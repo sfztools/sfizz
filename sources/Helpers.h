@@ -35,7 +35,7 @@ inline std::string_view trim(std::string_view s)
 
 inline constexpr unsigned int Fnv1aBasis = 0x811C9DC5;
 inline constexpr unsigned int Fnv1aPrime = 0x01000193;
-inline constexpr unsigned int hash(const char *s, unsigned int h = Fnv1aBasis)
+inline constexpr unsigned int   hash(const char *s, unsigned int h = Fnv1aBasis)
 {
     return !*s ? h : hash(s + 1, static_cast<unsigned int>((h ^ *s) * static_cast<unsigned long long>(Fnv1aPrime)));
 }
