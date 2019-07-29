@@ -43,14 +43,17 @@ void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
     auto& lastRegion = regions.emplace_back();
-    for (auto& opcode: globalOpcodes)
-        lastRegion.parseOpcode(opcode);
-    for (auto& opcode: masterOpcodes)
-        lastRegion.parseOpcode(opcode);
-    for (auto& opcode: groupOpcodes)
-        lastRegion.parseOpcode(opcode);
-    for (auto& opcode: regionOpcodes)
-        lastRegion.parseOpcode(opcode);
+    
+    auto parseOpcodes = [&](const auto& opcodes) {
+        for (auto& opcode: opcodes)
+            if (!lastRegion.parseOpcode(opcode))
+                unknownOpcodes.insert(opcode.opcode);
+    };
+
+    parseOpcodes(globalOpcodes);
+    parseOpcodes(masterOpcodes);
+    parseOpcodes(groupOpcodes);
+    parseOpcodes(regionOpcodes);
 }
 
 void sfz::Synth::clear()

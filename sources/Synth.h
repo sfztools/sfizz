@@ -3,6 +3,7 @@
 #include "Region.h"
 #include "SfzHelpers.h"
 #include <vector>
+#include <set>
 #include <optional>
 #include <string_view>
 
@@ -18,6 +19,7 @@ public:
     int getNumMasters() const noexcept { return numMasters; }
     int getNumCurves() const noexcept { return numCurves; }
     const Region* getRegionView(int idx) const noexcept { return idx < regions.size() ? &regions[idx] : nullptr; }
+    auto getUnknownOpcodes() { return unknownOpcodes; }
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
 private:
@@ -36,7 +38,7 @@ private:
     CCValueArray ccState;
     std::vector<CCNamePair> ccNames;
     std::optional<uint8_t> defaultSwitch;
-
+    std::set<std::string_view> unknownOpcodes;
     std::vector<Region> regions;
     void buildRegion(const std::vector<Opcode>& regionOpcodes);
 };

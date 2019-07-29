@@ -16,6 +16,7 @@ namespace Config
     inline constexpr double fastReleaseDuration { 0.01 };
     inline constexpr char defineCharacter { '$' };
     inline constexpr int oversamplingFactor { 2 };
+    inline constexpr unsigned int defaultAlignment { 16 };
 } // namespace config
 
 } // namespace sfz

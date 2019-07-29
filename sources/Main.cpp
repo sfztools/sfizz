@@ -33,5 +33,10 @@ int main(int argc, char** argv)
     std::cout << "Defines:" << '\n';
     for (auto& define: synth.getDefines())
         std::cout << '\t' << define.first << '=' << define.second << '\n';
+    std::cout << "==========" << '\n';
+    std::cout << "Unknown opcodes:";
+    for (auto& opcode: synth.getUnknownOpcodes())
+        std::cout << opcode << ',';
+    std::cout << '\n';
     return 0;
 }

@@ -25,6 +25,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(COMMON_SOURCES
     sources/Opcode.cpp
     sources/Synth.cpp
+    sources/FilePool.cpp
     sources/Region.cpp
     sources/Parser.cpp
 )
@@ -39,6 +40,8 @@ set(TEST_SOURCES
     tests/Region.cpp
     tests/Range.cpp
     tests/Opcode.cpp
+    tests/Buffer.cpp
+    tests/AudioBuffer.cpp
     tests/Files.cpp
     tests/Main.cpp
 )

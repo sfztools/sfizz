@@ -2,7 +2,7 @@
 #include "Helpers.h"
 #include "absl/strings/str_replace.h"
 
-void sfz::Region::parseOpcode(const Opcode& opcode)
+bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
     switch (hash(opcode.opcode))
     {
@@ -237,7 +237,41 @@ void sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("ampeg_vel2depth"):
         break;
     default:
-        std::string opcodeStr { opcode.opcode.begin(), opcode.opcode.end() };
-        unknownOpcodes.push_back(opcodeStr);
+        return false;
     }
+
+    return true;
+}
+
+bool sfz::Region::prepare()
+{
+    return false;
+}
+bool sfz::Region::isSwitchedOn() const noexcept
+{
+    return false;
+}
+bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue)
+{
+    return false;
+}
+bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue)
+{
+    return false;
+}
+bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue)
+{
+    return false;
+}
+void sfz::Region::registerPitchWheel(int channel, int pitch)
+{
+
+}
+void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch)
+{
+
+}
+void sfz::Region::registerTempo(float secondsPerQuarter)
+{
+
 }
