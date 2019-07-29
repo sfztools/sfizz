@@ -109,7 +109,6 @@ public:
     int getNumFrames() const noexcept { return numFrames; }
     int getNumChannels() const noexcept { return NumChannels; }
     bool empty() const noexcept { return numFrames == 0; }
-
 private:
     int numFrames { 0 };
     std::array<Buffer<Type, Alignment>, NumChannels> buffers;
