@@ -1,0 +1,5 @@
+<global> sw_lokey=30 sw_hikey=50 sw_default=40
+<region> sw_last=41 key=51 sample=*silence
+<region> sw_last=40 key=52 sample=*silence
+<region> sw_last=41 key=53 sample=*silence
+<region> sw_last=40 key=54 sample=*silence

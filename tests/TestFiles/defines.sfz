@@ -1,0 +1,8 @@
+<control>
+#define $KICKKEY 36
+#define $SNAREKEY 38
+#define $HATKEY 42
+
+<region>key=$KICKKEY sample=kick.wav
+<region>key=$SNAREKEY sample=snare.wav
+<region>key=$HATKEY sample=closedhat.wav

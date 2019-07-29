@@ -1,0 +1,3 @@
+#include "included_loop1.sfz"
+#include "root_loop.sfz"
+<region> sample=dummy_loop2.wav

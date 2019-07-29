@@ -1,0 +1,25 @@
+<global> width=40
+
+<master> pan=30
+
+<group>
+delay=67
+<region> key=60 sample=Regions/dummy.wav
+<region> key=61 sample=Regions/dummy.1.wav
+
+<group>
+delay=56
+<region> key=50 sample=Regions/dummy.wav
+<region> key=51 sample=Regions/dummy.1.wav
+
+<master> pan=-10
+
+<group>
+delay=47
+<region> key=40 sample=Regions/dummy.wav
+<region> key=41 sample=Regions/dummy.1.wav
+
+<group>
+delay=36
+<region> key=30 sample=Regions/dummy.wav
+<region> key=31 sample=Regions/dummy.1.wav

@@ -1,0 +1,2 @@
+#include "included_recursive2.sfz"
+<region> sample=dummy_recursive1.wav

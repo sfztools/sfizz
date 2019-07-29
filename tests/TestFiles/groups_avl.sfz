@@ -1,0 +1,6 @@
+<group> key=36 volume=6
+<region> lovel=1 hivel=26 sample=36-CajonCenter-1.wav
+<region> lovel=27 hivel=52 sample=36-CajonCenter-2.wav
+<region> lovel=53 hivel=77 sample=36-CajonCenter-3.wav
+<region> lovel=78 hivel=102 sample=36-CajonCenter-4.wav
+<region> lovel=103 hivel=127 sample=36-CajonCenter-5.wav
