@@ -6,8 +6,6 @@ project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 # Set the highest possible standard
 set(CMAKE_CXX_STANDARD 17)
 
-# Disable Abseil tests
-set(BUILD_TESTING OFF)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_compile_options(-stdlib=libc++)
@@ -15,10 +13,18 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
 endif()
 
+# Disable Abseil tests
+set(BUILD_TESTING OFF)
 add_subdirectory(external/abseil-cpp)
 add_subdirectory(external/spdlog)
 add_subdirectory(external/Catch2)
 add_subdirectory(external/cxxopts)
+
+#Disable Benchmark tests and installation
+set(BENCHMARK_ENABLE_TESTING OFF)
+set(BENCHMARK_ENABLE_INSTALL OFF)
+set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
+add_subdirectory(external/benchmark)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -31,10 +37,6 @@ set(COMMON_SOURCES
 )
     
 set(TEST_SOURCES
-    sources/Opcode.cpp
-    sources/Synth.cpp
-    sources/Region.cpp
-    sources/Parser.cpp
     tests/Regex.cpp
     tests/Helpers.cpp
     tests/Region.cpp
@@ -46,6 +48,10 @@ set(TEST_SOURCES
     tests/Main.cpp
 )
 
+set(BENCHMARK_SOURCES
+    benchmarks/Main.cpp
+    benchmarks/AudioBuffers.cpp
+)
 
 ###############################
 add_executable(sfzprint sources/ParserMain.cpp ${COMMON_SOURCES})
@@ -75,3 +81,11 @@ endif(UNIX)
 target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
+
+###############################
+add_executable(sfizz_bench ${BENCHMARK_SOURCES} ${COMMON_SOURCES})
+# Per OS properties
+if(UNIX)
+    target_link_libraries(sfizz_bench stdc++fs)
+endif(UNIX)
+target_link_libraries(sfizz_bench absl::strings benchmark)

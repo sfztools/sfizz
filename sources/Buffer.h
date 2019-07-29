@@ -54,8 +54,8 @@ public:
     
     Type* begin() noexcept { return data(); }
     Type* end() noexcept { return data() + alignedSize; }
-    const Type* cbegin() const noexcept { return data(); }
-    const Type* cend() const noexcept { return data() + alignedSize; }
+    // const Type* cbegin() const noexcept { return data(); }
+    // const Type* cend() const noexcept { return data() + alignedSize; }
 private:
     size_t largerSize { 0 };
     size_t alignedSize { 0 };

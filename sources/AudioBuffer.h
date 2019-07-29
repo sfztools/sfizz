@@ -44,6 +44,30 @@ public:
             return nullptr;
     }
 
+    Type* begin(int channelIndex) noexcept
+    {
+        ASSERT(channelIndex >= 0);
+        return buffer.data() + numFrames * channelIndex;
+    }
+
+    Type* end(int channelIndex) noexcept
+    {
+        ASSERT(channelIndex >= 0);
+        return buffer.data() + numFrames * (channelIndex + 1);
+    }
+
+    // const Type* cbegin(int channelIndex) noexcept
+    // {
+    //     ASSERT(channelIndex >= 0);
+    //     return buffer.data() + numFrames * channelIndex;
+    // }
+
+    // const Type* cend(int channelIndex) noexcept
+    // {
+    //     ASSERT(channelIndex >= 0);
+    //     return buffer.data() + numFrames * (channelIndex + 1);
+    // }
+
     Type& operator()(int channelIndex, int sampleIndex) noexcept
     {
         return getSample(channelIndex, sampleIndex);
@@ -99,12 +123,31 @@ public:
 
     Type* getChannel(int channelIndex) noexcept
     {
-        ASSERT(channelIndex >= 0);
         if (channelIndex < NumChannels)
             return &buffers[channelIndex].data();
         else
             return nullptr;
     }
+
+    Type* begin(int channelIndex) noexcept
+    {
+        return buffers[channelIndex].begin();
+    }
+
+    Type* end(int channelIndex) noexcept
+    {
+        return buffers[channelIndex].end();
+    }
+
+    // const Type* cbegin(int channelIndex) noexcept
+    // {
+    //     return buffers[channelIndex].cbegin();
+    // }
+
+    // const Type* cend(int channelIndex) noexcept
+    // {
+    //     return buffers[channelIndex].cend();
+    // }
 
     int getNumFrames() const noexcept { return numFrames; }
     int getNumChannels() const noexcept { return NumChannels; }

@@ -92,3 +92,22 @@ TEST_CASE("[AudioBuffer/SplitBuffer] Access 2")
         for (auto frameIdx = 0; frameIdx < splitDoubleBuffer.getNumFrames(); ++frameIdx)
             REQUIRE(splitDoubleBuffer(chanIdx, frameIdx) == static_cast<int>(splitDoubleBuffer.getNumFrames()) * chanIdx + frameIdx);
 }
+
+TEST_CASE("[AudioBuffer/SplitBuffer] Iterators")
+{
+    const int size { 256 };
+    const float fillValue { 2.0f };
+    AudioBuffer<float> buffer(size);
+    for (auto chanIdx = 0; chanIdx < buffer.getNumChannels(); ++chanIdx)
+        std::fill(buffer.begin(chanIdx), buffer.end(chanIdx), fillValue);
+
+    for (auto chanIdx = 0; chanIdx < buffer.getNumChannels(); ++chanIdx)
+        REQUIRE( std::all_of(buffer.begin(chanIdx), buffer.end(chanIdx), [fillValue](auto value) { return value == fillValue; }) );
+
+    SplitAudioBuffer<float> splitBuffer(size);
+    for (auto chanIdx = 0; chanIdx < splitBuffer.getNumChannels(); ++chanIdx)
+        std::fill(splitBuffer.begin(chanIdx), splitBuffer.end(chanIdx), fillValue);
+
+    for (auto chanIdx = 0; chanIdx < splitBuffer.getNumChannels(); ++chanIdx)
+        REQUIRE( std::all_of(splitBuffer.begin(chanIdx), splitBuffer.end(chanIdx), [fillValue](auto value) { return value == fillValue; }) );
+}
