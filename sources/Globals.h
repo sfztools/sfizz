@@ -20,9 +20,10 @@ namespace config
 
 } // namespace sfz
 
+enum class VectorOperations { standard, sse, neon };
 namespace config
 {
     inline constexpr unsigned int defaultAlignment { 16 };
-    enum class VectorOperations { standard, sse, neon };
+    
     inline constexpr VectorOperations vectorOperation { VectorOperations::standard };
 } // namespace config

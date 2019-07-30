@@ -103,7 +103,7 @@ struct Region
     EGDescription pitchEG;
     EGDescription filterEG;
 
-    double sampleRate { Config::defaultSampleRate };
+    double sampleRate { config::defaultSampleRate };
     int numChannels { 1 };
 };
 } // namespace sfz
