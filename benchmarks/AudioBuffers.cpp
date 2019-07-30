@@ -47,3 +47,4 @@ static void AB_Split_Fill_double(benchmark::State& state) {
   }
 }
 BENCHMARK(AB_Split_Fill_double);
+BENCHMARK_MAIN();

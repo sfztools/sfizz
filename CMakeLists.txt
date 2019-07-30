@@ -13,17 +13,14 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
 endif()
 
-# Disable Abseil tests
-set(BUILD_TESTING OFF)
+set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
 add_subdirectory(external/abseil-cpp)
 add_subdirectory(external/spdlog)
 add_subdirectory(external/Catch2)
 add_subdirectory(external/cxxopts)
 
-#Disable Benchmark tests and installation
-set(BENCHMARK_ENABLE_TESTING OFF)
-set(BENCHMARK_ENABLE_INSTALL OFF)
-set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
 add_subdirectory(external/benchmark)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -48,10 +45,6 @@ set(TEST_SOURCES
     tests/Main.cpp
 )
 
-set(BENCHMARK_SOURCES
-    benchmarks/Main.cpp
-    benchmarks/AudioBuffers.cpp
-)
 
 ###############################
 add_executable(sfzprint sources/ParserMain.cpp ${COMMON_SOURCES})
@@ -83,9 +76,9 @@ target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
 ###############################
-add_executable(sfizz_bench ${BENCHMARK_SOURCES} ${COMMON_SOURCES})
+add_executable(bench_audiobuffers benchmarks/AudioBuffers.cpp ${COMMON_SOURCES})
 # Per OS properties
 if(UNIX)
-    target_link_libraries(sfizz_bench stdc++fs)
+    target_link_libraries(bench_audiobuffers stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz_bench absl::strings benchmark)
+target_link_libraries(bench_audiobuffers absl::strings benchmark)
