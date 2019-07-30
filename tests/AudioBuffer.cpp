@@ -111,3 +111,108 @@ TEST_CASE("[AudioBuffer/SplitBuffer] Iterators")
     for (auto chanIdx = 0; chanIdx < splitBuffer.getNumChannels(); ++chanIdx)
         REQUIRE( std::all_of(splitBuffer.begin(chanIdx), splitBuffer.end(chanIdx), [fillValue](auto value) { return value == fillValue; }) );
 }
+
+template<class Type, unsigned int NumChannels, unsigned int Alignment = 16>
+void channelAlignmentTest(int size)
+{
+    static constexpr auto AlignmentMask { Alignment - 1 };
+    const Type fillValue { 2 };
+    AudioBuffer<Type, NumChannels, Alignment> buffer(size);
+    for (auto chanIdx = 0; chanIdx < NumChannels; ++chanIdx)
+        REQUIRE( ((size_t)buffer.getChannel(chanIdx) & AlignmentMask) == 0 );
+
+    SplitAudioBuffer<Type, NumChannels, Alignment> splitBuffer(size);
+    for (auto chanIdx = 0; chanIdx < NumChannels; ++chanIdx)
+        REQUIRE( ((size_t)splitBuffer.getChannel(chanIdx) & AlignmentMask) == 0 );
+}
+
+TEST_CASE("[AudioBuffer/SplitBuffer] Channel alignments (floats)")
+{
+    channelAlignmentTest<float, 1>(4);
+    channelAlignmentTest<float, 1>(5);
+    channelAlignmentTest<float, 1>(8);
+    channelAlignmentTest<float, 1>(256);
+    channelAlignmentTest<float, 1>(257);
+    channelAlignmentTest<float, 1>(1023);
+    channelAlignmentTest<float, 1>(1024);
+    channelAlignmentTest<float, 1>(65537);
+    channelAlignmentTest<float, 1>(65536);
+    channelAlignmentTest<float, 1>(65535);
+
+    channelAlignmentTest<float, 2>(4);
+    channelAlignmentTest<float, 2>(5);
+    channelAlignmentTest<float, 2>(8);
+    channelAlignmentTest<float, 2>(256);
+    channelAlignmentTest<float, 2>(257);
+    channelAlignmentTest<float, 2>(1023);
+    channelAlignmentTest<float, 2>(1024);
+    channelAlignmentTest<float, 2>(65537);
+    channelAlignmentTest<float, 2>(65536);
+    channelAlignmentTest<float, 2>(65535);
+
+    channelAlignmentTest<float, 3>(4);
+    channelAlignmentTest<float, 3>(5);
+    channelAlignmentTest<float, 3>(8);
+    channelAlignmentTest<float, 3>(256);
+    channelAlignmentTest<float, 3>(257);
+    channelAlignmentTest<float, 3>(1023);
+    channelAlignmentTest<float, 3>(1024);
+    channelAlignmentTest<float, 3>(65537);
+    channelAlignmentTest<float, 3>(65536);
+    channelAlignmentTest<float, 3>(65535);
+
+    channelAlignmentTest<float, 4>(4);
+    channelAlignmentTest<float, 4>(5);
+    channelAlignmentTest<float, 4>(8);
+    channelAlignmentTest<float, 4>(256);
+    channelAlignmentTest<float, 4>(257);
+    channelAlignmentTest<float, 4>(1023);
+    channelAlignmentTest<float, 4>(1024);
+    channelAlignmentTest<float, 4>(65537);
+    channelAlignmentTest<float, 4>(65536);
+    channelAlignmentTest<float, 4>(65535);
+
+    channelAlignmentTest<float, 1, 4>(4);
+    channelAlignmentTest<float, 1, 4>(5);
+    channelAlignmentTest<float, 1, 4>(8);
+    channelAlignmentTest<float, 1, 4>(256);
+    channelAlignmentTest<float, 1, 4>(257);
+    channelAlignmentTest<float, 1, 4>(1023);
+    channelAlignmentTest<float, 1, 4>(1024);
+    channelAlignmentTest<float, 1, 4>(65537);
+    channelAlignmentTest<float, 1, 4>(65536);
+    channelAlignmentTest<float, 1, 4>(65535);
+
+    channelAlignmentTest<float, 2, 4>(4);
+    channelAlignmentTest<float, 2, 4>(5);
+    channelAlignmentTest<float, 2, 4>(8);
+    channelAlignmentTest<float, 2, 4>(256);
+    channelAlignmentTest<float, 2, 4>(257);
+    channelAlignmentTest<float, 2, 4>(1023);
+    channelAlignmentTest<float, 2, 4>(1024);
+    channelAlignmentTest<float, 2, 4>(65537);
+    channelAlignmentTest<float, 2, 4>(65536);
+    channelAlignmentTest<float, 2, 4>(65535);
+
+    channelAlignmentTest<float, 1, 8>(4);
+    channelAlignmentTest<float, 1, 8>(5);
+    channelAlignmentTest<float, 1, 8>(8);
+    channelAlignmentTest<float, 1, 8>(256);
+    channelAlignmentTest<float, 1, 8>(257);
+    channelAlignmentTest<float, 1, 8>(1023);
+    channelAlignmentTest<float, 1, 8>(1024);
+    channelAlignmentTest<float, 1, 8>(65537);
+    channelAlignmentTest<float, 1, 8>(65536);
+    channelAlignmentTest<float, 1, 8>(65535);
+
+    channelAlignmentTest<float, 2, 8>(4);
+    channelAlignmentTest<float, 2, 8>(5);
+    channelAlignmentTest<float, 2, 8>(8);
+    channelAlignmentTest<float, 2, 8>(256);
+    channelAlignmentTest<float, 2, 8>(257);
+    channelAlignmentTest<float, 2, 8>(1023);
+    channelAlignmentTest<float, 2, 8>(1024);
+    channelAlignmentTest<float, 2, 8>(65537);
+    channelAlignmentTest<float, 2, 8>(65536);
+    channelAlignmentTest<float, 2, 8>(65535);
+}

@@ -9,7 +9,6 @@ class AudioBuffer
 {
 public:
     AudioBuffer() = default;
-
     AudioBuffer(int numFrames)
     {
         resize(numFrames);
@@ -19,9 +18,13 @@ public:
     {
         // should have a positive number of frames...
         ASSERT(numFrames >= 0);
-        if (buffer.resize(static_cast<size_t>(NumChannels * numFrames)))
+        padding = TypeAlignment - (numFrames & TypeAlignmentMask);
+        totalSize = NumChannels * (numFrames + padding);
+        if (buffer.resize(static_cast<size_t>(totalSize)))
         {
             this->numFrames = numFrames;
+            for (auto channelIndex = 0; channelIndex < NumChannels; ++channelIndex)
+                channels[channelIndex] = buffer.data() + channelIndex * (numFrames + padding);
             return true;
         }
 
@@ -37,36 +40,18 @@ public:
 
     Type* getChannel(int channelIndex) noexcept
     {
-        ASSERT(channelIndex >= 0);
-        if (channelIndex < NumChannels)
-            return buffer.data() + numFrames * channelIndex;
-        else
-            return nullptr;
+        return channels[channelIndex];
     }
 
     Type* begin(int channelIndex) noexcept
     {
-        ASSERT(channelIndex >= 0);
         return buffer.data() + numFrames * channelIndex;
     }
 
     Type* end(int channelIndex) noexcept
     {
-        ASSERT(channelIndex >= 0);
         return buffer.data() + numFrames * (channelIndex + 1);
     }
-
-    // const Type* cbegin(int channelIndex) noexcept
-    // {
-    //     ASSERT(channelIndex >= 0);
-    //     return buffer.data() + numFrames * channelIndex;
-    // }
-
-    // const Type* cend(int channelIndex) noexcept
-    // {
-    //     ASSERT(channelIndex >= 0);
-    //     return buffer.data() + numFrames * (channelIndex + 1);
-    // }
 
     Type& operator()(int channelIndex, int sampleIndex) noexcept
     {
@@ -78,7 +63,13 @@ public:
     bool empty() const noexcept { return numFrames == 0; }
 
 private:
+    static constexpr auto TypeAlignment { Alignment / sizeof(Type) };
+    static constexpr auto TypeAlignmentMask { TypeAlignment - 1 };
+    static_assert(TypeAlignment * sizeof(Type) == Alignment, "The alignment does not appear to be divided by the size of the Type");
     int numFrames { 0 };
+    int totalSize { 0 };
+    int padding { 0 };
+    std::array<Type*, NumChannels> channels;
     Buffer<Type, Alignment> buffer {};
 };
 
@@ -123,10 +114,7 @@ public:
 
     Type* getChannel(int channelIndex) noexcept
     {
-        if (channelIndex < NumChannels)
-            return &buffers[channelIndex].data();
-        else
-            return nullptr;
+        return buffers[channelIndex].data();
     }
 
     Type* begin(int channelIndex) noexcept
@@ -138,16 +126,6 @@ public:
     {
         return buffers[channelIndex].end();
     }
-
-    // const Type* cbegin(int channelIndex) noexcept
-    // {
-    //     return buffers[channelIndex].cbegin();
-    // }
-
-    // const Type* cend(int channelIndex) noexcept
-    // {
-    //     return buffers[channelIndex].cend();
-    // }
 
     int getNumFrames() const noexcept { return numFrames; }
     int getNumChannels() const noexcept { return NumChannels; }
