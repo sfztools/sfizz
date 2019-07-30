@@ -36,7 +36,7 @@ TEST_CASE("[Buffer] 10 floats ")
     Buffer<float> buffer(10);
     REQUIRE(!buffer.empty());
     REQUIRE(buffer.size() == 10);
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     for (auto& element: buffer)
         element = 0.0f;
     for (auto& element: buffer)
@@ -51,15 +51,15 @@ TEST_CASE("[Buffer] Resize 10 floats ")
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     REQUIRE(buffer.size() == baseSize);
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     std::fill(buffer.begin(), buffer.end(), 1.0f);
     REQUIRE( buffer.resize(smallSize) );
     REQUIRE( buffer.size() == smallSize );
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
     REQUIRE( buffer.resize(bigSize) );
     REQUIRE( buffer.size() == bigSize );
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
 }
@@ -72,15 +72,15 @@ TEST_CASE("[Buffer] Resize 4096 floats ")
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     REQUIRE(buffer.size() == baseSize);
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     std::fill(buffer.begin(), buffer.end(), 1.0f);
     REQUIRE( buffer.resize(smallSize) );
     REQUIRE( buffer.size() == smallSize );
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
     REQUIRE( buffer.resize(bigSize) );
     REQUIRE( buffer.size() == bigSize );
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
 }
@@ -93,15 +93,15 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     REQUIRE(buffer.size() == baseSize);
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     std::fill(buffer.begin(), buffer.end(), 1.0f);
     REQUIRE( buffer.resize(smallSize) );
     REQUIRE( buffer.size() == smallSize );
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
     REQUIRE( buffer.resize(bigSize) );
     REQUIRE( buffer.size() == bigSize );
-    REQUIRE(((size_t)buffer.data() & (sfz::Config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
 }

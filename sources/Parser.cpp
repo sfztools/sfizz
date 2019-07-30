@@ -103,7 +103,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 		std::string newString;
 		newString.reserve(tmpView.length());
 		std::string::size_type lastPos = 0;
-    	std::string::size_type findPos = tmpView.find(sfz::Config::defineCharacter, lastPos);
+    	std::string::size_type findPos = tmpView.find(sfz::config::defineCharacter, lastPos);
 
 		while(findPos < tmpView.npos)
 		{
@@ -122,11 +122,11 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 			
 			if (lastPos <= findPos)
 			{
-				newString += sfz::Config::defineCharacter;
+				newString += sfz::config::defineCharacter;
 				lastPos = findPos + 1;
 			}
 
-			findPos = tmpView.find(sfz::Config::defineCharacter, lastPos);
+			findPos = tmpView.find(sfz::config::defineCharacter, lastPos);
 		}
 
 		// Copy the rest of the string

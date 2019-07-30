@@ -3,7 +3,7 @@
 #include "Helpers.h"
 #include "Globals.h"
 
-template<class Type, unsigned int NumChannels = sfz::Config::numChannels, unsigned int Alignment = sfz::Config::defaultAlignment>
+template<class Type, unsigned int NumChannels = sfz::config::numChannels, unsigned int Alignment = config::defaultAlignment>
 
 class AudioBuffer
 {
@@ -36,6 +36,19 @@ public:
         ASSERT(channelIndex >= 0);
         ASSERT(sampleIndex >= 0);
         return *(buffer.data() + numFrames * channelIndex + sampleIndex);
+    }
+
+    void fill(Type value) noexcept
+    {
+        if constexpr (config::vectorOperation == config::VectorOperations::sse)
+        {
+
+        }
+        else
+        {
+            for(auto i = 0; i < NumChannels; ++i)
+                std::fill(begin(i), end(i), value);
+        }
     }
 
     Type* getChannel(int channelIndex) noexcept
@@ -73,7 +86,7 @@ private:
     Buffer<Type, Alignment> buffer {};
 };
 
-template<class Type, unsigned int NumChannels = sfz::Config::numChannels, unsigned int Alignment = sfz::Config::defaultAlignment>
+template<class Type, unsigned int NumChannels = sfz::config::numChannels, unsigned int Alignment = config::defaultAlignment>
 class SplitAudioBuffer
 {
 public:
@@ -98,6 +111,19 @@ public:
             this->numFrames = std::min(numFrames, this->numFrames);
 
         return resizedOK;
+    }
+
+    void fill(Type value) noexcept
+    {
+        if constexpr (config::vectorOperation == config::VectorOperations::sse)
+        {
+
+        }
+        else
+        {
+            for(auto i = 0; i < NumChannels; ++i)
+                std::fill(begin(i), end(i), value);
+        }
     }
 
     Type& getSample(int channelIndex, int sampleIndex) noexcept

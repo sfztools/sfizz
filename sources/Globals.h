@@ -3,7 +3,7 @@
 namespace sfz
 {
 
-namespace Config
+namespace config
 {
     inline constexpr double defaultSampleRate { 48000 };
     inline constexpr int defaultSamplesPerBlock { 1024 };
@@ -16,7 +16,13 @@ namespace Config
     inline constexpr double fastReleaseDuration { 0.01 };
     inline constexpr char defineCharacter { '$' };
     inline constexpr int oversamplingFactor { 2 };
-    inline constexpr unsigned int defaultAlignment { 16 };
 } // namespace config
 
 } // namespace sfz
+
+namespace config
+{
+    inline constexpr unsigned int defaultAlignment { 16 };
+    enum class VectorOperations { standard, sse, neon };
+    inline constexpr VectorOperations vectorOperation { VectorOperations::standard };
+} // namespace config

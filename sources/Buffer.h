@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
-template<class Type, unsigned int Alignment = sfz::Config::defaultAlignment>
+template<class Type, unsigned int Alignment = config::defaultAlignment>
 class Buffer
 {
 static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
