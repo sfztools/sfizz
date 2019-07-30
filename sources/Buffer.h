@@ -9,6 +9,7 @@ class Buffer
 {
 static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
 static_assert(Alignment == 0 || Alignment == 4 || Alignment == 8 || Alignment == 16, "Bad alignment value");
+static constexpr auto AlignmentMask { Alignment - 1 };
 public:
     Buffer() { }
     Buffer(size_t size)
@@ -23,7 +24,7 @@ public:
             return true;
         }
 
-        auto tempSize = newSize + Alignment;
+        auto tempSize = newSize + 2 * AlignmentMask; // To ensure that we have leeway at the beginning and at the end
         auto* newData = largerData != nullptr ? std::realloc(largerData, tempSize * sizeof(Type)) : std::malloc(tempSize * sizeof(Type));
         if (newData == nullptr)
             return false;
@@ -54,6 +55,7 @@ public:
     
     Type* begin() noexcept { return data(); }
     Type* end() noexcept { return data() + alignedSize; }
+    Type* alignedEnd() noexcept { return data() + alignedSize; }
     // const Type* cbegin() const noexcept { return data(); }
     // const Type* cend() const noexcept { return data() + alignedSize; }
 private:

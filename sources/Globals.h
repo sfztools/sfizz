@@ -27,3 +27,5 @@ namespace config
     
     inline constexpr VectorOperations vectorOperation { VectorOperations::standard };
 } // namespace config
+
+#include <x86intrin.h>
