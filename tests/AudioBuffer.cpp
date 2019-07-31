@@ -513,3 +513,12 @@ TEST_CASE("[AudioBuffer] Interleave read unaligned end -- SSE")
             real[realIdx++] = buffer(chanIdx, frameIdx);
     REQUIRE( real == expected );
 }
+
+TEST_CASE("[AudioBuffer] Fill a big Audiobuffer")
+{
+    constexpr int size { 2039247 };
+    AudioBuffer<float> buffer (size);
+    std::vector<float> input (2*size);
+    std::iota(input.begin(), input.end(), 1.0f);
+    buffer.readInterleaved(input.data(), size);
+}

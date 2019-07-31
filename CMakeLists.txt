@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.13)
 # You need to generate the AppConfig.h and the JuceHeader.h through the Projucer; the rest is more or less here 
 
 project(sfizz VERSION 1.0.0 LANGUAGES CXX)
@@ -76,9 +76,17 @@ target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
 ###############################
-add_executable(bench_audiobuffers benchmarks/AudioBuffers.cpp ${COMMON_SOURCES})
+add_executable(bench_ab_fill benchmarks/AudioBuffer_Fill.cpp ${COMMON_SOURCES})
 # Per OS properties
 if(UNIX)
-    target_link_libraries(bench_audiobuffers stdc++fs)
+    target_link_libraries(bench_ab_fill stdc++fs)
 endif(UNIX)
-target_link_libraries(bench_audiobuffers absl::strings benchmark)
+target_link_libraries(bench_ab_fill absl::strings benchmark)
+
+###############################
+add_executable(bench_ab_read benchmarks/AudioBuffer_Interleaved_Read.cpp ${COMMON_SOURCES})
+# Per OS properties
+if(UNIX)
+    target_link_libraries(bench_ab_read stdc++fs)
+endif(UNIX)
+target_link_libraries(bench_ab_read absl::strings benchmark)

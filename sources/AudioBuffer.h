@@ -3,6 +3,7 @@
 #include "Helpers.h"
 #include "Globals.h"
 #include <array>
+#include <iostream>
 #include <type_traits>
 
 template<class Type, unsigned int NumChannels = sfz::config::numChannels, unsigned int Alignment = config::defaultAlignment>
@@ -13,6 +14,7 @@ public:
     AudioBuffer() = default;
     AudioBuffer(int numFrames)
     {
+        DBG("Building an audiobuffer of size " << numFrames);
         resize(numFrames);
     }
     
@@ -73,9 +75,9 @@ public:
             const float* end = input + 2 * lastAligned;
             while (in < end)
             {
-                auto input0 = _mm_load_ps(in);
+                auto input0 = _mm_loadu_ps(in);
                 in += 4;
-                auto input1 = _mm_load_ps(in);
+                auto input1 = _mm_loadu_ps(in);
                 in += 4;
                 auto intermediate0 = _mm_unpacklo_ps(input0, input1);
                 auto intermediate1 = _mm_unpackhi_ps(input0, input1);
@@ -86,7 +88,6 @@ public:
                 out0 += 4;
                 out1 += 4;
             }
-
             for (auto chanIdx = 0; chanIdx < NumChannels; chanIdx++)
             {
                 auto* _in = input + 2 * lastAligned + chanIdx;

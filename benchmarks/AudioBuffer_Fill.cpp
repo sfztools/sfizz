@@ -68,25 +68,4 @@ static void Split_Fill_double(benchmark::State& state) {
 }
 
 BENCHMARK(Split_Fill_double);
-
-constexpr int size { 1039247 };
-static void Interleaved_Read(benchmark::State& state) {
-  AudioBuffer<float> buffer (size);
-  std::array<float, 2*size> input;
-  std::iota(input.begin(), input.end(), 1.0f);
-  for (auto _ : state) {
-    buffer.readInterleaved(input.data(), size);
-  }
-}
-BENCHMARK(Interleaved_Read);
-
-static void Interleaved_Read_SSE(benchmark::State& state) {
-  AudioBuffer<float> buffer (size);
-  std::array<float, 2*size> input;
-  std::iota(input.begin(), input.end(), 1.0f);
-  for (auto _ : state) {
-    buffer.readInterleaved<VectorOperations::sse>(input.data(), size);
-  }
-}
-BENCHMARK(Interleaved_Read_SSE);
 BENCHMARK_MAIN();
