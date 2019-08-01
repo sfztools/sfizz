@@ -13,6 +13,17 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
 endif()
 
+include(CheckCXXCompilerFlag)
+# CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+# if(COMPILER_SUPPORTS_MARCH_NATIVE)
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+# endif()
+
+# CHECK_CXX_COMPILER_FLAG("-ffast-math" COMPILER_SUPPORTS_FASTMATH)
+# if(COMPILER_SUPPORTS_FASTMATH)
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
+# endif()
+
 set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
 add_subdirectory(external/abseil-cpp)
 add_subdirectory(external/spdlog)

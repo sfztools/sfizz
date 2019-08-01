@@ -75,14 +75,14 @@ public:
             const float* end = input + 2 * lastAligned;
             while (in < end)
             {
-                auto input0 = _mm_loadu_ps(in);
+                const auto input0 = _mm_loadu_ps(in);
                 in += 4;
-                auto input1 = _mm_loadu_ps(in);
+                const auto input1 = _mm_loadu_ps(in);
                 in += 4;
-                auto intermediate0 = _mm_unpacklo_ps(input0, input1);
-                auto intermediate1 = _mm_unpackhi_ps(input0, input1);
-                auto output0 = _mm_unpacklo_ps(intermediate0, intermediate1);
-                auto output1 = _mm_unpackhi_ps(intermediate0, intermediate1);
+                const auto intermediate0 = _mm_unpacklo_ps(input0, input1);
+                const auto intermediate1 = _mm_unpackhi_ps(input0, input1);
+                const auto output0 = _mm_unpacklo_ps(intermediate0, intermediate1);
+                const auto output1 = _mm_unpackhi_ps(intermediate0, intermediate1);
                 _mm_store_ps(out0, output0);
                 _mm_store_ps(out1, output1);
                 out0 += 4;
