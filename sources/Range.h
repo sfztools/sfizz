@@ -27,9 +27,7 @@ public:
     constexpr Range(Type start, Type end) noexcept
     : _start(start), _end(std::max(start, end)) {}
     ~Range() = default;
-    Type start() const noexcept { return getStart(); }
     Type getStart() const noexcept { return _start; }
-    Type end() const noexcept { return getEnd(); }
     Type getEnd() const noexcept { return _end; }
     std::pair<Type, Type> getPair() const noexcept { return std::make_pair<Type, Type>(_start, _end); } 
     Range(const Range<Type>& range) = default;
@@ -47,10 +45,20 @@ public:
         if (end < _start)
             _start = end;
     }
-
     Type clamp(Type value) const noexcept { return std::clamp(value, _start, _end); }
     bool containsWithEnd(Type value) const noexcept { return (value >= _start && value <= _end); }
     bool contains(Type value) const noexcept { return (value >= _start && value < _end); }
+    void shrinkIfSmaller( Type start, Type end)
+    {
+        if (start > end)
+            std::swap(start, end);
+        
+        if (start > _start)
+            _start = start;
+
+        if (end < _end)
+            _end = end;
+    }
 private:
     Type _start { static_cast<Type>(0.0) };
     Type _end { static_cast<Type>(0.0) };

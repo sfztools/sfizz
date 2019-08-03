@@ -41,7 +41,7 @@ inline std::optional<ValueType> readOpcode(std::string_view value, const Range<V
     {
         float returnedValue;
         if (!absl::SimpleAtof(value, &returnedValue))
-            return {};
+            return std::nullopt;
 
         return validRange.clamp(returnedValue);
     }

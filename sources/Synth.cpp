@@ -1,6 +1,8 @@
 #include "Synth.h"
 #include "Helpers.h"
 #include <iostream>
+#include <utility>
+#include <algorithm>
 
 void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
 {
@@ -42,11 +44,11 @@ void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto& lastRegion = regions.emplace_back();
+    auto lastRegion = std::make_shared<Region>(filePool);
     
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode: opcodes)
-            if (!lastRegion.parseOpcode(opcode))
+            if (!lastRegion->parseOpcode(opcode))
                 unknownOpcodes.insert(opcode.opcode);
     };
 
@@ -54,6 +56,8 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     parseOpcodes(masterOpcodes);
     parseOpcodes(groupOpcodes);
     parseOpcodes(regionOpcodes);
+
+    regions.push_back(lastRegion);
 }
 
 void sfz::Synth::clear()
@@ -99,6 +103,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("default_path"):
             if (auto newPath = std::filesystem::path(member.value); std::filesystem::exists(newPath))
                 rootDirectory = newPath;
+            break;
         default:
             // Unsupported control opcode
             ASSERTFALSE;
@@ -109,5 +114,34 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 {
     clear();
-    return sfz::Parser::loadSfzFile(filename);
+    auto parserReturned = sfz::Parser::loadSfzFile(filename);
+    if (!parserReturned)
+        return false;
+    
+    if (regions.empty())
+        return false;
+
+    filePool.setRootDirectory(this->rootDirectory);
+    auto lastRegion = regions.end() - 1;
+    auto currentRegion = regions.begin();
+    while (currentRegion <= lastRegion)
+    {
+        if (! (*currentRegion)->prepare() )
+        {
+            DBG("Removing the region with sample " << (*currentRegion)->sample);
+            std::iter_swap(currentRegion, lastRegion);
+            lastRegion--;
+        }
+        else
+        {
+            for (auto note = (*currentRegion)->keyRange.getStart(); note <= (*currentRegion)->keyRange.getEnd(); note++)
+                noteActivationLists[note].push_back(*currentRegion);
+            for (auto cc = (*currentRegion)->keyRange.getStart(); cc <= (*currentRegion)->keyRange.getEnd(); cc++)
+                ccActivationLists[cc].push_back(*currentRegion);
+            currentRegion++;
+        }
+    }
+    DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
+    regions.resize(std::distance(regions.begin(), lastRegion) + 1);
+    return parserReturned;
 }

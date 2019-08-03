@@ -72,3 +72,20 @@ TEST_CASE("[Range] Clamp")
     REQUIRE( floatRange.clamp(10.0) == 10.0_a );
     REQUIRE( floatRange.clamp(11.0) == 10.0_a );
 }
+
+TEST_CASE("[Range] shrinkIfSmaller")
+{
+    Range<int> intRange {2, 10};
+    intRange.shrinkIfSmaller(0, 10);
+    REQUIRE( intRange == Range<int>(2, 10) );
+    intRange.shrinkIfSmaller(2, 11);
+    REQUIRE( intRange == Range<int>(2, 10) );
+    intRange.shrinkIfSmaller(2, 9);
+    REQUIRE( intRange == Range<int>(2, 9) );
+    intRange.shrinkIfSmaller(3, 9);
+    REQUIRE( intRange == Range<int>(3, 9) );
+    intRange.shrinkIfSmaller(4, 7);
+    REQUIRE( intRange == Range<int>(4, 7) );
+    intRange.shrinkIfSmaller(6, 5);
+    REQUIRE( intRange == Range<int>(5, 6) );
+}

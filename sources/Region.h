@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include "Opcode.h"
+#include "FilePool.h"
 #include "EGDescription.h"
 #include "Defaults.h"
 #include "CCMap.h"
@@ -10,6 +11,11 @@ namespace sfz
 {
 struct Region
 {
+    Region() = delete;
+    Region(FilePool& pool): filePool(pool) {}
+    Region(const Region&) = default;
+    ~Region() = default;
+
     bool isRelease() const noexcept { return trigger == SfzTrigger::release || trigger == SfzTrigger::release_key; }
     bool isGenerator() const noexcept { return sample.size() > 0 ? sample[0] == '*' : false; }
     bool shouldLoop() const noexcept { return (loopMode == SfzLoopMode::loop_continuous || loopMode == SfzLoopMode::loop_sustain); }
@@ -105,5 +111,8 @@ struct Region
 
     double sampleRate { config::defaultSampleRate };
     int numChannels { 1 };
+    std::shared_ptr<StereoBuffer<float>> preloadedData { nullptr };
+private:
+    FilePool& filePool;
 };
 } // namespace sfz

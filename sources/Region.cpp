@@ -245,16 +245,27 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
 bool sfz::Region::prepare()
 {
-    return false;
+    auto fileInformation = filePool.getFileInformation(sample);
+    if (!fileInformation)
+        return false;
+
+    DBG("Sample " << sample << " information: " << fileInformation->end << "(" << fileInformation->loopBegin << "->" << fileInformation->loopEnd << ")");
+    sampleEnd = std::min(sampleEnd, fileInformation->end);
+    loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
+    preloadedData = fileInformation->preloadedData;
+    return true;
 }
+
 bool sfz::Region::isSwitchedOn() const noexcept
 {
     return false;
 }
+
 bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue)
 {
     return false;
 }
+
 bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue)
 {
     return false;

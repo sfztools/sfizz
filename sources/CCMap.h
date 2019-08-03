@@ -6,8 +6,11 @@ template<class ValueType>
 class CCMap
 {
 public:
-    CCMap(const ValueType& defaultValue)
-    : defaultValue(defaultValue) { }
+    CCMap() = delete;
+    CCMap(const ValueType& defaultValue) : defaultValue(defaultValue) { }
+    CCMap(CCMap&&) = default;
+    CCMap(const CCMap&) = default;
+    ~CCMap() = default;
 
     const ValueType &getWithDefault(int index) const noexcept
     {
@@ -32,6 +35,7 @@ public:
     inline bool empty() const { return container.empty(); }
     const ValueType &at(int index) const { return container.at(index); }
     bool contains(int index) const noexcept { return container.find(index) != end(container); }
+
 private:
     const ValueType defaultValue;
     std::map<int, ValueType> container;

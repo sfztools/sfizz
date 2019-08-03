@@ -2,6 +2,7 @@
 #include "Parser.h"
 #include "Region.h"
 #include "SfzHelpers.h"
+#include "FilePool.h"
 #include <vector>
 #include <set>
 #include <optional>
@@ -18,7 +19,7 @@ public:
     int getNumGroups() const noexcept { return numGroups; }
     int getNumMasters() const noexcept { return numMasters; }
     int getNumCurves() const noexcept { return numCurves; }
-    const Region* getRegionView(int idx) const noexcept { return idx < regions.size() ? &regions[idx] : nullptr; }
+    const Region* getRegionView(int idx) const noexcept { return (size_t)idx < regions.size() ? regions[idx].get() : nullptr; }
     auto getUnknownOpcodes() { return unknownOpcodes; }
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
@@ -35,11 +36,15 @@ private:
     std::vector<Opcode> masterOpcodes;
     std::vector<Opcode> groupOpcodes;
 
+    FilePool filePool;
     CCValueArray ccState;
     std::vector<CCNamePair> ccNames;
     std::optional<uint8_t> defaultSwitch;
     std::set<std::string_view> unknownOpcodes;
-    std::vector<Region> regions;
+    using RegionPtrVector = std::vector<std::shared_ptr<Region>>;
+    std::vector<std::shared_ptr<Region>> regions;
+    std::array<RegionPtrVector, 128> noteActivationLists;
+    std::array<RegionPtrVector, 128> ccActivationLists;
     void buildRegion(const std::vector<Opcode>& regionOpcodes);
 };
 

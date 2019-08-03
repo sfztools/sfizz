@@ -10,6 +10,11 @@ namespace sfz
 
 struct EGDescription
 {
+    EGDescription() = default;
+    EGDescription(const EGDescription&) = default;
+    EGDescription(EGDescription&&) = default;
+    ~EGDescription() = default;
+
     float attack        { Default::attack };
     float decay         { Default::decay };
     float delay         { Default::delayEG };
