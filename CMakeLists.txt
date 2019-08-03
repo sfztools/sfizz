@@ -91,7 +91,7 @@ add_executable(sfizz sources/Main.cpp ${COMMON_SOURCES})
 if(UNIX)
     target_link_libraries(sfizz stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map)
+target_link_libraries(sfizz absl::stlrings cxxopts sndfile absl::flat_hash_map)
 
 ###############################
 # Test application
