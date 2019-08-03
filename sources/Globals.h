@@ -20,12 +20,13 @@ namespace config
 
 } // namespace sfz
 
-enum class VectorOperations { standard, sse, neon };
+enum class SIMD { scalar, sse, neon };
 namespace config
 {
     inline constexpr unsigned int defaultAlignment { 16 };
-    
-    inline constexpr VectorOperations vectorOperation { VectorOperations::standard };
+    inline constexpr SIMD vectorOperation { SIMD::scalar };
 } // namespace config
 
+#if HAVE_X86INTRIN_H
 #include <x86intrin.h>
+#endif

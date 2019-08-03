@@ -31,17 +31,28 @@ TEST_CASE("[Buffer] Empty (uint8_t)")
     REQUIRE(emptyBuffer.size() == 0);
 }
 
+template<class Type>
+void checkBoundaries(Buffer<Type>& buffer, size_t expectedSize)
+{
+    REQUIRE(buffer.size() == expectedSize);
+    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.alignedEnd() & (config::defaultAlignment - 1)) == 0);
+    REQUIRE(std::distance(buffer.begin(), buffer.end()) == expectedSize);
+    REQUIRE(std::distance(buffer.begin(), buffer.alignedEnd()) >= expectedSize);
+}
+
 TEST_CASE("[Buffer] 10 floats ")
 {
-    Buffer<float> buffer(10);
-    REQUIRE(!buffer.empty());
-    REQUIRE(buffer.size() == 10);
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    const int baseSize { 10 };
+    Buffer<float> buffer(baseSize);
+    checkBoundaries(buffer, baseSize);
+    
     for (auto& element: buffer)
         element = 0.0f;
     for (auto& element: buffer)
         REQUIRE(element == 0.0f);
 }
+
 
 TEST_CASE("[Buffer] Resize 10 floats ")
 {
@@ -50,37 +61,39 @@ TEST_CASE("[Buffer] Resize 10 floats ")
     const int bigSize { baseSize * 2 };
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
-    REQUIRE(buffer.size() == baseSize);
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, baseSize);
+    
     std::fill(buffer.begin(), buffer.end(), 1.0f);
+    
     REQUIRE( buffer.resize(smallSize) );
-    REQUIRE( buffer.size() == smallSize );
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, smallSize);
+
     REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
+    
     REQUIRE( buffer.resize(bigSize) );
-    REQUIRE( buffer.size() == bigSize );
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
 }
 
 TEST_CASE("[Buffer] Resize 4096 floats ")
 {
-    const int baseSize { 10 };
+    const int baseSize { 4096 };
     const int smallSize { baseSize / 2 };
     const int bigSize { baseSize * 2 };
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
-    REQUIRE(buffer.size() == baseSize);
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, baseSize);
+    
     std::fill(buffer.begin(), buffer.end(), 1.0f);
+    
     REQUIRE( buffer.resize(smallSize) );
-    REQUIRE( buffer.size() == smallSize );
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, smallSize);
+    
     REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
+    
     REQUIRE( buffer.resize(bigSize) );
-    REQUIRE( buffer.size() == bigSize );
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
 }
@@ -90,18 +103,19 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
     const int baseSize { 10 };
     const int smallSize { baseSize / 2 };
     const int bigSize { baseSize * 2 };
-    Buffer<float> buffer(baseSize);
+        Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
-    REQUIRE(buffer.size() == baseSize);
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, baseSize);
+    
     std::fill(buffer.begin(), buffer.end(), 1.0f);
+    
     REQUIRE( buffer.resize(smallSize) );
-    REQUIRE( buffer.size() == smallSize );
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, smallSize);
+    
     REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
+    
     REQUIRE( buffer.resize(bigSize) );
-    REQUIRE( buffer.size() == bigSize );
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
+    checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
 }

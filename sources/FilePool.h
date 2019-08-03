@@ -1,5 +1,5 @@
 #pragma once
-#include "AudioBuffer.h"
+#include "StereoBuffer.h"
 #include <filesystem>
 #include <map>
 #include <string_view>
@@ -12,6 +12,6 @@ public:
     FilePool() = default;
 private:
     std::filesystem::path rootDirectory;
-    std::map<std::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
+    std::map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
 };
 }

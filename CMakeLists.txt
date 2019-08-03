@@ -13,47 +13,65 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
 endif()
 
-include(CheckCXXCompilerFlag)
-# CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
-# if(COMPILER_SUPPORTS_MARCH_NATIVE)
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-# endif()
+if (UNIX) 
+    add_compile_options(-Wall)
+    add_compile_options(-Wextra)
+    # add_compile_options(-fno-exceptions)
+    add_compile_options(-ffast-math)
+    add_compile_options(-fno-rtti)
+    add_compile_options(-fno-omit-frame-pointer)
+endif()
 
-# CHECK_CXX_COMPILER_FLAG("-ffast-math" COMPILER_SUPPORTS_FASTMATH)
-# if(COMPILER_SUPPORTS_FASTMATH)
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
-# endif()
+message("Cmake flags: ${CMAKE_CXX_FLAGS}")
 
+# Check SIMD files
+include(CheckIncludeFiles)
+CHECK_INCLUDE_FILES(x86intrin.h HAVE_X86INTRIN_H)
+CHECK_INCLUDE_FILES(arm_neon.h HAVE_ARM_NEON_H)
+if (HAVE_X86INTRIN_H)
+    if(UNIX)
+        add_compile_options(-DHAVE_X86INTRIN_H)
+    endif()
+endif()
+if (HAVE_ARM_NEON_H)
+    if(UNIX)
+        add_compile_options(-DHAVE_ARM_NEON_H)
+    endif()
+endif()
+
+# Build options and includes
 set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
 add_subdirectory(external/abseil-cpp)
 add_subdirectory(external/spdlog)
 add_subdirectory(external/Catch2)
 add_subdirectory(external/cxxopts)
-
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
 add_subdirectory(external/benchmark)
 
+# Export the compile_commands.json file
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 
 set(COMMON_SOURCES
     sources/Opcode.cpp
     sources/Synth.cpp
     sources/FilePool.cpp
     sources/Region.cpp
+    sources/StereoBuffer.cpp
     sources/Parser.cpp
 )
     
 set(TEST_SOURCES
-    tests/Regex.cpp
-    tests/Helpers.cpp
-    tests/Region.cpp
-    tests/Range.cpp
-    tests/Opcode.cpp
-    tests/Buffer.cpp
-    tests/AudioBuffer.cpp
-    tests/Files.cpp
-    tests/Main.cpp
+    tests/RegexT.cpp
+    tests/HelpersT.cpp
+    tests/RegionT.cpp
+    tests/RangeT.cpp
+    tests/OpcodeT.cpp
+    tests/BufferT.cpp
+    tests/StereoBufferT.cpp
+    tests/FilesT.cpp
+    tests/MainT.cpp
 )
 
 
@@ -87,17 +105,17 @@ target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
 ###############################
-add_executable(bench_ab_fill benchmarks/AudioBuffer_Fill.cpp ${COMMON_SOURCES})
+add_executable(bench_fill benchmarks/Stereo_Fill.cpp ${COMMON_SOURCES})
 # Per OS properties
 if(UNIX)
-    target_link_libraries(bench_ab_fill stdc++fs)
+    target_link_libraries(bench_fill stdc++fs)
 endif(UNIX)
-target_link_libraries(bench_ab_fill absl::strings benchmark)
+target_link_libraries(bench_fill absl::strings benchmark)
 
 ###############################
-add_executable(bench_ab_read benchmarks/AudioBuffer_Interleaved_Read.cpp ${COMMON_SOURCES})
+add_executable(bench_read benchmarks/Stereo_Read_Interleaved.cpp ${COMMON_SOURCES})
 # Per OS properties
 if(UNIX)
-    target_link_libraries(bench_ab_read stdc++fs)
+    target_link_libraries(bench_read stdc++fs)
 endif(UNIX)
-target_link_libraries(bench_ab_read absl::strings benchmark)
+target_link_libraries(bench_read absl::strings benchmark)
