@@ -147,6 +147,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
         region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
         region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
         region->preloadedData = fileInformation->preloadedData;
+        region->sampleRate = fileInformation->sampleRate;
 
         for (auto note = region->keyRange.getStart(); note <= region->keyRange.getEnd(); note++)
             noteActivationLists[note].push_back(*currentRegion);
@@ -156,7 +157,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 
         currentRegion++;
     }
-    
+
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
     return parserReturned;

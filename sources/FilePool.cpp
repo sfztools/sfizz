@@ -9,7 +9,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     SndfileHandle sndFile ( reinterpret_cast<const char*>(file.c_str()) );
     FileInformation returnedValue;
     returnedValue.end = static_cast<uint32_t>(sndFile.frames());
-
+    returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
     SF_INSTRUMENT instrumentInfo;
     sndFile.command(SFC_GET_INSTRUMENT, &instrumentInfo, sizeof(instrumentInfo));
 
@@ -27,4 +27,40 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     // sndFile.command(SFC_GET_LOG_INFO, buffer, sizeof(buffer)) ;
     // DBG(buffer);
     return returnedValue;
+}
+
+void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames)
+{
+    if (!loadingQueue.try_enqueue({ voice, sample, numFrames }))
+        DBG("Problem enqueuing a file read for file " << sample);
+}
+
+void sfz::FilePool::loadingThread()
+{
+    FileLoadingInformation fileToLoad;
+    while (true)
+    {
+        loadingQueue.wait_dequeue(fileToLoad);
+        if (fileToLoad.voice == nullptr)
+        {
+            DBG("Background thread error: voice is null.");
+            continue;
+        }
+
+        DBG("Background loading of: " << fileToLoad.sample);
+        std::filesystem::path file { rootDirectory / fileToLoad.sample };
+        if (!std::filesystem::exists(file))
+        {
+            DBG("Background thread: no file " << fileToLoad.sample << " exists.");
+            continue;
+        }
+        
+        SndfileHandle sndFile ( reinterpret_cast<const char*>(file.c_str()) );
+        auto fileLoaded = std::make_unique<StereoBuffer<float>>(fileToLoad.numFrames);
+        auto readBuffer = std::make_unique<Buffer<float>>(fileToLoad.numFrames * 2);
+        sndFile.readf(readBuffer->data(), fileToLoad.numFrames);
+        fileLoaded->readInterleaved<SIMDConfig::useSIMD>(readBuffer->data(), fileToLoad.numFrames);
+        fileToLoad.voice->setFileData(std::move(fileLoaded));
+    }
+
 }

@@ -63,6 +63,10 @@ if (WIN32)
     target_include_directories(sndfile INTERFACE "${WIN_SNDFILE_PATH}/include")
 endif()
 
+# Export MoodyCamel's queue as a library
+add_library(readerwriterqueue INTERFACE)
+target_include_directories(readerwriterqueue INTERFACE "external/readerwriterqueue")
+
 # Export the compile_commands.json file
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -121,7 +125,7 @@ add_executable(sfizz sources/Main.cpp ${COMMON_SOURCES})
 if(UNIX)
     target_link_libraries(sfizz stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map)
+target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map readerwriterqueue)
 
 ###############################
 # Test application
