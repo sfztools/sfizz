@@ -245,6 +245,9 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
 bool sfz::Region::prepare()
 {
+    if (isGenerator())
+        return true;
+    
     auto fileInformation = filePool.getFileInformation(sample);
     if (!fileInformation)
         return false;

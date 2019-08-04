@@ -6,7 +6,6 @@ project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 # Set the highest possible standard
 set(CMAKE_CXX_STANDARD 17)
 
-
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_compile_options(-stdlib=libc++)
     # Presumably need the above for linking too, maybe other options missing as well
@@ -19,7 +18,16 @@ if (UNIX)
     # add_compile_options(-fno-exceptions)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-rtti)
-    add_compile_options(-fno-omit-frame-pointer)
+    # add_compile_options(-fno-omit-frame-pointer)
+endif()
+
+if (WIN32)
+    # TODO: Remove when abseil updates (deprecation warning from c++17 onwards)
+    add_compile_options(/wd4996)
+    # add_compile_options(/W3)
+    # add_compile_options(/GR-)
+    # add_compile_options(/permissive-)
+    # add_compile_options(/fp:fast)
 endif()
 
 message("Cmake flags: ${CMAKE_CXX_FLAGS}")
@@ -27,16 +35,16 @@ message("Cmake flags: ${CMAKE_CXX_FLAGS}")
 # Check SIMD files
 include(CheckIncludeFiles)
 CHECK_INCLUDE_FILES(x86intrin.h HAVE_X86INTRIN_H)
+CHECK_INCLUDE_FILES(intrin.h HAVE_INTRIN_H)
 CHECK_INCLUDE_FILES(arm_neon.h HAVE_ARM_NEON_H)
-if (HAVE_X86INTRIN_H)
-    if(UNIX)
-        add_compile_options(-DHAVE_X86INTRIN_H)
-    endif()
+if (HAVE_X86INTRIN_H AND UNIX)
+    add_compile_options(-DHAVE_X86INTRIN_H)
 endif()
-if (HAVE_ARM_NEON_H)
-    if(UNIX)
-        add_compile_options(-DHAVE_ARM_NEON_H)
-    endif()
+if (HAVE_INTRIN_H AND WIN32)
+    add_compile_options(/DHAVE_INTRIN_H)
+endif()
+if (HAVE_ARM_NEON_H AND UNIX)
+    add_compile_options(-DHAVE_ARM_NEON_H)
 endif()
 
 # Build options and includes
@@ -49,9 +57,22 @@ add_subdirectory(external/Catch2)
 add_subdirectory(external/cxxopts)
 add_subdirectory(external/benchmark)
 
+# Download libsndfile
+if (WIN32)
+    # file(DOWNLOAD https://github.com/bastibe/libsndfile-binaries/raw/master/libsndfile32bit.dll external/libsndfile-win/libsndfile32bit.dll)
+    # file(DOWNLOAD https://github.com/bastibe/libsndfile-binaries/raw/master/libsndfile64bit.dll external/libsndfile-win/libsndfile64bit.dll)
+    # message(STATUS "Downloading libsndfile")
+    # # find_library(sndfile libsndfile-1.lib HINTS ${WIN_SNDFILE_PATH}/lib)
+    set(WIN_SNDFILE_PATH "C:/Program Files/Mega-Nerd/libsndfile")
+    add_library(sndfile STATIC IMPORTED)
+    set_target_properties(sndfile PROPERTIES IMPORTED_LOCATION "${WIN_SNDFILE_PATH}/lib/libsndfile-1.lib")
+    set_target_properties(sndfile PROPERTIES LINKER_LANGUAGE CXX)
+    file(COPY "${WIN_SNDFILE_PATH}/bin/libsndfile-1.dll" DESTINATION ${CMAKE_BINARY_DIR})
+    target_include_directories(sndfile INTERFACE "${WIN_SNDFILE_PATH}/include")
+endif()
+
 # Export the compile_commands.json file
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 
 set(COMMON_SOURCES
     sources/Opcode.cpp
@@ -74,9 +95,8 @@ set(TEST_SOURCES
     tests/MainT.cpp
 )
 
-
 ###############################
-add_executable(sfzprint sources/ParserMain.cpp ${COMMON_SOURCES})
+add_executable(sfzprint sources/ParserMain.cpp sources/Opcode.cpp sources/Parser.cpp)
 # Per OS properties
 if(UNIX)
     target_link_libraries(sfzprint stdc++fs)
@@ -91,7 +111,7 @@ add_executable(sfizz sources/Main.cpp ${COMMON_SOURCES})
 if(UNIX)
     target_link_libraries(sfizz stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz absl::stlrings cxxopts sndfile absl::flat_hash_map)
+target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map)
 
 ###############################
 # Test application

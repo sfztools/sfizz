@@ -15,12 +15,14 @@ class Synth: public Parser
 {
 public:
     bool loadSfzFile(const std::filesystem::path& file) final;
-    int getNumRegions() const noexcept { return regions.size(); }
+    int getNumRegions() const noexcept { return static_cast<int>(regions.size()); }
     int getNumGroups() const noexcept { return numGroups; }
     int getNumMasters() const noexcept { return numMasters; }
     int getNumCurves() const noexcept { return numCurves; }
     const Region* getRegionView(int idx) const noexcept { return (size_t)idx < regions.size() ? regions[idx].get() : nullptr; }
     auto getUnknownOpcodes() { return unknownOpcodes; }
+    size_t getNumPreloadedSamples() { return filePool.getNumPreloadedSamples(); }
+
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
 private:

@@ -33,7 +33,7 @@ public:
         if (!std::filesystem::exists(file))
             return {};
         
-        SndfileHandle sndFile { file.c_str() };
+        SndfileHandle sndFile ( reinterpret_cast<const char*>(file.c_str()) );
         FileInformation returnedValue;
         returnedValue.end = static_cast<uint32_t>(sndFile.frames());
         SF_INSTRUMENT instrumentInfo;
@@ -53,6 +53,7 @@ public:
         // DBG(buffer);
         return returnedValue;
     }
+    size_t getNumPreloadedSamples() { return preloadedData.size(); }
 private:
     std::filesystem::path rootDirectory;
     Buffer<float> tempReadBuffer { config::preloadSize * 2 };

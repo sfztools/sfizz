@@ -25,10 +25,11 @@ int main(int argc, char** argv)
     std::cout << "\tGroups: " << synth.getNumGroups() << '\n';
     std::cout << "\tRegions: " << synth.getNumRegions() << '\n';
     std::cout << "\tCurves: " << synth.getNumCurves() << '\n';
+    std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Included files:" << '\n';
     for (auto& file: synth.getIncludedFiles())
-        std::cout << '\t' << file.c_str() << '\n';
+        std::cout << '\t' << file.string() << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Defines:" << '\n';
     for (auto& define: synth.getDefines())
@@ -38,5 +39,6 @@ int main(int argc, char** argv)
     for (auto& opcode: synth.getUnknownOpcodes())
         std::cout << opcode << ',';
     std::cout << '\n';
+    system("pause");
     return 0;
 }
