@@ -39,6 +39,5 @@ int main(int argc, char** argv)
     for (auto& opcode: synth.getUnknownOpcodes())
         std::cout << opcode << ',';
     std::cout << '\n';
-    system("pause");
     return 0;
 }
