@@ -47,12 +47,12 @@ void StereoBuffer<float, 16>::fill<true>(float value) noexcept
     const __m128 mmValue = _mm_set_ps1(value);
     auto [lBegin, rBegin] = getChannels();
     auto [lEnd, rEnd] = alignedEnds();
-    auto mmLeft = reinterpret_cast<__m128 *>(lBegin);
-    auto mmRight = reinterpret_cast<__m128 *>(rBegin);
-    while (mmLeft < reinterpret_cast<__m128 *>(lEnd)) // we should only need to test a single channel
+    auto mmLeft = reinterpret_cast<__m128*>(lBegin);
+    auto mmRight = reinterpret_cast<__m128*>(rBegin);
+    while (mmLeft < reinterpret_cast<__m128*>(lEnd)) // we should only need to test a single channel
     {
-        _mm_store_ps(reinterpret_cast<float *>(mmLeft), mmValue);
-        _mm_store_ps(reinterpret_cast<float *>(mmRight), mmValue);
+        _mm_store_ps(reinterpret_cast<float*>(mmLeft), mmValue);
+        _mm_store_ps(reinterpret_cast<float*>(mmRight), mmValue);
         mmLeft++;
         mmRight++;
     }

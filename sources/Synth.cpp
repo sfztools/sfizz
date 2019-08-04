@@ -156,7 +156,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 
         currentRegion++;
     }
-
+    
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
     return parserReturned;
