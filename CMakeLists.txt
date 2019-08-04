@@ -32,20 +32,12 @@ endif()
 
 message("Cmake flags: ${CMAKE_CXX_FLAGS}")
 
-# Check SIMD files
+# Check SIMD
+set(USE_SIMD OFF)
 include(CheckIncludeFiles)
 CHECK_INCLUDE_FILES(x86intrin.h HAVE_X86INTRIN_H)
 CHECK_INCLUDE_FILES(intrin.h HAVE_INTRIN_H)
 CHECK_INCLUDE_FILES(arm_neon.h HAVE_ARM_NEON_H)
-if (HAVE_X86INTRIN_H AND UNIX)
-    add_compile_options(-DHAVE_X86INTRIN_H)
-endif()
-if (HAVE_INTRIN_H AND WIN32)
-    add_compile_options(/DHAVE_INTRIN_H)
-endif()
-if (HAVE_ARM_NEON_H AND UNIX)
-    add_compile_options(-DHAVE_ARM_NEON_H)
-endif()
 
 # Build options and includes
 set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
@@ -81,6 +73,25 @@ set(COMMON_SOURCES
     sources/Region.cpp
     sources/Parser.cpp
 )
+
+set(SSE_SOURCES
+    sources/StereoBufferSSE.cpp
+)
+
+if (HAVE_X86INTRIN_H AND UNIX)
+    add_compile_options(-DHAVE_X86INTRIN_H)
+    add_compile_options(-DUSE_SIMD)
+    set(COMMON_SOURCES ${COMMON_SOURCES} ${SSE_SOURCES})
+endif()
+if (HAVE_INTRIN_H AND WIN32)
+    add_compile_options(/DHAVE_INTRIN_H)
+    add_compile_options(/DUSE_SIMD)
+    set(COMMON_SOURCES ${COMMON_SOURCES} ${SSE_SOURCES})
+endif()
+if (HAVE_ARM_NEON_H AND UNIX)
+    add_compile_options(-DUSE_SIMD)
+    add_compile_options(-DHAVE_ARM_NEON_H)
+endif()
     
 set(TEST_SOURCES
     tests/RegexT.cpp

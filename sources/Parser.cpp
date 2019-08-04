@@ -84,10 +84,17 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 			std::replace(includePath.begin(), includePath.end(), '\\', '/');
 			const auto newFile = rootDirectory / includePath;			
 			auto alreadyIncluded = std::find(includedFiles.begin(), includedFiles.end(), newFile);
-			if (std::filesystem::exists(newFile) && alreadyIncluded == includedFiles.end())
+			if (std::filesystem::exists(newFile))
 			{
-				includedFiles.push_back(newFile);
-				readSfzFile(newFile, lines);
+				if (alreadyIncluded == includedFiles.end())
+				{
+					includedFiles.push_back(newFile);
+					readSfzFile(newFile, lines);
+				}
+				else if (!recursiveIncludeGuard)
+				{
+					readSfzFile(newFile, lines);
+				}
 			}
 			continue;
 		}
