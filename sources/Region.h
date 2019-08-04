@@ -7,6 +7,7 @@
 #include "EGDescription.h"
 #include "Defaults.h"
 #include "CCMap.h"
+
 namespace sfz
 {
 struct Region

@@ -46,7 +46,7 @@ public:
         auto preloadedSize = std::min(returnedValue.end, static_cast<uint32_t>(config::preloadSize));
         returnedValue.preloadedData = std::make_shared<StereoBuffer<float>>(preloadedSize);
         sndFile.readf(tempReadBuffer.data(), preloadedSize);
-        returnedValue.preloadedData->readInterleaved(tempReadBuffer.data(), preloadedSize);
+        returnedValue.preloadedData->readInterleaved<SIMDConfig::supported>(tempReadBuffer.data(), preloadedSize);
         preloadedData[filename] = returnedValue.preloadedData;
         // char  buffer [2048] ;
         // sndFile.command(SFC_GET_LOG_INFO, buffer, sizeof(buffer)) ;

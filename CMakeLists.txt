@@ -79,7 +79,6 @@ set(COMMON_SOURCES
     sources/Synth.cpp
     sources/FilePool.cpp
     sources/Region.cpp
-    sources/StereoBuffer.cpp
     sources/Parser.cpp
 )
     

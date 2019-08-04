@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
-template<class Type, unsigned int Alignment = config::defaultAlignment>
+template<class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer
 {
 public:

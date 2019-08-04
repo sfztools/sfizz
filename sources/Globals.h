@@ -21,10 +21,14 @@ namespace config
 } // namespace sfz
 
 enum class SIMD { scalar, sse, neon };
-namespace config
+namespace SIMDConfig
 {
     inline constexpr unsigned int defaultAlignment { 16 };
-    inline constexpr SIMD vectorOperation { SIMD::scalar };
+#if HAVE_X86INTRIN_H || HAVE_INTRIN_H
+    inline constexpr SIMD supported { SIMD::sse };
+#else
+    inline constexpr SIMD supported {SIMD::scalar};
+#endif
 } // namespace config
 
 #if HAVE_X86INTRIN_H
