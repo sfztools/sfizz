@@ -243,49 +243,33 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     return true;
 }
 
-bool sfz::Region::prepare()
-{
-    if (isGenerator())
-        return true;
-    
-    auto fileInformation = filePool.getFileInformation(sample);
-    if (!fileInformation)
-        return false;
-
-    DBG("Sample " << sample << " information: " << fileInformation->end << "(" << fileInformation->loopBegin << "->" << fileInformation->loopEnd << ")");
-    sampleEnd = std::min(sampleEnd, fileInformation->end);
-    loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
-    preloadedData = fileInformation->preloadedData;
-    return true;
-}
-
 bool sfz::Region::isSwitchedOn() const noexcept
 {
     return false;
 }
 
-bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue)
+bool sfz::Region::registerNoteOn(int, int, uint8_t, float)
 {
     return false;
 }
 
-bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue)
+bool sfz::Region::registerNoteOff(int, int, uint8_t, float)
 {
     return false;
 }
-bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue)
+bool sfz::Region::registerCC(int, int, uint8_t)
 {
     return false;
 }
-void sfz::Region::registerPitchWheel(int channel, int pitch)
+void sfz::Region::registerPitchWheel(int, int)
 {
 
 }
-void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch)
+void sfz::Region::registerAftertouch(int, uint8_t)
 {
 
 }
-void sfz::Region::registerTempo(float secondsPerQuarter)
+void sfz::Region::registerTempo(float)
 {
 
 }

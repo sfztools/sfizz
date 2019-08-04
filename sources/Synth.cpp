@@ -44,7 +44,7 @@ void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_shared<Region>(filePool);
+    auto lastRegion = std::make_shared<Region>();
     
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode: opcodes)
@@ -122,25 +122,41 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
         return false;
 
     filePool.setRootDirectory(this->rootDirectory);
+
     auto lastRegion = regions.end() - 1;
     auto currentRegion = regions.begin();
     while (currentRegion <= lastRegion)
     {
-        if (! (*currentRegion)->prepare() )
+        auto region = *currentRegion;
+        
+        if (region->isGenerator())
         {
-            DBG("Removing the region with sample " << (*currentRegion)->sample);
+            currentRegion++;
+            continue;
+        }
+
+        auto fileInformation = filePool.getFileInformation(region->sample);
+        if (!fileInformation)
+        {
+            DBG("Removing the region with sample " << region->sample);
             std::iter_swap(currentRegion, lastRegion);
             lastRegion--;
+            continue;
         }
-        else
-        {
-            for (auto note = (*currentRegion)->keyRange.getStart(); note <= (*currentRegion)->keyRange.getEnd(); note++)
-                noteActivationLists[note].push_back(*currentRegion);
-            for (auto cc = (*currentRegion)->keyRange.getStart(); cc <= (*currentRegion)->keyRange.getEnd(); cc++)
-                ccActivationLists[cc].push_back(*currentRegion);
-            currentRegion++;
-        }
+
+        region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
+        region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
+        region->preloadedData = fileInformation->preloadedData;
+
+        for (auto note = region->keyRange.getStart(); note <= region->keyRange.getEnd(); note++)
+            noteActivationLists[note].push_back(*currentRegion);
+
+        for (auto cc = region->keyRange.getStart(); cc <= region->keyRange.getEnd(); cc++)
+            ccActivationLists[cc].push_back(*currentRegion);
+
+        currentRegion++;
     }
+
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
     return parserReturned;

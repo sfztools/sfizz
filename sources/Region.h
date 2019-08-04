@@ -12,8 +12,7 @@ namespace sfz
 {
 struct Region
 {
-    Region() = delete;
-    Region(FilePool& pool): filePool(pool) {}
+    Region() = default;
     Region(const Region&) = default;
     ~Region() = default;
 
@@ -113,7 +112,5 @@ struct Region
     double sampleRate { config::defaultSampleRate };
     int numChannels { 1 };
     std::shared_ptr<StereoBuffer<float>> preloadedData { nullptr };
-private:
-    FilePool& filePool;
 };
 } // namespace sfz
