@@ -70,6 +70,20 @@ public:
         }
     }
 
+    template<bool useSIMD=false>
+    void writeInterleaved(Type* output, int numFrames) noexcept
+    {
+        ASSERT(numFrames <= this->numFrames);
+        auto [lIn, rIn] = getChannels();
+        auto* out = output;
+        auto* end = output + numChannels * numFrames;
+        while (out < end)
+        {
+            *out++ = *lIn++;
+            *out++ = *rIn++;
+        }
+    }
+
     Type* getChannel(Channel channel) noexcept
     {
         switch(channel)

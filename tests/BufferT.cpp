@@ -32,11 +32,11 @@ TEST_CASE("[Buffer] Empty (uint8_t)")
 }
 
 template<class Type>
-void checkBoundaries(Buffer<Type>& buffer, size_t expectedSize)
+void checkBoundaries(Buffer<Type>& buffer, int expectedSize)
 {
-    REQUIRE(buffer.size() == expectedSize);
-    REQUIRE(((size_t)buffer.data() & (config::defaultAlignment - 1)) == 0);
-    REQUIRE(((size_t)buffer.alignedEnd() & (config::defaultAlignment - 1)) == 0);
+    REQUIRE((int)buffer.size() == expectedSize);
+    REQUIRE(((size_t)buffer.data() & (SIMDConfig::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.alignedEnd() & (SIMDConfig::defaultAlignment - 1)) == 0);
     REQUIRE(std::distance(buffer.begin(), buffer.end()) == expectedSize);
     REQUIRE(std::distance(buffer.begin(), buffer.alignedEnd()) >= expectedSize);
 }

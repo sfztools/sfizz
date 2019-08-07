@@ -19,7 +19,13 @@ public:
     FilePool()
     : fileLoadingThread(std::thread(&FilePool::loadingThread, this))
     {
+        
+    }
 
+    ~FilePool()
+    {
+        quitThread = true;
+        fileLoadingThread.join();
     }
     void setRootDirectory(const std::filesystem::path& directory) { rootDirectory = directory; }
     size_t getNumPreloadedSamples() { return preloadedData.size(); }
@@ -45,6 +51,7 @@ private:
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;
     void loadingThread();
     std::thread fileLoadingThread;
+    bool quitThread { false };
     Buffer<float> tempReadBuffer { config::preloadSize * 2 };
     // std::map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
     absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;

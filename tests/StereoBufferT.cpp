@@ -200,10 +200,10 @@ TEST_CASE("[AudioBuffer] fills")
         REQUIRE( real == expected );
     }
 
-    SECTION("Floats - 0.0 - SSE")
+    SECTION("Floats - 0.0 - SIMD")
     {
         StereoBuffer<float> buffer(10);
-        buffer.fill<SIMD::sse>(0.0f);
+        buffer.fill<true>(0.0f);
         std::array<float, 10> expected;
         std::fill(expected.begin(), expected.end(), 0.0f);
         std::array<float, 10> real { 2.0f };
@@ -217,10 +217,10 @@ TEST_CASE("[AudioBuffer] fills")
         REQUIRE( real == expected );
     }
 
-    SECTION("Floats - 1.0 - SSE")
+    SECTION("Floats - 1.0 - SIMD")
     {
         StereoBuffer<float> buffer(10);
-        buffer.fill<SIMD::sse>(1.0f);
+        buffer.fill<true>(1.0f);
         std::array<float, 10> expected { 1.0f };
         std::fill(expected.begin(), expected.end(), 1.0f);
         std::array<float, 10> real { 2.0f };
@@ -250,12 +250,12 @@ TEST_CASE("[StereoBuffer] Interleave read")
     REQUIRE( real == expected );
 }
 
-TEST_CASE("[StereoBuffer] Interleave read -- SSE")
+TEST_CASE("[StereoBuffer] Interleave read -- SIMD")
 {
     StereoBuffer<float> buffer(8);
     std::array<float, 16> input = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f};
     std::array<float, 16> expected = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
-    buffer.readInterleaved<SIMD::sse>(input.data(), 8);
+    buffer.readInterleaved<true>(input.data(), 8);
     std::array<float, 16> real { 0.0f };
     auto realIdx = 0;
     for (auto frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx)
@@ -265,12 +265,12 @@ TEST_CASE("[StereoBuffer] Interleave read -- SSE")
     REQUIRE( real == expected );
 }
 
-TEST_CASE("[StereoBuffer] Interleave read unaligned end -- SSE")
+TEST_CASE("[StereoBuffer] Interleave read unaligned end -- SIMD")
 {
     StereoBuffer<float> buffer(10);
     std::array<float, 20> input = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f};
     std::array<float, 20> expected = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f};
-    buffer.readInterleaved<SIMD::sse>(input.data(), 10);
+    buffer.readInterleaved<true>(input.data(), 10);
     std::array<float, 20> real { 0.0f };
     auto realIdx = 0;
     for (auto frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx)
@@ -280,7 +280,22 @@ TEST_CASE("[StereoBuffer] Interleave read unaligned end -- SSE")
     REQUIRE( real == expected );
 }
 
-TEST_CASE("[StereoBuffer] SSE vs scalar")
+TEST_CASE("[StereoBuffer] small interleaved read unaligned end -- SIMD")
+{
+    StereoBuffer<float> buffer(3);
+    std::array<float, 20> input = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f};
+    std::array<float, 20> expected = { 0.0f, 1.0f, 2.0f, 10.0f, 11.0f, 12.0f};
+    buffer.readInterleaved<true>(input.data(), 3);
+    std::array<float, 20> real { 0.0f };
+    auto realIdx = 0;
+    for (auto frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx)
+        real[realIdx++] = buffer(Channel::left, frameIdx);
+    for (auto frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx)
+        real[realIdx++] = buffer(Channel::right, frameIdx);
+    REQUIRE( real == expected );
+}
+
+TEST_CASE("[StereoBuffer] SIMD vs scalar")
 {
     constexpr int numFrames { 91 };
     StereoBuffer<float> buffer(numFrames);
@@ -288,7 +303,7 @@ TEST_CASE("[StereoBuffer] SSE vs scalar")
     std::iota(input.begin(), input.end(), 0.0f);
     StereoBuffer<float> expectedBuffer (numFrames);
     expectedBuffer.readInterleaved(input.data(), 10);
-    buffer.readInterleaved<SIMD::sse>(input.data(), 10);
+    buffer.readInterleaved<true>(input.data(), 10);
     std::array<float, numFrames * 2> expectedArray { 0.0f };
     std::array<float, numFrames * 2> realArray { 0.0f };
     auto sampleIdx = 0;
@@ -312,4 +327,34 @@ TEST_CASE("[AudioBuffer] Fill a big Audiobuffer")
     std::vector<float> input (2*size);
     std::iota(input.begin(), input.end(), 1.0f);
     buffer.readInterleaved(input.data(), size);
+}
+
+TEST_CASE("[StereoBuffer] Interleaved write -- Scalar")
+{
+    StereoBuffer<float> buffer(10);
+    std::array<float, 20> input  = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f};
+    std::array<float, 20> output { 0.0f };
+    buffer.readInterleaved<false>(input.data(), 10);
+    buffer.writeInterleaved<false>(output.data(), 10);
+    REQUIRE( output == input );
+}
+
+TEST_CASE("[StereoBuffer] Interleaved write -- SIMD")
+{
+    StereoBuffer<float> buffer(10);
+    std::array<float, 20> input  = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f};
+    std::array<float, 20> output { 0.0f };
+    buffer.readInterleaved<false>(input.data(), 10);
+    buffer.writeInterleaved<true>(output.data(), 10);
+    REQUIRE( output == input );
+}
+
+TEST_CASE("[StereoBuffer] Small interleaved write -- SIMD")
+{
+    StereoBuffer<float> buffer(3);
+    std::array<float, 20> input  = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f};
+    std::array<float, 20> output { 0.0f };
+    buffer.readInterleaved<false>(input.data(), 3);
+    buffer.writeInterleaved<true>(output.data(), 3);
+    REQUIRE( output == input );
 }

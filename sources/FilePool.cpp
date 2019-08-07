@@ -1,4 +1,6 @@
 #include "FilePool.h"
+#include <chrono>
+using namespace std::chrono_literals;
 
 std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename)
 {
@@ -38,9 +40,11 @@ void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int nu
 void sfz::FilePool::loadingThread()
 {
     FileLoadingInformation fileToLoad;
-    while (true)
+    while (!quitThread)
     {
-        loadingQueue.wait_dequeue(fileToLoad);
+        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 1ms))
+            continue;
+
         if (fileToLoad.voice == nullptr)
         {
             DBG("Background thread error: voice is null.");

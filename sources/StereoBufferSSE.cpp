@@ -5,6 +5,7 @@ template <>
 template <>
 void StereoBuffer<float, 16>::readInterleaved<true>(float *input, int numFrames) noexcept
 {
+    // The number of frames to read has to fit!
     ASSERT(this->numFrames >= numFrames);
     const int residualFrames = numFrames & (2 * TypeAlignment - 1);
     const int lastAligned = numFrames - residualFrames;
@@ -47,6 +48,7 @@ void StereoBuffer<float, 16>::fill<true>(float value) noexcept
     const __m128 mmValue = _mm_set_ps1(value);
     auto [lBegin, rBegin] = getChannels();
     auto [lEnd, rEnd] = alignedEnds();
+    // Cast to m128 so that pointer arithmetics make sense
     auto mmLeft = reinterpret_cast<__m128*>(lBegin);
     auto mmRight = reinterpret_cast<__m128*>(rBegin);
     while (mmLeft < reinterpret_cast<__m128*>(lEnd)) // we should only need to test a single channel
@@ -55,5 +57,39 @@ void StereoBuffer<float, 16>::fill<true>(float value) noexcept
         _mm_store_ps(reinterpret_cast<float*>(mmRight), mmValue);
         mmLeft++;
         mmRight++;
+    }
+}
+
+template<>
+template<>
+void StereoBuffer<float, 16>::writeInterleaved<true>(float* output, int numFrames) noexcept
+{
+    ASSERT(numFrames <= this->numFrames);
+    const int residualFrames = numFrames & (TypeAlignment - 1);
+    const int lastAligned = numFrames - residualFrames;
+    auto [lIn, rIn] = getChannels();
+    auto* out = output;
+    const auto* sseEnd = lIn + lastAligned;
+    while (lIn < sseEnd)
+    {
+        const auto lInRegister = _mm_load_ps(lIn);
+        const auto rInRegister = _mm_load_ps(rIn);
+        
+        const auto outRegister1 = _mm_unpacklo_ps(lInRegister, rInRegister);
+        _mm_storeu_ps(out, outRegister1);
+        out += TypeAlignment;
+        const auto outRegister2 = _mm_unpackhi_ps(lInRegister, rInRegister);
+        _mm_storeu_ps(out, outRegister2);
+        out += TypeAlignment;
+
+        lIn += TypeAlignment;
+        rIn += TypeAlignment;
+    }
+
+    const auto* end = output + numChannels * numFrames;
+    while (out < end)
+    {
+        *out++ = *lIn++;
+        *out++ = *rIn++;
     }
 }

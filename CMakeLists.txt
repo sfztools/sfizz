@@ -134,7 +134,7 @@ add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
 if(UNIX)
 target_link_libraries(sfizz_tests stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings)
+target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -147,9 +147,17 @@ endif(UNIX)
 target_link_libraries(bench_fill absl::strings benchmark)
 
 ###############################
-add_executable(bench_read benchmarks/Stereo_Read_Interleaved.cpp ${COMMON_SOURCES})
+add_executable(bench_read benchmarks/Stereo_Read_Interleaved.cpp sources/StereoBufferSSE.cpp)
 # Per OS properties
 if(UNIX)
     target_link_libraries(bench_read stdc++fs)
 endif(UNIX)
 target_link_libraries(bench_read absl::strings benchmark)
+
+###############################
+add_executable(bench_write benchmarks/Stereo_Write_Interleaved.cpp sources/StereoBufferSSE.cpp)
+# Per OS properties
+if(UNIX)
+    target_link_libraries(bench_write stdc++fs)
+endif(UNIX)
+target_link_libraries(bench_write absl::strings benchmark)

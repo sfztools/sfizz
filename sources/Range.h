@@ -67,13 +67,13 @@ private:
 template<class Type>
 bool operator==(const Range<Type>& lhs, const Range<Type>& rhs)
 {
-    return (lhs.start() == rhs.start()) && (lhs.end() == rhs.end());
+    return (lhs.getStart() == rhs.getStart()) && (lhs.getEnd() == rhs.getEnd());
 }
 
 template<class Type>
 bool operator==(const Range<Type>& lhs, const std::pair<Type, Type>& rhs)
 {
-    return (lhs.start() == rhs.first) && (lhs.end() == rhs.second);
+    return (lhs.getStart() == rhs.first) && (lhs.getEnd() == rhs.second);
 }
 
 template<class Type>

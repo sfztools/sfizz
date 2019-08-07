@@ -33,6 +33,8 @@ public:
         normalEnd = normalData + alignedSize;
         if (auto endMisalignment = (alignedSize & TypeAlignmentMask); endMisalignment != 0)
             _alignedEnd = normalEnd + Alignment - endMisalignment;
+        else
+            _alignedEnd = normalEnd;
         return true;
     }
 

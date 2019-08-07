@@ -79,18 +79,20 @@ TEST_CASE("[Files] Subdir include Win")
     REQUIRE( synth.getRegionView(0)->sample == "dummy_subdir.wav" );
 }
 
-TEST_CASE("[Files] Recursive include")
+TEST_CASE("[Files] Recursive include (with include guard)")
 {
     sfz::Synth synth;
+    synth.enableRecursiveIncludeGuard();
     synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_recursive.sfz");
     REQUIRE( synth.getNumRegions() == 2 );
     REQUIRE( synth.getRegionView(0)->sample == "dummy_recursive2.wav" );
     REQUIRE( synth.getRegionView(1)->sample == "dummy_recursive1.wav" );
 }
 
-TEST_CASE("[Files] Include loops")
+TEST_CASE("[Files] Include loops (with include guard)")
 {
     sfz::Synth synth;
+    synth.enableRecursiveIncludeGuard();
     synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_loop.sfz");
     REQUIRE( synth.getNumRegions() == 2 );
     REQUIRE( synth.getRegionView(0)->sample == "dummy_loop2.wav" );
