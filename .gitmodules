@@ -16,3 +16,9 @@
 [submodule "external/readerwriterqueue"]
 	path = external/readerwriterqueue
 	url = https://github.com/cameron314/readerwriterqueue.git
+[submodule "external/gsl-lite"]
+	path = external/gsl-lite
+	url = https://github.com/martinmoene/gsl-lite.git
+[submodule "external/cnpy"]
+	path = external/cnpy
+	url = https://github.com/rogersce/cnpy.git

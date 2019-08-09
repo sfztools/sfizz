@@ -2,3 +2,5 @@ build
 build-arm
 build-subl
 .vscode
+perf.data
+perf.data.old

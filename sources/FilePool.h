@@ -8,7 +8,7 @@
 #include <string_view>
 #include <absl/container/flat_hash_map.h>
 #include <map>
-#include <readerwriterqueue.h>
+#include "readerwriterqueue.h"
 #include <thread>
 
 namespace sfz

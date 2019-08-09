@@ -17,7 +17,6 @@ if (UNIX)
     add_compile_options(-Wextra)
     # add_compile_options(-fno-exceptions)
     add_compile_options(-ffast-math)
-    add_compile_options(-fno-rtti)
     # add_compile_options(-fno-omit-frame-pointer)
 endif()
 
@@ -47,7 +46,9 @@ add_subdirectory(external/abseil-cpp)
 add_subdirectory(external/spdlog)
 add_subdirectory(external/Catch2)
 add_subdirectory(external/cxxopts)
+add_subdirectory(external/gsl-lite)
 add_subdirectory(external/benchmark)
+add_subdirectory(external/cnpy)
 
 # Download libsndfile
 if (WIN32)
@@ -106,6 +107,7 @@ set(TEST_SOURCES
     tests/BufferT.cpp
     tests/StereoBufferT.cpp
     tests/FilesT.cpp
+    tests/OnePoleFilterT.cpp
     tests/MainT.cpp
 )
 
@@ -121,8 +123,12 @@ target_link_libraries(sfzprint absl::strings cxxopts)
 ###############################
 # Basic command line program
 add_executable(sfizz sources/Main.cpp ${COMMON_SOURCES})
+if (HAVE_INTRIN_H OR HAVE_X86INTRIN_H)
+    target_sources(sfizz PRIVATE ${SSE_SOURCES})
+endif()
 # Per OS properties
 if(UNIX)
+    target_compile_options(sfizz PRIVATE -fno-rtti)
     target_link_libraries(sfizz stdc++fs)
 endif(UNIX)
 target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map readerwriterqueue)
@@ -131,33 +137,37 @@ target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map re
 # Test application
 add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
 # Per OS properties
+if (HAVE_INTRIN_H OR HAVE_X86INTRIN_H)
+    target_sources(sfizz_tests PRIVATE ${SSE_SOURCES})
+endif()
 if(UNIX)
-target_link_libraries(sfizz_tests stdc++fs)
+    target_link_libraries(sfizz_tests stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue)
+target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue cnpy-static gsl::gsl-lite)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
 ###############################
-add_executable(bench_fill benchmarks/Stereo_Fill.cpp ${COMMON_SOURCES})
+add_executable(bench_fill benchmarks/Stereo_Fill.cpp sources/StereoBufferSSE.cpp)
 # Per OS properties
-if(UNIX)
-    target_link_libraries(bench_fill stdc++fs)
-endif(UNIX)
-target_link_libraries(bench_fill absl::strings benchmark)
+target_link_libraries(bench_fill benchmark)
 
 ###############################
 add_executable(bench_read benchmarks/Stereo_Read_Interleaved.cpp sources/StereoBufferSSE.cpp)
 # Per OS properties
-if(UNIX)
-    target_link_libraries(bench_read stdc++fs)
-endif(UNIX)
-target_link_libraries(bench_read absl::strings benchmark)
+target_link_libraries(bench_read benchmark)
 
 ###############################
 add_executable(bench_write benchmarks/Stereo_Write_Interleaved.cpp sources/StereoBufferSSE.cpp)
 # Per OS properties
-if(UNIX)
-    target_link_libraries(bench_write stdc++fs)
-endif(UNIX)
-target_link_libraries(bench_write absl::strings benchmark)
+target_link_libraries(bench_write benchmark)
+
+###############################
+add_executable(bench_span benchmarks/Spans.cpp)
+# Per OS properties
+target_link_libraries(bench_span benchmark gsl::gsl-lite absl::span)
+
+###############################
+add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
+# Per OS properties
+target_link_libraries(bench_opf_high_vs_low benchmark gsl::gsl-lite)
