@@ -17,7 +17,6 @@ if (UNIX)
     add_compile_options(-Wextra)
     # add_compile_options(-fno-exceptions)
     add_compile_options(-ffast-math)
-    add_compile_options(-msse4)
     # add_compile_options(-fno-omit-frame-pointer)
 endif()
 
