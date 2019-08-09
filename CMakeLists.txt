@@ -17,6 +17,7 @@ if (UNIX)
     add_compile_options(-Wextra)
     # add_compile_options(-fno-exceptions)
     add_compile_options(-ffast-math)
+    add_compile_options(-msse4)
     # add_compile_options(-fno-omit-frame-pointer)
 endif()
 
@@ -171,3 +172,8 @@ target_link_libraries(bench_span benchmark gsl::gsl-lite absl::span)
 add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
 # Per OS properties
 target_link_libraries(bench_opf_high_vs_low benchmark gsl::gsl-lite)
+
+###############################
+add_executable(bench_looping_index benchmarks/Looping_index.cpp)
+# Per OS properties
+target_link_libraries(bench_looping_index benchmark)
