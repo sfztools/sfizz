@@ -176,3 +176,7 @@ target_link_libraries(bench_opf_high_vs_low benchmark gsl::gsl-lite)
 add_executable(bench_looping_index benchmarks/Looping_index.cpp)
 # Per OS properties
 target_link_libraries(bench_looping_index benchmark)
+
+add_executable(bench_looping_index_2 benchmarks/Looping_index_2.cpp)
+# Per OS properties
+target_link_libraries(bench_looping_index_2 benchmark)
