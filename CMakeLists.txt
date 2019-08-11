@@ -108,6 +108,7 @@ set(TEST_SOURCES
     tests/StereoBufferT.cpp
     tests/FilesT.cpp
     tests/OnePoleFilterT.cpp
+    tests/RegionActivationT.cpp
     tests/MainT.cpp
 )
 
