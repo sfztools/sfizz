@@ -34,12 +34,14 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
 void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames)
 {
     if (!loadingQueue.try_enqueue({ voice, sample, numFrames }))
+    {
         DBG("Problem enqueuing a file read for file " << sample);
+    }
 }
 
 void sfz::FilePool::loadingThread()
 {
-    FileLoadingInformation fileToLoad;
+    FileLoadingInformation fileToLoad {};
     while (!quitThread)
     {
         if (!loadingQueue.wait_dequeue_timed(fileToLoad, 1ms))
