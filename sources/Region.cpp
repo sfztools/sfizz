@@ -245,31 +245,156 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
 bool sfz::Region::isSwitchedOn() const noexcept
 {
-    return false;
+    return  keySwitched &&
+            previousKeySwitched &&
+            sequenceSwitched &&
+            pitchSwitched &&
+            bpmSwitched &&
+            aftertouchSwitched &&
+            allCCSwitched;
 }
 
-bool sfz::Region::registerNoteOn(int, int, uint8_t, float)
+bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue)
 {
-    return false;
+    const bool chanOk = channelRange.containsWithEnd(channel);
+    if (!chanOk)
+        return false;
+
+    if (keyswitchRange.containsWithEnd(noteNumber))
+    {
+        if (keyswitch)
+        {
+            if (*keyswitch == noteNumber)
+                keySwitched = true;
+            else
+                keySwitched = false;
+        }
+
+        if (keyswitchDown && *keyswitchDown == noteNumber)
+            keySwitched = true;
+
+        if (keyswitchUp && *keyswitchUp == noteNumber)
+            keySwitched = false;
+    }
+
+    const bool keyOk = keyRange.containsWithEnd(noteNumber);
+    if (keyOk)
+    {
+        // Update the number of notes playing for the region
+        activeNotesInRange++;
+
+        // Sequence activation
+        sequenceCounter += 1;
+        if ((sequenceCounter % sequenceLength) == sequencePosition - 1)
+            sequenceSwitched = true;
+        else
+            sequenceSwitched = false;
+
+        // Velocity memory for release_key and for sw_vel=previous
+        if (trigger == SfzTrigger::release_key || velocityOverride == SfzVelocityOverride::previous)
+            lastNoteVelocities[noteNumber] = velocity;
+
+        if (previousNote)
+        {
+            if ( *previousNote == noteNumber)
+                previousKeySwitched = true;
+            else
+                previousKeySwitched = false;
+        }
+    }
+
+    if (!isSwitchedOn())
+        return false;
+
+    if (previousNote && !(previousKeySwitched && noteNumber != *previousNote))
+        return false;
+
+    const bool velOk = velocityRange.containsWithEnd(velocity);
+    const bool randOk = randRange.contains(randValue);
+    const bool firstLegatoNote = (trigger == SfzTrigger::first && activeNotesInRange == 0);
+    const bool attackTrigger = (trigger == SfzTrigger::attack);
+    const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && activeNotesInRange > 0);
+ 
+    return keyOk && velOk && chanOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int, int, uint8_t, float)
+bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity [[maybe_unused]], float randValue)
 {
-    return false;
-}
-bool sfz::Region::registerCC(int, int, uint8_t)
-{
-    return false;
-}
-void sfz::Region::registerPitchWheel(int, int)
-{
+    const bool chanOk = channelRange.containsWithEnd(channel);
+    if (!chanOk)
+        return false;
 
-}
-void sfz::Region::registerAftertouch(int, uint8_t)
-{
+    if (keyswitchRange.containsWithEnd(noteNumber))
+    {
+        if (keyswitchDown && *keyswitchDown == noteNumber)
+            keySwitched = false;
 
-}
-void sfz::Region::registerTempo(float)
-{
+        if (keyswitchUp && *keyswitchUp == noteNumber)
+            keySwitched = true;
+    }
 
+    const bool keyOk = keyRange.containsWithEnd(noteNumber);
+
+    // Update the number of notes playing for the region
+    if (keyOk)
+        activeNotesInRange--;
+
+    if (!isSwitchedOn())
+        return false;
+    
+    const bool randOk = randRange.contains(randValue);
+    const bool releaseTrigger = (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key);
+    return keyOk && chanOk && randOk && releaseTrigger;
+}
+
+bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue)
+{
+    if (!channelRange.containsWithEnd(channel))
+        return false;
+
+    if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
+        ccSwitched.set(ccNumber, true);
+    else
+        ccSwitched.set(ccNumber, false);
+    
+    if (ccSwitched.all())
+        allCCSwitched = true;
+    else
+        allCCSwitched = false;
+
+    if (ccTriggers.contains(ccNumber) && ccTriggers.at(ccNumber).containsWithEnd(ccValue))
+        return true;
+    else
+        return false;
+}
+
+void sfz::Region::registerPitchWheel(int channel, int pitch)
+{
+    if (!channelRange.containsWithEnd(channel))
+        return;
+    
+    if (bendRange.containsWithEnd(pitch))
+        pitchSwitched = true;
+    else
+        pitchSwitched = false;
+}
+
+void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch)
+{
+    if (!channelRange.containsWithEnd(channel))
+        return;
+    
+    if (aftertouchRange.containsWithEnd(aftertouch))
+        aftertouchSwitched = true;
+    else
+        aftertouchSwitched = false;
+}
+
+void sfz::Region::registerTempo(float secondsPerQuarter)
+{
+    const float bpm = 60.0f / secondsPerQuarter;
+    if (bpmRange.containsWithEnd(bpm))
+        bpmSwitched = true;
+    else
+        bpmSwitched = false;
 }

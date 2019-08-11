@@ -7,12 +7,16 @@
 #include "EGDescription.h"
 #include "Defaults.h"
 #include "CCMap.h"
+#include <bitset>
 
 namespace sfz
 {
 struct Region
 {
-    Region() = default;
+    Region()
+    {
+        ccSwitched.set();
+    }
     Region(const Region&) = default;
     ~Region() = default;
 
@@ -112,5 +116,17 @@ struct Region
     double sampleRate { config::defaultSampleRate };
     int numChannels { 1 };
     std::shared_ptr<StereoBuffer<float>> preloadedData { nullptr };
+private:
+    bool keySwitched { true };
+    bool previousKeySwitched { true };
+    bool sequenceSwitched { true };
+    bool pitchSwitched { true };
+    bool bpmSwitched { true };
+    bool aftertouchSwitched { true };
+    std::bitset<128> ccSwitched;
+    bool allCCSwitched { true };
+
+    int activeNotesInRange { -1 };
+    int sequenceCounter { 0 };
 };
 } // namespace sfz
