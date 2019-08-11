@@ -30,7 +30,6 @@ struct Region
     void registerPitchWheel(int channel, int pitch);
     void registerAftertouch(int channel, uint8_t aftertouch);
     void registerTempo(float secondsPerQuarter);
-    bool prepare();
     bool isStereo() const noexcept;
     bool parseOpcode(const Opcode& opcode);
     // Sound source: sample playback
@@ -98,7 +97,6 @@ struct Region
     Range<uint8_t> crossfadeVelOutRange { Default::crossfadeVelOutRange };
     SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeKeyCurve };
     SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
-
 
     // Performance parameters: pitch
     uint8_t pitchKeycenter{Default::pitchKeycenter}; // pitch_keycenter

@@ -75,8 +75,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("lobend"): setRangeStartFromOpcode(opcode, bendRange, Default::bendRange); break;
     case hash("hibend"): setRangeEndFromOpcode(opcode, bendRange, Default::bendRange); break;
     case hash("locc"): 
-        if (opcode.parameter) 
-            setRangeStartFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccRange); 
+        if (opcode.parameter)
+        {
+            setRangeStartFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccRange);
+        }
         break;
     case hash("hicc"):
         if (opcode.parameter) 
@@ -84,10 +86,19 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("sw_lokey"): setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange); break;
     case hash("sw_hikey"): setRangeEndFromOpcode(opcode, keyswitchRange, Default::keyRange); break;
-    case hash("sw_last"): setValueFromOpcode(opcode, keyswitch, Default::keyRange); break;
-    case hash("sw_down"): setValueFromOpcode(opcode, keyswitchDown, Default::keyRange); break;
+    case hash("sw_last"): 
+        setValueFromOpcode(opcode, keyswitch, Default::keyRange);
+        keySwitched = false;
+        break;
+    case hash("sw_down"):
+        setValueFromOpcode(opcode, keyswitchDown, Default::keyRange);
+        keySwitched = false;
+        break;
     case hash("sw_up"): setValueFromOpcode(opcode, keyswitchUp, Default::keyRange); break;
-    case hash("sw_previous"): setValueFromOpcode(opcode, previousNote, Default::keyRange); break;
+    case hash("sw_previous"):
+        setValueFromOpcode(opcode, previousNote, Default::keyRange);
+        previousKeySwitched = false;
+        break;
     case hash("sw_vel"):
         switch(hash(opcode.value))
         {
@@ -109,7 +120,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("lorand"): setRangeStartFromOpcode(opcode, randRange, Default::randRange); break;
     case hash("hirand"): setRangeEndFromOpcode(opcode, randRange, Default::randRange); break;
     case hash("seq_length"): setValueFromOpcode(opcode, sequenceLength, Default::sequenceRange); break;
-    case hash("seq_position"): setValueFromOpcode(opcode, sequencePosition, Default::sequenceRange); break;
+    case hash("seq_position"):
+        setValueFromOpcode(opcode, sequencePosition, Default::sequenceRange);
+        sequenceSwitched = (opcode.value == "1");
+        break;
     // Region logic: triggers
     case hash("trigger"):
         switch(hash(opcode.value))

@@ -155,6 +155,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
         for (auto cc = region->keyRange.getStart(); cc <= region->keyRange.getEnd(); cc++)
             ccActivationLists[cc].push_back(*currentRegion);
         
+        // Defaults
         for (int ccIndex = 1; ccIndex < 128; ccIndex++)
             region->registerCC(region->channelRange.getStart(), ccIndex, ccState[ccIndex]);
 
@@ -163,6 +164,10 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
             region->registerNoteOn(region->channelRange.getStart(), *defaultSwitch, 127, 1.0);
             region->registerNoteOff(region->channelRange.getStart(), *defaultSwitch, 0, 1.0);
         }
+        region->registerPitchWheel(region->channelRange.getStart(), 0);
+        region->registerAftertouch(region->channelRange.getStart(), 0);
+        region->registerTempo(2.0f);
+        
         currentRegion++;
     }
 
