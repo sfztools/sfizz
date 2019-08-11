@@ -4,10 +4,27 @@
 #include "gsl/gsl-lite.hpp"
 #include <string>
 #include <filesystem>
+#include <algorithm>
 using namespace Catch::literals;
 
 template<class Type>
-void testInputOutput(const std::filesystem::path& inputNumpyFile, const std::filesystem::path& outputNumpyFile, Type gain)
+inline bool approxEqual(const std::vector<Type>& lhs, const std::vector<Type>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < rhs.size(); ++i)
+        if (lhs[i] != Approx(rhs[i]).epsilon(1e-3))
+        {
+            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
+            return false;
+        }
+
+    return true;
+}
+
+template<class Type>
+void testLowpass(const std::filesystem::path& inputNumpyFile, const std::filesystem::path& outputNumpyFile, Type gain)
 {
     const auto input = cnpy::npy_load(inputNumpyFile.string());
     REQUIRE( input.word_size == 8 );
@@ -31,72 +48,163 @@ void testInputOutput(const std::filesystem::path& inputNumpyFile, const std::fil
     OnePoleFilter filter { gain };
     std::vector<Type> outputData (size);
     filter.processLowpass(inputData, outputData);
-    for (size_t i = 0; i < size; ++i)
-        REQUIRE( outputData[i] == Approx(expectedData[i]) );
+    REQUIRE( approxEqual(outputData, expectedData) );
 
     filter.reset();
     std::fill(outputData.begin(), outputData.end(), 0.0);
     std::vector<Type> gains(size);
     std::fill(gains.begin(), gains.end(), gain);
     filter.processLowpassVariableGain(inputData, outputData, gains);
-    for (size_t i = 0; i < size; ++i)
-        REQUIRE( outputData[i] == Approx(expectedData[i]) );
+    REQUIRE( approxEqual(outputData, expectedData) );
 }
 
-TEST_CASE("[OnePoleFilter] Float")
+template<class Type>
+void testHighpass(const std::filesystem::path& inputNumpyFile, const std::filesystem::path& outputNumpyFile, Type gain)
 {
-    testInputOutput<float>(
+    const auto input = cnpy::npy_load(inputNumpyFile.string());
+    REQUIRE( input.word_size == 8 );
+    const auto inputSpan = gsl::make_span(input.data<double>(), input.shape[0]);
+
+    const auto output = cnpy::npy_load(outputNumpyFile.string());
+    REQUIRE( output.word_size == 8 );
+    const auto outputSpan = gsl::make_span(output.data<double>(), output.shape[0]);
+    auto size = std::min(outputSpan.size(), inputSpan.size());
+    REQUIRE( size > 0 );
+
+    std::vector<Type> inputData;
+    std::vector<Type> expectedData;
+    inputData.reserve(size);
+    expectedData.reserve(size);
+    for (auto& data: inputSpan)
+        inputData.push_back(static_cast<Type>(data));
+    for (auto& data: outputSpan)
+        expectedData.push_back(static_cast<Type>(data));
+    
+    OnePoleFilter filter { gain };
+    std::vector<Type> outputData (size);
+    filter.processHighpass(inputData, outputData);
+    REQUIRE( approxEqual(outputData, expectedData) );
+
+    filter.reset();
+    std::fill(outputData.begin(), outputData.end(), 0.0);
+    std::vector<Type> gains(size);
+    std::fill(gains.begin(), gains.end(), gain);
+    filter.processHighpassVariableGain(inputData, outputData, gains);
+    REQUIRE( approxEqual(outputData, expectedData) );
+}
+
+TEST_CASE("[OnePoleFilter] Lowpass Float")
+{
+    testLowpass<float>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.1.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.1.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.1.npy",
         0.1f
     );
-    testInputOutput<float>(
+    testLowpass<float>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.3.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.3.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.3.npy",
         0.3f
     );
-    testInputOutput<float>(
+    testLowpass<float>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.5.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.5.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.5.npy",
         0.5f
     );
-    testInputOutput<float>(
+    testLowpass<float>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.7.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.7.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.7.npy",
         0.7f
     );
-    testInputOutput<float>(
+    testLowpass<float>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.9.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.9.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.9.npy",
         0.9f
     );
 }
 
-TEST_CASE("[OnePoleFilter] Double")
+TEST_CASE("[OnePoleFilter] Lowpass Double")
 {
-    testInputOutput<double>(
+    testLowpass<double>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.1.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.1.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.1.npy",
         0.1f
     );
-    testInputOutput<double>(
+    testLowpass<double>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.3.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.3.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.3.npy",
         0.3f
     );
-    testInputOutput<double>(
+    testLowpass<double>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.5.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.5.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.5.npy",
         0.5f
     );
-    testInputOutput<double>(
+    testLowpass<double>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.7.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.7.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.7.npy",
         0.7f
     );
-    testInputOutput<double>(
+    testLowpass<double>(
         std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.9.npy",
-        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_output_gain_0.9.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_low_gain_0.9.npy",
+        0.9f
+    );
+}
+
+TEST_CASE("[OnePoleFilter] Highpass Float")
+{
+    testHighpass<float>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.1.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.1.npy",
+        0.1f
+    );
+    testHighpass<float>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.3.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.3.npy",
+        0.3f
+    );
+    testHighpass<float>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.5.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.5.npy",
+        0.5f
+    );
+    testHighpass<float>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.7.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.7.npy",
+        0.7f
+    );
+    testHighpass<float>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.9.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.9.npy",
+        0.9f
+    );
+}
+
+TEST_CASE("[OnePoleFilter] Highpass Double")
+{
+    testHighpass<double>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.1.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.1.npy",
+        0.1f
+    );
+    testHighpass<double>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.3.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.3.npy",
+        0.3f
+    );
+    testHighpass<double>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.5.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.5.npy",
+        0.5f
+    );
+    testHighpass<double>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.7.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.7.npy",
+        0.7f
+    );
+    testHighpass<double>(
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_input_gain_0.9.npy",
+        std::filesystem::current_path() / "tests/TestFiles/OnePoleFilter/OPF_high_gain_0.9.npy",
         0.9f
     );
 }
