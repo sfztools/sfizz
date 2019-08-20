@@ -8,7 +8,19 @@ template<class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer
 {
 public:
-    Buffer() { }
+    using value_type = std::remove_cv_t<Type>;
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
+
+    constexpr Buffer() { }
     Buffer(size_t size)
     {
         resize(size);
@@ -22,14 +34,14 @@ public:
         }
 
         auto tempSize = newSize + 2 * AlignmentMask; // To ensure that we have leeway at the beginning and at the end
-        auto* newData = paddedData != nullptr ? std::realloc(paddedData, tempSize * sizeof(Type)) : std::malloc(tempSize * sizeof(Type));
+        auto* newData = paddedData != nullptr ? std::realloc(paddedData, tempSize * sizeof(value_type)) : std::malloc(tempSize * sizeof(value_type));
         if (newData == nullptr)
             return false;
 
         largerSize = tempSize;
         alignedSize = newSize;
-        paddedData = static_cast<Type*>(newData);
-        normalData = static_cast<Type*>(std::align(Alignment, alignedSize, newData, tempSize));
+        paddedData = static_cast<pointer>(newData);
+        normalData = static_cast<pointer>(std::align(Alignment, alignedSize, newData, tempSize));
         normalEnd = normalData + alignedSize;
         if (auto endMisalignment = (alignedSize & TypeAlignmentMask); endMisalignment != 0)
             _alignedEnd = normalEnd + Alignment - endMisalignment;
@@ -38,7 +50,6 @@ public:
         return true;
     }
 
-    Type* data() { return normalData; }
     void clear()
     {
         largerSize = 0;
@@ -54,22 +65,23 @@ public:
     }
 
     Type& operator[](int idx) { return *(normalData + idx); }
-    size_t size() const noexcept { return alignedSize; }
-    bool empty() const noexcept { return alignedSize == 0; }
-    Type* begin() noexcept { return data(); }
-    Type* end() noexcept { return normalEnd; }
-    Type* alignedEnd() noexcept { return _alignedEnd; }
+    constexpr pointer data() const noexcept { return normalData; }
+    constexpr size_type size() const noexcept { return alignedSize; }
+    constexpr bool empty() const noexcept { return alignedSize == 0; }
+    constexpr iterator begin() noexcept { return data(); }
+    constexpr iterator end() noexcept { return normalEnd; }
+    constexpr pointer alignedEnd() noexcept { return _alignedEnd; }
 private:
     static constexpr auto AlignmentMask { Alignment - 1 };
-    static constexpr auto TypeAlignment { Alignment / sizeof(Type) };
+    static constexpr auto TypeAlignment { Alignment / sizeof(value_type) };
     static constexpr auto TypeAlignmentMask { TypeAlignment - 1 };
-    static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
+    static_assert(std::is_arithmetic<value_type>::value, "Type should be arithmetic");
     static_assert(Alignment == 0 || Alignment == 4 || Alignment == 8 || Alignment == 16, "Bad alignment value");
-    static_assert(TypeAlignment * sizeof(Type) == Alignment, "The alignment does not appear to be divided by the size of the Type");
-    size_t largerSize { 0 };
-    size_t alignedSize { 0 };
-    Type* normalData { nullptr };
-    Type* paddedData { nullptr };
-    Type* normalEnd { nullptr };
-    Type* _alignedEnd { nullptr };
+    static_assert(TypeAlignment * sizeof(value_type) == Alignment, "The alignment does not appear to be divided by the size of the Type");
+    size_type largerSize { 0 };
+    size_type alignedSize { 0 };
+    pointer normalData { nullptr };
+    pointer paddedData { nullptr };
+    pointer normalEnd { nullptr };
+    pointer _alignedEnd { nullptr };
 };

@@ -80,22 +80,23 @@ set(COMMON_SOURCES
 )
 
 set(SSE_SOURCES
-    sources/StereoBufferSSE.cpp
+    
 )
 
 if (HAVE_X86INTRIN_H AND UNIX)
     add_compile_options(-DHAVE_X86INTRIN_H)
     add_compile_options(-DUSE_SIMD)
-    set(COMMON_SOURCES ${COMMON_SOURCES} ${SSE_SOURCES})
-endif()
-if (HAVE_INTRIN_H AND WIN32)
+    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDSSE.cpp)
+elseif (HAVE_INTRIN_H AND WIN32)
     add_compile_options(/DHAVE_INTRIN_H)
     add_compile_options(/DUSE_SIMD)
-    set(COMMON_SOURCES ${COMMON_SOURCES} ${SSE_SOURCES})
-endif()
-if (HAVE_ARM_NEON_H AND UNIX)
+    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDSSE.cpp)
+elseif (HAVE_ARM_NEON_H AND UNIX)
     add_compile_options(-DUSE_SIMD)
     add_compile_options(-DHAVE_ARM_NEON_H)
+    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDDummy.cpp)
+else()
+    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDDummy.cpp)
 endif()
     
 set(TEST_SOURCES
@@ -106,6 +107,7 @@ set(TEST_SOURCES
     tests/OpcodeT.cpp
     tests/BufferT.cpp
     tests/StereoBufferT.cpp
+    tests/SIMDHelpersT.cpp
     tests/FilesT.cpp
     tests/OnePoleFilterT.cpp
     tests/RegionActivationT.cpp
@@ -124,9 +126,6 @@ target_link_libraries(sfzprint absl::strings cxxopts)
 ###############################
 # Basic command line program
 add_executable(sfizz sources/Main.cpp ${COMMON_SOURCES})
-if (HAVE_INTRIN_H OR HAVE_X86INTRIN_H)
-    target_sources(sfizz PRIVATE ${SSE_SOURCES})
-endif()
 # Per OS properties
 if(UNIX)
     target_compile_options(sfizz PRIVATE -fno-rtti)
@@ -138,9 +137,6 @@ target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map re
 # Test application
 add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
 # Per OS properties
-if (HAVE_INTRIN_H OR HAVE_X86INTRIN_H)
-    target_sources(sfizz_tests PRIVATE ${SSE_SOURCES})
-endif()
 if(UNIX)
     target_link_libraries(sfizz_tests stdc++fs)
 endif(UNIX)
@@ -149,35 +145,28 @@ target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
 ###############################
-add_executable(bench_fill benchmarks/Stereo_Fill.cpp sources/StereoBufferSSE.cpp)
-# Per OS properties
-target_link_libraries(bench_fill benchmark)
-
-###############################
-add_executable(bench_read benchmarks/Stereo_Read_Interleaved.cpp sources/StereoBufferSSE.cpp)
-# Per OS properties
-target_link_libraries(bench_read benchmark)
-
-###############################
-add_executable(bench_write benchmarks/Stereo_Write_Interleaved.cpp sources/StereoBufferSSE.cpp)
-# Per OS properties
-target_link_libraries(bench_write benchmark)
-
-###############################
 add_executable(bench_span benchmarks/Spans.cpp)
-# Per OS properties
 target_link_libraries(bench_span benchmark gsl::gsl-lite absl::span)
 
 ###############################
 add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
-# Per OS properties
 target_link_libraries(bench_opf_high_vs_low benchmark gsl::gsl-lite)
 
 ###############################
 add_executable(bench_looping_index benchmarks/Looping_index.cpp)
-# Per OS properties
 target_link_libraries(bench_looping_index benchmark)
 
 add_executable(bench_looping_index_2 benchmarks/Looping_index_2.cpp)
-# Per OS properties
 target_link_libraries(bench_looping_index_2 benchmark)
+
+add_executable(bm_cum_prod benchmarks/Cum_Prod.cpp)
+target_link_libraries(bm_cum_prod benchmark)
+
+add_executable(bm_cum_sum benchmarks/Cum_Sum.cpp)
+target_link_libraries(bm_cum_sum benchmark)
+
+add_executable(bm_write benchmarks/BM_writeInterleaved.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_write benchmark gsl::gsl-lite)
+
+add_executable(bm_fill benchmarks/BM_fill.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_fill benchmark gsl::gsl-lite)

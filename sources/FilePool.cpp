@@ -1,4 +1,5 @@
 #include "FilePool.h"
+#include "gsl/gsl-lite.hpp"
 #include <chrono>
 using namespace std::chrono_literals;
 
@@ -23,7 +24,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     auto preloadedSize = std::min(returnedValue.end, static_cast<uint32_t>(config::preloadSize));
     returnedValue.preloadedData = std::make_shared<StereoBuffer<float>>(preloadedSize);
     sndFile.readf(tempReadBuffer.data(), preloadedSize);
-    returnedValue.preloadedData->readInterleaved<SIMDConfig::useSIMD>(tempReadBuffer.data(), preloadedSize);
+    returnedValue.preloadedData->readInterleaved(gsl::make_span(tempReadBuffer).first(preloadedSize));
     preloadedData[filename] = returnedValue.preloadedData;
     // char  buffer [2048] ;
     // sndFile.command(SFC_GET_LOG_INFO, buffer, sizeof(buffer)) ;
@@ -65,7 +66,7 @@ void sfz::FilePool::loadingThread()
         auto fileLoaded = std::make_unique<StereoBuffer<float>>(fileToLoad.numFrames);
         auto readBuffer = std::make_unique<Buffer<float>>(fileToLoad.numFrames * 2);
         sndFile.readf(readBuffer->data(), fileToLoad.numFrames);
-        fileLoaded->readInterleaved<SIMDConfig::useSIMD>(readBuffer->data(), fileToLoad.numFrames);
+        fileLoaded->readInterleaved(*readBuffer);
         fileToLoad.voice->setFileData(std::move(fileLoaded));
     }
 

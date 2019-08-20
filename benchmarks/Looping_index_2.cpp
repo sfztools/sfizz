@@ -8,7 +8,7 @@
 // In this one we have an array of indices
 
 constexpr int loopOffset { 5 };
-constexpr int loopPoint { 51 };
+constexpr int loopPoint { 1076 };
 constexpr int loopBack { loopPoint - loopOffset };
 constexpr float maxJump { 4 };
 

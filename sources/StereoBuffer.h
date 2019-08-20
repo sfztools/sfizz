@@ -2,9 +2,11 @@
 #include "Buffer.h"
 #include "Helpers.h"
 #include "Globals.h"
+#include "gsl/gsl-lite.hpp"
 #include <array>
 #include <iostream>
 #include <type_traits>
+#include "SIMDHelpers.h"
 
 enum class Channel {left, right};
 
@@ -46,42 +48,22 @@ public:
         }
     }
 
-    template<bool useSIMD = false>
     void fill(Type value) noexcept
     {
-        std::fill(begin(Channel::left), end(Channel::left), value);
-        std::fill(begin(Channel::right), end(Channel::right), value);
+        ::fill<Type>(leftBuffer, value);
+        ::fill<Type>(rightBuffer, value);
     }
 
-    template<bool useSIMD=false>
-    void readInterleaved(Type* input, int numFrames) noexcept
+    void readInterleaved(gsl::span<const Type> input) noexcept
     {
-        auto* in = input;
-        auto* end = input + numChannels * numFrames;
-        auto [lOut, rOut] = getChannels();
-        while (in < end)
-        {
-            *lOut = *in;
-            in++;
-            *rOut = *in;
-            in++;
-            lOut += 1;
-            rOut += 1;
-        }
+        ASSERT(input.size() <= numChannels * numFrames);
+        ::readInterleaved<Type>(input, leftBuffer, rightBuffer);
     }
 
-    template<bool useSIMD=false>
-    void writeInterleaved(Type* output, int numFrames) noexcept
+    void writeInterleaved(gsl::span<Type> output) noexcept
     {
-        ASSERT(numFrames <= this->numFrames);
-        auto [lIn, rIn] = getChannels();
-        auto* out = output;
-        auto* end = output + numChannels * numFrames;
-        while (out < end)
-        {
-            *out++ = *lIn++;
-            *out++ = *rIn++;
-        }
+        ASSERT(output.size() >= numChannels * numFrames);
+        ::writeInterleaved<Type>(leftBuffer, rightBuffer, output);
     }
 
     Type* getChannel(Channel channel) noexcept
@@ -148,11 +130,3 @@ private:
     Buffer<Type, Alignment> rightBuffer {};
     Type trash { 0 };
 };
-
-template <>
-template <>
-void StereoBuffer<float, 16>::readInterleaved<true>(float *input, int numFrames) noexcept;
-
-template <>
-template <>
-void StereoBuffer<float, 16>::fill<true>(float value) noexcept;

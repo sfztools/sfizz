@@ -22,7 +22,8 @@ public:
     const Region* getRegionView(int idx) const noexcept { return (size_t)idx < regions.size() ? regions[idx].get() : nullptr; }
     auto getUnknownOpcodes() { return unknownOpcodes; }
     size_t getNumPreloadedSamples() { return filePool.getNumPreloadedSamples(); }
-
+    void prepareToPlay(int samplesPerBlock, double sampleRate);
+    void renderBlock(StereoBuffer<float>& buffer);
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
 private:
