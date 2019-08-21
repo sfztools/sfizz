@@ -3,11 +3,42 @@
 #include "x86intrin.h"
 #include "mathfuns/sse_mathfun.h"
 
-constexpr int TypeAlignment { 4 };
+constexpr uintptr_t TypeAlignment { 4 };
+constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 };
 using Type = float;
+constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
+constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
+
+
+struct AlignmentSentinels { float* nextAligned; float* lastAligned; };
+
+float* nextAligned(const float* ptr)
+{
+    return reinterpret_cast<float*>( (reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask) & (~ByteAlignmentMask) );
+}
+
+float* prevAligned(const float* ptr)
+{
+    return reinterpret_cast<float*>( reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask) );
+}
+
+bool unaligned(const float* ptr)
+{
+    return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask) != 0;
+}
+
+bool unaligned(const float* ptr1, const float* ptr2)
+{
+    return unaligned(ptr1) || unaligned(ptr2);
+}
+
+bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3)
+{
+    return unaligned(ptr1) || unaligned(ptr2) || unaligned(ptr3);
+}
 
 template<>
-void readInterleaved<Type, true>(absl::Span<const Type> input, absl::Span<Type> outputLeft, absl::Span<Type> outputRight) noexcept
+void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     // The size of the outputs is not big enough for the input...
     ASSERT(outputLeft.size() >= input.size() / 2);
@@ -18,14 +49,21 @@ void readInterleaved<Type, true>(absl::Span<const Type> input, absl::Span<Type> 
     auto* in = input.begin();
     auto* lOut = outputLeft.begin();
     auto* rOut = outputRight.begin();
-    const int unalignedEnd = input.size() & (2 * TypeAlignment - 1);
-    const int lastAligned = input.size() - unalignedEnd;
-    auto* inputSentinel = in + lastAligned;
-    while (in < inputSentinel && lOut < outputLeft.end() && rOut < outputRight.end())
+
+    const auto size = std::min(input.size(), std::min(outputLeft.size() * 2, outputRight.size() * 2 ));
+    const auto* lastAligned = prevAligned(input.begin() + size - TypeAlignment);
+
+    while (unaligned(in, lOut, rOut) && in < lastAligned)
     {
-        auto register0 = _mm_loadu_ps(in);
+        *lOut++ = *in++;
+        *rOut++ = *in++;
+    }
+
+    while (in < lastAligned )
+    {
+        auto register0 = _mm_load_ps(in);
         in += TypeAlignment;
-        auto register1 = _mm_loadu_ps(in);
+        auto register1 = _mm_load_ps(in);
         in += TypeAlignment;
         auto register2 = register0;
         // register 2 holds the copy of register 0 that is going to get erased by the first operation
@@ -33,14 +71,13 @@ void readInterleaved<Type, true>(absl::Span<const Type> input, absl::Span<Type> 
         // "take 0 from a, take 2 from a, take 0 from b, take 2 from b"
         register0 = _mm_shuffle_ps(register0, register1, 0b10001000);
         register1 = _mm_shuffle_ps(register2, register1, 0b11011101);
-        _mm_storeu_ps(lOut, register0);
-        _mm_storeu_ps(rOut, register1);
+        _mm_store_ps(lOut, register0);
+        _mm_store_ps(rOut, register1);
         lOut += TypeAlignment;
         rOut += TypeAlignment;
     }
     
-    inputSentinel = input.end() - 1;
-    while (in < inputSentinel && lOut < outputLeft.end() && rOut < outputRight.end())
+    while (in < input.end() - 1)
     {
         *lOut++ = *in++;
         *rOut++ = *in++;
@@ -48,7 +85,7 @@ void readInterleaved<Type, true>(absl::Span<const Type> input, absl::Span<Type> 
 }
 
 template<>
-void writeInterleaved<Type, true>(absl::Span<const Type> inputLeft, absl::Span<const Type> inputRight, absl::Span<Type> output) noexcept
+void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     // The size of the output is not big enough for the inputs...
     ASSERT(inputLeft.size() <= output.size() / 2);
@@ -58,48 +95,53 @@ void writeInterleaved<Type, true>(absl::Span<const Type> inputLeft, absl::Span<c
     auto* rIn = inputRight.begin();
     auto* out = output.begin();
 
-    const int residualLeft = inputLeft.size() & (TypeAlignment - 1);
-    const int residualRight = inputRight.size() & (TypeAlignment - 1);
-    const auto* leftSentinel = lIn + inputLeft.size() - residualLeft;
-    const auto* rightSentinel = rIn + inputRight.size() - residualRight;
-    const auto* outputSentinel = output.end() - 1;
+    const auto size = std::min(output.size(), std::min(inputLeft.size(), inputRight.size()) * 2);
+    const auto* lastAligned = prevAligned(output.begin() + size - TypeAlignment);
 
-    while (lIn < leftSentinel && rIn < rightSentinel && out < outputSentinel)
+    while (unaligned(out, rIn, lIn) && out < lastAligned)
     {
-        const auto lInRegister = _mm_loadu_ps(lIn);
-        const auto rInRegister = _mm_loadu_ps(rIn);
+        *out++ = *lIn++;
+        *out++ = *rIn++;
+    }
+
+    while (out < lastAligned)
+    {
+        const auto lInRegister = _mm_load_ps(lIn);
+        const auto rInRegister = _mm_load_ps(rIn);
 
         const auto outRegister1 = _mm_unpacklo_ps(lInRegister, rInRegister);
-        _mm_storeu_ps(out, outRegister1);
+        _mm_store_ps(out, outRegister1);
         out += TypeAlignment;
 
         const auto outRegister2 = _mm_unpackhi_ps(lInRegister, rInRegister);
-        _mm_storeu_ps(out, outRegister2);
+        _mm_store_ps(out, outRegister2);
         out += TypeAlignment;
 
         lIn += TypeAlignment;
         rIn += TypeAlignment;
     }
 
-    while (lIn < inputLeft.end() && rIn < inputRight.end() && out < outputSentinel)
+    while (out < output.end() - 1)
     {
-
         *out++ = *lIn++;
         *out++ = *rIn++;
     }
 }
+
 
 template<>
 void fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     const auto mmValue = _mm_set_ps1(value);
     auto* out = output.begin();
-    const int residual = output.size() & (TypeAlignment - 1);
-    const auto* sentinel = output.end() - residual;
+    const auto* lastAligned = prevAligned(output.end());
     
-    while (out < sentinel) // we should only need to test a single channel
+    while (unaligned(out) && out < lastAligned)
+        *out++ = value;
+
+    while (out < lastAligned) // we should only need to test a single channel
     {
-        _mm_storeu_ps(out, mmValue);
+        _mm_store_ps(out, mmValue);
         out += TypeAlignment;
     }
     
@@ -117,8 +159,8 @@ void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) n
     while (in < sentinel)
     {
         _mm_storeu_ps(out, exp_ps(_mm_loadu_ps(in)));
-        out += 4;
-        in += 4;
+        out += TypeAlignment;
+        in += TypeAlignment;
     }
 }
 
@@ -132,8 +174,8 @@ void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) n
     while (in < sentinel)
     {
         _mm_storeu_ps(out, cos_ps(_mm_loadu_ps(in)));
-        out += 4;
-        in += 4;
+        out += TypeAlignment;
+        in += TypeAlignment;
     }
 }
 
@@ -147,10 +189,12 @@ void log<float, true>(absl::Span<const float> input, absl::Span<float> output) n
     while (in < sentinel)
     {
         _mm_storeu_ps(out, log_ps(_mm_loadu_ps(in)));
-        out += 4;
-        in += 4;
+        out += TypeAlignment;
+        in += TypeAlignment;
     }
 }
+
+
 
 template<>
 void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
@@ -162,7 +206,54 @@ void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) n
     while (in < sentinel)
     {
         _mm_storeu_ps(out, sin_ps(_mm_loadu_ps(in)));
-        out += 4;
-        in += 4;
+        out += TypeAlignment;
+        in += TypeAlignment;
     }
+}
+
+template<>
+void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    auto* in = input.begin();
+    auto* out = output.begin();
+    const auto size = std::min(output.size(), input.size());
+    const auto* lastAligned = prevAligned(output.begin() + size);
+    const auto mmGain = _mm_set_ps1(gain);
+
+    while (unaligned(out, in) && out < lastAligned)
+        *out++ = gain * (*in++);
+    
+    while (out < lastAligned)
+    {
+        _mm_store_ps(out, _mm_mul_ps(mmGain, _mm_load_ps(in)));
+        in += TypeAlignment;
+        out += TypeAlignment;
+    }
+
+    while (out < output.end())
+        *out++ = gain * (*in++);
+}
+
+template<>
+void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* g = gain.begin();
+    const auto size = std::min(output.size(), std::min(input.size(), gain.size()));
+    const auto* lastAligned = prevAligned(output.begin() + size);
+
+    while (unaligned(out, in, g) && out < lastAligned)
+        *out++ = (*g++) * (*in++);
+
+    while (out < lastAligned)
+    {
+        _mm_store_ps(out, _mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)));
+        g += TypeAlignment;
+        in += TypeAlignment;
+        out += TypeAlignment;
+    }
+
+    while (out < output.end())
+        *out++ = (*g++) * (*in++);
 }

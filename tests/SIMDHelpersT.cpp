@@ -266,3 +266,75 @@ TEST_CASE("[Helpers] Interleaved write SIMD vs Scalar")
     writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(outputSIMD));
     REQUIRE( outputScalar == outputSIMD );
 }
+
+TEST_CASE("[Helpers] Gain, single")
+{
+    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
+    applyGain<float, false>(fillValue, input, absl::MakeSpan(output));
+    REQUIRE( output == expected );
+}
+
+TEST_CASE("[Helpers] Gain, single and inplace")
+{
+    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
+    applyGain<float, false>(fillValue, buffer, absl::MakeSpan(buffer));
+    REQUIRE( buffer == expected );
+}
+
+TEST_CASE("[Helpers] Gain, spans")
+{
+    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    applyGain<float, false>(gain, input, absl::MakeSpan(output));
+    REQUIRE( output == expected );
+}
+
+TEST_CASE("[Helpers] Gain, spans and inplace")
+{
+    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    applyGain<float, false>(gain, buffer, absl::MakeSpan(buffer));
+    REQUIRE( buffer == expected );
+}
+
+TEST_CASE("[Helpers] Gain, single (SIMD)")
+{
+    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
+    applyGain<float, true>(fillValue, input, absl::MakeSpan(output));
+    REQUIRE( output == expected );
+}
+
+TEST_CASE("[Helpers] Gain, single and inplace (SIMD)")
+{
+    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
+    applyGain<float, true>(fillValue, buffer, absl::MakeSpan(buffer));
+    REQUIRE( buffer == expected );
+}
+
+TEST_CASE("[Helpers] Gain, spans (SIMD)")
+{
+    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    applyGain<float, true>(gain, input, absl::MakeSpan(output));
+    REQUIRE( output == expected );
+}
+
+TEST_CASE("[Helpers] Gain, spans and inplace (SIMD)")
+{
+    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    applyGain<float, true>(gain, buffer, absl::MakeSpan(buffer));
+    REQUIRE( buffer == expected );
+}

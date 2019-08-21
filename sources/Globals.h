@@ -26,6 +26,8 @@ namespace SIMDConfig
     constexpr bool writeInterleaved { true };
     constexpr bool readInterleaved { true };
     constexpr bool fill { false };
+    constexpr bool gain { false };
+    constexpr bool mathfuns { false };
 #if USE_SIMD
     constexpr bool useSIMD { true };
 #else

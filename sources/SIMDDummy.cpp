@@ -57,3 +57,15 @@ void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 {
     cos<float, false>(input, output);
 }
+
+template<>
+void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    applyGain<float, false>(gain, input, output);
+}
+
+template<>
+void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    applyGain<float, false>(gain, input, output);
+}

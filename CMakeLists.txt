@@ -179,3 +179,6 @@ target_link_libraries(bm_mathfuns benchmark absl::span absl::span)
 if (UNIX)
     # target_compile_options(bm_math_loops PRIVATE -fopenmp)
 endif()
+
+add_executable(bm_gain benchmarks/BM_gain.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_gain benchmark absl::span)

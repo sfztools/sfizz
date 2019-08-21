@@ -1,6 +1,5 @@
-
-#include "absl/types/span.h"
 #include "Globals.h"
+#include <absl/types/span.h>
 #include "Helpers.h"
 #include <cmath>
 
@@ -52,7 +51,7 @@ void fill(absl::Span<T> output, T value) noexcept
 template<>
 void fill<float, true>(absl::Span<float> output, float value) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::useSIMD>
+template<class Type, bool SIMD=SIMDConfig::mathfuns>
 void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -64,7 +63,7 @@ void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template<>
 void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::useSIMD>
+template<class Type, bool SIMD=SIMDConfig::mathfuns>
 void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -76,7 +75,7 @@ void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template<>
 void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::useSIMD>
+template<class Type, bool SIMD=SIMDConfig::mathfuns>
 void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -88,7 +87,7 @@ void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template<>
 void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::useSIMD>
+template<class Type, bool SIMD=SIMDConfig::mathfuns>
 void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -109,9 +108,48 @@ void linearRamp(absl::Span<T> output, T start, T end);
 template<class T, bool SIMD=SIMDConfig::useSIMD>
 void exponentialRamp(absl::Span<T> output, T start, T end);
 
-template<class T, bool SIMD=SIMDConfig::useSIMD>
-void applyGain(T gain, absl::Span<T> output);
+template<class T, bool SIMD=SIMDConfig::gain>
+void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    ASSERT(input.size() <= output.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + std::min(output.size(), input.size());
+    while (out < sentinel)
+    {
+        *out++ = gain * (*in++);
+    }
+}
 
-template<class T, bool SIMD=SIMDConfig::useSIMD>
-void applyGain(absl::Span<const T> gain, absl::Span<T> output);
+template<class T, bool SIMD=SIMDConfig::gain>
+void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    ASSERT(gain.size() == input.size());
+    ASSERT(input.size() <= output.size());
+    auto* in = input.begin();
+    auto* g = gain.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + std::min(gain.size(), std::min(output.size(), input.size()));
+    while (out < sentinel)
+    {
+        *out++ = (*g++) * (*in++);
+    }
+}
 
+template<class T, bool SIMD=SIMDConfig::gain>
+void applyGain(T gain, absl::Span<T> output) noexcept
+{
+    applyGain<T, SIMD>(gain, output, output);
+}
+
+template<class T, bool SIMD=SIMDConfig::gain>
+void applyGain(absl::Span<const T> gain, absl::Span<T> output) noexcept
+{
+    applyGain<T, SIMD>(gain, output, output);
+}
+
+template<>
+void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template<>
+void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
