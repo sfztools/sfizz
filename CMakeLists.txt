@@ -1,6 +1,4 @@
 cmake_minimum_required(VERSION 3.13)
-# You need to generate the AppConfig.h and the JuceHeader.h through the Projucer; the rest is more or less here 
-
 project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 
 # Set the highest possible standard
