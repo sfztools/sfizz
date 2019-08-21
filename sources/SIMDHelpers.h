@@ -100,7 +100,36 @@ template<>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 template<class T, bool SIMD=SIMDConfig::useSIMD>
-void loopingSFZIndex(absl::Span<const T> inputLeft, absl::Span<const T> inputRight, absl::Span<T> output);
+void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
+{
+    ASSERT(indices.size() >= jumps.size());
+    ASSERT(indices.size() == leftCoeffs.size());
+    ASSERT(indices.size() == rightCoeffs.size());
+
+    auto* index = indices.begin();
+    auto* leftCoeff = leftCoeffs.begin();
+    auto* rightCoeff = rightCoeffs.begin();
+    auto* jump = jumps.begin();
+    const auto size = min(jumps.size(), indices.size(), leftCoeffs.size(), rightCoeffs.size());
+    auto* sentinel = jumps.begin() + size;
+    
+    while (jump < sentinel)
+    {
+        floatIndex += *jump;
+        if (floatIndex >= loopEnd)
+            floatIndex -= loopEnd - loopStart;
+        *index = static_cast<int>(floatIndex);
+        *rightCoeff = floatIndex - *index;
+        *leftCoeff = 1.0f - *rightCoeff;
+        index++;
+        leftCoeff++;
+        rightCoeff++;
+        jump++;
+    }
+}
+
+template<>
+void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept;
 
 template<class T, bool SIMD=SIMDConfig::useSIMD>
 void linearRamp(absl::Span<T> output, T start, T end);

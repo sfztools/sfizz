@@ -69,3 +69,9 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 {
     applyGain<float, false>(gain, input, output);
 }
+
+template<>
+void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
+{
+    loopingSFZIndex<float, false>( jumps, leftCoeff, rightCoeff, indices);
+}

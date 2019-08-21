@@ -48,6 +48,13 @@ inline unsigned int hash(std::string_view s, unsigned int h = Fnv1aBasis)
     return h;
 }
 
+template<class T>
+inline constexpr T min(T op1, T op2) { return std::min(op1, op2); }
+template<class T>
+inline constexpr T min(T op1, T op2, T op3) { return std::min(op1, std::min(op2, op3)); }
+template<class T>
+inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::min(op2, std::min(op3, op4))); }
+
 #ifndef NDEBUG
 #if __linux__ || __unix__
     // These trap into the signal library rather than your own sourcecode

@@ -56,13 +56,13 @@ public:
 
     void readInterleaved(absl::Span<const Type> input) noexcept
     {
-        ASSERT(input.size() <= numChannels * numFrames);
+        ASSERT(input.size() <= static_cast<size_t>(numChannels * numFrames));
         ::readInterleaved<Type>(input, absl::MakeSpan(leftBuffer), absl::MakeSpan(rightBuffer));
     }
 
     void writeInterleaved(absl::Span<Type> output) noexcept
     {
-        ASSERT(output.size() >= numChannels * numFrames);
+        ASSERT(output.size() >= static_cast<size_t>(numChannels * numFrames));
         ::writeInterleaved<Type>(leftBuffer, rightBuffer, output);
     }
 

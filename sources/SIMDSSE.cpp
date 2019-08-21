@@ -37,6 +37,11 @@ bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3)
     return unaligned(ptr1) || unaligned(ptr2) || unaligned(ptr3);
 }
 
+bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3, const float* ptr4)
+{
+    return unaligned(ptr1) || unaligned(ptr2) || unaligned(ptr3) || unaligned(ptr4);
+}
+
 template<>
 void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
@@ -194,8 +199,6 @@ void log<float, true>(absl::Span<const float> input, absl::Span<float> output) n
     }
 }
 
-
-
 template<>
 void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
@@ -256,4 +259,82 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 
     while (out < output.end())
         *out++ = (*g++) * (*in++);
+}
+
+template<>
+void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
+{
+    ASSERT(indices.size() >= jumps.size());
+    ASSERT(indices.size() == leftCoeffs.size());
+    ASSERT(indices.size() == rightCoeffs.size());
+
+    auto index = indices.data();
+    auto leftCoeff = leftCoeffs.data();
+    auto rightCoeff = rightCoeffs.data();
+    auto jump = jumps.data();
+    const auto size = min(jumps.size(), indices.size(), leftCoeffs.size(), rightCoeffs.size());
+    const auto* sentinel = jumps.begin() + size;
+    const auto* alignedEnd = prevAligned(sentinel);
+
+    while (unaligned(reinterpret_cast<float*>(index), leftCoeff, rightCoeff, jump) && jump < alignedEnd)
+    {
+        floatIndex += *jump;
+        if (floatIndex >= loopEnd)
+            floatIndex -= loopEnd - loopStart;
+        *index = static_cast<int>(floatIndex);
+        *rightCoeff = floatIndex - *index;
+        *leftCoeff = 1.0f - *rightCoeff;
+        index++;
+        leftCoeff++;
+        rightCoeff++;
+        jump++;
+    }
+
+    auto mmFloatIndex = _mm_set_ps1(floatIndex);
+    const auto mmJumpBack   = _mm_set1_ps(loopEnd - loopStart);
+    const auto mmLoopEnd = _mm_set1_ps(loopEnd);
+    while (jump < alignedEnd)
+    {
+        auto mmOffset = _mm_load_ps(jump);
+        mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4))); 
+        mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, 0x40));
+
+        mmFloatIndex = _mm_add_ps(mmFloatIndex, mmOffset);
+        const auto mmCompared = _mm_cmpge_ps(mmFloatIndex, mmLoopEnd);
+        auto mmLoopBack = _mm_sub_ps(mmFloatIndex, mmJumpBack);
+        mmLoopBack = _mm_and_ps(mmCompared, mmLoopBack);
+        mmFloatIndex = _mm_andnot_ps(mmCompared, mmFloatIndex);
+        mmFloatIndex = _mm_add_ps(mmFloatIndex, mmLoopBack);
+
+        auto mmIndices = _mm_cvtps_epi32(_mm_sub_ps(mmFloatIndex, _mm_set_ps1(0.4999999552965164184570312f)));
+        _mm_store_si128(reinterpret_cast<__m128i*>(index), mmIndices);
+        
+        auto mmRight = _mm_sub_ps(mmFloatIndex, _mm_cvtepi32_ps(mmIndices));
+        auto mmLeft = _mm_sub_ps(_mm_set_ps1(1.0f), mmRight);
+        _mm_store_ps(leftCoeff, mmLeft);
+        _mm_store_ps(rightCoeff, mmRight);
+
+        mmFloatIndex = _mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(3, 3, 3, 3));
+        // floatingIndex = _mm_cvtss_f32(_mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(0, 0, 0, 3)));;
+        // floatingIndex = *(index + 3) + *(rightCoeff + 3);
+        index += TypeAlignment;
+        jump += TypeAlignment;
+        leftCoeff += TypeAlignment;
+        rightCoeff += TypeAlignment;
+    }
+
+    floatIndex = _mm_cvtss_f32(mmFloatIndex);
+    while (jump < sentinel)
+    {
+        floatIndex += *jump;
+        if (floatIndex >= loopEnd)
+            floatIndex -= loopEnd - loopStart;
+        *index = static_cast<int>(floatIndex);
+        *rightCoeff = floatIndex - *index;
+        *leftCoeff = 1.0f - *rightCoeff;
+        index++;
+        leftCoeff++;
+        rightCoeff++;
+        jump++;
+    }
 }

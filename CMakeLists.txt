@@ -17,7 +17,7 @@ if (UNIX)
     add_compile_options(-Wextra)
     # add_compile_options(-fno-exceptions)
     add_compile_options(-ffast-math)
-    # add_compile_options(-fno-omit-frame-pointer)
+    add_compile_options(-fno-omit-frame-pointer)
 endif()
 
 if (WIN32)
@@ -140,7 +140,7 @@ add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
 if(UNIX)
     target_link_libraries(sfizz_tests stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span)
+target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span absl::algorithm)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -153,12 +153,6 @@ add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
 target_link_libraries(bench_opf_high_vs_low benchmark absl::span)
 
 ###############################
-add_executable(bench_looping_index benchmarks/Looping_index.cpp)
-target_link_libraries(bench_looping_index benchmark)
-
-add_executable(bench_looping_index_2 benchmarks/Looping_index_2.cpp)
-target_link_libraries(bench_looping_index_2 benchmark)
-
 add_executable(bm_cum_prod benchmarks/Cum_Prod.cpp)
 target_link_libraries(bm_cum_prod benchmark)
 
@@ -175,10 +169,13 @@ add_executable(bm_fill benchmarks/BM_fill.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_fill benchmark absl::span)
 
 add_executable(bm_mathfuns benchmarks/BM_mathfuns.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_mathfuns benchmark absl::span absl::span)
+target_link_libraries(bm_mathfuns benchmark absl::span)
 if (UNIX)
     # target_compile_options(bm_math_loops PRIVATE -fopenmp)
 endif()
 
 add_executable(bm_gain benchmarks/BM_gain.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_gain benchmark absl::span)
+
+add_executable(bm_looping benchmarks/BM_looping.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_looping benchmark absl::span absl::algorithm)

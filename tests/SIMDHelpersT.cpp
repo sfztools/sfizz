@@ -2,12 +2,30 @@
 #include "../sources/SIMDHelpers.h"
 #include <array>
 #include <algorithm>
+#include <absl/types/span.h>
+#include <absl/algorithm/container.h>
 using namespace Catch::literals;
 
 constexpr int smallBufferSize { 3 };
 constexpr int bigBufferSize { 4095 };
 constexpr int medBufferSize { 127 };
 constexpr double fillValue { 1.3 };
+
+template<class Type>
+inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps=1e-3)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < rhs.size(); ++i)
+        if (rhs[i] != Approx(lhs[i]).epsilon(eps))
+        {
+            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
+            return false;
+        }
+
+    return true;
+}
 
 TEST_CASE("[Helpers] fill() - Manual buffer")
 {
@@ -338,3 +356,53 @@ TEST_CASE("[Helpers] Gain, spans and inplace (SIMD)")
     applyGain<float, true>(gain, buffer, absl::MakeSpan(buffer));
     REQUIRE( buffer == expected );
 }
+
+TEST_CASE("[Helpers] SFZ looping index")
+{
+    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f}; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<int, 6> indices;
+    std::array<float, 6> leftCoeffs;
+    std::array<float, 6> rightCoeffs;
+    std::array<int, 6> expectedIndices { 2, 3, 4, 1, 2, 4 };
+    std::array<float, 6> expectedLeft { 0.9f, 0.7f, 0.4f, 1.0f, 0.5f, 0.9f };
+    std::array<float, 6> expectedRight { 0.1f, 0.3f, 0.6f, 0.0f, 0.5f, 0.1f };
+    loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6, 1);
+    REQUIRE( indices == expectedIndices );
+    REQUIRE( approxEqual<float>(leftCoeffs, expectedLeft) );
+    REQUIRE( approxEqual<float>(rightCoeffs, expectedRight) );
+}
+
+TEST_CASE("[Helpers] SFZ looping index (SIMD)")
+{
+    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f}; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<int, 6> indices;
+    std::array<float, 6> leftCoeffs;
+    std::array<float, 6> rightCoeffs;
+    std::array<int, 6> expectedIndices { 2, 3, 4, 1, 2, 4 };
+    std::array<float, 6> expectedLeft { 0.9f, 0.7f, 0.4f, 1.0f, 0.5f, 0.9f };
+    std::array<float, 6> expectedRight { 0.1f, 0.3f, 0.6f, 0.0f, 0.5f, 0.1f };
+    loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6, 1);
+    REQUIRE( indices == expectedIndices );
+    REQUIRE( approxEqual<float>(leftCoeffs, expectedLeft) );
+    REQUIRE( approxEqual<float>(rightCoeffs, expectedRight) );
+}
+
+// TEST_CASE("[Helpers] SFZ looping index (SIMD vs Scalar)")
+// {
+
+//     std::vector<float> jumps(bigBufferSize);
+//     absl::c_fill(jumps, fillValue);
+
+//     std::vector<int> indices(bigBufferSize);
+//     std::vector<float> leftCoeffs(bigBufferSize);
+//     std::vector<float> rightCoeffs(bigBufferSize);
+    
+//     std::vector<int> indicesSIMD(bigBufferSize);
+//     std::vector<float> leftCoeffsSIMD(bigBufferSize);
+//     std::vector<float> rightCoeffsSIMD(bigBufferSize);
+//     loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, medBufferSize, 1);
+//     loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffsSIMD), absl::MakeSpan(rightCoeffsSIMD), absl::MakeSpan(indicesSIMD), 1.0f, medBufferSize, 1);
+//     REQUIRE( approxEqual<int>(indices, indicesSIMD, 1) );
+//     REQUIRE( approxEqual<float>(leftCoeffs, leftCoeffsSIMD, 1e-2) );
+//     REQUIRE( approxEqual<float>(rightCoeffs, rightCoeffsSIMD, 1e-2) );
+// }
