@@ -1,12 +1,13 @@
 #include "SIMDHelpers.h"
 #include "Helpers.h"
 #include "x86intrin.h"
+#include "mathfuns/sse_mathfun.h"
 
 constexpr int TypeAlignment { 4 };
 using Type = float;
 
 template<>
-void readInterleaved<Type, true>(gsl::span<const Type> input, gsl::span<Type> outputLeft, gsl::span<Type> outputRight) noexcept
+void readInterleaved<Type, true>(absl::Span<const Type> input, absl::Span<Type> outputLeft, absl::Span<Type> outputRight) noexcept
 {
     // The size of the outputs is not big enough for the input...
     ASSERT(outputLeft.size() >= input.size() / 2);
@@ -36,7 +37,7 @@ void readInterleaved<Type, true>(gsl::span<const Type> input, gsl::span<Type> ou
         _mm_storeu_ps(rOut, register1);
         lOut += TypeAlignment;
         rOut += TypeAlignment;
-    }    
+    }
     
     inputSentinel = input.end() - 1;
     while (in < inputSentinel && lOut < outputLeft.end() && rOut < outputRight.end())
@@ -47,7 +48,7 @@ void readInterleaved<Type, true>(gsl::span<const Type> input, gsl::span<Type> ou
 }
 
 template<>
-void writeInterleaved<Type, true>(gsl::span<const Type> inputLeft, gsl::span<const Type> inputRight, gsl::span<Type> output) noexcept
+void writeInterleaved<Type, true>(absl::Span<const Type> inputLeft, absl::Span<const Type> inputRight, absl::Span<Type> output) noexcept
 {
     // The size of the output is not big enough for the inputs...
     ASSERT(inputLeft.size() <= output.size() / 2);
@@ -89,7 +90,7 @@ void writeInterleaved<Type, true>(gsl::span<const Type> inputLeft, gsl::span<con
 }
 
 template<>
-void fill<float, true>(gsl::span<float> output, float value) noexcept
+void fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     const auto mmValue = _mm_set_ps1(value);
     auto* out = output.begin();
@@ -104,4 +105,19 @@ void fill<float, true>(gsl::span<float> output, float value) noexcept
     
     while (out < output.end())
         *out++ = value;
+}
+
+template<>
+void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = in + std::min(input.size(), output.size());
+    while (in < sentinel)
+    {
+        _mm_storeu_ps(out, exp_ps(_mm_loadu_ps(in)));
+        out += 4;
+        in += 4;
+    }
 }

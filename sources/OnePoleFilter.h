@@ -1,6 +1,6 @@
 #include "Globals.h"
 #include <cmath>
-#include "gsl/gsl-lite.hpp"
+#include <absl/types/span.h>
 
 template<class Type=float>
 class OnePoleFilter
@@ -27,7 +27,7 @@ public:
 
     Type getGain() const { return gain; }
 
-    int processLowpass(gsl::span<const Type> input, gsl::span<Type> lowpass)
+    int processLowpass(absl::Span<const Type> input, absl::Span<Type> lowpass)
     {
         for (auto [in, out] = std::pair(input.begin(), lowpass.begin()); 
             in < input.end() && out < lowpass.end(); in++, out++)
@@ -37,7 +37,7 @@ public:
         return std::min(input.size(), lowpass.size());
     }
 
-    int processHighpass(gsl::span<const Type> input, gsl::span<Type> highpass)
+    int processHighpass(absl::Span<const Type> input, absl::Span<Type> highpass)
     {
         for (auto [in, out] = std::pair(input.begin(), highpass.begin()); 
             in < input.end() && out < highpass.end(); in++, out++)
@@ -47,7 +47,7 @@ public:
         return std::min(input.size(), highpass.size());
     }
 
-    int processLowpassVariableGain(gsl::span<const Type> input, gsl::span<Type> lowpass, gsl::span<const Type> gain)
+    int processLowpassVariableGain(absl::Span<const Type> input, absl::Span<Type> lowpass, absl::Span<const Type> gain)
     {
         for (auto [in, out, g] = std::tuple(input.begin(), lowpass.begin(), gain.begin()); 
             in < input.end() && out < lowpass.end() && g < gain.end(); in++, out++, g++)
@@ -59,7 +59,7 @@ public:
         return std::min({ input.size(), lowpass.size(), gain.size() });
     }
 
-    int processHighpassVariableGain(gsl::span<const Type> input, gsl::span<Type> highpass, gsl::span<const Type> gain)
+    int processHighpassVariableGain(absl::Span<const Type> input, absl::Span<Type> highpass, absl::Span<const Type> gain)
     {
         for (auto [in, out, g] = std::tuple(input.begin(), highpass.begin(), gain.begin()); 
             in < input.end() && out < highpass.end() && g < gain.end(); in++, out++, g++)

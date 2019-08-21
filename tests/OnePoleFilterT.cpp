@@ -1,10 +1,10 @@
 #include "../sources/OnePoleFilter.h"
 #include "catch2/catch.hpp"
 #include "cnpy.h"
-#include "gsl/gsl-lite.hpp"
 #include <string>
 #include <filesystem>
 #include <algorithm>
+#include <absl/types/span.h>
 using namespace Catch::literals;
 
 template<class Type>
@@ -28,11 +28,11 @@ void testLowpass(const std::filesystem::path& inputNumpyFile, const std::filesys
 {
     const auto input = cnpy::npy_load(inputNumpyFile.string());
     REQUIRE( input.word_size == 8 );
-    const auto inputSpan = gsl::make_span(input.data<double>(), input.shape[0]);
+    const auto inputSpan = absl::MakeSpan(input.data<double>(), input.shape[0]);
 
     const auto output = cnpy::npy_load(outputNumpyFile.string());
     REQUIRE( output.word_size == 8 );
-    const auto outputSpan = gsl::make_span(output.data<double>(), output.shape[0]);
+    const auto outputSpan = absl::MakeSpan(output.data<double>(), output.shape[0]);
     auto size = std::min(outputSpan.size(), inputSpan.size());
     REQUIRE( size > 0 );
 
@@ -47,14 +47,14 @@ void testLowpass(const std::filesystem::path& inputNumpyFile, const std::filesys
     
     OnePoleFilter filter { gain };
     std::vector<Type> outputData (size);
-    filter.processLowpass(inputData, outputData);
+    filter.processLowpass(inputData, absl::MakeSpan(outputData));
     REQUIRE( approxEqual(outputData, expectedData) );
 
     filter.reset();
     std::fill(outputData.begin(), outputData.end(), 0.0);
     std::vector<Type> gains(size);
     std::fill(gains.begin(), gains.end(), gain);
-    filter.processLowpassVariableGain(inputData, outputData, gains);
+    filter.processLowpassVariableGain(inputData, absl::MakeSpan(outputData), gains);
     REQUIRE( approxEqual(outputData, expectedData) );
 }
 
@@ -63,11 +63,11 @@ void testHighpass(const std::filesystem::path& inputNumpyFile, const std::filesy
 {
     const auto input = cnpy::npy_load(inputNumpyFile.string());
     REQUIRE( input.word_size == 8 );
-    const auto inputSpan = gsl::make_span(input.data<double>(), input.shape[0]);
+    const auto inputSpan = absl::MakeSpan(input.data<double>(), input.shape[0]);
 
     const auto output = cnpy::npy_load(outputNumpyFile.string());
     REQUIRE( output.word_size == 8 );
-    const auto outputSpan = gsl::make_span(output.data<double>(), output.shape[0]);
+    const auto outputSpan = absl::MakeSpan(output.data<double>(), output.shape[0]);
     auto size = std::min(outputSpan.size(), inputSpan.size());
     REQUIRE( size > 0 );
 
@@ -82,14 +82,14 @@ void testHighpass(const std::filesystem::path& inputNumpyFile, const std::filesy
     
     OnePoleFilter filter { gain };
     std::vector<Type> outputData (size);
-    filter.processHighpass(inputData, outputData);
+    filter.processHighpass(inputData, absl::MakeSpan(outputData));
     REQUIRE( approxEqual(outputData, expectedData) );
 
     filter.reset();
     std::fill(outputData.begin(), outputData.end(), 0.0);
     std::vector<Type> gains(size);
     std::fill(gains.begin(), gains.end(), gain);
-    filter.processHighpassVariableGain(inputData, outputData, gains);
+    filter.processHighpassVariableGain(inputData, absl::MakeSpan(outputData), gains);
     REQUIRE( approxEqual(outputData, expectedData) );
 }
 

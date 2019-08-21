@@ -2,34 +2,40 @@
 #include "Helpers.h"
 
 template<>
-void readInterleaved<float, true>(gsl::span<const float> input, gsl::span<float> outputLeft, gsl::span<float> outputRight) noexcept
+void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     readInterleaved<float, false>(input, outputLeft, outputRight);
 }
 
 template<>
-void writeInterleaved<float, true>(gsl::span<const float> inputLeft, gsl::span<const float> inputRight, gsl::span<float> output) noexcept
+void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     writeInterleaved<float, false>(inputLeft, inputRight, output);
 }
 
 // template<class Type, bool SIMD=false>
-// void loopingSFZIndex(gsl::span<const Type> inputLeft, gsl::span<const Type> inputRight, gsl::span<Type> output);
+// void loopingSFZIndex(absl::Span<const Type> inputLeft, absl::Span<const Type> inputRight, absl::Span<Type> output);
 
 // template<class Type, bool SIMD=false>
-// void linearRamp(gsl::span<Type> output, Type start, Type end);
+// void linearRamp(absl::Span<Type> output, Type start, Type end);
 
 // template<class Type, bool SIMD=false>
-// void exponentialRamp(gsl::span<Type> output, Type start, Type end);
+// void exponentialRamp(absl::Span<Type> output, Type start, Type end);
 
 // template<class Type, bool SIMD=false>
-// void applyGain(Type gain, gsl::span<Type> output);
+// void applyGain(Type gain, absl::Span<Type> output);
 
 // template<class Type, bool SIMD=false>
-// void applyGain(gsl::span<const Type> output, gsl::span<Type> output);
+// void applyGain(absl::Span<const Type> output, absl::Span<Type> output);
 
 template<>
-void fill<float, true>(gsl::span<float> output, float value) noexcept
+void fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     fill<float, false>(output, value);
+}
+
+template<>
+void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    exp<float, false>(input, output);
 }

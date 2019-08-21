@@ -2,7 +2,7 @@
 #include "Buffer.h"
 #include "Helpers.h"
 #include "Globals.h"
-#include "gsl/gsl-lite.hpp"
+
 #include <array>
 #include <iostream>
 #include <type_traits>
@@ -50,17 +50,17 @@ public:
 
     void fill(Type value) noexcept
     {
-        ::fill<Type>(leftBuffer, value);
-        ::fill<Type>(rightBuffer, value);
+        ::fill<Type>(absl::MakeSpan(leftBuffer), value);
+        ::fill<Type>(absl::MakeSpan(rightBuffer), value);
     }
 
-    void readInterleaved(gsl::span<const Type> input) noexcept
+    void readInterleaved(absl::Span<const Type> input) noexcept
     {
         ASSERT(input.size() <= numChannels * numFrames);
-        ::readInterleaved<Type>(input, leftBuffer, rightBuffer);
+        ::readInterleaved<Type>(input, absl::MakeSpan(leftBuffer), absl::MakeSpan(rightBuffer));
     }
 
-    void writeInterleaved(gsl::span<Type> output) noexcept
+    void writeInterleaved(absl::Span<Type> output) noexcept
     {
         ASSERT(output.size() >= numChannels * numFrames);
         ::writeInterleaved<Type>(leftBuffer, rightBuffer, output);

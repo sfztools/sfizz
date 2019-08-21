@@ -140,7 +140,7 @@ add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
 if(UNIX)
     target_link_libraries(sfizz_tests stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue cnpy-static gsl::gsl-lite)
+target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -150,7 +150,7 @@ target_link_libraries(bench_span benchmark gsl::gsl-lite absl::span)
 
 ###############################
 add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
-target_link_libraries(bench_opf_high_vs_low benchmark gsl::gsl-lite)
+target_link_libraries(bench_opf_high_vs_low benchmark absl::span)
 
 ###############################
 add_executable(bench_looping_index benchmarks/Looping_index.cpp)
@@ -166,7 +166,19 @@ add_executable(bm_cum_sum benchmarks/Cum_Sum.cpp)
 target_link_libraries(bm_cum_sum benchmark)
 
 add_executable(bm_write benchmarks/BM_writeInterleaved.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_write benchmark gsl::gsl-lite)
+target_link_libraries(bm_write benchmark absl::span)
 
 add_executable(bm_fill benchmarks/BM_fill.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_fill benchmark gsl::gsl-lite)
+target_link_libraries(bm_fill benchmark absl::span)
+
+add_executable(bm_math_functions benchmarks/Math_functions.cpp)
+target_link_libraries(bm_math_functions benchmark)
+if (UNIX)
+    target_compile_options(bm_math_functions PRIVATE -funsafe-math-optimizations -msse4.2)
+endif()
+
+add_executable(bm_mathfuns benchmarks/BM_mathfuns.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_mathfuns benchmark absl::span absl::span)
+if (UNIX)
+    # target_compile_options(bm_math_loops PRIVATE -fopenmp)
+endif()
