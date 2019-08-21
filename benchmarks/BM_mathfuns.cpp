@@ -6,13 +6,26 @@
 #include <iostream>
 #include "../sources/SIMDHelpers.h"
 
-static void Dummy(benchmark::State& state) {
+class MyFixture : public benchmark::Fixture {
+public:
+  void SetUp(const ::benchmark::State& state) {
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    std::vector<float> source(state.range(0));
-    std::vector<float> result(state.range(0));
-    std::normal_distribution<float> dist { };
+    std::uniform_real_distribution<float> dist { 0.1, 1 };
+    source = std::vector<float>(state.range(0));
+    result = std::vector<float>(state.range(0));
     std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
+  }
+
+  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  }
+
+  std::vector<float> source;
+  std::vector<float> result;
+};
+
+
+BENCHMARK_DEFINE_F(MyFixture, Dummy)(benchmark::State& state) {
     for (auto _ : state)
     {
          for (int i = 0; i < state.range(0); ++i)
@@ -21,13 +34,7 @@ static void Dummy(benchmark::State& state) {
     }
 }
 
-static void StdExp(benchmark::State& state) {
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::vector<float> source(state.range(0));
-    std::vector<float> result(state.range(0));
-    std::normal_distribution<float> dist { };
-    std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
+BENCHMARK_DEFINE_F(MyFixture, StdExp)(benchmark::State& state) {
     for (auto _ : state)
     {
         for (int i = 0; i < state.range(0); ++i)
@@ -36,29 +43,7 @@ static void StdExp(benchmark::State& state) {
     }
 }
 
-// static void StdExpOMP(benchmark::State& state) {
-//     std::random_device rd { };
-//     std::mt19937 gen { rd() };
-//     std::vector<float> source(state.range(0));
-//     std::vector<float> result(state.range(0));
-//     std::normal_distribution<float> dist { };
-//     std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
-//     for (auto _ : state)
-//     {
-//         #pragma omp simd
-//         for (int i = 0; i < state.range(0); ++i)
-//             result[i] = std::exp(source[i]);
-//         benchmark::DoNotOptimize(result);
-//     }
-// }
-
-static void Scalar(benchmark::State& state) {
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::vector<float> source(state.range(0));
-    std::vector<float> result(state.range(0));
-    std::normal_distribution<float> dist { };
-    std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
+BENCHMARK_DEFINE_F(MyFixture, ScalarExp)(benchmark::State& state) {
     for (auto _ : state)
     {
         exp<float, false>(source, absl::MakeSpan(result));
@@ -66,13 +51,7 @@ static void Scalar(benchmark::State& state) {
     }
 }
 
-static void SIMD(benchmark::State& state) {
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::vector<float> source(state.range(0));
-    std::vector<float> result(state.range(0));
-    std::normal_distribution<float> dist { };
-    std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
+BENCHMARK_DEFINE_F(MyFixture, SIMDExp)(benchmark::State& state) {
     for (auto _ : state)
     {
         exp<float, true>(source, absl::MakeSpan(result));
@@ -80,8 +59,93 @@ static void SIMD(benchmark::State& state) {
     }
 }
 
-BENCHMARK(Dummy)->RangeMultiplier(2)->Range(1 << 6, 1 << 10);
-BENCHMARK(StdExp)->RangeMultiplier(2)->Range(1 << 6, 1 << 10);
-BENCHMARK(Scalar)->RangeMultiplier(2)->Range(1 << 6, 1 << 10);
-BENCHMARK(SIMD)->RangeMultiplier(2)->Range(1 << 6, 1 << 10);
+BENCHMARK_DEFINE_F(MyFixture, StdLog)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        for (int i = 0; i < state.range(0); ++i)
+            result[i] = std::log(source[i]);
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, ScalarLog)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        log<float, false>(source, absl::MakeSpan(result));
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, SIMDLog)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        log<float, true>(source, absl::MakeSpan(result));
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, StdSin)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        for (int i = 0; i < state.range(0); ++i)
+            result[i] = std::sin(source[i]);
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, ScalarSin)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        sin<float, false>(source, absl::MakeSpan(result));
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, SIMDSin)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        sin<float, true>(source, absl::MakeSpan(result));
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, StdCos)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        for (int i = 0; i < state.range(0); ++i)
+            result[i] = std::cos(source[i]);
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, ScalarCos)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        cos<float, false>(source, absl::MakeSpan(result));
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, SIMDCos)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        cos<float, true>(source, absl::MakeSpan(result));
+        benchmark::DoNotOptimize(result);
+    }
+}
+
+BENCHMARK_REGISTER_F(MyFixture, Dummy)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, StdExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, ScalarExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, SIMDExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, StdLog)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, ScalarLog)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, SIMDLog)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, StdSin)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, ScalarSin)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, SIMDSin)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, StdCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, ScalarCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, SIMDCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+
 BENCHMARK_MAIN();

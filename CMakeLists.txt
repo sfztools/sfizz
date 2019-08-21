@@ -168,14 +168,11 @@ target_link_libraries(bm_cum_sum benchmark)
 add_executable(bm_write benchmarks/BM_writeInterleaved.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_write benchmark absl::span)
 
+add_executable(bm_read benchmarks/BM_readInterleaved.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_read benchmark absl::span)
+
 add_executable(bm_fill benchmarks/BM_fill.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_fill benchmark absl::span)
-
-add_executable(bm_math_functions benchmarks/Math_functions.cpp)
-target_link_libraries(bm_math_functions benchmark)
-if (UNIX)
-    target_compile_options(bm_math_functions PRIVATE -funsafe-math-optimizations -msse4.2)
-endif()
 
 add_executable(bm_mathfuns benchmarks/BM_mathfuns.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_mathfuns benchmark absl::span absl::span)

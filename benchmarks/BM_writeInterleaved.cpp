@@ -3,6 +3,7 @@
 #include "../sources/Buffer.h"
 #include <algorithm>
 #include <numeric>
+#include <absl/types/span.h>
 
 static void Interleaved_Write(benchmark::State& state) {
   Buffer<float> inputLeft (state.range(0));
@@ -12,7 +13,7 @@ static void Interleaved_Write(benchmark::State& state) {
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
 
   for (auto _ : state) {
-    writeInterleaved<float, false>(inputLeft, inputRight, output);
+    writeInterleaved<float, false>(inputLeft, inputRight, absl::MakeSpan(output));
   }
 }
 
@@ -23,7 +24,7 @@ static void Interleaved_Write_SSE(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, true>(inputLeft, inputRight, output);
+    writeInterleaved<float, true>(inputLeft, inputRight, absl::MakeSpan(output));
     benchmark::DoNotOptimize(output);
   }
 }
@@ -35,7 +36,7 @@ static void Unaligned_Interleaved_Write(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, false>(gsl::span(inputLeft).subspan(1) , gsl::span(inputRight).subspan(1), gsl::span(output).subspan(1));
+    writeInterleaved<float, false>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(1));
     benchmark::DoNotOptimize(output);
   }
 }
@@ -47,7 +48,7 @@ static void Unaligned_Interleaved_Write_SSE(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, true>(gsl::span(inputLeft).subspan(1) , gsl::span(inputRight).subspan(1), gsl::span(output).subspan(1));
+    writeInterleaved<float, true>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(1));
     benchmark::DoNotOptimize(output);
   }
 }

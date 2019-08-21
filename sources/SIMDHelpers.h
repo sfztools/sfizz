@@ -64,6 +64,42 @@ void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template<>
 void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
+template<class Type, bool SIMD=SIMDConfig::useSIMD>
+void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto sentinel = std::min(input.size(), output.size());
+    for (decltype(sentinel) i = 0; i < sentinel; ++i)
+        output[i] = std::log(input[i]);
+}
+
+template<>
+void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template<class Type, bool SIMD=SIMDConfig::useSIMD>
+void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto sentinel = std::min(input.size(), output.size());
+    for (decltype(sentinel) i = 0; i < sentinel; ++i)
+        output[i] = std::sin(input[i]);
+}
+
+template<>
+void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template<class Type, bool SIMD=SIMDConfig::useSIMD>
+void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto sentinel = std::min(input.size(), output.size());
+    for (decltype(sentinel) i = 0; i < sentinel; ++i)
+        output[i] = std::cos(input[i]);
+}
+
+template<>
+void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
 template<class T, bool SIMD=SIMDConfig::useSIMD>
 void loopingSFZIndex(absl::Span<const T> inputLeft, absl::Span<const T> inputRight, absl::Span<T> output);
 

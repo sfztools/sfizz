@@ -121,3 +121,48 @@ void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) n
         in += 4;
     }
 }
+
+template<>
+void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = in + std::min(input.size(), output.size());
+    while (in < sentinel)
+    {
+        _mm_storeu_ps(out, cos_ps(_mm_loadu_ps(in)));
+        out += 4;
+        in += 4;
+    }
+}
+
+template<>
+void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = in + std::min(input.size(), output.size());
+    while (in < sentinel)
+    {
+        _mm_storeu_ps(out, log_ps(_mm_loadu_ps(in)));
+        out += 4;
+        in += 4;
+    }
+}
+
+template<>
+void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = in + std::min(input.size(), output.size());
+    while (in < sentinel)
+    {
+        _mm_storeu_ps(out, sin_ps(_mm_loadu_ps(in)));
+        out += 4;
+        in += 4;
+    }
+}

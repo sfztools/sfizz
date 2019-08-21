@@ -39,3 +39,21 @@ void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 {
     exp<float, false>(input, output);
 }
+
+template<>
+void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    log<float, false>(input, output);
+}
+
+template<>
+void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    sin<float, false>(input, output);
+}
+
+template<>
+void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    cos<float, false>(input, output);
+}
