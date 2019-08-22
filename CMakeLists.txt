@@ -75,6 +75,7 @@ set(COMMON_SOURCES
     sources/Synth.cpp
     sources/FilePool.cpp
     sources/Region.cpp
+    sources/ADSREnvelope.cpp
     sources/Parser.cpp
 )
 
@@ -110,6 +111,7 @@ set(TEST_SOURCES
     tests/FilesT.cpp
     tests/OnePoleFilterT.cpp
     tests/RegionActivationT.cpp
+    tests/ADSREnvelopeT.cpp
     tests/MainT.cpp
 )
 
@@ -169,3 +171,6 @@ target_link_libraries(bm_looping benchmark absl::span absl::algorithm)
 
 add_executable(bm_ramp benchmarks/BM_ramp.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_ramp benchmark absl::span absl::algorithm)
+
+add_executable(bm_ADSR benchmarks/BM_ADSR.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_ADSR benchmark absl::span absl::algorithm)

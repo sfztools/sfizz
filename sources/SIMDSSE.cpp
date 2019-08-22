@@ -306,7 +306,7 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
 }
 
 template<>
-void linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
+float linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
@@ -328,10 +328,11 @@ void linearRamp<float, true>(absl::Span<float> output, float value, float step) 
     value = _mm_cvtss_f32(mmValue);
     while(out < output.end())
         snippetRampLinear<float>(out, value, step);
+    return value;
 }
 
 template<>
-void multiplicativeRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
+float multiplicativeRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
@@ -353,4 +354,5 @@ void multiplicativeRamp<float, true>(absl::Span<float> output, float value, floa
     value = _mm_cvtss_f32(mmValue);
     while(out < output.end())
         snippetRampMultiplicative<float>(out, value, step);
+    return value;
 }

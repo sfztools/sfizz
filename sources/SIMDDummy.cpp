@@ -68,13 +68,13 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
 }
 
 template<>
-void linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
+float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
 {
-    linearRamp<float, false>(output, start, step);
+    return linearRamp<float, false>(output, start, step);
 }
 
 template<>
-void multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
+float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
 {
-    multiplicativeRamp<float, false>(output, start, step);
+    return multiplicativeRamp<float, false>(output, start, step);
 }

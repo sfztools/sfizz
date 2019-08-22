@@ -206,11 +206,12 @@ inline void snippetRampLinear(T*& output, T& value, T step)
 }
 
 template<class T, bool SIMD=SIMDConfig::linearRamp>
-void linearRamp(absl::Span<T> output, T start, T step) noexcept
+T linearRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
     while(out < output.end())
         snippetRampLinear<T>(out, start, step);
+    return start;
 }
 
 template<class T>
@@ -221,16 +222,17 @@ inline void snippetRampMultiplicative(T*& output, T& value, T step)
 }
 
 template<class T, bool SIMD=SIMDConfig::multiplicativeRamp>
-void multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
+T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
     while(out < output.end())
         snippetRampMultiplicative<T>(out, start, step);
+    return start;
 }
 
 
 template<>
-void linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
+float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
 
 template<>
-void multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
+float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
