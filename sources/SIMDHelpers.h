@@ -123,7 +123,7 @@ inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, i
     jump++;
 }
 
-template<class T, bool SIMD=SIMDConfig::useSIMD>
+template<class T, bool SIMD=SIMDConfig::loopingSFZIndex>
 void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
 {
     ASSERT(indices.size() >= jumps.size());
@@ -205,7 +205,7 @@ inline void snippetRampLinear(T*& output, T& value, T step)
     *output++ = value;
 }
 
-template<class T, bool SIMD=SIMDConfig::gain>
+template<class T, bool SIMD=SIMDConfig::linearRamp>
 void linearRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
@@ -220,7 +220,7 @@ inline void snippetRampMultiplicative(T*& output, T& value, T step)
     *output++ = value;
 }
 
-template<class T, bool SIMD=SIMDConfig::gain>
+template<class T, bool SIMD=SIMDConfig::multiplicativeRamp>
 void multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
