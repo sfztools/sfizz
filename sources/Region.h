@@ -3,8 +3,8 @@
 #include <vector>
 #include <string>
 #include "Opcode.h"
-#include "FilePool.h"
 #include "EGDescription.h"
+#include "StereoBuffer.h"
 #include "Defaults.h"
 #include "CCMap.h"
 #include <bitset>

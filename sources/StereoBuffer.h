@@ -34,6 +34,19 @@ public:
         return false;
     }
 
+    absl::Span<const Type> getSpan(Channel channel) const
+    {
+        switch(channel)
+        {
+        case Channel::left: return leftBuffer;
+        case Channel::right: return rightBuffer;
+        // Should not be here by construction...
+        default: 
+            ASSERTFALSE; 
+            return {};
+        }
+    }
+
     Type& getSample(Channel channel, int sampleIndex) noexcept
     {
         ASSERT(sampleIndex >= 0);
@@ -64,6 +77,12 @@ public:
     {
         ASSERT(output.size() >= static_cast<size_t>(numChannels * numFrames));
         ::writeInterleaved<Type>(leftBuffer, rightBuffer, output);
+    }
+
+    void add(const StereoBuffer<Type>& buffer)
+    {
+        ::add<Type>(buffer.getSpan(Channel::left), absl::MakeSpan(leftBuffer));
+        ::add<Type>(buffer.getSpan(Channel::right), absl::MakeSpan(rightBuffer));
     }
 
     Type* getChannel(Channel channel) noexcept

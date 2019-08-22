@@ -174,3 +174,6 @@ target_link_libraries(bm_ramp benchmark absl::span absl::algorithm)
 
 add_executable(bm_ADSR benchmarks/BM_ADSR.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_ADSR benchmark absl::span absl::algorithm)
+
+add_executable(bm_add benchmarks/BM_add.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_add benchmark absl::span absl::algorithm)

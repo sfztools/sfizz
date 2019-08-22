@@ -14,6 +14,11 @@ namespace sfz
 class Synth: public Parser
 {
 public:
+    Synth()
+    {
+        for (int i = 0; i < config::numVoices; ++i)
+            voices.push_back(std::make_unique<Voice>());
+    }
     bool loadSfzFile(const std::filesystem::path& file) final;
     int getNumRegions() const noexcept { return static_cast<int>(regions.size()); }
     int getNumGroups() const noexcept { return numGroups; }
@@ -22,8 +27,30 @@ public:
     const Region* getRegionView(int idx) const noexcept { return (size_t)idx < regions.size() ? regions[idx].get() : nullptr; }
     auto getUnknownOpcodes() { return unknownOpcodes; }
     size_t getNumPreloadedSamples() { return filePool.getNumPreloadedSamples(); }
-    void prepareToPlay(int samplesPerBlock, double sampleRate);
-    void renderBlock(StereoBuffer<float>& buffer);
+
+    void prepareToPlay(int samplesPerBlock, double sampleRate)
+    {
+        this->samplesPerBlock = samplesPerBlock;
+        this->sampleRate = sampleRate;
+        this->tempBuffer = StereoBuffer<float>(samplesPerBlock);
+    }
+
+    void renderBlock(StereoBuffer<float>& buffer)
+    {
+        for (auto& voice: voices)
+        {
+            voice->renderBlock(tempBuffer);
+            buffer.add(tempBuffer);
+        }
+    }
+
+    void noteOn(int delay, int channel, int noteNumber, uint8_t velocity);
+    void noteOff(int delay, int channel, int noteNumber, uint8_t velocity);
+    void cc(int delay, int channel, int ccNumber, uint8_t ccValue);
+    void pitchWheel(int delay, int channel, int pitch);
+    void aftertouch(int delay, int channel, uint8_t aftertouch);
+    void tempo(int delay, float secondsPerQuarter);
+    
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
 private:
@@ -44,11 +71,16 @@ private:
     std::vector<CCNamePair> ccNames;
     std::optional<uint8_t> defaultSwitch;
     std::set<std::string_view> unknownOpcodes;
-    using RegionPtrVector = std::vector<std::shared_ptr<Region>>;
-    std::vector<std::shared_ptr<Region>> regions;
+    using RegionPtrVector = std::vector<Region*>;
+    std::vector<std::unique_ptr<Region>> regions;
+    std::vector<std::unique_ptr<Voice>> voices;
     std::array<RegionPtrVector, 128> noteActivationLists;
     std::array<RegionPtrVector, 128> ccActivationLists;
     void buildRegion(const std::vector<Opcode>& regionOpcodes);
+
+    StereoBuffer<float> tempBuffer { config::defaultSamplesPerBlock };
+    int samplesPerBlock { config::defaultSamplesPerBlock };
+    float sampleRate { config::defaultSampleRate };
 };
 
 }

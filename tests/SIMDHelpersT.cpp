@@ -487,3 +487,35 @@ TEST_CASE("[Helpers] Multiplicative Ramp unaligned (SIMD vs scalar)")
     multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
     REQUIRE( approxEqual<float>(outputScalar, outputSIMD) );
 }
+
+TEST_CASE("[Helpers] Add")
+{
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> expected { 2.0, 3.0, 4.0, 5.0, 6.0 };
+    add<float, false>(input, absl::MakeSpan(output));
+    REQUIRE( output == expected );
+}
+
+TEST_CASE("[Helpers] Add (SIMD)")
+{
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 5> expected { 2.0, 3.0, 4.0, 5.0, 6.0 };
+    add<float, true>(input, absl::MakeSpan(output));
+    REQUIRE( output == expected );
+}
+
+TEST_CASE("[Helpers] Add (SIMD vs scalar)")
+{
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(input, 0.0);
+    absl::c_fill(outputScalar, 0.0);
+    absl::c_fill(outputSIMD, 0.0);
+
+    add<float, false>(input, absl::MakeSpan(outputScalar));
+    add<float, true>(input, absl::MakeSpan(outputSIMD));
+    REQUIRE( approxEqual<float>(outputScalar, outputSIMD) );
+}

@@ -31,6 +31,7 @@ namespace SIMDConfig
     constexpr bool loopingSFZIndex { true };
     constexpr bool linearRamp { false };
     constexpr bool multiplicativeRamp { true };
+    constexpr bool add { false };
 #if USE_SIMD
     constexpr bool useSIMD { true };
 #else

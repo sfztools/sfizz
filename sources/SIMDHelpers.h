@@ -231,9 +231,28 @@ T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
     return start;
 }
 
-
 template<>
 float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
 
 template<>
 float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
+
+template<class T>
+inline void snippetAdd(const T*& input, T*& output)
+{
+    *output++ += *input++;
+}
+
+template<class T, bool SIMD=SIMDConfig::add>
+void add(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + min(input.size(), output.size());
+    while (out < sentinel)
+        snippetAdd(in, out);
+}
+
+template<>
+void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;

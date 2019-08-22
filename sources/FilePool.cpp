@@ -45,7 +45,7 @@ void sfz::FilePool::loadingThread()
     FileLoadingInformation fileToLoad {};
     while (!quitThread)
     {
-        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 1s))
+        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 1ms))
             continue;
 
         if (fileToLoad.voice == nullptr)

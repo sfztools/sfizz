@@ -78,3 +78,9 @@ float multiplicativeRamp<float, true>(absl::Span<float> output, float start, flo
 {
     return multiplicativeRamp<float, false>(output, start, step);
 }
+
+template<>
+void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    add<float, false>(input, output);
+}

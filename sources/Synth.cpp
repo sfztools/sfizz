@@ -44,7 +44,7 @@ void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_shared<Region>();
+    auto lastRegion = std::make_unique<Region>();
     
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode: opcodes)
@@ -57,7 +57,7 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     parseOpcodes(groupOpcodes);
     parseOpcodes(regionOpcodes);
 
-    regions.push_back(lastRegion);
+    regions.push_back(std::move(lastRegion));
 }
 
 void sfz::Synth::clear()
@@ -127,7 +127,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
     auto currentRegion = regions.begin();
     while (currentRegion <= lastRegion)
     {
-        auto region = *currentRegion;
+        auto region = &**currentRegion;
         
         if (region->isGenerator())
         {
@@ -150,10 +150,10 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
         region->sampleRate = fileInformation->sampleRate;
 
         for (auto note = region->keyRange.getStart(); note <= region->keyRange.getEnd(); note++)
-            noteActivationLists[note].push_back(*currentRegion);
+            noteActivationLists[note].push_back(region);
 
         for (auto cc = region->keyRange.getStart(); cc <= region->keyRange.getEnd(); cc++)
-            ccActivationLists[cc].push_back(*currentRegion);
+            ccActivationLists[cc].push_back(region);
         
         // Defaults
         for (int ccIndex = 1; ccIndex < 128; ccIndex++)
