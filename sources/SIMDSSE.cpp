@@ -1,6 +1,14 @@
 #include "SIMDHelpers.h"
 #include "Helpers.h"
-#include "x86intrin.h"
+
+#if HAVE_X86INTRIN_H
+#include <x86intrin.h>
+#endif
+
+#if HAVE_INTRIN_H
+#include <intrin.h>
+#endif
+
 #include "mathfuns/sse_mathfun.h"
 
 using Type = float;
