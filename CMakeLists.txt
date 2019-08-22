@@ -147,11 +147,6 @@ add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
 target_link_libraries(bench_opf_high_vs_low benchmark absl::span)
 
 ###############################
-add_executable(bm_cum_prod benchmarks/Cum_Prod.cpp)
-target_link_libraries(bm_cum_prod benchmark)
-
-add_executable(bm_cum_sum benchmarks/Cum_Sum.cpp)
-target_link_libraries(bm_cum_sum benchmark)
 
 add_executable(bm_write benchmarks/BM_writeInterleaved.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_write benchmark absl::span)
@@ -164,12 +159,12 @@ target_link_libraries(bm_fill benchmark absl::span)
 
 add_executable(bm_mathfuns benchmarks/BM_mathfuns.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_mathfuns benchmark absl::span)
-if (UNIX)
-    # target_compile_options(bm_math_loops PRIVATE -fopenmp)
-endif()
 
 add_executable(bm_gain benchmarks/BM_gain.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_gain benchmark absl::span)
 
 add_executable(bm_looping benchmarks/BM_looping.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_looping benchmark absl::span absl::algorithm)
+
+add_executable(bm_ramp benchmarks/BM_ramp.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_ramp benchmark absl::span absl::algorithm)

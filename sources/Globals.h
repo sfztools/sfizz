@@ -25,9 +25,12 @@ namespace SIMDConfig
     constexpr unsigned int defaultAlignment { 16 };
     constexpr bool writeInterleaved { true };
     constexpr bool readInterleaved { true };
-    constexpr bool fill { false };
+    constexpr bool fill { true };
     constexpr bool gain { false };
     constexpr bool mathfuns { false };
+    constexpr bool loopingSFZIndex { true };
+    constexpr bool linearRamp { false };
+    constexpr bool multiplicativeRamp { true };
 #if USE_SIMD
     constexpr bool useSIMD { true };
 #else

@@ -144,12 +144,6 @@ void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::
 template<>
 void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept;
 
-template<class T, bool SIMD=SIMDConfig::useSIMD>
-void linearRamp(absl::Span<T> output, T start, T end);
-
-template<class T, bool SIMD=SIMDConfig::useSIMD>
-void exponentialRamp(absl::Span<T> output, T start, T end);
-
 template<class T>
 inline void snippetGain(T gain, const T*& input, T*& output)
 {
@@ -203,3 +197,40 @@ void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Spa
 
 template<>
 void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template<class T>
+inline void snippetRampLinear(T*& output, T& value, T step)
+{
+    value += step;
+    *output++ = value;
+}
+
+template<class T, bool SIMD=SIMDConfig::gain>
+void linearRamp(absl::Span<T> output, T start, T step) noexcept
+{
+    auto* out = output.begin();
+    while(out < output.end())
+        snippetRampLinear<T>(out, start, step);
+}
+
+template<class T>
+inline void snippetRampMultiplicative(T*& output, T& value, T step)
+{
+    value *= step;
+    *output++ = value;
+}
+
+template<class T, bool SIMD=SIMDConfig::gain>
+void multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
+{
+    auto* out = output.begin();
+    while(out < output.end())
+        snippetRampMultiplicative<T>(out, start, step);
+}
+
+
+template<>
+void linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
+
+template<>
+void multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;

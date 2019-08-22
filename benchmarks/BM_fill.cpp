@@ -16,7 +16,7 @@ static void Dummy(benchmark::State& state) {
   }
 }
 
-static void Fill_float(benchmark::State& state) {
+static void FillScalar(benchmark::State& state) {
   Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
@@ -26,7 +26,7 @@ static void Fill_float(benchmark::State& state) {
   }
 }
 
-static void Fill_float_unaligned(benchmark::State& state) {
+static void FillScalar_unaligned(benchmark::State& state) {
   Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
@@ -36,7 +36,7 @@ static void Fill_float_unaligned(benchmark::State& state) {
   }
 }
 
-static void Fill_float_SSE(benchmark::State& state) {
+static void FillSIMD(benchmark::State& state) {
   Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
@@ -46,7 +46,7 @@ static void Fill_float_SSE(benchmark::State& state) {
   }
 }
 
-static void Fill_float_SSE_unaligned(benchmark::State& state) {
+static void FillSIMD_unaligned(benchmark::State& state) {
   Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
@@ -56,20 +56,9 @@ static void Fill_float_SSE_unaligned(benchmark::State& state) {
   }
 }
 
-static void Fill_double(benchmark::State& state) {
-  Buffer<double> buffer (state.range(0));
-  std::random_device rd { };
-  std::mt19937 gen { rd() };
-  std::uniform_real_distribution<double> dist { 1, 2 };
-  for (auto _ : state) {
-    fill<double>(absl::MakeSpan(buffer), dist(gen));
-  }
-}
-
 BENCHMARK(Dummy)->Range((2<<6), (2<<16));
-BENCHMARK(Fill_float)->Range((2<<6), (2<<16));
-BENCHMARK(Fill_float_SSE)->Range((2<<6), (2<<16));
-BENCHMARK(Fill_float_unaligned)->Range((2<<6), (2<<16));
-BENCHMARK(Fill_float_SSE_unaligned)->Range((2<<6), (2<<16));
-BENCHMARK(Fill_double)->Range((2<<6), (2<<16));
+BENCHMARK(FillScalar)->Range((2<<6), (2<<16));
+BENCHMARK(FillSIMD)->Range((2<<6), (2<<16));
+BENCHMARK(FillScalar_unaligned)->Range((2<<6), (2<<16));
+BENCHMARK(FillSIMD_unaligned)->Range((2<<6), (2<<16));
 BENCHMARK_MAIN();

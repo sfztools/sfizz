@@ -304,3 +304,53 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
     while (jump < sentinel)
         snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 }
+
+template<>
+void linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
+{
+    auto* out = output.begin();
+    const auto* lastAligned = prevAligned(output.end());
+
+    while(unaligned(out) && out < lastAligned)
+        snippetRampLinear<float>(out, value, step);
+
+    auto mmValue = _mm_set1_ps(value);
+    auto mmStep = _mm_set_ps(step+step+step+step, step+step+step, step+step, step);
+
+    while (out < lastAligned)
+    {
+        mmValue = _mm_add_ps(mmValue, mmStep);
+        _mm_store_ps(out, mmValue);
+        mmValue = _mm_shuffle_ps(mmValue, mmValue, _MM_SHUFFLE(3, 3, 3, 3));
+        out += TypeAlignment;
+    }
+
+    value = _mm_cvtss_f32(mmValue);
+    while(out < output.end())
+        snippetRampLinear<float>(out, value, step);
+}
+
+template<>
+void multiplicativeRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
+{
+    auto* out = output.begin();
+    const auto* lastAligned = prevAligned(output.end());
+
+    while(unaligned(out) && out < lastAligned)
+        snippetRampMultiplicative<float>(out, value, step);
+
+    auto mmValue = _mm_set1_ps(value);
+    auto mmStep = _mm_set_ps(step*step*step*step, step*step*step, step*step, step);
+
+    while (out < lastAligned)
+    {
+        mmValue = _mm_mul_ps(mmValue, mmStep);
+        _mm_store_ps(out, mmValue);
+        mmValue = _mm_shuffle_ps(mmValue, mmValue, _MM_SHUFFLE(3, 3, 3, 3));
+        out += TypeAlignment;
+    }
+
+    value = _mm_cvtss_f32(mmValue);
+    while(out < output.end())
+        snippetRampMultiplicative<float>(out, value, step);
+}
