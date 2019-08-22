@@ -42,10 +42,7 @@ set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
 set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
 add_subdirectory(external/abseil-cpp)
-add_subdirectory(external/spdlog)
 add_subdirectory(external/Catch2)
-add_subdirectory(external/cxxopts)
-add_subdirectory(external/gsl-lite)
 add_subdirectory(external/benchmark)
 add_subdirectory(external/cnpy)
 
@@ -121,7 +118,7 @@ add_executable(sfzprint sources/ParserMain.cpp sources/Opcode.cpp sources/Parser
 if(UNIX)
     target_link_libraries(sfzprint stdc++fs)
 endif(UNIX)
-target_link_libraries(sfzprint absl::strings cxxopts)
+target_link_libraries(sfzprint absl::strings absl::flags_parse)
 
 
 ###############################
@@ -132,7 +129,7 @@ if(UNIX)
     target_compile_options(sfizz PRIVATE -fno-rtti)
     target_link_libraries(sfizz stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz absl::strings cxxopts sndfile absl::flat_hash_map readerwriterqueue)
+target_link_libraries(sfizz absl::strings sndfile absl::flat_hash_map readerwriterqueue absl::flags_parse)
 
 ###############################
 # Test application

@@ -1,24 +1,15 @@
 [submodule "external/abseil-cpp"]
 	path = external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
-[submodule "external/spdlog"]
-	path = external/spdlog
-	url = https://github.com/gabime/spdlog
 [submodule "external/Catch2"]
 	path = external/Catch2
 	url = https://github.com/catchorg/Catch2
-[submodule "external/cxxopts"]
-	path = external/cxxopts
-	url = https://github.com/jarro2783/cxxopts
 [submodule "external/benchmark"]
 	path = external/benchmark
 	url = https://github.com/google/benchmark
 [submodule "external/readerwriterqueue"]
 	path = external/readerwriterqueue
 	url = https://github.com/cameron314/readerwriterqueue.git
-[submodule "external/gsl-lite"]
-	path = external/gsl-lite
-	url = https://github.com/martinmoene/gsl-lite.git
 [submodule "external/cnpy"]
 	path = external/cnpy
 	url = https://github.com/rogersce/cnpy.git

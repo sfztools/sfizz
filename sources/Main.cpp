@@ -1,20 +1,17 @@
 #include "Synth.h"
 #include <iostream>
-#include "cxxopts.hpp"
+#include <absl/flags/parse.h>
+#include <absl/types/span.h>
 
 int main(int argc, char** argv)
 {
     std::ios::sync_with_stdio(false);
-    std::vector<std::string> filesToParse;
-    cxxopts::Options options("sfzparser", "Parses an sfz file and prints the output");
-    options.add_options()("positional", "SFZ files to parse", cxxopts::value<std::vector<std::string>>(filesToParse));
-    options.parse_positional({"positional"});
-    auto result = options.parse(argc, argv);
-    if (filesToParse.size() == 0)
-    {
-        std::cout << options.help() << '\n';
-        return -1;
-    }
+    auto arguments = absl::ParseCommandLine(argc, argv);
+    auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
+    std::cout << "Positional arguments:";
+    for (auto& file: filesToParse)
+        std::cout << " " << file << ',';
+    std::cout << '\n';
 
     sfz::Synth synth;
     std::filesystem::path filename { filesToParse[0] };
