@@ -143,10 +143,6 @@ target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
 ###############################
-add_executable(bench_span benchmarks/Spans.cpp)
-target_link_libraries(bench_span benchmark gsl::gsl-lite absl::span)
-
-###############################
 add_executable(bench_opf_high_vs_low benchmarks/OPF_high_vs_low.cpp)
 target_link_libraries(bench_opf_high_vs_low benchmark absl::span)
 

@@ -1,7 +1,15 @@
 #include "Globals.h"
 #include <absl/types/span.h>
+#include <absl/algorithm/container.h>
 #include "Helpers.h"
 #include <cmath>
+
+template<class T>
+inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
+{
+    *outputLeft++ = *input++;
+    *outputRight++ = *input++;
+}
 
 template<class T, bool SIMD=SIMDConfig::readInterleaved>
 void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::Span<T> outputRight) noexcept
@@ -14,10 +22,14 @@ void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::
     auto* lOut = outputLeft.begin();
     auto* rOut = outputRight.begin();
     while (in < (input.end() - 1) && lOut < outputLeft.end() && rOut < outputRight.end())
-    {
-        *lOut++ = *in++;
-        *rOut++ = *in++;
-    }
+        snippetRead<T>(in, lOut, rOut);
+}
+
+template<class T>
+inline void snippetWrite(T*& output, const T*& inputLeft, const T*& inputRight)
+{
+    *output++ = *inputLeft++;
+    *output++ = *inputRight++;
 }
 
 template<class T, bool SIMD=SIMDConfig::writeInterleaved>
@@ -30,10 +42,7 @@ void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRi
     auto* rIn = inputRight.begin();
     auto* out = output.begin();
     while (lIn < inputLeft.end() && rIn < inputRight.end() && out < (output.end() - 1))
-    {
-        *out++ = *lIn++;
-        *out++ = *rIn++;
-    }
+        snippetWrite<T>(out, lIn, rIn);
 }
 
 // Specializations
@@ -45,7 +54,7 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
 template<class T, bool SIMD=SIMDConfig::fill>
 void fill(absl::Span<T> output, T value) noexcept
 {
-    std::fill(output.begin(), output.end(), value);
+    absl::c_fill(output, value);
 }
 
 template<>
@@ -99,6 +108,21 @@ void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template<>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
+template<class T>
+inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd, T loopStart)
+{
+    floatIndex += *jump;
+    if (floatIndex >= loopEnd)
+        floatIndex -= loopEnd - loopStart;
+    *index = static_cast<int>(floatIndex);
+    *rightCoeff = floatIndex - *index;
+    *leftCoeff = 1.0f - *rightCoeff;
+    index++;
+    leftCoeff++;
+    rightCoeff++;
+    jump++;
+}
+
 template<class T, bool SIMD=SIMDConfig::useSIMD>
 void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
 {
@@ -114,18 +138,7 @@ void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::
     auto* sentinel = jumps.begin() + size;
     
     while (jump < sentinel)
-    {
-        floatIndex += *jump;
-        if (floatIndex >= loopEnd)
-            floatIndex -= loopEnd - loopStart;
-        *index = static_cast<int>(floatIndex);
-        *rightCoeff = floatIndex - *index;
-        *leftCoeff = 1.0f - *rightCoeff;
-        index++;
-        leftCoeff++;
-        rightCoeff++;
-        jump++;
-    }
+        snippetLoopingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 }
 
 template<>
@@ -137,6 +150,12 @@ void linearRamp(absl::Span<T> output, T start, T end);
 template<class T, bool SIMD=SIMDConfig::useSIMD>
 void exponentialRamp(absl::Span<T> output, T start, T end);
 
+template<class T>
+inline void snippetGain(T gain, const T*& input, T*& output)
+{
+    *output++ = gain * (*input++);
+}
+
 template<class T, bool SIMD=SIMDConfig::gain>
 void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -145,9 +164,13 @@ void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = out + std::min(output.size(), input.size());
     while (out < sentinel)
-    {
-        *out++ = gain * (*in++);
-    }
+        snippetGain<T>(gain, in, out);
+}
+
+template<class T>
+inline void snippetGainSpan(const T*& gain, const T*& input, T*& output)
+{
+    *output++ = (*gain++) * (*input++);
 }
 
 template<class T, bool SIMD=SIMDConfig::gain>
@@ -160,9 +183,7 @@ void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T
     auto* out = output.begin();
     auto* sentinel = out + std::min(gain.size(), std::min(output.size(), input.size()));
     while (out < sentinel)
-    {
-        *out++ = (*g++) * (*in++);
-    }
+        snippetGainSpan<T>(g, in, out);
 }
 
 template<class T, bool SIMD=SIMDConfig::gain>

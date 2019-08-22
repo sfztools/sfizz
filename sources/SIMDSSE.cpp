@@ -59,10 +59,7 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
     const auto* lastAligned = prevAligned(input.begin() + size - TypeAlignment);
 
     while (unaligned(in, lOut, rOut) && in < lastAligned)
-    {
-        *lOut++ = *in++;
-        *rOut++ = *in++;
-    }
+        snippetRead<float>(in, lOut, rOut);
 
     while (in < lastAligned )
     {
@@ -83,10 +80,7 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
     }
     
     while (in < input.end() - 1)
-    {
-        *lOut++ = *in++;
-        *rOut++ = *in++;
-    }
+        snippetRead<float>(in, lOut, rOut);
 }
 
 template<>
@@ -104,10 +98,7 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
     const auto* lastAligned = prevAligned(output.begin() + size - TypeAlignment);
 
     while (unaligned(out, rIn, lIn) && out < lastAligned)
-    {
-        *out++ = *lIn++;
-        *out++ = *rIn++;
-    }
+        snippetWrite<float>(out, lIn, rIn);
 
     while (out < lastAligned)
     {
@@ -127,10 +118,7 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
     }
 
     while (out < output.end() - 1)
-    {
-        *out++ = *lIn++;
-        *out++ = *rIn++;
-    }
+        snippetWrite<float>(out, lIn, rIn);
 }
 
 
@@ -247,7 +235,7 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
     const auto* lastAligned = prevAligned(output.begin() + size);
 
     while (unaligned(out, in, g) && out < lastAligned)
-        *out++ = (*g++) * (*in++);
+        snippetGainSpan<float>(g, in, out);
 
     while (out < lastAligned)
     {
@@ -258,7 +246,7 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
     }
 
     while (out < output.end())
-        *out++ = (*g++) * (*in++);
+        snippetGainSpan<float>(g, in, out);
 }
 
 template<>
@@ -277,18 +265,7 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
     const auto* alignedEnd = prevAligned(sentinel);
 
     while (unaligned(reinterpret_cast<float*>(index), leftCoeff, rightCoeff, jump) && jump < alignedEnd)
-    {
-        floatIndex += *jump;
-        if (floatIndex >= loopEnd)
-            floatIndex -= loopEnd - loopStart;
-        *index = static_cast<int>(floatIndex);
-        *rightCoeff = floatIndex - *index;
-        *leftCoeff = 1.0f - *rightCoeff;
-        index++;
-        leftCoeff++;
-        rightCoeff++;
-        jump++;
-    }
+        snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 
     auto mmFloatIndex = _mm_set_ps1(floatIndex);
     const auto mmJumpBack   = _mm_set1_ps(loopEnd - loopStart);
@@ -325,16 +302,5 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
 
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
     while (jump < sentinel)
-    {
-        floatIndex += *jump;
-        if (floatIndex >= loopEnd)
-            floatIndex -= loopEnd - loopStart;
-        *index = static_cast<int>(floatIndex);
-        *rightCoeff = floatIndex - *index;
-        *leftCoeff = 1.0f - *rightCoeff;
-        index++;
-        leftCoeff++;
-        rightCoeff++;
-        jump++;
-    }
+        snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 }

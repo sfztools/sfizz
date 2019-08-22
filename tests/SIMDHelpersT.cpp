@@ -2,6 +2,7 @@
 #include "../sources/SIMDHelpers.h"
 #include <array>
 #include <algorithm>
+#include <iostream>
 #include <absl/types/span.h>
 #include <absl/algorithm/container.h>
 using namespace Catch::literals;

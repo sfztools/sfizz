@@ -14,19 +14,10 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
 }
 
 // template<class Type, bool SIMD=false>
-// void loopingSFZIndex(absl::Span<const Type> inputLeft, absl::Span<const Type> inputRight, absl::Span<Type> output);
+// void linearRamp(absl::Span<Type> output, Type start, Type step);
 
 // template<class Type, bool SIMD=false>
-// void linearRamp(absl::Span<Type> output, Type start, Type end);
-
-// template<class Type, bool SIMD=false>
-// void exponentialRamp(absl::Span<Type> output, Type start, Type end);
-
-// template<class Type, bool SIMD=false>
-// void applyGain(Type gain, absl::Span<Type> output);
-
-// template<class Type, bool SIMD=false>
-// void applyGain(absl::Span<const Type> output, absl::Span<Type> output);
+// void exponentialRamp(absl::Span<Type> output, Type start, Type step);
 
 template<>
 void fill<float, true>(absl::Span<float> output, float value) noexcept
