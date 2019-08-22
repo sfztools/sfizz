@@ -72,7 +72,9 @@ set(COMMON_SOURCES
     sources/Synth.cpp
     sources/FilePool.cpp
     sources/Region.cpp
-    sources/ADSREnvelope.cpp
+    sources/FloatEnvelopes.cpp
+    # sources/LinearEnvelope.cpp
+    # sources/ADSREnvelope.cpp
     sources/Parser.cpp
 )
 
@@ -109,6 +111,7 @@ set(TEST_SOURCES
     tests/OnePoleFilterT.cpp
     tests/RegionActivationT.cpp
     tests/ADSREnvelopeT.cpp
+    tests/LinearEnvelopeT.cpp
     tests/MainT.cpp
 )
 

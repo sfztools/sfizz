@@ -1,3 +1,4 @@
+#pragma once
 #include "Globals.h"
 #include <cmath>
 #include <absl/types/span.h>

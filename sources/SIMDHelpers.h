@@ -1,3 +1,4 @@
+#pragma once
 #include "Globals.h"
 #include <absl/types/span.h>
 #include <absl/algorithm/container.h>

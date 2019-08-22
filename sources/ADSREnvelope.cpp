@@ -213,6 +213,4 @@ constexpr bool ADSREnvelope<Type>::isSmoothing() noexcept
     return currentState != State::Done;
 }
 
-// Explicit instantiation
-template class ADSREnvelope<float>;
 }
