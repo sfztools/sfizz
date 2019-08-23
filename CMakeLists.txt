@@ -113,6 +113,7 @@ set(TEST_SOURCES
     tests/ADSREnvelopeT.cpp
     tests/LinearEnvelopeT.cpp
     tests/MainT.cpp
+    tests/RegionTriggersT.cpp
 )
 
 ###############################

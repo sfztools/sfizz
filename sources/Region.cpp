@@ -455,7 +455,7 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
         return false;
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue);
+    const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
     const bool firstLegatoNote = (trigger == SfzTrigger::first && activeNotesInRange == 0);
     const bool attackTrigger = (trigger == SfzTrigger::attack);
     const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && activeNotesInRange > 0);
