@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "Region.h"
 #include "SfzHelpers.h"
+#include "absl/types/span.h"
 #include <optional>
 #include <random>
 #include <set>
@@ -36,6 +37,8 @@ public:
 
     void renderBlock(StereoBuffer<float>& buffer)
     {
+        buffer.fill(0.0f);
+        
         for (auto& voice : voices) {
             voice->renderBlock(tempBuffer);
             buffer.add(tempBuffer);
@@ -45,11 +48,16 @@ public:
     void noteOn(int delay, int channel, int noteNumber, uint8_t velocity)
     {
         auto randValue = getUniform();
-        for (auto& voice : voices)
-            voice->registerNoteOn(delay, channel, noteNumber, velocity);
 
         for (auto& region : regions) {
             if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
+                
+                for (auto& voice: voices)
+                {
+                    if (voice->checkOffGroup(delay, region->group))
+                        noteOff(delay, voice->getTriggerChannel(), voice->getTriggerNumber(), 0);
+                }
+
                 auto voice = findFreeVoice();
                 if (voice == nullptr)
                     continue;
@@ -62,11 +70,8 @@ public:
     void noteOff(int delay, int channel, int noteNumber, uint8_t velocity)
     {
         auto randValue = getUniform();
-        for (auto& voice : voices) {
-            if (voice->registerNoteOff(delay, channel, noteNumber, velocity)) {
-                // do something
-            }
-        }
+        for (auto& voice : voices)
+            voice->registerNoteOff(delay, channel, noteNumber, velocity);
 
         for (auto& region : regions) {
             if (region->registerNoteOff(channel, noteNumber, velocity, randValue)) {

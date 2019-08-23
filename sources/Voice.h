@@ -32,8 +32,7 @@ public:
         return (region == nullptr);
     }
 
-    void registerNoteOn(int delay, int channel, int noteNumber, uint8_t velocity);
-    bool registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
+    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
     bool registerCC(int delay, int channel, int ccNumber, uint8_t ccValue);
     void registerPitchWheel(int delay, int channel, int pitch);
     void registerAftertouch(int delay, int channel, uint8_t aftertouch);
@@ -44,6 +43,38 @@ public:
     {
         buffer.fill(0.0f);
     }
+
+    bool checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexcept
+    {
+        if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group )
+        {
+            // TODO: release
+            return true;
+        }
+
+        return false;
+    }
+
+    int getTriggerNumber() const
+    {
+        return triggerNumber;
+    }
+
+    int getTriggerChannel() const
+    {
+        return triggerNumber;
+    }
+
+    uint8_t getTriggerValue() const
+    {
+        return triggerNumber;
+    }
+
+    TriggerType getTriggerType() const
+    {
+        return triggerType;
+    }
+
 
     void reset()
     {
