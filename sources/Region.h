@@ -127,4 +127,5 @@ private:
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
 };
+
 } // namespace sfz

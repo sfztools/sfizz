@@ -11,7 +11,7 @@ using CCValueArray = std::array<uint8_t, 128>;
 using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
 
-inline std::optional<uint8_t> readNoteValue(const std::string_view&value)
+inline std::optional<uint8_t> readNoteValue(const std::string_view& value)
 {
     switch(hash(value))
     {

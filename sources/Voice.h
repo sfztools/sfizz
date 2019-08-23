@@ -27,6 +27,11 @@ public:
         dataReady.store(true);
     }
 
+    bool isFree()
+    {
+        return (region == nullptr);
+    }
+
     bool registerNoteOn(int delay, int channel, int noteNumber, uint8_t velocity);
     void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
     bool registerCC(int delay, int channel, int ccNumber, uint8_t ccValue);

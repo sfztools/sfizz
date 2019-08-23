@@ -127,7 +127,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
     auto currentRegion = regions.begin();
     while (currentRegion <= lastRegion)
     {
-        auto region = &**currentRegion;
+        auto region = currentRegion->get();
         
         if (region->isGenerator())
         {

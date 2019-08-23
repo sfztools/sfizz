@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <optional>
+#include <random>
 #include <string_view>
 
 namespace sfz
@@ -44,16 +45,56 @@ public:
         }
     }
 
-    void noteOn(int delay, int channel, int noteNumber, uint8_t velocity);
-    void noteOff(int delay, int channel, int noteNumber, uint8_t velocity);
+    void noteOn(int delay, int channel, int noteNumber, uint8_t velocity)
+    {
+        auto randValue = getUniform();
+        for (auto& region: regions)
+        {
+            if (region->registerNoteOn(channel, noteNumber, velocity, randValue))
+            {
+                auto voice = findFreeVoice();
+                if (voice == nullptr)
+                    continue;
+                
+                voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            }
+        }
+    }
+
+    void noteOff(int delay, int channel, int noteNumber, uint8_t velocity)
+    {
+        auto randValue = getUniform();
+        for (auto& region: regions)
+        {
+            if (region->registerNoteOff(channel, noteNumber, velocity, randValue))
+            {
+                auto voice = findFreeVoice();
+                if (voice == nullptr)
+                    continue;
+                
+                voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+                voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            }
+        }
+    }
     void cc(int delay, int channel, int ccNumber, uint8_t ccValue);
     void pitchWheel(int delay, int channel, int pitch);
     void aftertouch(int delay, int channel, uint8_t aftertouch);
     void tempo(int delay, float secondsPerQuarter);
-    
+
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
 private:
+    Voice* findFreeVoice()
+    {
+        auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
+        if (freeVoice == voices.end())
+        {
+            DBG("Voices are overloaded, can't start a new note");
+            return {};
+        }
+        return freeVoice->get();
+    }
     bool hasGlobal { false };
     bool hasControl { false };
     int numGroups { 0 };
@@ -81,6 +122,13 @@ private:
     StereoBuffer<float> tempBuffer { config::defaultSamplesPerBlock };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
+    std::random_device rd { };
+    std::mt19937 randomGenerator { rd() };
+    std::uniform_real_distribution<float> randomDistribution { 0, 1 };
+    float getUniform()
+    {
+        return randomDistribution(randomGenerator);
+    }
 };
 
 }
