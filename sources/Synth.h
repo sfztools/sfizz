@@ -1,19 +1,17 @@
 #pragma once
+#include "FilePool.h"
 #include "Parser.h"
 #include "Region.h"
 #include "SfzHelpers.h"
-#include "FilePool.h"
-#include <vector>
-#include <set>
 #include <optional>
 #include <random>
+#include <set>
 #include <string_view>
+#include <vector>
 
-namespace sfz
-{
+namespace sfz {
 
-class Synth: public Parser
-{
+class Synth : public Parser {
 public:
     Synth()
     {
@@ -38,8 +36,7 @@ public:
 
     void renderBlock(StereoBuffer<float>& buffer)
     {
-        for (auto& voice: voices)
-        {
+        for (auto& voice : voices) {
             voice->renderBlock(tempBuffer);
             buffer.add(tempBuffer);
         }
@@ -48,14 +45,15 @@ public:
     void noteOn(int delay, int channel, int noteNumber, uint8_t velocity)
     {
         auto randValue = getUniform();
-        for (auto& region: regions)
-        {
-            if (region->registerNoteOn(channel, noteNumber, velocity, randValue))
-            {
+        for (auto& voice : voices)
+            voice->registerNoteOn(delay, channel, noteNumber, velocity);
+
+        for (auto& region : regions) {
+            if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
                 auto voice = findFreeVoice();
                 if (voice == nullptr)
                     continue;
-                
+
                 voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
             }
         }
@@ -64,15 +62,18 @@ public:
     void noteOff(int delay, int channel, int noteNumber, uint8_t velocity)
     {
         auto randValue = getUniform();
-        for (auto& region: regions)
-        {
-            if (region->registerNoteOff(channel, noteNumber, velocity, randValue))
-            {
+        for (auto& voice : voices) {
+            if (voice->registerNoteOff(delay, channel, noteNumber, velocity)) {
+                // do something
+            }
+        }
+
+        for (auto& region : regions) {
+            if (region->registerNoteOff(channel, noteNumber, velocity, randValue)) {
                 auto voice = findFreeVoice();
                 if (voice == nullptr)
                     continue;
-                
-                voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+
                 voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
             }
         }
@@ -84,17 +85,18 @@ public:
 
 protected:
     void callback(std::string_view header, std::vector<Opcode> members) final;
+
 private:
     Voice* findFreeVoice()
     {
         auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
-        if (freeVoice == voices.end())
-        {
+        if (freeVoice == voices.end()) {
             DBG("Voices are overloaded, can't start a new note");
             return {};
         }
         return freeVoice->get();
     }
+
     bool hasGlobal { false };
     bool hasControl { false };
     int numGroups { 0 };
@@ -122,9 +124,10 @@ private:
     StereoBuffer<float> tempBuffer { config::defaultSamplesPerBlock };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
-    std::random_device rd { };
+    std::random_device rd {};
     std::mt19937 randomGenerator { rd() };
     std::uniform_real_distribution<float> randomDistribution { 0, 1 };
+
     float getUniform()
     {
         return randomDistribution(randomGenerator);

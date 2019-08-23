@@ -32,8 +32,8 @@ public:
         return (region == nullptr);
     }
 
-    bool registerNoteOn(int delay, int channel, int noteNumber, uint8_t velocity);
-    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
+    void registerNoteOn(int delay, int channel, int noteNumber, uint8_t velocity);
+    bool registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
     bool registerCC(int delay, int channel, int ccNumber, uint8_t ccValue);
     void registerPitchWheel(int delay, int channel, int pitch);
     void registerAftertouch(int delay, int channel, uint8_t aftertouch);
