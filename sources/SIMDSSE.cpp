@@ -1,5 +1,5 @@
-#include "SIMDHelpers.h"
 #include "Helpers.h"
+#include "SIMDHelpers.h"
 
 #if HAVE_X86INTRIN_H
 #include <x86intrin.h>
@@ -13,21 +13,23 @@
 
 using Type = float;
 [[maybe_unused]] constexpr uintptr_t TypeAlignment { 4 };
-[[maybe_unused]] constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 } ;
+[[maybe_unused]] constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 };
 [[maybe_unused]] constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
 [[maybe_unused]] constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
 
-
-struct AlignmentSentinels { float* nextAligned; float* lastAligned; };
+struct AlignmentSentinels {
+    float* nextAligned;
+    float* lastAligned;
+};
 
 float* nextAligned(const float* ptr)
 {
-    return reinterpret_cast<float*>( (reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask) & (~ByteAlignmentMask) );
+    return reinterpret_cast<float*>((reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask) & (~ByteAlignmentMask));
 }
 
 float* prevAligned(const float* ptr)
 {
-    return reinterpret_cast<float*>( reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask) );
+    return reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask));
 }
 
 bool unaligned(const float* ptr)
@@ -50,7 +52,7 @@ bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3, const fl
     return unaligned(ptr1) || unaligned(ptr2) || unaligned(ptr3) || unaligned(ptr4);
 }
 
-template<>
+template <>
 void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     // The size of the outputs is not big enough for the input...
@@ -63,14 +65,13 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
     auto* lOut = outputLeft.begin();
     auto* rOut = outputRight.begin();
 
-    const auto size = std::min(input.size(), std::min(outputLeft.size() * 2, outputRight.size() * 2 ));
+    const auto size = std::min(input.size(), std::min(outputLeft.size() * 2, outputRight.size() * 2));
     const auto* lastAligned = prevAligned(input.begin() + size - TypeAlignment);
 
     while (unaligned(in, lOut, rOut) && in < lastAligned)
         snippetRead<float>(in, lOut, rOut);
 
-    while (in < lastAligned )
-    {
+    while (in < lastAligned) {
         auto register0 = _mm_load_ps(in);
         in += TypeAlignment;
         auto register1 = _mm_load_ps(in);
@@ -86,12 +87,12 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
         lOut += TypeAlignment;
         rOut += TypeAlignment;
     }
-    
+
     while (in < input.end() - 1)
         snippetRead<float>(in, lOut, rOut);
 }
 
-template<>
+template <>
 void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     // The size of the output is not big enough for the inputs...
@@ -108,8 +109,7 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
     while (unaligned(out, rIn, lIn) && out < lastAligned)
         snippetWrite<float>(out, lIn, rIn);
 
-    while (out < lastAligned)
-    {
+    while (out < lastAligned) {
         const auto lInRegister = _mm_load_ps(lIn);
         const auto rInRegister = _mm_load_ps(rIn);
 
@@ -129,14 +129,13 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
         snippetWrite<float>(out, lIn, rIn);
 }
 
-
-template<>
+template <>
 void fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     const auto mmValue = _mm_set_ps1(value);
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
-    
+
     while (unaligned(out) && out < lastAligned)
         *out++ = value;
 
@@ -145,72 +144,100 @@ void fill<float, true>(absl::Span<float> output, float value) noexcept
         _mm_store_ps(out, mmValue);
         out += TypeAlignment;
     }
-    
+
     while (out < output.end())
         *out++ = value;
 }
 
-template<>
+template <>
 void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
-    while (in < sentinel)
-    {
-        _mm_storeu_ps(out, exp_ps(_mm_loadu_ps(in)));
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(in, out) && in < lastAligned)
+        *out++ = std::exp(*in++);
+
+    while (in < lastAligned) {
+        _mm_store_ps(out, exp_ps(_mm_load_ps(in)));
         out += TypeAlignment;
         in += TypeAlignment;
     }
+
+    while (in < sentinel)
+        *out++ = std::exp(*in++);
 }
 
-template<>
+template <>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
-    while (in < sentinel)
-    {
-        _mm_storeu_ps(out, cos_ps(_mm_loadu_ps(in)));
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(in, out) && in < lastAligned)
+        *out++ = std::exp(*in++);
+
+    while (in < lastAligned) {
+        _mm_store_ps(out, cos_ps(_mm_load_ps(in)));
         out += TypeAlignment;
         in += TypeAlignment;
     }
+
+    while (in < sentinel)
+        *out++ = std::exp(*in++);
 }
 
-template<>
+template <>
 void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
-    while (in < sentinel)
-    {
-        _mm_storeu_ps(out, log_ps(_mm_loadu_ps(in)));
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(in, out) && in < lastAligned)
+        *out++ = std::exp(*in++);
+
+    while (in < lastAligned) {
+        _mm_store_ps(out, log_ps(_mm_load_ps(in)));
         out += TypeAlignment;
         in += TypeAlignment;
     }
+
+    while (in < sentinel)
+        *out++ = std::exp(*in++);
 }
 
-template<>
+template <>
 void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
-    while (in < sentinel)
-    {
-        _mm_storeu_ps(out, sin_ps(_mm_loadu_ps(in)));
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(in, out) && in < lastAligned)
+        *out++ = std::exp(*in++);
+
+    while (in < lastAligned) {
+        _mm_store_ps(out, sin_ps(_mm_load_ps(in)));
         out += TypeAlignment;
         in += TypeAlignment;
     }
+
+    while (in < sentinel)
+        *out++ = std::exp(*in++);
 }
 
-template<>
+template <>
 void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     auto* in = input.begin();
@@ -221,9 +248,8 @@ void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Spa
 
     while (unaligned(out, in) && out < lastAligned)
         *out++ = gain * (*in++);
-    
-    while (out < lastAligned)
-    {
+
+    while (out < lastAligned) {
         _mm_store_ps(out, _mm_mul_ps(mmGain, _mm_load_ps(in)));
         in += TypeAlignment;
         out += TypeAlignment;
@@ -233,7 +259,7 @@ void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Spa
         *out++ = gain * (*in++);
 }
 
-template<>
+template <>
 void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     auto* in = input.begin();
@@ -245,8 +271,7 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
     while (unaligned(out, in, g) && out < lastAligned)
         snippetGainSpan<float>(g, in, out);
 
-    while (out < lastAligned)
-    {
+    while (out < lastAligned) {
         _mm_store_ps(out, _mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)));
         g += TypeAlignment;
         in += TypeAlignment;
@@ -257,8 +282,14 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
         snippetGainSpan<float>(g, in, out);
 }
 
-template<>
-void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
+template <>
+void loopingSFZIndex<float, true>(  absl::Span<const float> jumps,
+                                    absl::Span<float> leftCoeffs, 
+                                    absl::Span<float> rightCoeffs, 
+                                    absl::Span<int> indices, 
+                                    float floatIndex, 
+                                    float loopEnd, 
+                                    float loopStart) noexcept
 {
     ASSERT(indices.size() >= jumps.size());
     ASSERT(indices.size() == leftCoeffs.size());
@@ -276,12 +307,11 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
         snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 
     auto mmFloatIndex = _mm_set_ps1(floatIndex);
-    const auto mmJumpBack   = _mm_set1_ps(loopEnd - loopStart);
+    const auto mmJumpBack = _mm_set1_ps(loopEnd - loopStart);
     const auto mmLoopEnd = _mm_set1_ps(loopEnd);
-    while (jump < alignedEnd)
-    {
+    while (jump < alignedEnd) {
         auto mmOffset = _mm_load_ps(jump);
-        mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4))); 
+        mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4)));
         mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, 0x40));
 
         mmFloatIndex = _mm_add_ps(mmFloatIndex, mmOffset);
@@ -293,7 +323,7 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
 
         auto mmIndices = _mm_cvtps_epi32(_mm_sub_ps(mmFloatIndex, _mm_set_ps1(0.4999999552965164184570312f)));
         _mm_store_si128(reinterpret_cast<__m128i*>(index), mmIndices);
-        
+
         auto mmRight = _mm_sub_ps(mmFloatIndex, _mm_cvtepi32_ps(mmIndices));
         auto mmLeft = _mm_sub_ps(_mm_set_ps1(1.0f), mmRight);
         _mm_store_ps(leftCoeff, mmLeft);
@@ -313,20 +343,19 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<floa
         snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 }
 
-template<>
+template <>
 float linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
 
-    while(unaligned(out) && out < lastAligned)
+    while (unaligned(out) && out < lastAligned)
         snippetRampLinear<float>(out, value, step);
 
     auto mmValue = _mm_set1_ps(value);
-    auto mmStep = _mm_set_ps(step+step+step+step, step+step+step, step+step, step);
+    auto mmStep = _mm_set_ps(step + step + step + step, step + step + step, step + step, step);
 
-    while (out < lastAligned)
-    {
+    while (out < lastAligned) {
         mmValue = _mm_add_ps(mmValue, mmStep);
         _mm_store_ps(out, mmValue);
         mmValue = _mm_shuffle_ps(mmValue, mmValue, _MM_SHUFFLE(3, 3, 3, 3));
@@ -334,25 +363,24 @@ float linearRamp<float, true>(absl::Span<float> output, float value, float step)
     }
 
     value = _mm_cvtss_f32(mmValue);
-    while(out < output.end())
+    while (out < output.end())
         snippetRampLinear<float>(out, value, step);
     return value;
 }
 
-template<>
+template <>
 float multiplicativeRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
 
-    while(unaligned(out) && out < lastAligned)
+    while (unaligned(out) && out < lastAligned)
         snippetRampMultiplicative<float>(out, value, step);
 
     auto mmValue = _mm_set1_ps(value);
-    auto mmStep = _mm_set_ps(step*step*step*step, step*step*step, step*step, step);
+    auto mmStep = _mm_set_ps(step * step * step * step, step * step * step, step * step, step);
 
-    while (out < lastAligned)
-    {
+    while (out < lastAligned) {
         mmValue = _mm_mul_ps(mmValue, mmStep);
         _mm_store_ps(out, mmValue);
         mmValue = _mm_shuffle_ps(mmValue, mmValue, _MM_SHUFFLE(3, 3, 3, 3));
@@ -360,12 +388,12 @@ float multiplicativeRamp<float, true>(absl::Span<float> output, float value, flo
     }
 
     value = _mm_cvtss_f32(mmValue);
-    while(out < output.end())
+    while (out < output.end())
         snippetRampMultiplicative<float>(out, value, step);
     return value;
 }
 
-template<>
+template <>
 void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -373,17 +401,16 @@ void add<float, true>(absl::Span<const float> input, absl::Span<float> output) n
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
     const auto* lastAligned = prevAligned(sentinel);
-    
-    while(unaligned(in, out) && out < lastAligned)
+
+    while (unaligned(in, out) && out < lastAligned)
         snippetAdd<float>(in, out);
 
-    while(out < lastAligned)
-    {
+    while (out < lastAligned) {
         _mm_store_ps(out, _mm_add_ps(_mm_load_ps(in), _mm_load_ps(out)));
         out += TypeAlignment;
         in += TypeAlignment;
     }
 
-    while(out < sentinel)
+    while (out < sentinel)
         snippetAdd<float>(in, out);
 }
