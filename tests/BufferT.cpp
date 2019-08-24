@@ -1,5 +1,5 @@
-#include "catch2/catch.hpp"
 #include "../sources/Buffer.h"
+#include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;
 
@@ -31,7 +31,7 @@ TEST_CASE("[Buffer] Empty (uint8_t)")
     REQUIRE(emptyBuffer.size() == 0);
 }
 
-template<class Type>
+template <class Type>
 void checkBoundaries(Buffer<Type>& buffer, int expectedSize)
 {
     REQUIRE((int)buffer.size() == expectedSize);
@@ -46,13 +46,12 @@ TEST_CASE("[Buffer] 10 floats ")
     const int baseSize { 10 };
     Buffer<float> buffer(baseSize);
     checkBoundaries(buffer, baseSize);
-    
-    for (auto& element: buffer)
+
+    for (auto& element : buffer)
         element = 0.0f;
-    for (auto& element: buffer)
+    for (auto& element : buffer)
         REQUIRE(element == 0.0f);
 }
-
 
 TEST_CASE("[Buffer] Resize 10 floats ")
 {
@@ -62,15 +61,15 @@ TEST_CASE("[Buffer] Resize 10 floats ")
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     checkBoundaries(buffer, baseSize);
-    
+
     std::fill(buffer.begin(), buffer.end(), 1.0f);
-    
-    REQUIRE( buffer.resize(smallSize) );
+
+    REQUIRE(buffer.resize(smallSize));
     checkBoundaries(buffer, smallSize);
 
-    REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
-    
-    REQUIRE( buffer.resize(bigSize) );
+    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }));
+
+    REQUIRE(buffer.resize(bigSize));
     checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
@@ -84,15 +83,15 @@ TEST_CASE("[Buffer] Resize 4096 floats ")
     Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     checkBoundaries(buffer, baseSize);
-    
+
     std::fill(buffer.begin(), buffer.end(), 1.0f);
-    
-    REQUIRE( buffer.resize(smallSize) );
+
+    REQUIRE(buffer.resize(smallSize));
     checkBoundaries(buffer, smallSize);
-    
-    REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
-    
-    REQUIRE( buffer.resize(bigSize) );
+
+    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }));
+
+    REQUIRE(buffer.resize(bigSize));
     checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
@@ -103,19 +102,40 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
     const int baseSize { 10 };
     const int smallSize { baseSize / 2 };
     const int bigSize { baseSize * 2 };
-        Buffer<float> buffer(baseSize);
+    Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     checkBoundaries(buffer, baseSize);
-    
+
     std::fill(buffer.begin(), buffer.end(), 1.0f);
-    
-    REQUIRE( buffer.resize(smallSize) );
+
+    REQUIRE(buffer.resize(smallSize));
     checkBoundaries(buffer, smallSize);
-    
-    REQUIRE( std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }) );
-    
-    REQUIRE( buffer.resize(bigSize) );
+
+    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }));
+
+    REQUIRE(buffer.resize(bigSize));
     checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
+}
+
+TEST_CASE("[Buffer] Copy and move")
+{
+    const int baseSize { 128 };
+    Buffer<float> buffer(baseSize);
+    Buffer<float> copied { baseSize - 4 };
+    std::fill(buffer.begin(), buffer.end(), 1.0f);
+    std::fill(copied.begin(), copied.end(), 2.0f);
+    copied = buffer;
+    checkBoundaries(copied, baseSize);
+    REQUIRE(std::all_of(copied.begin(), copied.end(), [](auto value) { return value == 1.0f; }));
+
+    Buffer<float> copyConstructed { buffer };
+    checkBoundaries(copyConstructed, baseSize);
+    REQUIRE(std::all_of(copyConstructed.begin(), copyConstructed.end(), [](auto value) { return value == 1.0f; }));
+
+    Buffer<float> moveConstructed { std::move(buffer) };
+    REQUIRE(buffer.empty());
+    checkBoundaries(moveConstructed, baseSize);
+    REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](auto value) { return value == 1.0f; }));
 }

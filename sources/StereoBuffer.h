@@ -46,6 +46,8 @@ public:
     absl::Span<Type> getSpan(Channel channel)
     {
         switch (channel) {
+        default:
+            [[fallthrough]];
         case Channel::left:
             return absl::MakeSpan(leftBuffer);
         case Channel::right:
@@ -57,6 +59,8 @@ public:
     {
         ASSERT(sampleIndex >= 0);
         switch (channel) {
+        default:
+            [[fallthrough]];
         case Channel::left:
             return leftBuffer[sampleIndex];
         case Channel::right:
