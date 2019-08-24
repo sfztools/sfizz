@@ -1,6 +1,7 @@
 #pragma once
 #include <string_view>
 #include <signal.h>
+#include <random>
 
 inline void trimInPlace(std::string_view& s)
 {
@@ -75,3 +76,42 @@ inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::m
 #define ASSERT(expression)
 #define DBG(ostream)
 #endif
+
+template<class Type>
+inline constexpr Type db2pow(Type in)
+{
+    return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.1));
+}
+
+template<class Type>
+inline constexpr Type pow2db(Type in)
+{
+    return static_cast<Type>(10.0) * std::log10(in);
+}
+
+template<class Type>
+inline constexpr Type db2mag(Type in)
+{
+    return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.05));
+}
+
+template<class Type>
+inline constexpr Type mag2db(Type in)
+{
+    return static_cast<Type>(20.0) * std::log10(in);
+}
+
+namespace Random
+{
+    static inline std::random_device randomDevice;
+    static inline std::mt19937 randomGenerator { randomDevice() };
+} 
+
+inline float midiNoteFrequency(const int noteNumber) 
+{
+    return 440.0f * std::pow(2.0f, (noteNumber - 69) / 12.0f);
+}
+
+constexpr double pi() { return std::acos(-1); } 
+constexpr double twoPi() { return 2*pi(); } 
+constexpr double piTwo() { return pi()/2; } 

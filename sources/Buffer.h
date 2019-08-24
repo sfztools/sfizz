@@ -53,8 +53,7 @@ public:
             _alignedEnd = normalEnd + Alignment - endMisalignment;
         else
             _alignedEnd = normalEnd;
-
-        DBG("Buffer resized (" << newSize << ") at: " << this);
+        
         return true;
     }
 

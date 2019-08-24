@@ -18,7 +18,7 @@ public:
     Synth()
     {
         for (int i = 0; i < config::numVoices; ++i)
-            voices.push_back(std::make_unique<Voice>());
+            voices.push_back(std::make_unique<Voice>(ccState));
     }
     bool loadSfzFile(const std::filesystem::path& file) final;
     int getNumRegions() const noexcept { return static_cast<int>(regions.size()); }
@@ -34,12 +34,16 @@ public:
         DBG("[Synth] Samples per block set to " << samplesPerBlock);
         this->samplesPerBlock = samplesPerBlock;
         this->tempBuffer.resize(samplesPerBlock);
+        for (auto & voice: voices)
+            voice->setSamplesPerBlock(samplesPerBlock);
     }
 
-    void setSampleRate(double sampleRate)
+    void setSampleRate(float sampleRate)
     {
         DBG("[Synth] Sample rate set to " << sampleRate);
         this->sampleRate = sampleRate;
+        for (auto & voice: voices)
+            voice->setSampleRate(sampleRate);
     }
 
     void renderBlock(StereoSpan<float> buffer)
@@ -59,7 +63,6 @@ public:
 
         for (auto& region : regions) {
             if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
-                
                 for (auto& voice: voices)
                 {
                     if (voice->checkOffGroup(delay, region->group))
@@ -70,7 +73,8 @@ public:
                 if (voice == nullptr)
                     continue;
 
-                voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
+                voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
+                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
             }
         }
     }
@@ -87,7 +91,8 @@ public:
                 if (voice == nullptr)
                     continue;
 
-                voice->startVoice(region.get(), channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+                voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
             }
         }
     }
@@ -96,13 +101,16 @@ public:
         for (auto& voice : voices)
             voice->registerCC(delay, channel, ccNumber, ccValue);
 
+        ccState[ccNumber] = ccValue;
+
         for (auto& region : regions) {
             if (region->registerCC(channel, ccNumber, ccValue)) {
                 auto voice = findFreeVoice();
                 if (voice == nullptr)
                     continue;
 
-                voice->startVoice(region.get(), channel, ccNumber, ccValue, Voice::TriggerType::NoteOff);
+                voice->startVoice(region.get(), delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
+                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
             }
         }
     }

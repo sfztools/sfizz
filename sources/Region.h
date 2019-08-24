@@ -1,4 +1,6 @@
 #pragma once
+#include "Helpers.h"
+#include <bits/stdint-uintn.h>
 #include <optional>
 #include <vector>
 #include <string>
@@ -8,6 +10,7 @@
 #include "Defaults.h"
 #include "CCMap.h"
 #include <bitset>
+#include <random>
 
 namespace sfz
 {
@@ -31,6 +34,26 @@ struct Region
     void registerAftertouch(int channel, uint8_t aftertouch);
     void registerTempo(float secondsPerQuarter);
     bool isStereo() const noexcept;
+    float getBaseGain()
+    {
+        float baseGaindB { volume };
+        baseGaindB += gainDistribution(Random::randomGenerator);
+        return db2mag(baseGaindB);
+    }
+    uint32_t getOffset()
+    {
+        return offset + offsetDistribution(Random::randomGenerator);
+    }
+    uint32_t getDelay()
+    {
+        return delay + delayDistribution(Random::randomGenerator);
+    }
+
+    uint32_t trueSampleEnd()
+    {
+        return min(sampleEnd, loopRange.getEnd());
+    }
+
     bool parseOpcode(const Opcode& opcode);
     // Sound source: sample playback
     std::string sample {}; // Sample
@@ -126,6 +149,10 @@ private:
 
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
+
+    std::uniform_real_distribution<float> gainDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
+    std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };
+    std::uniform_int_distribution<uint32_t> offsetDistribution { 0, sfz::Default::offsetRandom };
 };
 
 } // namespace sfz

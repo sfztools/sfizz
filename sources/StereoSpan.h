@@ -41,6 +41,13 @@ public:
     {
     }
 
+    StereoSpan(StereoBuffer<ValueType>& buffer)
+        : numFrames(buffer.getNumFrames())
+        , leftBuffer(buffer.getSpan(Channel::left))
+        , rightBuffer(buffer.getSpan(Channel::right))
+    {
+    }
+
     StereoSpan(StereoBuffer<ValueType>& buffer, size_t numFrames)
         : numFrames(numFrames)
         , leftBuffer(buffer.getSpan(Channel::left).first(numFrames))
@@ -55,7 +62,7 @@ public:
     {
     }
 
-    StereoSpan(StereoSpan<ValueType>& span)
+    StereoSpan(const StereoSpan<ValueType>& span)
         : numFrames(span.size())
         , leftBuffer(span.left())
         , rightBuffer(span.right())
@@ -73,6 +80,12 @@ public:
     {
         ::fill<Type>(leftBuffer, value);
         ::fill<Type>(rightBuffer, value);
+    }
+
+    void applyGain(absl::Span<const Type> gain) noexcept
+    {
+        ::applyGain<Type>(gain, leftBuffer);
+        ::applyGain<Type>(gain, rightBuffer);
     }
 
     void readInterleaved(absl::Span<const Type> input) noexcept
@@ -93,32 +106,32 @@ public:
         ::add<Type>(buffer.right(), rightBuffer);
     }
 
-    absl::Span<Type> left()
+    absl::Span<Type> left() const
     {
         return leftBuffer;
     }
 
-    absl::Span<Type> right()
+    absl::Span<Type> right() const
     {
         return rightBuffer;
     }
 
-    StereoSpan<Type> first(size_t length)
+    StereoSpan<Type> first(size_t length) const
     {
         return { leftBuffer.first(length), rightBuffer.first(length) };
     }
 
-    StereoSpan<Type> last(size_t length)
+    StereoSpan<Type> last(size_t length) const
     {
         return { leftBuffer.last(length), rightBuffer.last(length) };
     }
 
-    StereoSpan<Type> subspan(size_t pos, size_t length = absl::Span<Type>::npos)
+    StereoSpan<Type> subspan(size_t pos, size_t length = absl::Span<Type>::npos) const
     {
         return { leftBuffer.subspan(pos, length), rightBuffer.subspan(pos, length) };
     }
 
-    size_t size()
+    size_t size() const
     {
         return numFrames;
     }

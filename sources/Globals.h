@@ -5,7 +5,7 @@ namespace sfz
 
 namespace config
 {
-    constexpr double defaultSampleRate { 48000 };
+    constexpr float defaultSampleRate { 48000 };
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int preloadSize { 8192 };
     constexpr int numChannels { 2 };
@@ -13,9 +13,10 @@ namespace config
     constexpr int numLoadingThreads { 4 };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };
-    constexpr double fastReleaseDuration { 0.01 };
+    constexpr float fastReleaseDuration { 0.01 };
     constexpr char defineCharacter { '$' };
     constexpr int oversamplingFactor { 2 };
+    constexpr float A440 { 440.0 };
 } // namespace config
 
 } // namespace sfz

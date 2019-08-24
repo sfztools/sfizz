@@ -64,19 +64,19 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
 
         switch (midi::status(event.buffer[0])) {
         case midi::noteOff:
-            DBG("[MIDI] Note " << event.buffer[1] << " OFF at time " << event.time);
-            synth->noteOff(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
+            synth->noteOff(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
-            DBG("[MIDI] Note " << event.buffer[1] << " ON at time " << event.time);
-            synth->noteOn(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
+            synth->noteOn(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
             DBG("[MIDI] Polyphonic pressure on at time " << event.time);
             break;
         case midi::controlChange:
-            DBG("[MIDI] CC " << event.buffer[1] << " at time " << event.time);
-            synth->cc(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
+            synth->cc(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
             break;
         case midi::programChange:
             DBG("[MIDI] Program change at time " << event.time);
@@ -100,7 +100,6 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
     };
 
     synth->renderBlock(output);
-
     return 0;
 }
 

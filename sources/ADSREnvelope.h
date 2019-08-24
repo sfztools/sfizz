@@ -12,7 +12,7 @@ public:
     Type getNextValue() noexcept;
     void getBlock(absl::Span<Type> output) noexcept;
     void startRelease(int releaseDelay) noexcept;
-    constexpr bool isSmoothing() noexcept;
+    bool isSmoothing() noexcept;
 private:
     enum class State
     {

@@ -1,6 +1,8 @@
 #include "Region.h"
 #include "Helpers.h"
 #include "absl/strings/str_replace.h"
+#include <bits/stdint-uintn.h>
+#include <random>
 
 bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
@@ -14,12 +16,14 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("delay_random"):
         setValueFromOpcode(opcode, delayRandom, Default::delayRange);
+        delayDistribution.param( std::uniform_real_distribution<float>::param_type(0, delayRandom) );
         break;
     case hash("offset"):
         setValueFromOpcode(opcode, offset, Default::offsetRange);
         break;
     case hash("offset_random"):
         setValueFromOpcode(opcode, offsetRandom, Default::offsetRange);
+        offsetDistribution.param( std::uniform_int_distribution<uint32_t>::param_type(0, offsetRandom) );
         break;
     case hash("end"):
         setValueFromOpcode(opcode, sampleEnd, Default::sampleEndRange);
@@ -250,6 +254,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("amp_random"):
         setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
+        gainDistribution.param(std::uniform_real_distribution<float>::param_type(-ampRandom, ampRandom));
         break;
     case hash("amp_velcurve_"):
         if (opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter)) {
