@@ -62,6 +62,7 @@ void sfz::FilePool::loadingThread()
         auto readBuffer = std::make_unique<Buffer<float>>(fileToLoad.numFrames * 2);
         sndFile.readf(readBuffer->data(), fileToLoad.numFrames);
         fileLoaded->readInterleaved(*readBuffer);
+        ASSERT(fileLoaded != nullptr);
         fileToLoad.voice->setFileData(std::move(fileLoaded));
     }
 }

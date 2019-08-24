@@ -2,14 +2,17 @@
 #include "FilePool.h"
 #include "Parser.h"
 #include "Region.h"
-#include "StereoSpan.h"
 #include "SfzHelpers.h"
+#include "StereoSpan.h"
 #include "absl/types/span.h"
 #include <optional>
 #include <random>
 #include <set>
 #include <string_view>
+#include <thread>
 #include <vector>
+#include <chrono>
+using namespace std::literals;
 
 namespace sfz {
 
@@ -20,6 +23,13 @@ public:
         for (int i = 0; i < config::numVoices; ++i)
             voices.push_back(std::make_unique<Voice>(ccState));
     }
+
+    ~Synth()
+    {
+        threadsShouldQuit = true;
+        garbageCollectionThread.join();
+    }
+
     bool loadSfzFile(const std::filesystem::path& file) final;
     int getNumRegions() const noexcept { return static_cast<int>(regions.size()); }
     int getNumGroups() const noexcept { return numGroups; }
@@ -34,7 +44,7 @@ public:
         DBG("[Synth] Samples per block set to " << samplesPerBlock);
         this->samplesPerBlock = samplesPerBlock;
         this->tempBuffer.resize(samplesPerBlock);
-        for (auto & voice: voices)
+        for (auto& voice : voices)
             voice->setSamplesPerBlock(samplesPerBlock);
     }
 
@@ -42,14 +52,14 @@ public:
     {
         DBG("[Synth] Sample rate set to " << sampleRate);
         this->sampleRate = sampleRate;
-        for (auto & voice: voices)
+        for (auto& voice : voices)
             voice->setSampleRate(sampleRate);
     }
 
     void renderBlock(StereoSpan<float> buffer)
     {
         buffer.fill(0.0f);
-        
+
         StereoSpan<float> tempSpan { tempBuffer, buffer.size() };
         for (auto& voice : voices) {
             voice->renderBlock(tempSpan);
@@ -63,8 +73,7 @@ public:
 
         for (auto& region : regions) {
             if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
-                for (auto& voice: voices)
-                {
+                for (auto& voice : voices) {
                     if (voice->checkOffGroup(delay, region->group))
                         noteOff(delay, voice->getTriggerChannel(), voice->getTriggerNumber(), 0);
                 }
@@ -164,10 +173,21 @@ private:
     std::mt19937 randomGenerator { rd() };
     std::uniform_real_distribution<float> randomDistribution { 0, 1 };
 
+    bool threadsShouldQuit { false };
+    std::thread garbageCollectionThread { [&]() {
+        while (!threadsShouldQuit) {
+            for (auto& voice : voices)
+                voice->garbageCollect();
+            std::this_thread::sleep_for(1s);
+        }
+    } };
+
     float getUniform()
     {
         return randomDistribution(randomGenerator);
     }
+    
+    LEAK_DETECTOR(Synth);
 };
 
 }

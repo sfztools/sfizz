@@ -65,8 +65,8 @@ public:
 
     void setFileData(std::unique_ptr<StereoBuffer<float>> file)
     {
-        fileData.reset(file.release());
-        dataReady.store(true);
+        fileData = std::move(file);
+        dataReady.store(true, std::memory_order_seq_cst);
     }
 
     bool isFree()
@@ -76,12 +76,19 @@ public:
 
     void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]])
     {
-        if (state == State::playing && triggerChannel == channel && triggerNumber == noteNumber)
-            egEnvelope.startRelease(delay);
+        if (state == State::playing && triggerChannel == channel && triggerNumber == noteNumber) {
+            noteIsOff = true;
+
+            if (ccState[64] < 63)
+                egEnvelope.startRelease(delay);
+        }
+
     }
 
     void registerCC(int delay [[maybe_unused]], int channel [[maybe_unused]], int ccNumber [[maybe_unused]], uint8_t ccValue [[maybe_unused]])
     {
+        if (ccNumber == 64 && noteIsOff && ccValue < 63)
+            egEnvelope.startRelease(delay);
     }
 
     void registerPitchWheel(int delay, int channel, int pitch);
@@ -126,7 +133,7 @@ public:
     void fillWithData(StereoSpan<float> buffer)
     {
         const StereoSpan<const float> source([&]() -> StereoBuffer<float>& {
-            if (dataReady)
+            if (dataReady.load(std::memory_order_seq_cst) && fileData != nullptr)
                 return *fileData;
             else
                 return *region->preloadedData;
@@ -135,6 +142,7 @@ public:
         const auto actualBlockSize = min(buffer.size(), source.size() - sourcePosition);
         buffer.add(source.subspan(sourcePosition, actualBlockSize));
         sourcePosition += actualBlockSize;
+
         if (sourcePosition == source.size())
             egEnvelope.startRelease(buffer.size());
     }
@@ -189,6 +197,13 @@ public:
         region = nullptr;
         state = State::idle;
         dataReady.store(false);
+        noteIsOff = false;
+    }
+
+    void garbageCollect()
+    {
+        if (state == State::idle && region == nullptr)
+            fileData.reset();
     }
 
 private:
@@ -200,6 +215,7 @@ private:
         release
     };
     State state;
+    bool noteIsOff { false };
 
     TriggerType triggerType;
     int triggerNumber;
@@ -214,7 +230,7 @@ private:
     uint32_t sourcePosition;
     uint32_t initialDelay;
 
-    std::atomic<bool> dataReady;
+    std::atomic<bool> dataReady { false };
     std::unique_ptr<StereoBuffer<float>> fileData;
 
     Buffer<float> tempBuffer1;
@@ -227,6 +243,7 @@ private:
 
     const CCValueArray& ccState;
     ADSREnvelope<float> egEnvelope;
+    LEAK_DETECTOR(Voice);
 };
 
 } // namespace sfz

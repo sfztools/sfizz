@@ -19,6 +19,7 @@ struct Opcode
     std::string_view value{};	
     // This is to handle the integer parameter of some opcodes
     std::optional<uint8_t> parameter;
+    LEAK_DETECTOR(Opcode);
 };
 
 template<class ValueType>

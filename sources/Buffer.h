@@ -1,11 +1,11 @@
 #pragma once
 #include "Globals.h"
+#include "Helpers.h"
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <type_traits>
 #include <utility>
-
 template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer
 {
@@ -135,4 +135,5 @@ private:
     pointer paddedData{nullptr};
     pointer normalEnd{nullptr};
     pointer _alignedEnd{nullptr};
+    LEAK_DETECTOR(Buffer);
 };

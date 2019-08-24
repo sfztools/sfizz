@@ -55,5 +55,6 @@ private:
     Buffer<float> tempReadBuffer { config::preloadSize * 2 };
     // std::map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
     absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
+    LEAK_DETECTOR(FilePool);
 };
 }

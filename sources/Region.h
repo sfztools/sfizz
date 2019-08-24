@@ -153,6 +153,7 @@ private:
     std::uniform_real_distribution<float> gainDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
     std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };
     std::uniform_int_distribution<uint32_t> offsetDistribution { 0, sfz::Default::offsetRandom };
+    LEAK_DETECTOR(Region);
 };
 
 } // namespace sfz

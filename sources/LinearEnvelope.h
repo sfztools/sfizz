@@ -1,5 +1,6 @@
 #pragma once
 #include "Globals.h"
+#include "Helpers.h"
 #include <type_traits>
 #include <functional>
 #include <absl/types/span.h>
@@ -25,6 +26,7 @@ private:
     std::vector<std::pair<int, Type>> events;
     int maxCapacity { config::defaultSamplesPerBlock };
     Type currentValue { 0.0 };
+    LEAK_DETECTOR(LinearEnvelope);
 };
 
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include "Helpers.h"
 
 namespace sfz
 {
@@ -40,5 +41,6 @@ public:
 private:
     const ValueType defaultValue;
     std::map<int, ValueType> container;
+    LEAK_DETECTOR(CCMap);
 };
 }

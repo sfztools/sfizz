@@ -2,7 +2,6 @@
 #include "Buffer.h"
 #include "Globals.h"
 #include "Helpers.h"
-
 #include "SIMDHelpers.h"
 #include <array>
 #include <iostream>
@@ -160,4 +159,5 @@ private:
     int numFrames { 0 };
     Buffer<Type, Alignment> leftBuffer {};
     Buffer<Type, Alignment> rightBuffer {};
+    LEAK_DETECTOR(StereoBuffer);
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include <absl/types/span.h>
+#include "Helpers.h"
 namespace sfz
 {
 
@@ -31,6 +32,7 @@ private:
     Type sustain { 0 };
     int releaseDelay { 0 };
     bool shouldRelease { false };
+    LEAK_DETECTOR(ADSREnvelope);
 };
 
 }

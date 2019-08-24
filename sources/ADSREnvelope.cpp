@@ -181,7 +181,8 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         }
         
         originalSpan.remove_prefix(releaseDelay);
-        currentValue = originalSpan.front();
+        if (originalSpan.size() > 0)
+            currentValue = originalSpan.front();
         step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue)) / (release > 0 ? release : 1));
         remainingSamples -= releaseDelay;
         length = min(remainingSamples, release);

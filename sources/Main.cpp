@@ -125,12 +125,15 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
     return 0;
 }
 
+static bool shouldClose { false };
+
 static void done(int sig [[maybe_unused]])
 {
-    std::cout << "Closing..." << '\n';
-    if (client != nullptr)
-        jack_client_close(client);
-    exit(0);
+    std::cout << "Signal received" << '\n';
+    shouldClose = true;
+    // if (client != nullptr)
+        
+    // exit(0);
 }
 
 int main(int argc, char** argv)
@@ -229,6 +232,11 @@ int main(int argc, char** argv)
     signal(SIGINT, done);
     signal(SIGTERM, done);
     signal(SIGQUIT, done);
-    sleep(-1);
+
+    while (!shouldClose)
+        sleep(1);
+    
+    std::cout << "Closing..." << '\n';
+    jack_client_close(client);
     return 0;
 }

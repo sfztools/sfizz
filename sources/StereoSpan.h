@@ -141,4 +141,5 @@ private:
     size_t numFrames { 0 };
     absl::Span<Type> leftBuffer;
     absl::Span<Type> rightBuffer;
+    LEAK_DETECTOR(StereoSpan);
 };

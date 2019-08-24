@@ -67,6 +67,7 @@ struct EGDescription
     {
         return ccSwitchedValue(ccValues, ccSustain, sustain) + normalizeCC(velocity)*vel2sustain;
     }
+    LEAK_DETECTOR(EGDescription);
 };
 
 } //namespace sfz
