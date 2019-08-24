@@ -13,12 +13,6 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
     writeInterleaved<float, false>(inputLeft, inputRight, output);
 }
 
-// template<class Type, bool SIMD=false>
-// void linearRamp(absl::Span<Type> output, Type start, Type step);
-
-// template<class Type, bool SIMD=false>
-// void exponentialRamp(absl::Span<Type> output, Type start, Type step);
-
 template<>
 void fill<float, true>(absl::Span<float> output, float value) noexcept
 {

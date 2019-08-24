@@ -49,14 +49,14 @@ void sfz::FilePool::loadingThread()
             DBG("Background thread error: voice is null.");
             continue;
         }
-
+        
         DBG("Background loading of: " << fileToLoad.sample);
         std::filesystem::path file { rootDirectory / fileToLoad.sample };
         if (!std::filesystem::exists(file)) {
             DBG("Background thread: no file " << fileToLoad.sample << " exists.");
             continue;
         }
-
+        
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
         auto fileLoaded = std::make_unique<StereoBuffer<float>>(fileToLoad.numFrames);
         auto readBuffer = std::make_unique<Buffer<float>>(fileToLoad.numFrames * 2);

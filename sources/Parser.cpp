@@ -8,38 +8,38 @@
 using svregex_iterator = std::regex_iterator<std::string_view::const_iterator>;
 using svmatch_results = std::match_results<std::string_view::const_iterator>;
 
-void removeCommentOnLine(std::string_view& line)
+void removeCommentOnLine(std::string_view &line)
 {
 	if (auto position = line.find("//"); position != line.npos)
 		line.remove_suffix(line.size() - position);
 }
 
-bool sfz::Parser::loadSfzFile(const std::filesystem::path& file)
+bool sfz::Parser::loadSfzFile(const std::filesystem::path &file)
 {
-    const auto sfzFile = file.is_absolute() ? file : rootDirectory / file;
+	const auto sfzFile = file.is_absolute() ? file : rootDirectory / file;
 	if (!std::filesystem::exists(sfzFile))
 		return false;
 
-    rootDirectory = file.parent_path();
+	rootDirectory = file.parent_path();
 	std::vector<std::string> lines;
 	readSfzFile(file, lines);
 
-    aggregatedContent = absl::StrJoin(lines, " ");
-	const std::string_view aggregatedView { aggregatedContent };
+	aggregatedContent = absl::StrJoin(lines, " ");
+	const std::string_view aggregatedView{aggregatedContent};
 
-    svregex_iterator headerIterator(aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers);
+	svregex_iterator headerIterator(aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers);
 	const auto regexEnd = svregex_iterator();
 
-    std::vector<Opcode> currentMembers;
+	std::vector<Opcode> currentMembers;
 
-    for (; headerIterator != regexEnd; ++headerIterator)
-  	{
+	for (; headerIterator != regexEnd; ++headerIterator)
+	{
 		svmatch_results headerMatch = *headerIterator;
 
 		// Can't use uniform initialization here because it generates narrowing conversions
 		const std::string_view header(&*headerMatch[1].first, headerMatch[1].length());
 		const std::string_view members(&*headerMatch[2].first, headerMatch[2].length());
-		auto paramIterator = svregex_iterator (members.cbegin(), members.cend(), sfz::Regexes::members);
+		auto paramIterator = svregex_iterator(members.cbegin(), members.cend(), sfz::Regexes::members);
 
 		// Store or handle members
 		for (; paramIterator != regexEnd; ++paramIterator)
@@ -47,16 +47,16 @@ bool sfz::Parser::loadSfzFile(const std::filesystem::path& file)
 			const svmatch_results paramMatch = *paramIterator;
 			const std::string_view opcode(&*paramMatch[1].first, paramMatch[1].length());
 			const std::string_view value(&*paramMatch[2].first, paramMatch[2].length());
-            currentMembers.emplace_back(opcode, value);		
+			currentMembers.emplace_back(opcode, value);
 		}
 		callback(header, currentMembers);
-        currentMembers.clear();
+		currentMembers.clear();
 	}
 
-    return true;
+	return true;
 }
 
-void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector<std::string>& lines) noexcept
+void sfz::Parser::readSfzFile(const std::filesystem::path &fileName, std::vector<std::string> &lines) noexcept
 {
 	std::ifstream fileStream(fileName.c_str());
 	if (!fileStream)
@@ -69,7 +69,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 	std::string tmpString;
 	while (std::getline(fileStream, tmpString))
 	{
-		std::string_view tmpView { tmpString };
+		std::string_view tmpView{tmpString};
 
 		removeCommentOnLine(tmpView);
 		trimInPlace(tmpView);
@@ -82,7 +82,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 		{
 			auto includePath = includeMatch.str(1);
 			std::replace(includePath.begin(), includePath.end(), '\\', '/');
-			const auto newFile = rootDirectory / includePath;			
+			const auto newFile = rootDirectory / includePath;
 			auto alreadyIncluded = std::find(includedFiles.begin(), includedFiles.end(), newFile);
 			if (std::filesystem::exists(newFile))
 			{
@@ -110,13 +110,13 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 		std::string newString;
 		newString.reserve(tmpView.length());
 		std::string::size_type lastPos = 0;
-    	std::string::size_type findPos = tmpView.find(sfz::config::defineCharacter, lastPos);
+		std::string::size_type findPos = tmpView.find(sfz::config::defineCharacter, lastPos);
 
-		while(findPos < tmpView.npos)
+		while (findPos < tmpView.npos)
 		{
 			newString.append(tmpView, lastPos, findPos - lastPos);
 
-			for (auto& definePair: defines)
+			for (auto &definePair : defines)
 			{
 				std::string_view candidate = tmpView.substr(findPos, definePair.first.length());
 				if (candidate == definePair.first)
@@ -126,7 +126,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 					break;
 				}
 			}
-			
+
 			if (lastPos <= findPos)
 			{
 				newString += sfz::config::defineCharacter;
@@ -138,6 +138,6 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 
 		// Copy the rest of the string
 		newString += tmpView.substr(lastPos);
-		lines.push_back(std::move(newString));		
+		lines.push_back(std::move(newString));
 	}
 }

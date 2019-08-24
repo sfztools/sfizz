@@ -133,6 +133,7 @@ public:
     void fillWithData(StereoSpan<float> buffer)
     {
         const StereoSpan<const float> source([&]() -> StereoBuffer<float>& {
+            // TODO: shouldn't need to check fileData here, something is a bit strange...
             if (dataReady.load(std::memory_order_seq_cst) && fileData != nullptr)
                 return *fileData;
             else
@@ -191,12 +192,12 @@ public:
 
     void reset()
     {
+        dataReady.store(false);
+        state = State::idle;
         if (region != nullptr) {
             DBG("Reset voice with sample " << region->sample);
         }
         region = nullptr;
-        state = State::idle;
-        dataReady.store(false);
         noteIsOff = false;
     }
 
