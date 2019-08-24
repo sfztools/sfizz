@@ -112,6 +112,9 @@ inline float midiNoteFrequency(const int noteNumber)
     return 440.0f * std::pow(2.0f, (noteNumber - 69) / 12.0f);
 }
 
-constexpr double pi() { return std::acos(-1); } 
-constexpr double twoPi() { return 2*pi(); } 
-constexpr double piTwo() { return pi()/2; } 
+template<class Type>
+constexpr Type pi { 3.141592653589793238462643383279502884 };
+template<class Type>
+constexpr Type twoPi { 2*pi<Type> };
+template<class Type> 
+constexpr Type piTwo { pi<Type>/2 };

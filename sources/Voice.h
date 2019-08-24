@@ -1,30 +1,29 @@
 #pragma once
 #include "ADSREnvelope.h"
-#include "StereoBuffer.h"
-#include "StereoSpan.h"
 #include "Globals.h"
 #include "Region.h"
-#include "absl/types/span.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
+#include "StereoBuffer.h"
+#include "StereoSpan.h"
+#include "absl/types/span.h"
 #include <atomic>
 #include <memory>
 
-namespace sfz
-{
-class Voice
-{
+namespace sfz {
+class Voice {
 public:
     Voice() = delete;
-    Voice(const CCValueArray &ccState)
-        : ccState(ccState) {}
-    enum class TriggerType
+    Voice(const CCValueArray& ccState)
+        : ccState(ccState)
     {
+    }
+    enum class TriggerType {
         NoteOn,
         NoteOff,
         CC
     };
-    void startVoice(Region *region, int delay, int channel, int number, uint8_t value, TriggerType triggerType)
+    void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType)
     {
         this->triggerType = triggerType;
         triggerNumber = number;
@@ -75,13 +74,13 @@ public:
         return (region == nullptr);
     }
 
-    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity[[maybe_unused]])
+    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]])
     {
         if (state == State::playing && triggerChannel == channel && triggerNumber == noteNumber)
             egEnvelope.startRelease(delay);
     }
 
-    void registerCC(int delay[[maybe_unused]], int channel[[maybe_unused]], int ccNumber[[maybe_unused]], uint8_t ccValue[[maybe_unused]])
+    void registerCC(int delay [[maybe_unused]], int channel [[maybe_unused]], int ccNumber [[maybe_unused]], uint8_t ccValue [[maybe_unused]])
     {
     }
 
@@ -126,7 +125,7 @@ public:
 
     void fillWithData(StereoSpan<float> buffer)
     {
-        StereoSpan<const float> source([&]() -> StereoBuffer<float> & {
+        const StereoSpan<const float> source([&]() -> StereoBuffer<float>& {
             if (dataReady)
                 return *fileData;
             else
@@ -145,17 +144,16 @@ public:
         if (region->sample != "*sine")
             return;
 
-        float step = baseFrequency * twoPi() / sampleRate;
+        float step = baseFrequency * twoPi<float> / sampleRate;
         ::linearRamp<float>(tempSpan1.first(buffer.size()), sourcePosition * step, step);
         ::sin<float>(tempSpan1, buffer.left());
         absl::c_copy(buffer.left(), buffer.right().begin());
         sourcePosition += buffer.size();
     }
 
-    bool checkOffGroup(int delay[[maybe_unused]], uint32_t group) noexcept
+    bool checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexcept
     {
-        if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group)
-        {
+        if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
             // TODO: release
             return true;
         }
@@ -185,8 +183,7 @@ public:
 
     void reset()
     {
-        if (region != nullptr)
-        {
+        if (region != nullptr) {
             DBG("Reset voice with sample " << region->sample);
         }
         region = nullptr;
@@ -195,10 +192,9 @@ public:
     }
 
 private:
-    Region *region;
+    Region* region;
 
-    enum class State
-    {
+    enum class State {
         idle,
         playing,
         release
@@ -210,10 +206,10 @@ private:
     int triggerChannel;
     uint8_t triggerValue;
 
-    float speedRatio{1.0};
-    float pitchRatio{1.0};
-    float baseGain{1.0};
-    float baseFrequency{440.0};
+    float speedRatio { 1.0 };
+    float pitchRatio { 1.0 };
+    float baseGain { 1.0 };
+    float baseFrequency { 440.0 };
 
     uint32_t sourcePosition;
     uint32_t initialDelay;
@@ -223,13 +219,13 @@ private:
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;
-    absl::Span<float> tempSpan1{absl::MakeSpan(tempBuffer1)};
-    absl::Span<float> tempSpan2{absl::MakeSpan(tempBuffer2)};
+    absl::Span<float> tempSpan1 { absl::MakeSpan(tempBuffer1) };
+    absl::Span<float> tempSpan2 { absl::MakeSpan(tempBuffer2) };
 
-    int samplesPerBlock{config::defaultSamplesPerBlock};
-    double sampleRate{config::defaultSampleRate};
+    int samplesPerBlock { config::defaultSamplesPerBlock };
+    double sampleRate { config::defaultSampleRate };
 
-    const CCValueArray &ccState;
+    const CCValueArray& ccState;
     ADSREnvelope<float> egEnvelope;
 };
 
