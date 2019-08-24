@@ -2,6 +2,7 @@
 #include "FilePool.h"
 #include "Parser.h"
 #include "Region.h"
+#include "StereoSpan.h"
 #include "SfzHelpers.h"
 #include "absl/types/span.h"
 #include <optional>
@@ -28,20 +29,27 @@ public:
     auto getUnknownOpcodes() { return unknownOpcodes; }
     size_t getNumPreloadedSamples() { return filePool.getNumPreloadedSamples(); }
 
-    void prepareToPlay(int samplesPerBlock, double sampleRate)
+    void setSamplesPerBlock(int samplesPerBlock)
     {
+        DBG("[Synth] Samples per block set to " << samplesPerBlock);
         this->samplesPerBlock = samplesPerBlock;
-        this->sampleRate = sampleRate;
-        this->tempBuffer = StereoBuffer<float>(samplesPerBlock);
+        this->tempBuffer.resize(samplesPerBlock);
     }
 
-    void renderBlock(StereoBuffer<float>& buffer)
+    void setSampleRate(double sampleRate)
+    {
+        DBG("[Synth] Sample rate set to " << sampleRate);
+        this->sampleRate = sampleRate;
+    }
+
+    void renderBlock(StereoSpan<float> buffer)
     {
         buffer.fill(0.0f);
         
+        StereoSpan<float> tempSpan { tempBuffer, buffer.size() };
         for (auto& voice : voices) {
-            voice->renderBlock(tempBuffer);
-            buffer.add(tempBuffer);
+            voice->renderBlock(tempSpan);
+            buffer.add(tempSpan);
         }
     }
 
@@ -83,7 +91,22 @@ public:
             }
         }
     }
-    void cc(int delay, int channel, int ccNumber, uint8_t ccValue);
+    void cc(int delay, int channel, int ccNumber, uint8_t ccValue)
+    {
+        for (auto& voice : voices)
+            voice->registerCC(delay, channel, ccNumber, ccValue);
+
+        for (auto& region : regions) {
+            if (region->registerCC(channel, ccNumber, ccValue)) {
+                auto voice = findFreeVoice();
+                if (voice == nullptr)
+                    continue;
+
+                voice->startVoice(region.get(), channel, ccNumber, ccValue, Voice::TriggerType::NoteOff);
+            }
+        }
+    }
+
     void pitchWheel(int delay, int channel, int pitch);
     void aftertouch(int delay, int channel, uint8_t aftertouch);
     void tempo(int delay, float secondsPerQuarter);

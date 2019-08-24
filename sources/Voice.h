@@ -1,5 +1,6 @@
 #pragma once
 #include "StereoBuffer.h"
+#include "StereoSpan.h"
 #include "Globals.h"
 #include "Region.h"
 #include <atomic>
@@ -32,14 +33,20 @@ public:
         return (region == nullptr);
     }
 
-    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
-    bool registerCC(int delay, int channel, int ccNumber, uint8_t ccValue);
+    void registerNoteOff(int delay [[maybe_unused]], int channel [[maybe_unused]], int noteNumber [[maybe_unused]], uint8_t velocity [[maybe_unused]])
+    {
+
+    }
+    void registerCC(int delay [[maybe_unused]], int channel [[maybe_unused]], int ccNumber [[maybe_unused]], uint8_t ccValue [[maybe_unused]])
+    {
+
+    }
     void registerPitchWheel(int delay, int channel, int pitch);
     void registerAftertouch(int delay, int channel, uint8_t aftertouch);
     void registerTempo(int delay, float secondsPerQuarter);
 
     void prepareToPlay(int samplesPerBlock, double sampleRate);
-    void renderBlock(StereoBuffer<float>& buffer)
+    void renderBlock(StereoSpan<float> buffer)
     {
         buffer.fill(0.0f);
     }

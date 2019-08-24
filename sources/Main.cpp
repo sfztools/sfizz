@@ -1,21 +1,152 @@
+#include "StereoSpan.h"
 #include "Synth.h"
-#include <iostream>
 #include <absl/flags/parse.h>
 #include <absl/types/span.h>
+#include <atomic>
+#include <bits/stdint-uintn.h>
+#include <cstddef>
+#include <ios>
+#include <iostream>
+#include <jack/jack.h>
+#include <jack/midiport.h>
+#include <jack/types.h>
+#include <ostream>
+#include <signal.h>
+#include <string_view>
+#include <thread>
+using namespace std::literals;
+
+static jack_port_t* midiInputPort;
+static jack_port_t* outputPort1;
+static jack_port_t* outputPort2;
+static jack_client_t* client;
+
+namespace midi {
+constexpr uint8_t statusMask { 0b11110000 };
+constexpr uint8_t channelMask { 0b00001111 };
+constexpr uint8_t noteOff { 0x80 };
+constexpr uint8_t noteOn { 0x90 };
+constexpr uint8_t polyphonicPressure { 0xA0 };
+constexpr uint8_t controlChange { 0xB0 };
+constexpr uint8_t programChange { 0xC0 };
+constexpr uint8_t channelPressure { 0xD0 };
+constexpr uint8_t pitchBend { 0xE0 };
+constexpr uint8_t systemMessage { 0xF0 };
+
+constexpr uint8_t status(uint8_t midiStatusByte)
+{
+    return midiStatusByte & statusMask;
+}
+constexpr uint8_t channel(uint8_t midiStatusByte)
+{
+    return midiStatusByte & channelMask;
+}
+}
+
+static std::atomic<bool> keepRunning [[maybe_unused]] { true };
+
+int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
+{
+    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+
+    auto buffer = jack_port_get_buffer(midiInputPort, numFrames);
+    assert(buffer);
+
+    auto numMidiEvents = jack_midi_get_event_count(buffer);
+    jack_midi_event_t event;
+
+    for (uint32_t i = 0; i < numMidiEvents; ++i) {
+        if (jack_midi_event_get(&event, buffer, i) != 0)
+            continue;
+
+        if (event.size == 0)
+            continue;
+
+        switch (midi::status(event.buffer[0])) {
+        case midi::noteOff:
+            DBG("[MIDI] Note " << event.buffer[1] << " OFF at time " << event.time);
+            synth->noteOff(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            break;
+        case midi::noteOn:
+            DBG("[MIDI] Note " << event.buffer[1] << " ON at time " << event.time);
+            synth->noteOn(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            break;
+        case midi::polyphonicPressure:
+            DBG("[MIDI] Polyphonic pressure on at time " << event.time);
+            break;
+        case midi::controlChange:
+            DBG("[MIDI] CC " << event.buffer[1] << " at time " << event.time);
+            synth->cc(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            break;
+        case midi::programChange:
+            DBG("[MIDI] Program change at time " << event.time);
+            break;
+        case midi::channelPressure:
+            DBG("[MIDI] Channel pressure at time " << event.time);
+            break;
+        case midi::pitchBend:
+            DBG("[MIDI] Pitch bend at time " << event.time);
+            break;
+        case midi::systemMessage:
+            DBG("[MIDI] System message at time " << event.time);
+            break;
+        }
+    }
+
+    StereoSpan<float> output {
+        jack_port_get_buffer(outputPort1, numFrames),
+        jack_port_get_buffer(outputPort2, numFrames), 
+        numFrames
+    };
+
+    synth->renderBlock(output);
+
+    return 0;
+}
+
+int sampleBlockChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
+{
+    if (arg == nullptr)
+        return 0;
+
+    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    DBG("Sample per block changed to " << nframes);
+    synth->setSamplesPerBlock(nframes);
+    return 0;
+}
+
+int sampleRateChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
+{
+    if (arg == nullptr)
+        return 0;
+
+    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    DBG("Sample rate changed to " << nframes);
+    synth->setSampleRate(nframes);
+    return 0;
+}
+
+static void done(int sig [[maybe_unused]])
+{
+    std::cout << "Closing..." << '\n';
+    if (client != nullptr)
+        jack_client_close(client);
+    exit(0);
+}
 
 int main(int argc, char** argv)
 {
-    std::ios::sync_with_stdio(false);
+    // std::ios::sync_with_stdio(false);
     auto arguments = absl::ParseCommandLine(argc, argv);
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
     std::cout << "Positional arguments:";
-    for (auto& file: filesToParse)
+    for (auto& file : filesToParse)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
     sfz::Synth synth;
     std::filesystem::path filename { filesToParse[0] };
-    synth.loadSfzFile(filename);  
+    synth.loadSfzFile(filename);
     std::cout << "==========" << '\n';
     std::cout << "Total:" << '\n';
     std::cout << "\tMasters: " << synth.getNumMasters() << '\n';
@@ -25,16 +156,80 @@ int main(int argc, char** argv)
     std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Included files:" << '\n';
-    for (auto& file: synth.getIncludedFiles())
+    for (auto& file : synth.getIncludedFiles())
         std::cout << '\t' << file.string() << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Defines:" << '\n';
-    for (auto& define: synth.getDefines())
+    for (auto& define : synth.getDefines())
         std::cout << '\t' << define.first << '=' << define.second << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Unknown opcodes:";
-    for (auto& opcode: synth.getUnknownOpcodes())
+    for (auto& opcode : synth.getUnknownOpcodes())
         std::cout << opcode << ',';
     std::cout << '\n';
+    // std::cout << std::flush;
+
+    auto defaultName = "sfizz";
+    jack_status_t status;
+    client = jack_client_open(defaultName, JackNullOption, &status);
+    if (client == nullptr) {
+        std::cerr << "Could not open JACK client" << '\n';
+        // if (status & JackFailure)
+        //     std::cerr << "JackFailure: Overall operation failed" << '\n';
+        return 1;
+    }
+
+    if (status & JackNameNotUnique) {
+        std::cout << "Name was taken: assigned " << jack_get_client_name(client) << "instead" << '\n';
+    }
+    if (status & JackServerStarted) {
+        std::cout << "Connected to JACK" << '\n';
+    }
+
+    synth.setSamplesPerBlock(jack_get_buffer_size(client));
+    synth.setSampleRate(jack_get_sample_rate(client));
+
+    jack_set_sample_rate_callback(client, sampleRateChanged, &synth);
+    jack_set_buffer_size_callback(client, sampleBlockChanged, &synth);
+    jack_set_process_callback(client, process, &synth);
+
+    midiInputPort = jack_port_register(client, "input", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+    if (midiInputPort == nullptr) {
+        std::cerr << "Could not open MIDI input port" << '\n';
+        return 1;
+    }
+
+    outputPort1 = jack_port_register(client, "output_1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+    outputPort2 = jack_port_register(client, "output_2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+    if (outputPort1 == nullptr || outputPort2 == nullptr) {
+        std::cerr << "Could not open output ports" << '\n';
+        return 1;
+    }
+
+    if (jack_activate(client) != 0) {
+        std::cerr << "Could not activate client" << '\n';
+        return 1;
+    }
+
+    auto systemPorts = jack_get_ports(client, nullptr, nullptr, JackPortIsPhysical | JackPortIsInput);
+    if (systemPorts == nullptr) {
+        std::cerr << "No physical output ports found" << '\n';
+        return 1;
+    }
+
+    if (jack_connect(client, jack_port_name(outputPort1), systemPorts[0])) {
+        std::cerr << "Cannot connect to physical output ports (0)" << '\n';
+    }
+
+    if (jack_connect(client, jack_port_name(outputPort2), systemPorts[1])) {
+        std::cerr << "Cannot connect to physical output ports (1)" << '\n';
+    }
+    jack_free(systemPorts);
+
+    signal(SIGHUP, done);
+    signal(SIGINT, done);
+    signal(SIGTERM, done);
+    signal(SIGQUIT, done);
+    sleep(-1);
     return 0;
 }

@@ -133,7 +133,7 @@ if(UNIX)
     target_compile_options(sfizz PRIVATE -fno-rtti -fno-exceptions)
     target_link_libraries(sfizz stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz absl::strings sndfile absl::flat_hash_map readerwriterqueue absl::flags_parse)
+target_link_libraries(sfizz jack absl::strings sndfile absl::flat_hash_map readerwriterqueue absl::flags_parse)
 
 ###############################
 # Test application

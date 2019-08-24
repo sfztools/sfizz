@@ -33,17 +33,23 @@ public:
         return false;
     }
 
-    absl::Span<const Type> getSpan(Channel channel) const
+    absl::Span<const Type> getConstSpan(Channel channel) const
     {
         switch (channel) {
         case Channel::left:
             return leftBuffer;
         case Channel::right:
             return rightBuffer;
-        // Should not be here by construction...
-        default:
-            ASSERTFALSE;
-            return {};
+        }
+    }
+
+    absl::Span<Type> getSpan(Channel channel)
+    {
+        switch (channel) {
+        case Channel::left:
+            return absl::MakeSpan(leftBuffer);
+        case Channel::right:
+            return absl::MakeSpan(rightBuffer);
         }
     }
 
@@ -55,10 +61,6 @@ public:
             return leftBuffer[sampleIndex];
         case Channel::right:
             return rightBuffer[sampleIndex];
-        // Should not be here by construction...
-        default:
-            ASSERTFALSE;
-            return trash;
         }
     }
 
@@ -152,9 +154,6 @@ private:
     static constexpr auto TypeAlignmentMask { TypeAlignment - 1 };
     static_assert(TypeAlignment * sizeof(Type) == Alignment, "The alignment does not appear to be divided by the size of the Type");
     int numFrames { 0 };
-    int totalSize { 0 };
-    int padding { 0 };
     Buffer<Type, Alignment> leftBuffer {};
     Buffer<Type, Alignment> rightBuffer {};
-    Type trash { 0 };
 };
