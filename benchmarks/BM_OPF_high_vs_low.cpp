@@ -1,12 +1,19 @@
 #include <benchmark/benchmark.h>
-#include "gsl/gsl-lite.hpp"
+#include <absl/types/span.h>
 #include <random>
 #include <algorithm>
-#include "../sources/Intrinsics.h"
+
+#if HAVE_X86INTRIN_H
+#include <x86intrin.h>
+#endif
+
+#if HAVE_INTRIN_H
+#include <intrin.h>
+#endif
 
 constexpr float filterGain { 0.25f };
 
-void lowpass(gsl::span<const float> input, gsl::span<float> lowpass, float gain)
+void lowpass(absl::Span<const float> input, absl::Span<float> lowpass, float gain)
 {
     float state = 0.0f;
     float intermediate;
@@ -21,7 +28,7 @@ void lowpass(gsl::span<const float> input, gsl::span<float> lowpass, float gain)
     }
 }
 
-void highpass(gsl::span<const float> input, gsl::span<float> highpass, float gain)
+void highpass(absl::Span<const float> input, absl::Span<float> highpass, float gain)
 {
     float state = 0.0f;
     float intermediate;
@@ -36,7 +43,7 @@ void highpass(gsl::span<const float> input, gsl::span<float> highpass, float gai
     }
 }
 
-void highpass_foreach(gsl::span<const float> input, gsl::span<float> highpass, float gain)
+void highpass_foreach(absl::Span<const float> input, absl::Span<float> highpass, float gain)
 {
     lowpass(input, highpass, gain);
     for (auto [in, out] = std::make_pair(input.begin(), highpass.begin()); 
@@ -45,7 +52,7 @@ void highpass_foreach(gsl::span<const float> input, gsl::span<float> highpass, f
         *out = *in - *out;
 }
 
-void highpass_raw(gsl::span<const float> input, gsl::span<float> highpass, float gain)
+void highpass_raw(absl::Span<const float> input, absl::Span<float> highpass, float gain)
 {
     lowpass(input, highpass, gain);
     auto in = input.data();
@@ -58,7 +65,7 @@ void highpass_raw(gsl::span<const float> input, gsl::span<float> highpass, float
     }
 }
 
-void highpass_sse(gsl::span<const float> input, gsl::span<float> highpass, float gain)
+void highpass_sse(absl::Span<const float> input, absl::Span<float> highpass, float gain)
 {
     lowpass(input, highpass, gain);
     auto in = input.data();
@@ -96,7 +103,7 @@ static void Low(benchmark::State& state) {
     });
 
     for (auto _ : state)
-        lowpass(input, output, filterGain);
+        lowpass(input, absl::MakeSpan(output), filterGain);
 }
 
 static void High(benchmark::State& state) {
@@ -111,7 +118,7 @@ static void High(benchmark::State& state) {
     });
 
     for (auto _ : state)
-        highpass(input, output, filterGain);
+        highpass(input, absl::MakeSpan(output), filterGain);
 }
 
 static void High_ForEach(benchmark::State& state) {
@@ -126,7 +133,7 @@ static void High_ForEach(benchmark::State& state) {
     });
 
     for (auto _ : state)
-        highpass_foreach(input, output, filterGain);
+        highpass_foreach(input, absl::MakeSpan(output), filterGain);
 }
 
 static void High_Raw(benchmark::State& state) {
@@ -141,7 +148,7 @@ static void High_Raw(benchmark::State& state) {
     });
 
     for (auto _ : state)
-        highpass_raw(input, output, filterGain);
+        highpass_raw(input, absl::MakeSpan(output), filterGain);
 }
 
 static void High_SSE(benchmark::State& state) {
@@ -156,7 +163,7 @@ static void High_SSE(benchmark::State& state) {
     });
 
     for (auto _ : state)
-        highpass_sse(input, output, filterGain);
+        highpass_sse(input, absl::MakeSpan(output), filterGain);
 }
 
 
