@@ -1,6 +1,7 @@
 build
 build-arm
-build-subl
+build-release
+build-debug
 .vscode
 perf.data
 perf.data.old
