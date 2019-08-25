@@ -283,13 +283,13 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 }
 
 template <>
-void loopingSFZIndex<float, true>(  absl::Span<const float> jumps,
-                                    absl::Span<float> leftCoeffs, 
-                                    absl::Span<float> rightCoeffs, 
-                                    absl::Span<int> indices, 
-                                    float floatIndex, 
-                                    float loopEnd, 
-                                    float loopStart) noexcept
+void loopingSFZIndex<float, true>(absl::Span<const float> jumps,
+    absl::Span<float> leftCoeffs,
+    absl::Span<float> rightCoeffs,
+    absl::Span<int> indices,
+    float floatIndex,
+    float loopEnd,
+    float loopStart) noexcept
 {
     ASSERT(indices.size() >= jumps.size());
     ASSERT(indices.size() == leftCoeffs.size());

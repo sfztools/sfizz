@@ -1,21 +1,19 @@
 #pragma once
-#include "Helpers.h"
-#include <bits/stdint-uintn.h>
-#include <optional>
-#include <vector>
-#include <string>
-#include "Opcode.h"
-#include "EGDescription.h"
-#include "StereoBuffer.h"
-#include "Defaults.h"
 #include "CCMap.h"
+#include "Defaults.h"
+#include "EGDescription.h"
+#include "Helpers.h"
+#include "Opcode.h"
+#include "StereoBuffer.h"
+#include <bits/stdint-uintn.h>
 #include <bitset>
+#include <optional>
 #include <random>
+#include <string>
+#include <vector>
 
-namespace sfz
-{
-struct Region
-{
+namespace sfz {
+struct Region {
     Region()
     {
         ccSwitched.set();
@@ -72,14 +70,14 @@ struct Region
     SfzOffMode offMode { Default::offMode }; // off_mode
 
     // Region logic: key mapping
-    Range<uint8_t> keyRange{ Default::keyRange }; //lokey, hikey and key
-    Range<uint8_t> velocityRange{ Default::velocityRange }; // hivel and lovel
+    Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
+    Range<uint8_t> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<uint8_t> channelRange{ Default::channelRange }; //lochan and hichan
-    Range<int> bendRange{ Default::bendRange }; // hibend and lobend
+    Range<uint8_t> channelRange { Default::channelRange }; //lochan and hichan
+    Range<int> bendRange { Default::bendRange }; // hibend and lobend
     CCMap<Range<uint8_t>> ccConditions { Default::ccRange };
-    Range<uint8_t> keyswitchRange{ Default::keyRange }; // sw_hikey and sw_lokey
+    Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     std::optional<uint8_t> keyswitch {}; // sw_last
     std::optional<uint8_t> keyswitchUp {}; // sw_up
     std::optional<uint8_t> keyswitchDown {}; // sw_down
@@ -87,9 +85,9 @@ struct Region
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
 
     // Region logic: internal conditions
-    Range<uint8_t> aftertouchRange{ Default::aftertouchRange }; // hichanaft and lochanaft
-    Range<float> bpmRange{ Default::bpmRange }; // hibpm and lobpm
-    Range<float> randRange{ Default::randRange }; // hirand and lorand
+    Range<uint8_t> aftertouchRange { Default::aftertouchRange }; // hichanaft and lochanaft
+    Range<float> bpmRange { Default::bpmRange }; // hibpm and lobpm
+    Range<float> randRange { Default::randRange }; // hirand and lorand
     uint8_t sequenceLength { Default::sequenceLength }; // seq_length
     uint8_t sequencePosition { Default::sequencePosition }; // seq_position
 
@@ -122,10 +120,10 @@ struct Region
     SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
 
     // Performance parameters: pitch
-    uint8_t pitchKeycenter{Default::pitchKeycenter}; // pitch_keycenter
-    int pitchKeytrack{ Default::pitchKeytrack }; // pitch_keytrack
-    int pitchRandom{ Default::pitchRandom }; // pitch_random
-    int pitchVeltrack{ Default::pitchVeltrack }; // pitch_veltrack
+    uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter
+    int pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
+    int pitchRandom { Default::pitchRandom }; // pitch_random
+    int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune
 
@@ -137,6 +135,7 @@ struct Region
     double sampleRate { config::defaultSampleRate };
     int numChannels { 1 };
     std::shared_ptr<StereoBuffer<float>> preloadedData { nullptr };
+
 private:
     bool keySwitched { true };
     bool previousKeySwitched { true };

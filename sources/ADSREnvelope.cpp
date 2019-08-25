@@ -1,13 +1,12 @@
-#include "Globals.h"
-#include "SIMDHelpers.h"
-#include "Helpers.h"
 #include "ADSREnvelope.h"
+#include "Globals.h"
+#include "Helpers.h"
+#include "SIMDHelpers.h"
 #include <algorithm>
 
-namespace sfz
-{
+namespace sfz {
 
-template<class Type>
+template <class Type>
 void ADSREnvelope<Type>::reset(int attack, int release, Type sustain, int delay, int decay, int hold, Type start, Type depth) noexcept
 {
     ASSERT(start <= 1.0f);
@@ -32,44 +31,40 @@ void ADSREnvelope<Type>::reset(int attack, int release, Type sustain, int delay,
     currentState = State::Delay;
 }
 
-template<class Type>
+template <class Type>
 Type ADSREnvelope<Type>::getNextValue() noexcept
 {
-    if (shouldRelease && releaseDelay-- == 0)
-    {
+    if (shouldRelease && releaseDelay-- == 0) {
         currentState = State::Release;
         step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue)) / (release > 0 ? release : 1));
     }
-    
-    switch(currentState)
-    {
+
+    switch (currentState) {
     case State::Delay:
         if (delay-- > 0)
             return start;
-        
+
         currentState = State::Attack;
         step = (1.0 - currentValue) / (attack > 0 ? attack : 1);
         [[fallthrough]];
     case State::Attack:
-        if (attack-- > 0)
-        {
+        if (attack-- > 0) {
             currentValue += step;
             return currentValue;
         }
-        
+
         currentState = State::Hold;
         currentValue = 1.0;
         [[fallthrough]];
     case State::Hold:
         if (hold-- > 0)
             return currentValue;
-        
+
         step = std::exp(std::log(sustain) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
         [[fallthrough]];
     case State::Decay:
-        if (decay-- > 0)
-        {
+        if (decay-- > 0) {
             currentValue *= step;
             return currentValue;
         }
@@ -80,8 +75,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
     case State::Sustain:
         return currentValue;
     case State::Release:
-        if (release-- > 0)
-        {
+        if (release-- > 0) {
             currentValue *= step;
             return currentValue;
         }
@@ -94,14 +88,13 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
     }
 }
 
-template<class Type>
+template <class Type>
 void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 {
     auto originalSpan = output;
     auto remainingSamples = static_cast<int>(output.size());
     int length;
-    switch(currentState)
-    {
+    switch (currentState) {
     case State::Delay:
         length = min(remainingSamples, delay);
         ::fill<Type>(output, currentValue);
@@ -110,7 +103,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         delay -= length;
         if (remainingSamples == 0)
             break;
-        
+
         currentState = State::Attack;
         step = (peak - start) / (attack > 0 ? attack : 1);
         [[fallthrough]];
@@ -122,7 +115,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         attack -= length;
         if (remainingSamples == 0)
             break;
-        
+
         currentValue = peak;
         currentState = State::Hold;
         [[fallthrough]];
@@ -134,7 +127,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         hold -= length;
         if (remainingSamples == 0)
             break;
-        
+
         step = std::exp(std::log(sustain) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
         [[fallthrough]];
@@ -171,15 +164,13 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
     }
     ::fill<Type>(output, currentValue);
 
-    if (shouldRelease)
-    {
+    if (shouldRelease) {
         remainingSamples = static_cast<int>(originalSpan.size());
-        if (releaseDelay > remainingSamples)
-        {
+        if (releaseDelay > remainingSamples) {
             releaseDelay -= remainingSamples;
             return;
         }
-        
+
         originalSpan.remove_prefix(releaseDelay);
         if (originalSpan.size() > 0)
             currentValue = originalSpan.front();
@@ -191,22 +182,20 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         originalSpan.remove_prefix(length);
         release -= length;
 
-        if (release == 0)
-        {
+        if (release == 0) {
             currentValue = 0.0;
             currentState = State::Done;
             ::fill<Type>(originalSpan, 0.0);
         }
-        
     }
 }
-template<class Type>
+template <class Type>
 bool ADSREnvelope<Type>::isSmoothing() noexcept
 {
     return currentState != State::Done;
 }
 
-template<class Type>
+template <class Type>
 void ADSREnvelope<Type>::startRelease(int releaseDelay) noexcept
 {
     shouldRelease = true;

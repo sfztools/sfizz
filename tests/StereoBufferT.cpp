@@ -1,5 +1,5 @@
-#include "catch2/catch.hpp"
 #include "../sources/StereoBuffer.h"
+#include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;
 
@@ -33,16 +33,14 @@ TEST_CASE("[StereoBuffer] Access")
 {
     const int size { 5 };
     StereoBuffer<double> doubleBuffer(size);
-    for (auto frameIdx = 0; frameIdx < doubleBuffer.getNumFrames(); ++frameIdx)
-    {
+    for (auto frameIdx = 0; frameIdx < doubleBuffer.getNumFrames(); ++frameIdx) {
         doubleBuffer.getSample(Channel::left, frameIdx) = static_cast<double>(doubleBuffer.getNumFrames()) + frameIdx;
         doubleBuffer.getSample(Channel::right, frameIdx) = static_cast<double>(doubleBuffer.getNumFrames()) - frameIdx;
     }
 
-    for (auto frameIdx = 0; frameIdx < doubleBuffer.getNumFrames(); ++frameIdx)
-    {
-        REQUIRE(doubleBuffer.getSample(Channel::left, frameIdx) == static_cast<double>(doubleBuffer.getNumFrames())  + frameIdx);
-        REQUIRE(doubleBuffer(Channel::left, frameIdx) == static_cast<double>(doubleBuffer.getNumFrames())  + frameIdx);
+    for (auto frameIdx = 0; frameIdx < doubleBuffer.getNumFrames(); ++frameIdx) {
+        REQUIRE(doubleBuffer.getSample(Channel::left, frameIdx) == static_cast<double>(doubleBuffer.getNumFrames()) + frameIdx);
+        REQUIRE(doubleBuffer(Channel::left, frameIdx) == static_cast<double>(doubleBuffer.getNumFrames()) + frameIdx);
         REQUIRE(doubleBuffer.getSample(Channel::right, frameIdx) == static_cast<double>(doubleBuffer.getNumFrames()) - frameIdx);
         REQUIRE(doubleBuffer(Channel::right, frameIdx) == static_cast<double>(doubleBuffer.getNumFrames()) - frameIdx);
     }
@@ -56,17 +54,17 @@ TEST_CASE("[StereoBuffer] Iterators")
     std::fill(buffer.begin(Channel::left), buffer.end(Channel::left), fillValue);
     std::fill(buffer.begin(Channel::right), buffer.end(Channel::right), fillValue);
 
-    REQUIRE( std::all_of(buffer.begin(Channel::left), buffer.end(Channel::left), [fillValue](auto value) { return value == fillValue; }) );
-    REQUIRE( std::all_of(buffer.begin(Channel::right), buffer.end(Channel::right), [fillValue](auto value) { return value == fillValue; }) );
+    REQUIRE(std::all_of(buffer.begin(Channel::left), buffer.end(Channel::left), [fillValue](auto value) { return value == fillValue; }));
+    REQUIRE(std::all_of(buffer.begin(Channel::right), buffer.end(Channel::right), [fillValue](auto value) { return value == fillValue; }));
 }
 
-template<class Type, unsigned int Alignment = 16>
+template <class Type, unsigned int Alignment = 16>
 void channelAlignmentTest(int size)
 {
     static constexpr auto AlignmentMask { Alignment - 1 };
     StereoBuffer<Type, Alignment> buffer(size);
-    REQUIRE( ((size_t)buffer.getChannel(Channel::left) & AlignmentMask) == 0 );
-    REQUIRE( ((size_t)buffer.getChannel(Channel::right) & AlignmentMask) == 0 );
+    REQUIRE(((size_t)buffer.getChannel(Channel::left) & AlignmentMask) == 0);
+    REQUIRE(((size_t)buffer.getChannel(Channel::right) & AlignmentMask) == 0);
 }
 
 TEST_CASE("[StereoBuffer] Channel alignments (floats)")
@@ -140,19 +138,18 @@ TEST_CASE("[AudioBuffer] fills")
 
     for (auto frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx)
         real[frameIdx] = buffer(Channel::left, frameIdx);
-    REQUIRE( real == expected );
+    REQUIRE(real == expected);
 
     for (auto frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx)
         real[frameIdx] = buffer(Channel::right, frameIdx);
-    REQUIRE( real == expected );
+    REQUIRE(real == expected);
 }
-
 
 TEST_CASE("[AudioBuffer] Fill a big Audiobuffer")
 {
     constexpr int size { 2039247 };
-    StereoBuffer<float> buffer (size);
-    std::vector<float> input (2*size);
+    StereoBuffer<float> buffer(size);
+    std::vector<float> input(2 * size);
     std::iota(input.begin(), input.end(), 1.0f);
     buffer.readInterleaved(input);
 }
@@ -160,29 +157,29 @@ TEST_CASE("[AudioBuffer] Fill a big Audiobuffer")
 TEST_CASE("[StereoBuffer] Interleaved write -- Scalar")
 {
     StereoBuffer<float> buffer(10);
-    std::array<float, 20> input  = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f};
+    std::array<float, 20> input = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 20> output { 0.0f };
     buffer.readInterleaved(input);
     buffer.writeInterleaved(absl::MakeSpan(output));
-    REQUIRE( output == input );
+    REQUIRE(output == input);
 }
 
 TEST_CASE("[StereoBuffer] Interleaved write -- SIMD")
 {
     StereoBuffer<float> buffer(10);
-    std::array<float, 20> input  = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f};
+    std::array<float, 20> input = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f };
     std::array<float, 20> output { 0.0f };
     buffer.readInterleaved(input);
     buffer.writeInterleaved(absl::MakeSpan(output));
-    REQUIRE( output == input );
+    REQUIRE(output == input);
 }
 
 TEST_CASE("[StereoBuffer] Small interleaved write -- SIMD")
 {
     StereoBuffer<float> buffer(3);
-    std::array<float, 6> input  = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f};
+    std::array<float, 6> input = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f };
     std::array<float, 6> output { 0.0f };
     buffer.readInterleaved(input);
     buffer.writeInterleaved(absl::MakeSpan(output));
-    REQUIRE( output == input );
+    REQUIRE(output == input);
 }

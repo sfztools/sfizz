@@ -1,5 +1,6 @@
 #pragma once
 #include "ADSREnvelope.h"
+#include "Defaults.h"
 #include "Globals.h"
 #include "Region.h"
 #include "SIMDHelpers.h"
@@ -7,7 +8,6 @@
 #include "StereoBuffer.h"
 #include "StereoSpan.h"
 #include "absl/types/span.h"
-#include "Defaults.h"
 #include <atomic>
 #include <memory>
 
@@ -92,7 +92,6 @@ public:
             if (ccState[64] < 63)
                 egEnvelope.startRelease(delay);
         }
-
     }
 
     void registerCC(int delay [[maybe_unused]], int channel [[maybe_unused]], int ccNumber [[maybe_unused]], uint8_t ccValue [[maybe_unused]])

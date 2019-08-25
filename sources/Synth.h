@@ -5,13 +5,13 @@
 #include "SfzHelpers.h"
 #include "StereoSpan.h"
 #include "absl/types/span.h"
+#include <chrono>
 #include <optional>
 #include <random>
 #include <set>
 #include <string_view>
 #include <thread>
 #include <vector>
-#include <chrono>
 using namespace std::literals;
 
 namespace sfz {
@@ -129,7 +129,7 @@ public:
     void tempo(int delay, float secondsPerQuarter);
 
 protected:
-    void callback(std::string_view header, const std::vector<Opcode>&  members) final;
+    void callback(std::string_view header, const std::vector<Opcode>& members) final;
 
 private:
     Voice* findFreeVoice()
@@ -177,13 +177,12 @@ private:
     std::thread garbageCollectionThread { [&]() {
         while (!threadsShouldQuit) {
             auto activeVoices { 0 };
-            for (auto& voice : voices)
-            {
+            for (auto& voice : voices) {
                 voice->garbageCollect();
                 if (!voice->isFree())
                     activeVoices++;
             }
-            DBG("Active voices:" << activeVoices  << " | Stray buffers: " << FilePool::getFileBuffers());
+            DBG("Active voices:" << activeVoices << " | Stray buffers: " << FilePool::getFileBuffers());
             std::this_thread::sleep_for(1s);
         }
     } };
@@ -192,7 +191,7 @@ private:
     {
         return randomDistribution(randomGenerator);
     }
-    
+
     LEAK_DETECTOR(Synth);
 };
 

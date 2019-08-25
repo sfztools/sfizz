@@ -4,13 +4,12 @@
 #include <bits/stdint-uintn.h>
 #include <random>
 
-bool sfz::Region::parseOpcode(const Opcode &opcode)
+bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
-    switch (hash(opcode.opcode))
-    {
+    switch (hash(opcode.opcode)) {
     // Sound source: sample playback
     case hash("sample"):
-        sample = absl::StrReplaceAll(trim(opcode.value), {{"\\", "/"}});
+        sample = absl::StrReplaceAll(trim(opcode.value), { { "\\", "/" } });
         break;
     case hash("delay"):
         setValueFromOpcode(opcode, delay, Default::delayRange);
@@ -34,8 +33,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         break;
     case hash("loopmode"):
     case hash("loop_mode"):
-        switch (hash(opcode.value))
-        {
+        switch (hash(opcode.value)) {
         case hash("no_loop"):
             loopMode = SfzLoopMode::no_loop;
             break;
@@ -70,8 +68,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         setValueFromOpcode(opcode, offBy, Default::groupRange);
         break;
     case hash("off_mode"):
-        switch (hash(opcode.value))
-        {
+        switch (hash(opcode.value)) {
         case hash("fast"):
             offMode = SfzOffMode::fast;
             break;
@@ -115,8 +112,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
         break;
     case hash("locc"):
-        if (opcode.parameter)
-        {
+        if (opcode.parameter) {
             setRangeStartFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccRange);
         }
         break;
@@ -146,8 +142,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         previousKeySwitched = false;
         break;
     case hash("sw_vel"):
-        switch (hash(opcode.value))
-        {
+        switch (hash(opcode.value)) {
         case hash("current"):
             velocityOverride = SfzVelocityOverride::current;
             break;
@@ -186,8 +181,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         break;
     // Region logic: triggers
     case hash("trigger"):
-        switch (hash(opcode.value))
-        {
+        switch (hash(opcode.value)) {
         case hash("attack"):
             trigger = SfzTrigger::attack;
             break;
@@ -263,8 +257,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         gainDistribution.param(std::uniform_real_distribution<float>::param_type(-ampRandom, ampRandom));
         break;
     case hash("amp_velcurve_"):
-        if (opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter))
-        {
+        if (opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter)) {
             if (auto value = readOpcode(opcode.value, Default::ampVelcurveRange); value)
                 velocityPoints.emplace_back(*opcode.parameter, *value);
         }
@@ -294,8 +287,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         setRangeEndFromOpcode(opcode, crossfadeVelOutRange, Default::velocityRange);
         break;
     case hash("xf_keycurve"):
-        switch (hash(opcode.value))
-        {
+        switch (hash(opcode.value)) {
         case hash("power"):
             crossfadeKeyCurve = SfzCrossfadeCurve::power;
             break;
@@ -307,8 +299,7 @@ bool sfz::Region::parseOpcode(const Opcode &opcode)
         }
         break;
     case hash("xf_velcurve"):
-        switch (hash(opcode.value))
-        {
+        switch (hash(opcode.value)) {
         case hash("power"):
             crossfadeVelCurve = SfzCrossfadeCurve::power;
             break;
@@ -423,10 +414,8 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
     if (!chanOk)
         return false;
 
-    if (keyswitchRange.containsWithEnd(noteNumber))
-    {
-        if (keyswitch)
-        {
+    if (keyswitchRange.containsWithEnd(noteNumber)) {
+        if (keyswitch) {
             if (*keyswitch == noteNumber)
                 keySwitched = true;
             else
@@ -441,8 +430,7 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
     }
 
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
-    if (keyOk)
-    {
+    if (keyOk) {
         // Update the number of notes playing for the region
         activeNotesInRange++;
 
@@ -457,8 +445,7 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
         if (trigger == SfzTrigger::release_key || velocityOverride == SfzVelocityOverride::previous)
             lastNoteVelocities[noteNumber] = velocity;
 
-        if (previousNote)
-        {
+        if (previousNote) {
             if (*previousNote == noteNumber)
                 previousKeySwitched = true;
             else
@@ -481,14 +468,13 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
     return keyOk && velOk && chanOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity[[maybe_unused]], float randValue)
+bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity [[maybe_unused]], float randValue)
 {
     const bool chanOk = channelRange.containsWithEnd(channel);
     if (!chanOk)
         return false;
 
-    if (keyswitchRange.containsWithEnd(noteNumber))
-    {
+    if (keyswitchRange.containsWithEnd(noteNumber)) {
         if (keyswitchDown && *keyswitchDown == noteNumber)
             keySwitched = false;
 

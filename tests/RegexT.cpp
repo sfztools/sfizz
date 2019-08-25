@@ -1,5 +1,5 @@
-#include "catch2/catch.hpp"
 #include "../sources/Parser.h"
+#include "catch2/catch.hpp"
 using namespace Catch::literals;
 
 void includeTest(const std::string& line, const std::string& fileName)
@@ -57,7 +57,7 @@ TEST_CASE("[Regex] Header")
     SECTION("Basic header match")
     {
         std::smatch headerMatch;
-        std::string line{"<header>param1=value1 param2=value2<next>"};
+        std::string line { "<header>param1=value1 param2=value2<next>" };
         auto found = std::regex_search(line, headerMatch, sfz::Regexes::headers);
         REQUIRE(found);
         REQUIRE(headerMatch[1] == "header");
@@ -66,7 +66,7 @@ TEST_CASE("[Regex] Header")
     SECTION("EOL header match")
     {
         std::smatch headerMatch;
-        std::string line{"<header>param1=value1 param2=value2"};
+        std::string line { "<header>param1=value1 param2=value2" };
         auto found = std::regex_search(line, headerMatch, sfz::Regexes::headers);
         REQUIRE(found);
         REQUIRE(headerMatch[1] == "header");
@@ -74,7 +74,7 @@ TEST_CASE("[Regex] Header")
     }
 }
 
-void memberTest(const std::string &line, const std::string &variable, const std::string &value)
+void memberTest(const std::string& line, const std::string& variable, const std::string& value)
 {
     std::smatch memberMatch;
     auto found = std::regex_search(line, memberMatch, sfz::Regexes::members);
@@ -114,7 +114,7 @@ void parameterTest(const std::string& line, const std::string& opcode, const std
     REQUIRE(parameterMatch[2] == parameter);
 }
 
-void parameterFail(const std::string &line)
+void parameterFail(const std::string& line)
 {
     std::smatch parameterMatch;
     auto found = std::regex_search(line, parameterMatch, sfz::Regexes::opcodeParameters);

@@ -58,7 +58,7 @@ void sfz::FilePool::loadingThread()
         }
 
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        // auto deleteAndTrackBuffers = [this]  
+        // auto deleteAndTrackBuffers = [this]
         std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileLoaded(new StereoBuffer<float>(fileToLoad.numFrames), deleteAndTrackBuffers);
         auto readBuffer = std::make_unique<Buffer<float>>(fileToLoad.numFrames * 2);
         sndFile.readf(readBuffer->data(), fileToLoad.numFrames);

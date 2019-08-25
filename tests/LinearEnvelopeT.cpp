@@ -1,21 +1,20 @@
-#include "catch2/catch.hpp"
 #include "../sources/LinearEnvelope.h"
-#include <array>
-#include <algorithm>
-#include <iostream>
-#include <absl/types/span.h>
+#include "catch2/catch.hpp"
 #include <absl/algorithm/container.h>
+#include <absl/types/span.h>
+#include <algorithm>
+#include <array>
+#include <iostream>
 using namespace Catch::literals;
 
-template<class Type>
-inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps=1e-3)
+template <class Type>
+inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
 {
     if (lhs.size() != rhs.size())
         return false;
 
     for (size_t i = 0; i < rhs.size(); ++i)
-        if (rhs[i] != Approx(lhs[i]).epsilon(eps))
-        {
+        if (rhs[i] != Approx(lhs[i]).epsilon(eps)) {
             std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
             return false;
         }
@@ -29,7 +28,7 @@ TEST_CASE("[LinearEnvelope] Basic state")
     std::array<float, 5> output;
     std::array<float, 5> expected { 0.0, 0.0, 0.0, 0.0, 0.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] Basic event")
@@ -39,7 +38,7 @@ TEST_CASE("[LinearEnvelope] Basic event")
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.25, 0.5, 0.75, 1.0, 1.0, 1.0, 1.0, 1.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 2 events, close")
@@ -50,7 +49,7 @@ TEST_CASE("[LinearEnvelope] 2 events, close")
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.25, 0.5, 0.75, 1.0, 2.0, 2.0, 2.0, 2.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 2 events, far")
@@ -61,7 +60,7 @@ TEST_CASE("[LinearEnvelope] 2 events, far")
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.5, 1, 1.25, 1.5, 1.75, 2.0, 2.0, 2.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 2 events, reversed")
@@ -72,7 +71,7 @@ TEST_CASE("[LinearEnvelope] 2 events, reversed")
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.5, 1, 1.25, 1.5, 1.75, 2.0, 2.0, 2.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 3 events, overlapping")
@@ -84,7 +83,7 @@ TEST_CASE("[LinearEnvelope] 3 events, overlapping")
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.5, 1, 1.25, 1.5, 1.75, 2.0, 3.0, 3.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 3 events, out of block")
@@ -96,7 +95,7 @@ TEST_CASE("[LinearEnvelope] 3 events, out of block")
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.5, 1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 3 events, out of block, with another block call")
@@ -109,7 +108,7 @@ TEST_CASE("[LinearEnvelope] 3 events, out of block, with another block call")
     std::array<float, 8> expected { 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0 };
     envelope.getBlock(absl::MakeSpan(output));
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 2 events, with another block call")
@@ -121,17 +120,17 @@ TEST_CASE("[LinearEnvelope] 2 events, with another block call")
     std::array<float, 8> expected { 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0 };
     envelope.getBlock(absl::MakeSpan(output));
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }
 
 TEST_CASE("[LinearEnvelope] 2 events, function")
 {
     sfz::LinearEnvelope<float> envelope;
-    envelope.setFunction([](auto x) { return 2*x; });
+    envelope.setFunction([](auto x) { return 2 * x; });
     envelope.registerEvent(2, 1.0);
     envelope.registerEvent(6, 2.0);
     std::array<float, 8> output;
     std::array<float, 8> expected { 1, 2, 2.5, 3, 3.5, 4.0, 4.0, 4.0 };
     envelope.getBlock(absl::MakeSpan(output));
-    REQUIRE( output == expected );
+    REQUIRE(output == expected);
 }

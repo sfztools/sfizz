@@ -1,33 +1,31 @@
 #pragma once
-#include <map>
 #include "Helpers.h"
+#include <map>
 
-namespace sfz
-{
-template<class ValueType>
-class CCMap
-{
+namespace sfz {
+template <class ValueType>
+class CCMap {
 public:
     CCMap() = delete;
-    CCMap(const ValueType& defaultValue) : defaultValue(defaultValue) { }
+    CCMap(const ValueType& defaultValue)
+        : defaultValue(defaultValue)
+    {
+    }
     CCMap(CCMap&&) = default;
     CCMap(const CCMap&) = default;
     ~CCMap() = default;
 
-    const ValueType &getWithDefault(int index) const noexcept
+    const ValueType& getWithDefault(int index) const noexcept
     {
         auto it = container.find(index);
-        if (it == end(container))
-        {
+        if (it == end(container)) {
             return defaultValue;
-        }
-        else
-        {
+        } else {
             return it->second;
         }
     }
 
-    ValueType &operator[](const int &key) noexcept
+    ValueType& operator[](const int& key) noexcept
     {
         if (!contains(key))
             container.emplace(key, defaultValue);
@@ -35,7 +33,7 @@ public:
     }
 
     inline bool empty() const { return container.empty(); }
-    const ValueType &at(int index) const { return container.at(index); }
+    const ValueType& at(int index) const { return container.at(index); }
     bool contains(int index) const noexcept { return container.find(index) != end(container); }
 
 private:

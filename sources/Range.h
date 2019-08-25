@@ -1,12 +1,12 @@
 #pragma once
-#include <type_traits>
-#include <initializer_list>
 #include <algorithm>
+#include <initializer_list>
+#include <type_traits>
 
-template<class Type>
-class Range
-{
+template <class Type>
+class Range {
     static_assert(std::is_arithmetic<Type>::value, "The Type should be arithmetic");
+
 public:
     constexpr Range() = default;
     // constexpr Range(std::initializer_list<Type> list)
@@ -25,11 +25,14 @@ public:
     //     }
     // }
     constexpr Range(Type start, Type end) noexcept
-    : _start(start), _end(std::max(start, end)) {}
+        : _start(start)
+        , _end(std::max(start, end))
+    {
+    }
     ~Range() = default;
     Type getStart() const noexcept { return _start; }
     Type getEnd() const noexcept { return _end; }
-    std::pair<Type, Type> getPair() const noexcept { return std::make_pair<Type, Type>(_start, _end); } 
+    std::pair<Type, Type> getPair() const noexcept { return std::make_pair<Type, Type>(_start, _end); }
     Range(const Range<Type>& range) = default;
     Range(Range<Type>&& range) = default;
     void setStart(Type start) noexcept
@@ -48,35 +51,36 @@ public:
     Type clamp(Type value) const noexcept { return std::clamp(value, _start, _end); }
     bool containsWithEnd(Type value) const noexcept { return (value >= _start && value <= _end); }
     bool contains(Type value) const noexcept { return (value >= _start && value < _end); }
-    void shrinkIfSmaller( Type start, Type end)
+    void shrinkIfSmaller(Type start, Type end)
     {
         if (start > end)
             std::swap(start, end);
-        
+
         if (start > _start)
             _start = start;
 
         if (end < _end)
             _end = end;
     }
+
 private:
     Type _start { static_cast<Type>(0.0) };
     Type _end { static_cast<Type>(0.0) };
 };
 
-template<class Type>
+template <class Type>
 bool operator==(const Range<Type>& lhs, const Range<Type>& rhs)
 {
     return (lhs.getStart() == rhs.getStart()) && (lhs.getEnd() == rhs.getEnd());
 }
 
-template<class Type>
+template <class Type>
 bool operator==(const Range<Type>& lhs, const std::pair<Type, Type>& rhs)
 {
     return (lhs.getStart() == rhs.first) && (lhs.getEnd() == rhs.second);
 }
 
-template<class Type>
+template <class Type>
 bool operator==(const std::pair<Type, Type>& lhs, const Range<Type>& rhs)
 {
     return rhs == lhs;

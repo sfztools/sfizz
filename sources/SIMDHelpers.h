@@ -1,18 +1,18 @@
 #pragma once
 #include "Globals.h"
-#include <absl/types/span.h>
-#include <absl/algorithm/container.h>
 #include "Helpers.h"
+#include <absl/algorithm/container.h>
+#include <absl/types/span.h>
 #include <cmath>
 
-template<class T>
+template <class T>
 inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
 {
     *outputLeft++ = *input++;
     *outputRight++ = *input++;
 }
 
-template<class T, bool SIMD=SIMDConfig::readInterleaved>
+template <class T, bool SIMD = SIMDConfig::readInterleaved>
 void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::Span<T> outputRight) noexcept
 {
     // The size of the output is not big enough for the input...
@@ -26,14 +26,14 @@ void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::
         snippetRead<T>(in, lOut, rOut);
 }
 
-template<class T>
+template <class T>
 inline void snippetWrite(T*& output, const T*& inputLeft, const T*& inputRight)
 {
     *output++ = *inputLeft++;
     *output++ = *inputRight++;
 }
 
-template<class T, bool SIMD=SIMDConfig::writeInterleaved>
+template <class T, bool SIMD = SIMDConfig::writeInterleaved>
 void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRight, absl::Span<T> output) noexcept
 {
     ASSERT(inputLeft.size() <= output.size() / 2);
@@ -47,21 +47,21 @@ void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRi
 }
 
 // Specializations
-template<>
+template <>
 void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept;
-template<>
+template <>
 void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept;
 
-template<class T, bool SIMD=SIMDConfig::fill>
+template <class T, bool SIMD = SIMDConfig::fill>
 void fill(absl::Span<T> output, T value) noexcept
 {
     absl::c_fill(output, value);
 }
 
-template<>
+template <>
 void fill<float, true>(absl::Span<float> output, float value) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::mathfuns>
+template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -70,10 +70,10 @@ void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
         output[i] = std::exp(input[i]);
 }
 
-template<>
+template <>
 void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::mathfuns>
+template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -82,10 +82,10 @@ void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
         output[i] = std::log(input[i]);
 }
 
-template<>
+template <>
 void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::mathfuns>
+template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -94,10 +94,10 @@ void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
         output[i] = std::sin(input[i]);
 }
 
-template<>
+template <>
 void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class Type, bool SIMD=SIMDConfig::mathfuns>
+template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -106,10 +106,10 @@ void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
         output[i] = std::cos(input[i]);
 }
 
-template<>
+template <>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class T>
+template <class T>
 inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd, T loopStart)
 {
     floatIndex += *jump;
@@ -124,7 +124,7 @@ inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, i
     jump++;
 }
 
-template<class T, bool SIMD=SIMDConfig::loopingSFZIndex>
+template <class T, bool SIMD = SIMDConfig::loopingSFZIndex>
 void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
 {
     ASSERT(indices.size() >= jumps.size());
@@ -137,21 +137,21 @@ void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::
     auto* jump = jumps.begin();
     const auto size = min(jumps.size(), indices.size(), leftCoeffs.size(), rightCoeffs.size());
     auto* sentinel = jumps.begin() + size;
-    
+
     while (jump < sentinel)
         snippetLoopingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 }
 
-template<>
+template <>
 void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept;
 
-template<class T>
+template <class T>
 inline void snippetGain(T gain, const T*& input, T*& output)
 {
     *output++ = gain * (*input++);
 }
 
-template<class T, bool SIMD=SIMDConfig::gain>
+template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     ASSERT(input.size() <= output.size());
@@ -162,13 +162,13 @@ void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
         snippetGain<T>(gain, in, out);
 }
 
-template<class T>
+template <class T>
 inline void snippetGainSpan(const T*& gain, const T*& input, T*& output)
 {
     *output++ = (*gain++) * (*input++);
 }
 
-template<class T, bool SIMD=SIMDConfig::gain>
+template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     ASSERT(gain.size() == input.size());
@@ -181,69 +181,69 @@ void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T
         snippetGainSpan<T>(g, in, out);
 }
 
-template<class T, bool SIMD=SIMDConfig::gain>
+template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(T gain, absl::Span<T> output) noexcept
 {
     applyGain<T, SIMD>(gain, output, output);
 }
 
-template<class T, bool SIMD=SIMDConfig::gain>
+template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(absl::Span<const T> gain, absl::Span<T> output) noexcept
 {
     applyGain<T, SIMD>(gain, output, output);
 }
 
-template<>
+template <>
 void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<>
+template <>
 void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class T>
+template <class T>
 inline void snippetRampLinear(T*& output, T& value, T step)
 {
     value += step;
     *output++ = value;
 }
 
-template<class T, bool SIMD=SIMDConfig::linearRamp>
+template <class T, bool SIMD = SIMDConfig::linearRamp>
 T linearRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
-    while(out < output.end())
+    while (out < output.end())
         snippetRampLinear<T>(out, start, step);
     return start;
 }
 
-template<class T>
+template <class T>
 inline void snippetRampMultiplicative(T*& output, T& value, T step)
 {
     value *= step;
     *output++ = value;
 }
 
-template<class T, bool SIMD=SIMDConfig::multiplicativeRamp>
+template <class T, bool SIMD = SIMDConfig::multiplicativeRamp>
 T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
-    while(out < output.end())
+    while (out < output.end())
         snippetRampMultiplicative<T>(out, start, step);
     return start;
 }
 
-template<>
+template <>
 float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
 
-template<>
+template <>
 float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
 
-template<class T>
+template <class T>
 inline void snippetAdd(const T*& input, T*& output)
 {
     *output++ += *input++;
 }
 
-template<class T, bool SIMD=SIMDConfig::add>
+template <class T, bool SIMD = SIMDConfig::add>
 void add(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -254,5 +254,5 @@ void add(absl::Span<const T> input, absl::Span<T> output) noexcept
         snippetAdd(in, out);
 }
 
-template<>
+template <>
 void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;

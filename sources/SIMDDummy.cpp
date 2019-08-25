@@ -1,79 +1,79 @@
-#include "SIMDHelpers.h"
 #include "Helpers.h"
+#include "SIMDHelpers.h"
 
-template<>
+template <>
 void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     readInterleaved<float, false>(input, outputLeft, outputRight);
 }
 
-template<>
+template <>
 void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     writeInterleaved<float, false>(inputLeft, inputRight, output);
 }
 
-template<>
+template <>
 void fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     fill<float, false>(output, value);
 }
 
-template<>
+template <>
 void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     exp<float, false>(input, output);
 }
 
-template<>
+template <>
 void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     log<float, false>(input, output);
 }
 
-template<>
+template <>
 void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     sin<float, false>(input, output);
 }
 
-template<>
+template <>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     cos<float, false>(input, output);
 }
 
-template<>
+template <>
 void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     applyGain<float, false>(gain, input, output);
 }
 
-template<>
+template <>
 void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     applyGain<float, false>(gain, input, output);
 }
 
-template<>
+template <>
 void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
 {
     loopingSFZIndex<float, false>(jumps, leftCoeff, rightCoeff, indices, floatIndex, loopEnd, loopStart);
 }
 
-template<>
+template <>
 float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
 {
     return linearRamp<float, false>(output, start, step);
 }
 
-template<>
+template <>
 float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
 {
     return multiplicativeRamp<float, false>(output, start, step);
 }
 
-template<>
+template <>
 void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     add<float, false>(input, output);

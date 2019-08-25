@@ -1,15 +1,15 @@
-#include "catch2/catch.hpp"
 #include "../sources/Region.h"
+#include "catch2/catch.hpp"
 using namespace Catch::literals;
 
 TEST_CASE("Region activation", "Region tests")
 {
-    sfz::Region region { };
+    sfz::Region region {};
     region.parseOpcode({ "sample", "*sine" });
     SECTION("Basic state")
     {
         region.registerCC(1, 4, 0);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
     }
 
     SECTION("Single CC range")
@@ -17,19 +17,19 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "locc4", "56" });
         region.parseOpcode({ "hicc4", "59" });
         region.registerCC(1, 4, 0);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(1, 4, 57);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 4, 56);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 4, 59);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 4, 43);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(1, 4, 65);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(1, 6, 57);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
     }
 
     SECTION("Multiple CC ranges")
@@ -40,25 +40,25 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "hicc54", "27" });
         region.registerCC(1, 4, 0);
         region.registerCC(1, 54, 0);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(1, 4, 57);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(1, 54, 19);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 54, 18);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 54, 27);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 4, 56);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 4, 59);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 54, 2);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(1, 54, 26);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerCC(1, 4, 65);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
     }
 
     SECTION("Bend ranges")
@@ -66,13 +66,13 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "lobend", "56" });
         region.parseOpcode({ "hibend", "243" });
         region.registerPitchWheel(1, 0);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerPitchWheel(1, 56);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerPitchWheel(1, 243);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerPitchWheel(1, 245);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
     }
 
     SECTION("Aftertouch ranges")
@@ -80,13 +80,13 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "lochanaft", "56" });
         region.parseOpcode({ "hichanaft", "68" });
         region.registerAftertouch(1, 0);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerAftertouch(1, 56);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerAftertouch(1, 68);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerAftertouch(1, 98);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
     }
 
     SECTION("BPM ranges")
@@ -94,26 +94,26 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "lobpm", "56" });
         region.parseOpcode({ "hibpm", "68" });
         region.registerTempo(2.0f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerTempo(0.90f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerTempo(1.01f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerTempo(1.1f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
     }
 
     // TODO: add keyswitches
     SECTION("Keyswitches: sw_last")
     {
         region.parseOpcode({ "sw_last", "40" });
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 41, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 41, 0, 0.5f);
     }
 
@@ -122,20 +122,20 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "sw_lokey", "30" });
         region.parseOpcode({ "sw_hikey", "50" });
         region.parseOpcode({ "sw_last", "40" });
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 60, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 60, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 60, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 60, 0, 0.5f);
         region.registerNoteOn(1, 41, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 41, 0, 0.5f);
     }
 
@@ -144,20 +144,20 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "sw_lokey", "30" });
         region.parseOpcode({ "sw_hikey", "50" });
         region.parseOpcode({ "sw_down", "40" });
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 60, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 60, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 60, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 60, 0, 0.5f);
         region.registerNoteOn(1, 41, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 41, 0, 0.5f);
     }
 
@@ -166,103 +166,100 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "sw_lokey", "30" });
         region.parseOpcode({ "sw_hikey", "50" });
         region.parseOpcode({ "sw_up", "40" });
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 41, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
         region.registerNoteOff(1, 41, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
     }
 
     SECTION("Keyswitches: sw_previous")
     {
         region.parseOpcode({ "sw_previous", "40" });
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 41, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
         region.registerNoteOff(1, 41, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 41, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 41, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
     }
-    
+
     SECTION("Sequences: length 2, default position")
     {
         region.parseOpcode({ "seq_length", "2" });
         region.parseOpcode({ "seq_position", "1" });
         region.parseOpcode({ "key", "40" });
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
- 
+        REQUIRE(!region.isSwitchedOn());
     }
     SECTION("Sequences: length 2, position 2")
     {
         region.parseOpcode({ "seq_length", "2" });
         region.parseOpcode({ "seq_position", "2" });
         region.parseOpcode({ "key", "40" });
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
- 
+        REQUIRE(region.isSwitchedOn());
     }
     SECTION("Sequences: length 3, position 2")
     {
         region.parseOpcode({ "seq_length", "3" });
         region.parseOpcode({ "seq_position", "2" });
         region.parseOpcode({ "key", "40" });
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( !region.isSwitchedOn() );
+        REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(1, 40, 64, 0.5f);
-        REQUIRE( region.isSwitchedOn() );
+        REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(1, 40, 0, 0.5f);
-        REQUIRE( region.isSwitchedOn() ); 
+        REQUIRE(region.isSwitchedOn());
     }
 }
-
