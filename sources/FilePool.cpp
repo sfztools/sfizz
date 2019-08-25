@@ -1,6 +1,6 @@
 #include "FilePool.h"
-
 #include <chrono>
+#include <memory>
 using namespace std::chrono_literals;
 
 std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename)
@@ -49,20 +49,22 @@ void sfz::FilePool::loadingThread()
             DBG("Background thread error: voice is null.");
             continue;
         }
-        
+
         DBG("Background loading of: " << fileToLoad.sample);
         std::filesystem::path file { rootDirectory / fileToLoad.sample };
         if (!std::filesystem::exists(file)) {
             DBG("Background thread: no file " << fileToLoad.sample << " exists.");
             continue;
         }
-        
+
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        auto fileLoaded = std::make_unique<StereoBuffer<float>>(fileToLoad.numFrames);
+        // auto deleteAndTrackBuffers = [this]  
+        std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileLoaded(new StereoBuffer<float>(fileToLoad.numFrames), deleteAndTrackBuffers);
         auto readBuffer = std::make_unique<Buffer<float>>(fileToLoad.numFrames * 2);
         sndFile.readf(readBuffer->data(), fileToLoad.numFrames);
         fileLoaded->readInterleaved(*readBuffer);
         ASSERT(fileLoaded != nullptr);
+        fileBuffers++;
         fileToLoad.voice->setFileData(std::move(fileLoaded));
     }
 }

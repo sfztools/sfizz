@@ -63,7 +63,7 @@ public:
             normalizePercents(region->amplitudeEG.getStart(ccState, velocity)));
     }
 
-    void setFileData(std::unique_ptr<StereoBuffer<float>> file)
+    void setFileData(std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> file)
     {
         fileData = std::move(file);
         dataReady.store(true, std::memory_order_seq_cst);
@@ -232,7 +232,7 @@ private:
     uint32_t initialDelay;
 
     std::atomic<bool> dataReady { false };
-    std::unique_ptr<StereoBuffer<float>> fileData;
+    std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileData;
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;

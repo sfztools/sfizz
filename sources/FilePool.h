@@ -40,6 +40,14 @@ public:
     };
     std::optional<FileInformation> getFileInformation(std::string_view filename);
     void enqueueLoading(Voice* voice, std::string_view sample, int numFrames);
+    static void deleteAndTrackBuffers(StereoBuffer<float>* buffer) {
+        fileBuffers--;
+        delete buffer;
+    };
+    static int getFileBuffers()
+    {
+        return fileBuffers.load();
+    }
 private:
     std::filesystem::path rootDirectory;
     struct FileLoadingInformation
@@ -48,11 +56,15 @@ private:
         std::string_view sample;
         int numFrames;
     };
+    
+    inline static std::atomic<int> fileBuffers { 0 };
+
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;
     void loadingThread();
     std::thread fileLoadingThread;
     bool quitThread { false };
     Buffer<float> tempReadBuffer { config::preloadSize * 2 };
+    
     // std::map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
     absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);

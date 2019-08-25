@@ -176,8 +176,14 @@ private:
     bool threadsShouldQuit { false };
     std::thread garbageCollectionThread { [&]() {
         while (!threadsShouldQuit) {
+            auto activeVoices { 0 };
             for (auto& voice : voices)
+            {
                 voice->garbageCollect();
+                if (!voice->isFree())
+                    activeVoices++;
+            }
+            DBG("Active voices:" << activeVoices  << " | Stray buffers: " << FilePool::getFileBuffers());
             std::this_thread::sleep_for(1s);
         }
     } };
