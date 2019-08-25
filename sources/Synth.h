@@ -129,7 +129,7 @@ public:
     void tempo(int delay, float secondsPerQuarter);
 
 protected:
-    void callback(std::string_view header, std::vector<Opcode> members) final;
+    void callback(std::string_view header, const std::vector<Opcode>&  members) final;
 
 private:
     Voice* findFreeVoice()

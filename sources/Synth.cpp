@@ -4,14 +4,14 @@
 #include <utility>
 #include <algorithm>
 
-void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
+void sfz::Synth::callback(std::string_view header, const std::vector<Opcode>& members)
 {
     switch (hash(header))
     {
     case hash("global"):
         // We shouldn't have multiple global headers in file
         ASSERT(!hasGlobal);
-        globalOpcodes = std::move(members);
+        globalOpcodes = members;
         hasGlobal = true;
         break;
     case hash("control"):
@@ -20,11 +20,11 @@ void sfz::Synth::callback(std::string_view header, std::vector<Opcode> members)
         hasControl = true;
         break;
     case hash("master"):
-        masterOpcodes = std::move(members);
+        masterOpcodes = members;
         numMasters++;
         break;
     case hash("group"): 
-        groupOpcodes = std::move(members);
+        groupOpcodes = members;
         numGroups++;
         break;
     case hash("region"):

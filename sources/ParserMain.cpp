@@ -13,7 +13,7 @@ public:
     int getNumMasters() const noexcept { return numMasters; }
     int getNumCurves() const noexcept { return numCurves; }
 protected:
-    void callback(std::string_view header, std::vector<sfz::Opcode> members [[maybe_unused]]) final
+    void callback(std::string_view header, const std::vector<sfz::Opcode>& members [[maybe_unused]]) final
     {
         switch (hash(header))
         {

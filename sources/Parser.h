@@ -27,7 +27,7 @@ public:
     void disableRecursiveIncludeGuard() { recursiveIncludeGuard = false; }
     void enableRecursiveIncludeGuard() { recursiveIncludeGuard = true; }
 protected:
-    virtual void callback(std::string_view header, std::vector<Opcode> members) = 0;
+    virtual void callback(std::string_view header, const std::vector<Opcode>& members) = 0;
     std::filesystem::path rootDirectory { std::filesystem::current_path() };
 private:
     bool recursiveIncludeGuard { false };
