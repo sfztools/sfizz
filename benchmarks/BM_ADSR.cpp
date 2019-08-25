@@ -11,6 +11,9 @@ constexpr int decay = attack;
 constexpr int release = attack;
 constexpr int releaseTime = envelopeSize - static_cast<int>(envelopeSize / 4);
 
+// Explicitely instantiate class
+#include "../sources/ADSREnvelope.cpp"
+template class sfz::ADSREnvelope<float>;
 
 static void Point(benchmark::State& state) {
     std::vector<float> output(state.range(0));
