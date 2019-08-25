@@ -7,6 +7,7 @@
 #include "StereoBuffer.h"
 #include "StereoSpan.h"
 #include "absl/types/span.h"
+#include "Defaults.h"
 #include <atomic>
 #include <memory>
 
@@ -76,8 +77,17 @@ public:
 
     void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]])
     {
-        if (state == State::playing && triggerChannel == channel && triggerNumber == noteNumber) {
+        if (region == nullptr)
+            return;
+
+        if (state != State::playing)
+            return;
+
+        if (triggerChannel == channel && triggerNumber == noteNumber) {
             noteIsOff = true;
+
+            if (region->loopMode == SfzLoopMode::one_shot)
+                return;
 
             if (ccState[64] < 63)
                 egEnvelope.startRelease(delay);
