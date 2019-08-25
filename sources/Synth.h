@@ -22,6 +22,7 @@ public:
     {
         for (int i = 0; i < config::numVoices; ++i)
             voices.push_back(std::make_unique<Voice>(ccState));
+        garbageCollectionThread = std::thread(&Synth::garbageCollection, this);
     }
 
     ~Synth()
@@ -142,6 +143,20 @@ private:
         return freeVoice->get();
     }
 
+    void garbageCollection() 
+    {
+        while (!threadsShouldQuit) {
+            auto activeVoices { 0 };
+            for (auto& voice : voices) {
+                voice->garbageCollect();
+                if (!voice->isFree())
+                    activeVoices++;
+            }
+            DBG("Active voices:" << activeVoices << " | Stray buffers: " << FilePool::getFileBuffers());
+            std::this_thread::sleep_for(1s);
+        }
+    }
+
     bool hasGlobal { false };
     bool hasControl { false };
     int numGroups { 0 };
@@ -174,18 +189,7 @@ private:
     std::uniform_real_distribution<float> randomDistribution { 0, 1 };
 
     bool threadsShouldQuit { false };
-    std::thread garbageCollectionThread { [&]() {
-        while (!threadsShouldQuit) {
-            auto activeVoices { 0 };
-            for (auto& voice : voices) {
-                voice->garbageCollect();
-                if (!voice->isFree())
-                    activeVoices++;
-            }
-            DBG("Active voices:" << activeVoices << " | Stray buffers: " << FilePool::getFileBuffers());
-            std::this_thread::sleep_for(1s);
-        }
-    } };
+    std::thread garbageCollectionThread;
 
     float getUniform()
     {

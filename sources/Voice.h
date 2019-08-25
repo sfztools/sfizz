@@ -217,14 +217,14 @@ public:
     }
 
 private:
-    Region* region;
+    Region* region { nullptr };
 
     enum class State {
         idle,
         playing,
         release
     };
-    State state;
+    State state { State::idle };
     bool noteIsOff { false };
 
     TriggerType triggerType;
@@ -237,11 +237,11 @@ private:
     float baseGain { 1.0 };
     float baseFrequency { 440.0 };
 
-    uint32_t sourcePosition;
-    uint32_t initialDelay;
+    uint32_t sourcePosition { 0 };
+    uint32_t initialDelay { 0 };
 
     std::atomic<bool> dataReady { false };
-    std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileData;
+    std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileData { nullptr };
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;
