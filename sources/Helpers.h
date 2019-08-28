@@ -1,7 +1,16 @@
 #pragma once
+#include <bits/stdint-uintn.h>
+#include <cstdint>
 #include <random>
 #include <signal.h>
 #include <string_view>
+#ifdef HAVE_X86INTRIN_H
+#include <x86intrin.h>
+#endif
+
+#ifdef HAVE_INTRIN_H
+#include <intrin.h>
+#endif
 
 inline void trimInPlace(std::string_view& s)
 {
@@ -169,3 +178,35 @@ private:
 #else
 #define LEAK_DETECTOR(Class)
 #endif
+
+class ScopedFTZ {
+
+public:
+    ScopedFTZ()
+    {
+#if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
+        unsigned mask = _MM_DENORMALS_ZERO_MASK | _MM_FLUSH_ZERO_MASK;
+        registerState = _mm_getcsr();
+        _mm_setcsr((registerState & (~mask)) | mask);
+#elif HAVE_ARM_NEON_H
+        intptr_t mask = (1 << 24);
+        asm volatile("vmrs %0, fpscr"
+                     : "=r"(registerState));
+        asm volatile("vmsr fpscr, %0"
+                     :
+                     : "ri"((registerState & (~mask)) | mask));
+#endif
+    }
+    ~ScopedFTZ()
+    {
+#if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
+        _mm_setcsr(registerState);
+#elif HAVE_ARM_NEON_H
+        asm volatile("vmsr %0, fpscr"
+                     : "=r"(registerState));
+#endif
+    }
+
+private:
+    unsigned registerState;
+};

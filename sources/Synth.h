@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "Region.h"
 #include "SfzHelpers.h"
+#include "Helpers.h"
 #include "StereoSpan.h"
 #include "absl/types/span.h"
 #include <chrono>
@@ -59,6 +60,7 @@ public:
 
     void renderBlock(StereoSpan<float> buffer)
     {
+        ScopedFTZ ftz;
         buffer.fill(0.0f);
 
         StereoSpan<float> tempSpan { tempBuffer, buffer.size() };
