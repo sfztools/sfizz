@@ -3,7 +3,6 @@
 #include <absl/flags/parse.h>
 #include <absl/types/span.h>
 #include <atomic>
-#include <bits/stdint-uintn.h>
 #include <cstddef>
 #include <ios>
 #include <iostream>

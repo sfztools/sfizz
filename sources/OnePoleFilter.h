@@ -1,5 +1,6 @@
 #pragma once
 #include "Globals.h"
+#include "Helpers.h"
 #include <absl/types/span.h>
 #include <cmath>
 
@@ -11,7 +12,7 @@ public:
     template <class C>
     static Type normalizedGain(Type cutoff, C sampleRate)
     {
-        return std::tan(cutoff / static_cast<Type>(sampleRate) * M_PIf32);
+        return std::tan(cutoff / static_cast<Type>(sampleRate) * pi<float>);
     }
 
     OnePoleFilter(Type gain)

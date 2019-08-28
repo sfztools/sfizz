@@ -1,7 +1,6 @@
 #include "Region.h"
 #include "Helpers.h"
 #include "absl/strings/str_replace.h"
-#include <bits/stdint-uintn.h>
 #include <random>
 
 bool sfz::Region::parseOpcode(const Opcode& opcode)
