@@ -165,9 +165,10 @@ public:
             return;
 
         float step = baseFrequency * twoPi<float> / sampleRate;
-        ::linearRamp<float>(tempSpan1.first(buffer.size()), sourcePosition * step, step);
-        ::sin<float>(tempSpan1, buffer.left());
+        phase = ::linearRamp<float>(tempSpan1, phase, step);
+        ::sin<float>(tempSpan1.first(buffer.size()), buffer.left());
         absl::c_copy(buffer.left(), buffer.right().begin());
+        
         sourcePosition += buffer.size();
     }
 
@@ -238,6 +239,7 @@ private:
     float pitchRatio { 1.0 };
     float baseGain { 1.0 };
     float baseFrequency { 440.0 };
+    float phase { 0.0f };
 
     uint32_t sourcePosition { 0 };
     uint32_t initialDelay { 0 };
