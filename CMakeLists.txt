@@ -168,6 +168,9 @@ target_link_libraries(bm_gain benchmark absl::span)
 add_executable(bm_looping benchmarks/BM_looping.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_looping benchmark absl::span absl::algorithm)
 
+add_executable(bm_saturating benchmarks/BM_saturating.cpp sources/SIMDSSE.cpp)
+target_link_libraries(bm_saturating benchmark absl::span absl::algorithm)
+
 add_executable(bm_ramp benchmarks/BM_ramp.cpp sources/SIMDSSE.cpp)
 target_link_libraries(bm_ramp benchmark absl::span absl::algorithm)
 

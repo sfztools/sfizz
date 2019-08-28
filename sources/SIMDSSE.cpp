@@ -344,6 +344,63 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps,
 }
 
 template <>
+void saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
+    absl::Span<float> leftCoeffs,
+    absl::Span<float> rightCoeffs,
+    absl::Span<int> indices,
+    float floatIndex,
+    float loopEnd) noexcept
+{
+    ASSERT(indices.size() >= jumps.size());
+    ASSERT(indices.size() == leftCoeffs.size());
+    ASSERT(indices.size() == rightCoeffs.size());
+
+    auto index = indices.data();
+    auto leftCoeff = leftCoeffs.data();
+    auto rightCoeff = rightCoeffs.data();
+    auto jump = jumps.data();
+    const auto size = min(jumps.size(), indices.size(), leftCoeffs.size(), rightCoeffs.size());
+    const auto* sentinel = jumps.begin() + size;
+    const auto* alignedEnd = prevAligned(sentinel);
+
+    while (unaligned(reinterpret_cast<float*>(index), leftCoeff, rightCoeff, jump) && jump < alignedEnd)
+        snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+
+    auto mmFloatIndex = _mm_set_ps1(floatIndex);
+    const auto mmLoopEnd = _mm_set1_ps(loopEnd);
+    const auto mmSaturated = _mm_sub_ps(mmLoopEnd, _mm_set_ps1(0.000001f));
+    while (jump < alignedEnd) {
+        auto mmOffset = _mm_load_ps(jump);
+        mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4)));
+        mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, 0x40));
+
+        mmFloatIndex = _mm_add_ps(mmFloatIndex, mmOffset);
+        const auto mmCompared = _mm_cmplt_ps(mmFloatIndex, mmLoopEnd);
+        mmFloatIndex = _mm_add_ps(_mm_and_ps(mmCompared, mmFloatIndex), _mm_andnot_ps(mmCompared, mmSaturated));
+
+        auto mmIndices = _mm_cvtps_epi32(_mm_sub_ps(mmFloatIndex, _mm_set_ps1(0.4999999552965164184570312f)));
+        _mm_store_si128(reinterpret_cast<__m128i*>(index), mmIndices);
+
+        auto mmRight = _mm_sub_ps(mmFloatIndex, _mm_cvtepi32_ps(mmIndices));
+        auto mmLeft = _mm_sub_ps(_mm_set_ps1(1.0f), mmRight);
+        _mm_store_ps(leftCoeff, mmLeft);
+        _mm_store_ps(rightCoeff, mmRight);
+
+        mmFloatIndex = _mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(3, 3, 3, 3));
+        // floatingIndex = _mm_cvtss_f32(_mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(0, 0, 0, 3)));;
+        // floatingIndex = *(index + 3) + *(rightCoeff + 3);
+        index += TypeAlignment;
+        jump += TypeAlignment;
+        leftCoeff += TypeAlignment;
+        rightCoeff += TypeAlignment;
+    }
+
+    floatIndex = _mm_cvtss_f32(mmFloatIndex);
+    while (jump < sentinel)
+        snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+}
+
+template <>
 float linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();

@@ -109,6 +109,50 @@ void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template <>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
+template <>
+void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template <class T>
+inline void snippetSaturatingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd)
+{
+    floatIndex += *jump;
+    if (floatIndex >= loopEnd) {
+        floatIndex = loopEnd;
+        *index = static_cast<int>(floatIndex) - 1;
+        *rightCoeff = static_cast<T>(1.0);
+        *leftCoeff = static_cast<T>(0.0);
+    } else {
+        *index = static_cast<int>(floatIndex);
+        *rightCoeff = floatIndex - *index;
+        *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
+    }
+    index++;
+    leftCoeff++;
+    rightCoeff++;
+    jump++;
+}
+
+template <class T, bool SIMD = SIMDConfig::saturatingSFZIndex>
+void saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd) noexcept
+{
+    ASSERT(indices.size() >= jumps.size());
+    ASSERT(indices.size() == leftCoeffs.size());
+    ASSERT(indices.size() == rightCoeffs.size());
+
+    auto* index = indices.begin();
+    auto* leftCoeff = leftCoeffs.begin();
+    auto* rightCoeff = rightCoeffs.begin();
+    auto* jump = jumps.begin();
+    const auto size = min(jumps.size(), indices.size(), leftCoeffs.size(), rightCoeffs.size());
+    auto* sentinel = jumps.begin() + size;
+
+    while (jump < sentinel)
+        snippetSaturatingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+}
+
+template <>
+void saturatingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs, absl::Span<int> indices, float floatIndex, float loopEnd) noexcept;
+
 template <class T>
 inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd, T loopStart)
 {
