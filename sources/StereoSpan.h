@@ -88,6 +88,12 @@ public:
         ::applyGain<Type>(gain, rightBuffer);
     }
 
+    void applyGain(Type gain) noexcept
+    {
+        ::applyGain<Type>(gain, leftBuffer);
+        ::applyGain<Type>(gain, rightBuffer);
+    }
+
     void readInterleaved(absl::Span<const Type> input) noexcept
     {
         ASSERT(input.size() <= static_cast<size_t>(numChannels * numFrames));

@@ -135,6 +135,8 @@ public:
         egEnvelope.getBlock(tempSpan1.first(numSamples));
         buffer.applyGain(tempSpan1);
 
+        buffer.applyGain(baseGain);
+
         if (!egEnvelope.isSmoothing())
             reset();
     }

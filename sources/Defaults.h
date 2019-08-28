@@ -59,7 +59,7 @@ namespace Default
     inline constexpr Range<uint8_t> ccTriggerValueRange{ 0, 127 };
 
     // Performance parameters: amplifier
-    inline constexpr float volume { 0.0 };
+    inline constexpr float volume { -3.0 };
     inline constexpr Range<float> volumeRange { -144.0, 6.0 };
     inline constexpr Range<float> volumeCCRange { -144.0, 6.0 };
     inline constexpr float amplitude { 100.0 };
