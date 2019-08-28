@@ -441,7 +441,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("volume")
     {
-        REQUIRE(region.volume == 0.0f);
+        REQUIRE(region.volume == -3.0f);
         region.parseOpcode({ "volume", "4.2" });
         REQUIRE(region.volume == 4.2f);
         region.parseOpcode({ "volume", "-4.2" });
