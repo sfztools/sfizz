@@ -35,7 +35,7 @@ public:
     std::pair<Type, Type> getPair() const noexcept { return std::make_pair<Type, Type>(_start, _end); }
     Range(const Range<Type>& range) = default;
     Range(Range<Type>&& range) = default;
-    constexpr Type length() { return _end - _start; }
+    constexpr Type length() const { return _end - _start; }
     void setStart(Type start) noexcept
     {
         _start = start;
