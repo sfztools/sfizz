@@ -32,6 +32,7 @@ struct Region {
     bool isStereo() const noexcept;
     float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
     float getNoteGain(int noteNumber, uint8_t velocity) noexcept;
+    float getCCGain(const CCValueArray& ccState) noexcept;
     float getBaseGain() noexcept;
     float velocityGain(uint8_t velocity) const noexcept;
     uint32_t getOffset() noexcept;
@@ -105,6 +106,9 @@ struct Region {
     Range<uint8_t> crossfadeVelOutRange { Default::crossfadeVelOutRange };
     SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeKeyCurve };
     SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
+    SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCCCurve };
+    CCMap<Range<uint8_t>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
+    CCMap<Range<uint8_t>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
 
     // Performance parameters: pitch
     uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter

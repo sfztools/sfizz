@@ -54,9 +54,15 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     auto lastRegion = std::make_unique<Region>();
 
     auto parseOpcodes = [&](const auto& opcodes) {
-        for (auto& opcode : opcodes)
+        for (auto& opcode : opcodes) {
+            const auto unknown = absl::c_find_if(unknownOpcodes, [&](std::string_view sv) { return sv.compare(opcode.opcode) == 0; });
+            if (unknown != unknownOpcodes.end()) {
+                continue;
+            }
+
             if (!lastRegion->parseOpcode(opcode))
                 unknownOpcodes.insert(opcode.opcode);
+        }
     };
 
     parseOpcodes(globalOpcodes);

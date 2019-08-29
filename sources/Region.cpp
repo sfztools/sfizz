@@ -5,6 +5,12 @@
 
 bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
+    // Check that the parameter is well formed
+    if (opcode.parameter && !sfz::Default::ccRange.containsWithEnd(*opcode.parameter)) {
+        DBG("Wrong parameter value (" << std::to_string(*opcode.parameter) << ") for opcode " << opcode.opcode);
+        return false;
+    }
+
     switch (hash(opcode.opcode)) {
     // Sound source: sample playback
     case hash("sample"):
@@ -309,6 +315,38 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             DBG("Unknown crossfade power curve: " << std::string(opcode.value));
         }
         break;
+    case hash("xfin_locc"):
+        if (opcode.parameter) {
+            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::ccRange);
+        }
+        break;
+    case hash("xfin_hicc"):
+        if (opcode.parameter) {
+            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::velocityRange);
+        }
+        break;
+    case hash("xfout_locc"):
+        if (opcode.parameter) {
+            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::velocityRange);
+        }
+        break;
+    case hash("xfout_hicc"):
+        if (opcode.parameter) {
+            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::velocityRange);
+        }
+        break;
+    case hash("xf_cccurve"):
+        switch (hash(opcode.value)) {
+        case hash("power"):
+            crossfadeCCCurve = SfzCrossfadeCurve::power;
+            break;
+        case hash("gain"):
+            crossfadeCCCurve = SfzCrossfadeCurve::gain;
+            break;
+        default:
+            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+        }
+        break;
 
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
@@ -593,6 +631,7 @@ bool sfz::Region::isStereo() const noexcept
     return this->numChannels == 2;
 }
 
+// TODO: lots and lots of repetition here...
 float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
 {
     float baseGain { 1.0f };
@@ -605,7 +644,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     if (noteNumber < crossfadeKeyInRange.getStart())
         baseGain = 0.0f;
     else if (noteNumber < crossfadeKeyInRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyInRange.getStart()) / crossfadeKeyInRange.length();
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyInRange.getStart()) / (crossfadeKeyInRange.length() > 0 ? crossfadeKeyInRange.length() : 1);
         if (crossfadeKeyCurve == SfzCrossfadeCurve::power)
             baseGain *= sqrt(crossfadePosition);
         if (crossfadeKeyCurve == SfzCrossfadeCurve::gain)
@@ -615,7 +654,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     if (noteNumber > crossfadeKeyOutRange.getEnd())
         baseGain = 0.0f;
     else if (noteNumber > crossfadeKeyOutRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyOutRange.getStart()) / crossfadeKeyOutRange.length();
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyOutRange.getStart()) / (crossfadeKeyOutRange.length() > 0 ? crossfadeKeyOutRange.length() : 1);
         if (crossfadeKeyCurve == SfzCrossfadeCurve::power)
             baseGain *= sqrt(1 - crossfadePosition);
         if (crossfadeKeyCurve == SfzCrossfadeCurve::gain)
@@ -625,7 +664,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     if (velocity < crossfadeVelInRange.getStart())
         baseGain = 0;
     else if (velocity < crossfadeVelInRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelInRange.getStart()) / crossfadeVelInRange.length();
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelInRange.getStart()) / (crossfadeVelInRange.length() > 0 ? crossfadeVelInRange.length() : 1);
         if (crossfadeVelCurve == SfzCrossfadeCurve::power)
             baseGain *= sqrt(crossfadePosition);
         if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
@@ -635,7 +674,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     if (velocity > crossfadeVelOutRange.getEnd())
         baseGain = 0;
     else if (velocity > crossfadeVelOutRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelOutRange.getStart()) / crossfadeVelOutRange.length();
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelOutRange.getStart()) / (crossfadeVelOutRange.length() > 0 ? crossfadeVelOutRange.length() : 1);
         if (crossfadeVelCurve == SfzCrossfadeCurve::power)
             baseGain *= sqrt(1 - crossfadePosition);
         if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
@@ -645,25 +684,57 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     return baseGain;
 }
 
+float sfz::Region::getCCGain(const sfz::CCValueArray& ccState) noexcept
+{
+    float gain { 1.0f };
+
+    for (const auto& valuePair : crossfadeCCInRange) {
+        const auto ccValue = ccState[valuePair.first];
+        const auto crossfadeRange = valuePair.second;
+        if (ccValue < crossfadeRange.getStart()) {
+            gain = 0.0f;
+        } else if (ccValue < crossfadeRange.getEnd()) {
+            const auto crossfadePosition = static_cast<float>(ccValue - crossfadeRange.getStart()) / (crossfadeRange.length() > 0 ? crossfadeRange.length() : 1);
+            if (crossfadeCCCurve == SfzCrossfadeCurve::power)
+                gain *= sqrt(crossfadePosition);
+            if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
+                gain *= crossfadePosition;
+        }
+    }
+
+    for (const auto& valuePair : crossfadeCCOutRange) {
+        const auto ccValue = ccState[valuePair.first];
+        const auto crossfadeRange = valuePair.second;
+        if (ccValue > crossfadeRange.getEnd()) {
+            gain = 0.0f;
+        } else if (ccValue > crossfadeRange.getStart()) {
+            const auto crossfadePosition = static_cast<float>(ccValue - crossfadeRange.getStart()) / (crossfadeRange.length() > 0 ? crossfadeRange.length() : 1);
+            if (crossfadeCCCurve == SfzCrossfadeCurve::power)
+                gain *= sqrt(1 - crossfadePosition);
+            if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
+                gain *= 1 - crossfadePosition;
+        }
+    }
+
+    return gain;
+}
+
 float sfz::Region::velocityGain(uint8_t velocity) const noexcept
 {
     float gaindB { 0.0 };
-    if (velocityPoints.size() > 0)
-    {
+    if (velocityPoints.size() > 0) {
         auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
         auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
         // Linear interpolation
         float relativePositionInSegment { static_cast<float>(velocity - before->first) / (after->first - before->first) };
         float segmentEndpoints { after->second - before->second };
-        gaindB =  db2pow(relativePositionInSegment * segmentEndpoints);
-    }
-    else
-    {
-        float floatVelocity { static_cast<float>(velocity)/127 };
+        gaindB = db2pow(relativePositionInSegment * segmentEndpoints);
+    } else {
+        float floatVelocity { static_cast<float>(velocity) / 127 };
         if (ampVeltrack > 0)
-            gaindB =  40 * std::log(floatVelocity) / std::log(10.0f);
+            gaindB = 40 * std::log(floatVelocity) / std::log(10.0f);
         else
-            gaindB =  40 * std::log(1-floatVelocity) / std::log(10.0f);
+            gaindB = 40 * std::log(1 - floatVelocity) / std::log(10.0f);
     }
     gaindB *= std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd();
     return db2pow(gaindB);

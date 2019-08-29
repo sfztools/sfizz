@@ -85,8 +85,11 @@ namespace Default
     inline constexpr Range<uint8_t> crossfadeKeyOutRange { 127, 127 };
     inline constexpr Range<uint8_t> crossfadeVelInRange { 0, 0 };
     inline constexpr Range<uint8_t> crossfadeVelOutRange { 127, 127 };
+    inline constexpr Range<uint8_t> crossfadeCCInRange { 0, 0 };
+    inline constexpr Range<uint8_t> crossfadeCCOutRange { 127, 127 };
     inline constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
     inline constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
+    inline constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
 
      // Performance parameters: pitch
     inline constexpr uint8_t pitchKeycenter { 60 };
