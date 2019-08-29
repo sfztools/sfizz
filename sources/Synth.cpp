@@ -4,6 +4,12 @@
 #include <iostream>
 #include <utility>
 
+sfz::Synth::Synth()
+{
+    for (int i = 0; i < config::numVoices; ++i)
+        voices.push_back(std::make_unique<Voice>(ccState));
+}
+
 void sfz::Synth::callback(std::string_view header, const std::vector<Opcode>& members)
 {
     switch (hash(header)) {
@@ -166,4 +172,116 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
     return parserReturned;
+}
+
+sfz::Voice* sfz::Synth::findFreeVoice()
+{
+    auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
+    if (freeVoice == voices.end()) {
+        DBG("Voices are overloaded, can't start a new note");
+        return {};
+    }
+    return freeVoice->get();
+}
+
+void sfz::Synth::getNumActiveVoices() const
+{
+    auto activeVoices { 0 };
+    for (const auto& voice : voices) {
+        if (!voice->isFree())
+            activeVoices++;
+    }
+}
+
+void sfz::Synth::garbageCollect()
+{
+    for (auto& voice : voices) {
+        voice->garbageCollect();
+    }
+}
+
+void sfz::Synth::setSamplesPerBlock(int samplesPerBlock)
+{
+    DBG("[Synth] Samples per block set to " << samplesPerBlock);
+    this->samplesPerBlock = samplesPerBlock;
+    this->tempBuffer.resize(samplesPerBlock);
+    for (auto& voice : voices)
+        voice->setSamplesPerBlock(samplesPerBlock);
+}
+
+void sfz::Synth::setSampleRate(float sampleRate)
+{
+    DBG("[Synth] Sample rate set to " << sampleRate);
+    this->sampleRate = sampleRate;
+    for (auto& voice : voices)
+        voice->setSampleRate(sampleRate);
+}
+
+void sfz::Synth::renderBlock(StereoSpan<float> buffer)
+{
+    ScopedFTZ ftz;
+    buffer.fill(0.0f);
+    StereoSpan<float> tempSpan { tempBuffer, buffer.size() };
+    for (auto& voice : voices) {
+        voice->renderBlock(tempSpan);
+        buffer.add(tempSpan);
+    }
+}
+
+void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity)
+{
+    auto randValue = randNoteDistribution(Random::randomGenerator);
+
+    for (auto& region : regions) {
+        if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
+            for (auto& voice : voices) {
+                if (voice->checkOffGroup(delay, region->group))
+                    noteOff(delay, voice->getTriggerChannel(), voice->getTriggerNumber(), 0);
+            }
+
+            auto voice = findFreeVoice();
+            if (voice == nullptr)
+                continue;
+
+            voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
+        }
+    }
+}
+
+void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity)
+{
+    auto randValue = randNoteDistribution(Random::randomGenerator);
+    for (auto& voice : voices)
+        voice->registerNoteOff(delay, channel, noteNumber, velocity);
+
+    for (auto& region : regions) {
+        if (region->registerNoteOff(channel, noteNumber, velocity, randValue)) {
+            auto voice = findFreeVoice();
+            if (voice == nullptr)
+                continue;
+
+            voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
+        }
+    }
+}
+
+void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue)
+{
+    for (auto& voice : voices)
+        voice->registerCC(delay, channel, ccNumber, ccValue);
+
+    ccState[ccNumber] = ccValue;
+
+    for (auto& region : regions) {
+        if (region->registerCC(channel, ccNumber, ccValue)) {
+            auto voice = findFreeVoice();
+            if (voice == nullptr)
+                continue;
+
+            voice->startVoice(region.get(), delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
+            filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
+        }
+    }
 }

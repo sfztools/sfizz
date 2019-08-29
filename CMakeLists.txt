@@ -72,9 +72,8 @@ set(COMMON_SOURCES
     sources/Synth.cpp
     sources/FilePool.cpp
     sources/Region.cpp
+    sources/Voice.cpp
     sources/FloatEnvelopes.cpp
-    # sources/LinearEnvelope.cpp
-    # sources/ADSREnvelope.cpp
     sources/Parser.cpp
 )
 

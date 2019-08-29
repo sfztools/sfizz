@@ -547,3 +547,39 @@ void sfz::Region::registerTempo(float secondsPerQuarter)
     else
         bpmSwitched = false;
 }
+
+float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept
+{
+    auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
+    pitchVariationInCents += tune; // sample tuning
+    pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
+    pitchVariationInCents += velocity / 127 * pitchVeltrack; // track velocity
+    pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
+    return centsFactor(pitchVariationInCents);
+}
+float sfz::Region::getBaseGain() noexcept 
+{
+    float baseGaindB { volume };
+    baseGaindB += gainDistribution(Random::randomGenerator);
+    return db2mag(baseGaindB);
+}
+uint32_t sfz::Region::getOffset() noexcept
+{
+    return offset + offsetDistribution(Random::randomGenerator);
+}
+uint32_t sfz::Region::getDelay() noexcept
+{
+    return delay + delayDistribution(Random::randomGenerator);
+}
+
+uint32_t sfz::Region::trueSampleEnd() const noexcept
+{
+    return min(sampleEnd, loopRange.getEnd());
+}
+bool sfz::Region::canUsePreloadedData() const noexcept
+{
+    if (preloadedData == nullptr)
+        return false;
+
+    return trueSampleEnd() < static_cast<uint32_t>(preloadedData->getNumFrames());
+}

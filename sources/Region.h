@@ -2,7 +2,6 @@
 #include "CCMap.h"
 #include "Defaults.h"
 #include "EGDescription.h"
-#include "Helpers.h"
 #include "Opcode.h"
 #include "StereoBuffer.h"
 #include <bitset>
@@ -31,44 +30,14 @@ struct Region {
     void registerAftertouch(int channel, uint8_t aftertouch);
     void registerTempo(float secondsPerQuarter);
     bool isStereo() const noexcept;
-    float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept
-    {
-        auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
-        pitchVariationInCents += tune; // sample tuning
-        pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-        pitchVariationInCents += velocity / 127 * pitchVeltrack; // track velocity
-        if (pitchRandom > 0)
-            pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
-        return centsFactor(pitchVariationInCents);
-    }
-    float getBaseGain()
-    {
-        float baseGaindB { volume };
-        baseGaindB += gainDistribution(Random::randomGenerator);
-        return db2mag(baseGaindB);
-    }
-    uint32_t getOffset()
-    {
-        return offset + offsetDistribution(Random::randomGenerator);
-    }
-    uint32_t getDelay()
-    {
-        return delay + delayDistribution(Random::randomGenerator);
-    }
-
-    uint32_t trueSampleEnd()
-    {
-        return min(sampleEnd, loopRange.getEnd());
-    }
-    bool canUsePreloadedData()
-    {
-        if (preloadedData == nullptr)
-            return false;
-
-        return trueSampleEnd() < static_cast<uint32_t>(preloadedData->getNumFrames());
-    }
-
+    float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
+    float getBaseGain() noexcept;
+    uint32_t getOffset() noexcept;
+    uint32_t getDelay() noexcept;
+    uint32_t trueSampleEnd() const noexcept;
+    bool canUsePreloadedData() const noexcept;
     bool parseOpcode(const Opcode& opcode);
+
     // Sound source: sample playback
     std::string sample {}; // Sample
     float delay { Default::delay }; // delay
