@@ -652,6 +652,44 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.crossfadeVelOutRange == Range<uint8_t>(0, 0));
     }
 
+    SECTION("xfin_locc, xfin_hicc")
+    {
+        REQUIRE(!region.crossfadeCCInRange.contains(4));
+        region.parseOpcode({ "xfin_locc4", "4" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(4, 4));
+        region.parseOpcode({ "xfin_locc4", "128" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(127, 127));
+        region.parseOpcode({ "xfin_locc4", "59" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(59, 127));
+        region.parseOpcode({ "xfin_hicc4", "59" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(59, 59));
+        region.parseOpcode({ "xfin_hicc4", "128" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(59, 127));
+        region.parseOpcode({ "xfin_hicc4", "0" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(0, 0));
+        region.parseOpcode({ "xfin_hicc4", "-1" });
+        REQUIRE(region.crossfadeCCInRange[4] == Range<uint8_t>(0, 0));
+    }
+
+    SECTION("xfout_locc, xfout_hicc")
+    {
+        REQUIRE(!region.crossfadeCCOutRange.contains(4));
+        region.parseOpcode({ "xfout_locc4", "4" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(4, 127));
+        region.parseOpcode({ "xfout_locc4", "128" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(127, 127));
+        region.parseOpcode({ "xfout_locc4", "59" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(59, 127));
+        region.parseOpcode({ "xfout_hicc4", "59" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(59, 59));
+        region.parseOpcode({ "xfout_hicc4", "128" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(59, 127));
+        region.parseOpcode({ "xfout_hicc4", "0" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(0, 0));
+        region.parseOpcode({ "xfout_hicc4", "-1" });
+        REQUIRE(region.crossfadeCCOutRange[4] == Range<uint8_t>(0, 0));
+    }
+
     SECTION("xf_keycurve")
     {
         REQUIRE(region.crossfadeKeyCurve == SfzCrossfadeCurve::power);
@@ -678,6 +716,20 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "xf_velcurve", "gain" });
         region.parseOpcode({ "xf_velcurve", "something" });
         REQUIRE(region.crossfadeVelCurve == SfzCrossfadeCurve::gain);
+    }
+
+    SECTION("xf_cccurve")
+    {
+        REQUIRE(region.crossfadeCCCurve == SfzCrossfadeCurve::power);
+        region.parseOpcode({ "xf_cccurve", "gain" });
+        REQUIRE(region.crossfadeCCCurve == SfzCrossfadeCurve::gain);
+        region.parseOpcode({ "xf_cccurve", "power" });
+        REQUIRE(region.crossfadeCCCurve == SfzCrossfadeCurve::power);
+        region.parseOpcode({ "xf_cccurve", "something" });
+        REQUIRE(region.crossfadeCCCurve == SfzCrossfadeCurve::power);
+        region.parseOpcode({ "xf_cccurve", "gain" });
+        region.parseOpcode({ "xf_cccurve", "something" });
+        REQUIRE(region.crossfadeCCCurve == SfzCrossfadeCurve::gain);
     }
 
     SECTION("pitch_keycenter")
