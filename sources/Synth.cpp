@@ -17,12 +17,14 @@ void sfz::Synth::callback(std::string_view header, const std::vector<Opcode>& me
         // We shouldn't have multiple global headers in file
         ASSERT(!hasGlobal);
         globalOpcodes = members;
+        handleGlobalOpcodes(members);
         hasGlobal = true;
         break;
     case hash("control"):
         // We shouldn't have multiple control headers in file
         ASSERT(!hasControl)
         hasControl = true;
+        handleControlOpcodes(members);
         break;
     case hash("master"):
         masterOpcodes = members;

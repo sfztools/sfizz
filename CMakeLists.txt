@@ -141,7 +141,7 @@ add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
 if(UNIX)
     target_link_libraries(sfizz_tests stdc++fs)
 endif(UNIX)
-target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span absl::algorithm)
+target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::str_format absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span absl::algorithm)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
 
