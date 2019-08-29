@@ -4,9 +4,26 @@
 #include <chrono>
 #include <fstream>
 #include <memory>
+#include <sndfile.hh>
 #include <sstream>
 #include <string>
 using namespace std::chrono_literals;
+
+
+template<class T>
+void readFromFile(SndfileHandle& sndFile, int numFrames, StereoBuffer<T>& output)
+{
+    if (sndFile.channels() == 1) {
+        auto tempReadBuffer = std::make_unique<Buffer<float>>(numFrames);
+        sndFile.readf(tempReadBuffer->data(), numFrames);
+        std::copy(tempReadBuffer->begin(), tempReadBuffer->end(), output.begin(Channel::left));
+        std::copy(tempReadBuffer->begin(), tempReadBuffer->end(), output.begin(Channel::right));
+    } else if (sndFile.channels() == 2) {
+        auto tempReadBuffer = std::make_unique<Buffer<float>>(2 * numFrames);
+        sndFile.readf(tempReadBuffer->data(), numFrames);
+        output.readInterleaved(*tempReadBuffer);
+    }
+}
 
 std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename)
 {
@@ -37,25 +54,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     }();
     returnedValue.preloadedData = std::make_shared<StereoBuffer<float>>(preloadedSize);
     preloadedData[filename] = returnedValue.preloadedData;
-    // auto tempReadBuffer = std::make_unique<Buffer<float>>(2 * preloadedSize);
-    if (sndFile.channels() == 1) {
-        tempReadBuffer.resize(preloadedSize);
-        sndFile.readf(tempReadBuffer.data(), preloadedSize);
-        std::copy(tempReadBuffer.begin(), tempReadBuffer.end(), returnedValue.preloadedData->begin(Channel::left));
-        std::copy(tempReadBuffer.begin(), tempReadBuffer.end(), returnedValue.preloadedData->begin(Channel::right));
-    } else if (sndFile.channels() == 2) {
-        tempReadBuffer.resize(preloadedSize * 2);
-        sndFile.readf(tempReadBuffer.data(), preloadedSize);
-        returnedValue.preloadedData->readInterleaved(tempReadBuffer);
-    }
-    // std::stringstream dumpName { };
-    // dumpName << filename <<  ".preloaded" << preloadedFilesWritten << ".bin";
-    // dumpName << filename <<  ".preloaded" << ".bin";
-    // std::ofstream ofile(dumpName.str(), std::ios::binary);
-    // preloadedFilesWritten++;
-    // for (auto& floatValue: tempReadBuffer)
-    //     ofile.write((char*) &floatValue, sizeof(float));
-    // ofile.close();
+    readFromFile(sndFile, preloadedSize, *returnedValue.preloadedData);
     // char  buffer [2048] ;
     // sndFile.command(SFC_GET_LOG_INFO, buffer, sizeof(buffer)) ;
     // DBG(buffer);
@@ -90,18 +89,7 @@ void sfz::FilePool::loadingThread()
 
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
         auto fileLoaded = std::make_unique<StereoBuffer<float>>(fileToLoad.numFrames);
-        if (sndFile.channels() == 1) {
-            tempReadBuffer.resize(fileToLoad.numFrames);
-            sndFile.readf(tempReadBuffer.data(), fileToLoad.numFrames);
-            std::copy(tempReadBuffer.begin(), tempReadBuffer.end(), fileLoaded->begin(Channel::left));
-            std::copy(tempReadBuffer.begin(), tempReadBuffer.end(), fileLoaded->begin(Channel::right));
-        } else if (sndFile.channels() == 2) {
-            tempReadBuffer.resize(fileToLoad.numFrames * 2);
-            sndFile.readf(tempReadBuffer.data(), fileToLoad.numFrames);
-            fileLoaded->readInterleaved(tempReadBuffer);
-        }
-        // std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileLoaded(new StereoBuffer<float>(framesRead), deleteAndTrackBuffers);
-        // fileBuffers++;
+        readFromFile(sndFile, fileToLoad.numFrames, *fileLoaded);
         fileToLoad.voice->setFileData(std::move(fileLoaded));
     }
 }

@@ -60,7 +60,6 @@ private:
     void loadingThread();
     std::thread fileLoadingThread;
     bool quitThread { false };
-    Buffer<float> tempReadBuffer;
     absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);
 };
