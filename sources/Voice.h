@@ -17,33 +17,33 @@ public:
         NoteOff,
         CC
     };
-    void setSampleRate(float sampleRate);
-    void setSamplesPerBlock(int samplesPerBlock);
+    void setSampleRate(float sampleRate) noexcept;
+    void setSamplesPerBlock(int samplesPerBlock) noexcept;
     
-    void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType);
+    void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType) noexcept;
 
-    void setFileData(std::unique_ptr<StereoBuffer<float>> file);
-    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity);
-    void registerCC(int delay, int channel, int ccNumber, uint8_t ccValue);
-    void registerPitchWheel(int delay, int channel, int pitch);
-    void registerAftertouch(int delay, int channel, uint8_t aftertouch);
-    void registerTempo(int delay, float secondsPerQuarter);
+    void setFileData(std::unique_ptr<StereoBuffer<float>> file) noexcept;
+    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
+    void registerCC(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;
+    void registerPitchWheel(int delay, int channel, int pitch) noexcept;
+    void registerAftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
+    void registerTempo(int delay, float secondsPerQuarter) noexcept;
     bool checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexcept;
 
-    void renderBlock(StereoSpan<float> buffer);
+    void renderBlock(StereoSpan<float> buffer) noexcept;
 
-    bool isFree() const;
-    int getTriggerNumber() const;
-    int getTriggerChannel() const;
-    uint8_t getTriggerValue() const;
-    TriggerType getTriggerType() const;
+    bool isFree() const noexcept;
+    int getTriggerNumber() const noexcept;
+    int getTriggerChannel() const noexcept;
+    uint8_t getTriggerValue() const noexcept;
+    TriggerType getTriggerType() const noexcept;
 
-    void reset();
-    void garbageCollect();
+    void reset() noexcept;
+    void garbageCollect() noexcept;
 private:
-    void fillWithData(StereoSpan<float> buffer);
-    void fillWithGenerator(StereoSpan<float> buffer);
-    void prepareEGEnvelope(int delay, uint8_t velocity);
+    void fillWithData(StereoSpan<float> buffer) noexcept;
+    void fillWithGenerator(StereoSpan<float> buffer) noexcept;
+    void prepareEGEnvelope(int delay, uint8_t velocity) noexcept;
 
     Region* region { nullptr };
 

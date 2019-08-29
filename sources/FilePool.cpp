@@ -19,7 +19,7 @@ void readFromFile(SndfileHandle& sndFile, int numFrames, StereoBuffer<T>& output
     }
 }
 
-std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename)
+std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename) noexcept
 {
     std::filesystem::path file { rootDirectory / filename };
     if (!std::filesystem::exists(file))
@@ -60,14 +60,14 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     return returnedValue;
 }
 
-void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames)
+void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames) noexcept
 {
     if (!loadingQueue.try_enqueue({ voice, sample, numFrames })) {
         DBG("Problem enqueuing a file read for file " << sample);
     }
 }
 
-void sfz::FilePool::loadingThread()
+void sfz::FilePool::loadingThread() noexcept
 {
     FileLoadingInformation fileToLoad {};
     while (!quitThread) {

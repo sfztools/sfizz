@@ -176,7 +176,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
     return parserReturned;
 }
 
-sfz::Voice* sfz::Synth::findFreeVoice()
+sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
     auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
     if (freeVoice == voices.end()) {
@@ -186,7 +186,7 @@ sfz::Voice* sfz::Synth::findFreeVoice()
     return freeVoice->get();
 }
 
-void sfz::Synth::getNumActiveVoices() const
+void sfz::Synth::getNumActiveVoices() const noexcept
 {
     auto activeVoices { 0 };
     for (const auto& voice : voices) {
@@ -195,14 +195,14 @@ void sfz::Synth::getNumActiveVoices() const
     }
 }
 
-void sfz::Synth::garbageCollect()
+void sfz::Synth::garbageCollect() noexcept
 {
     for (auto& voice : voices) {
         voice->garbageCollect();
     }
 }
 
-void sfz::Synth::setSamplesPerBlock(int samplesPerBlock)
+void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     DBG("[Synth] Samples per block set to " << samplesPerBlock);
     this->samplesPerBlock = samplesPerBlock;
@@ -211,7 +211,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock)
         voice->setSamplesPerBlock(samplesPerBlock);
 }
 
-void sfz::Synth::setSampleRate(float sampleRate)
+void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
     DBG("[Synth] Sample rate set to " << sampleRate);
     this->sampleRate = sampleRate;
@@ -219,7 +219,7 @@ void sfz::Synth::setSampleRate(float sampleRate)
         voice->setSampleRate(sampleRate);
 }
 
-void sfz::Synth::renderBlock(StereoSpan<float> buffer)
+void sfz::Synth::renderBlock(StereoSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
@@ -230,7 +230,7 @@ void sfz::Synth::renderBlock(StereoSpan<float> buffer)
     }
 }
 
-void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity)
+void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
 {
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
@@ -251,7 +251,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     }
 }
 
-void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity)
+void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
 {
     auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& voice : voices)
@@ -269,7 +269,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     }
 }
 
-void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue)
+void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
 {
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
@@ -286,4 +286,33 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue)
             filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
         }
     }
+}
+
+int sfz::Synth::getNumRegions() const noexcept
+{
+    return static_cast<int>(regions.size());
+}
+int sfz::Synth::getNumGroups() const noexcept
+{
+    return numGroups;
+}
+int sfz::Synth::getNumMasters() const noexcept
+{
+    return numMasters;
+}
+int sfz::Synth::getNumCurves() const noexcept
+{
+    return numCurves;
+}
+const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
+{
+    return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
+}
+std::set<std::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
+{
+    return unknownOpcodes;
+}
+size_t sfz::Synth::getNumPreloadedSamples() const noexcept
+{
+    return filePool.getNumPreloadedSamples();
 }

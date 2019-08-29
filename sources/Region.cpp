@@ -403,12 +403,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     return true;
 }
 
-bool sfz::Region::isSwitchedOn() const noexcept
+bool sfz::Region::isSwitchedOn() const noexcept 
 {
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && allCCSwitched;
 }
 
-bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue)
+bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept
 {
     const bool chanOk = channelRange.containsWithEnd(channel);
     if (!chanOk)
@@ -468,7 +468,7 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
     return keyOk && velOk && chanOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity [[maybe_unused]], float randValue)
+bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity [[maybe_unused]], float randValue) noexcept
 {
     const bool chanOk = channelRange.containsWithEnd(channel);
     if (!chanOk)
@@ -496,7 +496,7 @@ bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity 
     return keyOk && chanOk && randOk && releaseTrigger;
 }
 
-bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue)
+bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue) noexcept
 {
     if (!channelRange.containsWithEnd(channel))
         return false;
@@ -517,7 +517,7 @@ bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue)
         return false;
 }
 
-void sfz::Region::registerPitchWheel(int channel, int pitch)
+void sfz::Region::registerPitchWheel(int channel, int pitch) noexcept
 {
     if (!channelRange.containsWithEnd(channel))
         return;
@@ -528,7 +528,7 @@ void sfz::Region::registerPitchWheel(int channel, int pitch)
         pitchSwitched = false;
 }
 
-void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch)
+void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch) noexcept
 {
     if (!channelRange.containsWithEnd(channel))
         return;
@@ -539,7 +539,7 @@ void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch)
         aftertouchSwitched = false;
 }
 
-void sfz::Region::registerTempo(float secondsPerQuarter)
+void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
 {
     const float bpm = 60.0f / secondsPerQuarter;
     if (bpmRange.containsWithEnd(bpm))
@@ -557,16 +557,19 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
     return centsFactor(pitchVariationInCents);
 }
+
 float sfz::Region::getBaseGain() noexcept 
 {
     float baseGaindB { volume };
     baseGaindB += gainDistribution(Random::randomGenerator);
     return db2mag(baseGaindB);
 }
+
 uint32_t sfz::Region::getOffset() noexcept
 {
     return offset + offsetDistribution(Random::randomGenerator);
 }
+
 uint32_t sfz::Region::getDelay() noexcept
 {
     return delay + delayDistribution(Random::randomGenerator);
@@ -576,6 +579,7 @@ uint32_t sfz::Region::trueSampleEnd() const noexcept
 {
     return min(sampleEnd, loopRange.getEnd());
 }
+
 bool sfz::Region::canUsePreloadedData() const noexcept
 {
     if (preloadedData == nullptr)

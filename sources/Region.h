@@ -23,12 +23,12 @@ struct Region {
     bool isGenerator() const noexcept { return sample.size() > 0 ? sample[0] == '*' : false; }
     bool shouldLoop() const noexcept { return (loopMode == SfzLoopMode::loop_continuous || loopMode == SfzLoopMode::loop_sustain); }
     bool isSwitchedOn() const noexcept;
-    bool registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue);
-    bool registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue);
-    bool registerCC(int channel, int ccNumber, uint8_t ccValue);
-    void registerPitchWheel(int channel, int pitch);
-    void registerAftertouch(int channel, uint8_t aftertouch);
-    void registerTempo(float secondsPerQuarter);
+    bool registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept;
+    bool registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept;
+    bool registerCC(int channel, int ccNumber, uint8_t ccValue) noexcept;
+    void registerPitchWheel(int channel, int pitch) noexcept;
+    void registerAftertouch(int channel, uint8_t aftertouch) noexcept;
+    void registerTempo(float secondsPerQuarter) noexcept;
     bool isStereo() const noexcept;
     float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
     float getBaseGain() noexcept;

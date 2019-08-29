@@ -23,8 +23,8 @@ public:
         quitThread = true;
         fileLoadingThread.join();
     }
-    void setRootDirectory(const std::filesystem::path& directory) { rootDirectory = directory; }
-    size_t getNumPreloadedSamples() { return preloadedData.size(); }
+    void setRootDirectory(const std::filesystem::path& directory) noexcept { rootDirectory = directory; }
+    size_t getNumPreloadedSamples() const noexcept { return preloadedData.size(); }
 
     struct FileInformation {
         uint32_t end { Default::sampleEndRange.getEnd() };
@@ -33,18 +33,8 @@ public:
         double sampleRate { config::defaultSampleRate };
         std::shared_ptr<StereoBuffer<float>> preloadedData;
     };
-    std::optional<FileInformation> getFileInformation(std::string_view filename);
-    void enqueueLoading(Voice* voice, std::string_view sample, int numFrames);
-    static void deleteAndTrackBuffers(StereoBuffer<float>* buffer)
-    {
-        fileBuffers--;
-        delete buffer;
-    };
-    static int getFileBuffers()
-    {
-        return fileBuffers.load();
-    }
-
+    std::optional<FileInformation> getFileInformation(std::string_view filename) noexcept;
+    void enqueueLoading(Voice* voice, std::string_view sample, int numFrames) noexcept;
 private:
     std::filesystem::path rootDirectory;
     struct FileLoadingInformation {
@@ -53,9 +43,8 @@ private:
         int numFrames;
     };
 
-    inline static std::atomic<int> fileBuffers { 0 };
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;
-    void loadingThread();
+    void loadingThread() noexcept;
     std::thread fileLoadingThread;
     bool quitThread { false };
     absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;

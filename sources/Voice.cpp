@@ -7,7 +7,7 @@ sfz::Voice::Voice(const CCValueArray& ccState)
 {
 }
 
-void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, uint8_t value, sfz::Voice::TriggerType triggerType)
+void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
 {
     this->triggerType = triggerType;
     triggerNumber = number;
@@ -32,7 +32,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     prepareEGEnvelope(delay, value);
 }
 
-void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity)
+void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
 {
     auto secondsToSamples = [this](auto timeInSeconds) {
         return static_cast<int>(timeInSeconds * sampleRate);
@@ -48,18 +48,18 @@ void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity)
         normalizePercents(region->amplitudeEG.getStart(ccState, velocity)));
 }
 
-void sfz::Voice::setFileData(std::unique_ptr<StereoBuffer<float>> file)
+void sfz::Voice::setFileData(std::unique_ptr<StereoBuffer<float>> file) noexcept
 {
     fileData = std::move(file);
     dataReady.store(true);
 }
 
-bool sfz::Voice::isFree() const
+bool sfz::Voice::isFree() const noexcept
 {
     return (region == nullptr);
 }
 
-void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]])
+void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     if (region == nullptr)
         return;
@@ -78,33 +78,33 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
     }
 }
 
-void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumber, uint8_t ccValue)
+void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumber, uint8_t ccValue) noexcept
 {
     if (ccNumber == 64 && noteIsOff && ccValue < 63)
         egEnvelope.startRelease(delay);
 }
 
-void sfz::Voice::registerPitchWheel(int delay [[maybe_unused]], int channel [[maybe_unused]], int pitch [[maybe_unused]])
+void sfz::Voice::registerPitchWheel(int delay [[maybe_unused]], int channel [[maybe_unused]], int pitch [[maybe_unused]]) noexcept
 {
 
 }
 
-void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], int channel [[maybe_unused]], uint8_t aftertouch [[maybe_unused]])
+void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], int channel [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
 {
 
 }
 
-void sfz::Voice::registerTempo(int delay [[maybe_unused]], float secondsPerQuarter [[maybe_unused]])
+void sfz::Voice::registerTempo(int delay [[maybe_unused]], float secondsPerQuarter [[maybe_unused]]) noexcept
 {
 
 }
 
-void sfz::Voice::setSampleRate(float sampleRate)
+void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
 }
 
-void sfz::Voice::setSamplesPerBlock(int samplesPerBlock)
+void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
     tempBuffer1.resize(samplesPerBlock);
@@ -115,7 +115,7 @@ void sfz::Voice::setSamplesPerBlock(int samplesPerBlock)
     indexSpan = absl::MakeSpan(indexBuffer);
 }
 
-void sfz::Voice::renderBlock(StereoSpan<float> buffer)
+void sfz::Voice::renderBlock(StereoSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.size();
     ASSERT(static_cast<int>(numSamples) <= samplesPerBlock);
@@ -139,7 +139,7 @@ void sfz::Voice::renderBlock(StereoSpan<float> buffer)
         reset();
 }
 
-void sfz::Voice::fillWithData(StereoSpan<float> buffer)
+void sfz::Voice::fillWithData(StereoSpan<float> buffer) noexcept
 {
     auto source { [&]() {
         if (region->canUsePreloadedData() || !dataReady)
@@ -195,7 +195,7 @@ void sfz::Voice::fillWithData(StereoSpan<float> buffer)
     }
 }
 
-void sfz::Voice::fillWithGenerator(StereoSpan<float> buffer)
+void sfz::Voice::fillWithGenerator(StereoSpan<float> buffer) noexcept
 {
     if (region->sample != "*sine")
         return;
@@ -219,27 +219,27 @@ bool sfz::Voice::checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexc
     return false;
 }
 
-int sfz::Voice::getTriggerNumber() const
+int sfz::Voice::getTriggerNumber() const noexcept
 {
     return triggerNumber;
 }
 
-int sfz::Voice::getTriggerChannel() const
+int sfz::Voice::getTriggerChannel() const noexcept
 {
     return triggerNumber;
 }
 
-uint8_t sfz::Voice::getTriggerValue() const
+uint8_t sfz::Voice::getTriggerValue() const noexcept
 {
     return triggerNumber;
 }
 
-sfz::Voice::TriggerType sfz::Voice::getTriggerType() const
+sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
 {
     return triggerType;
 }
 
-void sfz::Voice::reset()
+void sfz::Voice::reset() noexcept
 {
     dataReady.store(false);
     state = State::idle;
@@ -252,7 +252,7 @@ void sfz::Voice::reset()
     noteIsOff = false;
 }
 
-void sfz::Voice::garbageCollect()
+void sfz::Voice::garbageCollect() noexcept
 {
     if (state == State::idle && region == nullptr)
         fileData.reset();

@@ -22,27 +22,27 @@ public:
     Synth();
 
     bool loadSfzFile(const std::filesystem::path& file) final;
-    int getNumRegions() const noexcept { return static_cast<int>(regions.size()); }
-    int getNumGroups() const noexcept { return numGroups; }
-    int getNumMasters() const noexcept { return numMasters; }
-    int getNumCurves() const noexcept { return numCurves; }
-    const Region* getRegionView(int idx) const noexcept { return (size_t)idx < regions.size() ? regions[idx].get() : nullptr; }
-    auto getUnknownOpcodes() { return unknownOpcodes; }
-    size_t getNumPreloadedSamples() { return filePool.getNumPreloadedSamples(); }
+    int getNumRegions() const noexcept;
+    int getNumGroups() const noexcept;
+    int getNumMasters() const noexcept;
+    int getNumCurves() const noexcept;
+    const Region* getRegionView(int idx) const noexcept;
+    std::set<std::string_view> getUnknownOpcodes() const noexcept;
+    size_t getNumPreloadedSamples() const noexcept;
 
-    void setSamplesPerBlock(int samplesPerBlock);
-    void setSampleRate(float sampleRate);
-    void renderBlock(StereoSpan<float> buffer);
+    void setSamplesPerBlock(int samplesPerBlock) noexcept;
+    void setSampleRate(float sampleRate) noexcept;
+    void renderBlock(StereoSpan<float> buffer) noexcept;
 
-    void noteOn(int delay, int channel, int noteNumber, uint8_t velocity);
-    void noteOff(int delay, int channel, int noteNumber, uint8_t velocity);
-    void cc(int delay, int channel, int ccNumber, uint8_t ccValue);
-    void pitchWheel(int delay, int channel, int pitch);
-    void aftertouch(int delay, int channel, uint8_t aftertouch);
-    void tempo(int delay, float secondsPerQuarter);
+    void noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
+    void cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;
+    void pitchWheel(int delay, int channel, int pitch) noexcept;
+    void aftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
+    void tempo(int delay, float secondsPerQuarter) noexcept;
 
-    void getNumActiveVoices() const;
-    void garbageCollect();
+    void getNumActiveVoices() const noexcept;
+    void garbageCollect() noexcept;
 protected:
     void callback(std::string_view header, const std::vector<Opcode>& members) final;
 
@@ -63,7 +63,7 @@ private:
 
     FilePool filePool;
     CCValueArray ccState;
-    Voice* findFreeVoice();
+    Voice* findFreeVoice() noexcept;
     std::vector<CCNamePair> ccNames;
     std::optional<uint8_t> defaultSwitch;
     std::set<std::string_view> unknownOpcodes;
