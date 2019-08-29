@@ -1,5 +1,6 @@
 #include "Synth.h"
 #include "Helpers.h"
+#include "absl/algorithm/container.h"
 #include <algorithm>
 #include <iostream>
 #include <utility>
@@ -124,6 +125,28 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
     }
 }
 
+void addEndpointsToVelocityCurve(sfz::Region& region)
+{
+    if (region.velocityPoints.size() > 0)
+    {
+        absl::c_sort(region.velocityPoints, [](auto& lhs, auto& rhs) { return lhs.first < rhs.first; });
+        if (region.ampVeltrack > 0)
+        {
+            if (region.velocityPoints.back().first != sfz::Default::velocityRange.getEnd())
+                region.velocityPoints.push_back(std::make_pair<int, float>(127, 1.0f));
+            if (region.velocityPoints.front().first != sfz::Default::velocityRange.getStart())
+                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair<int, float>(0, 0.0f));
+        }
+        else
+        {
+            if (region.velocityPoints.front().first != sfz::Default::velocityRange.getEnd())
+                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair<int, float>(127, 0.0f));
+            if (region.velocityPoints.back().first != sfz::Default::velocityRange.getStart())
+                region.velocityPoints.push_back(std::make_pair<int, float>(0, 1.0f));
+        }        
+    }
+}
+
 bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 {
     clear();
@@ -172,10 +195,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
             region->registerNoteOff(region->channelRange.getStart(), *defaultSwitch, 0, 1.0);
         }
 
-        absl::c_sort(region->velocityPoints, [](const auto& lhs, const auto& rhs) {
-            return lhs.first < rhs.first;
-        });
-        
+        addEndpointsToVelocityCurve(*region);
         region->registerPitchWheel(region->channelRange.getStart(), 0);
         region->registerAftertouch(region->channelRange.getStart(), 0);
         region->registerTempo(2.0f);
