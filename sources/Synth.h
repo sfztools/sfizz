@@ -70,7 +70,7 @@ public:
 
     void noteOn(int delay, int channel, int noteNumber, uint8_t velocity)
     {
-        auto randValue = getUniform();
+        auto randValue = randNoteDistribution(Random::randomGenerator);
 
         for (auto& region : regions) {
             if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
@@ -91,7 +91,7 @@ public:
 
     void noteOff(int delay, int channel, int noteNumber, uint8_t velocity)
     {
-        auto randValue = getUniform();
+        auto randValue = randNoteDistribution(Random::randomGenerator);
         for (auto& voice : voices)
             voice->registerNoteOff(delay, channel, noteNumber, velocity);
 
@@ -187,16 +187,8 @@ private:
     float sampleRate { config::defaultSampleRate };
     std::random_device rd {};
     std::mt19937 randomGenerator { rd() };
-    std::uniform_real_distribution<float> randomDistribution { 0, 1 };
-
-    bool threadsShouldQuit { false };
-    std::thread garbageCollectionThread;
-
-    float getUniform()
-    {
-        return randomDistribution(randomGenerator);
-    }
-
+    std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
+    
     LEAK_DETECTOR(Synth);
 };
 
