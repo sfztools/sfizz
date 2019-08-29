@@ -109,6 +109,7 @@ set(TEST_SOURCES
     tests/FilesT.cpp
     tests/OnePoleFilterT.cpp
     tests/RegionActivationT.cpp
+    tests/RegionCrossfadesT.cpp
     tests/ADSREnvelopeT.cpp
     tests/LinearEnvelopeT.cpp
     tests/MainT.cpp

@@ -631,55 +631,56 @@ bool sfz::Region::isStereo() const noexcept
     return this->numChannels == 2;
 }
 
-// TODO: lots and lots of repetition here...
+template<class T, class U>
+float crossfadeIn(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+{
+    if (value < crossfadeRange.getStart())
+        return 0.0f;
+    else if (value < crossfadeRange.getEnd()) {
+        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / std::max(static_cast<float>(crossfadeRange.length()), 1.0f);
+        if (curve == SfzCrossfadeCurve::power)
+            return sqrt(crossfadePosition);
+        if (curve == SfzCrossfadeCurve::gain)
+            return crossfadePosition;
+    }
+
+    return 1.0f;
+}
+
+template<class T, class U>
+float crossfadeOut(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+{
+    if (value > crossfadeRange.getEnd())
+        return 0.0f;
+    else if (value > crossfadeRange.getStart()) {
+        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / std::max(static_cast<float>(crossfadeRange.length()), 1.0f);
+        if (curve == SfzCrossfadeCurve::power)
+            return sqrt(1 - crossfadePosition);
+        if (curve == SfzCrossfadeCurve::gain)
+            return 1 - crossfadePosition;
+    }
+
+    return 1.0f;
+}
+
 float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
 {
     float baseGain { 1.0f };
 
+    // Amplitude velocity tracking
     if (trigger == SfzTrigger::release_key)
         baseGain *= velocityGain(lastNoteVelocities[noteNumber]);
     else
         baseGain *= velocityGain(velocity);
 
-    if (noteNumber < crossfadeKeyInRange.getStart())
-        baseGain = 0.0f;
-    else if (noteNumber < crossfadeKeyInRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyInRange.getStart()) / (crossfadeKeyInRange.length() > 0 ? crossfadeKeyInRange.length() : 1);
-        if (crossfadeKeyCurve == SfzCrossfadeCurve::power)
-            baseGain *= sqrt(crossfadePosition);
-        if (crossfadeKeyCurve == SfzCrossfadeCurve::gain)
-            baseGain *= crossfadePosition;
-    }
+    // Amplitude key tracking
+    baseGain *= db2pow(ampKeytrack * static_cast<float>(noteNumber - pitchKeycenter));
 
-    if (noteNumber > crossfadeKeyOutRange.getEnd())
-        baseGain = 0.0f;
-    else if (noteNumber > crossfadeKeyOutRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyOutRange.getStart()) / (crossfadeKeyOutRange.length() > 0 ? crossfadeKeyOutRange.length() : 1);
-        if (crossfadeKeyCurve == SfzCrossfadeCurve::power)
-            baseGain *= sqrt(1 - crossfadePosition);
-        if (crossfadeKeyCurve == SfzCrossfadeCurve::gain)
-            baseGain *= 1 - crossfadePosition;
-    }
-
-    if (velocity < crossfadeVelInRange.getStart())
-        baseGain = 0;
-    else if (velocity < crossfadeVelInRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelInRange.getStart()) / (crossfadeVelInRange.length() > 0 ? crossfadeVelInRange.length() : 1);
-        if (crossfadeVelCurve == SfzCrossfadeCurve::power)
-            baseGain *= sqrt(crossfadePosition);
-        if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
-            baseGain *= crossfadePosition;
-    }
-
-    if (velocity > crossfadeVelOutRange.getEnd())
-        baseGain = 0;
-    else if (velocity > crossfadeVelOutRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelOutRange.getStart()) / (crossfadeVelOutRange.length() > 0 ? crossfadeVelOutRange.length() : 1);
-        if (crossfadeVelCurve == SfzCrossfadeCurve::power)
-            baseGain *= sqrt(1 - crossfadePosition);
-        if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
-            baseGain *= 1 - crossfadePosition;
-    }
+    // Crossfades related to key and velocity
+    baseGain *= crossfadeIn(crossfadeKeyInRange, noteNumber, crossfadeKeyCurve);
+    baseGain *= crossfadeOut(crossfadeKeyOutRange, noteNumber, crossfadeKeyCurve);
+    baseGain *= crossfadeIn(crossfadeVelInRange, velocity, crossfadeVelCurve);
+    baseGain *= crossfadeOut(crossfadeVelOutRange, velocity, crossfadeVelCurve);
 
     return baseGain;
 }
@@ -688,32 +689,20 @@ float sfz::Region::getCCGain(const sfz::CCValueArray& ccState) noexcept
 {
     float gain { 1.0f };
 
+    if (amplitudeCC)
+        gain *= *amplitudeCC
+
+    // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
         const auto ccValue = ccState[valuePair.first];
         const auto crossfadeRange = valuePair.second;
-        if (ccValue < crossfadeRange.getStart()) {
-            gain = 0.0f;
-        } else if (ccValue < crossfadeRange.getEnd()) {
-            const auto crossfadePosition = static_cast<float>(ccValue - crossfadeRange.getStart()) / (crossfadeRange.length() > 0 ? crossfadeRange.length() : 1);
-            if (crossfadeCCCurve == SfzCrossfadeCurve::power)
-                gain *= sqrt(crossfadePosition);
-            if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
-                gain *= crossfadePosition;
-        }
+        gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     for (const auto& valuePair : crossfadeCCOutRange) {
         const auto ccValue = ccState[valuePair.first];
         const auto crossfadeRange = valuePair.second;
-        if (ccValue > crossfadeRange.getEnd()) {
-            gain = 0.0f;
-        } else if (ccValue > crossfadeRange.getStart()) {
-            const auto crossfadePosition = static_cast<float>(ccValue - crossfadeRange.getStart()) / (crossfadeRange.length() > 0 ? crossfadeRange.length() : 1);
-            if (crossfadeCCCurve == SfzCrossfadeCurve::power)
-                gain *= sqrt(1 - crossfadePosition);
-            if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
-                gain *= 1 - crossfadePosition;
-        }
+        gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     return gain;
