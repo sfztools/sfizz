@@ -26,8 +26,14 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
     pitchRatio = region->getBasePitchVariation(number, value);
     baseGain = region->getBaseGain();
+    if (triggerType != TriggerType::CC)
+        baseGain *= region->getNoteGain(number, value);
+    DBG("Voice base gain with note crossfades: " << baseGain);
+    baseGain *= region->getCCGain(ccState);
+    DBG("Voice base gain with CC crossfades: " << baseGain);
     sourcePosition = region->getOffset();
     initialDelay = delay + region->getDelay();
+    DBG("Voice initial delay: " << initialDelay);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
 }
