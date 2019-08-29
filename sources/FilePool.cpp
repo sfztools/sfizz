@@ -30,9 +30,11 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
         DBG("Missing logic for " << sndFile.channels() << ", discarding sample " << filename);
         return {};
     }
+
     FileInformation returnedValue;
     returnedValue.end = static_cast<uint32_t>(sndFile.frames());
     returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
+
     SF_INSTRUMENT instrumentInfo;
     sndFile.command(SFC_GET_INSTRUMENT, &instrumentInfo, sizeof(instrumentInfo));
     if (instrumentInfo.loop_count == 1) {
@@ -46,12 +48,15 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
         else
             return std::min(returnedValue.end, static_cast<uint32_t>(config::preloadSize));
     }();
-    returnedValue.preloadedData = std::make_shared<StereoBuffer<float>>(preloadedSize);
-    preloadedData[filename] = returnedValue.preloadedData;
-    readFromFile(sndFile, preloadedSize, *returnedValue.preloadedData);
-    // char  buffer [2048] ;
-    // sndFile.command(SFC_GET_LOG_INFO, buffer, sizeof(buffer)) ;
-    // DBG(buffer);
+
+    if (preloadedData.contains(filename)) {
+        returnedValue.preloadedData = preloadedData[filename];
+    } else {
+        returnedValue.preloadedData = std::make_shared<StereoBuffer<float>>(preloadedSize);
+        readFromFile(sndFile, preloadedSize, *returnedValue.preloadedData);
+        preloadedData[filename] = returnedValue.preloadedData;
+    }
+
     return returnedValue;
 }
 
