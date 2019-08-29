@@ -32,6 +32,16 @@ struct Region {
     void registerAftertouch(int channel, uint8_t aftertouch);
     void registerTempo(float secondsPerQuarter);
     bool isStereo() const noexcept;
+    float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept
+    {
+        auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
+        pitchVariationInCents += tune; // sample tuning
+        pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
+        pitchVariationInCents += velocity / 127 * pitchVeltrack; // track velocity
+        if (pitchRandom > 0)
+            pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
+        return centsFactor(pitchVariationInCents);
+    }
     float getBaseGain()
     {
         float baseGaindB { volume };
@@ -50,6 +60,13 @@ struct Region {
     uint32_t trueSampleEnd()
     {
         return min(sampleEnd, loopRange.getEnd());
+    }
+    bool canUsePreloadedData()
+    {
+        if (preloadedData == nullptr)
+            return false;
+
+        return trueSampleEnd() < static_cast<uint32_t>(preloadedData->getNumFrames());
     }
 
     bool parseOpcode(const Opcode& opcode);
@@ -152,6 +169,7 @@ private:
     std::uniform_real_distribution<float> gainDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
     std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };
     std::uniform_int_distribution<uint32_t> offsetDistribution { 0, sfz::Default::offsetRandom };
+    std::uniform_int_distribution<int> pitchDistribution { -sfz::Default::pitchRandom, sfz::Default::pitchRandom };
     LEAK_DETECTOR(Region);
 };
 

@@ -283,7 +283,7 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 }
 
 template <>
-void loopingSFZIndex<float, true>(absl::Span<const float> jumps,
+float loopingSFZIndex<float, true>(absl::Span<const float> jumps,
     absl::Span<float> leftCoeffs,
     absl::Span<float> rightCoeffs,
     absl::Span<int> indices,
@@ -341,10 +341,11 @@ void loopingSFZIndex<float, true>(absl::Span<const float> jumps,
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
     while (jump < sentinel)
         snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
+    return floatIndex;
 }
 
 template <>
-void saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
+float saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
     absl::Span<float> leftCoeffs,
     absl::Span<float> rightCoeffs,
     absl::Span<int> indices,
@@ -398,6 +399,7 @@ void saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
     while (jump < sentinel)
         snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+    return floatIndex;
 }
 
 template <>

@@ -55,14 +55,12 @@ private:
     };
 
     inline static std::atomic<int> fileBuffers { 0 };
-
+    int preloadedFilesWritten {0};
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;
     void loadingThread();
     std::thread fileLoadingThread;
     bool quitThread { false };
-    Buffer<float> tempReadBuffer { config::preloadSize * 2 };
-
-    // std::map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
+    Buffer<float> tempReadBuffer;
     absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);
 };

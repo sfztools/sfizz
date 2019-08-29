@@ -27,6 +27,7 @@ constexpr bool fill { true };
 constexpr bool gain { false };
 constexpr bool mathfuns { false };
 constexpr bool loopingSFZIndex { true };
+constexpr bool saturatingSFZIndex { true };
 constexpr bool linearRamp { false };
 constexpr bool multiplicativeRamp { true };
 constexpr bool add { false };

@@ -323,6 +323,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("pitch_random"):
         setValueFromOpcode(opcode, pitchRandom, Default::pitchRandomRange);
+        pitchDistribution.param(std::uniform_int_distribution<int>::param_type(-pitchRandom, pitchRandom));
         break;
     case hash("transpose"):
         setValueFromOpcode(opcode, transpose, Default::transposeRange);

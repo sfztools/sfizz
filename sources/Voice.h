@@ -41,10 +41,11 @@ public:
 
         state = State::playing;
         speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
+        pitchRatio = region->getBasePitchVariation(number, value);
         baseGain = region->getBaseGain();
         sourcePosition = region->getOffset();
         initialDelay = delay + region->getDelay();
-        baseFrequency = midiNoteFrequency(number);
+        baseFrequency = midiNoteFrequency(number) * pitchRatio;
         prepareEGEnvelope(delay, value);
     }
 
@@ -64,10 +65,10 @@ public:
             normalizePercents(region->amplitudeEG.getStart(ccState, velocity)));
     }
 
-    void setFileData(std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> file)
+    void setFileData(std::unique_ptr<StereoBuffer<float>> file)
     {
         fileData = std::move(file);
-        dataReady.store(true, std::memory_order_seq_cst);
+        dataReady.store(true);
     }
 
     bool isFree()
@@ -114,8 +115,10 @@ public:
         this->samplesPerBlock = samplesPerBlock;
         tempBuffer1.resize(samplesPerBlock);
         tempBuffer2.resize(samplesPerBlock);
+        indexBuffer.resize(samplesPerBlock);
         tempSpan1 = absl::MakeSpan(tempBuffer1);
         tempSpan2 = absl::MakeSpan(tempBuffer2);
+        indexSpan = absl::MakeSpan(indexBuffer);
     }
 
     void renderBlock(StereoSpan<float> buffer)
@@ -129,13 +132,14 @@ public:
 
         if (region->isGenerator())
             fillWithGenerator(buffer);
-        else
+        else 
             fillWithData(buffer);
 
-        egEnvelope.getBlock(tempSpan1.first(numSamples));
-        buffer.applyGain(tempSpan1);
+        // buffer.applyGain(baseGain);
 
-        buffer.applyGain(baseGain);
+        auto envelopeSpan = tempSpan1.first(numSamples);
+        egEnvelope.getBlock(envelopeSpan);
+        // buffer.applyGain(envelopeSpan);
 
         if (!egEnvelope.isSmoothing())
             reset();
@@ -143,20 +147,57 @@ public:
 
     void fillWithData(StereoSpan<float> buffer)
     {
-        const StereoSpan<const float> source([&]() -> StereoBuffer<float>& {
-            // TODO: shouldn't need to check fileData here, something is a bit strange...
-            if (dataReady.load(std::memory_order_seq_cst) && fileData != nullptr)
-                return *fileData;
+        auto source { [&]() {
+            if (region->canUsePreloadedData() || !dataReady)
+                return StereoSpan<const float>(*region->preloadedData);
             else
-                return *region->preloadedData;
-        }());
+                return StereoSpan<const float>(*fileData);
+        }()};
 
-        const auto actualBlockSize = min(buffer.size(), source.size() - sourcePosition);
-        buffer.add(source.subspan(sourcePosition, actualBlockSize));
-        sourcePosition += actualBlockSize;
+        auto indices = indexSpan.first(buffer.size());
+        auto jumps = tempSpan1.first(buffer.size());
+        auto leftCoeffs = tempSpan1.first(buffer.size());
+        auto rightCoeffs = tempSpan2.first(buffer.size());
 
-        if (sourcePosition == source.size())
+        ::fill<float>(jumps, pitchRatio * speedRatio);
+        if (region->shouldLoop() && region->trueSampleEnd() <= source.size()) {
+            floatPosition = ::loopingSFZIndex<float, false>(
+                jumps,
+                leftCoeffs,
+                rightCoeffs,
+                indices,
+                floatPosition,
+                region->trueSampleEnd() - 1,
+                region->loopRange.getStart());
+        } else {
+            floatPosition = ::saturatingSFZIndex<float, false>(
+                jumps,
+                leftCoeffs,
+                rightCoeffs,
+                indices,
+                floatPosition,
+                source.size() - 1);
+        }
+
+        auto ind = indices.data();
+        auto leftCoeff = leftCoeffs.data();
+        auto rightCoeff = rightCoeffs.data();
+        auto left = buffer.left().data();
+        auto right = buffer.right().data();
+        while (ind < indices.end()) {
+            *left = source.left()[*ind] * (*leftCoeff) + source.left()[*ind + 1] * (*rightCoeff);
+            *right = source.right()[*ind] * (*leftCoeff) + source.right()[*ind + 1] * (*rightCoeff);
+            left++;
+            right++;
+            ind++;
+            leftCoeff++;
+            rightCoeff++;
+        }
+
+        if (!region->shouldLoop() && (floatPosition + 1.01) > source.size()) {
+            DBG("Releasing " << region->sample);
             egEnvelope.startRelease(buffer.size());
+        }
     }
 
     void fillWithGenerator(StereoSpan<float> buffer)
@@ -168,7 +209,7 @@ public:
         phase = ::linearRamp<float>(tempSpan1, phase, step);
         ::sin<float>(tempSpan1.first(buffer.size()), buffer.left());
         absl::c_copy(buffer.left(), buffer.right().begin());
-        
+
         sourcePosition += buffer.size();
     }
 
@@ -209,6 +250,8 @@ public:
         if (region != nullptr) {
             DBG("Reset voice with sample " << region->sample);
         }
+        sourcePosition = 0;
+        floatPosition = 0.0f;
         region = nullptr;
         noteIsOff = false;
     }
@@ -242,15 +285,19 @@ private:
     float phase { 0.0f };
 
     uint32_t sourcePosition { 0 };
+    float floatPosition { 0.0f };
     uint32_t initialDelay { 0 };
 
     std::atomic<bool> dataReady { false };
-    std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileData { nullptr };
+    // std::unique_ptr<StereoBuffer<float>, std::function<void(StereoBuffer<float>*)>> fileData { nullptr };
+    std::unique_ptr<StereoBuffer<float>> fileData { nullptr };
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;
+    Buffer<int> indexBuffer;
     absl::Span<float> tempSpan1 { absl::MakeSpan(tempBuffer1) };
     absl::Span<float> tempSpan2 { absl::MakeSpan(tempBuffer2) };
+    absl::Span<int> indexSpan { absl::MakeSpan(indexBuffer) };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     double sampleRate { config::defaultSampleRate };

@@ -34,7 +34,14 @@ public:
         ASSERT(leftBuffer.size() == rightBuffer.size());
     }
 
-    StereoSpan(StereoBuffer<const ValueType>& buffer)
+    StereoSpan(StereoBuffer<ValueType>&& buffer)
+        : numFrames(buffer.getNumFrames())
+        , leftBuffer(buffer.getSpan(Channel::left))
+        , rightBuffer(buffer.getSpan(Channel::right))
+    {
+    }
+
+    StereoSpan(StereoBuffer<const ValueType>&& buffer)
         : leftBuffer(buffer.getConstSpan(Channel::left))
         , rightBuffer(buffer.getConstSpan(Channel::right))
         , numFrames(buffer.getNumFrames())
@@ -45,6 +52,13 @@ public:
         : numFrames(buffer.getNumFrames())
         , leftBuffer(buffer.getSpan(Channel::left))
         , rightBuffer(buffer.getSpan(Channel::right))
+    {
+    }
+
+    StereoSpan(StereoBuffer<const ValueType>& buffer)
+        : leftBuffer(buffer.getConstSpan(Channel::left))
+        , rightBuffer(buffer.getConstSpan(Channel::right))
+        , numFrames(buffer.getNumFrames())
     {
     }
 
@@ -74,6 +88,7 @@ public:
         , leftBuffer(span.left())
         , rightBuffer(span.right())
     {
+
     }
 
     void fill(Type value) noexcept

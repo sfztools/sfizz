@@ -62,11 +62,11 @@ public:
     {
         ScopedFTZ ftz;
         buffer.fill(0.0f);
-
         StereoSpan<float> tempSpan { tempBuffer, buffer.size() };
         for (auto& voice : voices) {
             voice->renderBlock(tempSpan);
             buffer.add(tempSpan);
+            tempBuffer.fill(0.0f);
         }
     }
 
@@ -108,6 +108,7 @@ public:
             }
         }
     }
+
     void cc(int delay, int channel, int ccNumber, uint8_t ccValue)
     {
         for (auto& voice : voices)
@@ -155,7 +156,7 @@ private:
                     activeVoices++;
             }
             DBG("Active voices:" << activeVoices << " | Stray buffers: " << FilePool::getFileBuffers());
-            std::this_thread::sleep_for(1s);
+            std::this_thread::sleep_for(200ms);
         }
     }
 

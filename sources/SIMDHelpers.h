@@ -133,7 +133,7 @@ inline void snippetSaturatingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff
 }
 
 template <class T, bool SIMD = SIMDConfig::saturatingSFZIndex>
-void saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd) noexcept
+float saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd) noexcept
 {
     ASSERT(indices.size() >= jumps.size());
     ASSERT(indices.size() == leftCoeffs.size());
@@ -148,10 +148,11 @@ void saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, abs
 
     while (jump < sentinel)
         snippetSaturatingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+    return floatIndex;
 }
 
 template <>
-void saturatingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs, absl::Span<int> indices, float floatIndex, float loopEnd) noexcept;
+float saturatingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs, absl::Span<int> indices, float floatIndex, float loopEnd) noexcept;
 
 template <class T>
 inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd, T loopStart)
@@ -169,7 +170,7 @@ inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, i
 }
 
 template <class T, bool SIMD = SIMDConfig::loopingSFZIndex>
-void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
+float loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
 {
     ASSERT(indices.size() >= jumps.size());
     ASSERT(indices.size() == leftCoeffs.size());
@@ -184,10 +185,11 @@ void loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::
 
     while (jump < sentinel)
         snippetLoopingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
+    return floatIndex;
 }
 
 template <>
-void loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept;
+float loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept;
 
 template <class T>
 inline void snippetGain(T gain, const T*& input, T*& output)

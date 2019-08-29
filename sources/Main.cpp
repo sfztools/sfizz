@@ -92,7 +92,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
             break;
         }
     }
-
+    // DBG("Num frames: " << numFrames);
     StereoSpan<float> output {
         jack_port_get_buffer(outputPort1, numFrames),
         jack_port_get_buffer(outputPort2, numFrames), 
@@ -100,6 +100,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
     };
 
     synth->renderBlock(output);
+
     return 0;
 }
 
