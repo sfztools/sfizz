@@ -16,7 +16,7 @@ public:
   void SetUp(const ::benchmark::State& state) {
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 0, 1 };
+    std::uniform_real_distribution<float> dist { 0, maxJump };
     indices = std::vector<int>(state.range(0));
     leftCoeffs = std::vector<float>(state.range(0));
     rightCoeffs = std::vector<float>(state.range(0));
