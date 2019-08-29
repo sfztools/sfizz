@@ -5,7 +5,6 @@
 #include "Helpers.h"
 #include "Opcode.h"
 #include "StereoBuffer.h"
-#include <bits/stdint-uintn.h>
 #include <bitset>
 #include <optional>
 #include <random>
