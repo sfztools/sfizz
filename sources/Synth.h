@@ -64,7 +64,6 @@ public:
         for (auto& voice : voices) {
             voice->renderBlock(tempSpan);
             buffer.add(tempSpan);
-            tempBuffer.fill(0.0f);
         }
     }
 
@@ -188,7 +187,7 @@ private:
     std::random_device rd {};
     std::mt19937 randomGenerator { rd() };
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
-    
+
     LEAK_DETECTOR(Synth);
 };
 
