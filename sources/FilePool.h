@@ -54,7 +54,6 @@ private:
     };
 
     inline static std::atomic<int> fileBuffers { 0 };
-    int preloadedFilesWritten {0};
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;
     void loadingThread();
     std::thread fileLoadingThread;
