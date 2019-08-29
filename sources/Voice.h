@@ -71,7 +71,7 @@ public:
         dataReady.store(true);
     }
 
-    bool isFree()
+    bool isFree() const
     {
         return (region == nullptr);
     }

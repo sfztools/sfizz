@@ -23,13 +23,11 @@ public:
     {
         for (int i = 0; i < config::numVoices; ++i)
             voices.push_back(std::make_unique<Voice>(ccState));
-        garbageCollectionThread = std::thread(&Synth::garbageCollection, this);
     }
 
     ~Synth()
     {
-        threadsShouldQuit = true;
-        garbageCollectionThread.join();
+        
     }
 
     bool loadSfzFile(const std::filesystem::path& file) final;
@@ -131,7 +129,21 @@ public:
     void pitchWheel(int delay, int channel, int pitch);
     void aftertouch(int delay, int channel, uint8_t aftertouch);
     void tempo(int delay, float secondsPerQuarter);
+    void getNumActiveVoices() const
+    {
+        auto activeVoices { 0 };
+        for (const auto& voice : voices) {
+            if (!voice->isFree())
+                activeVoices++;
+        }
+    }
 
+    void garbageCollect()
+    {
+        for (auto& voice : voices) {
+            voice->garbageCollect();
+        }
+    }
 protected:
     void callback(std::string_view header, const std::vector<Opcode>& members) final;
 
@@ -144,20 +156,6 @@ private:
             return {};
         }
         return freeVoice->get();
-    }
-
-    void garbageCollection() 
-    {
-        while (!threadsShouldQuit) {
-            auto activeVoices { 0 };
-            for (auto& voice : voices) {
-                voice->garbageCollect();
-                if (!voice->isFree())
-                    activeVoices++;
-            }
-            DBG("Active voices:" << activeVoices << " | Stray buffers: " << FilePool::getFileBuffers());
-            std::this_thread::sleep_for(200ms);
-        }
     }
 
     bool hasGlobal { false };
