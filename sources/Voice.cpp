@@ -197,6 +197,7 @@ void sfz::Voice::fillWithData(StereoSpan<float> buffer) noexcept
 
     if (!region->shouldLoop() && (floatPosition + 1.01) > source.size()) {
         DBG("Releasing " << region->sample);
+        state = State::release;
         egEnvelope.startRelease(buffer.size());
     }
 }
@@ -218,7 +219,9 @@ void sfz::Voice::fillWithGenerator(StereoSpan<float> buffer) noexcept
 bool sfz::Voice::checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexcept
 {
     if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
-        // TODO: release
+        DBG("Off group of sample " << region->sample);
+        state = State::release;
+        egEnvelope.startRelease(delay);
         return true;
     }
 
