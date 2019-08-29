@@ -2,15 +2,9 @@
 #include "Globals.h"
 #include "absl/types/span.h"
 #include <chrono>
-#include <fstream>
-#include <memory>
-#include <sndfile.hh>
-#include <sstream>
-#include <string>
 using namespace std::chrono_literals;
 
-
-template<class T>
+template <class T>
 void readFromFile(SndfileHandle& sndFile, int numFrames, StereoBuffer<T>& output)
 {
     if (sndFile.channels() == 1) {
@@ -33,7 +27,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
 
     SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
     if (sndFile.channels() != 1 && sndFile.channels() != 2) {
-        DBG("Missing logic for " << sndFile.channels() <<", discarding sample " << filename);
+        DBG("Missing logic for " << sndFile.channels() << ", discarding sample " << filename);
         return {};
     }
     FileInformation returnedValue;
