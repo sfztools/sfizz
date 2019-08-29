@@ -32,6 +32,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     }
 
     FileInformation returnedValue;
+    returnedValue.numChannels = sndFile.channels();
     returnedValue.end = static_cast<uint32_t>(sndFile.frames());
     returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
 

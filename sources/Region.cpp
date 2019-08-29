@@ -408,7 +408,7 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && allCCSwitched;
 }
 
-bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept
+bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept 
 {
     const bool chanOk = channelRange.containsWithEnd(channel);
     if (!chanOk)
@@ -586,4 +586,9 @@ bool sfz::Region::canUsePreloadedData() const noexcept
         return false;
 
     return trueSampleEnd() < static_cast<uint32_t>(preloadedData->getNumFrames());
+}
+
+bool sfz::Region::isStereo() const noexcept
+{
+    return this->numChannels == 2;
 }

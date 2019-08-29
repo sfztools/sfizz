@@ -87,8 +87,11 @@ void sfz::Synth::clear()
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
-        if (member.opcode == "sw_default")
+        switch (hash(member.opcode)) {
+        case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
+            break;
+        }
     }
 }
 
@@ -132,23 +135,21 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
     while (currentRegion <= lastRegion) {
         auto region = currentRegion->get();
 
-        if (region->isGenerator()) {
-            currentRegion++;
-            continue;
-        }
+        if (!region->isGenerator()) {
+            auto fileInformation = filePool.getFileInformation(region->sample);
+            if (!fileInformation) {
+                DBG("Removing the region with sample " << region->sample);
+                std::iter_swap(currentRegion, lastRegion);
+                lastRegion--;
+                continue;
+            }
 
-        auto fileInformation = filePool.getFileInformation(region->sample);
-        if (!fileInformation) {
-            DBG("Removing the region with sample " << region->sample);
-            std::iter_swap(currentRegion, lastRegion);
-            lastRegion--;
-            continue;
+            region->numChannels = fileInformation->numChannels;
+            region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
+            region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
+            region->preloadedData = fileInformation->preloadedData;
+            region->sampleRate = fileInformation->sampleRate;
         }
-
-        region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
-        region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
-        region->preloadedData = fileInformation->preloadedData;
-        region->sampleRate = fileInformation->sampleRate;
 
         for (auto note = region->keyRange.getStart(); note <= region->keyRange.getEnd(); note++)
             noteActivationLists[note].push_back(region);

@@ -11,6 +11,7 @@ TEST_CASE("[Files] Single region (regions_one.sfz)")
     REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
 }
 
+
 TEST_CASE("[Files] Multiple regions (regions_many.sfz)")
 {
     sfz::Synth synth;
@@ -227,48 +228,55 @@ TEST_CASE("[Files] Pizz basic")
     REQUIRE(synth.getRegionView(3)->sample == R"(../Samples/pizz/a0_vl4_rr4.wav)");
 }
 
-// TEST_CASE("[Files] sw_default")
-// {
-//     const double sampleRate { 48000 };
-//     const int blockSize { 256 };
-//     sfz::Synth synth;
-//     synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/sw_default.sfz");
-//     REQUIRE( synth.getNumRegions() == 4 );
-//     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
-// }
+TEST_CASE("[Files] Channels (channels.sfz)")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/channels.sfz");
+    REQUIRE(synth.getNumRegions() == 2);
+    REQUIRE(synth.getRegionView(0)->sample == "mono_sample.wav");
+    REQUIRE(synth.getRegionView(0)->numChannels == 1);
+    REQUIRE(!synth.getRegionView(0)->isStereo());
+    REQUIRE(synth.getRegionView(1)->sample == "stereo_sample.wav");
+    REQUIRE(synth.getRegionView(1)->numChannels == 2);
+    REQUIRE(synth.getRegionView(1)->isStereo());
+}
 
-// TEST_CASE("[Files] sw_default and playing with switches")
-// {
-//     const double sampleRate { 48000 };
-//     const int blockSize { 256 };
-//     sfz::Synth synth;
-//     synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/sw_default.sfz");
-//     REQUIRE( synth.getNumRegions() == 4 );
-//     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
-//     AudioBuffer<float> buffer { 2, blockSize };
-//     synth.prepareToPlay(sampleRate, blockSize);
-//     buffer.clear();
-//     synth.registerNoteOn(1, 41, 64, 0);
-//     REQUIRE( synth.getRegionView(0)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(2)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
-//     synth.registerNoteOff(1, 41, 0, 0);
-//     synth.registerNoteOn(1, 42, 64, 0);
-//     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
-//     synth.registerNoteOff(1, 42, 0, 0);
-//     synth.registerNoteOn(1, 40, 64, 0);
-//     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
-//     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
-//     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
-// }
+TEST_CASE("[Files] sw_default")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/sw_default.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+}
+
+TEST_CASE("[Files] sw_default and playing with switches")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/sw_default.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+    synth.noteOn(0, 1, 41, 64);
+    synth.noteOff(0, 1, 41, 0);
+    REQUIRE( synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
+    synth.noteOn(0, 1, 42, 64);
+    synth.noteOff(0, 1, 42, 0);
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
+    synth.noteOn(0, 1, 40, 64);
+    synth.noteOff(0, 1, 40, 64);
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+}

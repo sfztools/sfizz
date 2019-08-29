@@ -27,6 +27,7 @@ public:
     size_t getNumPreloadedSamples() const noexcept { return preloadedData.size(); }
 
     struct FileInformation {
+        int numChannels { 1 };
         uint32_t end { Default::sampleEndRange.getEnd() };
         uint32_t loopBegin { Default::loopRange.getStart() };
         uint32_t loopEnd { Default::loopRange.getEnd() };
