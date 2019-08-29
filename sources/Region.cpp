@@ -403,12 +403,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     return true;
 }
 
-bool sfz::Region::isSwitchedOn() const noexcept 
+bool sfz::Region::isSwitchedOn() const noexcept
 {
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && allCCSwitched;
 }
 
-bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept 
+bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept
 {
     const bool chanOk = channelRange.containsWithEnd(channel);
     if (!chanOk)
@@ -558,7 +558,7 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseGain() noexcept 
+float sfz::Region::getBaseGain() noexcept
 {
     float baseGaindB { volume };
     baseGaindB += gainDistribution(Random::randomGenerator);
@@ -591,4 +591,80 @@ bool sfz::Region::canUsePreloadedData() const noexcept
 bool sfz::Region::isStereo() const noexcept
 {
     return this->numChannels == 2;
+}
+
+float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
+{
+    float baseGain { 1.0f };
+
+    if (trigger == SfzTrigger::release_key)
+        baseGain *= velocityGain(lastNoteVelocities[noteNumber]);
+    else
+        baseGain *= velocityGain(velocity);
+
+    if (noteNumber < crossfadeKeyInRange.getStart())
+        baseGain = 0.0f;
+    else if (noteNumber < crossfadeKeyInRange.getEnd()) {
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyInRange.getStart()) / crossfadeKeyInRange.length();
+        if (crossfadeKeyCurve == SfzCrossfadeCurve::power)
+            baseGain *= sqrt(crossfadePosition);
+        if (crossfadeKeyCurve == SfzCrossfadeCurve::gain)
+            baseGain *= crossfadePosition;
+    }
+
+    if (noteNumber > crossfadeKeyOutRange.getEnd())
+        baseGain = 0.0f;
+    else if (noteNumber > crossfadeKeyOutRange.getStart()) {
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeKeyOutRange.getStart()) / crossfadeKeyOutRange.length();
+        if (crossfadeKeyCurve == SfzCrossfadeCurve::power)
+            baseGain *= sqrt(1 - crossfadePosition);
+        if (crossfadeKeyCurve == SfzCrossfadeCurve::gain)
+            baseGain *= 1 - crossfadePosition;
+    }
+
+    if (velocity < crossfadeVelInRange.getStart())
+        baseGain = 0;
+    else if (velocity < crossfadeVelInRange.getEnd()) {
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelInRange.getStart()) / crossfadeVelInRange.length();
+        if (crossfadeVelCurve == SfzCrossfadeCurve::power)
+            baseGain *= sqrt(crossfadePosition);
+        if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
+            baseGain *= crossfadePosition;
+    }
+
+    if (velocity > crossfadeVelOutRange.getEnd())
+        baseGain = 0;
+    else if (velocity > crossfadeVelOutRange.getStart()) {
+        const auto crossfadePosition = static_cast<float>(noteNumber - crossfadeVelOutRange.getStart()) / crossfadeVelOutRange.length();
+        if (crossfadeVelCurve == SfzCrossfadeCurve::power)
+            baseGain *= sqrt(1 - crossfadePosition);
+        if (crossfadeVelCurve == SfzCrossfadeCurve::gain)
+            baseGain *= 1 - crossfadePosition;
+    }
+
+    return baseGain;
+}
+
+float sfz::Region::velocityGain(uint8_t velocity) const noexcept
+{
+    float gaindB { 0.0 };
+    if (velocityPoints.size() > 0)
+    {
+        auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
+        auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
+        // Linear interpolation
+        float relativePositionInSegment { static_cast<float>(velocity - before->first) / (after->first - before->first) };
+        float segmentEndpoints { after->second - before->second };
+        gaindB =  db2pow(relativePositionInSegment * segmentEndpoints);
+    }
+    else
+    {
+        float floatVelocity { static_cast<float>(velocity)/127 };
+        if (ampVeltrack > 0)
+            gaindB =  40 * std::log(floatVelocity) / std::log(10.0f);
+        else
+            gaindB =  40 * std::log(1-floatVelocity) / std::log(10.0f);
+    }
+    gaindB *= std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd();
+    return db2pow(gaindB);
 }

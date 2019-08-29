@@ -18,7 +18,7 @@ public:
     const ValueType& getWithDefault(int index) const noexcept
     {
         auto it = container.find(index);
-        if (it == end(container)) {
+        if (it == container.end()) {
             return defaultValue;
         } else {
             return it->second;
@@ -34,8 +34,9 @@ public:
 
     inline bool empty() const { return container.empty(); }
     const ValueType& at(int index) const { return container.at(index); }
-    bool contains(int index) const noexcept { return container.find(index) != end(container); }
-
+    bool contains(int index) const noexcept { return container.find(index) != container.end(); }
+    typename std::map<int, ValueType>::iterator begin() { return container.begin(); }
+    typename std::map<int, ValueType>::iterator end() { return container.end(); }
 private:
     const ValueType defaultValue;
     std::map<int, ValueType> container;

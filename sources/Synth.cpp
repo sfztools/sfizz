@@ -165,6 +165,11 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
             region->registerNoteOn(region->channelRange.getStart(), *defaultSwitch, 127, 1.0);
             region->registerNoteOff(region->channelRange.getStart(), *defaultSwitch, 0, 1.0);
         }
+
+        absl::c_sort(region->velocityPoints, [](const auto& lhs, const auto& rhs) {
+            return lhs.first < rhs.first;
+        });
+        
         region->registerPitchWheel(region->channelRange.getStart(), 0);
         region->registerAftertouch(region->channelRange.getStart(), 0);
         region->registerTempo(2.0f);
