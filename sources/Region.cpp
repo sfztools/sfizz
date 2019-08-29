@@ -430,6 +430,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("ampeg_sustain_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccSustain, Default::egOnCCPercentRange);
         break;
+
     // Ignored opcodes
     case hash("ampeg_depth"):
     case hash("ampeg_vel2depth"):
@@ -706,20 +707,24 @@ float sfz::Region::getCCGain(const sfz::CCValueArray& ccState) noexcept
 float sfz::Region::velocityGain(uint8_t velocity) const noexcept
 {
     float gaindB { 0.0 };
-    if (velocityPoints.size() > 0) {
+
+    if (velocityPoints.size() > 0) { // Custom velocity curve
         auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
         auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
         // Linear interpolation
         float relativePositionInSegment { static_cast<float>(velocity - before->first) / (after->first - before->first) };
         float segmentEndpoints { after->second - before->second };
         gaindB = db2pow(relativePositionInSegment * segmentEndpoints);
-    } else {
+    } else { // Standard velocity curve
         float floatVelocity { static_cast<float>(velocity) / 127 };
         if (ampVeltrack > 0)
             gaindB = 40 * std::log(floatVelocity) / std::log(10.0f);
         else
             gaindB = 40 * std::log(1 - floatVelocity) / std::log(10.0f);
     }
+
+    // Velocity tracking
     gaindB *= std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd();
+
     return db2pow(gaindB);
 }
