@@ -443,7 +443,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
 bool sfz::Region::isSwitchedOn() const noexcept
 {
-    return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && allCCSwitched;
+    return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
 bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept
@@ -539,15 +539,11 @@ bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue) noexcep
     if (!channelRange.containsWithEnd(channel))
         return false;
 
+    // TODO: we can probably 
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else
         ccSwitched.set(ccNumber, false);
-
-    if (ccSwitched.all())
-        allCCSwitched = true;
-    else
-        allCCSwitched = false;
 
     if (ccTriggers.contains(ccNumber) && ccTriggers.at(ccNumber).containsWithEnd(ccValue))
         return true;
@@ -688,10 +684,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
 float sfz::Region::getCCGain(const sfz::CCValueArray& ccState) noexcept
 {
     float gain { 1.0f };
-
-    if (amplitudeCC)
-        gain *= *amplitudeCC
-
+    
     // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
         const auto ccValue = ccState[valuePair.first];

@@ -135,7 +135,6 @@ private:
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
     std::bitset<128> ccSwitched;
-    bool allCCSwitched { true };
 
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
