@@ -27,7 +27,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "../sources/SIMDHelpers.h"
+#include "../sfizz/SIMDHelpers.h"
 
 class GainSingle : public benchmark::Fixture {
 public:

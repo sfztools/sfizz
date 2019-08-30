@@ -1,5 +1,29 @@
 project(sfizz)
 
+# Check SIMD
+include(CheckIncludeFiles)
+CHECK_INCLUDE_FILES(x86intrin.h HAVE_X86INTRIN_H)
+CHECK_INCLUDE_FILES(intrin.h HAVE_INTRIN_H)
+CHECK_INCLUDE_FILES(arm_neon.h HAVE_ARM_NEON_H)
+
+# SIMD checks
+if (HAVE_X86INTRIN_H AND UNIX)
+    add_compile_options(-DHAVE_X86INTRIN_H)
+    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDSSE.cpp)
+elseif (HAVE_INTRIN_H AND WIN32)
+    add_compile_options(/DHAVE_INTRIN_H)
+    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDSSE.cpp)
+elseif (HAVE_ARM_NEON_H AND UNIX)
+    add_compile_options(-DHAVE_ARM_NEON_H)
+    add_compile_options(-mfpu=neon-fp-armv8)
+    add_compile_options(-march=native)
+    add_compile_options(-mtune=cortex-a53)
+    add_compile_options(-funsafe-math-optimizations)
+    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDNEON.cpp)
+else()
+    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDDummy.cpp)
+endif()
+
 add_executable(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
 target_link_libraries(bm_opf_high_vs_low benchmark absl::span)
 
@@ -32,3 +56,18 @@ target_link_libraries(bm_ADSR benchmark absl::span absl::algorithm)
 
 add_executable(bm_add BM_add.cpp ${SFIZZ_SIMD_SOURCES})
 target_link_libraries(bm_add benchmark absl::span absl::algorithm)
+
+add_custom_target(sfizz_benchmarks)
+add_dependencies(sfizz_benchmarks 
+	bm_opf_high_vs_low 
+	bm_write
+	bm_read
+	bm_fill
+	bm_mathfuns
+	bm_gain
+	bm_looping
+	bm_saturating
+	bm_ramp
+	bm_ADSR
+	bm_add
+)

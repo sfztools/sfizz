@@ -33,6 +33,7 @@ elseif (HAVE_ARM_NEON_H AND UNIX)
 else()
     set(SFIZZ_SIMD_SOURCES SIMDDummy.cpp)
 endif()
+
 set(SFIZZ_SOURCES ${SFIZZ_SOURCES} ${SFIZZ_SIMD_SOURCES})
 
 add_library(sfizz_parser STATIC)

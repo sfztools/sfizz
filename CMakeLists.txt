@@ -71,13 +71,17 @@ target_include_directories(readerwriterqueue INTERFACE "external/readerwriterque
 add_subdirectory(sfizz)
 add_subdirectory(clients)
 
+if (SFIZZ_TESTS)
 # Tests
 add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
 add_subdirectory(external/cnpy EXCLUDE_FROM_ALL)
 add_subdirectory(tests)
+endif()
 
+if (SFIZZ_BENCHMARKS)
 # Benchmarks
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
 set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
 add_subdirectory(external/benchmark EXCLUDE_FROM_ALL)
 add_subdirectory(benchmarks)
+endif()
