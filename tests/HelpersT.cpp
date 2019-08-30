@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "../sources/Helpers.h"
+#include "../sources/StringViewHelpers.h"
 #include "catch2/catch.hpp"
 #include <string_view>
 using namespace Catch::literals;

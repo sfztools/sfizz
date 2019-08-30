@@ -23,6 +23,7 @@
 
 #pragma once
 #include "CCMap.h"
+#include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
 #include "Opcode.h"

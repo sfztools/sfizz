@@ -27,6 +27,7 @@
 #include "Region.h"
 #include "StereoBuffer.h"
 #include "StereoSpan.h"
+#include "LeakDetector.h"
 #include <absl/types/span.h>
 #include <atomic>
 

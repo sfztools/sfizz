@@ -22,46 +22,55 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <optional>
-#include <string>
-#include <array>
+#include <algorithm>
 #include <cmath>
+#include <random>
 
-namespace sfz
+template <class T>
+inline constexpr T min(T op1, T op2) { return std::min(op1, op2); }
+template <class T>
+inline constexpr T min(T op1, T op2, T op3) { return std::min(op1, std::min(op2, op3)); }
+template <class T>
+inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::min(op2, std::min(op3, op4))); }
+
+
+template <class Type>
+inline constexpr Type db2pow(Type in)
 {
-
-using CCValueArray = std::array<uint8_t, 128>;
-using CCValuePair = std::pair<uint8_t, float> ;
-using CCNamePair = std::pair<uint8_t, std::string>;
-
-template<class T>
-inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
-{
-    return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
+    return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.1));
 }
 
-template<class T>
-inline constexpr float normalizeCC(T ccValue)
+template <class Type>
+inline constexpr Type pow2db(Type in)
 {
-    static_assert(std::is_integral<T>::value);
-    return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
+    return static_cast<Type>(10.0) * std::log10(in);
 }
 
-template<class T>
-inline constexpr float normalizePercents(T percentValue)
+template <class Type>
+inline constexpr Type db2mag(Type in)
 {
-    return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
+    return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.05));
 }
 
-inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
+template <class Type>
+inline constexpr Type mag2db(Type in)
 {
-    if (ccSwitch)
-        return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
-    else
-        return value;
+    return static_cast<Type>(20.0) * std::log10(in);
 }
 
-std::optional<uint8_t> readNoteValue(const std::string_view& value);
+namespace Random {
+static inline std::random_device randomDevice;
+static inline std::mt19937 randomGenerator { randomDevice() };
+} // namespace Random
 
-} // namespace sfz
+inline float midiNoteFrequency(const int noteNumber)
+{
+    return 440.0f * std::pow(2.0f, (noteNumber - 69) / 12.0f);
+}
 
+template <class Type>
+constexpr Type pi { 3.141592653589793238462643383279502884 };
+template <class Type>
+constexpr Type twoPi { 2 * pi<Type> };
+template <class Type>
+constexpr Type piTwo { pi<Type> / 2 };

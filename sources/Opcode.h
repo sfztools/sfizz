@@ -23,7 +23,7 @@
 
 #pragma once
 #include "Defaults.h"
-#include "Helpers.h"
+#include "LeakDetector.h"
 #include "Range.h"
 #include "SfzHelpers.h"
 #include <optional>

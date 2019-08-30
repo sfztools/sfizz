@@ -21,47 +21,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
-#include <optional>
-#include <string>
-#include <array>
-#include <cmath>
+#include "ScopedFTZ.h"
+#if (HAVE_X86INTRIN_H)
+#include <x86intrin.h> 
+#elif (HAVE_INTRIN_H)
+#include <intrin.h>
+#elif (HAVE_ARM_NEON_H)
+#include "arm_neon.h"
+#endif
 
-namespace sfz
+
+ScopedFTZ::ScopedFTZ()
 {
-
-using CCValueArray = std::array<uint8_t, 128>;
-using CCValuePair = std::pair<uint8_t, float> ;
-using CCNamePair = std::pair<uint8_t, std::string>;
-
-template<class T>
-inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
-{
-    return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
+#if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
+    unsigned mask = _MM_DENORMALS_ZERO_MASK | _MM_FLUSH_ZERO_MASK;
+    registerState = _mm_getcsr();
+    _mm_setcsr((registerState & (~mask)) | mask);
+#elif HAVE_ARM_NEON_H
+    intptr_t mask = (1 << 24);
+    asm volatile("vmrs %0, fpscr" : "=r"(registerState));
+    asm volatile("vmsr fpscr, %0" : : "ri"((registerState & (~mask)) | mask));
+#endif
 }
 
-template<class T>
-inline constexpr float normalizeCC(T ccValue)
+ScopedFTZ::~ScopedFTZ()
 {
-    static_assert(std::is_integral<T>::value);
-    return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
+#if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
+    _mm_setcsr(registerState);
+#elif HAVE_ARM_NEON_H
+    asm volatile("vmsr %0, fpscr" : : "ri"(registerState));
+#endif
 }
-
-template<class T>
-inline constexpr float normalizePercents(T percentValue)
-{
-    return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
-}
-
-inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
-{
-    if (ccSwitch)
-        return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
-    else
-        return value;
-}
-
-std::optional<uint8_t> readNoteValue(const std::string_view& value);
-
-} // namespace sfz
-

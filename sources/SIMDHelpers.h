@@ -23,7 +23,8 @@
 
 #pragma once
 #include "Globals.h"
-#include "Helpers.h"
+#include "Debug.h"
+#include "MathHelpers.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <cmath>

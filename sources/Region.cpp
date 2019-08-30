@@ -22,7 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Region.h"
-#include "Helpers.h"
+#include "Debug.h"
+#include "StringViewHelpers.h"
 #include "absl/strings/str_replace.h"
 #include <random>
 

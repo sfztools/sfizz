@@ -22,8 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "LinearEnvelope.h"
-#include "Helpers.h"
 #include "SIMDHelpers.h"
+#include "MathHelpers.h"
 #include <absl/algorithm/container.h>
 
 namespace sfz {

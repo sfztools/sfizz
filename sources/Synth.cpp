@@ -22,7 +22,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Synth.h"
-#include "Helpers.h"
+#include "ScopedFTZ.h"
+#include "Debug.h"
+#include "StringViewHelpers.h"
 #include "absl/algorithm/container.h"
 #include <algorithm>
 #include <iostream>

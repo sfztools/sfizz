@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "Helpers.h"
+#include "LeakDetector.h"
 #include <absl/types/span.h>
 namespace sfz {
 

@@ -22,46 +22,51 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <optional>
-#include <string>
-#include <array>
-#include <cmath>
+#include <atomic>
+#include "Debug.h"
 
-namespace sfz
-{
+template <class Owner>
+class LeakDetector {
+public:
+    LeakDetector()
+    {
+        objectCounter.count++;
+    }
+    LeakDetector(const LeakDetector&)
+    {
+        objectCounter.count++;
+    }
+    ~LeakDetector()
+    {
+        objectCounter.count--;
+        if (objectCounter.count.load() < 0) {
+            DBG("Deleted a dangling pointer for class " << Owner::getClassName());
+            // Deleted a dangling pointer!
+            ASSERTFALSE;
+        }
+    }
 
-using CCValueArray = std::array<uint8_t, 128>;
-using CCValuePair = std::pair<uint8_t, float> ;
-using CCNamePair = std::pair<uint8_t, std::string>;
+private:
+    struct ObjectCounter {
+        ObjectCounter() = default;
+        ~ObjectCounter()
+        {
+            if (auto residualCount = count.load() > 0) {
+                DBG("Leaked " << residualCount << " instance(s) of class " << Owner::getClassName());
+                // Leaked ojects
+                ASSERTFALSE;
+            }
+        };
+        std::atomic<int> count { 0 };
+    };
+    static inline ObjectCounter objectCounter;
+};
 
-template<class T>
-inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
-{
-    return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
-}
-
-template<class T>
-inline constexpr float normalizeCC(T ccValue)
-{
-    static_assert(std::is_integral<T>::value);
-    return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
-}
-
-template<class T>
-inline constexpr float normalizePercents(T percentValue)
-{
-    return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
-}
-
-inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
-{
-    if (ccSwitch)
-        return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
-    else
-        return value;
-}
-
-std::optional<uint8_t> readNoteValue(const std::string_view& value);
-
-} // namespace sfz
-
+#ifndef NDEBUG
+#define LEAK_DETECTOR(Class)                             \
+    friend class LeakDetector<Class>;                    \
+    static const char* getClassName() { return #Class; } \
+    LeakDetector<Class> leakDetector;
+#else
+#define LEAK_DETECTOR(Class)
+#endif

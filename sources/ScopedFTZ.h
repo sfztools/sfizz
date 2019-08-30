@@ -21,47 +21,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
-#include <optional>
-#include <string>
-#include <array>
-#include <cmath>
+class ScopedFTZ {
 
-namespace sfz
-{
-
-using CCValueArray = std::array<uint8_t, 128>;
-using CCValuePair = std::pair<uint8_t, float> ;
-using CCNamePair = std::pair<uint8_t, std::string>;
-
-template<class T>
-inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
-{
-    return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
-}
-
-template<class T>
-inline constexpr float normalizeCC(T ccValue)
-{
-    static_assert(std::is_integral<T>::value);
-    return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
-}
-
-template<class T>
-inline constexpr float normalizePercents(T percentValue)
-{
-    return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
-}
-
-inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
-{
-    if (ccSwitch)
-        return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
-    else
-        return value;
-}
-
-std::optional<uint8_t> readNoteValue(const std::string_view& value);
-
-} // namespace sfz
-
+public:
+    ScopedFTZ();
+    ~ScopedFTZ();
+private:
+    unsigned registerState;
+};

@@ -24,6 +24,7 @@
 #pragma once
 #include "Globals.h"
 #include "Defaults.h"
+#include "LeakDetector.h"
 #include "SfzHelpers.h"
 #include <optional>
 

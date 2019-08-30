@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Opcode.h"
+#include "StringViewHelpers.h"
 
 sfz::Opcode::Opcode(std::string_view inputOpcode, std::string_view inputValue)
     : opcode(inputOpcode)

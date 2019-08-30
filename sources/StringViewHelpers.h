@@ -22,46 +22,42 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <optional>
-#include <string>
-#include <array>
-#include <cmath>
+#include <string_view>
 
-namespace sfz
+inline void trimInPlace(std::string_view& s)
 {
-
-using CCValueArray = std::array<uint8_t, 128>;
-using CCValuePair = std::pair<uint8_t, float> ;
-using CCNamePair = std::pair<uint8_t, std::string>;
-
-template<class T>
-inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
-{
-    return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
+    const auto leftPosition = s.find_first_not_of(" \r\t\n\f\v");
+    if (leftPosition != s.npos) {
+        s.remove_prefix(leftPosition);
+        const auto rightPosition = s.find_last_not_of(" \r\t\n\f\v");
+        s.remove_suffix(s.size() - rightPosition - 1);
+    } else {
+        s.remove_suffix(s.size());
+    }
 }
 
-template<class T>
-inline constexpr float normalizeCC(T ccValue)
+inline std::string_view trim(std::string_view s)
 {
-    static_assert(std::is_integral<T>::value);
-    return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
+    const auto leftPosition = s.find_first_not_of(" \r\t\n\f\v");
+    if (leftPosition != s.npos) {
+        s.remove_prefix(leftPosition);
+        const auto rightPosition = s.find_last_not_of(" \r\t\n\f\v");
+        s.remove_suffix(s.size() - rightPosition - 1);
+    } else {
+        s.remove_suffix(s.size());
+    }
+    return s;
 }
 
-template<class T>
-inline constexpr float normalizePercents(T percentValue)
+inline constexpr uint64_t Fnv1aBasis = 0x811C9DC5;
+inline constexpr uint64_t Fnv1aPrime = 0x01000193;
+
+inline constexpr uint64_t hash(std::string_view s, uint64_t h = Fnv1aBasis)
 {
-    return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
+    if (s.length() > 0)
+        return hash( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime );
+
+    return h;
 }
 
-inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
-{
-    if (ccSwitch)
-        return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
-    else
-        return value;
-}
-
-std::optional<uint8_t> readNoteValue(const std::string_view& value);
-
-} // namespace sfz
 

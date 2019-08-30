@@ -23,13 +23,13 @@
 
 #pragma once
 #include "Defaults.h"
+#include "LeakDetector.h"
 #include "StereoBuffer.h"
 #include "Voice.h"
 #include "readerwriterqueue.h"
 #include <absl/container/flat_hash_map.h>
 #include <filesystem>
 #include <optional>
-#include <sndfile.hh>
 #include <string_view>
 #include <thread>
 

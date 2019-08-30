@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Voice.h"
+#include "Voice.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
 #include "absl/algorithm/container.h"

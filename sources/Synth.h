@@ -25,18 +25,14 @@
 #include "FilePool.h"
 #include "Parser.h"
 #include "Region.h"
-#include "SfzHelpers.h"
-#include "Helpers.h"
+#include "LeakDetector.h"
 #include "StereoSpan.h"
 #include "absl/types/span.h"
-#include <chrono>
 #include <optional>
 #include <random>
 #include <set>
 #include <string_view>
-#include <thread>
 #include <vector>
-using namespace std::literals;
 
 namespace sfz {
 
@@ -99,8 +95,7 @@ private:
     StereoBuffer<float> tempBuffer { config::defaultSamplesPerBlock };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
-    std::random_device rd {};
-    std::mt19937 randomGenerator { rd() };
+
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
 
     LEAK_DETECTOR(Synth);

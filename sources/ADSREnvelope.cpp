@@ -23,7 +23,6 @@
 
 #include "ADSREnvelope.h"
 #include "Globals.h"
-#include "Helpers.h"
 #include "SIMDHelpers.h"
 #include <algorithm>
 

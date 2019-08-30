@@ -24,7 +24,8 @@
 #pragma once
 #include "Buffer.h"
 #include "Globals.h"
-#include "Helpers.h"
+#include "Debug.h"
+#include "LeakDetector.h"
 #include "SIMDHelpers.h"
 #include <array>
 #include <iostream>

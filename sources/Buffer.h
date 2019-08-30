@@ -23,7 +23,7 @@
 
 #pragma once
 #include "Globals.h"
-#include "Helpers.h"
+#include "LeakDetector.h"
 #include <cstdlib>
 #include <cstring>
 #include <memory>

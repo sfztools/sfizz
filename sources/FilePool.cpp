@@ -23,8 +23,10 @@
 
 #include "FilePool.h"
 #include "Globals.h"
+#include "Debug.h"
 #include "absl/types/span.h"
 #include <chrono>
+#include <sndfile.hh>
 using namespace std::chrono_literals;
 
 template <class T>
