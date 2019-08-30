@@ -77,6 +77,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
     auto numMidiEvents = jack_midi_get_event_count(buffer);
     jack_midi_event_t event;
 
+    // Midi dispatching
     for (uint32_t i = 0; i < numMidiEvents; ++i) {
         if (jack_midi_event_get(&event, buffer, i) != 0)
             continue;
@@ -114,7 +115,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
             break;
         }
     }
-    // DBG("Num frames: " << numFrames);
+
     StereoSpan<float> output {
         jack_port_get_buffer(outputPort1, numFrames),
         jack_port_get_buffer(outputPort2, numFrames), 

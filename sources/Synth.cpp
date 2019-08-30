@@ -259,7 +259,6 @@ void sfz::Synth::garbageCollect() noexcept
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
-    DBG("[Synth] Samples per block set to " << samplesPerBlock);
     this->samplesPerBlock = samplesPerBlock;
     this->tempBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
@@ -268,7 +267,6 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
-    DBG("[Synth] Sample rate set to " << sampleRate);
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
         voice->setSampleRate(sampleRate);
