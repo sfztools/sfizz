@@ -24,6 +24,7 @@
 #include "Voice.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
+#include "absl/algorithm/container.h"
 
 sfz::Voice::Voice(const CCValueArray& ccState)
     : ccState(ccState)
@@ -88,6 +89,15 @@ bool sfz::Voice::isFree() const noexcept
     return (region == nullptr);
 }
 
+
+void sfz::Voice::release(int delay) noexcept
+{
+    if (state == State::playing) {
+        state = State::release;
+        egEnvelope.startRelease(delay);
+    }
+}
+
 void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     if (region == nullptr)
@@ -102,15 +112,16 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (ccState[64] < 63)
-            egEnvelope.startRelease(delay);
+        if (ccState[64] < 63) {
+            release(delay);
+        }
     }
 }
 
 void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumber, uint8_t ccValue) noexcept
 {
     if (ccNumber == 64 && noteIsOff && ccValue < 63)
-        egEnvelope.startRelease(delay);
+        release(delay);
 }
 
 void sfz::Voice::registerPitchWheel(int delay [[maybe_unused]], int channel [[maybe_unused]], int pitch [[maybe_unused]]) noexcept
@@ -217,8 +228,8 @@ void sfz::Voice::fillWithData(StereoSpan<float> buffer) noexcept
 
     if (!region->shouldLoop() && (floatPosition + 1.01) > source.size()) {
         DBG("Releasing " << region->sample);
-        state = State::release;
-        egEnvelope.startRelease(buffer.size());
+        auto last = std::distance(indices.begin(), absl::c_find(indices, region->trueSampleEnd() - 1));
+        release(last);
     }
 }
 
@@ -236,12 +247,11 @@ void sfz::Voice::fillWithGenerator(StereoSpan<float> buffer) noexcept
     sourcePosition += buffer.size();
 }
 
-bool sfz::Voice::checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexcept
+bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 {
     if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
         DBG("Off group of sample " << region->sample);
-        state = State::release;
-        egEnvelope.startRelease(delay);
+        release(delay);
         return true;
     }
 

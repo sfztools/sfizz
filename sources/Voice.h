@@ -51,7 +51,7 @@ public:
     void registerPitchWheel(int delay, int channel, int pitch) noexcept;
     void registerAftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
     void registerTempo(int delay, float secondsPerQuarter) noexcept;
-    bool checkOffGroup(int delay [[maybe_unused]], uint32_t group) noexcept;
+    bool checkOffGroup(int delay, uint32_t group) noexcept;
 
     void renderBlock(StereoSpan<float> buffer) noexcept;
 
@@ -67,7 +67,7 @@ private:
     void fillWithData(StereoSpan<float> buffer) noexcept;
     void fillWithGenerator(StereoSpan<float> buffer) noexcept;
     void prepareEGEnvelope(int delay, uint8_t velocity) noexcept;
-
+    void release(int delay) noexcept;
     Region* region { nullptr };
 
     enum class State {
