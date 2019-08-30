@@ -73,6 +73,7 @@ set(COMMON_SOURCES
     sources/FilePool.cpp
     sources/Region.cpp
     sources/Voice.cpp
+    sources/SfzHelpers.cpp
     sources/FloatEnvelopes.cpp
     sources/Parser.cpp
 )
