@@ -22,11 +22,11 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <bits/stdint-uintn.h>
 #include <cstdint>
 #include <random>
 #include <signal.h>
 #include <string_view>
+
 #ifdef HAVE_X86INTRIN_H
 #include <x86intrin.h>
 #endif
@@ -60,17 +60,13 @@ inline std::string_view trim(std::string_view s)
     return s;
 }
 
-inline constexpr unsigned int Fnv1aBasis = 0x811C9DC5;
-inline constexpr unsigned int Fnv1aPrime = 0x01000193;
-inline constexpr unsigned int hash(const char* s, unsigned int h = Fnv1aBasis)
-{
-    return !*s ? h : hash(s + 1, static_cast<unsigned int>((h ^ *s) * static_cast<unsigned long long>(Fnv1aPrime)));
-}
+inline constexpr uint64_t Fnv1aBasis = 0x811C9DC5;
+inline constexpr uint64_t Fnv1aPrime = 0x01000193;
 
-inline unsigned int hash(std::string_view s, unsigned int h = Fnv1aBasis)
+inline constexpr uint64_t hash(std::string_view s, uint64_t h = Fnv1aBasis)
 {
     if (s.length() > 0)
-        return hash(std::string_view(s.data() + 1, s.length() - 1), static_cast<unsigned int>((h ^ s.front()) * static_cast<unsigned long long>(Fnv1aPrime)));
+        return hash( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime );
 
     return h;
 }
