@@ -69,7 +69,10 @@ add_library(readerwriterqueue INTERFACE)
 target_include_directories(readerwriterqueue INTERFACE "external/readerwriterqueue")
 
 add_subdirectory(sfizz)
+
+if (SFIZZ_CLIENTS)
 add_subdirectory(clients)
+endif()
 
 if (SFIZZ_TESTS)
 # Tests
