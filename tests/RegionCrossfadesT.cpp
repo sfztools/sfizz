@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "../sources/Region.h"
+#include "Region.h"
 #include "catch2/catch.hpp"
 #include <SfzHelpers.h>
 using namespace Catch::literals;

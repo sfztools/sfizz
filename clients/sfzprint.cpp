@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Parser.h"
+#include "StringViewHelpers.h"
 #include <iostream>
 #include <filesystem>
 #include <string_view>

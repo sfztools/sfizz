@@ -52,7 +52,6 @@ public:
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
     void setSampleRate(float sampleRate) noexcept;
     void renderBlock(StereoSpan<float> buffer) noexcept;
-
     void noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
     void noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
     void cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;

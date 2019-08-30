@@ -13,8 +13,6 @@ endif()
 if (UNIX) 
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
-    # add_compile_options(-fno-exceptions)
-    # add_compile_options(-fno-rtti)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer)
 endif()
@@ -30,21 +28,27 @@ endif()
 
 message("Cmake flags: ${CMAKE_CXX_FLAGS}")
 
-# Check SIMD
-set(USE_SIMD OFF)
-include(CheckIncludeFiles)
-CHECK_INCLUDE_FILES(x86intrin.h HAVE_X86INTRIN_H)
-CHECK_INCLUDE_FILES(intrin.h HAVE_INTRIN_H)
-CHECK_INCLUDE_FILES(arm_neon.h HAVE_ARM_NEON_H)
+# Export the compile_commands.json file
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+# Update submodules as needed
+    option(GIT_SUBMODULE "Check submodules during build" ON)
+    if(GIT_SUBMODULE)
+        message(STATUS "Submodule update")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
+endif()
 
 # Build options and includes
 set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
 add_subdirectory(external/abseil-cpp EXCLUDE_FROM_ALL)
-add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
-add_subdirectory(external/benchmark EXCLUDE_FROM_ALL)
-add_subdirectory(external/cnpy EXCLUDE_FROM_ALL)
 
 # Download libsndfile
 if (WIN32)
@@ -64,120 +68,16 @@ endif()
 add_library(readerwriterqueue INTERFACE)
 target_include_directories(readerwriterqueue INTERFACE "external/readerwriterqueue")
 
-# Export the compile_commands.json file
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_subdirectory(sfizz)
+add_subdirectory(clients)
 
-set(COMMON_SOURCES
-    sources/Opcode.cpp
-    sources/Synth.cpp
-    sources/FilePool.cpp
-    sources/Region.cpp
-    sources/Voice.cpp
-    sources/ScopedFTZ.cpp
-    sources/SfzHelpers.cpp
-    sources/FloatEnvelopes.cpp
-    sources/Parser.cpp
-)
+# Tests
+add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
+add_subdirectory(external/cnpy EXCLUDE_FROM_ALL)
+add_subdirectory(tests)
 
-set(SSE_SOURCES
-    
-)
-
-if (HAVE_X86INTRIN_H AND UNIX)
-    add_compile_options(-DHAVE_X86INTRIN_H)
-    add_compile_options(-DUSE_SIMD)
-    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDSSE.cpp)
-elseif (HAVE_INTRIN_H AND WIN32)
-    add_compile_options(/DHAVE_INTRIN_H)
-    add_compile_options(/DUSE_SIMD)
-    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDSSE.cpp)
-elseif (HAVE_ARM_NEON_H AND UNIX)
-    add_compile_options(-DUSE_SIMD)
-    add_compile_options(-DHAVE_ARM_NEON_H)
-    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDDummy.cpp)
-else()
-    set(COMMON_SOURCES ${COMMON_SOURCES} sources/SIMDDummy.cpp)
-endif()
-    
-set(TEST_SOURCES
-    tests/RegexT.cpp
-    tests/HelpersT.cpp
-    tests/RegionT.cpp
-    tests/RangeT.cpp
-    tests/OpcodeT.cpp
-    tests/BufferT.cpp
-    tests/StereoBufferT.cpp
-    tests/SIMDHelpersT.cpp
-    tests/FilesT.cpp
-    tests/OnePoleFilterT.cpp
-    tests/RegionActivationT.cpp
-    tests/RegionCrossfadesT.cpp
-    tests/ADSREnvelopeT.cpp
-    tests/LinearEnvelopeT.cpp
-    tests/MainT.cpp
-    tests/RegionTriggersT.cpp
-)
-
-###############################
-add_executable(sfzprint sources/ParserMain.cpp sources/Opcode.cpp sources/Parser.cpp)
-# Per OS properties
-if(UNIX)
-    target_link_libraries(sfzprint stdc++fs)
-endif(UNIX)
-target_link_libraries(sfzprint absl::strings absl::flags_parse)
-
-
-###############################
-# Basic command line program
-add_executable(sfizz sources/Main.cpp ${COMMON_SOURCES})
-# Per OS properties
-if(UNIX)
-    target_compile_options(sfizz PRIVATE -fno-rtti -fno-exceptions)
-    target_link_libraries(sfizz stdc++fs)
-endif(UNIX)
-target_link_libraries(sfizz jack absl::strings sndfile absl::flat_hash_map readerwriterqueue absl::flags_parse)
-
-###############################
-# Test application
-add_executable(sfizz_tests ${TEST_SOURCES} ${COMMON_SOURCES})
-# Per OS properties
-if(UNIX)
-    target_link_libraries(sfizz_tests stdc++fs)
-endif(UNIX)
-target_link_libraries(sfizz_tests Catch2::Catch2 absl::strings absl::str_format absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span absl::algorithm)
-target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
-file(COPY "tests" DESTINATION ${CMAKE_BINARY_DIR})
-
-###############################
-add_executable(bm_opf_high_vs_low benchmarks/BM_OPF_high_vs_low.cpp)
-target_link_libraries(bm_opf_high_vs_low benchmark absl::span)
-
-add_executable(bm_write benchmarks/BM_writeInterleaved.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_write benchmark absl::span)
-
-add_executable(bm_read benchmarks/BM_readInterleaved.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_read benchmark absl::span)
-
-add_executable(bm_fill benchmarks/BM_fill.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_fill benchmark absl::span)
-
-add_executable(bm_mathfuns benchmarks/BM_mathfuns.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_mathfuns benchmark absl::span)
-
-add_executable(bm_gain benchmarks/BM_gain.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_gain benchmark absl::span)
-
-add_executable(bm_looping benchmarks/BM_looping.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_looping benchmark absl::span absl::algorithm)
-
-add_executable(bm_saturating benchmarks/BM_saturating.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_saturating benchmark absl::span absl::algorithm)
-
-add_executable(bm_ramp benchmarks/BM_ramp.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_ramp benchmark absl::span absl::algorithm)
-
-add_executable(bm_ADSR benchmarks/BM_ADSR.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_ADSR benchmark absl::span absl::algorithm)
-
-add_executable(bm_add benchmarks/BM_add.cpp sources/SIMDSSE.cpp)
-target_link_libraries(bm_add benchmark absl::span absl::algorithm)
+# Benchmarks
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
+add_subdirectory(external/benchmark EXCLUDE_FROM_ALL)
+add_subdirectory(benchmarks)
