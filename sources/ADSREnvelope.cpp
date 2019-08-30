@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ADSREnvelope.h"
-#include "Globals.h"
+#include "Config.h"
 #include "SIMDHelpers.h"
 #include <algorithm>
 

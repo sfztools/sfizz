@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "Globals.h"
+#include "Config.h"
 #include "LeakDetector.h"
 #include <cstdlib>
 #include <cstring>

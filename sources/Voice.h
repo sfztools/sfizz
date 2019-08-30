@@ -23,7 +23,7 @@
 
 #pragma once
 #include "ADSREnvelope.h"
-#include "Globals.h"
+#include "Config.h"
 #include "Region.h"
 #include "StereoBuffer.h"
 #include "StereoSpan.h"

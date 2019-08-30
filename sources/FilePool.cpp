@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FilePool.h"
-#include "Globals.h"
+#include "Config.h"
 #include "Debug.h"
 #include "absl/types/span.h"
 #include <chrono>

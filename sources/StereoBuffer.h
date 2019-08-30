@@ -23,7 +23,7 @@
 
 #pragma once
 #include "Buffer.h"
-#include "Globals.h"
+#include "Config.h"
 #include "Debug.h"
 #include "LeakDetector.h"
 #include "SIMDHelpers.h"

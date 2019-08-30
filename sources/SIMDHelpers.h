@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "Globals.h"
+#include "Config.h"
 #include "Debug.h"
 #include "MathHelpers.h"
 #include <absl/algorithm/container.h>

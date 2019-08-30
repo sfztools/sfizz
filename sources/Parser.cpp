@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Parser.h"
-#include "Globals.h"
+#include "Config.h"
 #include "StringViewHelpers.h"
 #include "absl/strings/str_join.h"
 #include <algorithm>
