@@ -24,6 +24,7 @@
 #pragma once
 #include "ADSREnvelope.h"
 #include "Config.h"
+#include "LinearEnvelope.h"
 #include "Region.h"
 #include "StereoBuffer.h"
 #include "StereoSpan.h"
@@ -109,6 +110,10 @@ private:
 
     const CCValueArray& ccState;
     ADSREnvelope<float> egEnvelope;
+    LinearEnvelope<float> amplitudeEnvelope;
+    LinearEnvelope<float> leftPanEnvelope;
+    LinearEnvelope<float> rightPanEnvelope;
+
     LEAK_DETECTOR(Voice);
 };
 

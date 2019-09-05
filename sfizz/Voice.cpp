@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Voice.h"
-#include "Voice.h"
+#include "Defaults.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
 #include "absl/algorithm/container.h"
@@ -53,12 +53,13 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
-    DBG("Voice base gain with note crossfades: " << baseGain);
     baseGain *= region->getCCGain(ccState);
-    DBG("Voice base gain with CC crossfades: " << baseGain);
+    if (region->amplitudeCC)
+        baseGain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
+    amplitudeEnvelope.reset(baseGain);
+    
     sourcePosition = region->getOffset();
     initialDelay = delay + region->getDelay();
-    DBG("Voice initial delay: " << initialDelay);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
 }
@@ -89,7 +90,6 @@ bool sfz::Voice::isFree() const noexcept
 {
     return (region == nullptr);
 }
-
 
 void sfz::Voice::release(int delay) noexcept
 {
@@ -123,18 +123,26 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
 {
     if (ccNumber == 64 && noteIsOff && ccValue < 63)
         release(delay);
+
+    if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {
+        const float newGain { normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) * baseGain };
+        amplitudeEnvelope.registerEvent(delay, newGain);
+    }
 }
 
 void sfz::Voice::registerPitchWheel(int delay [[maybe_unused]], int channel [[maybe_unused]], int pitch [[maybe_unused]]) noexcept
 {
+    // TODO
 }
 
 void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], int channel [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
 {
+    // TODO
 }
 
 void sfz::Voice::registerTempo(int delay [[maybe_unused]], float secondsPerQuarter [[maybe_unused]]) noexcept
 {
+    // TODO
 }
 
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
@@ -167,9 +175,10 @@ void sfz::Voice::renderBlock(StereoSpan<float> buffer) noexcept
     else
         fillWithData(buffer);
 
-    buffer.applyGain(baseGain);
-
     auto envelopeSpan = tempSpan1.first(numSamples);
+    amplitudeEnvelope.getBlock(envelopeSpan);
+    buffer.applyGain(envelopeSpan);
+
     egEnvelope.getBlock(envelopeSpan);
     buffer.applyGain(envelopeSpan);
 

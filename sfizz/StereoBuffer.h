@@ -31,8 +31,7 @@
 #include <iostream>
 #include <type_traits>
 
-enum class Channel { left,
-    right };
+enum class Channel { left, right };
 
 template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class StereoBuffer {

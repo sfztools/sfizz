@@ -74,3 +74,5 @@ template <class Type>
 constexpr Type twoPi { 2 * pi<Type> };
 template <class Type>
 constexpr Type piTwo { pi<Type> / 2 };
+template <class Type>
+constexpr Type piFour { pi<Type> / 4 };
