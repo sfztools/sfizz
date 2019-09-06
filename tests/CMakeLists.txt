@@ -6,7 +6,8 @@ project(sfizz)
 set(SFIZZ_TEST_SOURCES
     RegexT.cpp
     HelpersT.cpp
-    RegionT.cpp
+    HelpersT.cpp
+    AudioBufferT.cpp
     RangeT.cpp
     OpcodeT.cpp
     BufferT.cpp
