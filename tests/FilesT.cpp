@@ -257,10 +257,8 @@ TEST_CASE("[Files] Channels (channels.sfz)")
     synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/channels.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "mono_sample.wav");
-    REQUIRE(synth.getRegionView(0)->numChannels == 1);
     REQUIRE(!synth.getRegionView(0)->isStereo());
     REQUIRE(synth.getRegionView(1)->sample == "stereo_sample.wav");
-    REQUIRE(synth.getRegionView(1)->numChannels == 2);
     REQUIRE(synth.getRegionView(1)->isStereo());
 }
 

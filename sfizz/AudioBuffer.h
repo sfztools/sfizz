@@ -50,6 +50,14 @@ public:
             buffers[i] = std::make_unique<buffer_type>(numFrames);
     }
 
+    bool resize(size_type newSize)
+    {
+        bool returnedOK = true;
+        for (auto i = 0; i < numChannels; ++i)
+            returnedOK &= buffers[i]->resize(newSize);
+        return returnedOK;
+    }
+
     iterator channelWriter(int channelIndex)
     {
         ASSERT(channelIndex < numChannels)
@@ -68,7 +76,7 @@ public:
         return {};
     }
 
-    const_iterator channelReader(int channelIndex)
+    const_iterator channelReader(int channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -77,7 +85,7 @@ public:
         return {};
     }
 
-    const_iterator channelReaderEnd(int channelIndex)
+    const_iterator channelReaderEnd(int channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -86,7 +94,7 @@ public:
         return {};
     }
 
-    absl::Span<value_type> getSpan(int channelIndex)
+    absl::Span<value_type> getSpan(int channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -95,45 +103,45 @@ public:
         return {};
     }
 
-    absl::Span<const value_type> getConstSpan(int channelIndex)
+    absl::Span<const value_type> getConstSpan(int channelIndex) const
     {
         return getSpan(channelIndex);
     }
 
-   	void addChannel()
-   	{
-   		if (numChannels < MaxChannels)
-   			buffers[numChannels++] = std::make_unique<buffer_type>(numFrames);
-   	}
+    void addChannel()
+    {
+        if (numChannels < MaxChannels)
+            buffers[numChannels++] = std::make_unique<buffer_type>(numFrames);
+    }
 
-   	size_type getNumFrames()
-   	{
-   		return numFrames;
-   	}
+    size_type getNumFrames() const
+    {
+        return numFrames;
+    }
 
-	size_type getNumChannels()
-   	{
-   		return numChannels;
-   	}
+    int getNumChannels() const
+    {
+        return numChannels;
+    }
 
-   	bool empty()
-   	{
-   		return numFrames == 0;
-   	}
+    bool empty() const
+    {
+        return numFrames == 0;
+    }
 
-   	Type& getSample(int channelIndex, size_type frameIndex)
-   	{
-   		// Uhoh
-   		ASSERT(buffers[channelIndex] != nullptr);
-   		ASSERT(frameIndex < numFrames);
+    Type& getSample(int channelIndex, size_type frameIndex)
+    {
+        // Uhoh
+        ASSERT(buffers[channelIndex] != nullptr);
+        ASSERT(frameIndex < numFrames);
 
-   		return *(buffers[channelIndex]->data() + frameIndex);
-   	}
+        return *(buffers[channelIndex]->data() + frameIndex);
+    }
 
-   	Type& operator()(int channelIndex, size_type frameIndex)
-   	{
-   		return getSample(channelIndex, frameIndex);
-   	}
+    Type& operator()(int channelIndex, size_type frameIndex)
+    {
+        return getSample(channelIndex, frameIndex);
+    }
 
 private:
     using buffer_type = Buffer<Type, Alignment>;

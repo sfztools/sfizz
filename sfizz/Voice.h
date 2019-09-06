@@ -26,8 +26,8 @@
 #include "Config.h"
 #include "LinearEnvelope.h"
 #include "Region.h"
-#include "StereoBuffer.h"
-#include "StereoSpan.h"
+#include "AudioBuffer.h"
+#include "AudioSpan.h"
 #include "LeakDetector.h"
 #include <absl/types/span.h>
 #include <atomic>
@@ -47,7 +47,7 @@ public:
     
     void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType) noexcept;
 
-    void setFileData(std::unique_ptr<StereoBuffer<float>> file) noexcept;
+    void setFileData(std::unique_ptr<AudioBuffer<float>> file) noexcept;
     void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
     void registerCC(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;
     void registerPitchWheel(int delay, int channel, int pitch) noexcept;
@@ -55,7 +55,7 @@ public:
     void registerTempo(int delay, float secondsPerQuarter) noexcept;
     bool checkOffGroup(int delay, uint32_t group) noexcept;
 
-    void renderBlock(StereoSpan<float> buffer) noexcept;
+    void renderBlock(AudioSpan<float, 2> buffer) noexcept;
 
     bool isFree() const noexcept;
     int getTriggerNumber() const noexcept;
@@ -66,9 +66,11 @@ public:
     void reset() noexcept;
     void garbageCollect() noexcept;
 private:
-    void fillWithData(StereoSpan<float> buffer) noexcept;
-    void fillWithGenerator(StereoSpan<float> buffer) noexcept;
+    void fillWithData(AudioSpan<float> buffer) noexcept;
+    void fillWithGenerator(AudioSpan<float> buffer) noexcept;
     void prepareEGEnvelope(int delay, uint8_t velocity) noexcept;
+    void processMono(AudioSpan<float> buffer) noexcept;
+    void processStereo(AudioSpan<float> buffer) noexcept;
     void release(int delay) noexcept;
     Region* region { nullptr };
 
@@ -96,7 +98,7 @@ private:
     uint32_t initialDelay { 0 };
 
     std::atomic<bool> dataReady { false };
-    std::unique_ptr<StereoBuffer<float>> fileData { nullptr };
+    std::unique_ptr<AudioBuffer<float>> fileData { nullptr };
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;

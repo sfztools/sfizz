@@ -197,8 +197,6 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
                 lastRegion--;
                 continue;
             }
-
-            region->numChannels = fileInformation->numChannels;
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
             region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
             region->preloadedData = fileInformation->preloadedData;
@@ -274,11 +272,11 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
         voice->setSampleRate(sampleRate);
 }
 
-void sfz::Synth::renderBlock(StereoSpan<float> buffer) noexcept
+void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
-    StereoSpan<float> tempSpan { tempBuffer, buffer.size() };
+    auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
     for (auto& voice : voices) {
         voice->renderBlock(tempSpan);
         buffer.add(tempSpan);

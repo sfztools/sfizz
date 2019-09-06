@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "StereoSpan.h"
+#include "AudioSpan.h"
 #include "Synth.h"
 #include <absl/flags/parse.h>
 #include <absl/types/span.h>
@@ -116,13 +116,9 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
         }
     }
 
-    StereoSpan<float> output {
-        jack_port_get_buffer(outputPort1, numFrames),
-        jack_port_get_buffer(outputPort2, numFrames), 
-        numFrames
-    };
-
-    synth->renderBlock(output);
+    auto leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
+    auto rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
+    synth->renderBlock({ { leftOutput, rightOutput }, numFrames });
 
     return 0;
 }
@@ -156,7 +152,7 @@ static void done(int sig [[maybe_unused]])
     std::cout << "Signal received" << '\n';
     shouldClose = true;
     // if (client != nullptr)
-        
+
     // exit(0);
 }
 
@@ -259,7 +255,7 @@ int main(int argc, char** argv)
 
     while (!shouldClose)
         sleep(1);
-    
+
     std::cout << "Closing..." << '\n';
     jack_client_close(client);
     return 0;

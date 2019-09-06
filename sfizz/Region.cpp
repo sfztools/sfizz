@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Region.h"
+#include "MathHelpers.h"
 #include "Debug.h"
 #include "StringViewHelpers.h"
 #include "absl/strings/str_replace.h"
@@ -651,7 +652,10 @@ bool sfz::Region::canUsePreloadedData() const noexcept
 
 bool sfz::Region::isStereo() const noexcept
 {
-    return this->numChannels == 2;
+    if (isGenerator())
+        return 1;
+
+    return (this->preloadedData->getNumChannels() == 2);
 }
 
 template<class T, class U>

@@ -22,26 +22,27 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FilePool.h"
+#include "AudioBuffer.h"
 #include "Config.h"
 #include "Debug.h"
 #include "absl/types/span.h"
 #include <chrono>
+#include <memory>
 #include <sndfile.hh>
 using namespace std::chrono_literals;
 
 template <class T>
-void readFromFile(SndfileHandle& sndFile, int numFrames, StereoBuffer<T>& output)
+std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFrames)
 {
+    auto returnedBuffer = std::make_unique<AudioBuffer<T>>(sndFile.channels(), numFrames);
     if (sndFile.channels() == 1) {
-        auto tempReadBuffer = std::make_unique<Buffer<float>>(numFrames);
-        sndFile.readf(tempReadBuffer->data(), numFrames);
-        std::copy(tempReadBuffer->begin(), tempReadBuffer->end(), output.begin(Channel::left));
-        std::copy(tempReadBuffer->begin(), tempReadBuffer->end(), output.begin(Channel::right));
+        sndFile.readf(returnedBuffer->channelWriter(0), numFrames);
     } else if (sndFile.channels() == 2) {
-        auto tempReadBuffer = std::make_unique<Buffer<float>>(2 * numFrames);
-        sndFile.readf(tempReadBuffer->data(), numFrames);
-        output.readInterleaved(*tempReadBuffer);
+        auto tempReadBuffer = std::make_unique<AudioBuffer<float>>(1, 2 * numFrames);
+        sndFile.readf(tempReadBuffer->channelWriter(0), numFrames);
+        ::readInterleaved<float>(tempReadBuffer->getSpan(0), returnedBuffer->getSpan(0), returnedBuffer->getSpan(1));
     }
+    return returnedBuffer;
 }
 
 std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename) noexcept
@@ -52,12 +53,11 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
 
     SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
     if (sndFile.channels() != 1 && sndFile.channels() != 2) {
-        DBG("Missing logic for " << sndFile.channels() << ", discarding sample " << filename);
+        DBG("Missing logic for " << sndFile.channels() << " channels, discarding sample " << filename);
         return {};
     }
 
     FileInformation returnedValue;
-    returnedValue.numChannels = sndFile.channels();
     returnedValue.end = static_cast<uint32_t>(sndFile.frames());
     returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
 
@@ -78,8 +78,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     if (preloadedData.contains(filename)) {
         returnedValue.preloadedData = preloadedData[filename];
     } else {
-        returnedValue.preloadedData = std::make_shared<StereoBuffer<float>>(preloadedSize);
-        readFromFile(sndFile, preloadedSize, *returnedValue.preloadedData);
+        returnedValue.preloadedData = std::shared_ptr<AudioBuffer<float>>(readFromFile<float>(sndFile, preloadedSize));
         preloadedData[filename] = returnedValue.preloadedData;
     }
 
@@ -97,7 +96,7 @@ void sfz::FilePool::loadingThread() noexcept
 {
     FileLoadingInformation fileToLoad {};
     while (!quitThread) {
-        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 1ms))
+        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 100ms))
             continue;
 
         if (fileToLoad.voice == nullptr) {
@@ -113,8 +112,7 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        auto fileLoaded = std::make_unique<StereoBuffer<float>>(fileToLoad.numFrames);
-        readFromFile(sndFile, fileToLoad.numFrames, *fileLoaded);
-        fileToLoad.voice->setFileData(std::move(fileLoaded));
+        auto fileLoaded = std::make_unique<AudioBuffer<float>>(sndFile.channels(), fileToLoad.numFrames);
+        fileToLoad.voice->setFileData(readFromFile<float>(sndFile, fileToLoad.numFrames));
     }
 }

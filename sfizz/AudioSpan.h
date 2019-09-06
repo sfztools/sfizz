@@ -39,37 +39,48 @@ public:
     {
     }
 
+    AudioSpan(const std::array<Type*, MaxChannels>& spans, int numChannels, size_type offset, size_type size)
+        : numFrames(size)
+        , numChannels(numChannels)
+    {
+        ASSERT(static_cast<unsigned int>(numChannels) <= MaxChannels);
+        for (auto i = 0; i < numChannels; ++i)
+            this->spans[i] = spans[i] + offset;
+    }
+
     AudioSpan(std::initializer_list<Type*> spans, size_type numFrames)
         : numFrames(numFrames)
         , numChannels(spans.size())
     {
-    	static_assert(spans.size() <= MaxChannels);
-        for (auto i = 0; i < spans.size(); i++) {
+        ASSERT(spans.size() <= MaxChannels);
+        auto newSpan = spans.begin();
+        auto thisSpan = this->spans.begin();
+        for (; newSpan < spans.end() && thisSpan < this->spans.end(); thisSpan++, newSpan++) {
             // This will not end well...
-            ASSERT(spans[i] != nullptr);
-            this->spans[i] = spans[i];
+            ASSERT(*newSpan != nullptr);
+            *thisSpan = *newSpan;
         }
     }
 
     AudioSpan(std::initializer_list<absl::Span<Type>> spans)
         : numChannels(spans.size())
     {
-    	static_assert(spans.size() <= MaxChannels);
+        ASSERT(spans.size() <= MaxChannels);
         auto size = absl::Span<Type>::npos;
-        for (auto i = 0; i < spans.size(); i++) {
-            // This will not end well...
-            ASSERT(spans[i] != nullptr);
-            this->spans[i] = spans[i].data();
-            size = std::min(size, spans[i].size());
+        auto newSpan = spans.begin();
+        auto thisSpan = this->spans.begin();
+        for (; newSpan < spans.end() && thisSpan < this->spans.end(); thisSpan++, newSpan++) {
+            *thisSpan = newSpan->data();
+            size = std::min(size, newSpan->size());
         }
     }
 
     template <class U, unsigned int N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>>
-    AudioSpan(const AudioBuffer<U, N, Alignment>& audioBuffer)
+    AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
     {
-        for (auto i = 0; i < N; i++) {
+        for (int i = 0; i < numChannels; i++) {
             if constexpr (std::is_const<Type>::value)
                 this->spans[i] = audioBuffer.channelReader(i);
             else
@@ -82,7 +93,7 @@ public:
         : numFrames(other.getNumFrames())
         , numChannels(other.getNumChannels())
     {
-        for (auto i = 0; i < N; i++) {
+        for (int i = 0; i < numChannels; i++) {
             this->spans[i] = other.getChannel(i);
         }
     }
@@ -105,7 +116,7 @@ public:
         return {};
     }
 
-    absl::Span<const std::remove_cv<Type>> getConstSpan(int channelIndex)
+    absl::Span<const Type> getConstSpan(int channelIndex)
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -117,23 +128,23 @@ public:
     void fill(Type value) noexcept
     {
         for (int i = 0; i < numChannels; ++i)
-            ::fill<Type>({ getChannel(i), numFrames }, value);
+            ::fill<Type>(getSpan(i), value);
     }
 
     void applyGain(absl::Span<const Type> gain) noexcept
     {
         for (int i = 0; i < numChannels; ++i)
-            ::applyGain<Type>({ getChannel(i), numFrames }, gain);
+            ::applyGain<Type>(gain, getSpan(i));
     }
 
     void applyGain(Type gain) noexcept
     {
         for (int i = 0; i < numChannels; ++i)
-            ::applyGain<Type>({ getChannel(i), numFrames }, gain);
+            ::applyGain<Type>(gain, getSpan(i));
     }
 
     template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
-    void add(const AudioSpan<U, N>& other)
+    void add(AudioSpan<U, N>& other)
     {
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
@@ -143,7 +154,7 @@ public:
     }
 
     template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
-    void copy(const AudioSpan<U, N>& other)
+    void copy(AudioSpan<U, N>& other)
     {
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
@@ -160,6 +171,24 @@ public:
     int getNumChannels()
     {
         return numChannels;
+    }
+
+    AudioSpan<Type> first(size_type length)
+    {
+        ASSERT(length <= numFrames);
+        return { spans, numChannels, 0, length };
+    }
+
+    AudioSpan<Type> last(size_type length)
+    {
+        ASSERT(length <= numFrames);
+        return { spans, numChannels, numFrames - length, length };
+    }
+
+    AudioSpan<Type> subspan(size_type offset, size_type length)
+    {
+        ASSERT(length + offset <= numFrames);
+        return { spans, numChannels, offset, length };
     }
 
 private:

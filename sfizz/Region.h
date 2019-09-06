@@ -27,7 +27,7 @@
 #include "Defaults.h"
 #include "EGDescription.h"
 #include "Opcode.h"
-#include "StereoBuffer.h"
+#include "AudioBuffer.h"
 #include <bitset>
 #include <optional>
 #include <random>
@@ -148,9 +148,7 @@ struct Region {
     EGDescription filterEG;
 
     double sampleRate { config::defaultSampleRate };
-    int numChannels { 1 };
-    std::shared_ptr<StereoBuffer<float>> preloadedData { nullptr };
-
+    std::shared_ptr<AudioBuffer<float>> preloadedData { nullptr };
 private:
     bool keySwitched { true };
     bool previousKeySwitched { true };

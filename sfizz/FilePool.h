@@ -24,7 +24,7 @@
 #pragma once
 #include "Defaults.h"
 #include "LeakDetector.h"
-#include "StereoBuffer.h"
+#include "AudioBuffer.h"
 #include "Voice.h"
 #include "readerwriterqueue.h"
 #include <absl/container/flat_hash_map.h>
@@ -50,12 +50,11 @@ public:
     size_t getNumPreloadedSamples() const noexcept { return preloadedData.size(); }
 
     struct FileInformation {
-        int numChannels { 1 };
         uint32_t end { Default::sampleEndRange.getEnd() };
         uint32_t loopBegin { Default::loopRange.getStart() };
         uint32_t loopEnd { Default::loopRange.getEnd() };
         double sampleRate { config::defaultSampleRate };
-        std::shared_ptr<StereoBuffer<float>> preloadedData;
+        std::shared_ptr<AudioBuffer<float>> preloadedData;
     };
     std::optional<FileInformation> getFileInformation(std::string_view filename) noexcept;
     void enqueueLoading(Voice* voice, std::string_view sample, int numFrames) noexcept;
@@ -71,7 +70,7 @@ private:
     void loadingThread() noexcept;
     std::thread fileLoadingThread;
     bool quitThread { false };
-    absl::flat_hash_map<std::string_view, std::shared_ptr<StereoBuffer<float>>> preloadedData;
+    absl::flat_hash_map<std::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);
 };
 }

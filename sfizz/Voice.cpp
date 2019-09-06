@@ -57,7 +57,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->amplitudeCC)
         baseGain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(baseGain);
-    
+
     sourcePosition = region->getOffset();
     initialDelay = delay + region->getDelay();
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
@@ -80,8 +80,9 @@ void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
         normalizePercents(region->amplitudeEG.getStart(ccState, velocity)));
 }
 
-void sfz::Voice::setFileData(std::unique_ptr<StereoBuffer<float>> file) noexcept
+void sfz::Voice::setFileData(std::unique_ptr<AudioBuffer<float>> file) noexcept
 {
+    // DBG("File data set for sample " << region->sample);
     fileData = std::move(file);
     dataReady.store(true);
 }
@@ -161,10 +162,9 @@ void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
     indexSpan = absl::MakeSpan(indexBuffer);
 }
 
-void sfz::Voice::renderBlock(StereoSpan<float> buffer) noexcept
+void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 {
-    const auto numSamples = buffer.size();
-    ASSERT(static_cast<int>(numSamples) <= samplesPerBlock);
+    ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
     buffer.fill(0.0f);
 
     if (state == State::idle || region == nullptr)
@@ -175,34 +175,59 @@ void sfz::Voice::renderBlock(StereoSpan<float> buffer) noexcept
     else
         fillWithData(buffer);
 
-    auto envelopeSpan = tempSpan1.first(numSamples);
-    amplitudeEnvelope.getBlock(envelopeSpan);
-    buffer.applyGain(envelopeSpan);
-
-    egEnvelope.getBlock(envelopeSpan);
-    buffer.applyGain(envelopeSpan);
-
+    if (region->isStereo())
+        processStereo(buffer);
+    else
+        processMono(buffer);
+    
     if (!egEnvelope.isSmoothing())
         reset();
 }
 
-void sfz::Voice::fillWithData(StereoSpan<float> buffer) noexcept
+void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
+{
+    const auto numSamples = buffer.getNumFrames();
+    auto leftBuffer = buffer.getSpan(0);
+    auto rightBuffer = buffer.getSpan(1);
+    
+    auto envelopeSpan = tempSpan1.first(numSamples);
+    amplitudeEnvelope.getBlock(envelopeSpan);
+    ::applyGain<float>(envelopeSpan, leftBuffer);
+
+    egEnvelope.getBlock(envelopeSpan);
+    ::applyGain<float>(envelopeSpan, leftBuffer);
+
+    ::copy<float>(leftBuffer, rightBuffer);
+}
+void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
+{
+    const auto numSamples = buffer.getNumFrames();
+    auto envelopeSpan = tempSpan1.first(numSamples);
+   
+    amplitudeEnvelope.getBlock(envelopeSpan);
+    buffer.applyGain(envelopeSpan);
+    
+    egEnvelope.getBlock(envelopeSpan);
+    buffer.applyGain(envelopeSpan);
+}
+
+void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 {
     auto source { [&]() {
         if (region->canUsePreloadedData() || !dataReady)
-            return StereoSpan<const float>(*region->preloadedData);
+            return AudioSpan<const float>(*region->preloadedData);
         else
-            return StereoSpan<const float>(*fileData);
+            return AudioSpan<const float>(*fileData);
     }() };
 
-    auto indices = indexSpan.first(buffer.size());
-    auto jumps = tempSpan1.first(buffer.size());
-    auto leftCoeffs = tempSpan1.first(buffer.size());
-    auto rightCoeffs = tempSpan2.first(buffer.size());
+    auto indices = indexSpan.first(buffer.getNumFrames());
+    auto jumps = tempSpan1.first(buffer.getNumFrames());
+    auto leftCoeffs = tempSpan1.first(buffer.getNumFrames());
+    auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
 
     ::fill<float>(jumps, pitchRatio * speedRatio);
 
-    if (region->shouldLoop() && region->trueSampleEnd() <= source.size()) {
+    if (region->shouldLoop() && region->trueSampleEnd() <= source.getNumFrames()) {
         floatPosition = ::loopingSFZIndex<float, false>(
             jumps,
             leftCoeffs,
@@ -218,32 +243,42 @@ void sfz::Voice::fillWithData(StereoSpan<float> buffer) noexcept
             rightCoeffs,
             indices,
             floatPosition,
-            source.size() - 1);
+            source.getNumFrames() - 1);
     }
 
     auto ind = indices.data();
     auto leftCoeff = leftCoeffs.data();
     auto rightCoeff = rightCoeffs.data();
-    auto left = buffer.left().data();
-    auto right = buffer.right().data();
-    while (ind < indices.end()) {
-        *left = source.left()[*ind] * (*leftCoeff) + source.left()[*ind + 1] * (*rightCoeff);
-        *right = source.right()[*ind] * (*leftCoeff) + source.right()[*ind + 1] * (*rightCoeff);
-        left++;
-        right++;
-        ind++;
-        leftCoeff++;
-        rightCoeff++;
+    auto left = buffer.getChannel(0);
+    if (source.getNumChannels() == 1) {
+        while (ind < indices.end()) {
+            *left = source.getChannel(0)[*ind] * (*leftCoeff) + source.getChannel(0)[*ind + 1] * (*rightCoeff);
+            left++;
+            ind++;
+            leftCoeff++;
+            rightCoeff++;
+        }
+    } else {
+        auto right = buffer.getChannel(1);
+        while (ind < indices.end()) {
+            *left = source.getChannel(0)[*ind] * (*leftCoeff) + source.getChannel(0)[*ind + 1] * (*rightCoeff);
+            *right = source.getChannel(1)[*ind] * (*leftCoeff) + source.getChannel(1)[*ind + 1] * (*rightCoeff);
+            left++;
+            right++;
+            ind++;
+            leftCoeff++;
+            rightCoeff++;
+        }
     }
 
-    if (!region->shouldLoop() && (floatPosition + 1.01) > source.size()) {
+    if (!region->shouldLoop() && (floatPosition + 1.01) > source.getNumFrames()) {
         DBG("Releasing " << region->sample);
         auto last = std::distance(indices.begin(), absl::c_find(indices, region->trueSampleEnd() - 1));
         release(last);
     }
 }
 
-void sfz::Voice::fillWithGenerator(StereoSpan<float> buffer) noexcept
+void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 {
     if (region->sample != "*sine")
         return;
@@ -251,10 +286,10 @@ void sfz::Voice::fillWithGenerator(StereoSpan<float> buffer) noexcept
     float step = baseFrequency * twoPi<float> / sampleRate;
     phase = ::linearRamp<float>(tempSpan1, phase, step);
 
-    ::sin<float>(tempSpan1.first(buffer.size()), buffer.left());
-    absl::c_copy(buffer.left(), buffer.right().begin());
+    ::sin<float>(tempSpan1.first(buffer.getNumFrames()), buffer.getSpan(0));
+    ::copy<float>(buffer.getSpan(0), buffer.getSpan(1));
 
-    sourcePosition += buffer.size();
+    sourcePosition += buffer.getNumFrames();
 }
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
