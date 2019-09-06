@@ -1,0 +1,169 @@
+// Copyright (c) 2019, Paul Ferrand
+// All rights reserved.
+
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#pragma once
+#include "AudioBuffer.h"
+#include "Buffer.h"
+#include "Config.h"
+#include "Debug.h"
+#include "LeakDetector.h"
+#include "SIMDHelpers.h"
+#include <initializer_list>
+#include <type_traits>
+
+template <class Type, unsigned int MaxChannels = sfz::config::numChannels>
+class AudioSpan {
+public:
+    using size_type = size_t;
+    AudioSpan()
+    {
+    }
+
+    AudioSpan(std::initializer_list<Type*> spans, size_type numFrames)
+        : numFrames(numFrames)
+        , numChannels(spans.size())
+    {
+    	static_assert(spans.size() <= MaxChannels);
+        for (auto i = 0; i < spans.size(); i++) {
+            // This will not end well...
+            ASSERT(spans[i] != nullptr);
+            this->spans[i] = spans[i];
+        }
+    }
+
+    AudioSpan(std::initializer_list<absl::Span<Type>> spans)
+        : numChannels(spans.size())
+    {
+    	static_assert(spans.size() <= MaxChannels);
+        auto size = absl::Span<Type>::npos;
+        for (auto i = 0; i < spans.size(); i++) {
+            // This will not end well...
+            ASSERT(spans[i] != nullptr);
+            this->spans[i] = spans[i].data();
+            size = std::min(size, spans[i].size());
+        }
+    }
+
+    template <class U, unsigned int N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>>
+    AudioSpan(const AudioBuffer<U, N, Alignment>& audioBuffer)
+        : numFrames(audioBuffer.getNumFrames())
+        , numChannels(audioBuffer.getNumChannels())
+    {
+        for (auto i = 0; i < N; i++) {
+            if constexpr (std::is_const<Type>::value)
+                this->spans[i] = audioBuffer.channelReader(i);
+            else
+                this->spans[i] = audioBuffer.channelWriter(i);
+        }
+    }
+
+    template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
+    AudioSpan(const AudioSpan<U, N>& other)
+        : numFrames(other.getNumFrames())
+        , numChannels(other.getNumChannels())
+    {
+        for (auto i = 0; i < N; i++) {
+            this->spans[i] = other.getChannel(i);
+        }
+    }
+
+    Type* getChannel(int channelIndex)
+    {
+        ASSERT(channelIndex < numChannels);
+        if (channelIndex < numChannels)
+            return spans[channelIndex];
+
+        return {};
+    }
+
+    absl::Span<Type> getSpan(int channelIndex)
+    {
+        ASSERT(channelIndex < numChannels);
+        if (channelIndex < numChannels)
+            return { spans[channelIndex], numFrames };
+
+        return {};
+    }
+
+    absl::Span<const std::remove_cv<Type>> getConstSpan(int channelIndex)
+    {
+        ASSERT(channelIndex < numChannels);
+        if (channelIndex < numChannels)
+            return { spans[channelIndex], numFrames };
+
+        return {};
+    }
+
+    void fill(Type value) noexcept
+    {
+        for (int i = 0; i < numChannels; ++i)
+            ::fill<Type>({ getChannel(i), numFrames }, value);
+    }
+
+    void applyGain(absl::Span<const Type> gain) noexcept
+    {
+        for (int i = 0; i < numChannels; ++i)
+            ::applyGain<Type>({ getChannel(i), numFrames }, gain);
+    }
+
+    void applyGain(Type gain) noexcept
+    {
+        for (int i = 0; i < numChannels; ++i)
+            ::applyGain<Type>({ getChannel(i), numFrames }, gain);
+    }
+
+    template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
+    void add(const AudioSpan<U, N>& other)
+    {
+        ASSERT(other.getNumChannels() == numChannels);
+        if (other.getNumChannels() == numChannels) {
+            for (int i = 0; i < numChannels; ++i)
+                ::add<Type>(other.getConstSpan(i), getSpan(i));
+        }
+    }
+
+    template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
+    void copy(const AudioSpan<U, N>& other)
+    {
+        ASSERT(other.getNumChannels() == numChannels);
+        if (other.getNumChannels() == numChannels) {
+            for (int i = 0; i < numChannels; ++i)
+                ::copy<Type>(other.getConstSpan(i), getSpan(i));
+        }
+    }
+
+    size_type getNumFrames()
+    {
+        return numFrames;
+    }
+
+    int getNumChannels()
+    {
+        return numChannels;
+    }
+
+private:
+    std::array<Type*, MaxChannels> spans;
+    size_type numFrames { 0 };
+    int numChannels { 0 };
+};
