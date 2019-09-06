@@ -622,3 +622,33 @@ TEST_CASE("[Helpers] Add (SIMD vs scalar)")
     add<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
+
+TEST_CASE("[Helpers] copy")
+{
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    copy<float, false>(input, absl::MakeSpan(output));
+    REQUIRE(output == input);
+}
+
+TEST_CASE("[Helpers] copy (SIMD)")
+{
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+    copy<float, true>(input, absl::MakeSpan(output));
+    REQUIRE(output == input);
+}
+
+TEST_CASE("[Helpers] copy (SIMD vs scalar)")
+{
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(input, 0.0);
+    absl::c_fill(outputScalar, 0.0);
+    absl::c_fill(outputSIMD, 0.0);
+
+    add<float, false>(input, absl::MakeSpan(outputScalar));
+    add<float, true>(input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}

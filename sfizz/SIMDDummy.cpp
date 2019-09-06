@@ -107,3 +107,9 @@ void add<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 {
     add<float, false>(input, output);
 }
+
+template <>
+void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    copy<float, false>(input, output);
+}

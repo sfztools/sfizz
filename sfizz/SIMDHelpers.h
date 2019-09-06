@@ -326,3 +326,24 @@ void add(absl::Span<const T> input, absl::Span<T> output) noexcept
 
 template <>
 void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+
+template <class T>
+void snippetCopy(const T*& input, T*& output)
+{
+    *output++ = *input++;
+}
+
+template <class T, bool SIMD = SIMDConfig::copy>
+void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + min(input.size(), output.size());
+    while (out < sentinel)
+        snippetCopy(in, out);
+}
+
+template <>
+void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
