@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Voice.h"
+#include "AudioSpan.h"
 #include "Defaults.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
@@ -50,15 +51,24 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     state = State::playing;
     speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
     pitchRatio = region->getBasePitchVariation(number, value);
+
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
-    baseGain *= region->getCCGain(ccState);
+    baseGain *= region->getCrossfadeGain(ccState);
     if (region->amplitudeCC)
         baseGain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(baseGain);
 
+    basePan = normalizeNegativePercents(region->pan);
+    auto pan = basePan;
+    if (region->panCC)
+        pan += normalizeCC(ccState[region->amplitudeCC->first]) * normalizeNegativePercents(region->amplitudeCC->second);
+    panEnvelope.reset(pan);
+    DBG("Base Panning: " << pan);
+
     sourcePosition = region->getOffset();
+    floatPosition = static_cast<float>(sourcePosition);
     initialDelay = delay + region->getDelay();
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
@@ -129,6 +139,11 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
         const float newGain { normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) * baseGain };
         amplitudeEnvelope.registerEvent(delay, newGain);
     }
+
+    if (region->panCC && ccNumber == region->panCC->first) {
+        const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->amplitudeCC->second)};
+        panEnvelope.registerEvent(delay, newPan);
+    }
 }
 
 void sfz::Voice::registerPitchWheel(int delay [[maybe_unused]], int channel [[maybe_unused]], int pitch [[maybe_unused]]) noexcept
@@ -190,15 +205,31 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
     
-    auto envelopeSpan = tempSpan1.first(numSamples);
-    amplitudeEnvelope.getBlock(envelopeSpan);
-    ::applyGain<float>(envelopeSpan, leftBuffer);
+    auto span1 = tempSpan1.first(numSamples);
+    auto span2 = tempSpan2.first(numSamples);
 
-    egEnvelope.getBlock(envelopeSpan);
-    ::applyGain<float>(envelopeSpan, leftBuffer);
+    // Amplitude envelope
+    amplitudeEnvelope.getBlock(span1);
+    ::applyGain<float>(span1, leftBuffer);
 
+    // AmpEG envelope
+    egEnvelope.getBlock(span1);
+    ::applyGain<float>(span1, leftBuffer);
+    
+    // Prepare for stereo output
     ::copy<float>(leftBuffer, rightBuffer);
+
+    panEnvelope.getBlock(span1);
+    // We assume that the pan envelope is already normalized between -1 and 1
+    ::fill<float>(span2, 1.0f);
+    ::add<float>(span1, span2);
+    ::applyGain<float>(piFour<float>, span2);
+    ::cos<float>(span2, span1);
+    ::sin<float>(span2, span2);
+    ::applyGain<float>(span1, leftBuffer);
+    ::applyGain<float>(span2, rightBuffer);
 }
+
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();

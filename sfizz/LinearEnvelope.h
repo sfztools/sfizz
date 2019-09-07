@@ -41,7 +41,6 @@ public:
     void clear();
     void reset(Type value = 0.0);
     void getBlock(absl::Span<Type> output);
-
 private:
     std::function<Type(Type)> function { [](Type input) { return input; } };
     static_assert(std::is_arithmetic<Type>::value);

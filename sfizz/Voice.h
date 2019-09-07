@@ -90,6 +90,7 @@ private:
     float speedRatio { 1.0 };
     float pitchRatio { 1.0 };
     float baseGain { 1.0 };
+    float basePan { 0.0 };
     float baseFrequency { 440.0 };
     float phase { 0.0f };
 
@@ -113,8 +114,7 @@ private:
     const CCValueArray& ccState;
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> amplitudeEnvelope;
-    LinearEnvelope<float> leftPanEnvelope;
-    LinearEnvelope<float> rightPanEnvelope;
+    LinearEnvelope<float> panEnvelope;
 
     LEAK_DETECTOR(Voice);
 };

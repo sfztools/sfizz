@@ -53,6 +53,12 @@ inline constexpr float normalizePercents(T percentValue)
     return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
 }
 
+template<class T>
+inline constexpr float normalizeNegativePercents(T percentValue)
+{
+    return std::min(std::max(static_cast<float>(percentValue), -100.0f), 100.0f) / 100.0f;
+}
+
 inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)

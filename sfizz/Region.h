@@ -56,7 +56,7 @@ struct Region {
     bool isStereo() const noexcept;
     float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
     float getNoteGain(int noteNumber, uint8_t velocity) noexcept;
-    float getCCGain(const CCValueArray& ccState) noexcept;
+    float getCrossfadeGain(const CCValueArray& ccState) noexcept;
     float getBaseGain() noexcept;
     float velocityGain(uint8_t velocity) const noexcept;
     uint32_t getOffset() noexcept;

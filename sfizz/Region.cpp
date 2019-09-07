@@ -712,7 +712,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     return baseGain;
 }
 
-float sfz::Region::getCCGain(const sfz::CCValueArray& ccState) noexcept
+float sfz::Region::getCrossfadeGain(const sfz::CCValueArray& ccState) noexcept
 {
     float gain { 1.0f };
 
