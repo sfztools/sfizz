@@ -170,13 +170,13 @@ TEST_CASE("[Region] Crossfade in on CC")
     region.parseOpcode({ "xfin_locc24", "20" });
     region.parseOpcode({ "xfin_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
-	ccState[24] = 19; REQUIRE( region.getCCGain(ccState) == 0.0_a );
-	ccState[24] = 20; REQUIRE( region.getCCGain(ccState) == 0.0_a );
-	ccState[24] = 21; REQUIRE( region.getCCGain(ccState) == 0.5_a );
-	ccState[24] = 22; REQUIRE( region.getCCGain(ccState) == 0.70711_a );
-	ccState[24] = 23; REQUIRE( region.getCCGain(ccState) == 0.86603_a );
-	ccState[24] = 24; REQUIRE( region.getCCGain(ccState) == 1.0_a );
-	ccState[24] = 25; REQUIRE( region.getCCGain(ccState) == 1.0_a );
+	ccState[24] = 19; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
+	ccState[24] = 20; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
+	ccState[24] = 21; REQUIRE( region.getCrossfadeGain(ccState) == 0.5_a );
+	ccState[24] = 22; REQUIRE( region.getCrossfadeGain(ccState) == 0.70711_a );
+	ccState[24] = 23; REQUIRE( region.getCrossfadeGain(ccState) == 0.86603_a );
+	ccState[24] = 24; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
+	ccState[24] = 25; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
 }
 
 TEST_CASE("[Region] Crossfade in on CC - gain")
@@ -188,13 +188,13 @@ TEST_CASE("[Region] Crossfade in on CC - gain")
     region.parseOpcode({ "xfin_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
     region.parseOpcode({ "xf_cccurve", "gain" });
-	ccState[24] = 19; REQUIRE( region.getCCGain(ccState) == 0.0_a );
-	ccState[24] = 20; REQUIRE( region.getCCGain(ccState) == 0.0_a );
-	ccState[24] = 21; REQUIRE( region.getCCGain(ccState) == 0.25_a );
-	ccState[24] = 22; REQUIRE( region.getCCGain(ccState) == 0.5_a );
-	ccState[24] = 23; REQUIRE( region.getCCGain(ccState) == 0.75_a );
-	ccState[24] = 24; REQUIRE( region.getCCGain(ccState) == 1.0_a );
-	ccState[24] = 25; REQUIRE( region.getCCGain(ccState) == 1.0_a );
+	ccState[24] = 19; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
+	ccState[24] = 20; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
+	ccState[24] = 21; REQUIRE( region.getCrossfadeGain(ccState) == 0.25_a );
+	ccState[24] = 22; REQUIRE( region.getCrossfadeGain(ccState) == 0.5_a );
+	ccState[24] = 23; REQUIRE( region.getCrossfadeGain(ccState) == 0.75_a );
+	ccState[24] = 24; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
+	ccState[24] = 25; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
 }
 TEST_CASE("[Region] Crossfade out on CC")
 {
@@ -204,13 +204,13 @@ TEST_CASE("[Region] Crossfade out on CC")
     region.parseOpcode({ "xfout_locc24", "20" });
     region.parseOpcode({ "xfout_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
-	ccState[24] = 19; REQUIRE( region.getCCGain(ccState) == 1.0_a );
-	ccState[24] = 20; REQUIRE( region.getCCGain(ccState) == 1.0_a );
-	ccState[24] = 21; REQUIRE( region.getCCGain(ccState) == 0.86603_a );
-	ccState[24] = 22; REQUIRE( region.getCCGain(ccState) == 0.70711_a );
-	ccState[24] = 23; REQUIRE( region.getCCGain(ccState) == 0.5_a );
-	ccState[24] = 24; REQUIRE( region.getCCGain(ccState) == 0.0_a );
-	ccState[24] = 25; REQUIRE( region.getCCGain(ccState) == 0.0_a );
+	ccState[24] = 19; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
+	ccState[24] = 20; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
+	ccState[24] = 21; REQUIRE( region.getCrossfadeGain(ccState) == 0.86603_a );
+	ccState[24] = 22; REQUIRE( region.getCrossfadeGain(ccState) == 0.70711_a );
+	ccState[24] = 23; REQUIRE( region.getCrossfadeGain(ccState) == 0.5_a );
+	ccState[24] = 24; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
+	ccState[24] = 25; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
 }
 
 TEST_CASE("[Region] Crossfade out on CC - gain")
@@ -222,11 +222,11 @@ TEST_CASE("[Region] Crossfade out on CC - gain")
     region.parseOpcode({ "xfout_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
     region.parseOpcode({ "xf_cccurve", "gain" });
-	ccState[24] = 19; REQUIRE( region.getCCGain(ccState) == 1.0_a );
-	ccState[24] = 20; REQUIRE( region.getCCGain(ccState) == 1.0_a );
-	ccState[24] = 21; REQUIRE( region.getCCGain(ccState) == 0.75_a );
-	ccState[24] = 22; REQUIRE( region.getCCGain(ccState) == 0.5_a );
-	ccState[24] = 23; REQUIRE( region.getCCGain(ccState) == 0.25_a );
-	ccState[24] = 24; REQUIRE( region.getCCGain(ccState) == 0.0_a );
-	ccState[24] = 25; REQUIRE( region.getCCGain(ccState) == 0.0_a );
+	ccState[24] = 19; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
+	ccState[24] = 20; REQUIRE( region.getCrossfadeGain(ccState) == 1.0_a );
+	ccState[24] = 21; REQUIRE( region.getCrossfadeGain(ccState) == 0.75_a );
+	ccState[24] = 22; REQUIRE( region.getCrossfadeGain(ccState) == 0.5_a );
+	ccState[24] = 23; REQUIRE( region.getCrossfadeGain(ccState) == 0.25_a );
+	ccState[24] = 24; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
+	ccState[24] = 25; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
 }
