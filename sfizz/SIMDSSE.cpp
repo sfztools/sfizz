@@ -535,7 +535,7 @@ void subtract<float, true>(absl::Span<const float> input, absl::Span<float> outp
         snippetSubtract<float>(in, out);
 
     while (out < lastAligned) {
-        _mm_store_ps(out, _mm_sub_ps(_mm_load_ps(in), _mm_load_ps(out)));
+        _mm_store_ps(out, _mm_sub_ps(_mm_load_ps(out), _mm_load_ps(in)));
         out += TypeAlignment;
         in += TypeAlignment;
     }
