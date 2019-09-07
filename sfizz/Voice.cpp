@@ -64,6 +64,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     auto pan = basePan;
     if (region->panCC)
         pan += normalizeCC(ccState[region->amplitudeCC->first]) * normalizeNegativePercents(region->amplitudeCC->second);
+        pan += normalizeCC(ccState[region->panCC->first]) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
     DBG("Base Panning: " << pan);
 
@@ -141,7 +142,7 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
-        const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->amplitudeCC->second)};
+        const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->panCC->second)};
         panEnvelope.registerEvent(delay, newPan);
     }
 }
