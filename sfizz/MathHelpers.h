@@ -76,3 +76,7 @@ template <class Type>
 constexpr Type piTwo { pi<Type> / 2 };
 template <class Type>
 constexpr Type piFour { pi<Type> / 4 };
+template <class Type>
+constexpr Type sqrtTwo { 1.414213562373095048801688724209698078569671875376948073176 };
+template <class Type>
+constexpr Type sqrtTwoInv { 0.707106781186547524400844362104849039284835937688474036588 };

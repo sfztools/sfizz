@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SIMDHelpers.h"
+#include <xmmintrin.h>
 
 #if HAVE_X86INTRIN_H
 #include <x86intrin.h>
@@ -305,6 +306,31 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 }
 
 template <>
+void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* g = gain.begin();
+    const auto size = std::min(output.size(), std::min(input.size(), gain.size()));
+    const auto* lastAligned = prevAligned(output.begin() + size);
+
+    while (unaligned(out, in, g) && out < lastAligned)
+        snippetMultiplyAdd<float>(g, in, out);
+
+    while (out < lastAligned) {
+        auto mmOut = _mm_load_ps(out);
+        mmOut = _mm_add_ps(_mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)), mmOut);
+        _mm_store_ps(out, mmOut);
+        g += TypeAlignment;
+        in += TypeAlignment;
+        out += TypeAlignment;
+    }
+
+    while (out < output.end())
+        snippetMultiplyAdd<float>(g, in, out);
+}
+
+template <>
 float loopingSFZIndex<float, true>(absl::Span<const float> jumps,
     absl::Span<float> leftCoeffs,
     absl::Span<float> rightCoeffs,
@@ -494,6 +520,28 @@ void add<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 
     while (out < sentinel)
         snippetAdd<float>(in, out);
+}
+
+template <>
+void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + min(input.size(), output.size());
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(in, out) && out < lastAligned)
+        snippetSubtract<float>(in, out);
+
+    while (out < lastAligned) {
+        _mm_store_ps(out, _mm_sub_ps(_mm_load_ps(in), _mm_load_ps(out)));
+        out += TypeAlignment;
+        in += TypeAlignment;
+    }
+
+    while (out < sentinel)
+        snippetSubtract<float>(in, out);
 }
 
 template <>

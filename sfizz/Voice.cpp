@@ -63,10 +63,20 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     basePan = normalizeNegativePercents(region->pan);
     auto pan = basePan;
     if (region->panCC)
-        pan += normalizeCC(ccState[region->amplitudeCC->first]) * normalizeNegativePercents(region->amplitudeCC->second);
         pan += normalizeCC(ccState[region->panCC->first]) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
-    DBG("Base Panning: " << pan);
+
+    basePosition = normalizeNegativePercents(region->position);
+    auto position = basePosition;
+    if (region->positionCC)
+        position += normalizeCC(ccState[region->positionCC->first]) * normalizeNegativePercents(region->positionCC->second);
+    positionEnvelope.reset(position);
+
+    baseWidth = normalizeNegativePercents(region->width);
+    auto width = baseWidth;
+    if (region->widthCC)
+        width += normalizeCC(ccState[region->widthCC->first]) * normalizeNegativePercents(region->widthCC->second);
+    widthEnvelope.reset(width);
 
     sourcePosition = region->getOffset();
     floatPosition = static_cast<float>(sourcePosition);
@@ -172,9 +182,11 @@ void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
     this->samplesPerBlock = samplesPerBlock;
     tempBuffer1.resize(samplesPerBlock);
     tempBuffer2.resize(samplesPerBlock);
+    tempBuffer3.resize(samplesPerBlock);
     indexBuffer.resize(samplesPerBlock);
     tempSpan1 = absl::MakeSpan(tempBuffer1);
     tempSpan2 = absl::MakeSpan(tempBuffer2);
+    tempSpan3 = absl::MakeSpan(tempBuffer3);
     indexSpan = absl::MakeSpan(indexBuffer);
 }
 
@@ -234,13 +246,49 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
-    auto envelopeSpan = tempSpan1.first(numSamples);
-   
-    amplitudeEnvelope.getBlock(envelopeSpan);
-    buffer.applyGain(envelopeSpan);
+    auto span1 = tempSpan1.first(numSamples);
+    auto span2 = tempSpan2.first(numSamples);
+    auto span3 = tempSpan3.first(numSamples);
+    auto leftBuffer = buffer.getSpan(0);
+    auto rightBuffer = buffer.getSpan(1);
+
+    amplitudeEnvelope.getBlock(span1);
+    buffer.applyGain(span1);
     
-    egEnvelope.getBlock(envelopeSpan);
-    buffer.applyGain(envelopeSpan);
+    egEnvelope.getBlock(span1);
+    buffer.applyGain(span1);
+
+    // Create mid/side from left/right in the output buffer
+    ::copy<float>(rightBuffer, span1);
+    ::add<float>(leftBuffer, rightBuffer);
+    ::subtract<float>(span1, leftBuffer);
+    ::applyGain<float>(sqrtTwoInv<float>, leftBuffer);
+    ::applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+
+    // Apply the width process
+    widthEnvelope.getBlock(span1);
+    ::fill<float>(span2, 1.0f);
+    ::add<float>(span1, span2);
+    ::applyGain<float>(piFour<float>, span2);
+    ::cos<float>(span2, span1);
+    ::sin<float>(span2, span2);
+    ::applyGain<float>(span1, leftBuffer);
+    ::applyGain<float>(span2, rightBuffer);
+
+    // Apply a position to the "left" channel which is supposed to be our mid channel
+    // TODO: add panning here too?
+    positionEnvelope.getBlock(span1);
+    ::fill<float>(span2, 1.0f);
+    ::add<float>(span1, span2);
+    ::applyGain<float>(piFour<float>, span2);
+    ::cos<float>(span2, span1);
+    ::sin<float>(span2, span2);
+    ::copy<float>(leftBuffer, span3);
+    ::copy<float>(rightBuffer, leftBuffer);
+    ::multiplyAdd<float>(span1, span3, leftBuffer);
+    ::multiplyAdd<float>(span2, span3, rightBuffer);
+    ::applyGain<float>(sqrtTwoInv<float>, leftBuffer);
+    ::applyGain<float>(sqrtTwoInv<float>, rightBuffer);
 }
 
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept

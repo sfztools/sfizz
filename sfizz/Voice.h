@@ -91,6 +91,8 @@ private:
     float pitchRatio { 1.0 };
     float baseGain { 1.0 };
     float basePan { 0.0 };
+    float basePosition { 0.0 };
+    float baseWidth { 0.0 };
     float baseFrequency { 440.0 };
     float phase { 0.0f };
 
@@ -103,9 +105,11 @@ private:
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;
+    Buffer<float> tempBuffer3;
     Buffer<int> indexBuffer;
     absl::Span<float> tempSpan1 { absl::MakeSpan(tempBuffer1) };
     absl::Span<float> tempSpan2 { absl::MakeSpan(tempBuffer2) };
+    absl::Span<float> tempSpan3 { absl::MakeSpan(tempBuffer3) };
     absl::Span<int> indexSpan { absl::MakeSpan(indexBuffer) };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
@@ -115,6 +119,8 @@ private:
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> amplitudeEnvelope;
     LinearEnvelope<float> panEnvelope;
+    LinearEnvelope<float> positionEnvelope;
+    LinearEnvelope<float> widthEnvelope;
 
     LEAK_DETECTOR(Voice);
 };

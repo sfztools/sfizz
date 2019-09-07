@@ -54,5 +54,7 @@ namespace SIMDConfig {
     constexpr bool linearRamp { false };
     constexpr bool multiplicativeRamp { true };
     constexpr bool add { false };
+    constexpr bool subtract { false };
+    constexpr bool multiplyAdd { false };
     constexpr bool copy { false };
 }
