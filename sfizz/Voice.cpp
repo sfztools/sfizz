@@ -234,6 +234,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 
     panEnvelope.getBlock(span1);
     // We assume that the pan envelope is already normalized between -1 and 1
+    // Check bm_pan for your architecture to check if it's interesting to use the pan helper instead
     ::fill<float>(span2, 1.0f);
     ::add<float>(span1, span2);
     ::applyGain<float>(piFour<float>, span2);

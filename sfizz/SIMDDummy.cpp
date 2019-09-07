@@ -125,3 +125,9 @@ void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) 
 {
     copy<float, false>(input, output);
 }
+
+template <>
+void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
+{
+    pan<float, false>(panEnvelope, leftBuffer, rightBuffer);
+}

@@ -389,3 +389,27 @@ void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
 
 template <>
 void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template <class T>
+inline void snippetPan(const T*& pan, T*& left, T*& right)
+{
+    const auto circlePan = piFour<float> * (static_cast<T>(1.0) + *pan++);
+    *left++ *= std::cos(circlePan);
+    *right++ *= std::sin(circlePan);
+}
+
+template <class T, bool SIMD = SIMDConfig::pan>
+void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
+{
+    ASSERT(leftBuffer.size() >= panEnvelope.size());
+    ASSERT(rightBuffer.size() >= panEnvelope.size());
+    auto* pan = panEnvelope.begin();
+    auto* left = leftBuffer.begin();
+    auto* right = rightBuffer.begin();
+    auto* sentinel = pan + min(panEnvelope.size(), leftBuffer.size(), rightBuffer.size());
+    while (pan < sentinel)
+        snippetPan(pan, left, right);
+}
+
+template <>
+void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;

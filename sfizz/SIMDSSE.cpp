@@ -565,3 +565,39 @@ void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) 
     while (out < sentinel)
         snippetCopy<float>(in, out);
 }
+
+template <>
+void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
+{
+    ASSERT(leftBuffer.size() >= panEnvelope.size());
+    ASSERT(rightBuffer.size() >= panEnvelope.size());
+    auto* pan = panEnvelope.begin();
+    auto* left = leftBuffer.begin();
+    auto* right = rightBuffer.begin();
+    auto* sentinel = pan + min(panEnvelope.size(), leftBuffer.size(), rightBuffer.size());
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(pan, left, right) && pan < lastAligned)
+        snippetPan(pan, left, right);
+
+    const auto mmOne = _mm_set_ps1(1.0f);
+    const auto mmPiFour = _mm_set_ps1(piFour<float>);
+    __m128 mmCos; 
+    __m128 mmSin; 
+    while (pan < lastAligned) {
+        auto mmPan = _mm_load_ps(pan);
+        mmPan = _mm_add_ps(mmOne, mmPan);
+        mmPan = _mm_mul_ps(mmOne, mmPiFour);
+        sincos_ps(mmPan, &mmSin, &mmCos);
+        auto mmLeft = _mm_mul_ps(mmCos, _mm_load_ps(left));
+        auto mmRight = _mm_mul_ps(mmCos, _mm_load_ps(left));
+        _mm_store_ps(left, mmLeft);
+        _mm_store_ps(right, mmRight);
+        left += TypeAlignment;
+        right += TypeAlignment;
+        pan += TypeAlignment;
+    }
+
+    while (pan < sentinel)
+        snippetPan(pan, left, right);
+}

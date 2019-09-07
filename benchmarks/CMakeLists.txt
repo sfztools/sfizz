@@ -66,6 +66,9 @@ target_link_libraries(bm_subtract benchmark absl::span absl::algorithm)
 add_executable(bm_copy BM_copy.cpp ${SFIZZ_SIMD_SOURCES})
 target_link_libraries(bm_copy benchmark absl::span absl::algorithm)
 
+add_executable(bm_pan BM_pan.cpp ${SFIZZ_SIMD_SOURCES})
+target_link_libraries(bm_pan benchmark absl::span absl::algorithm)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks 
 	bm_opf_high_vs_low 
@@ -79,6 +82,7 @@ add_dependencies(sfizz_benchmarks
 	bm_ramp
 	bm_ADSR
 	bm_add
+	bm_pan
 	bm_subtract
 	bm_multiplyAdd
 )
