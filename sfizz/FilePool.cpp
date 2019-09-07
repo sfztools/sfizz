@@ -85,9 +85,9 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     return returnedValue;
 }
 
-void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames) noexcept
+void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames, unsigned ticket) noexcept
 {
-    if (!loadingQueue.try_enqueue({ voice, sample, numFrames })) {
+    if (!loadingQueue.try_enqueue({ voice, sample, numFrames, ticket })) {
         DBG("Problem enqueuing a file read for file " << sample);
     }
 }
@@ -113,6 +113,6 @@ void sfz::FilePool::loadingThread() noexcept
 
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
         auto fileLoaded = std::make_unique<AudioBuffer<float>>(sndFile.channels(), fileToLoad.numFrames);
-        fileToLoad.voice->setFileData(readFromFile<float>(sndFile, fileToLoad.numFrames));
+        fileToLoad.voice->setFileData(readFromFile<float>(sndFile, fileToLoad.numFrames), fileToLoad.ticket);
     }
 }

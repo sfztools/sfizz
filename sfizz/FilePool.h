@@ -57,13 +57,14 @@ public:
         std::shared_ptr<AudioBuffer<float>> preloadedData;
     };
     std::optional<FileInformation> getFileInformation(std::string_view filename) noexcept;
-    void enqueueLoading(Voice* voice, std::string_view sample, int numFrames) noexcept;
+    void enqueueLoading(Voice* voice, std::string_view sample, int numFrames, unsigned ticket) noexcept;
 private:
     std::filesystem::path rootDirectory;
     struct FileLoadingInformation {
         Voice* voice;
         std::string_view sample;
         int numFrames;
+        unsigned ticket;
     };
 
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;

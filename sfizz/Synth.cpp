@@ -22,8 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Synth.h"
-#include "ScopedFTZ.h"
 #include "Debug.h"
+#include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
 #include "absl/algorithm/container.h"
 #include <algorithm>
@@ -106,6 +106,7 @@ void sfz::Synth::clear()
     numGroups = 0;
     numMasters = 0;
     numCurves = 0;
+    fileTicket = -1;
     defaultSwitch = std::nullopt;
     for (auto& state : ccState)
         state = 0;
@@ -152,23 +153,19 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 
 void addEndpointsToVelocityCurve(sfz::Region& region)
 {
-    if (region.velocityPoints.size() > 0)
-    {
+    if (region.velocityPoints.size() > 0) {
         absl::c_sort(region.velocityPoints, [](auto& lhs, auto& rhs) { return lhs.first < rhs.first; });
-        if (region.ampVeltrack > 0)
-        {
+        if (region.ampVeltrack > 0) {
             if (region.velocityPoints.back().first != sfz::Default::velocityRange.getEnd())
                 region.velocityPoints.push_back(std::make_pair<int, float>(127, 1.0f));
             if (region.velocityPoints.front().first != sfz::Default::velocityRange.getStart())
                 region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair<int, float>(0, 0.0f));
-        }
-        else
-        {
+        } else {
             if (region.velocityPoints.front().first != sfz::Default::velocityRange.getEnd())
                 region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair<int, float>(127, 0.0f));
             if (region.velocityPoints.back().first != sfz::Default::velocityRange.getStart())
                 region.velocityPoints.push_back(std::make_pair<int, float>(0, 1.0f));
-        }        
+        }
     }
 }
 
@@ -299,7 +296,10 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
                 continue;
 
             voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
-            filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
+            if (!region->isGenerator()) {
+                voice->expectFileData(fileTicket);
+                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
+            }
         }
     }
 }
@@ -317,7 +317,10 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
                 continue;
 
             voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
-            filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
+            if (!region->isGenerator()) {
+                voice->expectFileData(fileTicket);
+                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
+            }
         }
     }
 }
@@ -336,7 +339,10 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
                 continue;
 
             voice->startVoice(region.get(), delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
-            filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd());
+            if (!region->isGenerator()) {
+                voice->expectFileData(fileTicket);
+                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
+            }
         }
     }
 }

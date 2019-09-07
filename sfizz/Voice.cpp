@@ -101,9 +101,11 @@ void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
         normalizePercents(region->amplitudeEG.getStart(ccState, velocity)));
 }
 
-void sfz::Voice::setFileData(std::unique_ptr<AudioBuffer<float>> file) noexcept
+void sfz::Voice::setFileData(std::unique_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept
 {
-    // DBG("File data set for sample " << region->sample);
+    if (ticket != this->ticket)
+        return;
+
     fileData = std::move(file);
     dataReady.store(true);
 }
@@ -421,4 +423,9 @@ void sfz::Voice::garbageCollect() noexcept
 {
     if (state == State::idle && region == nullptr)
         fileData.reset();
+}
+
+void sfz::Voice::expectFileData(unsigned ticket)
+{
+    this->ticket = ticket;
 }

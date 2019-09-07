@@ -96,6 +96,7 @@ private:
     float sampleRate { config::defaultSampleRate };
 
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
+    unsigned fileTicket { 1 };
 
     LEAK_DETECTOR(Synth);
 };
