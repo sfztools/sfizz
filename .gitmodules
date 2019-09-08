@@ -16,5 +16,5 @@
 	shallow = true
 [submodule "external/cnpy"]
 	path = external/cnpy
-	url = https://github.com/rogersce/cnpy.git
+	url = https://github.com/paulfd/cnpy.git
 	shallow = true
