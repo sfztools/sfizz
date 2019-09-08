@@ -396,12 +396,12 @@ int sfz::Voice::getTriggerNumber() const noexcept
 
 int sfz::Voice::getTriggerChannel() const noexcept
 {
-    return triggerNumber;
+    return triggerChannel;
 }
 
 uint8_t sfz::Voice::getTriggerValue() const noexcept
 {
-    return triggerNumber;
+    return triggerValue;
 }
 
 sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
