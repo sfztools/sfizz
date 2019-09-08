@@ -2,7 +2,6 @@
 	path = external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
 	shallow = true
-
 [submodule "external/benchmark"]
 	path = external/benchmark
 	url = https://github.com/google/benchmark
@@ -10,8 +9,4 @@
 [submodule "external/readerwriterqueue"]
 	path = external/readerwriterqueue
 	url = https://github.com/cameron314/readerwriterqueue.git
-	shallow = true
-[submodule "external/cnpy"]
-	path = external/cnpy
-	url = https://github.com/paulfd/cnpy.git
 	shallow = true
