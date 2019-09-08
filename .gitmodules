@@ -2,10 +2,7 @@
 	path = external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
 	shallow = true
-[submodule "external/Catch2"]
-	path = external/Catch2
-	url = https://github.com/catchorg/Catch2
-	shallow = true
+
 [submodule "external/benchmark"]
 	path = external/benchmark
 	url = https://github.com/google/benchmark
