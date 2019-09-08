@@ -145,6 +145,9 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
 
 void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumber, uint8_t ccValue) noexcept
 {
+    if (region == nullptr)
+        return;
+
     if (ccNumber == 64 && noteIsOff && ccValue < 63)
         release(delay);
 
