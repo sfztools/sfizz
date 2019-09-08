@@ -96,7 +96,7 @@ void sfz::FilePool::loadingThread() noexcept
 {
     FileLoadingInformation fileToLoad {};
     while (!quitThread) {
-        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 100ms))
+        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 10ms))
             continue;
 
         if (fileToLoad.voice == nullptr) {

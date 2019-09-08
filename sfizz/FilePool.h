@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include "Config.h"
 #include "Defaults.h"
 #include "LeakDetector.h"
 #include "AudioBuffer.h"
@@ -67,7 +68,7 @@ private:
         unsigned ticket;
     };
 
-    moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue;
+    moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue { config::numVoices };
     void loadingThread() noexcept;
     std::thread fileLoadingThread;
     bool quitThread { false };
