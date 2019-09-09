@@ -24,6 +24,7 @@
 #include "Voice.h"
 #include "AudioSpan.h"
 #include "Defaults.h"
+#include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
 #include "absl/algorithm/container.h"
@@ -52,13 +53,21 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
     pitchRatio = region->getBasePitchVariation(number, value);
 
+    baseVolumedB = region->getBaseVolumedB();
+    auto volumedB { baseVolumedB };
+    if (region->volumeCC)
+        volumedB += normalizeCC(ccState[region->volumeCC->first]) * region->volumeCC->second;
+    volumeEnvelope.reset(db2mag(volumedB));
+
     baseGain = region->getBaseGain();
+    baseGain *= region->getCrossfadeGain(ccState);
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
-    baseGain *= region->getCrossfadeGain(ccState);
+
+    float gain { baseGain };
     if (region->amplitudeCC)
-        baseGain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
-    amplitudeEnvelope.reset(baseGain);
+        gain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
+    amplitudeEnvelope.reset(gain);
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan = basePan;
@@ -152,13 +161,28 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
         release(delay);
 
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {
-        const float newGain { normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) * baseGain };
+        const float newGain { baseGain * normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) };
         amplitudeEnvelope.registerEvent(delay, newGain);
+    }
+
+    if (region->volumeCC && ccNumber == region->volumeCC->first) {
+        const float newVolumedB { baseVolumedB + normalizeCC(ccValue) * region->volumeCC->second };
+        amplitudeEnvelope.registerEvent(delay, db2mag(newVolumedB));
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
         const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->panCC->second)};
         panEnvelope.registerEvent(delay, newPan);
+    }
+
+    if (region->positionCC && ccNumber == region->positionCC->first) {
+        const float newPosition { basePosition + normalizeCC(ccValue) * normalizeNegativePercents(region->positionCC->second)};
+        positionEnvelope.registerEvent(delay, newPosition);
+    }
+
+    if (region->widthCC && ccNumber == region->widthCC->first) {
+        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizeNegativePercents(region->widthCC->second)};
+        widthEnvelope.registerEvent(delay, newWidth);
     }
 }
 
@@ -233,7 +257,11 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     // AmpEG envelope
     egEnvelope.getBlock(span1);
     ::applyGain<float>(span1, leftBuffer);
-    
+
+    // Volume envelope
+    volumeEnvelope.getBlock(span1);
+    ::applyGain<float>(span1, leftBuffer);
+
     // Prepare for stereo output
     ::copy<float>(leftBuffer, rightBuffer);
 
@@ -258,10 +286,16 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
+    // Amplitude envelope
     amplitudeEnvelope.getBlock(span1);
     buffer.applyGain(span1);
     
+    // AmpEG envelope
     egEnvelope.getBlock(span1);
+    buffer.applyGain(span1);
+
+    // Volume envelope
+    volumeEnvelope.getBlock(span1);
     buffer.applyGain(span1);
 
     // Create mid/side from left/right in the output buffer

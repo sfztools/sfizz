@@ -284,7 +284,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("amp_random"):
         setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
-        gainDistribution.param(std::uniform_real_distribution<float>::param_type(-ampRandom, ampRandom));
+        volumeDistribution.param(std::uniform_real_distribution<float>::param_type(-ampRandom, ampRandom));
         break;
     case hash("amp_velcurve_"):
         if (opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter)) {
@@ -620,11 +620,14 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     return centsFactor(pitchVariationInCents);
 }
 
+float sfz::Region::getBaseVolumedB() noexcept
+{
+    return volume + volumeDistribution(Random::randomGenerator);
+}
+
 float sfz::Region::getBaseGain() noexcept
 {
-    float baseGaindB { volume };
-    baseGaindB += gainDistribution(Random::randomGenerator);
-    return db2mag(baseGaindB);
+    return amplitude;
 }
 
 uint32_t sfz::Region::getOffset() noexcept
@@ -692,20 +695,22 @@ float crossfadeOut(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve cu
 
 float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
 {
-    float baseGain { 1.0f };
+    float baseGain { 1.0 };
+
+    // Amplitude key tracking
+    baseGain *= db2mag(ampKeytrack * static_cast<float>(noteNumber - ampKeycenter));
+
+    // Crossfades related to the note number
+    baseGain *= crossfadeIn(crossfadeKeyInRange, noteNumber, crossfadeKeyCurve);
+    baseGain *= crossfadeOut(crossfadeKeyOutRange, noteNumber, crossfadeKeyCurve);
 
     // Amplitude velocity tracking
     if (trigger == SfzTrigger::release_key)
-        baseGain *= velocityGain(lastNoteVelocities[noteNumber]);
+        baseGain *= velocityCurve(lastNoteVelocities[noteNumber]);
     else
-        baseGain *= velocityGain(velocity);
+        baseGain *= velocityCurve(velocity);
 
-    // Amplitude key tracking
-    baseGain *= db2pow(ampKeytrack * static_cast<float>(noteNumber - pitchKeycenter));
-
-    // Crossfades related to key and velocity
-    baseGain *= crossfadeIn(crossfadeKeyInRange, noteNumber, crossfadeKeyCurve);
-    baseGain *= crossfadeOut(crossfadeKeyOutRange, noteNumber, crossfadeKeyCurve);
+    // Crossfades related to velocity
     baseGain *= crossfadeIn(crossfadeVelInRange, velocity, crossfadeVelCurve);
     baseGain *= crossfadeOut(crossfadeVelOutRange, velocity, crossfadeVelCurve);
 
@@ -732,9 +737,9 @@ float sfz::Region::getCrossfadeGain(const sfz::CCValueArray& ccState) noexcept
     return gain;
 }
 
-float sfz::Region::velocityGain(uint8_t velocity) const noexcept
+float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
 {
-    float gaindB { 0.0 };
+    float gain { 1.0 };
 
     if (velocityPoints.size() > 0) { // Custom velocity curve
         auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
@@ -742,17 +747,17 @@ float sfz::Region::velocityGain(uint8_t velocity) const noexcept
         // Linear interpolation
         float relativePositionInSegment { static_cast<float>(velocity - before->first) / (after->first - before->first) };
         float segmentEndpoints { after->second - before->second };
-        gaindB = db2pow(relativePositionInSegment * segmentEndpoints);
+        gain *= relativePositionInSegment * segmentEndpoints;
     } else { // Standard velocity curve
-        float floatVelocity { static_cast<float>(velocity) / 127 };
-        if (ampVeltrack > 0)
-            gaindB = 40 * std::log(floatVelocity) / std::log(10.0f);
+        const float floatVelocity { static_cast<float>(velocity) / 127 };
+        const float gaindB = [&]() {
+            if (ampVeltrack > 0)
+            return 40 * std::log(floatVelocity) / std::log(10.0f);
         else
-            gaindB = 40 * std::log(1 - floatVelocity) / std::log(10.0f);
+            return 40 * std::log(1 - floatVelocity) / std::log(10.0f);
+        }();
+        gain *= db2mag( gaindB * std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd());
     }
 
-    // Velocity tracking
-    gaindB *= std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd();
-
-    return db2pow(gaindB);
+    return gain;
 }

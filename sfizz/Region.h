@@ -57,8 +57,9 @@ struct Region {
     float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
     float getNoteGain(int noteNumber, uint8_t velocity) noexcept;
     float getCrossfadeGain(const CCValueArray& ccState) noexcept;
+    float getBaseVolumedB() noexcept;
     float getBaseGain() noexcept;
-    float velocityGain(uint8_t velocity) const noexcept;
+    float velocityCurve(uint8_t velocity) const noexcept;
     uint32_t getOffset() noexcept;
     uint32_t getDelay() noexcept;
     uint32_t trueSampleEnd() const noexcept;
@@ -161,7 +162,7 @@ private:
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
 
-    std::uniform_real_distribution<float> gainDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
+    std::uniform_real_distribution<float> volumeDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
     std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };
     std::uniform_int_distribution<uint32_t> offsetDistribution { 0, sfz::Default::offsetRandom };
     std::uniform_int_distribution<int> pitchDistribution { -sfz::Default::pitchRandom, sfz::Default::pitchRandom };

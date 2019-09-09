@@ -90,6 +90,7 @@ private:
 
     float speedRatio { 1.0 };
     float pitchRatio { 1.0 };
+    float baseVolumedB{ 0.0 };
     float baseGain { 1.0 };
     float basePan { 0.0 };
     float basePosition { 0.0 };
@@ -119,7 +120,8 @@ private:
 
     const CCValueArray& ccState;
     ADSREnvelope<float> egEnvelope;
-    LinearEnvelope<float> amplitudeEnvelope;
+    LinearEnvelope<float> volumeEnvelope; // dB events but the envelope output is linear gain
+    LinearEnvelope<float> amplitudeEnvelope; // linear events
     LinearEnvelope<float> panEnvelope;
     LinearEnvelope<float> positionEnvelope;
     LinearEnvelope<float> widthEnvelope;
