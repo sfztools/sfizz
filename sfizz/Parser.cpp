@@ -129,7 +129,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
         while (findPos < tmpView.npos) {
             newString.append(tmpView, lastPos, findPos - lastPos);
 
-            const auto defineEnd = tmpView.find_first_of(" \r\t\n\f\v", findPos);
+            const auto defineEnd = tmpView.find_first_of("= \r\t\n\f\v", findPos);
             const auto candidate = tmpView.substr(findPos, defineEnd - findPos);
             for (auto& definePair : defines) {
                 if (candidate == definePair.first) {
