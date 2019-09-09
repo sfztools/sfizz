@@ -627,7 +627,7 @@ float sfz::Region::getBaseVolumedB() noexcept
 
 float sfz::Region::getBaseGain() noexcept
 {
-    return amplitude;
+    return normalizePercents(amplitude);
 }
 
 uint32_t sfz::Region::getOffset() noexcept
@@ -695,7 +695,7 @@ float crossfadeOut(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve cu
 
 float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
 {
-    float baseGain { 1.0 };
+    float baseGain { 1.0f };
 
     // Amplitude key tracking
     baseGain *= db2mag(ampKeytrack * static_cast<float>(noteNumber - ampKeycenter));
@@ -739,7 +739,7 @@ float sfz::Region::getCrossfadeGain(const sfz::CCValueArray& ccState) noexcept
 
 float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
 {
-    float gain { 1.0 };
+    float gain { 1.0f };
 
     if (velocityPoints.size() > 0) { // Custom velocity curve
         auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });

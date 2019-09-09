@@ -58,6 +58,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->volumeCC)
         volumedB += normalizeCC(ccState[region->volumeCC->first]) * region->volumeCC->second;
     volumeEnvelope.reset(db2mag(volumedB));
+    DBG("Base volume: " << baseVolumedB << " dB - with modifier: " << volumedB << " dB");
 
     baseGain = region->getBaseGain();
     baseGain *= region->getCrossfadeGain(ccState);
@@ -68,24 +69,28 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->amplitudeCC)
         gain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(gain);
+    DBG("Base gain: " << baseGain << " - with modifier: " << gain);
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan = basePan;
     if (region->panCC)
         pan += normalizeCC(ccState[region->panCC->first]) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
+    DBG("Base pan: " << basePan << " - with modifier: " << pan);
 
     basePosition = normalizeNegativePercents(region->position);
     auto position = basePosition;
     if (region->positionCC)
         position += normalizeCC(ccState[region->positionCC->first]) * normalizeNegativePercents(region->positionCC->second);
     positionEnvelope.reset(position);
+    DBG("Base position: " << basePosition << " - with modifier: " << position);
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width = baseWidth;
     if (region->widthCC)
         width += normalizeCC(ccState[region->widthCC->first]) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(width);
+    DBG("Base width: " << baseWidth << " - with modifier: " << width);
 
     sourcePosition = region->getOffset();
     floatPosition = static_cast<float>(sourcePosition);
