@@ -46,16 +46,15 @@ protected:
         case hash("region"): numRegions++; break;
         case hash("curve"): numCurves++; break;
         }
-        // std::cout << "[" << header << "]" << '\t';
-        // for (auto& member: members)
-        // {
-        //     std::cout << member.opcode << "=" << member.value;
-        //     if (member.parameter)
-        //         std::cout << " (" << (int)*member.parameter << ")";
-        //     std::cout << ' ';
-
-        // }
-        // std::cout << '\n';
+        std::cout << "[" << header << "]" << ' ';
+        for (auto& member: members)
+        {
+            std::cout << member.opcode << "=" << member.value;
+            if (member.parameter)
+                std::cout << " (" << (int)*member.parameter << ")";
+            std::cout << ' ';
+        }
+        std::cout << '\n';
     }
 private:
     int numRegions { 0 };
