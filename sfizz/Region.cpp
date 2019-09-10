@@ -749,12 +749,13 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
         float segmentEndpoints { after->second - before->second };
         gain *= relativePositionInSegment * segmentEndpoints;
     } else { // Standard velocity curve
-        const float floatVelocity { static_cast<float>(velocity) / 127 };
+        const float floatVelocity { static_cast<float>(velocity) / 127.0f };
+        // FIXME: Maybe there's a prettier way to check the boundaries?
         const float gaindB = [&]() {
-            if (ampVeltrack > 0)
-            return 40 * std::log(floatVelocity) / std::log(10.0f);
-        else
-            return 40 * std::log(1 - floatVelocity) / std::log(10.0f);
+            if (ampVeltrack >= 0)
+                return floatVelocity == 0.0f ? -90.0f : 40 * std::log(floatVelocity) / std::log(10.0f);
+            else
+                return floatVelocity == 1.0f ? -90.0f : 40 * std::log(1 - floatVelocity) / std::log(10.0f);
         }();
         gain *= db2mag( gaindB * std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd());
     }
