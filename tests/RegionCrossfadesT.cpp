@@ -230,3 +230,31 @@ TEST_CASE("[Region] Crossfade out on CC - gain")
 	ccState[24] = 24; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
 	ccState[24] = 25; REQUIRE( region.getCrossfadeGain(ccState) == 0.0_a );
 }
+
+TEST_CASE("[Region] Velocity bug for extreme values - veltrack at 0")
+{
+    sfz::Region region {};
+    region.parseOpcode({ "sample", "*sine" });
+    region.parseOpcode({ "amp_veltrack", "0" });
+    REQUIRE( region.getNoteGain(64, 127) == 1.0_a );
+    REQUIRE( region.getNoteGain(64, 0) == 1.0_a );
+}
+
+
+TEST_CASE("[Region] Velocity bug for extreme values - positive veltrack")
+{
+    sfz::Region region {};
+    region.parseOpcode({ "sample", "*sine" });
+    region.parseOpcode({ "amp_veltrack", "100" });
+    REQUIRE( region.getNoteGain(64, 127) == 1.0_a );
+    REQUIRE( region.getNoteGain(64, 0) == Approx(0.0).margin(0.0001) );
+}
+
+TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
+{
+    sfz::Region region {};
+    region.parseOpcode({ "sample", "*sine" });
+    region.parseOpcode({ "amp_veltrack", "-100" });
+    REQUIRE( region.getNoteGain(64, 127) == Approx(0.0).margin(0.0001) );
+    REQUIRE( region.getNoteGain(64, 0) == 1.0_a );
+}
