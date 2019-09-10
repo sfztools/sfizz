@@ -23,11 +23,13 @@
 
 #pragma once
 
-#ifdef __linux__
+#if defined(__cpp_lib_filesystem) || (defined(__has_include) && __has_include(<filesystem>))
+#include <filesystem>
+#elif defined(__cpp_lib_experimental_filesystem) || (defined(__has_include) && __has_include(<experimental/filesystem>))
 #include <experimental/filesystem>
 namespace std {
     namespace filesystem = std::experimental::filesystem;
 }
 #else
-#include <filesystem>
+#error no filesystem support
 #endif
