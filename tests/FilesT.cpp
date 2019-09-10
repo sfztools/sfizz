@@ -301,3 +301,18 @@ TEST_CASE("[Files] sw_default and playing with switches")
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
 }
+
+
+TEST_CASE("[Files] wrong (overlapping) replacement for defines")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/SpecificBugs/wrong-replacements.sfz");
+    REQUIRE( synth.getNumRegions() == 3 );
+    REQUIRE( synth.getRegionView(0)->keyRange.getStart() == 52 );
+    REQUIRE( synth.getRegionView(0)->keyRange.getEnd() == 52 );
+    REQUIRE( synth.getRegionView(1)->keyRange.getStart() == 57 );
+    REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
+    REQUIRE( synth.getRegionView(2)->amplitudeCC );
+    REQUIRE( synth.getRegionView(2)->amplitudeCC->first == 10 );
+    REQUIRE( synth.getRegionView(2)->amplitudeCC->second == 34.0f );
+}

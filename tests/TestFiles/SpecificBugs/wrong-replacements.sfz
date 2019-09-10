@@ -1,0 +1,7 @@
+#define $KeyCrash2Edge     52 // Crash Cymbal 2 (Edge)
+#define $KeyCrash2     57 // Crash Cymbal 2 (Bow)
+#define $Param     10 // Opcode parameter replacement
+
+<region> key=$KeyCrash2Edge sample=../mono_sample.wav
+<region> key=$KeyCrash2 sample=../mono_sample.wav
+<region> amplitude_oncc$Param=34 sample=../mono_sample.wav
