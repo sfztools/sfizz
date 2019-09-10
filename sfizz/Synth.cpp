@@ -41,7 +41,8 @@ void sfz::Synth::callback(std::string_view header, const std::vector<Opcode>& me
     switch (hash(header)) {
     case hash("global"):
         // We shouldn't have multiple global headers in file
-        ASSERT(!hasGlobal);
+        // But apparently some instruments do not really care :)
+        // ASSERT(!hasGlobal);
         globalOpcodes = members;
         handleGlobalOpcodes(members);
         hasGlobal = true;
