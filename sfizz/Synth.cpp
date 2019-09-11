@@ -133,14 +133,17 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
         switch (hash(member.opcode)) {
+        case hash("Set_cc"): [[fallthrough]]
         case hash("set_cc"):
             if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
                 setValueFromOpcode(member, ccState[*member.parameter], Default::ccRange);
             break;
+        case hash("Label_cc"): [[fallthrough]]
         case hash("label_cc"):
             if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
                 ccNames.emplace_back(*member.parameter, member.value);
             break;
+        case hash("Default_path"): [[fallthrough]]
         case hash("default_path"):
             if (auto newPath = std::filesystem::path(member.value); std::filesystem::exists(newPath))
                 rootDirectory = newPath;
