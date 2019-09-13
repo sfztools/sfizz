@@ -26,6 +26,7 @@
 #include "LeakDetector.h"
 #include "Range.h"
 #include "SfzHelpers.h"
+#include "StringViewHelpers.h"
 #include <optional>
 #include <string_view>
 
@@ -48,8 +49,12 @@ inline std::optional<ValueType> readOpcode(std::string_view value, const Range<V
 {
     if constexpr (std::is_integral<ValueType>::value) {
         int64_t returnedValue;
-        if (!absl::SimpleAtoi(value, &returnedValue))
-            return {};
+        if (!absl::SimpleAtoi(value, &returnedValue)) {
+            float floatValue;
+            if (!absl::SimpleAtof(value, &floatValue))
+                return {};
+            returnedValue = static_cast<int64_t>(floatValue);
+        }
 
         if (returnedValue > std::numeric_limits<ValueType>::max())
             returnedValue = std::numeric_limits<ValueType>::max();
@@ -63,6 +68,18 @@ inline std::optional<ValueType> readOpcode(std::string_view value, const Range<V
             return std::nullopt;
 
         return validRange.clamp(returnedValue);
+    }
+}
+
+inline std::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
+{
+    switch (hash(opcode.value)) {
+    case hash("off"):
+        return false;
+    case hash("on"):
+        return true;
+    default:
+        return {};
     }
 }
 

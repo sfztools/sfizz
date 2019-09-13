@@ -142,5 +142,9 @@ namespace Default
     inline constexpr Range<int> egDepthRange { -12000, 12000 };
     inline constexpr Range<float> egOnCCTimeRange { -100.0, 100.0 };
     inline constexpr Range<float> egOnCCPercentRange { -100.0, 100.0 };
+
+    // ***** SFZ v2 ********
+    inline constexpr bool checkSustain { true }; // sustain_sw
+    inline constexpr bool checkSostenuto { true }; // sostenuto_sw
 }
 }

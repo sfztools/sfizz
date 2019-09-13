@@ -31,7 +31,8 @@ namespace config {
     constexpr int preloadSize { 8192 };
     constexpr int numChannels { 2 };
     constexpr int numVoices { 64 };
-    constexpr int numLoadingThreads { 4 };
+    constexpr int sustainCC { 64 };
+    constexpr int halfCCThreshold { 64 };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };
     constexpr float fastReleaseDuration { 0.01 };

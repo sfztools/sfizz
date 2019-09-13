@@ -1011,6 +1011,26 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeEG.ccStart->second == -100.0f);
         REQUIRE(region.amplitudeEG.ccSustain->second == -100.0f);
     }
+
+    SECTION("sustain_sw and sostenuto_sw")
+    {
+        REQUIRE(region.checkSustain);
+        REQUIRE(region.checkSostenuto);
+        region.parseOpcode({ "sustain_sw", "off" });
+        REQUIRE(!region.checkSustain);
+        region.parseOpcode({ "sustain_sw", "on" });
+        REQUIRE(region.checkSustain);
+        region.parseOpcode({ "sustain_sw", "off" });
+        region.parseOpcode({ "sustain_sw", "obladi" });
+        REQUIRE(region.checkSustain);
+        region.parseOpcode({ "sostenuto_sw", "off" });
+        REQUIRE(!region.checkSostenuto);
+        region.parseOpcode({ "sostenuto_sw", "on" });
+        REQUIRE(region.checkSostenuto);
+        region.parseOpcode({ "sostenuto_sw", "off" });
+        region.parseOpcode({ "sostenuto_sw", "obladi" });
+        REQUIRE(region.checkSostenuto);
+    }
 }
 
 // Specific region bugs

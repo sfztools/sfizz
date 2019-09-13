@@ -96,6 +96,8 @@ struct Region {
     std::optional<uint8_t> keyswitchDown {}; // sw_down
     std::optional<uint8_t> previousNote {}; // sw_previous
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
+    bool checkSustain { Default::checkSustain }; // sustain_sw
+    bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
 
     // Region logic: internal conditions
     Range<uint8_t> aftertouchRange { Default::aftertouchRange }; // hichanaft and lochanaft

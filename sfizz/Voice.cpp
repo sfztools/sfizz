@@ -23,6 +23,7 @@
 
 #include "Voice.h"
 #include "AudioSpan.h"
+#include "Config.h"
 #include "Defaults.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
@@ -94,6 +95,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
 
     sourcePosition = region->getOffset();
     floatPosition = static_cast<float>(sourcePosition);
+    DBG("Offset: " << floatPosition);
     initialDelay = delay + region->getDelay();
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
@@ -151,9 +153,8 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (ccState[64] < 63) {
+        if (!region->checkSustain || ccState[config::sustainCC] < config::halfCCThreshold)
             release(delay);
-        }
     }
 }
 
@@ -162,7 +163,7 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
     if (region == nullptr)
         return;
 
-    if (ccNumber == 64 && noteIsOff && ccValue < 63)
+    if (ccNumber == config::sustainCC && noteIsOff && ccValue < config::halfCCThreshold)
         release(delay);
 
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {

@@ -22,8 +22,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Region.h"
+#include "Defaults.h"
 #include "MathHelpers.h"
 #include "Debug.h"
+#include "Opcode.h"
 #include "StringViewHelpers.h"
 #include "absl/strings/str_replace.h"
 #include <random>
@@ -183,6 +185,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             DBG("Unknown velocity mode: " << std::string(opcode.value));
         }
         break;
+
+    case hash("sustain_sw"):
+        checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
+        break;  
+    case hash("sostenuto_sw"):
+        checkSostenuto = readBooleanFromOpcode(opcode).value_or(Default::checkSostenuto);
+        break;  
     // Region logic: internal conditions
     case hash("lochanaft"):
         setRangeStartFromOpcode(opcode, aftertouchRange, Default::aftertouchRange);
