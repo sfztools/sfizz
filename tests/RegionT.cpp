@@ -1012,3 +1012,13 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeEG.ccSustain->second == -100.0f);
     }
 }
+
+// Specific region bugs
+TEST_CASE("[Region] Non-conforming floating point values in integer opcodes")
+{
+    sfz::Region region;
+    region.parseOpcode({ "offset", "2014.5" });
+    REQUIRE(region.offset == 2014);
+    region.parseOpcode({ "pitch_keytrack", "-2.1" });
+    REQUIRE(region.pitchKeytrack == -2);
+}

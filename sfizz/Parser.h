@@ -46,11 +46,9 @@ public:
     const std::vector<std::filesystem::path>& getIncludedFiles() const noexcept { return includedFiles; }
     void disableRecursiveIncludeGuard() { recursiveIncludeGuard = false; }
     void enableRecursiveIncludeGuard() { recursiveIncludeGuard = true; }
-
 protected:
     virtual void callback(std::string_view header, const std::vector<Opcode>& members) = 0;
     std::filesystem::path rootDirectory { std::filesystem::current_path() };
-
 private:
     bool recursiveIncludeGuard { false };
     std::map<std::string, std::string> defines;
