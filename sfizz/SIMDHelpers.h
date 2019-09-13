@@ -413,3 +413,20 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
 
 template <>
 void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
+
+template <class T, bool SIMD = SIMDConfig::mean>
+T mean(absl::Span<const T> vector) noexcept
+{
+    T result { 0.0 };
+    if (vector.size() == 0)
+        return result;
+
+    auto* value = vector.begin();
+    while (value < vector.end())
+        result += *value++;
+
+    return result / static_cast<T>(vector.size());
+}
+
+template <>
+float mean<float, true>(absl::Span<const float> vector) noexcept;

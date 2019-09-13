@@ -684,3 +684,17 @@ TEST_CASE("[Helpers] copy (SIMD vs scalar)")
     add<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
+
+TEST_CASE("[Helpers] Mean")
+{
+    std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
+    REQUIRE(mean<float, false>(input) == 5.5f);
+    REQUIRE(mean<float, true>(input) == 5.5f);
+}
+
+TEST_CASE("[Helpers] Mean (SIMD vs scalar)")
+{
+    std::vector<float> input(bigBufferSize);
+    absl::c_iota(input, 0.0);
+    REQUIRE(mean<float, false>(input) == mean<float, true>(input));
+}

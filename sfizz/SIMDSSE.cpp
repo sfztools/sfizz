@@ -601,3 +601,35 @@ void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> lef
     while (pan < sentinel)
         snippetPan(pan, left, right);
 }
+
+template <>
+float mean<float, true>(absl::Span<const float> vector) noexcept
+{
+    float result { 0.0 };
+    if (vector.size() == 0)
+        return result;
+
+    auto* value = vector.begin();
+    auto* sentinel = vector.end();
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(value))
+        result += *value++;
+    
+    auto mmValues = _mm_setzero_ps();
+    while(value < lastAligned) {
+        mmValues = _mm_add_ps(mmValues, _mm_load_ps(value));
+        value += TypeAlignment;
+    }
+
+    std::array<float, 4> sseResult;
+    _mm_store_ps(sseResult.data(), mmValues);
+
+    for (auto sseValue: sseResult)
+        result += sseValue;
+
+    while (value < sentinel)
+        result += *value++;
+
+    return result / static_cast<float>(vector.size());
+}

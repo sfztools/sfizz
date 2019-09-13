@@ -131,3 +131,9 @@ void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> lef
 {
     pan<float, false>(panEnvelope, leftBuffer, rightBuffer);
 }
+
+template <>
+float mean<float, true>(absl::Span<const float> vector) noexcept
+{
+    return mean<float, false>(vector);
+}

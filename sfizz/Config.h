@@ -59,4 +59,5 @@ namespace SIMDConfig {
     constexpr bool multiplyAdd { false };
     constexpr bool copy { false };
     constexpr bool pan { true };
+    constexpr bool mean { true };
 }
