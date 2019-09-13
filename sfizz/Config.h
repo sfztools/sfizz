@@ -39,6 +39,8 @@ namespace config {
     constexpr char defineCharacter { '$' };
     constexpr int oversamplingFactor { 2 };
     constexpr float A440 { 440.0 };
+    constexpr unsigned powerHistoryLength { 16 };
+    constexpr float voiceStealingThreshold { 0.00001 };
 } // namespace config
 
 } // namespace sfz
@@ -59,5 +61,6 @@ namespace SIMDConfig {
     constexpr bool multiplyAdd { false };
     constexpr bool copy { false };
     constexpr bool pan { true };
-    constexpr bool mean { true };
+    constexpr bool mean { false };
+    constexpr bool meanSquared { false };
 }

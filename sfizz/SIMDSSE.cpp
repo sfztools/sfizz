@@ -616,20 +616,57 @@ float mean<float, true>(absl::Span<const float> vector) noexcept
     while (unaligned(value))
         result += *value++;
     
-    auto mmValues = _mm_setzero_ps();
+    auto mmSums = _mm_setzero_ps();
     while(value < lastAligned) {
-        mmValues = _mm_add_ps(mmValues, _mm_load_ps(value));
+        mmSums = _mm_add_ps(mmSums, _mm_load_ps(value));
         value += TypeAlignment;
     }
 
     std::array<float, 4> sseResult;
-    _mm_store_ps(sseResult.data(), mmValues);
+    _mm_store_ps(sseResult.data(), mmSums);
 
     for (auto sseValue: sseResult)
         result += sseValue;
 
     while (value < sentinel)
         result += *value++;
+
+    return result / static_cast<float>(vector.size());
+}
+
+template <>
+float meanSquared<float, true>(absl::Span<const float> vector) noexcept
+{
+    float result { 0.0 };
+    if (vector.size() == 0)
+        return result;
+
+    auto* value = vector.begin();
+    auto* sentinel = vector.end();
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(value)) {
+        result += (*value) * (*value);
+        value++;
+    }
+    
+    auto mmSums = _mm_setzero_ps();
+    while(value < lastAligned) {
+        const auto mmValues = _mm_load_ps(value);
+        mmSums = _mm_add_ps(mmSums, _mm_mul_ps(mmValues, mmValues));
+        value += TypeAlignment;
+    }
+
+    std::array<float, 4> sseResult;
+    _mm_store_ps(sseResult.data(), mmSums);
+
+    for (auto sseValue: sseResult)
+        result += sseValue;
+
+    while (value < sentinel) {
+        result += (*value) * (*value);
+        value++;
+    }
 
     return result / static_cast<float>(vector.size());
 }

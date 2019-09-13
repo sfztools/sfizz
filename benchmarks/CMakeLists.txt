@@ -72,12 +72,16 @@ target_link_libraries(bm_pan benchmark absl::span absl::algorithm)
 add_executable(bm_mean BM_mean.cpp ${SFIZZ_SIMD_SOURCES})
 target_link_libraries(bm_mean benchmark absl::span absl::algorithm)
 
+add_executable(bm_meanSquared BM_meanSquared.cpp ${SFIZZ_SIMD_SOURCES})
+target_link_libraries(bm_meanSquared benchmark absl::span absl::algorithm)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks 
 	bm_opf_high_vs_low 
 	bm_write
 	bm_read
 	bm_mean
+	bm_meanSquared
 	bm_fill
 	bm_mathfuns
 	bm_gain

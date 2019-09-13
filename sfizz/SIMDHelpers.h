@@ -430,3 +430,22 @@ T mean(absl::Span<const T> vector) noexcept
 
 template <>
 float mean<float, true>(absl::Span<const float> vector) noexcept;
+
+template <class T, bool SIMD = SIMDConfig::meanSquared>
+T meanSquared(absl::Span<const T> vector) noexcept
+{
+    T result { 0.0 };
+    if (vector.size() == 0)
+        return result;
+
+    auto* value = vector.begin();
+    while (value < vector.end()) {
+        result += (*value) * (*value);
+        value++;
+    }
+
+    return result / static_cast<T>(vector.size());
+}
+
+template <>
+float meanSquared<float, true>(absl::Span<const float> vector) noexcept;

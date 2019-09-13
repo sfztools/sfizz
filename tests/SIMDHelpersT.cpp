@@ -696,5 +696,19 @@ TEST_CASE("[Helpers] Mean (SIMD vs scalar)")
 {
     std::vector<float> input(bigBufferSize);
     absl::c_iota(input, 0.0);
-    REQUIRE(mean<float, false>(input) == mean<float, true>(input));
+    REQUIRE(mean<float, false>(input) == Approx(mean<float, true>(input)).margin(0.001));
+}
+
+TEST_CASE("[Helpers] Mean Squared")
+{
+    std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
+    REQUIRE(meanSquared<float, false>(input) == 38.5f);
+    REQUIRE(meanSquared<float, true>(input) == 38.5f);
+}
+
+TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
+{
+    std::vector<float> input(medBufferSize);
+    absl::c_iota(input, 0.0);
+    REQUIRE(meanSquared<float, false>(input) == meanSquared<float, true>(input));
 }

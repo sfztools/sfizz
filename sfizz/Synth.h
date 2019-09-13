@@ -86,8 +86,10 @@ private:
     std::optional<uint8_t> defaultSwitch;
     std::set<std::string_view> unknownOpcodes;
     using RegionPtrVector = std::vector<Region*>;
+    using VoicePtrVector = std::vector<Voice*>;
     std::vector<std::unique_ptr<Region>> regions;
     std::vector<std::unique_ptr<Voice>> voices;
+    VoicePtrVector voiceViewArray;
     std::array<RegionPtrVector, 128> noteActivationLists;
     std::array<RegionPtrVector, 128> ccActivationLists;
 

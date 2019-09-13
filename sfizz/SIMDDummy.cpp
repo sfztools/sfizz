@@ -137,3 +137,9 @@ float mean<float, true>(absl::Span<const float> vector) noexcept
 {
     return mean<float, false>(vector);
 }
+
+template <>
+float meanSquared<float, true>(absl::Span<const float> vector) noexcept
+{
+    return meanSquared<float, false>(vector);
+}

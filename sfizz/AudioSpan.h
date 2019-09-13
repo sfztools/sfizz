@@ -125,6 +125,16 @@ public:
         return {};
     }
 
+    Type meanSquared() noexcept
+    {
+        if (numChannels == 0)
+            return 0.0;
+        Type result = 0.0;
+        for (int i = 0; i < numChannels; ++i)
+            result += ::meanSquared<Type>(getConstSpan(i));
+        return result / numChannels;
+    }
+
     void fill(Type value) noexcept
     {
         for (int i = 0; i < numChannels; ++i)

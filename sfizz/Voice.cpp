@@ -48,7 +48,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (delay < 0)
         delay = 0;
 
-    DBG("Starting voice with " << region->sample);
+    // DBG("Starting voice with " << region->sample);
 
     state = State::playing;
     speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
@@ -59,7 +59,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->volumeCC)
         volumedB += normalizeCC(ccState[region->volumeCC->first]) * region->volumeCC->second;
     volumeEnvelope.reset(db2mag(volumedB));
-    DBG("Base volume: " << baseVolumedB << " dB - with modifier: " << volumedB << " dB");
+    // DBG("Base volume: " << baseVolumedB << " dB - with modifier: " << volumedB << " dB");
 
     baseGain = region->getBaseGain();
     baseGain *= region->getCrossfadeGain(ccState);
@@ -70,32 +70,32 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->amplitudeCC)
         gain *= normalizeCC(ccState[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(gain);
-    DBG("Base gain: " << baseGain << " - with modifier: " << gain);
+    // DBG("Base gain: " << baseGain << " - with modifier: " << gain);
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan = basePan;
     if (region->panCC)
         pan += normalizeCC(ccState[region->panCC->first]) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
-    DBG("Base pan: " << basePan << " - with modifier: " << pan);
+    // DBG("Base pan: " << basePan << " - with modifier: " << pan);
 
     basePosition = normalizeNegativePercents(region->position);
     auto position = basePosition;
     if (region->positionCC)
         position += normalizeCC(ccState[region->positionCC->first]) * normalizeNegativePercents(region->positionCC->second);
     positionEnvelope.reset(position);
-    DBG("Base position: " << basePosition << " - with modifier: " << position);
+    // DBG("Base position: " << basePosition << " - with modifier: " << position);
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width = baseWidth;
     if (region->widthCC)
         width += normalizeCC(ccState[region->widthCC->first]) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(width);
-    DBG("Base width: " << baseWidth << " - with modifier: " << width);
+    // DBG("Base width: " << baseWidth << " - with modifier: " << width);
 
     sourcePosition = region->getOffset();
     floatPosition = static_cast<float>(sourcePosition);
-    DBG("Offset: " << floatPosition);
+    // DBG("Offset: " << floatPosition);
     initialDelay = delay + region->getDelay();
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
@@ -230,8 +230,10 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
     buffer.fill(0.0f);
 
-    if (state == State::idle || region == nullptr)
+    if (state == State::idle || region == nullptr) {
+        powerHistory.push(0.0);
         return;
+    }
 
     if (region->isGenerator())
         fillWithGenerator(buffer);
@@ -245,6 +247,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     
     if (!egEnvelope.isSmoothing())
         reset();
+    
+    powerHistory.push(buffer.meanSquared());
 }
 
 void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
@@ -471,4 +475,19 @@ void sfz::Voice::garbageCollect() noexcept
 void sfz::Voice::expectFileData(unsigned ticket)
 {
     this->ticket = ticket;
+}
+
+float sfz::Voice::getMeanSquaredAverage() const noexcept
+{
+    return powerHistory.getAverage();
+}
+
+bool sfz::Voice::canBeStolen() const noexcept
+{
+    return state == State::release;
+}
+
+float sfz::Voice::getSourcePosition() const noexcept
+{
+    return floatPosition;
 }

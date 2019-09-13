@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Synth.h"
+#include "Config.h"
 #include "Debug.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
@@ -34,6 +35,7 @@ sfz::Synth::Synth()
 {
     for (int i = 0; i < config::numVoices; ++i)
         voices.push_back(std::make_unique<Voice>(ccState));
+    voiceViewArray.reserve(config::numVoices);
 }
 
 void sfz::Synth::callback(std::string_view header, const std::vector<Opcode>& members)
@@ -235,11 +237,28 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
     auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
-    if (freeVoice == voices.end()) {
-        DBG("Voices are overloaded, can't start a new note");
-        return {};
+    if (freeVoice != voices.end())
+        return freeVoice->get();
+
+    // Find voices that can be stolen
+    DBG("No free voice, trying to steal");
+    voiceViewArray.clear();
+    for (auto& voice: voices)
+        if (voice->canBeStolen())
+            voiceViewArray.push_back(voice.get());
+    absl::c_sort(voices, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
+
+    for (auto* voice: voiceViewArray) {
+        DBG("Average voice power: " << voice->getMeanSquaredAverage());
+        if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
+            DBG("Stealing voice...");
+            voice->reset();
+            return voice;
+        }
     }
-    return freeVoice->get();
+
+    DBG("Voices are overloaded, can't start a new note");
+    return {};
 }
 
 void sfz::Synth::getNumActiveVoices() const noexcept

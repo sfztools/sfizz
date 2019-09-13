@@ -25,6 +25,7 @@
 #include "ADSREnvelope.h"
 #include "Config.h"
 #include "LinearEnvelope.h"
+#include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
@@ -59,6 +60,7 @@ public:
     void renderBlock(AudioSpan<float, 2> buffer) noexcept;
 
     bool isFree() const noexcept;
+    bool canBeStolen() const noexcept;
     int getTriggerNumber() const noexcept;
     int getTriggerChannel() const noexcept;
     uint8_t getTriggerValue() const noexcept;
@@ -66,6 +68,9 @@ public:
 
     void reset() noexcept;
     void garbageCollect() noexcept;
+
+    float getMeanSquaredAverage() const noexcept;
+    float getSourcePosition() const noexcept;
 private:
     void fillWithData(AudioSpan<float> buffer) noexcept;
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
@@ -126,6 +131,7 @@ private:
     LinearEnvelope<float> positionEnvelope;
     LinearEnvelope<float> widthEnvelope;
 
+    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
     LEAK_DETECTOR(Voice);
 };
 
