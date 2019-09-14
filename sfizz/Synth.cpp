@@ -206,11 +206,15 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
             region->sampleRate = fileInformation->sampleRate;
         }
 
-        for (auto note = region->keyRange.getStart(); note <= region->keyRange.getEnd(); note++)
-            noteActivationLists[note].push_back(region);
+        for (auto note = 0; note < 128; note++) {
+            if (region->keyRange.containsWithEnd(note) || region->keyswitchRange.containsWithEnd(note))
+                noteActivationLists[note].push_back(region);
+        }
 
-        for (auto cc = region->keyRange.getStart(); cc <= region->keyRange.getEnd(); cc++)
-            ccActivationLists[cc].push_back(region);
+        for (auto cc = 0; cc < 128; cc++) {
+            if (region->ccTriggers.contains(cc) || region->ccConditions.contains(cc))
+                ccActivationLists[cc].push_back(region);
+        }
 
         // Defaults
         for (int ccIndex = 1; ccIndex < 128; ccIndex++)
@@ -305,9 +309,10 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
 void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
 {
+    ASSERT(noteNumber <= 128);
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
-    for (auto& region : regions) {
+    for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
             for (auto& voice : voices) {
                 if (voice->checkOffGroup(delay, region->group))
@@ -318,7 +323,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
                 filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
@@ -329,17 +334,18 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
 
 void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
 {
+    ASSERT(noteNumber <= 128);
     auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, velocity);
 
-    for (auto& region : regions) {
+    for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(channel, noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region.get(), delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
                 filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
@@ -350,18 +356,19 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
 
 void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
 {
+    ASSERT(ccNumber <= 128);
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
 
     ccState[ccNumber] = ccValue;
 
-    for (auto& region : regions) {
+    for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(channel, ccNumber, ccValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region.get(), delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
+            voice->startVoice(region, delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
                 filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
