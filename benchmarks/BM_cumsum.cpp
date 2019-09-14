@@ -29,12 +29,12 @@
 #include <iostream>
 #include "../sfizz/SIMDHelpers.h"
 
-class CumsumArray : public benchmark::Fixture {
+class CumArray : public benchmark::Fixture {
 public:
   void SetUp(const ::benchmark::State& state) {
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 0, 1 };
+    std::uniform_real_distribution<float> dist { 0.1, 1 };
     input = std::vector<float>(state.range(0));
     output = std::vector<float>(state.range(0));
     std::generate(input.begin(), input.end(), [&]() { return dist(gen); });
@@ -49,36 +49,37 @@ public:
 };
 
 
-BENCHMARK_DEFINE_F(CumsumArray, Scalar)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(CumArray, Sum_Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
         cumsum<float, false>(input, absl::MakeSpan(output));
     }
 }
 
-BENCHMARK_DEFINE_F(CumsumArray, SIMD)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(CumArray, Sum_SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
         cumsum<float, true>(input, absl::MakeSpan(output));
     }
 }
 
-BENCHMARK_DEFINE_F(CumsumArray, Scalar_Unaligned)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(CumArray, Sum_Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
         cumsum<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
-BENCHMARK_DEFINE_F(CumsumArray, SIMD_Unaligned)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(CumArray, Sum_SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
         cumsum<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
-BENCHMARK_REGISTER_F(CumsumArray, Scalar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
-BENCHMARK_REGISTER_F(CumsumArray, SIMD)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
-BENCHMARK_REGISTER_F(CumsumArray, Scalar_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
-BENCHMARK_REGISTER_F(CumsumArray, SIMD_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+
+BENCHMARK_REGISTER_F(CumArray, Sum_Scalar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(CumArray, Sum_SIMD)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(CumArray, Sum_Scalar_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(CumArray, Sum_SIMD_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_MAIN();

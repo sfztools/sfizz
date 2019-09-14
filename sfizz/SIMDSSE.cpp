@@ -691,7 +691,7 @@ void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output
     while (in < lastAligned) {
         auto mmOffset = _mm_load_ps(in);
         mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4)));
-        mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, 0x40));
+        mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, _MM_SHUFFLE(1, 0, 0, 0)));
         mmOutput = _mm_add_ps(mmOutput, mmOffset);
         _mm_store_ps(out, mmOutput);
         mmOutput = _mm_shuffle_ps(mmOutput, mmOutput, _MM_SHUFFLE(3, 3, 3, 3));
