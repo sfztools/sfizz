@@ -55,6 +55,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     pitchRatio = region->getBasePitchVariation(number, value);
 
     baseVolumedB = region->getBaseVolumedB();
+
     auto volumedB { baseVolumedB };
     if (region->volumeCC)
         volumedB += normalizeCC(ccState[region->volumeCC->first]) * region->volumeCC->second;
@@ -93,8 +94,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     widthEnvelope.reset(width);
     // DBG("Base width: " << baseWidth << " - with modifier: " << width);
 
-    sourcePosition = region->getOffset();
-    floatPosition = static_cast<float>(sourcePosition);
+    floatPosition = static_cast<float>(region->getOffset());
     // DBG("Offset: " << floatPosition);
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() / sampleRate);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
@@ -418,8 +418,6 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 
     ::sin<float>(tempSpan1.first(buffer.getNumFrames()), buffer.getSpan(0));
     ::copy<float>(buffer.getSpan(0), buffer.getSpan(1));
-
-    sourcePosition += buffer.getNumFrames();
 }
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
@@ -460,7 +458,6 @@ void sfz::Voice::reset() noexcept
     if (region != nullptr) {
         DBG("Reset voice with sample " << region->sample);
     }
-    sourcePosition = 0;
     floatPosition = 0.0f;
     region = nullptr;
     noteIsOff = false;

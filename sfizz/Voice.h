@@ -103,7 +103,6 @@ private:
     float baseFrequency { 440.0 };
     float phase { 0.0f };
 
-    uint32_t sourcePosition { 0 };
     float floatPosition { 0.0f };
     uint32_t initialDelay { 0 };
 
