@@ -712,3 +712,23 @@ TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
     absl::c_iota(input, 0.0);
     REQUIRE(meanSquared<float, false>(input) == meanSquared<float, true>(input));
 }
+
+TEST_CASE("[Helpers] Cumulative sum ")
+{
+    std::array<float, 6> input { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<float, 6> output; 
+    std::array<float, 6> expected { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
+    cumsum<float, false>(input, absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
+{
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
+    cumsum<float, false>(input, absl::MakeSpan(outputScalar));
+    cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}

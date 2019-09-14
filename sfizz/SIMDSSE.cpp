@@ -613,7 +613,7 @@ float mean<float, true>(absl::Span<const float> vector) noexcept
     auto* sentinel = vector.end();
     const auto* lastAligned = prevAligned(sentinel);
 
-    while (unaligned(value))
+    while (unaligned(value) && value < lastAligned)
         result += *value++;
     
     auto mmSums = _mm_setzero_ps();
@@ -645,7 +645,7 @@ float meanSquared<float, true>(absl::Span<const float> vector) noexcept
     auto* sentinel = vector.end();
     const auto* lastAligned = prevAligned(sentinel);
 
-    while (unaligned(value)) {
+    while (unaligned(value) && value < lastAligned) {
         result += (*value) * (*value);
         value++;
     }
@@ -669,4 +669,36 @@ float meanSquared<float, true>(absl::Span<const float> vector) noexcept
     }
 
     return result / static_cast<float>(vector.size());
+}
+
+template <>
+void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    if (input.size() == 0)
+        return;
+
+    auto out = output.data();
+    auto in = input.data();
+    const auto sentinel = in + std::min(input.size(), output.size());
+    const auto lastAligned = prevAligned(sentinel);
+
+    *out++ = *in++;
+    while (unaligned(in, out) && in < lastAligned)
+        snippetCumsum(in, out);
+
+    auto mmOutput = _mm_set_ps1(*(out - 1));
+    while (in < lastAligned) {
+        auto mmOffset = _mm_load_ps(in);
+        mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4)));
+        mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, 0x40));
+        mmOutput = _mm_add_ps(mmOutput, mmOffset);
+        _mm_store_ps(out, mmOutput);
+        mmOutput = _mm_shuffle_ps(mmOutput, mmOutput, _MM_SHUFFLE(3, 3, 3, 3));
+        in += TypeAlignment;
+        out += TypeAlignment;
+    }
+
+    while (in < sentinel)
+        snippetCumsum(in, out);
 }

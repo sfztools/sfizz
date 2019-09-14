@@ -143,3 +143,9 @@ float meanSquared<float, true>(absl::Span<const float> vector) noexcept
 {
     return meanSquared<float, false>(vector);
 }
+
+template <>
+void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    cumsum<float, false>(input, output);
+}

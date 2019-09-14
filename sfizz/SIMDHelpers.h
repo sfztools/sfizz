@@ -449,3 +449,29 @@ T meanSquared(absl::Span<const T> vector) noexcept
 
 template <>
 float meanSquared<float, true>(absl::Span<const float> vector) noexcept;
+
+template <class T>
+inline void snippetCumsum(const T*& input, T*& output)
+{
+    *output = *(output - 1) + *input++;
+    output++;
+}
+
+template <class T, bool SIMD = SIMDConfig::cumsum>
+void cumsum(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    if (input.size() == 0)
+        return;
+
+    auto out = output.data();
+    auto in = input.data();
+    const auto sentinel = in + std::min(input.size(), output.size());
+
+    *out++ = *in++;
+    while (in < sentinel)
+        snippetCumsum(in, out);
+}
+
+template <>
+void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
