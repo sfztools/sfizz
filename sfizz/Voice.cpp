@@ -73,21 +73,21 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     // DBG("Base gain: " << baseGain << " - with modifier: " << gain);
 
     basePan = normalizeNegativePercents(region->pan);
-    auto pan = basePan;
+    auto pan { basePan };
     if (region->panCC)
         pan += normalizeCC(ccState[region->panCC->first]) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
     // DBG("Base pan: " << basePan << " - with modifier: " << pan);
 
     basePosition = normalizeNegativePercents(region->position);
-    auto position = basePosition;
+    auto position { basePosition };
     if (region->positionCC)
         position += normalizeCC(ccState[region->positionCC->first]) * normalizeNegativePercents(region->positionCC->second);
     positionEnvelope.reset(position);
     // DBG("Base position: " << basePosition << " - with modifier: " << position);
 
     baseWidth = normalizeNegativePercents(region->width);
-    auto width = baseWidth;
+    auto width { baseWidth };
     if (region->widthCC)
         width += normalizeCC(ccState[region->widthCC->first]) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(width);
@@ -96,7 +96,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     sourcePosition = region->getOffset();
     floatPosition = static_cast<float>(sourcePosition);
     // DBG("Offset: " << floatPosition);
-    initialDelay = delay + region->getDelay();
+    initialDelay = delay + static_cast<uint32_t>(region->getDelay() / sampleRate);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
 }
