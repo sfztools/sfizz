@@ -494,3 +494,35 @@ void cumsum(absl::Span<const float> input, absl::Span<float> output) noexcept
 
 template <>
 void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template<class T>
+void snippetSFZInterpolationCast(const T*& floatJump, int*& jump, T*& leftCoeff, T*& rightCoeff)
+{
+    *jump = static_cast<int>(*floatJump);
+    *rightCoeff = *floatJump - static_cast<float>(*jump);
+    *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
+    leftCoeff++;
+    jump++;
+    rightCoeff++;
+    floatJump++;
+}
+
+template<class T, bool SIMD = SIMDConfig::sfzInterpolationCast>
+void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs) noexcept
+{
+    ASSERT(jumps.size() >= floatJumps.size());
+    ASSERT(jumps.size() == leftCoeffs.size());
+    ASSERT(jumps.size() == rightCoeffs.size());
+
+    auto floatJump = floatJumps.data();
+    auto jump = jumps.data();
+    auto leftCoeff = leftCoeffs.data();
+    auto rightCoeff = rightCoeffs.data();
+    const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), leftCoeffs.size(), rightCoeffs.size());
+
+    while (floatJump < sentinel)
+        snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
+}
+
+template<>
+void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept;

@@ -523,6 +523,26 @@ void add<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
+void add<float, true>(float value, absl::Span<float> output) noexcept
+{
+    auto* out = output.begin();
+    auto* sentinel = output.end();
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(out) && out < lastAligned)
+        snippetAdd<float>(value, out);
+
+    auto mmValue = _mm_set_ps1(value);
+    while (out < lastAligned) {
+        _mm_store_ps(out, _mm_add_ps(mmValue, _mm_load_ps(out)));
+        out += TypeAlignment;
+    }
+
+    while (out < sentinel)
+        snippetAdd<float>(value, out);
+}
+
+template <>
 void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
@@ -582,8 +602,8 @@ void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> lef
 
     const auto mmOne = _mm_set_ps1(1.0f);
     const auto mmPiFour = _mm_set_ps1(piFour<float>);
-    __m128 mmCos; 
-    __m128 mmSin; 
+    __m128 mmCos;
+    __m128 mmSin;
     while (pan < lastAligned) {
         auto mmPan = _mm_load_ps(pan);
         mmPan = _mm_add_ps(mmOne, mmPan);
@@ -615,9 +635,9 @@ float mean<float, true>(absl::Span<const float> vector) noexcept
 
     while (unaligned(value) && value < lastAligned)
         result += *value++;
-    
+
     auto mmSums = _mm_setzero_ps();
-    while(value < lastAligned) {
+    while (value < lastAligned) {
         mmSums = _mm_add_ps(mmSums, _mm_load_ps(value));
         value += TypeAlignment;
     }
@@ -625,7 +645,7 @@ float mean<float, true>(absl::Span<const float> vector) noexcept
     std::array<float, 4> sseResult;
     _mm_store_ps(sseResult.data(), mmSums);
 
-    for (auto sseValue: sseResult)
+    for (auto sseValue : sseResult)
         result += sseValue;
 
     while (value < sentinel)
@@ -649,9 +669,9 @@ float meanSquared<float, true>(absl::Span<const float> vector) noexcept
         result += (*value) * (*value);
         value++;
     }
-    
+
     auto mmSums = _mm_setzero_ps();
-    while(value < lastAligned) {
+    while (value < lastAligned) {
         const auto mmValues = _mm_load_ps(value);
         mmSums = _mm_add_ps(mmSums, _mm_mul_ps(mmValues, mmValues));
         value += TypeAlignment;
@@ -660,7 +680,7 @@ float meanSquared<float, true>(absl::Span<const float> vector) noexcept
     std::array<float, 4> sseResult;
     _mm_store_ps(sseResult.data(), mmSums);
 
-    for (auto sseValue: sseResult)
+    for (auto sseValue : sseResult)
         result += sseValue;
 
     while (value < sentinel) {
@@ -701,4 +721,40 @@ void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output
 
     while (in < sentinel)
         snippetCumsum(in, out);
+}
+
+template <>
+void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
+{
+    ASSERT(jumps.size() >= floatJumps.size());
+    ASSERT(jumps.size() == leftCoeffs.size());
+    ASSERT(jumps.size() == rightCoeffs.size());
+
+    auto floatJump = floatJumps.data();
+    auto jump = jumps.data();
+    auto leftCoeff = leftCoeffs.data();
+    auto rightCoeff = rightCoeffs.data();
+    const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), leftCoeffs.size(), rightCoeffs.size());
+    const auto lastAligned = prevAligned(sentinel);
+
+    while (unaligned(floatJump, reinterpret_cast<float*>(jump), leftCoeff, rightCoeff) && floatJump < lastAligned)
+        snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
+
+    while (floatJump < lastAligned) {
+        auto mmFloatJumps = _mm_load_ps(floatJump);
+        auto mmIndices = _mm_cvtps_epi32(_mm_sub_ps(mmFloatJumps, _mm_set_ps1(0.4999999552965164184570312f)));
+        _mm_store_si128(reinterpret_cast<__m128i*>(jump), mmIndices);
+
+        auto mmRight = _mm_sub_ps(mmFloatJumps, _mm_cvtepi32_ps(mmIndices));
+        auto mmLeft = _mm_sub_ps(_mm_set_ps1(1.0f), mmRight);
+        _mm_store_ps(leftCoeff, mmLeft);
+        _mm_store_ps(rightCoeff, mmRight);
+        floatJump += TypeAlignment;
+        jump += TypeAlignment;
+        leftCoeff += TypeAlignment;
+        rightCoeff += TypeAlignment;
+    }
+
+    while(floatJump < sentinel)
+        snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
 }

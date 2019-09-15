@@ -155,3 +155,9 @@ void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output
 {
     cumsum<float, false>(input, output);
 }
+
+template<>
+void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
+{
+    sfzInterpolationCast<float, false>(floatJumps, jumps, leftCoeffs, rightCoeffs);
+}
