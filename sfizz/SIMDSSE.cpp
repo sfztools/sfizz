@@ -565,6 +565,26 @@ void subtract<float, true>(absl::Span<const float> input, absl::Span<float> outp
 }
 
 template <>
+void subtract<float, true>(const float value, absl::Span<float> output) noexcept
+{
+    auto* out = output.begin();
+    auto* sentinel = output.end();
+    const auto* lastAligned = prevAligned(sentinel);
+
+    while (unaligned(out) && out < lastAligned)
+        snippetSubtract<float>(value, out);
+
+    auto mmValue = _mm_set_ps1(value);
+    while (out < lastAligned) {
+        _mm_store_ps(out, _mm_sub_ps(_mm_load_ps(out), mmValue));
+        out += TypeAlignment;
+    }
+
+    while (out < sentinel)
+        snippetSubtract<float>(value, out);
+}
+
+template <>
 void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());

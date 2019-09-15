@@ -374,6 +374,21 @@ inline void snippetSubtract(const T*& input, T*& output)
     *output++ -= *input++;
 }
 
+template <class T>
+inline void snippetSubtract(const T value, T*& output)
+{
+    *output++ -= value;
+}
+
+template <class T, bool SIMD = SIMDConfig::subtract>
+void subtract(const T value, absl::Span<T> output) noexcept
+{
+    auto* out = output.begin();
+    auto* sentinel = output.end();
+    while (out < sentinel)
+        snippetSubtract(value, out);
+}
+
 template <class T, bool SIMD = SIMDConfig::subtract>
 void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -388,6 +403,8 @@ void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
 template <>
 void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
+template <>
+void subtract<float, true>(const float value, absl::Span<float> output) noexcept;
 
 template <class T>
 void snippetCopy(const T*& input, T*& output)

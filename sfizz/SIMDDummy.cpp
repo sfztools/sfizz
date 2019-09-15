@@ -127,6 +127,13 @@ void subtract<float, true>(absl::Span<const float> input, absl::Span<float> outp
 }
 
 template <>
+void subtract<float, true>(const float value, absl::Span<float> output) noexcept
+{
+    subtract<float, false>(value, output);
+}
+
+
+template <>
 void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     copy<float, false>(input, output);
