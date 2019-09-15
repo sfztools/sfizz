@@ -201,6 +201,12 @@ public:
         return { spans, numChannels, offset, length };
     }
 
+    AudioSpan<Type> subspan(size_type offset)
+    {
+        ASSERT(offset <= numFrames);
+        return { spans, numChannels, offset, numFrames - offset };
+    }
+
 private:
     std::array<Type*, MaxChannels> spans;
     size_type numFrames { 0 };
