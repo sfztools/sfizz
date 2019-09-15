@@ -526,3 +526,30 @@ void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps,
 
 template<>
 void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept;
+
+template <class T>
+inline void snippetDiff(const T*& input, T*& output)
+{
+    *output = *input - *(input - 1);
+    output++;
+    input++;
+}
+
+template <class T, bool SIMD = SIMDConfig::diff>
+void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    ASSERT(output.size() >= input.size());
+    if (input.size() == 0)
+        return;
+
+    auto out = output.data();
+    auto in = input.data();
+    const auto sentinel = in + std::min(input.size(), output.size());
+
+    *out++ = *in++;
+    while (in < sentinel)
+        snippetDiff(in, out);
+}
+
+template <>
+void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;

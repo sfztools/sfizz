@@ -732,3 +732,23 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
     cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
+
+TEST_CASE("[Helpers] Diff ")
+{
+    std::array<float, 6> input { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
+    std::array<float, 6> output; 
+    std::array<float, 6> expected { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f };
+    diff<float, false>(input, absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
+{
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
+    diff<float, false>(input, absl::MakeSpan(outputScalar));
+    diff<float, true>(input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}

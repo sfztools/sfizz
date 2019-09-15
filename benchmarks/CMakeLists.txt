@@ -78,18 +78,26 @@ target_link_libraries(bm_meanSquared benchmark absl::span absl::algorithm)
 add_executable(bm_cumsum BM_cumsum.cpp ${SFIZZ_SIMD_SOURCES})
 target_link_libraries(bm_cumsum benchmark absl::span absl::algorithm)
 
+add_executable(bm_diff BM_diff.cpp ${SFIZZ_SIMD_SOURCES})
+target_link_libraries(bm_diff benchmark absl::span absl::algorithm)
+
 add_executable(bm_interpolationCast BM_interpolationCast.cpp ${SFIZZ_SIMD_SOURCES})
 target_link_libraries(bm_interpolationCast benchmark absl::span absl::algorithm)
+
+add_executable(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp ${SFIZZ_SIMD_SOURCES})
+target_link_libraries(bm_pointerIterationOrOffsets benchmark absl::span absl::algorithm)
 
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks 
 	bm_opf_high_vs_low 
 	bm_write
+	bm_pointerIterationOrOffsets
 	bm_read
 	bm_mean
 	bm_meanSquared
 	bm_fill
 	bm_cumsum
+	bm_diff
 	bm_interpolationCast
 	bm_mathfuns
 	bm_gain

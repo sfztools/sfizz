@@ -62,6 +62,7 @@ namespace SIMDConfig {
     constexpr bool copy { false };
     constexpr bool pan { true };
     constexpr bool cumsum { true };
+    constexpr bool diff { false };
     constexpr bool sfzInterpolationCast { true };
     constexpr bool mean { false };
     constexpr bool meanSquared { false };

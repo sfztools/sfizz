@@ -161,3 +161,9 @@ void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl:
 {
     sfzInterpolationCast<float, false>(floatJumps, jumps, leftCoeffs, rightCoeffs);
 }
+
+template <>
+void diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    diff<float, false>(input, output);
+}
