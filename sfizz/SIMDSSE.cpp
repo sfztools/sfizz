@@ -795,7 +795,7 @@ void diff<float, true>(absl::Span<const float> input, absl::Span<float> output) 
     while (unaligned(in, out) && in < lastAligned)
         snippetDiff(in, out);
 
-    auto mmBase = _mm_set_ps1(*(out - 1));
+    auto mmBase = _mm_set_ps1(*(in - 1));
     while (in < lastAligned) {
         auto mmOutput = _mm_load_ps(in);
         auto mmNextBase = _mm_shuffle_ps(mmOutput, mmOutput, _MM_SHUFFLE(3, 3, 3, 3));
