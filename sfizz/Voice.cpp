@@ -94,8 +94,8 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     widthEnvelope.reset(width);
     // DBG("Base width: " << baseWidth << " - with modifier: " << width);
 
-    floatPosition = static_cast<float>(region->getOffset());
-    // DBG("Offset: " << floatPosition);
+    sourcePosition = region->getOffset();
+    // DBG("Offset: " << sourcePosition);
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() / sampleRate);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(delay, value);
@@ -177,17 +177,17 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
-        const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->panCC->second)};
+        const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->panCC->second) };
         panEnvelope.registerEvent(delay, newPan);
     }
 
     if (region->positionCC && ccNumber == region->positionCC->first) {
-        const float newPosition { basePosition + normalizeCC(ccValue) * normalizeNegativePercents(region->positionCC->second)};
+        const float newPosition { basePosition + normalizeCC(ccValue) * normalizeNegativePercents(region->positionCC->second) };
         positionEnvelope.registerEvent(delay, newPosition);
     }
 
     if (region->widthCC && ccNumber == region->widthCC->first) {
-        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizeNegativePercents(region->widthCC->second)};
+        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizeNegativePercents(region->widthCC->second) };
         widthEnvelope.registerEvent(delay, newWidth);
     }
 }
@@ -244,10 +244,10 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         processStereo(buffer);
     else
         processMono(buffer);
-    
+
     if (!egEnvelope.isSmoothing())
         reset();
-    
+
     powerHistory.push(buffer.meanSquared());
 }
 
@@ -256,7 +256,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     const auto numSamples = buffer.getNumFrames();
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
-    
+
     auto span1 = tempSpan1.first(numSamples);
     auto span2 = tempSpan2.first(numSamples);
 
@@ -299,7 +299,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     // Amplitude envelope
     amplitudeEnvelope.getBlock(span1);
     buffer.applyGain(span1);
-    
+
     // AmpEG envelope
     egEnvelope.getBlock(span1);
     buffer.applyGain(span1);
@@ -356,33 +356,41 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
 
     ::fill<float>(jumps, pitchRatio * speedRatio);
+    jumps[0] += floatPositionOffset;
+    ::cumsum<float>(jumps, jumps);
+    ::sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
+    ::add<int>(sourcePosition, indices);
 
-    if (region->shouldLoop() && region->trueSampleEnd() <= source.getNumFrames()) {
-        floatPosition = ::loopingSFZIndex<float, false>(
-            jumps,
-            leftCoeffs,
-            rightCoeffs,
-            indices,
-            floatPosition,
-            region->trueSampleEnd() - 1,
-            region->loopRange.getStart());
+    //FIXME : all this casting is driving me crazy
+    const auto sampleEnd = static_cast<int>(region->trueSampleEnd()) - 1;
+    if (region->shouldLoop() && static_cast<size_t>(sampleEnd) <= source.getNumFrames()) {
+        const auto offset = sampleEnd - static_cast<int>(region->loopRange.getStart());
+        for (auto* index = indices.begin(); index < indices.end(); ++index) {
+            if (*index > sampleEnd) {
+                const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
+                ::subtract<int>(offset, { index, remainingElements });
+            }
+        }
     } else {
-        floatPosition = ::saturatingSFZIndex<float, false>(
-            jumps,
-            leftCoeffs,
-            rightCoeffs,
-            indices,
-            floatPosition,
-            source.getNumFrames() - 1);
+        for (auto* index = indices.begin(); index < indices.end(); ++index) {
+            if (*index > sampleEnd) {
+                const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
+                ::fill<int>(indices.last(remainingElements), sampleEnd);
+                ::fill<float>(leftCoeffs.last(remainingElements), 0.0f);
+                ::fill<float>(rightCoeffs.last(remainingElements), 1.0f);
+                break;
+            }
+        }
     }
 
     auto ind = indices.data();
     auto leftCoeff = leftCoeffs.data();
     auto rightCoeff = rightCoeffs.data();
     auto left = buffer.getChannel(0);
+    auto leftSource = source.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            *left = source.getChannel(0)[*ind] * (*leftCoeff) + source.getChannel(0)[*ind + 1] * (*rightCoeff);
+            *left = leftSource[*ind] * (*leftCoeff) + leftSource[*ind + 1] * (*rightCoeff);
             left++;
             ind++;
             leftCoeff++;
@@ -390,9 +398,10 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     } else {
         auto right = buffer.getChannel(1);
+        auto rightSource = source.getChannel(1);
         while (ind < indices.end()) {
-            *left = source.getChannel(0)[*ind] * (*leftCoeff) + source.getChannel(0)[*ind + 1] * (*rightCoeff);
-            *right = source.getChannel(1)[*ind] * (*leftCoeff) + source.getChannel(1)[*ind + 1] * (*rightCoeff);
+            *left = leftSource[*ind] * (*leftCoeff) + leftSource[*ind + 1] * (*rightCoeff);
+            *right = rightSource[*ind] * (*leftCoeff) + rightSource[*ind + 1] * (*rightCoeff);
             left++;
             right++;
             ind++;
@@ -401,10 +410,14 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     }
 
-    if (!region->shouldLoop() && (floatPosition + 1.01) > source.getNumFrames()) {
+    sourcePosition = indices.back();
+    floatPositionOffset = rightCoeffs.back();
+
+    if (state != State::release && !region->shouldLoop() && sourcePosition == sampleEnd) {
         DBG("Releasing " << region->sample);
-        auto last = std::distance(indices.begin(), absl::c_find(indices, region->trueSampleEnd() - 1));
+        auto last = std::distance(indices.begin(), absl::c_find(indices, sampleEnd));
         release(last);
+        buffer.subspan(last).fill(0.0f);
     }
 }
 
@@ -418,6 +431,10 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 
     ::sin<float>(tempSpan1.first(buffer.getNumFrames()), buffer.getSpan(0));
     ::copy<float>(buffer.getSpan(0), buffer.getSpan(1));
+
+    // Wrap the phase so we don't loose too much precision on longer notes
+    const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>);
+    phase -= twoPi<float> * static_cast<float>(numTwoPiWraps);
 }
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
@@ -458,7 +475,8 @@ void sfz::Voice::reset() noexcept
     if (region != nullptr) {
         DBG("Reset voice with sample " << region->sample);
     }
-    floatPosition = 0.0f;
+    sourcePosition = 0;
+    floatPositionOffset = 0.0f;
     region = nullptr;
     noteIsOff = false;
 }
@@ -484,7 +502,7 @@ bool sfz::Voice::canBeStolen() const noexcept
     return state == State::release;
 }
 
-float sfz::Voice::getSourcePosition() const noexcept
+uint32_t sfz::Voice::getSourcePosition() const noexcept
 {
-    return floatPosition;
+    return sourcePosition;
 }

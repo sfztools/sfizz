@@ -70,7 +70,7 @@ public:
     void garbageCollect() noexcept;
 
     float getMeanSquaredAverage() const noexcept;
-    float getSourcePosition() const noexcept;
+    uint32_t getSourcePosition() const noexcept;
 private:
     void fillWithData(AudioSpan<float> buffer) noexcept;
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
@@ -103,8 +103,9 @@ private:
     float baseFrequency { 440.0 };
     float phase { 0.0f };
 
-    float floatPosition { 0.0f };
-    uint32_t initialDelay { 0 };
+    float floatPositionOffset { 0.0f };
+    int sourcePosition { 0 };
+    int initialDelay { 0 };
 
     std::atomic<bool> dataReady { false };
     std::unique_ptr<AudioBuffer<float>> fileData { nullptr };
