@@ -632,6 +632,15 @@ TEST_CASE("[Helpers] Subtract")
     REQUIRE(output == expected);
 }
 
+TEST_CASE("[Helpers] Subtract 2")
+{
+    std::array<float, 5> output { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> expected { 0.0, 1.0, 2.0, 3.0, 4.0 };
+    subtract<float, false>(1.0f, absl::MakeSpan(output));
+    REQUIRE(output == expected);
+}
+
+
 TEST_CASE("[Helpers] Subtract (SIMD)")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
@@ -652,6 +661,18 @@ TEST_CASE("[Helpers] Subtract (SIMD vs scalar)")
 
     subtract<float, false>(input, absl::MakeSpan(outputScalar));
     subtract<float, true>(input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}
+
+TEST_CASE("[Helpers] Subtract 2 (SIMD vs scalar)")
+{
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(outputScalar, 0.0);
+    absl::c_iota(outputSIMD, 0.0);
+
+    subtract<float, false>(1.2f, absl::MakeSpan(outputScalar));
+    subtract<float, true>(1.2f, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
