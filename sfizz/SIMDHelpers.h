@@ -350,6 +350,25 @@ template <>
 void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 template <class T>
+inline void snippetAdd(const T value, T*& output)
+{
+    *output++ += value;
+}
+
+template <class T, bool SIMD = SIMDConfig::add>
+void add(T value, absl::Span<T> output) noexcept
+{
+    auto* out = output.begin();
+    auto* sentinel = output.end();
+    while (out < sentinel)
+        snippetAdd(value, out);
+}
+
+template <>
+void add<float, true>(float value, absl::Span<float> output) noexcept;
+
+
+template <class T>
 inline void snippetSubtract(const T*& input, T*& output)
 {
     *output++ -= *input++;

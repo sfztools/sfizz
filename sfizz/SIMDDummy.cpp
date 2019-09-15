@@ -115,6 +115,12 @@ void add<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
+void add<float, true>(float value, absl::Span<float> output) noexcept
+{
+    add<float, false>(value, output);
+}
+
+template <>
 void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     subtract<float, false>(input, output);

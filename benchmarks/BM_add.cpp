@@ -49,6 +49,33 @@ public:
   std::vector<float> output;
 };
 
+BENCHMARK_DEFINE_F(AddArray, Value_Scalar)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        add<float, false>(1.1f, absl::MakeSpan(output));
+    }
+}
+
+BENCHMARK_DEFINE_F(AddArray, Value_SIMD)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        add<float, true>(1.1f, absl::MakeSpan(output));
+    }
+}
+
+BENCHMARK_DEFINE_F(AddArray, Value_Scalar_Unaligned)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        add<float, false>(1.1f, absl::MakeSpan(output).subspan(1));
+    }
+}
+
+BENCHMARK_DEFINE_F(AddArray, Value_SIMD_Unaligned)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        add<float, true>(1.1f, absl::MakeSpan(output).subspan(1));
+    }
+}
 
 BENCHMARK_DEFINE_F(AddArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
@@ -78,6 +105,10 @@ BENCHMARK_DEFINE_F(AddArray, SIMD_Unaligned)(benchmark::State& state) {
     }
 }
 
+BENCHMARK_REGISTER_F(AddArray, Value_Scalar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(AddArray, Value_SIMD)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(AddArray, Value_Scalar_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(AddArray, Value_SIMD_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(AddArray, Scalar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(AddArray, SIMD)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(AddArray, Scalar_Unaligned)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
