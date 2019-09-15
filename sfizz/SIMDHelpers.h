@@ -477,7 +477,7 @@ inline void snippetCumsum(const T*& input, T*& output)
 }
 
 template <class T, bool SIMD = SIMDConfig::cumsum>
-void cumsum(absl::Span<const float> input, absl::Span<float> output) noexcept
+void cumsum(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     if (input.size() == 0)
