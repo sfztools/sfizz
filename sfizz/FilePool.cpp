@@ -79,7 +79,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     if (preloadedData.contains(filename)) {
         auto alreadyPreloaded = preloadedData[filename];
         if (preloadedSize > alreadyPreloaded->getNumFrames()) {
-            alreadyPreloaded.reset(readFromFile<float>(sndFile, preloadedSize).get());
+            alreadyPreloaded.reset(readFromFile<float>(sndFile, preloadedSize).release());
         }
         returnedValue.preloadedData = alreadyPreloaded;
     } else {
