@@ -344,7 +344,9 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 {
     auto source { [&]() {
-        if (region->canUsePreloadedData() || !dataReady)
+        if (region->canUsePreloadedData())
+            return AudioSpan<const float>(*region->preloadedData);
+        else if (!dataReady)
             return AudioSpan<const float>(*region->preloadedData);
         else
             return AudioSpan<const float>(*fileData);
@@ -483,8 +485,9 @@ void sfz::Voice::reset() noexcept
 
 void sfz::Voice::garbageCollect() noexcept
 {
-    if (state == State::idle && region == nullptr)
+    if (state == State::idle && region == nullptr) {
         fileData.reset();
+    }
 }
 
 void sfz::Voice::expectFileData(unsigned ticket)
