@@ -269,15 +269,15 @@ TEST_CASE("[Region] rt_decay")
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "trigger", "release" });
     region.parseOpcode({ "rt_decay", "10" });
-    sfz::setNoteOnTime(64);
+    sfz::noteOn(64, 64);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 1.0f).margin(0.1) );
     region.parseOpcode({ "rt_decay", "20" });
-    sfz::setNoteOnTime(64);
+    sfz::noteOn(64, 64);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 2.0f).margin(0.1) );
     region.parseOpcode({ "trigger", "attack" });
-    sfz::setNoteOnTime(64);
+    sfz::noteOn(64, 64);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume).margin(0.1) );
 }

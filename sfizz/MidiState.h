@@ -4,10 +4,13 @@
 namespace sfz
 {
 	inline std::array<std::chrono::steady_clock::time_point, 128> noteOnTimes { };
-	inline void setNoteOnTime(int noteNumber)
+	inline std::array<uint8_t, 128> lastNoteVelocities { };
+	inline void noteOn(int noteNumber, uint8_t velocity)
 	{
-		if (noteNumber >= 0 && noteNumber < 128)
+		if (noteNumber >= 0 && noteNumber < 128) {
+			lastNoteVelocities[noteNumber] = velocity;
 			noteOnTimes[noteNumber] = std::chrono::steady_clock::now();
+		}
 	}
 
 	inline float getNoteDuration(int noteNumber)
@@ -19,5 +22,13 @@ namespace sfz
 		}
 
 		return 0.0f;
+	}
+
+	inline uint8_t getNoteVelocity(int noteNumber)
+	{
+		if (noteNumber >= 0 && noteNumber < 128)
+			return lastNoteVelocities[noteNumber];
+
+		return 0;
 	}
 }

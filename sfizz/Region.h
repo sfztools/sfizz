@@ -108,7 +108,6 @@ struct Region {
 
     // Region logic: triggers
     SfzTrigger trigger { Default::trigger }; // trigger
-    std::array<uint8_t, 128> lastNoteVelocities; // Keeps the velocities of the previous note-ons if the region has the trigger release_key
     CCMap<Range<uint8_t>> ccTriggers { Default::ccTriggerValueRange }; // on_loccN on_hiccN
 
     // Performance parameters: amplifier

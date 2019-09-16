@@ -313,7 +313,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    setNoteOnTime(noteNumber);
+    sfz::noteOn(noteNumber, velocity);
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
     for (auto& region : noteActivationLists[noteNumber]) {
@@ -341,17 +341,18 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    auto replacedVelocity = velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity;
     auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& voice : voices)
-        voice->registerNoteOff(delay, channel, noteNumber, velocity);
+        voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
 
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOff(channel, noteNumber, velocity, randValue)) {
+        if (region->registerNoteOff(channel, noteNumber, replacedVelocity, randValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            voice->startVoice(region, delay, channel, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
                 filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);

@@ -518,10 +518,6 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
         else
             sequenceSwitched = false;
 
-        // Velocity memory for release_key and for sw_vel=previous
-        if (trigger == SfzTrigger::release_key || velocityOverride == SfzVelocityOverride::previous)
-            lastNoteVelocities[noteNumber] = velocity;
-
         if (previousNote) {
             if (*previousNote == noteNumber)
                 previousKeySwitched = true;
@@ -568,9 +564,10 @@ bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity 
     if (!isSwitchedOn())
         return false;
 
+    const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue);
     const bool releaseTrigger = (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key);
-    return keyOk && chanOk && randOk && releaseTrigger;
+    return keyOk && velOk && chanOk && randOk && releaseTrigger;
 }
 
 bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue) noexcept
@@ -721,10 +718,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     baseGain *= crossfadeOut(crossfadeKeyOutRange, noteNumber, crossfadeKeyCurve);
 
     // Amplitude velocity tracking
-    if (trigger == SfzTrigger::release_key)
-        baseGain *= velocityCurve(lastNoteVelocities[noteNumber]);
-    else
-        baseGain *= velocityCurve(velocity);
+    baseGain *= velocityCurve(velocity);
 
     // Crossfades related to velocity
     baseGain *= crossfadeIn(crossfadeVelInRange, velocity, crossfadeVelCurve);
