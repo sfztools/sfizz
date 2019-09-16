@@ -68,6 +68,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
         returnedValue.loopEnd = instrumentInfo.loops[0].end;
     }
 
+    // FIXME: Large offsets will require large preloading; is this OK in practice?
     const auto preloadedSize = [&]() {
         if (config::preloadSize == 0)
             return returnedValue.end;
