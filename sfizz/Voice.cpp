@@ -54,7 +54,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
     pitchRatio = region->getBasePitchVariation(number, value);
 
-    baseVolumedB = region->getBaseVolumedB();
+    baseVolumedB = region->getBaseVolumedB(number);
 
     auto volumedB { baseVolumedB };
     if (region->volumeCC)

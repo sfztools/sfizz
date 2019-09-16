@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Synth.h"
+#include "MidiState.h"
 #include "Config.h"
 #include "Debug.h"
 #include "ScopedFTZ.h"
@@ -309,7 +310,10 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
 void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
 {
-    ASSERT(noteNumber <= 128);
+    ASSERT(noteNumber < 128);
+    ASSERT(noteNumber >= 0);
+
+    setNoteOnTime(noteNumber);
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
     for (auto& region : noteActivationLists[noteNumber]) {
@@ -334,7 +338,9 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
 
 void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
 {
-    ASSERT(noteNumber <= 128);
+    ASSERT(noteNumber < 128);
+    ASSERT(noteNumber >= 0);
+
     auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, velocity);
@@ -356,7 +362,9 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
 
 void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
 {
-    ASSERT(ccNumber <= 128);
+    ASSERT(ccNumber < 128);
+    ASSERT(ccNumber >= 0);
+
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
 

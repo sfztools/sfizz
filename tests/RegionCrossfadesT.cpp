@@ -21,9 +21,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "Defaults.h"
 #include "Region.h"
 #include "catch2/catch.hpp"
 #include <SfzHelpers.h>
+#include <chrono>
+#include <thread>
+#include "MidiState.h"
 using namespace Catch::literals;
 
 TEST_CASE("[Region] Crossfade in on key")
@@ -257,4 +261,23 @@ TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
     region.parseOpcode({ "amp_veltrack", "-100" });
     REQUIRE( region.getNoteGain(64, 127) == Approx(0.0).margin(0.0001) );
     REQUIRE( region.getNoteGain(64, 0) == 1.0_a );
+}
+
+TEST_CASE("[Region] rt_decay")
+{
+    sfz::Region region {};
+    region.parseOpcode({ "sample", "*sine" });
+    region.parseOpcode({ "trigger", "release" });
+    region.parseOpcode({ "rt_decay", "10" });
+    sfz::setNoteOnTime(64);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 1.0f).margin(0.1) );
+    region.parseOpcode({ "rt_decay", "20" });
+    sfz::setNoteOnTime(64);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 2.0f).margin(0.1) );
+    region.parseOpcode({ "trigger", "attack" });
+    sfz::setNoteOnTime(64);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume).margin(0.1) );
 }

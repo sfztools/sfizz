@@ -113,6 +113,8 @@ namespace Default
     inline constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
     inline constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
     inline constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
+    inline constexpr float rtDecay { 0.0f };
+    inline constexpr Range<float> rtDecayRange { 0.0f, 200.0f };
 
      // Performance parameters: pitch
     inline constexpr uint8_t pitchKeycenter { 60 };

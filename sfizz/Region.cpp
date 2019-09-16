@@ -27,6 +27,7 @@
 #include "Debug.h"
 #include "Opcode.h"
 #include "StringViewHelpers.h"
+#include "MidiState.h"
 #include "absl/strings/str_replace.h"
 #include <random>
 
@@ -381,6 +382,9 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             DBG("Unknown crossfade power curve: " << std::string(opcode.value));
         }
         break;
+    case hash("rt_decay"):
+        setValueFromOpcode(opcode, rtDecay, Default::rtDecayRange);
+        break;
 
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
@@ -629,9 +633,12 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseVolumedB() noexcept
+float sfz::Region::getBaseVolumedB(int noteNumber) noexcept
 {
-    return volume + volumeDistribution(Random::randomGenerator);
+    auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
+    if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
+        baseVolumedB -= rtDecay * getNoteDuration(noteNumber);
+    return baseVolumedB;
 }
 
 float sfz::Region::getBaseGain() noexcept
