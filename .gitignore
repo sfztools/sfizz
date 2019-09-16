@@ -1,5 +1,6 @@
 build
 build-arm
+build-asan
 build-release
 build-debug
 .vscode
