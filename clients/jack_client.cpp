@@ -35,6 +35,7 @@
 #include <ostream>
 #include <signal.h>
 #include <string_view>
+#include <chrono>
 #include <thread>
 using namespace std::literals;
 
@@ -253,8 +254,10 @@ int main(int argc, char** argv)
     signal(SIGTERM, done);
     signal(SIGQUIT, done);
 
-    while (!shouldClose)
-        sleep(1);
+    while (!shouldClose){
+        synth.garbageCollect();
+        std::this_thread::sleep_for(1s);
+    }
 
     std::cout << "Closing..." << '\n';
     jack_client_close(client);
