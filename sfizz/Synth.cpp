@@ -29,8 +29,10 @@
 #include "StringViewHelpers.h"
 #include "absl/algorithm/container.h"
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <utility>
+using namespace std::literals;
 
 sfz::Synth::Synth()
 {
@@ -179,6 +181,11 @@ void addEndpointsToVelocityCurve(sfz::Region& region)
 
 bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 {
+    canEnterCallback = false;
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
     clear();
     auto parserReturned = sfz::Parser::loadSfzFile(filename);
     if (!parserReturned)
@@ -237,6 +244,8 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
+    
+    canEnterCallback = true;
     return parserReturned;
 }
 
@@ -302,11 +311,18 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
+    if (!canEnterCallback)
+        return;
+
+    inCallback = true;
+
     auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
     for (auto& voice : voices) {
         voice->renderBlock(tempSpan);
         buffer.add(tempSpan);
     }
+
+    inCallback = false;
 }
 
 void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept

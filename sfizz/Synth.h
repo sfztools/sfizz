@@ -100,6 +100,9 @@ private:
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
     unsigned fileTicket { 1 };
 
+    std::atomic<bool> canEnterCallback { true };
+    std::atomic<bool> inCallback { false };
+
     LEAK_DETECTOR(Synth);
 };
 
