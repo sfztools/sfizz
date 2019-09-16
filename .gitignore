@@ -2,6 +2,7 @@ build
 build-arm
 build-asan
 build-release
+build-reldeb
 build-debug
 .vscode
 perf.data
