@@ -59,6 +59,7 @@ public:
     };
     std::optional<FileInformation> getFileInformation(std::string_view filename, uint32_t offset) noexcept;
     void enqueueLoading(Voice* voice, std::string_view sample, int numFrames, unsigned ticket) noexcept;
+    void clear();
 private:
     std::filesystem::path rootDirectory;
     struct FileLoadingInformation {

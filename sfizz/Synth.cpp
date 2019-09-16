@@ -119,6 +119,7 @@ void sfz::Synth::clear()
     masterOpcodes.clear();
     groupOpcodes.clear();
     regions.clear();
+    filePool.clear();
 }
 
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)

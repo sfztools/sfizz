@@ -121,3 +121,11 @@ void sfz::FilePool::loadingThread() noexcept
         fileToLoad.voice->setFileData(readFromFile<float>(sndFile, fileToLoad.numFrames), fileToLoad.ticket);
     }
 }
+
+void sfz::FilePool::clear()
+{
+    preloadedData.clear();
+    while(loadingQueue.pop()){
+        // Pop the queue
+    }
+}
