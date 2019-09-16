@@ -255,7 +255,7 @@ int main(int argc, char** argv)
     signal(SIGQUIT, done);
 
     while (!shouldClose){
-        synth.garbageCollect();
+        // synth.garbageCollect();
         std::this_thread::sleep_for(1s);
     }
 
