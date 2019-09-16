@@ -22,8 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SIMDHelpers.h"
+#include <array>
 #include <xmmintrin.h>
-
 #if HAVE_X86INTRIN_H
 #include <x86intrin.h>
 #endif
