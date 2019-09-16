@@ -194,7 +194,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
         auto region = currentRegion->get();
 
         if (!region->isGenerator()) {
-            auto fileInformation = filePool.getFileInformation(region->sample);
+            auto fileInformation = filePool.getFileInformation(region->sample, region->offset + region->offsetRandom);
             if (!fileInformation) {
                 DBG("Removing the region with sample " << region->sample);
                 std::iter_swap(currentRegion, lastRegion);

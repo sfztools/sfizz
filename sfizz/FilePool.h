@@ -57,7 +57,7 @@ public:
         double sampleRate { config::defaultSampleRate };
         std::shared_ptr<AudioBuffer<float>> preloadedData;
     };
-    std::optional<FileInformation> getFileInformation(std::string_view filename) noexcept;
+    std::optional<FileInformation> getFileInformation(std::string_view filename, uint32_t offset) noexcept;
     void enqueueLoading(Voice* voice, std::string_view sample, int numFrames, unsigned ticket) noexcept;
 private:
     std::filesystem::path rootDirectory;

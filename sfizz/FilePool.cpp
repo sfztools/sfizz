@@ -45,7 +45,7 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
     return returnedBuffer;
 }
 
-std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename) noexcept
+std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename, uint32_t offset) noexcept
 {
     std::filesystem::path file { rootDirectory / filename };
     if (!std::filesystem::exists(file))
@@ -72,11 +72,15 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
         if (config::preloadSize == 0)
             return returnedValue.end;
         else
-            return std::min(returnedValue.end, static_cast<uint32_t>(config::preloadSize));
+            return std::min(returnedValue.end, offset + static_cast<uint32_t>(config::preloadSize));
     }();
 
     if (preloadedData.contains(filename)) {
-        returnedValue.preloadedData = preloadedData[filename];
+        auto alreadyPreloaded = preloadedData[filename];
+        if (preloadedSize > alreadyPreloaded->getNumFrames()) {
+            alreadyPreloaded.reset(readFromFile<float>(sndFile, preloadedSize).get());
+        }
+        returnedValue.preloadedData = alreadyPreloaded;
     } else {
         returnedValue.preloadedData = std::shared_ptr<AudioBuffer<float>>(readFromFile<float>(sndFile, preloadedSize));
         preloadedData[filename] = returnedValue.preloadedData;
