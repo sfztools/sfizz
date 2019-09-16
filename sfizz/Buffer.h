@@ -46,11 +46,14 @@ public:
 
     Buffer()
     {
+    
     }
+    
     Buffer(size_t size)
     {
         resize(size);
     }
+
     bool resize(size_t newSize)
     {
         if (newSize == 0) {

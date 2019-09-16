@@ -29,6 +29,7 @@
 #include "LeakDetector.h"
 #include "SIMDHelpers.h"
 #include <initializer_list>
+#include <array>
 #include <type_traits>
 
 template <class Type, unsigned int MaxChannels = sfz::config::numChannels>

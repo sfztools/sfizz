@@ -28,6 +28,7 @@
 #include "LeakDetector.h"
 #include "absl/types/span.h"
 #include <memory>
+#include <array>
 
 template <class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
