@@ -7,3 +7,13 @@ build-debug
 .vscode
 perf.data
 perf.data.old
+
+Makefile
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+*.a
+
+clients/sfizz_jack
+clients/sfzprint
