@@ -29,6 +29,7 @@
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
 #include "absl/algorithm/container.h"
+#include <memory>
 
 sfz::Voice::Voice(const CCValueArray& ccState)
     : ccState(ccState)
@@ -117,7 +118,7 @@ void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
         normalizePercents(region->amplitudeEG.getStart(ccState, velocity)));
 }
 
-void sfz::Voice::setFileData(std::unique_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept
+void sfz::Voice::setFileData(std::shared_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept
 {
     if (ticket != this->ticket)
         return;
@@ -473,13 +474,14 @@ sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
 void sfz::Voice::reset() noexcept
 {
     dataReady.store(false);
+    fileData.reset();
     state = State::idle;
     if (region != nullptr) {
         DBG("Reset voice with sample " << region->sample);
     }
+    region = nullptr;
     sourcePosition = 0;
     floatPositionOffset = 0.0f;
-    region = nullptr;
     noteIsOff = false;
 }
 

@@ -28,7 +28,9 @@
 #include "absl/types/span.h"
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <sndfile.hh>
+#include <thread>
 using namespace std::chrono_literals;
 
 template <class T>
@@ -42,7 +44,7 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
         sndFile.readf(tempReadBuffer->channelWriter(0), numFrames);
         ::readInterleaved<float>(tempReadBuffer->getSpan(0), returnedBuffer->getSpan(0), returnedBuffer->getSpan(1));
     }
-    return returnedBuffer;
+    return std::move(returnedBuffer);
 }
 
 std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename, uint32_t offset) noexcept
@@ -79,11 +81,20 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     if (preloadedData.contains(filename)) {
         auto alreadyPreloaded = preloadedData[filename];
         if (preloadedSize > alreadyPreloaded->getNumFrames()) {
+            // FIXME: Okay, ideally here you would have a double indirection so that we can update _all_ the preloaded
+            // files in previous regions to account for the new offset
+            //
+            // Before this next command, some old regions and the file pool hold a shared pointer to the same audio buffer.
+            // This audio buffer is OK for the old regions, but too small for the new one.
+            // By resetting the filepool data to a new, longer audiobuffer, we are creating 2 copies of the same audio data.
+            // The filepool and the new regions have the longer copy, and the older regions have the shorter copy.
+            // This is not entirely optimal, but is it better to write a double shared pointer ?
+            // std::shared_ptr<std::shared_ptr<AudioBuffer>>> is a bit ugly...
             alreadyPreloaded.reset(readFromFile<float>(sndFile, preloadedSize).release());
         }
         returnedValue.preloadedData = alreadyPreloaded;
     } else {
-        returnedValue.preloadedData = std::shared_ptr<AudioBuffer<float>>(readFromFile<float>(sndFile, preloadedSize));
+        returnedValue.preloadedData = readFromFile<float>(sndFile, preloadedSize);
         preloadedData[filename] = returnedValue.preloadedData;
     }
 
@@ -99,10 +110,11 @@ void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int nu
 
 void sfz::FilePool::loadingThread() noexcept
 {
-    FileLoadingInformation fileToLoad {};
     while (!quitThread) {
-        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 10ms))
+        FileLoadingInformation fileToLoad {};
+        if (!loadingQueue.wait_dequeue_timed(fileToLoad, 200ms)) {
             continue;
+        }
 
         if (fileToLoad.voice == nullptr) {
             DBG("Background thread error: voice is null.");
@@ -117,15 +129,34 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        auto fileLoaded = std::make_unique<AudioBuffer<float>>(sndFile.channels(), fileToLoad.numFrames);
-        fileToLoad.voice->setFileData(readFromFile<float>(sndFile, fileToLoad.numFrames), fileToLoad.ticket);
+        
+        std::lock_guard guard { fileHandleMutex };
+        auto newHandle = fileHandles.emplace_back(readFromFile<float>(sndFile, fileToLoad.numFrames));
+        fileToLoad.voice->setFileData(newHandle, fileToLoad.ticket);
+    }
+}
+
+void sfz::FilePool::garbageThread() noexcept
+{
+    while (!quitThread) {
+        for (auto handle = fileHandles.begin(); handle < fileHandles.end();) {
+            if (handle->use_count() == 1) {
+                handle->reset();
+                std::lock_guard guard { fileHandleMutex };
+                std::iter_swap(handle, fileHandles.end() - 1);
+                fileHandles.pop_back();
+            } else {
+                handle++;
+            }
+        }
+        std::this_thread::sleep_for(200ms);
     }
 }
 
 void sfz::FilePool::clear()
 {
     preloadedData.clear();
-    while(loadingQueue.pop()){
+    while (loadingQueue.pop()) {
         // Pop the queue
     }
 }

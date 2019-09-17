@@ -30,6 +30,7 @@
 #include "filesystem.h"
 #include "readerwriterqueue.h"
 #include <absl/container/flat_hash_map.h>
+#include <mutex>
 #include <optional>
 #include <string_view>
 #include <thread>
@@ -39,6 +40,7 @@ class FilePool {
 public:
     FilePool()
         : fileLoadingThread(std::thread(&FilePool::loadingThread, this))
+        , garbageCollectionThread(std::thread(&FilePool::garbageThread, this))
     {
     }
 
@@ -46,6 +48,7 @@ public:
     {
         quitThread = true;
         fileLoadingThread.join();
+        garbageCollectionThread.join();
     }
     void setRootDirectory(const std::filesystem::path& directory) noexcept { rootDirectory = directory; }
     size_t getNumPreloadedSamples() const noexcept { return preloadedData.size(); }
@@ -71,7 +74,11 @@ private:
 
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue { config::numVoices };
     void loadingThread() noexcept;
+    void garbageThread() noexcept;
     std::thread fileLoadingThread;
+    std::thread garbageCollectionThread;
+    std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
+    std::mutex fileHandleMutex;
     bool quitThread { false };
     absl::flat_hash_map<std::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);

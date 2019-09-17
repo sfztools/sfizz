@@ -32,6 +32,7 @@
 #include "LeakDetector.h"
 #include <absl/types/span.h>
 #include <atomic>
+#include <memory>
 
 namespace sfz {
 class Voice {
@@ -49,7 +50,7 @@ public:
     void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType) noexcept;
 
     void expectFileData(unsigned ticket);
-    void setFileData(std::unique_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept;
+    void setFileData(std::shared_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept;
     void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
     void registerCC(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;
     void registerPitchWheel(int delay, int channel, int pitch) noexcept;
@@ -108,7 +109,7 @@ private:
     int initialDelay { 0 };
 
     std::atomic<bool> dataReady { false };
-    std::unique_ptr<AudioBuffer<float>> fileData { nullptr };
+    std::shared_ptr<AudioBuffer<float>> fileData { nullptr };
     unsigned ticket { 0 };
 
     Buffer<float> tempBuffer1;
