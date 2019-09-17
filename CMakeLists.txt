@@ -66,10 +66,6 @@ if (WIN32)
     target_include_directories(sndfile INTERFACE "${WIN_SNDFILE_PATH}/include")
 endif()
 
-# Export MoodyCamel's queue as a library
-add_library(readerwriterqueue INTERFACE)
-target_include_directories(readerwriterqueue INTERFACE "external/readerwriterqueue")
-
 add_subdirectory(sfizz)
 
 if (SFIZZ_CLIENTS)
@@ -77,9 +73,6 @@ add_subdirectory(clients)
 endif()
 
 if (SFIZZ_TESTS)
-# Tests
-add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
-add_subdirectory(external/cnpy EXCLUDE_FROM_ALL)
 add_subdirectory(tests)
 endif()
 

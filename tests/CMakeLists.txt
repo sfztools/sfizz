@@ -24,6 +24,10 @@ set(SFIZZ_TEST_SOURCES
     RegionTriggersT.cpp
 )
 
+find_package(ZLIB REQUIRED)
+add_library(cnpy cnpy.cpp)
+target_link_libraries(cnpy PRIVATE ZLIB::ZLIB)
+
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
 target_link_libraries(sfizz_tests PRIVATE sfizz)
 
@@ -31,7 +35,7 @@ target_link_libraries(sfizz_tests PRIVATE sfizz)
 if(UNIX)
     target_link_libraries(sfizz_tests PRIVATE stdc++fs atomic)
 endif(UNIX)
-target_link_libraries(sfizz_tests PRIVATE Catch2::Catch2 absl::strings absl::str_format absl::flat_hash_map sndfile readerwriterqueue cnpy-static absl::span absl::algorithm)
+target_link_libraries(sfizz_tests PRIVATE absl::strings absl::str_format absl::flat_hash_map sndfile cnpy absl::span absl::algorithm)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)

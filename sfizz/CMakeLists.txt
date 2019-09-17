@@ -51,7 +51,7 @@ if(UNIX)
     target_link_libraries(sfizz PUBLIC stdc++fs atomic)
     target_compile_options(sfizz PRIVATE -fno-rtti -fno-exceptions)
 endif(UNIX)
-target_link_libraries(sfizz PUBLIC readerwriterqueue absl::strings)
+target_link_libraries(sfizz PUBLIC absl::strings)
 target_link_libraries(sfizz PRIVATE sndfile absl::flat_hash_map)
 
 add_library(sfizz::parser ALIAS sfizz_parser)

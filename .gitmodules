@@ -6,15 +6,3 @@
 	path = external/benchmark
 	url = https://github.com/google/benchmark
 	shallow = true
-[submodule "external/readerwriterqueue"]
-	path = external/readerwriterqueue
-	url = https://github.com/cameron314/readerwriterqueue.git
-	shallow = true
-[submodule "external/cnpy"]
-	path = external/cnpy
-	url = https://github.com/paulfd/cnpy.git
-	shallow = true
-[submodule "external/Catch2"]
-	path = external/Catch2
-	url = https://github.com/catchorg/Catch2.git
-	shallow = true
