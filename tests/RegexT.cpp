@@ -126,6 +126,7 @@ TEST_CASE("[Regex] Member")
     memberTest("sample=subdir space\\sample.wav next_member=value", "sample", "subdir space\\sample.wav");
     memberTest("sample=..\\Samples\\pizz\\a0_vl3_rr3.wav", "sample", "..\\Samples\\pizz\\a0_vl3_rr3.wav");
     memberTest("sample=..\\Samples\\SMD Cymbals Stereo (Samples)\\Hi-Hat (Samples)\\01 Hat Tight 1\\RR1\\09_Hat_Tight_Cnt_RR1.wav", "sample", "..\\Samples\\SMD Cymbals Stereo (Samples)\\Hi-Hat (Samples)\\01 Hat Tight 1\\RR1\\09_Hat_Tight_Cnt_RR1.wav");
+    memberTest("sample=..\\G&S CW-Drum Kit-1\\SnareFX\\SNR-OFF-V08-CustomWorks-6x13.wav", "sample", "..\\G&S CW-Drum Kit-1\\SnareFX\\SNR-OFF-V08-CustomWorks-6x13.wav");
 }
 
 void parameterTest(const std::string& line, const std::string& opcode, const std::string& parameter)
