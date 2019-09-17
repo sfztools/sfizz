@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 
 # Set the highest possible standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_compile_options(-stdlib=libc++)
