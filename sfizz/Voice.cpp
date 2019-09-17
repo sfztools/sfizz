@@ -153,7 +153,7 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (region->checkSustain && ccState[config::sustainCC] < config::halfCCThreshold)
+        if (!region->checkSustain || ccState[config::sustainCC] < config::halfCCThreshold)
             release(delay);
     }
 }
