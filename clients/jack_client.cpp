@@ -168,8 +168,7 @@ int main(int argc, char** argv)
     std::cout << '\n';
 
     sfz::Synth synth;
-    std::filesystem::path filename { filesToParse[0] };
-    synth.loadSfzFile(filename);
+    synth.loadSfzFile(filesToParse[0]);
     std::cout << "==========" << '\n';
     std::cout << "Total:" << '\n';
     std::cout << "\tMasters: " << synth.getNumMasters() << '\n';
