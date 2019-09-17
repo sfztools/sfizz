@@ -121,7 +121,7 @@ private:
     absl::Span<int> indexSpan { absl::MakeSpan(indexBuffer) };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
-    double sampleRate { config::defaultSampleRate };
+    float sampleRate { config::defaultSampleRate };
 
     const CCValueArray& ccState;
     ADSREnvelope<float> egEnvelope;
