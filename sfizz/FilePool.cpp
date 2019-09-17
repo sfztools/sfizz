@@ -156,6 +156,7 @@ void sfz::FilePool::garbageThread() noexcept
 void sfz::FilePool::clear()
 {
     preloadedData.clear();
+    fileHandles.clear();
     while (loadingQueue.pop()) {
         // Pop the queue
     }
