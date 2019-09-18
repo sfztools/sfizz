@@ -353,12 +353,15 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     }
 }
 
-void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
+void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    auto replacedVelocity = velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity;
+    // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a 
+    // way in sfz to specify that a release trigger should NOT use the note-on velocity?
+    // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
+    auto replacedVelocity = sfz::getNoteVelocity(noteNumber);
     auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
