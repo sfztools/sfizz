@@ -13,20 +13,9 @@ matrix:
         - g++-8
     env:
     - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-    - BADGE=linux
 
   - os: osx
     osx_image: xcode10.1
-    env:
-    - BADGE=osx
-
-  # Hack to get some OS-specific badges
-  exclude:
-  - os: linux
-    env: BADGE=osx
-
-  - os: osx
-    env: BADGE=linux
 
 before_install:
 - sh ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
