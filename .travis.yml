@@ -1,9 +1,5 @@
 language: cpp
 
-env:
-- BADGE=linux
-- BADGE=osx
-
 matrix:
   include:
   - os: linux
@@ -17,9 +13,12 @@ matrix:
         - g++-8
     env:
     - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - BADGE=linux
 
   - os: osx
     osx_image: xcode10.1
+    env:
+    - BADGE=osx
 
   # Hack to get some OS-specific badges
   exclude:
