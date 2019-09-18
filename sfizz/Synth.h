@@ -28,7 +28,7 @@
 #include "LeakDetector.h"
 #include "AudioSpan.h"
 #include "absl/types/span.h"
-#include <optional>
+#include <absl/types/optional.h>
 #include <random>
 #include <set>
 #include <string_view>
@@ -46,7 +46,7 @@ public:
     int getNumMasters() const noexcept;
     int getNumCurves() const noexcept;
     const Region* getRegionView(int idx) const noexcept;
-    std::set<std::string_view> getUnknownOpcodes() const noexcept;
+    std::set<absl::string_view> getUnknownOpcodes() const noexcept;
     size_t getNumPreloadedSamples() const noexcept;
 
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
@@ -62,7 +62,7 @@ public:
     void getNumActiveVoices() const noexcept;
     void garbageCollect() noexcept;
 protected:
-    void callback(std::string_view header, const std::vector<Opcode>& members) final;
+    void callback(absl::string_view header, const std::vector<Opcode>& members) final;
 
 private:
     bool hasGlobal { false };
@@ -83,8 +83,8 @@ private:
     CCValueArray ccState;
     Voice* findFreeVoice() noexcept;
     std::vector<CCNamePair> ccNames;
-    std::optional<uint8_t> defaultSwitch;
-    std::set<std::string_view> unknownOpcodes;
+    absl::optional<uint8_t> defaultSwitch;
+    std::set<absl::string_view> unknownOpcodes;
     using RegionPtrVector = std::vector<Region*>;
     using VoicePtrVector = std::vector<Voice*>;
     std::vector<std::unique_ptr<Region>> regions;

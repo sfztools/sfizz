@@ -27,6 +27,7 @@
 #include <absl/types/span.h>
 #include <functional>
 #include <type_traits>
+#include <vector>
 
 namespace sfz {
 

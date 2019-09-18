@@ -31,7 +31,7 @@
 #include "readerwriterqueue.h"
 #include <absl/container/flat_hash_map.h>
 #include <mutex>
-#include <optional>
+#include <absl/types/optional.h>
 #include <string_view>
 #include <thread>
 
@@ -56,14 +56,14 @@ public:
         double sampleRate { config::defaultSampleRate };
         std::shared_ptr<AudioBuffer<float>> preloadedData;
     };
-    std::optional<FileInformation> getFileInformation(std::string_view filename, uint32_t offset) noexcept;
-    void enqueueLoading(Voice* voice, std::string_view sample, int numFrames, unsigned ticket) noexcept;
+    absl::optional<FileInformation> getFileInformation(absl::string_view filename, uint32_t offset) noexcept;
+    void enqueueLoading(Voice* voice, absl::string_view sample, int numFrames, unsigned ticket) noexcept;
     void clear();
 private:
     std::filesystem::path rootDirectory;
     struct FileLoadingInformation {
         Voice* voice;
-        std::string_view sample;
+        absl::string_view sample;
         int numFrames;
         unsigned ticket;
     };
@@ -76,7 +76,7 @@ private:
     std::thread garbageCollectionThread { &FilePool::garbageThread, this };
     std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
     std::mutex fileHandleMutex;
-    absl::flat_hash_map<std::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
+    absl::flat_hash_map<absl::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);
 };
 }

@@ -31,6 +31,7 @@
 #include <mutex>
 #include <sndfile.hh>
 #include <thread>
+#include <mutex>
 using namespace std::chrono_literals;
 
 template <class T>
@@ -47,7 +48,7 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
     return returnedBuffer;
 }
 
-std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename, uint32_t offset) noexcept
+absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(absl::string_view filename, uint32_t offset) noexcept
 {
     std::filesystem::path file { rootDirectory / filename };
     if (!std::filesystem::exists(file))
@@ -101,7 +102,7 @@ std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(
     return returnedValue;
 }
 
-void sfz::FilePool::enqueueLoading(Voice* voice, std::string_view sample, int numFrames, unsigned ticket) noexcept
+void sfz::FilePool::enqueueLoading(Voice* voice, absl::string_view sample, int numFrames, unsigned ticket) noexcept
 {
     if (!loadingQueue.try_enqueue({ voice, sample, numFrames, ticket })) {
         DBG("Problem enqueuing a file read for file " << sample);

@@ -24,12 +24,12 @@
 #pragma once
 
 #if defined(__cpp_lib_filesystem) || (defined(__has_include) && __has_include(<filesystem>))
-#include <filesystem>
-#elif defined(__cpp_lib_experimental_filesystem) || (defined(__has_include) && __has_include(<experimental/filesystem>))
-#include <experimental/filesystem>
-namespace std {
-    namespace filesystem = std::experimental::filesystem;
-}
+		#include <filesystem>
+#elif __cplusplus >= 201103L
+	#include <experimental/filesystem>
+	namespace std {
+		namespace filesystem = std::experimental::filesystem;
+	}
 #else
-#error no filesystem support
+	#error no filesystem support
 #endif

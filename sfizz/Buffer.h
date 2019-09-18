@@ -72,7 +72,8 @@ public:
         paddedData = static_cast<pointer>(newData);
         normalData = static_cast<pointer>(std::align(Alignment, alignedSize, newData, tempSize));
         normalEnd = normalData + alignedSize;
-        if (auto endMisalignment = (alignedSize & TypeAlignmentMask); endMisalignment != 0)
+		auto endMisalignment = (alignedSize & TypeAlignmentMask);
+		if (endMisalignment != 0)
             _alignedEnd = normalEnd + Alignment - endMisalignment;
         else
             _alignedEnd = normalEnd;

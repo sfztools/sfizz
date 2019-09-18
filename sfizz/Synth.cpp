@@ -41,7 +41,7 @@ sfz::Synth::Synth()
     voiceViewArray.reserve(config::numVoices);
 }
 
-void sfz::Synth::callback(std::string_view header, const std::vector<Opcode>& members)
+void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& members)
 {
     switch (hash(header)) {
     case hash("global"):
@@ -87,7 +87,7 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode : opcodes) {
-            const auto unknown = absl::c_find_if(unknownOpcodes, [&](std::string_view sv) { return sv.compare(opcode.opcode) == 0; });
+            const auto unknown = absl::c_find_if(unknownOpcodes, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
             if (unknown != unknownOpcodes.end()) {
                 continue;
             }
@@ -113,7 +113,7 @@ void sfz::Synth::clear()
     numMasters = 0;
     numCurves = 0;
     fileTicket = -1;
-    defaultSwitch = std::nullopt;
+	defaultSwitch = absl::nullopt;
     for (auto& state : ccState)
         state = 0;
     ccNames.clear();
@@ -426,7 +426,7 @@ const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
 {
     return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
 }
-std::set<std::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
+std::set<absl::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
 {
     return unknownOpcodes;
 }

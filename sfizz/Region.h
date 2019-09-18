@@ -29,7 +29,7 @@
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include <bitset>
-#include <optional>
+#include <absl/types/optional.h>
 #include <random>
 #include <string>
 #include <vector>
@@ -73,13 +73,13 @@ struct Region {
     uint32_t offset { Default::offset }; // offset
     uint32_t offsetRandom { Default::offsetRandom }; // offset_random
     uint32_t sampleEnd { Default::sampleEndRange.getEnd() }; // end
-    std::optional<uint32_t> sampleCount {}; // count
+    absl::optional<uint32_t> sampleCount {}; // count
     SfzLoopMode loopMode { Default::loopMode }; // loopmode
     Range<uint32_t> loopRange { Default::loopRange }; //loopstart and loopend
 
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group
-    std::optional<uint32_t> offBy {}; // off_by
+    absl::optional<uint32_t> offBy {}; // off_by
     SfzOffMode offMode { Default::offMode }; // off_mode
 
     // Region logic: key mapping
@@ -91,10 +91,10 @@ struct Region {
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
     CCMap<Range<uint8_t>> ccConditions { Default::ccRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
-    std::optional<uint8_t> keyswitch {}; // sw_last
-    std::optional<uint8_t> keyswitchUp {}; // sw_up
-    std::optional<uint8_t> keyswitchDown {}; // sw_down
-    std::optional<uint8_t> previousNote {}; // sw_previous
+    absl::optional<uint8_t> keyswitch {}; // sw_last
+    absl::optional<uint8_t> keyswitchUp {}; // sw_up
+    absl::optional<uint8_t> keyswitchDown {}; // sw_down
+    absl::optional<uint8_t> previousNote {}; // sw_previous
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
@@ -116,11 +116,11 @@ struct Region {
     float pan { Default::pan }; // pan
     float width { Default::width }; // width
     float position { Default::position }; // position
-    std::optional<CCValuePair> volumeCC; // volume_oncc
-    std::optional<CCValuePair> amplitudeCC; // amplitude_oncc
-    std::optional<CCValuePair> panCC; // pan_oncc
-    std::optional<CCValuePair> widthCC; // width_oncc
-    std::optional<CCValuePair> positionCC; // position_oncc
+    absl::optional<CCValuePair> volumeCC; // volume_oncc
+    absl::optional<CCValuePair> amplitudeCC; // amplitude_oncc
+    absl::optional<CCValuePair> panCC; // pan_oncc
+    absl::optional<CCValuePair> widthCC; // width_oncc
+    absl::optional<CCValuePair> positionCC; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
