@@ -1,5 +1,7 @@
 # sfizz
 
+[![Travis Build Status](https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux-macOS&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
+
 ## Building
 
 Sfizz depends on the `sndfile` library.
