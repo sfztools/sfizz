@@ -1,5 +1,9 @@
 language: cpp
 
+env:
+- BADGE=linux
+- BADGE=macos
+
 matrix:
   include:
   - os: linux
@@ -16,6 +20,14 @@ matrix:
 
   - os: osx
     osx_image: xcode10.1
+
+  # Hack to get some OS-specific badges
+  exclude:
+  - os: osx
+    env: BADGE=linux
+
+  - os: linux
+    env: BADGE=macos
 
 before_install:
 - sh ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
