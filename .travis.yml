@@ -2,7 +2,7 @@ language: cpp
 
 env:
 - BADGE=linux
-- BADGE=macos
+- BADGE=osx
 
 matrix:
   include:
@@ -23,11 +23,11 @@ matrix:
 
   # Hack to get some OS-specific badges
   exclude:
+  - os: linux
+    env: BADGE=osx
+
   - os: osx
     env: BADGE=linux
-
-  - os: linux
-    env: BADGE=macos
 
 before_install:
 - sh ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
