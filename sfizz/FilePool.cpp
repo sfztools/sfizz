@@ -131,8 +131,8 @@ void sfz::FilePool::loadingThread() noexcept
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
         
         std::lock_guard guard { fileHandleMutex };
-        auto newHandle = fileHandles.emplace_back(readFromFile<float>(sndFile, fileToLoad.numFrames));
-        fileToLoad.voice->setFileData(newHandle, fileToLoad.ticket);
+        fileHandles.emplace_back(readFromFile<float>(sndFile, fileToLoad.numFrames));
+        fileToLoad.voice->setFileData(fileHandles.back(), fileToLoad.ticket);
     }
 }
 
@@ -141,7 +141,6 @@ void sfz::FilePool::garbageThread() noexcept
     while (!quitThread) {
         for (auto handle = fileHandles.begin(); handle < fileHandles.end();) {
             if (handle->use_count() == 1) {
-                handle->reset();
                 std::lock_guard guard { fileHandleMutex };
                 std::iter_swap(handle, fileHandles.end() - 1);
                 fileHandles.pop_back();
