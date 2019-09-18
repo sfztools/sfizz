@@ -24,7 +24,7 @@
 #include "SfzHelpers.h"
 #include "StringViewHelpers.h"
 
-std::optional<uint8_t> sfz::readNoteValue(const std::string_view& value)
+absl::optional<uint8_t> sfz::readNoteValue(const absl::string_view& value)
 {
     switch(hash(value))
     {

@@ -22,8 +22,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <optional>
-#include <string>
+#include <absl/types/optional.h>
+#include <absl/strings/string_view.h>
+//#include <string>
 #include <array>
 #include <cmath>
 
@@ -59,7 +60,7 @@ inline constexpr float normalizeNegativePercents(T percentValue)
     return std::min(std::max(static_cast<float>(percentValue), -100.0f), 100.0f) / 100.0f;
 }
 
-inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<CCValuePair>& ccSwitch, float value) noexcept
+inline float ccSwitchedValue(const CCValueArray& ccValues, const absl::optional<CCValuePair>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)
         return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
@@ -67,7 +68,7 @@ inline float ccSwitchedValue(const CCValueArray& ccValues, const std::optional<C
         return value;
 }
 
-std::optional<uint8_t> readNoteValue(const std::string_view& value);
+absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
 
 } // namespace sfz
 

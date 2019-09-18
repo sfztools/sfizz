@@ -27,7 +27,7 @@
 #include "Range.h"
 #include "SfzHelpers.h"
 #include "StringViewHelpers.h"
-#include <optional>
+#include <absl/types/optional.h>
 #include <string_view>
 
 // charconv support is still sketchy with clang/gcc so we use abseil's numbers
@@ -36,16 +36,16 @@
 namespace sfz {
 struct Opcode {
     Opcode() = delete;
-    Opcode(std::string_view inputOpcode, std::string_view inputValue);
-    std::string_view opcode {};
-    std::string_view value {};
+    Opcode(absl::string_view inputOpcode, absl::string_view inputValue);
+    absl::string_view opcode {};
+    absl::string_view value {};
     // This is to handle the integer parameter of some opcodes
-    std::optional<uint8_t> parameter;
+    absl::optional<uint8_t> parameter;
     LEAK_DETECTOR(Opcode);
 };
 
 template <class ValueType>
-inline std::optional<ValueType> readOpcode(std::string_view value, const Range<ValueType>& validRange)
+inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
     if constexpr (std::is_integral<ValueType>::value) {
         int64_t returnedValue;
@@ -65,13 +65,13 @@ inline std::optional<ValueType> readOpcode(std::string_view value, const Range<V
     } else {
         float returnedValue;
         if (!absl::SimpleAtof(value, &returnedValue))
-            return std::nullopt;
+			return absl::nullopt;
 
         return validRange.clamp(returnedValue);
     }
 }
 
-inline std::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
+inline absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
 {
     switch (hash(opcode.value)) {
     case hash("off"):
@@ -94,7 +94,7 @@ inline void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Ra
 }
 
 template <class ValueType>
-inline void setValueFromOpcode(const Opcode& opcode, std::optional<ValueType>& target, const Range<ValueType>& validRange)
+inline void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
     if (!value) // Try and read a note rather than a number
@@ -124,7 +124,7 @@ inline void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& targ
 }
 
 template <class ValueType>
-inline void setCCPairFromOpcode(const Opcode& opcode, std::optional<CCValuePair>& target, const Range<ValueType>& validRange)
+inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCValuePair>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
     if (value && opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter))

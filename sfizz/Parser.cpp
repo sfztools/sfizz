@@ -28,12 +28,13 @@
 #include <algorithm>
 #include <fstream>
 
-using svregex_iterator = std::regex_iterator<std::string_view::const_iterator>;
-using svmatch_results = std::match_results<std::string_view::const_iterator>;
+using svregex_iterator = std::regex_iterator<absl::string_view::const_iterator>;
+using svmatch_results = std::match_results<absl::string_view::const_iterator>;
 
-void removeCommentOnLine(std::string_view& line)
+void removeCommentOnLine(absl::string_view& line)
 {
-    if (auto position = line.find("//"); position != line.npos)
+	auto position = line.find("//");
+	if (position != line.npos)
         line.remove_suffix(line.size() - position);
 }
 
@@ -48,7 +49,7 @@ bool sfz::Parser::loadSfzFile(const std::filesystem::path& file)
     readSfzFile(file, lines);
 
     aggregatedContent = absl::StrJoin(lines, " ");
-    const std::string_view aggregatedView { aggregatedContent };
+    const absl::string_view aggregatedView { aggregatedContent };
 
     svregex_iterator headerIterator(aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers);
     const auto regexEnd = svregex_iterator();
@@ -59,15 +60,15 @@ bool sfz::Parser::loadSfzFile(const std::filesystem::path& file)
         svmatch_results headerMatch = *headerIterator;
 
         // Can't use uniform initialization here because it generates narrowing conversions
-        const std::string_view header(&*headerMatch[1].first, headerMatch[1].length());
-        const std::string_view members(&*headerMatch[2].first, headerMatch[2].length());
+        const absl::string_view header(&*headerMatch[1].first, headerMatch[1].length());
+        const absl::string_view members(&*headerMatch[2].first, headerMatch[2].length());
         auto paramIterator = svregex_iterator(members.cbegin(), members.cend(), sfz::Regexes::members);
 
         // Store or handle members
         for (; paramIterator != regexEnd; ++paramIterator) {
             const svmatch_results paramMatch = *paramIterator;
-            const std::string_view opcode(&*paramMatch[1].first, paramMatch[1].length());
-            const std::string_view value(&*paramMatch[2].first, paramMatch[2].length());
+            const absl::string_view opcode(&*paramMatch[1].first, paramMatch[1].length());
+            const absl::string_view value(&*paramMatch[2].first, paramMatch[2].length());
             currentMembers.emplace_back(opcode, value);
         }
         callback(header, currentMembers);
@@ -89,7 +90,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
 
     std::string tmpString;
     while (std::getline(fileStream, tmpString)) {
-        std::string_view tmpView { tmpString };
+        absl::string_view tmpView { tmpString };
 
         removeCommentOnLine(tmpView);
         trimInPlace(tmpView);

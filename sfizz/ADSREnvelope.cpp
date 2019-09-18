@@ -24,7 +24,7 @@
 #include "ADSREnvelope.h"
 #include "Config.h"
 #include "SIMDHelpers.h"
-#include <algorithm>
+#include "compat/algorithm.h"
 
 namespace sfz {
 

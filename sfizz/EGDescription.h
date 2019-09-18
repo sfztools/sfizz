@@ -26,7 +26,7 @@
 #include "Defaults.h"
 #include "LeakDetector.h"
 #include "SfzHelpers.h"
-#include <optional>
+#include <absl/types/optional.h>
 
 
 namespace sfz
@@ -55,13 +55,13 @@ struct EGDescription
     float vel2sustain   { Default::vel2sustain };
     int   vel2depth     { Default::depth };
 
-    std::optional<CCValuePair> ccAttack;
-    std::optional<CCValuePair> ccDecay;
-    std::optional<CCValuePair> ccDelay;
-    std::optional<CCValuePair> ccHold;
-    std::optional<CCValuePair> ccRelease;
-    std::optional<CCValuePair> ccStart;
-    std::optional<CCValuePair> ccSustain;
+	absl::optional<CCValuePair> ccAttack;
+	absl::optional<CCValuePair> ccDecay;
+	absl::optional<CCValuePair> ccDelay;
+	absl::optional<CCValuePair> ccHold;
+	absl::optional<CCValuePair> ccRelease;
+	absl::optional<CCValuePair> ccStart;
+	absl::optional<CCValuePair> ccSustain;
 
     float getAttack(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {

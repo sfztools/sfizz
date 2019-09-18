@@ -22,42 +22,18 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <string_view>
 
-inline void trimInPlace(absl::string_view& s)
-{
-    const auto leftPosition = s.find_first_not_of(" \r\t\n\f\v");
-    if (leftPosition != s.npos) {
-        s.remove_prefix(leftPosition);
-        const auto rightPosition = s.find_last_not_of(" \r\t\n\f\v");
-        s.remove_suffix(s.size() - rightPosition - 1);
-    } else {
-        s.remove_suffix(s.size());
-    }
-}
+#include <algorithm>
 
-inline absl::string_view trim(absl::string_view s)
-{
-    const auto leftPosition = s.find_first_not_of(" \r\t\n\f\v");
-    if (leftPosition != s.npos) {
-        s.remove_prefix(leftPosition);
-        const auto rightPosition = s.find_last_not_of(" \r\t\n\f\v");
-        s.remove_suffix(s.size() - rightPosition - 1);
-    } else {
-        s.remove_suffix(s.size());
-    }
-    return s;
-}
-
-inline constexpr uint64_t Fnv1aBasis = 0x811C9DC5;
-inline constexpr uint64_t Fnv1aPrime = 0x01000193;
-
-inline constexpr uint64_t hash(absl::string_view s, uint64_t h = Fnv1aBasis)
-{
-    if (s.length() > 0)
-        return hash( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime );
-
-    return h;
-}
-
-
+#if __cplusplus <= 201402L
+	#include <cassert>
+	namespace std
+	{
+		template<class T>
+		constexpr const T& clamp( const T& v, const T& lo, const T& hi )
+		{
+			assert( !(hi < lo) );
+			return (v < lo) ? lo : (hi < v) ? hi : v;
+		}
+	}
+#endif // lower than C++17
