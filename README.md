@@ -1,6 +1,7 @@
 # sfizz
 
-[![Travis](https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux-macOS&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
+[![Travis Linux Build Status](https://img.shields.io/travis/com/sfztools/sfizz.svg?env=BADGE=linux&label=Linux&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
+[![Travis macOS Build Status](https://img.shields.io/travis/com/sfztools/sfizz.svg?env=BADGE=macos&label=macOS&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
 
 ## Building
 
