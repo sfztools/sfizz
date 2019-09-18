@@ -1,7 +1,6 @@
 # sfizz
 
 [![Travis](https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux-macOS&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
-[![AppVeyor](https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor)](https://ci.appveyor.com/project/sfztools/sfizz)
 
 ## Building
 
