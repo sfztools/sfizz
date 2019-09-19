@@ -1,6 +1,6 @@
 #include <chrono>
 #include <array>
-#include "compat/inline.h"
+#include "compat/utils.h"
 namespace sfz
 {
 	SFZ_INLINE std::array<std::chrono::steady_clock::time_point, 128> noteOnTimes { };

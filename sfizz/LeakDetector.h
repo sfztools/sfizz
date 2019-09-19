@@ -24,7 +24,7 @@
 #pragma once
 #include <atomic>
 #include "Debug.h"
-#include "compat/inline.h"
+#include "compat/utils.h"
 
 template <class Owner>
 class LeakDetector {
