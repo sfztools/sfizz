@@ -49,8 +49,8 @@ inline absl::string_view trim(absl::string_view s)
     return s;
 }
 
-inline constexpr uint64_t Fnv1aBasis = 0x811C9DC5;
-inline constexpr uint64_t Fnv1aPrime = 0x01000193;
+constexpr uint64_t Fnv1aBasis = 0x811C9DC5;
+constexpr uint64_t Fnv1aPrime = 0x01000193;
 
 inline constexpr uint64_t hash(absl::string_view s, uint64_t h = Fnv1aBasis)
 {

@@ -1,10 +1,10 @@
 #include <chrono>
 #include <array>
-
+#include "compat/inline.h"
 namespace sfz
 {
-	inline std::array<std::chrono::steady_clock::time_point, 128> noteOnTimes { };
-	inline std::array<uint8_t, 128> lastNoteVelocities { };
+	SFZ_INLINE std::array<std::chrono::steady_clock::time_point, 128> noteOnTimes { };
+	SFZ_INLINE std::array<uint8_t, 128> lastNoteVelocities { };
 	inline void noteOn(int noteNumber, uint8_t velocity)
 	{
 		if (noteNumber >= 0 && noteNumber < 128) {

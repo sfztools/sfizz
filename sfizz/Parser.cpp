@@ -33,8 +33,8 @@ using svmatch_results = std::match_results<absl::string_view::const_iterator>;
 
 void removeCommentOnLine(absl::string_view& line)
 {
-	auto position = line.find("//");
-	if (position != line.npos)
+    auto position = line.find("//");
+    if (position != line.npos)
         line.remove_suffix(line.size() - position);
 }
 

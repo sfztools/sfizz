@@ -28,7 +28,8 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     : opcode(inputOpcode)
     , value(inputValue)
 {
-    if (const auto lastCharIndex = inputOpcode.find_last_not_of("1234567890"); lastCharIndex != inputOpcode.npos) {
+    const auto lastCharIndex = inputOpcode.find_last_not_of("1234567890");
+    if (lastCharIndex != inputOpcode.npos) {
         int returnedValue;
         absl::string_view parameterView = inputOpcode;
         parameterView.remove_prefix(lastCharIndex + 1);
