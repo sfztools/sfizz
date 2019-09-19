@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include "compat/inline.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -59,8 +60,8 @@ inline constexpr Type mag2db(Type in)
 }
 
 namespace Random {
-static inline std::random_device randomDevice;
-static inline std::mt19937 randomGenerator { randomDevice() };
+static SFZ_INLINE std::random_device randomDevice;
+static SFZ_INLINE std::mt19937 randomGenerator { randomDevice() };
 } // namespace Random
 
 inline float midiNoteFrequency(const int noteNumber)

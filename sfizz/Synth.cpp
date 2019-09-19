@@ -113,7 +113,7 @@ void sfz::Synth::clear()
     numMasters = 0;
     numCurves = 0;
     fileTicket = -1;
-	defaultSwitch = absl::nullopt;
+    defaultSwitch = absl::nullopt;
     for (auto& state : ccState)
         state = 0;
     ccNames.clear();
@@ -150,10 +150,12 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
                 ccNames.emplace_back(*member.parameter, member.value);
             break;
         case hash("Default_path"): [[fallthrough]];
-        case hash("default_path"):
-            if (auto newPath = std::filesystem::path(member.value); std::filesystem::exists(newPath))
+        case hash("default_path"): {
+            auto newPath = std::filesystem::path(member.value);
+            if (std::filesystem::exists(newPath))
                 rootDirectory = newPath;
             break;
+        }
         default:
             // Unsupported control opcode
             ASSERTFALSE;

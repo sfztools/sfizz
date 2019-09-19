@@ -298,7 +298,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("amp_velcurve_"):
         if (opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter)) {
-            if (auto value = readOpcode(opcode.value, Default::ampVelcurveRange); value)
+            auto value = readOpcode(opcode.value, Default::ampVelcurveRange);
+            if (value)
                 velocityPoints.emplace_back(*opcode.parameter, *value);
         }
         break;
