@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 inline void trimInPlace(absl::string_view& s)
 {
