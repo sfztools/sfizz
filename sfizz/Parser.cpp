@@ -25,6 +25,7 @@
 #include "Config.h"
 #include "StringViewHelpers.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_cat.h"
 #include <algorithm>
 #include <fstream>
 
@@ -128,7 +129,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
         std::string::size_type findPos = tmpView.find(sfz::config::defineCharacter, lastPos);
 
         while (findPos < tmpView.npos) {
-            newString.append(tmpView, lastPos, findPos - lastPos);
+            absl::StrAppend(&newString, tmpView.substr(lastPos, findPos - lastPos));
 
             const auto defineEnd = tmpView.find_first_of("= \r\t\n\f\v", findPos);
             const auto candidate = tmpView.substr(findPos, defineEnd - findPos);
@@ -150,7 +151,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
         }
 
         // Copy the rest of the string
-        newString += tmpView.substr(lastPos);
+        absl::StrAppend(&newString, tmpView.substr(lastPos));
         lines.push_back(std::move(newString));
     }
 }
