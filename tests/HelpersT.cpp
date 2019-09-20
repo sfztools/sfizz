@@ -23,36 +23,35 @@
 
 #include "StringViewHelpers.h"
 #include "catch2/catch.hpp"
-#include <string_view>
+#include "absl/strings/string_view.h"
 using namespace Catch::literals;
-using namespace std::literals::string_view_literals;
 
 TEST_CASE("[Helpers] trimInPlace")
 {
     SECTION("Trim nothing")
     {
-        auto input { "view"sv };
+        absl::string_view input { "view" };
         trimInPlace(input);
-        REQUIRE(input == "view"sv);
+        REQUIRE(input == "view");
     }
 
     SECTION("Trim spaces")
     {
-        auto input { "   view  "sv };
+        absl::string_view input { "   view  " };
         trimInPlace(input);
-        REQUIRE(input == "view"sv);
+        REQUIRE(input == "view");
     }
 
     SECTION("Trim other chars")
     {
-        auto input { " \tview  \t"sv };
+        absl::string_view input { " \tview  \t" };
         trimInPlace(input);
-        REQUIRE(input == "view"sv);
+        REQUIRE(input == "view");
     }
 
     SECTION("Empty view")
     {
-        auto input { "     "sv };
+        absl::string_view input { "     " };
         trimInPlace(input);
         REQUIRE(input.empty());
     }
@@ -62,25 +61,25 @@ TEST_CASE("[Helpers] trim")
 {
     SECTION("Trim nothing")
     {
-        auto input { "view"sv };
-        REQUIRE(trim(input) == "view"sv);
+        absl::string_view input { "view" };
+        REQUIRE(trim(input) == "view");
     }
 
     SECTION("Trim spaces")
     {
-        auto input { "   view  "sv };
-        REQUIRE(trim(input) == "view"sv);
+        absl::string_view input { "   view  " };
+        REQUIRE(trim(input) == "view");
     }
 
     SECTION("Trim other chars")
     {
-        auto input { " \tview  \t"sv };
-        REQUIRE(trim(input) == "view"sv);
+        absl::string_view input { " \tview  \t" };
+        REQUIRE(trim(input) == "view");
     }
 
     SECTION("Empty view")
     {
-        auto input { "     "sv };
+        absl::string_view input { "     " };
         REQUIRE(trim(input).empty());
     }
 }
