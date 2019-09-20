@@ -24,9 +24,9 @@
 #include "OnePoleFilter.h"
 #include "catch2/catch.hpp"
 #include "cnpy.h"
+#include "../sfizz/compat/filesystem.h"
 #include <absl/types/span.h>
 #include <algorithm>
-#include <filesystem>
 #include <string>
 using namespace Catch::literals;
 
@@ -67,7 +67,7 @@ void testLowpass(const std::filesystem::path& inputNumpyFile, const std::filesys
     for (auto& data : outputSpan)
         expectedData.push_back(static_cast<Type>(data));
 
-    OnePoleFilter filter { gain };
+    OnePoleFilter<Type> filter { gain };
     std::vector<Type> outputData(size);
     filter.processLowpass(inputData, absl::MakeSpan(outputData));
     REQUIRE(approxEqual(outputData, expectedData));
@@ -102,7 +102,7 @@ void testHighpass(const std::filesystem::path& inputNumpyFile, const std::filesy
     for (auto& data : outputSpan)
         expectedData.push_back(static_cast<Type>(data));
 
-    OnePoleFilter filter { gain };
+    OnePoleFilter<Type> filter { gain };
     std::vector<Type> outputData(size);
     filter.processHighpass(inputData, absl::MakeSpan(outputData));
     REQUIRE(approxEqual(outputData, expectedData));
