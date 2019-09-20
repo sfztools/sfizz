@@ -53,42 +53,58 @@ public:
 
     int processLowpass(absl::Span<const Type> input, absl::Span<Type> lowpass)
     {
-        for (auto [in, out] = std::pair(input.begin(), lowpass.begin());
-             in < input.end() && out < lowpass.end(); in++, out++) {
+        auto in = input.begin();
+        auto out = lowpass.begin();
+        auto size = std::min(input.size(), lowpass.size());
+        auto sentinel = in.begin() + size;
+        while (in < sentinel) {
             oneLowpass(in, out);
+            in++;
+            out++;
         }
-        return std::min(input.size(), lowpass.size());
+        return size;
     }
 
     int processHighpass(absl::Span<const Type> input, absl::Span<Type> highpass)
     {
-        for (auto [in, out] = std::pair(input.begin(), highpass.begin());
-             in < input.end() && out < highpass.end(); in++, out++) {
+        auto in = input.begin();
+        auto out = highpass.begin();
+        auto size = std::min(input.size(), highpass.size());
+        auto sentinel = in.begin() + size;
+        while (in < sentinel) {
             oneHighpass(in, out);
+            in++;
+            out++;
         }
-        return std::min(input.size(), highpass.size());
+        return size;
     }
 
     int processLowpassVariableGain(absl::Span<const Type> input, absl::Span<Type> lowpass, absl::Span<const Type> gain)
     {
-        for (auto [in, out, g] = std::tuple(input.begin(), lowpass.begin(), gain.begin());
-             in < input.end() && out < lowpass.end() && g < gain.end(); in++, out++, g++) {
+        auto in = input.begin();
+        auto out = lowpass.begin();
+        auto g = gain.begin();
+        auto size = min(input.size(), lowpass.size(), gain.size());
+        auto sentinel = in.begin() + size;
+        while (in < sentinel) {
             setGain(*g);
             oneLowpass(in, out);
         }
-
-        return std::min({ input.size(), lowpass.size(), gain.size() });
+        return size;
     }
 
     int processHighpassVariableGain(absl::Span<const Type> input, absl::Span<Type> highpass, absl::Span<const Type> gain)
     {
-        for (auto [in, out, g] = std::tuple(input.begin(), highpass.begin(), gain.begin());
-             in < input.end() && out < highpass.end() && g < gain.end(); in++, out++, g++) {
+        auto in = input.begin();
+        auto out = highpass.begin();
+        auto g = gain.begin();
+        auto size = min(input.size(), highpass.size(), gain.size());
+        auto sentinel = in.begin() + size;
+        while (in < sentinel) {
             setGain(*g);
             oneHighpass(in, out);
         }
-
-        return std::min({ input.size(), highpass.size(), gain.size() });
+        return size;
     }
 
     void reset() { state = 0.0; }
