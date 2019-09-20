@@ -29,6 +29,7 @@
 #include "StringViewHelpers.h"
 #include <absl/types/optional.h>
 #include <string_view>
+#include <type_traits>
 
 // charconv support is still sketchy with clang/gcc so we use abseil's numbers
 #include "absl/strings/numbers.h"
@@ -44,10 +45,9 @@ struct Opcode {
     LEAK_DETECTOR(Opcode);
 };
 
-template <class ValueType>
+template <typename ValueType, std::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
-    if constexpr (std::is_integral<ValueType>::value) {
         int64_t returnedValue;
         if (!absl::SimpleAtoi(value, &returnedValue)) {
             float floatValue;
@@ -62,13 +62,16 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
             returnedValue = std::numeric_limits<ValueType>::min();
 
         return validRange.clamp(static_cast<ValueType>(returnedValue));
-    } else {
-        float returnedValue;
-        if (!absl::SimpleAtof(value, &returnedValue))
-			return absl::nullopt;
+}
 
-        return validRange.clamp(returnedValue);
-    }
+template <typename ValueType, std::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
+inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
+{
+    float returnedValue;
+    if (!absl::SimpleAtof(value, &returnedValue))
+		return absl::nullopt;
+
+    return validRange.clamp(returnedValue);
 }
 
 inline absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
