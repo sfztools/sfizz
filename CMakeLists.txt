@@ -4,7 +4,8 @@ project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 # Set the highest possible standard
 set(CMAKE_CXX_STANDARD 17)
 
-cmake_policy(SET CMP0069 NEW)
+# Enable LTO
+set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
