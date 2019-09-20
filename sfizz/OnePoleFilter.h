@@ -56,7 +56,7 @@ public:
         auto in = input.begin();
         auto out = lowpass.begin();
         auto size = std::min(input.size(), lowpass.size());
-        auto sentinel = in.begin() + size;
+        auto sentinel = in + size;
         while (in < sentinel) {
             oneLowpass(in, out);
             in++;
@@ -70,7 +70,7 @@ public:
         auto in = input.begin();
         auto out = highpass.begin();
         auto size = std::min(input.size(), highpass.size());
-        auto sentinel = in.begin() + size;
+        auto sentinel = in + size;
         while (in < sentinel) {
             oneHighpass(in, out);
             in++;
@@ -85,7 +85,7 @@ public:
         auto out = lowpass.begin();
         auto g = gain.begin();
         auto size = min(input.size(), lowpass.size(), gain.size());
-        auto sentinel = in.begin() + size;
+        auto sentinel = in + size;
         while (in < sentinel) {
             setGain(*g);
             oneLowpass(in, out);
@@ -99,10 +99,10 @@ public:
         auto out = highpass.begin();
         auto g = gain.begin();
         auto size = min(input.size(), highpass.size(), gain.size());
-        auto sentinel = in.begin() + size;
+        auto sentinel = in + size;
         while (in < sentinel) {
             setGain(*g);
-            oneHighpass(in, out);
+            oneLowpass(in, out);
         }
         return size;
     }
