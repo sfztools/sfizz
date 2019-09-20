@@ -44,7 +44,7 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
         sndFile.readf(tempReadBuffer->channelWriter(0), numFrames);
         ::readInterleaved<float>(tempReadBuffer->getSpan(0), returnedBuffer->getSpan(0), returnedBuffer->getSpan(1));
     }
-    return std::move(returnedBuffer);
+    return returnedBuffer;
 }
 
 std::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(std::string_view filename, uint32_t offset) noexcept
@@ -142,8 +142,10 @@ void sfz::FilePool::garbageThread() noexcept
         for (auto handle = fileHandles.begin(); handle < fileHandles.end();) {
             if (handle->use_count() == 1) {
                 std::lock_guard guard { fileHandleMutex };
+                handle->reset();
                 std::iter_swap(handle, fileHandles.end() - 1);
                 fileHandles.pop_back();
+                DBG("Popped a background file... " << fileHandles.size() << " remaining")
             } else {
                 handle++;
             }

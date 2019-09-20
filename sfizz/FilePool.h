@@ -38,11 +38,7 @@
 namespace sfz {
 class FilePool {
 public:
-    FilePool()
-        : fileLoadingThread(std::thread(&FilePool::loadingThread, this))
-        , garbageCollectionThread(std::thread(&FilePool::garbageThread, this))
-    {
-    }
+    FilePool() { }
 
     ~FilePool()
     {
@@ -75,11 +71,11 @@ private:
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue { config::numVoices };
     void loadingThread() noexcept;
     void garbageThread() noexcept;
-    std::thread fileLoadingThread;
-    std::thread garbageCollectionThread;
+    bool quitThread { false };
+    std::thread fileLoadingThread { &FilePool::loadingThread, this };
+    std::thread garbageCollectionThread { &FilePool::garbageThread, this };
     std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
     std::mutex fileHandleMutex;
-    bool quitThread { false };
     absl::flat_hash_map<std::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);
 };
