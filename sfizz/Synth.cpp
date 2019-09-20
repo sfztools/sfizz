@@ -37,7 +37,7 @@ using namespace std::literals;
 sfz::Synth::Synth()
 {
     for (int i = 0; i < config::numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(ccState));
+        voices.push_back(std::make_unique<Voice>(midiState));
     voiceViewArray.reserve(config::numVoices);
 }
 
@@ -83,7 +83,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_unique<Region>();
+    auto lastRegion = std::make_unique<Region>(midiState);
 
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode : opcodes) {
@@ -114,7 +114,7 @@ void sfz::Synth::clear()
     numCurves = 0;
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
-    for (auto& state : ccState)
+    for (auto& state : midiState.cc)
         state = 0;
     ccNames.clear();
     globalOpcodes.clear();
@@ -142,7 +142,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Set_cc"): [[fallthrough]];
         case hash("set_cc"):
             if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
-                setValueFromOpcode(member, ccState[*member.parameter], Default::ccRange);
+                setValueFromOpcode(member, midiState.cc[*member.parameter], Default::ccRange);
             break;
         case hash("Label_cc"): [[fallthrough]];
         case hash("label_cc"):
@@ -230,7 +230,7 @@ bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
 
         // Defaults
         for (int ccIndex = 1; ccIndex < 128; ccIndex++)
-            region->registerCC(region->channelRange.getStart(), ccIndex, ccState[ccIndex]);
+            region->registerCC(region->channelRange.getStart(), ccIndex, midiState.cc[ccIndex]);
 
         if (defaultSwitch) {
             region->registerNoteOn(region->channelRange.getStart(), *defaultSwitch, 127, 1.0);
@@ -333,7 +333,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    sfz::noteOn(noteNumber, velocity);
+    midiState.noteOn(noteNumber, velocity);
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
     for (auto& region : noteActivationLists[noteNumber]) {
@@ -361,7 +361,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    auto replacedVelocity = velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity;
+    auto replacedVelocity = velocity == 0 ? midiState.getNoteVelocity(noteNumber) : velocity;
     auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
@@ -389,7 +389,7 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
 
-    ccState[ccNumber] = ccValue;
+    midiState.cc[ccNumber] = ccValue;
 
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(channel, ccNumber, ccValue)) {

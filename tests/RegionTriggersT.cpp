@@ -27,7 +27,9 @@ using namespace Catch::literals;
 
 TEST_CASE("Basic triggers", "Region triggers")
 {
-    sfz::Region region;
+    sfz::MidiState midiState;
+    sfz::Region region { midiState };
+    
     region.parseOpcode({ "sample", "*sine" });
     SECTION("key")
     {
@@ -136,7 +138,8 @@ TEST_CASE("Basic triggers", "Region triggers")
 
 TEST_CASE("Legato triggers", "Region triggers")
 {
-    sfz::Region region;
+    sfz::MidiState midiState;
+    sfz::Region region { midiState };
     region.parseOpcode({ "sample", "*sine" });
     SECTION("First note playing")
     {

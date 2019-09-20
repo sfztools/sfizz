@@ -28,6 +28,7 @@
 #include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"
+#include "MidiState.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include <absl/types/span.h>
@@ -38,7 +39,7 @@ namespace sfz {
 class Voice {
 public:
     Voice() = delete;
-    Voice(const CCValueArray& ccState);
+    Voice(const MidiState& midiState);
     enum class TriggerType {
         NoteOn,
         NoteOff,
@@ -124,7 +125,7 @@ private:
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
 
-    const CCValueArray& ccState;
+    const MidiState& midiState;
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> volumeEnvelope; // dB events but the envelope output is linear gain
     LinearEnvelope<float> amplitudeEnvelope; // linear events
