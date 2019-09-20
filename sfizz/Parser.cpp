@@ -26,7 +26,9 @@
 #include "StringViewHelpers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_cat.h"
+#include "Regexes.h"
 #include <algorithm>
+#include <regex>
 #include <fstream>
 
 using svregex_iterator = std::regex_iterator<absl::string_view::const_iterator>;

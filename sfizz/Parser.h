@@ -25,20 +25,11 @@
 #include "Opcode.h"
 #include "compat/filesystem.h"
 #include <map>
-#include <regex>
 #include <string>
-#include <string_view>
+#include "absl/strings/string_view.h"
 #include <vector>
 
 namespace sfz {
-namespace Regexes {
-	SFZ_INLINE static std::regex includes { R"V(#include\s*"(.*?)".*$)V", std::regex::optimize };
-	SFZ_INLINE static std::regex defines { R"(#define\s*(\$[a-zA-Z0-9]+)\s+([a-zA-Z0-9]+)(?=\s|$))", std::regex::optimize };
-	SFZ_INLINE static std::regex headers { R"(<(.*?)>(.*?)(?=<|$))", std::regex::optimize };
-	SFZ_INLINE static std::regex members { R"(([a-zA-Z0-9_]+)=([a-zA-Z0-9-_#.&\/\s\\\(\),\*]+)(?![a-zA-Z0-9_]*=))", std::regex::optimize };
-	SFZ_INLINE static std::regex opcodeParameters { R"(([a-zA-Z0-9_]+?)([0-9]+)$)", std::regex::optimize };
-}
-
 class Parser {
 public:
     virtual bool loadSfzFile(const std::filesystem::path& file);
