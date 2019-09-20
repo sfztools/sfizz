@@ -28,8 +28,8 @@
 #include "Debug.h"
 #include "LeakDetector.h"
 #include "SIMDHelpers.h"
-#include <initializer_list>
 #include <array>
+#include <initializer_list>
 #include <type_traits>
 
 template <class Type, unsigned int MaxChannels = sfz::config::numChannels>
@@ -76,19 +76,24 @@ public:
         }
     }
 
+    template <class U, unsigned int N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>, typename = std::enable_if_t<std::is_const<U>::value, int>>
+    AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
+        : numFrames(audioBuffer.getNumFrames())
+        , numChannels(audioBuffer.getNumChannels())
+    {
+        for (int i = 0; i < numChannels; i++) {
+            this->spans[i] = audioBuffer.channelReader(i);
+        }
+    }
     template <class U, unsigned int N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>>
     AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
     {
         for (int i = 0; i < numChannels; i++) {
-            if constexpr (std::is_const<Type>::value)
-                this->spans[i] = audioBuffer.channelReader(i);
-            else
-                this->spans[i] = audioBuffer.channelWriter(i);
+            this->spans[i] = audioBuffer.channelWriter(i);
         }
     }
-
     template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
     AudioSpan(const AudioSpan<U, N>& other)
         : numFrames(other.getNumFrames())
