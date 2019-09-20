@@ -151,7 +151,8 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("Default_path"): [[fallthrough]];
         case hash("default_path"): {
-            auto newPath = std::filesystem::path(member.value);
+            auto stringPath = std::string(member.value.begin(), member.value.end());
+            auto newPath = std::filesystem::path(stringPath);
             if (std::filesystem::exists(newPath))
                 rootDirectory = newPath;
             break;
@@ -349,7 +350,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
             voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
+                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
             }
         }
     }
@@ -377,7 +378,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
             voice->startVoice(region, delay, channel, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
+                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
             }
         }
     }
@@ -402,7 +403,7 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
             voice->startVoice(region, delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, region->sample, region->trueSampleEnd(), fileTicket++);
+                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
             }
         }
     }

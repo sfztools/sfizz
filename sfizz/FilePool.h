@@ -56,14 +56,14 @@ public:
         double sampleRate { config::defaultSampleRate };
         std::shared_ptr<AudioBuffer<float>> preloadedData;
     };
-    absl::optional<FileInformation> getFileInformation(absl::string_view filename, uint32_t offset) noexcept;
-    void enqueueLoading(Voice* voice, absl::string_view sample, int numFrames, unsigned ticket) noexcept;
+    absl::optional<FileInformation> getFileInformation(const std::string& filename, uint32_t offset) noexcept;
+    void enqueueLoading(Voice* voice, const std::string* sample, int numFrames, unsigned ticket) noexcept;
     void clear();
 private:
     std::filesystem::path rootDirectory;
     struct FileLoadingInformation {
         Voice* voice;
-        absl::string_view sample;
+        const std::string* sample;
         int numFrames;
         unsigned ticket;
     };

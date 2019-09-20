@@ -48,7 +48,7 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
     return returnedBuffer;
 }
 
-absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(absl::string_view filename, uint32_t offset) noexcept
+absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename, uint32_t offset) noexcept
 {
     std::filesystem::path file { rootDirectory / filename };
     if (!std::filesystem::exists(file))
@@ -102,7 +102,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
     return returnedValue;
 }
 
-void sfz::FilePool::enqueueLoading(Voice* voice, absl::string_view sample, int numFrames, unsigned ticket) noexcept
+void sfz::FilePool::enqueueLoading(Voice* voice, const std::string* sample, int numFrames, unsigned ticket) noexcept
 {
     if (!loadingQueue.try_enqueue({ voice, sample, numFrames, ticket })) {
         DBG("Problem enqueuing a file read for file " << sample);
@@ -122,10 +122,15 @@ void sfz::FilePool::loadingThread() noexcept
             continue;
         }
 
-        DBG("Background loading of: " << fileToLoad.sample);
-        std::filesystem::path file { rootDirectory / fileToLoad.sample };
+        if (fileToLoad.sample == nullptr) {
+            DBG("Background thread error: sample is null.");
+            continue;
+        }
+
+        DBG("Background loading of: " << *fileToLoad.sample);
+        std::filesystem::path file { rootDirectory / *fileToLoad.sample };
         if (!std::filesystem::exists(file)) {
-            DBG("Background thread: no file " << fileToLoad.sample << " exists.");
+            DBG("Background thread: no file " << *fileToLoad.sample << " exists.");
             continue;
         }
 
