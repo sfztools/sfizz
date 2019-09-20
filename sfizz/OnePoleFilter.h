@@ -89,6 +89,9 @@ public:
         while (in < sentinel) {
             setGain(*g);
             oneLowpass(in, out);
+            in++;
+            out++;
+            g++;
         }
         return size;
     }
@@ -103,6 +106,9 @@ public:
         while (in < sentinel) {
             setGain(*g);
             oneLowpass(in, out);
+            in++;
+            out++;
+            g++;
         }
         return size;
     }
