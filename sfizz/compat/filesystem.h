@@ -1,15 +1,16 @@
 #pragma once
-
-#ifdef __cplusplus
-	#if (__cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
-		#include <filesystem>
-	#elif (__cplusplus >= 201402L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)
-		#warning std::experimental::filesystem in use
-		#include <experimental/filesystem>
-		namespace std {
-			namespace filesystem = std::experimental::filesystem;
-		}
-	#endif
+#ifdef USE_STD_FILESYSTEM
+	#warning FS
+	#include <filesystem>
+	namespace fs = std::filesystem;
 #else
-	#error no filesystem support
+	#warning EXPFS
+	#include <experimental/filesystem>
+	namespace fs = std::experimental::filesystem;
 #endif
+
+// #if __cplusplus < 201703L
+// 	#warning EXPFSNS
+// #else
+// 	#warning FSNS
+// #endif

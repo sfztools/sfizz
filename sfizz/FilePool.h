@@ -46,7 +46,7 @@ public:
         fileLoadingThread.join();
         garbageCollectionThread.join();
     }
-    void setRootDirectory(const std::filesystem::path& directory) noexcept { rootDirectory = directory; }
+    void setRootDirectory(const fs::path& directory) noexcept { rootDirectory = directory; }
     size_t getNumPreloadedSamples() const noexcept { return preloadedData.size(); }
 
     struct FileInformation {
@@ -60,7 +60,7 @@ public:
     void enqueueLoading(Voice* voice, const std::string* sample, int numFrames, unsigned ticket) noexcept;
     void clear();
 private:
-    std::filesystem::path rootDirectory;
+    fs::path rootDirectory;
     struct FileLoadingInformation {
         Voice* voice;
         const std::string* sample;

@@ -23,13 +23,13 @@
 
 #include "Synth.h"
 #include "catch2/catch.hpp"
-#include <filesystem>
+#include "../sfizz/compat/filesystem.h"
 using namespace Catch::literals;
 
 TEST_CASE("[Files] Single region (regions_one.sfz)")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Regions/regions_one.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_one.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
 }
@@ -38,7 +38,7 @@ TEST_CASE("[Files] Single region (regions_one.sfz)")
 TEST_CASE("[Files] Multiple regions (regions_many.sfz)")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Regions/regions_many.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_many.sfz");
     REQUIRE(synth.getNumRegions() == 3);
     REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
     REQUIRE(synth.getRegionView(1)->sample == "dummy.1.wav");
@@ -48,7 +48,7 @@ TEST_CASE("[Files] Multiple regions (regions_many.sfz)")
 TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Regions/regions_opcodes.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->channelRange == Range<uint8_t>(2, 14));
 }
@@ -56,7 +56,7 @@ TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
 TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Regions/underscore_opcodes.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/underscore_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain);
 }
@@ -64,7 +64,7 @@ TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
 TEST_CASE("[Files] Local include")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_local.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_local.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
 }
@@ -72,7 +72,7 @@ TEST_CASE("[Files] Local include")
 TEST_CASE("[Files] Multiple includes")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/multiple_includes.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/multiple_includes.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
     REQUIRE(synth.getRegionView(1)->sample == "dummy2.wav");
@@ -81,7 +81,7 @@ TEST_CASE("[Files] Multiple includes")
 TEST_CASE("[Files] Multiple includes with comments")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/multiple_includes_with_comments.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/multiple_includes_with_comments.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
     REQUIRE(synth.getRegionView(1)->sample == "dummy2.wav");
@@ -90,7 +90,7 @@ TEST_CASE("[Files] Multiple includes with comments")
 TEST_CASE("[Files] Subdir include")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_subdir.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_subdir.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->sample == "dummy_subdir.wav");
 }
@@ -98,7 +98,7 @@ TEST_CASE("[Files] Subdir include")
 TEST_CASE("[Files] Subdir include Win")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_subdir_win.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_subdir_win.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->sample == "dummy_subdir.wav");
 }
@@ -107,7 +107,7 @@ TEST_CASE("[Files] Recursive include (with include guard)")
 {
     sfz::Synth synth;
     synth.enableRecursiveIncludeGuard();
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_recursive.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_recursive.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "dummy_recursive2.wav");
     REQUIRE(synth.getRegionView(1)->sample == "dummy_recursive1.wav");
@@ -117,7 +117,7 @@ TEST_CASE("[Files] Include loops (with include guard)")
 {
     sfz::Synth synth;
     synth.enableRecursiveIncludeGuard();
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/Includes/root_loop.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_loop.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "dummy_loop2.wav");
     REQUIRE(synth.getRegionView(1)->sample == "dummy_loop1.wav");
@@ -126,7 +126,7 @@ TEST_CASE("[Files] Include loops (with include guard)")
 TEST_CASE("[Files] Define test")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/defines.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/defines.sfz");
     REQUIRE(synth.getNumRegions() == 3);
     REQUIRE(synth.getRegionView(0)->keyRange == Range<uint8_t>(36, 36));
     REQUIRE(synth.getRegionView(1)->keyRange == Range<uint8_t>(38, 38));
@@ -136,7 +136,7 @@ TEST_CASE("[Files] Define test")
 TEST_CASE("[Files] Group from AVL")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     REQUIRE(synth.getNumRegions() == 5);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
         REQUIRE(synth.getRegionView(i)->volume == 6.0f);
@@ -152,7 +152,7 @@ TEST_CASE("[Files] Group from AVL")
 TEST_CASE("[Files] Full hierarchy")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
     REQUIRE(synth.getNumRegions() == 8);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
         REQUIRE(synth.getRegionView(i)->width == 40.0f);
@@ -193,9 +193,9 @@ TEST_CASE("[Files] Full hierarchy")
 TEST_CASE("[Files] Reloading files")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
     REQUIRE(synth.getNumRegions() == 8);
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
     REQUIRE(synth.getNumRegions() == 8);
 }
 
@@ -203,7 +203,7 @@ TEST_CASE("[Files] Full hierarchy with antislashes")
 {
     {
         sfz::Synth synth;
-        synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
+        synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
         REQUIRE(synth.getNumRegions() == 8);
         REQUIRE(synth.getRegionView(0)->sample == "Regions/dummy.wav");
         REQUIRE(synth.getRegionView(1)->sample == "Regions/dummy.1.wav");
@@ -217,7 +217,7 @@ TEST_CASE("[Files] Full hierarchy with antislashes")
 
     {
         sfz::Synth synth;
-        synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/basic_hierarchy_antislash.sfz");
+        synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy_antislash.sfz");
         REQUIRE(synth.getNumRegions() == 8);
         REQUIRE(synth.getRegionView(0)->sample == "Regions/dummy.wav");
         REQUIRE(synth.getRegionView(1)->sample == "Regions/dummy.1.wav");
@@ -233,7 +233,7 @@ TEST_CASE("[Files] Full hierarchy with antislashes")
 TEST_CASE("[Files] Pizz basic")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/SpecificBugs/MeatBassPizz/Programs/pizz.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/MeatBassPizz/Programs/pizz.sfz");
     REQUIRE(synth.getNumRegions() == 4);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
         REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(12, 22));
@@ -254,7 +254,7 @@ TEST_CASE("[Files] Pizz basic")
 TEST_CASE("[Files] Channels (channels.sfz)")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/channels.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "mono_sample.wav");
     REQUIRE(!synth.getRegionView(0)->isStereo());
@@ -265,7 +265,7 @@ TEST_CASE("[Files] Channels (channels.sfz)")
 TEST_CASE("[Files] sw_default")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/sw_default.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/sw_default.sfz");
     REQUIRE( synth.getNumRegions() == 4 );
     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
@@ -276,7 +276,7 @@ TEST_CASE("[Files] sw_default")
 TEST_CASE("[Files] sw_default and playing with switches")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/sw_default.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/sw_default.sfz");
     REQUIRE( synth.getNumRegions() == 4 );
     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
@@ -306,7 +306,7 @@ TEST_CASE("[Files] sw_default and playing with switches")
 TEST_CASE("[Files] wrong (overlapping) replacement for defines")
 {
     sfz::Synth synth;
-    synth.loadSfzFile(std::filesystem::current_path() / "tests/TestFiles/SpecificBugs/wrong-replacements.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/wrong-replacements.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
     REQUIRE( synth.getRegionView(0)->keyRange.getStart() == 52 );
     REQUIRE( synth.getRegionView(0)->keyRange.getEnd() == 52 );

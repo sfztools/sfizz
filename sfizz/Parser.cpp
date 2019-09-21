@@ -41,10 +41,10 @@ void removeCommentOnLine(absl::string_view& line)
         line.remove_suffix(line.size() - position);
 }
 
-bool sfz::Parser::loadSfzFile(const std::filesystem::path& file)
+bool sfz::Parser::loadSfzFile(const fs::path& file)
 {
     const auto sfzFile = file.is_absolute() ? file : rootDirectory / file;
-    if (!std::filesystem::exists(sfzFile))
+    if (!fs::exists(sfzFile))
         return false;
 
     rootDirectory = file.parent_path();
@@ -81,7 +81,7 @@ bool sfz::Parser::loadSfzFile(const std::filesystem::path& file)
     return true;
 }
 
-void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector<std::string>& lines) noexcept
+void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>& lines) noexcept
 {
     std::ifstream fileStream(fileName.c_str());
     if (!fileStream)
@@ -107,7 +107,7 @@ void sfz::Parser::readSfzFile(const std::filesystem::path& fileName, std::vector
             std::replace(includePath.begin(), includePath.end(), '\\', '/');
             const auto newFile = rootDirectory / includePath;
             auto alreadyIncluded = std::find(includedFiles.begin(), includedFiles.end(), newFile);
-            if (std::filesystem::exists(newFile)) {
+            if (fs::exists(newFile)) {
                 if (alreadyIncluded == includedFiles.end()) {
                     includedFiles.push_back(newFile);
                     readSfzFile(newFile, lines);

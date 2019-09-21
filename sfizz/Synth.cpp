@@ -152,8 +152,8 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Default_path"): [[fallthrough]];
         case hash("default_path"): {
             auto stringPath = std::string(member.value.begin(), member.value.end());
-            auto newPath = std::filesystem::path(stringPath);
-            if (std::filesystem::exists(newPath))
+            auto newPath = fs::path(stringPath);
+            if (fs::exists(newPath))
                 rootDirectory = newPath;
             break;
         }
@@ -182,7 +182,7 @@ void addEndpointsToVelocityCurve(sfz::Region& region)
     }
 }
 
-bool sfz::Synth::loadSfzFile(const std::filesystem::path& filename)
+bool sfz::Synth::loadSfzFile(const fs::path& filename)
 {
     canEnterCallback = false;
     while (inCallback) {

@@ -50,8 +50,8 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
 
 absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename, uint32_t offset) noexcept
 {
-    std::filesystem::path file { rootDirectory / filename };
-    if (!std::filesystem::exists(file))
+    fs::path file { rootDirectory / filename };
+    if (!fs::exists(file))
         return {};
 
     SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
@@ -128,8 +128,8 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         DBG("Background loading of: " << *fileToLoad.sample);
-        std::filesystem::path file { rootDirectory / *fileToLoad.sample };
-        if (!std::filesystem::exists(file)) {
+        fs::path file { rootDirectory / *fileToLoad.sample };
+        if (!fs::exists(file)) {
             DBG("Background thread: no file " << *fileToLoad.sample << " exists.");
             continue;
         }

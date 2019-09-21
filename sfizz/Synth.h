@@ -40,8 +40,7 @@ namespace sfz {
 class Synth : public Parser {
 public:
     Synth();
-
-    bool loadSfzFile(const std::filesystem::path& file) final;
+    bool loadSfzFile(const fs::path& file) final;
     int getNumRegions() const noexcept;
     int getNumGroups() const noexcept;
     int getNumMasters() const noexcept;

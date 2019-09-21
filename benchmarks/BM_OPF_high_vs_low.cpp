@@ -41,13 +41,14 @@ void lowpass(absl::Span<const float> input, absl::Span<float> lowpass, float gai
     float state = 0.0f;
     float intermediate;
     const auto G = gain / (1 - gain);
-    for (auto [in, out] = std::make_pair(input.begin(), lowpass.begin()); 
-         in < input.end() && out < lowpass.end();
-         in++, out++)
-    {
+    auto in = input.begin();
+    auto out = lowpass.begin();
+    while (in < input.end()) {
         intermediate = G * (*in - state);
         *out = intermediate + state;
         state = *out + intermediate;
+        in++;
+        out++;
     }
 }
 
@@ -56,23 +57,15 @@ void highpass(absl::Span<const float> input, absl::Span<float> highpass, float g
     float state = 0.0f;
     float intermediate;
     const auto G = gain / (1 - gain);
-    for (auto [in, out] = std::make_pair(input.begin(), highpass.begin()); 
-         in < input.end() && out < highpass.end();
-         in++, out++)
-    {
+    auto in = input.begin();
+    auto out = highpass.begin();
+    while (in < input.end()) {
         intermediate = G * (*in - state);
         *out = *in - intermediate - state;
         state += 2*intermediate;
+        in++;
+        out++;
     }
-}
-
-void highpass_foreach(absl::Span<const float> input, absl::Span<float> highpass, float gain)
-{
-    lowpass(input, highpass, gain);
-    for (auto [in, out] = std::make_pair(input.begin(), highpass.begin()); 
-         in < input.end() && out < highpass.end();
-         in++, out++)
-        *out = *in - *out;
 }
 
 void highpass_raw(absl::Span<const float> input, absl::Span<float> highpass, float gain)
@@ -80,8 +73,7 @@ void highpass_raw(absl::Span<const float> input, absl::Span<float> highpass, flo
     lowpass(input, highpass, gain);
     auto in = input.data();
     auto out = highpass.data();
-    while (in < input.end() && out < highpass.end())
-    {
+    while (in < input.end()) {
         *out = *in - *out;
         out++;
         in++;
@@ -144,21 +136,6 @@ static void High(benchmark::State& state) {
         highpass(input, absl::MakeSpan(output), filterGain);
 }
 
-static void High_ForEach(benchmark::State& state) {
-    std::vector<float> input(state.range(0));
-    std::vector<float> output(state.range(0));
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    
-    std::normal_distribution<float> dist { };
-    std::generate(input.begin(), input.end(), [&]() {
-        return dist(gen);
-    });
-
-    for (auto _ : state)
-        highpass_foreach(input, absl::MakeSpan(output), filterGain);
-}
-
 static void High_Raw(benchmark::State& state) {
     std::vector<float> input(state.range(0));
     std::vector<float> output(state.range(0));
@@ -192,7 +169,6 @@ static void High_SSE(benchmark::State& state) {
 
 BENCHMARK(Low)->RangeMultiplier(2)->Range((2<<5), (2<<10));
 BENCHMARK(High)->RangeMultiplier(2)->Range((2<<5), (2<<10));
-BENCHMARK(High_ForEach)->RangeMultiplier(2)->Range((2<<5), (2<<10));
 BENCHMARK(High_Raw)->RangeMultiplier(2)->Range((2<<5), (2<<10));
 BENCHMARK(High_SSE)->RangeMultiplier(2)->Range((2<<5), (2<<10));
 BENCHMARK_MAIN();

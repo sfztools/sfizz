@@ -32,20 +32,20 @@
 namespace sfz {
 class Parser {
 public:
-    virtual bool loadSfzFile(const std::filesystem::path& file);
+    virtual bool loadSfzFile(const fs::path& file);
     const std::map<std::string, std::string>& getDefines() const noexcept { return defines; }
-    const std::vector<std::filesystem::path>& getIncludedFiles() const noexcept { return includedFiles; }
+    const std::vector<fs::path>& getIncludedFiles() const noexcept { return includedFiles; }
     void disableRecursiveIncludeGuard() { recursiveIncludeGuard = false; }
     void enableRecursiveIncludeGuard() { recursiveIncludeGuard = true; }
 protected:
     virtual void callback(absl::string_view header, const std::vector<Opcode>& members) = 0;
-    std::filesystem::path rootDirectory { std::filesystem::current_path() };
+    fs::path rootDirectory { fs::current_path() };
 private:
     bool recursiveIncludeGuard { false };
     std::map<std::string, std::string> defines;
-    std::vector<std::filesystem::path> includedFiles;
+    std::vector<fs::path> includedFiles;
     std::string aggregatedContent {};
-    void readSfzFile(const std::filesystem::path& fileName, std::vector<std::string>& lines) noexcept;
+    void readSfzFile(const fs::path& fileName, std::vector<std::string>& lines) noexcept;
 };
 
 } // namespace sfz
