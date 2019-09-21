@@ -27,7 +27,7 @@
 #include "LeakDetector.h"
 #include "AudioBuffer.h"
 #include "Voice.h"
-#include "compat/filesystem.h"
+#include "ghc/fs_std.hpp"
 #include "readerwriterqueue.h"
 #include <absl/container/flat_hash_map.h>
 #include <mutex>

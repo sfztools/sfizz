@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "compat/algorithm.h"
+#include "MathHelpers.h"
 #include <initializer_list>
 #include <type_traits>
 
@@ -72,7 +72,7 @@ public:
         if (end < _start)
             _start = end;
     }
-    Type clamp(Type value) const noexcept { return std::clamp(value, _start, _end); }
+    Type clamp(Type value) const noexcept { return ::clamp(value, _start, _end); }
     bool containsWithEnd(Type value) const noexcept { return (value >= _start && value <= _end); }
     bool contains(Type value) const noexcept { return (value >= _start && value < _end); }
     void shrinkIfSmaller(Type start, Type end)

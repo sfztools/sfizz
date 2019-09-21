@@ -23,7 +23,7 @@
 
 #include "Synth.h"
 #include "catch2/catch.hpp"
-#include "../sfizz/compat/filesystem.h"
+#include "../sfizz/ghc/fs_std.hpp"
 using namespace Catch::literals;
 
 TEST_CASE("[Files] Single region (regions_one.sfz)")

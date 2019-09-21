@@ -23,7 +23,6 @@
 
 #include "Parser.h"
 #include "StringViewHelpers.h"
-#include "compat/filesystem.h"
 #include <iostream>
 #include <string_view>
 #include <absl/flags/parse.h>

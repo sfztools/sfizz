@@ -24,7 +24,6 @@
 #pragma once
 #include <atomic>
 #include "Debug.h"
-#include "compat/utils.h"
 
 template <class Owner>
 class LeakDetector {
@@ -60,7 +59,7 @@ private:
         };
         std::atomic<int> count { 0 };
     };
-	static SFZ_INLINE ObjectCounter objectCounter;
+	static ObjectCounter objectCounter;
 };
 
 #ifndef NDEBUG

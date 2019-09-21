@@ -24,7 +24,7 @@
 #include "ADSREnvelope.h"
 #include "Config.h"
 #include "SIMDHelpers.h"
-#include "compat/algorithm.h"
+#include "MathHelpers.h"
 
 namespace sfz {
 
@@ -34,8 +34,8 @@ void ADSREnvelope<Type>::reset(int attack, int release, Type sustain, int delay,
     ASSERT(start <= 1.0f);
     ASSERT(sustain <= 1.0f);
 
-    sustain = std::clamp<Type>(sustain, 0.0, 1.0);
-    start = std::clamp<Type>(start, 0.0, 1.0);
+    sustain = clamp<Type>(sustain, 0.0, 1.0);
+    start = clamp<Type>(start, 0.0, 1.0);
 
     currentState = State::Done;
     this->delay = delay;

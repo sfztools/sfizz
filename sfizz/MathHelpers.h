@@ -22,9 +22,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "compat/utils.h"
 #include <algorithm>
 #include <cmath>
+#include <cassert>
 #include <random>
 
 template <class T>
@@ -60,13 +60,20 @@ inline constexpr Type mag2db(Type in)
 }
 
 namespace Random {
-	static SFZ_INLINE std::random_device randomDevice;
-	static SFZ_INLINE std::mt19937 randomGenerator { randomDevice() };
+	static std::random_device randomDevice;
+	static std::mt19937 randomGenerator { randomDevice() };
 } // namespace Random
 
 inline float midiNoteFrequency(const int noteNumber)
 {
     return 440.0f * std::pow(2.0f, (noteNumber - 69) / 12.0f);
+}
+
+template<class T>
+constexpr const T& clamp( const T& v, const T& lo, const T& hi )
+{
+	assert( !(hi < lo) );
+	return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
 template <class Type>

@@ -2,7 +2,6 @@
 #include <chrono>
 #include <array>
 #include "SfzHelpers.h"
-#include "compat/utils.h"
 
 namespace sfz
 {

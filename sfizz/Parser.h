@@ -23,7 +23,7 @@
 
 #pragma once
 #include "Opcode.h"
-#include "compat/filesystem.h"
+#include "ghc/fs_std.hpp"
 #include <map>
 #include <string>
 #include "absl/strings/string_view.h"
