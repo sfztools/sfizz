@@ -44,7 +44,7 @@ public:
     void getBlock(absl::Span<Type> output);
 private:
     std::function<Type(Type)> function { [](Type input) { return input; } };
-    static_assert(std::is_arithmetic<Type>::value);
+    static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
     std::vector<std::pair<int, Type>> events;
     int maxCapacity { config::defaultSamplesPerBlock };
     Type currentValue { 0.0 };
