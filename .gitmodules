@@ -1,8 +1,8 @@
 [submodule "external/abseil-cpp"]
 	path = external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
-	shallow = true
+	branch = master
 [submodule "external/benchmark"]
 	path = external/benchmark
 	url = https://github.com/google/benchmark
-	shallow = true
+	branch = master
