@@ -2,6 +2,12 @@
 
 set -e
 
+# Travis Webhook
+wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+chmod +x send.sh
+./send.sh success $WEBHOOK_URL
+
+# Deploy
 export VERSION=$(git describe --tags)
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
   export DEPLOYFILE=Sfizz-$VERSION-x86_64.AppImage

@@ -26,6 +26,9 @@ install:
 script:
 - sh ${TRAVIS_BUILD_DIR}/.travis/script.sh
 
+after_failure:
+- sh ${TRAVIS_BUILD_DIR}/.travis/after_failure.sh
+
 after_success:
 - sh ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
 
