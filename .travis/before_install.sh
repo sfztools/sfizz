@@ -7,7 +7,8 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
   sudo sh cmake-3.13.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
   export PATH="/usr/local/bin:$PATH" # FIXME
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+  sudo ln -s /usr/local /opt/local
   brew update
   brew upgrade cmake
-  brew install libsndfile
+  brew install jack libsndfile
 fi
