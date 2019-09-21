@@ -528,7 +528,7 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD)")
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v + v, v + v + v, v + v + v + v, v + v + v + v + v, v + v + v + v + v + v };
     linearRamp<float, true>(absl::MakeSpan(output), start, v);
-    REQUIRE(output == expected);
+    REQUIRE(approxEqual<float>(output, expected));
 }
 
 TEST_CASE("[Helpers] Linear Ramp (SIMD vs scalar)")

@@ -45,7 +45,7 @@ std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFram
         sndFile.readf(tempReadBuffer->channelWriter(0), numFrames);
         ::readInterleaved<float>(tempReadBuffer->getSpan(0), returnedBuffer->getSpan(0), returnedBuffer->getSpan(1));
     }
-    return std::move(returnedBuffer);
+    return returnedBuffer;
 }
 
 absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename, uint32_t offset) noexcept

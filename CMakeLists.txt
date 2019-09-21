@@ -4,11 +4,15 @@ project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 # Set the highest possible standard
 set(CMAKE_CXX_STANDARD 14)
 
+# Enable LTO
+set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_compile_options(-stdlib=libc++)
     # Presumably need the above for linking too, maybe other options missing as well
     add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-else()
+else() 
     add_link_options(-lstdc++fs)
 endif()
 

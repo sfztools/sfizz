@@ -365,8 +365,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     ::add<int>(sourcePosition, indices);
 
     //FIXME : all this casting is driving me crazy
-    const auto sampleEnd = static_cast<int>(region->trueSampleEnd()) - 1;
-    if (region->shouldLoop() && static_cast<size_t>(sampleEnd) <= source.getNumFrames()) {
+    const auto sampleEnd = min(static_cast<int>(region->trueSampleEnd()), static_cast<int>(source.getNumFrames())) - 1;
+    if (region->shouldLoop() && region->loopRange.getEnd() <= source.getNumFrames()) {
         const auto offset = sampleEnd - static_cast<int>(region->loopRange.getStart());
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
             if (*index > sampleEnd) {
