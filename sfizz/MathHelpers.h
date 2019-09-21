@@ -60,8 +60,8 @@ inline constexpr Type mag2db(Type in)
 }
 
 namespace Random {
-static SFZ_INLINE std::random_device randomDevice;
-static SFZ_INLINE std::mt19937 randomGenerator { randomDevice() };
+	static SFZ_INLINE std::random_device randomDevice;
+	static SFZ_INLINE std::mt19937 randomGenerator { randomDevice() };
 } // namespace Random
 
 inline float midiNoteFrequency(const int noteNumber)

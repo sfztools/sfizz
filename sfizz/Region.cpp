@@ -635,7 +635,7 @@ float sfz::Region::getBaseVolumedB(int noteNumber) noexcept
 {
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
-        baseVolumedB -= rtDecay * getNoteDuration(noteNumber);
+        baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
 }
 

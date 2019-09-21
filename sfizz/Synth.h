@@ -26,6 +26,7 @@
 #include "Parser.h"
 #include "Region.h"
 #include "LeakDetector.h"
+#include "MidiState.h"
 #include "AudioSpan.h"
 #include "absl/types/span.h"
 #include <absl/types/optional.h>
@@ -39,8 +40,7 @@ namespace sfz {
 class Synth : public Parser {
 public:
     Synth();
-
-    bool loadSfzFile(const std::filesystem::path& file) final;
+    bool loadSfzFile(const fs::path& file) final;
     int getNumRegions() const noexcept;
     int getNumGroups() const noexcept;
     int getNumMasters() const noexcept;
@@ -80,7 +80,7 @@ private:
     std::vector<Opcode> groupOpcodes;
 
     FilePool filePool;
-    CCValueArray ccState;
+    MidiState midiState;
     Voice* findFreeVoice() noexcept;
     std::vector<CCNamePair> ccNames;
     absl::optional<uint8_t> defaultSwitch;

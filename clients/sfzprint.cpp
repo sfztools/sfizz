@@ -74,8 +74,7 @@ int main(int argc, char** argv)
     std::cout << '\n';
     
     PrintingParser parser;
-    std::filesystem::path filename { filesToParse[0] };
-    parser.loadSfzFile(filename);  
+    parser.loadSfzFile(filesToParse[0]);  
     std::cout << "==========" << '\n';
     std::cout << "Total:" << '\n';
     std::cout << "\tMasters: " << parser.getNumMasters() << '\n';

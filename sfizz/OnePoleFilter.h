@@ -89,6 +89,9 @@ public:
         while (in < sentinel) {
             setGain(*g);
             oneLowpass(in, out);
+            in++;
+            out++;
+            g++;
         }
         return size;
     }
@@ -102,7 +105,10 @@ public:
         auto sentinel = in + size;
         while (in < sentinel) {
             setGain(*g);
-            oneLowpass(in, out);
+            oneHighpass(in, out);
+            in++;
+            out++;
+            g++;
         }
         return size;
     }

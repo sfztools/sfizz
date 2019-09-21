@@ -25,36 +25,27 @@
 #include "Opcode.h"
 #include "compat/filesystem.h"
 #include <map>
-#include <regex>
 #include <string>
-#include <string_view>
+#include "absl/strings/string_view.h"
 #include <vector>
 
 namespace sfz {
-namespace Regexes {
-	SFZ_INLINE static std::regex includes { R"V(#include\s*"(.*?)".*$)V", std::regex::optimize };
-	SFZ_INLINE static std::regex defines { R"(#define\s*(\$[a-zA-Z0-9]+)\s+([a-zA-Z0-9]+)(?=\s|$))", std::regex::optimize };
-	SFZ_INLINE static std::regex headers { R"(<(.*?)>(.*?)(?=<|$))", std::regex::optimize };
-	SFZ_INLINE static std::regex members { R"(([a-zA-Z0-9_]+)=([a-zA-Z0-9-_#.&\/\s\\\(\),\*]+)(?![a-zA-Z0-9_]*=))", std::regex::optimize };
-	SFZ_INLINE static std::regex opcodeParameters { R"(([a-zA-Z0-9_]+?)([0-9]+)$)", std::regex::optimize };
-}
-
 class Parser {
 public:
-    virtual bool loadSfzFile(const std::filesystem::path& file);
+    virtual bool loadSfzFile(const fs::path& file);
     const std::map<std::string, std::string>& getDefines() const noexcept { return defines; }
-    const std::vector<std::filesystem::path>& getIncludedFiles() const noexcept { return includedFiles; }
+    const std::vector<fs::path>& getIncludedFiles() const noexcept { return includedFiles; }
     void disableRecursiveIncludeGuard() { recursiveIncludeGuard = false; }
     void enableRecursiveIncludeGuard() { recursiveIncludeGuard = true; }
 protected:
     virtual void callback(absl::string_view header, const std::vector<Opcode>& members) = 0;
-    std::filesystem::path rootDirectory { std::filesystem::current_path() };
+    fs::path rootDirectory { fs::current_path() };
 private:
     bool recursiveIncludeGuard { false };
     std::map<std::string, std::string> defines;
-    std::vector<std::filesystem::path> includedFiles;
+    std::vector<fs::path> includedFiles;
     std::string aggregatedContent {};
-    void readSfzFile(const std::filesystem::path& fileName, std::vector<std::string>& lines) noexcept;
+    void readSfzFile(const fs::path& fileName, std::vector<std::string>& lines) noexcept;
 };
 
 } // namespace sfz

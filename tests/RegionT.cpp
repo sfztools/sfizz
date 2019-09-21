@@ -21,13 +21,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "MidiState.h"
 #include "Region.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 
 TEST_CASE("[Region] Parsing opcodes")
 {
-    sfz::Region region;
+    sfz::MidiState midiState;
+    sfz::Region region { midiState };
+    
     SECTION("sample")
     {
         REQUIRE(region.sample == "");
@@ -168,10 +171,10 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(!region.offBy);
         region.parseOpcode({ "off_by", "5" });
         REQUIRE(region.offBy);
-        REQUIRE(region.offBy == 5);
+        REQUIRE(*region.offBy == 5);
         region.parseOpcode({ "off_by", "-1" });
         REQUIRE(region.offBy);
-        REQUIRE(region.offBy == 0);
+        REQUIRE(*region.offBy == 0);
     }
 
     SECTION("off_mode")
@@ -1036,7 +1039,8 @@ TEST_CASE("[Region] Parsing opcodes")
 // Specific region bugs
 TEST_CASE("[Region] Non-conforming floating point values in integer opcodes")
 {
-    sfz::Region region;
+    sfz::MidiState midiState;
+    sfz::Region region { midiState };
     region.parseOpcode({ "offset", "2014.5" });
     REQUIRE(region.offset == 2014);
     region.parseOpcode({ "pitch_keytrack", "-2.1" });

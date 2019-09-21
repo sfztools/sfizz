@@ -28,6 +28,7 @@
 #include "EGDescription.h"
 #include "Opcode.h"
 #include "AudioBuffer.h"
+#include "MidiState.h"
 #include <bitset>
 #include <absl/types/optional.h>
 #include <random>
@@ -36,7 +37,8 @@
 
 namespace sfz {
 struct Region {
-    Region()
+    Region(const MidiState& midiState)
+    : midiState(midiState)
     {
         ccSwitched.set();
     }
@@ -154,6 +156,7 @@ struct Region {
     double sampleRate { config::defaultSampleRate };
     std::shared_ptr<AudioBuffer<float>> preloadedData { nullptr };
 private:
+    const MidiState& midiState;
     bool keySwitched { true };
     bool previousKeySwitched { true };
     bool sequenceSwitched { true };

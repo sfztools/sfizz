@@ -27,7 +27,7 @@
 #include "../sfizz/SIMDHelpers.h"
 #include "absl/types/span.h"
 
-inline constexpr int bigNumber { 2399132 };
+constexpr int bigNumber { 2399132 };
 
 class IterOffset : public benchmark::Fixture {
 public:

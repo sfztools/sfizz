@@ -27,7 +27,9 @@ using namespace Catch::literals;
 
 TEST_CASE("Region activation", "Region tests")
 {
-    sfz::Region region {};
+    sfz::MidiState midiState;
+    sfz::Region region { midiState };
+    
     region.parseOpcode({ "sample", "*sine" });
     SECTION("Basic state")
     {

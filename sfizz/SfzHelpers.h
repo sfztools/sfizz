@@ -44,7 +44,7 @@ inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 template<class T>
 inline constexpr float normalizeCC(T ccValue)
 {
-    static_assert(std::is_integral<T>::value);
+    static_assert(std::is_integral<T>::value, "Requires an integral T");
     return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
 }
 

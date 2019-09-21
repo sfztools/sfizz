@@ -36,14 +36,41 @@ endif()
 
 set(SFIZZ_SOURCES ${SFIZZ_SOURCES} ${SFIZZ_SIMD_SOURCES})
 
+# include(CheckCXXSourceCompiles)
+# check_cxx_source_compiles("
+#     #include <filesystem>
+
+#     int main(int argc, char** argv)
+#     {   
+#         std::filesystem::path p;
+#         return 0;
+#     }
+# " HAVE_STD_FILESYSTEM)
+
+check_include_file_cxx("filesystem" HAVE_STD_FILESYSTEM)
+if (HAVE_STD_FILESYSTEM)
+    # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0)
+    #     add_compile_options(-DUSE_STD_FILESYSTEM)
+    # endif()
+    if (WIN32)
+        add_compile_options(/DUSE_STD_FILESYSTEM)
+    endif()
+endif()
+
+
 add_library(sfizz_parser STATIC)
 target_sources(sfizz_parser PRIVATE Parser.cpp Opcode.cpp)
 target_include_directories(sfizz_parser PUBLIC .)
-if(UNIX)
-    target_link_libraries(sfizz_parser PUBLIC stdc++fs)
-    # target_compile_options(sfizz_parser PUBLIC -fno-rtti -fno-exceptions)
-endif(UNIX)
 target_link_libraries(sfizz_parser PRIVATE absl::strings)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
+    target_link_libraries(sfizz_parser PUBLIC c++fs)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_link_libraries(sfizz_parser PUBLIC stdc++fs)
+endif()
+
 
 add_library(sfizz STATIC ${SFIZZ_SOURCES})
 target_link_libraries(sfizz PRIVATE sfizz_parser)
@@ -51,9 +78,17 @@ target_include_directories(sfizz PUBLIC .)
 find_package(Threads REQUIRED)
 target_link_libraries(sfizz PRIVATE Threads::Threads)
 if(UNIX)
-    target_link_libraries(sfizz PUBLIC stdc++fs atomic)
-    # target_compile_options(sfizz PUBLIC -fno-rtti -fno-exceptions)
+    target_link_libraries(sfizz PUBLIC atomic)
 endif(UNIX)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
+    target_link_libraries(sfizz PUBLIC c++fs)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_link_libraries(sfizz PUBLIC stdc++fs)
+endif()
+
 target_link_libraries(sfizz PUBLIC absl::strings)
 target_link_libraries(sfizz PRIVATE sndfile absl::flat_hash_map)
 
