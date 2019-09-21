@@ -9,4 +9,5 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
   brew update
   brew upgrade cmake
+  brew install libsndfile
 fi
