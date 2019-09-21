@@ -356,6 +356,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     }
 }
 
+void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
