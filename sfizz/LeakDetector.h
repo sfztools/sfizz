@@ -25,6 +25,7 @@
 #include <atomic>
 #include "Debug.h"
 
+#if __cplusplus >= 201703L
 template <class Owner>
 class LeakDetector {
 public:
@@ -67,6 +68,10 @@ private:
     friend class LeakDetector<Class>;                    \
     static const char* getClassName() { return #Class; } \
     LeakDetector<Class> leakDetector;
+#else
+#define LEAK_DETECTOR(Class)
+#endif
+
 #else
 #define LEAK_DETECTOR(Class)
 #endif
