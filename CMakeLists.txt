@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 
-# set(CMAKE_CXX_STANDARD 14)
+# Do not override if set to more than 14
+if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
+    set(CMAKE_CXX_STANDARD 14)
+endif()
 
 # Enable LTO
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
