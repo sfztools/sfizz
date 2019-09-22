@@ -10,5 +10,5 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
   sudo ln -s /usr/local /opt/local
   brew update
   brew upgrade cmake
-  brew install jack libsndfile
+  brew install jack
 fi
