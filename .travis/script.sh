@@ -11,6 +11,6 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
   make -j$(nproc)
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
   mkdir build && cd build
-  cmake -D CMAKE_BUILD_TYPE=Release -D SFIZZ_CLIENTS=ON -G Xcode ..
+  cmake -D SFIZZ_CLIENTS=OFF -G Xcode .. # FIXME: client build
   xcodebuild -project sfizz.xcodeproj -alltargets -configuration Release build
 fi
