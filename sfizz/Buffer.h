@@ -29,6 +29,9 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+
+namespace sfz
+{
 template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer {
 public:
@@ -157,3 +160,4 @@ private:
     pointer _alignedEnd { nullptr };
     LEAK_DETECTOR(Buffer);
 };
+}

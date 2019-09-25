@@ -61,28 +61,28 @@ public:
 BENCHMARK_DEFINE_F(LoopingFixture, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 2.5f, loopEnd, loopStart);
+        sfz::loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 2.5f, loopEnd, loopStart);
     }
 }
 
 BENCHMARK_DEFINE_F(LoopingFixture, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 2.5f, loopEnd, loopStart);
+        sfz::loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 2.5f, loopEnd, loopStart);
     }
 }
 
 BENCHMARK_DEFINE_F(LoopingFixture, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        loopingSFZIndex<float, false>(absl::MakeSpan(jumps).subspan(1), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1), absl::MakeSpan(indices).subspan(3), 2.5f, loopEnd, loopStart);
+        sfz::loopingSFZIndex<float, false>(absl::MakeSpan(jumps).subspan(1), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1), absl::MakeSpan(indices).subspan(3), 2.5f, loopEnd, loopStart);
     }
 }
 
 BENCHMARK_DEFINE_F(LoopingFixture, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        loopingSFZIndex<float, true>(absl::MakeSpan(jumps).subspan(1), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1), absl::MakeSpan(indices).subspan(3), 2.5f, loopEnd, loopStart);
+        sfz::loopingSFZIndex<float, true>(absl::MakeSpan(jumps).subspan(1), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1), absl::MakeSpan(indices).subspan(3), 2.5f, loopEnd, loopStart);
     }
 }
 

@@ -35,15 +35,15 @@
 using namespace std::chrono_literals;
 
 template <class T>
-std::unique_ptr<AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFrames)
+std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, int numFrames)
 {
-    auto returnedBuffer = std::make_unique<AudioBuffer<T>>(sndFile.channels(), numFrames);
+    auto returnedBuffer = std::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames);
     if (sndFile.channels() == 1) {
         sndFile.readf(returnedBuffer->channelWriter(0), numFrames);
     } else if (sndFile.channels() == 2) {
-        auto tempReadBuffer = std::make_unique<AudioBuffer<float>>(1, 2 * numFrames);
+        auto tempReadBuffer = std::make_unique<sfz::AudioBuffer<float>>(1, 2 * numFrames);
         sndFile.readf(tempReadBuffer->channelWriter(0), numFrames);
-        ::readInterleaved<float>(tempReadBuffer->getSpan(0), returnedBuffer->getSpan(0), returnedBuffer->getSpan(1));
+        sfz::readInterleaved<float>(tempReadBuffer->getSpan(0), returnedBuffer->getSpan(0), returnedBuffer->getSpan(1));
     }
     return returnedBuffer;
 }
@@ -90,7 +90,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
             // By resetting the filepool data to a new, longer audiobuffer, we are creating 2 copies of the same audio data.
             // The filepool and the new regions have the longer copy, and the older regions have the shorter copy.
             // This is not entirely optimal, but is it better to write a double shared pointer ?
-            // std::shared_ptr<std::shared_ptr<AudioBuffer>>> is a bit ugly...
+            // std::shared_ptr<std::shared_ptr<sfz::AudioBuffer>>> is a bit ugly...
             alreadyPreloaded.reset(readFromFile<float>(sndFile, preloadedSize).release());
         }
         returnedValue.preloadedData = alreadyPreloaded;

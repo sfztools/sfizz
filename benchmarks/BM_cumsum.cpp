@@ -52,28 +52,28 @@ public:
 BENCHMARK_DEFINE_F(CumArray, Sum_Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        cumsum<float, false>(input, absl::MakeSpan(output));
+        sfz::cumsum<float, false>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(CumArray, Sum_SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        cumsum<float, true>(input, absl::MakeSpan(output));
+        sfz::cumsum<float, true>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(CumArray, Sum_Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        cumsum<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::cumsum<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(CumArray, Sum_SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        cumsum<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::cumsum<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 

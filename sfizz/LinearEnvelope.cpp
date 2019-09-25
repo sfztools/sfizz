@@ -90,12 +90,12 @@ void LinearEnvelope<Type>::getBlock(absl::Span<Type> output)
         }
 
         const auto step = (event.second - currentValue) / length;
-        currentValue = ::linearRamp<Type>(output.subspan(index, length), currentValue, step);
+        currentValue = linearRamp<Type>(output.subspan(index, length), currentValue, step);
         index += length;
     }
 
     if (index < static_cast<int>(output.size()))
-        ::fill<Type>(output.subspan(index), currentValue);
+        fill<Type>(output.subspan(index), currentValue);
 
     clear();
 }

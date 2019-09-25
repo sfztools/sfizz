@@ -67,7 +67,7 @@ void testLowpass(const fs::path& inputNumpyFile, const fs::path& outputNumpyFile
     for (auto& data : outputSpan)
         expectedData.push_back(static_cast<Type>(data));
 
-    OnePoleFilter<Type> filter { gain };
+    sfz::OnePoleFilter<Type> filter { gain };
     std::vector<Type> outputData(size);
     filter.processLowpass(inputData, absl::MakeSpan(outputData));
     REQUIRE(approxEqual(outputData, expectedData));
@@ -102,7 +102,7 @@ void testHighpass(const fs::path& inputNumpyFile, const fs::path& outputNumpyFil
     for (auto& data : outputSpan)
         expectedData.push_back(static_cast<Type>(data));
 
-    OnePoleFilter<Type> filter { gain };
+    sfz::OnePoleFilter<Type> filter { gain };
     std::vector<Type> outputData(size);
     filter.processHighpass(inputData, absl::MakeSpan(outputData));
     REQUIRE(approxEqual(outputData, expectedData));

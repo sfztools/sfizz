@@ -29,6 +29,8 @@
 #include <absl/types/span.h>
 #include <cmath>
 
+namespace sfz
+{
 template <class T>
 inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
 {
@@ -570,3 +572,5 @@ void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
 
 template <>
 void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+} // namespace sfz

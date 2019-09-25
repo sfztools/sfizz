@@ -59,28 +59,28 @@ public:
 BENCHMARK_DEFINE_F(InterpolationCast, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfzInterpolationCast<float, false>(floatJumps, absl::MakeSpan(jumps), absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs));
+        sfz::sfzInterpolationCast<float, false>(floatJumps, absl::MakeSpan(jumps), absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs));
     }
 }
 
 BENCHMARK_DEFINE_F(InterpolationCast, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfzInterpolationCast<float, true>(floatJumps, absl::MakeSpan(jumps), absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs));
+        sfz::sfzInterpolationCast<float, true>(floatJumps, absl::MakeSpan(jumps), absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs));
     }
 }
 
 BENCHMARK_DEFINE_F(InterpolationCast, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfzInterpolationCast<float, false>(absl::MakeSpan(floatJumps).subspan(1), absl::MakeSpan(jumps).subspan(3), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1));
+        sfz::sfzInterpolationCast<float, false>(absl::MakeSpan(floatJumps).subspan(1), absl::MakeSpan(jumps).subspan(3), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(InterpolationCast, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfzInterpolationCast<float, true>(absl::MakeSpan(floatJumps).subspan(1), absl::MakeSpan(jumps).subspan(3), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1));
+        sfz::sfzInterpolationCast<float, true>(absl::MakeSpan(floatJumps).subspan(1), absl::MakeSpan(jumps).subspan(3), absl::MakeSpan(leftCoeffs).subspan(2), absl::MakeSpan(rightCoeffs).subspan(1));
     }
 }
 

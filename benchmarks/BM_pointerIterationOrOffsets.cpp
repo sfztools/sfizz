@@ -42,7 +42,7 @@ public:
     jumps.resize(state.range(0));
     offsets.resize(state.range(0));
     absl::c_generate(jumps, [&]() { return jumpDist(gen); });
-    cumsum<int>(jumps, absl::MakeSpan(offsets));
+    sfz::cumsum<int>(jumps, absl::MakeSpan(offsets));
   }
 
   void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
@@ -58,7 +58,7 @@ public:
 BENCHMARK_DEFINE_F(IterOffset, Pointers)(benchmark::State& state) {
     for (auto _ : state)
     {   
-        diff<int>(offsets, absl::MakeSpan(jumps));
+        sfz::diff<int>(offsets, absl::MakeSpan(jumps));
         auto jump = jumps.begin();
         auto in = source.begin();
         auto out = result.begin();

@@ -32,6 +32,8 @@
 #include <initializer_list>
 #include <type_traits>
 
+namespace sfz
+{
 template <class Type, unsigned int MaxChannels = sfz::config::numChannels>
 class AudioSpan {
 public:
@@ -137,26 +139,26 @@ public:
             return 0.0;
         Type result = 0.0;
         for (int i = 0; i < numChannels; ++i)
-            result += ::meanSquared<Type>(getConstSpan(i));
+            result += sfz::meanSquared<Type>(getConstSpan(i));
         return result / numChannels;
     }
 
     void fill(Type value) noexcept
     {
         for (int i = 0; i < numChannels; ++i)
-            ::fill<Type>(getSpan(i), value);
+            sfz::fill<Type>(getSpan(i), value);
     }
 
     void applyGain(absl::Span<const Type> gain) noexcept
     {
         for (int i = 0; i < numChannels; ++i)
-            ::applyGain<Type>(gain, getSpan(i));
+            sfz::applyGain<Type>(gain, getSpan(i));
     }
 
     void applyGain(Type gain) noexcept
     {
         for (int i = 0; i < numChannels; ++i)
-            ::applyGain<Type>(gain, getSpan(i));
+            sfz::applyGain<Type>(gain, getSpan(i));
     }
 
     template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
@@ -165,7 +167,7 @@ public:
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
             for (int i = 0; i < numChannels; ++i)
-                ::add<Type>(other.getConstSpan(i), getSpan(i));
+                sfz::add<Type>(other.getConstSpan(i), getSpan(i));
         }
     }
 
@@ -175,7 +177,7 @@ public:
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
             for (int i = 0; i < numChannels; ++i)
-                ::copy<Type>(other.getConstSpan(i), getSpan(i));
+                sfz::copy<Type>(other.getConstSpan(i), getSpan(i));
         }
     }
 
@@ -218,3 +220,4 @@ private:
     size_type numFrames { 0 };
     int numChannels { 0 };
 };
+}

@@ -30,6 +30,9 @@
 #include <memory>
 #include <array>
 
+namespace sfz 
+{
+
 template <class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
 public:
@@ -151,3 +154,4 @@ private:
     int numChannels { 0 };
     size_type numFrames { 0 };
 };
+}
