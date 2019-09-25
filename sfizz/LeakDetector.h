@@ -60,7 +60,7 @@ private:
         };
         std::atomic<int> count { 0 };
     };
-	static ObjectCounter objectCounter;
+	inline static ObjectCounter objectCounter;
 };
 
 #ifndef NDEBUG
