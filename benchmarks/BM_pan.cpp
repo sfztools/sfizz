@@ -66,27 +66,27 @@ public:
 BENCHMARK_DEFINE_F(PanArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        ::pan<float, false>(pan, absl::MakeSpan(left), absl::MakeSpan(right));
+        sfz::pan<float, false>(pan, absl::MakeSpan(left), absl::MakeSpan(right));
     }
 }
 
 BENCHMARK_DEFINE_F(PanArray, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        ::pan<float, true>(pan, absl::MakeSpan(left), absl::MakeSpan(right));
+        sfz::pan<float, true>(pan, absl::MakeSpan(left), absl::MakeSpan(right));
     }
 }
 
 BENCHMARK_DEFINE_F(PanArray, BlockOps)(benchmark::State& state) {
     for (auto _ : state)
     {
-        ::fill<float>(span2, 1.0f);
-        ::add<float>(span1, span2);
-        ::applyGain<float>(piFour<float>, span2);
-        ::cos<float>(span2, span1);
-        ::sin<float>(span2, span2);
-        ::applyGain<float>(span1, absl::MakeSpan(left));
-        ::applyGain<float>(span2, absl::MakeSpan(right));
+        sfz::fill<float>(span2, 1.0f);
+        sfz::add<float>(span1, span2);
+        sfz::applyGain<float>(piFour<float>, span2);
+        sfz::cos<float>(span2, span1);
+        sfz::sin<float>(span2, span2);
+        sfz::applyGain<float>(span1, absl::MakeSpan(left));
+        sfz::applyGain<float>(span2, absl::MakeSpan(right));
     }
 }
 

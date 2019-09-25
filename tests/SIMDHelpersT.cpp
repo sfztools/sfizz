@@ -69,7 +69,7 @@ TEST_CASE("[Helpers] fill() - Manual buffer")
 {
     std::vector<float> buffer(5);
     std::vector<float> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    fill<float, false>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<float, false>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -79,7 +79,7 @@ TEST_CASE("[Helpers] fill() - Small buffer")
     std::vector<float> expected(smallBufferSize);
     std::fill(expected.begin(), expected.end(), fillValue);
 
-    fill<float, false>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<float, false>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -89,7 +89,7 @@ TEST_CASE("[Helpers] fill() - Big buffer")
     std::vector<float> expected(bigBufferSize);
     std::fill(expected.begin(), expected.end(), fillValue);
 
-    fill<float, false>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<float, false>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -99,7 +99,7 @@ TEST_CASE("[Helpers] fill() - Small buffer -- SIMD")
     std::vector<float> expected(smallBufferSize);
     std::fill(expected.begin(), expected.end(), fillValue);
 
-    fill<float, true>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<float, true>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -109,7 +109,7 @@ TEST_CASE("[Helpers] fill() - Big buffer -- SIMD")
     std::vector<float> expected(bigBufferSize);
     std::fill(expected.begin(), expected.end(), fillValue);
 
-    fill<float, true>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<float, true>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -119,7 +119,7 @@ TEST_CASE("[Helpers] fill() - Small buffer -- doubles")
     std::vector<double> expected(smallBufferSize);
     std::fill(expected.begin(), expected.end(), fillValue);
 
-    fill<double, false>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<double, false>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -129,7 +129,7 @@ TEST_CASE("[Helpers] fill() - Big buffer -- doubles")
     std::vector<double> expected(bigBufferSize);
     std::fill(expected.begin(), expected.end(), fillValue);
 
-    fill<double, false>(absl::MakeSpan(buffer), fillValue);
+    sfz::fill<double, false>(absl::MakeSpan(buffer), fillValue);
     REQUIRE(buffer == expected);
 }
 
@@ -139,7 +139,7 @@ TEST_CASE("[Helpers] Interleaved read")
     std::array<float, 16> expected { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 8> leftOutput;
     std::array<float, 8> rightOutput;
-    readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 16> real;
 
     auto realIdx = 0;
@@ -156,7 +156,7 @@ TEST_CASE("[Helpers] Interleaved read unaligned end")
     std::array<float, 20> expected { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 10> leftOutput;
     std::array<float, 10> rightOutput;
-    readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 20> real;
 
     auto realIdx = 0;
@@ -173,7 +173,7 @@ TEST_CASE("[Helpers] Small interleaved read unaligned end")
     std::array<float, 6> expected { 0.0f, 1.0f, 2.0f, 10.0f, 11.0f, 12.0f };
     std::array<float, 3> leftOutput;
     std::array<float, 3> rightOutput;
-    readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 6> real;
 
     auto realIdx = 0;
@@ -190,7 +190,7 @@ TEST_CASE("[Helpers] Interleaved read -- SIMD")
     std::array<float, 16> expected = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 8> leftOutput;
     std::array<float, 8> rightOutput;
-    readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 16> real;
 
     auto realIdx = 0;
@@ -207,7 +207,7 @@ TEST_CASE("[Helpers] Interleaved read unaligned end -- SIMD")
     std::array<float, 20> expected = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 10> leftOutput;
     std::array<float, 10> rightOutput;
-    readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 20> real;
 
     auto realIdx = 0;
@@ -224,7 +224,7 @@ TEST_CASE("[Helpers] Small interleaved read unaligned end -- SIMD")
     std::array<float, 6> expected { 0.0f, 1.0f, 2.0f, 10.0f, 11.0f, 12.0f };
     std::array<float, 3> leftOutput;
     std::array<float, 3> rightOutput;
-    readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 6> real;
 
     auto realIdx = 0;
@@ -243,8 +243,8 @@ TEST_CASE("[Helpers] Interleaved read SIMD vs Scalar")
     std::array<float, medBufferSize> leftOutputSIMD;
     std::array<float, medBufferSize> rightOutputSIMD;
     std::iota(input.begin(), input.end(), 0.0f);
-    readInterleaved<float, false>(input, absl::MakeSpan(leftOutputScalar), absl::MakeSpan(rightOutputScalar));
-    readInterleaved<float, true>(input, absl::MakeSpan(leftOutputSIMD), absl::MakeSpan(rightOutputSIMD));
+    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutputScalar), absl::MakeSpan(rightOutputScalar));
+    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutputSIMD), absl::MakeSpan(rightOutputSIMD));
     REQUIRE(leftOutputScalar == leftOutputSIMD);
     REQUIRE(rightOutputScalar == rightOutputSIMD);
 }
@@ -264,7 +264,7 @@ TEST_CASE("[Helpers] Interleaved write")
     std::array<float, 8> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 16> output;
     std::array<float, 16> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f };
-    writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -274,7 +274,7 @@ TEST_CASE("[Helpers] Interleaved write unaligned end")
     std::array<float, 10> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 20> output;
     std::array<float, 20> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f };
-    writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -284,7 +284,7 @@ TEST_CASE("[Helpers] Small interleaved write unaligned end")
     std::array<float, 3> rightInput { 10.0f, 11.0f, 12.0f };
     std::array<float, 6> output;
     std::array<float, 6> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f };
-    writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -303,7 +303,7 @@ TEST_CASE("[Helpers] Interleaved write -- SIMD")
     std::array<float, 8> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 16> output;
     std::array<float, 16> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f };
-    writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -313,7 +313,7 @@ TEST_CASE("[Helpers] Interleaved write unaligned end -- SIMD")
     std::array<float, 10> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 20> output;
     std::array<float, 20> expected = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f };
-    writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -323,7 +323,7 @@ TEST_CASE("[Helpers] Small interleaved write unaligned end -- SIMD")
     std::array<float, 3> rightInput { 10.0f, 11.0f, 12.0f };
     std::array<float, 6> output;
     std::array<float, 6> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f };
-    writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -335,8 +335,8 @@ TEST_CASE("[Helpers] Interleaved write SIMD vs Scalar")
     std::array<float, medBufferSize * 2> outputSIMD;
     std::iota(leftInput.begin(), leftInput.end(), 0.0f);
     std::iota(rightInput.begin(), rightInput.end(), medBufferSize);
-    writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(outputScalar));
-    writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(outputSIMD));
+    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(outputScalar));
+    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(outputSIMD));
     REQUIRE(outputScalar == outputSIMD);
 }
 
@@ -345,7 +345,7 @@ TEST_CASE("[Helpers] Gain, single")
     std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    applyGain<float, false>(fillValue, input, absl::MakeSpan(output));
+    sfz::applyGain<float, false>(fillValue, input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -353,7 +353,7 @@ TEST_CASE("[Helpers] Gain, single and inplace")
 {
     std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    applyGain<float, false>(fillValue, buffer, absl::MakeSpan(buffer));
+    sfz::applyGain<float, false>(fillValue, buffer, absl::MakeSpan(buffer));
     REQUIRE(buffer == expected);
 }
 
@@ -363,7 +363,7 @@ TEST_CASE("[Helpers] Gain, spans")
     std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    applyGain<float, false>(gain, input, absl::MakeSpan(output));
+    sfz::applyGain<float, false>(gain, input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -372,7 +372,7 @@ TEST_CASE("[Helpers] Gain, spans and inplace")
     std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    applyGain<float, false>(gain, buffer, absl::MakeSpan(buffer));
+    sfz::applyGain<float, false>(gain, buffer, absl::MakeSpan(buffer));
     REQUIRE(buffer == expected);
 }
 
@@ -381,7 +381,7 @@ TEST_CASE("[Helpers] Gain, single (SIMD)")
     std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    applyGain<float, true>(fillValue, input, absl::MakeSpan(output));
+    sfz::applyGain<float, true>(fillValue, input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -389,7 +389,7 @@ TEST_CASE("[Helpers] Gain, single and inplace (SIMD)")
 {
     std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    applyGain<float, true>(fillValue, buffer, absl::MakeSpan(buffer));
+    sfz::applyGain<float, true>(fillValue, buffer, absl::MakeSpan(buffer));
     REQUIRE(buffer == expected);
 }
 
@@ -399,7 +399,7 @@ TEST_CASE("[Helpers] Gain, spans (SIMD)")
     std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    applyGain<float, true>(gain, input, absl::MakeSpan(output));
+    sfz::applyGain<float, true>(gain, input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -408,7 +408,7 @@ TEST_CASE("[Helpers] Gain, spans and inplace (SIMD)")
     std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    applyGain<float, true>(gain, buffer, absl::MakeSpan(buffer));
+    sfz::applyGain<float, true>(gain, buffer, absl::MakeSpan(buffer));
     REQUIRE(buffer == expected);
 }
 
@@ -421,7 +421,7 @@ TEST_CASE("[Helpers] SFZ looping index")
     std::array<int, 6> expectedIndices { 2, 3, 4, 1, 2, 4 };
     std::array<float, 6> expectedLeft { 0.9f, 0.7f, 0.4f, 1.0f, 0.5f, 0.9f };
     std::array<float, 6> expectedRight { 0.1f, 0.3f, 0.6f, 0.0f, 0.5f, 0.1f };
-    loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6, 1);
+    sfz::loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6, 1);
     REQUIRE(indices == expectedIndices);
     REQUIRE(approxEqual<float>(leftCoeffs, expectedLeft));
     REQUIRE(approxEqual<float>(rightCoeffs, expectedRight));
@@ -436,7 +436,7 @@ TEST_CASE("[Helpers] SFZ looping index (SIMD)")
     std::array<int, 6> expectedIndices { 2, 3, 4, 1, 2, 4 };
     std::array<float, 6> expectedLeft { 0.9f, 0.7f, 0.4f, 1.0f, 0.5f, 0.9f };
     std::array<float, 6> expectedRight { 0.1f, 0.3f, 0.6f, 0.0f, 0.5f, 0.1f };
-    loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6, 1);
+    sfz::loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6, 1);
     REQUIRE(indices == expectedIndices);
     REQUIRE(approxEqual<float>(leftCoeffs, expectedLeft));
     REQUIRE(approxEqual<float>(rightCoeffs, expectedRight));
@@ -455,8 +455,8 @@ TEST_CASE("[Helpers] SFZ looping index (SIMD)")
 //     std::vector<int> indicesSIMD(bigBufferSize);
 //     std::vector<float> leftCoeffsSIMD(bigBufferSize);
 //     std::vector<float> rightCoeffsSIMD(bigBufferSize);
-//     loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, medBufferSize, 1);
-//     loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffsSIMD), absl::MakeSpan(rightCoeffsSIMD), absl::MakeSpan(indicesSIMD), 1.0f, medBufferSize, 1);
+//     sfz::loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, medBufferSize, 1);
+//     sfz::loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffsSIMD), absl::MakeSpan(rightCoeffsSIMD), absl::MakeSpan(indicesSIMD), 1.0f, medBufferSize, 1);
 //     for (int i = 0; i < bigBufferSize; ++i)
 //         REQUIRE( ((static_cast<float>(indices[i]) + rightCoeffs[i] == Approx(static_cast<float>(indicesSIMD[i]) + rightCoeffsSIMD[i]).margin(1e-2)) 
 //                 || (static_cast<float>(indices[i]) + rightCoeffs[i] == Approx(static_cast<float>(indicesSIMD[i]) + rightCoeffsSIMD[i] - static_cast<float>(medBufferSize)).margin(2e-2))) );
@@ -471,7 +471,7 @@ TEST_CASE("[Helpers] SFZ saturating index")
     std::array<int, 6> expectedIndices { 2, 3, 4, 5, 5, 5 };
     std::array<float, 6> expectedLeft { 0.9f, 0.7f, 0.4f, 0.0f, 0.0f, 0.0f };
     std::array<float, 6> expectedRight { 0.1f, 0.3f, 0.6f, 1.0f, 1.0f, 1.0f };
-    saturatingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6);
+    sfz::saturatingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6);
     REQUIRE(indices == expectedIndices);
     REQUIRE(approxEqual<float>(leftCoeffs, expectedLeft));
     REQUIRE(approxEqual<float>(rightCoeffs, expectedRight));
@@ -486,7 +486,7 @@ TEST_CASE("[Helpers] SFZ saturating index (SIMD)")
     std::array<int, 6> expectedIndices { 2, 3, 4, 5, 5, 5 };
     std::array<float, 6> expectedLeft { 0.9f, 0.7f, 0.4f, 0.0f, 0.0f, 0.0f };
     std::array<float, 6> expectedRight { 0.1f, 0.3f, 0.6f, 1.0f, 1.0f, 1.0f };
-    saturatingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6);
+    sfz::saturatingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 6);
     REQUIRE(indices == expectedIndices);
     REQUIRE(approxEqualMargin<float>(leftCoeffs, expectedLeft));
     REQUIRE(approxEqualMargin<float>(rightCoeffs, expectedRight));
@@ -505,8 +505,8 @@ TEST_CASE("[Helpers] SFZ saturating index (SIMD vs Scalar)")
     std::vector<int> indicesSIMD(medBufferSize);
     std::vector<float> leftCoeffsSIMD(medBufferSize);
     std::vector<float> rightCoeffsSIMD(medBufferSize);
-    saturatingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 78);
-    saturatingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffsSIMD), absl::MakeSpan(rightCoeffsSIMD), absl::MakeSpan(indicesSIMD), 1.0f, 78);
+    sfz::saturatingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, 78);
+    sfz::saturatingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffsSIMD), absl::MakeSpan(rightCoeffsSIMD), absl::MakeSpan(indicesSIMD), 1.0f, 78);
     for (int i = 0; i < medBufferSize; ++i)
         REQUIRE( static_cast<float>(indices[i]) + rightCoeffs[i] == Approx(static_cast<float>(indicesSIMD[i]) + rightCoeffsSIMD[i]));
 }
@@ -517,7 +517,7 @@ TEST_CASE("[Helpers] Linear Ramp")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v + v, v + v + v, v + v + v + v, v + v + v + v + v, v + v + v + v + v + v };
-    linearRamp<float, false>(absl::MakeSpan(output), start, v);
+    sfz::linearRamp<float, false>(absl::MakeSpan(output), start, v);
     REQUIRE(output == expected);
 }
 
@@ -527,7 +527,7 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD)")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v + v, v + v + v, v + v + v + v, v + v + v + v + v, v + v + v + v + v + v };
-    linearRamp<float, true>(absl::MakeSpan(output), start, v);
+    sfz::linearRamp<float, true>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -536,8 +536,8 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD vs scalar)")
     const float start { 0.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    linearRamp<float, false>(absl::MakeSpan(outputScalar), start, fillValue);
-    linearRamp<float, true>(absl::MakeSpan(outputSIMD), start, fillValue);
+    sfz::linearRamp<float, false>(absl::MakeSpan(outputScalar), start, fillValue);
+    sfz::linearRamp<float, true>(absl::MakeSpan(outputSIMD), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -546,8 +546,8 @@ TEST_CASE("[Helpers] Linear Ramp unaligned (SIMD vs scalar)")
     const float start { 0.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    linearRamp<float, false>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
-    linearRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
+    sfz::linearRamp<float, false>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
+    sfz::linearRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -557,7 +557,7 @@ TEST_CASE("[Helpers] Multiplicative Ramp")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v * v, v * v * v, v * v * v * v, v * v * v * v * v, v * v * v * v * v * v };
-    multiplicativeRamp<float, false>(absl::MakeSpan(output), start, v);
+    sfz::multiplicativeRamp<float, false>(absl::MakeSpan(output), start, v);
     REQUIRE(output == expected);
 }
 
@@ -567,7 +567,7 @@ TEST_CASE("[Helpers] Multiplicative Ramp (SIMD)")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v * v, v * v * v, v * v * v * v, v * v * v * v * v, v * v * v * v * v * v };
-    multiplicativeRamp<float, true>(absl::MakeSpan(output), start, v);
+    sfz::multiplicativeRamp<float, true>(absl::MakeSpan(output), start, v);
     REQUIRE(output == expected);
 }
 
@@ -576,8 +576,8 @@ TEST_CASE("[Helpers] Multiplicative Ramp (SIMD vs scalar)")
     const float start { 1.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    multiplicativeRamp<float, false>(absl::MakeSpan(outputScalar), start, fillValue);
-    multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD), start, fillValue);
+    sfz::multiplicativeRamp<float, false>(absl::MakeSpan(outputScalar), start, fillValue);
+    sfz::multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -586,8 +586,8 @@ TEST_CASE("[Helpers] Multiplicative Ramp unaligned (SIMD vs scalar)")
     const float start { 1.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    multiplicativeRamp<float, false>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
-    multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
+    sfz::multiplicativeRamp<float, false>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
+    sfz::multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -596,7 +596,7 @@ TEST_CASE("[Helpers] Add")
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { 2.0, 3.0, 4.0, 5.0, 6.0 };
-    add<float, false>(input, absl::MakeSpan(output));
+    sfz::add<float, false>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -605,7 +605,7 @@ TEST_CASE("[Helpers] Add (SIMD)")
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { 2.0, 3.0, 4.0, 5.0, 6.0 };
-    add<float, true>(input, absl::MakeSpan(output));
+    sfz::add<float, true>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -618,8 +618,8 @@ TEST_CASE("[Helpers] Add (SIMD vs scalar)")
     absl::c_fill(outputScalar, 0.0);
     absl::c_fill(outputSIMD, 0.0);
 
-    add<float, false>(input, absl::MakeSpan(outputScalar));
-    add<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::add<float, false>(input, absl::MakeSpan(outputScalar));
+    sfz::add<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -628,7 +628,7 @@ TEST_CASE("[Helpers] Subtract")
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { 0.0, -1.0, -2.0, -3.0, -4.0 };
-    subtract<float, false>(input, absl::MakeSpan(output));
+    sfz::subtract<float, false>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -636,7 +636,7 @@ TEST_CASE("[Helpers] Subtract 2")
 {
     std::array<float, 5> output { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> expected { 0.0, 1.0, 2.0, 3.0, 4.0 };
-    subtract<float, false>(1.0f, absl::MakeSpan(output));
+    sfz::subtract<float, false>(1.0f, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -646,7 +646,7 @@ TEST_CASE("[Helpers] Subtract (SIMD)")
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { 0.0, -1.0, -2.0, -3.0, -4.0 };
-    subtract<float, true>(input, absl::MakeSpan(output));
+    sfz::subtract<float, true>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -659,8 +659,8 @@ TEST_CASE("[Helpers] Subtract (SIMD vs scalar)")
     absl::c_fill(outputScalar, 0.0);
     absl::c_fill(outputSIMD, 0.0);
 
-    subtract<float, false>(input, absl::MakeSpan(outputScalar));
-    subtract<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::subtract<float, false>(input, absl::MakeSpan(outputScalar));
+    sfz::subtract<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -671,8 +671,8 @@ TEST_CASE("[Helpers] Subtract 2 (SIMD vs scalar)")
     absl::c_iota(outputScalar, 0.0);
     absl::c_iota(outputSIMD, 0.0);
 
-    subtract<float, false>(1.2f, absl::MakeSpan(outputScalar));
-    subtract<float, true>(1.2f, absl::MakeSpan(outputSIMD));
+    sfz::subtract<float, false>(1.2f, absl::MakeSpan(outputScalar));
+    sfz::subtract<float, true>(1.2f, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -680,7 +680,7 @@ TEST_CASE("[Helpers] copy")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    copy<float, false>(input, absl::MakeSpan(output));
+    sfz::copy<float, false>(input, absl::MakeSpan(output));
     REQUIRE(output == input);
 }
 
@@ -688,7 +688,7 @@ TEST_CASE("[Helpers] copy (SIMD)")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    copy<float, true>(input, absl::MakeSpan(output));
+    sfz::copy<float, true>(input, absl::MakeSpan(output));
     REQUIRE(output == input);
 }
 
@@ -701,37 +701,37 @@ TEST_CASE("[Helpers] copy (SIMD vs scalar)")
     absl::c_fill(outputScalar, 0.0);
     absl::c_fill(outputSIMD, 0.0);
 
-    add<float, false>(input, absl::MakeSpan(outputScalar));
-    add<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::add<float, false>(input, absl::MakeSpan(outputScalar));
+    sfz::add<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
 TEST_CASE("[Helpers] Mean")
 {
     std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
-    REQUIRE(mean<float, false>(input) == 5.5f);
-    REQUIRE(mean<float, true>(input) == 5.5f);
+    REQUIRE(sfz::mean<float, false>(input) == 5.5f);
+    REQUIRE(sfz::mean<float, true>(input) == 5.5f);
 }
 
 TEST_CASE("[Helpers] Mean (SIMD vs scalar)")
 {
     std::vector<float> input(bigBufferSize);
     absl::c_iota(input, 0.0);
-    REQUIRE(mean<float, false>(input) == Approx(mean<float, true>(input)).margin(0.001));
+    REQUIRE(sfz::mean<float, false>(input) == Approx(sfz::mean<float, true>(input)).margin(0.001));
 }
 
 TEST_CASE("[Helpers] Mean Squared")
 {
     std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
-    REQUIRE(meanSquared<float, false>(input) == 38.5f);
-    REQUIRE(meanSquared<float, true>(input) == 38.5f);
+    REQUIRE(sfz::meanSquared<float, false>(input) == 38.5f);
+    REQUIRE(sfz::meanSquared<float, true>(input) == 38.5f);
 }
 
 TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
 {
     std::vector<float> input(medBufferSize);
     absl::c_iota(input, 0.0);
-    REQUIRE(meanSquared<float, false>(input) == meanSquared<float, true>(input));
+    REQUIRE(sfz::meanSquared<float, false>(input) == sfz::meanSquared<float, true>(input));
 }
 
 TEST_CASE("[Helpers] Cumulative sum ")
@@ -739,7 +739,7 @@ TEST_CASE("[Helpers] Cumulative sum ")
     std::array<float, 6> input { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
     std::array<float, 6> output; 
     std::array<float, 6> expected { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
-    cumsum<float, false>(input, absl::MakeSpan(output));
+    sfz::cumsum<float, false>(input, absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -748,9 +748,9 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
-    cumsum<float, false>(input, absl::MakeSpan(outputScalar));
-    cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
+    sfz::cumsum<float, false>(input, absl::MakeSpan(outputScalar));
+    sfz::cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -759,7 +759,7 @@ TEST_CASE("[Helpers] Diff ")
     std::array<float, 6> input { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
     std::array<float, 6> output; 
     std::array<float, 6> expected { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f };
-    diff<float, false>(input, absl::MakeSpan(output));
+    sfz::diff<float, false>(input, absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -768,8 +768,8 @@ TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
-    diff<float, false>(input, absl::MakeSpan(outputScalar));
-    diff<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
+    sfz::diff<float, false>(input, absl::MakeSpan(outputScalar));
+    sfz::diff<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }

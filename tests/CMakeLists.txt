@@ -12,7 +12,6 @@ set(SFIZZ_TEST_SOURCES
     RangeT.cpp
     OpcodeT.cpp
     BufferT.cpp
-    StereoBufferT.cpp
     SIMDHelpersT.cpp
     FilesT.cpp
     OnePoleFilterT.cpp

@@ -29,73 +29,73 @@
 #include <absl/types/span.h>
 
 static void Interleaved_Write(benchmark::State& state) {
-  Buffer<float> inputLeft (state.range(0));
-  Buffer<float> inputRight (state.range(0));
-  Buffer<float> output (state.range(0) * 2);
+  sfz::Buffer<float> inputLeft (state.range(0));
+  sfz::Buffer<float> inputRight (state.range(0));
+  sfz::Buffer<float> output (state.range(0) * 2);
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
 
   for (auto _ : state) {
-    writeInterleaved<float, false>(inputLeft, inputRight, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, false>(inputLeft, inputRight, absl::MakeSpan(output));
   }
 }
 
 static void Interleaved_Write_SSE(benchmark::State& state) {
-  Buffer<float> inputLeft (state.range(0));
-  Buffer<float> inputRight (state.range(0));
-  Buffer<float> output (state.range(0) * 2);
+  sfz::Buffer<float> inputLeft (state.range(0));
+  sfz::Buffer<float> inputRight (state.range(0));
+  sfz::Buffer<float> output (state.range(0) * 2);
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, true>(inputLeft, inputRight, absl::MakeSpan(output));
+    sfz::writeInterleaved<float, true>(inputLeft, inputRight, absl::MakeSpan(output));
     benchmark::DoNotOptimize(output);
   }
 }
 
 static void Unaligned_Interleaved_Write(benchmark::State& state) {
-  Buffer<float> inputLeft (state.range(0));
-  Buffer<float> inputRight (state.range(0));
-  Buffer<float> output (state.range(0) * 2);
+  sfz::Buffer<float> inputLeft (state.range(0));
+  sfz::Buffer<float> inputRight (state.range(0));
+  sfz::Buffer<float> output (state.range(0) * 2);
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, false>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
+    sfz::writeInterleaved<float, false>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
     benchmark::DoNotOptimize(output);
   }
 }
 
 static void Unaligned_Interleaved_Write_SSE(benchmark::State& state) {
-  Buffer<float> inputLeft (state.range(0));
-  Buffer<float> inputRight (state.range(0));
-  Buffer<float> output (state.range(0) * 2);
+  sfz::Buffer<float> inputLeft (state.range(0));
+  sfz::Buffer<float> inputRight (state.range(0));
+  sfz::Buffer<float> output (state.range(0) * 2);
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, true>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
+    sfz::writeInterleaved<float, true>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
     benchmark::DoNotOptimize(output);
   }
 }
 
 static void Unaligned_Interleaved_Write_2(benchmark::State& state) {
-  Buffer<float> inputLeft (state.range(0));
-  Buffer<float> inputRight (state.range(0));
-  Buffer<float> output (state.range(0) * 2);
+  sfz::Buffer<float> inputLeft (state.range(0));
+  sfz::Buffer<float> inputRight (state.range(0));
+  sfz::Buffer<float> output (state.range(0) * 2);
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, false>(absl::MakeSpan(inputLeft) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
+    sfz::writeInterleaved<float, false>(absl::MakeSpan(inputLeft) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
     benchmark::DoNotOptimize(output);
   }
 }
 
 static void Unaligned_Interleaved_Write_SSE_2(benchmark::State& state) {
-  Buffer<float> inputLeft (state.range(0));
-  Buffer<float> inputRight (state.range(0));
-  Buffer<float> output (state.range(0) * 2);
+  sfz::Buffer<float> inputLeft (state.range(0));
+  sfz::Buffer<float> inputRight (state.range(0));
+  sfz::Buffer<float> output (state.range(0) * 2);
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    writeInterleaved<float, true>(absl::MakeSpan(inputLeft) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
+    sfz::writeInterleaved<float, true>(absl::MakeSpan(inputLeft) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
     benchmark::DoNotOptimize(output);
   }
 }

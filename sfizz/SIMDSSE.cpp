@@ -76,7 +76,7 @@ bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3, const fl
 }
 
 template <>
-void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
+void sfz::readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     // The size of the outputs is not big enough for the input...
     ASSERT(outputLeft.size() >= input.size() / 2);
@@ -116,7 +116,7 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
 }
 
 template <>
-void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
+void sfz::writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     // The size of the output is not big enough for the inputs...
     ASSERT(inputLeft.size() <= output.size() / 2);
@@ -153,7 +153,7 @@ void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span
 }
 
 template <>
-void fill<float, true>(absl::Span<float> output, float value) noexcept
+void sfz::fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     const auto mmValue = _mm_set_ps1(value);
     auto* out = output.begin();
@@ -173,7 +173,7 @@ void fill<float, true>(absl::Span<float> output, float value) noexcept
 }
 
 template <>
-void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -195,7 +195,7 @@ void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
-void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -217,7 +217,7 @@ void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
-void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -239,7 +239,7 @@ void log<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
-void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -261,7 +261,7 @@ void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
-void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     auto* in = input.begin();
     auto* out = output.begin();
@@ -283,7 +283,7 @@ void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Spa
 }
 
 template <>
-void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     auto* in = input.begin();
     auto* out = output.begin();
@@ -306,7 +306,7 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 }
 
 template <>
-void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     auto* in = input.begin();
     auto* out = output.begin();
@@ -331,7 +331,7 @@ void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const flo
 }
 
 template <>
-float loopingSFZIndex<float, true>(absl::Span<const float> jumps,
+float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps,
     absl::Span<float> leftCoeffs,
     absl::Span<float> rightCoeffs,
     absl::Span<int> indices,
@@ -393,7 +393,7 @@ float loopingSFZIndex<float, true>(absl::Span<const float> jumps,
 }
 
 template <>
-float saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
+float sfz::saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
     absl::Span<float> leftCoeffs,
     absl::Span<float> rightCoeffs,
     absl::Span<int> indices,
@@ -451,7 +451,7 @@ float saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
 }
 
 template <>
-float linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
+float sfz::linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
@@ -476,7 +476,7 @@ float linearRamp<float, true>(absl::Span<float> output, float value, float step)
 }
 
 template <>
-float multiplicativeRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
+float sfz::multiplicativeRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
     const auto* lastAligned = prevAligned(output.end());
@@ -501,7 +501,7 @@ float multiplicativeRamp<float, true>(absl::Span<float> output, float value, flo
 }
 
 template <>
-void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -523,7 +523,7 @@ void add<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 }
 
 template <>
-void add<float, true>(float value, absl::Span<float> output) noexcept
+void sfz::add<float, true>(float value, absl::Span<float> output) noexcept
 {
     auto* out = output.begin();
     auto* sentinel = output.end();
@@ -543,7 +543,7 @@ void add<float, true>(float value, absl::Span<float> output) noexcept
 }
 
 template <>
-void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -565,7 +565,7 @@ void subtract<float, true>(absl::Span<const float> input, absl::Span<float> outp
 }
 
 template <>
-void subtract<float, true>(const float value, absl::Span<float> output) noexcept
+void sfz::subtract<float, true>(const float value, absl::Span<float> output) noexcept
 {
     auto* out = output.begin();
     auto* sentinel = output.end();
@@ -585,7 +585,7 @@ void subtract<float, true>(const float value, absl::Span<float> output) noexcept
 }
 
 template <>
-void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     auto* in = input.begin();
@@ -607,7 +607,7 @@ void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) 
 }
 
 template <>
-void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
+void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
 {
     ASSERT(leftBuffer.size() >= panEnvelope.size());
     ASSERT(rightBuffer.size() >= panEnvelope.size());
@@ -643,7 +643,7 @@ void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> lef
 }
 
 template <>
-float mean<float, true>(absl::Span<const float> vector) noexcept
+float sfz::mean<float, true>(absl::Span<const float> vector) noexcept
 {
     float result { 0.0 };
     if (vector.size() == 0)
@@ -675,7 +675,7 @@ float mean<float, true>(absl::Span<const float> vector) noexcept
 }
 
 template <>
-float meanSquared<float, true>(absl::Span<const float> vector) noexcept
+float sfz::meanSquared<float, true>(absl::Span<const float> vector) noexcept
 {
     float result { 0.0 };
     if (vector.size() == 0)
@@ -712,7 +712,7 @@ float meanSquared<float, true>(absl::Span<const float> vector) noexcept
 }
 
 template <>
-void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     if (input.size() == 0)
@@ -744,7 +744,7 @@ void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output
 }
 
 template <>
-void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
+void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
 {
     ASSERT(jumps.size() >= floatJumps.size());
     ASSERT(jumps.size() == leftCoeffs.size());
@@ -780,7 +780,7 @@ void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl:
 }
 
 template <>
-void diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     ASSERT(output.size() >= input.size());
     if (input.size() == 0)

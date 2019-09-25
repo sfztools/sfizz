@@ -29,64 +29,64 @@
 #include <absl/types/span.h>
 
 static void Scalar(benchmark::State& state) {
-  Buffer<float> input (state.range(0) * 2);
-  Buffer<float> outputLeft (state.range(0));
-  Buffer<float> outputRight (state.range(0));
+  sfz::Buffer<float> input (state.range(0) * 2);
+  sfz::Buffer<float> outputLeft (state.range(0));
+  sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
 
   for (auto _ : state) {
-    readInterleaved<float, false>(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::readInterleaved<float, false>(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
   }
 }
 
 static void SSE(benchmark::State& state) {
-  Buffer<float> input (state.range(0) * 2);
-  Buffer<float> outputLeft (state.range(0));
-  Buffer<float> outputRight (state.range(0));
+  sfz::Buffer<float> input (state.range(0) * 2);
+  sfz::Buffer<float> outputLeft (state.range(0));
+  sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
 
   for (auto _ : state) {
-    readInterleaved<float, true>(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::readInterleaved<float, true>(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
   }
 }
 
 static void Scalar_Unaligned(benchmark::State& state) {
-  Buffer<float> input (state.range(0) * 2);
-  Buffer<float> outputLeft (state.range(0));
-  Buffer<float> outputRight (state.range(0));
+  sfz::Buffer<float> input (state.range(0) * 2);
+  sfz::Buffer<float> outputLeft (state.range(0));
+  sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    readInterleaved<float, false>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::readInterleaved<float, false>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
   }
 }
 
 static void SSE_Unaligned(benchmark::State& state) {
-  Buffer<float> input (state.range(0) * 2);
-  Buffer<float> outputLeft (state.range(0));
-  Buffer<float> outputRight (state.range(0));
+  sfz::Buffer<float> input (state.range(0) * 2);
+  sfz::Buffer<float> outputLeft (state.range(0));
+  sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    readInterleaved<float, true>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::readInterleaved<float, true>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
   }
 }
 
 static void Scalar_Unaligned_2(benchmark::State& state) {
-  Buffer<float> input (state.range(0) * 2);
-  Buffer<float> outputLeft (state.range(0));
-  Buffer<float> outputRight (state.range(0));
+  sfz::Buffer<float> input (state.range(0) * 2);
+  sfz::Buffer<float> outputLeft (state.range(0));
+  sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    readInterleaved<float, false>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft).subspan(1), absl::MakeSpan(outputRight).subspan(3));
+    sfz::readInterleaved<float, false>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft).subspan(1), absl::MakeSpan(outputRight).subspan(3));
   }
 }
 
 static void SSE_Unaligned_2(benchmark::State& state) {
-  Buffer<float> input (state.range(0) * 2);
-  Buffer<float> outputLeft (state.range(0));
-  Buffer<float> outputRight (state.range(0));
+  sfz::Buffer<float> input (state.range(0) * 2);
+  sfz::Buffer<float> outputLeft (state.range(0));
+  sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    readInterleaved<float, true>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft).subspan(1), absl::MakeSpan(outputRight).subspan(3));
+    sfz::readInterleaved<float, true>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft).subspan(1), absl::MakeSpan(outputRight).subspan(3));
   }
 }
 

@@ -119,7 +119,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
     switch (currentState) {
     case State::Delay:
         length = min(remainingSamples, delay);
-        ::fill<Type>(output, currentValue);
+        fill<Type>(output, currentValue);
         output.remove_prefix(length);
         remainingSamples -= length;
         delay -= length;
@@ -131,7 +131,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         [[fallthrough]];
     case State::Attack:
         length = min(remainingSamples, attack);
-        currentValue = ::linearRamp<Type>(output, currentValue, step);
+        currentValue = linearRamp<Type>(output, currentValue, step);
         output.remove_prefix(length);
         remainingSamples -= length;
         attack -= length;
@@ -143,7 +143,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         [[fallthrough]];
     case State::Hold:
         length = min(remainingSamples, hold);
-        ::fill<Type>(output, currentValue);
+        fill<Type>(output, currentValue);
         output.remove_prefix(length);
         remainingSamples -= length;
         hold -= length;
@@ -155,7 +155,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         [[fallthrough]];
     case State::Decay:
         length = min(remainingSamples, decay);
-        currentValue = ::multiplicativeRamp<Type>(output, currentValue, step);
+        currentValue = multiplicativeRamp<Type>(output, currentValue, step);
         output.remove_prefix(length);
         remainingSamples -= length;
         decay -= length;
@@ -169,7 +169,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         break;
     case State::Release:
         length = min(remainingSamples, release);
-        currentValue = ::multiplicativeRamp<Type>(output, currentValue, step);
+        currentValue = multiplicativeRamp<Type>(output, currentValue, step);
         output.remove_prefix(length);
         remainingSamples -= length;
         release -= length;
@@ -184,7 +184,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
     default:
         break;
     }
-    ::fill<Type>(output, currentValue);
+    fill<Type>(output, currentValue);
 
     if (shouldRelease) {
         remainingSamples = static_cast<int>(originalSpan.size());
@@ -200,14 +200,14 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         remainingSamples -= releaseDelay;
         length = min(remainingSamples, release);
         currentState = State::Release;
-        currentValue = ::multiplicativeRamp<Type>(originalSpan, currentValue, step);
+        currentValue = multiplicativeRamp<Type>(originalSpan, currentValue, step);
         originalSpan.remove_prefix(length);
         release -= length;
 
         if (release == 0) {
             currentValue = 0.0;
             currentState = State::Done;
-            ::fill<Type>(originalSpan, 0.0);
+            fill<Type>(originalSpan, 0.0);
         }
     }
 }

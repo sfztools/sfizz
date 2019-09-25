@@ -83,14 +83,14 @@ BENCHMARK_DEFINE_F(GainSingle, Straight)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainSingle, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        applyGain<float, false>(gain, input, absl::MakeSpan(output));
+        sfz::applyGain<float, false>(gain, input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(GainSingle, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        applyGain<float, true>(gain, input, absl::MakeSpan(output));
+        sfz::applyGain<float, true>(gain, input, absl::MakeSpan(output));
     }
 }
 
@@ -105,28 +105,28 @@ BENCHMARK_DEFINE_F(GainArray, Straight)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        applyGain<float, false>(gain, input, absl::MakeSpan(output));
+        sfz::applyGain<float, false>(gain, input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(GainArray, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        applyGain<float, true>(gain, input, absl::MakeSpan(output));
+        sfz::applyGain<float, true>(gain, input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(GainArray, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        applyGain<float, false>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::applyGain<float, false>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(GainArray, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        applyGain<float, true>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::applyGain<float, true>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
