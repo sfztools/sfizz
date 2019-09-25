@@ -24,153 +24,153 @@
 #include "SIMDHelpers.h"
 
 template <>
-void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
+void sfz::readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     readInterleaved<float, false>(input, outputLeft, outputRight);
 }
 
 template <>
-void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
+void sfz::writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     writeInterleaved<float, false>(inputLeft, inputRight, output);
 }
 
 template <>
-void fill<float, true>(absl::Span<float> output, float value) noexcept
+void sfz::fill<float, true>(absl::Span<float> output, float value) noexcept
 {
     fill<float, false>(output, value);
 }
 
 template <>
-void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     exp<float, false>(input, output);
 }
 
 template <>
-void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     log<float, false>(input, output);
 }
 
 template <>
-void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     sin<float, false>(input, output);
 }
 
 template <>
-void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     cos<float, false>(input, output);
 }
 
 template <>
-void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     applyGain<float, false>(gain, input, output);
 }
 
 template <>
-void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     applyGain<float, false>(gain, input, output);
 }
 
 template <>
-void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     multiplyAdd<float, false>(gain, input, output);
 }
 
 template <>
-float loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
+float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
 {
     return loopingSFZIndex<float, false>(jumps, leftCoeff, rightCoeff, indices, floatIndex, loopEnd, loopStart);
 }
 
 template <>
-float saturatingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd) noexcept
+float sfz::saturatingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd) noexcept
 {
     return saturatingSFZIndex<float, false>(jumps, leftCoeff, rightCoeff, indices, floatIndex, loopEnd);
 }
 
 
 template <>
-float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
+float sfz::linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
 {
     return linearRamp<float, false>(output, start, step);
 }
 
 template <>
-float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
+float sfz::multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept
 {
     return multiplicativeRamp<float, false>(output, start, step);
 }
 
 template <>
-void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     add<float, false>(input, output);
 }
 
 template <>
-void add<float, true>(float value, absl::Span<float> output) noexcept
+void sfz::add<float, true>(float value, absl::Span<float> output) noexcept
 {
     add<float, false>(value, output);
 }
 
 template <>
-void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     subtract<float, false>(input, output);
 }
 
 template <>
-void subtract<float, true>(const float value, absl::Span<float> output) noexcept
+void sfz::subtract<float, true>(const float value, absl::Span<float> output) noexcept
 {
     subtract<float, false>(value, output);
 }
 
 
 template <>
-void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     copy<float, false>(input, output);
 }
 
 template <>
-void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
+void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
 {
     pan<float, false>(panEnvelope, leftBuffer, rightBuffer);
 }
 
 template <>
-float mean<float, true>(absl::Span<const float> vector) noexcept
+float sfz::mean<float, true>(absl::Span<const float> vector) noexcept
 {
     return mean<float, false>(vector);
 }
 
 template <>
-float meanSquared<float, true>(absl::Span<const float> vector) noexcept
+float sfz::meanSquared<float, true>(absl::Span<const float> vector) noexcept
 {
     return meanSquared<float, false>(vector);
 }
 
 template <>
-void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     cumsum<float, false>(input, output);
 }
 
 template<>
-void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
+void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
 {
     sfzInterpolationCast<float, false>(floatJumps, jumps, leftCoeffs, rightCoeffs);
 }
 
 template <>
-void diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
+void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     diff<float, false>(input, output);
 }

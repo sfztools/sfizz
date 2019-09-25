@@ -263,29 +263,29 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 
     // Amplitude envelope
     amplitudeEnvelope.getBlock(span1);
-    ::applyGain<float>(span1, leftBuffer);
+    applyGain<float>(span1, leftBuffer);
 
     // AmpEG envelope
     egEnvelope.getBlock(span1);
-    ::applyGain<float>(span1, leftBuffer);
+    applyGain<float>(span1, leftBuffer);
 
     // Volume envelope
     volumeEnvelope.getBlock(span1);
-    ::applyGain<float>(span1, leftBuffer);
+    applyGain<float>(span1, leftBuffer);
 
     // Prepare for stereo output
-    ::copy<float>(leftBuffer, rightBuffer);
+    copy<float>(leftBuffer, rightBuffer);
 
     panEnvelope.getBlock(span1);
     // We assume that the pan envelope is already normalized between -1 and 1
     // Check bm_pan for your architecture to check if it's interesting to use the pan helper instead
-    ::fill<float>(span2, 1.0f);
-    ::add<float>(span1, span2);
-    ::applyGain<float>(piFour<float>, span2);
-    ::cos<float>(span2, span1);
-    ::sin<float>(span2, span2);
-    ::applyGain<float>(span1, leftBuffer);
-    ::applyGain<float>(span2, rightBuffer);
+    fill<float>(span2, 1.0f);
+    add<float>(span1, span2);
+    applyGain<float>(piFour<float>, span2);
+    cos<float>(span2, span1);
+    sin<float>(span2, span2);
+    applyGain<float>(span1, leftBuffer);
+    applyGain<float>(span2, rightBuffer);
 }
 
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
@@ -310,36 +310,36 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     buffer.applyGain(span1);
 
     // Create mid/side from left/right in the output buffer
-    ::copy<float>(rightBuffer, span1);
-    ::add<float>(leftBuffer, rightBuffer);
-    ::subtract<float>(span1, leftBuffer);
-    ::applyGain<float>(sqrtTwoInv<float>, leftBuffer);
-    ::applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+    copy<float>(rightBuffer, span1);
+    add<float>(leftBuffer, rightBuffer);
+    subtract<float>(span1, leftBuffer);
+    applyGain<float>(sqrtTwoInv<float>, leftBuffer);
+    applyGain<float>(sqrtTwoInv<float>, rightBuffer);
 
     // Apply the width process
     widthEnvelope.getBlock(span1);
-    ::fill<float>(span2, 1.0f);
-    ::add<float>(span1, span2);
-    ::applyGain<float>(piFour<float>, span2);
-    ::cos<float>(span2, span1);
-    ::sin<float>(span2, span2);
-    ::applyGain<float>(span1, leftBuffer);
-    ::applyGain<float>(span2, rightBuffer);
+    fill<float>(span2, 1.0f);
+    add<float>(span1, span2);
+    applyGain<float>(piFour<float>, span2);
+    cos<float>(span2, span1);
+    sin<float>(span2, span2);
+    applyGain<float>(span1, leftBuffer);
+    applyGain<float>(span2, rightBuffer);
 
     // Apply a position to the "left" channel which is supposed to be our mid channel
     // TODO: add panning here too?
     positionEnvelope.getBlock(span1);
-    ::fill<float>(span2, 1.0f);
-    ::add<float>(span1, span2);
-    ::applyGain<float>(piFour<float>, span2);
-    ::cos<float>(span2, span1);
-    ::sin<float>(span2, span2);
-    ::copy<float>(leftBuffer, span3);
-    ::copy<float>(rightBuffer, leftBuffer);
-    ::multiplyAdd<float>(span1, span3, leftBuffer);
-    ::multiplyAdd<float>(span2, span3, rightBuffer);
-    ::applyGain<float>(sqrtTwoInv<float>, leftBuffer);
-    ::applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+    fill<float>(span2, 1.0f);
+    add<float>(span1, span2);
+    applyGain<float>(piFour<float>, span2);
+    cos<float>(span2, span1);
+    sin<float>(span2, span2);
+    copy<float>(leftBuffer, span3);
+    copy<float>(rightBuffer, leftBuffer);
+    multiplyAdd<float>(span1, span3, leftBuffer);
+    multiplyAdd<float>(span2, span3, rightBuffer);
+    applyGain<float>(sqrtTwoInv<float>, leftBuffer);
+    applyGain<float>(sqrtTwoInv<float>, rightBuffer);
 }
 
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
@@ -358,11 +358,11 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto leftCoeffs = tempSpan1.first(buffer.getNumFrames());
     auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
 
-    ::fill<float>(jumps, pitchRatio * speedRatio);
+    fill<float>(jumps, pitchRatio * speedRatio);
     jumps[0] += floatPositionOffset;
-    ::cumsum<float>(jumps, jumps);
-    ::sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
-    ::add<int>(sourcePosition, indices);
+    cumsum<float>(jumps, jumps);
+    sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
+    add<int>(sourcePosition, indices);
 
     //FIXME : all this casting is driving me crazy
     const auto sampleEnd = min(static_cast<int>(region->trueSampleEnd()), static_cast<int>(source.getNumFrames())) - 1;
@@ -371,16 +371,16 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
             if (*index > sampleEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
-                ::subtract<int>(offset, { index, remainingElements });
+                subtract<int>(offset, { index, remainingElements });
             }
         }
     } else {
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
             if (*index > sampleEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
-                ::fill<int>(indices.last(remainingElements), sampleEnd);
-                ::fill<float>(leftCoeffs.last(remainingElements), 0.0f);
-                ::fill<float>(rightCoeffs.last(remainingElements), 1.0f);
+                fill<int>(indices.last(remainingElements), sampleEnd);
+                fill<float>(leftCoeffs.last(remainingElements), 0.0f);
+                fill<float>(rightCoeffs.last(remainingElements), 1.0f);
                 break;
             }
         }
@@ -430,10 +430,10 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         return;
 
     float step = baseFrequency * twoPi<float> / sampleRate;
-    phase = ::linearRamp<float>(tempSpan1, phase, step);
+    phase = linearRamp<float>(tempSpan1, phase, step);
 
-    ::sin<float>(tempSpan1.first(buffer.getNumFrames()), buffer.getSpan(0));
-    ::copy<float>(buffer.getSpan(0), buffer.getSpan(1));
+    sin<float>(tempSpan1.first(buffer.getNumFrames()), buffer.getSpan(0));
+    copy<float>(buffer.getSpan(0), buffer.getSpan(1));
 
     // Wrap the phase so we don't loose too much precision on longer notes
     const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>);

@@ -53,28 +53,28 @@ public:
 BENCHMARK_DEFINE_F(SubArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        subtract<float, false>(input, absl::MakeSpan(output));
+        sfz::subtract<float, false>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(SubArray, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        subtract<float, true>(input, absl::MakeSpan(output));
+        sfz::subtract<float, true>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(SubArray, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        subtract<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::subtract<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(SubArray, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        subtract<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::subtract<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 

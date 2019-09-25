@@ -43,7 +43,6 @@ namespace config {
     constexpr float voiceStealingThreshold { 0.00001 };
 } // namespace config
 
-} // namespace sfz
 
 namespace SIMDConfig {
     constexpr unsigned int defaultAlignment { 16 };
@@ -67,3 +66,4 @@ namespace SIMDConfig {
     constexpr bool mean { false };
     constexpr bool meanSquared { false };
 }
+} // namespace sfz

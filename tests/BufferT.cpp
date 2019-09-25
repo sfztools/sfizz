@@ -28,38 +28,38 @@ using namespace Catch::literals;
 
 TEST_CASE("[Buffer] Empty (float)")
 {
-    Buffer<float> emptyBuffer;
+    sfz::Buffer<float> emptyBuffer;
     REQUIRE(emptyBuffer.empty());
     REQUIRE(emptyBuffer.size() == 0);
 }
 
 TEST_CASE("[Buffer] Empty (int)")
 {
-    Buffer<int> emptyBuffer;
+    sfz::Buffer<int> emptyBuffer;
     REQUIRE(emptyBuffer.empty());
     REQUIRE(emptyBuffer.size() == 0);
 }
 
 TEST_CASE("[Buffer] Empty (double)")
 {
-    Buffer<double> emptyBuffer;
+    sfz::Buffer<double> emptyBuffer;
     REQUIRE(emptyBuffer.empty());
     REQUIRE(emptyBuffer.size() == 0);
 }
 
 TEST_CASE("[Buffer] Empty (uint8_t)")
 {
-    Buffer<uint8_t> emptyBuffer;
+    sfz::Buffer<uint8_t> emptyBuffer;
     REQUIRE(emptyBuffer.empty());
     REQUIRE(emptyBuffer.size() == 0);
 }
 
 template <class Type>
-void checkBoundaries(Buffer<Type>& buffer, int expectedSize)
+void checkBoundaries(sfz::Buffer<Type>& buffer, int expectedSize)
 {
     REQUIRE((int)buffer.size() == expectedSize);
-    REQUIRE(((size_t)buffer.data() & (SIMDConfig::defaultAlignment - 1)) == 0);
-    REQUIRE(((size_t)buffer.alignedEnd() & (SIMDConfig::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (sfz::SIMDConfig::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.alignedEnd() & (sfz::SIMDConfig::defaultAlignment - 1)) == 0);
     REQUIRE(std::distance(buffer.begin(), buffer.end()) == expectedSize);
     REQUIRE(std::distance(buffer.begin(), buffer.alignedEnd()) >= expectedSize);
 }
@@ -67,7 +67,7 @@ void checkBoundaries(Buffer<Type>& buffer, int expectedSize)
 TEST_CASE("[Buffer] 10 floats ")
 {
     const int baseSize { 10 };
-    Buffer<float> buffer(baseSize);
+    sfz::Buffer<float> buffer(baseSize);
     checkBoundaries(buffer, baseSize);
 
     for (auto& element : buffer)
@@ -81,7 +81,7 @@ TEST_CASE("[Buffer] Resize 10 floats ")
     const int baseSize { 10 };
     const int smallSize { baseSize / 2 };
     const int bigSize { baseSize * 2 };
-    Buffer<float> buffer(baseSize);
+    sfz::Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     checkBoundaries(buffer, baseSize);
 
@@ -103,7 +103,7 @@ TEST_CASE("[Buffer] Resize 4096 floats ")
     const int baseSize { 4096 };
     const int smallSize { baseSize / 2 };
     const int bigSize { baseSize * 2 };
-    Buffer<float> buffer(baseSize);
+    sfz::Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     checkBoundaries(buffer, baseSize);
 
@@ -125,7 +125,7 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
     const int baseSize { 10 };
     const int smallSize { baseSize / 2 };
     const int bigSize { baseSize * 2 };
-    Buffer<float> buffer(baseSize);
+    sfz::Buffer<float> buffer(baseSize);
     REQUIRE(!buffer.empty());
     checkBoundaries(buffer, baseSize);
 
@@ -145,19 +145,19 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
 TEST_CASE("[Buffer] Copy and move")
 {
     const int baseSize { 128 };
-    Buffer<float> buffer(baseSize);
-    Buffer<float> copied { baseSize - 4 };
+    sfz::Buffer<float> buffer(baseSize);
+    sfz::Buffer<float> copied { baseSize - 4 };
     std::fill(buffer.begin(), buffer.end(), 1.0f);
     std::fill(copied.begin(), copied.end(), 2.0f);
     copied = buffer;
     checkBoundaries(copied, baseSize);
     REQUIRE(std::all_of(copied.begin(), copied.end(), [](auto value) { return value == 1.0f; }));
 
-    Buffer<float> copyConstructed { buffer };
+    sfz::Buffer<float> copyConstructed { buffer };
     checkBoundaries(copyConstructed, baseSize);
     REQUIRE(std::all_of(copyConstructed.begin(), copyConstructed.end(), [](auto value) { return value == 1.0f; }));
 
-    Buffer<float> moveConstructed { std::move(buffer) };
+    sfz::Buffer<float> moveConstructed { std::move(buffer) };
     REQUIRE(buffer.empty());
     checkBoundaries(moveConstructed, baseSize);
     REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](auto value) { return value == 1.0f; }));

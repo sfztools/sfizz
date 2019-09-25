@@ -29,28 +29,28 @@ using namespace Catch::literals;
 
 TEST_CASE("[AudioBuffer] Empty buffers")
 {
-    AudioBuffer<float> floatBuffer;
+    sfz::AudioBuffer<float> floatBuffer;
     REQUIRE(floatBuffer.empty());
     REQUIRE(floatBuffer.getNumFrames() == 0);
-    AudioBuffer<double> doubleBuffer;
+    sfz::AudioBuffer<double> doubleBuffer;
     REQUIRE(doubleBuffer.empty());
     REQUIRE(doubleBuffer.getNumFrames() == 0);
-    AudioBuffer<int> intBuffer;
+    sfz::AudioBuffer<int> intBuffer;
     REQUIRE(intBuffer.empty());
     REQUIRE(intBuffer.getNumFrames() == 0);
 }
 
 TEST_CASE("[AudioBuffer] Non-empty")
 {
-    AudioBuffer<float> floatBuffer(1, 10);
+    sfz::AudioBuffer<float> floatBuffer(1, 10);
     REQUIRE(!floatBuffer.empty());
     REQUIRE(floatBuffer.getNumFrames() == 10);
     REQUIRE(floatBuffer.getNumChannels() == 1);
-    AudioBuffer<double> doubleBuffer(2, 10);
+    sfz::AudioBuffer<double> doubleBuffer(2, 10);
     REQUIRE(!doubleBuffer.empty());
     REQUIRE(doubleBuffer.getNumFrames() == 10);
     REQUIRE(doubleBuffer.getNumChannels() == 2);
-    AudioBuffer<int> intBuffer(1, 10);
+    sfz::AudioBuffer<int> intBuffer(1, 10);
     REQUIRE(!intBuffer.empty());
     REQUIRE(intBuffer.getNumFrames() == 10);
     REQUIRE(intBuffer.getNumChannels() == 1);
@@ -59,7 +59,7 @@ TEST_CASE("[AudioBuffer] Non-empty")
 TEST_CASE("[AudioBuffer] Access")
 {
     const int size { 5 };
-    AudioBuffer<float> buffer(2, size);
+    sfz::AudioBuffer<float> buffer(2, size);
     for (size_t frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx) {
         buffer.getSample(0, frameIdx) = static_cast<double>(buffer.getNumFrames()) + frameIdx;
         buffer.getSample(1, frameIdx) = static_cast<double>(buffer.getNumFrames()) - frameIdx;
@@ -77,7 +77,7 @@ TEST_CASE("[AudioBuffer] Iterators")
 {
     const int size { 256 };
     const float fillValue { 2.0f };
-    AudioBuffer<float> buffer(2, size);
+    sfz::AudioBuffer<float> buffer(2, size);
     std::fill(buffer.channelWriter(0), buffer.channelWriterEnd(0), fillValue);
     std::fill(buffer.channelWriter(1), buffer.channelWriterEnd(1), fillValue);
 
@@ -89,14 +89,14 @@ TEST_CASE("[AudioSpan] Constructions")
 {
     const int size { 256 };
     const float fillValue { 2.0f };
-    AudioBuffer<float> buffer(2, size);
+    sfz::AudioBuffer<float> buffer(2, size);
     std::fill(buffer.channelWriter(0), buffer.channelWriterEnd(0), fillValue);
     std::fill(buffer.channelWriter(1), buffer.channelWriterEnd(1), fillValue);
 
-    AudioSpan<float> span { buffer };
-    AudioSpan<const float> constSpan { buffer };
-    AudioSpan<float> manualSpan { { buffer.channelWriter(0), buffer.channelWriter(1) }, buffer.getNumFrames() };
-    AudioSpan<const float> manualConstSpan { { buffer.channelReader(0), buffer.channelReader(1) }, buffer.getNumFrames() };
-    AudioSpan<float> manualSpan2 { {buffer.getSpan(0), buffer.getSpan(1) } };
-    AudioSpan<const float> manualConstSpan2 { {buffer.getConstSpan(0), buffer.getConstSpan(1) } };
+    sfz::AudioSpan<float> span { buffer };
+    sfz::AudioSpan<const float> constSpan { buffer };
+    sfz::AudioSpan<float> manualSpan { { buffer.channelWriter(0), buffer.channelWriter(1) }, buffer.getNumFrames() };
+    sfz::AudioSpan<const float> manualConstSpan { { buffer.channelReader(0), buffer.channelReader(1) }, buffer.getNumFrames() };
+    sfz::AudioSpan<float> manualSpan2 { {buffer.getSpan(0), buffer.getSpan(1) } };
+    sfz::AudioSpan<const float> manualConstSpan2 { {buffer.getConstSpan(0), buffer.getConstSpan(1) } };
 }

@@ -27,6 +27,8 @@
 #include <absl/types/span.h>
 #include <cmath>
 
+namespace sfz
+{
 template <class Type = float>
 class OnePoleFilter {
 public:
@@ -135,3 +137,4 @@ private:
         state += 2 * intermediate;
     }
 };
+}
