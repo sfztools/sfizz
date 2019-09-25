@@ -63,28 +63,28 @@ BENCHMARK_DEFINE_F(MultiplyAdd, Straight)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(MultiplyAdd, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        multiplyAdd<float, false>(gain, input, absl::MakeSpan(output));
+        sfz::multiplyAdd<float, false>(gain, input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(MultiplyAdd, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        multiplyAdd<float, true>(gain, input, absl::MakeSpan(output));
+        sfz::multiplyAdd<float, true>(gain, input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(MultiplyAdd, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        multiplyAdd<float, false>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::multiplyAdd<float, false>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(MultiplyAdd, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        multiplyAdd<float, true>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::multiplyAdd<float, true>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 

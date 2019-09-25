@@ -51,7 +51,7 @@ BENCHMARK_DEFINE_F(MeanSquaredArray, Scalar)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = meanSquared<float, false>(input);
+        auto result = sfz::meanSquared<float, false>(input);
         benchmark::DoNotOptimize(result);
     }
 }
@@ -60,7 +60,7 @@ BENCHMARK_DEFINE_F(MeanSquaredArray, SIMD)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = meanSquared<float, true>(input);
+        auto result = sfz::meanSquared<float, true>(input);
         benchmark::DoNotOptimize(result);
     }
 }
@@ -69,7 +69,7 @@ BENCHMARK_DEFINE_F(MeanSquaredArray, Scalar_Unaligned)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = meanSquared<float, false>(absl::MakeSpan(input).subspan(1));
+        auto result = sfz::meanSquared<float, false>(absl::MakeSpan(input).subspan(1));
         benchmark::DoNotOptimize(result);
     }
 }
@@ -78,7 +78,7 @@ BENCHMARK_DEFINE_F(MeanSquaredArray, SIMD_Unaligned)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = meanSquared<float, true>(absl::MakeSpan(input).subspan(1));
+        auto result = sfz::meanSquared<float, true>(absl::MakeSpan(input).subspan(1));
         benchmark::DoNotOptimize(result);
     }
 }

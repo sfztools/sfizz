@@ -29,7 +29,7 @@
 #include <numeric>
 
 static void Dummy(benchmark::State& state) {
-  Buffer<float> buffer (state.range(0));
+  sfz::Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
   std::uniform_real_distribution<float> dist { 1, 2 };
@@ -40,42 +40,42 @@ static void Dummy(benchmark::State& state) {
 }
 
 static void FillScalar(benchmark::State& state) {
-  Buffer<float> buffer (state.range(0));
+  sfz::Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
   std::uniform_real_distribution<float> dist { 1, 2 };
   for (auto _ : state) {
-    fill<float, false>(absl::MakeSpan(buffer), dist(gen));
+    sfz::fill<float, false>(absl::MakeSpan(buffer), dist(gen));
   }
 }
 
 static void FillScalar_unaligned(benchmark::State& state) {
-  Buffer<float> buffer (state.range(0));
+  sfz::Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
   std::uniform_real_distribution<float> dist { 1, 2 };
   for (auto _ : state) {
-    fill<float, false>(absl::MakeSpan(buffer).subspan(1), dist(gen));
+    sfz::fill<float, false>(absl::MakeSpan(buffer).subspan(1), dist(gen));
   }
 }
 
 static void FillSIMD(benchmark::State& state) {
-  Buffer<float> buffer (state.range(0));
+  sfz::Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
   std::uniform_real_distribution<float> dist { 1, 2 };
   for (auto _ : state) {
-    fill<float, true>(absl::MakeSpan(buffer), dist(gen));
+    sfz::fill<float, true>(absl::MakeSpan(buffer), dist(gen));
   }
 }
 
 static void FillSIMD_unaligned(benchmark::State& state) {
-  Buffer<float> buffer (state.range(0));
+  sfz::Buffer<float> buffer (state.range(0));
   std::random_device rd { };
   std::mt19937 gen { rd() };
   std::uniform_real_distribution<float> dist { 1, 2 };
   for (auto _ : state) {
-    fill<float, true>(absl::MakeSpan(buffer).subspan(1), dist(gen));
+    sfz::fill<float, true>(absl::MakeSpan(buffer).subspan(1), dist(gen));
   }
 }
 

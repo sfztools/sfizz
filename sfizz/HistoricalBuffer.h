@@ -2,6 +2,8 @@
 #include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
+namespace sfz
+{
 template<class ValueType>
 class HistoricalBuffer {
 public:
@@ -15,7 +17,7 @@ public:
 	void resize(int size)
 	{
 		buffer.resize(size);
-		::fill<ValueType>(absl::MakeSpan(buffer), 0.0);
+		fill<ValueType>(absl::MakeSpan(buffer), 0.0);
 		index = 0;
 	}
 	
@@ -30,10 +32,11 @@ public:
 
 	ValueType getAverage() const
 	{
-		return ::mean<ValueType>(buffer);
+		return mean<ValueType>(buffer);
 	}
 private:
 	std::vector<ValueType> buffer;
 	size_t size { 0 };
 	size_t index { 0 };
 };
+}
