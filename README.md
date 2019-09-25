@@ -21,7 +21,7 @@ The process is as follows:
 
 In the shell world, this means
 ```sh
-git clone --recursive https://github.com/paulfd/sfizz.git
+git clone --recursive https://github.com/sfztools/sfizz.git
 cd sfizz
 mkdir build && cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D SFIZZ_CLIENTS=ON ..
