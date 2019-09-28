@@ -108,6 +108,11 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
+    AtomicDisabler callbackDisabler { canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+    
     for (auto &voice: voices)
         voice->reset();
     for (auto& list: noteActivationLists)
