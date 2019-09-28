@@ -676,7 +676,7 @@ bool sfz::Region::isStereo() const noexcept
 }
 
 template<class T, class U>
-float crossfadeIn(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
 {
     if (value < crossfadeRange.getStart())
         return 0.0f;
@@ -692,7 +692,7 @@ float crossfadeIn(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve cur
 }
 
 template<class T, class U>
-float crossfadeOut(const Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
 {
     if (value > crossfadeRange.getEnd())
         return 0.0f;
