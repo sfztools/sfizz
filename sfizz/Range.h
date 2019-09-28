@@ -26,6 +26,10 @@
 #include <initializer_list>
 #include <type_traits>
 
+
+namespace sfz
+{
+
 template <class Type>
 class Range {
     static_assert(std::is_arithmetic<Type>::value, "The Type should be arithmetic");
@@ -91,21 +95,22 @@ private:
     Type _start { static_cast<Type>(0.0) };
     Type _end { static_cast<Type>(0.0) };
 };
+}
 
 template <class Type>
-bool operator==(const Range<Type>& lhs, const Range<Type>& rhs)
+bool operator==(const sfz::Range<Type>& lhs, const sfz::Range<Type>& rhs)
 {
     return (lhs.getStart() == rhs.getStart()) && (lhs.getEnd() == rhs.getEnd());
 }
 
 template <class Type>
-bool operator==(const Range<Type>& lhs, const std::pair<Type, Type>& rhs)
+bool operator==(const sfz::Range<Type>& lhs, const std::pair<Type, Type>& rhs)
 {
     return (lhs.getStart() == rhs.first) && (lhs.getEnd() == rhs.second);
 }
 
 template <class Type>
-bool operator==(const std::pair<Type, Type>& lhs, const Range<Type>& rhs)
+bool operator==(const std::pair<Type, Type>& lhs, const sfz::Range<Type>& rhs)
 {
     return rhs == lhs;
 }

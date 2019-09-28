@@ -50,7 +50,7 @@ TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->channelRange == Range<uint8_t>(2, 14));
+    REQUIRE(synth.getRegionView(0)->channelRange == sfz::Range<uint8_t>(2, 14));
 }
 
 TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
@@ -128,9 +128,9 @@ TEST_CASE("[Files] Define test")
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/defines.sfz");
     REQUIRE(synth.getNumRegions() == 3);
-    REQUIRE(synth.getRegionView(0)->keyRange == Range<uint8_t>(36, 36));
-    REQUIRE(synth.getRegionView(1)->keyRange == Range<uint8_t>(38, 38));
-    REQUIRE(synth.getRegionView(2)->keyRange == Range<uint8_t>(42, 42));
+    REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(36, 36));
+    REQUIRE(synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(38, 38));
+    REQUIRE(synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(42, 42));
 }
 
 TEST_CASE("[Files] Group from AVL")
@@ -140,13 +140,13 @@ TEST_CASE("[Files] Group from AVL")
     REQUIRE(synth.getNumRegions() == 5);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
         REQUIRE(synth.getRegionView(i)->volume == 6.0f);
-        REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(36, 36));
+        REQUIRE(synth.getRegionView(i)->keyRange == sfz::Range<uint8_t>(36, 36));
     }
-    REQUIRE(synth.getRegionView(0)->velocityRange == Range<uint8_t>(1, 26));
-    REQUIRE(synth.getRegionView(1)->velocityRange == Range<uint8_t>(27, 52));
-    REQUIRE(synth.getRegionView(2)->velocityRange == Range<uint8_t>(53, 77));
-    REQUIRE(synth.getRegionView(3)->velocityRange == Range<uint8_t>(78, 102));
-    REQUIRE(synth.getRegionView(4)->velocityRange == Range<uint8_t>(103, 127));
+    REQUIRE(synth.getRegionView(0)->velocityRange == sfz::Range<uint8_t>(1, 26));
+    REQUIRE(synth.getRegionView(1)->velocityRange == sfz::Range<uint8_t>(27, 52));
+    REQUIRE(synth.getRegionView(2)->velocityRange == sfz::Range<uint8_t>(53, 77));
+    REQUIRE(synth.getRegionView(3)->velocityRange == sfz::Range<uint8_t>(78, 102));
+    REQUIRE(synth.getRegionView(4)->velocityRange == sfz::Range<uint8_t>(103, 127));
 }
 
 TEST_CASE("[Files] Full hierarchy")
@@ -159,35 +159,35 @@ TEST_CASE("[Files] Full hierarchy")
     }
     REQUIRE(synth.getRegionView(0)->pan == 30.0f);
     REQUIRE(synth.getRegionView(0)->delay == 67);
-    REQUIRE(synth.getRegionView(0)->keyRange == Range<uint8_t>(60, 60));
+    REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(60, 60));
 
     REQUIRE(synth.getRegionView(1)->pan == 30.0f);
     REQUIRE(synth.getRegionView(1)->delay == 67);
-    REQUIRE(synth.getRegionView(1)->keyRange == Range<uint8_t>(61, 61));
+    REQUIRE(synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(61, 61));
 
     REQUIRE(synth.getRegionView(2)->pan == 30.0f);
     REQUIRE(synth.getRegionView(2)->delay == 56);
-    REQUIRE(synth.getRegionView(2)->keyRange == Range<uint8_t>(50, 50));
+    REQUIRE(synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(50, 50));
 
     REQUIRE(synth.getRegionView(3)->pan == 30.0f);
     REQUIRE(synth.getRegionView(3)->delay == 56);
-    REQUIRE(synth.getRegionView(3)->keyRange == Range<uint8_t>(51, 51));
+    REQUIRE(synth.getRegionView(3)->keyRange == sfz::Range<uint8_t>(51, 51));
 
     REQUIRE(synth.getRegionView(4)->pan == -10.0f);
     REQUIRE(synth.getRegionView(4)->delay == 47);
-    REQUIRE(synth.getRegionView(4)->keyRange == Range<uint8_t>(40, 40));
+    REQUIRE(synth.getRegionView(4)->keyRange == sfz::Range<uint8_t>(40, 40));
 
     REQUIRE(synth.getRegionView(5)->pan == -10.0f);
     REQUIRE(synth.getRegionView(5)->delay == 47);
-    REQUIRE(synth.getRegionView(5)->keyRange == Range<uint8_t>(41, 41));
+    REQUIRE(synth.getRegionView(5)->keyRange == sfz::Range<uint8_t>(41, 41));
 
     REQUIRE(synth.getRegionView(6)->pan == -10.0f);
     REQUIRE(synth.getRegionView(6)->delay == 36);
-    REQUIRE(synth.getRegionView(6)->keyRange == Range<uint8_t>(30, 30));
+    REQUIRE(synth.getRegionView(6)->keyRange == sfz::Range<uint8_t>(30, 30));
 
     REQUIRE(synth.getRegionView(7)->pan == -10.0f);
     REQUIRE(synth.getRegionView(7)->delay == 36);
-    REQUIRE(synth.getRegionView(7)->keyRange == Range<uint8_t>(31, 31));
+    REQUIRE(synth.getRegionView(7)->keyRange == sfz::Range<uint8_t>(31, 31));
 }
 
 TEST_CASE("[Files] Reloading files")
@@ -236,15 +236,15 @@ TEST_CASE("[Files] Pizz basic")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/MeatBassPizz/Programs/pizz.sfz");
     REQUIRE(synth.getNumRegions() == 4);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
-        REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(12, 22));
-        REQUIRE(synth.getRegionView(i)->velocityRange == Range<uint8_t>(97, 127));
+        REQUIRE(synth.getRegionView(i)->keyRange == sfz::Range<uint8_t>(12, 22));
+        REQUIRE(synth.getRegionView(i)->velocityRange == sfz::Range<uint8_t>(97, 127));
         REQUIRE(synth.getRegionView(i)->pitchKeycenter == 21);
-        REQUIRE(synth.getRegionView(i)->ccConditions.getWithDefault(107) == Range<uint8_t>(0, 13));
+        REQUIRE(synth.getRegionView(i)->ccConditions.getWithDefault(107) == sfz::Range<uint8_t>(0, 13));
     }
-    REQUIRE(synth.getRegionView(0)->randRange == Range<float>(0, 0.25));
-    REQUIRE(synth.getRegionView(1)->randRange == Range<float>(0.25, 0.5));
-    REQUIRE(synth.getRegionView(2)->randRange == Range<float>(0.5, 0.75));
-    REQUIRE(synth.getRegionView(3)->randRange == Range<float>(0.75, 1.0));
+    REQUIRE(synth.getRegionView(0)->randRange == sfz::Range<float>(0, 0.25));
+    REQUIRE(synth.getRegionView(1)->randRange == sfz::Range<float>(0.25, 0.5));
+    REQUIRE(synth.getRegionView(2)->randRange == sfz::Range<float>(0.5, 0.75));
+    REQUIRE(synth.getRegionView(3)->randRange == sfz::Range<float>(0.75, 1.0));
     REQUIRE(synth.getRegionView(0)->sample == R"(../Samples/pizz/a0_vl4_rr1.wav)");
     REQUIRE(synth.getRegionView(1)->sample == R"(../Samples/pizz/a0_vl4_rr2.wav)");
     REQUIRE(synth.getRegionView(2)->sample == R"(../Samples/pizz/a0_vl4_rr3.wav)");
