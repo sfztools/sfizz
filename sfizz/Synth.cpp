@@ -22,9 +22,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Synth.h"
-#include "MidiState.h"
+#include "AtomicGuard.h"
 #include "Config.h"
 #include "Debug.h"
+#include "MidiState.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
 #include "absl/algorithm/container.h"
@@ -139,17 +140,20 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
         switch (hash(member.opcode)) {
-        case hash("Set_cc"): [[fallthrough]];
+        case hash("Set_cc"):
+            [[fallthrough]];
         case hash("set_cc"):
             if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
                 setValueFromOpcode(member, midiState.cc[*member.parameter], Default::ccRange);
             break;
-        case hash("Label_cc"): [[fallthrough]];
+        case hash("Label_cc"):
+            [[fallthrough]];
         case hash("label_cc"):
             if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
                 ccNames.emplace_back(*member.parameter, member.value);
             break;
-        case hash("Default_path"): [[fallthrough]];
+        case hash("Default_path"):
+            [[fallthrough]];
         case hash("default_path"): {
             auto stringPath = std::string(member.value.begin(), member.value.end());
             auto newPath = fs::path(stringPath);
@@ -184,7 +188,7 @@ void addEndpointsToVelocityCurve(sfz::Region& region)
 
 bool sfz::Synth::loadSfzFile(const fs::path& filename)
 {
-    canEnterCallback = false;
+    AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
         std::this_thread::sleep_for(1ms);
     }
@@ -247,8 +251,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
 
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
-    
-    canEnterCallback = true;
+
     return parserReturned;
 }
 
@@ -261,12 +264,12 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     // Find voices that can be stolen
     DBG("No free voice, trying to steal");
     voiceViewArray.clear();
-    for (auto& voice: voices)
+    for (auto& voice : voices)
         if (voice->canBeStolen())
             voiceViewArray.push_back(voice.get());
     absl::c_sort(voices, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
 
-    for (auto* voice: voiceViewArray) {
+    for (auto* voice : voiceViewArray) {
         DBG("Average voice power: " << voice->getMeanSquaredAverage());
         if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
             DBG("Stealing voice...");
@@ -297,6 +300,11 @@ void sfz::Synth::garbageCollect() noexcept
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
+    AtomicDisabler callbackDisabler { canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
     this->samplesPerBlock = samplesPerBlock;
     this->tempBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
@@ -305,6 +313,11 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
+    AtomicDisabler callbackDisabler { canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+    
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
         voice->setSampleRate(sampleRate);
@@ -314,18 +327,17 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
+    
     if (!canEnterCallback)
         return;
 
-    inCallback = true;
+    AtomicGuard callbackGuard { inCallback };
 
     auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
     for (auto& voice : voices) {
         voice->renderBlock(tempSpan);
         buffer.add(tempSpan);
     }
-
-    inCallback = false;
 }
 
 void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
@@ -334,6 +346,12 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     ASSERT(noteNumber >= 0);
 
     midiState.noteOn(noteNumber, velocity);
+
+    if (!canEnterCallback)
+        return;
+
+    AtomicGuard callbackGuard { inCallback };
+
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
     for (auto& region : noteActivationLists[noteNumber]) {
@@ -361,7 +379,12 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a 
+    if (!canEnterCallback)
+        return;
+
+    AtomicGuard callbackGuard { inCallback };
+
+    // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
     auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
@@ -388,6 +411,11 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
 {
     ASSERT(ccNumber < 128);
     ASSERT(ccNumber >= 0);
+
+    if (!canEnterCallback)
+        return;
+
+    AtomicGuard callbackGuard { inCallback };
 
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
