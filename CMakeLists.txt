@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(sfizz VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+# Do not override if set to more than 14
+if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
+    set(CMAKE_CXX_STANDARD 14)
+endif()
 
 # Enable LTO
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
@@ -67,10 +70,13 @@ if (WIN32)
     set_target_properties(sndfile PROPERTIES LINKER_LANGUAGE CXX)
     file(COPY "${WIN_SNDFILE_PATH}/bin/libsndfile-1.dll" DESTINATION ${CMAKE_BINARY_DIR})
     target_include_directories(sndfile INTERFACE "${WIN_SNDFILE_PATH}/include")
-elseif (APPLE)
-    add_library(sndfile STATIC IMPORTED)
-    set_target_properties(sndfile PROPERTIES LINKER_LANGUAGE CXX)
-    target_include_directories(sndfile INTERFACE "usr/local/include")
+elseif(APPLE)
+    find_path(SNDFILE_INCLUDE_DIR NAMES sndfile.hh PATHS "/usr/local/include")
+    find_library(SNDFILE_LIBRARY  NAMES sndfile    PATHS "/usr/local/lib")
+    message(STATUS "include dir: " ${SNDFILE_INCLUDE_DIR} " lib: " ${SNDFILE_LIBRARY})
+    add_library(sndfile SHARED IMPORTED GLOBAL)
+    target_include_directories(sndfile INTERFACE ${SNDFILE_INCLUDE_DIR})
+    target_link_libraries(sndfile INTERFACE ${SNDFILE_LIBRARY})
 endif()
 
 add_subdirectory(sfizz)

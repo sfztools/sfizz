@@ -16,5 +16,7 @@ compile_commands.json
 *.a
 *.txt.user
 
+.DS_Store
+
 clients/sfizz_jack
 clients/sfzprint
