@@ -160,4 +160,5 @@ private:
     pointer _alignedEnd { nullptr };
     LEAK_DETECTOR(Buffer);
 };
+
 }
