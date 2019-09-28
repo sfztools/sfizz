@@ -72,11 +72,11 @@ private:
     void loadingThread() noexcept;
     void garbageThread() noexcept;
     bool quitThread { false };
+    std::mutex fileHandleMutex;
+    std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
+    absl::flat_hash_map<absl::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
     std::thread fileLoadingThread { &FilePool::loadingThread, this };
     std::thread garbageCollectionThread { &FilePool::garbageThread, this };
-    std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
-    std::mutex fileHandleMutex;
-    absl::flat_hash_map<absl::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
     LEAK_DETECTOR(FilePool);
 };
 }
