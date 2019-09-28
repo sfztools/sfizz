@@ -108,6 +108,14 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
+    for (auto &voice: voices)
+        voice->reset();
+    for (auto& list: noteActivationLists)
+        list.clear();
+    for (auto& list: ccActivationLists)
+        list.clear();
+    regions.clear();
+    filePool.clear();
     hasGlobal = false;
     hasControl = false;
     numGroups = 0;
@@ -121,8 +129,6 @@ void sfz::Synth::clear()
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
-    regions.clear();
-    filePool.clear();
 }
 
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
