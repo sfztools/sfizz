@@ -145,16 +145,17 @@ void sfz::FilePool::loadingThread() noexcept
 void sfz::FilePool::garbageThread() noexcept
 {
     while (!quitThread) {
+        fileHandleMutex.lock();
         for (auto handle = fileHandles.begin(); handle < fileHandles.end();) {
             if (handle->use_count() == 1) {
                 handle->reset();
-                std::lock_guard<std::mutex> guard { fileHandleMutex };
                 std::iter_swap(handle, fileHandles.end() - 1);
                 fileHandles.pop_back();
             } else {
                 handle++;
             }
         }
+        fileHandleMutex.unlock();
         std::this_thread::sleep_for(200ms);
     }
 }
