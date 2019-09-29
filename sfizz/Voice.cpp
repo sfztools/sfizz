@@ -248,9 +248,9 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         fillWithData(delayed_buffer);
 
     if (region->isStereo())
-        processStereo(delayed_buffer);
+        processStereo(buffer);
     else
-        processMono(delayed_buffer);
+        processMono(buffer);
 
     if (!egEnvelope.isSmoothing())
         reset();
