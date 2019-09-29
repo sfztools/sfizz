@@ -96,10 +96,10 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     // DBG("Base width: " << baseWidth << " - with modifier: " << width);
 
     sourcePosition = region->getOffset();
-    // DBG("Offset: " << sourcePosition);
-    initialDelay = delay + static_cast<uint32_t>(region->getDelay() / sampleRate);
+    DBG("Offset: " << sourcePosition);
+    initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
-    prepareEGEnvelope(delay, value);
+    prepareEGEnvelope(initialDelay, value);
 }
 
 void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
@@ -236,15 +236,21 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         return;
     }
 
+    auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
+    auto delayed_buffer = buffer.subspan(delay);
+    initialDelay -= delay;
+    if (delayed_buffer.getNumFrames() == 0)
+        return;
+
     if (region->isGenerator())
-        fillWithGenerator(buffer);
+        fillWithGenerator(delayed_buffer);
     else
-        fillWithData(buffer);
+        fillWithData(delayed_buffer);
 
     if (region->isStereo())
-        processStereo(buffer);
+        processStereo(delayed_buffer);
     else
-        processMono(buffer);
+        processMono(delayed_buffer);
 
     if (!egEnvelope.isSmoothing())
         reset();
