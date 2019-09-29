@@ -239,8 +239,6 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
     initialDelay -= delay;
-    if (delayed_buffer.getNumFrames() == 0)
-        return;
 
     if (region->isGenerator())
         fillWithGenerator(delayed_buffer);
@@ -248,9 +246,9 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         fillWithData(delayed_buffer);
 
     if (region->isStereo())
-        processStereo(delayed_buffer);
+        processStereo(buffer);
     else
-        processMono(delayed_buffer);
+        processMono(buffer);
 
     if (!egEnvelope.isSmoothing())
         reset();
@@ -350,6 +348,9 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 {
+    if (buffer.getNumFrames() == 0)
+        return;
+
     auto source { [&]() {
         if (region->canUsePreloadedData())
             return AudioSpan<const float>(*region->preloadedData);
@@ -433,6 +434,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 {
     if (region->sample != "*sine")
+        return;
+
+    if (buffer.getNumFrames() == 0)
         return;
 
     float step = baseFrequency * twoPi<float> / sampleRate;
