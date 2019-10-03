@@ -1,0 +1,14 @@
+<div class="row my-4 justify-content-center">
+	<div class="col-md-7">
+		<p class="text-center">Search this website:</p>
+		<form class="form-search" role="search" action="{{ '/search/'| relative_url }}/">
+			<div class="input-group input-group-lg">
+				<input type="text" class="form-control searchbox" name="q">
+				<div class="input-group-append">
+					<button class="btn btn-primary" type="submit">Search</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<div id="searchresults" class="gcse-searchresults-only" data-enableHistory="true"></div>

@@ -1,0 +1,59 @@
+$blue: #337ab7;
+$navbar-dark-color: rgba(#fff, .75);
+$navbar-dark-hover-color: #fff;
+
+@import "../../node_modules/bootstrap/scss/bootstrap";
+@import "syntax-highlight";
+@import "google-cse";
+
+/* Styles applied site-wide. */
+
+.navbar, .card-header {
+	background-color: #222;
+}
+aside .card-body {
+	padding: 0.5rem;
+}
+aside .nav-link {
+	padding: 0.35rem 0.25rem;
+}
+pre {
+	padding: 0.5rem 0.75rem;
+	border: 2px solid rgba($black, .2);
+	border-radius: 0.50rem;
+}
+table {
+	width:100%;
+	border-collapse: collapse;
+	margin-bottom: 1em;
+}
+th, td {
+	text-align: left;
+	padding: 5px 10px;
+	border: 1px solid #e5e5e5;
+}
+th {
+	color: #f8f9fA;
+	background-color: #222;
+}
+tr:nth-child(even) {
+	background-color: #f2f2f2;
+}
+#scrollButton {
+	display: none;
+	position: fixed;
+	bottom: 20px;
+	right: 30px;
+	z-index: 99;
+	font-size: 18px;
+	border: none;
+	outline: none;
+	background-color: rgba(255, 255, 255, 0.5);
+	color: rgba(0, 0, 0, 0.5);
+	cursor: pointer;
+	padding: 6px;
+	border-radius: 50%;
+}
+#scrollButton:hover {
+	background-color: rgba(255, 255, 255, 0.8);
+}

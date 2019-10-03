@@ -1,0 +1,62 @@
+			<nav class="navbar navbar-expand-lg navbar-dark rounded">
+				<a class="navbar-brand" href="{{ '/' | relative_url }}">
+					<img src="{{ '/assets/img/logo.png' | relative_url }}"
+						width="30" height="30" class="d-inline-block align-top" alt="">
+					{{ site.project.name }}
+				</a>
+
+				<button class="navbar-toggler" type="button" data-toggle="collapse"
+					data-target="#navbarContent" aria-controls="navbarContent"
+					aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+
+				<div class="collapse navbar-collapse" id="navbarContent">
+					<ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+{% for item in site.data.locale[page.lang].layout.navigation %}
+	{% if item.type == "normal" %}
+						<li class="nav-item">
+							<a class="nav-link" href="{{ item.url | relative_url }}">
+		{%-if item.icon_type-%}
+								<i class="{{ item.icon_category }} fa-{{ item.icon_type }} fa-fw"
+									aria-hidden="true"></i>&nbsp;
+		{%-endif-%}
+								{{ item.title }}</a>
+	{% else %}
+		{% assign item_id = 'navbar' | append: item.title %}
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="{{ item_id }}"
+								data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		{%-if item.icon_type-%}
+							<i class="{{ item.icon_category }} fa-{{ item.icon_type }} fa-fw"
+								aria-hidden="true"></i>&nbsp;
+		{%-endif-%}
+							{{ item.title }}</a>
+							<div class="dropdown-menu" aria-labelledby="{{ item_id }}">
+		{% for subitem in item.pages %}
+			{% if subitem.title == nil %}
+								<div class="dropdown-divider"></div>
+			{% else %}
+				{%-assign disabled=""-%}
+				{%-if subitem.disabled-%}{%-assign disabled=" disabled"-%}{%-endif-%}
+								<a class="dropdown-item{{ disabled }}"
+									href="{{ subitem.url | relative_url }}">
+				{%-if subitem.icon_type-%}
+									<i class="{{ subitem.icon_category }} fa-{{ subitem.icon_type }} fa-fw"
+										aria-hidden="true"></i>&nbsp;
+				{%-endif-%}
+									{{ subitem.title }}</a>
+			{% endif %}
+		{% endfor %}
+							</div>
+	{% endif %}
+						</li>
+{% endfor %}
+					</ul>
+				</div>
+				<form class="form-inline my-2 my-lg-0" role="search"
+					action="{{ '/' | append: 'search/' | relative_url }}/">
+					<input class="form-control mr-sm-2" type="search" name="q"
+						placeholder="Search" aria-label="Search">
+				</form>
+			</nav>
