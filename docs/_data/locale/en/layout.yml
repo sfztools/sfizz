@@ -49,6 +49,12 @@ navigation:
   type: normal
   url: /contacts
 
+#- title: Status
+#  icon_type: tasks
+#  icon_category: fas
+#  type: normal
+#  url: /status
+
 - title: Downloads
   type: normal
   icon_type: download

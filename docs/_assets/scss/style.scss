@@ -22,23 +22,6 @@ pre {
 	border: 2px solid rgba($black, .2);
 	border-radius: 0.50rem;
 }
-table {
-	width:100%;
-	border-collapse: collapse;
-	margin-bottom: 1em;
-}
-th, td {
-	text-align: left;
-	padding: 5px 10px;
-	border: 1px solid #e5e5e5;
-}
-th {
-	color: #f8f9fA;
-	background-color: #222;
-}
-tr:nth-child(even) {
-	background-color: #f2f2f2;
-}
 #scrollButton {
 	display: none;
 	position: fixed;
