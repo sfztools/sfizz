@@ -44,7 +44,9 @@
 			<th scope="col">Opcode</th>
 			<th scope="col" style="text-align:center">Version</th>
 			<th scope="col" style="text-align:center">Supported</th>
+{%-comment-%}
 			<th scope="col" style="text-align:center">Tested</th>
+{%-endcomment-%}
 		</tr>
 	</thead>
 	<tbody>
@@ -59,7 +61,7 @@
 		{%-else-%}
 			{%-assign opcode_support = opcode.support-%}
 		{%-endif-%}
-
+{%-comment-%}
 		{%-if opcode.tested == nil or opcode.tested == 'x'-%}
 			{%-assign opcode_tested = ":x:"-%}
 		{%-elsif opcode.tested == 'v'-%}
@@ -67,11 +69,14 @@
 		{%-else-%}
 			{%-assign opcode_tested = opcode.tested-%}
 		{%-endif-%}
+{%-endcomment-%}
 		<tr>
 			<td>{{ opcode_url }}</td>
 			<td style="text-align:center">{{ opcode.version }}</td>
 			<td style="text-align:center">{{ opcode_support }}</td>
+{%-comment-%}
 			<td style="text-align:center">{{ opcode_tested }}</td>
+{%-endcomment-%}
 		</tr>
 	{%-endfor-%}
 	</tbody>
