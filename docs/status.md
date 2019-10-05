@@ -1,7 +1,6 @@
 ---
 title: "Opcodes Support Status"
 lang: "en"
-published: false
 ---
 Here is the list of currently supported headers and opcodes.
 

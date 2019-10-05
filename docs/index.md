@@ -13,7 +13,7 @@ Sfizz depends on the `sndfile` library.
 The Jack client that you will probably build depends on the `jack` library.
 To build `sfizz` you need to install both as shared libraries on the system.
 In Debian-based distributions, this translates into
-```
+```sh
 sudo apt install libjack-jackd2-dev libsndfile1-dev
 ```
 
@@ -40,7 +40,7 @@ If no Jack server is already started it will start one with basic options.
 ### Possible pitfalls and alternatives
 
 If you already cloned the repository without the `--recursive` option, update the submodules manually with
-```
+```sh
 git submodule update --init --recursive
 ```
 
