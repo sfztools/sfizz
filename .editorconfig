@@ -1,14 +1,13 @@
-# EditorConfig configuration
-# http://editorconfig.org
-
-# Top-most EditorConfig file
 root = true
 
-# No trailing whitespaces, but with a newline ending every file,
-# UTF-8 charset, set indent to spaces with width of four
 [*]
-insert_final_newline = true
-trim_trailing_whitespace = true
+end_of_line = lf
+insert_final_newline = false
 charset = utf-8
+indent_style = tab
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.yml]
 indent_style = space
-indent_size = 4
+indent_size = 2

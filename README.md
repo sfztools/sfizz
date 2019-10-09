@@ -1,42 +1,32 @@
-# sfizz
+# Source code for the [sfizz] documentation website
 
-[![Travis Build Status](https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux-macOS&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
+This website is built using [Jekyll], using [Node.js] to compile
+all static assets including the [Bootstrap] library and built on
+along with the [SASS] stylesheets. Most of the content on the website is
+written using [Markdown], making it extremely easy to write and maintain.
+Icons are provided by [Font Awesome], favicons by [Favicon Generator].
 
-## Building
+## Local Build Quick-start Guide
 
-Sfizz depends on the `sndfile` library.
-The Jack client that you will probably build depends on the `jack` library.
-To build `sfizz` you need to install both as shared libraries on the system.
-In Debian-based distributions, this translates into
-```
-sudo apt install libjack-jackd2-dev libsndfile1-dev
-```
+- Install `ruby` and `yarn`
+- Use the automatic setup via `setup.sh`
 
-The process is as follows:
-1. Clone the repository with all the submodules
-2. Create a build directory for CMake and `cd` into it
-3. Prep the Makefiles with the `SFIZZ_CLIENTS` option
-4. Build
-5. Enjoy :)
+or manually:
 
-In the shell world, this means
-```sh
-git clone --recursive https://github.com/sfztools/sfizz.git
-cd sfizz
-mkdir build && cd build
-cmake -D CMAKE_BUILD_TYPE=Release -D SFIZZ_CLIENTS=ON ..
-make
-```
-You can then find the Jack client in `clients/sfizz_jack`.
-Just specify an `.sfz` file as a parameter and you are good to go.
-The client will forcefully connect to the system output, and open an event input in Jack for you to connect a midi capable software or hardware (e.g. `jack-keyboard`).
-If no Jack server is already started it will start one with basic options.
+	$ gem update
+	$ gem install bundler
+	$ yarn --no-bin-links
+	$ yarn dist
+	$ bundle exec jekyll serve -w
 
-### Possible pitfalls and alternatives
+The local website should be available at <http://localhost:4000/>
 
-If you already cloned the repository without the `--recursive` option, update the submodules manually with
-```
-git submodule update --init --recursive
-```
+[Bootstrap]: http://getbootstrap.com/
+[Favicon Generator]: https://realfavicongenerator.net/
+[Font Awesome]: http://fontawesome.io/
+[Jekyll]: http://jekyllrb.com/
+[Markdown]: https://daringfireball.net/projects/markdown/
+[Node.js]: http://nodejs.org/
+[SASS]: https://sass-lang.com/
+[sfizz]: https://sfztools.github.io/sfizz
 
-You can build with `clang`, although in that case the CMakeFile defaults to using `libc++` instead of `libstdc++`.
