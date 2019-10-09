@@ -1,0 +1,21 @@
+{% for card in site.data.locale.[page.lang].layout.cards %}
+						<div class="card border-dark mb-4">
+							<div class="card-header text-light">
+								<i class="{{ card.icon_category }} fa-{{ card.icon_type }}"
+									aria-hidden="true"></i>
+								{{ card.title }}
+							</div>
+							<div class="card-body">
+								<ul class="nav nav-pills flex-column">
+	{% for item in card.links %}
+									<li class="nav-item"><a class="nav-link" href="{{ item.url }}"
+										title="{{ item.title }}">
+										<i class="{{ item.icon_category }} fa-{{ item.icon_type }} fa-fw"
+										aria-hidden="true"></i>
+										{{ item.title }}</a>
+									</li>
+	{% endfor %}
+								</ul>
+							</div>
+						</div>
+{% endfor %}

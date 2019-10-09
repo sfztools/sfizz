@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+	<head>
+{% include head.html %}
+	</head>
+{% if page.classes %}
+	<body class="{{ page.classes | join: ' ' }}">
+{% else %}
+	<body>
+{% endif %}
+		<button onclick="topFunction()" id="scrollButton" title="Go to top">Top</button>
+		<a href="#content" class="sr-only">Skip to content</a>
+		<div class="container">
+{% include header.html %}
+			<div class="row mt-4" id="content">
+				<div class="col-md-9">
+					<article>
+						<h1>{{ page.title }}</h1>
+{{ content }}
+					</article>
+				</div>
+				<div class="col-md-3">
+					<aside>
+{% include cards.html %}
+					</aside>
+				</div>
+			</div>
+{% include footer.html %}
+		</div>
+{% include scripts.html %}
+	</body>
+</html>

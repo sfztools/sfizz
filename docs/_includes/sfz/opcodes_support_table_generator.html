@@ -1,0 +1,84 @@
+
+<h2>Supported Operating Systems</h2>
+<ul>
+{%-for os in site.data.sfz.support.os-%}
+	<li>{{ os.name }}</li>
+{%-endfor-%}
+</ul>
+
+<h2>Supported Headers</h2>
+<table class="table table-sm table-hover table-striped table-responsive">
+	<thead class="thead-dark">
+		<tr>
+			<th scope="col">Header</th>
+			<th scope="col" style="text-align:center">Version</th>
+			<th scope="col" style="text-align:center">Supported</th>
+		</tr>
+	</thead>
+	<tbody>
+{%-for header in site.data.sfz.support.headers-%}
+	{%-assign header_url = "<a href='https://sfzformat.com/headers/" |
+		append: header.name | append: "'>" | append: header.name | append: "</a>"-%}
+	{%-if header.support == nil or header.support == 'x'-%}
+		{%-assign header_support = ":x:"-%}
+	{%-elsif header.support == 'v'-%}
+		{%-assign header_support = ":heavy_check_mark:"-%}
+	{%-else-%}
+		{%-assign header_support = header.support-%}
+	{%-endif-%}
+		<tr>
+			<td>{{ header_url }}</td>
+			<td style="text-align:center">{{ header.version }}</td>
+			<td style="text-align:center">{{ header_support }}</td>
+		</tr>
+{%-endfor-%}
+	</tbody>
+</table>
+<h2>Supported Opcodes</h2>
+
+{%-for category in site.data.sfz.support.categories-%}
+	<h3>{{ category.name }}</h3>
+<table class="table table-sm table-hover table-striped table-responsive">
+	<thead class="thead-dark">
+		<tr>
+			<th scope="col">Opcode</th>
+			<th scope="col" style="text-align:center">Version</th>
+			<th scope="col" style="text-align:center">Supported</th>
+{%-comment-%}
+			<th scope="col" style="text-align:center">Tested</th>
+{%-endcomment-%}
+		</tr>
+	</thead>
+	<tbody>
+	{%-for opcode in category.opcodes-%}
+		{%-assign opcode_name = opcode.name | replace: '#', ''-%}
+		{%-assign opcode_url = "<a href='https://sfzformat.com/opcodes/" |
+			append: opcode_name | append: "'>" | append: opcode.name | append: "</a>" -%}
+		{%-if opcode.support == nil or opcode.support == 'x'-%}
+			{%-assign opcode_support = ":x:"-%}
+		{%-elsif opcode.support == 'v'-%}
+			{%-assign opcode_support = ":heavy_check_mark:"-%}
+		{%-else-%}
+			{%-assign opcode_support = opcode.support-%}
+		{%-endif-%}
+{%-comment-%}
+		{%-if opcode.tested == nil or opcode.tested == 'x'-%}
+			{%-assign opcode_tested = ":x:"-%}
+		{%-elsif opcode.tested == 'v'-%}
+			{%-assign opcode_tested = ":heavy_check_mark:"-%}
+		{%-else-%}
+			{%-assign opcode_tested = opcode.tested-%}
+		{%-endif-%}
+{%-endcomment-%}
+		<tr>
+			<td>{{ opcode_url }}</td>
+			<td style="text-align:center">{{ opcode.version }}</td>
+			<td style="text-align:center">{{ opcode_support }}</td>
+{%-comment-%}
+			<td style="text-align:center">{{ opcode_tested }}</td>
+{%-endcomment-%}
+		</tr>
+	{%-endfor-%}
+	</tbody>
+</table>
+{%-endfor-%}

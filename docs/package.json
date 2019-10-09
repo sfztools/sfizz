@@ -1,0 +1,42 @@
+{
+	"name": "Jekyllize",
+	"version": "0.1.0",
+	"author": "RedTide <redtid3@gmail.com>",
+	"homepage": "https://jekyllize.github.io",
+	"scripts": {
+		"css": "node node_modules/npm-run-all/bin/run-s/index.js css-compile css-prefix css-minify",
+		"css-compile": "node node_modules/node-sass/bin/node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 _assets/scss/style.scss assets/css/style.css",
+		"css-prefix": "node node_modules/postcss-cli/bin/postcss --use autoprefixer --replace \"assets/css/*.css\" \"!assets/css/*.min.css\"",
+		"css-minify": "node node_modules/clean-css-cli/bin/cleancss --level 1 --source-map --source-map-inline-sources --output assets/css/style.min.css node_modules/bootstrap/dist/css/bootstrap.min.css \"node_modules/@fancyapps/fancybox/dist/jquery.fancybox.min.css\" assets/css/style.css",
+		"js": "node node_modules/npm-run-all/bin/run-s/index.js js-minify",
+		"js-minify": "node node_modules/uglify-js/bin/uglifyjs --compress --mangle --comments \"/^!/\" --source-map \"includeSources,url=scripts.min.js.map\" --output assets/js/scripts.min.js node_modules/jquery/dist/jquery.min.js node_modules/bootstrap/dist/js/bootstrap.min.js \"node_modules/@fancyapps/fancybox/dist/jquery.fancybox.min.js\" _assets/js/*.js",
+		"dist": "node node_modules/npm-run-all/bin/run-p/index.js css js"
+	},
+	"browserslist": [
+		"defaults"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:jekyllize/jekyllize.github.io.git"
+	},
+	"bugs": {
+		"url": "https://github.com/jekyllize/jekyllize.github.io/issues"
+	},
+	"license": "MPL-2.0",
+	"engines": {
+		"node": ">= 6.9.0"
+	},
+	"dependencies": {
+		"@fancyapps/fancybox": "^3.2.5",
+		"autoprefixer": "^8.2.0",
+		"bootstrap": "^4.0.0",
+		"clean-css-cli": "^4.1.11",
+		"jquery": "^3.3.1",
+		"node-sass": "^4.8.3",
+		"npm-run-all": "^4.1.2",
+		"popper.js": "^1.14.1",
+		"postcss-cli": "^5.0.0",
+		"sass": "^1.14.3",
+		"uglify-js": "^3.3.16"
+	}
+}

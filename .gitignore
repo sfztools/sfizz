@@ -14,7 +14,7 @@ CMakeFiles/
 cmake_install.cmake
 compile_commands.json
 *.a
-*.txt.user
+*.txt.user*
 
 .DS_Store
 

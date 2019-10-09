@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+{% include head.html %}
+	</head>
+{% if page.classes %}
+	<body class="{{ page.classes | join: ' ' }}">
+{% else %}
+	<body>
+{% endif %}
+		<button onclick="topFunction()" id="scrollButton" title="Go to top">Top</button>
+		<a href="#content" class="sr-only">Skip to content</a>
+		<div class="container">
+{% include header.html %}
+			<div class="row mt-4" id="content">
+				<div class="col-md-9">
+					<article class="mb-4">
+							<h1>{{ page.title | escape }}</h1>
+							<p class="text-muted">
+								Posted on <time datetime="{{ page.date | datetime | date_to_xmlschema }}">
+								{{ page.date | date: page.date_fmt }}</time>
+{% if page.author %}by {{ page.author }}{% endif %}
+							</p>
+{{ content }}
+{% if page.comments and site.disqus_shortname %}
+						<h2>Comments</h2>
+						<div id="disqus_thread"></div>
+						<noscript>Please enable JavaScript to view the comments.</noscript>
+{% endif %}
+					</article>
+					<p class="my-4 text-center">
+						<a class="btn btn-lg btn-default" href="{{ "/news/archive/" | relative_url }}">
+							<i class="fa fa-calendar fa-fw"></i> News Archive</a>
+					</p>
+				</div>
+				<div class="col-md-3">
+					<aside>
+{% include cards.html %}
+					</aside>
+				</div>
+			</div>
+{% include footer.html %}
+		</div>
+{% include scripts.html %}
+{% if page.comments and site.disqus_shortname %}
+		<script type="text/javascript">
+			var disqus_shortname = "{{ site.disqus_shortname }}";
+			var disqus_identifier = "{{ page.id | escape }}";
+			var disqus_url = "{{ site.url }}{{ page.url }}";
+			var e = document.createElement('div');
+			e.innerHTML = "{{ page.title | escape }}";
+			var disqus_title = e.childNodes[0].nodeValue;
+			(function() {
+			var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+			dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+			(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+			})();
+		</script>
+{% endif %}
+	</body>
+</html>
