@@ -1,0 +1,63 @@
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+
+exclude:
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - Gemfile
+  - Gemfile.lock
+  - LICENSE
+  - new_post
+  - node_modules
+  - package.json
+  - package-lock.json
+  - README.md
+  - setup.sh
+  - assets/css/style.css
+  - TODO.md
+  - yarn.lock
+  - yarn-error.log
+
+plugins:
+  - jekyll-sitemap
+  - jemoji
+
+organization:
+  name: "SFZTools"
+  url: "https://github.com/sfztools"
+
+project:
+  name: "Sfizz"
+  url: "https://sfztools.github.io/sfizz"
+  copyright_owner: "Paul Ferrand"
+  spdx_license_id: "BSD-2-Clause"
+  docs_path: "master/docs"
+  authors:
+    content: "Paul Ferrand"
+    web: "RedTide"
+
+locale:
+  default: "en"
+
+google:
+  analytics_code:
+  cse_code:
+
+realfavicongenerator:
+  mask_icon_color: "#5bbad5"
+  msapplication_tile_color: "#da532c"
+  theme_color: "#ffffff"
+
+disqus_shortname:

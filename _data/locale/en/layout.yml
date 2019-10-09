@@ -1,0 +1,106 @@
+navigation:
+- label: "Projects"
+  type: "dropdown"
+  icon_type: "hammer"
+  icon_category: "fas"
+  pages:
+  - label: "BeatBox"
+    url: "https://sfztools.github.io/beatbox/"
+    icon_type: "drum"
+    icon_category: "fas"
+
+  - label: "Sfizz Library"
+    url: "https://sfztools.github.io/sfizz/"
+    icon_type: "play-circle"
+    icon_category: "fas"
+    disabled: true
+
+  - label: "Sfizz Juce (Archived)"
+    url: "https://sfztools.github.io/sfizz-juce/"
+    icon_type: "play-circle"
+    icon_category: "fas"
+  -
+  - label: "SFZ-Flat"
+    url: "https://github.com/sfztools/sfz-flat/"
+  -
+  - label: "Geany Syntax Highlight"
+    url: "https://github.com/sfztools/syntax-highlighting-geany/"
+
+  - label: "Sublime Text Syntax Highlight"
+    url: "https://github.com/sfztools/syntax-highlighting-sublime-text/"
+
+  - label: "VSCode Syntax Highlight"
+    url: "https://github.com/sfztools/syntax-highlighting-vscode/"
+
+- label: "GitHub"
+  type: "dropdown"
+  icon_type: "github"
+  icon_category: "fab"
+  pages:
+  - label: "Organization"
+    url: "https://github.com/sfztools/"
+
+  - label: "Repository"
+    url: "https://github.com/sfztools/sfizz/"
+
+- label: "Dev"
+  type: "dropdown"
+  icon_type: "code"
+  icon_category: "fas"
+  pages:
+  - label: "Documentation"
+    icon_type: "book"
+    icon_category: "fas"
+    url: "/doxy"
+
+  - label: "Status"
+    icon_type: "tasks"
+    icon_category: "fas"
+    url: "/status"
+
+- label: "Downloads"
+  type: "normal"
+  icon_type: "download"
+  icon_category: "fas"
+  url: "/downloads"
+
+- label: "Contacts"
+  icon_type: "at"
+  icon_category: "fas"
+  type: "normal"
+  url: "/contacts"
+
+- label: "Home"
+  type: "normal"
+  icon_type: "home"
+  icon_category: "fas"
+  url: "https://sfztools.github.io/"
+
+cards:
+- label: "Follow us"
+  icon_type: "eye"
+  icon_category: "fas"
+  links:
+  - label: "Discord Chat"
+    url: "https://discord.gg/3ArE9Mw"
+    icon_type: "discord"
+    icon_category: "fab"
+
+  - label: "News Atom Feed"
+    url: "/atom.xml"
+    icon_type: "rss"
+    icon_category: "fas"
+
+- label: "Quick links"
+  icon_type: "link"
+  icon_category: "fas"
+  links:
+  - label: "SFZ Format"
+    url: "https://sfzformat.github.io/"
+    icon_type: "book"
+    icon_category: "fas"
+
+  - label: "Free SFZ Instruments"
+    url: "https://github.com/sfzinstruments/"
+    icon_type: "download"
+    icon_category: "fas"

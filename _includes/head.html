@@ -1,0 +1,36 @@
+		<meta charset="utf-8">
+
+		<title>
+		{%-if page.title-%}
+			{{ page.title | escape }} - {{ site.project.name }}
+		{%-else-%}
+			{{ site.project.name }}
+		{%-endif-%}
+		</title>
+
+		{% if site.project.authors.content-%}
+		<meta name="author" content="{{ site.project.authors.content }}">
+		{% endif %}
+		{%-if site.project.authors.web-%}
+		<meta name="web-author" content="{{ site.project.authors.web }}">
+		{%-endif %}
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		{% if site.google.analytics_code %}{%-include google-analytics.html-%}{% endif %}
+		<!-- Atom Feeds -->
+		<link href="{{ "/atom.xml" | relative_url }}" rel="alternate" title="News"
+			type="application/atom+xml" />
+
+		{% include favicons.html %}
+		<!-- Stylesheets -->
+		<link href="{{ "/assets/css/style.min.css" | relative_url }}"
+			rel="stylesheet" media="screen">
+		{%-for stylesheet in page.stylesheets-%}
+		<link href="{{ "/assets/css/" | append: stylesheet | append: .css | relative_url }}"
+			rel="stylesheet">
+		{% endfor %}
+		{%-include custom-styles.html %}
+
+		<!-- Font Awesome Icons -->
+		<script defer src="https://use.fontawesome.com/releases/v5.11.2/js/solid.js"       integrity="sha384-Mf3ap7OwO+bjTkzM1RsrothLh38uKXvMWJ2TQPXGHqZcqfeI/cyCV+sfV0IDnBDq" crossorigin="anonymous"></script>
+		<script defer src="https://use.fontawesome.com/releases/v5.11.2/js/brands.js"      integrity="sha384-b2GpqFrJizV0BUEdbrITdOA5HnxnlrErt7MlEERWd6NSJ32rHeibEvyyCuA13OAS" crossorigin="anonymous"></script>
+		<script defer src="https://use.fontawesome.com/releases/v5.11.2/js/fontawesome.js" integrity="sha384-EYYaHDhIRoBhd/Ir/1fPnxg9rZLk/55lKtlNT5KrIcONoCS2kjf7ZWzMoCLLACeo" crossorigin="anonymous"></script>

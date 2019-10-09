@@ -1,0 +1,98 @@
+{%-assign locale_count = 0-%}
+{%-for language in site.data.locale-%}
+	{%-if language[0] == page.lang-%}
+		{%-assign current_locale_dir = language[1]-%}
+	{%-endif-%}
+	{%-assign locale_count = forloop.length-%}
+{%-endfor-%}
+{%-assign default_locale = site.locale.default-%}
+{%-if page.lang == default_locale-%}
+	{%-assign page_path_prefix = "/"-%}
+{%-else-%}
+	{%-assign page_path_prefix = '/' | append: page.lang | append: '/'-%}
+{%-endif-%}
+{% assign t = current_locale_dir.translation %}
+			<nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#222">
+				<a class="navbar-brand" href="{{ page_path_prefix | relative_url }}">
+					<img src="{{ '/assets/img/logo.png' | relative_url }}"
+					width="30" height="30" class="d-inline-block align-top" alt="">
+					{{ site.project.name }}
+				</a>
+
+				<button class="navbar-toggler" type="button" data-toggle="collapse"
+					data-target="#navbarContent" aria-controls="navbarContent"
+					aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+
+				<div class="collapse navbar-collapse" id="navbarContent">
+					<ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+{% if locale_count > 1 %}
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" id="navbarMenuLang" href="#"
+								data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								<img border="0" src="{{ '/assets/flags/' | append: page.lang | append: '.png' | relative_url }}"
+									width="16" height="11">
+							</a>
+							<div class="dropdown-menu" aria-labelledby="navbarMenuLang">
+	{% for language in site.data.locale %}
+		{% if language[0] == default_locale %}
+			{% assign path_prefix = "/" %}
+		{% else %}
+			{% assign path_prefix = '/' | append: language[0] | append: '/' %}
+		{% endif %}
+								<a class="dropdown-item" href="{{ path_prefix | relative_url }}">
+									<img border="0" src="{{ '/assets/flags/' | append: language[0] | append: '.png' | relative_url }}"
+										width="16" height="11">
+									{{ language[1].translation.name }}</a>
+	{% endfor %}
+							</div>
+						</li>
+{% endif %}
+{% for item in current_locale_dir.layout.navigation %}
+	{% if item.type == "normal" %}
+						<li class="nav-item">
+							<a class="nav-link" href="{{ item.url | relative_url }}">
+		{%-if item.icon_type-%}
+								<i class="{{ item.icon_category }} fa-{{ item.icon_type }} fa-fw"
+									aria-hidden="true"></i>&nbsp;
+		{%-endif-%}
+									{{ item.label }}</a>
+	{% else %}
+		{% assign item_id = 'navbar' | append: item.label %}
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="{{ item_id }}"
+								data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		{%-if item.icon_type-%}
+							<i class="{{ item.icon_category }} fa-{{ item.icon_type }} fa-fw"
+								aria-hidden="true"></i>&nbsp;
+		{%-endif-%}
+								{{ item.label }}</a>
+							<div class="dropdown-menu" aria-labelledby="{{ item_id }}">
+		{% for subitem in item.pages %}
+			{% if subitem.label == nil %}
+								<div class="dropdown-divider"></div>
+			{% else %}
+				{%-assign disabled=""-%}
+				{%-if subitem.disabled-%}{%-assign disabled=" disabled"-%}{%-endif-%}
+								<a class="dropdown-item{{ disabled }}"
+									href="{{ subitem.url | relative_url }}">
+				{%-if subitem.icon_type-%}
+									<i class="{{ subitem.icon_category }} fa-{{ subitem.icon_type }} fa-fw"
+										aria-hidden="true"></i>&nbsp;
+				{%-endif-%}
+										{{ subitem.label }}</a>
+			{% endif %}
+		{% endfor %}
+							</div>
+	{% endif %}
+						</li>
+{% endfor %}
+					</ul>
+				</div>
+				<form class="form-inline my-2 my-lg-0" role="search"
+					action="{{ page_path_prefix | append: 'search/' | relative_url }}">
+					<input class="form-control mr-sm-2" type="search" name="query"
+						placeholder="{{ t.search }}" aria-label="Search">
+				</form>
+			</nav>
