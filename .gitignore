@@ -14,9 +14,18 @@ CMakeFiles/
 cmake_install.cmake
 compile_commands.json
 *.a
-*.txt.user*
+*.txt.user
 
 .DS_Store
 
 clients/sfizz_jack
 clients/sfzprint
+
+# gh-pages unstaged files:
+
+.bundle/
+Gemfile.lock
+_site/
+assets/
+node_modules/
+yarn.lock
