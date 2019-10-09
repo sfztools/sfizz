@@ -1,5 +1,0 @@
-		<script src="{{ '/assets/js/scripts.min.js' | relative_url }}"></script>
-{%-for script in page.scripts-%}
-		<script src="{{ '/assets/js/' | append: script | append: '.js' | relative_url }}"></script>
-{%-endfor-%}
-{% include custom-scripts.html %}
