@@ -48,10 +48,10 @@ navigation:
   icon_type: "code"
   icon_category: "fas"
   pages:
-  - label: "Documentation"
-    icon_type: "book"
-    icon_category: "fas"
-    url: "/doxy"
+# - label: "Documentation"
+#   icon_type: "book"
+#   icon_category: "fas"
+#   url: "/doxy"
 
   - label: "Status"
     icon_type: "tasks"
