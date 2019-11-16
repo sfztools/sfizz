@@ -293,13 +293,14 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     return {};
 }
 
-void sfz::Synth::getNumActiveVoices() const noexcept
+int sfz::Synth::getNumActiveVoices() const noexcept
 {
     auto activeVoices { 0 };
     for (const auto& voice : voices) {
         if (!voice->isFree())
             activeVoices++;
     }
+    return activeVoices;
 }
 
 void sfz::Synth::garbageCollect() noexcept
