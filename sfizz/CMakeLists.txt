@@ -59,7 +59,6 @@ target_sources(sfizz_parser PRIVATE Parser.cpp Opcode.cpp)
 target_include_directories(sfizz_parser PUBLIC .)
 target_link_libraries(sfizz_parser PRIVATE absl::strings)
 
-
 add_library(sfizz STATIC ${SFIZZ_SOURCES})
 target_link_libraries(sfizz PRIVATE sfizz_parser)
 target_include_directories(sfizz PUBLIC .)
@@ -74,3 +73,9 @@ target_link_libraries(sfizz PRIVATE sndfile absl::flat_hash_map)
 
 add_library(sfizz::parser ALIAS sfizz_parser)
 add_library(sfizz::sfizz ALIAS sfizz)
+
+add_library(sfizz_shared SHARED)
+set_target_properties(sfizz_shared PROPERTIES OUTPUT_NAME sfizz)
+# set_target_properties(sfizz_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_sources(sfizz_shared PRIVATE sfizz.cpp)
+target_link_libraries(sfizz_shared sfizz::sfizz)
