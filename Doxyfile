@@ -58,7 +58,7 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = ./docs/
+OUTPUT_DIRECTORY       = .
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -458,7 +458,7 @@ LOOKUP_CACHE_SIZE      = 0
 # normally produced when WARNINGS is set to YES.
 # The default value is: NO.
 
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = NO
 
 # If the EXTRACT_PRIVATE tag is set to YES, all private members of a class will
 # be included in the documentation.
@@ -515,7 +515,7 @@ EXTRACT_ANON_NSPACES   = NO
 # section is generated. This option has no effect if EXTRACT_ALL is enabled.
 # The default value is: NO.
 
-HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_MEMBERS     = YES
 
 # If the HIDE_UNDOC_CLASSES tag is set to YES, doxygen will hide all
 # undocumented classes that are normally visible in the class hierarchy. If set
@@ -523,7 +523,7 @@ HIDE_UNDOC_MEMBERS     = NO
 # has no effect if EXTRACT_ALL is enabled.
 # The default value is: NO.
 
-HIDE_UNDOC_CLASSES     = NO
+HIDE_UNDOC_CLASSES     = YES
 
 # If the HIDE_FRIEND_COMPOUNDS tag is set to YES, doxygen will hide all friend
 # (class|struct|union) declarations. If set to NO, these declarations will be
@@ -702,7 +702,7 @@ SHOW_USED_FILES        = NO
 # (if specified).
 # The default value is: YES.
 
-SHOW_FILES             = NO
+SHOW_FILES             = YES
 
 # Set the SHOW_NAMESPACES tag to NO to disable the generation of the Namespaces
 # page. This will remove the Namespaces entry from the Quick Index and from the
@@ -1105,7 +1105,7 @@ GENERATE_HTML          = YES
 # The default directory is: html.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_OUTPUT            = doxy
+HTML_OUTPUT            = api
 
 # The HTML_FILE_EXTENSION tag can be used to specify the file extension for each
 # generated HTML page (for example: .htm, .php, .asp).
@@ -1286,7 +1286,7 @@ DOCSET_BUNDLE_ID       = tools.sfz.sfizz
 # The default value is: org.doxygen.Publisher.
 # This tag requires that the tag GENERATE_DOCSET is set to YES.
 
-DOCSET_PUBLISHER_ID    = tools.sfz
+DOCSET_PUBLISHER_ID    = tools.sfz.SFZTools
 
 # The DOCSET_PUBLISHER_NAME tag identifies the documentation publisher.
 # The default value is: Publisher.
