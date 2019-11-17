@@ -10,6 +10,9 @@ endif()
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
+# Enable PIC
+# set(POSITION_INDEPENDENT_CODE ON)
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
     add_compile_options(-stdlib=libc++)
@@ -18,7 +21,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
 
-if (UNIX) 
+if (UNIX)
+    add_compile_options(-fPIC)
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
     add_compile_options(-ffast-math)

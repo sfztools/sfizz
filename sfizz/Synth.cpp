@@ -293,13 +293,14 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     return {};
 }
 
-void sfz::Synth::getNumActiveVoices() const noexcept
+int sfz::Synth::getNumActiveVoices() const noexcept
 {
     auto activeVoices { 0 };
     for (const auto& voice : voices) {
         if (!voice->isFree())
             activeVoices++;
     }
+    return activeVoices;
 }
 
 void sfz::Synth::garbageCollect() noexcept
@@ -355,6 +356,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    // DBG("Received note " << noteNumber << "/" << +velocity << " ON at time " << delay);
 
     midiState.noteOn(noteNumber, velocity);
 
@@ -389,6 +391,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    // DBG("Received note " << noteNumber << "/" << +velocity << " OFF at time " << delay);
 
     if (!canEnterCallback)
         return;
@@ -446,6 +449,19 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
             }
         }
     }
+}
+
+void sfz::Synth::pitchWheel(int /* delay */, int /* channel */, int /* pitch */) noexcept
+{
+
+}
+void sfz::Synth::aftertouch(int /* delay */, int /* channel */, uint8_t /* aftertouch */) noexcept
+{
+
+}
+void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
+{
+
 }
 
 int sfz::Synth::getNumRegions() const noexcept

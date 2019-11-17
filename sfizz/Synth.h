@@ -59,7 +59,7 @@ public:
     void aftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
     void tempo(int delay, float secondsPerQuarter) noexcept;
 
-    void getNumActiveVoices() const noexcept;
+    int getNumActiveVoices() const noexcept;
     void garbageCollect() noexcept;
 protected:
     void callback(absl::string_view header, const std::vector<Opcode>& members) final;
