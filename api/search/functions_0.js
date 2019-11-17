@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['sfizz_5fcreate_5fsynth_22',['sfizz_create_synth',['../sfizz_8h.html#a463b1ec989c4632a5d3f6ba000a7de4c',1,'sfizz.h']]],
+  ['sfizz_5fforce_5fgarbage_5fcollection_23',['sfizz_force_garbage_collection',['../sfizz_8h.html#ab85f5c03fe7700ea87961eda3279d431',1,'sfizz.h']]],
+  ['sfizz_5ffree_24',['sfizz_free',['../sfizz_8h.html#abaee61a443deabf621f435b501500e1e',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5factive_5fvoices_25',['sfizz_get_num_active_voices',['../sfizz_8h.html#acec4532bfd04af82f205922b4fec7a69',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fcurves_26',['sfizz_get_num_curves',['../sfizz_8h.html#a89c9d54d7ed0fbf3d9dd36a0a5701d28',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fgroups_27',['sfizz_get_num_groups',['../sfizz_8h.html#a1f48f36bd8c6019a742c2f4e0bc77c30',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fmasters_28',['sfizz_get_num_masters',['../sfizz_8h.html#a147c6f9b27cc6668d79f7294d5a77971',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fpreloaded_5fsamples_29',['sfizz_get_num_preloaded_samples',['../sfizz_8h.html#a25b3debbcdf1e9babf170b59fdc850d9',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fregions_30',['sfizz_get_num_regions',['../sfizz_8h.html#ac96835f2e4ad2f9272b75727b666ee06',1,'sfizz.h']]],
+  ['sfizz_5fload_5ffile_31',['sfizz_load_file',['../sfizz_8h.html#aa9011dc512736812fe220c954073ec37',1,'sfizz.h']]],
+  ['sfizz_5frender_5fblock_32',['sfizz_render_block',['../sfizz_8h.html#a3a6b63cd5a344fbfee9aac9924526c76',1,'sfizz.h']]],
+  ['sfizz_5fsend_5faftertouch_33',['sfizz_send_aftertouch',['../sfizz_8h.html#af50f65810c2d279eb0c697f08b4bd2f8',1,'sfizz.h']]],
+  ['sfizz_5fsend_5fcc_34',['sfizz_send_cc',['../sfizz_8h.html#a8fc801aaefd86c4b8ff9c4fc0e937cbe',1,'sfizz.h']]],
+  ['sfizz_5fsend_5fnote_5foff_35',['sfizz_send_note_off',['../sfizz_8h.html#ac2ffd934d2237580009595a4075ecf71',1,'sfizz.h']]],
+  ['sfizz_5fsend_5fnote_5fon_36',['sfizz_send_note_on',['../sfizz_8h.html#a83507ae0a57f3f6a6d2e261b0d838601',1,'sfizz.h']]],
+  ['sfizz_5fsend_5fpitch_5fwheel_37',['sfizz_send_pitch_wheel',['../sfizz_8h.html#a2f06affe178c4a9a47e9e81266b0fe92',1,'sfizz.h']]],
+  ['sfizz_5fsend_5ftempo_38',['sfizz_send_tempo',['../sfizz_8h.html#a9bde64a9b34824a38f2c662c9e98904b',1,'sfizz.h']]],
+  ['sfizz_5fset_5fsample_5frate_39',['sfizz_set_sample_rate',['../sfizz_8h.html#af0f8b0d64c668ec3ea933e1a3887c8c8',1,'sfizz.h']]],
+  ['sfizz_5fset_5fsamples_5fper_5fblock_40',['sfizz_set_samples_per_block',['../sfizz_8h.html#a05c1993fe37dc48b38e646990914be5e',1,'sfizz.h']]]
+];
