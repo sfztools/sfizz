@@ -449,6 +449,19 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     }
 }
 
+void sfz::Synth::pitchWheel(int /* delay */, int /* channel */, int /* pitch */) noexcept
+{
+
+}
+void sfz::Synth::aftertouch(int /* delay */, int /* channel */, uint8_t /* aftertouch */) noexcept
+{
+
+}
+void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
+{
+
+}
+
 int sfz::Synth::getNumRegions() const noexcept
 {
     return static_cast<int>(regions.size());
