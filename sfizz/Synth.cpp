@@ -356,6 +356,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    // DBG("Received note " << noteNumber << "/" << +velocity << " ON at time " << delay);
 
     midiState.noteOn(noteNumber, velocity);
 
@@ -390,6 +391,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    // DBG("Received note " << noteNumber << "/" << +velocity << " OFF at time " << delay);
 
     if (!canEnterCallback)
         return;
