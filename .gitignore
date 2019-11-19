@@ -24,9 +24,10 @@ clients/sfzprint
 
 # gh-pages unstaged files:
 
-.bundle/
-Gemfile.lock
 _site/
+.bundle/
+api/
 assets/
 node_modules/
+Gemfile.lock
 yarn.lock
