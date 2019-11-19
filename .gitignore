@@ -4,6 +4,7 @@ build-asan
 build-release
 build-reldeb
 build-debug
+docs
 .vscode
 perf.data
 perf.data.old
