@@ -65,17 +65,33 @@ target_include_directories(sfizz PUBLIC .)
 find_package(Threads REQUIRED)
 target_link_libraries(sfizz PRIVATE Threads::Threads)
 if(UNIX)
-    target_link_libraries(sfizz PUBLIC atomic)
+target_link_libraries(sfizz PUBLIC atomic)
 endif(UNIX)
 
 target_link_libraries(sfizz PUBLIC absl::strings)
 target_link_libraries(sfizz PRIVATE sndfile absl::flat_hash_map)
 
+install(TARGETS sfizz_parser DESTINATION . EXCLUDE_FROM_ALL)
+install(TARGETS sfizz DESTINATION . EXCLUDE_FROM_ALL)
+
 add_library(sfizz::parser ALIAS sfizz_parser)
 add_library(sfizz::sfizz ALIAS sfizz)
 
 add_library(sfizz_shared SHARED)
-set_target_properties(sfizz_shared PROPERTIES OUTPUT_NAME sfizz)
+set_target_properties(sfizz_shared PROPERTIES
+    OUTPUT_NAME sfizz
+    PUBLIC_HEADER sfizz.h)
 # set_target_properties(sfizz_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_sources(sfizz_shared PRIVATE sfizz.cpp)
 target_link_libraries(sfizz_shared sfizz::sfizz)
+configure_file(sfizz.pc.in sfizz.pc @ONLY)
+
+if(UNIX)
+    include(GNUInstallDirs)
+    install(TARGETS sfizz_shared 
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    install(FILES 
+        ${CMAKE_BINARY_DIR}/sfizz/sfizz.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+endif()

@@ -6,6 +6,9 @@ if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
     set(CMAKE_CXX_STANDARD 14)
 endif()
 
+# Skip installing all dependencies
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+
 # Enable LTO
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
