@@ -33,7 +33,7 @@ sfizz_synth_t* sfizz_create_synth()
     return reinterpret_cast<sfizz_synth_t*>(new sfz::Synth());
 }
 
-bool sfizz_load_file(sfizz_synth_t* synth, char* path)
+bool sfizz_load_file(sfizz_synth_t* synth, const char* path)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->loadSfzFile(path);

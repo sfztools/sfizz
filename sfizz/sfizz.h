@@ -57,7 +57,7 @@ void sfizz_free(sfizz_synth_t* synth);
  * @return true when file loading went OK.
  * @return false if some error occured while loading.
  */
-bool sfizz_load_file(sfizz_synth_t* synth, char* path);
+bool sfizz_load_file(sfizz_synth_t* synth, const char* path);
 
 /**
  * @brief Returns the number of regions in the currently loaded SFZ file.
