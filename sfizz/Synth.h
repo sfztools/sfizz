@@ -39,7 +39,7 @@ namespace sfz {
 
 class Synth : public Parser {
 public:
-    Synth() {}
+    Synth();
     Synth(int numVoices);
     bool loadSfzFile(const fs::path& file) final;
     int getNumRegions() const noexcept;
