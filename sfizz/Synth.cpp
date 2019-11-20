@@ -35,6 +35,11 @@
 #include <utility>
 using namespace std::literals;
 
+sfz::Synth::Synth()
+{
+    resetVoices(this->numVoices);
+}
+
 sfz::Synth::Synth(int numVoices)
 {
     resetVoices(numVoices);
