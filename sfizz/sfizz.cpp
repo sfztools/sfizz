@@ -24,6 +24,7 @@
 #include "Synth.h"
 #include "sfizz.h"
 
+#define UNUSED(x) (void)(x)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -122,6 +123,7 @@ void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     // Only stereo output is supported for now
     ASSERT(num_channels == 2);
+    UNUSED(num_channels);
     self->renderBlock({{channels[0], channels[1]}, static_cast<size_t>(num_frames)});
 }
 
@@ -141,6 +143,18 @@ float sfizz_get_volume(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->getVolume();
+}
+
+void sfizz_set_num_voices(sfizz_synth_t* synth, int num_voices)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setNumVoices(num_voices);
+}
+
+int sfizz_get_num_voices(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getNumVoices();
 }
 
 #ifdef __cplusplus

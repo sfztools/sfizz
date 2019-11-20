@@ -232,6 +232,21 @@ void sfizz_set_volume(sfizz_synth_t* synth, float volume);
  */
 float sfizz_get_volume(sfizz_synth_t* synth);
 
+/**
+ * @brief Sets the number of voices used by the synth
+ * 
+ * @param synth 
+ * @param num_voices 
+ */
+void sfizz_set_num_voices(sfizz_synth_t* synth, int num_voices);
+/**
+ * @brief Returns the number of voices
+ * 
+ * @param synth 
+ * @return num_voices 
+ */
+int sfizz_get_num_voices(sfizz_synth_t* synth);
+
 #ifdef __cplusplus
 }
 #endif
