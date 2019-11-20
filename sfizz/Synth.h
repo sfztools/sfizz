@@ -51,6 +51,9 @@ public:
 
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
     void setSampleRate(float sampleRate) noexcept;
+    float getVolume() const noexcept;
+    void setVolume(float volume) noexcept; 
+
     void renderBlock(AudioSpan<float> buffer) noexcept;
     void noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
     void noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
@@ -96,6 +99,7 @@ private:
     AudioBuffer<float> tempBuffer { 2, config::defaultSamplesPerBlock };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
+    float volume { Default::volume };
 
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
     unsigned fileTicket { 1 };
