@@ -143,6 +143,10 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
         case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
             break;
+        case hash("volume"):
+            // FIXME : Probably best not to mess with this and let the host control the volume
+            // setValueFromOpcode(member, volume, Default::volumeRange);
+            break;
         }
     }
 }
@@ -350,6 +354,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         voice->renderBlock(tempSpan);
         buffer.add(tempSpan);
     }
+
+    buffer.applyGain(db2mag(volume));
 }
 
 void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
@@ -491,4 +497,13 @@ std::set<absl::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
 size_t sfz::Synth::getNumPreloadedSamples() const noexcept
 {
     return filePool.getNumPreloadedSamples();
+}
+
+float sfz::Synth::getVolume() const noexcept
+{
+    return volume;
+}
+void sfz::Synth::setVolume(float volume) noexcept
+{
+    this->volume = Default::volumeRange.clamp(volume);
 }

@@ -216,6 +216,22 @@ void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels
  */
 void sfizz_force_garbage_collection(sfizz_synth_t* synth);
 
+/**
+ * @brief Set the global instrument volume.
+ * 
+ * @param synth 
+ * @param volume the new volume
+ */
+void sfizz_set_volume(sfizz_synth_t* synth, float volume);
+
+/**
+ * @brief Get the global instrument volume.
+ * 
+ * @param synth 
+ * @return float the instrument volume
+ */
+float sfizz_get_volume(sfizz_synth_t* synth);
+
 #ifdef __cplusplus
 }
 #endif

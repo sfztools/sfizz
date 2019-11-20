@@ -131,6 +131,18 @@ void sfizz_force_garbage_collection(sfizz_synth_t* synth)
     self->garbageCollect();
 }
 
+void sfizz_set_volume(sfizz_synth_t* synth, float volume)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setVolume(volume);
+}
+
+float sfizz_get_volume(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getVolume();
+}
+
 #ifdef __cplusplus
 }
 #endif
