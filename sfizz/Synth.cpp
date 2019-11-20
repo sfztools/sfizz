@@ -35,11 +35,9 @@
 #include <utility>
 using namespace std::literals;
 
-sfz::Synth::Synth()
+sfz::Synth::Synth(int numVoices)
 {
-    for (int i = 0; i < config::numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(midiState));
-    voiceViewArray.reserve(config::numVoices);
+    resetVoices(numVoices);
 }
 
 void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& members)
@@ -506,4 +504,29 @@ float sfz::Synth::getVolume() const noexcept
 void sfz::Synth::setVolume(float volume) noexcept
 {
     this->volume = Default::volumeRange.clamp(volume);
+}
+
+int sfz::Synth::getNumVoices() const noexcept
+{
+    return numVoices;
+}
+
+void sfz::Synth::setNumVoices(int numVoices) noexcept
+{
+    ASSERT(numVoices > 0);
+    resetVoices(numVoices);
+}
+
+void sfz::Synth::resetVoices(int numVoices)
+{
+    AtomicDisabler callbackDisabler{ canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
+    voices.clear();
+    for (int i = 0; i < numVoices; ++i)
+        voices.push_back(std::make_unique<Voice>(midiState));
+    voiceViewArray.reserve(numVoices);
+    this->numVoices = numVoices;
 }

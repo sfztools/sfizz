@@ -39,7 +39,8 @@ namespace sfz {
 
 class Synth : public Parser {
 public:
-    Synth();
+    Synth() {}
+    Synth(int numVoices);
     bool loadSfzFile(const fs::path& file) final;
     int getNumRegions() const noexcept;
     int getNumGroups() const noexcept;
@@ -63,6 +64,8 @@ public:
     void tempo(int delay, float secondsPerQuarter) noexcept;
 
     int getNumActiveVoices() const noexcept;
+    int getNumVoices() const noexcept;
+    void setNumVoices(int numVoices) noexcept;
     void garbageCollect() noexcept;
 protected:
     void callback(absl::string_view header, const std::vector<Opcode>& members) final;
@@ -74,6 +77,7 @@ private:
     int numMasters { 0 };
     int numCurves { 0 };
     void clear();
+    void resetVoices(int numVoices);
     void handleGlobalOpcodes(const std::vector<Opcode>& members);
     void handleControlOpcodes(const std::vector<Opcode>& members);
     void buildRegion(const std::vector<Opcode>& regionOpcodes);
@@ -106,6 +110,8 @@ private:
 
     std::atomic<bool> canEnterCallback { true };
     std::atomic<bool> inCallback { false };
+
+    int numVoices { config::numVoices };
 
     LEAK_DETECTOR(Synth);
 };
