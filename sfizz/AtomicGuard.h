@@ -41,6 +41,7 @@ public:
 private:
 	std::atomic<bool>& guard;
 };
+
 class AtomicDisabler
 {
 public:

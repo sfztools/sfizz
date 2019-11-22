@@ -92,7 +92,7 @@ void sfz::readInterleaved<float, true>(absl::Span<const float> input, absl::Span
     const auto* lastAligned = prevAligned(input.begin() + size - TypeAlignment);
 
     while (unaligned(in, lOut, rOut) && in < lastAligned)
-        snippetRead<float>(in, lOut, rOut);
+        _internals::snippetRead<float>(in, lOut, rOut);
 
     while (in < lastAligned) {
         auto register0 = _mm_load_ps(in);
@@ -112,7 +112,7 @@ void sfz::readInterleaved<float, true>(absl::Span<const float> input, absl::Span
     }
 
     while (in < input.end() - 1)
-        snippetRead<float>(in, lOut, rOut);
+        _internals::snippetRead<float>(in, lOut, rOut);
 }
 
 template <>
@@ -130,7 +130,7 @@ void sfz::writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl:
     const auto* lastAligned = prevAligned(output.begin() + size - TypeAlignment);
 
     while (unaligned(out, rIn, lIn) && out < lastAligned)
-        snippetWrite<float>(out, lIn, rIn);
+        _internals::snippetWrite<float>(out, lIn, rIn);
 
     while (out < lastAligned) {
         const auto lInRegister = _mm_load_ps(lIn);
@@ -149,7 +149,7 @@ void sfz::writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl:
     }
 
     while (out < output.end() - 1)
-        snippetWrite<float>(out, lIn, rIn);
+        _internals::snippetWrite<float>(out, lIn, rIn);
 }
 
 template <>
@@ -292,7 +292,7 @@ void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const 
     const auto* lastAligned = prevAligned(output.begin() + size);
 
     while (unaligned(out, in, g) && out < lastAligned)
-        snippetGainSpan<float>(g, in, out);
+        _internals::snippetGainSpan<float>(g, in, out);
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)));
@@ -302,7 +302,7 @@ void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const 
     }
 
     while (out < output.end())
-        snippetGainSpan<float>(g, in, out);
+        _internals::snippetGainSpan<float>(g, in, out);
 }
 
 template <>
@@ -315,7 +315,7 @@ void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<cons
     const auto* lastAligned = prevAligned(output.begin() + size);
 
     while (unaligned(out, in, g) && out < lastAligned)
-        snippetMultiplyAdd<float>(g, in, out);
+        _internals::snippetMultiplyAdd<float>(g, in, out);
 
     while (out < lastAligned) {
         auto mmOut = _mm_load_ps(out);
@@ -327,7 +327,7 @@ void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<cons
     }
 
     while (out < output.end())
-        snippetMultiplyAdd<float>(g, in, out);
+        _internals::snippetMultiplyAdd<float>(g, in, out);
 }
 
 template <>
@@ -352,7 +352,7 @@ float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps,
     const auto* alignedEnd = prevAligned(sentinel);
 
     while (unaligned(reinterpret_cast<float*>(index), leftCoeff, rightCoeff, jump) && jump < alignedEnd)
-        snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
+        _internals::snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
 
     auto mmFloatIndex = _mm_set_ps1(floatIndex);
     const auto mmJumpBack = _mm_set1_ps(loopEnd - loopStart);
@@ -388,7 +388,7 @@ float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps,
 
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
     while (jump < sentinel)
-        snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
+        _internals::snippetLoopingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
     return floatIndex;
 }
 
@@ -413,7 +413,7 @@ float sfz::saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
     const auto* alignedEnd = prevAligned(sentinel);
 
     while (unaligned(reinterpret_cast<float*>(index), leftCoeff, rightCoeff, jump) && jump < alignedEnd)
-        snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+        _internals::snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
 
     auto mmFloatIndex = _mm_set_ps1(floatIndex);
     const auto mmLoopEnd = _mm_set1_ps(loopEnd);
@@ -446,7 +446,7 @@ float sfz::saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
 
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
     while (jump < sentinel)
-        snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+        _internals::snippetSaturatingIndex<float>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
     return floatIndex;
 }
 
@@ -457,7 +457,7 @@ float sfz::linearRamp<float, true>(absl::Span<float> output, float value, float 
     const auto* lastAligned = prevAligned(output.end());
 
     while (unaligned(out) && out < lastAligned)
-        snippetRampLinear<float>(out, value, step);
+        _internals::snippetRampLinear<float>(out, value, step);
 
     auto mmValue = _mm_set1_ps(value);
     auto mmStep = _mm_set_ps(step + step + step + step, step + step + step, step + step, step);
@@ -471,7 +471,7 @@ float sfz::linearRamp<float, true>(absl::Span<float> output, float value, float 
 
     value = _mm_cvtss_f32(mmValue);
     while (out < output.end())
-        snippetRampLinear<float>(out, value, step);
+        _internals::snippetRampLinear<float>(out, value, step);
     return value;
 }
 
@@ -482,7 +482,7 @@ float sfz::multiplicativeRamp<float, true>(absl::Span<float> output, float value
     const auto* lastAligned = prevAligned(output.end());
 
     while (unaligned(out) && out < lastAligned)
-        snippetRampMultiplicative<float>(out, value, step);
+        _internals::snippetRampMultiplicative<float>(out, value, step);
 
     auto mmValue = _mm_set1_ps(value);
     auto mmStep = _mm_set_ps(step * step * step * step, step * step * step, step * step, step);
@@ -496,7 +496,7 @@ float sfz::multiplicativeRamp<float, true>(absl::Span<float> output, float value
 
     value = _mm_cvtss_f32(mmValue);
     while (out < output.end())
-        snippetRampMultiplicative<float>(out, value, step);
+        _internals::snippetRampMultiplicative<float>(out, value, step);
     return value;
 }
 
@@ -510,7 +510,7 @@ void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> outp
     const auto* lastAligned = prevAligned(sentinel);
 
     while (unaligned(in, out) && out < lastAligned)
-        snippetAdd<float>(in, out);
+        _internals::snippetAdd<float>(in, out);
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_add_ps(_mm_load_ps(in), _mm_load_ps(out)));
@@ -519,7 +519,7 @@ void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> outp
     }
 
     while (out < sentinel)
-        snippetAdd<float>(in, out);
+        _internals::snippetAdd<float>(in, out);
 }
 
 template <>
@@ -530,7 +530,7 @@ void sfz::add<float, true>(float value, absl::Span<float> output) noexcept
     const auto* lastAligned = prevAligned(sentinel);
 
     while (unaligned(out) && out < lastAligned)
-        snippetAdd<float>(value, out);
+        _internals::snippetAdd<float>(value, out);
 
     auto mmValue = _mm_set_ps1(value);
     while (out < lastAligned) {
@@ -539,7 +539,7 @@ void sfz::add<float, true>(float value, absl::Span<float> output) noexcept
     }
 
     while (out < sentinel)
-        snippetAdd<float>(value, out);
+        _internals::snippetAdd<float>(value, out);
 }
 
 template <>
@@ -552,7 +552,7 @@ void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float>
     const auto* lastAligned = prevAligned(sentinel);
 
     while (unaligned(in, out) && out < lastAligned)
-        snippetSubtract<float>(in, out);
+        _internals::snippetSubtract<float>(in, out);
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_sub_ps(_mm_load_ps(out), _mm_load_ps(in)));
@@ -561,7 +561,7 @@ void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float>
     }
 
     while (out < sentinel)
-        snippetSubtract<float>(in, out);
+        _internals::snippetSubtract<float>(in, out);
 }
 
 template <>
@@ -572,7 +572,7 @@ void sfz::subtract<float, true>(const float value, absl::Span<float> output) noe
     const auto* lastAligned = prevAligned(sentinel);
 
     while (unaligned(out) && out < lastAligned)
-        snippetSubtract<float>(value, out);
+        _internals::snippetSubtract<float>(value, out);
 
     auto mmValue = _mm_set_ps1(value);
     while (out < lastAligned) {
@@ -581,7 +581,7 @@ void sfz::subtract<float, true>(const float value, absl::Span<float> output) noe
     }
 
     while (out < sentinel)
-        snippetSubtract<float>(value, out);
+        _internals::snippetSubtract<float>(value, out);
 }
 
 template <>
@@ -594,7 +594,7 @@ void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> out
     const auto* lastAligned = prevAligned(sentinel);
 
     while (unaligned(in, out) && out < lastAligned)
-        snippetCopy<float>(in, out);
+        _internals::snippetCopy<float>(in, out);
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_load_ps(in));
@@ -603,7 +603,7 @@ void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> out
     }
 
     while (out < sentinel)
-        snippetCopy<float>(in, out);
+        _internals::snippetCopy<float>(in, out);
 }
 
 template <>
@@ -618,7 +618,7 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
     const auto* lastAligned = prevAligned(sentinel);
 
     while (unaligned(pan, left, right) && pan < lastAligned)
-        snippetPan(pan, left, right);
+        _internals::snippetPan(pan, left, right);
 
     const auto mmOne = _mm_set_ps1(1.0f);
     const auto mmPiFour = _mm_set_ps1(piFour<float>);
@@ -639,7 +639,7 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
     }
 
     while (pan < sentinel)
-        snippetPan(pan, left, right);
+        _internals::snippetPan(pan, left, right);
 }
 
 template <>
@@ -725,7 +725,7 @@ void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> o
 
     *out++ = *in++;
     while (unaligned(in, out) && in < lastAligned)
-        snippetCumsum(in, out);
+        _internals::snippetCumsum(in, out);
 
     auto mmOutput = _mm_set_ps1(*(out - 1));
     while (in < lastAligned) {
@@ -740,7 +740,7 @@ void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> o
     }
 
     while (in < sentinel)
-        snippetCumsum(in, out);
+        _internals::snippetCumsum(in, out);
 }
 
 template <>
@@ -758,7 +758,7 @@ void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, 
     const auto lastAligned = prevAligned(sentinel);
 
     while (unaligned(floatJump, reinterpret_cast<float*>(jump), leftCoeff, rightCoeff) && floatJump < lastAligned)
-        snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
+        _internals::snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
 
     while (floatJump < lastAligned) {
         auto mmFloatJumps = _mm_load_ps(floatJump);
@@ -776,7 +776,7 @@ void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, 
     }
 
     while(floatJump < sentinel)
-        snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
+        _internals::snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
 }
 
 template <>
@@ -793,7 +793,7 @@ void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> out
 
     *out++ = *in++;
     while (unaligned(in, out) && in < lastAligned)
-        snippetDiff(in, out);
+        _internals::snippetDiff(in, out);
 
     auto mmBase = _mm_set_ps1(*(in - 1));
     while (in < lastAligned) {
@@ -808,5 +808,5 @@ void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> out
     }
 
     while (in < sentinel)
-        snippetDiff(in, out);
+        _internals::snippetDiff(in, out);
 }

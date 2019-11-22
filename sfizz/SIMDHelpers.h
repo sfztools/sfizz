@@ -29,13 +29,14 @@
 #include <absl/types/span.h>
 #include <cmath>
 
-namespace sfz
-{
-template <class T>
-inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
-{
-    *outputLeft++ = *input++;
-    *outputRight++ = *input++;
+namespace sfz {
+namespace _internals {
+    template <class T>
+    inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
+    {
+        *outputLeft++ = *input++;
+        *outputRight++ = *input++;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::readInterleaved>
@@ -49,14 +50,16 @@ void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::
     auto* lOut = outputLeft.begin();
     auto* rOut = outputRight.begin();
     while (in < (input.end() - 1) && lOut < outputLeft.end() && rOut < outputRight.end())
-        snippetRead<T>(in, lOut, rOut);
+        _internals::snippetRead<T>(in, lOut, rOut);
 }
 
-template <class T>
-inline void snippetWrite(T*& output, const T*& inputLeft, const T*& inputRight)
-{
-    *output++ = *inputLeft++;
-    *output++ = *inputRight++;
+namespace _internals {
+    template <class T>
+    inline void snippetWrite(T*& output, const T*& inputLeft, const T*& inputRight)
+    {
+        *output++ = *inputLeft++;
+        *output++ = *inputRight++;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::writeInterleaved>
@@ -69,7 +72,7 @@ void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRi
     auto* rIn = inputRight.begin();
     auto* out = output.begin();
     while (lIn < inputLeft.end() && rIn < inputRight.end() && out < (output.end() - 1))
-        snippetWrite<T>(out, lIn, rIn);
+        _internals::snippetWrite<T>(out, lIn, rIn);
 }
 
 // Specializations
@@ -135,27 +138,26 @@ void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 template <>
 void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template <>
-void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
-
-template <class T>
-inline void snippetSaturatingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd)
-{
-    floatIndex += *jump;
-    if (floatIndex >= loopEnd) {
-        floatIndex = loopEnd;
-        *index = static_cast<int>(floatIndex) - 1;
-        *rightCoeff = static_cast<T>(1.0);
-        *leftCoeff = static_cast<T>(0.0);
-    } else {
-        *index = static_cast<int>(floatIndex);
-        *rightCoeff = floatIndex - *index;
-        *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
+namespace _internals {
+    template <class T>
+    inline void snippetSaturatingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd)
+    {
+        floatIndex += *jump;
+        if (floatIndex >= loopEnd) {
+            floatIndex = loopEnd;
+            *index = static_cast<int>(floatIndex) - 1;
+            *rightCoeff = static_cast<T>(1.0);
+            *leftCoeff = static_cast<T>(0.0);
+        } else {
+            *index = static_cast<int>(floatIndex);
+            *rightCoeff = floatIndex - *index;
+            *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
+        }
+        index++;
+        leftCoeff++;
+        rightCoeff++;
+        jump++;
     }
-    index++;
-    leftCoeff++;
-    rightCoeff++;
-    jump++;
 }
 
 template <class T, bool SIMD = SIMDConfig::saturatingSFZIndex>
@@ -173,26 +175,28 @@ float saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, ab
     auto* sentinel = jumps.begin() + size;
 
     while (jump < sentinel)
-        snippetSaturatingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
+        _internals::snippetSaturatingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd);
     return floatIndex;
 }
 
 template <>
 float saturatingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs, absl::Span<int> indices, float floatIndex, float loopEnd) noexcept;
 
-template <class T>
-inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd, T loopStart)
-{
-    floatIndex += *jump;
-    if (floatIndex >= loopEnd)
-        floatIndex -= loopEnd - loopStart;
-    *index = static_cast<int>(floatIndex);
-    *rightCoeff = floatIndex - *index;
-    *leftCoeff = 1.0f - *rightCoeff;
-    index++;
-    leftCoeff++;
-    rightCoeff++;
-    jump++;
+namespace _internals {
+    template <class T>
+    inline void snippetLoopingIndex(const T*& jump, T*& leftCoeff, T*& rightCoeff, int*& index, T& floatIndex, T loopEnd, T loopStart)
+    {
+        floatIndex += *jump;
+        if (floatIndex >= loopEnd)
+            floatIndex -= loopEnd - loopStart;
+        *index = static_cast<int>(floatIndex);
+        *rightCoeff = floatIndex - *index;
+        *leftCoeff = 1.0f - *rightCoeff;
+        index++;
+        leftCoeff++;
+        rightCoeff++;
+        jump++;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::loopingSFZIndex>
@@ -210,17 +214,19 @@ float loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl:
     auto* sentinel = jumps.begin() + size;
 
     while (jump < sentinel)
-        snippetLoopingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
+        _internals::snippetLoopingIndex<T>(jump, leftCoeff, rightCoeff, index, floatIndex, loopEnd, loopStart);
     return floatIndex;
 }
 
 template <>
 float loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept;
 
-template <class T>
-inline void snippetGain(T gain, const T*& input, T*& output)
-{
-    *output++ = gain * (*input++);
+namespace _internals {
+    template <class T>
+    inline void snippetGain(T gain, const T*& input, T*& output)
+    {
+        *output++ = gain * (*input++);
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::gain>
@@ -231,13 +237,15 @@ void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = out + std::min(output.size(), input.size());
     while (out < sentinel)
-        snippetGain<T>(gain, in, out);
+        _internals::snippetGain<T>(gain, in, out);
 }
 
-template <class T>
-inline void snippetGainSpan(const T*& gain, const T*& input, T*& output)
-{
-    *output++ = (*gain++) * (*input++);
+namespace _internals {
+    template <class T>
+    inline void snippetGainSpan(const T*& gain, const T*& input, T*& output)
+    {
+        *output++ = (*gain++) * (*input++);
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::gain>
@@ -250,7 +258,7 @@ void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T
     auto* out = output.begin();
     auto* sentinel = out + std::min(gain.size(), std::min(output.size(), input.size()));
     while (out < sentinel)
-        snippetGainSpan<T>(g, in, out);
+        _internals::snippetGainSpan<T>(g, in, out);
 }
 
 template <class T, bool SIMD = SIMDConfig::gain>
@@ -271,10 +279,12 @@ void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Spa
 template <>
 void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template <class T>
-inline void snippetMultiplyAdd(const T*& gain, const T*& input, T*& output)
-{
-    *output++ += (*gain++) * (*input++);
+namespace _internals {
+    template <class T>
+    inline void snippetMultiplyAdd(const T*& gain, const T*& input, T*& output)
+    {
+        *output++ += (*gain++) * (*input++);
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::multiplyAdd>
@@ -287,17 +297,19 @@ void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span
     auto* out = output.begin();
     auto* sentinel = out + std::min(gain.size(), std::min(output.size(), input.size()));
     while (out < sentinel)
-        snippetMultiplyAdd<T>(g, in, out);
+        _internals::snippetMultiplyAdd<T>(g, in, out);
 }
 
 template <>
 void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template <class T>
-inline void snippetRampLinear(T*& output, T& value, T step)
-{
-    value += step;
-    *output++ = value;
+namespace _internals {
+    template <class T>
+    inline void snippetRampLinear(T*& output, T& value, T step)
+    {
+        value += step;
+        *output++ = value;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::linearRamp>
@@ -305,15 +317,17 @@ T linearRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
     while (out < output.end())
-        snippetRampLinear<T>(out, start, step);
+        _internals::snippetRampLinear<T>(out, start, step);
     return start;
 }
 
-template <class T>
-inline void snippetRampMultiplicative(T*& output, T& value, T step)
-{
-    value *= step;
-    *output++ = value;
+namespace _internals {
+    template <class T>
+    inline void snippetRampMultiplicative(T*& output, T& value, T step)
+    {
+        value *= step;
+        *output++ = value;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::multiplicativeRamp>
@@ -321,7 +335,7 @@ T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 {
     auto* out = output.begin();
     while (out < output.end())
-        snippetRampMultiplicative<T>(out, start, step);
+        _internals::snippetRampMultiplicative<T>(out, start, step);
     return start;
 }
 
@@ -331,10 +345,17 @@ float linearRamp<float, true>(absl::Span<float> output, float start, float step)
 template <>
 float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
 
-template <class T>
-inline void snippetAdd(const T*& input, T*& output)
-{
-    *output++ += *input++;
+namespace _internals {
+    template <class T>
+    inline void snippetAdd(const T*& input, T*& output)
+    {
+        *output++ += *input++;
+    }
+    template <class T>
+    inline void snippetAdd(const T value, T*& output)
+    {
+        *output++ += value;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::add>
@@ -345,17 +366,11 @@ void add(absl::Span<const T> input, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
     while (out < sentinel)
-        snippetAdd(in, out);
+        _internals::snippetAdd(in, out);
 }
 
 template <>
 void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
-
-template <class T>
-inline void snippetAdd(const T value, T*& output)
-{
-    *output++ += value;
-}
 
 template <class T, bool SIMD = SIMDConfig::add>
 void add(T value, absl::Span<T> output) noexcept
@@ -363,23 +378,24 @@ void add(T value, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = output.end();
     while (out < sentinel)
-        snippetAdd(value, out);
+        _internals::snippetAdd(value, out);
 }
 
 template <>
 void add<float, true>(float value, absl::Span<float> output) noexcept;
 
+namespace _internals {
+    template <class T>
+    inline void snippetSubtract(const T*& input, T*& output)
+    {
+        *output++ -= *input++;
+    }
 
-template <class T>
-inline void snippetSubtract(const T*& input, T*& output)
-{
-    *output++ -= *input++;
-}
-
-template <class T>
-inline void snippetSubtract(const T value, T*& output)
-{
-    *output++ -= value;
+    template <class T>
+    inline void snippetSubtract(const T value, T*& output)
+    {
+        *output++ -= value;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::subtract>
@@ -388,7 +404,7 @@ void subtract(const T value, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = output.end();
     while (out < sentinel)
-        snippetSubtract(value, out);
+        _internals::snippetSubtract(value, out);
 }
 
 template <class T, bool SIMD = SIMDConfig::subtract>
@@ -399,7 +415,7 @@ void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
     while (out < sentinel)
-        snippetSubtract(in, out);
+        _internals::snippetSubtract(in, out);
 }
 
 template <>
@@ -408,10 +424,12 @@ void subtract<float, true>(absl::Span<const float> input, absl::Span<float> outp
 template <>
 void subtract<float, true>(const float value, absl::Span<float> output) noexcept;
 
-template <class T>
-void snippetCopy(const T*& input, T*& output)
-{
-    *output++ = *input++;
+namespace _internals {
+    template <class T>
+    void snippetCopy(const T*& input, T*& output)
+    {
+        *output++ = *input++;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::copy>
@@ -422,18 +440,20 @@ void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
     while (out < sentinel)
-        snippetCopy(in, out);
+        _internals::snippetCopy(in, out);
 }
 
 template <>
 void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template <class T>
-inline void snippetPan(const T*& pan, T*& left, T*& right)
-{
-    const auto circlePan = piFour<float> * (static_cast<T>(1.0) + *pan++);
-    *left++ *= std::cos(circlePan);
-    *right++ *= std::sin(circlePan);
+namespace _internals {
+    template <class T>
+    inline void snippetPan(const T*& pan, T*& left, T*& right)
+    {
+        const auto circlePan = piFour<float> * (static_cast<T>(1.0) + *pan++);
+        *left++ *= std::cos(circlePan);
+        *right++ *= std::sin(circlePan);
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::pan>
@@ -446,7 +466,7 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
     auto* right = rightBuffer.begin();
     auto* sentinel = pan + min(panEnvelope.size(), leftBuffer.size(), rightBuffer.size());
     while (pan < sentinel)
-        snippetPan(pan, left, right);
+        _internals::snippetPan(pan, left, right);
 }
 
 template <>
@@ -455,7 +475,7 @@ void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> lef
 template <class T, bool SIMD = SIMDConfig::mean>
 T mean(absl::Span<const T> vector) noexcept
 {
-    T result { 0.0 };
+    T result{ 0.0 };
     if (vector.size() == 0)
         return result;
 
@@ -472,7 +492,7 @@ float mean<float, true>(absl::Span<const float> vector) noexcept;
 template <class T, bool SIMD = SIMDConfig::meanSquared>
 T meanSquared(absl::Span<const T> vector) noexcept
 {
-    T result { 0.0 };
+    T result{ 0.0 };
     if (vector.size() == 0)
         return result;
 
@@ -488,11 +508,13 @@ T meanSquared(absl::Span<const T> vector) noexcept
 template <>
 float meanSquared<float, true>(absl::Span<const float> vector) noexcept;
 
-template <class T>
-inline void snippetCumsum(const T*& input, T*& output)
-{
-    *output = *(output - 1) + *input++;
-    output++;
+namespace _internals {
+    template <class T>
+    inline void snippetCumsum(const T*& input, T*& output)
+    {
+        *output = *(output - 1) + *input++;
+        output++;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::cumsum>
@@ -508,25 +530,27 @@ void cumsum(absl::Span<const T> input, absl::Span<T> output) noexcept
 
     *out++ = *in++;
     while (in < sentinel)
-        snippetCumsum(in, out);
+        _internals::snippetCumsum(in, out);
 }
 
 template <>
 void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
-template<class T>
-void snippetSFZInterpolationCast(const T*& floatJump, int*& jump, T*& leftCoeff, T*& rightCoeff)
-{
-    *jump = static_cast<int>(*floatJump);
-    *rightCoeff = *floatJump - static_cast<float>(*jump);
-    *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
-    leftCoeff++;
-    jump++;
-    rightCoeff++;
-    floatJump++;
+namespace _internals {
+    template <class T>
+    void snippetSFZInterpolationCast(const T*& floatJump, int*& jump, T*& leftCoeff, T*& rightCoeff)
+    {
+        *jump = static_cast<int>(*floatJump);
+        *rightCoeff = *floatJump - static_cast<float>(*jump);
+        *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
+        leftCoeff++;
+        jump++;
+        rightCoeff++;
+        floatJump++;
+    }
 }
 
-template<class T, bool SIMD = SIMDConfig::sfzInterpolationCast>
+template <class T, bool SIMD = SIMDConfig::sfzInterpolationCast>
 void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs) noexcept
 {
     ASSERT(jumps.size() >= floatJumps.size());
@@ -540,18 +564,20 @@ void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps,
     const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), leftCoeffs.size(), rightCoeffs.size());
 
     while (floatJump < sentinel)
-        snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
+        _internals::snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
 }
 
-template<>
+template <>
 void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept;
 
-template <class T>
-inline void snippetDiff(const T*& input, T*& output)
-{
-    *output = *input - *(input - 1);
-    output++;
-    input++;
+namespace _internals {
+    template <class T>
+    inline void snippetDiff(const T*& input, T*& output)
+    {
+        *output = *input - *(input - 1);
+        output++;
+        input++;
+    }
 }
 
 template <class T, bool SIMD = SIMDConfig::diff>
@@ -567,10 +593,10 @@ void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
 
     *out++ = *in++;
     while (in < sentinel)
-        snippetDiff(in, out);
+        _internals::snippetDiff(in, out);
 }
 
 template <>
-void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+void diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 } // namespace sfz

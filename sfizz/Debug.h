@@ -25,10 +25,7 @@
 
 #ifndef NDEBUG
 #include <iostream>
-// These trap into the signal library rather than your own sourcecode
-// #include <signal.h>
-// #define ASSERTFALSE { ::kill(0, SIGTRAP); }
-// #define ASSERTFALSE { raise(SIGTRAP); }
+
 #if (__linux__ || __unix__)
 
 // Break in source code
