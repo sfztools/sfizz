@@ -49,7 +49,7 @@ static void Point(benchmark::State& state) {
                 out = envelope.getNextValue();
         benchmark::DoNotOptimize(output);
     }
-    state.counters["Per block"] = benchmark::Counter(envelopeSize / state.range(0), benchmark::Counter::kIsIterationInvariantRate);
+    state.counters["Per block"] = benchmark::Counter(envelopeSize / state.range(0), benchmark::Counter::kIsRate);
 }
 
 static void Block(benchmark::State& state) {
@@ -63,7 +63,7 @@ static void Block(benchmark::State& state) {
         benchmark::DoNotOptimize(output);
     }
 
-    state.counters["Per block"] = benchmark::Counter(envelopeSize / state.range(0), benchmark::Counter::kIsIterationInvariantRate);
+    state.counters["Per block"] = benchmark::Counter(envelopeSize / state.range(0), benchmark::Counter::kIsRate);
 }
 
 BENCHMARK(Point)->RangeMultiplier(2)->Range((2<<6), (2<<11));
