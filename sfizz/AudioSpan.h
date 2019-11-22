@@ -277,7 +277,7 @@ public:
      */
     void fill(Type value) noexcept
     {
-        static_assert(!std::is_const_v<Type>, "Can't allow mutating operations on const AudioSpans");
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         for (int i = 0; i < numChannels; ++i)
             sfz::fill<Type>(getSpan(i), value);
     }
@@ -289,7 +289,7 @@ public:
      */
     void applyGain(absl::Span<const Type> gain) noexcept
     {
-        static_assert(!std::is_const_v<Type>, "Can't allow mutating operations on const AudioSpans");
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         for (int i = 0; i < numChannels; ++i)
             sfz::applyGain<Type>(gain, getSpan(i));
     }
@@ -301,7 +301,7 @@ public:
      */
     void applyGain(Type gain) noexcept
     {
-        static_assert(!std::is_const_v<Type>, "Can't allow mutating operations on const AudioSpans");
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         for (int i = 0; i < numChannels; ++i)
             sfz::applyGain<Type>(gain, getSpan(i));
     }
@@ -315,7 +315,7 @@ public:
     template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
     void add(AudioSpan<U, N>& other)
     {
-        static_assert(!std::is_const_v<Type>, "Can't allow mutating operations on const AudioSpans");
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
             for (int i = 0; i < numChannels; ++i)
@@ -332,7 +332,7 @@ public:
     template <class U, unsigned int N, typename = std::enable_if<N <= MaxChannels>>
     void copy(AudioSpan<U, N>& other)
     {
-        static_assert(!std::is_const_v<Type>, "Can't allow mutating operations on const AudioSpans");
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
             for (int i = 0; i < numChannels; ++i)
