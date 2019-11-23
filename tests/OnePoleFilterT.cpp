@@ -24,7 +24,7 @@
 #include "OnePoleFilter.h"
 #include "catch2/catch.hpp"
 #include "cnpy.h"
-#include "../sfizz/ghc/fs_std.hpp"
+#include "ghc/fs_std.hpp"
 #include <absl/types/span.h>
 #include <algorithm>
 #include <string>

@@ -45,3 +45,7 @@ endif()
 if (SFIZZ_BENCHMARKS)
 add_subdirectory(benchmarks)
 endif()
+
+if (SFIZZ_TESTS)
+add_subdirectory(tests)
+endif()

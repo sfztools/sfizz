@@ -63,16 +63,18 @@ add_library(sfizz::sfizz ALIAS sfizz)
 
 # Shared library and installation target
 
-add_library(sfizz_shared SHARED sfizz/sfizz_wrapper.cpp)
-set_target_properties(sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER sfizz.h)
-target_link_libraries(sfizz_shared sfizz::sfizz)
-configure_file(${CMAKE_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
-if(UNIX)
-    include(GNUInstallDirs)
-    install(TARGETS sfizz_shared 
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-    install(FILES 
-        ${CMAKE_BINARY_DIR}/src/sfizz.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
-endif()
+if (SFIZZ_SHARED)
+    add_library(sfizz_shared SHARED sfizz/sfizz_wrapper.cpp)
+    set_target_properties(sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER sfizz.h)
+    target_link_libraries(sfizz_shared sfizz::sfizz)
+    configure_file(${CMAKE_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
+    if(UNIX)
+        include(GNUInstallDirs)
+        install(TARGETS sfizz_shared 
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        install(FILES 
+            ${CMAKE_BINARY_DIR}/src/sfizz.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+    endif()
+endif(SFIZZ_SHARED)
