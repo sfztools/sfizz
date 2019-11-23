@@ -55,6 +55,8 @@ target_link_libraries(sfizz PRIVATE sndfile absl::flat_hash_map Threads::Threads
 if(UNIX)
     target_link_libraries(sfizz PUBLIC atomic)
 endif(UNIX)
+set_property(TARGET sfizz_parser PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+set_property(TARGET sfizz PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
 
 add_library(sfizz::parser ALIAS sfizz_parser)
 add_library(sfizz::sfizz ALIAS sfizz)
