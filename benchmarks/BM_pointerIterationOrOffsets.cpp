@@ -24,7 +24,7 @@
 #include <benchmark/benchmark.h>
 #include <random>
 #include <absl/algorithm/container.h>
-#include "../sfizz/SIMDHelpers.h"
+#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
 constexpr int bigNumber { 2399132 };

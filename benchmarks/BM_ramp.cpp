@@ -23,8 +23,8 @@
 
 #include <benchmark/benchmark.h>
 #include <random>
-#include "../sfizz/SIMDHelpers.h"
-#include "../sfizz/Buffer.h"
+#include "SIMDHelpers.h"
+#include "Buffer.h"
 
 
 static void Dummy(benchmark::State& state) {

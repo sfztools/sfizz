@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <benchmark/benchmark.h>
-#include "../sfizz/ADSREnvelope.h"
+#include "ADSREnvelope.h"
 #include <algorithm>
 #include <random>
 #include <numeric>
@@ -35,7 +35,7 @@ constexpr int release = attack;
 constexpr int releaseTime = envelopeSize - static_cast<int>(envelopeSize / 4);
 
 // Explicitely instantiate class
-#include "../sfizz/ADSREnvelope.cpp"
+#include "ADSREnvelope.cpp"
 template class sfz::ADSREnvelope<float>;
 
 static void Point(benchmark::State& state) {

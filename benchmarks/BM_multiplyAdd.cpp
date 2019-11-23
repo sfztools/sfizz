@@ -27,7 +27,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "../sfizz/SIMDHelpers.h"
+#include "SIMDHelpers.h"
 
 class MultiplyAdd : public benchmark::Fixture {
 public:
