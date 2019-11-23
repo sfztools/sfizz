@@ -33,3 +33,15 @@ add_subdirectory(external/abseil-cpp EXCLUDE_FROM_ALL)
 
 # Add the static library targets and sources
 add_subdirectory(src)
+
+if (SFIZZ_CLIENTS)
+add_subdirectory(clients)
+endif()
+
+if (SFIZZ_LV2)
+add_subdirectory(lv2)
+endif()
+
+if (SFIZZ_BENCHMARKS)
+add_subdirectory(benchmarks)
+endif()
