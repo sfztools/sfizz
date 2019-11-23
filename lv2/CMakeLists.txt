@@ -15,4 +15,16 @@ add_custom_command( TARGET sfizz_lv2 POST_BUILD
                             ${CMAKE_SOURCE_DIR}/lv2/manifest.ttl
                             ${CMAKE_CURRENT_BINARY_DIR}/manifest.ttl)
 
-# TODO: install target for the LV2 plugin
+set_property(TARGET sfizz_lv2 PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+
+
+if(UNIX)
+    if (NOT LV2_INSTALL_PREFIX)
+        set(LV2_INSTALL_PREFIX ${CMAKE_INSTALL_LIBDIR}/lv2/sfizz.lv2)
+    endif()
+    install(TARGETS sfizz_lv2 
+        ARCHIVE DESTINATION ${LV2_INSTALL_PREFIX}
+        LIBRARY DESTINATION ${LV2_INSTALL_PREFIX})
+    install(FILES ${CMAKE_BINARY_DIR}/lv2/sfizz.ttl DESTINATION ${LV2_INSTALL_PREFIX})
+    install(FILES ${CMAKE_BINARY_DIR}/lv2/manifest.ttl DESTINATION ${LV2_INSTALL_PREFIX})
+endif()
