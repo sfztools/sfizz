@@ -21,6 +21,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+/**
+ * @brief Flush floating points to zero and disable denormals as an RAII helper.
+ * 
+ */
 class ScopedFTZ {
 
 public:

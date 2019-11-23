@@ -21,6 +21,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+/**
+ * @file MathHelpers.h
+ * @author Paul Ferrand (paul@ferrand.cc)
+ * @brief Contains math helper functions and math constants
+ * @version 0.1
+ * @date 2019-11-23 
+ */
 #pragma once
 #include <algorithm>
 #include <cmath>
@@ -34,43 +41,91 @@ inline constexpr T min(T op1, T op2, T op3) { return std::min(op1, std::min(op2,
 template <class T>
 inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::min(op2, std::min(op3, op4))); }
 
-
+/**
+ * @brief Converts db values into power (applies 10**(in/10))
+ * 
+ * @tparam Type 
+ * @param in 
+ * @return Type 
+ */
 template <class Type>
 inline constexpr Type db2pow(Type in)
 {
     return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.1));
 }
 
+/**
+ * @brief Converts power values into dB (applies 10log10(in))
+ * 
+ * @tparam Type 
+ * @param in 
+ * @return Type 
+ */
 template <class Type>
 inline constexpr Type pow2db(Type in)
 {
     return static_cast<Type>(10.0) * std::log10(in);
 }
 
+/**
+ * @brief Converts dB values to magnitude (applies 10**(in/20))
+ * 
+ * @tparam Type 
+ * @param in 
+ * @return constexpr Type 
+ */
 template <class Type>
 inline constexpr Type db2mag(Type in)
 {
     return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.05));
 }
 
+/**
+ * @brief Converts magnitude values into dB (applies 20log10(in))
+ * 
+ * @tparam Type 
+ * @param in 
+ * @return Type 
+ */
 template <class Type>
 inline constexpr Type mag2db(Type in)
 {
     return static_cast<Type>(20.0) * std::log10(in);
 }
 
+/**
+ * @brief Global random singletons
+ * 
+ * TODO: could be moved into a singleton class holder
+ * 
+ */
 namespace Random {
 	static std::random_device randomDevice;
 	static std::mt19937 randomGenerator { randomDevice() };
 } // namespace Random
 
+/**
+ * @brief Converts a midi note to a frequency value
+ * 
+ * @param noteNumber 
+ * @return float 
+ */
 inline float midiNoteFrequency(const int noteNumber)
 {
     return 440.0f * std::pow(2.0f, (noteNumber - 69) / 12.0f);
 }
 
+/**
+ * @brief Clamps a value between bounds, including the bounds!
+ * 
+ * @tparam T 
+ * @param v 
+ * @param lo 
+ * @param hi 
+ * @return T
+ */
 template<class T>
-constexpr const T& clamp( const T& v, const T& lo, const T& hi )
+constexpr T clamp( const T& v, const T& lo, const T& hi )
 {
 	assert( !(hi < lo) );
 	return (v < lo) ? lo : (hi < v) ? hi : v;
