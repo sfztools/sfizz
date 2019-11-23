@@ -64,7 +64,7 @@ add_library(sfizz::sfizz ALIAS sfizz)
 # Shared library and installation target
 
 if (SFIZZ_SHARED)
-    add_library(sfizz_shared SHARED sfizz/sfizz_wrapper.cpp)
+    add_library(sfizz_shared SHARED sfizz.h)
     set_target_properties(sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER sfizz.h)
     target_link_libraries(sfizz_shared sfizz::sfizz)
     configure_file(${CMAKE_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)

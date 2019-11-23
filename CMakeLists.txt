@@ -9,6 +9,9 @@ endif()
 # Export the compile_commands.json file
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Only install what's explicitely said
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+
 # Add required flags for the builds
 if (UNIX)
     add_compile_options(-Wall)
@@ -33,6 +36,8 @@ add_subdirectory(external/abseil-cpp EXCLUDE_FROM_ALL)
 
 # Add the static library targets and sources
 add_subdirectory(src)
+
+# Optional targets
 
 if (SFIZZ_CLIENTS)
 add_subdirectory(clients)
