@@ -35,12 +35,27 @@ using CCValueArray = std::array<uint8_t, 128>;
 using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
 
+/**
+ * @brief Converts cents to a pitch ratio
+ * 
+ * @tparam T 
+ * @param cents 
+ * @param centsPerOctave 
+ * @return constexpr float 
+ */
 template<class T>
 inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 {
     return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
 }
 
+/**
+ * @brief Normalize a CC value between (T)0.0 and (T)1.0
+ * 
+ * @tparam T 
+ * @param ccValue 
+ * @return constexpr float 
+ */
 template<class T>
 inline constexpr float normalizeCC(T ccValue)
 {
@@ -48,18 +63,40 @@ inline constexpr float normalizeCC(T ccValue)
     return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
 }
 
+/**
+ * @brief Normalize a percentage between 0 and 1
+ * 
+ * @tparam T 
+ * @param percentValue 
+ * @return constexpr float 
+ */
 template<class T>
 inline constexpr float normalizePercents(T percentValue)
 {
     return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
 }
 
+/**
+ * @brief Normalize a possibly negative percentage between -1 and 1
+ * 
+ * @tparam T 
+ * @param percentValue 
+ * @return constexpr float 
+ */
 template<class T>
 inline constexpr float normalizeNegativePercents(T percentValue)
 {
     return std::min(std::max(static_cast<float>(percentValue), -100.0f), 100.0f) / 100.0f;
 }
 
+/**
+ * @brief If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.
+ * 
+ * @param ccValues 
+ * @param ccSwitch 
+ * @param value 
+ * @return float 
+ */
 inline float ccSwitchedValue(const CCValueArray& ccValues, const absl::optional<CCValuePair>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)
@@ -68,6 +105,12 @@ inline float ccSwitchedValue(const CCValueArray& ccValues, const absl::optional<
         return value;
 }
 
+/**
+ * @brief Convert a note in string to its equivalent midi note number
+ * 
+ * @param value 
+ * @return absl::optional<uint8_t> 
+ */
 absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
 
 } // namespace sfz

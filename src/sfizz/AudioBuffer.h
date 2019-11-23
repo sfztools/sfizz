@@ -32,7 +32,16 @@
 
 namespace sfz 
 {
-
+/**
+ * @brief A class to handle a collection of buffers, where each buffer has the same size.
+ * 
+ * Unlike AudioSpan, this class *owns* its underlying buffers and they are freed when the buffer
+ * is destroyed. 
+ * 
+ * @tparam Type the underlying type of the buffers
+ * @tparam MaxChannels the maximum number of channels in the buffer
+ * @tparam Alignment the alignment for the buffers
+ */
 template <class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
 public:
@@ -43,9 +52,21 @@ public:
     using const_iterator = const_pointer;
     using size_type = size_t;
 
+    /**
+     * @brief Construct a new Audio Buffer object
+     * 
+     */
     AudioBuffer()
     {
     }
+
+    /**
+     * @brief Construct a new Audio Buffer object with a specified number of
+     * channels and frames.
+     * 
+     * @param numChannels 
+     * @param numFrames 
+     */
     AudioBuffer(int numChannels, int numFrames)
         : numChannels(numChannels)
         , numFrames(numFrames)
@@ -54,6 +75,13 @@ public:
             buffers[i] = std::make_unique<buffer_type>(numFrames);
     }
 
+    /**
+     * @brief Resizes all the underlying buffers to a new size.
+     * 
+     * @param newSize 
+     * @return true if the resize worked
+     * @return false otherwise
+     */
     bool resize(size_type newSize)
     {
         bool returnedOK = true;
@@ -62,6 +90,12 @@ public:
         return returnedOK;
     }
 
+    /**
+     * @brief Return an iterator to a specific channel with a non-const type.
+     * 
+     * @param channelIndex 
+     * @return iterator 
+     */
     iterator channelWriter(int channelIndex)
     {
         ASSERT(channelIndex < numChannels)
@@ -71,6 +105,12 @@ public:
         return {};
     }
 
+    /**
+     * @brief Returns a sentinel for the channelWriter(channelIndex) iterator
+     * 
+     * @param channelIndex 
+     * @return iterator 
+     */
     iterator channelWriterEnd(int channelIndex)
     {
         ASSERT(channelIndex < numChannels)
@@ -80,6 +120,12 @@ public:
         return {};
     }
 
+    /**
+     * @brief Returns a const iterator for a specific channel
+     * 
+     * @param channelIndex 
+     * @return const_iterator 
+     */
     const_iterator channelReader(int channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
@@ -89,6 +135,12 @@ public:
         return {};
     }
 
+    /**
+     * @brief Returns a sentinel for the channelReader(channelIndex) iterator
+     * 
+     * @param channelIndex 
+     * @return const_iterator 
+     */
     const_iterator channelReaderEnd(int channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
@@ -98,6 +150,12 @@ public:
         return {};
     }
 
+    /**
+     * @brief Get a Span for a specific channel
+     * 
+     * @param channelIndex 
+     * @return absl::Span<value_type> 
+     */
     absl::Span<value_type> getSpan(int channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
@@ -107,32 +165,67 @@ public:
         return {};
     }
 
+    /**
+     * @brief Get a const Span object for a specific channel
+     * 
+     * @param channelIndex 
+     * @return absl::Span<const value_type> 
+     */
     absl::Span<const value_type> getConstSpan(int channelIndex) const
     {
         return getSpan(channelIndex);
     }
 
+    /**
+     * @brief Add a channel to the buffer with the current number of frames.
+     * 
+     */
     void addChannel()
     {
         if (numChannels < MaxChannels)
             buffers[numChannels++] = std::make_unique<buffer_type>(numFrames);
     }
 
+    /**
+     * @brief Get the number of elements in each buffer
+     * 
+     * @return size_type 
+     */
     size_type getNumFrames() const
     {
         return numFrames;
     }
 
+    /**
+     * @brief Get the number of channels
+     * 
+     * @return int 
+     */
     int getNumChannels() const
     {
         return numChannels;
     }
 
+    /**
+     * @brief Check if the buffers contains no elements
+     * 
+     * @return true
+     * @return false 
+     */
     bool empty() const
     {
         return numFrames == 0;
     }
 
+    /**
+     * @brief Get a reference to a given element in a given buffer.
+     * 
+     * In release builds this is not checked and may touch bad memory.
+     * 
+     * @param channelIndex 
+     * @param frameIndex 
+     * @return Type& 
+     */
     Type& getSample(int channelIndex, size_type frameIndex)
     {
         // Uhoh
@@ -142,6 +235,13 @@ public:
         return *(buffers[channelIndex]->data() + frameIndex);
     }
 
+    /**
+     * @brief Alias for getSample(...)
+     * 
+     * @param channelIndex 
+     * @param frameIndex 
+     * @return Type& 
+     */
     Type& operator()(int channelIndex, size_type frameIndex)
     {
         return getSample(channelIndex, frameIndex);
