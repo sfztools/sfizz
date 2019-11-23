@@ -46,6 +46,7 @@ target_link_libraries(sfizz_parser PRIVATE absl::strings)
 
 add_library(sfizz STATIC ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp)
 target_include_directories(sfizz PUBLIC sfizz)
+target_include_directories(sfizz PUBLIC .)
 target_include_directories(sfizz PUBLIC external)
 target_link_libraries(sfizz PRIVATE sfizz_parser)
 find_package(Threads REQUIRED)
