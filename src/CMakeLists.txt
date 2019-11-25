@@ -58,4 +58,4 @@ if (SFIZZ_SHARED)
         install (FILES
             ${CMAKE_BINARY_DIR}/src/sfizz.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
     endif()
-endif ()
+endif()
