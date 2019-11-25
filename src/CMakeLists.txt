@@ -32,7 +32,7 @@ if (UNIX)
     target_link_libraries (sfizz PUBLIC atomic)
 endif()
 
-if (SFIZZ_USE_LTO)
+if (ENABLE_LTO)
     set_property (TARGET sfizz_parser PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
     set_property (TARGET sfizz        PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
 endif()

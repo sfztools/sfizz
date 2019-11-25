@@ -8,10 +8,10 @@ include (SfizzConfig)
 # Build Options
 set (BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests [default: OFF]")
 
-set (SFIZZ_LV2_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
+set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
     "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/lv2]")
 
-option (SFIZZ_USE_LTO    "Enable Link Time Optimization [default: ON]" ON)
+option (ENABLE_LTO       "Enable Link Time Optimization [default: ON]" ON)
 option (SFIZZ_JACK       "Enable JACK stand-alone build [default: ON]" ON)
 option (SFIZZ_LV2        "Enable LV2 plug-in build [default: ON]" ON)
 option (SFIZZ_BENCHMARKS "Enable benchmarks build [default: OFF]" OFF)
@@ -44,7 +44,7 @@ endif()
 message (STATUS "
 Project name:                  ${CMAKE_PROJECT_NAME}
 Build type:                    ${CMAKE_BUILD_TYPE}
-Build using LTO:               ${SFIZZ_USE_LTO}
+Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
 Build LV2 plug-in:             ${SFIZZ_LV2}
@@ -52,7 +52,7 @@ Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
-LV2 destination directory:     ${SFIZZ_LV2_DIR}
+LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
 
 Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
 Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}
