@@ -9,7 +9,7 @@ set (SFIZZ_SOURCES
     sfizz/SfzHelpers.cpp
     sfizz/FloatEnvelopes.cpp
 )
-include (SfizzSimdSourceFilesCheck)
+include (SfizzSIMDSourceFilesCheck)
 
 # Parser core library
 add_library (sfizz_parser STATIC)
