@@ -18,6 +18,9 @@ option (SFIZZ_BENCHMARKS "Enable benchmarks build [default: OFF]" OFF)
 option (SFIZZ_TESTS      "Enable tests build [default: OFF]" OFF)
 option (SFIZZ_SHARED     "Enable shared library build [default: ON]" ON)
 
+# Don't use IPO in non Release builds
+include (CheckIPO)
+
 # Add Abseil
 add_subdirectory (external/abseil-cpp EXCLUDE_FROM_ALL)
 
