@@ -2,7 +2,7 @@
 include (CheckIPOSupported)
 check_ipo_supported (RESULT result OUTPUT output)
 
-if (result AND ENABLE_LTO AND ${CMAKE_BUILD_TYPE} MATCHES Release)
+if (result AND ENABLE_LTO AND ${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message (STATUS "\nLTO enabled.")
 else()
     if (${output})
