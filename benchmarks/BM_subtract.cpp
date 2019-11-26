@@ -27,7 +27,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "../sfizz/SIMDHelpers.h"
+#include "SIMDHelpers.h"
 
 class SubArray : public benchmark::Fixture {
 public:

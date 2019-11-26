@@ -24,12 +24,11 @@ set(SFIZZ_TEST_SOURCES
 )
 
 find_package(ZLIB REQUIRED)
-add_library(cnpy cnpy/cnpy.cpp)
+add_library(cnpy cnpy.cpp)
 target_link_libraries(cnpy PRIVATE ZLIB::ZLIB)
-target_include_directories(cnpy PUBLIC cnpy)
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::sfizz)
+target_link_libraries(sfizz_tests PRIVATE sfizz)
 
 # Per OS properties
 if(UNIX)

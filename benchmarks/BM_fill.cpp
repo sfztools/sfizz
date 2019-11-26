@@ -22,8 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <benchmark/benchmark.h>
-#include "../sfizz/SIMDHelpers.h"
-#include "../sfizz/Buffer.h"
+#include "SIMDHelpers.h"
+#include "Buffer.h"
 #include <algorithm>
 #include <random>
 #include <numeric>

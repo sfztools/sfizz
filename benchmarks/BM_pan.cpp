@@ -27,8 +27,8 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "../sfizz/SIMDHelpers.h"
-#include "../sfizz/Config.h"
+#include "SIMDHelpers.h"
+#include "Config.h"
 #include "absl/types/span.h"
 
 class PanArray : public benchmark::Fixture {

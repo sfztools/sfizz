@@ -23,7 +23,7 @@
 
 /**
   @file
-  @brief sfizz public API.
+  @brief sfizz public C API
 */
 
 #pragma once

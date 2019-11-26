@@ -26,7 +26,7 @@
 #include <random>
 #include <numeric>
 #include <absl/algorithm/container.h>
-#include "../sfizz/SIMDHelpers.h"
+#include "SIMDHelpers.h"
 
 // In this one we have an array of indices
 

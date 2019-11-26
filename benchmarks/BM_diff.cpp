@@ -27,7 +27,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "../sfizz/SIMDHelpers.h"
+#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
 class DiffArray : public benchmark::Fixture {
