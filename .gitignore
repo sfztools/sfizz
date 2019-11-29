@@ -25,5 +25,4 @@ api/
 assets/
 node_modules/
 *.lock
-sfizz.sublime-project
-sfizz.sublime-workspace
+*.sublime-*
