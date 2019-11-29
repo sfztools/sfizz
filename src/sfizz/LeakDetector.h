@@ -26,6 +26,23 @@
 #include "Debug.h"
 
 #if __cplusplus >= 201703L
+/**
+ * @brief Tries to catch memory leaks by counting constructions
+ * and deletions of objects. This will trap at the end of the program
+ * execution if some elements were not properly deleted for one reason
+ * or another. Use by adding the LEAK_DETECTOR macro at the end of a class
+ * definition with the proper class name, e.g.
+ *
+ * @code{.cpp}
+ * class Buffer
+ * {
+ *      // Some code for buffer
+ *      LEAK_DETECTOR(Buffer);
+ * }
+ * @endcode
+ *
+ * @tparam Owner
+ */
 template <class Owner>
 class LeakDetector {
 public:
