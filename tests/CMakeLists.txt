@@ -37,5 +37,6 @@ if(UNIX)
 endif(UNIX)
 target_link_libraries(sfizz_tests PRIVATE absl::strings absl::str_format absl::flat_hash_map sndfile cnpy absl::span absl::algorithm)
 target_include_directories(sfizz_tests SYSTEM PRIVATE sources)
+sfizz_enable_lto_if_needed(sfizz_tests)
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)

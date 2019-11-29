@@ -32,10 +32,8 @@ if (UNIX)
     target_link_libraries (sfizz PUBLIC atomic)
 endif()
 
-if (ENABLE_LTO)
-    set_property (TARGET sfizz_parser PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
-    set_property (TARGET sfizz        PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
-endif()
+sfizz_enable_lto_if_needed(sfizz_parser)
+sfizz_enable_lto_if_needed(sfizz)
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz)
