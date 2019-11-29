@@ -36,6 +36,23 @@
 #include <thread>
 
 namespace sfz {
+/**
+ * @brief This is a singleton-designed class that holds all the preloaded
+ * data as well as functions to request new file data and collect the file
+ * handles to close after they are read.
+ *
+ * This object caches the file data that was already preloaded in case it is asked
+ * again by a region using the same sample. In this situation, both regions have a
+ * handle on the same preloaded data.
+ *
+ * The file request is immediately served using the preloaded data. A ticket is then
+ * provided to the voice that requested the file, and the file loading happens in the
+ * background. When the file is fully loaded, the background makes the full data available
+ * to the voice and consumes the ticket, while conserving a handle on this file. When the
+ * voice dies it releases its handle on the files, which should decrease the  reference count
+ * to 1. A garbage collection thread then runs regularly to clear the memory of all file
+ * handles with a reference count of 1.
+ */
 class FilePool {
 public:
     FilePool() { }
@@ -46,7 +63,17 @@ public:
         fileLoadingThread.join();
         garbageCollectionThread.join();
     }
+    /**
+     * @brief Set the root directory from which to search for files to load
+     *
+     * @param directory
+     */
     void setRootDirectory(const fs::path& directory) noexcept { rootDirectory = directory; }
+    /**
+     * @brief Get the number of preloaded sample files
+     *
+     * @return size_t
+     */
     size_t getNumPreloadedSamples() const noexcept { return preloadedData.size(); }
 
     struct FileInformation {
@@ -56,8 +83,35 @@ public:
         double sampleRate { config::defaultSampleRate };
         std::shared_ptr<AudioBuffer<float>> preloadedData;
     };
+    /**
+     * @brief Get metadata information about a file as well as the first chunk of data
+     *
+     * If the same file was already preloaded and with a compatible offset, the handle
+     * is shared between the regions. Otherwise, a new handle is created (the others keep
+     * the old preloaded file).
+     *
+     * @param filename
+     * @param offset the maximum offset to consider for preloading. The total preloaded
+     *                  size will be preloadedSize + offset
+     * @return absl::optional<FileInformation>
+     */
     absl::optional<FileInformation> getFileInformation(const std::string& filename, uint32_t offset) noexcept;
+    /**
+     * @brief Queue a full loading operation for a given voice.
+     *
+     * The goal of the ticket is to avoid file loading operations that for some reason
+     * finish too late a "replace" a proper sample with an obsolete one for a voice.
+     *
+     * @param voice the voice to give the full file data to
+     * @param sample the sample file
+     * @param numFrames the number of frames to load from the file
+     * @param ticket an ideally unique ticket number for this file.
+     */
     void enqueueLoading(Voice* voice, const std::string* sample, int numFrames, unsigned ticket) noexcept;
+    /**
+     * @brief Clear all preloaded files.
+     *
+     */
     void clear();
 private:
     fs::path rootDirectory;
