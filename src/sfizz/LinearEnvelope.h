@@ -30,17 +30,74 @@
 #include <vector>
 
 namespace sfz {
-
+/**
+ * @brief Describes a simple linear envelope that can be polled in a blockwise
+ * manner. It works by storing "events" in the immediate future and linearly
+ * interpolating between these events. This envelope can also transform its
+ * incoming target points through a lambda, although the interpolation will
+ * always be linear (i.e. the lambda function is applied before the interpolation).
+ *
+ * The way to use this class is by repeatedly calling `registerEvent` and then
+ * `getBlock` to get a block of interpolated values in between the specified events.
+ * You should only register events whose timestamps are below the size of the block
+ * you will require when calling `getBlock`.
+ *
+ * @tparam Type
+ */
 template <class Type>
 class LinearEnvelope {
 public:
+    /**
+     * @brief Construct a new linear envelope with a default memory size for
+     * incoming events.
+     *
+     */
     LinearEnvelope();
+    /**
+     * @brief Construct a new linear envelope with a specific memory size for
+     * incoming events as well as a transformation function for incoming events.
+     *
+     * @param maxCapacity
+     * @param function
+     */
     LinearEnvelope(int maxCapacity, std::function<Type(Type)> function);
+    /**
+     * @brief Set the maximum memory size for incoming events
+     *
+     * @param maxCapacity
+     */
     void setMaxCapacity(int maxCapacity);
+    /**
+     * @brief Set the transformation function for the value of incoming events.
+     *
+     * @param function
+     */
     void setFunction(std::function<Type(Type)> function);
+    /**
+     * @brief Register a new event. Note that the timestamp of the new value should
+     * be less than the future call to `getBlock` otherwise the event will be ignored.
+     *
+     * @param timestamp
+     * @param inputValue
+     */
     void registerEvent(int timestamp, Type inputValue);
+    /**
+     * @brief Clear all events in memory
+     *
+     */
     void clear();
+    /**
+     * @brief Reset the envelope and clears the memory.
+     *
+     * @param value
+     */
     void reset(Type value = 0.0);
+    /**
+     * @brief Get a block of interpolated values between events previously registered
+     * using `registerEvent`.
+     *
+     * @param output
+     */
     void getBlock(absl::Span<Type> output);
 private:
     std::function<Type(Type)> function { [](Type input) { return input; } };

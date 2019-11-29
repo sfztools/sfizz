@@ -21,6 +21,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+/**
+ * @file FloatEnvelopes.cpp
+ * @author Paul Ferrand (paul@ferrand.cc)
+ * @brief Force the instantiations of the ADSR and linear envelopes for floats
+ * @version 0.1
+ * @date 2019-11-30
+ *
+ * @copyright Copyright (c) 2019 Paul Ferrand
+ *
+ */
+
 #include "LinearEnvelope.h"
 #include "ADSREnvelope.h"
 

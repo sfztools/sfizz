@@ -25,15 +25,55 @@
 #include "LeakDetector.h"
 #include <absl/types/span.h>
 namespace sfz {
-
+/**
+ * @brief Describe an attack/delay/sustain/release envelope that can
+ * produce its coefficient in a blockwise manner for SIMD-type operations.
+ *
+ * @tparam Type the underlying type
+ */
 template <class Type>
 class ADSREnvelope {
 public:
     ADSREnvelope() = default;
+    /**
+     * @brief Resets the ADSR envelope. There's alot of parameter but what can you do.
+     * They all match the SFZ specification.
+     *
+     * @param attack
+     * @param release
+     * @param sustain
+     * @param delay
+     * @param decay
+     * @param hold
+     * @param start
+     * @param depth
+     */
     void reset(int attack, int release, Type sustain = 1.0, int delay = 0, int decay = 0, int hold = 0, Type start = 0.0, Type depth = 1) noexcept;
+    /**
+     * @brief Get the next value for the envelope
+     *
+     * @return Type
+     */
     Type getNextValue() noexcept;
+    /**
+     * @brief Get a block of values for the envelope. This method tries hard to be efficient
+     * and hopefully it is.
+     *
+     * @param output
+     */
     void getBlock(absl::Span<Type> output) noexcept;
+    /**
+     * @brief Start the envelope release after a delay.
+     *
+     * @param releaseDelay the delay before releasing in samples
+     */
     void startRelease(int releaseDelay) noexcept;
+    /**
+     * @brief Is the envelope smoothing?
+     *
+     * @return true
+     * @return false
+     */
     bool isSmoothing() noexcept;
 
 private:
