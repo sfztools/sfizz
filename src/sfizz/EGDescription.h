@@ -31,7 +31,14 @@
 
 namespace sfz
 {
-
+/**
+ * @brief A description for an SFZ envelope generator, with its envelope parameters
+ * and possible CC modulation. This is a structure to be integrated directly in a
+ * region and accessed, so not too many getters and setters in there.
+ *
+ * TODO: should be updated for SFZ v2
+ *
+ */
 struct EGDescription
 {
     EGDescription() = default;
@@ -63,30 +70,79 @@ struct EGDescription
 	absl::optional<CCValuePair> ccStart;
 	absl::optional<CCValuePair> ccSustain;
 
+    /**
+     * @brief Get the attack with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getAttack(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccAttack, attack) + normalizeCC(velocity)*vel2attack;
     }
+    /**
+     * @brief Get the decay with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getDecay(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccDecay, decay) + normalizeCC(velocity)*vel2decay;
     }
+    /**
+     * @brief Get the delay with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getDelay(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccDelay, delay) + normalizeCC(velocity)*vel2delay;
     }
+    /**
+     * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getHold(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccHold, hold) + normalizeCC(velocity)*vel2hold;
     }
+    /**
+     * @brief Get the release duration with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getRelease(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccRelease, release) + normalizeCC(velocity)*vel2release;
     }
+    /**
+     * @brief Get the starting level with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getStart(const CCValueArray &ccValues, uint8_t velocity [[maybe_unused]]) const noexcept
     {
         return ccSwitchedValue(ccValues, ccStart, start);
     }
+    /**
+     * @brief Get the sustain level with possibly a CC modifier and a velocity modifier
+     *
+     * @param ccValues
+     * @param velocity
+     * @return float
+     */
     float getSustain(const CCValueArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccSustain, sustain) + normalizeCC(velocity)*vel2sustain;
