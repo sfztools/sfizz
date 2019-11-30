@@ -649,7 +649,7 @@ uint32_t sfz::Region::getOffset() noexcept
     return offset + offsetDistribution(Random::randomGenerator);
 }
 
-uint32_t sfz::Region::getDelay() noexcept
+float sfz::Region::getDelay() noexcept
 {
     return delay + delayDistribution(Random::randomGenerator);
 }
