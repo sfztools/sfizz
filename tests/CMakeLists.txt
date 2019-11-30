@@ -16,7 +16,7 @@ set(SFIZZ_TEST_SOURCES
     FilesT.cpp
     OnePoleFilterT.cpp
     RegionActivationT.cpp
-    RegionCrossfadesT.cpp
+    RegionValueComputationsT.cpp
     ADSREnvelopeT.cpp
     LinearEnvelopeT.cpp
     MainT.cpp

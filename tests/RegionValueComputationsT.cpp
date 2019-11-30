@@ -29,7 +29,7 @@
 #include <thread>
 #include "MidiState.h"
 using namespace Catch::literals;
-
+constexpr int numRandomTests { 64 };
 TEST_CASE("[Region] Crossfade in on key")
 {
 	sfz::MidiState midiState;
@@ -293,4 +293,20 @@ TEST_CASE("[Region] rt_decay")
     midiState.noteOn(64, 64);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume).margin(0.1) );
+}
+
+TEST_CASE("[Region] Base delay")
+{
+    sfz::MidiState midiState;
+    sfz::Region region{ midiState };
+    region.parseOpcode({ "sample", "*sine" });
+    region.parseOpcode({ "delay", "10" });
+    REQUIRE( region.getDelay() == 10.0f );
+    region.parseOpcode({ "delay_random", "10" });
+    Random::randomGenerator.seed(42);
+    for (int i = 0; i < numRandomTests; ++i)
+    {
+        auto delay = region.getDelay();
+        REQUIRE( (delay >= 10.0 && delay <= 20.0) );
+    }
 }
