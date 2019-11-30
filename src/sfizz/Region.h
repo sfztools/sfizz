@@ -209,9 +209,9 @@ struct Region {
      */
     uint32_t getOffset() noexcept;
     /**
-     * @brief Get the region delay in samples
+     * @brief Get the region delay in seconds
      *
-     * @return uint32_t
+     * @return float
      */
     float getDelay() noexcept;
     /**
