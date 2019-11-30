@@ -29,6 +29,12 @@
 
 namespace sfz
 {
+/**
+ * @brief An implementation of a one pole filter. This is a scalar
+ * implementation.
+ *
+ * @tparam Type the underlying type of the filter.
+ */
 template <class Type = float>
 class OnePoleFilter {
 public:

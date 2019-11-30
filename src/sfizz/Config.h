@@ -43,7 +43,7 @@ namespace config {
     constexpr float voiceStealingThreshold { 0.00001 };
 } // namespace config
 
-
+// Enable or disable SIMD accelerators by default
 namespace SIMDConfig {
     constexpr unsigned int defaultAlignment { 16 };
     constexpr bool writeInterleaved { true };

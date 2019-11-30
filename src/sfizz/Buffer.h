@@ -32,6 +32,18 @@
 
 namespace sfz
 {
+/**
+ * @brief A heap buffer structure that tries to align its beginning and adds a small offset
+ * at the end for alignment too.
+ *
+ * Apparently on Linux this effort is mostly useless, and in the end most of the SIMD operations
+ * are coded with alignment checks and sentinels so this class could probably be much simpler.
+ * It does however wrap realloc which in some cases should be a bit more efficient than
+ * allocating a whole new block.
+ *
+ * @tparam Type The buffer type
+ * @tparam Alignment the required alignment in bytes (defaults to SIMDConfig::defaultAlignment)
+ */
 template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer {
 public:
@@ -46,16 +58,33 @@ public:
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using size_type = size_t;
 
+    /**
+     * @brief Construct a new Buffer object that is empty
+     *
+     */
     Buffer()
     {
-    
+
     }
-    
+
+    /**
+     * @brief Construct a new Buffer object with size
+     *
+     * @param size
+     */
     Buffer(size_t size)
     {
         resize(size);
     }
 
+    /**
+     * @brief Resizes the buffer. Given that std::realloc may return either the same pointer
+     * or a new one, you need to account for both cases in the code if you are using deep pointers.
+     *
+     * @param newSize the new buffer size in bytes
+     * @return true if allocation succeeded
+     * @return false otherwise
+     */
     bool resize(size_t newSize)
     {
         if (newSize == 0) {
@@ -83,6 +112,10 @@ public:
         return true;
     }
 
+    /**
+     * @brief Clear the buffers and frees the underlying memory
+     *
+     */
     void clear()
     {
         largerSize = 0;
@@ -97,6 +130,11 @@ public:
         std::free(paddedData);
     }
 
+    /**
+     * @brief Construct a new Buffer object from an existing one
+     *
+     * @param other
+     */
     Buffer(const Buffer<Type>& other)
     {
         if (resize(other.size())) {
@@ -104,6 +142,11 @@ public:
         }
     }
 
+    /**
+     * @brief Construct a new Buffer object by moving an existing one
+     *
+     * @param other
+     */
     Buffer(Buffer<Type>&& other)
     {
         largerSize = std::exchange(other.largerSize, 0);

@@ -320,6 +320,7 @@ void sfz::Synth::garbageCollect() noexcept
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
+
     while (inCallback) {
         std::this_thread::sleep_for(1ms);
     }
@@ -347,10 +348,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     ScopedFTZ ftz;
     buffer.fill(0.0f);
     
+    AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
-
-    AtomicGuard callbackGuard { inCallback };
 
     auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
     for (auto& voice : voices) {
@@ -369,10 +369,9 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
 
     midiState.noteOn(noteNumber, velocity);
 
+    AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
-
-    AtomicGuard callbackGuard { inCallback };
 
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
@@ -402,10 +401,9 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber >= 0);
     // DBG("Received note " << noteNumber << "/" << +velocity << " OFF at time " << delay);
 
+    AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
-
-    AtomicGuard callbackGuard { inCallback };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -435,10 +433,9 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     ASSERT(ccNumber < 128);
     ASSERT(ccNumber >= 0);
 
+    AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
-
-    AtomicGuard callbackGuard { inCallback };
 
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);

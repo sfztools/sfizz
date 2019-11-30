@@ -189,10 +189,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     case hash("sustain_sw"):
         checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
-        break;  
+        break;
     case hash("sostenuto_sw"):
         checkSostenuto = readBooleanFromOpcode(opcode).value_or(Default::checkSostenuto);
-        break;  
+        break;
     // Region logic: internal conditions
     case hash("lochanaft"):
         setRangeStartFromOpcode(opcode, aftertouchRange, Default::aftertouchRange);
@@ -649,7 +649,7 @@ uint32_t sfz::Region::getOffset() noexcept
     return offset + offsetDistribution(Random::randomGenerator);
 }
 
-uint32_t sfz::Region::getDelay() noexcept
+float sfz::Region::getDelay() noexcept
 {
     return delay + delayDistribution(Random::randomGenerator);
 }

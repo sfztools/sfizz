@@ -4,6 +4,12 @@
 
 namespace sfz
 {
+/**
+ * @brief A naive circular buffer which is supposed to hold power values
+ * and return the average of its content.
+ *
+ * @tparam ValueType
+ */
 template<class ValueType>
 class HistoricalBuffer {
 public:
@@ -14,13 +20,24 @@ public:
 		resize(size);
 	}
 
+    /**
+     * @brief Resize the underlying buffer. Newly added "slots" are
+     * initialized to 0.0
+     *
+     * @param size
+     */
 	void resize(int size)
 	{
 		buffer.resize(size);
 		fill<ValueType>(absl::MakeSpan(buffer), 0.0);
 		index = 0;
 	}
-	
+
+    /**
+     * @brief Add a value to the buffer
+     *
+     * @param value
+     */
 	void push(ValueType value)
 	{
 		if (size > 0) {
@@ -30,6 +47,11 @@ public:
 		}
 	}
 
+    /**
+     * @brief Return the average of all the values in the buffer
+     *
+     * @return ValueType
+     */
 	ValueType getAverage() const
 	{
 		return mean<ValueType>(buffer);

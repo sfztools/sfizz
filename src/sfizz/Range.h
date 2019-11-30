@@ -26,10 +26,13 @@
 #include <initializer_list>
 #include <type_traits>
 
-
 namespace sfz
 {
-
+/**
+ * @brief This class holds a range with functions to clamp and test if a value is in the range
+ *
+ * @tparam Type
+ */
 template <class Type>
 class Range {
     static_assert(std::is_arithmetic<Type>::value, "The Type should be arithmetic");
@@ -59,6 +62,11 @@ public:
     ~Range() = default;
     Type getStart() const noexcept { return _start; }
     Type getEnd() const noexcept { return _end; }
+    /**
+     * @brief Get the range as an std::pair of the endpoints
+     *
+     * @return std::pair<Type, Type>
+     */
     std::pair<Type, Type> getPair() const noexcept { return std::make_pair<Type, Type>(_start, _end); }
     Range(const Range<Type>& range) = default;
     Range(Range<Type>&& range) = default;
@@ -76,9 +84,35 @@ public:
         if (end < _start)
             _start = end;
     }
+    /**
+     * @brief Clamp a value within the range including the endpoints
+     *
+     * @param value
+     * @return Type
+     */
     Type clamp(Type value) const noexcept { return ::clamp(value, _start, _end); }
+    /**
+     * @brief Checks if a value is in the range, including the endpoints
+     *
+     * @param value
+     * @return true
+     * @return false
+     */
     bool containsWithEnd(Type value) const noexcept { return (value >= _start && value <= _end); }
+    /**
+     * @brief Checks if a value is in the range, excluding the end of the range
+     *
+     * @param value
+     * @return true
+     * @return false
+     */
     bool contains(Type value) const noexcept { return (value >= _start && value < _end); }
+    /**
+     * @brief Shrink the region if it is smaller than the provided start and end points
+     *
+     * @param start
+     * @param end
+     */
     void shrinkIfSmaller(Type start, Type end)
     {
         if (start > end)
