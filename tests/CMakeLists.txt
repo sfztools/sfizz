@@ -20,6 +20,7 @@ set(SFIZZ_TEST_SOURCES
     ADSREnvelopeT.cpp
     LinearEnvelopeT.cpp
     MainT.cpp
+    SynthT.cpp
     RegionTriggersT.cpp
 )
 

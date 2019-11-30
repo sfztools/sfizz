@@ -115,7 +115,7 @@ void sfz::Synth::clear()
     while (inCallback) {
         std::this_thread::sleep_for(1ms);
     }
-    
+
     for (auto &voice: voices)
         voice->reset();
     for (auto& list: noteActivationLists)
@@ -337,7 +337,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     while (inCallback) {
         std::this_thread::sleep_for(1ms);
     }
-    
+
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
         voice->setSampleRate(sampleRate);
@@ -347,7 +347,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
-    
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
@@ -486,10 +486,17 @@ int sfz::Synth::getNumCurves() const noexcept
 {
     return numCurves;
 }
+
 const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
 {
     return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
 }
+
+const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
+{
+    return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
+}
+
 std::set<absl::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
 {
     return unknownOpcodes;
@@ -534,7 +541,7 @@ void sfz::Synth::resetVoices(int numVoices)
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
     }
-    
+
     voiceViewArray.reserve(numVoices);
     this->numVoices = numVoices;
 }

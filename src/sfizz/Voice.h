@@ -73,6 +73,18 @@ public:
      * @param samplesPerBlock
      */
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
+    /**
+     * @brief Get the sample rate of the voice.
+     *
+     * @return float
+     */
+    float getSampleRate() const noexcept { return sampleRate; }
+    /**
+     * @brief Get the expected block size.
+     *
+     * @return int
+     */
+    int getSamplesPerBlock() const noexcept { return samplesPerBlock; }
 
     /**
      * @brief Start playing a region after a short delay for different triggers (note on, off, cc)
