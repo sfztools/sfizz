@@ -22,37 +22,37 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * @file SIMDHelpers.h  
+ * @file SIMDHelpers.h
  * @author Paul Ferrand (paul@ferrand.cc)
  * @brief This file contains useful functions to treat buffers of numerical values
- * (e.g. a buffer of floats usually). 
- * 
+ * (e.g. a buffer of floats usually).
+ *
  * These functions are templated to apply on
  * various underlying buffer types, and this file contains the generic version of the
  * function. Some templates specializations exists for different architecture that try
  * to make use of SIMD intrinsics; you can find such a file in SIMDSSE.cpp and possibly
  * someday SIMDNEON.cpp for ARM platforms.
- * 
- * If you want to write specializations for float buffers the idea is to start from the SIMDDummy 
+ *
+ * If you want to write specializations for float buffers the idea is to start from the SIMDDummy
  * file that just calls back the generic implementation, and implement the specializations you
  * wish from this list. You can then either activate or deactivate a SIMD version by default
  * using the variables in Config.h, or call e.g. writeInterleaved<float, true>(...) to use the
  * SIMD version of writeInterleaved. To implement e.g. double template specializations you
  * will need to amend this file to pre-declare the specializations, and create a file similar to
  * SIMDxxx.cpp.
- * 
+ *
  * All the SIMD functions are benchmarked. If you run the benchmark for a given function you can check
  * if it is interesting to run the SIMD version by default. The interest is that you can activate
  * and deactivate each SIMD specialization with a fine granularity, since SIMD performance
  * will be very dependent on the processor architecture. Modern processors can also organize their
  * instructions so that scalar non-SIMD code runs sometimes much more efficiently than SIMD code
  * especially when the latter does not operate on misaligned buffers.
- * 
+ *
  * @version 0.1
  * @date 2019-11-23
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 #pragma once
 #include "Config.h"
@@ -74,14 +74,14 @@ namespace _internals {
 
 /**
  * @brief Read interleaved stereo data from a buffer and separate it in a left/right pair of buffers.
- * 
+ *
  * The output size will be the minimum of the input span and output spans size.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param input 
+ * @param input
  * @param outputLeft
- * @param outputRight 
+ * @param outputRight
  */
 template <class T, bool SIMD = SIMDConfig::readInterleaved>
 void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::Span<T> outputRight) noexcept
@@ -108,14 +108,14 @@ namespace _internals {
 
 /**
  * @brief Write a pair of left and right stereo input into a single buffer interleaved.
- * 
+ *
  * The output size will be the minimum of the input spans and output span size.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param inputLeft 
- * @param inputRight 
- * @param output 
+ * @param inputLeft
+ * @param inputRight
+ * @param output
  */
 template <class T, bool SIMD = SIMDConfig::writeInterleaved>
 void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRight, absl::Span<T> output) noexcept
@@ -138,11 +138,11 @@ void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<floa
 
 /**
  * @brief Fill a buffer with a value; comparable to std::fill in essence.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param output 
- * @param value 
+ * @param output
+ * @param value
  */
 template <class T, bool SIMD = SIMDConfig::fill>
 void fill(absl::Span<T> output, T value) noexcept
@@ -155,11 +155,11 @@ void fill<float, true>(absl::Span<float> output, float value) noexcept;
 
 /**
  * @brief Exp math function
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param input 
- * @param output 
+ * @param input
+ * @param output
  */
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
@@ -175,13 +175,13 @@ void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 
 /**
  * @brief Log math function
- * 
+ *
  * The output size will be the minimum of the input span and output span size.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param input 
- * @param output 
+ * @param input
+ * @param output
  */
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
@@ -197,13 +197,13 @@ void log<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 
 /**
  * @brief sin math function
- * 
+ *
  * The output size will be the minimum of the input span and output span size.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param input 
- * @param output 
+ * @param input
+ * @param output
  */
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
@@ -219,13 +219,13 @@ void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 
 /**
  * @brief cos math function
- * 
+ *
  * The output size will be the minimum of the input span and output span size.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
- * @param input 
- * @param output 
+ * @param input
+ * @param output
  */
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
@@ -264,21 +264,22 @@ namespace _internals {
 /**
  * @brief Computes an integer index and 2 float coefficients corresponding to the
  * linear interpolation procedure. This version will saturate the index to the upper
- * bound if the upper bound is reached. 
- * 
+ * bound if the upper bound is reached.
+ *
  * The indices are computed starting from the given floatIndex, and each increment
  * is given by the elements of jumps.
  * The output size will be the minimum of the inputs span and outputs span size.
- * 
+ *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
  * @param jumps the floating point increments to the index
  * @param leftCoeffs the linear interpolation coefficients for the left value
  * @param rightCoeffs the linear interpolation coefficients for the right value
- * @param indices the integer sample indices for the left values; the right values for interpolation at index i are (indices[i] + 1) and not indices[i+1]
- * @param floatIndex the starting floating point index 
+ * @param indices the integer sample indices for the left values; the right values
+ *          for interpolation at index i are (indices[i] + 1) and not indices[i+1]
+ * @param floatIndex the starting floating point index
  * @param loopEnd the end of the "loop" which is not really a loop because it saturate.
- * @return float 
+ * @return float
  */
 template <class T, bool SIMD = SIMDConfig::saturatingSFZIndex>
 float saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd) noexcept
@@ -319,6 +320,23 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Computes an integer index and 2 float coefficients corresponding to the
+ * linear interpolation procedure. This version will loop the index at the upper
+ * bound loopend and restart it at the start of the loop.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param jumps the floating point increments to the index
+ * @param leftCoeffs the linear interpolation coefficients for the left value
+ * @param rightCoeffs the linear interpolation coefficients for the right value
+ * @param indices the integer sample indices for the left values; the right values
+ *          for interpolation at index i are (indices[i] + 1) and not indices[i+1]
+ * @param floatIndex the starting floating point index
+ * @param loopEnd the end index of the loop
+ * @param loopStart the start index of the loop
+ * @return float
+ */
 template <class T, bool SIMD = SIMDConfig::loopingSFZIndex>
 float loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
 {
@@ -349,6 +367,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Applies a scalar gain to the input
+ *
+ * The output size will be the minimum of the input span and output span size.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param gain the gain to apply
+ * @param input
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -368,6 +397,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Applies a vector gain to an input stap
+ *
+ * The output size will be the minimum of the gain, input span and output span size.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param gain
+ * @param input
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -381,12 +421,30 @@ void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T
         _internals::snippetGainSpan<T>(g, in, out);
 }
 
+/**
+ * @brief Applies a scalar gain in-place on a span
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param gain
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(T gain, absl::Span<T> output) noexcept
 {
     applyGain<T, SIMD>(gain, output, output);
 }
 
+/**
+ * @brief Applies a vector gain in-place on a span
+ *
+ * The output size will be the minimum of the gain span and output span size.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param gain
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(absl::Span<const T> gain, absl::Span<T> output) noexcept
 {
@@ -407,6 +465,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Applies a gain to the input and add it on the output
+ *
+ * The output size will be the minimum of the gain span, input span and output span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param gain
+ * @param input
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::multiplyAdd>
 void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -432,6 +501,16 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Compute a linear ramp blockwise between 2 values
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param output The destination span
+ * @param start
+ * @param step
+ * @return T
+ */
 template <class T, bool SIMD = SIMDConfig::linearRamp>
 T linearRamp(absl::Span<T> output, T start, T step) noexcept
 {
@@ -450,6 +529,16 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Compute a multiplicative ramp blockwise between 2 values
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param output The destination span
+ * @param start
+ * @param step
+ * @return T
+ */
 template <class T, bool SIMD = SIMDConfig::multiplicativeRamp>
 T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 {
@@ -478,6 +567,16 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Add an input span to the output span
+ *
+ * The output size will be the minimum of the gain span, input span and output span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param input
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::add>
 void add(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -518,6 +617,14 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Subtract a value from a span
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param value
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::subtract>
 void subtract(const T value, absl::Span<T> output) noexcept
 {
@@ -527,6 +634,16 @@ void subtract(const T value, absl::Span<T> output) noexcept
         _internals::snippetSubtract(value, out);
 }
 
+/**
+ * @brief Subtract a span from another span
+ *
+ * The output size will be the minimum of the input span and output span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param input
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::subtract>
 void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -552,6 +669,16 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Copy a span in another
+ *
+ * The output size will be the minimum of the input span and output span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param input
+ * @param output
+ */
 template <class T, bool SIMD = SIMDConfig::copy>
 void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -576,6 +703,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Pans a mono signal left or right
+ *
+ * The output size will be the minimum of the pan envelope span and left and right buffer span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param panEnvelope
+ * @param leftBuffer
+ * @param rightBuffer
+ */
 template <class T, bool SIMD = SIMDConfig::pan>
 void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
 {
@@ -592,6 +730,14 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
 template <>
 void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
 
+/**
+ * @brief Computes the mean of a span
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param vector
+ * @return T
+ */
 template <class T, bool SIMD = SIMDConfig::mean>
 T mean(absl::Span<const T> vector) noexcept
 {
@@ -609,6 +755,14 @@ T mean(absl::Span<const T> vector) noexcept
 template <>
 float mean<float, true>(absl::Span<const float> vector) noexcept;
 
+/**
+ * @brief Computes the mean squared of a span
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param vector
+ * @return T
+ */
 template <class T, bool SIMD = SIMDConfig::meanSquared>
 T meanSquared(absl::Span<const T> vector) noexcept
 {
@@ -637,6 +791,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Computes the cumulative sum of a span.
+ * The first output is the same as the first input.
+ *
+ * The output size will be the minimum of the input span and output span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param vector
+ * @return T
+ */
 template <class T, bool SIMD = SIMDConfig::cumsum>
 void cumsum(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
@@ -670,6 +835,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Computes the linear interpolation coefficients for a floating point index
+ * and extracts the integer index of the elements to interpolate
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param floatJumps the floating point indices
+ * @param jumps the integer indices outputs
+ * @param leftCoeffs the left interpolation coefficients
+ * @param rightCoeffs the right interpolation coefficients
+ */
 template <class T, bool SIMD = SIMDConfig::sfzInterpolationCast>
 void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs) noexcept
 {
@@ -700,6 +876,17 @@ namespace _internals {
     }
 }
 
+/**
+ * @brief Computes the differential of a span (successive differences).
+ * The first output is the same as the first input.
+ *
+ * The output size will be the minimum of the input span and output span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param vector
+ * @return T
+ */
 template <class T, bool SIMD = SIMDConfig::diff>
 void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
