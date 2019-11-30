@@ -113,6 +113,8 @@ public:
      *
      */
     void clear();
+    void emptyFileLoadingQueue() noexcept { emptyQueue = true; }
+    bool shouldEmptyQueue() const noexcept { return emptyQueue; }
 private:
     fs::path rootDirectory;
     struct FileLoadingInformation {
@@ -126,6 +128,7 @@ private:
     void loadingThread() noexcept;
     void garbageThread() noexcept;
     bool quitThread { false };
+    bool emptyQueue { false };
     std::mutex fileHandleMutex;
     std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
     absl::flat_hash_map<absl::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;
