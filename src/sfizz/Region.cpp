@@ -189,10 +189,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     case hash("sustain_sw"):
         checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
-        break;  
+        break;
     case hash("sostenuto_sw"):
         checkSostenuto = readBooleanFromOpcode(opcode).value_or(Default::checkSostenuto);
-        break;  
+        break;
     // Region logic: internal conditions
     case hash("lochanaft"):
         setRangeStartFromOpcode(opcode, aftertouchRange, Default::aftertouchRange);

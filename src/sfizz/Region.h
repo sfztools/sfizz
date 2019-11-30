@@ -36,6 +36,18 @@
 #include <vector>
 
 namespace sfz {
+/**
+ * @brief Regions are the basic building blocks for the SFZ parsing and handling code.
+ * All SFZ files are made of regions that are activated when a key is pressed or a CC
+ * is triggered. Most opcodes constrain the situations in which a region can be activated.
+ * Once activated, the Synth object will find a voice to play the region.
+ *
+ * This class is mostly open as there are a ton of parameters needed for the voice to be
+ * able to play the region, and using getters would incur a ton of boilerplate code. Note
+ * also that some parameters may be parsed and stored in regions but no playing logi is
+ * available in the voices to take advantage of them.
+ *
+ */
 struct Region {
     Region(const MidiState& midiState)
     : midiState(midiState)
@@ -45,27 +57,185 @@ struct Region {
     Region(const Region&) = default;
     ~Region() = default;
 
+    /**
+     * @brief Triggers on release?
+     *
+     * @return true
+     * @return false
+     */
     bool isRelease() const noexcept { return trigger == SfzTrigger::release || trigger == SfzTrigger::release_key; }
+    /**
+     * @brief Is a generator (*sine or *silence mostly)?
+     *
+     * @return true
+     * @return false
+     */
     bool isGenerator() const noexcept { return sample.size() > 0 ? sample[0] == '*' : false; }
+    /**
+     * @brief Is a looping region (at least potentially)?
+     *
+     * @return true
+     * @return false
+     */
     bool shouldLoop() const noexcept { return (loopMode == SfzLoopMode::loop_continuous || loopMode == SfzLoopMode::loop_sustain); }
+    /**
+     * @brief Given the current midi state, is the region switched on?
+     *
+     * @return true
+     * @return false
+     */
     bool isSwitchedOn() const noexcept;
+    /**
+     * @brief Register a new note on event. The region may be switched on or off using keys so
+     * this function updates the keyswitches state.
+     *
+     * @param channel
+     * @param noteNumber
+     * @param velocity
+     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
+     *                  and vary the samples
+     * @return true if the region should trigger on this event.
+     * @return false
+     */
     bool registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept;
+    /**
+     * @brief Register a new note off event. The region may be switched on or off using keys so
+     * this function updates the keyswitches state.
+     *
+     * @param channel
+     * @param noteNumber
+     * @param velocity
+     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
+     *                  and vary the samples
+     * @return true if the region should trigger on this event.
+     * @return false
+     */
     bool registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept;
+    /**
+     * @brief Register a new CC event. The region may be switched on or off using CCs so
+     * this function checks if it indeeds need to activate or not.
+     *
+     * @param channel
+     * @param ccNumber
+     * @param ccValue
+     * @return true if the region should trigger on this event
+     * @return false
+     */
     bool registerCC(int channel, int ccNumber, uint8_t ccValue) noexcept;
+    /**
+     * @brief Register a new pitch wheel event.
+     *
+     * @param channel
+     * @param pitch
+     * @return true if the region should trigger on this event
+     * @return false
+     */
     void registerPitchWheel(int channel, int pitch) noexcept;
+    /**
+     * @brief Register a new aftertouch event.
+     *
+     * @param channel
+     * @param aftertouch
+     * @return true if the region should trigger on this event
+     * @return false
+     */
     void registerAftertouch(int channel, uint8_t aftertouch) noexcept;
+    /**
+     * @brief Register tempo
+     *
+     * @param channel
+     * @param aftertouch
+     * @return true if the region should trigger on this event
+     * @return false
+     */
     void registerTempo(float secondsPerQuarter) noexcept;
+    /**
+     * @brief Is the underlying region sample a stereo one?
+     *
+     * @return true
+     * @return false
+     */
     bool isStereo() const noexcept;
+    /**
+     * @brief Get the base pitch of the region depending on which note has been
+     * pressed and at which velocity.
+     *
+     * @param noteNumber
+     * @param velocity
+     * @return float
+     */
     float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
+    /**
+     * @brief Get the note-related gain of the region depending on which note has been
+     * pressed and at which velocity.
+     *
+     * @param noteNumber
+     * @param velocity
+     * @return float
+     */
     float getNoteGain(int noteNumber, uint8_t velocity) noexcept;
+    /**
+     * @brief Get the additional crossfade gain of the region depending on the
+     * CC values
+     *
+     * @param ccState
+     * @return float
+     */
     float getCrossfadeGain(const CCValueArray& ccState) noexcept;
+    /**
+     * @brief Get the base volume of the region depending on which note has been
+     * pressed to trigger the region.
+     *
+     * @param noteNumber
+     * @return float
+     */
     float getBaseVolumedB(int noteNumber) noexcept;
+    /**
+     * @brief Get the base gain of the region.
+     *
+     * @return float
+     */
     float getBaseGain() noexcept;
+    /**
+     * @brief Computes the gain value related to the velocity of the note
+     *
+     * @return float
+     */
     float velocityCurve(uint8_t velocity) const noexcept;
+    /**
+     * @brief Get the region offset in samples
+     *
+     * @return uint32_t
+     */
     uint32_t getOffset() noexcept;
-    uint32_t getDelay() noexcept;
+    /**
+     * @brief Get the region delay in samples
+     *
+     * @return uint32_t
+     */
+    float getDelay() noexcept;
+    /**
+     * @brief Get the index of the sample end, either natural end or forced
+     * loop.
+     *
+     * @return uint32_t
+     */
     uint32_t trueSampleEnd() const noexcept;
+    /**
+     * @brief Can the region use the preloaded data only to play its full range?
+     *
+     * @return true
+     * @return false
+     */
     bool canUsePreloadedData() const noexcept;
+    /**
+     * @brief Parse a new opcode into the region to fill in the proper parameters.
+     * This must be called multiple times for each opcode applying to this region.
+     *
+     * @param opcode
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
     bool parseOpcode(const Opcode& opcode);
 
     // Sound source: sample playback
@@ -138,7 +308,7 @@ struct Region {
     CCMap<Range<uint8_t>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
     CCMap<Range<uint8_t>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
-    
+
 
     // Performance parameters: pitch
     uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter
