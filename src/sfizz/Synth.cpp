@@ -533,6 +533,12 @@ void sfz::Synth::resetVoices(int numVoices)
         std::this_thread::sleep_for(1ms);
     }
 
+    // Empty the file pool loading queue and spinlock on it
+    filePool.emptyFileLoadingQueue();
+    while (filePool.shouldEmptyQueue()) {
+        std::this_thread::sleep_for(1ms);
+    }
+
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
         voices.push_back(std::make_unique<Voice>(midiState));
