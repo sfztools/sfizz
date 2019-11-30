@@ -112,6 +112,12 @@ void sfz::FilePool::enqueueLoading(Voice* voice, const std::string* sample, int 
 void sfz::FilePool::loadingThread() noexcept
 {
     while (!quitThread) {
+        if (emptyQueue) {
+            while(loadingQueue.pop()) {}
+            emptyQueue = false;
+            continue;
+        }
+
         FileLoadingInformation fileToLoad {};
         if (!loadingQueue.wait_dequeue_timed(fileToLoad, 200ms)) {
             continue;
@@ -135,7 +141,7 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        
+
         std::lock_guard<std::mutex> guard { fileHandleMutex };
         fileHandles.emplace_back(readFromFile<float>(sndFile, fileToLoad.numFrames));
         fileToLoad.voice->setFileData(fileHandles.back(), fileToLoad.ticket);
