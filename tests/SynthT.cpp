@@ -89,9 +89,3 @@ TEST_CASE("[Synth] Check that the sample per block and sample rate are actually 
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 48000.0f );
     }
 }
-
-TEST_CASE("[Synth] Check that the sample rate and sample per block is changed when changing the number of voices")
-{
-    sfz::Synth synth;
-
-}
