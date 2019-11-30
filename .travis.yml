@@ -41,3 +41,6 @@ deploy:
   on:
     repo: sfztools/sfizz
     tags: true
+
+notifications:
+  irc: "ircs://chat.freenode.net:7070/#sfztools-dev"
