@@ -21,6 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "Config.h"
 #include "Synth.h"
 #include "sfizz.h"
 
@@ -127,10 +128,26 @@ void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels
     self->renderBlock({{channels[0], channels[1]}, static_cast<size_t>(num_frames)});
 }
 
-void sfizz_force_garbage_collection(sfizz_synth_t* synth)
+unsigned int sfizz_get_preload_size(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->garbageCollect();
+    return self->getPreloadSize();
+}
+void sfizz_set_preload_size(sfizz_synth_t* synth, unsigned int preload_size)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setPreloadSize(preload_size);
+}
+
+sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return static_cast<sfizz_oversampling_factor_t>(self->getOversamplingFactor());
+}
+void sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t preload_size)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setOversamplingFactor(static_cast<sfz::Oversampling>(preload_size));
 }
 
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
