@@ -49,8 +49,8 @@ namespace sfz {
  *
  */
 struct Region {
-    Region(const MidiState& midiState, Oversampling factor = config::defaultOversamplingFactor)
-    : midiState(midiState), oversamplingFactor(factor)
+    Region(const MidiState& midiState)
+    : midiState(midiState)
     {
         ccSwitched.set();
     }
@@ -326,8 +326,6 @@ private:
 
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
-
-    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     std::uniform_real_distribution<float> volumeDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
     std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };

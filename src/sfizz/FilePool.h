@@ -136,6 +136,7 @@ public:
     uint32_t getPreloadSize() const noexcept;
     void setOversamplingFactor(Oversampling factor) noexcept;
     Oversampling getOversamplingFactor() const noexcept;
+    void emptyFileLoadingQueue() noexcept;
 private:
     fs::path rootDirectory;
     void loadingThread() noexcept;

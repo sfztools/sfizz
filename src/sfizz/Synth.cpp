@@ -316,9 +316,7 @@ int sfz::Synth::getNumActiveVoices() const noexcept
 
 void sfz::Synth::garbageCollect() noexcept
 {
-    for (auto& voice : voices) {
 
-    }
 }
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -550,6 +548,7 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
     for (auto& voice: voices)
         voice->reset();
 
+    resources.filePool.emptyFileLoadingQueue();
     resources.filePool.setOversamplingFactor(factor);
     oversamplingFactor = factor;
 }

@@ -187,8 +187,17 @@ void sfz::FilePool::loadingThread() noexcept
     FilePromisePtr promise;
     while (!quitThread) {
         promisesToClean.clear();
+
+        if (emptyQueue) {
+            while(promiseQueue.pop()) {
+
+            }
+            emptyQueue = false;
+            continue;
+        }
+
         if (!promiseQueue.try_dequeue(promise)) {
-            std::this_thread::sleep_for(0.1ms);
+            std::this_thread::sleep_for(1ms);
             continue;
         }
 
@@ -208,6 +217,7 @@ void sfz::FilePool::loadingThread() noexcept
 
 void sfz::FilePool::clear()
 {
+    emptyFileLoadingQueue();
     preloadedFiles.clear();
     temporaryFilePromises.clear();
     promisesToClean.clear();
@@ -255,4 +265,11 @@ sfz::Oversampling sfz::FilePool::getOversamplingFactor() const noexcept
 uint32_t sfz::FilePool::getPreloadSize() const noexcept
 {
     return preloadSize;
+}
+
+void sfz::FilePool::emptyFileLoadingQueue() noexcept
+{
+    emptyQueue = true;
+    while (emptyQueue)
+        std::this_thread::sleep_for(1ms);
 }
