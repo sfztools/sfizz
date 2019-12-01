@@ -28,12 +28,11 @@
 #include "AudioBuffer.h"
 #include "SIMDHelpers.h"
 #include "ghc/fs_std.hpp"
-#include "moodycamel/readerwriterqueue.h"
 #include <absl/container/flat_hash_map.h>
-#include <mutex>
 #include <absl/types/optional.h>
 #include "absl/strings/string_view.h"
 #include <thread>
+#include <sndfile.hh>
 
 namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
@@ -138,7 +137,6 @@ public:
     Oversampling getOversamplingFactor() const noexcept;
 private:
     fs::path rootDirectory;
-
     void loadingThread() noexcept;
 
     uint32_t preloadSize { config::preloadSize };
@@ -147,8 +145,6 @@ private:
     // Signals
     bool quitThread { false };
     bool emptyQueue { false };
-
-    std::mutex fileHandleMutex;
 
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClean;
