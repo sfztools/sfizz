@@ -31,6 +31,7 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
 #include "absl/strings/string_view.h"
+#include "moodycamel/readerwriterqueue.h"
 #include <thread>
 #include <sndfile.hh>
 
@@ -139,9 +140,9 @@ private:
     fs::path rootDirectory;
     void loadingThread() noexcept;
 
+    moodycamel::ReaderWriterQueue<FilePromisePtr> promiseQueue;
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
-
     // Signals
     bool quitThread { false };
     bool emptyQueue { false };

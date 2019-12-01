@@ -60,9 +60,11 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
             return;
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
+        DBG("[Voice] Sample rate for " << region->sample << " is " << currentPromise->sampleRate);
+        DBG("[Voice] Speed ratio set to " << speedRatio);
     }
-
     pitchRatio = region->getBasePitchVariation(number, value);
+    DBG("[Voice] Pitch ratio set to " << pitchRatio);
 
     baseVolumedB = region->getBaseVolumedB(number);
 
@@ -373,7 +375,10 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     add<int>(sourcePosition, indices);
 
     //FIXME : all this casting is driving me crazy
-    const auto sampleEnd = min(static_cast<size_t>(region->trueSampleEnd(currentPromise->oversamplingFactor)), source.getNumFrames()) - 1;
+    const auto sampleEnd = min(
+        static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
+        static_cast<int>(source.getNumFrames())
+    ) - 1;
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto offset = sampleEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
         for (auto* index = indices.begin(); index < indices.end(); ++index) {

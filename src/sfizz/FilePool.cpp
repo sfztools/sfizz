@@ -60,18 +60,19 @@ std::unique_ptr<sfz::AudioBuffer<T>> upsample4x(const sfz::AudioBuffer<T>& buffe
 template <class T>
 std::unique_ptr<sfz::AudioBuffer<T>> upsample8x(const sfz::AudioBuffer<T>& buffer)
 {
-    auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 4);
+    auto tempBuffer2x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
+    auto tempBuffer4x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 4);
     auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 8);
     for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
-        sfz::upsample2xStage(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer).first(buffer.getNumFrames() * 2));
-        sfz::upsample4xStage(absl::MakeConstSpan(*tempBuffer).first(buffer.getNumFrames() * 2), absl::MakeSpan(*tempBuffer));
-        sfz::upsample8xStage(absl::MakeConstSpan(*tempBuffer), outputBuffer->getSpan(channelIdx));
+        sfz::upsample2xStage(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer2x));
+        sfz::upsample4xStage(absl::MakeConstSpan(*tempBuffer2x), absl::MakeSpan(*tempBuffer4x));
+        sfz::upsample8xStage(absl::MakeConstSpan(*tempBuffer4x), outputBuffer->getSpan(channelIdx));
     }
     return outputBuffer;
 }
 
 template <class T>
-std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor = sfz::Oversampling::x1)
+std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor)
 {
     auto baseBuffer = std::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames);
     if (sndFile.channels() == 1) {
@@ -83,13 +84,17 @@ std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32
         sfz::readInterleaved<T>(tempReadBuffer->getSpan(0), baseBuffer->getSpan(0), baseBuffer->getSpan(1));
     }
 
-    switch (factor)
-    {
-        case sfz::Oversampling::x1: return baseBuffer;
-        case sfz::Oversampling::x2: return upsample2x(*baseBuffer);
-        case sfz::Oversampling::x4: return upsample4x(*baseBuffer);
-        case sfz::Oversampling::x8: return upsample8x(*baseBuffer);
-        default: return {};
+    switch (factor) {
+    case sfz::Oversampling::x1:
+        return baseBuffer;
+    case sfz::Oversampling::x2:
+        return upsample2x(*baseBuffer);
+    case sfz::Oversampling::x4:
+        return upsample4x(*baseBuffer);
+    case sfz::Oversampling::x8:
+        return upsample8x(*baseBuffer);
+    default:
+        return {};
     }
 }
 
@@ -159,7 +164,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
         promise->preloadedData = preloaded->second.preloadedData;
         promise->sampleRate = preloaded->second.sampleRate;
         promise->oversamplingFactor = oversamplingFactor;
-        temporaryFilePromises.push_back(promise);
+        promiseQueue.enqueue(promise);
     }
     return promise;
 }
@@ -172,30 +177,32 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
         const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset);
+        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, oversamplingFactor);
     }
     this->preloadSize = preloadSize;
 }
 
 void sfz::FilePool::loadingThread() noexcept
 {
+    FilePromisePtr promise;
     while (!quitThread) {
-        std::this_thread::sleep_for(1ms);
-        for (auto& promise : temporaryFilePromises) {
-            if (!promise->dataReady) {
-                fs::path file { rootDirectory / std::string(promise->filename) };
-                SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-                if (sndFile.error() != 0)
-                    continue;
-
-                DBG("Loading file for " << promise->filename << " in the background");
-                const uint32_t frames = sndFile.frames();
-                promise->fileData = readFromFile<float>(sndFile, frames);
-                promise->dataReady = true;
-            }
+        promisesToClean.clear();
+        if (!promiseQueue.try_dequeue(promise)) {
+            std::this_thread::sleep_for(0.1ms);
+            continue;
         }
 
-        promisesToClean.clear();
+        fs::path file { rootDirectory / std::string(promise->filename) };
+        SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+        if (sndFile.error() != 0)
+            continue;
+
+        DBG("Loading file for " << promise->filename << " in the background");
+        const uint32_t frames = sndFile.frames();
+        promise->fileData = readFromFile<float>(sndFile, frames, oversamplingFactor);
+        promise->dataReady = true;
+        temporaryFilePromises.push_back(promise);
+        promise.reset();
     }
 }
 
@@ -233,7 +240,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
         const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset);
+        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor);
         preloadedFile.second.sampleRate *= samplerateChange;
     }
 
