@@ -546,3 +546,26 @@ void sfz::Synth::resetVoices(int numVoices)
     voiceViewArray.reserve(numVoices);
     this->numVoices = numVoices;
 }
+
+void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
+{
+    AtomicDisabler callbackDisabler{ canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
+    resources.filePool.emptyFileLoadingQueue();
+    for (auto& voice: voices)
+        voice->reset();
+
+    for (auto& region: regions) {
+        region->setOversamplingFactor(factor);
+    }
+
+    oversamplingFactor = factor;
+}
+
+sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
+{
+    return oversamplingFactor;
+}

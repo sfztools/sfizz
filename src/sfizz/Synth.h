@@ -279,6 +279,22 @@ public:
      *
      */
     void garbageCollect() noexcept;
+
+    /**
+     * @brief Set the oversampling factor to a new value. This will disable all callbacks
+     * kill all the voices, and trigger a reloading of every file in the FilePool under
+     * the new oversampling.
+     *
+     * @param factor
+     */
+    void setOversamplingFactor(Oversampling factor) noexcept;
+
+    /**
+     * @brief get the current oversampling factor
+     *
+     * @return Oversampling
+     */
+    Oversampling getOversamplingFactor() const noexcept;
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -370,6 +386,7 @@ private:
     float sampleRate { config::defaultSampleRate };
     float volume { Default::volume };
     int numVoices { config::numVoices };
+    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };

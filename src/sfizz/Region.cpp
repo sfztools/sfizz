@@ -773,3 +773,13 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
 
     return gain;
 }
+
+void sfz::Region::setOversamplingFactor(sfz::Oversampling factor) noexcept
+{
+    oversamplingFactor = factor;
+}
+
+sfz::Oversampling sfz::Region::getOversamplingFactor() const noexcept
+{
+    return oversamplingFactor;
+}

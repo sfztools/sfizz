@@ -49,8 +49,8 @@ namespace sfz {
  *
  */
 struct Region {
-    Region(const MidiState& midiState)
-    : midiState(midiState)
+    Region(const MidiState& midiState, Oversampling factor = config::defaultOversamplingFactor)
+    : midiState(midiState), oversamplingFactor(factor)
     {
         ccSwitched.set();
     }
@@ -238,6 +238,22 @@ struct Region {
      */
     bool parseOpcode(const Opcode& opcode);
 
+    /**
+     * @brief Set the oversampling factor to a new value. This will trigger updates of
+     * all the relevant values (sample ends, loop points, etc). It will also trigger
+     * preloading the file data again.
+     *
+     * @param factor
+     */
+    void setOversamplingFactor(Oversampling factor) noexcept;
+
+    /**
+     * @brief get the current oversampling factor
+     *
+     * @return Oversampling
+     */
+    Oversampling getOversamplingFactor() const noexcept;
+
     // Sound source: sample playback
     std::string sample {}; // Sample
     float delay { Default::delay }; // delay
@@ -337,6 +353,8 @@ private:
 
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
+
+    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     std::uniform_real_distribution<float> volumeDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
     std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };
