@@ -659,22 +659,6 @@ uint32_t sfz::Region::trueSampleEnd() const noexcept
     return min(sampleEnd, loopRange.getEnd());
 }
 
-bool sfz::Region::canUsePreloadedData() const noexcept
-{
-    if (preloadedData == nullptr)
-        return false;
-
-    return trueSampleEnd() < static_cast<uint32_t>(preloadedData->getNumFrames());
-}
-
-bool sfz::Region::isStereo() const noexcept
-{
-    if (isGenerator())
-        return 1;
-
-    return (this->preloadedData->getNumChannels() == 2);
-}
-
 template<class T, class U>
 float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
 {

@@ -257,9 +257,9 @@ TEST_CASE("[Files] Channels (channels.sfz)")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "mono_sample.wav");
-    REQUIRE(!synth.getRegionView(0)->isStereo());
+    REQUIRE(!synth.getRegionView(0)->isStereo);
     REQUIRE(synth.getRegionView(1)->sample == "stereo_sample.wav");
-    REQUIRE(synth.getRegionView(1)->isStereo());
+    REQUIRE(synth.getRegionView(1)->isStereo);
 }
 
 TEST_CASE("[Files] sw_default")

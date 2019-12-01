@@ -24,6 +24,7 @@
 #pragma once
 #include "Resources.h"
 #include "Parser.h"
+#include "Voice.h"
 #include "Region.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
@@ -353,11 +354,6 @@ private:
     std::vector<Opcode> masterOpcodes;
     std::vector<Opcode> groupOpcodes;
 
-    // Singletons passed as references to the voices
-    // TODO: these should probably go in a global singleton holder along with a buffer distribution and LFO/EG stuff...
-    Resources resources;
-    MidiState midiState;
-
     /**
      * @brief Find a voice that is not currently playing
      *
@@ -395,6 +391,10 @@ private:
     // Atomic guards; must be used with AtomicGuard and AtomicDisabler
     std::atomic<bool> canEnterCallback { true };
     std::atomic<bool> inCallback { false };
+
+    // Singletons passed as references to the voices
+    Resources resources;
+    MidiState midiState;
 
     LEAK_DETECTOR(Synth);
 };

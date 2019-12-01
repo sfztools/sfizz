@@ -227,7 +227,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         auto region = currentRegion->get();
 
         if (!region->isGenerator()) {
-            auto fileInformation = resources.filePool.getFileInformation(region->sample, region->offset + region->offsetRandom);
+            auto fileInformation = resources.filePool.getFileInformation(region->sample);
             if (!fileInformation) {
                 DBG("Removing the region with sample " << region->sample);
                 std::iter_swap(currentRegion, lastRegion);
@@ -236,8 +236,12 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
             }
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
             region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
-            region->preloadedData = fileInformation->preloadedData;
-            region->sampleRate = fileInformation->sampleRate;
+            if (fileInformation->numChannels == 2)
+                region->isStereo = true;
+
+            // TODO: adjust with LFO targets
+            const auto maxOffset { region->offset + region->offsetRandom };
+            resources.filePool.preloadFile(region->sample, maxOffset);
         }
 
         for (auto note = 0; note < 128; note++) {
@@ -313,7 +317,7 @@ int sfz::Synth::getNumActiveVoices() const noexcept
 void sfz::Synth::garbageCollect() noexcept
 {
     for (auto& voice : voices) {
-        voice->garbageCollect();
+
     }
 }
 
@@ -347,6 +351,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
+
+    resources.filePool.cleanupPromises();
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -387,10 +393,6 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
                 continue;
 
             voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
-            if (!region->isGenerator()) {
-                voice->expectFileData(fileTicket);
-                resources.filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
-            }
         }
     }
 }
@@ -420,10 +422,6 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
                 continue;
 
             voice->startVoice(region, delay, channel, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
-            if (!region->isGenerator()) {
-                voice->expectFileData(fileTicket);
-                resources.filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
-            }
         }
     }
 }
@@ -449,10 +447,6 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
                 continue;
 
             voice->startVoice(region, delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
-            if (!region->isGenerator()) {
-                voice->expectFileData(fileTicket);
-                resources.filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
-            }
         }
     }
 }
@@ -533,10 +527,9 @@ void sfz::Synth::resetVoices(int numVoices)
         std::this_thread::sleep_for(1ms);
     }
 
-    resources.filePool.emptyFileLoadingQueue();
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(midiState));
+        voices.push_back(std::make_unique<Voice>(midiState, resources));
 
     for (auto& voice: voices) {
         voice->setSampleRate(this->sampleRate);
@@ -554,7 +547,6 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
         std::this_thread::sleep_for(1ms);
     }
 
-    resources.filePool.emptyFileLoadingQueue();
     for (auto& voice: voices)
         voice->reset();
 

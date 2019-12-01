@@ -29,6 +29,7 @@
 #include "Region.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
+#include "Resources.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include <absl/types/span.h>
@@ -50,7 +51,7 @@ public:
      *
      * @param midiState
      */
-    Voice(const MidiState& midiState);
+    Voice(const MidiState& midiState, Resources& resources);
     enum class TriggerType {
         NoteOn,
         NoteOff,
@@ -98,23 +99,6 @@ public:
      */
     void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType) noexcept;
 
-    /**
-     * @brief Tells the voice that it should expect to receive a file at some point using the
-     * setFileData() function. The ticket is a unique identifier that will prevent the file data
-     * to be set "too late"; if the voice receives the file for an older ticket, it will discard
-     * it.
-     *
-     * @param ticket
-     */
-    void expectFileData(unsigned ticket);
-    /**
-     * @brief Sets the file data for a given ticket. The voice can freely release and destroy the
-     * shared pointer, as it will be garbage collected by the file pool afterwards.
-     *
-     * @param file
-     * @param ticket
-     */
-    void setFileData(std::shared_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept;
     /**
      * @brief Register a note-off event; this may trigger a release.
      *
@@ -221,11 +205,6 @@ public:
      *
      */
     void reset() noexcept;
-    /**
-     * @brief Clear the loaded file data if it's not useful anymore
-     *
-     */
-    void garbageCollect() noexcept;
 
     /**
      * @brief Get the mean squared power of the last rendered block. This is used
@@ -309,9 +288,7 @@ private:
     int sourcePosition { 0 };
     int initialDelay { 0 };
 
-    std::atomic<bool> dataReady { false };
-    std::shared_ptr<AudioBuffer<float>> fileData { nullptr };
-    unsigned ticket { 0 };
+    FilePromisePtr currentPromise { nullptr };
 
     Buffer<float> tempBuffer1;
     Buffer<float> tempBuffer2;
@@ -326,6 +303,8 @@ private:
     float sampleRate { config::defaultSampleRate };
 
     const MidiState& midiState;
+    Resources& resources;
+
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> volumeEnvelope; // dB events but the envelope output is linear gain
     LinearEnvelope<float> amplitudeEnvelope; // linear events

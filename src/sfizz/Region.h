@@ -149,13 +149,7 @@ struct Region {
      * @return false
      */
     void registerTempo(float secondsPerQuarter) noexcept;
-    /**
-     * @brief Is the underlying region sample a stereo one?
-     *
-     * @return true
-     * @return false
-     */
-    bool isStereo() const noexcept;
+
     /**
      * @brief Get the base pitch of the region depending on which note has been
      * pressed and at which velocity.
@@ -339,8 +333,7 @@ struct Region {
     EGDescription pitchEG;
     EGDescription filterEG;
 
-    double sampleRate { config::defaultSampleRate };
-    std::shared_ptr<AudioBuffer<float>> preloadedData { nullptr };
+    bool isStereo { false };
 private:
     const MidiState& midiState;
     bool keySwitched { true };
