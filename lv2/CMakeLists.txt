@@ -1,5 +1,9 @@
 project (lv2plugin)
 
+# Dependencies check
+find_package (PkgConfig)
+pkg_check_modules (LV2 lv2>=1.10.0 REQUIRED)
+
 # CMAKE_PROJECT_NAME is the top level project name, not the current one
 set (LV2PLUGIN_PRJ_NAME "${CMAKE_PROJECT_NAME}_lv2")
 
@@ -23,6 +27,7 @@ set (LV2PLUGIN_TTL_SRC_FILES
     ${CMAKE_PROJECT_NAME}.ttl.in
 )
 add_library (${LV2PLUGIN_PRJ_NAME} SHARED ${CMAKE_PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_FILES})
+target_include_directories (${LV2PLUGIN_PRJ_NAME} PRIVATE ${LV2_INCLUDE_DIRS})
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${CMAKE_PROJECT_NAME}::${CMAKE_PROJECT_NAME})
 
 if (ENABLE_LTO)

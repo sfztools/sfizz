@@ -7,10 +7,10 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
   gcc -v && g++ -v && cmake --version && /usr/local/bin/cmake --version && $SHELL --version
 
   mkdir build && cd build
-  /usr/local/bin/cmake -D CMAKE_BUILD_TYPE=Debug -D SFIZZ_CLIENTS=ON ..
+  /usr/local/bin/cmake ..
   make -j$(nproc)
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
   mkdir build && cd build
-  cmake -D SFIZZ_CLIENTS=OFF -G Xcode .. # FIXME: client build
+  cmake -D SFIZZ_JACK=OFF -G Xcode .. # FIXME: client build
   xcodebuild -project sfizz.xcodeproj -alltargets -configuration Debug build
 fi
