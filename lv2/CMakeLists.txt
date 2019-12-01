@@ -1,9 +1,5 @@
 project (lv2plugin)
 
-# Dependencies check
-find_package (PkgConfig)
-pkg_check_modules (LV2 lv2>=1.10.0 REQUIRED)
-
 # CMAKE_PROJECT_NAME is the top level project name, not the current one
 set (LV2PLUGIN_PRJ_NAME "${CMAKE_PROJECT_NAME}_lv2")
 
@@ -27,9 +23,22 @@ set (LV2PLUGIN_TTL_SRC_FILES
     ${CMAKE_PROJECT_NAME}.ttl.in
 )
 add_library (${LV2PLUGIN_PRJ_NAME} SHARED ${CMAKE_PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_FILES})
-target_include_directories (${LV2PLUGIN_PRJ_NAME} PRIVATE ${LV2_INCLUDE_DIRS})
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${CMAKE_PROJECT_NAME}::${CMAKE_PROJECT_NAME})
 
+# Fetch required LV2 include files
+include(FetchContent)
+FetchContent_Declare(
+  lv2
+  GIT_REPOSITORY https://gitlab.com/lv2/lv2.git
+  GIT_TAG        v1.16.0
+)
+FetchContent_GetProperties(lv2)
+if(NOT lv2_POPULATED)
+  FetchContent_Populate(lv2)
+  target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE ${lv2_SOURCE_DIR})
+endif()
+
+# Enable LTO if available
 if (ENABLE_LTO)
     set_property (TARGET ${LV2PLUGIN_PRJ_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
 endif()

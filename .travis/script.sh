@@ -7,7 +7,9 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
   gcc -v && g++ -v && cmake --version && /usr/local/bin/cmake --version && $SHELL --version
 
   mkdir build && cd build
-  /usr/local/bin/cmake ..
+
+  # FIXME: lto error in build when enabled
+  /usr/local/bin/cmake -D CMAKE_BUILD_TYPE=Release -D ENABLE_LTO=OFF ..
   make -j$(nproc)
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
   mkdir build && cd build
