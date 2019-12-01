@@ -23,6 +23,7 @@
 
 #include "sfizz.hpp"
 #include <absl/flags/parse.h>
+#include <absl/flags/flag.h>
 #include <absl/types/span.h>
 #include <atomic>
 #include <cstddef>
@@ -156,17 +157,36 @@ static void done(int sig [[maybe_unused]])
     // exit(0);
 }
 
+ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are 1x, 2x, 4x, 8x)");
+ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+
 int main(int argc, char** argv)
 {
     // std::ios::sync_with_stdio(false);
     auto arguments = absl::ParseCommandLine(argc, argv);
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
+    const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
+    const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+
+    std::cout << "Flags" << '\n';
+    std::cout << "- Oversampling: " << oversampling << '\n';
+    std::cout << "- Preloaded Size: " << preload_size << '\n';
+    const auto factor = [&]() {
+        if (oversampling == "x1") return sfz::Oversampling::x1;
+        if (oversampling == "x2") return sfz::Oversampling::x2;
+        if (oversampling == "x4") return sfz::Oversampling::x4;
+        if (oversampling == "x8") return sfz::Oversampling::x8;
+        return sfz::Oversampling::x1;
+    }();
+
     std::cout << "Positional arguments:";
     for (auto& file : filesToParse)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
     sfz::Synth synth;
+    synth.setOversamplingFactor(factor);
+    synth.setPreloadSize(preload_size);
     synth.loadSfzFile(filesToParse[0]);
     std::cout << "==========" << '\n';
     std::cout << "Total:" << '\n';

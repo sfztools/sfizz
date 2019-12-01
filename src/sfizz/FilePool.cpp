@@ -141,10 +141,10 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
 
     if (preloadedFiles.contains(filename)) {
         if (framesToLoad > preloadedFiles[filename].preloadedData->getNumFrames()) {
-            preloadedFiles[filename].preloadedData = readFromFile<float>(sndFile, framesToLoad);
+            preloadedFiles[filename].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor);
         }
     } else {
-        preloadedFiles.insert_or_assign(filename, { readFromFile<float>(sndFile, framesToLoad), static_cast<float>(sndFile.samplerate()) * static_cast<float>(oversamplingFactor) });
+        preloadedFiles.insert_or_assign(filename, { readFromFile<float>(sndFile, framesToLoad, oversamplingFactor), static_cast<float>(sndFile.samplerate() * oversamplingFactor) });
     }
 
     return true;
