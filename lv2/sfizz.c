@@ -3,10 +3,10 @@
 
   Copyright 2019, Paul Ferrand <paul@ferrand.cc>
 
-  This file was based on skeleton and example code from the LV2 plugin 
+  This file was based on skeleton and example code from the LV2 plugin
   distribution available at http://lv2plug.in/
 
-  The LV2 sample plugins have the following copyright and notice, which are 
+  The LV2 sample plugins have the following copyright and notice, which are
   extended to the current work:
   Copyright 2011-2016 David Robillard <d@drobilla.net>
   Copyright 2011 Gabriel M. Beddingfield <gabriel@teuton.org>
@@ -187,7 +187,7 @@ instantiate(const LV2_Descriptor *descriptor,
 {
     UNUSED(descriptor);
     UNUSED(path);
-    LV2_Options_Option *options;
+    LV2_Options_Option *options = NULL;
     bool supports_bounded_block_size = false;
     bool options_has_block_size = false;
     bool supports_fixed_block_size = false;
@@ -326,7 +326,7 @@ activate(LV2_Handle instance)
     self->synth = sfizz_create_synth();
     sfizz_set_samples_per_block(self->synth, self->max_block_size);
     sfizz_set_sample_rate(self->synth, self->sample_rate);
-    if (self->sfz_file_path && strlen(self->sfz_file_path) > 0)
+    if (strlen(self->sfz_file_path) > 0)
     {
         lv2_log_note(&self->logger, "Current file is: %s\n", self->sfz_file_path);
         sfizz_load_file(self->synth, self->sfz_file_path);
@@ -482,7 +482,7 @@ run(LV2_Handle instance, uint32_t sample_count)
                 if (!property) // Send the full state
                 {
                     sfizz_lv2_send_file_path(self);
-                } 
+                }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
                     sfizz_lv2_send_file_path(self);
@@ -507,7 +507,7 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     float volume = *(self->volume_port);
     sfizz_set_volume(self->synth, volume);
-    
+
     int num_voices = (int)*self->polyphony_port;
     if (num_voices != self->num_voices && !self->changing_voices)
     {
