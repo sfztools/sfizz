@@ -149,13 +149,7 @@ struct Region {
      * @return false
      */
     void registerTempo(float secondsPerQuarter) noexcept;
-    /**
-     * @brief Is the underlying region sample a stereo one?
-     *
-     * @return true
-     * @return false
-     */
-    bool isStereo() const noexcept;
+
     /**
      * @brief Get the base pitch of the region depending on which note has been
      * pressed and at which velocity.
@@ -207,7 +201,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t getOffset() noexcept;
+    uint32_t getOffset(Oversampling factor = x1) noexcept;
     /**
      * @brief Get the region delay in seconds
      *
@@ -220,14 +214,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t trueSampleEnd() const noexcept;
-    /**
-     * @brief Can the region use the preloaded data only to play its full range?
-     *
-     * @return true
-     * @return false
-     */
-    bool canUsePreloadedData() const noexcept;
+    uint32_t trueSampleEnd(Oversampling factor = x1) const noexcept;
     /**
      * @brief Parse a new opcode into the region to fill in the proper parameters.
      * This must be called multiple times for each opcode applying to this region.
@@ -237,6 +224,9 @@ struct Region {
      * @return false
      */
     bool parseOpcode(const Opcode& opcode);
+
+    uint32_t loopStart(Oversampling factor = x1) const noexcept;
+    uint32_t loopEnd(Oversampling factor = x1) const noexcept;
 
     // Sound source: sample playback
     std::string sample {}; // Sample
@@ -323,8 +313,7 @@ struct Region {
     EGDescription pitchEG;
     EGDescription filterEG;
 
-    double sampleRate { config::defaultSampleRate };
-    std::shared_ptr<AudioBuffer<float>> preloadedData { nullptr };
+    bool isStereo { false };
 private:
     const MidiState& midiState;
     bool keySwitched { true };

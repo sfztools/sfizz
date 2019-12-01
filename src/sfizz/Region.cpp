@@ -644,9 +644,9 @@ float sfz::Region::getBaseGain() noexcept
     return normalizePercents(amplitude);
 }
 
-uint32_t sfz::Region::getOffset() noexcept
+uint32_t sfz::Region::getOffset(Oversampling factor) noexcept
 {
-    return offset + offsetDistribution(Random::randomGenerator);
+    return (offset + offsetDistribution(Random::randomGenerator)) * factor;
 }
 
 float sfz::Region::getDelay() noexcept
@@ -654,25 +654,19 @@ float sfz::Region::getDelay() noexcept
     return delay + delayDistribution(Random::randomGenerator);
 }
 
-uint32_t sfz::Region::trueSampleEnd() const noexcept
+uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept
 {
-    return min(sampleEnd, loopRange.getEnd());
+    return min(sampleEnd, loopRange.getEnd()) * factor;
 }
 
-bool sfz::Region::canUsePreloadedData() const noexcept
+uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
 {
-    if (preloadedData == nullptr)
-        return false;
-
-    return trueSampleEnd() < static_cast<uint32_t>(preloadedData->getNumFrames());
+    return loopRange.getStart() * factor;
 }
 
-bool sfz::Region::isStereo() const noexcept
+uint32_t sfz::Region::loopEnd(Oversampling factor) const noexcept
 {
-    if (isGenerator())
-        return 1;
-
-    return (this->preloadedData->getNumChannels() == 2);
+    return loopRange.getEnd() * factor;
 }
 
 template<class T, class U>

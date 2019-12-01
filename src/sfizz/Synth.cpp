@@ -123,7 +123,7 @@ void sfz::Synth::clear()
     for (auto& list: ccActivationLists)
         list.clear();
     regions.clear();
-    filePool.clear();
+    resources.filePool.clear();
     hasGlobal = false;
     hasControl = false;
     numGroups = 0;
@@ -219,7 +219,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
     if (regions.empty())
         return false;
 
-    filePool.setRootDirectory(this->rootDirectory);
+    resources.filePool.setRootDirectory(this->rootDirectory);
 
     auto lastRegion = regions.end() - 1;
     auto currentRegion = regions.begin();
@@ -227,7 +227,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         auto region = currentRegion->get();
 
         if (!region->isGenerator()) {
-            auto fileInformation = filePool.getFileInformation(region->sample, region->offset + region->offsetRandom);
+            auto fileInformation = resources.filePool.getFileInformation(region->sample);
             if (!fileInformation) {
                 DBG("Removing the region with sample " << region->sample);
                 std::iter_swap(currentRegion, lastRegion);
@@ -236,8 +236,12 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
             }
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
             region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
-            region->preloadedData = fileInformation->preloadedData;
-            region->sampleRate = fileInformation->sampleRate;
+            if (fileInformation->numChannels == 2)
+                region->isStereo = true;
+
+            // TODO: adjust with LFO targets
+            const auto maxOffset { region->offset + region->offsetRandom };
+            resources.filePool.preloadFile(region->sample, maxOffset);
         }
 
         for (auto note = 0; note < 128; note++) {
@@ -312,9 +316,7 @@ int sfz::Synth::getNumActiveVoices() const noexcept
 
 void sfz::Synth::garbageCollect() noexcept
 {
-    for (auto& voice : voices) {
-        voice->garbageCollect();
-    }
+
 }
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -347,6 +349,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     buffer.fill(0.0f);
+
+    resources.filePool.cleanupPromises();
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -387,10 +391,6 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
                 continue;
 
             voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
-            if (!region->isGenerator()) {
-                voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
-            }
         }
     }
 }
@@ -420,10 +420,6 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
                 continue;
 
             voice->startVoice(region, delay, channel, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
-            if (!region->isGenerator()) {
-                voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
-            }
         }
     }
 }
@@ -449,10 +445,6 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
                 continue;
 
             voice->startVoice(region, delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
-            if (!region->isGenerator()) {
-                voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
-            }
         }
     }
 }
@@ -503,7 +495,7 @@ std::set<absl::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
 }
 size_t sfz::Synth::getNumPreloadedSamples() const noexcept
 {
-    return filePool.getNumPreloadedSamples();
+    return resources.filePool.getNumPreloadedSamples();
 }
 
 float sfz::Synth::getVolume() const noexcept
@@ -533,10 +525,9 @@ void sfz::Synth::resetVoices(int numVoices)
         std::this_thread::sleep_for(1ms);
     }
 
-    filePool.emptyFileLoadingQueue();
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(midiState));
+        voices.push_back(std::make_unique<Voice>(midiState, resources));
 
     for (auto& voice: voices) {
         voice->setSampleRate(this->sampleRate);
@@ -545,4 +536,39 @@ void sfz::Synth::resetVoices(int numVoices)
 
     voiceViewArray.reserve(numVoices);
     this->numVoices = numVoices;
+}
+
+void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
+{
+    AtomicDisabler callbackDisabler{ canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
+    for (auto& voice: voices)
+        voice->reset();
+
+    resources.filePool.emptyFileLoadingQueue();
+    resources.filePool.setOversamplingFactor(factor);
+    oversamplingFactor = factor;
+}
+
+sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
+{
+    return oversamplingFactor;
+}
+
+void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
+{
+    AtomicDisabler callbackDisabler{ canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
+    resources.filePool.setPreloadSize(preloadSize);
+}
+
+uint32_t sfz::Synth::getPreloadSize() const noexcept
+{
+    return resources.filePool.getPreloadSize();
 }

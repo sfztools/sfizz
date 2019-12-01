@@ -22,8 +22,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "FilePool.h"
+#include "Resources.h"
 #include "Parser.h"
+#include "Voice.h"
 #include "Region.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
@@ -279,6 +280,36 @@ public:
      *
      */
     void garbageCollect() noexcept;
+
+    /**
+     * @brief Set the oversampling factor to a new value. This will disable all callbacks
+     * kill all the voices, and trigger a reloading of every file in the FilePool under
+     * the new oversampling.
+     *
+     * @param factor
+     */
+    void setOversamplingFactor(Oversampling factor) noexcept;
+
+    /**
+     * @brief get the current oversampling factor
+     *
+     * @return Oversampling
+     */
+    Oversampling getOversamplingFactor() const noexcept;
+
+    /**
+     * @brief Set the preloaded file size. This will disable the callback.
+     *
+     * @param factor
+     */
+    void setPreloadSize(uint32_t preloadSize) noexcept;
+
+    /**
+     * @brief get the current preloaded file size
+     *
+     * @return Oversampling
+     */
+    uint32_t getPreloadSize() const noexcept;
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -337,11 +368,6 @@ private:
     std::vector<Opcode> masterOpcodes;
     std::vector<Opcode> groupOpcodes;
 
-    // Singletons passed as references to the voices
-    // TODO: these should probably go in a global singleton holder along with a buffer distribution and LFO/EG stuff...
-    FilePool filePool;
-    MidiState midiState;
-
     /**
      * @brief Find a voice that is not currently playing
      *
@@ -370,6 +396,7 @@ private:
     float sampleRate { config::defaultSampleRate };
     float volume { Default::volume };
     int numVoices { config::numVoices };
+    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
@@ -378,6 +405,10 @@ private:
     // Atomic guards; must be used with AtomicGuard and AtomicDisabler
     std::atomic<bool> canEnterCallback { true };
     std::atomic<bool> inCallback { false };
+
+    // Singletons passed as references to the voices
+    Resources resources;
+    MidiState midiState;
 
     LEAK_DETECTOR(Synth);
 };

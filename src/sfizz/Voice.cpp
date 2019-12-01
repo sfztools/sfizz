@@ -31,8 +31,8 @@
 #include "absl/algorithm/container.h"
 #include <memory>
 
-sfz::Voice::Voice(const MidiState& midiState)
-    : midiState(midiState)
+sfz::Voice::Voice(const sfz::MidiState& midiState, sfz::Resources& resources)
+    : midiState(midiState), resources(resources)
 {
 }
 
@@ -44,6 +44,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     triggerValue = value;
 
     this->region = region;
+    state = State::playing;
 
     ASSERT(delay >= 0);
     if (delay < 0)
@@ -51,9 +52,19 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
 
     // DBG("Starting voice with " << region->sample);
 
-    state = State::playing;
-    speedRatio = static_cast<float>(region->sampleRate / this->sampleRate);
+    if (!region->isGenerator()) {
+        currentPromise = resources.filePool.getFilePromise(region->sample);
+        if (currentPromise == nullptr) {
+            DBG("[Voice] Could not fetch the file promise for sample " << region->sample);
+            reset();
+            return;
+        }
+        speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
+        DBG("[Voice] Sample rate for " << region->sample << " is " << currentPromise->sampleRate);
+        DBG("[Voice] Speed ratio set to " << speedRatio);
+    }
     pitchRatio = region->getBasePitchVariation(number, value);
+    DBG("[Voice] Pitch ratio set to " << pitchRatio);
 
     baseVolumedB = region->getBaseVolumedB(number);
 
@@ -116,15 +127,6 @@ void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
         secondsToSamples(region->amplitudeEG.getDecay(midiState.cc, velocity)),
         secondsToSamples(region->amplitudeEG.getHold(midiState.cc, velocity)),
         normalizePercents(region->amplitudeEG.getStart(midiState.cc, velocity)));
-}
-
-void sfz::Voice::setFileData(std::shared_ptr<AudioBuffer<float>> file, unsigned ticket) noexcept
-{
-    if (ticket != this->ticket)
-        return;
-
-    fileData = std::move(file);
-    dataReady.store(true);
 }
 
 bool sfz::Voice::isFree() const noexcept
@@ -245,7 +247,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     else
         fillWithData(delayed_buffer);
 
-    if (region->isStereo())
+    if (region->isStereo)
         processStereo(buffer);
     else
         processMono(buffer);
@@ -352,12 +354,13 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         return;
 
     auto source { [&]() {
-        if (region->canUsePreloadedData())
-            return AudioSpan<const float>(*region->preloadedData);
-        else if (!dataReady)
-            return AudioSpan<const float>(*region->preloadedData);
+        // if (region->trueSampleEnd() < currentPromise->preloadedData->getNumFrames())
+        //     return AudioSpan<const float>(*currentPromise->preloadedData);
+        // else
+        if (!currentPromise->dataReady)
+            return AudioSpan<const float>(*currentPromise->preloadedData);
         else
-            return AudioSpan<const float>(*fileData);
+            return AudioSpan<const float>(*currentPromise->fileData);
     }() };
 
     auto indices = indexSpan.first(buffer.getNumFrames());
@@ -372,9 +375,12 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     add<int>(sourcePosition, indices);
 
     //FIXME : all this casting is driving me crazy
-    const auto sampleEnd = min(static_cast<int>(region->trueSampleEnd()), static_cast<int>(source.getNumFrames())) - 1;
-    if (region->shouldLoop() && region->loopRange.getEnd() <= source.getNumFrames()) {
-        const auto offset = sampleEnd - static_cast<int>(region->loopRange.getStart());
+    const auto sampleEnd = min(
+        static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
+        static_cast<int>(source.getNumFrames())
+    ) - 1;
+    if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
+        const auto offset = sampleEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
             if (*index > sampleEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
@@ -483,28 +489,15 @@ sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
 
 void sfz::Voice::reset() noexcept
 {
-    dataReady.store(false);
-    fileData.reset();
     state = State::idle;
     if (region != nullptr) {
         DBG("Reset voice with sample " << region->sample);
     }
     region = nullptr;
+    currentPromise.reset();
     sourcePosition = 0;
     floatPositionOffset = 0.0f;
     noteIsOff = false;
-}
-
-void sfz::Voice::garbageCollect() noexcept
-{
-    if (state == State::idle && region == nullptr) {
-        fileData.reset();
-    }
-}
-
-void sfz::Voice::expectFileData(unsigned ticket)
-{
-    this->ticket = ticket;
 }
 
 float sfz::Voice::getMeanSquaredAverage() const noexcept

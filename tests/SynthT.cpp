@@ -21,6 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "Config.h"
 #include "sfizz.hpp"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
@@ -88,4 +89,34 @@ TEST_CASE("[Synth] Check that the sample per block and sample rate are actually 
         REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 128 );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 48000.0f );
     }
+}
+
+TEST_CASE("[Synth] Check that we can change the size of the preload before and after loading")
+{
+    sfz::Synth synth;
+    synth.setPreloadSize(512);
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.setPreloadSize(1024);
+
+    synth.noteOn(0, 1, 36, 24);
+    synth.noteOn(0, 1, 36, 89);
+    synth.renderBlock(buffer);
+    synth.setPreloadSize(2048);
+    synth.renderBlock(buffer);
+}
+
+TEST_CASE("[Synth] Check that we can change the oversampling factor before and after loading")
+{
+    sfz::Synth synth;
+    synth.setOversamplingFactor(sfz::x2);
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.setOversamplingFactor(sfz::x4);
+
+    synth.noteOn(0, 1, 36, 24);
+    synth.noteOn(0, 1, 36, 89);
+    synth.renderBlock(buffer);
+    synth.setOversamplingFactor(sfz::x2);
+    synth.renderBlock(buffer);
 }

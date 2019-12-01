@@ -24,6 +24,12 @@
 #pragma once
 
 namespace sfz {
+enum Oversampling {
+    x1 = 1,
+    x2 = 2,
+    x4 = 4,
+    x8 = 8
+};
 
 namespace config {
     constexpr float defaultSampleRate { 48000 };
@@ -37,7 +43,7 @@ namespace config {
     constexpr float virtuallyZero { 0.00005f };
     constexpr float fastReleaseDuration { 0.01 };
     constexpr char defineCharacter { '$' };
-    constexpr int oversamplingFactor { 2 };
+    constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr unsigned powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001 };
@@ -65,5 +71,6 @@ namespace SIMDConfig {
     constexpr bool sfzInterpolationCast { true };
     constexpr bool mean { false };
     constexpr bool meanSquared { false };
+    constexpr bool upsampling { false };
 }
 } // namespace sfz
