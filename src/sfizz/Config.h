@@ -65,5 +65,6 @@ namespace SIMDConfig {
     constexpr bool sfzInterpolationCast { true };
     constexpr bool mean { false };
     constexpr bool meanSquared { false };
+    constexpr bool upsampling { false };
 }
 } // namespace sfz
