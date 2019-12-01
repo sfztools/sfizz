@@ -550,14 +550,26 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
     for (auto& voice: voices)
         voice->reset();
 
-    for (auto& region: regions) {
-        region->setOversamplingFactor(factor);
-    }
-
+    resources.filePool.setOversamplingFactor(factor);
     oversamplingFactor = factor;
 }
 
 sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
 {
     return oversamplingFactor;
+}
+
+void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
+{
+    AtomicDisabler callbackDisabler{ canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
+    resources.filePool.setPreloadSize(preloadSize);
+}
+
+uint32_t sfz::Synth::getPreloadSize() const noexcept
+{
+    return resources.filePool.getPreloadSize();
 }

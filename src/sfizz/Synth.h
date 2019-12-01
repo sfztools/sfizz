@@ -296,6 +296,20 @@ public:
      * @return Oversampling
      */
     Oversampling getOversamplingFactor() const noexcept;
+
+    /**
+     * @brief Set the preloaded file size. This will disable the callback.
+     *
+     * @param factor
+     */
+    void setPreloadSize(uint32_t preloadSize) noexcept;
+
+    /**
+     * @brief get the current preloaded file size
+     *
+     * @return Oversampling
+     */
+    uint32_t getPreloadSize() const noexcept;
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time

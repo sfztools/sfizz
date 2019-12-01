@@ -142,7 +142,7 @@ void sfz::FilePool::loadingThread() noexcept
                 if (sndFile.error() != 0)
                     continue;
 
-                DBG("Loading file for " << *promise->filename << " in the background");
+                DBG("Loading file for " << promise->filename << " in the background");
                 const uint32_t frames = sndFile.frames();
                 promise->fileData = readFromFile<float>(sndFile, frames);
                 promise->dataReady = true;
@@ -178,4 +178,20 @@ void sfz::FilePool::cleanupPromises() noexcept
             promise++;
         }
     }
+}
+
+
+void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
+{
+    this->oversamplingFactor = factor;
+}
+
+sfz::Oversampling sfz::FilePool::getOversamplingFactor() const noexcept
+{
+    return oversamplingFactor;
+}
+
+uint32_t sfz::FilePool::getPreloadSize() const noexcept
+{
+    return preloadSize;
 }

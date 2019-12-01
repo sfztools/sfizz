@@ -24,8 +24,7 @@
 #pragma once
 
 namespace sfz {
-enum class Oversampling: int
-{
+enum Oversampling {
     x1 = 1,
     x2 = 2,
     x4 = 4,

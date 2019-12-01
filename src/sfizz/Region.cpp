@@ -644,9 +644,9 @@ float sfz::Region::getBaseGain() noexcept
     return normalizePercents(amplitude);
 }
 
-uint32_t sfz::Region::getOffset() noexcept
+uint32_t sfz::Region::getOffset(Oversampling factor) noexcept
 {
-    return offset + offsetDistribution(Random::randomGenerator);
+    return (offset + offsetDistribution(Random::randomGenerator)) * factor;
 }
 
 float sfz::Region::getDelay() noexcept
@@ -654,9 +654,19 @@ float sfz::Region::getDelay() noexcept
     return delay + delayDistribution(Random::randomGenerator);
 }
 
-uint32_t sfz::Region::trueSampleEnd() const noexcept
+uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept
 {
-    return min(sampleEnd, loopRange.getEnd());
+    return min(sampleEnd, loopRange.getEnd()) * factor;
+}
+
+uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
+{
+    return loopRange.getStart() * factor;
+}
+
+uint32_t sfz::Region::loopEnd(Oversampling factor) const noexcept
+{
+    return loopRange.getEnd() * factor;
 }
 
 template<class T, class U>
@@ -756,14 +766,4 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
     }
 
     return gain;
-}
-
-void sfz::Region::setOversamplingFactor(sfz::Oversampling factor) noexcept
-{
-    oversamplingFactor = factor;
-}
-
-sfz::Oversampling sfz::Region::getOversamplingFactor() const noexcept
-{
-    return oversamplingFactor;
 }

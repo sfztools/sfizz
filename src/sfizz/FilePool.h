@@ -133,6 +133,9 @@ public:
     void cleanupPromises() noexcept;
     FilePromisePtr getFilePromise(const std::string& filename) noexcept;
     void setPreloadSize(uint32_t preloadSize) noexcept;
+    uint32_t getPreloadSize() const noexcept;
+    void setOversamplingFactor(Oversampling factor) noexcept;
+    Oversampling getOversamplingFactor() const noexcept;
 private:
     fs::path rootDirectory;
 
