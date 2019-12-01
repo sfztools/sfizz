@@ -113,8 +113,13 @@ public:
      *
      */
     void clear();
-    void emptyFileLoadingQueue() noexcept { emptyQueue = true; }
-    bool shouldEmptyQueue() const noexcept { return emptyQueue; }
+    /**
+     * @brief Empty the file loading queue. This function will lock and wait
+     * for the background thread to finish its business, so don't call it from
+     * the audio thread.
+     *
+     */
+    void emptyFileLoadingQueue() noexcept;
 private:
     fs::path rootDirectory;
     struct FileLoadingInformation {

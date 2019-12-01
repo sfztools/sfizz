@@ -174,3 +174,10 @@ void sfz::FilePool::clear()
         // Pop the queue
     }
 }
+
+void sfz::FilePool::emptyFileLoadingQueue() noexcept
+{
+    emptyQueue = true;
+    while (emptyQueue)
+        std::this_thread::sleep_for(1ms);
+}
