@@ -132,8 +132,13 @@ private:
     moodycamel::BlockingReaderWriterQueue<FileLoadingInformation> loadingQueue { config::numVoices };
     void loadingThread() noexcept;
     void garbageThread() noexcept;
+
+    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
+
+    // Signals
     bool quitThread { false };
     bool emptyQueue { false };
+
     std::mutex fileHandleMutex;
     std::vector<std::shared_ptr<AudioBuffer<float>>> fileHandles;
     absl::flat_hash_map<absl::string_view, std::shared_ptr<AudioBuffer<float>>> preloadedData;

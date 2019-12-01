@@ -123,7 +123,7 @@ void sfz::Synth::clear()
     for (auto& list: ccActivationLists)
         list.clear();
     regions.clear();
-    filePool.clear();
+    resources.filePool.clear();
     hasGlobal = false;
     hasControl = false;
     numGroups = 0;
@@ -219,7 +219,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
     if (regions.empty())
         return false;
 
-    filePool.setRootDirectory(this->rootDirectory);
+    resources.filePool.setRootDirectory(this->rootDirectory);
 
     auto lastRegion = regions.end() - 1;
     auto currentRegion = regions.begin();
@@ -227,7 +227,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         auto region = currentRegion->get();
 
         if (!region->isGenerator()) {
-            auto fileInformation = filePool.getFileInformation(region->sample, region->offset + region->offsetRandom);
+            auto fileInformation = resources.filePool.getFileInformation(region->sample, region->offset + region->offsetRandom);
             if (!fileInformation) {
                 DBG("Removing the region with sample " << region->sample);
                 std::iter_swap(currentRegion, lastRegion);
@@ -389,7 +389,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
             voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
+                resources.filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
             }
         }
     }
@@ -422,7 +422,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
             voice->startVoice(region, delay, channel, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
+                resources.filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
             }
         }
     }
@@ -451,7 +451,7 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
             voice->startVoice(region, delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
             if (!region->isGenerator()) {
                 voice->expectFileData(fileTicket);
-                filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
+                resources.filePool.enqueueLoading(voice, &region->sample, region->trueSampleEnd(), fileTicket++);
             }
         }
     }
@@ -503,7 +503,7 @@ std::set<absl::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
 }
 size_t sfz::Synth::getNumPreloadedSamples() const noexcept
 {
-    return filePool.getNumPreloadedSamples();
+    return resources.filePool.getNumPreloadedSamples();
 }
 
 float sfz::Synth::getVolume() const noexcept
@@ -533,7 +533,7 @@ void sfz::Synth::resetVoices(int numVoices)
         std::this_thread::sleep_for(1ms);
     }
 
-    filePool.emptyFileLoadingQueue();
+    resources.filePool.emptyFileLoadingQueue();
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
         voices.push_back(std::make_unique<Voice>(midiState));

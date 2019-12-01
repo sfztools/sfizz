@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "FilePool.h"
+#include "Resources.h"
 #include "Parser.h"
 #include "Region.h"
 #include "LeakDetector.h"
@@ -355,7 +355,7 @@ private:
 
     // Singletons passed as references to the voices
     // TODO: these should probably go in a global singleton holder along with a buffer distribution and LFO/EG stuff...
-    FilePool filePool;
+    Resources resources;
     MidiState midiState;
 
     /**
