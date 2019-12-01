@@ -30,6 +30,16 @@
   rdfs:label "Polyphony" ;
   rdfs:range atom:Int .
 
+<@LV2PLUGIN_URI@:preload_size>
+  a lv2:Parameter ;
+  rdfs:label "Preload size" ;
+  rdfs:range atom:Int .
+
+<@LV2PLUGIN_URI@:oversampling>
+  a lv2:Parameter ;
+  rdfs:label "Oversampling" ;
+  rdfs:range atom:Int .
+
 <@LV2PLUGIN_URI@>
   a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
 
@@ -105,4 +115,39 @@
     lv2:scalePoint [ rdfs:label "64 voices"; rdf:value 64 ] ;
     lv2:scalePoint [ rdfs:label "128 voices"; rdf:value 128 ] ;
     lv2:scalePoint [ rdfs:label "256 voices"; rdf:value 256 ] ;
-  ] .
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 6 ;
+    lv2:symbol "oversampling" ;
+    lv2:name "Internal oversampling factor" ;
+    pg:group <#config> ;
+    lv2:portProperty pprop:notAutomatic ;
+    lv2:portProperty pprop:expensive ;
+    lv2:portProperty lv2:integer ;
+    lv2:portProperty lv2:enumeration ;
+    lv2:default 1 ;
+    lv2:minimum 1 ;
+    lv2:maximum 8 ;
+    lv2:scalePoint [ rdfs:label "x1 oversampling"; rdf:value 1 ] ;
+    lv2:scalePoint [ rdfs:label "x2 oversampling"; rdf:value 2 ] ;
+    lv2:scalePoint [ rdfs:label "x4 oversampling"; rdf:value 4 ] ;
+    lv2:scalePoint [ rdfs:label "x8 oversampling"; rdf:value 8 ] ;
+  ], [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 7 ;
+    lv2:symbol "preload_size" ;
+    lv2:name "Preload size" ;
+    pg:group <#config> ;
+    lv2:portProperty pprop:notAutomatic ;
+    lv2:portProperty pprop:expensive ;
+    lv2:portProperty lv2:integer ;
+    lv2:portProperty lv2:enumeration ;
+    lv2:default 8192 ;
+    lv2:minimum 1024 ;
+    lv2:maximum 16384 ;
+    lv2:scalePoint [ rdfs:label "4 Ko"; rdf:value 1024 ] ;
+    lv2:scalePoint [ rdfs:label "8 Ko"; rdf:value 2048 ] ;
+    lv2:scalePoint [ rdfs:label "16 Ko"; rdf:value 4096 ] ;
+    lv2:scalePoint [ rdfs:label "32 Ko"; rdf:value 8192 ] ;
+    lv2:scalePoint [ rdfs:label "64 Ko"; rdf:value 16384 ] ;
+  ].

@@ -144,10 +144,28 @@ sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t* synth)
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return static_cast<sfizz_oversampling_factor_t>(self->getOversamplingFactor());
 }
-void sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t preload_size)
+
+bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t oversampling)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->setOversamplingFactor(static_cast<sfz::Oversampling>(preload_size));
+    using sfz::Oversampling;
+    switch(oversampling)
+    {
+        case SFIZZ_OVERSAMPLING_X1:
+            self->setOversamplingFactor(sfz::Oversampling::x1);
+            return true;
+        case SFIZZ_OVERSAMPLING_X2:
+            self->setOversamplingFactor(sfz::Oversampling::x2);
+            return true;
+        case SFIZZ_OVERSAMPLING_X4:
+            self->setOversamplingFactor(sfz::Oversampling::x4);
+            return true;
+        case SFIZZ_OVERSAMPLING_X8:
+            self->setOversamplingFactor(sfz::Oversampling::x8);
+            return true;
+        default:
+            return false;
+    }
 }
 
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)

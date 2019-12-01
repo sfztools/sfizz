@@ -39,6 +39,7 @@ typedef enum {
     SFIZZ_OVERSAMPLING_X4 = 4,
     SFIZZ_OVERSAMPLING_X8 = 8
 } sfizz_oversampling_factor_t;
+
 /**
  * @brief      Creates a sfizz synth. This object has to be freed by the caller
  *             using sfizz_free().
@@ -268,9 +269,9 @@ sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t* synth);
  * @param      synth         The synth
  * @param[in]  preload_size  The preload size
  *
- * @return     The internal sample rate of the engine
+ * @return     True if the oversampling factor was correct
  */
-void sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t preload_size);
+bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t oversampling);
 
 /**
  * @brief      Set the global instrument volume.
