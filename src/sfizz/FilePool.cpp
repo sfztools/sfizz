@@ -173,7 +173,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 {
     // Update all the preloaded sizes
     for (auto& preloadedFile : preloadedFiles) {
-        const auto numFrames = preloadedFile.second.preloadedData->getNumFrames();
+        const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / oversamplingFactor;
         const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
@@ -246,7 +246,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
     float samplerateChange { static_cast<float>(factor) / static_cast<float>(this->oversamplingFactor) };
     for (auto& preloadedFile : preloadedFiles) {
-        const auto numFrames = preloadedFile.second.preloadedData->getNumFrames();
+        const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / this->oversamplingFactor;
         const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
