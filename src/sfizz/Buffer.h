@@ -149,12 +149,15 @@ public:
      */
     Buffer(Buffer<Type>&& other)
     {
-        largerSize = std::exchange(other.largerSize, 0);
-        alignedSize = std::exchange(other.alignedSize, 0);
-        paddedData = std::exchange(other.paddedData, nullptr);
-        normalData = std::exchange(other.normalData, nullptr);
-        normalEnd = std::exchange(other.normalEnd, nullptr);
-        _alignedEnd = std::exchange(other._alignedEnd, nullptr);
+        if (this != &other) {
+            std::free(paddedData);
+            largerSize = std::exchange(other.largerSize, 0);
+            alignedSize = std::exchange(other.alignedSize, 0);
+            paddedData = std::exchange(other.paddedData, nullptr);
+            normalData = std::exchange(other.normalData, nullptr);
+            normalEnd = std::exchange(other.normalEnd, nullptr);
+            _alignedEnd = std::exchange(other._alignedEnd, nullptr);
+        }
     }
 
     Buffer<Type>& operator=(const Buffer<Type>& other)
@@ -187,6 +190,7 @@ public:
     constexpr iterator begin() noexcept { return data(); }
     constexpr iterator end() noexcept { return normalEnd; }
     constexpr pointer alignedEnd() noexcept { return _alignedEnd; }
+
 
 private:
     static constexpr auto AlignmentMask { Alignment - 1 };
