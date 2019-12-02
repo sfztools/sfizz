@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sfizz_2eh_21',['sfizz.h',['../sfizz_8h.html',1,'']]]
+  ['mathhelpers_2eh',['MathHelpers.h',['../_math_helpers_8h.html',1,'']]]
 ];

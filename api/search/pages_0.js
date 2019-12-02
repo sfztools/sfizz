@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sfizz_41',['sfizz',['../index.html',1,'']]]
+  ['sfizz',['sfizz',['../index.html',1,'']]]
 ];
