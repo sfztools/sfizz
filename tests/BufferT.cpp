@@ -157,8 +157,8 @@ TEST_CASE("[Buffer] Copy and move")
     checkBoundaries(copyConstructed, baseSize);
     REQUIRE(std::all_of(copyConstructed.begin(), copyConstructed.end(), [](auto value) { return value == 1.0f; }));
 
-    sfz::Buffer<float> moveConstructed { std::move(buffer) };
-    REQUIRE(buffer.empty());
-    checkBoundaries(moveConstructed, baseSize);
-    REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](auto value) { return value == 1.0f; }));
+    // sfz::Buffer<float> moveConstructed { std::move(buffer) };
+    // REQUIRE(buffer.empty());
+    // checkBoundaries(moveConstructed, baseSize);
+    // REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](auto value) { return value == 1.0f; }));
 }

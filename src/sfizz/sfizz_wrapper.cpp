@@ -192,6 +192,18 @@ int sfizz_get_num_voices(sfizz_synth_t* synth)
     return self->getNumVoices();
 }
 
+int sfizz_get_num_buffers(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getAllocatedBuffers();
+}
+
+int sfizz_get_num_bytes(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getAllocatedBytes();
+}
+
 #ifdef __cplusplus
 }
 #endif

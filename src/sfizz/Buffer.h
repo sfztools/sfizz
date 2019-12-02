@@ -29,20 +29,65 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-
+#ifdef DEBUG
+#include <iostream>
+#endif
 namespace sfz
 {
+
 /**
- * @brief A heap buffer structure that tries to align its beginning and adds a small offset
- * at the end for alignment too.
+ * @brief      A buffer counting class that tries to track the memory usage.
+ */
+class BufferCounter
+{
+public:
+    BufferCounter() = default;
+    ~BufferCounter()
+    {
+#ifndef NDEBUG
+        std::cout << "Remaining buffers on destruction: " << numBuffers << '\n';
+        std::cout << "Total size: " << bytes << '\n';
+#endif
+    }
+
+    void newBuffer(int size)
+    {
+        numBuffers++;
+        bytes.fetch_add(size);
+    }
+
+    void bufferResized(int oldSize, int newSize)
+    {
+        bytes.fetch_add(newSize);
+        bytes.fetch_sub(oldSize);
+    }
+
+    void bufferDeleted(int size)
+    {
+        numBuffers--;
+        bytes.fetch_sub(size);
+    }
+
+    int getNumBuffers() { return numBuffers; }
+    int getTotalBytes() { return bytes; }
+private:
+    std::atomic<int> numBuffers { 0 };
+    std::atomic<int> bytes { 0 };
+};
+
+/**
+ * @brief      A heap buffer structure that tries to align its beginning and
+ *             adds a small offset at the end for alignment too.
  *
- * Apparently on Linux this effort is mostly useless, and in the end most of the SIMD operations
- * are coded with alignment checks and sentinels so this class could probably be much simpler.
- * It does however wrap realloc which in some cases should be a bit more efficient than
- * allocating a whole new block.
+ *             Apparently on Linux this effort is mostly useless, and in the end
+ *             most of the SIMD operations are coded with alignment checks and
+ *             sentinels so this class could probably be much simpler. It does
+ *             however wrap realloc which in some cases should be a bit more
+ *             efficient than allocating a whole new block.
  *
- * @tparam Type The buffer type
- * @tparam Alignment the required alignment in bytes (defaults to SIMDConfig::defaultAlignment)
+ * @tparam     Type       The buffer type
+ * @tparam     Alignment  the required alignment in bytes (defaults to
+ *                        SIMDConfig::defaultAlignment)
  */
 template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer {
@@ -64,7 +109,7 @@ public:
      */
     Buffer()
     {
-
+        counter().newBuffer(0);
     }
 
     /**
@@ -74,6 +119,7 @@ public:
      */
     Buffer(size_t size)
     {
+        counter().newBuffer(0);
         resize(size);
     }
 
@@ -98,6 +144,7 @@ public:
             return false;
         }
 
+        counter().bufferResized(largerSize * sizeof(value_type), tempSize * sizeof(value_type));
         largerSize = tempSize;
         alignedSize = newSize;
         paddedData = static_cast<pointer>(newData);
@@ -118,6 +165,7 @@ public:
      */
     void clear()
     {
+        counter().bufferResized(largerSize * sizeof(value_type), 0);
         largerSize = 0;
         alignedSize = 0;
         std::free(paddedData);
@@ -127,6 +175,7 @@ public:
     }
     ~Buffer()
     {
+        counter().bufferDeleted(largerSize * sizeof(value_type));
         std::free(paddedData);
     }
 
@@ -147,18 +196,19 @@ public:
      *
      * @param other
      */
-    Buffer(Buffer<Type>&& other)
-    {
-        if (this != &other) {
-            std::free(paddedData);
-            largerSize = std::exchange(other.largerSize, 0);
-            alignedSize = std::exchange(other.alignedSize, 0);
-            paddedData = std::exchange(other.paddedData, nullptr);
-            normalData = std::exchange(other.normalData, nullptr);
-            normalEnd = std::exchange(other.normalEnd, nullptr);
-            _alignedEnd = std::exchange(other._alignedEnd, nullptr);
-        }
-    }
+    Buffer(Buffer<Type>&& other) = delete;
+    // {
+    //     if (this != &other) {
+    //         counter().bufferDeleted(largerSize * sizeof(value_type));
+    //         std::free(paddedData);
+    //         largerSize = std::exchange(other.largerSize, 0);
+    //         alignedSize = std::exchange(other.alignedSize, 0);
+    //         paddedData = std::exchange(other.paddedData, nullptr);
+    //         normalData = std::exchange(other.normalData, nullptr);
+    //         normalEnd = std::exchange(other.normalEnd, nullptr);
+    //         _alignedEnd = std::exchange(other._alignedEnd, nullptr);
+    //     }
+    // }
 
     Buffer<Type>& operator=(const Buffer<Type>& other)
     {
@@ -169,19 +219,20 @@ public:
         return *this;
     }
 
-    Buffer<Type>& operator=(Buffer<Type>&& other)
-    {
-        if (this != &other) {
-            std::free(paddedData);
-            largerSize = std::exchange(other.largerSize, 0);
-            alignedSize = std::exchange(other.alignedSize, 0);
-            paddedData = std::exchange(other.paddedData, nullptr);
-            normalData = std::exchange(other.normalData, nullptr);
-            normalEnd = std::exchange(other.normalEnd, nullptr);
-            _alignedEnd = std::exchange(other._alignedEnd, nullptr);
-        }
-        return *this;
-    }
+    Buffer<Type>& operator=(Buffer<Type>&& other) = delete;
+    // {
+    //     if (this != &other) {
+    //         counter().bufferDeleted(largerSize * sizeof(value_type));
+    //         std::free(paddedData);
+    //         largerSize = std::exchange(other.largerSize, 0);
+    //         alignedSize = std::exchange(other.alignedSize, 0);
+    //         paddedData = std::exchange(other.paddedData, nullptr);
+    //         normalData = std::exchange(other.normalData, nullptr);
+    //         normalEnd = std::exchange(other.normalEnd, nullptr);
+    //         _alignedEnd = std::exchange(other._alignedEnd, nullptr);
+    //     }
+    //     return *this;
+    // }
 
     Type& operator[](int idx) { return *(normalData + idx); }
     constexpr pointer data() const noexcept { return normalData; }
@@ -192,6 +243,18 @@ public:
     constexpr pointer alignedEnd() noexcept { return _alignedEnd; }
 
 
+    /**
+     * @brief      Return the buffer counter object.
+     *
+     *             TODO: In C++ 17 all of this can be static inline.
+     *
+     * @return     The buffer counter on which you can call various methods.
+     */
+    static BufferCounter& counter()
+    {
+        static BufferCounter counter;
+        return counter;
+    }
 private:
     static constexpr auto AlignmentMask { Alignment - 1 };
     static constexpr auto TypeAlignment { Alignment / sizeof(value_type) };
