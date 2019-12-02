@@ -147,18 +147,19 @@ public:
      *
      * @param other
      */
-    Buffer(Buffer<Type>&& other)
-    {
-        if (this != &other) {
-            std::free(paddedData);
-            largerSize = std::exchange(other.largerSize, 0);
-            alignedSize = std::exchange(other.alignedSize, 0);
-            paddedData = std::exchange(other.paddedData, nullptr);
-            normalData = std::exchange(other.normalData, nullptr);
-            normalEnd = std::exchange(other.normalEnd, nullptr);
-            _alignedEnd = std::exchange(other._alignedEnd, nullptr);
-        }
-    }
+    Buffer(Buffer<Type>&& other) = delete;
+    // {
+    //     if (this != &other) {
+    //         counter().bufferDeleted(largerSize * sizeof(value_type));
+    //         std::free(paddedData);
+    //         largerSize = std::exchange(other.largerSize, 0);
+    //         alignedSize = std::exchange(other.alignedSize, 0);
+    //         paddedData = std::exchange(other.paddedData, nullptr);
+    //         normalData = std::exchange(other.normalData, nullptr);
+    //         normalEnd = std::exchange(other.normalEnd, nullptr);
+    //         _alignedEnd = std::exchange(other._alignedEnd, nullptr);
+    //     }
+    // }
 
     Buffer<Type>& operator=(const Buffer<Type>& other)
     {
@@ -169,19 +170,20 @@ public:
         return *this;
     }
 
-    Buffer<Type>& operator=(Buffer<Type>&& other)
-    {
-        if (this != &other) {
-            std::free(paddedData);
-            largerSize = std::exchange(other.largerSize, 0);
-            alignedSize = std::exchange(other.alignedSize, 0);
-            paddedData = std::exchange(other.paddedData, nullptr);
-            normalData = std::exchange(other.normalData, nullptr);
-            normalEnd = std::exchange(other.normalEnd, nullptr);
-            _alignedEnd = std::exchange(other._alignedEnd, nullptr);
-        }
-        return *this;
-    }
+    Buffer<Type>& operator=(Buffer<Type>&& other) = delete;
+    // {
+    //     if (this != &other) {
+    //         counter().bufferDeleted(largerSize * sizeof(value_type));
+    //         std::free(paddedData);
+    //         largerSize = std::exchange(other.largerSize, 0);
+    //         alignedSize = std::exchange(other.alignedSize, 0);
+    //         paddedData = std::exchange(other.paddedData, nullptr);
+    //         normalData = std::exchange(other.normalData, nullptr);
+    //         normalEnd = std::exchange(other.normalEnd, nullptr);
+    //         _alignedEnd = std::exchange(other._alignedEnd, nullptr);
+    //     }
+    //     return *this;
+    // }
 
     Type& operator[](int idx) { return *(normalData + idx); }
     constexpr pointer data() const noexcept { return normalData; }
