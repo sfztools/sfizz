@@ -44,7 +44,7 @@ public:
     BufferCounter() = default;
     ~BufferCounter()
     {
-#ifdef DEBUG
+#ifndef NDEBUG
         std::cout << "Remaining buffers on destruction: " << numBuffers << '\n';
         std::cout << "Total size: " << bytes << '\n';
 #endif

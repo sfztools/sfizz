@@ -273,7 +273,7 @@ int main(int argc, char** argv)
     signal(SIGQUIT, done);
 
     while (!shouldClose){
-#ifdef DEBUG
+#ifndef NDEBUG
         std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
         std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
 #endif

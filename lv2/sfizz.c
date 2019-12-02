@@ -578,7 +578,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         }
     }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     // Log the buffer usage
     self->sample_counter += (int)sample_count;
     if (self->sample_counter > LOG_SAMPLE_COUNT)
