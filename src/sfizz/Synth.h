@@ -310,6 +310,20 @@ public:
      * @return Oversampling
      */
     uint32_t getPreloadSize() const noexcept;
+
+    /**
+     * @brief      Gets the number of allocated buffers.
+     *
+     * @return     The allocated buffers.
+     */
+    int getAllocatedBuffers() const noexcept { return Buffer<float>::counter().getNumBuffers(); }
+
+    /**
+     * @brief      Gets the number of bytes allocated through the buffers
+     *
+     * @return     The allocated bytes.
+     */
+    int getAllocatedBytes() const noexcept { return Buffer<float>::counter().getTotalBytes(); }
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time

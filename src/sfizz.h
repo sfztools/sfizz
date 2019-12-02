@@ -305,6 +305,26 @@ void sfizz_set_num_voices(sfizz_synth_t* synth, int num_voices);
  */
 int sfizz_get_num_voices(sfizz_synth_t* synth);
 
+/**
+ * @brief      Get the number of allocated buffers from the synth.
+ *
+ * @param      synth  The synth
+ *
+ * @return     The number of buffers held by the synth
+ */
+int sfizz_get_num_buffers(sfizz_synth_t* synth);
+/**
+ * @brief      Get the number of bytes allocated from the synth. Note that this
+ *             value can be less than the actual memory usage since it only
+ *             counts the buffer objects managed by sfizz.
+ *
+ * @param      synth  The synth
+ *
+ * @return     The number of bytes held by the synth in buffers;
+ */
+int sfizz_get_num_bytes(sfizz_synth_t* synth);
+
+
 #ifdef __cplusplus
 }
 #endif
