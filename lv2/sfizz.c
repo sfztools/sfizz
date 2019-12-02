@@ -63,6 +63,7 @@
 #define DEFAULT_VOICES 64
 #define DEFAULT_OVERSAMPLING SFIZZ_OVERSAMPLING_X1
 #define DEFAULT_PRELOAD 8192
+#define LOG_SAMPLE_COUNT 96000
 #define UNUSED(x) (void)(x)
 
 typedef struct
@@ -121,6 +122,7 @@ typedef struct
     sfizz_oversampling_factor_t oversampling;
     bool changing_state;
     int max_block_size;
+    int sample_counter;
     float sample_rate;
 } sfizz_plugin_t;
 
@@ -226,6 +228,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
     self->changing_state = false;
+    self->sample_counter = 0;
 
     // Get the features from the host and populate the structure
     for (const LV2_Feature *const *f = features; *f; f++)
@@ -574,6 +577,17 @@ run(LV2_Handle instance, uint32_t sample_count)
             self->changing_state = true;
         }
     }
+
+#ifdef DEBUG
+    // Log the buffer usage
+    self->sample_counter += (int)sample_count;
+    if (self->sample_counter > LOG_SAMPLE_COUNT)
+    {
+        lv2_log_note(&self->logger, "[run] Allocated buffers: %d\n", sfizz_get_num_buffers(self->synth));
+        lv2_log_note(&self->logger, "[run] Allocated bytes: %d\n", sfizz_get_num_bytes(self->synth));
+        self->sample_counter -= LOG_SAMPLE_COUNT;
+    }
+#endif
 
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
