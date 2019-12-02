@@ -1,6 +1,8 @@
 var searchData=
 [
   ['garbagecollect',['garbageCollect',['../classsfz_1_1_synth.html#a21ac9843f358524a9421f48afc202af0',1,'sfz::Synth']]],
+  ['getallocatedbuffers',['getAllocatedBuffers',['../classsfz_1_1_synth.html#ab053c82caec16444daeaed6f27b44f95',1,'sfz::Synth']]],
+  ['getallocatedbytes',['getAllocatedBytes',['../classsfz_1_1_synth.html#ab03c02dcd32ff1856c85a875315370e8',1,'sfz::Synth']]],
   ['getattack',['getAttack',['../structsfz_1_1_e_g_description.html#a17e0674f9c11f3a49ce385e9939362ab',1,'sfz::EGDescription']]],
   ['getaverage',['getAverage',['../classsfz_1_1_historical_buffer.html#a9fd4b03e228ffb6978813c6f9f9cf4bc',1,'sfz::HistoricalBuffer']]],
   ['getbasegain',['getBaseGain',['../structsfz_1_1_region.html#accd951ff140d13f8a11ae91a44d8233e',1,'sfz::Region']]],

@@ -105,6 +105,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classsfz_1_1_buffer-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">sfz::Buffer&lt; Type, Alignment &gt; Class Template Reference</div>  </div>
@@ -133,9 +134,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9b85f8a8b1be4471fd52ecb71b3fe20d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_buffer.html#a9b85f8a8b1be4471fd52ecb71b3fe20d">Buffer</a> (const <a class="el" href="classsfz_1_1_buffer.html">Buffer</a>&lt; Type &gt; &amp;other)</td></tr>
 <tr class="memdesc:a9b85f8a8b1be4471fd52ecb71b3fe20d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classsfz_1_1_buffer.html" title="A heap buffer structure that tries to align its beginning and adds a small offset at the end for alig...">Buffer</a> object from an existing one.  <a href="#a9b85f8a8b1be4471fd52ecb71b3fe20d">More...</a><br /></td></tr>
 <tr class="separator:a9b85f8a8b1be4471fd52ecb71b3fe20d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2f878bcac32a61f8dc75bc8d942f5dc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_buffer.html#af2f878bcac32a61f8dc75bc8d942f5dc">Buffer</a> (<a class="el" href="classsfz_1_1_buffer.html">Buffer</a>&lt; Type &gt; &amp;&amp;other)</td></tr>
-<tr class="memdesc:af2f878bcac32a61f8dc75bc8d942f5dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classsfz_1_1_buffer.html" title="A heap buffer structure that tries to align its beginning and adds a small offset at the end for alig...">Buffer</a> object by moving an existing one.  <a href="#af2f878bcac32a61f8dc75bc8d942f5dc">More...</a><br /></td></tr>
-<tr class="separator:af2f878bcac32a61f8dc75bc8d942f5dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a403769cc8059d61478ad9bfd332b25b4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_buffer.html#a403769cc8059d61478ad9bfd332b25b4">Buffer</a> (<a class="el" href="classsfz_1_1_buffer.html">Buffer</a>&lt; Type &gt; &amp;&amp;other)=delete</td></tr>
+<tr class="memdesc:a403769cc8059d61478ad9bfd332b25b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classsfz_1_1_buffer.html" title="A heap buffer structure that tries to align its beginning and adds a small offset at the end for alig...">Buffer</a> object by moving an existing one.  <a href="#a403769cc8059d61478ad9bfd332b25b4">More...</a><br /></td></tr>
+<tr class="separator:a403769cc8059d61478ad9bfd332b25b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a2c6dd38a79c8897a3d781d13f5ff46bd"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classsfz_1_1_buffer_counter.html">BufferCounter</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_buffer.html#a2c6dd38a79c8897a3d781d13f5ff46bd">counter</a> ()</td></tr>
+<tr class="memdesc:a2c6dd38a79c8897a3d781d13f5ff46bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the buffer counter object.  <a href="#a2c6dd38a79c8897a3d781d13f5ff46bd">More...</a><br /></td></tr>
+<tr class="separator:a2c6dd38a79c8897a3d781d13f5ff46bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class Type, unsigned int Alignment = SIMDConfig::defaultAlignment&gt;<br />
@@ -252,8 +259,8 @@ template&lt;class Type, unsigned int Alignment = SIMDConfig::defaultAlignment&gt
 
 </div>
 </div>
-<a id="af2f878bcac32a61f8dc75bc8d942f5dc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af2f878bcac32a61f8dc75bc8d942f5dc">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[4/4]</span></h2>
+<a id="a403769cc8059d61478ad9bfd332b25b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a403769cc8059d61478ad9bfd332b25b4">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -273,7 +280,7 @@ template&lt;class Type, unsigned int Alignment = SIMDConfig::defaultAlignment&gt
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -315,6 +322,37 @@ template&lt;class Type, unsigned int Alignment = SIMDConfig::defaultAlignment&gt
 </div><div class="memdoc">
 
 <p>Clear the buffers and frees the underlying memory. </p>
+
+</div>
+</div>
+<a id="a2c6dd38a79c8897a3d781d13f5ff46bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c6dd38a79c8897a3d781d13f5ff46bd">&#9670;&nbsp;</a></span>counter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Type, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static <a class="el" href="classsfz_1_1_buffer_counter.html">BufferCounter</a>&amp; <a class="el" href="classsfz_1_1_buffer.html">sfz::Buffer</a>&lt; Type, Alignment &gt;::counter </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the buffer counter object. </p>
+<p>TODO: In C++ 17 all of this can be static inline.</p>
+<dl class="section return"><dt>Returns</dt><dd>The buffer counter on which you can call various methods. </dd></dl>
 
 </div>
 </div>
@@ -362,7 +400,7 @@ false otherwise </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Mon Dec 2 2019 02:02:53 for sfizz by
+					<span style="float:right">Generated on Mon Dec 2 2019 11:39:29 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

@@ -20,6 +20,8 @@ var searchData=
   ['sfizz_5fcreate_5fsynth',['sfizz_create_synth',['../sfizz_8h.html#a463b1ec989c4632a5d3f6ba000a7de4c',1,'sfizz.h']]],
   ['sfizz_5ffree',['sfizz_free',['../sfizz_8h.html#abaee61a443deabf621f435b501500e1e',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5factive_5fvoices',['sfizz_get_num_active_voices',['../sfizz_8h.html#acec4532bfd04af82f205922b4fec7a69',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fbuffers',['sfizz_get_num_buffers',['../sfizz_8h.html#a3ebb02917388939ce9b17ad8bd084be0',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fbytes',['sfizz_get_num_bytes',['../sfizz_8h.html#a73d40f7001b7496153347a38d903cb85',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fcurves',['sfizz_get_num_curves',['../sfizz_8h.html#a89c9d54d7ed0fbf3d9dd36a0a5701d28',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fgroups',['sfizz_get_num_groups',['../sfizz_8h.html#a1f48f36bd8c6019a742c2f4e0bc77c30',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fmasters',['sfizz_get_num_masters',['../sfizz_8h.html#a147c6f9b27cc6668d79f7294d5a77971',1,'sfizz.h']]],

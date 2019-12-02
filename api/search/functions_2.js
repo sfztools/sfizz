@@ -17,5 +17,6 @@ var searchData=
   ['containswithend',['containsWithEnd',['../classsfz_1_1_range.html#a226914eac9fd1925d1f8271b49e51e82',1,'sfz::Range']]],
   ['copy',['copy',['../namespacesfz.html#af3f98787f6ed2987d28ffdc0ca5bdc4a',1,'sfz']]],
   ['cos',['cos',['../namespacesfz.html#a921cd12917ee9b0eb2a60b5d50f1881c',1,'sfz']]],
+  ['counter',['counter',['../classsfz_1_1_buffer.html#a2c6dd38a79c8897a3d781d13f5ff46bd',1,'sfz::Buffer']]],
   ['cumsum',['cumsum',['../namespacesfz.html#a7d68cfdcf6c011ab2b27841b2f37a33a',1,'sfz']]]
 ];

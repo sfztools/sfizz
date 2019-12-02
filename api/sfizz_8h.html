@@ -194,6 +194,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a1e3e264fba927016d4d83f50ed3eeeec"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a1e3e264fba927016d4d83f50ed3eeeec">sfizz_get_num_voices</a> (sfizz_synth_t *synth)</td></tr>
 <tr class="memdesc:a1e3e264fba927016d4d83f50ed3eeeec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of voices.  <a href="#a1e3e264fba927016d4d83f50ed3eeeec">More...</a><br /></td></tr>
 <tr class="separator:a1e3e264fba927016d4d83f50ed3eeeec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ebb02917388939ce9b17ad8bd084be0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a3ebb02917388939ce9b17ad8bd084be0">sfizz_get_num_buffers</a> (sfizz_synth_t *synth)</td></tr>
+<tr class="memdesc:a3ebb02917388939ce9b17ad8bd084be0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of allocated buffers from the synth.  <a href="#a3ebb02917388939ce9b17ad8bd084be0">More...</a><br /></td></tr>
+<tr class="separator:a3ebb02917388939ce9b17ad8bd084be0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73d40f7001b7496153347a38d903cb85"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a73d40f7001b7496153347a38d903cb85">sfizz_get_num_bytes</a> (sfizz_synth_t *synth)</td></tr>
+<tr class="memdesc:a73d40f7001b7496153347a38d903cb85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of bytes allocated from the synth.  <a href="#a73d40f7001b7496153347a38d903cb85">More...</a><br /></td></tr>
+<tr class="separator:a73d40f7001b7496153347a38d903cb85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>sfizz public C API </p>
@@ -270,6 +276,61 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>int the number of playing voices </dd></dl>
+
+</div>
+</div>
+<a id="a3ebb02917388939ce9b17ad8bd084be0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ebb02917388939ce9b17ad8bd084be0">&#9670;&nbsp;</a></span>sfizz_get_num_buffers()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int sfizz_get_num_buffers </td>
+          <td>(</td>
+          <td class="paramtype">sfizz_synth_t *&#160;</td>
+          <td class="paramname"><em>synth</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the number of allocated buffers from the synth. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">synth</td><td>The synth</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of buffers held by the synth </dd></dl>
+
+</div>
+</div>
+<a id="a73d40f7001b7496153347a38d903cb85"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73d40f7001b7496153347a38d903cb85">&#9670;&nbsp;</a></span>sfizz_get_num_bytes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int sfizz_get_num_bytes </td>
+          <td>(</td>
+          <td class="paramtype">sfizz_synth_t *&#160;</td>
+          <td class="paramname"><em>synth</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the number of bytes allocated from the synth. </p>
+<p>Note that this value can be less than the actual memory usage since it only counts the buffer objects managed by sfizz.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">synth</td><td>The synth</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of bytes held by the synth in buffers; </dd></dl>
 
 </div>
 </div>
@@ -1169,7 +1230,7 @@ false if some error occured while loading. </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Mon Dec 2 2019 02:02:53 for sfizz by
+					<span style="float:right">Generated on Mon Dec 2 2019 11:39:29 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

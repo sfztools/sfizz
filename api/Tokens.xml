@@ -288,6 +288,28 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>sfizz_get_num_buffers</Name>
+      <APILanguage>c</APILanguage>
+      <Type>func</Type>
+    </TokenIdentifier>
+    <Path>sfizz_8h.html</Path>
+    <Anchor>a3ebb02917388939ce9b17ad8bd084be0</Anchor>
+    <Abstract>Get the number of allocated buffers from the synth. </Abstract>
+    <DeclaredIn>sfizz.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>sfizz_get_num_bytes</Name>
+      <APILanguage>c</APILanguage>
+      <Type>func</Type>
+    </TokenIdentifier>
+    <Path>sfizz_8h.html</Path>
+    <Anchor>a73d40f7001b7496153347a38d903cb85</Anchor>
+    <Abstract>Get the number of bytes allocated from the synth. </Abstract>
+    <DeclaredIn>sfizz.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>db2pow</Name>
       <APILanguage>c</APILanguage>
       <Type>func</Type>
@@ -1701,8 +1723,31 @@
       <Scope>sfz::Buffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_buffer.html</Path>
-    <Anchor>af2f878bcac32a61f8dc75bc8d942f5dc</Anchor>
+    <Anchor>a403769cc8059d61478ad9bfd332b25b4</Anchor>
     <Abstract>Construct a new Buffer object by moving an existing one. </Abstract>
+    <DeclaredIn>Buffer.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>counter</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>clm</Type>
+      <Scope>sfz::Buffer</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_buffer.html</Path>
+    <Anchor>a2c6dd38a79c8897a3d781d13f5ff46bd</Anchor>
+    <Abstract>Return the buffer counter object. </Abstract>
+    <DeclaredIn>Buffer.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>sfz::BufferCounter</Name>
+      <APILanguage>c</APILanguage>
+      <Type>cl</Type>
+      <Scope>sfz::BufferCounter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_buffer_counter.html</Path>
+    <Abstract>A buffer counting class that tries to track the memory usage. </Abstract>
     <DeclaredIn>Buffer.h</DeclaredIn>
   </Token>
   <Token>
@@ -2901,6 +2946,30 @@
     <Path>classsfz_1_1_synth.html</Path>
     <Anchor>ae9dc0ac9e3540ad64684f44aef6d578a</Anchor>
     <Abstract>get the current preloaded file size </Abstract>
+    <DeclaredIn>Synth.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getAllocatedBuffers</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Synth</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_synth.html</Path>
+    <Anchor>ab053c82caec16444daeaed6f27b44f95</Anchor>
+    <Abstract>Gets the number of allocated buffers. </Abstract>
+    <DeclaredIn>Synth.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getAllocatedBytes</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Synth</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_synth.html</Path>
+    <Anchor>ab03c02dcd32ff1856c85a875315370e8</Anchor>
+    <Abstract>Gets the number of bytes allocated through the buffers. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
   <Token>

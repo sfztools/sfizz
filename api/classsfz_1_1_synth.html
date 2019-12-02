@@ -211,6 +211,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae9dc0ac9e3540ad64684f44aef6d578a"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ae9dc0ac9e3540ad64684f44aef6d578a">getPreloadSize</a> () const noexcept</td></tr>
 <tr class="memdesc:ae9dc0ac9e3540ad64684f44aef6d578a"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the current preloaded file size  <a href="#ae9dc0ac9e3540ad64684f44aef6d578a">More...</a><br /></td></tr>
 <tr class="separator:ae9dc0ac9e3540ad64684f44aef6d578a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab053c82caec16444daeaed6f27b44f95"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ab053c82caec16444daeaed6f27b44f95">getAllocatedBuffers</a> () const noexcept</td></tr>
+<tr class="memdesc:ab053c82caec16444daeaed6f27b44f95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the number of allocated buffers.  <a href="#ab053c82caec16444daeaed6f27b44f95">More...</a><br /></td></tr>
+<tr class="separator:ab053c82caec16444daeaed6f27b44f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab03c02dcd32ff1856c85a875315370e8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ab03c02dcd32ff1856c85a875315370e8">getAllocatedBytes</a> () const noexcept</td></tr>
+<tr class="memdesc:ab03c02dcd32ff1856c85a875315370e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the number of bytes allocated through the buffers.  <a href="#ab03c02dcd32ff1856c85a875315370e8">More...</a><br /></td></tr>
+<tr class="separator:ab03c02dcd32ff1856c85a875315370e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -460,6 +466,62 @@ Protected Member Functions</h2></td></tr>
 
 <p>Trigger a garbage collection, which removes the samples that are loaded by the <a class="el" href="classsfz_1_1_file_pool.html" title="This is a singleton-designed class that holds all the preloaded data as well as functions to request ...">FilePool</a> after being requested by the voices. </p>
 <p>This does not concern the preloaded samples, only the samples loaded to be played fully. This function is run regularly in a background thread so normally you should not need to call it explicitely. </p>
+
+</div>
+</div>
+<a id="ab053c82caec16444daeaed6f27b44f95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab053c82caec16444daeaed6f27b44f95">&#9670;&nbsp;</a></span>getAllocatedBuffers()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int sfz::Synth::getAllocatedBuffers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets the number of allocated buffers. </p>
+<dl class="section return"><dt>Returns</dt><dd>The allocated buffers. </dd></dl>
+
+</div>
+</div>
+<a id="ab03c02dcd32ff1856c85a875315370e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab03c02dcd32ff1856c85a875315370e8">&#9670;&nbsp;</a></span>getAllocatedBytes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int sfz::Synth::getAllocatedBytes </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets the number of bytes allocated through the buffers. </p>
+<dl class="section return"><dt>Returns</dt><dd>The allocated bytes. </dd></dl>
 
 </div>
 </div>
@@ -1347,7 +1409,7 @@ false if the file was not found or no regions were loaded. </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Mon Dec 2 2019 02:02:53 for sfizz by
+					<span style="float:right">Generated on Mon Dec 2 2019 11:39:29 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
