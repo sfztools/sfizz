@@ -11,6 +11,7 @@ matrix:
         packages:
         - gcc-8
         - g++-8
+        - doxygen
     env:
     - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
 
@@ -27,10 +28,12 @@ script:
 - sh ${TRAVIS_BUILD_DIR}/.travis/script.sh
 
 after_failure:
-- sh ${TRAVIS_BUILD_DIR}/.travis/after_failure.sh
+- sh ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh failure
 
 after_success:
-- sh ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
+- sh ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
+- sh ${TRAVIS_BUILD_DIR}/.travis/update_dox.sh
+- sh ${TRAVIS_BUILD_DIR}/.travis/deploy.sh
 
 deploy:
   provider: releases

@@ -19,10 +19,14 @@ clients/sfizz_jack
 clients/sfzprint
 
 # gh-pages unstaged files:
+_api/
 _site/
 .bundle/
 api/
 assets/
 node_modules/
+.jekyll-cache
+.jekyll-metadata
+.sass-cache
 *.lock
 *.sublime-*
