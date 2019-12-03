@@ -219,6 +219,12 @@ public:
      * @return uint32_t
      */
     uint32_t getSourcePosition() const noexcept;
+    /**
+     * Returns the region that is currently playing. May be null if the voice is not active!
+     *
+     * @return
+     */
+    const Region* getRegion() const noexcept { return region; }
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
