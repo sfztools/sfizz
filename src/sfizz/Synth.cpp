@@ -29,6 +29,7 @@
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
 #include "absl/algorithm/container.h"
+#include "absl/strings/str_replace.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -173,10 +174,12 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Default_path"):
             [[fallthrough]];
         case hash("default_path"): {
-            auto stringPath = std::string(member.value.begin(), member.value.end());
-            auto newPath = fs::path(stringPath);
-            if (fs::exists(newPath))
+            const auto stringPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
+            const auto newPath = rootDirectory / fs::path(stringPath);
+            if (fs::exists(newPath)) {
+                DBG("Changing default sample path to " << stringPath);
                 rootDirectory = newPath;
+            }
             break;
         }
         default:
