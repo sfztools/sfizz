@@ -6,6 +6,10 @@
       <Path>index.html</Path>
       <Subnodes>
        <Node>
+        <Name>Global view of the engine</Name>
+        <Path>md_doxygen_pages_engine_description.html</Path>
+       </Node>
+       <Node>
         <Name>Namespaces</Name>
         <Path></Path>
         <Subnodes>

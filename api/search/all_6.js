@@ -50,5 +50,6 @@ var searchData=
   ['getunknownopcodes',['getUnknownOpcodes',['../classsfz_1_1_synth.html#ad83ae265b530f3a9e3aa5a97a4b069a1',1,'sfz::Synth']]],
   ['getvoiceview',['getVoiceView',['../classsfz_1_1_synth.html#ab0bd46a930df0e8fe7106a745db55872',1,'sfz::Synth']]],
   ['getvolume',['getVolume',['../classsfz_1_1_synth.html#a5c693f7a10813afd3a9c06cefee6f99a',1,'sfz::Synth']]],
-  ['getwithdefault',['getWithDefault',['../classsfz_1_1_c_c_map.html#a5fd9ade3276c6b444f22644365744c38',1,'sfz::CCMap']]]
+  ['getwithdefault',['getWithDefault',['../classsfz_1_1_c_c_map.html#a5fd9ade3276c6b444f22644365744c38',1,'sfz::CCMap']]],
+  ['global_20view_20of_20the_20engine',['Global view of the engine',['../md_doxygen_pages_engine_description.html',1,'']]]
 ];

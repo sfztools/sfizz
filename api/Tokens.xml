@@ -721,6 +721,13 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>md_doxygen_pages_engine_description</Name>
+      <APILanguage>markdown</APILanguage>
+    </TokenIdentifier>
+    <Path>md_doxygen_pages_engine_description.html</Path>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>ScopedFTZ</Name>
       <APILanguage>c</APILanguage>
       <Type>cl</Type>
