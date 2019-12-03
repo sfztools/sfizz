@@ -144,10 +144,12 @@
     lv2:portProperty lv2:enumeration ;
     lv2:default 8192 ;
     lv2:minimum 1024 ;
-    lv2:maximum 16384 ;
+    lv2:maximum 65536 ;
     lv2:scalePoint [ rdfs:label "4 Ko"; rdf:value 1024 ] ;
     lv2:scalePoint [ rdfs:label "8 Ko"; rdf:value 2048 ] ;
     lv2:scalePoint [ rdfs:label "16 Ko"; rdf:value 4096 ] ;
     lv2:scalePoint [ rdfs:label "32 Ko"; rdf:value 8192 ] ;
     lv2:scalePoint [ rdfs:label "64 Ko"; rdf:value 16384 ] ;
+    lv2:scalePoint [ rdfs:label "128 Ko"; rdf:value 32768 ] ;
+    lv2:scalePoint [ rdfs:label "256 Ko"; rdf:value 65536 ] ;
   ].
