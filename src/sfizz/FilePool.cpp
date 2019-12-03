@@ -189,15 +189,15 @@ void sfz::FilePool::loadingThread() noexcept
         promisesToClean.clear();
 
         if (emptyQueue) {
-            while(promiseQueue.pop()) {
-
+            while(promiseQueue.try_dequeue(promise)) {
+                // We're just dequeuing
             }
             emptyQueue = false;
             continue;
         }
 
         if (!promiseQueue.try_dequeue(promise)) {
-            std::this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(0.1ms);
             continue;
         }
 
