@@ -845,6 +845,11 @@
                 <Anchor>a22a85c50bde628e6add863bdcdc5ef59</Anchor>
                </Node>
                <Node>
+                <Name>getRegion</Name>
+                <Path>classsfz_1_1_voice.html</Path>
+                <Anchor>a9d36436f417f8f52a34f51bd450d3af7</Anchor>
+               </Node>
+               <Node>
                 <Name>getSampleRate</Name>
                 <Path>classsfz_1_1_voice.html</Path>
                 <Anchor>af850a94b30882aa92c4ced438c2d593c</Anchor>

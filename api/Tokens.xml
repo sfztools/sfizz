@@ -3266,4 +3266,16 @@
     <Abstract>Get the position of the voice in the source, in samples. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getRegion</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Voice</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_voice.html</Path>
+    <Anchor>a9d36436f417f8f52a34f51bd450d3af7</Anchor>
+    <Abstract>Returns the region that is currently playing. </Abstract>
+    <DeclaredIn>Voice.h</DeclaredIn>
+  </Token>
 </Tokens>

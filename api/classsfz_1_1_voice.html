@@ -184,6 +184,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a634100fd8b4799d1b620640c896a676a"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a634100fd8b4799d1b620640c896a676a">getSourcePosition</a> () const noexcept</td></tr>
 <tr class="memdesc:a634100fd8b4799d1b620640c896a676a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the position of the voice in the source, in samples.  <a href="#a634100fd8b4799d1b620640c896a676a">More...</a><br /></td></tr>
 <tr class="separator:a634100fd8b4799d1b620640c896a676a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d36436f417f8f52a34f51bd450d3af7"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structsfz_1_1_region.html">Region</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a9d36436f417f8f52a34f51bd450d3af7">getRegion</a> () const noexcept</td></tr>
+<tr class="memdesc:a9d36436f417f8f52a34f51bd450d3af7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the region that is currently playing.  <a href="#a9d36436f417f8f52a34f51bd450d3af7">More...</a><br /></td></tr>
+<tr class="separator:a9d36436f417f8f52a34f51bd450d3af7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The SFZ voice are the polyphony holders. </p>
@@ -332,6 +335,35 @@ false </dd></dl>
 <p>Get the mean squared power of the last rendered block. </p>
 <p>This is used to determine which voice to steal if there are too many notes flying around.</p>
 <dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+
+</div>
+</div>
+<a id="a9d36436f417f8f52a34f51bd450d3af7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d36436f417f8f52a34f51bd450d3af7">&#9670;&nbsp;</a></span>getRegion()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structsfz_1_1_region.html">Region</a>* sfz::Voice::getRegion </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the region that is currently playing. </p>
+<p>May be null if the voice is not active!</p>
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 </div>
 </div>
@@ -1038,7 +1070,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Tue Dec 3 2019 20:42:05 for sfizz by
+					<span style="float:right">Generated on Tue Dec 3 2019 23:33:04 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
