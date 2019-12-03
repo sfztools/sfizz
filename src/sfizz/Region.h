@@ -127,8 +127,6 @@ struct Region {
      *
      * @param channel
      * @param pitch
-     * @return true if the region should trigger on this event
-     * @return false
      */
     void registerPitchWheel(int channel, int pitch) noexcept;
     /**
@@ -136,17 +134,12 @@ struct Region {
      *
      * @param channel
      * @param aftertouch
-     * @return true if the region should trigger on this event
-     * @return false
      */
     void registerAftertouch(int channel, uint8_t aftertouch) noexcept;
     /**
      * @brief Register tempo
      *
-     * @param channel
-     * @param aftertouch
-     * @return true if the region should trigger on this event
-     * @return false
+     * @param secondsPerQuarter
      */
     void registerTempo(float secondsPerQuarter) noexcept;
 
