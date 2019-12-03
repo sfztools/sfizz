@@ -316,3 +316,11 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
     REQUIRE( synth.getRegionView(2)->amplitudeCC->first == 10 );
     REQUIRE( synth.getRegionView(2)->amplitudeCC->second == 34.0f );
 }
+
+TEST_CASE("[Files] Specific bug: relative path with backslashes")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/win_backslashes.sfz");
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->sample == R"(closedhat.wav)");
+}
