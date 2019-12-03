@@ -138,12 +138,8 @@ private:
 
 The main function is then quite straightforward and we call a function from the Parser class that loads a file
 ```cpp
-int main(int argc, char** argv)
-{
-    PrintingParser parser;
-    parser.loadSfzFile("my_sfz_file.sfz");
-    return 0;
-}
+PrintingParser parser;
+parser.loadSfzFile("my_sfz_file.sfz");
 ```
 If you circle back to the parser you will see that opcodes are stored in an `Opcode` class. This class does some parsing
 itself and separates the opcode name itself, parameters if any, and the value. Opcodes are very cheap to copy and pass
