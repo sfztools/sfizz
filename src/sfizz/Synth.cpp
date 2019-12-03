@@ -551,7 +551,7 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
     for (auto& voice: voices)
         voice->reset();
 
-    resources.filePool.emptyFileLoadingQueue();
+    resources.filePool.emptyFileLoadingQueues();
     resources.filePool.setOversamplingFactor(factor);
     oversamplingFactor = factor;
 }

@@ -164,7 +164,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
         promise->preloadedData = preloaded->second.preloadedData;
         promise->sampleRate = preloaded->second.sampleRate;
         promise->oversamplingFactor = oversamplingFactor;
-        promiseQueue.enqueue(promise);
+        promiseQueue.try_enqueue(promise);
     }
     return promise;
 }
@@ -196,28 +196,34 @@ void sfz::FilePool::loadingThread() noexcept
             continue;
         }
 
-        if (!promiseQueue.try_dequeue(promise)) {
-            std::this_thread::sleep_for(0.1ms);
+        if (!promiseQueue.wait_dequeue_timed(promise, 50ms)) {
             continue;
         }
 
-        fs::path file { rootDirectory / std::string(promise->filename) };
-        SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
-        if (sndFile.error() != 0)
-            continue;
+        // The voice abandoned the promise already we just don't care
+        if (promise.use_count() != 1) {
+            fs::path file { rootDirectory / std::string(promise->filename) };
+            SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+            if (sndFile.error() != 0)
+                continue;
 
-        DBG("Loading file for " << promise->filename << " in the background");
-        const uint32_t frames = sndFile.frames();
-        promise->fileData = readFromFile<float>(sndFile, frames, oversamplingFactor);
-        promise->dataReady = true;
-        temporaryFilePromises.push_back(promise);
+            DBG("Loading file for " << promise->filename << " in the background");
+            const uint32_t frames = sndFile.frames();
+            promise->fileData = readFromFile<float>(sndFile, frames, oversamplingFactor);
+            promise->dataReady = true;
+        }
+
+        while (!filledPromiseQueue.try_enqueue(promise)) {
+            DBG("Error enqueuing the file for " << promise->filename << " in the filledPromiseQueue");
+            std::this_thread::sleep_for(1ms);
+        }
         promise.reset();
     }
 }
 
 void sfz::FilePool::clear()
 {
-    emptyFileLoadingQueue();
+    emptyFileLoadingQueues();
     preloadedFiles.clear();
     temporaryFilePromises.clear();
     promisesToClean.clear();
@@ -225,19 +231,23 @@ void sfz::FilePool::clear()
 
 void sfz::FilePool::cleanupPromises() noexcept
 {
-    if (temporaryFilePromises.empty())
-        return;
+    FilePromisePtr promise;
+    // Remove stuff from the filled queue and put them in a linear storage
+    while (filledPromiseQueue.try_dequeue(promise)) {
+        temporaryFilePromises.push_back(promise);
+        promise.reset();
+    }
 
-    auto promise = temporaryFilePromises.begin();
+    auto promiseIterator = temporaryFilePromises.begin();
     auto sentinel = temporaryFilePromises.end() - 1;
-    while (promise != temporaryFilePromises.end()) {
-        if (promise->use_count() == 1) {
-            promisesToClean.push_back(*promise);
-            std::iter_swap(promise, sentinel);
+    while (promiseIterator != temporaryFilePromises.end()) {
+        if (promiseIterator->use_count() == 1) {
+            promisesToClean.push_back(*promiseIterator);
+            std::iter_swap(promiseIterator, sentinel);
             sentinel--;
             temporaryFilePromises.pop_back();
         } else {
-            promise++;
+            promiseIterator++;
         }
     }
 }
@@ -267,7 +277,7 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
     return preloadSize;
 }
 
-void sfz::FilePool::emptyFileLoadingQueue() noexcept
+void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
     while (emptyQueue)

@@ -31,7 +31,7 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
 #include "absl/strings/string_view.h"
-#include "moodycamel/concurrentqueue.h"
+#include "moodycamel/blockingconcurrentqueue.h"
 #include <thread>
 #include <sndfile.hh>
 
@@ -77,12 +77,17 @@ using FilePromisePtr = std::shared_ptr<FilePromise>;
 
 class FilePool {
 public:
-    FilePool() { }
+    FilePool()
+    {
+        for (int i = 0; i < config::numBackgroundThreads; ++i)
+            fileLoadingThreadPool.emplace_back( &FilePool::loadingThread, this );
+    }
 
     ~FilePool()
     {
         quitThread = true;
-        fileLoadingThread.join();
+        for (auto& thread: fileLoadingThreadPool)
+            thread.join();
     }
     /**
      * @brief Set the root directory from which to search for files to load
@@ -136,12 +141,13 @@ public:
     uint32_t getPreloadSize() const noexcept;
     void setOversamplingFactor(Oversampling factor) noexcept;
     Oversampling getOversamplingFactor() const noexcept;
-    void emptyFileLoadingQueue() noexcept;
+    void emptyFileLoadingQueues() noexcept;
 private:
     fs::path rootDirectory;
     void loadingThread() noexcept;
 
-    moodycamel::ConcurrentQueue<FilePromisePtr> promiseQueue;
+    moodycamel::BlockingConcurrentQueue<FilePromisePtr> promiseQueue { config::maxVoices };
+    moodycamel::BlockingConcurrentQueue<FilePromisePtr> filledPromiseQueue { config::maxVoices };
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals
@@ -151,7 +157,7 @@ private:
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClean;
     absl::flat_hash_map<absl::string_view, PreloadedFileHandle> preloadedFiles;
-    std::thread fileLoadingThread { &FilePool::loadingThread, this };
+    std::vector<std::thread> fileLoadingThreadPool { };
     LEAK_DETECTOR(FilePool);
 };
 }
