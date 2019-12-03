@@ -23,8 +23,10 @@
 
 #pragma once
 #include <array>
+#include <memory>
 #include "absl/types/span.h"
 #include "Debug.h"
+#include "AudioBuffer.h"
 #include "Config.h"
 #include "hiir/Upsampler2xFpu.h"
 
@@ -92,4 +94,42 @@ template<>
 inline void upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output);
 template<>
 inline void upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output);
+
+template <class T, bool SIMD=SIMDConfig::upsampling>
+std::unique_ptr<sfz::AudioBuffer<T>> upsample2x(const sfz::AudioBuffer<T>& buffer)
+{
+    // auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
+    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 2);
+    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
+        sfz::upsample2xStage<SIMD>(buffer.getConstSpan(channelIdx), outputBuffer->getSpan(channelIdx));
+    }
+    return outputBuffer;
+}
+
+template <class T, bool SIMD=SIMDConfig::upsampling>
+std::unique_ptr<sfz::AudioBuffer<T>> upsample4x(const sfz::AudioBuffer<T>& buffer)
+{
+    auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
+    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 4);
+    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
+        sfz::upsample2xStage<SIMD>(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer));
+        sfz::upsample4xStage<SIMD>(absl::MakeConstSpan(*tempBuffer), outputBuffer->getSpan(channelIdx));
+    }
+    return outputBuffer;
+}
+
+template <class T, bool SIMD=SIMDConfig::upsampling>
+std::unique_ptr<sfz::AudioBuffer<T>> upsample8x(const sfz::AudioBuffer<T>& buffer)
+{
+    auto tempBuffer2x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
+    auto tempBuffer4x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 4);
+    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 8);
+    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
+        sfz::upsample2xStage<SIMD>(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer2x));
+        sfz::upsample4xStage<SIMD>(absl::MakeConstSpan(*tempBuffer2x), absl::MakeSpan(*tempBuffer4x));
+        sfz::upsample8xStage<SIMD>(absl::MakeConstSpan(*tempBuffer4x), outputBuffer->getSpan(channelIdx));
+    }
+    return outputBuffer;
+}
+
 }

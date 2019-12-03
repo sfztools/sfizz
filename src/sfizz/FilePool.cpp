@@ -35,43 +35,6 @@
 using namespace std::chrono_literals;
 
 template <class T>
-std::unique_ptr<sfz::AudioBuffer<T>> upsample2x(const sfz::AudioBuffer<T>& buffer)
-{
-    // auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
-    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 2);
-    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
-        sfz::upsample2xStage(buffer.getConstSpan(channelIdx), outputBuffer->getSpan(channelIdx));
-    }
-    return outputBuffer;
-}
-
-template <class T>
-std::unique_ptr<sfz::AudioBuffer<T>> upsample4x(const sfz::AudioBuffer<T>& buffer)
-{
-    auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
-    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 4);
-    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
-        sfz::upsample2xStage(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer));
-        sfz::upsample4xStage(absl::MakeConstSpan(*tempBuffer), outputBuffer->getSpan(channelIdx));
-    }
-    return outputBuffer;
-}
-
-template <class T>
-std::unique_ptr<sfz::AudioBuffer<T>> upsample8x(const sfz::AudioBuffer<T>& buffer)
-{
-    auto tempBuffer2x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
-    auto tempBuffer4x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 4);
-    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 8);
-    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
-        sfz::upsample2xStage(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer2x));
-        sfz::upsample4xStage(absl::MakeConstSpan(*tempBuffer2x), absl::MakeSpan(*tempBuffer4x));
-        sfz::upsample8xStage(absl::MakeConstSpan(*tempBuffer4x), outputBuffer->getSpan(channelIdx));
-    }
-    return outputBuffer;
-}
-
-template <class T>
 std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor)
 {
     auto baseBuffer = std::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames);
@@ -88,11 +51,11 @@ std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32
     case sfz::Oversampling::x1:
         return baseBuffer;
     case sfz::Oversampling::x2:
-        return upsample2x(*baseBuffer);
+        return sfz::upsample2x(*baseBuffer);
     case sfz::Oversampling::x4:
-        return upsample4x(*baseBuffer);
+        return sfz::upsample4x(*baseBuffer);
     case sfz::Oversampling::x8:
-        return upsample8x(*baseBuffer);
+        return sfz::upsample8x(*baseBuffer);
     default:
         return {};
     }
