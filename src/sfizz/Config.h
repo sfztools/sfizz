@@ -36,7 +36,9 @@ namespace config {
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int preloadSize { 8192 };
     constexpr int numChannels { 2 };
+    constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
+    constexpr int maxVoices { 256 };
     constexpr int sustainCC { 64 };
     constexpr int halfCCThreshold { 64 };
     constexpr int centPerSemitone { 100 };
