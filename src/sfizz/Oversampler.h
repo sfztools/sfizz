@@ -61,7 +61,7 @@ constexpr std::array<double, 3> coeffsStage8x {
 };
 
 template<bool SIMD=SIMDConfig::upsampling>
-inline void upsample2xStage(absl::Span<const float> input, absl::Span<float> output)
+void upsample2xStage(absl::Span<const float> input, absl::Span<float> output)
 {
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xFpu<coeffsStage2x.size()> upsampler;
@@ -71,7 +71,7 @@ inline void upsample2xStage(absl::Span<const float> input, absl::Span<float> out
 
 
 template<bool SIMD=SIMDConfig::upsampling>
-inline void upsample4xStage(absl::Span<const float> input, absl::Span<float> output)
+void upsample4xStage(absl::Span<const float> input, absl::Span<float> output)
 {
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xFpu<coeffsStage4x.size()> upsampler;
@@ -80,7 +80,7 @@ inline void upsample4xStage(absl::Span<const float> input, absl::Span<float> out
 }
 
 template<bool SIMD=SIMDConfig::upsampling>
-inline void upsample8xStage(absl::Span<const float> input, absl::Span<float> output)
+void upsample8xStage(absl::Span<const float> input, absl::Span<float> output)
 {
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xFpu<coeffsStage8x.size()> upsampler;
@@ -89,11 +89,11 @@ inline void upsample8xStage(absl::Span<const float> input, absl::Span<float> out
 }
 
 template<>
-inline void upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> output);
+void upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> output);
 template<>
-inline void upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output);
+void upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output);
 template<>
-inline void upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output);
+void upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output);
 
 template <class T, bool SIMD=SIMDConfig::upsampling>
 std::unique_ptr<sfz::AudioBuffer<T>> upsample2x(const sfz::AudioBuffer<T>& buffer)

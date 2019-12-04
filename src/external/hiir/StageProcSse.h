@@ -1,10 +1,10 @@
 /*****************************************************************************
 
-        StageProc4Sse.h
-        Author: Laurent de Soras, 2015
+        StageProcSse.h
+        Author: Laurent de Soras, 2005
 
 Template parameters:
-	- REMAINING: Number of remaining coefficients to process, >= 0
+	- CUR: index of the coefficient to process, >= 0
 
 --- Legal stuff ---
 
@@ -18,8 +18,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 
 
-#if ! defined (hiir_StageProc4Sse_HEADER_INCLUDED)
-#define hiir_StageProc4Sse_HEADER_INCLUDED
+#if ! defined (hiir_StageProcSse_HEADER_INCLUDED)
+#define hiir_StageProcSse_HEADER_INCLUDED
 
 #if defined (_MSC_VER)
 	#pragma once
@@ -43,20 +43,20 @@ namespace hiir
 
 class StageDataSse;
 
-template <int REMAINING>
-class StageProc4Sse
+template <int CUR>
+class StageProcSse
 {
 
-	static_assert ((REMAINING >= 0), "REMAINING must be >= 0");
+	static_assert ((CUR >= 0), "CUR must be >= 0");
 
 /*\\\ PUBLIC \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 public:
 
 	static hiir_FORCEINLINE void
-	               process_sample_pos (const int nbr_coefs, __m128 &spl_0, __m128 &spl_1, StageDataSse *stage_arr);
+	               process_sample_pos (StageDataSse *stage_ptr, __m128 &y, __m128 &mem);
 	static hiir_FORCEINLINE void
-	               process_sample_neg (const int nbr_coefs, __m128 &spl_0, __m128 &spl_1, StageDataSse *stage_arr);
+	               process_sample_neg (StageDataSse *stage_ptr, __m128 &y, __m128 &mem);
 
 
 
@@ -70,20 +70,22 @@ protected:
 
 private:
 
+	enum {         PREV = CUR - 1 };
+
 
 
 /*\\\ FORBIDDEN MEMBER FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 private:
 
-	               StageProc4Sse ();
-	               StageProc4Sse (const StageProc4Sse <REMAINING> &other);
-	StageProc4Sse <REMAINING> &
-						operator = (const StageProc4Sse <REMAINING> &other);
-	bool           operator == (const StageProc4Sse <REMAINING> &other);
-	bool           operator != (const StageProc4Sse <REMAINING> &other);
+	               StageProcSse ();
+	               StageProcSse (const StageProcSse <CUR> &other);
+	StageProcSse <CUR> &
+	               operator = (const StageProcSse <CUR> &other);
+	bool           operator == (const StageProcSse <CUR> &other);
+	bool           operator != (const StageProcSse <CUR> &other);
 
-}; // class StageProc4Sse
+}; // class StageProcSse
 
 
 
@@ -91,11 +93,11 @@ private:
 
 
 
-#include "hiir/StageProc4Sse.hpp"
+#include "hiir/StageProcSse.hpp"
 
 
 
-#endif   // hiir_StageProc4Sse_HEADER_INCLUDED
+#endif   // hiir_StageProcSse_HEADER_INCLUDED
 
 
 

@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-        Upsampler2x4Sse.hpp
-        Author: Laurent de Soras, 2015
+        Upsampler2xNeon.hpp
+        Author: Laurent de Soras, 2016
 
 --- Legal stuff ---
 
@@ -15,14 +15,16 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 
 
-#if ! defined (hiir_Upsampler2x4Sse_CODEHEADER_INCLUDED)
-#define hiir_Upsampler2x4Sse_CODEHEADER_INCLUDED
+#if ! defined (hiir_Upsampler2xNeon_CODEHEADER_INCLUDED)
+#define hiir_Upsampler2xNeon_CODEHEADER_INCLUDED
 
 
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "hiir/StageProc4Sse.h"
+#include "hiir/StageProcNeon.h"
+
+#include <arm_neon.h>
 
 #include <cassert>
 
@@ -45,12 +47,17 @@ Throws: Nothing
 */
 
 template <int NC>
-Upsampler2x4Sse <NC>::Upsampler2x4Sse ()
+Upsampler2xNeon <NC>::Upsampler2xNeon ()
 :	_filter ()
 {
-	for (int i = 0; i < NBR_COEFS + 2; ++i)
+	for (int i = 0; i < NBR_STAGES + 1; ++i)
 	{
-		_mm_store_ps (_filter [i]._coef, _mm_setzero_ps ());
+		_filter [i]._coef4 = vdupq_n_f32 (0);
+	}
+	if ((NBR_COEFS & 1) != 0)
+	{
+		const int      pos = (NBR_COEFS ^ 1) & (STAGE_WIDTH - 1);
+		_filter [NBR_STAGES]._coef [pos] = 1;
 	}
 
 	clear_buffers ();
@@ -73,13 +80,15 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2x4Sse <NC>::set_coefs (const double coef_arr [NBR_COEFS])
+void	Upsampler2xNeon <NC>::set_coefs (const double coef_arr [NBR_COEFS])
 {
 	assert (coef_arr != 0);
 
 	for (int i = 0; i < NBR_COEFS; ++i)
 	{
-		_mm_store_ps (_filter [i + 2]._coef, _mm_set1_ps (float (coef_arr [i])));
+		const int      stage = (i / STAGE_WIDTH) + 1;
+		const int      pos = (i ^ 1) & (STAGE_WIDTH - 1);
+		_filter [stage]._coef [pos] = float (coef_arr [i]);
 	}
 }
 
@@ -89,29 +98,29 @@ void	Upsampler2x4Sse <NC>::set_coefs (const double coef_arr [NBR_COEFS])
 ==============================================================================
 Name: process_sample
 Description:
-	Upsamples (x2) the input vector, generating two output vectors.
+	Upsamples (x2) the input sample, generating two output samples.
 Input parameters:
-	- input: The input vector.
+	- input: The input sample.
 Output parameters:
-	- out_0: First output vector.
-	- out_1: Second output vector.
+	- out_0: First output sample.
+	- out_1: Second output sample.
 Throws: Nothing
 ==============================================================================
 */
 
 template <int NC>
-void	Upsampler2x4Sse <NC>::process_sample (__m128 &out_0, __m128 &out_1, __m128 input)
+void	Upsampler2xNeon <NC>::process_sample (float &out_0, float &out_1, float input)
 {
-	__m128         even = input;
-	__m128         odd  = input;
-	StageProc4Sse <NBR_COEFS>::process_sample_pos (
-		NBR_COEFS,
-		even,
-		odd,
-		&_filter [0]
-	);
-	out_0 = even;
-	out_1 = odd;
+	const float32x2_t spl_in = vdup_n_f32 (input);
+	const float32x2_t spl_mid = vget_low_f32 (_filter [NBR_STAGES]._mem4);
+	float32x4_t       y       = vcombine_f32 (spl_in, spl_mid);
+	float32x4_t       mem     = _filter [0]._mem4;
+
+	StageProcNeon <NBR_STAGES>::process_sample_pos (&_filter [0], y, mem);
+	_filter [NBR_STAGES]._mem4 = y;
+
+	out_0 = vgetq_lane_f32 (y, 3);
+	out_1 = vgetq_lane_f32 (y, 2);
 }
 
 
@@ -120,36 +129,29 @@ void	Upsampler2x4Sse <NC>::process_sample (__m128 &out_0, __m128 &out_1, __m128 
 ==============================================================================
 Name: process_block
 Description:
-	Upsamples (x2) the input vector block.
+	Upsamples (x2) the input sample block.
 	Input and output blocks may overlap, see assert() for details.
 Input parameters:
-	- in_ptr: Input array, containing nbr_spl vector.
-		No alignment constraint.
-	- nbr_spl: Number of input vectors to process, > 0
+	- in_ptr: Input array, containing nbr_spl samples.
+	- nbr_spl: Number of input samples to process, > 0
 Output parameters:
-	- out_0_ptr: Output vector array, capacity: nbr_spl * 2 vectors.
-		No alignment constraint.
+	- out_0_ptr: Output sample array, capacity: nbr_spl * 2 samples.
 Throws: Nothing
 ==============================================================================
 */
 
 template <int NC>
-void	Upsampler2x4Sse <NC>::process_block (float out_ptr [], const float in_ptr [], long nbr_spl)
+void	Upsampler2xNeon <NC>::process_block (float out_ptr [], const float in_ptr [], long nbr_spl)
 {
 	assert (out_ptr != 0);
 	assert (in_ptr != 0);
-	assert (out_ptr >= in_ptr + nbr_spl * 4 || in_ptr >= out_ptr + nbr_spl * 4);
+	assert (out_ptr >= in_ptr + nbr_spl || in_ptr >= out_ptr + nbr_spl);
 	assert (nbr_spl > 0);
 
 	long           pos = 0;
 	do
 	{
-		__m128         dst_0;
-		__m128         dst_1;
-		const __m128   src = _mm_loadu_ps (in_ptr + pos * 4);
-		process_sample (dst_0, dst_1, src);
-		_mm_storeu_ps (out_ptr + pos * 8    , dst_0);
-		_mm_storeu_ps (out_ptr + pos * 8 + 4, dst_1);
+		process_sample (out_ptr [pos * 2], out_ptr [pos * 2 + 1], in_ptr [pos]);
 		++ pos;
 	}
 	while (pos < nbr_spl);
@@ -168,11 +170,11 @@ Throws: Nothing
 */
 
 template <int NC>
-void	Upsampler2x4Sse <NC>::clear_buffers ()
+void	Upsampler2xNeon <NC>::clear_buffers ()
 {
-	for (int i = 0; i < NBR_COEFS + 2; ++i)
+	for (int i = 0; i < NBR_STAGES + 1; ++i)
 	{
-		_mm_store_ps (_filter [i]._mem, _mm_setzero_ps ());
+		_filter [i]._mem4 = vdupq_n_f32 (0);
 	}
 }
 
@@ -190,7 +192,7 @@ void	Upsampler2x4Sse <NC>::clear_buffers ()
 
 
 
-#endif   // hiir_Upsampler2x4Sse_CODEHEADER_INCLUDED
+#endif   // hiir_Upsampler2xNeon_CODEHEADER_INCLUDED
 
 
 

@@ -22,29 +22,31 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Oversampler.h"
-#include "hiir/Upsampler2x4Sse.h"
+#include "hiir/Upsampler2xSse.h"
 
 template<>
-inline void sfz::upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> output)
+void sfz::upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> output)
 {
     ASSERT(output.size() >= 2 * input.size());
-    hiir::Upsampler2x4Sse<sfz::coeffsStage2x.size()> upsampler;
+    hiir::Upsampler2xSse<sfz::coeffsStage2x.size()> upsampler;
     upsampler.set_coefs(sfz::coeffsStage2x.data());
     upsampler.process_block(output.data(), input.data(), input.size());
 }
+
 template<>
-inline void sfz::upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output)
+void sfz::upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output)
 {
     ASSERT(output.size() >= 2 * input.size());
-    hiir::Upsampler2x4Sse<sfz::coeffsStage4x.size()> upsampler;
+    hiir::Upsampler2xSse<sfz::coeffsStage4x.size()> upsampler;
     upsampler.set_coefs(sfz::coeffsStage4x.data());
     upsampler.process_block(output.data(), input.data(), input.size());
 }
+
 template<>
-inline void sfz::upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output)
+void sfz::upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output)
 {
     ASSERT(output.size() >= 2 * input.size());
-    hiir::Upsampler2x4Sse<sfz::coeffsStage8x.size()> upsampler;
+    hiir::Upsampler2xSse<sfz::coeffsStage8x.size()> upsampler;
     upsampler.set_coefs(sfz::coeffsStage8x.data());
     upsampler.process_block(output.data(), input.data(), input.size());
 }

@@ -1,12 +1,14 @@
 /*****************************************************************************
 
-        Upsampler2x4Sse.h
-        Author: Laurent de Soras, 2015
+        Upsampler2xNeon.h
+        Author: Laurent de Soras, 2016
 
-Upsamples vectors of 4 float by a factor 2 the input signal, using the SSE
-instruction set.
+Upsamples by a factor 2 the input signal, using NEON instruction set.
 
 This object must be aligned on a 16-byte boundary!
+
+If the number of coefficients is 2 or 3 modulo 4, the output is delayed from
+1 sample, compared to the theoretical formula (or FPU implementation).
 
 Template parameters:
 	- NC: number of coefficients, > 0
@@ -24,8 +26,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 
 #pragma once
-#if ! defined (hiir_Upsampler2x4Sse_HEADER_INCLUDED)
-#define hiir_Upsampler2x4Sse_HEADER_INCLUDED
+#if ! defined (hiir_Upsampler2xNeon_HEADER_INCLUDED)
+#define hiir_Upsampler2xNeon_HEADER_INCLUDED
 
 #if defined (_MSC_VER)
 	#pragma warning (4 : 4250)
@@ -35,10 +37,7 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 /*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-#include "hiir/def.h"
-#include "hiir/StageDataSse.h"
-
-#include <xmmintrin.h>
+#include "hiir/StageDataNeon.h"
 
 #include <array>
 
@@ -50,7 +49,7 @@ namespace hiir
 
 
 template <int NC>
-class Upsampler2x4Sse
+class Upsampler2xNeon
 {
 
 	static_assert ((NC > 0), "Number of coefficient must be positive.");
@@ -61,13 +60,15 @@ public:
 
 	enum {         NBR_COEFS = NC };
 
-	               Upsampler2x4Sse ();
+	               Upsampler2xNeon ();
+	               Upsampler2xNeon (const Upsampler2xNeon &other)   = default;
+	Upsampler2xNeon &
+	               operator = (const Upsampler2xNeon &other)        = default;
 
-	void				set_coefs (const double coef_arr [NBR_COEFS]);
-	hiir_FORCEINLINE void
-	               process_sample (__m128 &out_0, __m128 &out_1, __m128 input);
-	void				process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
-	void				clear_buffers ();
+	void           set_coefs (const double coef_arr [NBR_COEFS]);
+	inline void    process_sample (float &out_0, float &out_1, float input);
+	void           process_block (float out_ptr [], const float in_ptr [], long nbr_spl);
+	void           clear_buffers ();
 
 
 
@@ -81,9 +82,12 @@ protected:
 
 private:
 
-	typedef std::array <StageDataSse, NBR_COEFS + 2> Filter;   // Stages 0 and 1 contain only input memories
+	enum {         STAGE_WIDTH = 4 };
+	enum {         NBR_STAGES  = (NBR_COEFS + STAGE_WIDTH - 1) / STAGE_WIDTH };
 
-	Filter         _filter; // Should be the first member (thus easier to align)
+	typedef	std::array <StageDataNeon, NBR_STAGES + 1>	Filter;	// Stage 0 contains only input memory
+
+	Filter         _filter;    // Should be the first member (thus easier to align)
 
 
 
@@ -91,10 +95,10 @@ private:
 
 private:
 
-	bool           operator == (const Upsampler2x4Sse <NC> &other) const;
-	bool           operator != (const Upsampler2x4Sse <NC> &other) const;
+	bool           operator == (const Upsampler2xNeon <NC> &other) const = delete;
+	bool           operator != (const Upsampler2xNeon <NC> &other) const = delete;
 
-}; // class Upsampler2x4Sse
+}; // class Upsampler2xNeon
 
 
 
@@ -102,11 +106,11 @@ private:
 
 
 
-#include "hiir/Upsampler2x4Sse.hpp"
+#include "hiir/Upsampler2xNeon.hpp"
 
 
 
-#endif   // hiir_Upsampler2x4Sse_HEADER_INCLUDED
+#endif   // hiir_Upsampler2xNeon_HEADER_INCLUDED
 
 
 

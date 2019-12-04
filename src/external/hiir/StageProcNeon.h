@@ -1,10 +1,10 @@
 /*****************************************************************************
 
-        StageProc4Neon.h
+        StageProcNeon.h
         Author: Laurent de Soras, 2016
 
 Template parameters:
-	- REMAINING: Number of remaining coefficients to process, >= 0
+	- CUR: index of the coefficient coefficient to process, >= 0
 
 --- Legal stuff ---
 
@@ -19,8 +19,8 @@ http://sam.zoy.org/wtfpl/COPYING for more details.
 
 
 #pragma once
-#if ! defined (hiir_StageProc4Neon_HEADER_INCLUDED)
-#define hiir_StageProc4Neon_HEADER_INCLUDED
+#if ! defined (hiir_StageProcNeon_HEADER_INCLUDED)
+#define hiir_StageProcNeon_HEADER_INCLUDED
 
 #if defined (_MSC_VER)
 	#pragma warning (4 : 4250)
@@ -41,19 +41,20 @@ namespace hiir
 
 class StageDataNeon;
 
-template <int REMAINING>
-class StageProc4Neon
+template <int CUR>
+class StageProcNeon
 {
-	static_assert (REMAINING >= 0, "REMAINING must be >= 0.");
+
+	static_assert ((CUR >= 0), "CUR must be >= 0");
 
 /*\\\ PUBLIC \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 public:
 
 	static hiir_FORCEINLINE void
-	               process_sample_pos (const int nbr_coefs, float32x4_t &spl_0, float32x4_t &spl_1, StageDataNeon *stage_arr);
+	               process_sample_pos (StageDataNeon *stage_ptr, float32x4_t &y, float32x4_t &mem);
 	static hiir_FORCEINLINE void
-	               process_sample_neg (const int nbr_coefs, float32x4_t &spl_0, float32x4_t &spl_1, StageDataNeon *stage_arr);
+	               process_sample_neg (StageDataNeon *stage_ptr, float32x4_t &y, float32x4_t &mem);
 
 
 
@@ -67,21 +68,23 @@ protected:
 
 private:
 
+	enum {         PREV = CUR - 1 };
+
 
 
 /*\\\ FORBIDDEN MEMBER FUNCTIONS \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 private:
 
-	               StageProc4Neon ()                                           = delete;
-	               StageProc4Neon (const StageProc4Neon <REMAINING> &other)    = delete;
-	               ~StageProc4Neon ()                                          = delete;
-	StageProc4Neon <REMAINING> &
-	               operator = (const StageProc4Neon <REMAINING> &other)        = delete;
-	bool           operator == (const StageProc4Neon <REMAINING> &other) const = delete;
-	bool           operator != (const StageProc4Neon <REMAINING> &other) const = delete;
+	               StageProcNeon ()                                     = delete;
+	               StageProcNeon (const StageProcNeon <CUR> &other)     = delete;
+	               ~StageProcNeon ()                                    = delete;
+	StageProcNeon &
+	               operator = (const StageProcNeon <CUR> &other)        = delete;
+	bool           operator == (const StageProcNeon <CUR> &other) const = delete;
+	bool           operator != (const StageProcNeon <CUR> &other) const = delete;
 
-}; // class StageProc4Neon
+}; // class StageProcNeon
 
 
 
@@ -89,11 +92,11 @@ private:
 
 
 
-#include "hiir/StageProc4Neon.hpp"
+#include "hiir/StageProcNeon.hpp"
 
 
 
-#endif   // hiir_StageProc4Neon_HEADER_INCLUDED
+#endif   // hiir_StageProcNeon_HEADER_INCLUDED
 
 
 
