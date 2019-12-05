@@ -1,4 +1,4 @@
-DOCSET_NAME=sfizz.tools.sfz.docset
+DOCSET_NAME=tools.sfz.sfizz.docset
 DOCSET_CONTENTS=$(DOCSET_NAME)/Contents
 DOCSET_RESOURCES=$(DOCSET_CONTENTS)/Resources
 DOCSET_DOCUMENTS=$(DOCSET_RESOURCES)/Documents

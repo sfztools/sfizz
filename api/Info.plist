@@ -6,13 +6,13 @@
      <key>CFBundleName</key>
      <string>sfizz</string>
      <key>CFBundleIdentifier</key>
-     <string>sfizz.tools.sfz</string>
+     <string>tools.sfz.sfizz</string>
      <key>CFBundleVersion</key>
      <string>0.1.0</string>
      <key>DocSetFeedName</key>
      <string>sfizz</string>
      <key>DocSetPublisherIdentifier</key>
-     <string>tools.sfz</string>
+     <string>tools.sfz.SFZTools</string>
      <key>DocSetPublisherName</key>
      <string>SFZTools</string>
      <key>DashDocSetFamily</key>
