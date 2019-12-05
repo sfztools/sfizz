@@ -15,7 +15,8 @@ yarn.lock
 
 # Unstaged files in other branches
 build*
+external/*
 *.txt.user*
-external/
+*.code-workspace
 
 .DS_Store
