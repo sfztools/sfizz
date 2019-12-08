@@ -488,8 +488,13 @@ run(LV2_Handle instance, uint32_t sample_count)
     if (!self->control_port || !self->notify_port)
         return;
 
-    if (*(self->freewheel_port) > 0)
-        lv2_log_note(&self->logger, "[run] Freewheeling set!");
+    // Enable freewheeling on the synth if necessary, which wait for
+    // the background loading queues to flush before rendering.
+    if (*(self->freewheel_port) > 0) {
+        sfizz_enable_freewheeling(self->synth);
+    } else {
+        sfizz_disable_freewheeling(self->synth);
+    }
 
     // Set up forge to write directly to notify output port.
     const size_t notify_capacity = self->notify_port->atom.size;
