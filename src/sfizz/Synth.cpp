@@ -572,3 +572,18 @@ uint32_t sfz::Synth::getPreloadSize() const noexcept
 {
     return resources.filePool.getPreloadSize();
 }
+
+void sfz::Synth::enableFreeWheeling() noexcept
+{
+    if (!freeWheeling) {
+    freeWheeling = true;
+    DBG("Enabling freewheeling");
+    }
+}
+void sfz::Synth::disableFreeWheeling() noexcept
+{
+    if (freeWheeling) {
+        freeWheeling = false;
+        DBG("Disabling freewheeling");
+    }
+}

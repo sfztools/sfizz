@@ -325,8 +325,8 @@ public:
      */
     int getAllocatedBytes() const noexcept { return Buffer<float>::counter().getTotalBytes(); }
 
-    void enableFreeWheeling() { freeWheeling = true; }
-    void disableFreeWheeling() { freeWheeling = true; }
+    void enableFreeWheeling() noexcept;
+    void disableFreeWheeling() noexcept;
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
