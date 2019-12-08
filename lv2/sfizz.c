@@ -446,7 +446,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         //              "[process_midi] Received note on %d/%d at time %d\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_note_on(self->synth,
                            (int)ev->time.frames,
-                           (int)MIDI_CHANNEL(msg[0]) + 1,
+                           (int)MIDI_CHANNEL(msg[0]),
                            (int)msg[1],
                            msg[2]);
         break;
@@ -455,7 +455,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         //              "[process_midi] Received note off %d/%d at time %d\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_note_off(self->synth,
                             (int)ev->time.frames,
-                            (int)MIDI_CHANNEL(msg[0]) + 1,
+                            (int)MIDI_CHANNEL(msg[0]),
                             (int)msg[1],
                             msg[2]);
         break;
@@ -464,7 +464,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         //              "[process_midi] Received CC %d/%d at time %d\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_cc(self->synth,
                       (int)ev->time.frames,
-                      (int)MIDI_CHANNEL(msg[0]) + 1,
+                      (int)MIDI_CHANNEL(msg[0]),
                       (int)msg[1],
                       msg[2]);
         break;

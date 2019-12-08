@@ -191,7 +191,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param channel the midi channel for the event
+     * @param channel the midi channel for the event (0-based)
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
@@ -201,7 +201,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param channel the midi channel for the event
+     * @param channel the midi channel for the event (0-based)
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
@@ -211,7 +211,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
-     * @param channel the midi channel for the event
+     * @param channel the midi channel for the event (0-based)
      * @param ccNumber the cc number
      * @param ccValue the cc value
      */
@@ -222,7 +222,7 @@ public:
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to
      *              renderBlock().
-     * @param channel the midi channel for the event
+     * @param channel the midi channel for the event (0-based)
      * @param pitch the pitch value
      */
     void pitchWheel(int delay, int channel, int pitch) noexcept;
@@ -231,7 +231,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
-     * @param channel the midi channel for the event
+     * @param channel the midi channel for the event (0-based)
      * @param aftertouch the aftertouch value
      */
     void aftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
@@ -240,7 +240,6 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
-     * @param channel the midi channel for the event
      * @param secondsPerQuarter the new period of the quarter note
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;

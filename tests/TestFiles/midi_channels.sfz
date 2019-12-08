@@ -1,0 +1,3 @@
+<region> lochan=1 hichan=1 sample=dummy1.wav
+<region> lochan=2 hichan=2 sample=dummy2.wav
+<region> lochan=16 hichan=16 sample=dummy16.wav

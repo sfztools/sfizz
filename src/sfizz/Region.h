@@ -89,7 +89,7 @@ struct Region {
      * @brief Register a new note on event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
      *
-     * @param channel
+     * @param channel MIDI channel (1-based)
      * @param noteNumber
      * @param velocity
      * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
@@ -102,7 +102,7 @@ struct Region {
      * @brief Register a new note off event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
      *
-     * @param channel
+     * @param channel MIDI channel (1-based)
      * @param noteNumber
      * @param velocity
      * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
@@ -115,7 +115,7 @@ struct Region {
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
      *
-     * @param channel
+     * @param channel MIDI channel (1-based)
      * @param ccNumber
      * @param ccValue
      * @return true if the region should trigger on this event
@@ -125,14 +125,14 @@ struct Region {
     /**
      * @brief Register a new pitch wheel event.
      *
-     * @param channel
+     * @param channel MIDI channel (1-based)
      * @param pitch
      */
     void registerPitchWheel(int channel, int pitch) noexcept;
     /**
      * @brief Register a new aftertouch event.
      *
-     * @param channel
+     * @param channel MIDI channel (1-based)
      * @param aftertouch
      */
     void registerAftertouch(int channel, uint8_t aftertouch) noexcept;

@@ -372,6 +372,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    channel = translateMidiChannelToSfz(channel);
     midiState.noteOn(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -401,6 +402,8 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    channel = translateMidiChannelToSfz(channel);
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
@@ -429,6 +432,8 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     ASSERT(ccNumber < 128);
     ASSERT(ccNumber >= 0);
 
+    channel = translateMidiChannelToSfz(channel);
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
@@ -449,13 +454,13 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     }
 }
 
-void sfz::Synth::pitchWheel(int /* delay */, int /* channel */, int /* pitch */) noexcept
+void sfz::Synth::pitchWheel(int /* delay */, int channel, int /* pitch */) noexcept
 {
-
+    channel = translateMidiChannelToSfz(channel);
 }
-void sfz::Synth::aftertouch(int /* delay */, int /* channel */, uint8_t /* aftertouch */) noexcept
+void sfz::Synth::aftertouch(int /* delay */, int channel, uint8_t /* aftertouch */) noexcept
 {
-
+    channel = translateMidiChannelToSfz(channel);
 }
 void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
 {

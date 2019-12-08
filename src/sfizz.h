@@ -145,7 +145,7 @@ void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate);
  *
  * @param      synth        The synth
  * @param      delay        the delay of the event in the block, in samples.
- * @param      channel      the MIDI channel; currently starts at 1 (FIXME)
+ * @param      channel      the MIDI channel (starting at 0 for the first channel)
  * @param      note_number  the MIDI note number
  * @param      velocity     the MIDI velocity
  */
@@ -159,7 +159,7 @@ void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int channel, int note_n
  *
  * @param      synth        The synth
  * @param      delay        the delay of the event in the block, in samples.
- * @param      channel      the MIDI channel; currently starts at 1 (FIXME)
+ * @param      channel      the MIDI channel (starting at 0 for the first channel)
  * @param      note_number  the MIDI note number
  * @param      velocity     the MIDI velocity
  */
@@ -171,7 +171,7 @@ void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int channel, int note_
  *
  * @param      synth      The synth
  * @param      delay      the delay of the event in the block, in samples.
- * @param      channel    the MIDI channel; currently starts at 1 (FIXME)
+ * @param      channel    the MIDI channel (starting at 0 for the first channel)
  * @param      cc_number  the MIDI CC number
  * @param      cc_value   the MIDI CC value
  */

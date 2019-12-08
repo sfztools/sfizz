@@ -36,12 +36,23 @@ using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
 
 /**
+ * @brief Translates the zero-based MIDI channel to the 1-based SFZ channel
+ *
+ * @param zeroBasedChannel
+ * @return constexpr int
+ */
+inline constexpr int translateMidiChannelToSfz(int zeroBasedChannel)
+{
+    return zeroBasedChannel + 1;
+}
+
+/**
  * @brief Converts cents to a pitch ratio
- * 
- * @tparam T 
- * @param cents 
- * @param centsPerOctave 
- * @return constexpr float 
+ *
+ * @tparam T
+ * @param cents
+ * @param centsPerOctave
+ * @return constexpr float
  */
 template<class T>
 inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
@@ -51,10 +62,10 @@ inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 
 /**
  * @brief Normalize a CC value between (T)0.0 and (T)1.0
- * 
- * @tparam T 
- * @param ccValue 
- * @return constexpr float 
+ *
+ * @tparam T
+ * @param ccValue
+ * @return constexpr float
  */
 template<class T>
 inline constexpr float normalizeCC(T ccValue)
@@ -65,10 +76,10 @@ inline constexpr float normalizeCC(T ccValue)
 
 /**
  * @brief Normalize a percentage between 0 and 1
- * 
- * @tparam T 
- * @param percentValue 
- * @return constexpr float 
+ *
+ * @tparam T
+ * @param percentValue
+ * @return constexpr float
  */
 template<class T>
 inline constexpr float normalizePercents(T percentValue)
@@ -78,10 +89,10 @@ inline constexpr float normalizePercents(T percentValue)
 
 /**
  * @brief Normalize a possibly negative percentage between -1 and 1
- * 
- * @tparam T 
- * @param percentValue 
- * @return constexpr float 
+ *
+ * @tparam T
+ * @param percentValue
+ * @return constexpr float
  */
 template<class T>
 inline constexpr float normalizeNegativePercents(T percentValue)
@@ -91,11 +102,11 @@ inline constexpr float normalizeNegativePercents(T percentValue)
 
 /**
  * @brief If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.
- * 
- * @param ccValues 
- * @param ccSwitch 
- * @param value 
- * @return float 
+ *
+ * @param ccValues
+ * @param ccSwitch
+ * @param value
+ * @return float
  */
 inline float ccSwitchedValue(const CCValueArray& ccValues, const absl::optional<CCValuePair>& ccSwitch, float value) noexcept
 {
@@ -107,9 +118,9 @@ inline float ccSwitchedValue(const CCValueArray& ccValues, const absl::optional<
 
 /**
  * @brief Convert a note in string to its equivalent midi note number
- * 
- * @param value 
- * @return absl::optional<uint8_t> 
+ *
+ * @param value
+ * @return absl::optional<uint8_t>
  */
 absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
 
