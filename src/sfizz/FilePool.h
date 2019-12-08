@@ -142,6 +142,7 @@ public:
     void setOversamplingFactor(Oversampling factor) noexcept;
     Oversampling getOversamplingFactor() const noexcept;
     void emptyFileLoadingQueues() noexcept;
+    void waitForBackgroundLoading() noexcept;
 private:
     fs::path rootDirectory;
     void loadingThread() noexcept;
@@ -153,6 +154,7 @@ private:
     // Signals
     bool quitThread { false };
     bool emptyQueue { false };
+    std::atomic<int> threadsLoading { 0 };
 
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClean;

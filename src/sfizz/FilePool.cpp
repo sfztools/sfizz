@@ -165,6 +165,8 @@ void sfz::FilePool::loadingThread() noexcept
 
         // The voice abandoned the promise already we just don't care
         if (promise.use_count() != 1) {
+            threadsLoading++;
+
             fs::path file { rootDirectory / std::string(promise->filename) };
             SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
             if (sndFile.error() != 0)
@@ -174,6 +176,8 @@ void sfz::FilePool::loadingThread() noexcept
             const uint32_t frames = sndFile.frames();
             promise->fileData = readFromFile<float>(sndFile, frames, oversamplingFactor);
             promise->dataReady = true;
+
+            threadsLoading--;
         }
 
         while (!filledPromiseQueue.try_enqueue(promise)) {
@@ -245,4 +249,16 @@ void sfz::FilePool::emptyFileLoadingQueues() noexcept
     emptyQueue = true;
     while (emptyQueue)
         std::this_thread::sleep_for(1ms);
+}
+
+void sfz::FilePool::waitForBackgroundLoading() noexcept
+{
+    // TODO: validate that this is enough, otherwise we will need an atomic count
+    // of the files we need to load still.
+    // Spinlocking on the size of the background queue
+    while (promiseQueue.size_approx() > 0)
+        std::this_thread::sleep_for(0.1ms);
+    // Spinlocking on the threads possibly logging in the background
+    while (threadsLoading > 0)
+        std::this_thread::sleep_for(0.1ms);
 }
