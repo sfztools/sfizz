@@ -88,31 +88,31 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
 
         switch (midi::status(event.buffer[0])) {
         case midi::noteOff:
-            DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
+            // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
             synth->noteOff(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
-            DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
+            // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
             synth->noteOn(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
-            DBG("[MIDI] Polyphonic pressure on at time " << event.time);
+            // DBG("[MIDI] Polyphonic pressure on at time " << event.time);
             break;
         case midi::controlChange:
-            DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
+            // DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
             synth->cc(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
             break;
         case midi::programChange:
-            DBG("[MIDI] Program change at time " << event.time);
+            // DBG("[MIDI] Program change at time " << event.time);
             break;
         case midi::channelPressure:
-            DBG("[MIDI] Channel pressure at time " << event.time);
+            // DBG("[MIDI] Channel pressure at time " << event.time);
             break;
         case midi::pitchBend:
-            DBG("[MIDI] Pitch bend at time " << event.time);
+            // DBG("[MIDI] Pitch bend at time " << event.time);
             break;
         case midi::systemMessage:
-            DBG("[MIDI] System message at time " << event.time);
+            // DBG("[MIDI] System message at time " << event.time);
             break;
         }
     }
@@ -130,7 +130,7 @@ int sampleBlockChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
         return 0;
 
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
-    DBG("Sample per block changed to " << nframes);
+    // DBG("Sample per block changed to " << nframes);
     synth->setSamplesPerBlock(nframes);
     return 0;
 }
@@ -141,7 +141,7 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
         return 0;
 
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
-    DBG("Sample rate changed to " << nframes);
+    // DBG("Sample rate changed to " << nframes);
     synth->setSampleRate(nframes);
     return 0;
 }

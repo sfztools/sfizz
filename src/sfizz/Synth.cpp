@@ -287,7 +287,6 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         return freeVoice->get();
 
     // Find voices that can be stolen
-    DBG("No free voice, trying to steal");
     voiceViewArray.clear();
     for (auto& voice : voices)
         if (voice->canBeStolen())
@@ -295,15 +294,12 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     absl::c_sort(voices, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
 
     for (auto* voice : voiceViewArray) {
-        DBG("Average voice power: " << voice->getMeanSquaredAverage());
         if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
-            DBG("Stealing voice...");
             voice->reset();
             return voice;
         }
     }
 
-    DBG("Voices are overloaded, can't start a new note");
     return {};
 }
 
@@ -372,7 +368,6 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-    // DBG("Received note " << noteNumber << "/" << +velocity << " ON at time " << delay);
 
     midiState.noteOn(noteNumber, velocity);
 
@@ -402,7 +397,6 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-    // DBG("Received note " << noteNumber << "/" << +velocity << " OFF at time " << delay);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)

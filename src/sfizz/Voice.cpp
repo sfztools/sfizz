@@ -50,21 +50,15 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (delay < 0)
         delay = 0;
 
-    // DBG("Starting voice with " << region->sample);
-
     if (!region->isGenerator()) {
         currentPromise = resources.filePool.getFilePromise(region->sample);
         if (currentPromise == nullptr) {
-            DBG("[Voice] Could not fetch the file promise for sample " << region->sample);
             reset();
             return;
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
-        DBG("[Voice] Sample rate for " << region->sample << " is " << currentPromise->sampleRate);
-        DBG("[Voice] Speed ratio set to " << speedRatio);
     }
     pitchRatio = region->getBasePitchVariation(number, value);
-    DBG("[Voice] Pitch ratio set to " << pitchRatio);
 
     baseVolumedB = region->getBaseVolumedB(number);
 
@@ -72,7 +66,6 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->volumeCC)
         volumedB += normalizeCC(midiState.cc[region->volumeCC->first]) * region->volumeCC->second;
     volumeEnvelope.reset(db2mag(volumedB));
-    // DBG("Base volume: " << baseVolumedB << " dB - with modifier: " << volumedB << " dB");
 
     baseGain = region->getBaseGain();
     baseGain *= region->getCrossfadeGain(midiState.cc);
@@ -83,31 +76,26 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     if (region->amplitudeCC)
         gain *= normalizeCC(midiState.cc[region->amplitudeCC->first]) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(gain);
-    // DBG("Base gain: " << baseGain << " - with modifier: " << gain);
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
         pan += normalizeCC(midiState.cc[region->panCC->first]) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
-    // DBG("Base pan: " << basePan << " - with modifier: " << pan);
 
     basePosition = normalizeNegativePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
         position += normalizeCC(midiState.cc[region->positionCC->first]) * normalizeNegativePercents(region->positionCC->second);
     positionEnvelope.reset(position);
-    // DBG("Base position: " << basePosition << " - with modifier: " << position);
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
         width += normalizeCC(midiState.cc[region->widthCC->first]) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(width);
-    // DBG("Base width: " << baseWidth << " - with modifier: " << width);
 
     sourcePosition = region->getOffset();
-    DBG("Offset: " << sourcePosition);
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
     prepareEGEnvelope(initialDelay, value);
@@ -430,7 +418,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     floatPositionOffset = rightCoeffs.back();
 
     if (state != State::release && !region->shouldLoop() && sourcePosition == sampleEnd) {
-        DBG("Releasing " << region->sample);
         auto last = std::distance(indices.begin(), absl::c_find(indices, sampleEnd));
         release(last);
         buffer.subspan(last).fill(0.0f);
@@ -459,7 +446,6 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 {
     if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
-        DBG("Off group of sample " << region->sample);
         release(delay);
         return true;
     }
@@ -490,9 +476,6 @@ sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
 void sfz::Voice::reset() noexcept
 {
     state = State::idle;
-    if (region != nullptr) {
-        DBG("Reset voice with sample " << region->sample);
-    }
     region = nullptr;
     currentPromise.reset();
     sourcePosition = 0;
