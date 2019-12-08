@@ -310,6 +310,39 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>sfizz_enable_freewheeling</Name>
+      <APILanguage>c</APILanguage>
+      <Type>func</Type>
+    </TokenIdentifier>
+    <Path>sfizz_8h.html</Path>
+    <Anchor>a54865ae4cd54abd1500e860bf324e10d</Anchor>
+    <Abstract>Enables freewheeling on the synth. </Abstract>
+    <DeclaredIn>sfizz.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>sfizz_disable_freewheeling</Name>
+      <APILanguage>c</APILanguage>
+      <Type>func</Type>
+    </TokenIdentifier>
+    <Path>sfizz_8h.html</Path>
+    <Anchor>a8c42c49a6b073cfe76f29ccf4cb62e13</Anchor>
+    <Abstract>Disables freewheeling on the synth. </Abstract>
+    <DeclaredIn>sfizz.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>sfizz_get_unknown_opcodes</Name>
+      <APILanguage>c</APILanguage>
+      <Type>func</Type>
+    </TokenIdentifier>
+    <Path>sfizz_8h.html</Path>
+    <Anchor>ac0cb89abd2668ad218b4d17ed4f19fc2</Anchor>
+    <Abstract>Get a comma separated list of unknown opcodes. </Abstract>
+    <DeclaredIn>sfizz.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>db2pow</Name>
       <APILanguage>c</APILanguage>
       <Type>func</Type>

@@ -200,6 +200,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a73d40f7001b7496153347a38d903cb85"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a73d40f7001b7496153347a38d903cb85">sfizz_get_num_bytes</a> (sfizz_synth_t *synth)</td></tr>
 <tr class="memdesc:a73d40f7001b7496153347a38d903cb85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of bytes allocated from the synth.  <a href="#a73d40f7001b7496153347a38d903cb85">More...</a><br /></td></tr>
 <tr class="separator:a73d40f7001b7496153347a38d903cb85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54865ae4cd54abd1500e860bf324e10d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a54865ae4cd54abd1500e860bf324e10d">sfizz_enable_freewheeling</a> (sfizz_synth_t *synth)</td></tr>
+<tr class="memdesc:a54865ae4cd54abd1500e860bf324e10d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables freewheeling on the synth.  <a href="#a54865ae4cd54abd1500e860bf324e10d">More...</a><br /></td></tr>
+<tr class="separator:a54865ae4cd54abd1500e860bf324e10d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c42c49a6b073cfe76f29ccf4cb62e13"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a8c42c49a6b073cfe76f29ccf4cb62e13">sfizz_disable_freewheeling</a> (sfizz_synth_t *synth)</td></tr>
+<tr class="memdesc:a8c42c49a6b073cfe76f29ccf4cb62e13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disables freewheeling on the synth.  <a href="#a8c42c49a6b073cfe76f29ccf4cb62e13">More...</a><br /></td></tr>
+<tr class="separator:a8c42c49a6b073cfe76f29ccf4cb62e13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0cb89abd2668ad218b4d17ed4f19fc2"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#ac0cb89abd2668ad218b4d17ed4f19fc2">sfizz_get_unknown_opcodes</a> (sfizz_synth_t *synth)</td></tr>
+<tr class="memdesc:ac0cb89abd2668ad218b4d17ed4f19fc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a comma separated list of unknown opcodes.  <a href="#ac0cb89abd2668ad218b4d17ed4f19fc2">More...</a><br /></td></tr>
+<tr class="separator:ac0cb89abd2668ad218b4d17ed4f19fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>sfizz public C API </p>
@@ -222,6 +231,58 @@ Functions</h2></td></tr>
 <p>Creates a sfizz synth. </p>
 <p>This object has to be freed by the caller using <a class="el" href="sfizz_8h.html#abaee61a443deabf621f435b501500e1e" title="Frees an existing sfizz synth. ">sfizz_free()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>sfizz_synth_t* </dd></dl>
+
+</div>
+</div>
+<a id="a8c42c49a6b073cfe76f29ccf4cb62e13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c42c49a6b073cfe76f29ccf4cb62e13">&#9670;&nbsp;</a></span>sfizz_disable_freewheeling()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfizz_disable_freewheeling </td>
+          <td>(</td>
+          <td class="paramtype">sfizz_synth_t *&#160;</td>
+          <td class="paramname"><em>synth</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Disables freewheeling on the synth. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">synth</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a54865ae4cd54abd1500e860bf324e10d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54865ae4cd54abd1500e860bf324e10d">&#9670;&nbsp;</a></span>sfizz_enable_freewheeling()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfizz_enable_freewheeling </td>
+          <td>(</td>
+          <td class="paramtype">sfizz_synth_t *&#160;</td>
+          <td class="paramname"><em>synth</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enables freewheeling on the synth. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">synth</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -549,6 +610,34 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the preloaded data size in sizeof(floats) </dd></dl>
+
+</div>
+</div>
+<a id="ac0cb89abd2668ad218b4d17ed4f19fc2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0cb89abd2668ad218b4d17ed4f19fc2">&#9670;&nbsp;</a></span>sfizz_get_unknown_opcodes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char* sfizz_get_unknown_opcodes </td>
+          <td>(</td>
+          <td class="paramtype">sfizz_synth_t *&#160;</td>
+          <td class="paramname"><em>synth</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get a comma separated list of unknown opcodes. </p>
+<p>The caller has to free() the string returned. This function allocates memory, do not call on the audio thread.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">synth</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>char* </dd></dl>
 
 </div>
 </div>
@@ -1230,7 +1319,7 @@ false if some error occured while loading. </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 20:32:06 for sfizz by
+					<span style="float:right">Generated on Sun Dec 8 2019 20:46:16 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

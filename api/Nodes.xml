@@ -1248,6 +1248,16 @@
                 <Anchor>a463b1ec989c4632a5d3f6ba000a7de4c</Anchor>
                </Node>
                <Node>
+                <Name>sfizz_disable_freewheeling</Name>
+                <Path>sfizz_8h.html</Path>
+                <Anchor>a8c42c49a6b073cfe76f29ccf4cb62e13</Anchor>
+               </Node>
+               <Node>
+                <Name>sfizz_enable_freewheeling</Name>
+                <Path>sfizz_8h.html</Path>
+                <Anchor>a54865ae4cd54abd1500e860bf324e10d</Anchor>
+               </Node>
+               <Node>
                 <Name>sfizz_free</Name>
                 <Path>sfizz_8h.html</Path>
                 <Anchor>abaee61a443deabf621f435b501500e1e</Anchor>
@@ -1306,6 +1316,11 @@
                 <Name>sfizz_get_preload_size</Name>
                 <Path>sfizz_8h.html</Path>
                 <Anchor>a08bc2f0edf593d294754399a456f121c</Anchor>
+               </Node>
+               <Node>
+                <Name>sfizz_get_unknown_opcodes</Name>
+                <Path>sfizz_8h.html</Path>
+                <Anchor>ac0cb89abd2668ad218b4d17ed4f19fc2</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_volume</Name>
