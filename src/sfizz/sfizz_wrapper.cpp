@@ -204,6 +204,18 @@ int sfizz_get_num_bytes(sfizz_synth_t* synth)
     return self->getAllocatedBytes();
 }
 
+void sfizz_enable_freewheeling(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->enableFreeWheeling();
+}
+
+void sfizz_disable_freewheeling(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->enableFreeWheeling();
+}
+
 #ifdef __cplusplus
 }
 #endif

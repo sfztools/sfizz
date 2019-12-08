@@ -351,6 +351,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     resources.filePool.cleanupPromises();
 
+    if (freeWheeling)
+        resources.filePool.waitForBackgroundLoading();
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;

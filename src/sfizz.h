@@ -324,7 +324,8 @@ int sfizz_get_num_buffers(sfizz_synth_t* synth);
  */
 int sfizz_get_num_bytes(sfizz_synth_t* synth);
 
-
+void sfizz_enable_freewheeling(sfizz_synth_t* synth);
+void sfizz_disable_freewheeling(sfizz_synth_t* synth);
 #ifdef __cplusplus
 }
 #endif

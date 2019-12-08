@@ -324,6 +324,9 @@ public:
      * @return     The allocated bytes.
      */
     int getAllocatedBytes() const noexcept { return Buffer<float>::counter().getTotalBytes(); }
+
+    void enableFreeWheeling() { freeWheeling = true; }
+    void disableFreeWheeling() { freeWheeling = true; }
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -419,6 +422,7 @@ private:
     // Atomic guards; must be used with AtomicGuard and AtomicDisabler
     std::atomic<bool> canEnterCallback { true };
     std::atomic<bool> inCallback { false };
+    bool freeWheeling { false };
 
     // Singletons passed as references to the voices
     Resources resources;
