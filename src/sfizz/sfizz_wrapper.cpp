@@ -213,7 +213,7 @@ void sfizz_enable_freewheeling(sfizz_synth_t* synth)
 void sfizz_disable_freewheeling(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->enableFreeWheeling();
+    self->disableFreeWheeling();
 }
 
 #ifdef __cplusplus
