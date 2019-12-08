@@ -802,7 +802,19 @@ work(LV2_Handle instance,
     {
         const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
         lv2_log_note(&self->logger, "[work] Loading file: %s\n", sfz_file_path);
-        sfizz_load_file(self->synth, sfz_file_path);
+        if (sfizz_load_file(self->synth, sfz_file_path))
+        {
+            char * unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
+            if (unknown_opcodes) {
+                lv2_log_note(&self->logger, "[work] Unknown opcodes: %s\n", unknown_opcodes);
+                free(unknown_opcodes);
+            }
+        }
+        else
+        {
+            lv2_log_error(&self->logger, "[work] Error with %s; no file should be loaded.\n", sfz_file_path);
+        }
+
     }
     else if (atom->type == self->sfizz_num_voices_uri)
     {

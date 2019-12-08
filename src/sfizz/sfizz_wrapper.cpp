@@ -216,6 +216,29 @@ void sfizz_disable_freewheeling(sfizz_synth_t* synth)
     self->disableFreeWheeling();
 }
 
+char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto unknownOpcodes = self->getUnknownOpcodes();
+    int totalLength = 0;
+    for (auto& opcode: unknownOpcodes)
+        totalLength += opcode.length();
+
+    if (totalLength == 0)
+        return nullptr;
+
+    auto opcodeList = (char *)std::malloc(totalLength + unknownOpcodes.size());
+
+    auto listIterator = opcodeList;
+    for (auto& opcode: unknownOpcodes) {
+        std::copy(opcode.begin(), opcode.end(), listIterator);
+        listIterator += opcode.length();
+        *listIterator++ = ',';
+    }
+    opcodeList[totalLength] = '\0';
+    return opcodeList;
+}
+
 #ifdef __cplusplus
 }
 #endif

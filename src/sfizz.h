@@ -324,8 +324,27 @@ int sfizz_get_num_buffers(sfizz_synth_t* synth);
  */
 int sfizz_get_num_bytes(sfizz_synth_t* synth);
 
+/**
+ * @brief Enables freewheeling on the synth.
+ *
+ * @param synth
+ */
 void sfizz_enable_freewheeling(sfizz_synth_t* synth);
+/**
+ * @brief Disables freewheeling on the synth.
+ *
+ * @param synth
+ */
 void sfizz_disable_freewheeling(sfizz_synth_t* synth);
+/**
+ * @brief Get a comma separated list of unknown opcodes. The caller has to free()
+ * the string returned. This function allocates memory, do not call on the
+ * audio thread.
+ *
+ * @param synth
+ * @return char*
+ */
+char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth);
 #ifdef __cplusplus
 }
 #endif
