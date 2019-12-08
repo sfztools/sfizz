@@ -189,8 +189,8 @@ public:
     /**
      * @brief Send a note on event to the synth
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
      * @param channel the midi channel for the event
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
@@ -199,8 +199,8 @@ public:
     /**
      * @brief Send a note off event to the synth
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
      * @param channel the midi channel for the event
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
@@ -219,8 +219,9 @@ public:
     /**
      * @brief Send a pitch bend event to the synth
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to
+     *              renderBlock().
      * @param channel the midi channel for the event
      * @param pitch the pitch value
      */
@@ -244,12 +245,14 @@ public:
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
-     * @brief Render an block of audio data in the buffer. This call will reset the synth
-     * in its waiting state for the next batch of events. The size of the block is integrated
-     * in the AudioSpan object. You can build an AudioSpan implicitely from a large number
-     * of source objects; check the AudioSpan reference for more precision.
+     * @brief Render an block of audio data in the buffer. This call will reset
+     * the synth in its waiting state for the next batch of events. The size of
+     * the block is integrated in the AudioSpan object. You can build an
+     * AudioSpan implicitely from a large number of source objects; check the
+     * AudioSpan reference for more precision.
      *
-     * @param buffer the buffer to write the next block into; this should be a stereo buffer.
+     * @param buffer the buffer to write the next block into; this should be a
+     * stereo buffer.
      */
     void renderBlock(AudioSpan<float> buffer) noexcept;
 
@@ -325,7 +328,18 @@ public:
      */
     int getAllocatedBytes() const noexcept { return Buffer<float>::counter().getTotalBytes(); }
 
+    /**
+     * @brief Enable freewheeling on the synth. This will wait for background
+     * loaded files to finish loading before each render callback to ensure that
+     * there will be no dropouts.
+     *
+     */
     void enableFreeWheeling() noexcept;
+    /**
+     * @brief Disable freewheeling on the synth. You should disable freewheeling
+     * before live use of the plugin otherwise the audio thread will lock.
+     *
+     */
     void disableFreeWheeling() noexcept;
 protected:
     /**

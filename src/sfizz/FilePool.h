@@ -134,14 +134,57 @@ public:
      *
      */
     void clear();
-
+    /**
+     * @brief Moves the filled promises to a linear storage, and checks
+     * said linear storage for promises that are not used anymore.
+     *
+     * This function has to be called on the audio thread.
+     */
     void cleanupPromises() noexcept;
+    /**
+     * @brief Get a file promise
+     *
+     * @param filename the file to preload
+     * @return FilePromisePtr a file promise
+     */
     FilePromisePtr getFilePromise(const std::string& filename) noexcept;
+    /**
+     * @brief Change the preloading size. This will trigger a full
+     * reload of all samples, so don't call it on the audio thread.
+     *
+     * @param preloadSize
+     */
     void setPreloadSize(uint32_t preloadSize) noexcept;
+    /**
+     * @brief Get the current preload size.
+     *
+     * @return uint32_t
+     */
     uint32_t getPreloadSize() const noexcept;
+    /**
+     * @brief Set the oversampling factor. This will trigger a full
+     * reload of all samples so don't call it on the audio thread.
+     *
+     * @param factor
+     */
     void setOversamplingFactor(Oversampling factor) noexcept;
+    /**
+     * @brief Get the current oversampling factor
+     *
+     * @return Oversampling
+     */
     Oversampling getOversamplingFactor() const noexcept;
+    /**
+     * @brief Empty the file loading queues without actually loading
+     * the files. All promises will be unfulfilled. Don't call this
+     * method on the audio thread as it will spinlock.
+     *
+     */
     void emptyFileLoadingQueues() noexcept;
+    /**
+     * @brief Wait for the background loading to finish for all promises
+     * in the queue.
+     */
     void waitForBackgroundLoading() noexcept;
 private:
     fs::path rootDirectory;

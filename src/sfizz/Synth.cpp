@@ -576,8 +576,8 @@ uint32_t sfz::Synth::getPreloadSize() const noexcept
 void sfz::Synth::enableFreeWheeling() noexcept
 {
     if (!freeWheeling) {
-    freeWheeling = true;
-    DBG("Enabling freewheeling");
+        freeWheeling = true;
+        DBG("Enabling freewheeling");
     }
 }
 void sfz::Synth::disableFreeWheeling() noexcept
