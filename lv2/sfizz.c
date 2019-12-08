@@ -53,6 +53,8 @@
 #define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
 #define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
 #define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
+// This one is just for the worker
+#define SFIZZ__logStatus "http://sfztools.github.io/sfizz:log_status"
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -113,6 +115,7 @@ typedef struct
     LV2_URID sfizz_num_voices_uri;
     LV2_URID sfizz_preload_size_uri;
     LV2_URID sfizz_oversampling_uri;
+    LV2_URID sfizz_log_status_uri;
 
     // Sfizz related data
     sfizz_synth_t *synth;
@@ -164,6 +167,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_num_voices_uri = map->map(map->handle, SFIZZ__numVoices);
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
+    self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
 }
 
 static void
@@ -482,6 +486,13 @@ static void sfizz_lv2_send_file_path(sfizz_plugin_t *self)
 }
 
 static void
+sfizz_lv2_status_log(sfizz_plugin_t* self)
+{
+    lv2_log_note(&self->logger, "[run] Allocated buffers: %d\n", sfizz_get_num_buffers(self->synth));
+    lv2_log_note(&self->logger, "[run] Allocated bytes: %d\n", sfizz_get_num_bytes(self->synth));
+}
+
+static void
 run(LV2_Handle instance, uint32_t sample_count)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
@@ -596,8 +607,15 @@ run(LV2_Handle instance, uint32_t sample_count)
     self->sample_counter += (int)sample_count;
     if (self->sample_counter > LOG_SAMPLE_COUNT)
     {
-        lv2_log_note(&self->logger, "[run] Allocated buffers: %d\n", sfizz_get_num_buffers(self->synth));
-        lv2_log_note(&self->logger, "[run] Allocated bytes: %d\n", sfizz_get_num_bytes(self->synth));
+        LV2_Atom atom;
+        atom.type = self->sfizz_log_status_uri;
+        atom.size = 0;
+        if (!self->worker->schedule_work(self->worker->handle,
+                                    lv2_atom_total_size((LV2_Atom*)&atom),
+                                    &atom) == LV2_WORKER_SUCCESS)
+        {
+            lv2_log_error(&self->logger, "[run] There was an issue sending a logging message to the background worker");
+        }
         self->sample_counter -= LOG_SAMPLE_COUNT;
     }
 #endif
@@ -805,6 +823,10 @@ work(LV2_Handle instance,
         lv2_log_note(&self->logger, "[work] Changing oversampling to: %d\n", oversampling);
         sfizz_set_oversampling_factor(self->synth, oversampling);
     }
+    else if (atom->type == self->sfizz_log_status_uri)
+    {
+        sfizz_lv2_status_log(self);
+    }
     else
     {
         lv2_log_error(&self->logger, "[worker] Got an unknown atom.\n");
@@ -859,6 +881,10 @@ work_response(LV2_Handle instance,
         self->oversampling = oversampling;
         self->changing_state = false;
         lv2_log_note(&self->logger, "[work_response] Oversampling changed to: %d\n", self->oversampling);
+    }
+    else if (atom->type == self->sfizz_log_status_uri)
+    {
+        // Nothing to do
     }
     else
     {
