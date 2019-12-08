@@ -82,6 +82,7 @@ typedef struct
     const float *polyphony_port;
     const float *oversampling_port;
     const float *preload_port;
+    const float *freewheel_port;
 
     // Atom forge
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
@@ -135,7 +136,8 @@ enum
     SFIZZ_VOLUME = 4,
     SFIZZ_POLYPHONY = 5,
     SFIZZ_OVERSAMPLING = 6,
-    SFIZZ_PRELOAD = 7
+    SFIZZ_PRELOAD = 7,
+    SFIZZ_FREEWHEELING = 8
 };
 
 static void
@@ -195,6 +197,9 @@ connect_port(LV2_Handle instance,
         break;
     case SFIZZ_PRELOAD:
         self->preload_port = (const float *)data;
+        break;
+    case SFIZZ_FREEWHEELING:
+        self->freewheel_port = (const float *)data;
         break;
     default:
         break;
@@ -482,6 +487,9 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     if (!self->control_port || !self->notify_port)
         return;
+
+    if (*(self->freewheel_port) > 0)
+        lv2_log_note(&self->logger, "[run] Freewheeling set!");
 
     // Set up forge to write directly to notify output port.
     const size_t notify_capacity = self->notify_port->atom.size;

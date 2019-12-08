@@ -152,4 +152,14 @@
     lv2:scalePoint [ rdfs:label "64 Ko"; rdf:value 16384 ] ;
     lv2:scalePoint [ rdfs:label "128 Ko"; rdf:value 32768 ] ;
     lv2:scalePoint [ rdfs:label "256 Ko"; rdf:value 65536 ] ;
+  ], [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 8 ;
+    lv2:symbol "freewheeling" ;
+    lv2:name "Freewheeling" ;
+    lv2:designation lv2:freeWheeling ;
+    lv2:portProperty lv2:toggled ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 1 ;
   ].
