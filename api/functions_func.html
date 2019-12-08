@@ -161,6 +161,9 @@ $(function() {
 <li>clamp()
 : <a class="el" href="classsfz_1_1_range.html#a05f8a673098df70ed692cc300afe1e6d">sfz::Range&lt; Type &gt;</a>
 </li>
+<li>cleanupPromises()
+: <a class="el" href="classsfz_1_1_file_pool.html#a73f46234da3ccee6c40f4ddb354cfb01">sfz::FilePool</a>
+</li>
 <li>clear()
 : <a class="el" href="classsfz_1_1_buffer.html#a3fe4689394573298ac4471df3a82cff7">sfz::Buffer&lt; Type, Alignment &gt;</a>
 , <a class="el" href="classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432">sfz::FilePool</a>
@@ -179,10 +182,23 @@ $(function() {
 </ul>
 
 
+<h3><a id="index_d"></a>- d -</h3><ul>
+<li>disableFreeWheeling()
+: <a class="el" href="classsfz_1_1_synth.html#a437a8b23e6597254279898c2707f611b">sfz::Synth</a>
+</li>
+</ul>
+
+
 <h3><a id="index_e"></a>- e -</h3><ul>
 <li>empty()
 : <a class="el" href="classsfz_1_1_audio_buffer.html#a39e8d91018c396244e71f79e99b1fa5f">sfz::AudioBuffer&lt; Type, MaxChannels, Alignment &gt;</a>
 , <a class="el" href="classsfz_1_1_c_c_map.html#a5f812431eaa247cd012a54801c19d969">sfz::CCMap&lt; ValueType &gt;</a>
+</li>
+<li>emptyFileLoadingQueues()
+: <a class="el" href="classsfz_1_1_file_pool.html#a51e27530894aadd71f8ddd1e9c4cda65">sfz::FilePool</a>
+</li>
+<li>enableFreeWheeling()
+: <a class="el" href="classsfz_1_1_synth.html#ae48e025723a2313e9ea78e3cd69376bf">sfz::Synth</a>
 </li>
 </ul>
 
@@ -243,6 +259,9 @@ $(function() {
 <li>getFileInformation()
 : <a class="el" href="classsfz_1_1_file_pool.html#aa874478a8b3074ca0cc7b126e9ee952b">sfz::FilePool</a>
 </li>
+<li>getFilePromise()
+: <a class="el" href="classsfz_1_1_file_pool.html#afe1de498a6d099da3541ea488ef8f8c3">sfz::FilePool</a>
+</li>
 <li>getHold()
 : <a class="el" href="structsfz_1_1_e_g_description.html#a293697d57c2ebdcdc1abccdf23dff515">sfz::EGDescription</a>
 </li>
@@ -293,13 +312,15 @@ $(function() {
 : <a class="el" href="structsfz_1_1_region.html#a1c23baafbce40d17f0b2725fd8c15683">sfz::Region</a>
 </li>
 <li>getOversamplingFactor()
-: <a class="el" href="classsfz_1_1_synth.html#ae1581f2d663f7fa242bbda8282aaf8b1">sfz::Synth</a>
+: <a class="el" href="classsfz_1_1_file_pool.html#ad68325ef56ebe42a5281cfa0693a643c">sfz::FilePool</a>
+, <a class="el" href="classsfz_1_1_synth.html#ae1581f2d663f7fa242bbda8282aaf8b1">sfz::Synth</a>
 </li>
 <li>getPair()
 : <a class="el" href="classsfz_1_1_range.html#ad63f967de9993809e8150222006312a4">sfz::Range&lt; Type &gt;</a>
 </li>
 <li>getPreloadSize()
-: <a class="el" href="classsfz_1_1_synth.html#ae9dc0ac9e3540ad64684f44aef6d578a">sfz::Synth</a>
+: <a class="el" href="classsfz_1_1_file_pool.html#a6900a9a2ec2c78e75105ee801f54fb0c">sfz::FilePool</a>
+, <a class="el" href="classsfz_1_1_synth.html#ae9dc0ac9e3540ad64684f44aef6d578a">sfz::Synth</a>
 </li>
 <li>getRegion()
 : <a class="el" href="classsfz_1_1_voice.html#a9d36436f417f8f52a34f51bd450d3af7">sfz::Voice</a>
@@ -487,10 +508,12 @@ $(function() {
 : <a class="el" href="classsfz_1_1_synth.html#a6b577d397db6f577b6602b1e4f55d91f">sfz::Synth</a>
 </li>
 <li>setOversamplingFactor()
-: <a class="el" href="classsfz_1_1_synth.html#ac1fa08496724db42bf002fd68caacddb">sfz::Synth</a>
+: <a class="el" href="classsfz_1_1_file_pool.html#a5e30479bbe1cdeffb0edbe178a8160ba">sfz::FilePool</a>
+, <a class="el" href="classsfz_1_1_synth.html#ac1fa08496724db42bf002fd68caacddb">sfz::Synth</a>
 </li>
 <li>setPreloadSize()
-: <a class="el" href="classsfz_1_1_synth.html#ac7268210d0e292b97b8e961fcc5f00d4">sfz::Synth</a>
+: <a class="el" href="classsfz_1_1_file_pool.html#a11cef5fe1e26c129c3e6b3c19c3e6667">sfz::FilePool</a>
+, <a class="el" href="classsfz_1_1_synth.html#ac7268210d0e292b97b8e961fcc5f00d4">sfz::Synth</a>
 </li>
 <li>setRootDirectory()
 : <a class="el" href="classsfz_1_1_file_pool.html#a8af2ebf9ec28ebccf2e119a4b38eead7">sfz::FilePool</a>
@@ -542,11 +565,18 @@ $(function() {
 : <a class="el" href="classsfz_1_1_voice.html#a82d3899e05531ff6ce843a8f684286a8">sfz::Voice</a>
 </li>
 </ul>
+
+
+<h3><a id="index_w"></a>- w -</h3><ul>
+<li>waitForBackgroundLoading()
+: <a class="el" href="classsfz_1_1_file_pool.html#adfc4e696a615594e4b7e965d3e2c57f6">sfz::FilePool</a>
+</li>
+</ul>
 </div><!-- contents -->
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 17:50:58 for sfizz by
+					<span style="float:right">Generated on Sun Dec 8 2019 20:32:06 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

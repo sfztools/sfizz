@@ -217,6 +217,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab03c02dcd32ff1856c85a875315370e8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ab03c02dcd32ff1856c85a875315370e8">getAllocatedBytes</a> () const noexcept</td></tr>
 <tr class="memdesc:ab03c02dcd32ff1856c85a875315370e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the number of bytes allocated through the buffers.  <a href="#ab03c02dcd32ff1856c85a875315370e8">More...</a><br /></td></tr>
 <tr class="separator:ab03c02dcd32ff1856c85a875315370e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae48e025723a2313e9ea78e3cd69376bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ae48e025723a2313e9ea78e3cd69376bf">enableFreeWheeling</a> () noexcept</td></tr>
+<tr class="memdesc:ae48e025723a2313e9ea78e3cd69376bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable freewheeling on the synth.  <a href="#ae48e025723a2313e9ea78e3cd69376bf">More...</a><br /></td></tr>
+<tr class="separator:ae48e025723a2313e9ea78e3cd69376bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a437a8b23e6597254279898c2707f611b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#a437a8b23e6597254279898c2707f611b">disableFreeWheeling</a> () noexcept</td></tr>
+<tr class="memdesc:a437a8b23e6597254279898c2707f611b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable freewheeling on the synth.  <a href="#a437a8b23e6597254279898c2707f611b">More...</a><br /></td></tr>
+<tr class="separator:a437a8b23e6597254279898c2707f611b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -329,7 +335,7 @@ Protected Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the delay at which the event occurs; this should be lower than the size of the block in the next call to <a class="el" href="classsfz_1_1_synth.html#ad2532b5e7690b15086a80283f3cf6486" title="Render an block of audio data in the buffer. ">renderBlock()</a>. </td></tr>
-    <tr><td class="paramname">channel</td><td>the midi channel for the event </td></tr>
+    <tr><td class="paramname">channel</td><td>the midi channel for the event (0-based) </td></tr>
     <tr><td class="paramname">aftertouch</td><td>the aftertouch value </td></tr>
   </table>
   </dd>
@@ -432,12 +438,68 @@ Protected Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the delay at which the event occurs; this should be lower than the size of the block in the next call to <a class="el" href="classsfz_1_1_synth.html#ad2532b5e7690b15086a80283f3cf6486" title="Render an block of audio data in the buffer. ">renderBlock()</a>. </td></tr>
-    <tr><td class="paramname">channel</td><td>the midi channel for the event </td></tr>
+    <tr><td class="paramname">channel</td><td>the midi channel for the event (0-based) </td></tr>
     <tr><td class="paramname">ccNumber</td><td>the cc number </td></tr>
     <tr><td class="paramname">ccValue</td><td>the cc value </td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a437a8b23e6597254279898c2707f611b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a437a8b23e6597254279898c2707f611b">&#9670;&nbsp;</a></span>disableFreeWheeling()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::Synth::disableFreeWheeling </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Disable freewheeling on the synth. </p>
+<p>You should disable freewheeling before live use of the plugin otherwise the audio thread will lock. </p>
+
+</div>
+</div>
+<a id="ae48e025723a2313e9ea78e3cd69376bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae48e025723a2313e9ea78e3cd69376bf">&#9670;&nbsp;</a></span>enableFreeWheeling()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::Synth::enableFreeWheeling </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enable freewheeling on the synth. </p>
+<p>This will wait for background loaded files to finish loading before each render callback to ensure that there will be no dropouts. </p>
 
 </div>
 </div>
@@ -995,7 +1057,7 @@ false if the file was not found or no regions were loaded. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the delay at which the event occurs; this should be lower than the size of the block in the next call to <a class="el" href="classsfz_1_1_synth.html#ad2532b5e7690b15086a80283f3cf6486" title="Render an block of audio data in the buffer. ">renderBlock()</a>. </td></tr>
-    <tr><td class="paramname">channel</td><td>the midi channel for the event </td></tr>
+    <tr><td class="paramname">channel</td><td>the midi channel for the event (0-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td>the midi note number </td></tr>
     <tr><td class="paramname">velocity</td><td>the midi note velocity </td></tr>
   </table>
@@ -1054,7 +1116,7 @@ false if the file was not found or no regions were loaded. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the delay at which the event occurs; this should be lower than the size of the block in the next call to <a class="el" href="classsfz_1_1_synth.html#ad2532b5e7690b15086a80283f3cf6486" title="Render an block of audio data in the buffer. ">renderBlock()</a>. </td></tr>
-    <tr><td class="paramname">channel</td><td>the midi channel for the event </td></tr>
+    <tr><td class="paramname">channel</td><td>the midi channel for the event (0-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td>the midi note number </td></tr>
     <tr><td class="paramname">velocity</td><td>the midi note velocity </td></tr>
   </table>
@@ -1107,7 +1169,7 @@ false if the file was not found or no regions were loaded. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the delay at which the event occurs; this should be lower than the size of the block in the next call to <a class="el" href="classsfz_1_1_synth.html#ad2532b5e7690b15086a80283f3cf6486" title="Render an block of audio data in the buffer. ">renderBlock()</a>. </td></tr>
-    <tr><td class="paramname">channel</td><td>the midi channel for the event </td></tr>
+    <tr><td class="paramname">channel</td><td>the midi channel for the event (0-based) </td></tr>
     <tr><td class="paramname">pitch</td><td>the pitch value </td></tr>
   </table>
   </dd>
@@ -1397,7 +1459,6 @@ false if the file was not found or no regions were loaded. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the delay at which the event occurs; this should be lower than the size of the block in the next call to <a class="el" href="classsfz_1_1_synth.html#ad2532b5e7690b15086a80283f3cf6486" title="Render an block of audio data in the buffer. ">renderBlock()</a>. </td></tr>
-    <tr><td class="paramname">channel</td><td>the midi channel for the event </td></tr>
     <tr><td class="paramname">secondsPerQuarter</td><td>the new period of the quarter note </td></tr>
   </table>
   </dd>
@@ -1409,7 +1470,7 @@ false if the file was not found or no regions were loaded. </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 17:50:58 for sfizz by
+					<span style="float:right">Generated on Sun Dec 8 2019 20:32:06 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

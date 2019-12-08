@@ -133,12 +133,64 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1e9b651ad7b87601df6470cc6ecd9432"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432">clear</a> ()</td></tr>
 <tr class="memdesc:a1e9b651ad7b87601df6470cc6ecd9432"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear all preloaded files.  <a href="#a1e9b651ad7b87601df6470cc6ecd9432">More...</a><br /></td></tr>
 <tr class="separator:a1e9b651ad7b87601df6470cc6ecd9432"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73f46234da3ccee6c40f4ddb354cfb01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a73f46234da3ccee6c40f4ddb354cfb01">cleanupPromises</a> () noexcept</td></tr>
+<tr class="memdesc:a73f46234da3ccee6c40f4ddb354cfb01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the filled promises to a linear storage, and checks said linear storage for promises that are not used anymore.  <a href="#a73f46234da3ccee6c40f4ddb354cfb01">More...</a><br /></td></tr>
+<tr class="separator:a73f46234da3ccee6c40f4ddb354cfb01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe1de498a6d099da3541ea488ef8f8c3"><td class="memItemLeft" align="right" valign="top">FilePromisePtr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#afe1de498a6d099da3541ea488ef8f8c3">getFilePromise</a> (const std::string &amp;filename) noexcept</td></tr>
+<tr class="memdesc:afe1de498a6d099da3541ea488ef8f8c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a file promise.  <a href="#afe1de498a6d099da3541ea488ef8f8c3">More...</a><br /></td></tr>
+<tr class="separator:afe1de498a6d099da3541ea488ef8f8c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11cef5fe1e26c129c3e6b3c19c3e6667"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a11cef5fe1e26c129c3e6b3c19c3e6667">setPreloadSize</a> (uint32_t preloadSize) noexcept</td></tr>
+<tr class="memdesc:a11cef5fe1e26c129c3e6b3c19c3e6667"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the preloading size.  <a href="#a11cef5fe1e26c129c3e6b3c19c3e6667">More...</a><br /></td></tr>
+<tr class="separator:a11cef5fe1e26c129c3e6b3c19c3e6667"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6900a9a2ec2c78e75105ee801f54fb0c"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a6900a9a2ec2c78e75105ee801f54fb0c">getPreloadSize</a> () const noexcept</td></tr>
+<tr class="memdesc:a6900a9a2ec2c78e75105ee801f54fb0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current preload size.  <a href="#a6900a9a2ec2c78e75105ee801f54fb0c">More...</a><br /></td></tr>
+<tr class="separator:a6900a9a2ec2c78e75105ee801f54fb0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e30479bbe1cdeffb0edbe178a8160ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a5e30479bbe1cdeffb0edbe178a8160ba">setOversamplingFactor</a> (Oversampling factor) noexcept</td></tr>
+<tr class="memdesc:a5e30479bbe1cdeffb0edbe178a8160ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the oversampling factor.  <a href="#a5e30479bbe1cdeffb0edbe178a8160ba">More...</a><br /></td></tr>
+<tr class="separator:a5e30479bbe1cdeffb0edbe178a8160ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad68325ef56ebe42a5281cfa0693a643c"><td class="memItemLeft" align="right" valign="top">Oversampling&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#ad68325ef56ebe42a5281cfa0693a643c">getOversamplingFactor</a> () const noexcept</td></tr>
+<tr class="memdesc:ad68325ef56ebe42a5281cfa0693a643c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current oversampling factor.  <a href="#ad68325ef56ebe42a5281cfa0693a643c">More...</a><br /></td></tr>
+<tr class="separator:ad68325ef56ebe42a5281cfa0693a643c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51e27530894aadd71f8ddd1e9c4cda65"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a51e27530894aadd71f8ddd1e9c4cda65">emptyFileLoadingQueues</a> () noexcept</td></tr>
+<tr class="memdesc:a51e27530894aadd71f8ddd1e9c4cda65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Empty the file loading queues without actually loading the files.  <a href="#a51e27530894aadd71f8ddd1e9c4cda65">More...</a><br /></td></tr>
+<tr class="separator:a51e27530894aadd71f8ddd1e9c4cda65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfc4e696a615594e4b7e965d3e2c57f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#adfc4e696a615594e4b7e965d3e2c57f6">waitForBackgroundLoading</a> () noexcept</td></tr>
+<tr class="memdesc:adfc4e696a615594e4b7e965d3e2c57f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for the background loading to finish for all promises in the queue.  <a href="#adfc4e696a615594e4b7e965d3e2c57f6">More...</a><br /></td></tr>
+<tr class="separator:adfc4e696a615594e4b7e965d3e2c57f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a singleton-designed class that holds all the preloaded data as well as functions to request new file data and collect the file handles to close after they are read. </p>
 <p>This object caches the file data that was already preloaded in case it is asked again by a region using the same sample. In this situation, both regions have a handle on the same preloaded data.</p>
 <p>The file request is immediately served using the preloaded data. A ticket is then provided to the voice that requested the file, and the file loading happens in the background. When the file is fully loaded, the background makes the full data available to the voice and consumes the ticket, while conserving a handle on this file. When the voice dies it releases its handle on the files, which should decrease the reference count to 1. A garbage collection thread then runs regularly to clear the memory of all file handles with a reference count of 1. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a73f46234da3ccee6c40f4ddb354cfb01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73f46234da3ccee6c40f4ddb354cfb01">&#9670;&nbsp;</a></span>cleanupPromises()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilePool::cleanupPromises </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Moves the filled promises to a linear storage, and checks said linear storage for promises that are not used anymore. </p>
+<p>This function has to be called on the audio thread. </p>
+
+</div>
+</div>
 <a id="a1e9b651ad7b87601df6470cc6ecd9432"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1e9b651ad7b87601df6470cc6ecd9432">&#9670;&nbsp;</a></span>clear()</h2>
 
@@ -155,6 +207,34 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Clear all preloaded files. </p>
+
+</div>
+</div>
+<a id="a51e27530894aadd71f8ddd1e9c4cda65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51e27530894aadd71f8ddd1e9c4cda65">&#9670;&nbsp;</a></span>emptyFileLoadingQueues()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilePool::emptyFileLoadingQueues </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Empty the file loading queues without actually loading the files. </p>
+<p>All promises will be unfulfilled. Don't call this method on the audio thread as it will spinlock. </p>
 
 </div>
 </div>
@@ -193,6 +273,41 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afe1de498a6d099da3541ea488ef8f8c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe1de498a6d099da3541ea488ef8f8c3">&#9670;&nbsp;</a></span>getFilePromise()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">FilePromisePtr sfz::FilePool::getFilePromise </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>filename</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get a file promise. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>the file to preload </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>FilePromisePtr a file promise </dd></dl>
+
+</div>
+</div>
 <a id="a2fe514d5486bbdcfb5f30fd2d02694b4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2fe514d5486bbdcfb5f30fd2d02694b4">&#9670;&nbsp;</a></span>getNumPreloadedSamples()</h2>
 
@@ -218,6 +333,62 @@ Public Member Functions</h2></td></tr>
 
 <p>Get the number of preloaded sample files. </p>
 <dl class="section return"><dt>Returns</dt><dd>size_t </dd></dl>
+
+</div>
+</div>
+<a id="ad68325ef56ebe42a5281cfa0693a643c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad68325ef56ebe42a5281cfa0693a643c">&#9670;&nbsp;</a></span>getOversamplingFactor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Oversampling sfz::FilePool::getOversamplingFactor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the current oversampling factor. </p>
+<dl class="section return"><dt>Returns</dt><dd>Oversampling </dd></dl>
+
+</div>
+</div>
+<a id="a6900a9a2ec2c78e75105ee801f54fb0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6900a9a2ec2c78e75105ee801f54fb0c">&#9670;&nbsp;</a></span>getPreloadSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t sfz::FilePool::getPreloadSize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the current preload size. </p>
+<dl class="section return"><dt>Returns</dt><dd>uint32_t </dd></dl>
 
 </div>
 </div>
@@ -269,6 +440,76 @@ false if something went wrong () </dd></dl>
 
 </div>
 </div>
+<a id="a5e30479bbe1cdeffb0edbe178a8160ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e30479bbe1cdeffb0edbe178a8160ba">&#9670;&nbsp;</a></span>setOversamplingFactor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilePool::setOversamplingFactor </td>
+          <td>(</td>
+          <td class="paramtype">Oversampling&#160;</td>
+          <td class="paramname"><em>factor</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the oversampling factor. </p>
+<p>This will trigger a full reload of all samples so don't call it on the audio thread.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">factor</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a11cef5fe1e26c129c3e6b3c19c3e6667"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11cef5fe1e26c129c3e6b3c19c3e6667">&#9670;&nbsp;</a></span>setPreloadSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilePool::setPreloadSize </td>
+          <td>(</td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>preloadSize</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Change the preloading size. </p>
+<p>This will trigger a full reload of all samples, so don't call it on the audio thread.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">preloadSize</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a8af2ebf9ec28ebccf2e119a4b38eead7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8af2ebf9ec28ebccf2e119a4b38eead7">&#9670;&nbsp;</a></span>setRootDirectory()</h2>
 
@@ -303,11 +544,38 @@ false if something went wrong () </dd></dl>
 
 </div>
 </div>
+<a id="adfc4e696a615594e4b7e965d3e2c57f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfc4e696a615594e4b7e965d3e2c57f6">&#9670;&nbsp;</a></span>waitForBackgroundLoading()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilePool::waitForBackgroundLoading </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Wait for the background loading to finish for all promises in the queue. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 17:50:58 for sfizz by
+					<span style="float:right">Generated on Sun Dec 8 2019 20:32:06 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

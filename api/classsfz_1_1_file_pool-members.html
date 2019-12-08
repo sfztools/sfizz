@@ -110,16 +110,24 @@ $(function() {
 
 <p>This is the complete list of members for <a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432">clear</a>()</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a73f46234da3ccee6c40f4ddb354cfb01">cleanupPromises</a>() noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432">clear</a>()</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a51e27530894aadd71f8ddd1e9c4cda65">emptyFileLoadingQueues</a>() noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#aa874478a8b3074ca0cc7b126e9ee952b">getFileInformation</a>(const std::string &amp;filename) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a2fe514d5486bbdcfb5f30fd2d02694b4">getNumPreloadedSamples</a>() const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a3430758f4b1ab97c27620de5fc727155">preloadFile</a>(const std::string &amp;filename, uint32_t maxOffset) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a8af2ebf9ec28ebccf2e119a4b38eead7">setRootDirectory</a>(const fs::path &amp;directory) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#afe1de498a6d099da3541ea488ef8f8c3">getFilePromise</a>(const std::string &amp;filename) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a2fe514d5486bbdcfb5f30fd2d02694b4">getNumPreloadedSamples</a>() const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#ad68325ef56ebe42a5281cfa0693a643c">getOversamplingFactor</a>() const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a6900a9a2ec2c78e75105ee801f54fb0c">getPreloadSize</a>() const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a3430758f4b1ab97c27620de5fc727155">preloadFile</a>(const std::string &amp;filename, uint32_t maxOffset) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a5e30479bbe1cdeffb0edbe178a8160ba">setOversamplingFactor</a>(Oversampling factor) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a11cef5fe1e26c129c3e6b3c19c3e6667">setPreloadSize</a>(uint32_t preloadSize) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#a8af2ebf9ec28ebccf2e119a4b38eead7">setRootDirectory</a>(const fs::path &amp;directory) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html#adfc4e696a615594e4b7e965d3e2c57f6">waitForBackgroundLoading</a>() noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_file_pool.html">sfz::FilePool</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 17:50:58 for sfizz by
+					<span style="float:right">Generated on Sun Dec 8 2019 20:32:06 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

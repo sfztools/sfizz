@@ -843,6 +843,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>translateMidiChannelToSfz</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a2716c15d9390419a135d72ecfd22d2ce</Anchor>
+    <Abstract>Translates the zero-based MIDI channel to the 1-based SFZ channel. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>centsFactor</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
@@ -2008,6 +2020,102 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>cleanupPromises</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a73f46234da3ccee6c40f4ddb354cfb01</Anchor>
+    <Abstract>Moves the filled promises to a linear storage, and checks said linear storage for promises that are n...</Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getFilePromise</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>afe1de498a6d099da3541ea488ef8f8c3</Anchor>
+    <Abstract>Get a file promise. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>setPreloadSize</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a11cef5fe1e26c129c3e6b3c19c3e6667</Anchor>
+    <Abstract>Change the preloading size. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getPreloadSize</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a6900a9a2ec2c78e75105ee801f54fb0c</Anchor>
+    <Abstract>Get the current preload size. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>setOversamplingFactor</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a5e30479bbe1cdeffb0edbe178a8160ba</Anchor>
+    <Abstract>Set the oversampling factor. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getOversamplingFactor</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>ad68325ef56ebe42a5281cfa0693a643c</Anchor>
+    <Abstract>Get the current oversampling factor. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>emptyFileLoadingQueues</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a51e27530894aadd71f8ddd1e9c4cda65</Anchor>
+    <Abstract>Empty the file loading queues without actually loading the files. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>waitForBackgroundLoading</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>adfc4e696a615594e4b7e965d3e2c57f6</Anchor>
+    <Abstract>Wait for the background loading to finish for all promises in the queue. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>sfz::HistoricalBuffer</Name>
       <APILanguage>c</APILanguage>
       <Type>tmplt</Type>
@@ -2977,6 +3085,30 @@
     <Path>classsfz_1_1_synth.html</Path>
     <Anchor>ab03c02dcd32ff1856c85a875315370e8</Anchor>
     <Abstract>Gets the number of bytes allocated through the buffers. </Abstract>
+    <DeclaredIn>Synth.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>enableFreeWheeling</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Synth</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_synth.html</Path>
+    <Anchor>ae48e025723a2313e9ea78e3cd69376bf</Anchor>
+    <Abstract>Enable freewheeling on the synth. </Abstract>
+    <DeclaredIn>Synth.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>disableFreeWheeling</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Synth</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_synth.html</Path>
+    <Anchor>a437a8b23e6597254279898c2707f611b</Anchor>
+    <Abstract>Disable freewheeling on the synth. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
   <Token>

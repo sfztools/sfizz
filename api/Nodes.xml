@@ -369,9 +369,19 @@
               <Path>classsfz_1_1_file_pool.html</Path>
               <Subnodes>
                <Node>
+                <Name>cleanupPromises</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a73f46234da3ccee6c40f4ddb354cfb01</Anchor>
+               </Node>
+               <Node>
                 <Name>clear</Name>
                 <Path>classsfz_1_1_file_pool.html</Path>
                 <Anchor>a1e9b651ad7b87601df6470cc6ecd9432</Anchor>
+               </Node>
+               <Node>
+                <Name>emptyFileLoadingQueues</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a51e27530894aadd71f8ddd1e9c4cda65</Anchor>
                </Node>
                <Node>
                 <Name>getFileInformation</Name>
@@ -379,9 +389,24 @@
                 <Anchor>aa874478a8b3074ca0cc7b126e9ee952b</Anchor>
                </Node>
                <Node>
+                <Name>getFilePromise</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>afe1de498a6d099da3541ea488ef8f8c3</Anchor>
+               </Node>
+               <Node>
                 <Name>getNumPreloadedSamples</Name>
                 <Path>classsfz_1_1_file_pool.html</Path>
                 <Anchor>a2fe514d5486bbdcfb5f30fd2d02694b4</Anchor>
+               </Node>
+               <Node>
+                <Name>getOversamplingFactor</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>ad68325ef56ebe42a5281cfa0693a643c</Anchor>
+               </Node>
+               <Node>
+                <Name>getPreloadSize</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a6900a9a2ec2c78e75105ee801f54fb0c</Anchor>
                </Node>
                <Node>
                 <Name>preloadFile</Name>
@@ -389,9 +414,24 @@
                 <Anchor>a3430758f4b1ab97c27620de5fc727155</Anchor>
                </Node>
                <Node>
+                <Name>setOversamplingFactor</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a5e30479bbe1cdeffb0edbe178a8160ba</Anchor>
+               </Node>
+               <Node>
+                <Name>setPreloadSize</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a11cef5fe1e26c129c3e6b3c19c3e6667</Anchor>
+               </Node>
+               <Node>
                 <Name>setRootDirectory</Name>
                 <Path>classsfz_1_1_file_pool.html</Path>
                 <Anchor>a8af2ebf9ec28ebccf2e119a4b38eead7</Anchor>
+               </Node>
+               <Node>
+                <Name>waitForBackgroundLoading</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>adfc4e696a615594e4b7e965d3e2c57f6</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -675,6 +715,16 @@
                 <Name>cc</Name>
                 <Path>classsfz_1_1_synth.html</Path>
                 <Anchor>a814241fbdb01a77a805337034f76f485</Anchor>
+               </Node>
+               <Node>
+                <Name>disableFreeWheeling</Name>
+                <Path>classsfz_1_1_synth.html</Path>
+                <Anchor>a437a8b23e6597254279898c2707f611b</Anchor>
+               </Node>
+               <Node>
+                <Name>enableFreeWheeling</Name>
+                <Path>classsfz_1_1_synth.html</Path>
+                <Anchor>ae48e025723a2313e9ea78e3cd69376bf</Anchor>
                </Node>
                <Node>
                 <Name>garbageCollect</Name>
