@@ -804,8 +804,9 @@ work(LV2_Handle instance,
         lv2_log_note(&self->logger, "[work] Loading file: %s\n", sfz_file_path);
         if (sfizz_load_file(self->synth, sfz_file_path))
         {
-            char * unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
-            if (unknown_opcodes) {
+            char* unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
+            if (unknown_opcodes)
+            {
                 lv2_log_note(&self->logger, "[work] Unknown opcodes: %s\n", unknown_opcodes);
                 free(unknown_opcodes);
             }
