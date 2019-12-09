@@ -223,7 +223,7 @@ public:
      *              than the size of the block in the next call to
      *              renderBlock().
      * @param channel the midi channel for the event (0-based)
-     * @param pitch the pitch value
+     * @param pitch the pitch value centered between -8192 and 8192
      */
     void pitchWheel(int delay, int channel, int pitch) noexcept;
     /**

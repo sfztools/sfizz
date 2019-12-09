@@ -454,9 +454,15 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     }
 }
 
-void sfz::Synth::pitchWheel(int /* delay */, int channel, int /* pitch */) noexcept
+void sfz::Synth::pitchWheel(int delay, int channel, int pitch) noexcept
 {
+    ASSERT(pitch <= 8192);
+    ASSERT(pitch >= 8192);
     channel = translateMidiChannelToSfz(channel);
+
+    for (auto& voice: voices) {
+        voice->registerPitchWheel(delay, channel, pitch);
+    }
 }
 void sfz::Synth::aftertouch(int /* delay */, int channel, uint8_t /* aftertouch */) noexcept
 {
