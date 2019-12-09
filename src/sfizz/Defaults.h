@@ -128,6 +128,11 @@ namespace Default
 	constexpr Range<int> transposeRange { -127, 127 };
 	constexpr int tune { 0 };
 	constexpr Range<int> tuneRange { -100, 100 };
+    constexpr Range<int> bendBoundRange { -9600, 9600 };
+    constexpr Range<int> bendStepRange { 1, 1200 };
+    constexpr int bendUp { 200 }; // No range here because the bounds can be inverted
+    constexpr int bendDown { -200 };
+    constexpr int bendStep { 1 };
 
     // Envelope generators
 	constexpr float attack { 0 };

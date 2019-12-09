@@ -407,6 +407,15 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("tune"):
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
+    case hash("bend_up"):
+        setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
+        break;
+    case hash("bend_down"):
+        setValueFromOpcode(opcode, bendDown, Default::bendBoundRange);
+        break;
+    case hash("bend_step"):
+        setValueFromOpcode(opcode, bendStep, Default::bendStepRange);
+        break;
 
     // Amplitude Envelope
     case hash("ampeg_attack"):

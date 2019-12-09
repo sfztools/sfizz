@@ -30,7 +30,7 @@ TEST_CASE("[Region] Parsing opcodes")
 {
     sfz::MidiState midiState;
     sfz::Region region { midiState };
-    
+
     SECTION("sample")
     {
         REQUIRE(region.sample == "");
@@ -830,6 +830,35 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.tune == 100);
         region.parseOpcode({ "tune", "-154" });
         REQUIRE(region.tune == -100);
+    }
+
+    SECTION("bend_up, bend_down, bend_step")
+    {
+        REQUIRE(region.bendUp == 200);
+        REQUIRE(region.bendDown == -200);
+        REQUIRE(region.bendStep == 1);
+        region.parseOpcode({ "bend_up", "400" });
+        REQUIRE(region.bendUp == 400);
+        region.parseOpcode({ "bend_up", "-200" });
+        REQUIRE(region.bendUp == -200);
+        region.parseOpcode({ "bend_up", "9700" });
+        REQUIRE(region.bendUp == 9600);
+        region.parseOpcode({ "bend_up", "-9700" });
+        REQUIRE(region.bendUp == -9600);
+        region.parseOpcode({ "bend_down", "400" });
+        REQUIRE(region.bendDown == 400);
+        region.parseOpcode({ "bend_down", "-200" });
+        REQUIRE(region.bendDown == -200);
+        region.parseOpcode({ "bend_down", "9700" });
+        REQUIRE(region.bendDown == 9600);
+        region.parseOpcode({ "bend_down", "-9700" });
+        REQUIRE(region.bendDown == -9600);
+        region.parseOpcode({ "bend_step", "400" });
+        REQUIRE(region.bendStep == 400);
+        region.parseOpcode({ "bend_step", "-200" });
+        REQUIRE(region.bendStep == 1);
+        region.parseOpcode({ "bend_step", "9700" });
+        REQUIRE(region.bendStep == 1200);
     }
 
     SECTION("ampeg")
