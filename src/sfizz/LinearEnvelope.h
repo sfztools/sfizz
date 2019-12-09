@@ -99,6 +99,14 @@ public:
      * @param output
      */
     void getBlock(absl::Span<Type> output);
+    /**
+     * @brief  Get a block of interpolated values with a forced quantization. The
+     * values within the block will vary in quantization steps.
+     *
+     * @param output
+     * @param quantizationStep
+     */
+    void getQuantizedBlock(absl::Span<Type> output, Type quantizationStep);
 private:
     std::function<Type(Type)> function { [](Type input) { return input; } };
     static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
