@@ -58,6 +58,7 @@ namespace SIMDConfig {
     constexpr bool readInterleaved { true };
     constexpr bool fill { true };
     constexpr bool gain { false };
+    constexpr bool divide { false };
     constexpr bool mathfuns { false };
     constexpr bool loopingSFZIndex { true };
     constexpr bool saturatingSFZIndex { true };

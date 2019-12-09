@@ -78,6 +78,12 @@ void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const 
 }
 
 template <>
+void sfz::divide<float, true>(absl::Span<const float> input, absl::Span<const float> divisor, absl::Span<float> output) noexcept
+{
+    divide<float, false>(input, divisor, output);
+}
+
+template <>
 void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     multiplyAdd<float, false>(gain, input, output);

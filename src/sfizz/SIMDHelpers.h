@@ -459,6 +459,56 @@ void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float
 
 namespace _internals {
     template <class T>
+    inline void snippetDivSpan(const T*& input, const T*& divisor,T*& output)
+    {
+        *output++ = (*input++) / (*divisor++);
+    }
+}
+
+/**
+ * @brief Divide a vector by another vector
+ *
+ * The output size will be the minimum of the divisor, input span and output span size.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param input
+ * @param divisor
+ * @param output
+ */
+template <class T, bool SIMD = SIMDConfig::divide>
+void divide(absl::Span<const T> input, absl::Span<const T> divisor, absl::Span<T> output) noexcept
+{
+    ASSERT(divisor.size() == input.size());
+    ASSERT(input.size() <= output.size());
+    auto* in = input.begin();
+    auto* d = divisor.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + std::min(divisor.size(), std::min(output.size(), input.size()));
+    while (out < sentinel)
+        _internals::snippetDivSpan<T>(in, d, out);
+}
+
+/**
+ * @brief Divide a vector by another in place
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param output
+ * @param divisor
+ */
+template <class T, bool SIMD = SIMDConfig::divide>
+void divide(absl::Span<T> output,  absl::Span<const T> divisor) noexcept
+{
+    divide<T, SIMD>(output, divisor, output);
+}
+
+template <>
+void divide<float, true>(absl::Span<const float> input, absl::Span<const float> divisor, absl::Span<float> output) noexcept;
+
+
+namespace _internals {
+    template <class T>
     inline void snippetMultiplyAdd(const T*& gain, const T*& input, T*& output)
     {
         *output++ += (*gain++) * (*input++);
