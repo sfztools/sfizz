@@ -45,6 +45,10 @@ add_executable(bm_gain BM_gain.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_gain benchmark absl::span)
 target_include_directories(bm_gain PRIVATE ../src/sfizz ../src/external)
 
+add_executable(bm_divide BM_divide.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_divide benchmark absl::span)
+target_include_directories(bm_divide PRIVATE ../src/sfizz ../src/external)
+
 add_executable(bm_looping BM_looping.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_looping benchmark absl::span absl::algorithm)
 target_include_directories(bm_looping PRIVATE ../src/sfizz ../src/external)
@@ -123,6 +127,7 @@ add_dependencies(sfizz_benchmarks
 	bm_interpolationCast
 	bm_mathfuns
 	bm_gain
+	bm_divide
 	bm_looping
 	bm_saturating
 	bm_ramp
