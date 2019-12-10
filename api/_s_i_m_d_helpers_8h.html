@@ -180,6 +180,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a4de51e21a6941c416de0156d5c270f77"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a4de51e21a6941c416de0156d5c270f77">sfz::applyGain</a> (absl::Span&lt; const T &gt; gain, absl::Span&lt; T &gt; output) noexcept</td></tr>
 <tr class="memdesc:a4de51e21a6941c416de0156d5c270f77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies a vector gain in-place on a span.  <a href="namespacesfz.html#a4de51e21a6941c416de0156d5c270f77">More...</a><br /></td></tr>
 <tr class="separator:a4de51e21a6941c416de0156d5c270f77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add0737429e53441b7180f723e157442f"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::divide&gt; </td></tr>
+<tr class="memitem:add0737429e53441b7180f723e157442f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#add0737429e53441b7180f723e157442f">sfz::divide</a> (absl::Span&lt; const T &gt; input, absl::Span&lt; const T &gt; divisor, absl::Span&lt; T &gt; output) noexcept</td></tr>
+<tr class="memdesc:add0737429e53441b7180f723e157442f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Divide a vector by another vector.  <a href="namespacesfz.html#add0737429e53441b7180f723e157442f">More...</a><br /></td></tr>
+<tr class="separator:add0737429e53441b7180f723e157442f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe9b2f81370eed27891f98fe86e82ee1"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::divide&gt; </td></tr>
+<tr class="memitem:abe9b2f81370eed27891f98fe86e82ee1"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#abe9b2f81370eed27891f98fe86e82ee1">sfz::divide</a> (absl::Span&lt; T &gt; output, absl::Span&lt; const T &gt; divisor) noexcept</td></tr>
+<tr class="memdesc:abe9b2f81370eed27891f98fe86e82ee1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Divide a vector by another in place.  <a href="namespacesfz.html#abe9b2f81370eed27891f98fe86e82ee1">More...</a><br /></td></tr>
+<tr class="separator:abe9b2f81370eed27891f98fe86e82ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc467c5a4f960d8a8afa9516e4020c5e"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </td></tr>
 <tr class="memitem:afc467c5a4f960d8a8afa9516e4020c5e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#afc467c5a4f960d8a8afa9516e4020c5e">sfz::multiplyAdd</a> (absl::Span&lt; const T &gt; gain, absl::Span&lt; const T &gt; input, absl::Span&lt; T &gt; output) noexcept</td></tr>
 <tr class="memdesc:afc467c5a4f960d8a8afa9516e4020c5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies a gain to the input and add it on the output.  <a href="namespacesfz.html#afc467c5a4f960d8a8afa9516e4020c5e">More...</a><br /></td></tr>
@@ -245,7 +253,7 @@ Functions</h2></td></tr>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 20:46:16 for sfizz by
+					<span style="float:right">Generated on Tue Dec 10 2019 07:35:43 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

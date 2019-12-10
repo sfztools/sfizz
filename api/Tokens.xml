@@ -565,6 +565,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>divide</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>add0737429e53441b7180f723e157442f</Anchor>
+    <Abstract>Divide a vector by another vector. </Abstract>
+    <DeclaredIn>SIMDHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>divide</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>abe9b2f81370eed27891f98fe86e82ee1</Anchor>
+    <Abstract>Divide a vector by another in place. </Abstract>
+    <DeclaredIn>SIMDHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>multiplyAdd</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
@@ -924,6 +948,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>normalizeBend</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a8ce09dc9086cece4592820b163644829</Anchor>
+    <Abstract>Normalize bends between -1 and 1. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>normalizeNegativePercents</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
@@ -1112,6 +1148,30 @@
     <Path>namespacesfz.html</Path>
     <Anchor>a4de51e21a6941c416de0156d5c270f77</Anchor>
     <Abstract>Applies a vector gain in-place on a span. </Abstract>
+    <DeclaredIn>SIMDHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>divide</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>add0737429e53441b7180f723e157442f</Anchor>
+    <Abstract>Divide a vector by another vector. </Abstract>
+    <DeclaredIn>SIMDHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>divide</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>abe9b2f81370eed27891f98fe86e82ee1</Anchor>
+    <Abstract>Divide a vector by another in place. </Abstract>
     <DeclaredIn>SIMDHelpers.h</DeclaredIn>
   </Token>
   <Token>
@@ -2299,6 +2359,18 @@
     <Path>classsfz_1_1_linear_envelope.html</Path>
     <Anchor>a63ce82730ec4db0e426484f0156f3ca2</Anchor>
     <Abstract>Get a block of interpolated values between events previously registered using registerEvent. </Abstract>
+    <DeclaredIn>LinearEnvelope.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getQuantizedBlock</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::LinearEnvelope</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_linear_envelope.html</Path>
+    <Anchor>a09240622779e579654ced88ff4cca567</Anchor>
+    <Abstract>Get a block of interpolated values with a forced quantization. </Abstract>
     <DeclaredIn>LinearEnvelope.h</DeclaredIn>
   </Token>
   <Token>

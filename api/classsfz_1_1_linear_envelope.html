@@ -142,6 +142,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a63ce82730ec4db0e426484f0156f3ca2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_linear_envelope.html#a63ce82730ec4db0e426484f0156f3ca2">getBlock</a> (absl::Span&lt; Type &gt; output)</td></tr>
 <tr class="memdesc:a63ce82730ec4db0e426484f0156f3ca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a block of interpolated values between events previously registered using <code>registerEvent</code>.  <a href="#a63ce82730ec4db0e426484f0156f3ca2">More...</a><br /></td></tr>
 <tr class="separator:a63ce82730ec4db0e426484f0156f3ca2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09240622779e579654ced88ff4cca567"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_linear_envelope.html#a09240622779e579654ced88ff4cca567">getQuantizedBlock</a> (absl::Span&lt; Type &gt; output, Type quantizationStep)</td></tr>
+<tr class="memdesc:a09240622779e579654ced88ff4cca567"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a block of interpolated values with a forced quantization.  <a href="#a09240622779e579654ced88ff4cca567">More...</a><br /></td></tr>
+<tr class="separator:a09240622779e579654ced88ff4cca567"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class Type&gt;<br />
@@ -261,6 +264,46 @@ template&lt;class Type&gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">output</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a09240622779e579654ced88ff4cca567"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09240622779e579654ced88ff4cca567">&#9670;&nbsp;</a></span>getQuantizedBlock()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Type&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classsfz_1_1_linear_envelope.html">sfz::LinearEnvelope</a>&lt; Type &gt;::getQuantizedBlock </td>
+          <td>(</td>
+          <td class="paramtype">absl::Span&lt; Type &gt;&#160;</td>
+          <td class="paramname"><em>output</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Type&#160;</td>
+          <td class="paramname"><em>quantizationStep</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get a block of interpolated values with a forced quantization. </p>
+<p>The values within the block will vary in quantization steps.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">output</td><td></td></tr>
+    <tr><td class="paramname">quantizationStep</td><td></td></tr>
   </table>
   </dd>
 </dl>
@@ -395,7 +438,7 @@ template&lt;class Type&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 20:46:16 for sfizz by
+					<span style="float:right">Generated on Tue Dec 10 2019 07:35:43 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

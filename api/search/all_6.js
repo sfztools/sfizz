@@ -35,6 +35,7 @@ var searchData=
   ['getoversamplingfactor',['getOversamplingFactor',['../classsfz_1_1_file_pool.html#ad68325ef56ebe42a5281cfa0693a643c',1,'sfz::FilePool::getOversamplingFactor()'],['../classsfz_1_1_synth.html#ae1581f2d663f7fa242bbda8282aaf8b1',1,'sfz::Synth::getOversamplingFactor()']]],
   ['getpair',['getPair',['../classsfz_1_1_range.html#ad63f967de9993809e8150222006312a4',1,'sfz::Range']]],
   ['getpreloadsize',['getPreloadSize',['../classsfz_1_1_file_pool.html#a6900a9a2ec2c78e75105ee801f54fb0c',1,'sfz::FilePool::getPreloadSize()'],['../classsfz_1_1_synth.html#ae9dc0ac9e3540ad64684f44aef6d578a',1,'sfz::Synth::getPreloadSize()']]],
+  ['getquantizedblock',['getQuantizedBlock',['../classsfz_1_1_linear_envelope.html#a09240622779e579654ced88ff4cca567',1,'sfz::LinearEnvelope']]],
   ['getregion',['getRegion',['../classsfz_1_1_voice.html#a9d36436f417f8f52a34f51bd450d3af7',1,'sfz::Voice']]],
   ['getregionview',['getRegionView',['../classsfz_1_1_synth.html#a7f412e08363d9c51522f04c2b587728a',1,'sfz::Synth']]],
   ['getrelease',['getRelease',['../structsfz_1_1_e_g_description.html#ab8f01c631007c6954b95dd195678b120',1,'sfz::EGDescription']]],

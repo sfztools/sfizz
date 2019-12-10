@@ -481,6 +481,11 @@
                 <Anchor>a63ce82730ec4db0e426484f0156f3ca2</Anchor>
                </Node>
                <Node>
+                <Name>getQuantizedBlock</Name>
+                <Path>classsfz_1_1_linear_envelope.html</Path>
+                <Anchor>a09240622779e579654ced88ff4cca567</Anchor>
+               </Node>
+               <Node>
                 <Name>registerEvent</Name>
                 <Path>classsfz_1_1_linear_envelope.html</Path>
                 <Anchor>a0a869245c4e6fa735eb511a2615b8af4</Anchor>
@@ -1125,6 +1130,16 @@
                   <Name>diff</Name>
                   <Path>_s_i_m_d_helpers_8h.html</Path>
                   <Anchor>aea56d9a29c3d47631dfe237d7041d382</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>divide</Name>
+                  <Path>_s_i_m_d_helpers_8h.html</Path>
+                  <Anchor>add0737429e53441b7180f723e157442f</Anchor>
+                 </Node>
+                 <Node>
+                  <Name>divide</Name>
+                  <Path>_s_i_m_d_helpers_8h.html</Path>
+                  <Anchor>abe9b2f81370eed27891f98fe86e82ee1</Anchor>
                  </Node>
                  <Node>
                   <Name>exp</Name>

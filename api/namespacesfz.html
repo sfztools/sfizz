@@ -214,6 +214,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#ac1f49ce61c8d1db977f17efc4ee199bf">normalizePercents</a> (T percentValue)</td></tr>
 <tr class="memdesc:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a percentage between 0 and 1.  <a href="#ac1f49ce61c8d1db977f17efc4ee199bf">More...</a><br /></td></tr>
 <tr class="separator:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ce09dc9086cece4592820b163644829"><td class="memItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a8ce09dc9086cece4592820b163644829">normalizeBend</a> (int bendValue)</td></tr>
+<tr class="memdesc:a8ce09dc9086cece4592820b163644829"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize bends between -1 and 1.  <a href="#a8ce09dc9086cece4592820b163644829">More...</a><br /></td></tr>
+<tr class="separator:a8ce09dc9086cece4592820b163644829"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#abfcbb9f0d7899c187863d5e457a84fca">normalizeNegativePercents</a> (T percentValue)</td></tr>
 <tr class="memdesc:abfcbb9f0d7899c187863d5e457a84fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a possibly negative percentage between -1 and 1.  <a href="#abfcbb9f0d7899c187863d5e457a84fca">More...</a><br /></td></tr>
@@ -276,6 +279,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a4de51e21a6941c416de0156d5c270f77"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a4de51e21a6941c416de0156d5c270f77">applyGain</a> (absl::Span&lt; const T &gt; gain, absl::Span&lt; T &gt; output) noexcept</td></tr>
 <tr class="memdesc:a4de51e21a6941c416de0156d5c270f77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies a vector gain in-place on a span.  <a href="#a4de51e21a6941c416de0156d5c270f77">More...</a><br /></td></tr>
 <tr class="separator:a4de51e21a6941c416de0156d5c270f77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add0737429e53441b7180f723e157442f"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::divide&gt; </td></tr>
+<tr class="memitem:add0737429e53441b7180f723e157442f"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#add0737429e53441b7180f723e157442f">divide</a> (absl::Span&lt; const T &gt; input, absl::Span&lt; const T &gt; divisor, absl::Span&lt; T &gt; output) noexcept</td></tr>
+<tr class="memdesc:add0737429e53441b7180f723e157442f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Divide a vector by another vector.  <a href="#add0737429e53441b7180f723e157442f">More...</a><br /></td></tr>
+<tr class="separator:add0737429e53441b7180f723e157442f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe9b2f81370eed27891f98fe86e82ee1"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::divide&gt; </td></tr>
+<tr class="memitem:abe9b2f81370eed27891f98fe86e82ee1"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#abe9b2f81370eed27891f98fe86e82ee1">divide</a> (absl::Span&lt; T &gt; output, absl::Span&lt; const T &gt; divisor) noexcept</td></tr>
+<tr class="memdesc:abe9b2f81370eed27891f98fe86e82ee1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Divide a vector by another in place.  <a href="#abe9b2f81370eed27891f98fe86e82ee1">More...</a><br /></td></tr>
+<tr class="separator:abe9b2f81370eed27891f98fe86e82ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc467c5a4f960d8a8afa9516e4020c5e"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </td></tr>
 <tr class="memitem:afc467c5a4f960d8a8afa9516e4020c5e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#afc467c5a4f960d8a8afa9516e4020c5e">multiplyAdd</a> (absl::Span&lt; const T &gt; gain, absl::Span&lt; const T &gt; input, absl::Span&lt; T &gt; output) noexcept</td></tr>
 <tr class="memdesc:afc467c5a4f960d8a8afa9516e4020c5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies a gain to the input and add it on the output.  <a href="#afc467c5a4f960d8a8afa9516e4020c5e">More...</a><br /></td></tr>
@@ -950,6 +961,122 @@ template&lt;class T , bool SIMD = SIMDConfig::diff&gt; </div>
 
 </div>
 </div>
+<a id="add0737429e53441b7180f723e157442f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add0737429e53441b7180f723e157442f">&#9670;&nbsp;</a></span>divide() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T , bool SIMD = SIMDConfig::divide&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::divide </td>
+          <td>(</td>
+          <td class="paramtype">absl::Span&lt; const T &gt;&#160;</td>
+          <td class="paramname"><em>input</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::Span&lt; const T &gt;&#160;</td>
+          <td class="paramname"><em>divisor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::Span&lt; T &gt;&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Divide a vector by another vector. </p>
+<p>The output size will be the minimum of the divisor, input span and output span size.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>the underlying type </td></tr>
+    <tr><td class="paramname">SIMD</td><td>use the SIMD version or the scalar version </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">input</td><td></td></tr>
+    <tr><td class="paramname">divisor</td><td></td></tr>
+    <tr><td class="paramname">output</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="abe9b2f81370eed27891f98fe86e82ee1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe9b2f81370eed27891f98fe86e82ee1">&#9670;&nbsp;</a></span>divide() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T , bool SIMD = SIMDConfig::divide&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::divide </td>
+          <td>(</td>
+          <td class="paramtype">absl::Span&lt; T &gt;&#160;</td>
+          <td class="paramname"><em>output</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::Span&lt; const T &gt;&#160;</td>
+          <td class="paramname"><em>divisor</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Divide a vector by another in place. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>the underlying type </td></tr>
+    <tr><td class="paramname">SIMD</td><td>use the SIMD version or the scalar version </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">output</td><td></td></tr>
+    <tr><td class="paramname">divisor</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="acb3fd29a957ebca6df035ba30e155f35"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acb3fd29a957ebca6df035ba30e155f35">&#9670;&nbsp;</a></span>exp()</h2>
 
@@ -1475,6 +1602,41 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a8ce09dc9086cece4592820b163644829"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ce09dc9086cece4592820b163644829">&#9670;&nbsp;</a></span>normalizeBend()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr float sfz::normalizeBend </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>bendValue</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Normalize bends between -1 and 1. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bendValue</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>constexpr float </dd></dl>
 
 </div>
 </div>
@@ -2574,7 +2736,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 8 2019 20:46:16 for sfizz by
+					<span style="float:right">Generated on Tue Dec 10 2019 07:35:43 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
