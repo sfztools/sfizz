@@ -186,6 +186,7 @@ public:
      */
     Buffer(const Buffer<Type>& other)
     {
+        counter().newBuffer(0);
         if (resize(other.size())) {
             std::memcpy(this->data(), other.data(), other.size() * sizeof(value_type));
         }
