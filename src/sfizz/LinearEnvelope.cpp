@@ -110,7 +110,7 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
 
     auto quantize = [quantizationStep](Type value) -> Type {
         return static_cast<int>(value / quantizationStep) * quantizationStep;
-    }
+    };
 
     currentValue = quantize(currentValue);
     const auto outputSize = static_cast<int>(output.size());
