@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "LinearEnvelope.h"
+#include "EventEnvelopes.h"
 #include "SIMDHelpers.h"
 #include "MathHelpers.h"
 #include <absl/algorithm/container.h>
@@ -29,59 +29,90 @@
 namespace sfz {
 
 template <class Type>
-LinearEnvelope<Type>::LinearEnvelope()
+EventEnvelope<Type>::EventEnvelope()
 {
     setMaxCapacity(maxCapacity);
 }
 
 template <class Type>
-LinearEnvelope<Type>::LinearEnvelope(int maxCapacity, std::function<Type(Type)> function)
+EventEnvelope<Type>::EventEnvelope(int maxCapacity, std::function<Type(Type)> function)
 {
     setMaxCapacity(maxCapacity);
     setFunction(function);
 }
 
 template <class Type>
-void LinearEnvelope<Type>::setMaxCapacity(int maxCapacity)
+void EventEnvelope<Type>::setMaxCapacity(int maxCapacity)
 {
     events.reserve(maxCapacity);
     this->maxCapacity = maxCapacity;
 }
 
 template <class Type>
-void LinearEnvelope<Type>::setFunction(std::function<Type(Type)> function)
+void EventEnvelope<Type>::setFunction(std::function<Type(Type)> function)
 {
     this->function = function;
 }
 
 template <class Type>
-void LinearEnvelope<Type>::registerEvent(int timestamp, Type inputValue)
+void EventEnvelope<Type>::registerEvent(int timestamp, Type inputValue)
 {
+    
     if (static_cast<int>(events.size()) < maxCapacity)
         events.emplace_back(timestamp, function(inputValue));
 }
 
 template <class Type>
-void LinearEnvelope<Type>::clear()
+void EventEnvelope<Type>::prepareEvents()
 {
-    events.clear();
+    if (resetEvents) {
+        if (!events.empty())
+            currentValue = events.back().second;
+        
+        clear();
+    } else {
+        absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
+            return lhs.first < rhs.first;
+        });
+        resetEvents = true;
+    }
 }
 
 template <class Type>
-void LinearEnvelope<Type>::reset(Type value)
+void EventEnvelope<Type>::clear()
+{
+    events.clear();
+    resetEvents = false;
+}
+
+template <class Type>
+void EventEnvelope<Type>::reset(Type value)
 {
     clear();
     currentValue = function(value);
+    resetEvents = false;
+}
+
+template <class Type>
+void EventEnvelope<Type>::getBlock(absl::Span<Type>)
+{
+    prepareEvents();
+}
+
+template <class Type>
+void EventEnvelope<Type>::getQuantizedBlock(absl::Span<Type>, Type)
+{
+    prepareEvents();
 }
 
 template <class Type>
 void LinearEnvelope<Type>::getBlock(absl::Span<Type> output)
 {
-    absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
-        return lhs.first < rhs.first;
-    });
-    int index { 0 };
+    EventEnvelope<Type>::getBlock(output);
+    auto& events = EventEnvelope<Type>::events;
+    auto& currentValue = EventEnvelope<Type>::currentValue;
 
+    int index { 0 };
     for (auto& event : events) {
         const auto length = min(event.first, static_cast<int>(output.size())) - index;
         if (length == 0) {
@@ -96,18 +127,16 @@ void LinearEnvelope<Type>::getBlock(absl::Span<Type> output)
 
     if (index < static_cast<int>(output.size()))
         fill<Type>(output.subspan(index), currentValue);
-
-    clear();
 }
 
 template <class Type>
 void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quantizationStep)
 {
+    EventEnvelope<Type>::getQuantizedBlock(output, quantizationStep);
+    auto& events = EventEnvelope<Type>::events;
+    auto& currentValue = EventEnvelope<Type>::currentValue;
+    
     ASSERT(quantizationStep != 0.0);
-
-    absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
-        return lhs.first < rhs.first;
-    });
     int index { 0 };
 
     const auto halfStep = quantizationStep / 2;
@@ -118,10 +147,17 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
     currentValue = quantize(currentValue);
     const auto outputSize = static_cast<int>(output.size());
     for (auto& event : events) {
-        const auto length = min(event.first, outputSize) - index;
         const auto newValue = quantize(event.second);
 
-        if (length == 0) {
+        if (event.first > outputSize) {
+            fill<Type>(output.subspan(index), currentValue);
+            currentValue = newValue;
+            index = outputSize;
+            break;
+        }
+
+        const auto length = event.first - index - 1;
+        if (length <= 0) {
             currentValue = newValue;
             continue;
         }
@@ -137,8 +173,6 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
 
     if (index < outputSize)
         fill<Type>(output.subspan(index), currentValue);
-
-    clear();
 }
 
 }

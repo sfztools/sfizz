@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "LinearEnvelope.h"
+#include "EventEnvelopes.h"
 #include "catch2/catch.hpp"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
@@ -164,7 +164,7 @@ TEST_CASE("[LinearEnvelope] Get quantized")
     envelope.registerEvent(2, 1.0);
     envelope.registerEvent(6, 2.0);
     std::array<float, 8> output;
-    std::array<float, 8> expected { 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0 };
+    std::array<float, 8> expected { 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
     REQUIRE(output == expected);
 }
@@ -175,7 +175,7 @@ TEST_CASE("[LinearEnvelope] Get quantized with 2 steps")
     envelope.registerEvent(2, 1.0);
     envelope.registerEvent(6, 3.0);
     std::array<float, 8> output;
-    std::array<float, 8> expected { 0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0 };
+    std::array<float, 8> expected { 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
     REQUIRE(output == expected);
 }
@@ -186,7 +186,7 @@ TEST_CASE("[LinearEnvelope] Get quantized with unclean events")
     envelope.registerEvent(2, 1.2);
     envelope.registerEvent(6, 2.5);
     std::array<float, 8> output;
-    std::array<float, 8> expected { 0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0 };
+    std::array<float, 8> expected { 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
     REQUIRE(output == expected);
 }
@@ -198,7 +198,7 @@ TEST_CASE("[LinearEnvelope] Get quantized 3 events, one out of block")
     envelope.registerEvent(6, 2.0);
     envelope.registerEvent(10, 3.0);
     std::array<float, 8> output;
-    std::array<float, 8> expected { 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0 };
+    std::array<float, 8> expected { 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0 };
     std::array<float, 8> expected2 { 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
     REQUIRE(output == expected);

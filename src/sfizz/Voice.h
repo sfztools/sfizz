@@ -24,7 +24,7 @@
 #pragma once
 #include "ADSREnvelope.h"
 #include "Config.h"
-#include "LinearEnvelope.h"
+#include "EventEnvelopes.h"
 #include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"

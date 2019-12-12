@@ -31,11 +31,10 @@
 
 namespace sfz {
 /**
- * @brief Describes a simple linear envelope that can be polled in a blockwise
+ * @brief Describes a simple envelope that can be polled in a blockwise
  * manner. It works by storing "events" in the immediate future and linearly
  * interpolating between these events. This envelope can also transform its
- * incoming target points through a lambda, although the interpolation will
- * always be linear (i.e. the lambda function is applied before the interpolation).
+ * incoming target points through a lambda, although the lambda function is applied before the interpolation.
  *
  * The way to use this class is by repeatedly calling `registerEvent` and then
  * `getBlock` to get a block of interpolated values in between the specified events.
@@ -45,14 +44,14 @@ namespace sfz {
  * @tparam Type
  */
 template <class Type>
-class LinearEnvelope {
+class EventEnvelope {
 public:
     /**
      * @brief Construct a new linear envelope with a default memory size for
      * incoming events.
      *
      */
-    LinearEnvelope();
+    EventEnvelope();
     /**
      * @brief Construct a new linear envelope with a specific memory size for
      * incoming events as well as a transformation function for incoming events.
@@ -60,7 +59,7 @@ public:
      * @param maxCapacity
      * @param function
      */
-    LinearEnvelope(int maxCapacity, std::function<Type(Type)> function);
+    EventEnvelope(int maxCapacity, std::function<Type(Type)> function);
     /**
      * @brief Set the maximum memory size for incoming events
      *
@@ -98,7 +97,7 @@ public:
      *
      * @param output
      */
-    void getBlock(absl::Span<Type> output);
+    virtual void getBlock(absl::Span<Type> output);
     /**
      * @brief  Get a block of interpolated values with a forced quantization. The
      * values within the block will vary in quantization steps.
@@ -106,14 +105,29 @@ public:
      * @param output
      * @param quantizationStep
      */
-    void getQuantizedBlock(absl::Span<Type> output, Type quantizationStep);
-private:
-    std::function<Type(Type)> function { [](Type input) { return input; } };
-    static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
+    virtual void getQuantizedBlock(absl::Span<Type> output, Type quantizationStep);
+protected:
     std::vector<std::pair<int, Type>> events;
-    int maxCapacity { config::defaultSamplesPerBlock };
     Type currentValue { 0.0 };
-    LEAK_DETECTOR(LinearEnvelope);
+private:
+    static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
+    std::function<Type(Type)> function { [](Type input) { return input; } };
+    int maxCapacity { config::defaultSamplesPerBlock };
+    void prepareEvents();
+    bool resetEvents { false };
+    LEAK_DETECTOR(EventEnvelope);
 };
 
+
+/**
+ * @brief Describes a simple linear envelope.
+ *
+ * @tparam Type
+ */
+template <class Type>
+class LinearEnvelope: public EventEnvelope<Type> {
+public:
+    void getBlock(absl::Span<Type> output) final;
+    void getQuantizedBlock(absl::Span<Type> output, Type quantizationStep) final;
+};
 }
