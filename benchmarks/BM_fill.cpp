@@ -79,9 +79,9 @@ static void FillSIMD_unaligned(benchmark::State& state) {
   }
 }
 
-BENCHMARK(Dummy)->Range((2<<6), (2<<16));
-BENCHMARK(FillScalar)->Range((2<<6), (2<<16));
-BENCHMARK(FillSIMD)->Range((2<<6), (2<<16));
-BENCHMARK(FillScalar_unaligned)->Range((2<<6), (2<<16));
-BENCHMARK(FillSIMD_unaligned)->Range((2<<6), (2<<16));
+BENCHMARK(Dummy)->RangeMultiplier(4)->Range((1<<2), (1<<12));
+BENCHMARK(FillScalar)->RangeMultiplier(4)->Range((1<<2), (1<<12));
+BENCHMARK(FillSIMD)->RangeMultiplier(4)->Range((1<<2), (1<<12));
+BENCHMARK(FillScalar_unaligned)->RangeMultiplier(4)->Range((1<<2), (1<<12));
+BENCHMARK(FillSIMD_unaligned)->RangeMultiplier(4)->Range((1<<2), (1<<12));
 BENCHMARK_MAIN();

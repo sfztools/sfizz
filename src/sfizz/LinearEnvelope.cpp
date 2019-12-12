@@ -103,13 +103,16 @@ void LinearEnvelope<Type>::getBlock(absl::Span<Type> output)
 template <class Type>
 void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quantizationStep)
 {
+    ASSERT(quantizationStep != 0.0);
+
     absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
         return lhs.first < rhs.first;
     });
     int index { 0 };
 
-    auto quantize = [quantizationStep](Type value) -> Type {
-        return static_cast<int>(value / quantizationStep) * quantizationStep;
+    const auto halfStep = quantizationStep / 2;
+    auto quantize = [quantizationStep, halfStep](Type value) -> Type {
+        return static_cast<int>((value + halfStep) / quantizationStep) * quantizationStep;
     };
 
     currentValue = quantize(currentValue);
@@ -125,9 +128,9 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
 
         const int numSteps = abs(newValue - currentValue) / quantizationStep;
         const auto stepLength = static_cast<int>(length / numSteps);
-        while (outputSize - index > stepLength) {
-            currentValue += currentValue <= newValue ? quantizationStep : -quantizationStep;
+        for (int i = 0; i < numSteps; ++i) {
             fill<Type>(output.subspan(index, stepLength), currentValue);
+            currentValue += currentValue <= newValue ? quantizationStep : -quantizationStep;
             index += stepLength;
         }
     }
