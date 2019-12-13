@@ -95,6 +95,13 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
         width += normalizeCC(midiState.cc[region->widthCC->first]) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(width);
 
+    pitchBendEnvelope.setFunction([region](float pitchValue){
+        const auto normalizedBend = normalizeBend(pitchValue);
+        const auto bendInCents = normalizedBend > 0 ? normalizedBend * region->bendUp : normalizedBend * region->bendDown;
+        return centsFactor(bendInCents);
+    });
+    pitchBendEnvelope.reset(midiState.pitchBend);
+
     sourcePosition = region->getOffset();
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number) * pitchRatio;
@@ -183,8 +190,15 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
     }
 }
 
-void sfz::Voice::registerPitchWheel(int delay [[maybe_unused]], int channel [[maybe_unused]], int pitch [[maybe_unused]]) noexcept
+void sfz::Voice::registerPitchWheel(int delay, int channel, int pitch) noexcept
 {
+    if (!channel == triggerChannel)
+        return;
+
+    if (state == State::idle)
+        return;
+
+    pitchBendEnvelope.registerEvent(delay, pitch);
     // TODO
 }
 
