@@ -88,14 +88,15 @@ inline constexpr float normalizePercents(T percentValue)
 }
 
 /**
- * @brief Normalize bends between -1 and 1
+ * @brief Normalize bends between -1 and 1. We clamp to 8191 instead of 8192 in the low end
+ * to have something symmetric with respect to 0.
  *
  * @param bendValue
  * @return constexpr float
  */
 inline constexpr float normalizeBend(int bendValue)
 {
-    return std::min(std::max(static_cast<float>(bendValue), -8192.0f), 8192.0f) / 8192.0f;
+    return std::min(std::max(static_cast<float>(bendValue), -8191.0f), 8191.0f) / 8191.0f;
 }
 
 /**
