@@ -46,6 +46,19 @@ sfz::Synth::Synth(int numVoices)
     resetVoices(numVoices);
 }
 
+sfz::Synth::~Synth()
+{
+    AtomicDisabler callbackDisabler { canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(1ms);
+    }
+
+    for (auto& voice: voices)
+        voice->reset();
+
+    resources.filePool.emptyFileLoadingQueues();
+}
+
 void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& members)
 {
     switch (hash(header)) {

@@ -83,6 +83,10 @@ public:
      */
     Synth();
     /**
+     * @brief Destructor
+     */
+    ~Synth();
+    /**
      * @brief Construct a new Synth object with a specified number of voices.
      *
      * @param numVoices
