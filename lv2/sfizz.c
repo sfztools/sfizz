@@ -467,8 +467,8 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                       msg[2]);
         break;
     case LV2_MIDI_MSG_BENDER:
-        lv2_log_note(&self->logger,
-                     "[process_midi] Received pitch bend %d on channel %d at time %ld\n", PITCH_BUILD_AND_CENTER(msg[1], msg[2]) , MIDI_CHANNEL(msg[0]), ev->time.frames);
+        // lv2_log_note(&self->logger,
+        //              "[process_midi] Received pitch bend %d on channel %d at time %ld\n", PITCH_BUILD_AND_CENTER(msg[1], msg[2]) , MIDI_CHANNEL(msg[0]), ev->time.frames);
         sfizz_send_pitch_wheel(self->synth,
                         (int)ev->time.frames,
                         (int)MIDI_CHANNEL(msg[0]),
