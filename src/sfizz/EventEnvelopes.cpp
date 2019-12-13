@@ -66,9 +66,6 @@ template <class Type>
 void EventEnvelope<Type>::prepareEvents()
 {
     if (resetEvents) {
-        if (!events.empty())
-            currentValue = events.back().second;
-        
         clear();
     } else {
         absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
@@ -152,7 +149,7 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
             fill<Type>(output.subspan(index), currentValue);
             currentValue = newValue;
             index = outputSize;
-            break;
+            continue;
         }
 
         const auto length = event.first - index - 1;
@@ -241,7 +238,7 @@ void MultiplicativeEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Ty
             fill<Type>(output.subspan(index), currentValue);
             currentValue = newValue;
             index = outputSize;
-            break;
+            continue;
         }
 
         const auto length = event.first - index - 1;
