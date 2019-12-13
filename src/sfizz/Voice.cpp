@@ -96,7 +96,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     widthEnvelope.reset(width);
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
-        const auto normalizedBend = normalizeBend(pitchValue);
+        const auto normalizedBend = -1 * normalizeBend(pitchValue);
         const auto bendInCents = normalizedBend > 0 ? normalizedBend * region->bendUp : normalizedBend * region->bendDown;
         return centsFactor(bendInCents);
     });
@@ -199,7 +199,6 @@ void sfz::Voice::registerPitchWheel(int delay, int channel, int pitch) noexcept
         return;
 
     pitchBendEnvelope.registerEvent(delay, pitch);
-    // TODO
 }
 
 void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], int channel [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
@@ -367,10 +366,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     auto indices = indexSpan.first(buffer.getNumFrames());
     auto jumps = tempSpan1.first(buffer.getNumFrames());
+    auto bends = tempSpan2.first(buffer.getNumFrames());
     auto leftCoeffs = tempSpan1.first(buffer.getNumFrames());
     auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
 
     fill<float>(jumps, pitchRatio * speedRatio);
+    if (region->bendStep > 1)
+        pitchBendEnvelope.getQuantizedBlock(bends, region->bendStep);
+    else
+        pitchBendEnvelope.getBlock(bends);
+
+    applyGain<float>(bends, jumps);
     jumps[0] += floatPositionOffset;
     cumsum<float>(jumps, jumps);
     sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
@@ -446,10 +452,23 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     if (buffer.getNumFrames() == 0)
         return;
 
-    float step = baseFrequency * twoPi<float> / sampleRate;
-    phase = linearRamp<float>(tempSpan1, phase, step);
+    auto jumps = tempSpan1.first(buffer.getNumFrames());
+    auto bends = tempSpan2.first(buffer.getNumFrames());
+    auto phases = tempSpan2.first(buffer.getNumFrames());
 
-    sin<float>(tempSpan1.first(buffer.getNumFrames()), buffer.getSpan(0));
+    const float step = baseFrequency * twoPi<float> / sampleRate;
+    fill<float>(jumps, step);
+
+    if (region->bendStep > 1)
+        pitchBendEnvelope.getQuantizedBlock(bends, region->bendStep);
+    else
+        pitchBendEnvelope.getBlock(bends);
+    applyGain<float>(bends, jumps);
+    jumps[0] += phase;
+    cumsum<float>(jumps, phases);
+    phase = phases.back();
+
+    sin<float>(phases, buffer.getSpan(0));
     copy<float>(buffer.getSpan(0), buffer.getSpan(1));
 
     // Wrap the phase so we don't loose too much precision on longer notes
