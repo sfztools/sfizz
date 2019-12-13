@@ -318,6 +318,7 @@ private:
     LinearEnvelope<float> positionEnvelope;
     LinearEnvelope<float> widthEnvelope;
     MultiplicativeEnvelope<float> pitchBendEnvelope;
+    float bendStepFactor { centsFactor(1) };
 
     HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
     LEAK_DETECTOR(Voice);

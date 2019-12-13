@@ -105,6 +105,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     sourcePosition = region->getOffset();
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
+    bendStepFactor = centsFactor(region->bendStep);
     prepareEGEnvelope(initialDelay, value);
 }
 
@@ -371,8 +372,10 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
 
     fill<float>(jumps, pitchRatio * speedRatio);
-    if (region->bendStep > 1)
-        pitchBendEnvelope.getQuantizedBlock(bends, region->bendStep);
+    if (region->bendStep > 1){
+        pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
+        DBG("Last bend value " << bends.back());
+    }
     else
         pitchBendEnvelope.getBlock(bends);
 
@@ -459,8 +462,10 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const float step = baseFrequency * twoPi<float> / sampleRate;
     fill<float>(jumps, step);
 
-    if (region->bendStep > 1)
-        pitchBendEnvelope.getQuantizedBlock(bends, region->bendStep);
+    if (region->bendStep > 1){
+        pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
+        DBG("Last bend value " << bends.back());
+    }
     else
         pitchBendEnvelope.getBlock(bends);
 
