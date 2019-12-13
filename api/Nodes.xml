@@ -739,6 +739,11 @@
                 <Anchor>acb60deb7fdad7c8b8c1e8940048a1d88</Anchor>
                </Node>
                <Node>
+                <Name>~Synth</Name>
+                <Path>classsfz_1_1_synth.html</Path>
+                <Anchor>aeaea30aa32e831a549a62bd4aec5785a</Anchor>
+               </Node>
+               <Node>
                 <Name>Synth</Name>
                 <Path>classsfz_1_1_synth.html</Path>
                 <Anchor>add1e3279e1695846f8c3400dd72a7ef8</Anchor>
@@ -1089,6 +1094,10 @@
            </Node>
            <Node>
             <Name>sfz::Buffer&lt; int &gt;</Name>
+            <Path>classsfz_1_1_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Buffer&lt; ValueType &gt;</Name>
             <Path>classsfz_1_1_buffer.html</Path>
            </Node>
            <Node>

@@ -3071,6 +3071,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>~Synth</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Synth</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_synth.html</Path>
+    <Anchor>aeaea30aa32e831a549a62bd4aec5785a</Anchor>
+    <Abstract>Destructor. </Abstract>
+    <DeclaredIn>Synth.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>Synth</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
