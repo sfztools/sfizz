@@ -96,8 +96,8 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     widthEnvelope.reset(width);
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
-        const auto normalizedBend = -1 * normalizeBend(pitchValue);
-        const auto bendInCents = normalizedBend > 0 ? normalizedBend * region->bendUp : normalizedBend * region->bendDown;
+        const auto normalizedBend = normalizeBend(pitchValue);
+        const auto bendInCents = normalizedBend > 0 ? normalizedBend * region->bendUp : -normalizedBend * region->bendDown;
         return centsFactor(bendInCents);
     });
     pitchBendEnvelope.reset(midiState.pitchBend);
