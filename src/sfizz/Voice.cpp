@@ -104,7 +104,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
 
     sourcePosition = region->getOffset();
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
-    baseFrequency = midiNoteFrequency(number) * pitchRatio;
+    baseFrequency = midiNoteFrequency(number);
     prepareEGEnvelope(initialDelay, value);
 }
 
@@ -463,6 +463,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         pitchBendEnvelope.getQuantizedBlock(bends, region->bendStep);
     else
         pitchBendEnvelope.getBlock(bends);
+
     applyGain<float>(bends, jumps);
     jumps[0] += phase;
     cumsum<float>(jumps, phases);
