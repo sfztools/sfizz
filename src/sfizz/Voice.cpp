@@ -192,7 +192,7 @@ void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumbe
 
 void sfz::Voice::registerPitchWheel(int delay, int channel, int pitch) noexcept
 {
-    if (!channel == triggerChannel)
+    if (channel != triggerChannel)
         return;
 
     if (state == State::idle)
