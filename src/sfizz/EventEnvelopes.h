@@ -132,7 +132,7 @@ public:
 };
 
 /**
- * @brief Describes a simple linear envelope.
+ * @brief Describes a simple multiplicative envelope.
  *
  * @tparam Type
  */

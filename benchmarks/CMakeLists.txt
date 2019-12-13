@@ -113,6 +113,10 @@ add_executable(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_resample benchmark absl::span absl::algorithm sndfile samplerate)
 target_include_directories(bm_resample PRIVATE ../src/sfizz ../src/external)
 
+add_executable(bm_envelopes BM_envelopes.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_envelopes benchmark absl::span absl::algorithm sndfile samplerate)
+target_include_directories(bm_envelopes PRIVATE ../src/sfizz ../src/external)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
 	bm_opf_high_vs_low
@@ -137,6 +141,7 @@ add_dependencies(sfizz_benchmarks
 	bm_subtract
 	bm_multiplyAdd
 	bm_resample
+	bm_envelopes
 )
 
 file(COPY "ride.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
