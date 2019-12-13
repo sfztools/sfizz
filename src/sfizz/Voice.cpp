@@ -372,10 +372,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
 
     fill<float>(jumps, pitchRatio * speedRatio);
-    if (region->bendStep > 1){
+    if (region->bendStep > 1)
         pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
-        DBG("Last bend value " << bends.back());
-    }
     else
         pitchBendEnvelope.getBlock(bends);
 
@@ -462,10 +460,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const float step = baseFrequency * twoPi<float> / sampleRate;
     fill<float>(jumps, step);
 
-    if (region->bendStep > 1){
+    if (region->bendStep > 1)
         pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
-        DBG("Last bend value " << bends.back());
-    }
     else
         pitchBendEnvelope.getBlock(bends);
 
