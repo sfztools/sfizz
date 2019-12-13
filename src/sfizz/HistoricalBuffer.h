@@ -1,4 +1,4 @@
-#include <vector>
+#include "Buffer.h"
 #include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
@@ -57,7 +57,7 @@ public:
 		return mean<ValueType>(buffer);
 	}
 private:
-	std::vector<ValueType> buffer;
+	Buffer<ValueType> buffer;
 	size_t size { 0 };
 	size_t index { 0 };
 };
