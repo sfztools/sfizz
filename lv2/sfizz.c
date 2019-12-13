@@ -303,7 +303,7 @@ instantiate(const LV2_Descriptor *descriptor,
                     lv2_log_warning(&self->logger, "Got a sample rate but the type was wrong\n");
                     continue;
                 }
-                self->sample_rate = *(float *)opt->value;
+                self->sample_rate = *(int*)opt->value;
             }
             else if (!self->expect_nominal_block_length && opt->key == self->max_block_length_uri)
             {
@@ -664,7 +664,7 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
                 lv2_log_warning(&self->logger, "[sfizz] Got a sample rate but the type was wrong\n");
                 continue;
             }
-            self->sample_rate = *(float *)opt->value;
+            self->sample_rate = *(int*)opt->value;
             sfizz_set_sample_rate(self->synth, self->sample_rate);
         }
         else if (!self->expect_nominal_block_length && opt->key == self->max_block_length_uri)
