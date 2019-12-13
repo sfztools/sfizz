@@ -365,6 +365,57 @@
               </Subnodes>
              </Node>
              <Node>
+              <Name>EventEnvelope</Name>
+              <Path>classsfz_1_1_event_envelope.html</Path>
+              <Subnodes>
+               <Node>
+                <Name>EventEnvelope</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>a06f09b5a4bcc8211d4449ca73bad0449</Anchor>
+               </Node>
+               <Node>
+                <Name>EventEnvelope</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>aa6e103f549540e1f8208671669f0a15f</Anchor>
+               </Node>
+               <Node>
+                <Name>clear</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>a1b20138c47700a0fd6f14f0acdbe923d</Anchor>
+               </Node>
+               <Node>
+                <Name>getBlock</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>ab109c9b466912ce48c340467785b970f</Anchor>
+               </Node>
+               <Node>
+                <Name>getQuantizedBlock</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>adef83d839e1d9dc2ab0f1ae9677f3152</Anchor>
+               </Node>
+               <Node>
+                <Name>registerEvent</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>ad55bbf7f81be02f9d0503a8429b380ab</Anchor>
+               </Node>
+               <Node>
+                <Name>reset</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>a4779d5516ca8ec74b5556385c020d2fa</Anchor>
+               </Node>
+               <Node>
+                <Name>setFunction</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>a476ee78b5fa80e28bc1a9efe7c02d244</Anchor>
+               </Node>
+               <Node>
+                <Name>setMaxCapacity</Name>
+                <Path>classsfz_1_1_event_envelope.html</Path>
+                <Anchor>a0e1dde09bc0070b87da9971c95b0d5e4</Anchor>
+               </Node>
+              </Subnodes>
+             </Node>
+             <Node>
               <Name>FilePool</Name>
               <Path>classsfz_1_1_file_pool.html</Path>
               <Subnodes>
@@ -461,49 +512,14 @@
               <Path>classsfz_1_1_linear_envelope.html</Path>
               <Subnodes>
                <Node>
-                <Name>LinearEnvelope</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>aa80795659e1c27a050c9b51ba36fb796</Anchor>
-               </Node>
-               <Node>
-                <Name>LinearEnvelope</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>a3a43d60ff4442f827d97d08162991c5b</Anchor>
-               </Node>
-               <Node>
-                <Name>clear</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>aa4b0a2d75994725793b046e93c357fd0</Anchor>
-               </Node>
-               <Node>
                 <Name>getBlock</Name>
                 <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>a63ce82730ec4db0e426484f0156f3ca2</Anchor>
+                <Anchor>aa43dcfdacede30a03aa6c7de1f23e906</Anchor>
                </Node>
                <Node>
                 <Name>getQuantizedBlock</Name>
                 <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>a09240622779e579654ced88ff4cca567</Anchor>
-               </Node>
-               <Node>
-                <Name>registerEvent</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>a0a869245c4e6fa735eb511a2615b8af4</Anchor>
-               </Node>
-               <Node>
-                <Name>reset</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>aff52f348d0b916ed2d8963336d5b27fe</Anchor>
-               </Node>
-               <Node>
-                <Name>setFunction</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>a2b4940b510b513be153900b6a7506e7c</Anchor>
-               </Node>
-               <Node>
-                <Name>setMaxCapacity</Name>
-                <Path>classsfz_1_1_linear_envelope.html</Path>
-                <Anchor>a45f09e45212149b1eee3d5304e37decd</Anchor>
+                <Anchor>a873f8d9e0547aa9812dc6d1c4300ce41</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -540,6 +556,22 @@
                 <Name>noteOnTimes</Name>
                 <Path>structsfz_1_1_midi_state.html</Path>
                 <Anchor>a675112ada42a0ec3b7689cef20e048d3</Anchor>
+               </Node>
+              </Subnodes>
+             </Node>
+             <Node>
+              <Name>MultiplicativeEnvelope</Name>
+              <Path>classsfz_1_1_multiplicative_envelope.html</Path>
+              <Subnodes>
+               <Node>
+                <Name>getBlock</Name>
+                <Path>classsfz_1_1_multiplicative_envelope.html</Path>
+                <Anchor>a297bb80dc75b43c1d6539ea15eb806d6</Anchor>
+               </Node>
+               <Node>
+                <Name>getQuantizedBlock</Name>
+                <Path>classsfz_1_1_multiplicative_envelope.html</Path>
+                <Anchor>a9fee6a7eefcb66b275fc73f8cb11478f</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -1009,6 +1041,152 @@
          <Node>
           <Name>Class Index</Name>
           <Path>classes.html</Path>
+         </Node>
+         <Node>
+          <Name>Class Hierarchy</Name>
+          <Path>hierarchy.html</Path>
+          <Subnodes>
+           <Node>
+            <Name>sfz::ADSREnvelope&lt; Type &gt;</Name>
+            <Path>classsfz_1_1_a_d_s_r_envelope.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::ADSREnvelope&lt; float &gt;</Name>
+            <Path>classsfz_1_1_a_d_s_r_envelope.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::AtomicDisabler</Name>
+            <Path>classsfz_1_1_atomic_disabler.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::AtomicGuard</Name>
+            <Path>classsfz_1_1_atomic_guard.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::AudioBuffer&lt; Type, MaxChannels, Alignment &gt;</Name>
+            <Path>classsfz_1_1_audio_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::AudioBuffer&lt; float &gt;</Name>
+            <Path>classsfz_1_1_audio_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::AudioSpan&lt; Type, MaxChannels &gt;</Name>
+            <Path>classsfz_1_1_audio_span.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Buffer&lt; Type, Alignment &gt;</Name>
+            <Path>classsfz_1_1_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Buffer&lt; float &gt;</Name>
+            <Path>classsfz_1_1_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Buffer&lt; int &gt;</Name>
+            <Path>classsfz_1_1_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::BufferCounter</Name>
+            <Path>classsfz_1_1_buffer_counter.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::CCMap&lt; ValueType &gt;</Name>
+            <Path>classsfz_1_1_c_c_map.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::CCMap&lt; sfz::Range&lt; uint8_t &gt; &gt;</Name>
+            <Path>classsfz_1_1_c_c_map.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::EGDescription</Name>
+            <Path>structsfz_1_1_e_g_description.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::EventEnvelope&lt; Type &gt;</Name>
+            <Path>classsfz_1_1_event_envelope.html</Path>
+            <Subnodes>
+             <Node>
+              <Name>sfz::LinearEnvelope&lt; Type &gt;</Name>
+              <Path>classsfz_1_1_linear_envelope.html</Path>
+             </Node>
+             <Node>
+              <Name>sfz::MultiplicativeEnvelope&lt; Type &gt;</Name>
+              <Path>classsfz_1_1_multiplicative_envelope.html</Path>
+             </Node>
+            </Subnodes>
+           </Node>
+           <Node>
+            <Name>sfz::EventEnvelope&lt; float &gt;</Name>
+            <Path>classsfz_1_1_event_envelope.html</Path>
+            <Subnodes>
+             <Node>
+              <Name>sfz::LinearEnvelope&lt; float &gt;</Name>
+              <Path>classsfz_1_1_linear_envelope.html</Path>
+             </Node>
+            </Subnodes>
+           </Node>
+           <Node>
+            <Name>sfz::FilePool</Name>
+            <Path>classsfz_1_1_file_pool.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::HistoricalBuffer&lt; ValueType &gt;</Name>
+            <Path>classsfz_1_1_historical_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::HistoricalBuffer&lt; float &gt;</Name>
+            <Path>classsfz_1_1_historical_buffer.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::MidiState</Name>
+            <Path>structsfz_1_1_midi_state.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::OnePoleFilter&lt; Type &gt;</Name>
+            <Path>classsfz_1_1_one_pole_filter.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Opcode</Name>
+            <Path>structsfz_1_1_opcode.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Range&lt; Type &gt;</Name>
+            <Path>classsfz_1_1_range.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Range&lt; float &gt;</Name>
+            <Path>classsfz_1_1_range.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Range&lt; int &gt;</Name>
+            <Path>classsfz_1_1_range.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Range&lt; uint32_t &gt;</Name>
+            <Path>classsfz_1_1_range.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Range&lt; uint8_t &gt;</Name>
+            <Path>classsfz_1_1_range.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Region</Name>
+            <Path>structsfz_1_1_region.html</Path>
+           </Node>
+           <Node>
+            <Name>ScopedFTZ</Name>
+            <Path>class_scoped_f_t_z.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Synth</Name>
+            <Path>classsfz_1_1_synth.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Voice</Name>
+            <Path>classsfz_1_1_voice.html</Path>
+           </Node>
+          </Subnodes>
          </Node>
          <Node>
           <Name>Class Members</Name>

@@ -139,6 +139,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_e_g_description.html">EGDescription</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A description for an SFZ envelope generator, with its envelope parameters and possible CC modulation.  <a href="structsfz_1_1_e_g_description.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_event_envelope.html">EventEnvelope</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a simple envelope that can be polled in a blockwise manner.  <a href="classsfz_1_1_event_envelope.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html">FilePool</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is a singleton-designed class that holds all the preloaded data as well as functions to request new file data and collect the file handles to close after they are read.  <a href="classsfz_1_1_file_pool.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,10 +149,13 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A naive circular buffer which is supposed to hold power values and return the average of its content.  <a href="classsfz_1_1_historical_buffer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_linear_envelope.html">LinearEnvelope</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a simple linear envelope that can be polled in a blockwise manner.  <a href="classsfz_1_1_linear_envelope.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a simple linear envelope.  <a href="classsfz_1_1_linear_envelope.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_midi_state.html">MidiState</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Holds the current "MIDI state", meaning the known state of all CCs currently, as well as the note velocities that triggered the currently pressed notes.  <a href="structsfz_1_1_midi_state.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_multiplicative_envelope.html">MultiplicativeEnvelope</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a simple linear envelope.  <a href="classsfz_1_1_multiplicative_envelope.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_one_pole_filter.html">OnePoleFilter</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An implementation of a one pole filter.  <a href="classsfz_1_1_one_pole_filter.html#details">More...</a><br /></td></tr>
@@ -2736,7 +2742,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Wed Dec 11 2019 11:12:45 for sfizz by
+					<span style="float:right">Generated on Fri Dec 13 2019 00:58:30 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

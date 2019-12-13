@@ -2,8 +2,8 @@ var searchData=
 [
   ['saturatingsfzindex',['saturatingSFZIndex',['../namespacesfz.html#a3c7883329dc3ff5455577487a444b5e8',1,'sfz']]],
   ['setccpairfromopcode',['setCCPairFromOpcode',['../namespacesfz.html#aef36c198066be8bee85b445c483f71a1',1,'sfz']]],
-  ['setfunction',['setFunction',['../classsfz_1_1_linear_envelope.html#a2b4940b510b513be153900b6a7506e7c',1,'sfz::LinearEnvelope']]],
-  ['setmaxcapacity',['setMaxCapacity',['../classsfz_1_1_linear_envelope.html#a45f09e45212149b1eee3d5304e37decd',1,'sfz::LinearEnvelope']]],
+  ['setfunction',['setFunction',['../classsfz_1_1_event_envelope.html#a476ee78b5fa80e28bc1a9efe7c02d244',1,'sfz::EventEnvelope']]],
+  ['setmaxcapacity',['setMaxCapacity',['../classsfz_1_1_event_envelope.html#a0e1dde09bc0070b87da9971c95b0d5e4',1,'sfz::EventEnvelope']]],
   ['setnumvoices',['setNumVoices',['../classsfz_1_1_synth.html#a6b577d397db6f577b6602b1e4f55d91f',1,'sfz::Synth']]],
   ['setoversamplingfactor',['setOversamplingFactor',['../classsfz_1_1_file_pool.html#a5e30479bbe1cdeffb0edbe178a8160ba',1,'sfz::FilePool::setOversamplingFactor()'],['../classsfz_1_1_synth.html#ac1fa08496724db42bf002fd68caacddb',1,'sfz::Synth::setOversamplingFactor()']]],
   ['setpreloadsize',['setPreloadSize',['../classsfz_1_1_file_pool.html#a11cef5fe1e26c129c3e6b3c19c3e6667',1,'sfz::FilePool::setPreloadSize()'],['../classsfz_1_1_synth.html#ac7268210d0e292b97b8e961fcc5f00d4',1,'sfz::Synth::setPreloadSize()']]],

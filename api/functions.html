@@ -167,8 +167,8 @@ $(function() {
 </li>
 <li>clear()
 : <a class="el" href="classsfz_1_1_buffer.html#a3fe4689394573298ac4471df3a82cff7">sfz::Buffer&lt; Type, Alignment &gt;</a>
+, <a class="el" href="classsfz_1_1_event_envelope.html#a1b20138c47700a0fd6f14f0acdbe923d">sfz::EventEnvelope&lt; Type &gt;</a>
 , <a class="el" href="classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432">sfz::FilePool</a>
-, <a class="el" href="classsfz_1_1_linear_envelope.html#aa4b0a2d75994725793b046e93c357fd0">sfz::LinearEnvelope&lt; Type &gt;</a>
 </li>
 <li>contains()
 : <a class="el" href="classsfz_1_1_c_c_map.html#abcd2e6d710bb1bcf467562a956188b37">sfz::CCMap&lt; ValueType &gt;</a>
@@ -200,6 +200,9 @@ $(function() {
 </li>
 <li>enableFreeWheeling()
 : <a class="el" href="classsfz_1_1_synth.html#ae48e025723a2313e9ea78e3cd69376bf">sfz::Synth</a>
+</li>
+<li>EventEnvelope()
+: <a class="el" href="classsfz_1_1_event_envelope.html#a06f09b5a4bcc8211d4449ca73bad0449">sfz::EventEnvelope&lt; Type &gt;</a>
 </li>
 </ul>
 
@@ -238,7 +241,9 @@ $(function() {
 </li>
 <li>getBlock()
 : <a class="el" href="classsfz_1_1_a_d_s_r_envelope.html#aa94251ebed9584e93405c96302ba1996">sfz::ADSREnvelope&lt; Type &gt;</a>
-, <a class="el" href="classsfz_1_1_linear_envelope.html#a63ce82730ec4db0e426484f0156f3ca2">sfz::LinearEnvelope&lt; Type &gt;</a>
+, <a class="el" href="classsfz_1_1_event_envelope.html#ab109c9b466912ce48c340467785b970f">sfz::EventEnvelope&lt; Type &gt;</a>
+, <a class="el" href="classsfz_1_1_linear_envelope.html#aa43dcfdacede30a03aa6c7de1f23e906">sfz::LinearEnvelope&lt; Type &gt;</a>
+, <a class="el" href="classsfz_1_1_multiplicative_envelope.html#a297bb80dc75b43c1d6539ea15eb806d6">sfz::MultiplicativeEnvelope&lt; Type &gt;</a>
 </li>
 <li>getChannel()
 : <a class="el" href="classsfz_1_1_audio_span.html#aad7bb493e7d7da0086c22319ce2f2f1e">sfz::AudioSpan&lt; Type, MaxChannels &gt;</a>
@@ -324,7 +329,9 @@ $(function() {
 , <a class="el" href="classsfz_1_1_synth.html#ae9dc0ac9e3540ad64684f44aef6d578a">sfz::Synth</a>
 </li>
 <li>getQuantizedBlock()
-: <a class="el" href="classsfz_1_1_linear_envelope.html#a09240622779e579654ced88ff4cca567">sfz::LinearEnvelope&lt; Type &gt;</a>
+: <a class="el" href="classsfz_1_1_event_envelope.html#adef83d839e1d9dc2ab0f1ae9677f3152">sfz::EventEnvelope&lt; Type &gt;</a>
+, <a class="el" href="classsfz_1_1_linear_envelope.html#a873f8d9e0547aa9812dc6d1c4300ce41">sfz::LinearEnvelope&lt; Type &gt;</a>
+, <a class="el" href="classsfz_1_1_multiplicative_envelope.html#a9fee6a7eefcb66b275fc73f8cb11478f">sfz::MultiplicativeEnvelope&lt; Type &gt;</a>
 </li>
 <li>getRegion()
 : <a class="el" href="classsfz_1_1_voice.html#a9d36436f417f8f52a34f51bd450d3af7">sfz::Voice</a>
@@ -407,9 +414,6 @@ $(function() {
 <li>lastNoteVelocities
 : <a class="el" href="structsfz_1_1_midi_state.html#af148bbd813ed658ead1bbea067591e13">sfz::MidiState</a>
 </li>
-<li>LinearEnvelope()
-: <a class="el" href="classsfz_1_1_linear_envelope.html#aa80795659e1c27a050c9b51ba36fb796">sfz::LinearEnvelope&lt; Type &gt;</a>
-</li>
 <li>loadSfzFile()
 : <a class="el" href="classsfz_1_1_synth.html#ad07a23d1434c53bd6569a46a890d975c">sfz::Synth</a>
 </li>
@@ -473,7 +477,7 @@ $(function() {
 , <a class="el" href="classsfz_1_1_voice.html#a0cab9da8d20cd32d699264a80c61edba">sfz::Voice</a>
 </li>
 <li>registerEvent()
-: <a class="el" href="classsfz_1_1_linear_envelope.html#a0a869245c4e6fa735eb511a2615b8af4">sfz::LinearEnvelope&lt; Type &gt;</a>
+: <a class="el" href="classsfz_1_1_event_envelope.html#ad55bbf7f81be02f9d0503a8429b380ab">sfz::EventEnvelope&lt; Type &gt;</a>
 </li>
 <li>registerNoteOff()
 : <a class="el" href="structsfz_1_1_region.html#a2e0706695d26ab544b1ac2ad067e8597">sfz::Region</a>
@@ -496,7 +500,7 @@ $(function() {
 </li>
 <li>reset()
 : <a class="el" href="classsfz_1_1_a_d_s_r_envelope.html#afc72281d7462d5874a2ee47f6d038918">sfz::ADSREnvelope&lt; Type &gt;</a>
-, <a class="el" href="classsfz_1_1_linear_envelope.html#aff52f348d0b916ed2d8963336d5b27fe">sfz::LinearEnvelope&lt; Type &gt;</a>
+, <a class="el" href="classsfz_1_1_event_envelope.html#a4779d5516ca8ec74b5556385c020d2fa">sfz::EventEnvelope&lt; Type &gt;</a>
 , <a class="el" href="classsfz_1_1_voice.html#a3c5fe85515b2edfa7228b75b134e5b89">sfz::Voice</a>
 </li>
 <li>resize()
@@ -509,10 +513,10 @@ $(function() {
 
 <h3><a id="index_s"></a>- s -</h3><ul>
 <li>setFunction()
-: <a class="el" href="classsfz_1_1_linear_envelope.html#a2b4940b510b513be153900b6a7506e7c">sfz::LinearEnvelope&lt; Type &gt;</a>
+: <a class="el" href="classsfz_1_1_event_envelope.html#a476ee78b5fa80e28bc1a9efe7c02d244">sfz::EventEnvelope&lt; Type &gt;</a>
 </li>
 <li>setMaxCapacity()
-: <a class="el" href="classsfz_1_1_linear_envelope.html#a45f09e45212149b1eee3d5304e37decd">sfz::LinearEnvelope&lt; Type &gt;</a>
+: <a class="el" href="classsfz_1_1_event_envelope.html#a0e1dde09bc0070b87da9971c95b0d5e4">sfz::EventEnvelope&lt; Type &gt;</a>
 </li>
 <li>setNumVoices()
 : <a class="el" href="classsfz_1_1_synth.html#a6b577d397db6f577b6602b1e4f55d91f">sfz::Synth</a>
@@ -589,7 +593,7 @@ $(function() {
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Wed Dec 11 2019 11:12:45 for sfizz by
+					<span style="float:right">Generated on Fri Dec 13 2019 00:58:30 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
