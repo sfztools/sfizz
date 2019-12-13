@@ -43,6 +43,7 @@
 namespace sfz
 {
     template class EventEnvelope<float>;
+    template class MultiplicativeEnvelope<float>;
     template class LinearEnvelope<float>;
     template class ADSREnvelope<float>;
 }

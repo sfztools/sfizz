@@ -18,7 +18,7 @@ set(SFIZZ_TEST_SOURCES
     RegionActivationT.cpp
     RegionValueComputationsT.cpp
     ADSREnvelopeT.cpp
-    LinearEnvelopeT.cpp
+    EventEnvelopesT.cpp
     MainT.cpp
     SynthT.cpp
     RegionTriggersT.cpp

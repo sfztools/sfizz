@@ -169,6 +169,17 @@ TEST_CASE("[LinearEnvelope] Get quantized")
     REQUIRE(output == expected);
 }
 
+TEST_CASE("[LinearEnvelope] Get quantized with unquantized targets")
+{
+    sfz::LinearEnvelope<float> envelope;
+    envelope.registerEvent(2, 1.1);
+    envelope.registerEvent(6, 1.9);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
+    REQUIRE(output == expected);
+}
+
 TEST_CASE("[LinearEnvelope] Get quantized with 2 steps")
 {
     sfz::LinearEnvelope<float> envelope;
@@ -176,6 +187,43 @@ TEST_CASE("[LinearEnvelope] Get quantized with 2 steps")
     envelope.registerEvent(6, 3.0);
     std::array<float, 8> output;
     std::array<float, 8> expected { 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[LinearEnvelope] Going down quantized with 2 steps")
+{
+    sfz::LinearEnvelope<float> envelope;
+    envelope.reset(3.0);
+    envelope.registerEvent(2, 2.0);
+    envelope.registerEvent(6, 0.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 3.0, 2.0, 2.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[LinearEnvelope] Get quantized with 2 steps and starting unquantized")
+{
+    sfz::LinearEnvelope<float> envelope;
+    envelope.reset(0.1);
+    envelope.registerEvent(3, 1.0);
+    envelope.registerEvent(7, 3.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 0.1, 0.1, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
+    REQUIRE(output == expected);
+}
+
+
+TEST_CASE("[LinearEnvelope] Going down quantized with 2 steps and starting unquantized")
+{
+    sfz::LinearEnvelope<float> envelope;
+    envelope.reset(3.6);
+    envelope.registerEvent(4, 1.0);
+    envelope.registerEvent(7, 0.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 3.6, 3.0, 2.0, 2.0, 1.0, 1.0, 0.0, 0.0 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
     REQUIRE(output == expected);
 }
@@ -204,4 +252,105 @@ TEST_CASE("[LinearEnvelope] Get quantized 3 events, one out of block")
     REQUIRE(output == expected);
     envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
     REQUIRE(output == expected2);
+}
+
+//
+TEST_CASE("[MultiplicativeEnvelope] Basic state")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    std::array<float, 5> output;
+    std::array<float, 5> expected { 1.0, 1.0, 1.0, 1.0, 1.0 };
+    envelope.getBlock(absl::MakeSpan(output));
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Basic event")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.registerEvent(4, 2.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 1.1892, 1.4142, 1.68176, 2.0, 2.0, 2.0, 2.0, 2.0 };
+    envelope.getBlock(absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[MultiplicativeEnvelope] 2 events")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.registerEvent(4, 2.0);
+    envelope.registerEvent(5, 4.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 1.1892, 1.4142, 1.68176, 2.0, 4.0, 4.0, 4.0, 4.0 };
+    envelope.getBlock(absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[MultiplicativeEnvelope] 2 events, far")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.registerEvent(2, 2.0);
+    envelope.registerEvent(6, 4.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 1.4142, 2.0, 2.37841, 2.82843, 3.36358, 4.0, 4.0, 4.0 };
+    envelope.getBlock(absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Get quantized with 2 steps")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.registerEvent(2, 2.0);
+    envelope.registerEvent(6, 4.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 1.0, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Going down quantized with 2 steps")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.reset(4.0);
+    envelope.registerEvent(2, 2.0);
+    envelope.registerEvent(6, 0.5);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 4.0, 2.0, 2.0, 1.0, 1.0, 0.5, 0.5, 0.5 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Get quantized with unclean events")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.registerEvent(2, 1.2);
+    envelope.registerEvent(6, 2.5);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Get quantized with 2 steps and starting unquantized")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.reset(0.9);
+    envelope.registerEvent(3, 1.0);
+    envelope.registerEvent(7, 4.0);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 0.9, 0.9, 1.0, 1.0, 2.0, 2.0, 4.0, 4.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected);
+}
+
+
+TEST_CASE("[MultiplicativeEnvelope] Going down quantized with 2 steps and starting unquantized")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.reset(4.6);
+    envelope.registerEvent(4, 1.0);
+    envelope.registerEvent(7, 0.25);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 4.6, 2.0, 1.0, 1.0, 0.5, 0.5, 0.25, 0.25 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected);
 }

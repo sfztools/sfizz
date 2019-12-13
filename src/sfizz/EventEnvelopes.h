@@ -130,4 +130,17 @@ public:
     void getBlock(absl::Span<Type> output) final;
     void getQuantizedBlock(absl::Span<Type> output, Type quantizationStep) final;
 };
+
+/**
+ * @brief Describes a simple linear envelope.
+ *
+ * @tparam Type
+ */
+template <class Type>
+class MultiplicativeEnvelope: public EventEnvelope<Type> {
+public:
+    MultiplicativeEnvelope();
+    void getBlock(absl::Span<Type> output) final;
+    void getQuantizedBlock(absl::Span<Type> output, Type quantizationStep) final;
+};
 }
