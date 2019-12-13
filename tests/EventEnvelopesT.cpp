@@ -191,6 +191,22 @@ TEST_CASE("[LinearEnvelope] Get quantized with 2 steps")
     REQUIRE(output == expected);
 }
 
+TEST_CASE("[LinearEnvelope] Get quantized with 2 steps and an unquantized out of block step")
+{
+    sfz::LinearEnvelope<float> envelope;
+    envelope.registerEvent(2, 1.0);
+    envelope.registerEvent(6, 3.0);
+    envelope.registerEvent(10, 4.2);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0 };
+    std::array<float, 8> expected2 { 4.0, 4.0, 4.0,4.0, 4.0, 4.0, 4.0, 4.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
+    REQUIRE(output == expected);
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 1.0f);
+    REQUIRE(output == expected2);
+}
+
+
 TEST_CASE("[LinearEnvelope] Going down quantized with 2 steps")
 {
     sfz::LinearEnvelope<float> envelope;
@@ -305,6 +321,21 @@ TEST_CASE("[MultiplicativeEnvelope] Get quantized with 2 steps")
     std::array<float, 8> expected { 1.0, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
     REQUIRE(output == expected);
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Get quantized with an unquantized out of range step")
+{
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.registerEvent(2, 2.0);
+    envelope.registerEvent(6, 4.0);
+    envelope.registerEvent(10, 8.2);
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 1.0, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0 };
+    std::array<float, 8> expected2 { 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0 };
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected);
+    envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
+    REQUIRE(output == expected2);
 }
 
 TEST_CASE("[MultiplicativeEnvelope] Going down quantized with 2 steps")
