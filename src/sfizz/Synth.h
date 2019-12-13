@@ -68,7 +68,8 @@ namespace sfz {
  * will call to render a block of 256 samples, all the events you send to the
  * synth should have a delay parameter strictly lower than 256. Events beyond 256
  * may be completely ignored by the synth as the incoming event buffer is cleared
- * during the renderBlock() call.
+ * during the renderBlock() call. You SHOULD also feed the midi events in the correct
+ * order, at least within a channel.
  *
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.

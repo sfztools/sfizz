@@ -141,7 +141,7 @@ void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate);
 /**
  * @brief      Send a note on event to the synth. As with all MIDI events, this
  *             needs to happen before the call to sfizz_render_block in each
- *             block.
+ *             block and should appear in order of the delays, at least within a channel.
  *
  * @param      synth        The synth
  * @param      delay        the delay of the event in the block, in samples.
@@ -154,8 +154,9 @@ void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int channel, int note_n
 /**
  * @brief      Send a note off event to the synth. As with all MIDI events, this
  *             needs to happen before the call to sfizz_render_block in each
- *             block. As per the SFZ spec the velocity of note-off events is
- *             usually replaced by the note-on velocity.
+ *             block and should appear in order of the delays, at least within a channel. 
+ *             As per the SFZ spec the velocity of note-off events is usually replaced by 
+ *             the note-on velocity.
  *
  * @param      synth        The synth
  * @param      delay        the delay of the event in the block, in samples.
@@ -167,7 +168,8 @@ void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int channel, int note_
 
 /**
  * @brief      Send a CC event to the synth. As with all MIDI events, this needs
- *             to happen before the call to sfizz_render_block in each block.
+ *             to happen before the call to sfizz_render_block in each block and 
+ *             should appear in order of the delays, at least within a channel.
  *
  * @param      synth      The synth
  * @param      delay      the delay of the event in the block, in samples.
@@ -177,7 +179,9 @@ void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int channel, int note_
  */
 void sfizz_send_cc(sfizz_synth_t* synth, int delay, int channel, int cc_number, char cc_value);
 /**
- * @brief      Send a pitch wheel event. (CURRENTLY UNIMPLEMENTED)
+ * @brief      Send a pitch wheel event. As with all MIDI events, this needs
+ *             to happen before the call to sfizz_render_block in each block and 
+ *             should appear in order of the delays, at least within a channel.
  *
  * @param      synth    The synth
  * @param      delay    The delay
