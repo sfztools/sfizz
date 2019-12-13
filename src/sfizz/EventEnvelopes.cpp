@@ -136,9 +136,8 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
     ASSERT(quantizationStep != 0.0);
     int index { 0 };
 
-    const auto halfStep = quantizationStep / 2;
-    auto quantize = [quantizationStep, halfStep](Type value) -> Type {
-        return static_cast<int>((value + halfStep) / quantizationStep) * quantizationStep;
+    auto quantize = [quantizationStep](Type value) -> Type {
+        return std::round(value / quantizationStep) * quantizationStep;
     };
 
     const auto outputSize = static_cast<int>(output.size());
@@ -227,7 +226,7 @@ void MultiplicativeEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Ty
     // log q     log q  
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](Type value) -> Type {
-        return std::exp(logStep * static_cast<int>(std::log(value)/logStep));
+        return std::exp(logStep * std::round(std::log(value)/logStep));
     };
 
     const auto outputSize = static_cast<int>(output.size());
