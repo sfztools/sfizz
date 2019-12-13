@@ -58,6 +58,11 @@ struct MidiState
 		return 0;
 	}
 
+    inline void pitchBendEvent(int pitchBendValue)
+    {
+        pitchBend = pitchBendValue;
+    }
+
     /**
      * @brief Stores the note on times.
      *
@@ -74,5 +79,9 @@ struct MidiState
      *
      */
 	CCValueArray cc;
+    /**
+     * Pitch bend status
+     */
+    int pitchBend { 0 };
 };
 }

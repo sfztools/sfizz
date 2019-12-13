@@ -459,7 +459,7 @@ void sfz::Synth::pitchWheel(int delay, int channel, int pitch) noexcept
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= 8192);
     channel = translateMidiChannelToSfz(channel);
-
+    midiState.pitchBendEvent(pitch);
     for (auto& voice: voices) {
         voice->registerPitchWheel(delay, channel, pitch);
     }
