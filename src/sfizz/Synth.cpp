@@ -360,8 +360,10 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
     for (auto& voice : voices) {
-        voice->renderBlock(tempSpan);
-        buffer.add(tempSpan);
+        if (!voice->isFree()) {
+            voice->renderBlock(tempSpan);
+            buffer.add(tempSpan);
+        }
     }
 
     buffer.applyGain(db2mag(volume));
