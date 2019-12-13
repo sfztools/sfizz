@@ -155,7 +155,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Holds the current "MIDI state", meaning the known state of all CCs currently, as well as the note velocities that triggered the currently pressed notes.  <a href="structsfz_1_1_midi_state.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_multiplicative_envelope.html">MultiplicativeEnvelope</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a simple linear envelope.  <a href="classsfz_1_1_multiplicative_envelope.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a simple multiplicative envelope.  <a href="classsfz_1_1_multiplicative_envelope.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_one_pole_filter.html">OnePoleFilter</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An implementation of a one pole filter.  <a href="classsfz_1_1_one_pole_filter.html#details">More...</a><br /></td></tr>
@@ -1636,6 +1636,7 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
 </div><div class="memdoc">
 
 <p>Normalize bends between -1 and 1. </p>
+<p>We clamp to 8191 instead of 8192 in the low end to have something symmetric with respect to 0.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">bendValue</td><td></td></tr>
@@ -2742,7 +2743,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Fri Dec 13 2019 00:58:30 for sfizz by
+					<span style="float:right">Generated on Fri Dec 13 2019 13:24:40 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

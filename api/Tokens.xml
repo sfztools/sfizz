@@ -2574,13 +2574,24 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>pitchBend</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>data</Type>
+      <Scope>sfz::MidiState</Scope>
+    </TokenIdentifier>
+    <Path>structsfz_1_1_midi_state.html</Path>
+    <Anchor>ad790074e7dbf0cae4d17d57f3f478b9a</Anchor>
+    <Abstract>Pitch bend status. </Abstract>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>sfz::MultiplicativeEnvelope</Name>
       <APILanguage>c</APILanguage>
       <Type>tmplt</Type>
       <Scope>sfz::MultiplicativeEnvelope</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_multiplicative_envelope.html</Path>
-    <Abstract>Describes a simple linear envelope. </Abstract>
+    <Abstract>Describes a simple multiplicative envelope. </Abstract>
     <DeclaredIn>EventEnvelopes.h</DeclaredIn>
   </Token>
   <Token>

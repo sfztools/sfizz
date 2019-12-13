@@ -7,6 +7,7 @@ var searchData=
   ['midinotefrequency',['midiNoteFrequency',['../_math_helpers_8h.html#a5453a70c90a3c9f00502e2b62e534aed',1,'MathHelpers.h']]],
   ['midistate',['MidiState',['../structsfz_1_1_midi_state.html',1,'sfz']]],
   ['multiplicativeenvelope',['MultiplicativeEnvelope',['../classsfz_1_1_multiplicative_envelope.html',1,'sfz']]],
+  ['multiplicativeenvelope_3c_20float_20_3e',['MultiplicativeEnvelope&lt; float &gt;',['../classsfz_1_1_multiplicative_envelope.html',1,'sfz']]],
   ['multiplicativeramp',['multiplicativeRamp',['../namespacesfz.html#ae9103c48dd4d2a8339524f8f5d4136fa',1,'sfz']]],
   ['multiplyadd',['multiplyAdd',['../namespacesfz.html#afc467c5a4f960d8a8afa9516e4020c5e',1,'sfz']]]
 ];

@@ -858,7 +858,7 @@ false if some error occured while loading. </dd></dl>
 </div><div class="memdoc">
 
 <p>Send a CC event to the synth. </p>
-<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block.</p>
+<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block and should appear in order of the delays, at least within a channel.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">synth</td><td>The synth </td></tr>
@@ -917,7 +917,7 @@ false if some error occured while loading. </dd></dl>
 </div><div class="memdoc">
 
 <p>Send a note off event to the synth. </p>
-<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block. As per the SFZ spec the velocity of note-off events is usually replaced by the note-on velocity.</p>
+<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block and should appear in order of the delays, at least within a channel. As per the SFZ spec the velocity of note-off events is usually replaced by the note-on velocity.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">synth</td><td>The synth </td></tr>
@@ -976,7 +976,7 @@ false if some error occured while loading. </dd></dl>
 </div><div class="memdoc">
 
 <p>Send a note on event to the synth. </p>
-<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block.</p>
+<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block and should appear in order of the delays, at least within a channel.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">synth</td><td>The synth </td></tr>
@@ -1029,7 +1029,7 @@ false if some error occured while loading. </dd></dl>
 </div><div class="memdoc">
 
 <p>Send a pitch wheel event. </p>
-<p>(CURRENTLY UNIMPLEMENTED)</p>
+<p>As with all MIDI events, this needs to happen before the call to sfizz_render_block in each block and should appear in order of the delays, at least within a channel.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">synth</td><td>The synth </td></tr>
@@ -1319,7 +1319,7 @@ false if some error occured while loading. </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Fri Dec 13 2019 00:58:30 for sfizz by
+					<span style="float:right">Generated on Fri Dec 13 2019 13:24:40 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

@@ -557,6 +557,11 @@
                 <Path>structsfz_1_1_midi_state.html</Path>
                 <Anchor>a675112ada42a0ec3b7689cef20e048d3</Anchor>
                </Node>
+               <Node>
+                <Name>pitchBend</Name>
+                <Path>structsfz_1_1_midi_state.html</Path>
+                <Anchor>ad790074e7dbf0cae4d17d57f3f478b9a</Anchor>
+               </Node>
               </Subnodes>
              </Node>
              <Node>
@@ -1123,6 +1128,10 @@
              <Node>
               <Name>sfz::LinearEnvelope&lt; float &gt;</Name>
               <Path>classsfz_1_1_linear_envelope.html</Path>
+             </Node>
+             <Node>
+              <Name>sfz::MultiplicativeEnvelope&lt; float &gt;</Name>
+              <Path>classsfz_1_1_multiplicative_envelope.html</Path>
              </Node>
             </Subnodes>
            </Node>

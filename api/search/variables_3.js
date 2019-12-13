@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['spans',['spans',['../classsfz_1_1_audio_span.html#ad8abff0f05730a73af659f5b4a5a20cc',1,'sfz::AudioSpan']]]
+  ['pitchbend',['pitchBend',['../structsfz_1_1_midi_state.html#ad790074e7dbf0cae4d17d57f3f478b9a',1,'sfz::MidiState']]]
 ];
