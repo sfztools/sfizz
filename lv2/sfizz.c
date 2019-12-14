@@ -487,10 +487,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
     switch (lv2_midi_message_type(msg))
     {
     case LV2_MIDI_MSG_NOTE_ON:
-        LV2_DEBUG("[process_midi] Received note on %d/%d at time %ld\n",
-                  msg[0],
-                  msg[1],
-                  ev->time.frames);
+        // LV2_DEBUG("[process_midi] Received note on %d/%d at time %ld\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_note_on(self->synth,
                            (int)ev->time.frames,
                            (int)MIDI_CHANNEL(msg[0]),
@@ -498,10 +495,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                            msg[2]);
         break;
     case LV2_MIDI_MSG_NOTE_OFF:
-        LV2_DEBUG("[process_midi] Received note off %d/%d at time %ld\n",
-                  msg[0],
-                  msg[1],
-                  ev->time.frames);
+        // LV2_DEBUG("[process_midi] Received note off %d/%d at time %ld\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_note_off(self->synth,
                             (int)ev->time.frames,
                             (int)MIDI_CHANNEL(msg[0]),
@@ -509,10 +503,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                             msg[2]);
         break;
     case LV2_MIDI_MSG_CONTROLLER:
-        LV2_DEBUG("[process_midi] Received CC %d/%d at time %ld\n", 
-                  msg[0],
-                  msg[1],
-                  ev->time.frames);
+        // LV2_DEBUG("[process_midi] Received CC %d/%d at time %ld\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_cc(self->synth,
                       (int)ev->time.frames,
                       (int)MIDI_CHANNEL(msg[0]),
@@ -520,10 +511,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                       msg[2]);
         break;
     case LV2_MIDI_MSG_BENDER:
-        LV2_DEBUG("[process_midi] Received pitch bend %d on channel %d at time %ld\n",
-                  PITCH_BUILD_AND_CENTER(msg[1], msg[2]),
-                  MIDI_CHANNEL(msg[0]),
-                  ev->time.frames);
+        // LV2_DEBUG("[process_midi] Received pitch bend %d on channel %d at time %ld\n", PITCH_BUILD_AND_CENTER(msg[1], msg[2]), MIDI_CHANNEL(msg[0]), ev->time.frames);
         sfizz_send_pitch_wheel(self->synth,
                         (int)ev->time.frames,
                         (int)MIDI_CHANNEL(msg[0]),
@@ -600,14 +588,8 @@ sfizz_lv2_check_num_voices(sfizz_plugin_t* self)
 }
 
 static void
-run(LV2_Handle instance, uint32_t sample_count)
+sfizz_lv2_check_freewheeling(sfizz_plugin_t* self)
 {
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    if (!self->control_port || !self->notify_port)
-        return;
-
-    // Enable freewheeling on the synth if necessary, which wait for
-    // the background loading queues to flush before rendering.
     if (*(self->freewheel_port) > 0)
     {
         sfizz_enable_freewheeling(self->synth);
@@ -616,6 +598,14 @@ run(LV2_Handle instance, uint32_t sample_count)
     {
         sfizz_disable_freewheeling(self->synth);
     }
+}
+
+static void
+run(LV2_Handle instance, uint32_t sample_count)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    if (!self->control_port || !self->notify_port)
+        return;
 
     // Set up forge to write directly to notify output port.
     const size_t notify_capacity = self->notify_port->atom.size;
@@ -666,6 +656,7 @@ run(LV2_Handle instance, uint32_t sample_count)
 
 
     // Check and update parameters if needed
+    sfizz_lv2_check_freewheeling(self);
     sfizz_set_volume(self->synth, *(self->volume_port));
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);
