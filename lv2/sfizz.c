@@ -69,6 +69,12 @@
 #define LOG_SAMPLE_COUNT 96000
 #define UNUSED(x) (void)(x)
 
+#ifndef NDEBUG
+#define LV2_DEBUG(...) lv2_log_note(&self->logger, "[DEBUG] " __VA_ARGS__)
+#else
+#define LV2_DEBUG(printargs)
+#endif
+
 typedef struct
 {
     // Features
@@ -211,6 +217,30 @@ connect_port(LV2_Handle instance,
     }
 }
 
+// This function sets the sample rate in the self parameter but does not update it.
+static void
+sfizz_lv2_parse_sample_rate(sfizz_plugin_t* self, const LV2_Options_Option* opt)
+{
+    if (opt->type == self->atom_float_uri)
+    {
+        self->sample_rate = *(float*)opt->value;
+        LV2_DEBUG("Set the sample rate to %f", self->sample_rate);
+    }
+    else if (opt->type == self->atom_int_uri)
+    {
+        self->sample_rate = *(int*)opt->value;
+        LV2_DEBUG("Set the sample rate to %f", self->sample_rate);
+    }
+    else
+    {
+        lv2_log_warning(&self->logger, "[sfizz] Got a sample rate but could not resolve the type of the atom.");
+        if (self->unmap)
+            lv2_log_warning(&self->logger,
+                            "[sfizz] Atom URI: %s\n",
+                            self->unmap->unmap(self->unmap->handle, opt->type));
+    }
+}
+
 static LV2_Handle
 instantiate(const LV2_Descriptor *descriptor,
             double rate,
@@ -299,12 +329,7 @@ instantiate(const LV2_Descriptor *descriptor,
         {
             if (opt->key == self->sample_rate_uri)
             {
-                if (opt->type != self->atom_float_uri)
-                {
-                    lv2_log_warning(&self->logger, "Got a sample rate but the type was wrong\n");
-                    continue;
-                }
-                self->sample_rate = *(int*)opt->value;
+                sfizz_lv2_parse_sample_rate(self, opt);
             }
             else if (!self->expect_nominal_block_length && opt->key == self->max_block_length_uri)
             {
@@ -462,8 +487,10 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
     switch (lv2_midi_message_type(msg))
     {
     case LV2_MIDI_MSG_NOTE_ON:
-        // lv2_log_note(&self->logger,
-        //              "[process_midi] Received note on %d/%d at time %d\n", msg[0], msg[1], ev->time.frames);
+        LV2_DEBUG("[process_midi] Received note on %d/%d at time %ld\n",
+                  msg[0],
+                  msg[1],
+                  ev->time.frames);
         sfizz_send_note_on(self->synth,
                            (int)ev->time.frames,
                            (int)MIDI_CHANNEL(msg[0]),
@@ -471,8 +498,10 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                            msg[2]);
         break;
     case LV2_MIDI_MSG_NOTE_OFF:
-        // lv2_log_note(&self->logger,
-        //              "[process_midi] Received note off %d/%d at time %d\n", msg[0], msg[1], ev->time.frames);
+        LV2_DEBUG("[process_midi] Received note off %d/%d at time %ld\n",
+                  msg[0],
+                  msg[1],
+                  ev->time.frames);
         sfizz_send_note_off(self->synth,
                             (int)ev->time.frames,
                             (int)MIDI_CHANNEL(msg[0]),
@@ -480,8 +509,10 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                             msg[2]);
         break;
     case LV2_MIDI_MSG_CONTROLLER:
-        // lv2_log_note(&self->logger,
-        //              "[process_midi] Received CC %d/%d at time %d\n", msg[0], msg[1], ev->time.frames);
+        LV2_DEBUG("[process_midi] Received CC %d/%d at time %ld\n", 
+                  msg[0],
+                  msg[1],
+                  ev->time.frames);
         sfizz_send_cc(self->synth,
                       (int)ev->time.frames,
                       (int)MIDI_CHANNEL(msg[0]),
@@ -489,8 +520,10 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                       msg[2]);
         break;
     case LV2_MIDI_MSG_BENDER:
-        // lv2_log_note(&self->logger,
-        //              "[process_midi] Received pitch bend %d on channel %d at time %ld\n", PITCH_BUILD_AND_CENTER(msg[1], msg[2]) , MIDI_CHANNEL(msg[0]), ev->time.frames);
+        LV2_DEBUG("[process_midi] Received pitch bend %d on channel %d at time %ld\n",
+                  PITCH_BUILD_AND_CENTER(msg[1], msg[2]),
+                  MIDI_CHANNEL(msg[0]),
+                  ev->time.frames);
         sfizz_send_pitch_wheel(self->synth,
                         (int)ev->time.frames,
                         (int)MIDI_CHANNEL(msg[0]),
@@ -679,12 +712,7 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
     {
         if (opt->key == self->sample_rate_uri)
         {
-            if (opt->type != self->atom_float_uri)
-            {
-                lv2_log_warning(&self->logger, "[sfizz] Got a sample rate but the type was wrong\n");
-                continue;
-            }
-            self->sample_rate = *(int*)opt->value;
+            sfizz_lv2_parse_sample_rate(self, opt);
             sfizz_set_sample_rate(self->synth, self->sample_rate);
         }
         else if (!self->expect_nominal_block_length && opt->key == self->max_block_length_uri)
