@@ -465,6 +465,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         sfz_file_path->type = self->sfizz_sfz_file_uri;
 
         // If the parameter is different from the current one we send it through
+        // TODO: this check could happen on the worker side
         self->changing_state = true;
         if (strcmp(self->sfz_file_path, LV2_ATOM_BODY_CONST(sfz_file_path)))
             self->worker->schedule_work(self->worker->handle, null_terminated_atom_size, sfz_file_path);
