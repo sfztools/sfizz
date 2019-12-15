@@ -145,8 +145,7 @@ void sfz::Synth::clear()
     numCurves = 0;
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
-    for (auto& state : midiState.cc)
-        state = 0;
+    midiState.reset();
     ccNames.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
@@ -175,8 +174,10 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Set_cc"):
             [[fallthrough]];
         case hash("set_cc"):
-            if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
-                setValueFromOpcode(member, midiState.cc[*member.parameter], Default::ccRange);
+            if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter)){
+                for (int channel=1; channel <=16; channel++)
+                    midiState.ccEvent(channel, *member.parameter, readOpcode(member.value, Default::ccRange).value_or(0));
+            }
             break;
         case hash("Label_cc"):
             [[fallthrough]];
@@ -271,8 +272,10 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         }
 
         // Defaults
-        for (int ccIndex = 1; ccIndex < 128; ccIndex++)
-            region->registerCC(region->channelRange.getStart(), ccIndex, midiState.cc[ccIndex]);
+        for (int ccIndex = 1; ccIndex < 128; ccIndex++) {
+            const auto channel = region->channelRange.getStart();
+            region->registerCC(channel, ccIndex, midiState.getCCValue(channel, ccIndex));
+        }
 
         if (defaultSwitch) {
             region->registerNoteOn(region->channelRange.getStart(), *defaultSwitch, 127, 1.0);
@@ -388,7 +391,7 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     ASSERT(noteNumber >= 0);
 
     channel = translateMidiChannelToSfz(channel);
-    midiState.noteOn(noteNumber, velocity);
+    midiState.noteOnEvent(channel, noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -417,8 +420,6 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    channel = translateMidiChannelToSfz(channel);
-
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
@@ -426,8 +427,10 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
+    auto replacedVelocity = midiState.getNoteVelocity(channel, noteNumber);
     auto randValue = randNoteDistribution(Random::randomGenerator);
+    
+    channel = translateMidiChannelToSfz(channel);
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
 
@@ -453,10 +456,10 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     if (!canEnterCallback)
         return;
 
+    midiState.ccEvent(channel, ccNumber, ccValue);
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
 
-    midiState.cc[ccNumber] = ccValue;
 
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(channel, ccNumber, ccValue)) {
@@ -474,7 +477,7 @@ void sfz::Synth::pitchWheel(int delay, int channel, int pitch) noexcept
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
     channel = translateMidiChannelToSfz(channel);
-    midiState.pitchBendEvent(pitch);
+    midiState.pitchBendEvent(channel, pitch);
     for (auto& voice: voices) {
         voice->registerPitchWheel(delay, channel, pitch);
     }

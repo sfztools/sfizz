@@ -243,10 +243,11 @@ private:
     /**
      * @brief Computes the values for the envelope depending on the note or CC number and the velocity/cc value
      *
+     * @param channel
      * @param delay
      * @param velocity
      */
-    void prepareEGEnvelope(int delay, uint8_t velocity) noexcept;
+    void prepareEGEnvelope(int channel, int delay, uint8_t velocity) noexcept;
     /**
      * @brief The function processing a mono sample source
      *

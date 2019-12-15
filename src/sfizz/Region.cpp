@@ -640,11 +640,11 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseVolumedB(int noteNumber) noexcept
+float sfz::Region::getBaseVolumedB(int channel, int noteNumber) noexcept
 {
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
-        baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
+        baseVolumedB -= rtDecay * midiState.getNoteDuration(channel, noteNumber);
     return baseVolumedB;
 }
 

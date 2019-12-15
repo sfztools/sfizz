@@ -173,10 +173,11 @@ struct Region {
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.
      *
+     * @param channel (1-based)
      * @param noteNumber
      * @return float
      */
-    float getBaseVolumedB(int noteNumber) noexcept;
+    float getBaseVolumedB(int channel, int noteNumber) noexcept;
     /**
      * @brief Get the base gain of the region.
      *

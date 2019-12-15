@@ -41,9 +41,20 @@ using CCNamePair = std::pair<uint8_t, std::string>;
  * @param zeroBasedChannel
  * @return constexpr int
  */
-inline constexpr int translateMidiChannelToSfz(int zeroBasedChannel)
+constexpr int translateMidiChannelToSfz(int zeroBasedChannel)
 {
     return zeroBasedChannel + 1;
+}
+
+/**
+ * @brief Translates the 1-based SFZ channel to the 0-based MIDI channel
+ *
+ * @param zeroBasedChannel
+ * @return constexpr int
+ */
+constexpr int translateSfzChannelToMidi(int oneBasedChannel)
+{
+    return oneBasedChannel - 1;
 }
 
 /**
