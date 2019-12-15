@@ -223,13 +223,17 @@ sfizz_lv2_parse_sample_rate(sfizz_plugin_t* self, const LV2_Options_Option* opt)
 {
     if (opt->type == self->atom_float_uri)
     {
-        self->sample_rate = *(float*)opt->value;
-        LV2_DEBUG("Set the sample rate to %f", self->sample_rate);
+        // self->sample_rate = *(float*)opt->value;
+        LV2_DEBUG("Attempted to change the sample rate to %.2f (original was %.2f); ignored",
+                  *(float*)opt->value,
+                  self->sample_rate);
     }
     else if (opt->type == self->atom_int_uri)
     {
-        self->sample_rate = *(int*)opt->value;
-        LV2_DEBUG("Set the sample rate to %f", self->sample_rate);
+        // self->sample_rate = *(int*)opt->value;
+        LV2_DEBUG("Attempted to change the sample rate to %d (original was %.2f); ignored",
+                  *(int*)opt->value,
+                  self->sample_rate);
     }
     else
     {
