@@ -51,7 +51,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             if (trimmedSample[0] == '*')
                 sample = std::string(trimmedSample);
             else    
-                sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trim(opcode.value), { { "\\", "/" } }));
+                sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trimmedSample, { { "\\", "/" } }));
         }
         break;
     case hash("delay"):
