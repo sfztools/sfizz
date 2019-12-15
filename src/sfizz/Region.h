@@ -93,7 +93,7 @@ struct Region {
      * @brief Register a new note on event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
      *
-     * @param channel MIDI channel (1-based)
+     * @param channel MIDI channel (0-based)
      * @param noteNumber
      * @param velocity
      * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
@@ -106,7 +106,7 @@ struct Region {
      * @brief Register a new note off event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
      *
-     * @param channel MIDI channel (1-based)
+     * @param channel MIDI channel (0-based)
      * @param noteNumber
      * @param velocity
      * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
@@ -119,7 +119,7 @@ struct Region {
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
      *
-     * @param channel MIDI channel (1-based)
+     * @param channel MIDI channel (0-based)
      * @param ccNumber
      * @param ccValue
      * @return true if the region should trigger on this event
@@ -129,14 +129,14 @@ struct Region {
     /**
      * @brief Register a new pitch wheel event.
      *
-     * @param channel MIDI channel (1-based)
+     * @param channel MIDI channel (0-based)
      * @param pitch
      */
     void registerPitchWheel(int channel, int pitch) noexcept;
     /**
      * @brief Register a new aftertouch event.
      *
-     * @param channel MIDI channel (1-based)
+     * @param channel MIDI channel (0-based)
      * @param aftertouch
      */
     void registerAftertouch(int channel, uint8_t aftertouch) noexcept;
@@ -177,7 +177,7 @@ struct Region {
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.
      *
-     * @param channel (1-based)
+     * @param channel (0-based)
      * @param noteNumber
      * @return float
      */
@@ -247,7 +247,7 @@ struct Region {
     Range<uint8_t> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<uint8_t> channelRange { Default::channelRange }; //lochan and hichan
+    Range<uint8_t> channelRange { Default::midiChannelRange }; //lochan and hichan
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
     CCMap<Range<uint8_t>> ccConditions { Default::ccRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey

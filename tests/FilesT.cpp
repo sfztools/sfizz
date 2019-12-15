@@ -50,7 +50,7 @@ TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->channelRange == sfz::Range<uint8_t>(2, 14));
+    REQUIRE(synth.getRegionView(0)->channelRange == sfz::Range<uint8_t>(1, 13));
 }
 
 TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")

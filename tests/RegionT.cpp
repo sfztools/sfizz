@@ -238,19 +238,19 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("lochan, hichan")
     {
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 16));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(0, 15));
         region.parseOpcode({ "lochan", "4" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(4, 16));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(3, 15));
         region.parseOpcode({ "lochan", "128" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(16, 16));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(15, 15));
         region.parseOpcode({ "lochan", "-3" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 16));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(0, 15));
         region.parseOpcode({ "hichan", "13" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 13));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(0, 12));
         region.parseOpcode({ "hichan", "-1" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 1));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(0, 0));
         region.parseOpcode({ "hichan", "128" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 16));
+        REQUIRE(region.channelRange == sfz::Range<uint8_t>(0, 15));
     }
 
     SECTION("lobend, hibend")

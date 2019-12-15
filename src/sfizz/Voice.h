@@ -92,7 +92,7 @@ public:
      *
      * @param region
      * @param delay
-     * @param channel
+     * @param channel (0-based)
      * @param number
      * @param value
      * @param triggerType
@@ -103,7 +103,7 @@ public:
      * @brief Register a note-off event; this may trigger a release.
      *
      * @param delay
-     * @param channel
+     * @param channel (0-based)
      * @param noteNumber
      * @param velocity
      */
@@ -114,7 +114,7 @@ public:
      * parameter.
      *
      * @param delay
-     * @param channel
+     * @param channel (0-based)
      * @param ccNumber
      * @param ccValue
      */
@@ -123,7 +123,7 @@ public:
      * @brief Register a pitch wheel event; for now this does nothing
      *
      * @param delay
-     * @param channel
+     * @param channel (0-based)
      * @param pitch
      */
     void registerPitchWheel(int delay, int channel, int pitch) noexcept;
@@ -131,7 +131,7 @@ public:
      * @brief Register an aftertouch event; for now this does nothing
      *
      * @param delay
-     * @param channel
+     * @param channel (0-based)
      * @param aftertouch
      */
     void registerAftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
@@ -139,7 +139,7 @@ public:
      * @brief Register a tempo event; for now this does nothing
      *
      * @param delay
-     * @param channel
+     * @param channel (0-based)
      * @param pitch
      */
     void registerTempo(int delay, float secondsPerQuarter) noexcept;
@@ -243,7 +243,7 @@ private:
     /**
      * @brief Computes the values for the envelope depending on the note or CC number and the velocity/cc value
      *
-     * @param channel
+     * @param channel (0-based)
      * @param delay
      * @param velocity
      */

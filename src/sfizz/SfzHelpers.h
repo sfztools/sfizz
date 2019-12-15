@@ -36,28 +36,6 @@ using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
 
 /**
- * @brief Translates the zero-based MIDI channel to the 1-based SFZ channel
- *
- * @param zeroBasedChannel
- * @return constexpr int
- */
-constexpr int translateMidiChannelToSfz(int zeroBasedChannel)
-{
-    return zeroBasedChannel + 1;
-}
-
-/**
- * @brief Translates the 1-based SFZ channel to the 0-based MIDI channel
- *
- * @param zeroBasedChannel
- * @return constexpr int
- */
-constexpr int translateSfzChannelToMidi(int oneBasedChannel)
-{
-    return oneBasedChannel - 1;
-}
-
-/**
  * @brief Converts cents to a pitch ratio
  *
  * @tparam T

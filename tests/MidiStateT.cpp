@@ -39,20 +39,20 @@ TEST_CASE("[MidiState] Initial values")
         REQUIRE( cc == 0 );
     for (auto& cc: state.getCCArray(6))
         REQUIRE( cc == 0 );
-    for (int channel = 1; channel <= 16; ++channel)
+    for (int channel = 0; channel < 16; ++channel)
         REQUIRE( state.getPitchBend(channel) == 0 );
 }
 
 TEST_CASE("[MidiState] Set and get CCs")
 {
     sfz::MidiState state;
-    const auto& cc1 = state.getCCArray(1);
+    const auto& cc0 = state.getCCArray(0);
     const auto& cc6 = state.getCCArray(6);
     const auto& cc12 = state.getCCArray(12);
-    state.ccEvent(1, 24, 23);
+    state.ccEvent(0, 24, 23);
     state.ccEvent(6, 123, 124);
-    REQUIRE(state.getCCValue(1, 24) == 23);
-    REQUIRE(cc1[24] == 23);
+    REQUIRE(state.getCCValue(0, 24) == 23);
+    REQUIRE(cc0[24] == 23);
     REQUIRE(state.getCCValue(6, 123) == 124);
     REQUIRE(cc6[123] == 124);
     REQUIRE(+state.getCCValue(12, 24) == 0);
@@ -64,33 +64,33 @@ TEST_CASE("[MidiState] Set and get CCs")
 TEST_CASE("[MidiState] Set and get pitch bends")
 {
     sfz::MidiState state;
-    state.pitchBendEvent(1, 894);
-    REQUIRE(state.getPitchBend(1) == 894);
+    state.pitchBendEvent(0, 894);
+    REQUIRE(state.getPitchBend(0) == 894);
     REQUIRE(state.getPitchBend(6) == 0);
-    state.pitchBendEvent(1, 0);
-    REQUIRE(state.getPitchBend(1) == 0);
+    state.pitchBendEvent(0, 0);
+    REQUIRE(state.getPitchBend(0) == 0);
     REQUIRE(state.getPitchBend(6) == 0);
 }
 
 TEST_CASE("[MidiState] Reset")
 {
     sfz::MidiState state;
-    state.pitchBendEvent(1, 894);
+    state.pitchBendEvent(0, 894);
     state.noteOnEvent(6, 64, 24);
-    state.ccEvent(16, 123, 124);
+    state.ccEvent(15, 123, 124);
     state.reset();
-    REQUIRE(state.getPitchBend(1) == 0);
+    REQUIRE(state.getPitchBend(0) == 0);
     REQUIRE(state.getNoteVelocity(6, 64) == 0);
-    REQUIRE(state.getCCValue(16, 123) == 0);
+    REQUIRE(state.getCCValue(15, 123) == 0);
 }
 
 TEST_CASE("[MidiState] Set and get note velocities")
 {
     sfz::MidiState state;
-    state.noteOnEvent(1, 64, 24);
-    REQUIRE(+state.getNoteVelocity(1, 64) == 24);
-    REQUIRE(+state.getNoteVelocity(2, 64) == 0);
-    state.noteOnEvent(1, 64, 123);
-    REQUIRE(+state.getNoteVelocity(1, 64) == 123);
-    REQUIRE(+state.getNoteVelocity(16, 64) == 0);
+    state.noteOnEvent(0, 64, 24);
+    REQUIRE(+state.getNoteVelocity(0, 64) == 24);
+    REQUIRE(+state.getNoteVelocity(1, 64) == 0);
+    state.noteOnEvent(0, 64, 123);
+    REQUIRE(+state.getNoteVelocity(0, 64) == 123);
+    REQUIRE(+state.getNoteVelocity(15, 64) == 0);
 }

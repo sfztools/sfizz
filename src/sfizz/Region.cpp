@@ -134,10 +134,18 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     // Region logic: MIDI conditions
     case hash("lochan"):
-        setRangeStartFromOpcode(opcode, channelRange, Default::channelRange);
+        {
+            const auto value = readOpcode(opcode.value, Default::channelRange);
+            if (value)
+                channelRange.setStart(*value - 1);
+        }
         break;
     case hash("hichan"):
-        setRangeEndFromOpcode(opcode, channelRange, Default::channelRange);
+        {
+            const auto value = readOpcode(opcode.value, Default::channelRange);
+            if (value)
+                channelRange.setEnd(*value - 1);
+        }
         break;
     case hash("lobend"):
         setRangeStartFromOpcode(opcode, bendRange, Default::bendRange);

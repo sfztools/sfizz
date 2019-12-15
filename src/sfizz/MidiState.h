@@ -18,7 +18,7 @@ public:
     /**
      * @brief Update the state after a note on event
      *
-     * @param channel (1-based)
+     * @param channel (0-based)
      * @param noteNumber
      * @param velocity
      */
@@ -27,7 +27,7 @@ public:
     /**
      * @brief Register a note off and get the note duration
      *
-     * @param channel (1-based)
+     * @param channel (0-based)
      * @param noteNumber
      * @return float
      */
@@ -36,7 +36,7 @@ public:
     /**
      * @brief Get the note on velocity for a given note
      *
-     * @param channel (1-based)
+     * @param channel (0-based)
      * @param noteNumber
      * @return uint8_t
      */
