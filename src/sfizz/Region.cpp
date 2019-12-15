@@ -43,7 +43,16 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     switch (hash(opcode.opcode)) {
     // Sound source: sample playback
     case hash("sample"):
-        sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trim(opcode.value), { { "\\", "/" } }));
+        {
+            const auto trimmedSample = trim(opcode.value);
+            if (trimmedSample.empty())
+                break;
+            
+            if (trimmedSample[0] == '*')
+                sample = std::string(trimmedSample);
+            else    
+                sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trim(opcode.value), { { "\\", "/" } }));
+        }
         break;
     case hash("delay"):
         setValueFromOpcode(opcode, delay, Default::delayRange);

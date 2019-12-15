@@ -381,3 +381,11 @@ TEST_CASE("[Files] Default path reset when calling loadSfzFile again")
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
 }
+
+TEST_CASE("[Files] Default path is ignored for generators")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path_generator.sfz");
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->sample == R"(*sine)");
+}
