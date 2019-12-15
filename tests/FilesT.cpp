@@ -371,3 +371,13 @@ TEST_CASE("[Files] Default path")
     REQUIRE(synth.getRegionView(2)->sample == R"(DefaultPath/SubPath1/sample1.wav)");
     REQUIRE(synth.getRegionView(3)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
 }
+
+TEST_CASE("[Files] Default path reset when calling loadSfzFile again")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path.sfz");
+    REQUIRE(synth.getNumRegions() == 4);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path_reset.sfz");
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
+}

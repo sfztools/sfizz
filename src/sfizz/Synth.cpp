@@ -136,6 +136,7 @@ void sfz::Synth::clear()
     numCurves = 0;
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
+    defaultPath = "";
     midiState.reset();
     ccNames.clear();
     globalOpcodes.clear();
