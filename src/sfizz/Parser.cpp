@@ -43,11 +43,11 @@ void removeCommentOnLine(absl::string_view& line)
 
 bool sfz::Parser::loadSfzFile(const fs::path& file)
 {
-    const auto sfzFile = file.is_absolute() ? file : rootDirectory / file;
+    const auto sfzFile = file.is_absolute() ? file : defaultPath / file;
     if (!fs::exists(sfzFile))
         return false;
 
-    rootDirectory = file.parent_path();
+    defaultPath = file.parent_path();
     std::vector<std::string> lines;
     readSfzFile(file, lines);
 
@@ -105,7 +105,7 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         if (std::regex_search(tmpView.begin(), tmpView.end(), includeMatch, sfz::Regexes::includes)) {
             auto includePath = includeMatch.str(1);
             std::replace(includePath.begin(), includePath.end(), '\\', '/');
-            const auto newFile = rootDirectory / includePath;
+            const auto newFile = defaultPath / includePath;
             auto alreadyIncluded = std::find(includedFiles.begin(), includedFiles.end(), newFile);
             if (fs::exists(newFile)) {
                 if (alreadyIncluded == includedFiles.end()) {
