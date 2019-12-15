@@ -6,6 +6,7 @@ set (SFIZZ_SOURCES
     sfizz/Region.cpp
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp
+    sfizz/MidiState.cpp
     sfizz/SfzHelpers.cpp
     sfizz/FloatEnvelopes.cpp
 )

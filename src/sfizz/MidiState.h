@@ -2,7 +2,6 @@
 #include <chrono>
 #include <array>
 #include "SfzHelpers.h"
-#include "Debug.h"
 
 namespace sfz
 {
@@ -15,10 +14,7 @@ namespace sfz
 class MidiState
 {
 public:
-    MidiState() noexcept
-    {
-        reset();
-    }
+    MidiState();
     /**
      * @brief Update the state after a note on event
      *
@@ -26,17 +22,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEvent(int channel, int noteNumber, uint8_t velocity) noexcept
-	{
-        ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(noteNumber >= 0 && noteNumber <= 127);
-        ASSERT(velocity >= 0 && velocity <= 127);
-        channel = translateSfzChannelToMidi(channel);
-		if (noteNumber >= 0 && noteNumber < 128) {
-			lastNoteVelocities[channel][noteNumber] = velocity;
-			noteOnTimes[channel][noteNumber] = std::chrono::steady_clock::now();
-		}
-	}
+	void noteOnEvent(int channel, int noteNumber, uint8_t velocity) noexcept;
 
     /**
      * @brief Register a note off and get the note duration
@@ -45,19 +31,7 @@ public:
      * @param noteNumber
      * @return float
      */
-	float getNoteDuration(int channel, int noteNumber) const
-	{
-        ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(noteNumber >= 0 && noteNumber <= 127);
-        channel = translateSfzChannelToMidi(channel);
-		if (noteNumber >= 0 && noteNumber < 128) {
-			const auto noteOffTime = std::chrono::steady_clock::now();
-			const auto duration = std::chrono::duration_cast<std::chrono::duration<float>>(noteOffTime - noteOnTimes[channel][noteNumber]);
-			return duration.count();
-		}
-
-		return 0.0f;
-	}
+	float getNoteDuration(int channel, int noteNumber) const;
 
     /**
      * @brief Get the note on velocity for a given note
@@ -66,66 +40,55 @@ public:
      * @param noteNumber
      * @return uint8_t
      */
-	uint8_t getNoteVelocity(int channel, int noteNumber) const noexcept
-	{
-        ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(noteNumber >= 0 && noteNumber <= 127);
-        channel = translateSfzChannelToMidi(channel);
-        return lastNoteVelocities[channel][noteNumber];
-	}
+	uint8_t getNoteVelocity(int channel, int noteNumber) const noexcept;
 
-    void pitchBendEvent(int channel, int pitchBendValue) noexcept
-    {
-        ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(pitchBendValue >= -8192 && pitchBendValue <= 8192);
-        channel = translateSfzChannelToMidi(channel);
-        pitchBends[channel] = pitchBendValue;
-    }
+    /**
+     * @brief Register a pitch bend event
+     * 
+     * @param channel 
+     * @param pitchBendValue 
+     */
+    void pitchBendEvent(int channel, int pitchBendValue) noexcept;
 
-    int getPitchBend(int channel) const noexcept
-    {
-        ASSERT(channel >= 1 && channel <= 16);
-        channel = translateSfzChannelToMidi(channel);
-        return pitchBends[channel];
-    }
+    /**
+     * @brief Get the pitch bend status on a channel
+     * 
+     * @param channel 
+     * @return int 
+     */
+    int getPitchBend(int channel) const noexcept;
 
-    void ccEvent(int channel, int ccNumber, uint8_t ccValue) noexcept
-    {
-        ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(ccNumber >= 0 && ccNumber <= 127);
-        ASSERT(ccValue >= 0 && ccValue <= 127);
-        channel = translateSfzChannelToMidi(channel);
-        cc[channel][ccNumber] = ccValue;
-    }
+    /**
+     * @brief Register a CC event
+     * 
+     * @param channel 
+     * @param ccNumber 
+     * @param ccValue 
+     */
+    void ccEvent(int channel, int ccNumber, uint8_t ccValue) noexcept;
 
-    uint8_t getCCValue(int channel, int ccNumber) const noexcept
-    {
-        ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(ccNumber >= 0 && ccNumber <= 127);
-        channel = translateSfzChannelToMidi(channel);
-        return cc[channel][ccNumber];
-    }
+    /**
+     * @brief Get the CC value for a specific channel and cc number
+     * 
+     * @param channel 
+     * @param ccNumber 
+     * @return uint8_t 
+     */
+    uint8_t getCCValue(int channel, int ccNumber) const noexcept;
 
-    const CCValueArray& getCCArray(int channel) const noexcept
-    {
-        ASSERT(channel >= 1 && channel <= 16);
-        channel = translateSfzChannelToMidi(channel);
-        return cc[channel];
-    }
+    /**
+     * @brief Get the full CC status for a specific channel
+     * 
+     * @param channel 
+     * @return const CCValueArray& 
+     */
+    const CCValueArray& getCCArray(int channel) const noexcept;
 
-    void reset() noexcept
-    {
-        for (auto& channelArray: lastNoteVelocities)
-            for (auto& velocity: channelArray)
-                velocity = 0;
-
-        for (auto& channelArray: cc)
-            for (auto& ccValue: channelArray)
-                ccValue = 0;
-
-        for (auto& bendValue: pitchBends)
-            bendValue = 0;
-    }
+    /**
+     * @brief Reset the midi state (does not impact the last note on time)
+     * 
+     */
+    void reset() noexcept;
 
 private:
     template<class T>
