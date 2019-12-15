@@ -688,9 +688,32 @@ run(LV2_Handle instance, uint32_t sample_count)
 static uint32_t
 lv2_get_options(LV2_Handle instance, LV2_Options_Option *options)
 {
-    UNUSED(instance);
-    UNUSED(options);
-    // We have no options
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    LV2_DEBUG("[DEBUG] get_options called\n");
+    for (LV2_Options_Option *opt = options; opt->value; ++opt)
+    {
+        if (self->unmap) {
+            LV2_DEBUG("[DEBUG] Called for an option with key (subject): %s (%s) \n", 
+                      self->unmap->unmap(self->unmap->handle, opt->key),
+                      self->unmap->unmap(self->unmap->handle, opt->subject));
+        }
+
+        if (opt->key == self->sample_rate_uri)
+        {
+            opt->type = self->atom_float_uri;
+            opt->size = sizeof(float);
+            opt->value = (void*)&self->sample_rate;
+            return LV2_OPTIONS_SUCCESS;
+        }
+
+        if (opt->key == self->max_block_length_uri || opt->key == self->nominal_block_length_uri)
+        {
+            opt->type = self->atom_int_uri;
+            opt->size = sizeof(int);
+            opt->value = (void*)&self->max_block_size;
+            return LV2_OPTIONS_SUCCESS;
+        }
+    }
     return LV2_OPTIONS_ERR_UNKNOWN;
 }
 
