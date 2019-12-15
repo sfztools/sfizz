@@ -445,7 +445,7 @@ private:
     MidiState midiState;
 
     // default_path
-    fs::path defaultPath { };
+    std::string defaultPath { "" };
 
     LEAK_DETECTOR(Synth);
 };

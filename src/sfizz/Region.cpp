@@ -29,6 +29,7 @@
 #include "StringViewHelpers.h"
 #include "MidiState.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/str_cat.h"
 #include <random>
 
 bool sfz::Region::parseOpcode(const Opcode& opcode)
@@ -42,7 +43,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     switch (hash(opcode.opcode)) {
     // Sound source: sample playback
     case hash("sample"):
-        sample = absl::StrReplaceAll(trim(opcode.value), { { "\\", "/" } });
+        sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trim(opcode.value), { { "\\", "/" } }));
         break;
     case hash("delay"):
         setValueFromOpcode(opcode, delay, Default::delayRange);

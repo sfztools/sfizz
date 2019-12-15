@@ -29,6 +29,7 @@
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
+#include "absl/strings/str_cat.h"
 #include <bitset>
 #include <absl/types/optional.h>
 #include <random>
@@ -49,9 +50,12 @@ namespace sfz {
  *
  */
 struct Region {
-    Region(const MidiState& midiState)
-    : midiState(midiState)
+    Region(const MidiState& midiState, std::string defaultPath = "")
+    : midiState(midiState), defaultPath(std::move(defaultPath))
     {
+        if (!this->defaultPath.empty() && this->defaultPath.back() != '/')
+            absl::StrAppend(&this->defaultPath, "/");
+
         ccSwitched.set();
     }
     Region(const Region&) = default;
@@ -320,6 +324,7 @@ private:
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
     std::bitset<128> ccSwitched;
+    std::string defaultPath { "" };
 
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };

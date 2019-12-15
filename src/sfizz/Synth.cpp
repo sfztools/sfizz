@@ -94,7 +94,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_unique<Region>(midiState);
+    auto lastRegion = std::make_unique<Region>(midiState, defaultPath);
 
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode : opcodes) {
@@ -179,11 +179,10 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Default_path"):
             [[fallthrough]];
         case hash("default_path"): {
-            const auto stringPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
-            const auto newPath = originalDirectory / fs::path(stringPath);
-            if (fs::exists(newPath)) {
-                DBG("Changing default sample path to " << stringPath);
-                defaultPath = newPath;
+            const auto newPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
+            if (fs::exists(originalDirectory / newPath)) {
+                DBG("Changing default sample path to " << newPath);
+                defaultPath = std::move(newPath);
             }
             break;
         }
@@ -220,7 +219,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
     }
 
     clear();
-    defaultPath = filename.parent_path();
     auto parserReturned = sfz::Parser::loadSfzFile(filename);
     if (!parserReturned)
         return false;
@@ -228,7 +226,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
     if (regions.empty())
         return false;
 
-    resources.filePool.setRootDirectory(this->defaultPath);
+    resources.filePool.setRootDirectory(this->originalDirectory);
 
     auto lastRegion = regions.end() - 1;
     auto currentRegion = regions.begin();
