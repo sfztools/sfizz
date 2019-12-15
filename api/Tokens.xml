@@ -912,6 +912,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>translateSfzChannelToMidi</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a61de021ab5eca6bd4ae09db67074b3d5</Anchor>
+    <Abstract>Translates the 1-based SFZ channel to the 0-based MIDI channel. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>centsFactor</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
@@ -2499,19 +2511,19 @@
       <Type>cl</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
+    <Path>classsfz_1_1_midi_state.html</Path>
     <Abstract>Holds the current &quot;MIDI state&quot;, meaning the known state of all CCs currently, as well as the note vel...</Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>noteOn</Name>
+      <Name>noteOnEvent</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>a463ac263d708172f88165f70a492a9e1</Anchor>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a3621ff211fcdaef0f4ca7c93d60d1901</Anchor>
     <Abstract>Update the state after a note on event. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2519,11 +2531,11 @@
     <TokenIdentifier>
       <Name>getNoteDuration</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>a26d9632b6b2daa5c39945d60270ee2db</Anchor>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>ac2c2b824d0aef00236645ccaa2fedca1</Anchor>
     <Abstract>Register a note off and get the note duration. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2531,57 +2543,85 @@
     <TokenIdentifier>
       <Name>getNoteVelocity</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>aece0f03a2dac2d75bdcfd4ce845fe0c0</Anchor>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a0c105a23260675c27d7e66b3f7dc4a2d</Anchor>
     <Abstract>Get the note on velocity for a given note. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>noteOnTimes</Name>
+      <Name>pitchBendEvent</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>a675112ada42a0ec3b7689cef20e048d3</Anchor>
-    <Abstract>Stores the note on times. </Abstract>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a9a23eed112561347f04f508d0992b825</Anchor>
+    <Abstract>Register a pitch bend event. </Abstract>
+    <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>lastNoteVelocities</Name>
+      <Name>getPitchBend</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>af148bbd813ed658ead1bbea067591e13</Anchor>
-    <Abstract>Stores the velocity of the note ons for currently depressed notes. </Abstract>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a365f0c4928d5bc372bd29f66264c86a8</Anchor>
+    <Abstract>Get the pitch bend status on a channel. </Abstract>
+    <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>cc</Name>
+      <Name>ccEvent</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>a8a61c0c4e1308b211778e296d5a93551</Anchor>
-    <Abstract>Current known values for the CCs. </Abstract>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>af842db8448e586a14f2e5df1bec4dc9c</Anchor>
+    <Abstract>Register a CC event. </Abstract>
+    <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>pitchBend</Name>
+      <Name>getCCValue</Name>
       <APILanguage>cpp</APILanguage>
-      <Type>data</Type>
+      <Type>instm</Type>
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
-    <Path>structsfz_1_1_midi_state.html</Path>
-    <Anchor>ad790074e7dbf0cae4d17d57f3f478b9a</Anchor>
-    <Abstract>Pitch bend status. </Abstract>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a12179d36ac37d65f3de4af12ed0de604</Anchor>
+    <Abstract>Get the CC value for a specific channel and cc number. </Abstract>
+    <DeclaredIn>MidiState.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>getCCArray</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::MidiState</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a68a26f3b59f3c8b6676fdaf1768ab409</Anchor>
+    <Abstract>Get the full CC status for a specific channel. </Abstract>
+    <DeclaredIn>MidiState.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>reset</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::MidiState</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_midi_state.html</Path>
+    <Anchor>a8e4beb553db5ad28eaae35032cfd1967</Anchor>
+    <Abstract>Reset the midi state (does not impact the last note on time) </Abstract>
+    <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>
@@ -2970,7 +3010,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>af316a3ebdc75c016db37aa54a050cdf5</Anchor>
+    <Anchor>abe5ddb612bb580c99f78fe2f7ff46fdc</Anchor>
     <Abstract>Get the base volume of the region depending on which note has been pressed to trigger the region...</Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>

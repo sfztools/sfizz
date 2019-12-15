@@ -525,42 +525,52 @@
              </Node>
              <Node>
               <Name>MidiState</Name>
-              <Path>structsfz_1_1_midi_state.html</Path>
+              <Path>classsfz_1_1_midi_state.html</Path>
               <Subnodes>
                <Node>
+                <Name>ccEvent</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>af842db8448e586a14f2e5df1bec4dc9c</Anchor>
+               </Node>
+               <Node>
+                <Name>getCCArray</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a68a26f3b59f3c8b6676fdaf1768ab409</Anchor>
+               </Node>
+               <Node>
+                <Name>getCCValue</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a12179d36ac37d65f3de4af12ed0de604</Anchor>
+               </Node>
+               <Node>
                 <Name>getNoteDuration</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>a26d9632b6b2daa5c39945d60270ee2db</Anchor>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>ac2c2b824d0aef00236645ccaa2fedca1</Anchor>
                </Node>
                <Node>
                 <Name>getNoteVelocity</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>aece0f03a2dac2d75bdcfd4ce845fe0c0</Anchor>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a0c105a23260675c27d7e66b3f7dc4a2d</Anchor>
                </Node>
                <Node>
-                <Name>noteOn</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>a463ac263d708172f88165f70a492a9e1</Anchor>
+                <Name>getPitchBend</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a365f0c4928d5bc372bd29f66264c86a8</Anchor>
                </Node>
                <Node>
-                <Name>cc</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>a8a61c0c4e1308b211778e296d5a93551</Anchor>
+                <Name>noteOnEvent</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a3621ff211fcdaef0f4ca7c93d60d1901</Anchor>
                </Node>
                <Node>
-                <Name>lastNoteVelocities</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>af148bbd813ed658ead1bbea067591e13</Anchor>
+                <Name>pitchBendEvent</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a9a23eed112561347f04f508d0992b825</Anchor>
                </Node>
                <Node>
-                <Name>noteOnTimes</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>a675112ada42a0ec3b7689cef20e048d3</Anchor>
-               </Node>
-               <Node>
-                <Name>pitchBend</Name>
-                <Path>structsfz_1_1_midi_state.html</Path>
-                <Anchor>ad790074e7dbf0cae4d17d57f3f478b9a</Anchor>
+                <Name>reset</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>a8e4beb553db5ad28eaae35032cfd1967</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -640,7 +650,7 @@
                <Node>
                 <Name>getBaseVolumedB</Name>
                 <Path>structsfz_1_1_region.html</Path>
-                <Anchor>af316a3ebdc75c016db37aa54a050cdf5</Anchor>
+                <Anchor>abe5ddb612bb580c99f78fe2f7ff46fdc</Anchor>
                </Node>
                <Node>
                 <Name>getCrossfadeGain</Name>
@@ -1158,7 +1168,7 @@
            </Node>
            <Node>
             <Name>sfz::MidiState</Name>
-            <Path>structsfz_1_1_midi_state.html</Path>
+            <Path>classsfz_1_1_midi_state.html</Path>
            </Node>
            <Node>
             <Name>sfz::OnePoleFilter&lt; Type &gt;</Name>

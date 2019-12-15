@@ -157,9 +157,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad95b7a75ae4acb75dca9177cda8ebc4b"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#ad95b7a75ae4acb75dca9177cda8ebc4b">getCrossfadeGain</a> (const CCValueArray &amp;ccState) noexcept</td></tr>
 <tr class="memdesc:ad95b7a75ae4acb75dca9177cda8ebc4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the additional crossfade gain of the region depending on the CC values.  <a href="#ad95b7a75ae4acb75dca9177cda8ebc4b">More...</a><br /></td></tr>
 <tr class="separator:ad95b7a75ae4acb75dca9177cda8ebc4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af316a3ebdc75c016db37aa54a050cdf5"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#af316a3ebdc75c016db37aa54a050cdf5">getBaseVolumedB</a> (int noteNumber) noexcept</td></tr>
-<tr class="memdesc:af316a3ebdc75c016db37aa54a050cdf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the base volume of the region depending on which note has been pressed to trigger the region.  <a href="#af316a3ebdc75c016db37aa54a050cdf5">More...</a><br /></td></tr>
-<tr class="separator:af316a3ebdc75c016db37aa54a050cdf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe5ddb612bb580c99f78fe2f7ff46fdc"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#abe5ddb612bb580c99f78fe2f7ff46fdc">getBaseVolumedB</a> (int channel, int noteNumber) noexcept</td></tr>
+<tr class="memdesc:abe5ddb612bb580c99f78fe2f7ff46fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the base volume of the region depending on which note has been pressed to trigger the region.  <a href="#abe5ddb612bb580c99f78fe2f7ff46fdc">More...</a><br /></td></tr>
+<tr class="separator:abe5ddb612bb580c99f78fe2f7ff46fdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:accd951ff140d13f8a11ae91a44d8233e"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#accd951ff140d13f8a11ae91a44d8233e">getBaseGain</a> () noexcept</td></tr>
 <tr class="memdesc:accd951ff140d13f8a11ae91a44d8233e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the base gain of the region.  <a href="#accd951ff140d13f8a11ae91a44d8233e">More...</a><br /></td></tr>
 <tr class="separator:accd951ff140d13f8a11ae91a44d8233e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -258,8 +258,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="af316a3ebdc75c016db37aa54a050cdf5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af316a3ebdc75c016db37aa54a050cdf5">&#9670;&nbsp;</a></span>getBaseVolumedB()</h2>
+<a id="abe5ddb612bb580c99f78fe2f7ff46fdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe5ddb612bb580c99f78fe2f7ff46fdc">&#9670;&nbsp;</a></span>getBaseVolumedB()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -271,8 +271,18 @@ Public Member Functions</h2></td></tr>
           <td class="memname">float sfz::Region::getBaseVolumedB </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>noteNumber</em></td><td>)</td>
+          <td class="paramname"><em>channel</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>noteNumber</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -285,6 +295,7 @@ Public Member Functions</h2></td></tr>
 <p>Get the base volume of the region depending on which note has been pressed to trigger the region. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">channel</td><td>(1-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td></td></tr>
   </table>
   </dd>
@@ -949,7 +960,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Fri Dec 13 2019 23:47:27 for sfizz by
+					<span style="float:right">Generated on Sun Dec 15 2019 20:14:19 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['cc',['cc',['../structsfz_1_1_midi_state.html#a8a61c0c4e1308b211778e296d5a93551',1,'sfz::MidiState']]]
+  ['spans',['spans',['../classsfz_1_1_audio_span.html#ad8abff0f05730a73af659f5b4a5a20cc',1,'sfz::AudioSpan']]]
 ];

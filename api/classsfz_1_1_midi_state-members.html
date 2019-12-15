@@ -99,7 +99,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespacesfz.html">sfz</a></li><li class="navelem"><a class="el" href="structsfz_1_1_midi_state.html">MidiState</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespacesfz.html">sfz</a></li><li class="navelem"><a class="el" href="classsfz_1_1_midi_state.html">MidiState</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -108,20 +108,22 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#a8a61c0c4e1308b211778e296d5a93551">cc</a></td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#a26d9632b6b2daa5c39945d60270ee2db">getNoteDuration</a>(int noteNumber) const</td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#aece0f03a2dac2d75bdcfd4ce845fe0c0">getNoteVelocity</a>(int noteNumber) const</td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#af148bbd813ed658ead1bbea067591e13">lastNoteVelocities</a></td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#a463ac263d708172f88165f70a492a9e1">noteOn</a>(int noteNumber, uint8_t velocity)</td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#a675112ada42a0ec3b7689cef20e048d3">noteOnTimes</a></td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html#ad790074e7dbf0cae4d17d57f3f478b9a">pitchBend</a></td><td class="entry"><a class="el" href="structsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#af842db8448e586a14f2e5df1bec4dc9c">ccEvent</a>(int channel, int ccNumber, uint8_t ccValue) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a68a26f3b59f3c8b6676fdaf1768ab409">getCCArray</a>(int channel) const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a12179d36ac37d65f3de4af12ed0de604">getCCValue</a>(int channel, int ccNumber) const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#ac2c2b824d0aef00236645ccaa2fedca1">getNoteDuration</a>(int channel, int noteNumber) const</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a0c105a23260675c27d7e66b3f7dc4a2d">getNoteVelocity</a>(int channel, int noteNumber) const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a365f0c4928d5bc372bd29f66264c86a8">getPitchBend</a>(int channel) const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a3621ff211fcdaef0f4ca7c93d60d1901">noteOnEvent</a>(int channel, int noteNumber, uint8_t velocity) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a9a23eed112561347f04f508d0992b825">pitchBendEvent</a>(int channel, int pitchBendValue) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a8e4beb553db5ad28eaae35032cfd1967">reset</a>() noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Fri Dec 13 2019 23:47:27 for sfizz by
+					<span style="float:right">Generated on Sun Dec 15 2019 20:14:19 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

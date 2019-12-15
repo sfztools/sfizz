@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['lastnotevelocities',['lastNoteVelocities',['../structsfz_1_1_midi_state.html#af148bbd813ed658ead1bbea067591e13',1,'sfz::MidiState']]],
   ['linearenvelope',['LinearEnvelope',['../classsfz_1_1_linear_envelope.html',1,'sfz']]],
   ['linearenvelope_3c_20float_20_3e',['LinearEnvelope&lt; float &gt;',['../classsfz_1_1_linear_envelope.html',1,'sfz']]],
   ['linearramp',['linearRamp',['../namespacesfz.html#a856b9e5f41439a7443e3fb6e010f8d13',1,'sfz']]],
