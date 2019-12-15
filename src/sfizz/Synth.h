@@ -446,6 +446,9 @@ private:
     Resources resources;
     MidiState midiState;
 
+    // default_path
+    fs::path defaultPath { };
+
     LEAK_DETECTOR(Synth);
 };
 

@@ -189,7 +189,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             [[fallthrough]];
         case hash("default_path"): {
             const auto stringPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
-            const auto newPath = defaultPath / fs::path(stringPath);
+            const auto newPath = originalDirectory / fs::path(stringPath);
             if (fs::exists(newPath)) {
                 DBG("Changing default sample path to " << stringPath);
                 defaultPath = newPath;
@@ -229,6 +229,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
     }
 
     clear();
+    defaultPath = filename.parent_path();
     auto parserReturned = sfz::Parser::loadSfzFile(filename);
     if (!parserReturned)
         return false;

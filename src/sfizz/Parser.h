@@ -40,7 +40,7 @@ public:
     void enableRecursiveIncludeGuard() { recursiveIncludeGuard = true; }
 protected:
     virtual void callback(absl::string_view header, const std::vector<Opcode>& members) = 0;
-    fs::path defaultPath { fs::current_path() };
+    fs::path originalDirectory { fs::current_path() };
 private:
     bool recursiveIncludeGuard { false };
     std::map<std::string, std::string> defines;
