@@ -357,8 +357,6 @@ protected:
     void callback(absl::string_view header, const std::vector<Opcode>& members) final;
 
 private:
-    bool hasGlobal { false };
-    bool hasControl { false };
     int numGroups { 0 };
     int numMasters { 0 };
     int numCurves { 0 };

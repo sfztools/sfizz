@@ -63,17 +63,10 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
 {
     switch (hash(header)) {
     case hash("global"):
-        // We shouldn't have multiple global headers in file
-        // But apparently some instruments do not really care :)
-        // ASSERT(!hasGlobal);
         globalOpcodes = members;
         handleGlobalOpcodes(members);
-        hasGlobal = true;
         break;
     case hash("control"):
-        // We shouldn't have multiple control headers in file
-        // ASSERT(!hasControl)
-        hasControl = true;
         handleControlOpcodes(members);
         break;
     case hash("master"):
@@ -138,8 +131,6 @@ void sfz::Synth::clear()
         list.clear();
     regions.clear();
     resources.filePool.clear();
-    hasGlobal = false;
-    hasControl = false;
     numGroups = 0;
     numMasters = 0;
     numCurves = 0;
