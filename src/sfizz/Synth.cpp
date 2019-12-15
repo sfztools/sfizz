@@ -420,6 +420,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    channel = translateMidiChannelToSfz(channel);
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
@@ -430,7 +431,6 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     auto replacedVelocity = midiState.getNoteVelocity(channel, noteNumber);
     auto randValue = randNoteDistribution(Random::randomGenerator);
     
-    channel = translateMidiChannelToSfz(channel);
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
 
