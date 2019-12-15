@@ -15,6 +15,10 @@ namespace sfz
 class MidiState
 {
 public:
+    MidiState() noexcept
+    {
+        reset();
+    }
     /**
      * @brief Update the state after a note on event
      *
@@ -22,7 +26,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEvent(int channel, int noteNumber, uint8_t velocity)
+	void noteOnEvent(int channel, int noteNumber, uint8_t velocity) noexcept
 	{
         ASSERT(channel >= 1 && channel <= 16);
         ASSERT(noteNumber >= 0 && noteNumber <= 127);
@@ -62,7 +66,7 @@ public:
      * @param noteNumber
      * @return uint8_t
      */
-	uint8_t getNoteVelocity(int channel, int noteNumber) const
+	uint8_t getNoteVelocity(int channel, int noteNumber) const noexcept
 	{
         ASSERT(channel >= 1 && channel <= 16);
         ASSERT(noteNumber >= 0 && noteNumber <= 127);
@@ -73,7 +77,7 @@ public:
     void pitchBendEvent(int channel, int pitchBendValue) noexcept
     {
         ASSERT(channel >= 1 && channel <= 16);
-        ASSERT(pitchBendValue >= 8192 && pitchBendValue <= 8192);
+        ASSERT(pitchBendValue >= -8192 && pitchBendValue <= 8192);
         channel = translateSfzChannelToMidi(channel);
         pitchBends[channel] = pitchBendValue;
     }
