@@ -900,30 +900,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>translateMidiChannelToSfz</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>sfz</Scope>
-    </TokenIdentifier>
-    <Path>namespacesfz.html</Path>
-    <Anchor>a2716c15d9390419a135d72ecfd22d2ce</Anchor>
-    <Abstract>Translates the zero-based MIDI channel to the 1-based SFZ channel. </Abstract>
-    <DeclaredIn>SfzHelpers.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>translateSfzChannelToMidi</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>sfz</Scope>
-    </TokenIdentifier>
-    <Path>namespacesfz.html</Path>
-    <Anchor>a61de021ab5eca6bd4ae09db67074b3d5</Anchor>
-    <Abstract>Translates the 1-based SFZ channel to the 0-based MIDI channel. </Abstract>
-    <DeclaredIn>SfzHelpers.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>centsFactor</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>

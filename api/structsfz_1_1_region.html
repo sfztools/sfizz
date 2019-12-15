@@ -295,7 +295,7 @@ Public Member Functions</h2></td></tr>
 <p>Get the base volume of the region depending on which note has been pressed to trigger the region. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">channel</td><td>(1-based) </td></tr>
+    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td></td></tr>
   </table>
   </dd>
@@ -599,7 +599,7 @@ false </dd></dl>
 <p>Register a new aftertouch event. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">channel</td><td>MIDI channel (1-based) </td></tr>
+    <tr><td class="paramname">channel</td><td>MIDI channel (0-based) </td></tr>
     <tr><td class="paramname">aftertouch</td><td></td></tr>
   </table>
   </dd>
@@ -651,7 +651,7 @@ false </dd></dl>
 <p>The region may be switched on or off using CCs so this function checks if it indeeds need to activate or not.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">channel</td><td>MIDI channel (1-based) </td></tr>
+    <tr><td class="paramname">channel</td><td>MIDI channel (0-based) </td></tr>
     <tr><td class="paramname">ccNumber</td><td></td></tr>
     <tr><td class="paramname">ccValue</td><td></td></tr>
   </table>
@@ -713,7 +713,7 @@ false </dd></dl>
 <p>The region may be switched on or off using keys so this function updates the keyswitches state.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">channel</td><td>MIDI channel (1-based) </td></tr>
+    <tr><td class="paramname">channel</td><td>MIDI channel (0-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td></td></tr>
     <tr><td class="paramname">velocity</td><td></td></tr>
     <tr><td class="paramname">randValue</td><td>a random value between 0 and 1 used to randomize a bit the region activations and vary the samples </td></tr>
@@ -776,7 +776,7 @@ false </dd></dl>
 <p>The region may be switched on or off using keys so this function updates the keyswitches state.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">channel</td><td>MIDI channel (1-based) </td></tr>
+    <tr><td class="paramname">channel</td><td>MIDI channel (0-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td></td></tr>
     <tr><td class="paramname">velocity</td><td></td></tr>
     <tr><td class="paramname">randValue</td><td>a random value between 0 and 1 used to randomize a bit the region activations and vary the samples </td></tr>
@@ -826,7 +826,7 @@ false </dd></dl>
 <p>Register a new pitch wheel event. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">channel</td><td>MIDI channel (1-based) </td></tr>
+    <tr><td class="paramname">channel</td><td>MIDI channel (0-based) </td></tr>
     <tr><td class="paramname">pitch</td><td></td></tr>
   </table>
   </dd>
@@ -960,7 +960,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 15 2019 21:12:12 for sfizz by
+					<span style="float:right">Generated on Sun Dec 15 2019 23:05:43 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

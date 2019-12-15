@@ -205,12 +205,6 @@ Functions</h2></td></tr>
 <tr class="memitem:aef36c198066be8bee85b445c483f71a1"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#aef36c198066be8bee85b445c483f71a1">setCCPairFromOpcode</a> (const <a class="el" href="structsfz_1_1_opcode.html">Opcode</a> &amp;opcode, absl::optional&lt; CCValuePair &gt; &amp;target, const <a class="el" href="classsfz_1_1_range.html">Range</a>&lt; ValueType &gt; &amp;validRange)</td></tr>
 <tr class="memdesc:aef36c198066be8bee85b445c483f71a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a CC modulation parameter from an opcode value.  <a href="#aef36c198066be8bee85b445c483f71a1">More...</a><br /></td></tr>
 <tr class="separator:aef36c198066be8bee85b445c483f71a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2716c15d9390419a135d72ecfd22d2ce"><td class="memItemLeft" align="right" valign="top">constexpr int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a2716c15d9390419a135d72ecfd22d2ce">translateMidiChannelToSfz</a> (int zeroBasedChannel)</td></tr>
-<tr class="memdesc:a2716c15d9390419a135d72ecfd22d2ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Translates the zero-based MIDI channel to the 1-based SFZ channel.  <a href="#a2716c15d9390419a135d72ecfd22d2ce">More...</a><br /></td></tr>
-<tr class="separator:a2716c15d9390419a135d72ecfd22d2ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a61de021ab5eca6bd4ae09db67074b3d5"><td class="memItemLeft" align="right" valign="top">constexpr int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a61de021ab5eca6bd4ae09db67074b3d5">translateSfzChannelToMidi</a> (int oneBasedChannel)</td></tr>
-<tr class="memdesc:a61de021ab5eca6bd4ae09db67074b3d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Translates the 1-based SFZ channel to the 0-based MIDI channel.  <a href="#a61de021ab5eca6bd4ae09db67074b3d5">More...</a><br /></td></tr>
-<tr class="separator:a61de021ab5eca6bd4ae09db67074b3d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace381c89be8ea56969614a371b7edae2"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:ace381c89be8ea56969614a371b7edae2"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#ace381c89be8ea56969614a371b7edae2">centsFactor</a> (T cents, T centsPerOctave=1200)</td></tr>
 <tr class="memdesc:ace381c89be8ea56969614a371b7edae2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts cents to a pitch ratio.  <a href="#ace381c89be8ea56969614a371b7edae2">More...</a><br /></td></tr>
@@ -2645,60 +2639,6 @@ template&lt;class T , bool SIMD = SIMDConfig::subtract&gt; </div>
 
 </div>
 </div>
-<a id="a2716c15d9390419a135d72ecfd22d2ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2716c15d9390419a135d72ecfd22d2ce">&#9670;&nbsp;</a></span>translateMidiChannelToSfz()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr int sfz::translateMidiChannelToSfz </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>zeroBasedChannel</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Translates the zero-based MIDI channel to the 1-based SFZ channel. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">zeroBasedChannel</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>constexpr int </dd></dl>
-
-</div>
-</div>
-<a id="a61de021ab5eca6bd4ae09db67074b3d5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a61de021ab5eca6bd4ae09db67074b3d5">&#9670;&nbsp;</a></span>translateSfzChannelToMidi()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr int sfz::translateSfzChannelToMidi </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>oneBasedChannel</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Translates the 1-based SFZ channel to the 0-based MIDI channel. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">zeroBasedChannel</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>constexpr int </dd></dl>
-
-</div>
-</div>
 <a id="a187a894c21d22a6571c6fe2a9394228f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a187a894c21d22a6571c6fe2a9394228f">&#9670;&nbsp;</a></span>writeInterleaved()</h2>
 
@@ -2765,7 +2705,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 15 2019 21:12:12 for sfizz by
+					<span style="float:right">Generated on Sun Dec 15 2019 23:05:43 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
