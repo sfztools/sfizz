@@ -322,7 +322,7 @@ TEST_CASE("[Files] Specific bug: relative path with backslashes")
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/win_backslashes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sample == R"(closedhat.wav)");
+    REQUIRE(synth.getRegionView(0)->sample == R"(Xylo/Subfolder/closedhat.wav)");
 }
 
 TEST_CASE("[Synth] Testing channel 1")
@@ -359,4 +359,15 @@ TEST_CASE("[Synth] Testing channel 16")
     const auto* region = synth.getVoiceView(0)->getRegion();
     REQUIRE( region != nullptr );
     REQUIRE( region->sample == "dummy16.wav" );
+}
+
+TEST_CASE("[Files] Default path")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path.sfz");
+    REQUIRE(synth.getNumRegions() == 4);
+    REQUIRE(synth.getRegionView(0)->sample == R"(DefaultPath/SubPath1/sample1.wav)");
+    REQUIRE(synth.getRegionView(1)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
+    REQUIRE(synth.getRegionView(2)->sample == R"(DefaultPath/SubPath1/sample1.wav)");
+    REQUIRE(synth.getRegionView(3)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
 }
