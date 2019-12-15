@@ -72,7 +72,7 @@
 #ifndef NDEBUG
 #define LV2_DEBUG(...) lv2_log_note(&self->logger, "[DEBUG] " __VA_ARGS__)
 #else
-#define LV2_DEBUG(printargs)
+#define LV2_DEBUG(...)
 #endif
 
 typedef struct
