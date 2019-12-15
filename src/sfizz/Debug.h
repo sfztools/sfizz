@@ -30,22 +30,25 @@
 
 // Break in source code
 #if (__x86_64__ || __i386__)
-#define ASSERTFALSE      \
-    {                    \
-        __asm__("int3"); \
+#define ASSERTFALSE                                                              \
+    {                                                                            \
+        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
+        __asm__("int3");                                                         \
     }
 #elif (__arm__ || __aarch64__)
-#define ASSERTFALSE       \
-    {                     \
-        __builtin_trap(); \
+#define ASSERTFALSE                                                              \
+    {                                                                            \
+        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
+        __builtin_trap();                                                        \
     }
 #endif
 
 #elif (_WIN32 || _WIN64)
 #pragma intrinsic(__debugbreak)
-#define ASSERTFALSE     \
-    {                   \
-        __debugbreak(); \
+#define ASSERTFALSE                                                              \
+    {                                                                            \
+        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
+        __debugbreak();                                                          \
     }
 #else
 #define ASSERTFALSE
