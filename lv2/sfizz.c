@@ -874,7 +874,6 @@ work(LV2_Handle instance,
         else
         {
             lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded.\n", sfz_file_path);
-            return LV2_WORKER_ERR_UNKNOWN;
         }
     }
     else if (atom->type == self->sfizz_num_voices_uri)
