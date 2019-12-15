@@ -72,7 +72,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
         break;
     case hash("control"):
         // We shouldn't have multiple control headers in file
-        ASSERT(!hasControl)
+        // ASSERT(!hasControl)
         hasControl = true;
         handleControlOpcodes(members);
         break;
