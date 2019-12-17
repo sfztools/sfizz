@@ -720,7 +720,7 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     else if (value > crossfadeRange.getStart()) {
         const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / std::max(static_cast<float>(crossfadeRange.length()), 1.0f);
         if (curve == SfzCrossfadeCurve::power)
-            return sqrt(1 - crossfadePosition);
+            return std::sqrt(1 - crossfadePosition);
         if (curve == SfzCrossfadeCurve::gain)
             return 1 - crossfadePosition;
     }
