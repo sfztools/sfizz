@@ -94,3 +94,10 @@ TEST_CASE("[MidiState] Set and get note velocities")
     REQUIRE(+state.getNoteVelocity(0, 64) == 123);
     REQUIRE(+state.getNoteVelocity(15, 64) == 0);
 }
+
+TEST_CASE("[MidiState] Extended CCs")
+{
+    sfz::MidiState state;
+    REQUIRE(state.getCCArray(1).size() >= 142);
+    state.ccEvent(6, 142, 64); // should not trap
+}
