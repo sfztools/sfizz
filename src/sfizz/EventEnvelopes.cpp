@@ -57,7 +57,9 @@ void EventEnvelope<Type>::setFunction(std::function<Type(Type)> function)
 template <class Type>
 void EventEnvelope<Type>::registerEvent(int timestamp, Type inputValue)
 {
-    
+    if (resetEvents)
+        clear();
+
     if (static_cast<int>(events.size()) < maxCapacity)
         events.emplace_back(timestamp, function(inputValue));
 }
@@ -65,14 +67,14 @@ void EventEnvelope<Type>::registerEvent(int timestamp, Type inputValue)
 template <class Type>
 void EventEnvelope<Type>::prepareEvents()
 {
-    if (resetEvents) {
+    if (resetEvents)
         clear();
-    } else {
-        absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
-            return lhs.first < rhs.first;
-        });
-        resetEvents = true;
-    }
+
+    absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
+        return lhs.first < rhs.first;
+    });
+    
+    resetEvents = true;
 }
 
 template <class Type>
@@ -201,7 +203,8 @@ void MultiplicativeEnvelope<Type>::getBlock(absl::Span<Type> output)
         }
 
         const auto step = std::exp((std::log(event.second) - std::log(currentValue)) / length);
-        currentValue = multiplicativeRamp<Type>(output.subspan(index, length), currentValue, step);
+        multiplicativeRamp<Type>(output.subspan(index, length), currentValue, step);
+        currentValue = event.second;
         index += length;
     }
 

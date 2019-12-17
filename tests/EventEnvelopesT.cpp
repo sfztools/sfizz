@@ -22,6 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "EventEnvelopes.h"
+#include "SfzHelpers.h"
+#include "Buffer.h"
 #include "catch2/catch.hpp"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
@@ -384,4 +386,21 @@ TEST_CASE("[MultiplicativeEnvelope] Going down quantized with 2 steps and starti
     std::array<float, 8> expected { 4.6, 2.0, 1.0, 1.0, 0.5, 0.5, 0.25, 0.25 };
     envelope.getQuantizedBlock(absl::MakeSpan(output), 2.0f);
     REQUIRE(output == expected);
+}
+
+TEST_CASE("[MultiplicativeEnvelope] Pitch envelope basic function")
+{
+    sfz::Buffer<float> output { 256 };
+    sfz::MultiplicativeEnvelope<float> envelope;
+    envelope.setFunction([](float pitchValue){
+        const auto normalizedBend = sfz::normalizeBend(pitchValue);
+        const auto bendInCents = normalizedBend * 200;
+        return sfz::centsFactor(bendInCents);
+    });
+    envelope.reset(0);
+    envelope.getBlock(absl::MakeSpan(output));
+    REQUIRE(output[255] == 1.0_a);
+    envelope.registerEvent(252, -6020);
+    envelope.getBlock(absl::MakeSpan(output));
+    REQUIRE(output[255] == Approx(0.9168).epsilon(0.01));
 }
