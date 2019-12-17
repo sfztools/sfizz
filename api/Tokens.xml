@@ -966,7 +966,7 @@
       <Scope>sfz</Scope>
     </TokenIdentifier>
     <Path>namespacesfz.html</Path>
-    <Anchor>a6c28fdac5c1f06535e91468247062eaa</Anchor>
+    <Anchor>a11ed5c444b21ac2033875210cdd626ab</Anchor>
     <Abstract>If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the va...</Abstract>
     <DeclaredIn>SfzHelpers.h</DeclaredIn>
   </Token>
@@ -1952,7 +1952,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>a17e0674f9c11f3a49ce385e9939362ab</Anchor>
+    <Anchor>addc5dfdda212845e6237c6d442e098d7</Anchor>
     <Abstract>Get the attack with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -1964,7 +1964,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>a8b795cb0e254b1af4d2403b3e2065a7a</Anchor>
+    <Anchor>a14d78bd55a45456fb62688440572f005</Anchor>
     <Abstract>Get the decay with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -1976,7 +1976,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>a63e35ea45a284bc8f34ed1208f2f163f</Anchor>
+    <Anchor>a6fd3c588397ae7cb107112500dabc97a</Anchor>
     <Abstract>Get the delay with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -1988,7 +1988,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>a293697d57c2ebdcdc1abccdf23dff515</Anchor>
+    <Anchor>a8c807b0dcce7312006dfdc0b211f3304</Anchor>
     <Abstract>Get the holding duration with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -2000,7 +2000,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>ab8f01c631007c6954b95dd195678b120</Anchor>
+    <Anchor>ab0cd0d848201aee132f87e67c9b2e9a1</Anchor>
     <Abstract>Get the release duration with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -2012,7 +2012,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>ad090672cdc33f903bdf4fe9b2c822b0e</Anchor>
+    <Anchor>abf6d6f682337a3d01dfcec8964c59226</Anchor>
     <Abstract>Get the starting level with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -2024,7 +2024,7 @@
       <Scope>sfz::EGDescription</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_e_g_description.html</Path>
-    <Anchor>ae399ae561f86af6e37442af4aef37e6b</Anchor>
+    <Anchor>a3e727fb33a048bdabfe623b5117ae4b0</Anchor>
     <Abstract>Get the sustain level with possibly a CC modifier and a velocity modifier. </Abstract>
     <DeclaredIn>EGDescription.h</DeclaredIn>
   </Token>
@@ -2583,7 +2583,7 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a68a26f3b59f3c8b6676fdaf1768ab409</Anchor>
+    <Anchor>ad51014e33e86cb73d1927505bbedc11b</Anchor>
     <Abstract>Get the full CC status for a specific channel. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2974,7 +2974,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>ad95b7a75ae4acb75dca9177cda8ebc4b</Anchor>
+    <Anchor>aef0852afda4761c40b7b46eba9863cd4</Anchor>
     <Abstract>Get the additional crossfade gain of the region depending on the CC values. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>

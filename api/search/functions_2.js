@@ -5,7 +5,7 @@ var searchData=
   ['cc',['cc',['../classsfz_1_1_synth.html#a814241fbdb01a77a805337034f76f485',1,'sfz::Synth']]],
   ['ccevent',['ccEvent',['../classsfz_1_1_midi_state.html#af842db8448e586a14f2e5df1bec4dc9c',1,'sfz::MidiState']]],
   ['ccmap',['CCMap',['../classsfz_1_1_c_c_map.html#a02a7160337593535d36ce12e0f338e45',1,'sfz::CCMap']]],
-  ['ccswitchedvalue',['ccSwitchedValue',['../namespacesfz.html#a6c28fdac5c1f06535e91468247062eaa',1,'sfz']]],
+  ['ccswitchedvalue',['ccSwitchedValue',['../namespacesfz.html#a11ed5c444b21ac2033875210cdd626ab',1,'sfz']]],
   ['centsfactor',['centsFactor',['../namespacesfz.html#ace381c89be8ea56969614a371b7edae2',1,'sfz']]],
   ['channelreader',['channelReader',['../classsfz_1_1_audio_buffer.html#ae3a77506efa8f5e09572a137ec344604',1,'sfz::AudioBuffer']]],
   ['channelreaderend',['channelReaderEnd',['../classsfz_1_1_audio_buffer.html#a30bd42620f320f93a166d8ffaf5d648e',1,'sfz::AudioBuffer']]],

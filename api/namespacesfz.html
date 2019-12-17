@@ -224,9 +224,9 @@ Functions</h2></td></tr>
 <tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#abfcbb9f0d7899c187863d5e457a84fca">normalizeNegativePercents</a> (T percentValue)</td></tr>
 <tr class="memdesc:abfcbb9f0d7899c187863d5e457a84fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a possibly negative percentage between -1 and 1.  <a href="#abfcbb9f0d7899c187863d5e457a84fca">More...</a><br /></td></tr>
 <tr class="separator:abfcbb9f0d7899c187863d5e457a84fca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c28fdac5c1f06535e91468247062eaa"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a6c28fdac5c1f06535e91468247062eaa">ccSwitchedValue</a> (const CCValueArray &amp;ccValues, const absl::optional&lt; CCValuePair &gt; &amp;ccSwitch, float value) noexcept</td></tr>
-<tr class="memdesc:a6c28fdac5c1f06535e91468247062eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.  <a href="#a6c28fdac5c1f06535e91468247062eaa">More...</a><br /></td></tr>
-<tr class="separator:a6c28fdac5c1f06535e91468247062eaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11ed5c444b21ac2033875210cdd626ab"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a11ed5c444b21ac2033875210cdd626ab">ccSwitchedValue</a> (const SfzCCArray &amp;ccValues, const absl::optional&lt; CCValuePair &gt; &amp;ccSwitch, float value) noexcept</td></tr>
+<tr class="memdesc:a11ed5c444b21ac2033875210cdd626ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.  <a href="#a11ed5c444b21ac2033875210cdd626ab">More...</a><br /></td></tr>
+<tr class="separator:a11ed5c444b21ac2033875210cdd626ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc410e944cee93f0c4a0cf44279ebe5d"><td class="memItemLeft" align="right" valign="top">absl::optional&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#afc410e944cee93f0c4a0cf44279ebe5d">readNoteValue</a> (const absl::string_view &amp;value)</td></tr>
 <tr class="memdesc:afc410e944cee93f0c4a0cf44279ebe5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a note in string to its equivalent midi note number.  <a href="#afc410e944cee93f0c4a0cf44279ebe5d">More...</a><br /></td></tr>
 <tr class="separator:afc410e944cee93f0c4a0cf44279ebe5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -635,8 +635,8 @@ template&lt;class T , bool SIMD = SIMDConfig::gain&gt; </div>
 
 </div>
 </div>
-<a id="a6c28fdac5c1f06535e91468247062eaa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6c28fdac5c1f06535e91468247062eaa">&#9670;&nbsp;</a></span>ccSwitchedValue()</h2>
+<a id="a11ed5c444b21ac2033875210cdd626ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11ed5c444b21ac2033875210cdd626ab">&#9670;&nbsp;</a></span>ccSwitchedValue()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -647,7 +647,7 @@ template&lt;class T , bool SIMD = SIMDConfig::gain&gt; </div>
         <tr>
           <td class="memname">float sfz::ccSwitchedValue </td>
           <td>(</td>
-          <td class="paramtype">const CCValueArray &amp;&#160;</td>
+          <td class="paramtype">const SfzCCArray &amp;&#160;</td>
           <td class="paramname"><em>ccValues</em>, </td>
         </tr>
         <tr>
@@ -695,9 +695,6 @@ template&lt;class T , bool SIMD = SIMDConfig::gain&gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">constexpr float sfz::centsFactor </td>
@@ -717,11 +714,6 @@ template&lt;class T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Converts cents to a pitch ratio. </p>
@@ -1613,9 +1605,6 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">constexpr float sfz::normalizeBend </td>
@@ -1625,11 +1614,6 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Normalize bends between -1 and 1. </p>
@@ -1651,9 +1635,6 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">constexpr float sfz::normalizeCC </td>
@@ -1663,11 +1644,6 @@ template&lt;class T &gt; </div>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Normalize a CC value between (T)0.0 and (T)1.0. </p>
@@ -1694,9 +1670,6 @@ template&lt;class T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">constexpr float sfz::normalizeNegativePercents </td>
@@ -1706,11 +1679,6 @@ template&lt;class T &gt; </div>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Normalize a possibly negative percentage between -1 and 1. </p>
@@ -1737,9 +1705,6 @@ template&lt;class T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">constexpr float sfz::normalizePercents </td>
@@ -1749,11 +1714,6 @@ template&lt;class T &gt; </div>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Normalize a percentage between 0 and 1. </p>
@@ -2705,7 +2665,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 15 2019 23:06:34 for sfizz by
+					<span style="float:right">Generated on Tue Dec 17 2019 11:39:03 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

@@ -330,37 +330,37 @@
                <Node>
                 <Name>getAttack</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>a17e0674f9c11f3a49ce385e9939362ab</Anchor>
+                <Anchor>addc5dfdda212845e6237c6d442e098d7</Anchor>
                </Node>
                <Node>
                 <Name>getDecay</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>a8b795cb0e254b1af4d2403b3e2065a7a</Anchor>
+                <Anchor>a14d78bd55a45456fb62688440572f005</Anchor>
                </Node>
                <Node>
                 <Name>getDelay</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>a63e35ea45a284bc8f34ed1208f2f163f</Anchor>
+                <Anchor>a6fd3c588397ae7cb107112500dabc97a</Anchor>
                </Node>
                <Node>
                 <Name>getHold</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>a293697d57c2ebdcdc1abccdf23dff515</Anchor>
+                <Anchor>a8c807b0dcce7312006dfdc0b211f3304</Anchor>
                </Node>
                <Node>
                 <Name>getRelease</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>ab8f01c631007c6954b95dd195678b120</Anchor>
+                <Anchor>ab0cd0d848201aee132f87e67c9b2e9a1</Anchor>
                </Node>
                <Node>
                 <Name>getStart</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>ad090672cdc33f903bdf4fe9b2c822b0e</Anchor>
+                <Anchor>abf6d6f682337a3d01dfcec8964c59226</Anchor>
                </Node>
                <Node>
                 <Name>getSustain</Name>
                 <Path>structsfz_1_1_e_g_description.html</Path>
-                <Anchor>ae399ae561f86af6e37442af4aef37e6b</Anchor>
+                <Anchor>a3e727fb33a048bdabfe623b5117ae4b0</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -535,7 +535,7 @@
                <Node>
                 <Name>getCCArray</Name>
                 <Path>classsfz_1_1_midi_state.html</Path>
-                <Anchor>a68a26f3b59f3c8b6676fdaf1768ab409</Anchor>
+                <Anchor>ad51014e33e86cb73d1927505bbedc11b</Anchor>
                </Node>
                <Node>
                 <Name>getCCValue</Name>
@@ -655,7 +655,7 @@
                <Node>
                 <Name>getCrossfadeGain</Name>
                 <Path>structsfz_1_1_region.html</Path>
-                <Anchor>ad95b7a75ae4acb75dca9177cda8ebc4b</Anchor>
+                <Anchor>aef0852afda4761c40b7b46eba9863cd4</Anchor>
                </Node>
                <Node>
                 <Name>getDelay</Name>

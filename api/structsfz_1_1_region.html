@@ -154,9 +154,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac87d6f68ce05169bef3796e29c629a70"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#ac87d6f68ce05169bef3796e29c629a70">getNoteGain</a> (int noteNumber, uint8_t velocity) noexcept</td></tr>
 <tr class="memdesc:ac87d6f68ce05169bef3796e29c629a70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the note-related gain of the region depending on which note has been pressed and at which velocity.  <a href="#ac87d6f68ce05169bef3796e29c629a70">More...</a><br /></td></tr>
 <tr class="separator:ac87d6f68ce05169bef3796e29c629a70"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad95b7a75ae4acb75dca9177cda8ebc4b"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#ad95b7a75ae4acb75dca9177cda8ebc4b">getCrossfadeGain</a> (const CCValueArray &amp;ccState) noexcept</td></tr>
-<tr class="memdesc:ad95b7a75ae4acb75dca9177cda8ebc4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the additional crossfade gain of the region depending on the CC values.  <a href="#ad95b7a75ae4acb75dca9177cda8ebc4b">More...</a><br /></td></tr>
-<tr class="separator:ad95b7a75ae4acb75dca9177cda8ebc4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef0852afda4761c40b7b46eba9863cd4"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#aef0852afda4761c40b7b46eba9863cd4">getCrossfadeGain</a> (const SfzCCArray &amp;ccState) noexcept</td></tr>
+<tr class="memdesc:aef0852afda4761c40b7b46eba9863cd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the additional crossfade gain of the region depending on the CC values.  <a href="#aef0852afda4761c40b7b46eba9863cd4">More...</a><br /></td></tr>
+<tr class="separator:aef0852afda4761c40b7b46eba9863cd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe5ddb612bb580c99f78fe2f7ff46fdc"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#abe5ddb612bb580c99f78fe2f7ff46fdc">getBaseVolumedB</a> (int channel, int noteNumber) noexcept</td></tr>
 <tr class="memdesc:abe5ddb612bb580c99f78fe2f7ff46fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the base volume of the region depending on which note has been pressed to trigger the region.  <a href="#abe5ddb612bb580c99f78fe2f7ff46fdc">More...</a><br /></td></tr>
 <tr class="separator:abe5ddb612bb580c99f78fe2f7ff46fdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -304,8 +304,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ad95b7a75ae4acb75dca9177cda8ebc4b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad95b7a75ae4acb75dca9177cda8ebc4b">&#9670;&nbsp;</a></span>getCrossfadeGain()</h2>
+<a id="aef0852afda4761c40b7b46eba9863cd4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef0852afda4761c40b7b46eba9863cd4">&#9670;&nbsp;</a></span>getCrossfadeGain()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -316,7 +316,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">float sfz::Region::getCrossfadeGain </td>
           <td>(</td>
-          <td class="paramtype">const CCValueArray &amp;&#160;</td>
+          <td class="paramtype">const SfzCCArray &amp;&#160;</td>
           <td class="paramname"><em>ccState</em></td><td>)</td>
           <td></td>
         </tr>
@@ -960,7 +960,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 15 2019 23:06:34 for sfizz by
+					<span style="float:right">Generated on Tue Dec 17 2019 11:39:03 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

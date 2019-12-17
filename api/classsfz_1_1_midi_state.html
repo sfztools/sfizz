@@ -139,9 +139,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a12179d36ac37d65f3de4af12ed0de604"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_midi_state.html#a12179d36ac37d65f3de4af12ed0de604">getCCValue</a> (int channel, int ccNumber) const noexcept</td></tr>
 <tr class="memdesc:a12179d36ac37d65f3de4af12ed0de604"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the CC value for a specific channel and cc number.  <a href="#a12179d36ac37d65f3de4af12ed0de604">More...</a><br /></td></tr>
 <tr class="separator:a12179d36ac37d65f3de4af12ed0de604"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68a26f3b59f3c8b6676fdaf1768ab409"><td class="memItemLeft" align="right" valign="top">const CCValueArray &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_midi_state.html#a68a26f3b59f3c8b6676fdaf1768ab409">getCCArray</a> (int channel) const noexcept</td></tr>
-<tr class="memdesc:a68a26f3b59f3c8b6676fdaf1768ab409"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the full CC status for a specific channel.  <a href="#a68a26f3b59f3c8b6676fdaf1768ab409">More...</a><br /></td></tr>
-<tr class="separator:a68a26f3b59f3c8b6676fdaf1768ab409"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad51014e33e86cb73d1927505bbedc11b"><td class="memItemLeft" align="right" valign="top">const SfzCCArray &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_midi_state.html#ad51014e33e86cb73d1927505bbedc11b">getCCArray</a> (int channel) const noexcept</td></tr>
+<tr class="memdesc:ad51014e33e86cb73d1927505bbedc11b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the full CC status for a specific channel.  <a href="#ad51014e33e86cb73d1927505bbedc11b">More...</a><br /></td></tr>
+<tr class="separator:ad51014e33e86cb73d1927505bbedc11b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e4beb553db5ad28eaae35032cfd1967"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_midi_state.html#a8e4beb553db5ad28eaae35032cfd1967">reset</a> () noexcept</td></tr>
 <tr class="memdesc:a8e4beb553db5ad28eaae35032cfd1967"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset the midi state (does not impact the last note on time)  <a href="#a8e4beb553db5ad28eaae35032cfd1967">More...</a><br /></td></tr>
 <tr class="separator:a8e4beb553db5ad28eaae35032cfd1967"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -201,8 +201,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a68a26f3b59f3c8b6676fdaf1768ab409"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68a26f3b59f3c8b6676fdaf1768ab409">&#9670;&nbsp;</a></span>getCCArray()</h2>
+<a id="ad51014e33e86cb73d1927505bbedc11b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad51014e33e86cb73d1927505bbedc11b">&#9670;&nbsp;</a></span>getCCArray()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -211,7 +211,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const CCValueArray&amp; sfz::MidiState::getCCArray </td>
+          <td class="memname">const SfzCCArray&amp; sfz::MidiState::getCCArray </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channel</em></td><td>)</td>
@@ -232,7 +232,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const CCValueArray&amp; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>const SfzCCArray&amp; </dd></dl>
 
 </div>
 </div>
@@ -529,7 +529,7 @@ Public Member Functions</h2></td></tr>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 15 2019 23:06:34 for sfizz by
+					<span style="float:right">Generated on Tue Dec 17 2019 11:39:03 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
