@@ -190,7 +190,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         }
         default:
             // Unsupported control opcode
-            ASSERTFALSE;
+            DBG("Unsupported control opcode: " << member.opcode);
         }
     }
 }
