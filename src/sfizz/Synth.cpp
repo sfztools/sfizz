@@ -142,6 +142,7 @@ void sfz::Synth::clear()
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
+    unknownOpcodes.clear();
 }
 
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
