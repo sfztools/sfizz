@@ -44,7 +44,7 @@ using CCNamePair = std::pair<uint8_t, std::string>;
  * @return constexpr float
  */
 template<class T>
-inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
+constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 {
     return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
 }
@@ -57,7 +57,7 @@ inline constexpr float centsFactor(T cents, T centsPerOctave = 1200)
  * @return constexpr float
  */
 template<class T>
-inline constexpr float normalizeCC(T ccValue)
+constexpr float normalizeCC(T ccValue)
 {
     static_assert(std::is_integral<T>::value, "Requires an integral T");
     return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
@@ -71,7 +71,7 @@ inline constexpr float normalizeCC(T ccValue)
  * @return constexpr float
  */
 template<class T>
-inline constexpr float normalizePercents(T percentValue)
+constexpr float normalizePercents(T percentValue)
 {
     return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
 }
@@ -83,7 +83,7 @@ inline constexpr float normalizePercents(T percentValue)
  * @param bendValue
  * @return constexpr float
  */
-inline constexpr float normalizeBend(int bendValue)
+constexpr float normalizeBend(int bendValue)
 {
     return std::min(std::max(static_cast<float>(bendValue), -8191.0f), 8191.0f) / 8191.0f;
 }
@@ -96,7 +96,7 @@ inline constexpr float normalizeBend(int bendValue)
  * @return constexpr float
  */
 template<class T>
-inline constexpr float normalizeNegativePercents(T percentValue)
+constexpr float normalizeNegativePercents(T percentValue)
 {
     return std::min(std::max(static_cast<float>(percentValue), -100.0f), 100.0f) / 100.0f;
 }
