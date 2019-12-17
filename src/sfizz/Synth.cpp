@@ -440,7 +440,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
 
 void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
 {
-    ASSERT(ccNumber < 128);
+    ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
 
