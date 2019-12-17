@@ -359,6 +359,15 @@ protected:
     void callback(absl::string_view header, const std::vector<Opcode>& members) final;
 
 private:
+    /**
+     * @brief Reset all CCs; to be used on CC 121
+     * 
+     * @param delay the delay for the controller reset
+     * @param channel the channel on which to reset the controller
+     * 
+     */
+    void resetAllControllers(int delay, int channel) noexcept;
+
     int numGroups { 0 };
     int numMasters { 0 };
     int numCurves { 0 };

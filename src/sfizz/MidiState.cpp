@@ -92,3 +92,13 @@ void sfz::MidiState::reset() noexcept
     for (auto& bendValue: pitchBends)
         bendValue = 0;
 }
+
+void sfz::MidiState::resetAllControllers(int channel) noexcept
+{
+    ASSERT(channel >= 0 && channel < 16);
+
+    for (int idx = 0; idx < config::numCCs; idx++)
+        cc[channel][idx] = 0;
+
+    pitchBends[channel] = 0;
+}

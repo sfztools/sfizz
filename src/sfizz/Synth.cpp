@@ -443,15 +443,18 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
-
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
 
-    midiState.ccEvent(channel, ccNumber, ccValue);
+    if (ccNumber == config::resetCC) {
+        resetAllControllers(delay, channel);
+        return;
+    }
+
+    midiState.ccEvent(channel, ccNumber, ccValue);    
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
-
 
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(channel, ccNumber, ccValue)) {
@@ -605,5 +608,24 @@ void sfz::Synth::disableFreeWheeling() noexcept
     if (freeWheeling) {
         freeWheeling = false;
         DBG("Disabling freewheeling");
+    }
+}
+
+void sfz::Synth::resetAllControllers(int delay, int channel) noexcept
+{
+    AtomicGuard callbackGuard { inCallback };
+    if (!canEnterCallback)
+        return;
+
+    midiState.resetAllControllers(channel);
+    for (auto& voice: voices) {
+        voice->registerPitchWheel(delay, channel, 0);
+        for (int cc = 0; cc < config::numCCs; ++cc)
+            voice->registerCC(delay, channel, cc, 0);
+    }
+
+    for (auto& region: regions) {
+        for (int cc = 0; cc < config::numCCs; ++cc)
+            region->registerCC(channel, cc, 0);
     }
 }

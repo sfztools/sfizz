@@ -90,6 +90,13 @@ public:
      */
     void reset() noexcept;
 
+    /**
+     * @brief Res
+     * 
+     * @param channel 
+     */
+    void resetAllControllers(int channel) noexcept;
+
 private:
     template<class T>
     using ChannelArray = std::array<T, 16>;
