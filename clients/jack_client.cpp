@@ -64,6 +64,11 @@ constexpr uint8_t channel(uint8_t midiStatusByte)
 {
     return midiStatusByte & channelMask;
 }
+
+constexpr int buildAndCenterPitch(uint8_t firstByte, uint8_t secondByte)
+{
+    return (int)(((unsigned int)secondByte << 7) + (unsigned int)firstByte) - 8192;
+}
 }
 
 static std::atomic<bool> keepRunning [[maybe_unused]] { true };
@@ -109,6 +114,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
             // DBG("[MIDI] Channel pressure at time " << event.time);
             break;
         case midi::pitchBend:
+            synth->pitchWheel(event.time, midi::channel(event.buffer[0]), midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));
             // DBG("[MIDI] Pitch bend at time " << event.time);
             break;
         case midi::systemMessage:
