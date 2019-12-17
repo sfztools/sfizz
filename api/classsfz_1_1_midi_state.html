@@ -145,6 +145,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8e4beb553db5ad28eaae35032cfd1967"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_midi_state.html#a8e4beb553db5ad28eaae35032cfd1967">reset</a> () noexcept</td></tr>
 <tr class="memdesc:a8e4beb553db5ad28eaae35032cfd1967"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset the midi state (does not impact the last note on time)  <a href="#a8e4beb553db5ad28eaae35032cfd1967">More...</a><br /></td></tr>
 <tr class="separator:a8e4beb553db5ad28eaae35032cfd1967"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a373d9097a2f5dac879ad8a6d34a7de6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_midi_state.html#a373d9097a2f5dac879ad8a6d34a7de6c">resetAllControllers</a> (int channel) noexcept</td></tr>
+<tr class="memdesc:a373d9097a2f5dac879ad8a6d34a7de6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Res.  <a href="#a373d9097a2f5dac879ad8a6d34a7de6c">More...</a><br /></td></tr>
+<tr class="separator:a373d9097a2f5dac879ad8a6d34a7de6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Holds the current "MIDI state", meaning the known state of all CCs currently, as well as the note velocities that triggered the currently pressed notes. </p>
@@ -525,11 +528,45 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a373d9097a2f5dac879ad8a6d34a7de6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a373d9097a2f5dac879ad8a6d34a7de6c">&#9670;&nbsp;</a></span>resetAllControllers()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::MidiState::resetAllControllers </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>channel</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Res. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">channel</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 </div><!-- contents -->
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Tue Dec 17 2019 20:41:33 for sfizz by
+					<span style="float:right">Generated on Tue Dec 17 2019 22:33:47 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
