@@ -157,9 +157,15 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
     }
 }
 
-void sfz::Voice::registerCC(int delay, int channel [[maybe_unused]], int ccNumber, uint8_t ccValue) noexcept
+void sfz::Voice::registerCC(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
 {
     if (region == nullptr)
+        return;
+
+    if (state ==  State::idle)
+        return;
+
+    if (triggerChannel != channel)
         return;
 
     if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
@@ -197,6 +203,9 @@ void sfz::Voice::registerPitchWheel(int delay, int channel, int pitch) noexcept
         return;
 
     if (state == State::idle)
+        return;
+
+    if (triggerChannel != channel)
         return;
 
     pitchBendEnvelope.registerEvent(delay, pitch);
