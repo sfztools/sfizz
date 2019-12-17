@@ -675,9 +675,9 @@ run(LV2_Handle instance, uint32_t sample_count)
         LV2_Atom atom;
         atom.type = self->sfizz_log_status_uri;
         atom.size = 0;
-        if (!self->worker->schedule_work(self->worker->handle,
+        if (!(self->worker->schedule_work(self->worker->handle,
                                          lv2_atom_total_size((LV2_Atom *)&atom),
-                                         &atom) == LV2_WORKER_SUCCESS)
+                                         &atom) == LV2_WORKER_SUCCESS))
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue sending a logging message to the background worker");
         }
