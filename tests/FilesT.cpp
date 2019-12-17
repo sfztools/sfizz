@@ -353,3 +353,14 @@ TEST_CASE("[Files] Default path is ignored for generators")
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->sample == R"(*sine)");
 }
+
+
+TEST_CASE("[Files] Set CC applies properly to all channels")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_cc.sfz");
+    for (int channel = 0; channel < 16; channel++) {
+        REQUIRE(synth.getMidiState().getCCValue(channel, 142) == 63);
+        REQUIRE(synth.getMidiState().getCCValue(channel, 61) == 122);
+    }
+}
