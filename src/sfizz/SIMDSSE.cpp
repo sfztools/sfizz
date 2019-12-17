@@ -652,7 +652,7 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
     while (pan < lastAligned) {
         auto mmPan = _mm_load_ps(pan);
         mmPan = _mm_add_ps(mmOne, mmPan);
-        mmPan = _mm_mul_ps(mmOne, mmPiFour);
+        mmPan = _mm_mul_ps(mmPan, mmPiFour);
         sincos_ps(mmPan, &mmSin, &mmCos);
         auto mmLeft = _mm_mul_ps(mmCos, _mm_load_ps(left));
         auto mmRight = _mm_mul_ps(mmCos, _mm_load_ps(left));
