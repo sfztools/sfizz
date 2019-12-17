@@ -156,3 +156,51 @@ TEST_CASE("[Synth] Testing channel 16")
     REQUIRE( region != nullptr );
     REQUIRE( region->sample == "dummy16.wav" );
 }
+
+TEST_CASE("[Synth] All notes offs/all sounds off (single channel)")
+{
+    sfz::Synth synth;
+    synth.setNumVoices(8);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
+    synth.noteOn(0, 0, 60, 63);
+    synth.noteOn(1, 0, 60, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.cc(0, 0, 120, 63);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+
+    synth.noteOn(0, 0, 60, 63);
+    synth.noteOn(1, 0, 60, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.cc(0, 0, 123, 63);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+}
+
+TEST_CASE("[Synth] All notes offs/all sounds off (multi channel)")
+{
+    sfz::Synth synth;
+    synth.setNumVoices(8);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
+    synth.noteOn(0, 0, 60, 63);
+    synth.noteOn(1, 1, 60, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.cc(0, 0, 120, 63);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+
+    synth.noteOn(0, 0, 60, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.cc(0, 0, 123, 63);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    synth.cc(0, 1, 123, 63);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+}
+
+TEST_CASE("[Synth] Reset all controllers")
+{
+    sfz::Synth synth;
+    synth.cc(0, 0, 12, 64);
+    synth.cc(0, 1, 12, 64);
+    REQUIRE( synth.getMidiState().getCCValue(0, 12) == 64 );
+    synth.cc(0, 0, 121, 64);
+    REQUIRE( synth.getMidiState().getCCValue(0, 12) == 0 );
+    REQUIRE( synth.getMidiState().getCCValue(1, 12) == 64 );
+}
