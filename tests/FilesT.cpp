@@ -127,10 +127,11 @@ TEST_CASE("[Files] Define test")
 {
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/defines.sfz");
-    REQUIRE(synth.getNumRegions() == 3);
+    REQUIRE(synth.getNumRegions() == 4);
     REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(36, 36));
     REQUIRE(synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(38, 38));
     REQUIRE(synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(42, 42));
+    REQUIRE(synth.getRegionView(3)->volume == -12.0f);
 }
 
 TEST_CASE("[Files] Group from AVL")

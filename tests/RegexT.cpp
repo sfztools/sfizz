@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Regexes.h"
+#include <iostream>
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 
@@ -29,6 +30,8 @@ void includeTest(const std::string& line, const std::string& fileName)
 {
     std::smatch includeMatch;
     auto found = std::regex_search(line, includeMatch, sfz::Regexes::includes);
+    if (!found)
+        std::cerr << "Define test failed: " << line << '\n';
     REQUIRE(found);
     REQUIRE(includeMatch[1] == fileName);
 }
@@ -70,6 +73,9 @@ TEST_CASE("[Regex] #define")
     defineTest("#define $alphanum asr1t44", "$alphanum", "asr1t44");
     defineTest("#define  $whitespace   asr1t44   ", "$whitespace", "asr1t44");
     defineTest("#define $lazyMatching  matched  bfasd ", "$lazyMatching", "matched");
+    defineTest("#define $stircut  -12", "$stircut", "-12");
+    defineTest("#define $_ht_under_score_  3fd", "$_ht_under_score_", "3fd");
+    defineTest("#define $ht_under_score  3fd", "$ht_under_score", "3fd");
     defineFail("#define $symbols# 1");
     defineFail("#define $symbolsAgain $1");
     defineFail("#define $trailingSymbols 1$");
