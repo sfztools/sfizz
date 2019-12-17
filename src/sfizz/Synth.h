@@ -422,7 +422,7 @@ private:
     // occur in the audio callback
     VoicePtrVector voiceViewArray;
     std::array<RegionPtrVector, 128> noteActivationLists;
-    std::array<RegionPtrVector, 128> ccActivationLists;
+    std::array<RegionPtrVector, config::numCCs> ccActivationLists;
 
     // Internal temporary buffer
     AudioBuffer<float> tempBuffer { 2, config::defaultSamplesPerBlock };

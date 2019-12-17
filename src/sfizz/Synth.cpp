@@ -258,13 +258,13 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
                 noteActivationLists[note].push_back(region);
         }
 
-        for (auto cc = 0; cc < 128; cc++) {
+        for (auto cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc) || region->ccConditions.contains(cc))
                 ccActivationLists[cc].push_back(region);
         }
 
         // Defaults
-        for (int ccIndex = 1; ccIndex < 128; ccIndex++) {
+        for (int ccIndex = 0; ccIndex < config::numCCs; ccIndex++) {
             const auto channel = region->channelRange.getStart();
             region->registerCC(channel, ccIndex, midiState.getCCValue(channel, ccIndex));
         }
