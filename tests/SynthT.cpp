@@ -120,3 +120,39 @@ TEST_CASE("[Synth] Check that we can change the oversampling factor before and a
     synth.setOversamplingFactor(sfz::x2);
     synth.renderBlock(buffer);
 }
+
+
+TEST_CASE("[Synth] Testing channel 1")
+{
+    sfz::Synth synth;
+    synth.setNumVoices(1);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
+    synth.noteOn(0, 0, 60, 63);
+    const auto* region = synth.getVoiceView(0)->getRegion();
+    REQUIRE( region != nullptr );
+    REQUIRE( region->sample == "dummy1.wav" );
+}
+
+TEST_CASE("[Synth] Testing channel 2")
+{
+    sfz::Synth synth;
+    synth.setNumVoices(1);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
+    synth.noteOn(0, 1, 60, 63);
+    const auto* region = synth.getVoiceView(0)->getRegion();
+    REQUIRE( region != nullptr );
+    REQUIRE( region->sample == "dummy2.wav" );
+}
+
+
+
+TEST_CASE("[Synth] Testing channel 16")
+{
+    sfz::Synth synth;
+    synth.setNumVoices(1);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
+    synth.noteOn(0, 15, 60, 63);
+    const auto* region = synth.getVoiceView(0)->getRegion();
+    REQUIRE( region != nullptr );
+    REQUIRE( region->sample == "dummy16.wav" );
+}
