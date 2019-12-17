@@ -43,6 +43,7 @@ void removeCommentOnLine(absl::string_view& line)
 
 bool sfz::Parser::loadSfzFile(const fs::path& file)
 {
+    const svregex_iterator regexEnd {};
     const auto sfzFile = file.is_absolute() ? file : originalDirectory / file;
     if (!fs::exists(sfzFile))
         return false;
@@ -54,18 +55,21 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
     aggregatedContent = absl::StrJoin(lines, " ");
     const absl::string_view aggregatedView { aggregatedContent };
 
-    svregex_iterator headerIterator(aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers);
-    const auto regexEnd = svregex_iterator();
+    // FIXME: segfaults with Carla + libstdc++ + the "bug" file in Unruly Drums; sometimes it takes a couple of tries for the
+    // segmentation fault to appear
+    svregex_iterator headerIterator { aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers };
 
     std::vector<Opcode> currentMembers;
 
     for (; headerIterator != regexEnd; ++headerIterator) {
         svmatch_results headerMatch = *headerIterator;
 
-        // Can't use uniform initialization here because it generates narrowing conversions
-        const absl::string_view header(&*headerMatch[1].first, headerMatch[1].length());
-        const absl::string_view members(&*headerMatch[2].first, headerMatch[2].length());
-        auto paramIterator = svregex_iterator(members.cbegin(), members.cend(), sfz::Regexes::members);
+        ASSERT(headerMatch[1].length() > 0);
+        ASSERT(headerMatch[2].length() > 0);
+        // MSVC needed a hack there using &*headerMatch[1].first; removed it for now
+        const absl::string_view header { headerMatch[1].first, static_cast<size_t>(headerMatch[1].length()) };
+        const absl::string_view members { headerMatch[2].first, static_cast<size_t>(headerMatch[2].length()) };
+        svregex_iterator paramIterator { members.cbegin(), members.cend(), sfz::Regexes::members };
 
         // Store or handle members
         for (; paramIterator != regexEnd; ++paramIterator) {
