@@ -409,7 +409,7 @@ private:
      * @return Voice*
      */
     Voice* findFreeVoice() noexcept;
-    // Names for the cc as set by the cc_label or cc_name opcodes
+    // Names for the cc as set by the label_cc opcode
     std::vector<CCNamePair> ccNames;
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;
