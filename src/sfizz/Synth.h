@@ -345,6 +345,8 @@ public:
      *
      */
     void disableFreeWheeling() noexcept;
+
+    const MidiState& getMidiState() const noexcept { return midiState; }
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time

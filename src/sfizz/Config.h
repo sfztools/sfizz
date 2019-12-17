@@ -49,6 +49,7 @@ namespace config {
     constexpr float A440 { 440.0 };
     constexpr unsigned powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001 };
+    constexpr int numCCs { 143 };
 } // namespace config
 
 // Enable or disable SIMD accelerators by default

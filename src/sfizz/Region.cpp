@@ -35,7 +35,7 @@
 bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
     // Check that the parameter is well formed
-    if (opcode.parameter && !sfz::Default::ccRange.containsWithEnd(*opcode.parameter)) {
+    if (opcode.parameter && !sfz::Default::ccNumberRange.containsWithEnd(*opcode.parameter)) {
         DBG("Wrong parameter value (" << std::to_string(*opcode.parameter) << ") for opcode " << opcode.opcode);
         return false;
     }
@@ -164,12 +164,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("locc"):
         if (opcode.parameter) {
-            setRangeStartFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccRange);
+            setRangeStartFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccValueRange);
         }
         break;
     case hash("hicc"):
         if (opcode.parameter)
-            setRangeEndFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccRange);
+            setRangeEndFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccValueRange);
         break;
     case hash("sw_lokey"):
         setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
@@ -261,11 +261,11 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("on_locc"):
         if (opcode.parameter)
-            setRangeStartFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccRange);
+            setRangeStartFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccTriggerValueRange);
         break;
     case hash("on_hicc"):
         if (opcode.parameter)
-            setRangeEndFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccRange);
+            setRangeEndFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccTriggerValueRange);
         break;
 
     // Performance parameters: amplifier
@@ -315,7 +315,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         volumeDistribution.param(std::uniform_real_distribution<float>::param_type(-ampRandom, ampRandom));
         break;
     case hash("amp_velcurve_"):
-        if (opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter)) {
+        {
             auto value = readOpcode(opcode.value, Default::ampVelcurveRange);
             if (value)
                 velocityPoints.emplace_back(*opcode.parameter, *value);
@@ -371,22 +371,22 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("xfin_locc"):
         if (opcode.parameter) {
-            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::ccRange);
+            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::ccValueRange);
         }
         break;
     case hash("xfin_hicc"):
         if (opcode.parameter) {
-            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::velocityRange);
+            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::ccValueRange);
         }
         break;
     case hash("xfout_locc"):
         if (opcode.parameter) {
-            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::velocityRange);
+            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::ccValueRange);
         }
         break;
     case hash("xfout_hicc"):
         if (opcode.parameter) {
-            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::velocityRange);
+            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::ccValueRange);
         }
         break;
     case hash("xf_cccurve"):

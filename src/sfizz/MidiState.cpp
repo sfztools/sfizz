@@ -58,7 +58,7 @@ int sfz::MidiState::getPitchBend(int channel) const noexcept
 void sfz::MidiState::ccEvent(int channel, int ccNumber, uint8_t ccValue) noexcept
 {
     ASSERT(channel >= 0 && channel < 16);
-    ASSERT(ccNumber >= 0 && ccNumber <= 142);
+    ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
     ASSERT(ccValue >= 0 && ccValue <= 127);
     
     cc[channel][ccNumber] = ccValue;
@@ -67,7 +67,7 @@ void sfz::MidiState::ccEvent(int channel, int ccNumber, uint8_t ccValue) noexcep
 uint8_t sfz::MidiState::getCCValue(int channel, int ccNumber) const noexcept
 {
     ASSERT(channel >= 0 && channel < 16);
-    ASSERT(ccNumber >= 0 && ccNumber <= 127);
+    ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
     
     return cc[channel][ccNumber];
 }

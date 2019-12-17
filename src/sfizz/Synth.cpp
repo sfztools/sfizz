@@ -166,15 +166,16 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Set_cc"):
             [[fallthrough]];
         case hash("set_cc"):
-            if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter)){
-                for (int channel=1; channel <=16; channel++)
-                    midiState.ccEvent(channel, *member.parameter, readOpcode(member.value, Default::ccRange).value_or(0));
+            if (member.parameter && Default::ccNumberRange.containsWithEnd(*member.parameter)) {
+                const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
+                for (int channel = 0; channel < 16; channel++)
+                    midiState.ccEvent(channel, *member.parameter, ccValue);
             }
             break;
         case hash("Label_cc"):
             [[fallthrough]];
         case hash("label_cc"):
-            if (member.parameter && Default::ccRange.containsWithEnd(*member.parameter))
+            if (member.parameter && Default::ccNumberRange.containsWithEnd(*member.parameter))
                 ccNames.emplace_back(*member.parameter, member.value);
             break;
         case hash("Default_path"):

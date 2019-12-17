@@ -27,11 +27,12 @@
 //#include <string>
 #include <array>
 #include <cmath>
+#include "Config.h"
 
 namespace sfz
 {
 
-using SfzCCArray = std::array<uint8_t, 142>;
+using SfzCCArray = std::array<uint8_t, config::numCCs>;
 using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
 

@@ -203,7 +203,7 @@ template <class ValueType>
 inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCValuePair>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
-    if (value && opcode.parameter && Default::ccRange.containsWithEnd(*opcode.parameter))
+    if (value && opcode.parameter && Default::ccNumberRange.containsWithEnd(*opcode.parameter))
         target = std::make_pair(*opcode.parameter, *value);
     else
         target = {};

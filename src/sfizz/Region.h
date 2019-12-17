@@ -249,7 +249,7 @@ struct Region {
     // Region logic: MIDI conditions
     Range<uint8_t> channelRange { Default::midiChannelRange }; //lochan and hichan
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
-    CCMap<Range<uint8_t>> ccConditions { Default::ccRange };
+    CCMap<Range<uint8_t>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
     absl::optional<uint8_t> keyswitchUp {}; // sw_up
