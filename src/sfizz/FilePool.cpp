@@ -200,10 +200,8 @@ void sfz::FilePool::cleanupPromises() noexcept
 {
     FilePromisePtr promise;
     // Remove stuff from the filled queue and put them in a linear storage
-    while (filledPromiseQueue.try_dequeue(promise)) {
+    while (filledPromiseQueue.try_dequeue(promise))
         temporaryFilePromises.push_back(promise);
-        promise.reset();
-    }
 
     auto promiseIterator = temporaryFilePromises.begin();
     auto sentinel = temporaryFilePromises.end() - 1;
