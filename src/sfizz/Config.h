@@ -41,6 +41,11 @@ namespace config {
     constexpr int numVoices { 64 };
     constexpr int maxVoices { 256 };
     constexpr int sustainCC { 64 };
+    constexpr int allSoundOffCC { 120 };
+    constexpr int resetCC { 121 };
+    constexpr int allNotesOffCC { 123 };
+    constexpr int omniOffCC { 124 };
+    constexpr int omniOnCC { 125 };
     constexpr int halfCCThreshold { 64 };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };

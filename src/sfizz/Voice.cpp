@@ -168,6 +168,11 @@ void sfz::Voice::registerCC(int delay, int channel, int ccNumber, uint8_t ccValu
     if (triggerChannel != channel)
         return;
 
+    if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
+        reset();
+        return;
+    }
+
     if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
 
