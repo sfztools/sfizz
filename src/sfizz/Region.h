@@ -323,7 +323,7 @@ private:
     bool pitchSwitched { true };
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
-    std::bitset<128> ccSwitched;
+    std::bitset<config::numCCs> ccSwitched;
     std::string defaultPath { "" };
 
     int activeNotesInRange { -1 };
