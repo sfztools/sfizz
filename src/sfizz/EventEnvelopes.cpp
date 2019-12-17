@@ -157,7 +157,7 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
             continue;
         }
 
-        const auto difference = abs(newValue - currentValue);
+        const auto difference = std::abs(newValue - currentValue);
         if (difference < quantizationStep) {
             fill<Type>(output.subspan(index, length), currentValue);
             currentValue = newValue;
