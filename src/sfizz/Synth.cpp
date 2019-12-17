@@ -329,6 +329,8 @@ void sfz::Synth::garbageCollect() noexcept
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
+    ASSERT(samplesPerBlock < config::maxBlockSize);
+
     AtomicDisabler callbackDisabler { canEnterCallback };
 
     while (inCallback) {

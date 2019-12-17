@@ -34,6 +34,7 @@ enum Oversampling {
 namespace config {
     constexpr float defaultSampleRate { 48000 };
     constexpr int defaultSamplesPerBlock { 1024 };
+    constexpr int maxBlockSize { 8192 };
     constexpr int preloadSize { 8192 };
     constexpr int numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
