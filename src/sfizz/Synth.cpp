@@ -182,7 +182,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Default_path"):
             [[fallthrough]];
         case hash("default_path"): {
-            const auto newPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
+            auto newPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             if (fs::exists(originalDirectory / newPath)) {
                 DBG("Changing default sample path to " << newPath);
                 defaultPath = std::move(newPath);
