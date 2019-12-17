@@ -777,7 +777,9 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
         auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
         auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
         // Linear interpolation
-        float relativePositionInSegment { static_cast<float>(velocity - before->first) / (after->first - before->first) };
+        float relativePositionInSegment { 
+            static_cast<float>(velocity - before->first) / static_cast<float>(after->first - before->first)
+        };
         float segmentEndpoints { after->second - before->second };
         gain *= relativePositionInSegment * segmentEndpoints;
     } else { // Standard velocity curve
