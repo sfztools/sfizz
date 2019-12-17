@@ -31,7 +31,7 @@
 namespace sfz
 {
 
-using CCValueArray = std::array<uint8_t, 128>;
+using SfzCCArray = std::array<uint8_t, 142>;
 using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
 
@@ -109,7 +109,7 @@ constexpr float normalizeNegativePercents(T percentValue)
  * @param value
  * @return float
  */
-inline float ccSwitchedValue(const CCValueArray& ccValues, const absl::optional<CCValuePair>& ccSwitch, float value) noexcept
+inline float ccSwitchedValue(const SfzCCArray& ccValues, const absl::optional<CCValuePair>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)
         return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);

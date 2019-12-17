@@ -80,9 +80,9 @@ public:
      * @brief Get the full CC status for a specific channel
      * 
      * @param channel 
-     * @return const CCValueArray& 
+     * @return const SfzCCArray& 
      */
-    const CCValueArray& getCCArray(int channel) const noexcept;
+    const SfzCCArray& getCCArray(int channel) const noexcept;
 
     /**
      * @brief Reset the midi state (does not impact the last note on time)
@@ -94,24 +94,24 @@ private:
     template<class T>
     using ChannelArray = std::array<T, 16>;
     template<class T>
-    using MidiArray = std::array<T, 128>;
+    using MidiNoteArray = std::array<T, 128>;
     using NoteOnTime = std::chrono::steady_clock::time_point;
     /**
      * @brief Stores the note on times.
      *
      */
-	ChannelArray<MidiArray<NoteOnTime>> noteOnTimes { };
+	ChannelArray<MidiNoteArray<NoteOnTime>> noteOnTimes { };
     /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
      *
      */
-	ChannelArray<MidiArray<uint8_t>> lastNoteVelocities { };
+	ChannelArray<MidiNoteArray<uint8_t>> lastNoteVelocities { };
     /**
      * @brief Current known values for the CCs.
      *
      */
-	ChannelArray<CCValueArray> cc;
+	ChannelArray<SfzCCArray> cc;
     /**
      * Pitch bend status
      */

@@ -336,7 +336,6 @@ TEST_CASE("[Synth] Testing channel 1")
     REQUIRE( region->sample == "dummy1.wav" );
 }
 
-
 TEST_CASE("[Synth] Testing channel 2")
 {
     sfz::Synth synth;

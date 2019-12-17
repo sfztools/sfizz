@@ -77,7 +77,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getAttack(const CCValueArray &ccValues, uint8_t velocity) const noexcept
+    float getAttack(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccAttack, attack) + normalizeCC(velocity)*vel2attack;
     }
@@ -88,7 +88,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getDecay(const CCValueArray &ccValues, uint8_t velocity) const noexcept
+    float getDecay(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccDecay, decay) + normalizeCC(velocity)*vel2decay;
     }
@@ -99,7 +99,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getDelay(const CCValueArray &ccValues, uint8_t velocity) const noexcept
+    float getDelay(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccDelay, delay) + normalizeCC(velocity)*vel2delay;
     }
@@ -110,7 +110,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getHold(const CCValueArray &ccValues, uint8_t velocity) const noexcept
+    float getHold(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccHold, hold) + normalizeCC(velocity)*vel2hold;
     }
@@ -121,7 +121,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getRelease(const CCValueArray &ccValues, uint8_t velocity) const noexcept
+    float getRelease(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccRelease, release) + normalizeCC(velocity)*vel2release;
     }
@@ -132,7 +132,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getStart(const CCValueArray &ccValues, uint8_t velocity [[maybe_unused]]) const noexcept
+    float getStart(const SfzCCArray &ccValues, uint8_t velocity [[maybe_unused]]) const noexcept
     {
         return ccSwitchedValue(ccValues, ccStart, start);
     }
@@ -143,7 +143,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getSustain(const CCValueArray &ccValues, uint8_t velocity) const noexcept
+    float getSustain(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
         return ccSwitchedValue(ccValues, ccSustain, sustain) + normalizeCC(velocity)*vel2sustain;
     }
