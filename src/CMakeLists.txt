@@ -1,18 +1,5 @@
 project(sfizz)
 
-include(FetchContent)
-FetchContent_Declare(
-  re2
-  GIT_REPOSITORY https://github.com/google/re2.git
-  GIT_TAG        master
-)
-
-FetchContent_GetProperties(re2)
-if(NOT re2_POPULATED)
-  FetchContent_Populate(re2)
-  add_subdirectory(${re2_SOURCE_DIR} ${re2_BINARY_DIR})
-endif()
-
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FilePool.cpp
@@ -30,9 +17,7 @@ add_library (sfizz_parser STATIC)
 target_sources (sfizz_parser PRIVATE sfizz/Parser.cpp sfizz/Opcode.cpp sfizz/SfzHelpers.cpp)
 target_include_directories (sfizz_parser PUBLIC sfizz)
 target_include_directories (sfizz_parser PUBLIC external)
-target_include_directories (sfizz_parser PRIVATE ${re2_SOURCE_DIR})
 target_link_libraries (sfizz_parser PRIVATE absl::strings)
-target_link_libraries (sfizz_parser PRIVATE re2)
 
 # Sfizz core library
 add_library (sfizz STATIC ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp)
