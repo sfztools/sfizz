@@ -47,7 +47,6 @@ private:
     std::vector<fs::path> includedFiles;
     std::string aggregatedContent {};
     void readSfzFile(const fs::path& fileName, std::vector<std::string>& lines) noexcept;
-    bool findDefine(absl::string_view line);
 };
 
 } // namespace sfz

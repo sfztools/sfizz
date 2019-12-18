@@ -117,7 +117,7 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
     return true;
 }
 
-bool sfz::Parser::findDefine(absl::string_view line)
+bool findDefine(absl::string_view line, absl::string_view& variable, absl::string_view& value)
 {
     const auto defPosition = line.find("#define");
     if (defPosition == absl::string_view::npos)
@@ -136,12 +136,10 @@ bool sfz::Parser::findDefine(absl::string_view line)
         return false;
 
     const auto valueEnd = line.find_first_of(" \r\t\n\f\v", valueStart);
-    const auto variable = line.substr(variableStart, variableEnd - variableStart);
-    const auto value = valueEnd != absl::string_view::npos 
+    variable = line.substr(variableStart, variableEnd - variableStart);
+    value = valueEnd != absl::string_view::npos 
         ? line.substr(valueStart, valueEnd - valueStart)
         : line.substr(valueStart);
-
-    defines[std::string(variable)] = std::string(value);
     return true;
 }
 
@@ -170,6 +168,9 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         return;
 
     std::string tmpString;
+    std::string includePath;
+    absl::string_view variable;
+    absl::string_view value;
     while (std::getline(fileStream, tmpString)) {
         absl::string_view tmpView { tmpString };
 
@@ -179,7 +180,6 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         if (tmpView.empty())
             continue;
 
-        std::string includePath;
         // New #include
         if (findInclude(tmpView, includePath)) {
             std::replace(includePath.begin(), includePath.end(), '\\', '/');
@@ -197,8 +197,11 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         }
 
         // New #define
-        if (findDefine(tmpView))
+        if (findDefine(tmpView, variable, value)) {
+            
+            defines[std::string(variable)] = std::string(value);
             continue;
+        }
 
         // Replace defined variables starting with $
         std::string newString;
