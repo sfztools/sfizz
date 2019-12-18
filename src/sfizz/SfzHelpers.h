@@ -126,5 +126,9 @@ inline float ccSwitchedValue(const SfzCCArray& ccValues, const absl::optional<CC
  */
 absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
 
+bool findHeader(absl::string_view& source, absl::string_view& header, absl::string_view& members);
+bool findOpcode(absl::string_view& source, absl::string_view& opcode, absl::string_view& value);
+bool findDefine(absl::string_view line, absl::string_view& variable, absl::string_view& value);
+bool findInclude(absl::string_view line, std::string& path);
 } // namespace sfz
 
