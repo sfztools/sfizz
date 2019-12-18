@@ -26,15 +26,8 @@
 #include "StringViewHelpers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_cat.h"
-#include "Regexes.h"
 #include <algorithm>
-#include <regex>
 #include <fstream>
-#include "re2/re2.h"
-#include "re2/stringpiece.h"
-
-using svregex_iterator = std::regex_iterator<absl::string_view::const_iterator>;
-using svmatch_results = std::match_results<absl::string_view::const_iterator>;
 
 void removeCommentOnLine(absl::string_view& line)
 {
@@ -54,15 +47,46 @@ bool findHeader(absl::string_view& source, absl::string_view& header, absl::stri
         return false;
 
     auto nextHeader = source.find("<", closeHeader);
-    header = source.substr(openHeader, closeHeader - openHeader);
-    members = source.substr(closeHeader, nextHeader - closeHeader);
+    header = source.substr(openHeader + 1, closeHeader - openHeader - 1);
+    if (nextHeader == absl::string_view::npos) {
+        members = trim(source.substr(closeHeader + 1));
+        source.remove_prefix(source.length());
+    } else {
+        members = trim(source.substr(closeHeader + 1, nextHeader - closeHeader - 1));
+        source.remove_prefix(nextHeader);
+    }
+
+    return true;
+}
+
+bool findOpcode(absl::string_view& source, absl::string_view& opcode, absl::string_view& value)
+{
+    auto opcodeEnd = source.find("=");
+    if (opcodeEnd == absl::string_view::npos)
+        return false;
+    
+    const auto valueStart = opcodeEnd + 1;
+    const auto nextOpcodeEnd = source.find("=", valueStart);
+
+    if (nextOpcodeEnd == absl::string_view::npos) {
+        opcode = source.substr(0, opcodeEnd);
+        value = source.substr(valueStart);
+        source.remove_prefix(source.length());
+        return true;
+    }
+
+    auto valueEnd = nextOpcodeEnd;
+    while (source[valueEnd] != ' ' && valueEnd != valueStart)
+        valueEnd--;
+    
+    opcode = source.substr(0, opcodeEnd);
+    value = source.substr(valueStart, valueEnd - valueStart);
+    source.remove_prefix(valueEnd);
+    return true;        
 }
 
 bool sfz::Parser::loadSfzFile(const fs::path& file)
 {
-    RE2 headerPattern { R"(<(.*?)>(.*))" };
-
-    const svregex_iterator regexEnd {};
     const auto sfzFile = file.is_absolute() ? file : originalDirectory / file;
     if (!fs::exists(sfzFile))
         return false;
@@ -72,42 +96,70 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
     readSfzFile(file, lines);
 
     aggregatedContent = absl::StrJoin(lines, " ");
-    const absl::string_view aggregatedView { aggregatedContent };
-
-    re2::StringPiece re2View { aggregatedContent };
-    re2::StringPiece header;
-    re2::StringPiece members;
-    // FIXME: segfaults with Carla + libstdc++ + the "bug" file in Unruly Drums; sometimes it takes a couple of tries for the
-    // segmentation fault to appear
-    svregex_iterator headerIterator { aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers };
+    absl::string_view aggregatedView { aggregatedContent };
+    absl::string_view header;
+    absl::string_view members;
 
     std::vector<Opcode> currentMembers;
+    while (findHeader(aggregatedView, header, members)) {
 
-    // for (; headerIterator != regexEnd; ++headerIterator) {
-        // svmatch_results headerMatch = *headerIterator;
-
-        // ASSERT(headerMatch[1].length() > 0);
-        // ASSERT(headerMatch[2].length() > 0);
-        // MSVC needed a hack there using &*headerMatch[1].first; removed it for now
-        // const absl::string_view header { headerMatch[1].first, static_cast<size_t>(headerMatch[1].length()) };
-        // const absl::string_view members { headerMatch[2].first, static_cast<size_t>(headerMatch[2].length()) };
-    
-    while (RE2::FindAndConsume(&re2View, headerPattern, &header, &members)) {
-        DBG("Header : " << header);
-        DBG("Members : " << members);
-        svregex_iterator paramIterator { members.begin(), members.end(), sfz::Regexes::members };
+        absl::string_view opcode;
+        absl::string_view value;
 
         // Store or handle members
-        for (; paramIterator != regexEnd; ++paramIterator) {
-            const svmatch_results paramMatch = *paramIterator;
-            const absl::string_view opcode(&*paramMatch[1].first, paramMatch[1].length());
-            const absl::string_view value(&*paramMatch[2].first, paramMatch[2].length());
+        while(findOpcode(members, opcode, value))
             currentMembers.emplace_back(opcode, value);
-        }
-        callback( {header.data(), header.size()}, currentMembers);
+        
+        callback(header, currentMembers);
         currentMembers.clear();
     }
 
+    return true;
+}
+
+bool sfz::Parser::findDefine(absl::string_view line)
+{
+    const auto defPosition = line.find("#define");
+    if (defPosition == absl::string_view::npos)
+        return false;
+    
+    const auto variableStart = line.find("$", 7);
+    if (variableStart == absl::string_view::npos)
+        return false;
+
+    const auto variableEnd = line.find_first_of(" \r\t\n\f\v", variableStart);
+    if (variableEnd == absl::string_view::npos)
+        return false;
+
+    const auto valueStart = line.find_first_not_of(" \r\t\n\f\v", variableEnd);
+    if (valueStart == absl::string_view::npos)
+        return false;
+
+    const auto valueEnd = line.find_first_of(" \r\t\n\f\v", valueStart);
+    const auto variable = line.substr(variableStart, variableEnd - variableStart);
+    const auto value = valueEnd != absl::string_view::npos 
+        ? line.substr(valueStart, valueEnd - valueStart)
+        : line.substr(valueStart);
+
+    defines[std::string(variable)] = std::string(value);
+    return true;
+}
+
+bool findInclude(absl::string_view line, std::string& path)
+{
+    const auto defPosition = line.find("#include");
+    if (defPosition == absl::string_view::npos)
+        return false;
+    
+    const auto pathStart = line.find("\"", 8);
+    if (pathStart == absl::string_view::npos)
+        return false;
+
+    const auto pathEnd = line.find("\"", pathStart + 1);
+    if (pathEnd == absl::string_view::npos)
+        return false;
+
+    path = std::string(line.substr(pathStart + 1, pathEnd - pathStart - 1));
     return true;
 }
 
@@ -116,13 +168,6 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
     std::ifstream fileStream(fileName.c_str());
     if (!fileStream)
         return;
-
-    // spdlog::info("Including file {}", fileName.string());
-    svmatch_results includeMatch;
-    svmatch_results defineMatch;
-
-    RE2 definePattern { R"(#define\s*(\$[a-zA-Z0-9_]+)\s+([a-zA-Z0-9-]+))" };
-    RE2 includePattern { R"V(#include\s*"(.*?)".*$)V" };
 
     std::string tmpString;
     while (std::getline(fileStream, tmpString)) {
@@ -134,10 +179,9 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         if (tmpView.empty())
             continue;
 
-        re2::StringPiece re2view { tmpView.data(), tmpView.length() };
         std::string includePath;
         // New #include
-        if (RE2::PartialMatch(re2view, includePattern, &includePath)) {
+        if (findInclude(tmpView, includePath)) {
             std::replace(includePath.begin(), includePath.end(), '\\', '/');
             const auto newFile = originalDirectory / includePath;
             auto alreadyIncluded = std::find(includedFiles.begin(), includedFiles.end(), newFile);
@@ -153,12 +197,8 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         }
 
         // New #define
-        re2::StringPiece defineVariable;
-        re2::StringPiece defineValue;
-        if (RE2::PartialMatch(re2view, definePattern, &defineVariable, &defineValue)) {
-            defines[ { defineVariable.data(), defineVariable.size() } ] = { defineValue.data(), defineValue.size() };
+        if (findDefine(tmpView))
             continue;
-        }
 
         // Replace defined variables starting with $
         std::string newString;
@@ -173,7 +213,7 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
             const auto candidate = tmpView.substr(findPos, defineEnd - findPos);
             for (auto& definePair : defines) {
                 if (candidate == definePair.first) {
-                    newString += definePair.second;
+                    absl::StrAppend(&newString, definePair.second);
                     lastPos = findPos + definePair.first.length();
                     break;
                 }
