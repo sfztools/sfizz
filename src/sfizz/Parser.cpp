@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <regex>
 #include <fstream>
+#include "re2/re2.h"
+#include "re2/stringpiece.h"
 
 using svregex_iterator = std::regex_iterator<absl::string_view::const_iterator>;
 using svmatch_results = std::match_results<absl::string_view::const_iterator>;
@@ -41,8 +43,25 @@ void removeCommentOnLine(absl::string_view& line)
         line.remove_suffix(line.size() - position);
 }
 
+bool findHeader(absl::string_view& source, absl::string_view& header, absl::string_view& members)
+{
+    auto openHeader = source.find("<");
+    if (openHeader == absl::string_view::npos)
+        return false;
+
+    auto closeHeader = source.find(">", openHeader);
+    if (openHeader == absl::string_view::npos)
+        return false;
+
+    auto nextHeader = source.find("<", closeHeader);
+    header = source.substr(openHeader, closeHeader - openHeader);
+    members = source.substr(closeHeader, nextHeader - closeHeader);
+}
+
 bool sfz::Parser::loadSfzFile(const fs::path& file)
 {
+    RE2 headerPattern { R"(<(.*?)>(.*))" };
+
     const svregex_iterator regexEnd {};
     const auto sfzFile = file.is_absolute() ? file : originalDirectory / file;
     if (!fs::exists(sfzFile))
@@ -55,21 +74,28 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
     aggregatedContent = absl::StrJoin(lines, " ");
     const absl::string_view aggregatedView { aggregatedContent };
 
+    re2::StringPiece re2View { aggregatedContent };
+    re2::StringPiece header;
+    re2::StringPiece members;
     // FIXME: segfaults with Carla + libstdc++ + the "bug" file in Unruly Drums; sometimes it takes a couple of tries for the
     // segmentation fault to appear
     svregex_iterator headerIterator { aggregatedView.cbegin(), aggregatedView.cend(), sfz::Regexes::headers };
 
     std::vector<Opcode> currentMembers;
 
-    for (; headerIterator != regexEnd; ++headerIterator) {
-        svmatch_results headerMatch = *headerIterator;
+    // for (; headerIterator != regexEnd; ++headerIterator) {
+        // svmatch_results headerMatch = *headerIterator;
 
-        ASSERT(headerMatch[1].length() > 0);
-        ASSERT(headerMatch[2].length() > 0);
+        // ASSERT(headerMatch[1].length() > 0);
+        // ASSERT(headerMatch[2].length() > 0);
         // MSVC needed a hack there using &*headerMatch[1].first; removed it for now
-        const absl::string_view header { headerMatch[1].first, static_cast<size_t>(headerMatch[1].length()) };
-        const absl::string_view members { headerMatch[2].first, static_cast<size_t>(headerMatch[2].length()) };
-        svregex_iterator paramIterator { members.cbegin(), members.cend(), sfz::Regexes::members };
+        // const absl::string_view header { headerMatch[1].first, static_cast<size_t>(headerMatch[1].length()) };
+        // const absl::string_view members { headerMatch[2].first, static_cast<size_t>(headerMatch[2].length()) };
+    
+    while (RE2::FindAndConsume(&re2View, headerPattern, &header, &members)) {
+        DBG("Header : " << header);
+        DBG("Members : " << members);
+        svregex_iterator paramIterator { members.begin(), members.end(), sfz::Regexes::members };
 
         // Store or handle members
         for (; paramIterator != regexEnd; ++paramIterator) {
@@ -78,7 +104,7 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
             const absl::string_view value(&*paramMatch[2].first, paramMatch[2].length());
             currentMembers.emplace_back(opcode, value);
         }
-        callback(header, currentMembers);
+        callback( {header.data(), header.size()}, currentMembers);
         currentMembers.clear();
     }
 
@@ -95,6 +121,9 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
     svmatch_results includeMatch;
     svmatch_results defineMatch;
 
+    RE2 definePattern { R"(#define\s*(\$[a-zA-Z0-9_]+)\s+([a-zA-Z0-9-]+))" };
+    RE2 includePattern { R"V(#include\s*"(.*?)".*$)V" };
+
     std::string tmpString;
     while (std::getline(fileStream, tmpString)) {
         absl::string_view tmpView { tmpString };
@@ -105,9 +134,10 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         if (tmpView.empty())
             continue;
 
+        re2::StringPiece re2view { tmpView.data(), tmpView.length() };
+        std::string includePath;
         // New #include
-        if (std::regex_search(tmpView.begin(), tmpView.end(), includeMatch, sfz::Regexes::includes)) {
-            auto includePath = includeMatch.str(1);
+        if (RE2::PartialMatch(re2view, includePattern, &includePath)) {
             std::replace(includePath.begin(), includePath.end(), '\\', '/');
             const auto newFile = originalDirectory / includePath;
             auto alreadyIncluded = std::find(includedFiles.begin(), includedFiles.end(), newFile);
@@ -123,8 +153,10 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
         }
 
         // New #define
-        if (std::regex_search(tmpView.begin(), tmpView.end(), defineMatch, sfz::Regexes::defines)) {
-            defines[defineMatch.str(1)] = defineMatch.str(2);
+        re2::StringPiece defineVariable;
+        re2::StringPiece defineValue;
+        if (RE2::PartialMatch(re2view, definePattern, &defineVariable, &defineValue)) {
+            defines[ { defineVariable.data(), defineVariable.size() } ] = { defineValue.data(), defineValue.size() };
             continue;
         }
 
