@@ -49,12 +49,13 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
 
     aggregatedContent = absl::StrJoin(lines, " ");
     absl::string_view aggregatedView { aggregatedContent };
+
     absl::string_view header;
     absl::string_view members;
 
     std::vector<Opcode> currentMembers;
-    while (findHeader(aggregatedView, header, members)) {
 
+    while (findHeader(aggregatedView, header, members)) {
         absl::string_view opcode;
         absl::string_view value;
 
@@ -129,7 +130,6 @@ void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>
                     break;
                 }
             }
-
 
             if (lastPos <= findPos) {
                 newString += sfz::config::defineCharacter;
