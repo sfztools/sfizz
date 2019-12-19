@@ -24,17 +24,17 @@
 #include "Oversampler.h"
 
 template<>
-inline void sfz::upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> output)
+void sfz::upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> output)
 {
     sfz::upsample2xStage<false>(input, output);
 }
 template<>
-inline void sfz::upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output)
+void sfz::upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> output)
 {
     sfz::upsample4xStage<false>(input, output);
 }
 template<>
-inline void sfz::upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output)
+void sfz::upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> output)
 {
     sfz::upsample8xStage<false>(input, output);
 }
