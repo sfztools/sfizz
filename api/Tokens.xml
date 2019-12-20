@@ -984,6 +984,54 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>findHeader</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a62f12e86de3f5c188a3a46840ded9030</Anchor>
+    <Abstract>From a source view, find the next sfz header and its members and return them, while updating the sour...</Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>findOpcode</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a2fd5bcf4ef8db620c9ce8dd153637e80</Anchor>
+    <Abstract>From a source view, find the next sfz member opcode and its value. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>findDefine</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a0154fe33ffa4619bd53939364a8cbe27</Anchor>
+    <Abstract>Find an SFZ #define statement on a line and return the variable and value as views. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>findInclude</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>ad493a0ef0d896c138a235f3b1d63d136</Anchor>
+    <Abstract>Find an SFZ #include statement on a line and return included path. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>readInterleaved</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>

@@ -230,6 +230,18 @@ Functions</h2></td></tr>
 <tr class="memitem:afc410e944cee93f0c4a0cf44279ebe5d"><td class="memItemLeft" align="right" valign="top">absl::optional&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#afc410e944cee93f0c4a0cf44279ebe5d">readNoteValue</a> (const absl::string_view &amp;value)</td></tr>
 <tr class="memdesc:afc410e944cee93f0c4a0cf44279ebe5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a note in string to its equivalent midi note number.  <a href="#afc410e944cee93f0c4a0cf44279ebe5d">More...</a><br /></td></tr>
 <tr class="separator:afc410e944cee93f0c4a0cf44279ebe5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62f12e86de3f5c188a3a46840ded9030"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a62f12e86de3f5c188a3a46840ded9030">findHeader</a> (absl::string_view &amp;source, absl::string_view &amp;header, absl::string_view &amp;members)</td></tr>
+<tr class="memdesc:a62f12e86de3f5c188a3a46840ded9030"><td class="mdescLeft">&#160;</td><td class="mdescRight">From a source view, find the next sfz header and its members and return them, while updating the source by removing this header and members from the beginning.  <a href="#a62f12e86de3f5c188a3a46840ded9030">More...</a><br /></td></tr>
+<tr class="separator:a62f12e86de3f5c188a3a46840ded9030"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fd5bcf4ef8db620c9ce8dd153637e80"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a2fd5bcf4ef8db620c9ce8dd153637e80">findOpcode</a> (absl::string_view &amp;source, absl::string_view &amp;opcode, absl::string_view &amp;value)</td></tr>
+<tr class="memdesc:a2fd5bcf4ef8db620c9ce8dd153637e80"><td class="mdescLeft">&#160;</td><td class="mdescRight">From a source view, find the next sfz member opcode and its value.  <a href="#a2fd5bcf4ef8db620c9ce8dd153637e80">More...</a><br /></td></tr>
+<tr class="separator:a2fd5bcf4ef8db620c9ce8dd153637e80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0154fe33ffa4619bd53939364a8cbe27"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a0154fe33ffa4619bd53939364a8cbe27">findDefine</a> (absl::string_view line, absl::string_view &amp;variable, absl::string_view &amp;value)</td></tr>
+<tr class="memdesc:a0154fe33ffa4619bd53939364a8cbe27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find an SFZ #define statement on a line and return the variable and value as views.  <a href="#a0154fe33ffa4619bd53939364a8cbe27">More...</a><br /></td></tr>
+<tr class="separator:a0154fe33ffa4619bd53939364a8cbe27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad493a0ef0d896c138a235f3b1d63d136"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#ad493a0ef0d896c138a235f3b1d63d136">findInclude</a> (absl::string_view line, std::string &amp;path)</td></tr>
+<tr class="memdesc:ad493a0ef0d896c138a235f3b1d63d136"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find an SFZ #include statement on a line and return included path.  <a href="#ad493a0ef0d896c138a235f3b1d63d136">More...</a><br /></td></tr>
+<tr class="separator:ad493a0ef0d896c138a235f3b1d63d136"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91425402d9ab9ea06c43f2b50deceff7"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::readInterleaved&gt; </td></tr>
 <tr class="memitem:a91425402d9ab9ea06c43f2b50deceff7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a91425402d9ab9ea06c43f2b50deceff7">readInterleaved</a> (absl::Span&lt; const T &gt; input, absl::Span&lt; T &gt; outputLeft, absl::Span&lt; T &gt; outputRight) noexcept</td></tr>
 <tr class="memdesc:a91425402d9ab9ea06c43f2b50deceff7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read interleaved stereo data from a buffer and separate it in a left/right pair of buffers.  <a href="#a91425402d9ab9ea06c43f2b50deceff7">More...</a><br /></td></tr>
@@ -1177,6 +1189,193 @@ template&lt;class T , bool SIMD = SIMDConfig::fill&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a0154fe33ffa4619bd53939364a8cbe27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0154fe33ffa4619bd53939364a8cbe27">&#9670;&nbsp;</a></span>findDefine()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool sfz::findDefine </td>
+          <td>(</td>
+          <td class="paramtype">absl::string_view&#160;</td>
+          <td class="paramname"><em>line</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>variable</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Find an SFZ #define statement on a line and return the variable and value as views. </p>
+<p>This function assums that there is a single define per line and that the variable and value are separated by whitespace. The output parameters are set only if the method returns true.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">line</td><td>The source line </td></tr>
+    <tr><td class="paramname">variable</td><td>An output view on the define variable </td></tr>
+    <tr><td class="paramname">value</td><td>An output view on the define value </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true If a define was found </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a62f12e86de3f5c188a3a46840ded9030"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62f12e86de3f5c188a3a46840ded9030">&#9670;&nbsp;</a></span>findHeader()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool sfz::findHeader </td>
+          <td>(</td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>source</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>header</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>members</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>From a source view, find the next sfz header and its members and return them, while updating the source by removing this header and members from the beginning. </p>
+<p>The function "consumes" the header and its members from the source if found.</p>
+<p>No check is made to see if the header is "valid" in the sfz sense. The output parameters are set only if the method returns true.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>A source view; can be updated and shortened </td></tr>
+    <tr><td class="paramname">header</td><td>An output view on the header, without the &lt;&gt; </td></tr>
+    <tr><td class="paramname">members</td><td>An output view on the members, untrimmed </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if a header was found </dd>
+<dd>
+false otherwise </dd></dl>
+
+</div>
+</div>
+<a id="ad493a0ef0d896c138a235f3b1d63d136"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad493a0ef0d896c138a235f3b1d63d136">&#9670;&nbsp;</a></span>findInclude()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool sfz::findInclude </td>
+          <td>(</td>
+          <td class="paramtype">absl::string_view&#160;</td>
+          <td class="paramname"><em>line</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Find an SFZ #include statement on a line and return included path. </p>
+<p>This function assums that there is a single include per line and that the include path is within quotes. The output parameter is set only if the method returns true.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">line</td><td>The source line </td></tr>
+    <tr><td class="paramname">path</td><td>The path, if found </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true If an include was found </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a2fd5bcf4ef8db620c9ce8dd153637e80"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2fd5bcf4ef8db620c9ce8dd153637e80">&#9670;&nbsp;</a></span>findOpcode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool sfz::findOpcode </td>
+          <td>(</td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>source</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>opcode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::string_view &amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>From a source view, find the next sfz member opcode and its value. </p>
+<p>Return them while updating the source by removing this opcode and value from the beginning. The function "consumes" the opcode from the source if one is found.</p>
+<p>No check is made to see if the opcode is "valid" in the sfz sense. The output parameters are set only if the method returns true.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>A source view; can be updated and shortened </td></tr>
+    <tr><td class="paramname">opcode</td><td>An output view on the opcode name </td></tr>
+    <tr><td class="paramname">value</td><td>An output view on the opcode value </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if an opcode was found </dd>
+<dd>
+false </dd></dl>
 
 </div>
 </div>
@@ -2665,7 +2864,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Thu Dec 19 2019 23:46:26 for sfizz by
+					<span style="float:right">Generated on Fri Dec 20 2019 00:02:58 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
