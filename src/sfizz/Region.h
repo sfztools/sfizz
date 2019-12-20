@@ -324,6 +324,7 @@ private:
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
     std::bitset<config::numCCs> ccSwitched;
+    bool triggerOnCC { false };
     std::string defaultPath { "" };
 
     int activeNotesInRange { -1 };

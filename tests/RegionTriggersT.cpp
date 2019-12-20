@@ -29,7 +29,7 @@ TEST_CASE("Basic triggers", "Region triggers")
 {
     sfz::MidiState midiState;
     sfz::Region region { midiState };
-    
+
     region.parseOpcode({ "sample", "*sine" });
     SECTION("key")
     {
@@ -121,11 +121,28 @@ TEST_CASE("Basic triggers", "Region triggers")
         REQUIRE(region.registerNoteOn(0, 40, 64, 1.0f));
     }
 
+    SECTION("Disable key trigger")
+    {
+        region.parseOpcode({ "key", "40" });
+        REQUIRE(region.registerNoteOn(0, 40, 64, 1.0f));
+        region.parseOpcode({ "hikey", "-1" });
+        REQUIRE(!region.registerNoteOn(0, 40, 64, 1.0f));
+        region.parseOpcode({ "hikey", "40" });
+        REQUIRE(region.registerNoteOn(0, 40, 64, 1.0f));
+        region.parseOpcode({ "key", "-1" });
+        REQUIRE(!region.registerNoteOn(0, 40, 64, 1.0f));
+        region.parseOpcode({ "key", "40" });
+        REQUIRE(region.registerNoteOn(0, 40, 64, 1.0f));
+    }
+
     SECTION("on_loccN, on_hiccN")
     {
         region.parseOpcode({ "on_locc47", "64" });
         region.parseOpcode({ "on_hicc47", "68" });
         REQUIRE(!region.registerCC(0, 47, 63));
+        REQUIRE(!region.registerCC(0, 47, 64));
+        REQUIRE(!region.registerCC(0, 47, 65));
+        region.parseOpcode({ "hikey", "-1" });
         REQUIRE(region.registerCC(0, 47, 64));
         REQUIRE(region.registerCC(0, 47, 65));
         REQUIRE(region.registerCC(0, 47, 66));

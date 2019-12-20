@@ -47,10 +47,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             const auto trimmedSample = trim(opcode.value);
             if (trimmedSample.empty())
                 break;
-            
+
             if (trimmedSample[0] == '*')
                 sample = std::string(trimmedSample);
-            else    
+            else
                 sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trimmedSample, { { "\\", "/" } }));
         }
         break;
@@ -127,9 +127,11 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("hikey"):
+        triggerOnCC = (opcode.value == "-1");
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("key"):
+        triggerOnCC = (opcode.value == "-1");
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
@@ -557,6 +559,9 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
     if (!isSwitchedOn())
         return false;
 
+    if (triggerOnCC)
+        return false;
+
     if (previousNote && !(previousKeySwitched && noteNumber != *previousNote))
         return false;
 
@@ -592,6 +597,9 @@ bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity 
     if (!isSwitchedOn())
         return false;
 
+    if (triggerOnCC)
+        return false;
+
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue);
     const bool releaseTrigger = (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key);
@@ -609,6 +617,9 @@ bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue) noexcep
         ccSwitched.set(ccNumber, false);
 
     if (!isSwitchedOn())
+        return false;
+
+    if (!triggerOnCC)
         return false;
 
     if (ccTriggers.contains(ccNumber) && ccTriggers.at(ccNumber).containsWithEnd(ccValue))
@@ -777,7 +788,7 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
         auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
         auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
         // Linear interpolation
-        float relativePositionInSegment { 
+        float relativePositionInSegment {
             static_cast<float>(velocity - before->first) / static_cast<float>(after->first - before->first)
         };
         float segmentEndpoints { after->second - before->second };
