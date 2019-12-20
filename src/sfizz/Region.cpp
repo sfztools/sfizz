@@ -312,7 +312,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("amp_random"):
         setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
-        volumeDistribution.param(std::uniform_real_distribution<float>::param_type(-ampRandom, ampRandom));
+        volumeDistribution.param(std::uniform_real_distribution<float>::param_type(0, ampRandom));
         break;
     case hash("amp_velcurve_"):
         {
