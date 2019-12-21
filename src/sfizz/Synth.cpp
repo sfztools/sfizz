@@ -181,14 +181,10 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("Default_path"):
             [[fallthrough]];
-        case hash("default_path"): {
-            auto newPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
-            if (fs::exists(originalDirectory / newPath)) {
-                DBG("Changing default sample path to " << newPath);
-                defaultPath = std::move(newPath);
-            }
+        case hash("default_path"):
+            defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
+            DBG("Changing default sample path to " << defaultPath);
             break;
-        }
         default:
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.opcode);
@@ -423,7 +419,7 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
     auto replacedVelocity = midiState.getNoteVelocity(channel, noteNumber);
     auto randValue = randNoteDistribution(Random::randomGenerator);
-    
+
     for (auto& voice : voices)
         voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
 
@@ -452,7 +448,7 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
         return;
     }
 
-    midiState.ccEvent(channel, ccNumber, ccValue);    
+    midiState.ccEvent(channel, ccNumber, ccValue);
     for (auto& voice : voices)
         voice->registerCC(delay, channel, ccNumber, ccValue);
 

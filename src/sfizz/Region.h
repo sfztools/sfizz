@@ -50,12 +50,9 @@ namespace sfz {
  *
  */
 struct Region {
-    Region(const MidiState& midiState, std::string defaultPath = "")
+    Region(const MidiState& midiState, absl::string_view defaultPath = "")
     : midiState(midiState), defaultPath(std::move(defaultPath))
     {
-        if (!this->defaultPath.empty() && this->defaultPath.back() != '/')
-            absl::StrAppend(&this->defaultPath, "/");
-
         ccSwitched.set();
     }
     Region(const Region&) = default;
@@ -325,7 +322,7 @@ private:
     bool aftertouchSwitched { true };
     std::bitset<config::numCCs> ccSwitched;
     bool triggerOnCC { false };
-    std::string defaultPath { "" };
+    absl::string_view defaultPath { "" };
 
     int activeNotesInRange { -1 };
     int sequenceCounter { 0 };

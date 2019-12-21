@@ -361,10 +361,10 @@ protected:
 private:
     /**
      * @brief Reset all CCs; to be used on CC 121
-     * 
+     *
      * @param delay the delay for the controller reset
      * @param channel the channel on which to reset the controller
-     * 
+     *
      */
     void resetAllControllers(int delay, int channel) noexcept;
 
