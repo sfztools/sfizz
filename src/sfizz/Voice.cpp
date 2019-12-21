@@ -127,12 +127,17 @@ void sfz::Voice::prepareEGEnvelope(int channel, int delay, uint8_t velocity) noe
 
 bool sfz::Voice::isFree() const noexcept
 {
-    return (region == nullptr);
+    return (state == State::idle);
 }
 
 void sfz::Voice::release(int delay) noexcept
 {
-    if (state == State::playing) {
+    if (state != State::playing)
+        return;
+
+    if (egEnvelope.getRemainingDelay() >= (delay - initialDelay)) {
+        reset();
+    } else {
         state = State::release;
         egEnvelope.startRelease(delay);
     }

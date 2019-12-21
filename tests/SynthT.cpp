@@ -204,3 +204,19 @@ TEST_CASE("[Synth] Reset all controllers")
     REQUIRE( synth.getMidiState().getCCValue(0, 12) == 0 );
     REQUIRE( synth.getMidiState().getCCValue(1, 12) == 64 );
 }
+
+TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kills the voice")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(1024);
+    synth.setNumVoices(1);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/delay_release.sfz");
+    synth.noteOn(0, 1, 60, 63);
+    REQUIRE( !synth.getVoiceView(0)->isFree() );
+    synth.noteOff(100, 1, 60, 63);
+    REQUIRE( synth.getVoiceView(0)->isFree() );
+    synth.noteOn(200, 1, 60, 63);
+    REQUIRE( !synth.getVoiceView(0)->isFree() );
+    synth.noteOff(1000, 1, 60, 63);
+    REQUIRE( !synth.getVoiceView(0)->isFree() );
+}

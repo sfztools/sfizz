@@ -75,6 +75,12 @@ public:
      * @return false
      */
     bool isSmoothing() noexcept;
+    /**
+     * @brief Get the remaining delay samples
+     *
+     * @return int
+     */
+    int getRemainingDelay() const noexcept;
 
 private:
     enum class State {

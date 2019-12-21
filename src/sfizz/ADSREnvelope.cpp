@@ -218,6 +218,12 @@ bool ADSREnvelope<Type>::isSmoothing() noexcept
 }
 
 template <class Type>
+int ADSREnvelope<Type>::getRemainingDelay() const noexcept
+{
+    return delay;
+}
+
+template <class Type>
 void ADSREnvelope<Type>::startRelease(int releaseDelay) noexcept
 {
     shouldRelease = true;
