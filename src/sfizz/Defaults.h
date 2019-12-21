@@ -156,5 +156,7 @@ namespace Default
     // ***** SFZ v2 ********
 	constexpr bool checkSustain { true }; // sustain_sw
 	constexpr bool checkSostenuto { true }; // sostenuto_sw
+    constexpr Range<int> octaveOffsetRange { -10, 10 }; // octave_offset
+    constexpr Range<int> noteOffsetRange { -127, 127 }; // note_offset
 }
 }

@@ -455,8 +455,10 @@ private:
     Resources resources;
     MidiState midiState;
 
-    // default_path
+    // Control opcodes
     std::string defaultPath { "" };
+    int noteOffset { 0 };
+    int octaveOffset { 0 };
 
     LEAK_DETECTOR(Synth);
 };

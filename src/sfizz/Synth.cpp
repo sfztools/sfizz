@@ -114,6 +114,9 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     parseOpcodes(groupOpcodes);
     parseOpcodes(regionOpcodes);
 
+    if (octaveOffset != 0 || noteOffset != 0)
+        lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
+
     regions.push_back(std::move(lastRegion));
 }
 
@@ -185,6 +188,12 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("default_path"):
             defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             DBG("Changing default sample path to " << defaultPath);
+            break;
+        case hash("note_offset"):
+            setValueFromOpcode(member, noteOffset, Default::noteOffsetRange);
+            break;
+        case hash("octave_offset"):
+            setValueFromOpcode(member, octaveOffset, Default::octaveOffsetRange);
             break;
         default:
             // Unsupported control opcode

@@ -807,3 +807,57 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
 
     return gain;
 }
+
+constexpr uint8_t offsetAndClamp(uint8_t key, int offset, sfz::Range<uint8_t> range)
+{
+    const int offsetKey { key + offset };
+    if (offsetKey > std::numeric_limits<uint8_t>::max())
+        return range.getEnd();
+    if (offsetKey < std::numeric_limits<uint8_t>::min())
+        return range.getStart();
+
+    return range.clamp(static_cast<uint8_t>(offsetKey));
+}
+
+void sfz::Region::offsetAllKeys(int offset) noexcept
+{
+    // Offset key range
+    if (keyRange != Default::keyRange) {
+        const auto start = keyRange.getStart();
+        const auto end = keyRange.getEnd();
+        keyRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
+        keyRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+    }
+    pitchKeycenter = offsetAndClamp(pitchKeycenter, offset, Default::keyRange);
+
+    // Offset key switches
+    if (keyswitchRange != Default::keyRange) {
+        const auto start = keyswitchRange.getStart();
+        const auto end = keyswitchRange.getEnd();
+        keyswitchRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
+        keyswitchRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+    }
+    if (keyswitchUp)
+        keyswitchUp = offsetAndClamp(*keyswitchUp, offset, Default::keyRange);
+    if (keyswitch)
+        keyswitch = offsetAndClamp(*keyswitch, offset, Default::keyRange);
+    if (keyswitchDown)
+        keyswitchDown = offsetAndClamp(*keyswitchDown, offset, Default::keyRange);
+    if (previousNote)
+        previousNote = offsetAndClamp(*previousNote, offset, Default::keyRange);
+
+    // Offset crossfade ranges
+    if (crossfadeKeyInRange != Default::crossfadeKeyInRange) {
+        const auto start = crossfadeKeyInRange.getStart();
+        const auto end = crossfadeKeyInRange.getEnd();
+        crossfadeKeyInRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
+        crossfadeKeyInRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+    }
+
+    if (crossfadeKeyOutRange != Default::crossfadeKeyOutRange) {
+        const auto start = crossfadeKeyOutRange.getStart();
+        const auto end = crossfadeKeyOutRange.getEnd();
+        crossfadeKeyOutRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
+        crossfadeKeyOutRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+    }
+}

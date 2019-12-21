@@ -365,3 +365,46 @@ TEST_CASE("[Files] Set CC applies properly to all channels")
         REQUIRE(synth.getMidiState().getCCValue(channel, 61) == 122);
     }
 }
+
+
+TEST_CASE("[Files] Note and octave offsets")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/note_offset.sfz");
+    REQUIRE( synth.getNumRegions() == 7 );
+
+    REQUIRE( synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(64, 64) );
+    REQUIRE( synth.getRegionView(0)->pitchKeycenter == 64 );
+    REQUIRE( synth.getRegionView(0)->keyswitchRange == sfz::Default::keyRange );
+    REQUIRE( synth.getRegionView(0)->crossfadeKeyInRange == sfz::Default::crossfadeKeyInRange );
+    REQUIRE( synth.getRegionView(0)->crossfadeKeyOutRange == sfz::Default::crossfadeKeyOutRange );
+
+    REQUIRE( synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(51, 56) );
+    REQUIRE( synth.getRegionView(1)->pitchKeycenter == 51 );
+
+    REQUIRE( synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(41, 45) );
+    REQUIRE( synth.getRegionView(2)->pitchKeycenter == 41 );
+    REQUIRE( synth.getRegionView(2)->crossfadeKeyInRange == sfz::Range<uint8_t>(37, 41) );
+    REQUIRE( synth.getRegionView(2)->crossfadeKeyOutRange == sfz::Range<uint8_t>(45, 49) );
+
+    REQUIRE( synth.getRegionView(3)->keyRange == sfz::Range<uint8_t>(62, 62) );
+    REQUIRE( synth.getRegionView(3)->keyswitchRange == sfz::Range<uint8_t>(23, 27) );
+    REQUIRE( synth.getRegionView(3)->keyswitch );
+    REQUIRE( *synth.getRegionView(3)->keyswitch == 24 );
+    REQUIRE( synth.getRegionView(3)->keyswitchUp );
+    REQUIRE( *synth.getRegionView(3)->keyswitchUp == 24 );
+    REQUIRE( synth.getRegionView(3)->keyswitchDown );
+    REQUIRE( *synth.getRegionView(3)->keyswitchDown == 24 );
+    REQUIRE( synth.getRegionView(3)->previousNote );
+    REQUIRE( *synth.getRegionView(3)->previousNote == 61 );
+
+    REQUIRE( synth.getRegionView(4)->keyRange == sfz::Range<uint8_t>(76, 76) );
+    REQUIRE( synth.getRegionView(4)->pitchKeycenter == 76 );
+
+    REQUIRE( synth.getRegionView(5)->keyRange == sfz::Range<uint8_t>(50, 50) );
+    REQUIRE( synth.getRegionView(5)->pitchKeycenter == 50 );
+
+    REQUIRE( synth.getRegionView(6)->keyRange == sfz::Range<uint8_t>(50, 50) );
+    REQUIRE( synth.getRegionView(6)->pitchKeycenter == 50 );
+}
+

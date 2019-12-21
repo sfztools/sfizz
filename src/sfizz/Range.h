@@ -90,7 +90,7 @@ public:
      * @param value
      * @return Type
      */
-    Type clamp(Type value) const noexcept { return ::clamp(value, _start, _end); }
+    constexpr Type clamp(Type value) const noexcept { return ::clamp(value, _start, _end); }
     /**
      * @brief Checks if a value is in the range, including the endpoints
      *
@@ -136,6 +136,13 @@ bool operator==(const sfz::Range<Type>& lhs, const sfz::Range<Type>& rhs)
 {
     return (lhs.getStart() == rhs.getStart()) && (lhs.getEnd() == rhs.getEnd());
 }
+
+template <class Type>
+bool operator!=(const sfz::Range<Type>& lhs, const sfz::Range<Type>& rhs)
+{
+    return (lhs.getStart() != rhs.getStart()) || (lhs.getEnd() != rhs.getEnd());
+}
+
 
 template <class Type>
 bool operator==(const sfz::Range<Type>& lhs, const std::pair<Type, Type>& rhs)

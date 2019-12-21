@@ -220,6 +220,8 @@ struct Region {
      */
     bool parseOpcode(const Opcode& opcode);
 
+    void offsetAllKeys(int offset) noexcept;
+
     uint32_t loopStart(Oversampling factor = x1) const noexcept;
     uint32_t loopEnd(Oversampling factor = x1) const noexcept;
 
