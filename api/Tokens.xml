@@ -1439,6 +1439,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>getRemainingDelay</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::ADSREnvelope</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_a_d_s_r_envelope.html</Path>
+    <Anchor>a57f867c1ea82280867128becd6514d6f</Anchor>
+    <Abstract>Get the remaining delay samples. </Abstract>
+    <DeclaredIn>ADSREnvelope.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>sfz::AtomicDisabler</Name>
       <APILanguage>c</APILanguage>
       <Type>cl</Type>
@@ -2831,7 +2843,7 @@
       <Scope>sfz::Range</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_range.html</Path>
-    <Anchor>a05f8a673098df70ed692cc300afe1e6d</Anchor>
+    <Anchor>aef58ceb857807af2c9d2984d240d0aec</Anchor>
     <Abstract>Clamp a value within the range including the endpoints. </Abstract>
     <DeclaredIn>Range.h</DeclaredIn>
   </Token>

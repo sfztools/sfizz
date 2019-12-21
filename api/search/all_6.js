@@ -42,6 +42,7 @@ var searchData=
   ['getregion',['getRegion',['../classsfz_1_1_voice.html#a9d36436f417f8f52a34f51bd450d3af7',1,'sfz::Voice']]],
   ['getregionview',['getRegionView',['../classsfz_1_1_synth.html#a7f412e08363d9c51522f04c2b587728a',1,'sfz::Synth']]],
   ['getrelease',['getRelease',['../structsfz_1_1_e_g_description.html#ab0cd0d848201aee132f87e67c9b2e9a1',1,'sfz::EGDescription']]],
+  ['getremainingdelay',['getRemainingDelay',['../classsfz_1_1_a_d_s_r_envelope.html#a57f867c1ea82280867128becd6514d6f',1,'sfz::ADSREnvelope']]],
   ['getsample',['getSample',['../classsfz_1_1_audio_buffer.html#a503864d51de64c8303aeea411efd8186',1,'sfz::AudioBuffer']]],
   ['getsamplerate',['getSampleRate',['../classsfz_1_1_voice.html#af850a94b30882aa92c4ced438c2d593c',1,'sfz::Voice']]],
   ['getsamplesperblock',['getSamplesPerBlock',['../classsfz_1_1_voice.html#a5394dccc480fa35282b24d29ff3cd20b',1,'sfz::Voice']]],

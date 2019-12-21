@@ -70,6 +70,11 @@
                 <Anchor>a655b834febc118a33306e518af65e8dd</Anchor>
                </Node>
                <Node>
+                <Name>getRemainingDelay</Name>
+                <Path>classsfz_1_1_a_d_s_r_envelope.html</Path>
+                <Anchor>a57f867c1ea82280867128becd6514d6f</Anchor>
+               </Node>
+               <Node>
                 <Name>isSmoothing</Name>
                 <Path>classsfz_1_1_a_d_s_r_envelope.html</Path>
                 <Anchor>aa1018d7601e3855a1f612c60d1f46a24</Anchor>
@@ -614,7 +619,7 @@
                <Node>
                 <Name>clamp</Name>
                 <Path>classsfz_1_1_range.html</Path>
-                <Anchor>a05f8a673098df70ed692cc300afe1e6d</Anchor>
+                <Anchor>aef58ceb857807af2c9d2984d240d0aec</Anchor>
                </Node>
                <Node>
                 <Name>contains</Name>
