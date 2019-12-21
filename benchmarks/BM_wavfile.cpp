@@ -34,8 +34,8 @@
 class FileFixture : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State& state) {
-        rootPath1 = getPath() / "ride.wav";
-        rootPath2 = getPath() / "ride2.wav";
+        rootPath1 = getPath() / "sample1.wav";
+        rootPath2 = getPath() / "sample2.wav";
         if (!ghc::filesystem::exists(rootPath1) || !ghc::filesystem::exists(rootPath2)) {
         #ifndef NDEBUG
             std::cerr << "Can't find path" << '\n';

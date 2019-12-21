@@ -121,6 +121,10 @@ add_executable(bm_wavfile BM_wavfile.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_wavfile benchmark absl::span absl::algorithm sndfile)
 target_include_directories(bm_wavfile PRIVATE ../src/sfizz ../src/external)
 
+add_executable(bm_flacfile BM_flacfile.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_flacfile benchmark absl::span absl::algorithm sndfile)
+target_include_directories(bm_flacfile PRIVATE ../src/sfizz ../src/external)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
 	bm_opf_high_vs_low
@@ -147,7 +151,10 @@ add_dependencies(sfizz_benchmarks
 	bm_resample
 	bm_envelopes
 	bm_wavfile
+	bm_flacfile
 )
 
-file(COPY "ride.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
-file(COPY "ride2.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample1.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample2.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample1.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample2.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
