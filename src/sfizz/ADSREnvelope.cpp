@@ -224,10 +224,13 @@ int ADSREnvelope<Type>::getRemainingDelay() const noexcept
 }
 
 template <class Type>
-void ADSREnvelope<Type>::startRelease(int releaseDelay) noexcept
+void ADSREnvelope<Type>::startRelease(int releaseDelay, bool fastRelease) noexcept
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
+
+    if (fastRelease)
+        this->release = 0;
 }
 
 }

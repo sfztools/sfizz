@@ -264,8 +264,9 @@ private:
      * @brief Release the voice after a given delay
      *
      * @param delay
+     * @param fastRelease whether to do a normal release or cut the voice abruptly
      */
-    void release(int delay) noexcept;
+    void release(int delay, bool fastRelease = false) noexcept;
     Region* region { nullptr };
 
     enum class State {

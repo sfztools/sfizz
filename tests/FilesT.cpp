@@ -355,7 +355,6 @@ TEST_CASE("[Files] Default path is ignored for generators")
     REQUIRE(synth.getRegionView(0)->sample == R"(*sine)");
 }
 
-
 TEST_CASE("[Files] Set CC applies properly to all channels")
 {
     sfz::Synth synth;
@@ -365,7 +364,6 @@ TEST_CASE("[Files] Set CC applies properly to all channels")
         REQUIRE(synth.getMidiState().getCCValue(channel, 61) == 122);
     }
 }
-
 
 TEST_CASE("[Files] Note and octave offsets")
 {
@@ -408,3 +406,28 @@ TEST_CASE("[Files] Note and octave offsets")
     REQUIRE( synth.getRegionView(6)->pitchKeycenter == 50 );
 }
 
+TEST_CASE("[Files] Off modes")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
+    REQUIRE( synth.getNumRegions() == 3 );
+    synth.noteOn(0, 0, 64, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    const auto* fastVoice =
+        synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
+            synth.getVoiceView(0) :
+            synth.getVoiceView(1) ;
+    const auto* normalVoice =
+        synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
+            synth.getVoiceView(1) :
+            synth.getVoiceView(0) ;
+    synth.noteOn(100, 0, 63, 63);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( fastVoice->isFree() );
+    REQUIRE( !normalVoice->isFree() );
+
+}

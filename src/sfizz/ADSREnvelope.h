@@ -66,8 +66,11 @@ public:
      * @brief Start the envelope release after a delay.
      *
      * @param releaseDelay the delay before releasing in samples
+     * @param fastRelease whether the release should be fast (i.e. 0 or so) or
+     *                    follow the release duration that was set when
+     *                    initializing the envelope
      */
-    void startRelease(int releaseDelay) noexcept;
+    void startRelease(int releaseDelay, bool fastRelease = false) noexcept;
     /**
      * @brief Is the envelope smoothing?
      *

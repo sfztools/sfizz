@@ -130,7 +130,7 @@ bool sfz::Voice::isFree() const noexcept
     return (state == State::idle);
 }
 
-void sfz::Voice::release(int delay) noexcept
+void sfz::Voice::release(int delay, bool fastRelease) noexcept
 {
     if (state != State::playing)
         return;
@@ -139,7 +139,7 @@ void sfz::Voice::release(int delay) noexcept
         reset();
     } else {
         state = State::release;
-        egEnvelope.startRelease(delay);
+        egEnvelope.startRelease(delay, fastRelease);
     }
 }
 
@@ -499,8 +499,11 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 {
-    if (region != nullptr && triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
-        release(delay);
+    if (region == nullptr)
+        return false;
+
+    if (triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
+        release(delay, region->offMode == SfzOffMode::fast);
         return true;
     }
 
