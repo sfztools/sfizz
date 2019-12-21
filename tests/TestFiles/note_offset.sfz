@@ -1,0 +1,16 @@
+<control> note_offset=1
+<region> key=63 sample=*sine
+<region> lokey=50 hikey=55 pitch_keycenter=50 sample=*sine
+<region> lokey=40 hikey=44 pitch_keycenter=40 xfin_lokey=36 xfin_hikey=40 xfout_lokey=36 xfout_hikey=40 sample=*sine
+<control> note_offset=-1
+<region> key=63 sample=*sine
+<region> lokey=50 hikey=55 pitch_keycenter=50 sample=*sine
+<region> lokey=40 hikey=44 pitch_keycenter=40 xfin_lokey=36 xfin_hikey=40 xfout_lokey=36 xfout_hikey=40 sample=*sine
+<control> note_offset=1 octave_offset=1
+<region> key=63 sample=*sine
+<region> lokey=50 hikey=55 pitch_keycenter=50 sample=*sine
+<region> lokey=40 hikey=44 pitch_keycenter=40 xfin_lokey=36 xfin_hikey=40 xfout_lokey=36 xfout_hikey=40 sample=*sine
+<control> note_offset=-1 octave_offset=-1
+<region> key=63 sample=*sine
+<region> lokey=50 hikey=55 pitch_keycenter=50 sample=*sine
+<region> lokey=40 hikey=44 pitch_keycenter=40 xfin_lokey=36 xfin_hikey=40 xfout_lokey=36 xfout_hikey=40 sample=*sine

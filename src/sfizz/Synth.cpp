@@ -67,6 +67,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
         handleGlobalOpcodes(members);
         break;
     case hash("control"):
+        defaultPath = ""; // Always reset on a new control header
         handleControlOpcodes(members);
         break;
     case hash("master"):
