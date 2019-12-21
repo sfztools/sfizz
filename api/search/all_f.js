@@ -55,7 +55,7 @@ var searchData=
   ['simdhelpers_2eh',['SIMDHelpers.h',['../_s_i_m_d_helpers_8h.html',1,'']]],
   ['sin',['sin',['../namespacesfz.html#a92c69c4723a06f6e692ddfee094420fb',1,'sfz']]],
   ['spans',['spans',['../classsfz_1_1_audio_span.html#ad8abff0f05730a73af659f5b4a5a20cc',1,'sfz::AudioSpan']]],
-  ['startrelease',['startRelease',['../classsfz_1_1_a_d_s_r_envelope.html#a5d9062c524d09c0f9fe196de0ae492be',1,'sfz::ADSREnvelope']]],
+  ['startrelease',['startRelease',['../classsfz_1_1_a_d_s_r_envelope.html#a6bdda7f21f8c8baefa21c0ba9a6bc7ab',1,'sfz::ADSREnvelope']]],
   ['startvoice',['startVoice',['../classsfz_1_1_voice.html#a4fdea019d6bc45fa273ee7b70acd4a04',1,'sfz::Voice']]],
   ['stringviewhelpers_2eh',['StringViewHelpers.h',['../_string_view_helpers_8h.html',1,'']]],
   ['subtract',['subtract',['../namespacesfz.html#a671c6bbf8866dbeac68ed3b887a705a5',1,'sfz::subtract(const T value, absl::Span&lt; T &gt; output) noexcept'],['../namespacesfz.html#acb0d4e00d9e7d95051a90753331f2c53',1,'sfz::subtract(absl::Span&lt; const T &gt; input, absl::Span&lt; T &gt; output) noexcept']]],

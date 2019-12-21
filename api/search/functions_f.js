@@ -49,7 +49,7 @@ var searchData=
   ['shouldloop',['shouldLoop',['../structsfz_1_1_region.html#af42ac52319e1f55a00585727a7678290',1,'sfz::Region']]],
   ['shrinkifsmaller',['shrinkIfSmaller',['../classsfz_1_1_range.html#aa087a74ec0e059cf61ee23ee5f29e58c',1,'sfz::Range']]],
   ['sin',['sin',['../namespacesfz.html#a92c69c4723a06f6e692ddfee094420fb',1,'sfz']]],
-  ['startrelease',['startRelease',['../classsfz_1_1_a_d_s_r_envelope.html#a5d9062c524d09c0f9fe196de0ae492be',1,'sfz::ADSREnvelope']]],
+  ['startrelease',['startRelease',['../classsfz_1_1_a_d_s_r_envelope.html#a6bdda7f21f8c8baefa21c0ba9a6bc7ab',1,'sfz::ADSREnvelope']]],
   ['startvoice',['startVoice',['../classsfz_1_1_voice.html#a4fdea019d6bc45fa273ee7b70acd4a04',1,'sfz::Voice']]],
   ['subtract',['subtract',['../namespacesfz.html#a671c6bbf8866dbeac68ed3b887a705a5',1,'sfz::subtract(const T value, absl::Span&lt; T &gt; output) noexcept'],['../namespacesfz.html#acb0d4e00d9e7d95051a90753331f2c53',1,'sfz::subtract(absl::Span&lt; const T &gt; input, absl::Span&lt; T &gt; output) noexcept']]],
   ['synth',['Synth',['../classsfz_1_1_synth.html#acb60deb7fdad7c8b8c1e8940048a1d88',1,'sfz::Synth::Synth()'],['../classsfz_1_1_synth.html#add1e3279e1695846f8c3400dd72a7ef8',1,'sfz::Synth::Synth(int numVoices)']]]
