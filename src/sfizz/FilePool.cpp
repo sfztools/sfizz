@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FilePool.h"
+#include "Buffer.h"
 #include "AudioBuffer.h"
 #include "Config.h"
 #include "Debug.h"
@@ -41,10 +42,10 @@ std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32
     if (sndFile.channels() == 1) {
         sndFile.readf(baseBuffer->channelWriter(0), numFrames);
     } else if (sndFile.channels() == 2) {
-        auto tempReadBuffer = std::make_unique<sfz::AudioBuffer<T>>(1, 2 * numFrames);
-        sndFile.readf(tempReadBuffer->channelWriter(0), numFrames);
+        auto tempReadBuffer = std::make_unique<sfz::Buffer<T>>(2 * numFrames);
+        sndFile.readf(tempReadBuffer->data(), numFrames);
         auto fileBuffer = std::make_unique<sfz::AudioBuffer<T>>(2, numFrames);
-        sfz::readInterleaved<T>(tempReadBuffer->getSpan(0), baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved<T>(*tempReadBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
     }
 
     switch (factor) {
@@ -112,7 +113,10 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
             preloadedFiles[filename].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor);
         }
     } else {
-        preloadedFiles.insert_or_assign(filename, { readFromFile<float>(sndFile, framesToLoad, oversamplingFactor), static_cast<float>(sndFile.samplerate() * oversamplingFactor) });
+        preloadedFiles.insert_or_assign(filename, {
+            readFromFile<float>(sndFile, framesToLoad, oversamplingFactor),
+            static_cast<float>(sndFile.samplerate() * oversamplingFactor)
+        });
     }
 
     return true;
