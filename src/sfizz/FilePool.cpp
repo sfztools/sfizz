@@ -67,7 +67,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
     if (!fs::exists(file))
         return {};
 
-    SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+    SndfileHandle sndFile(file.c_str());
     if (sndFile.channels() != 1 && sndFile.channels() != 2) {
         DBG("Missing logic for " << sndFile.channels() << " channels, discarding sample " << filename);
         return {};
@@ -94,7 +94,7 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
     if (!fs::exists(file))
         return false;
 
-    SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+    SndfileHandle sndFile(file.c_str());
     if (sndFile.channels() != 1 && sndFile.channels() != 2)
         return false;
 
@@ -139,7 +139,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
         const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / oversamplingFactor;
         const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
-        SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+        SndfileHandle sndFile(file.c_str());
         preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, oversamplingFactor);
     }
     this->preloadSize = preloadSize;
@@ -168,7 +168,7 @@ void sfz::FilePool::loadingThread() noexcept
             threadsLoading++;
 
             fs::path file { rootDirectory / std::string(promise->filename) };
-            SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+            SndfileHandle sndFile(file.c_str());
             if (sndFile.error() != 0)
                 continue;
 
@@ -224,7 +224,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
         const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / this->oversamplingFactor;
         const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
-        SndfileHandle sndFile(reinterpret_cast<const char*>(file.c_str()));
+        SndfileHandle sndFile(file.c_str());
         preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor);
         preloadedFile.second.sampleRate *= samplerateChange;
     }
