@@ -4,7 +4,7 @@ set -ex
 
 cmake_dir="cmake-3.13.0-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
 cmake_arc="${cmake_dir}.tar.gz"
-cmake_url="https://github.com/${TRAVIS_REPO_SLUG}/releases/download/${TRAVIS_OS_NAME}/${cmake_arc}"
+cmake_url="https://github.com/sfztools/cmake/releases/download/${TRAVIS_OS_NAME}/${cmake_arc}"
 
 if [ ${TRAVIS_OS_NAME} = "linux" ]; then
   wget -q ${cmake_url}
