@@ -26,6 +26,7 @@
 #include "Defaults.h"
 #include "LeakDetector.h"
 #include "AudioBuffer.h"
+#include "AudioSpan.h"
 #include "SIMDHelpers.h"
 #include "ghc/fs_std.hpp"
 #include <absl/container/flat_hash_map.h>
@@ -61,7 +62,7 @@ struct FilePromise
     AudioBufferPtr preloadedData {};
     std::unique_ptr<AudioBuffer<float>> fileData {};
     float sampleRate { config::defaultSampleRate };
-    std::atomic<int> availableFrames { 0 };
+    std::atomic_size_t availableFrames { 0 };
     std::atomic<bool> dataReady { false };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 };
@@ -92,6 +93,7 @@ public:
     {
         for (int i = 0; i < config::numBackgroundThreads; ++i)
             fileLoadingThreadPool.emplace_back( &FilePool::loadingThread, this );
+        fileLoadingThreadPool.emplace_back( &FilePool::clearingThread, this );
     }
 
     ~FilePool()
@@ -200,6 +202,8 @@ public:
 private:
     fs::path rootDirectory;
     void loadingThread() noexcept;
+    void clearingThread();
+    void tryToClearPromises();
 
     moodycamel::BlockingConcurrentQueue<FilePromisePtr> promiseQueue { config::maxVoices };
     moodycamel::BlockingConcurrentQueue<FilePromisePtr> filledPromiseQueue { config::maxVoices };
@@ -211,7 +215,10 @@ private:
     std::atomic<int> threadsLoading { 0 };
 
     std::vector<FilePromisePtr> temporaryFilePromises;
-    std::vector<FilePromisePtr> promisesToClean;
+    std::vector<FilePromisePtr> promisesToClear;
+    std::atomic<bool> addingPromisesToClear;
+    std::atomic<bool> canAddPromisesToClear;
+
     absl::flat_hash_map<absl::string_view, PreloadedFileHandle> preloadedFiles;
     std::vector<std::thread> fileLoadingThreadPool { };
     LEAK_DETECTOR(FilePool);

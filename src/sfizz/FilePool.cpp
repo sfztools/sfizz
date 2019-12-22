@@ -27,10 +27,10 @@
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
+#include "AtomicGuard.h"
 #include "absl/types/span.h"
 #include <chrono>
 #include <memory>
-#include <mutex>
 #include <sndfile.hh>
 #include <thread>
 using namespace std::chrono_literals;
@@ -149,12 +149,28 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     this->preloadSize = preloadSize;
 }
 
+void sfz::FilePool::tryToClearPromises()
+{
+    AtomicDisabler disabler { canAddPromisesToClear };
+
+    while (addingPromisesToClear)
+        std::this_thread::sleep_for(1ms);
+
+    promisesToClear.clear();
+}
+
+void sfz::FilePool::clearingThread()
+{
+    while (!quitThread) {
+        tryToClearPromises();
+        std::this_thread::sleep_for(50ms);
+    }
+}
+
 void sfz::FilePool::loadingThread() noexcept
 {
     FilePromisePtr promise;
     while (!quitThread) {
-        promisesToClean.clear();
-
         if (emptyQueue) {
             while(promiseQueue.try_dequeue(promise)) {
                 // We're just dequeuing
@@ -197,11 +213,16 @@ void sfz::FilePool::clear()
     emptyFileLoadingQueues();
     preloadedFiles.clear();
     temporaryFilePromises.clear();
-    promisesToClean.clear();
+    promisesToClear.clear();
 }
 
 void sfz::FilePool::cleanupPromises() noexcept
 {
+    AtomicGuard guard { addingPromisesToClear };
+
+    if (!canAddPromisesToClear)
+        return;
+
     FilePromisePtr promise;
     // Remove stuff from the filled queue and put them in a linear storage
     while (filledPromiseQueue.try_dequeue(promise))
@@ -211,7 +232,7 @@ void sfz::FilePool::cleanupPromises() noexcept
     auto sentinel = temporaryFilePromises.end() - 1;
     while (promiseIterator != temporaryFilePromises.end()) {
         if (promiseIterator->use_count() == 1) {
-            promisesToClean.push_back(*promiseIterator);
+            promisesToClear.push_back(*promiseIterator);
             std::iter_swap(promiseIterator, sentinel);
             sentinel--;
             temporaryFilePromises.pop_back();
