@@ -1,12 +1,20 @@
 #!/bin/bash
 
-set -e
+set -ex
 
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-  wget https://cmake.org/files/v3.13/cmake-3.13.0-Linux-x86_64.sh
-  sudo sh cmake-3.13.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
+cmake_dir="cmake-3.13.0-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+cmake_arc="${cmake_dir}.tar.gz"
+cmake_url="https://github.com/${TRAVIS_REPO_SLUG}/releases/download/${TRAVIS_OS_NAME}/${cmake_arc}"
+
+if [ ${TRAVIS_OS_NAME} = "linux" ]; then
+  wget -q ${cmake_url}
+  tar xzf ${cmake_arc}
+  cd ${TRAVIS_BUILD_DIR}/${cmake_dir}
+  sudo cp    bin/*   /usr/local/bin/
+  sudo cp -r doc     /usr/local/share/
+  sudo cp -r share/* /usr/local/share/
   export PATH="/usr/local/bin:$PATH" # FIXME
-elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+elif [ ${TRAVIS_OS_NAME} = "osx" ]; then
   sudo ln -s /usr/local /opt/local
   brew update
   brew upgrade cmake
