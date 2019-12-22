@@ -196,7 +196,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t getOffset(Oversampling factor = x1) noexcept;
+    uint32_t getOffset(Oversampling factor = Oversampling::x1) noexcept;
     /**
      * @brief Get the region delay in seconds
      *
@@ -209,7 +209,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t trueSampleEnd(Oversampling factor = x1) const noexcept;
+    uint32_t trueSampleEnd(Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Parse a new opcode into the region to fill in the proper parameters.
      * This must be called multiple times for each opcode applying to this region.
@@ -222,8 +222,8 @@ struct Region {
 
     void offsetAllKeys(int offset) noexcept;
 
-    uint32_t loopStart(Oversampling factor = x1) const noexcept;
-    uint32_t loopEnd(Oversampling factor = x1) const noexcept;
+    uint32_t loopStart(Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t loopEnd(Oversampling factor = Oversampling::x1) const noexcept;
 
     // Sound source: sample playback
     std::string sample {}; // Sample

@@ -109,15 +109,15 @@ TEST_CASE("[Synth] Check that we can change the size of the preload before and a
 TEST_CASE("[Synth] Check that we can change the oversampling factor before and after loading")
 {
     sfz::Synth synth;
-    synth.setOversamplingFactor(sfz::x2);
+    synth.setOversamplingFactor(sfz::Oversampling::x2);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
-    synth.setOversamplingFactor(sfz::x4);
+    synth.setOversamplingFactor(sfz::Oversampling::x4);
 
     synth.noteOn(0, 1, 36, 24);
     synth.noteOn(0, 1, 36, 89);
     synth.renderBlock(buffer);
-    synth.setOversamplingFactor(sfz::x2);
+    synth.setOversamplingFactor(sfz::Oversampling::x2);
     synth.renderBlock(buffer);
 }
 
