@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 # Travis Webhook
 wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh

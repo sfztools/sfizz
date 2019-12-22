@@ -30,3 +30,4 @@ node_modules/
 .sass-cache
 *.lock
 *.sublime-*
+*.code-*
