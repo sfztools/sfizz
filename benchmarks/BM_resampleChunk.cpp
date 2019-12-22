@@ -30,6 +30,54 @@
 #include <memory>
 #include <iostream>
 
+
+constexpr std::array<double, 12> coeffsStage2x {
+    0.036681502163648017,
+    0.13654762463195771,
+    0.27463175937945411,
+    0.42313861743656667,
+    0.56109869787919475,
+    0.67754004997416162,
+    0.76974183386322659,
+    0.83988962484963803,
+    0.89226081800387891,
+    0.9315419599631839,
+    0.96209454837808395,
+    0.98781637073289708
+};
+
+constexpr std::array<double, 4> coeffsStage4x {
+    0.042448989488488006,
+    0.17072114107630679,
+    0.39329183835224008,
+    0.74569514831986694
+};
+
+constexpr std::array<double, 3> coeffsStage8x {
+    0.055748680811302048,
+    0.24305119574153092,
+    0.6466991311926823
+};
+
+
+#if defined(__x86_64__) || defined(__i386__)
+#include "hiir/Upsampler2xSse.h"
+using Upsampler2x = hiir::Upsampler2xSse<coeffsStage2x.size()>;
+using Upsampler4x = hiir::Upsampler2xSse<coeffsStage4x.size()>;
+using Upsampler8x = hiir::Upsampler2xSse<coeffsStage8x.size()>;
+#elif defined(__arm__) || defined(__aarch64__)
+#include "hiir/Upsampler2xNeon.h"
+using Upsampler2x = hiir::Upsampler2xNeon<coeffsStage2x.size()>;
+using Upsampler4x = hiir::Upsampler2xNeon<coeffsStage4x.size()>;
+using Upsampler8x = hiir::Upsampler2xNeon<coeffsStage8x.size()>;
+#else
+#include "hiir/Upsampler2xFpu.h"
+using Upsampler2x = hiir::Upsampler2xFpu<coeffsStage2x.size()>;
+using Upsampler4x = hiir::Upsampler2xFpu<coeffsStage4x.size()>;
+using Upsampler8x = hiir::Upsampler2xFpu<coeffsStage8x.size()>;
+#endif
+
+
 class FileFixture : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State& /* state */) {
@@ -82,14 +130,23 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleAtOnce)(benchmark::State& state) {
     {
         sfz::Buffer<float> buffer { numFrames * sndfile.channels() };
         sfz::Buffer<float> temp  { numFrames * 4 };
+
+        Upsampler2x upsampler2x;
+        Upsampler4x upsampler4x;
+        upsampler2x.set_coefs(coeffsStage2x.data());
+        upsampler4x.set_coefs(coeffsStage4x.data());
+
         sndfile.readf(buffer.data(), numFrames);
         sfz::readInterleaved<float>(buffer, output->getSpan(0), output->getSpan(1));
 
-        sfz::upsample2xStage(output->getConstSpan(0).first(numFrames), absl::MakeSpan(temp));
-        sfz::upsample4xStage(absl::MakeConstSpan(temp).first(numFrames * 2), output->getSpan(0));
+        upsampler2x.process_block(temp.data(), output->channelReader(0), numFrames);
+        upsampler4x.process_block(output->channelWriter(0), temp.data(), numFrames * 2);
 
-        sfz::upsample2xStage(output->getConstSpan(1).first(numFrames), absl::MakeSpan(temp));
-        sfz::upsample4xStage(absl::MakeConstSpan(temp).first(numFrames * 2), output->getSpan(1));
+        upsampler2x.clear_buffers();
+        upsampler4x.clear_buffers();
+
+        upsampler2x.process_block(temp.data(), output->channelReader(1), numFrames);
+        upsampler4x.process_block(output->channelWriter(1), temp.data(), numFrames * 2);
     }
 }
 
@@ -110,6 +167,15 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleInChunks)(benchmark::State& state) {
         auto rightSpan = absl::MakeSpan(rightInput);
         auto chunkSpan = absl::MakeSpan(chunk);
 
+        Upsampler2x upsampler2xLeft;
+        Upsampler2x upsampler2xRight;
+        Upsampler4x upsampler4xLeft;
+        Upsampler4x upsampler4xRight;
+        upsampler2xLeft.set_coefs(coeffsStage2x.data());
+        upsampler2xRight.set_coefs(coeffsStage2x.data());
+        upsampler4xLeft.set_coefs(coeffsStage4x.data());
+        upsampler4xRight.set_coefs(coeffsStage4x.data());
+
         size_t inputFrameCounter { 0 };
         size_t outputFrameCounter { 0 };
         while(inputFrameCounter < numFrames)
@@ -122,11 +188,12 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleInChunks)(benchmark::State& state) {
             );
 
             sfz::readInterleaved<float>(bufferChunk, leftSpan, rightSpan);
-            sfz::upsample2xStage(leftSpan.first(thisChunkSize), chunkSpan);
-            sfz::upsample4xStage(chunkSpan.first(thisChunkSize * 2), output->getSpan(0).subspan(outputFrameCounter));
 
-            sfz::upsample2xStage(rightSpan.first(thisChunkSize), chunkSpan);
-            sfz::upsample4xStage(chunkSpan.first(thisChunkSize * 2), output->getSpan(1).subspan(outputFrameCounter));
+            upsampler2xLeft.process_block(chunkSpan.data(), leftSpan.data(), thisChunkSize);
+            upsampler4xLeft.process_block(output->channelWriter(0) + outputFrameCounter, chunkSpan.data(), thisChunkSize * 2);
+
+            upsampler2xRight.process_block(chunkSpan.data(), rightSpan.data(), thisChunkSize);
+            upsampler4xRight.process_block(output->channelWriter(1) + outputFrameCounter, chunkSpan.data(), thisChunkSize * 2);
 
             inputFrameCounter += chunkSize;
             outputFrameCounter += chunkSize * 4;
