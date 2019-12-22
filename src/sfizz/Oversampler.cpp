@@ -102,7 +102,7 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
     case Oversampling::x2:
         for (auto& upsampler: upsampler2x)
             upsampler.set_coefs(coeffsStage2x.data());
-        [[fallthrough]];
+        break;
     case Oversampling::x1:
         for (int i = 0; i < numChannels; ++i)
             copy<float>(input.getConstSpan(i), output.getSpan(i));
@@ -123,16 +123,22 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
         const auto thisChunkSize = std::min(chunkSize, numFrames - inputFrameCounter);
         const auto outputChunkSize { thisChunkSize * static_cast<int>(factor) };
         for (int chanIdx = 0; chanIdx < numChannels; chanIdx++) {
-            const auto inputChunk = input.getSpan(chanIdx).subspan(inputFrameCounter, chunkSize);
+            const auto inputChunk = input.getSpan(chanIdx).subspan(inputFrameCounter, thisChunkSize);
             const auto outputChunk = output.getSpan(chanIdx).subspan(outputFrameCounter, outputChunkSize);
-            upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), thisChunkSize);
-
+            if (factor == Oversampling::x2) {
+                upsampler2x[chanIdx].process_block(outputChunk.data(), inputChunk.data(), thisChunkSize);
+                continue;
+            }
             if (factor == Oversampling::x4) {
+                upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), thisChunkSize);
                 upsampler4x[chanIdx].process_block(outputChunk.data(), span1.data(), thisChunkSize * 2);
+                continue;
             }
             else if (factor == Oversampling::x8) {
+                upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), thisChunkSize);
                 upsampler4x[chanIdx].process_block(span2.data(), span1.data(), thisChunkSize * 2);
-                upsampler8x[chanIdx].process_block(outputChunk.data(), span1.data(), thisChunkSize * 4);
+                upsampler8x[chanIdx].process_block(outputChunk.data(), span2.data(), thisChunkSize * 4);
+                continue;
             }
         }
         inputFrameCounter += thisChunkSize;
