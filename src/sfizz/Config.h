@@ -56,6 +56,7 @@ namespace config {
     constexpr unsigned powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001 };
     constexpr int numCCs { 143 };
+    constexpr int chunkSize { 1024 };
 } // namespace config
 
 // Enable or disable SIMD accelerators by default
