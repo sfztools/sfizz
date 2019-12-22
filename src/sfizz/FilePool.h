@@ -47,10 +47,21 @@ struct PreloadedFileHandle
 
 struct FilePromise
 {
+    auto getData()
+    {
+        if (dataReady)
+            return AudioSpan<const float>(*fileData);
+        else if (availableFrames > preloadedData->getNumFrames())
+            return AudioSpan<const float>(*fileData).first(availableFrames);
+        else
+            return AudioSpan<const float>(*preloadedData);
+    }
+
     absl::string_view filename {};
     AudioBufferPtr preloadedData {};
     std::unique_ptr<AudioBuffer<float>> fileData {};
     float sampleRate { config::defaultSampleRate };
+    std::atomic<int> availableFrames { 0 };
     std::atomic<bool> dataReady { false };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 };

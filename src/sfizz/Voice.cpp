@@ -374,16 +374,12 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     if (buffer.getNumFrames() == 0)
         return;
 
-    auto source { [&]() {
-        // if (region->trueSampleEnd() < currentPromise->preloadedData->getNumFrames())
-        //     return AudioSpan<const float>(*currentPromise->preloadedData);
-        // else
-        if (!currentPromise->dataReady)
-            return AudioSpan<const float>(*currentPromise->preloadedData);
-        else
-            return AudioSpan<const float>(*currentPromise->fileData);
-    }() };
+    if (currentPromise == nullptr) {
+        DBG("[Voice] Missing promise during fillWithData");
+        return;
+    }
 
+    auto source = currentPromise->getData();
     auto indices = indexSpan.first(buffer.getNumFrames());
     auto jumps = tempSpan1.first(buffer.getNumFrames());
     auto bends = tempSpan2.first(buffer.getNumFrames());
