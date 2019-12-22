@@ -30,19 +30,19 @@
 #include <memory>
 #include <array>
 
-namespace sfz 
+namespace sfz
 {
 /**
  * @brief A class to handle a collection of buffers, where each buffer has the same size.
- * 
+ *
  * Unlike AudioSpan, this class *owns* its underlying buffers and they are freed when the buffer
- * is destroyed. 
- * 
+ * is destroyed.
+ *
  * @tparam Type the underlying type of the buffers
  * @tparam MaxChannels the maximum number of channels in the buffer
  * @tparam Alignment the alignment for the buffers
  */
-template <class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
+template <class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
 public:
     using value_type = std::remove_cv_t<Type>;
@@ -54,7 +54,7 @@ public:
 
     /**
      * @brief Construct a new Audio Buffer object
-     * 
+     *
      */
     AudioBuffer()
     {
@@ -63,9 +63,9 @@ public:
     /**
      * @brief Construct a new Audio Buffer object with a specified number of
      * channels and frames.
-     * 
-     * @param numChannels 
-     * @param numFrames 
+     *
+     * @param numChannels
+     * @param numFrames
      */
     AudioBuffer(int numChannels, int numFrames)
         : numChannels(numChannels)
@@ -77,24 +77,29 @@ public:
 
     /**
      * @brief Resizes all the underlying buffers to a new size.
-     * 
-     * @param newSize 
+     *
+     * @param newSize
      * @return true if the resize worked
      * @return false otherwise
      */
     bool resize(size_type newSize)
     {
         bool returnedOK = true;
+
         for (auto i = 0; i < numChannels; ++i)
             returnedOK &= buffers[i]->resize(newSize);
+
+        if (returnedOK)
+            numFrames = newSize;
+
         return returnedOK;
     }
 
     /**
      * @brief Return an iterator to a specific channel with a non-const type.
-     * 
-     * @param channelIndex 
-     * @return iterator 
+     *
+     * @param channelIndex
+     * @return iterator
      */
     iterator channelWriter(int channelIndex)
     {
@@ -107,9 +112,9 @@ public:
 
     /**
      * @brief Returns a sentinel for the channelWriter(channelIndex) iterator
-     * 
-     * @param channelIndex 
-     * @return iterator 
+     *
+     * @param channelIndex
+     * @return iterator
      */
     iterator channelWriterEnd(int channelIndex)
     {
@@ -122,9 +127,9 @@ public:
 
     /**
      * @brief Returns a const iterator for a specific channel
-     * 
-     * @param channelIndex 
-     * @return const_iterator 
+     *
+     * @param channelIndex
+     * @return const_iterator
      */
     const_iterator channelReader(int channelIndex) const
     {
@@ -137,9 +142,9 @@ public:
 
     /**
      * @brief Returns a sentinel for the channelReader(channelIndex) iterator
-     * 
-     * @param channelIndex 
-     * @return const_iterator 
+     *
+     * @param channelIndex
+     * @return const_iterator
      */
     const_iterator channelReaderEnd(int channelIndex) const
     {
@@ -152,9 +157,9 @@ public:
 
     /**
      * @brief Get a Span for a specific channel
-     * 
-     * @param channelIndex 
-     * @return absl::Span<value_type> 
+     *
+     * @param channelIndex
+     * @return absl::Span<value_type>
      */
     absl::Span<value_type> getSpan(int channelIndex) const
     {
@@ -167,9 +172,9 @@ public:
 
     /**
      * @brief Get a const Span object for a specific channel
-     * 
-     * @param channelIndex 
-     * @return absl::Span<const value_type> 
+     *
+     * @param channelIndex
+     * @return absl::Span<const value_type>
      */
     absl::Span<const value_type> getConstSpan(int channelIndex) const
     {
@@ -178,7 +183,7 @@ public:
 
     /**
      * @brief Add a channel to the buffer with the current number of frames.
-     * 
+     *
      */
     void addChannel()
     {
@@ -188,8 +193,8 @@ public:
 
     /**
      * @brief Get the number of elements in each buffer
-     * 
-     * @return size_type 
+     *
+     * @return size_type
      */
     size_type getNumFrames() const
     {
@@ -198,8 +203,8 @@ public:
 
     /**
      * @brief Get the number of channels
-     * 
-     * @return int 
+     *
+     * @return int
      */
     int getNumChannels() const
     {
@@ -208,9 +213,9 @@ public:
 
     /**
      * @brief Check if the buffers contains no elements
-     * 
+     *
      * @return true
-     * @return false 
+     * @return false
      */
     bool empty() const
     {
@@ -219,12 +224,12 @@ public:
 
     /**
      * @brief Get a reference to a given element in a given buffer.
-     * 
+     *
      * In release builds this is not checked and may touch bad memory.
-     * 
-     * @param channelIndex 
-     * @param frameIndex 
-     * @return Type& 
+     *
+     * @param channelIndex
+     * @param frameIndex
+     * @return Type&
      */
     Type& getSample(int channelIndex, size_type frameIndex)
     {
@@ -237,19 +242,44 @@ public:
 
     /**
      * @brief Alias for getSample(...)
-     * 
-     * @param channelIndex 
-     * @param frameIndex 
-     * @return Type& 
+     *
+     * @param channelIndex
+     * @param frameIndex
+     * @return Type&
      */
     Type& operator()(int channelIndex, size_type frameIndex)
     {
         return getSample(channelIndex, frameIndex);
     }
 
+    /**
+     * @brief Remove all channels from the buffer and reset it to empty
+     *
+     */
+    void reset()
+    {
+        for (int i = 0; i < numChannels; ++i)
+            buffers[i].reset();
+        numFrames = 0;
+        numChannels = 0;
+    }
+
+    /**
+     * @brief Add a positive number of channels to the buffer
+     *
+     * @param numChannels
+     */
+    void addChannels(int numChannels)
+    {
+        ASSERT(this->numChannels + numChannels <= MaxChannels);
+        for (int i = 0; i < numChannels; ++i)
+            addChannel();
+    }
+
 private:
     using buffer_type = Buffer<Type, Alignment>;
     using buffer_ptr = std::unique_ptr<buffer_type>;
+    static_assert(MaxChannels > 0, "Need a positive number of channels");
     std::array<buffer_ptr, MaxChannels> buffers;
     int numChannels { 0 };
     size_type numFrames { 0 };
