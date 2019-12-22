@@ -125,6 +125,14 @@ add_executable(bm_flacfile BM_flacfile.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_flacfile benchmark absl::span absl::algorithm sndfile)
 target_include_directories(bm_flacfile PRIVATE ../src/sfizz ../src/external)
 
+add_executable(bm_readChunk BM_readChunk.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_readChunk benchmark absl::span absl::algorithm sndfile)
+target_include_directories(bm_readChunk PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_resampleChunk BM_resampleChunk.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_resampleChunk benchmark absl::span absl::algorithm sndfile)
+target_include_directories(bm_resampleChunk PRIVATE ../src/sfizz ../src/external)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
 	bm_opf_high_vs_low
@@ -148,7 +156,9 @@ add_dependencies(sfizz_benchmarks
 	bm_pan
 	bm_subtract
 	bm_multiplyAdd
+	bm_readChunk
 	bm_resample
+	bm_resampleChunk
 	bm_envelopes
 	bm_wavfile
 	bm_flacfile

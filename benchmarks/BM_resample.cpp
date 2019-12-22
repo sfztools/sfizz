@@ -35,7 +35,7 @@ public:
     void SetUp(const ::benchmark::State& state)
     {
 
-        const auto rootPath = getPath() / "ride.wav";
+        const auto rootPath = getPath() / "sample1.wav";
         if (!ghc::filesystem::exists(rootPath)) {
         #ifndef NDEBUG
             std::cerr << "Can't find path" << '\n';
@@ -286,6 +286,15 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_FASTEST)(benchmark::State& state)
     }
 }
 
+BENCHMARK_DEFINE_F(SndFile, HIIR8X_default)(benchmark::State& state)
+{
+    for (auto _ : state) {
+        auto baseBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
+        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        auto outBuffer = sfz::upsample8x<float>(*baseBuffer);
+        benchmark::DoNotOptimize(outBuffer);
+    }
+}
 
 BENCHMARK_REGISTER_F(SndFile, HIIR2X_scalar);
 BENCHMARK_REGISTER_F(SndFile, HIIR4X_scalar);
@@ -302,4 +311,5 @@ BENCHMARK_REGISTER_F(SndFile, SRC2x_FASTEST);
 BENCHMARK_REGISTER_F(SndFile, SRC8x_MEDIUM);
 BENCHMARK_REGISTER_F(SndFile, SRC4x_FASTEST);
 BENCHMARK_REGISTER_F(SndFile, SRC8x_FASTEST);
+BENCHMARK_REGISTER_F(SndFile, HIIR8X_default);
 BENCHMARK_MAIN();
