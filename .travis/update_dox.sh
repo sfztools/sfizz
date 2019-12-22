@@ -1,6 +1,9 @@
 #!/bin/bash
 
-set -e
+set -ex
+
+# Build documentation only from Linux x86_64 builds
+if [[ ${TRAVIS_CPU_ARCH} != "amd64" ]]; then exit 0; fi
 
 doxygen Doxyfile
 git fetch --depth=1 https://github.com/${TRAVIS_REPO_SLUG}.git refs/heads/gh-pages:refs/remotes/origin/gh-pages

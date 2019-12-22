@@ -11,7 +11,6 @@ if [ ${TRAVIS_OS_NAME} = "linux" ]; then
   tar xzf ${cmake_arc}
   cd ${TRAVIS_BUILD_DIR}/${cmake_dir}
   sudo cp    bin/*   /usr/local/bin/
-  sudo cp -r doc     /usr/local/share/
   sudo cp -r share/* /usr/local/share/
   export PATH="/usr/local/bin:$PATH" # FIXME
 elif [ ${TRAVIS_OS_NAME} = "osx" ]; then
