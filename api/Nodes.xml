@@ -123,6 +123,11 @@
                 <Anchor>a2a176b89f64851bdc7134ddd02b5c115</Anchor>
                </Node>
                <Node>
+                <Name>addChannels</Name>
+                <Path>classsfz_1_1_audio_buffer.html</Path>
+                <Anchor>a457d4d2ecd3cee9993c93ccb969646c5</Anchor>
+               </Node>
+               <Node>
                 <Name>channelReader</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
                 <Anchor>ae3a77506efa8f5e09572a137ec344604</Anchor>
@@ -176,6 +181,11 @@
                 <Name>operator()</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
                 <Anchor>a6d484a51580b0fb7db43ef8356a8582e</Anchor>
+               </Node>
+               <Node>
+                <Name>reset</Name>
+                <Path>classsfz_1_1_audio_buffer.html</Path>
+                <Anchor>a4a193ca9915de973ebc7f3712c4c6ac9</Anchor>
                </Node>
                <Node>
                 <Name>resize</Name>
@@ -680,7 +690,7 @@
                <Node>
                 <Name>getOffset</Name>
                 <Path>structsfz_1_1_region.html</Path>
-                <Anchor>a1c23baafbce40d17f0b2725fd8c15683</Anchor>
+                <Anchor>a9a4978611bc8fd0069658ab31db67c7b</Anchor>
                </Node>
                <Node>
                 <Name>isGenerator</Name>
@@ -740,7 +750,7 @@
                <Node>
                 <Name>trueSampleEnd</Name>
                 <Path>structsfz_1_1_region.html</Path>
-                <Anchor>aaa1b7641638771c44e0c83c7f6bfed66</Anchor>
+                <Anchor>ae5e6b274bfa31514601b8fcb851bc199</Anchor>
                </Node>
                <Node>
                 <Name>velocityCurve</Name>

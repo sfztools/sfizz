@@ -2,6 +2,7 @@ var searchData=
 [
   ['add',['add',['../namespacesfz.html#ad0acbcd13727eee5b84f4a7e92377e40',1,'sfz']]],
   ['addchannel',['addChannel',['../classsfz_1_1_audio_buffer.html#a2a176b89f64851bdc7134ddd02b5c115',1,'sfz::AudioBuffer']]],
+  ['addchannels',['addChannels',['../classsfz_1_1_audio_buffer.html#a457d4d2ecd3cee9993c93ccb969646c5',1,'sfz::AudioBuffer']]],
   ['adsrenvelope',['ADSREnvelope',['../classsfz_1_1_a_d_s_r_envelope.html',1,'sfz']]],
   ['adsrenvelope_3c_20float_20_3e',['ADSREnvelope&lt; float &gt;',['../classsfz_1_1_a_d_s_r_envelope.html',1,'sfz']]],
   ['aftertouch',['aftertouch',['../classsfz_1_1_synth.html#a09d8c207f01af508656ed886a75118f6',1,'sfz::Synth']]],

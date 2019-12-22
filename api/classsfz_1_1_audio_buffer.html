@@ -163,9 +163,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6d484a51580b0fb7db43ef8356a8582e"><td class="memItemLeft" align="right" valign="top">Type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a6d484a51580b0fb7db43ef8356a8582e">operator()</a> (int channelIndex, size_type frameIndex)</td></tr>
 <tr class="memdesc:a6d484a51580b0fb7db43ef8356a8582e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alias for getSample(...)  <a href="#a6d484a51580b0fb7db43ef8356a8582e">More...</a><br /></td></tr>
 <tr class="separator:a6d484a51580b0fb7db43ef8356a8582e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a193ca9915de973ebc7f3712c4c6ac9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a4a193ca9915de973ebc7f3712c4c6ac9">reset</a> ()</td></tr>
+<tr class="memdesc:a4a193ca9915de973ebc7f3712c4c6ac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all channels from the buffer and reset it to empty.  <a href="#a4a193ca9915de973ebc7f3712c4c6ac9">More...</a><br /></td></tr>
+<tr class="separator:a4a193ca9915de973ebc7f3712c4c6ac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a457d4d2ecd3cee9993c93ccb969646c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a457d4d2ecd3cee9993c93ccb969646c5">addChannels</a> (int numChannels)</td></tr>
+<tr class="memdesc:a457d4d2ecd3cee9993c93ccb969646c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a positive number of channels to the buffer.  <a href="#a457d4d2ecd3cee9993c93ccb969646c5">More...</a><br /></td></tr>
+<tr class="separator:a457d4d2ecd3cee9993c93ccb969646c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt;<br />
+<div class="textblock"><h3>template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt;<br />
 class sfz::AudioBuffer&lt; Type, MaxChannels, Alignment &gt;</h3>
 
 <p>A class to handle a collection of buffers, where each buffer has the same size. </p>
@@ -185,7 +191,7 @@ class sfz::AudioBuffer&lt; Type, MaxChannels, Alignment &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -214,7 +220,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -262,7 +268,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -285,13 +291,49 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 
 </div>
 </div>
+<a id="a457d4d2ecd3cee9993c93ccb969646c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a457d4d2ecd3cee9993c93ccb969646c5">&#9670;&nbsp;</a></span>addChannels()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::addChannels </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>numChannels</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Add a positive number of channels to the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">numChannels</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ae3a77506efa8f5e09572a137ec344604"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae3a77506efa8f5e09572a137ec344604">&#9670;&nbsp;</a></span>channelReader()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -328,7 +370,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -365,7 +407,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -402,7 +444,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -439,7 +481,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -471,7 +513,7 @@ false </dd></dl>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -508,7 +550,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -538,7 +580,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -568,7 +610,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -617,7 +659,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -654,7 +696,7 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -696,13 +738,42 @@ template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, uns
 
 </div>
 </div>
+<a id="a4a193ca9915de973ebc7f3712c4c6ac9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a193ca9915de973ebc7f3712c4c6ac9">&#9670;&nbsp;</a></span>reset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::reset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove all channels from the buffer and reset it to empty. </p>
+
+</div>
+</div>
 <a id="a30ae68dea76dbb15b85eddd8b2a2306a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a30ae68dea76dbb15b85eddd8b2a2306a">&#9670;&nbsp;</a></span>resize()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, unsigned int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -739,7 +810,7 @@ false otherwise </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 22 2019 22:20:50 for sfizz by
+					<span style="float:right">Generated on Sun Dec 22 2019 23:21:41 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

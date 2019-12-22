@@ -33,7 +33,7 @@ var searchData=
   ['getnumpreloadedsamples',['getNumPreloadedSamples',['../classsfz_1_1_file_pool.html#a2fe514d5486bbdcfb5f30fd2d02694b4',1,'sfz::FilePool::getNumPreloadedSamples()'],['../classsfz_1_1_synth.html#a8bbbd2db16396a529dff87b36b6e3c5c',1,'sfz::Synth::getNumPreloadedSamples()']]],
   ['getnumregions',['getNumRegions',['../classsfz_1_1_synth.html#ac49878f212ad1db7faffc1198867e1eb',1,'sfz::Synth']]],
   ['getnumvoices',['getNumVoices',['../classsfz_1_1_synth.html#a7c1f04b7be90195ddb46099a42731349',1,'sfz::Synth']]],
-  ['getoffset',['getOffset',['../structsfz_1_1_region.html#a1c23baafbce40d17f0b2725fd8c15683',1,'sfz::Region']]],
+  ['getoffset',['getOffset',['../structsfz_1_1_region.html#a9a4978611bc8fd0069658ab31db67c7b',1,'sfz::Region']]],
   ['getoversamplingfactor',['getOversamplingFactor',['../classsfz_1_1_file_pool.html#ad68325ef56ebe42a5281cfa0693a643c',1,'sfz::FilePool::getOversamplingFactor()'],['../classsfz_1_1_synth.html#ae1581f2d663f7fa242bbda8282aaf8b1',1,'sfz::Synth::getOversamplingFactor()']]],
   ['getpair',['getPair',['../classsfz_1_1_range.html#ad63f967de9993809e8150222006312a4',1,'sfz::Range']]],
   ['getpitchbend',['getPitchBend',['../classsfz_1_1_midi_state.html#a365f0c4928d5bc372bd29f66264c86a8',1,'sfz::MidiState']]],

@@ -166,15 +166,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5df77f0225e44a9c9c0f42f6c35188c7"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#a5df77f0225e44a9c9c0f42f6c35188c7">velocityCurve</a> (uint8_t velocity) const noexcept</td></tr>
 <tr class="memdesc:a5df77f0225e44a9c9c0f42f6c35188c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the gain value related to the velocity of the note.  <a href="#a5df77f0225e44a9c9c0f42f6c35188c7">More...</a><br /></td></tr>
 <tr class="separator:a5df77f0225e44a9c9c0f42f6c35188c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c23baafbce40d17f0b2725fd8c15683"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#a1c23baafbce40d17f0b2725fd8c15683">getOffset</a> (Oversampling factor=x1) noexcept</td></tr>
-<tr class="memdesc:a1c23baafbce40d17f0b2725fd8c15683"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the region offset in samples.  <a href="#a1c23baafbce40d17f0b2725fd8c15683">More...</a><br /></td></tr>
-<tr class="separator:a1c23baafbce40d17f0b2725fd8c15683"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a4978611bc8fd0069658ab31db67c7b"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#a9a4978611bc8fd0069658ab31db67c7b">getOffset</a> (Oversampling factor=Oversampling::x1) noexcept</td></tr>
+<tr class="memdesc:a9a4978611bc8fd0069658ab31db67c7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the region offset in samples.  <a href="#a9a4978611bc8fd0069658ab31db67c7b">More...</a><br /></td></tr>
+<tr class="separator:a9a4978611bc8fd0069658ab31db67c7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a29c74ab6b97301ced899a177d63308"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#a0a29c74ab6b97301ced899a177d63308">getDelay</a> () noexcept</td></tr>
 <tr class="memdesc:a0a29c74ab6b97301ced899a177d63308"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the region delay in seconds.  <a href="#a0a29c74ab6b97301ced899a177d63308">More...</a><br /></td></tr>
 <tr class="separator:a0a29c74ab6b97301ced899a177d63308"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa1b7641638771c44e0c83c7f6bfed66"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#aaa1b7641638771c44e0c83c7f6bfed66">trueSampleEnd</a> (Oversampling factor=x1) const noexcept</td></tr>
-<tr class="memdesc:aaa1b7641638771c44e0c83c7f6bfed66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the index of the sample end, either natural end or forced loop.  <a href="#aaa1b7641638771c44e0c83c7f6bfed66">More...</a><br /></td></tr>
-<tr class="separator:aaa1b7641638771c44e0c83c7f6bfed66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5e6b274bfa31514601b8fcb851bc199"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#ae5e6b274bfa31514601b8fcb851bc199">trueSampleEnd</a> (Oversampling factor=Oversampling::x1) const noexcept</td></tr>
+<tr class="memdesc:ae5e6b274bfa31514601b8fcb851bc199"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the index of the sample end, either natural end or forced loop.  <a href="#ae5e6b274bfa31514601b8fcb851bc199">More...</a><br /></td></tr>
+<tr class="separator:ae5e6b274bfa31514601b8fcb851bc199"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7770f6af8c8879876199808e9a9757e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsfz_1_1_region.html#ac7770f6af8c8879876199808e9a9757e">parseOpcode</a> (const <a class="el" href="structsfz_1_1_opcode.html">Opcode</a> &amp;opcode)</td></tr>
 <tr class="memdesc:ac7770f6af8c8879876199808e9a9757e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a new opcode into the region to fill in the proper parameters.  <a href="#ac7770f6af8c8879876199808e9a9757e">More...</a><br /></td></tr>
 <tr class="separator:ac7770f6af8c8879876199808e9a9757e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -413,8 +413,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a1c23baafbce40d17f0b2725fd8c15683"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1c23baafbce40d17f0b2725fd8c15683">&#9670;&nbsp;</a></span>getOffset()</h2>
+<a id="a9a4978611bc8fd0069658ab31db67c7b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a4978611bc8fd0069658ab31db67c7b">&#9670;&nbsp;</a></span>getOffset()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -426,7 +426,7 @@ Public Member Functions</h2></td></tr>
           <td class="memname">uint32_t sfz::Region::getOffset </td>
           <td>(</td>
           <td class="paramtype">Oversampling&#160;</td>
-          <td class="paramname"><em>factor</em> = <code>x1</code></td><td>)</td>
+          <td class="paramname"><em>factor</em> = <code>Oversampling::x1</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -898,8 +898,8 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="aaa1b7641638771c44e0c83c7f6bfed66"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa1b7641638771c44e0c83c7f6bfed66">&#9670;&nbsp;</a></span>trueSampleEnd()</h2>
+<a id="ae5e6b274bfa31514601b8fcb851bc199"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5e6b274bfa31514601b8fcb851bc199">&#9670;&nbsp;</a></span>trueSampleEnd()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -911,7 +911,7 @@ false </dd></dl>
           <td class="memname">uint32_t sfz::Region::trueSampleEnd </td>
           <td>(</td>
           <td class="paramtype">Oversampling&#160;</td>
-          <td class="paramname"><em>factor</em> = <code>x1</code></td><td>)</td>
+          <td class="paramname"><em>factor</em> = <code>Oversampling::x1</code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -960,7 +960,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 22 2019 22:20:50 for sfizz by
+					<span style="float:right">Generated on Sun Dec 22 2019 23:21:41 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

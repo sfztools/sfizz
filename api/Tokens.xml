@@ -1664,6 +1664,30 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>reset</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::AudioBuffer</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_audio_buffer.html</Path>
+    <Anchor>a4a193ca9915de973ebc7f3712c4c6ac9</Anchor>
+    <Abstract>Remove all channels from the buffer and reset it to empty. </Abstract>
+    <DeclaredIn>AudioBuffer.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>addChannels</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::AudioBuffer</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_audio_buffer.html</Path>
+    <Anchor>a457d4d2ecd3cee9993c93ccb969646c5</Anchor>
+    <Abstract>Add a positive number of channels to the buffer. </Abstract>
+    <DeclaredIn>AudioBuffer.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>sfz::AudioSpan</Name>
       <APILanguage>c</APILanguage>
       <Type>tmplt</Type>
@@ -3094,7 +3118,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>a1c23baafbce40d17f0b2725fd8c15683</Anchor>
+    <Anchor>a9a4978611bc8fd0069658ab31db67c7b</Anchor>
     <Abstract>Get the region offset in samples. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -3118,7 +3142,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>aaa1b7641638771c44e0c83c7f6bfed66</Anchor>
+    <Anchor>ae5e6b274bfa31514601b8fcb851bc199</Anchor>
     <Abstract>Get the index of the sample end, either natural end or forced loop. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
