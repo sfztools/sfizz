@@ -135,7 +135,7 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     if (state != State::playing)
         return;
 
-    if (egEnvelope.getRemainingDelay() >= (delay - initialDelay)) {
+    if (egEnvelope.getRemainingDelay() > std::max(0, delay - initialDelay)) {
         reset();
     } else {
         state = State::release;

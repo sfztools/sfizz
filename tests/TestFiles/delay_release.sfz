@@ -1,1 +1,1 @@
-<region> delay=0.005 sample=dummy1.wav
+<region> ampeg_delay=0.005 ampeg_release=1 sample=dummy1.wav
