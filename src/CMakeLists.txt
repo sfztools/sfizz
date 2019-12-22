@@ -8,6 +8,7 @@ set (SFIZZ_SOURCES
     sfizz/ScopedFTZ.cpp
     sfizz/MidiState.cpp
     sfizz/SfzHelpers.cpp
+    sfizz/Oversampler.cpp
     sfizz/FloatEnvelopes.cpp
 )
 include (SfizzSIMDSourceFilesCheck)
