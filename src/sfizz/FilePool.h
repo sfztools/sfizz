@@ -216,8 +216,8 @@ private:
 
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
-    std::atomic<bool> addingPromisesToClear;
-    std::atomic<bool> canAddPromisesToClear;
+    std::atomic<bool> addingPromisesToClear { false };
+    std::atomic<bool> canAddPromisesToClear { true };
 
     absl::flat_hash_map<absl::string_view, PreloadedFileHandle> preloadedFiles;
     std::vector<std::thread> fileLoadingThreadPool { };
