@@ -172,7 +172,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
     if (preloaded == preloadedFiles.end())
         return {};
 
-    auto& promise = emptyPromises.back();
+    auto promise = emptyPromises.back();
     promise->filename = preloaded->first;
     promise->preloadedData = preloaded->second.preloadedData;
     promise->sampleRate = preloaded->second.sampleRate;
