@@ -45,34 +45,25 @@ struct AlignmentSentinels {
     float* lastAligned;
 };
 
-float* nextAligned(const float* ptr)
+constexpr float* nextAligned(const float* ptr)
 {
     return reinterpret_cast<float*>((reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask) & (~ByteAlignmentMask));
 }
 
-float* prevAligned(const float* ptr)
+constexpr float* prevAligned(const float* ptr)
 {
     return reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask));
 }
 
-bool unaligned(const float* ptr)
+constexpr bool unaligned(const float* ptr)
 {
     return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask) != 0;
 }
 
-bool unaligned(const float* ptr1, const float* ptr2)
+template<class... Args>
+constexpr bool unaligned(const float* ptr1, Args... rest)
 {
-    return unaligned(ptr1) || unaligned(ptr2);
-}
-
-bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3)
-{
-    return unaligned(ptr1) || unaligned(ptr2) || unaligned(ptr3);
-}
-
-bool unaligned(const float* ptr1, const float* ptr2, const float* ptr3, const float* ptr4)
-{
-    return unaligned(ptr1) || unaligned(ptr2) || unaligned(ptr3) || unaligned(ptr4);
+    return unaligned(ptr1) || unaligned(rest...);
 }
 
 template <>
@@ -186,8 +177,7 @@ void sfz::exp<float, true>(absl::Span<const float> input, absl::Span<float> outp
 
     while (in < lastAligned) {
         _mm_store_ps(out, exp_ps(_mm_load_ps(in)));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(out, in);
     }
 
     while (in < sentinel)
@@ -208,8 +198,7 @@ void sfz::cos<float, true>(absl::Span<const float> input, absl::Span<float> outp
 
     while (in < lastAligned) {
         _mm_store_ps(out, cos_ps(_mm_load_ps(in)));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(out, in);
     }
 
     while (in < sentinel)
@@ -230,8 +219,7 @@ void sfz::log<float, true>(absl::Span<const float> input, absl::Span<float> outp
 
     while (in < lastAligned) {
         _mm_store_ps(out, log_ps(_mm_load_ps(in)));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(out, in);
     }
 
     while (in < sentinel)
@@ -252,8 +240,7 @@ void sfz::sin<float, true>(absl::Span<const float> input, absl::Span<float> outp
 
     while (in < lastAligned) {
         _mm_store_ps(out, sin_ps(_mm_load_ps(in)));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(out, in);
     }
 
     while (in < sentinel)
@@ -274,8 +261,7 @@ void sfz::applyGain<float, true>(float gain, absl::Span<const float> input, absl
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_mul_ps(mmGain, _mm_load_ps(in)));
-        in += TypeAlignment;
-        out += TypeAlignment;
+        incrementAll<TypeAlignment>(out, in);
     }
 
     while (out < output.end())
@@ -296,9 +282,7 @@ void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const 
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)));
-        g += TypeAlignment;
-        in += TypeAlignment;
-        out += TypeAlignment;
+        incrementAll<TypeAlignment>(g, in, out);
     }
 
     while (out < output.end())
@@ -320,9 +304,7 @@ void sfz::divide<float, true>(absl::Span<const float> input, absl::Span<const fl
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_div_ps(_mm_load_ps(in), _mm_load_ps(div)));
-        div += TypeAlignment;
-        in += TypeAlignment;
-        out += TypeAlignment;
+        incrementAll<TypeAlignment>(in, div, out);
     }
 
     while (out < output.end())
@@ -346,9 +328,7 @@ void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<cons
         auto mmOut = _mm_load_ps(out);
         mmOut = _mm_add_ps(_mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)), mmOut);
         _mm_store_ps(out, mmOut);
-        g += TypeAlignment;
-        in += TypeAlignment;
-        out += TypeAlignment;
+        incrementAll<TypeAlignment>(g, in, out);
     }
 
     while (out < output.end())
@@ -405,10 +385,7 @@ float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps,
         mmFloatIndex = _mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(3, 3, 3, 3));
         // floatingIndex = _mm_cvtss_f32(_mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(0, 0, 0, 3)));;
         // floatingIndex = *(index + 3) + *(rightCoeff + 3);
-        index += TypeAlignment;
-        jump += TypeAlignment;
-        leftCoeff += TypeAlignment;
-        rightCoeff += TypeAlignment;
+        incrementAll<TypeAlignment>(index, jump, leftCoeff, rightCoeff);
     }
 
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
@@ -463,10 +440,7 @@ float sfz::saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
         mmFloatIndex = _mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(3, 3, 3, 3));
         // floatingIndex = _mm_cvtss_f32(_mm_shuffle_ps(mmFloatIndex, mmFloatIndex, _MM_SHUFFLE(0, 0, 0, 3)));;
         // floatingIndex = *(index + 3) + *(rightCoeff + 3);
-        index += TypeAlignment;
-        jump += TypeAlignment;
-        leftCoeff += TypeAlignment;
-        rightCoeff += TypeAlignment;
+        incrementAll<TypeAlignment>(index, jump, leftCoeff, rightCoeff);
     }
 
     floatIndex = _mm_cvtss_f32(mmFloatIndex);
@@ -539,8 +513,7 @@ void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> outp
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_add_ps(_mm_load_ps(in), _mm_load_ps(out)));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(in, out);
     }
 
     while (out < sentinel)
@@ -581,8 +554,7 @@ void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float>
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_sub_ps(_mm_load_ps(out), _mm_load_ps(in)));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(in, out);
     }
 
     while (out < sentinel)
@@ -623,8 +595,7 @@ void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> out
 
     while (out < lastAligned) {
         _mm_store_ps(out, _mm_load_ps(in));
-        out += TypeAlignment;
-        in += TypeAlignment;
+        incrementAll<TypeAlignment>(in, out);
     }
 
     while (out < sentinel)
@@ -658,9 +629,7 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
         auto mmRight = _mm_mul_ps(mmCos, _mm_load_ps(left));
         _mm_store_ps(left, mmLeft);
         _mm_store_ps(right, mmRight);
-        left += TypeAlignment;
-        right += TypeAlignment;
-        pan += TypeAlignment;
+        incrementAll<TypeAlignment>(pan, left, right);
     }
 
     while (pan < sentinel)
@@ -760,8 +729,7 @@ void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> o
         mmOutput = _mm_add_ps(mmOutput, mmOffset);
         _mm_store_ps(out, mmOutput);
         mmOutput = _mm_shuffle_ps(mmOutput, mmOutput, _MM_SHUFFLE(3, 3, 3, 3));
-        in += TypeAlignment;
-        out += TypeAlignment;
+        incrementAll<TypeAlignment>(in, out);
     }
 
     while (in < sentinel)
@@ -794,10 +762,7 @@ void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, 
         auto mmLeft = _mm_sub_ps(_mm_set_ps1(1.0f), mmRight);
         _mm_store_ps(leftCoeff, mmLeft);
         _mm_store_ps(rightCoeff, mmRight);
-        floatJump += TypeAlignment;
-        jump += TypeAlignment;
-        leftCoeff += TypeAlignment;
-        rightCoeff += TypeAlignment;
+        incrementAll<TypeAlignment>(floatJump, jump, leftCoeff, rightCoeff);
     }
 
     while(floatJump < sentinel)
@@ -828,8 +793,7 @@ void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> out
         mmBase = mmNextBase;
         mmOutput = _mm_sub_ps(mmOutput, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOutput), 4)));
         _mm_store_ps(out, mmOutput);
-        in += TypeAlignment;
-        out += TypeAlignment;
+        incrementAll<TypeAlignment>(in, out);
     }
 
     while (in < sentinel)
