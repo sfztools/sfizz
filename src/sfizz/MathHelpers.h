@@ -35,11 +35,11 @@
 #include <random>
 
 template <class T>
-inline constexpr T min(T op1, T op2) { return std::min(op1, op2); }
+constexpr T min(T op1, T op2) { return std::min(op1, op2); }
 template <class T>
-inline constexpr T min(T op1, T op2, T op3) { return std::min(op1, std::min(op2, op3)); }
+constexpr T min(T op1, T op2, T op3) { return std::min(op1, std::min(op2, op3)); }
 template <class T>
-inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::min(op2, std::min(op3, op4))); }
+constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::min(op2, std::min(op3, op4))); }
 
 /**
  * @brief Converts db values into power (applies 10**(in/10))
@@ -49,7 +49,7 @@ inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::m
  * @return Type
  */
 template <class Type>
-inline constexpr Type db2pow(Type in)
+constexpr Type db2pow(Type in)
 {
     return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.1));
 }
@@ -62,7 +62,7 @@ inline constexpr Type db2pow(Type in)
  * @return Type
  */
 template <class Type>
-inline constexpr Type pow2db(Type in)
+constexpr Type pow2db(Type in)
 {
     return static_cast<Type>(10.0) * std::log10(in);
 }
@@ -75,7 +75,7 @@ inline constexpr Type pow2db(Type in)
  * @return constexpr Type
  */
 template <class Type>
-inline constexpr Type db2mag(Type in)
+constexpr Type db2mag(Type in)
 {
     return std::pow(static_cast<Type>(10.0), in * static_cast<Type>(0.05));
 }
@@ -88,7 +88,7 @@ inline constexpr Type db2mag(Type in)
  * @return Type
  */
 template <class Type>
-inline constexpr Type mag2db(Type in)
+constexpr Type mag2db(Type in)
 {
     return static_cast<Type>(20.0) * std::log10(in);
 }
