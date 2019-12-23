@@ -30,7 +30,7 @@ find_package (Threads REQUIRED)
 target_link_libraries (sfizz PUBLIC absl::strings)
 target_link_libraries (sfizz PRIVATE sndfile absl::flat_hash_map Threads::Threads)
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
     target_link_libraries (sfizz PUBLIC atomic)
 endif()
 

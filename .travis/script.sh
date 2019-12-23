@@ -2,14 +2,16 @@
 
 set -ex
 
-if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
-  mkdir -p build/${INSTALL_DIR} && cd build
+mkdir -p build/${INSTALL_DIR} && cd build
 
+if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
   # FIXME: lto error in build when enabled
   /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DCMAKE_INSTALL_PREFIX:PATH=${PWD}/${INSTALL_DIR} ..
   make -j$(nproc)
 elif [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
-  mkdir build && cd build
-  cmake -D SFIZZ_JACK=OFF -G Xcode .. # FIXME: client build
-  xcodebuild -project sfizz.xcodeproj -alltargets -configuration Debug build
+  /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=${PWD}/${INSTALL_DIR} ..
+  make -j$(sysctl -n hw.ncpu)
+
+# Xcode not currently supported, see https://gitlab.kitware.com/cmake/cmake/issues/18088
+# xcodebuild -project sfizz.xcodeproj -alltargets -configuration Debug build
 fi
