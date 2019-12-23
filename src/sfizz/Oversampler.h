@@ -64,6 +64,8 @@ public:
 private:
     Oversampling factor;
     size_t chunkSize;
+
+    LEAK_DETECTOR(Oversampler);
 };
 
 }

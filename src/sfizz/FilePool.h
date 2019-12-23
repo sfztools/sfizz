@@ -65,6 +65,8 @@ struct FilePromise
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic_size_t availableFrames { 0 };
     std::atomic<bool> dataReady { false };
+
+    LEAK_DETECTOR(FilePromise);
 };
 
 using FilePromisePtr = std::shared_ptr<FilePromise>;
