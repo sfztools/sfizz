@@ -2244,6 +2244,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>FilePool</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a4f05e6f6842acb1e238268f5a964b80e</Anchor>
+    <Abstract>Construct a new File Pool object. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>setRootDirectory</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>
@@ -2835,6 +2847,41 @@
     <Path>structsfz_1_1_opcode.html</Path>
     <Abstract>Opcode description class; should be very lightweight to use and move around. </Abstract>
     <DeclaredIn>Opcode.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>sfz::Oversampler</Name>
+      <APILanguage>c</APILanguage>
+      <Type>cl</Type>
+      <Scope>sfz::Oversampler</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_oversampler.html</Path>
+    <Abstract>Wraps the internal oversampler in a single function that takes an AudioBuffer and oversamples it in a...</Abstract>
+    <DeclaredIn>Oversampler.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>Oversampler</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Oversampler</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_oversampler.html</Path>
+    <Anchor>a0796ed6eba24d67aab37602a7233e18a</Anchor>
+    <Abstract>Construct a new Oversampler object. </Abstract>
+    <DeclaredIn>Oversampler.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>stream</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Oversampler</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_oversampler.html</Path>
+    <Anchor>ab26a5d0907eebc75372220cc7a0376e2</Anchor>
+    <Abstract>Stream the oversampling of an input AudioBuffer into an output one, possibly signaling the caller alo...</Abstract>
+    <DeclaredIn>Oversampler.h</DeclaredIn>
   </Token>
   <Token>
     <TokenIdentifier>

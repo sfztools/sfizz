@@ -99,27 +99,19 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespacesfz.html">sfz</a></li><li class="navelem"><a class="el" href="classsfz_1_1_midi_state.html">MidiState</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespacesfz.html">sfz</a></li><li class="navelem"><a class="el" href="classsfz_1_1_oversampler.html">Oversampler</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">sfz::MidiState Member List</div>  </div>
+<div class="title">sfz::Oversampler Member List</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>This is the complete list of members for <a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a>, including all inherited members.</p>
+<p>This is the complete list of members for <a class="el" href="classsfz_1_1_oversampler.html">sfz::Oversampler</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a73a1fdb9f0f87a172514522321a8158c">ccEvent</a>(int ccNumber, uint8_t ccValue) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a19eeae5eb977759128fcdb415b1e5e17">getCCArray</a>() const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a7fc5424778613527212c4d3ef9614a92">getCCValue</a>(int ccNumber) const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a26d9632b6b2daa5c39945d60270ee2db">getNoteDuration</a>(int noteNumber) const</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#af96e7279289527dc9e65d4249e5311fb">getNoteVelocity</a>(int noteNumber) const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#af3680dbd85a19d385473b2c84f4155cb">getPitchBend</a>() const noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a06971a2b813884edfe8ffb6c39e4d15c">noteOnEvent</a>(int noteNumber, uint8_t velocity) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a2aced451eb434b46ddf7b66bc61ce001">pitchBendEvent</a>(int pitchBendValue) noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a8e4beb553db5ad28eaae35032cfd1967">reset</a>() noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html#a14c5c39d60b61d508f5e3e626344d0db">resetAllControllers</a>() noexcept</td><td class="entry"><a class="el" href="classsfz_1_1_midi_state.html">sfz::MidiState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classsfz_1_1_oversampler.html#a0796ed6eba24d67aab37602a7233e18a">Oversampler</a>(Oversampling factor=Oversampling::x1, size_t chunkSize=config::chunkSize)</td><td class="entry"><a class="el" href="classsfz_1_1_oversampler.html">sfz::Oversampler</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classsfz_1_1_oversampler.html#ab26a5d0907eebc75372220cc7a0376e2">stream</a>(const AudioBuffer&lt; float &gt; &amp;input, AudioBuffer&lt; float &gt; &amp;output, std::atomic&lt; size_t &gt; *framesReady=nullptr)</td><td class="entry"><a class="el" href="classsfz_1_1_oversampler.html">sfz::Oversampler</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 			<hr>
 			<footer>

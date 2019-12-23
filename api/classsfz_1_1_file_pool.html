@@ -118,6 +118,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a4f05e6f6842acb1e238268f5a964b80e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a4f05e6f6842acb1e238268f5a964b80e">FilePool</a> ()</td></tr>
+<tr class="memdesc:a4f05e6f6842acb1e238268f5a964b80e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new File Pool object.  <a href="#a4f05e6f6842acb1e238268f5a964b80e">More...</a><br /></td></tr>
+<tr class="separator:a4f05e6f6842acb1e238268f5a964b80e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8af2ebf9ec28ebccf2e119a4b38eead7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a8af2ebf9ec28ebccf2e119a4b38eead7">setRootDirectory</a> (const fs::path &amp;directory) noexcept</td></tr>
 <tr class="memdesc:a8af2ebf9ec28ebccf2e119a4b38eead7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the root directory from which to search for files to load.  <a href="#a8af2ebf9ec28ebccf2e119a4b38eead7">More...</a><br /></td></tr>
 <tr class="separator:a8af2ebf9ec28ebccf2e119a4b38eead7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,8 +164,29 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a singleton-designed class that holds all the preloaded data as well as functions to request new file data and collect the file handles to close after they are read. </p>
 <p>This object caches the file data that was already preloaded in case it is asked again by a region using the same sample. In this situation, both regions have a handle on the same preloaded data.</p>
-<p>The file request is immediately served using the preloaded data. A ticket is then provided to the voice that requested the file, and the file loading happens in the background. When the file is fully loaded, the background makes the full data available to the voice and consumes the ticket, while conserving a handle on this file. When the voice dies it releases its handle on the files, which should decrease the reference count to 1. A garbage collection thread then runs regularly to clear the memory of all file handles with a reference count of 1. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+<p>The file request is immediately served using the preloaded data. A promise is then provided to the voice that requested the file, and the file loading happens in the background. File reads happen on whole samples but oversampling is done in chunks, and the promise contains a counter for the frames that are loaded. When the voice dies it releases its handle on the promise, which should decrease the reference count to 1. A garbage collection thread then runs regularly to clear the memory of all file handles with a reference count of 1. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a4f05e6f6842acb1e238268f5a964b80e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f05e6f6842acb1e238268f5a964b80e">&#9670;&nbsp;</a></span>FilePool()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">sfz::FilePool::FilePool </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Construct a new File Pool object. </p>
+<p>This creates the background threads based on config::numBackgroundThreads as well as the garbage collection thread. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a id="a73f46234da3ccee6c40f4ddb354cfb01"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a73f46234da3ccee6c40f4ddb354cfb01">&#9670;&nbsp;</a></span>cleanupPromises()</h2>
 
@@ -575,7 +599,7 @@ false if something went wrong () </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Mon Dec 23 2019 00:28:12 for sfizz by
+					<span style="float:right">Generated on Mon Dec 23 2019 13:20:28 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

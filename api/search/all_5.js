@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['filepool',['FilePool',['../classsfz_1_1_file_pool.html',1,'sfz']]],
+  ['filepool',['FilePool',['../classsfz_1_1_file_pool.html',1,'sfz::FilePool'],['../classsfz_1_1_file_pool.html#a4f05e6f6842acb1e238268f5a964b80e',1,'sfz::FilePool::FilePool()']]],
   ['fill',['fill',['../classsfz_1_1_audio_span.html#afe7915ff9acf885df62788d57709b933',1,'sfz::AudioSpan::fill()'],['../namespacesfz.html#a1a5601af5f6d2113fdda2394fd7b00a0',1,'sfz::fill()']]],
   ['finddefine',['findDefine',['../namespacesfz.html#a0154fe33ffa4619bd53939364a8cbe27',1,'sfz']]],
   ['findheader',['findHeader',['../namespacesfz.html#a62f12e86de3f5c188a3a46840ded9030',1,'sfz']]],

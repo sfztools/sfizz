@@ -51,6 +51,7 @@ var searchData=
   ['sin',['sin',['../namespacesfz.html#a92c69c4723a06f6e692ddfee094420fb',1,'sfz']]],
   ['startrelease',['startRelease',['../classsfz_1_1_a_d_s_r_envelope.html#a6bdda7f21f8c8baefa21c0ba9a6bc7ab',1,'sfz::ADSREnvelope']]],
   ['startvoice',['startVoice',['../classsfz_1_1_voice.html#ae4d2941f9a0f71ed4f4743f1af38e2a8',1,'sfz::Voice']]],
+  ['stream',['stream',['../classsfz_1_1_oversampler.html#ab26a5d0907eebc75372220cc7a0376e2',1,'sfz::Oversampler']]],
   ['subtract',['subtract',['../namespacesfz.html#a671c6bbf8866dbeac68ed3b887a705a5',1,'sfz::subtract(const T value, absl::Span&lt; T &gt; output) noexcept'],['../namespacesfz.html#acb0d4e00d9e7d95051a90753331f2c53',1,'sfz::subtract(absl::Span&lt; const T &gt; input, absl::Span&lt; T &gt; output) noexcept']]],
   ['synth',['Synth',['../classsfz_1_1_synth.html#acb60deb7fdad7c8b8c1e8940048a1d88',1,'sfz::Synth::Synth()'],['../classsfz_1_1_synth.html#add1e3279e1695846f8c3400dd72a7ef8',1,'sfz::Synth::Synth(int numVoices)']]]
 ];

@@ -435,6 +435,11 @@
               <Path>classsfz_1_1_file_pool.html</Path>
               <Subnodes>
                <Node>
+                <Name>FilePool</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a4f05e6f6842acb1e238268f5a964b80e</Anchor>
+               </Node>
+               <Node>
                 <Name>cleanupPromises</Name>
                 <Path>classsfz_1_1_file_pool.html</Path>
                 <Anchor>a73f46234da3ccee6c40f4ddb354cfb01</Anchor>
@@ -620,6 +625,22 @@
               <Name>Opcode</Name>
               <Path>structsfz_1_1_opcode.html</Path>
               <Subnodes>
+              </Subnodes>
+             </Node>
+             <Node>
+              <Name>Oversampler</Name>
+              <Path>classsfz_1_1_oversampler.html</Path>
+              <Subnodes>
+               <Node>
+                <Name>Oversampler</Name>
+                <Path>classsfz_1_1_oversampler.html</Path>
+                <Anchor>a0796ed6eba24d67aab37602a7233e18a</Anchor>
+               </Node>
+               <Node>
+                <Name>stream</Name>
+                <Path>classsfz_1_1_oversampler.html</Path>
+                <Anchor>ab26a5d0907eebc75372220cc7a0376e2</Anchor>
+               </Node>
               </Subnodes>
              </Node>
              <Node>
@@ -1192,6 +1213,10 @@
            <Node>
             <Name>sfz::Opcode</Name>
             <Path>structsfz_1_1_opcode.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Oversampler</Name>
+            <Path>classsfz_1_1_oversampler.html</Path>
            </Node>
            <Node>
             <Name>sfz::Range&lt; Type &gt;</Name>
