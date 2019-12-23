@@ -45,23 +45,23 @@ struct AlignmentSentinels {
     float* lastAligned;
 };
 
-constexpr float* nextAligned(const float* ptr)
+float* nextAligned(const float* ptr)
 {
     return reinterpret_cast<float*>((reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask) & (~ByteAlignmentMask));
 }
 
-constexpr float* prevAligned(const float* ptr)
+float* prevAligned(const float* ptr)
 {
     return reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask));
 }
 
-constexpr bool unaligned(const float* ptr)
+bool unaligned(const float* ptr)
 {
     return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask) != 0;
 }
 
 template<class... Args>
-constexpr bool unaligned(const float* ptr1, Args... rest)
+bool unaligned(const float* ptr1, Args... rest)
 {
     return unaligned(ptr1) || unaligned(rest...);
 }
