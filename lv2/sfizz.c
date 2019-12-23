@@ -495,7 +495,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         // LV2_DEBUG("[process_midi] Received note on %d/%d at time %ld\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_note_on(self->synth,
                            (int)ev->time.frames,
-                           (int)MIDI_CHANNEL(msg[0]),
                            (int)msg[1],
                            msg[2]);
         break;
@@ -503,7 +502,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         // LV2_DEBUG("[process_midi] Received note off %d/%d at time %ld\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_note_off(self->synth,
                             (int)ev->time.frames,
-                            (int)MIDI_CHANNEL(msg[0]),
                             (int)msg[1],
                             msg[2]);
         break;
@@ -511,7 +509,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         // LV2_DEBUG("[process_midi] Received CC %d/%d at time %ld\n", msg[0], msg[1], ev->time.frames);
         sfizz_send_cc(self->synth,
                       (int)ev->time.frames,
-                      (int)MIDI_CHANNEL(msg[0]),
                       (int)msg[1],
                       msg[2]);
         break;
@@ -519,7 +516,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         // LV2_DEBUG("[process_midi] Received pitch bend %d on channel %d at time %ld\n", PITCH_BUILD_AND_CENTER(msg[1], msg[2]), MIDI_CHANNEL(msg[0]), ev->time.frames);
         sfizz_send_pitch_wheel(self->synth,
                         (int)ev->time.frames,
-                        (int)MIDI_CHANNEL(msg[0]),
                         PITCH_BUILD_AND_CENTER(msg[1], msg[2]));
         break;
     default:
@@ -697,7 +693,7 @@ lv2_get_options(LV2_Handle instance, LV2_Options_Option *options)
     for (LV2_Options_Option *opt = options; opt->value; ++opt)
     {
         if (self->unmap) {
-            LV2_DEBUG("[DEBUG] Called for an option with key (subject): %s (%s) \n", 
+            LV2_DEBUG("[DEBUG] Called for an option with key (subject): %s (%s) \n",
                       self->unmap->unmap(self->unmap->handle, opt->key),
                       self->unmap->unmap(self->unmap->handle, opt->subject));
         }
@@ -963,7 +959,7 @@ work_response(LV2_Handle instance,
 
     const LV2_Atom *atom = (const LV2_Atom *)data;
     if (atom->type == self->sfizz_sfz_file_uri)
-    { 
+    {
         self->changing_state = false;
     }
     else if (atom->type == self->sfizz_num_voices_uri)

@@ -92,54 +92,48 @@ public:
      *
      * @param region
      * @param delay
-     * @param channel (0-based)
      * @param number
      * @param value
      * @param triggerType
      */
-    void startVoice(Region* region, int delay, int channel, int number, uint8_t value, TriggerType triggerType) noexcept;
+    void startVoice(Region* region, int delay, int number, uint8_t value, TriggerType triggerType) noexcept;
 
     /**
      * @brief Register a note-off event; this may trigger a release.
      *
      * @param delay
-     * @param channel (0-based)
      * @param noteNumber
      * @param velocity
      */
-    void registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
+    void registerNoteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
     /**
      * @brief Register a CC event; this may trigger a release. If the voice is playing and its
      * region has CC modifiers, it will use this value to compute the CC envelope to apply to the
      * parameter.
      *
      * @param delay
-     * @param channel (0-based)
      * @param ccNumber
      * @param ccValue
      */
-    void registerCC(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;
+    void registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept;
     /**
      * @brief Register a pitch wheel event; for now this does nothing
      *
      * @param delay
-     * @param channel (0-based)
      * @param pitch
      */
-    void registerPitchWheel(int delay, int channel, int pitch) noexcept;
+    void registerPitchWheel(int delay, int pitch) noexcept;
     /**
      * @brief Register an aftertouch event; for now this does nothing
      *
      * @param delay
-     * @param channel (0-based)
      * @param aftertouch
      */
-    void registerAftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
+    void registerAftertouch(int delay, uint8_t aftertouch) noexcept;
     /**
      * @brief Register a tempo event; for now this does nothing
      *
      * @param delay
-     * @param channel (0-based)
      * @param pitch
      */
     void registerTempo(int delay, float secondsPerQuarter) noexcept;
@@ -181,12 +175,6 @@ public:
      * @return int
      */
     int getTriggerNumber() const noexcept;
-    /**
-     * @brief Get the channel that triggered the voice
-     *
-     * @return int
-     */
-    int getTriggerChannel() const noexcept;
     /**
      * @brief Get the value that triggered the voice (note velocity or cc value)
      *
@@ -243,11 +231,10 @@ private:
     /**
      * @brief Computes the values for the envelope depending on the note or CC number and the velocity/cc value
      *
-     * @param channel (0-based)
      * @param delay
      * @param velocity
      */
-    void prepareEGEnvelope(int channel, int delay, uint8_t velocity) noexcept;
+    void prepareEGEnvelope(int delay, uint8_t velocity) noexcept;
     /**
      * @brief The function processing a mono sample source
      *
@@ -279,7 +266,6 @@ private:
 
     TriggerType triggerType;
     int triggerNumber;
-    int triggerChannel;
     uint8_t triggerValue;
 
     float speedRatio { 1.0 };

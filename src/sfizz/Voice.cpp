@@ -36,11 +36,10 @@ sfz::Voice::Voice(const sfz::MidiState& midiState, sfz::Resources& resources)
 {
 }
 
-void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
+void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
 {
     this->triggerType = triggerType;
     triggerNumber = number;
-    triggerChannel = channel;
     triggerValue = value;
 
     this->region = region;
@@ -60,39 +59,39 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
     }
     pitchRatio = region->getBasePitchVariation(number, value);
 
-    baseVolumedB = region->getBaseVolumedB(channel, number);
+    baseVolumedB = region->getBaseVolumedB(number);
 
     auto volumedB { baseVolumedB };
     if (region->volumeCC)
-        volumedB += normalizeCC(midiState.getCCValue(channel, region->volumeCC->first)) * region->volumeCC->second;
+        volumedB += normalizeCC(midiState.getCCValue(region->volumeCC->first)) * region->volumeCC->second;
     volumeEnvelope.reset(db2mag(volumedB));
 
     baseGain = region->getBaseGain();
-    baseGain *= region->getCrossfadeGain(midiState.getCCArray(channel));
+    baseGain *= region->getCrossfadeGain(midiState.getCCArray());
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
 
     float gain { baseGain };
     if (region->amplitudeCC)
-        gain *= normalizeCC(midiState.getCCValue(channel, region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
+        gain *= normalizeCC(midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(gain);
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
-        pan += normalizeCC(midiState.getCCValue(channel, region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
+        pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(pan);
 
     basePosition = normalizeNegativePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
-        position += normalizeCC(midiState.getCCValue(channel, region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
+        position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
     positionEnvelope.reset(position);
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
-        width += normalizeCC(midiState.getCCValue(channel, region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
+        width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(width);
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
@@ -100,21 +99,21 @@ void sfz::Voice::startVoice(Region* region, int delay, int channel, int number, 
         const auto bendInCents = normalizedBend > 0 ? normalizedBend * region->bendUp : -normalizedBend * region->bendDown;
         return centsFactor(bendInCents);
     });
-    pitchBendEnvelope.reset(midiState.getPitchBend(channel));
+    pitchBendEnvelope.reset(midiState.getPitchBend());
 
     sourcePosition = region->getOffset();
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
     bendStepFactor = centsFactor(region->bendStep);
-    prepareEGEnvelope(channel, initialDelay, value);
+    prepareEGEnvelope(initialDelay, value);
 }
 
-void sfz::Voice::prepareEGEnvelope(int channel, int delay, uint8_t velocity) noexcept
+void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
 {
     auto secondsToSamples = [this](auto timeInSeconds) {
         return static_cast<int>(timeInSeconds * sampleRate);
     };
-    const auto& ccArray = midiState.getCCArray(channel);
+    const auto& ccArray = midiState.getCCArray();
     egEnvelope.reset(
         secondsToSamples(region->amplitudeEG.getAttack(ccArray, velocity)),
         secondsToSamples(region->amplitudeEG.getRelease(ccArray, velocity)),
@@ -143,7 +142,7 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     }
 }
 
-void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::Voice::registerNoteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     if (region == nullptr)
         return;
@@ -151,26 +150,23 @@ void sfz::Voice::registerNoteOff(int delay, int channel, int noteNumber, uint8_t
     if (state != State::playing)
         return;
 
-    if (triggerChannel == channel && triggerNumber == noteNumber) {
+    if (triggerNumber == noteNumber) {
         noteIsOff = true;
 
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (!region->checkSustain || midiState.getCCValue(channel, config::sustainCC) < config::halfCCThreshold)
+        if (!region->checkSustain || midiState.getCCValue(config::sustainCC) < config::halfCCThreshold)
             release(delay);
     }
 }
 
-void sfz::Voice::registerCC(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
+void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     if (region == nullptr)
         return;
 
     if (state ==  State::idle)
-        return;
-
-    if (triggerChannel != channel)
         return;
 
     if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
@@ -207,21 +203,15 @@ void sfz::Voice::registerCC(int delay, int channel, int ccNumber, uint8_t ccValu
     }
 }
 
-void sfz::Voice::registerPitchWheel(int delay, int channel, int pitch) noexcept
+void sfz::Voice::registerPitchWheel(int delay, int pitch) noexcept
 {
-    if (channel != triggerChannel)
-        return;
-
     if (state == State::idle)
-        return;
-
-    if (triggerChannel != channel)
         return;
 
     pitchBendEnvelope.registerEvent(delay, pitch);
 }
 
-void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], int channel [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
+void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
 {
     // TODO
 }
@@ -509,11 +499,6 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 int sfz::Voice::getTriggerNumber() const noexcept
 {
     return triggerNumber;
-}
-
-int sfz::Voice::getTriggerChannel() const noexcept
-{
-    return triggerChannel;
 }
 
 uint8_t sfz::Voice::getTriggerValue() const noexcept

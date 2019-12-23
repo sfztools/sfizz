@@ -88,30 +88,30 @@ void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate)
     self->setSampleRate(sample_rate);
 }
 
-void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int channel, int note_number, char velocity)
+void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->noteOn(delay, channel, note_number, velocity);
+    self->noteOn(delay, note_number, velocity);
 }
-void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int channel, int note_number, char velocity)
+void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->noteOff(delay, channel, note_number, velocity);
+    self->noteOff(delay, note_number, velocity);
 }
-void sfizz_send_cc(sfizz_synth_t* synth, int delay, int channel, int cc_number, char cc_value)
+void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->cc(delay, channel, cc_number, cc_value);
+    self->cc(delay, cc_number, cc_value);
 }
-void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int channel, int pitch)
+void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->pitchWheel(delay, channel, pitch);
+    self->pitchWheel(delay, pitch);
 }
-void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int channel, char aftertouch)
+void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    self->aftertouch(delay, channel, aftertouch);
+    self->aftertouch(delay, aftertouch);
 }
 void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter)
 {

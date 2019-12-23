@@ -144,20 +144,6 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
 
     // Region logic: MIDI conditions
-    case hash("lochan"):
-        {
-            const auto value = readOpcode(opcode.value, Default::channelRange);
-            if (value)
-                channelRange.setStart(*value - 1);
-        }
-        break;
-    case hash("hichan"):
-        {
-            const auto value = readOpcode(opcode.value, Default::channelRange);
-            if (value)
-                channelRange.setEnd(*value - 1);
-        }
-        break;
     case hash("lobend"):
         setRangeStartFromOpcode(opcode, bendRange, Default::bendRange);
         break;
@@ -500,6 +486,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
 
     // Ignored opcodes
+    case hash("hichan"):
+    case hash("lochan"):
     case hash("ampeg_depth"):
     case hash("ampeg_vel2depth"):
         break;
@@ -515,12 +503,8 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
-bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept
+bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randValue) noexcept
 {
-    const bool chanOk = channelRange.containsWithEnd(channel);
-    if (!chanOk)
-        return false;
-
     if (keyswitchRange.containsWithEnd(noteNumber)) {
         if (keyswitch) {
             if (*keyswitch == noteNumber)
@@ -571,15 +555,11 @@ bool sfz::Region::registerNoteOn(int channel, int noteNumber, uint8_t velocity, 
     const bool attackTrigger = (trigger == SfzTrigger::attack);
     const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && activeNotesInRange > 0);
 
-    return keyOk && velOk && chanOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
+    return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity [[maybe_unused]], float randValue) noexcept
+bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity [[maybe_unused]], float randValue) noexcept
 {
-    const bool chanOk = channelRange.containsWithEnd(channel);
-    if (!chanOk)
-        return false;
-
     if (keyswitchRange.containsWithEnd(noteNumber)) {
         if (keyswitchDown && *keyswitchDown == noteNumber)
             keySwitched = false;
@@ -603,14 +583,11 @@ bool sfz::Region::registerNoteOff(int channel, int noteNumber, uint8_t velocity 
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue);
     const bool releaseTrigger = (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key);
-    return keyOk && velOk && chanOk && randOk && releaseTrigger;
+    return keyOk && velOk && randOk && releaseTrigger;
 }
 
-bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue) noexcept
+bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
 {
-    if (!channelRange.containsWithEnd(channel))
-        return false;
-
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else
@@ -628,22 +605,16 @@ bool sfz::Region::registerCC(int channel, int ccNumber, uint8_t ccValue) noexcep
         return false;
 }
 
-void sfz::Region::registerPitchWheel(int channel, int pitch) noexcept
+void sfz::Region::registerPitchWheel(int pitch) noexcept
 {
-    if (!channelRange.containsWithEnd(channel))
-        return;
-
     if (bendRange.containsWithEnd(pitch))
         pitchSwitched = true;
     else
         pitchSwitched = false;
 }
 
-void sfz::Region::registerAftertouch(int channel, uint8_t aftertouch) noexcept
+void sfz::Region::registerAftertouch(uint8_t aftertouch) noexcept
 {
-    if (!channelRange.containsWithEnd(channel))
-        return;
-
     if (aftertouchRange.containsWithEnd(aftertouch))
         aftertouchSwitched = true;
     else
@@ -669,11 +640,11 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseVolumedB(int channel, int noteNumber) noexcept
+float sfz::Region::getBaseVolumedB(int noteNumber) noexcept
 {
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
-        baseVolumedB -= rtDecay * midiState.getNoteDuration(channel, noteNumber);
+        baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
 }
 

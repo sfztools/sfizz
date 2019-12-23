@@ -94,18 +94,18 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
         switch (midi::status(event.buffer[0])) {
         case midi::noteOff:
             // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
-            synth->noteOff(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
             // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
-            synth->noteOn(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
             // DBG("[MIDI] Polyphonic pressure on at time " << event.time);
             break;
         case midi::controlChange:
             // DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
-            synth->cc(event.time, midi::channel(event.buffer[0]), event.buffer[1], event.buffer[2]);
+            synth->cc(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::programChange:
             // DBG("[MIDI] Program change at time " << event.time);
@@ -114,7 +114,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
             // DBG("[MIDI] Channel pressure at time " << event.time);
             break;
         case midi::pitchBend:
-            synth->pitchWheel(event.time, midi::channel(event.buffer[0]), midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));
+            synth->pitchWheel(event.time, midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));
             // DBG("[MIDI] Pitch bend at time " << event.time);
             break;
         case midi::systemMessage:
@@ -163,7 +163,7 @@ static void done(int sig [[maybe_unused]])
     // exit(0);
 }
 
-ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are 1x, 2x, 4x, 8x)");
+ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
 ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
 
 int main(int argc, char** argv)

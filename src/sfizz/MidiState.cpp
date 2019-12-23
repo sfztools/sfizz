@@ -6,99 +6,84 @@ sfz::MidiState::MidiState()
     reset();
 }
 
-void sfz::MidiState::noteOnEvent(int channel, int noteNumber, uint8_t velocity) noexcept
+void sfz::MidiState::noteOnEvent(int noteNumber, uint8_t velocity) noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
     ASSERT(velocity >= 0 && velocity <= 127);
-    
+
     if (noteNumber >= 0 && noteNumber < 128) {
-        lastNoteVelocities[channel][noteNumber] = velocity;
-        noteOnTimes[channel][noteNumber] = std::chrono::steady_clock::now();
+        lastNoteVelocities[noteNumber] = velocity;
+        noteOnTimes[noteNumber] = std::chrono::steady_clock::now();
     }
 }
 
-float sfz::MidiState::getNoteDuration(int channel, int noteNumber) const
+float sfz::MidiState::getNoteDuration(int noteNumber) const
 {
-    ASSERT(channel >= 0 && channel < 16);
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
-    
+
     if (noteNumber >= 0 && noteNumber < 128) {
         const auto noteOffTime = std::chrono::steady_clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::duration<float>>(noteOffTime - noteOnTimes[channel][noteNumber]);
+        const auto duration = std::chrono::duration_cast<std::chrono::duration<float>>(noteOffTime - noteOnTimes[noteNumber]);
         return duration.count();
     }
 
     return 0.0f;
 }
 
-uint8_t sfz::MidiState::getNoteVelocity(int channel, int noteNumber) const noexcept
+uint8_t sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
-    
-    return lastNoteVelocities[channel][noteNumber];
+
+    return lastNoteVelocities[noteNumber];
 }
 
-void sfz::MidiState::pitchBendEvent(int channel, int pitchBendValue) noexcept
+void sfz::MidiState::pitchBendEvent(int pitchBendValue) noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
     ASSERT(pitchBendValue >= -8192 && pitchBendValue <= 8192);
-    
-    pitchBends[channel] = pitchBendValue;
+
+    pitchBend = pitchBendValue;
 }
 
-int sfz::MidiState::getPitchBend(int channel) const noexcept
+int sfz::MidiState::getPitchBend() const noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
-    
-    return pitchBends[channel];
+    return pitchBend;
 }
 
-void sfz::MidiState::ccEvent(int channel, int ccNumber, uint8_t ccValue) noexcept
+void sfz::MidiState::ccEvent(int ccNumber, uint8_t ccValue) noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
     ASSERT(ccValue >= 0 && ccValue <= 127);
-    
-    cc[channel][ccNumber] = ccValue;
+
+    cc[ccNumber] = ccValue;
 }
 
-uint8_t sfz::MidiState::getCCValue(int channel, int ccNumber) const noexcept
+uint8_t sfz::MidiState::getCCValue(int ccNumber) const noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
-    
-    return cc[channel][ccNumber];
+
+    return cc[ccNumber];
 }
 
-const sfz::SfzCCArray& sfz::MidiState::getCCArray(int channel) const noexcept
+const sfz::SfzCCArray& sfz::MidiState::getCCArray() const noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
-    
-    return cc[channel];
+    return cc;
 }
 
 void sfz::MidiState::reset() noexcept
 {
-    for (auto& channelArray: lastNoteVelocities)
-        for (auto& velocity: channelArray)
-            velocity = 0;
+    for (auto& velocity: lastNoteVelocities)
+        velocity = 0;
 
-    for (auto& channelArray: cc)
-        for (auto& ccValue: channelArray)
-            ccValue = 0;
+    for (auto& ccValue: cc)
+        ccValue = 0;
 
-    for (auto& bendValue: pitchBends)
-        bendValue = 0;
+    pitchBend = 0;
 }
 
-void sfz::MidiState::resetAllControllers(int channel) noexcept
+void sfz::MidiState::resetAllControllers() noexcept
 {
-    ASSERT(channel >= 0 && channel < 16);
-
     for (int idx = 0; idx < config::numCCs; idx++)
-        cc[channel][idx] = 0;
+        cc[idx] = 0;
 
-    pitchBends[channel] = 0;
+    pitchBend = 0;
 }

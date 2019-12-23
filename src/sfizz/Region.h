@@ -90,7 +90,6 @@ struct Region {
      * @brief Register a new note on event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
      *
-     * @param channel MIDI channel (0-based)
      * @param noteNumber
      * @param velocity
      * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
@@ -98,12 +97,11 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOn(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept;
+    bool registerNoteOn(int noteNumber, uint8_t velocity, float randValue) noexcept;
     /**
      * @brief Register a new note off event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
      *
-     * @param channel MIDI channel (0-based)
      * @param noteNumber
      * @param velocity
      * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
@@ -111,32 +109,29 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOff(int channel, int noteNumber, uint8_t velocity, float randValue) noexcept;
+    bool registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept;
     /**
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
      *
-     * @param channel MIDI channel (0-based)
      * @param ccNumber
      * @param ccValue
      * @return true if the region should trigger on this event
      * @return false
      */
-    bool registerCC(int channel, int ccNumber, uint8_t ccValue) noexcept;
+    bool registerCC(int ccNumber, uint8_t ccValue) noexcept;
     /**
      * @brief Register a new pitch wheel event.
      *
-     * @param channel MIDI channel (0-based)
      * @param pitch
      */
-    void registerPitchWheel(int channel, int pitch) noexcept;
+    void registerPitchWheel(int pitch) noexcept;
     /**
      * @brief Register a new aftertouch event.
      *
-     * @param channel MIDI channel (0-based)
      * @param aftertouch
      */
-    void registerAftertouch(int channel, uint8_t aftertouch) noexcept;
+    void registerAftertouch(uint8_t aftertouch) noexcept;
     /**
      * @brief Register tempo
      *
@@ -174,11 +169,10 @@ struct Region {
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.
      *
-     * @param channel (0-based)
      * @param noteNumber
      * @return float
      */
-    float getBaseVolumedB(int channel, int noteNumber) noexcept;
+    float getBaseVolumedB(int noteNumber) noexcept;
     /**
      * @brief Get the base gain of the region.
      *
@@ -246,7 +240,6 @@ struct Region {
     Range<uint8_t> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<uint8_t> channelRange { Default::midiChannelRange }; //lochan and hichan
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
     CCMap<Range<uint8_t>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey

@@ -69,7 +69,7 @@ namespace sfz {
  * synth should have a delay parameter strictly lower than 256. Events beyond 256
  * may be completely ignored by the synth as the incoming event buffer is cleared
  * during the renderBlock() call. You SHOULD also feed the midi events in the correct
- * order, at least within a channel.
+ * order.
  *
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.
@@ -196,50 +196,45 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param channel the midi channel for the event (0-based)
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-    void noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
+    void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
     /**
      * @brief Send a note off event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param channel the midi channel for the event (0-based)
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-    void noteOff(int delay, int channel, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
     /**
      * @brief Send a CC event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
-     * @param channel the midi channel for the event (0-based)
      * @param ccNumber the cc number
      * @param ccValue the cc value
      */
-    void cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept;
+    void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
     /**
      * @brief Send a pitch bend event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to
      *              renderBlock().
-     * @param channel the midi channel for the event (0-based)
      * @param pitch the pitch value centered between -8192 and 8192
      */
-    void pitchWheel(int delay, int channel, int pitch) noexcept;
+    void pitchWheel(int delay, int pitch) noexcept;
     /**
      * @brief Send a aftertouch event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
-     * @param channel the midi channel for the event (0-based)
      * @param aftertouch the aftertouch value
      */
-    void aftertouch(int delay, int channel, uint8_t aftertouch) noexcept;
+    void aftertouch(int delay, uint8_t aftertouch) noexcept;
     /**
      * @brief Send a tempo event to the synth
      *
@@ -363,10 +358,9 @@ private:
      * @brief Reset all CCs; to be used on CC 121
      *
      * @param delay the delay for the controller reset
-     * @param channel the channel on which to reset the controller
      *
      */
-    void resetAllControllers(int delay, int channel) noexcept;
+    void resetAllControllers(int delay) noexcept;
 
     int numGroups { 0 };
     int numMasters { 0 };

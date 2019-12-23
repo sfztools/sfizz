@@ -35,8 +35,8 @@ TEST_CASE("[Synth] Play and check active voices")
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
 
-    synth.noteOn(0, 1, 36, 24);
-    synth.noteOn(0, 1, 36, 89);
+    synth.noteOn(0, 36, 24);
+    synth.noteOn(0, 36, 89);
     REQUIRE(synth.getNumActiveVoices() == 2);
     // Render for a while
     for (int i = 0; i < 200; ++i)
@@ -51,8 +51,8 @@ TEST_CASE("[Synth] Change the number of voice while playing")
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
 
-    synth.noteOn(0, 1, 36, 24);
-    synth.noteOn(0, 1, 36, 89);
+    synth.noteOn(0, 36, 24);
+    synth.noteOn(0, 36, 89);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 2);
     synth.setNumVoices(8);
@@ -99,8 +99,8 @@ TEST_CASE("[Synth] Check that we can change the size of the preload before and a
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     synth.setPreloadSize(1024);
 
-    synth.noteOn(0, 1, 36, 24);
-    synth.noteOn(0, 1, 36, 89);
+    synth.noteOn(0, 36, 24);
+    synth.noteOn(0, 36, 89);
     synth.renderBlock(buffer);
     synth.setPreloadSize(2048);
     synth.renderBlock(buffer);
@@ -114,95 +114,39 @@ TEST_CASE("[Synth] Check that we can change the oversampling factor before and a
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     synth.setOversamplingFactor(sfz::Oversampling::x4);
 
-    synth.noteOn(0, 1, 36, 24);
-    synth.noteOn(0, 1, 36, 89);
+    synth.noteOn(0, 36, 24);
+    synth.noteOn(0, 36, 89);
     synth.renderBlock(buffer);
     synth.setOversamplingFactor(sfz::Oversampling::x2);
     synth.renderBlock(buffer);
 }
 
 
-TEST_CASE("[Synth] Testing channel 1")
-{
-    sfz::Synth synth;
-    synth.setNumVoices(1);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
-    synth.noteOn(0, 0, 60, 63);
-    const auto* region = synth.getVoiceView(0)->getRegion();
-    REQUIRE( region != nullptr );
-    REQUIRE( region->sample == "dummy1.wav" );
-}
-
-TEST_CASE("[Synth] Testing channel 2")
-{
-    sfz::Synth synth;
-    synth.setNumVoices(1);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
-    synth.noteOn(0, 1, 60, 63);
-    const auto* region = synth.getVoiceView(0)->getRegion();
-    REQUIRE( region != nullptr );
-    REQUIRE( region->sample == "dummy2.wav" );
-}
-
-
-
-TEST_CASE("[Synth] Testing channel 16")
-{
-    sfz::Synth synth;
-    synth.setNumVoices(1);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
-    synth.noteOn(0, 15, 60, 63);
-    const auto* region = synth.getVoiceView(0)->getRegion();
-    REQUIRE( region != nullptr );
-    REQUIRE( region->sample == "dummy16.wav" );
-}
-
-TEST_CASE("[Synth] All notes offs/all sounds off (single channel)")
+TEST_CASE("[Synth] All notes offs/all sounds off")
 {
     sfz::Synth synth;
     synth.setNumVoices(8);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
-    synth.noteOn(0, 0, 60, 63);
-    synth.noteOn(1, 0, 60, 63);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/sound_off.sfz");
+    synth.noteOn(0, 60, 63);
+    synth.noteOn(0, 62, 63);
     REQUIRE( synth.getNumActiveVoices() == 2 );
-    synth.cc(0, 0, 120, 63);
+    synth.cc(0, 120, 63);
     REQUIRE( synth.getNumActiveVoices() == 0 );
 
-    synth.noteOn(0, 0, 60, 63);
-    synth.noteOn(1, 0, 60, 63);
+    synth.noteOn(0, 62, 63);
+    synth.noteOn(0, 60, 63);
     REQUIRE( synth.getNumActiveVoices() == 2 );
-    synth.cc(0, 0, 123, 63);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
-}
-
-TEST_CASE("[Synth] All notes offs/all sounds off (multi channel)")
-{
-    sfz::Synth synth;
-    synth.setNumVoices(8);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/midi_channels.sfz");
-    synth.noteOn(0, 0, 60, 63);
-    synth.noteOn(1, 1, 60, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
-    synth.cc(0, 0, 120, 63);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
-
-    synth.noteOn(0, 0, 60, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
-    synth.cc(0, 0, 123, 63);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
-    synth.cc(0, 1, 123, 63);
+    synth.cc(0, 123, 63);
     REQUIRE( synth.getNumActiveVoices() == 0 );
 }
 
 TEST_CASE("[Synth] Reset all controllers")
 {
     sfz::Synth synth;
-    synth.cc(0, 0, 12, 64);
-    synth.cc(0, 1, 12, 64);
-    REQUIRE( synth.getMidiState().getCCValue(0, 12) == 64 );
-    synth.cc(0, 0, 121, 64);
-    REQUIRE( synth.getMidiState().getCCValue(0, 12) == 0 );
-    REQUIRE( synth.getMidiState().getCCValue(1, 12) == 64 );
+    synth.cc(0, 12, 64);
+    REQUIRE( synth.getMidiState().getCCValue(12) == 64 );
+    synth.cc(0, 121, 64);
+    REQUIRE( synth.getMidiState().getCCValue(12) == 0 );
 }
 
 TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kills the voice")
@@ -211,13 +155,13 @@ TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kil
     synth.setSamplesPerBlock(1024);
     synth.setNumVoices(1);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/delay_release.sfz");
-    synth.noteOn(0, 1, 60, 63);
+    synth.noteOn(0, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
-    synth.noteOff(100, 1, 60, 63);
+    synth.noteOff(100, 60, 63);
     REQUIRE( synth.getVoiceView(0)->isFree() );
-    synth.noteOn(200, 1, 60, 63);
+    synth.noteOn(200, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
-    synth.noteOff(1000, 1, 60, 63);
+    synth.noteOff(1000, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
 }
 
@@ -228,11 +172,11 @@ TEST_CASE("[Synth] Releasing after the initial and normal mode does not trigger 
     sfz::AudioBuffer<float> buffer(2, 1024);
     synth.setNumVoices(1);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/delay_release.sfz");
-    synth.noteOn(200, 1, 60, 63);
+    synth.noteOn(200, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
     synth.renderBlock(buffer);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
-    synth.noteOff(0, 1, 60, 63);
+    synth.noteOff(0, 60, 63);
     synth.renderBlock(buffer);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
 }

@@ -50,7 +50,7 @@ TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->channelRange == sfz::Range<uint8_t>(1, 13));
+    REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(2, 14));
 }
 
 TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
@@ -283,20 +283,20 @@ TEST_CASE("[Files] sw_default and playing with switches")
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
-    synth.noteOn(0, 1, 41, 64);
-    synth.noteOff(0, 1, 41, 0);
+    synth.noteOn(0, 41, 64);
+    synth.noteOff(0, 41, 0);
     REQUIRE( synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
-    synth.noteOn(0, 1, 42, 64);
-    synth.noteOff(0, 1, 42, 0);
+    synth.noteOn(0, 42, 64);
+    synth.noteOff(0, 42, 0);
     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
-    synth.noteOn(0, 1, 40, 64);
-    synth.noteOff(0, 1, 40, 64);
+    synth.noteOn(0, 40, 64);
+    synth.noteOff(0, 40, 64);
     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
@@ -355,14 +355,12 @@ TEST_CASE("[Files] Default path is ignored for generators")
     REQUIRE(synth.getRegionView(0)->sample == R"(*sine)");
 }
 
-TEST_CASE("[Files] Set CC applies properly to all channels")
+TEST_CASE("[Files] Set CC applies properly")
 {
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_cc.sfz");
-    for (int channel = 0; channel < 16; channel++) {
-        REQUIRE(synth.getMidiState().getCCValue(channel, 142) == 63);
-        REQUIRE(synth.getMidiState().getCCValue(channel, 61) == 122);
-    }
+    REQUIRE(synth.getMidiState().getCCValue(142) == 63);
+    REQUIRE(synth.getMidiState().getCCValue(61) == 122);
 }
 
 TEST_CASE("[Files] Note and octave offsets")
@@ -412,7 +410,7 @@ TEST_CASE("[Files] Off modes")
     synth.setSamplesPerBlock(256);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
-    synth.noteOn(0, 0, 64, 63);
+    synth.noteOn(0, 64, 63);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     const auto* fastVoice =
         synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
@@ -422,7 +420,7 @@ TEST_CASE("[Files] Off modes")
         synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
             synth.getVoiceView(1) :
             synth.getVoiceView(0) ;
-    synth.noteOn(100, 0, 63, 63);
+    synth.noteOn(100, 63, 63);
     REQUIRE( synth.getNumActiveVoices() == 3 );
     sfz::AudioBuffer<float> buffer { 2, 256 };
     synth.renderBlock(buffer);

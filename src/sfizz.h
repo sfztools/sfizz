@@ -141,64 +141,59 @@ void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate);
 /**
  * @brief      Send a note on event to the synth. As with all MIDI events, this
  *             needs to happen before the call to sfizz_render_block in each
- *             block and should appear in order of the delays, at least within a channel.
+ *             block and should appear in order of the delays.
  *
  * @param      synth        The synth
  * @param      delay        the delay of the event in the block, in samples.
- * @param      channel      the MIDI channel (starting at 0 for the first channel)
  * @param      note_number  the MIDI note number
  * @param      velocity     the MIDI velocity
  */
-void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int channel, int note_number, char velocity);
+void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity);
 
 /**
  * @brief      Send a note off event to the synth. As with all MIDI events, this
  *             needs to happen before the call to sfizz_render_block in each
- *             block and should appear in order of the delays, at least within a channel. 
- *             As per the SFZ spec the velocity of note-off events is usually replaced by 
+ *             block and should appear in order of the delays.
+ *             As per the SFZ spec the velocity of note-off events is usually replaced by
  *             the note-on velocity.
  *
  * @param      synth        The synth
  * @param      delay        the delay of the event in the block, in samples.
- * @param      channel      the MIDI channel (starting at 0 for the first channel)
  * @param      note_number  the MIDI note number
  * @param      velocity     the MIDI velocity
  */
-void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int channel, int note_number, char velocity);
+void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity);
 
 /**
  * @brief      Send a CC event to the synth. As with all MIDI events, this needs
- *             to happen before the call to sfizz_render_block in each block and 
- *             should appear in order of the delays, at least within a channel.
+ *             to happen before the call to sfizz_render_block in each block and
+ *             should appear in order of the delays.
  *
  * @param      synth      The synth
  * @param      delay      the delay of the event in the block, in samples.
- * @param      channel    the MIDI channel (starting at 0 for the first channel)
  * @param      cc_number  the MIDI CC number
  * @param      cc_value   the MIDI CC value
  */
-void sfizz_send_cc(sfizz_synth_t* synth, int delay, int channel, int cc_number, char cc_value);
+void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value);
 /**
  * @brief      Send a pitch wheel event. As with all MIDI events, this needs
- *             to happen before the call to sfizz_render_block in each block and 
- *             should appear in order of the delays, at least within a channel.
+ *             to happen before the call to sfizz_render_block in each block and
+ *             should appear in order of the delays.
  *
  * @param      synth    The synth
  * @param      delay    The delay
- * @param      channel  The channel
  * @param      pitch    The pitch
  */
-void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int channel, int pitch);
+void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch);
 
 /**
  * @brief Send an aftertouch event. (CURRENTLY UNIMPLEMENTED)
  *
  * @param synth
  * @param delay
- * @param channel
  * @param aftertouch
  */
-void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int channel, char aftertouch);
+void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
 
 /**
  * @brief      Send a tempo event. (CURRENTLY UNIMPLEMENTED)

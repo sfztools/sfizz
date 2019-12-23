@@ -173,8 +173,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("set_cc"):
             if (member.parameter && Default::ccNumberRange.containsWithEnd(*member.parameter)) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                for (int channel = 0; channel < 16; channel++)
-                    midiState.ccEvent(channel, *member.parameter, ccValue);
+                midiState.ccEvent(*member.parameter, ccValue);
             }
             break;
         case hash("Label_cc"):
@@ -272,18 +271,17 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
 
         // Defaults
         for (int ccIndex = 0; ccIndex < config::numCCs; ccIndex++) {
-            const auto channel = region->channelRange.getStart();
-            region->registerCC(channel, ccIndex, midiState.getCCValue(channel, ccIndex));
+            region->registerCC(ccIndex, midiState.getCCValue(ccIndex));
         }
 
         if (defaultSwitch) {
-            region->registerNoteOn(region->channelRange.getStart(), *defaultSwitch, 127, 1.0);
-            region->registerNoteOff(region->channelRange.getStart(), *defaultSwitch, 0, 1.0);
+            region->registerNoteOn(*defaultSwitch, 127, 1.0);
+            region->registerNoteOff(*defaultSwitch, 0, 1.0);
         }
 
         addEndpointsToVelocityCurve(*region);
-        region->registerPitchWheel(region->channelRange.getStart(), 0);
-        region->registerAftertouch(region->channelRange.getStart(), 0);
+        region->registerPitchWheel(0);
+        region->registerAftertouch(0);
         region->registerTempo(2.0f);
 
         currentRegion++;
@@ -386,12 +384,12 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     buffer.applyGain(db2mag(volume));
 }
 
-void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity) noexcept
+void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    midiState.noteOnEvent(channel, noteNumber, velocity);
+    midiState.noteOnEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -400,22 +398,22 @@ void sfz::Synth::noteOn(int delay, int channel, int noteNumber, uint8_t velocity
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOn(channel, noteNumber, velocity, randValue)) {
+        if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             for (auto& voice : voices) {
                 if (voice->checkOffGroup(delay, region->group))
-                    noteOff(delay, voice->getTriggerChannel(), voice->getTriggerNumber(), 0);
+                    noteOff(delay, voice->getTriggerNumber(), 0);
             }
 
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, channel, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
         }
     }
 }
 
-void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
@@ -427,24 +425,24 @@ void sfz::Synth::noteOff(int delay, int channel, int noteNumber, uint8_t velocit
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    auto replacedVelocity = midiState.getNoteVelocity(channel, noteNumber);
+    auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
     auto randValue = randNoteDistribution(Random::randomGenerator);
 
     for (auto& voice : voices)
-        voice->registerNoteOff(delay, channel, noteNumber, replacedVelocity);
+        voice->registerNoteOff(delay, noteNumber, replacedVelocity);
 
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOff(channel, noteNumber, replacedVelocity, randValue)) {
+        if (region->registerNoteOff(noteNumber, replacedVelocity, randValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, channel, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
+            voice->startVoice(region, delay, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
         }
     }
 }
 
-void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexcept
+void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
@@ -454,36 +452,36 @@ void sfz::Synth::cc(int delay, int channel, int ccNumber, uint8_t ccValue) noexc
         return;
 
     if (ccNumber == config::resetCC) {
-        resetAllControllers(delay, channel);
+        resetAllControllers(delay);
         return;
     }
 
-    midiState.ccEvent(channel, ccNumber, ccValue);
+    midiState.ccEvent(ccNumber, ccValue);
     for (auto& voice : voices)
-        voice->registerCC(delay, channel, ccNumber, ccValue);
+        voice->registerCC(delay, ccNumber, ccValue);
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCC(channel, ccNumber, ccValue)) {
+        if (region->registerCC(ccNumber, ccValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, channel, ccNumber, ccValue, Voice::TriggerType::CC);
+            voice->startVoice(region, delay, ccNumber, ccValue, Voice::TriggerType::CC);
         }
     }
 }
 
-void sfz::Synth::pitchWheel(int delay, int channel, int pitch) noexcept
+void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 {
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
 
-    midiState.pitchBendEvent(channel, pitch);
+    midiState.pitchBendEvent(pitch);
     for (auto& voice: voices) {
-        voice->registerPitchWheel(delay, channel, pitch);
+        voice->registerPitchWheel(delay, pitch);
     }
 }
-void sfz::Synth::aftertouch(int /* delay */, int /*channel*/, uint8_t /* aftertouch */) noexcept
+void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
 {
 }
 void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
@@ -617,21 +615,21 @@ void sfz::Synth::disableFreeWheeling() noexcept
     }
 }
 
-void sfz::Synth::resetAllControllers(int delay, int channel) noexcept
+void sfz::Synth::resetAllControllers(int delay) noexcept
 {
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
 
-    midiState.resetAllControllers(channel);
+    midiState.resetAllControllers();
     for (auto& voice: voices) {
-        voice->registerPitchWheel(delay, channel, 0);
+        voice->registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)
-            voice->registerCC(delay, channel, cc, 0);
+            voice->registerCC(delay, cc, 0);
     }
 
     for (auto& region: regions) {
         for (int cc = 0; cc < config::numCCs; ++cc)
-            region->registerCC(channel, cc, 0);
+            region->registerCC(cc, 0);
     }
 }
