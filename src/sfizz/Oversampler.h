@@ -31,15 +31,36 @@
 #include "Config.h"
 
 namespace sfz {
-
+/**
+ * @brief Wraps the internal oversampler in a single function that takes an
+ *        AudioBuffer and oversamples it in another pre-allocated one. The
+ *        Oversampler processes the file in chunks and can signal the frames
+ *        processes using an atomic counter.
+ */
 class Oversampler
 {
 public:
-    Oversampler() = delete;
+    /**
+     * @brief Construct a new Oversampler object
+     *
+     * @param factor
+     * @param chunkSize
+     */
     Oversampler(Oversampling factor = Oversampling::x1, size_t chunkSize = config::chunkSize);
+    /**
+     * @brief Stream the oversampling of an input AudioBuffer into an output
+     *        one, possibly signaling the caller along the way of the number of
+     *        frames that are written.
+     *
+     * @param input
+     * @param output
+     * @param framesReady an atomic counter for the ready frames. If null no signaling is done.
+     */
+    void stream(const AudioBuffer<float>& input, AudioBuffer<float>& output, std::atomic<size_t>* framesReady = nullptr);
+
+    Oversampler() = delete;
     Oversampler(const Oversampler&) = delete;
     Oversampler(Oversampler&&) = delete;
-    void stream(const AudioBuffer<float>& input, AudioBuffer<float>& output, std::atomic<size_t>* framesReady = nullptr);
 private:
     Oversampling factor;
     size_t chunkSize;
