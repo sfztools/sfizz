@@ -2,7 +2,7 @@
 
 set -ex
 
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
   sudo apt-get install libasound2-dev libjack-jackd2-dev libsndfile1-dev lv2-dev
 
   sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 100
