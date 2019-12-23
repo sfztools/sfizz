@@ -34,12 +34,17 @@
 #include <cassert>
 #include <random>
 
-template <class T>
-constexpr T min(T op1, T op2) { return std::min(op1, op2); }
-template <class T>
-constexpr T min(T op1, T op2, T op3) { return std::min(op1, std::min(op2, op3)); }
-template <class T>
-constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::min(op2, std::min(op3, op4))); }
+template<class T>
+constexpr T min(T op1, T op2)
+{
+    return std::min(op1, op2);
+}
+
+template<class T, class... Args>
+constexpr T min(T op1, Args... rest)
+{
+    return std::min(op1, min(rest...));
+}
 
 /**
  * @brief Converts db values into power (applies 10**(in/10))
@@ -131,17 +136,17 @@ constexpr T clamp( const T& v, const T& lo, const T& hi )
 	return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
-template<class T>
+template<int Increment = 1, class T>
 constexpr void incrementAll(T& only)
 {
-    only++;
+    only += Increment;
 }
 
-template<class T, class... Args>
+template<int Increment = 1, class T, class... Args>
 constexpr void incrementAll(T& first, Args&... rest)
 {
-    first++;
-    incrementAll(rest...);
+    first += Increment;
+    incrementAll<Increment>(rest...);
 }
 
 template<class ValueType>
