@@ -32,8 +32,8 @@ jobs:
         - gcc-8
         - g++-8
 
-# - os: osx
-#   osx_image: xcode10.1
+  - os: osx
+    osx_image: xcode10.1
 
 before_install:
 - bash ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
