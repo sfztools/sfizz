@@ -62,46 +62,43 @@ struct FilePromise
     AudioBufferPtr preloadedData {};
     AudioBuffer<float> fileData {};
     float sampleRate { config::defaultSampleRate };
+    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic_size_t availableFrames { 0 };
     std::atomic<bool> dataReady { false };
-    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 };
 
 using FilePromisePtr = std::shared_ptr<FilePromise>;
 /**
- * @brief This is a singleton-designed class that holds all the preloaded
- * data as well as functions to request new file data and collect the file
- * handles to close after they are read.
+ * @brief This is a singleton-designed class that holds all the preloaded data
+ * as well as functions to request new file data and collect the file handles to
+ * close after they are read.
  *
- * This object caches the file data that was already preloaded in case it is asked
- * again by a region using the same sample. In this situation, both regions have a
- * handle on the same preloaded data.
+ * This object caches the file data that was already preloaded in case it is
+ * asked again by a region using the same sample. In this situation, both
+ * regions have a handle on the same preloaded data.
  *
- * The file request is immediately served using the preloaded data. A ticket is then
- * provided to the voice that requested the file, and the file loading happens in the
- * background. When the file is fully loaded, the background makes the full data available
- * to the voice and consumes the ticket, while conserving a handle on this file. When the
- * voice dies it releases its handle on the files, which should decrease the  reference count
- * to 1. A garbage collection thread then runs regularly to clear the memory of all file
- * handles with a reference count of 1.
+ * The file request is immediately served using the preloaded data. A promise is
+ * then provided to the voice that requested the file, and the file loading
+ * happens in the background. File reads happen on whole samples but
+ * oversampling is done in chunks, and the promise contains a counter for the
+ * frames that are loaded. When the voice dies it releases its handle on the
+ * promise, which should decrease the  reference count to 1. A garbage
+ * collection thread then runs regularly to clear the memory of all file handles
+ * with a reference count of 1.
  */
 
 
 class FilePool {
 public:
-    FilePool()
-    {
-        for (int i = 0; i < config::numBackgroundThreads; ++i)
-            fileLoadingThreadPool.emplace_back( &FilePool::loadingThread, this );
-        fileLoadingThreadPool.emplace_back( &FilePool::clearingThread, this );
-    }
+    /**
+     * @brief Construct a new File Pool object.
+     *
+     * This creates the background threads based on config::numBackgroundThreads
+     * as well as the garbage collection thread.
+     */
+    FilePool();
 
-    ~FilePool()
-    {
-        quitThread = true;
-        for (auto& thread: fileLoadingThreadPool)
-            thread.join();
-    }
+    ~FilePool();
     /**
      * @brief Set the root directory from which to search for files to load
      *
@@ -214,13 +211,14 @@ private:
     bool emptyQueue { false };
     std::atomic<int> threadsLoading { 0 };
 
+    // File promises data structures along with their guards.
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
     std::atomic<bool> addingPromisesToClear { false };
     std::atomic<bool> canAddPromisesToClear { true };
 
     absl::flat_hash_map<absl::string_view, PreloadedFileHandle> preloadedFiles;
-    std::vector<std::thread> fileLoadingThreadPool { };
+    std::vector<std::thread> threadPool { };
     LEAK_DETECTOR(FilePool);
 };
 }

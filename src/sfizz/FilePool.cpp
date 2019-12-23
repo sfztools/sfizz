@@ -85,6 +85,20 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
     oversampler.stream(*baseBuffer, output, filledFrames);
 }
 
+sfz::FilePool::FilePool()
+    {
+        for (int i = 0; i < config::numBackgroundThreads; ++i)
+            threadPool.emplace_back( &FilePool::loadingThread, this );
+        threadPool.emplace_back( &FilePool::clearingThread, this );
+    }
+
+sfz::FilePool::~FilePool()
+{
+    quitThread = true;
+    for (auto& thread: threadPool)
+        thread.join();
+}
+
 absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename) noexcept
 {
     fs::path file { rootDirectory / filename };
@@ -227,6 +241,7 @@ void sfz::FilePool::loadingThread() noexcept
             DBG("Error enqueuing the file for " << promise->filename << " in the filledPromiseQueue");
             std::this_thread::sleep_for(1ms);
         }
+
         promise.reset();
     }
 }
