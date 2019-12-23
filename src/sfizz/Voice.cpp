@@ -420,23 +420,16 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto leftSource = source.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            *left = leftSource[*ind] * (*leftCoeff) + leftSource[*ind + 1] * (*rightCoeff);
-            left++;
-            ind++;
-            leftCoeff++;
-            rightCoeff++;
+            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
+            incrementAll(ind, left, leftCoeff, rightCoeff);
         }
     } else {
         auto right = buffer.getChannel(1);
         auto rightSource = source.getChannel(1);
         while (ind < indices.end()) {
-            *left = leftSource[*ind] * (*leftCoeff) + leftSource[*ind + 1] * (*rightCoeff);
-            *right = rightSource[*ind] * (*leftCoeff) + rightSource[*ind + 1] * (*rightCoeff);
-            left++;
-            right++;
-            ind++;
-            leftCoeff++;
-            rightCoeff++;
+            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
+            *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *leftCoeff, *rightCoeff);
+            incrementAll(ind, left, right, leftCoeff, rightCoeff);
         }
     }
 

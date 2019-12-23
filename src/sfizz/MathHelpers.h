@@ -26,7 +26,7 @@
  * @author Paul Ferrand (paul@ferrand.cc)
  * @brief Contains math helper functions and math constants
  * @version 0.1
- * @date 2019-11-23 
+ * @date 2019-11-23
  */
 #pragma once
 #include <algorithm>
@@ -43,10 +43,10 @@ inline constexpr T min(T op1, T op2, T op3, T op4) { return std::min(op1, std::m
 
 /**
  * @brief Converts db values into power (applies 10**(in/10))
- * 
- * @tparam Type 
- * @param in 
- * @return Type 
+ *
+ * @tparam Type
+ * @param in
+ * @return Type
  */
 template <class Type>
 inline constexpr Type db2pow(Type in)
@@ -56,10 +56,10 @@ inline constexpr Type db2pow(Type in)
 
 /**
  * @brief Converts power values into dB (applies 10log10(in))
- * 
- * @tparam Type 
- * @param in 
- * @return Type 
+ *
+ * @tparam Type
+ * @param in
+ * @return Type
  */
 template <class Type>
 inline constexpr Type pow2db(Type in)
@@ -69,10 +69,10 @@ inline constexpr Type pow2db(Type in)
 
 /**
  * @brief Converts dB values to magnitude (applies 10**(in/20))
- * 
- * @tparam Type 
- * @param in 
- * @return constexpr Type 
+ *
+ * @tparam Type
+ * @param in
+ * @return constexpr Type
  */
 template <class Type>
 inline constexpr Type db2mag(Type in)
@@ -82,10 +82,10 @@ inline constexpr Type db2mag(Type in)
 
 /**
  * @brief Converts magnitude values into dB (applies 20log10(in))
- * 
- * @tparam Type 
- * @param in 
- * @return Type 
+ *
+ * @tparam Type
+ * @param in
+ * @return Type
  */
 template <class Type>
 inline constexpr Type mag2db(Type in)
@@ -95,9 +95,9 @@ inline constexpr Type mag2db(Type in)
 
 /**
  * @brief Global random singletons
- * 
+ *
  * TODO: could be moved into a singleton class holder
- * 
+ *
  */
 namespace Random {
 	static std::random_device randomDevice;
@@ -106,9 +106,9 @@ namespace Random {
 
 /**
  * @brief Converts a midi note to a frequency value
- * 
- * @param noteNumber 
- * @return float 
+ *
+ * @param noteNumber
+ * @return float
  */
 inline float midiNoteFrequency(const int noteNumber)
 {
@@ -117,11 +117,11 @@ inline float midiNoteFrequency(const int noteNumber)
 
 /**
  * @brief Clamps a value between bounds, including the bounds!
- * 
- * @tparam T 
- * @param v 
- * @param lo 
- * @param hi 
+ *
+ * @tparam T
+ * @param v
+ * @param lo
+ * @param hi
  * @return T
  */
 template<class T>
@@ -129,6 +129,25 @@ constexpr T clamp( const T& v, const T& lo, const T& hi )
 {
 	assert( !(hi < lo) );
 	return (v < lo) ? lo : (hi < v) ? hi : v;
+}
+
+template<class T>
+constexpr void incrementAll(T& only)
+{
+    only++;
+}
+
+template<class T, class... Args>
+constexpr void incrementAll(T& first, Args&... rest)
+{
+    first++;
+    incrementAll(rest...);
+}
+
+template<class ValueType>
+constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueType leftCoeff, ValueType rightCoeff)
+{
+    return left * leftCoeff + right * rightCoeff;
 }
 
 template <class Type>
