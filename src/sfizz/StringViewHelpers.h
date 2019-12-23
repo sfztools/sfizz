@@ -22,14 +22,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * @file StringViewHelpers.h 
+ * @file StringViewHelpers.h
  * @author Paul Ferrand (paul@ferrand.cc)
  * @brief Contains some helper functions for string views
  * @version 0.1
  * @date 2019-11-23
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 
 #pragma once
@@ -37,8 +37,8 @@
 
 /**
  * @brief Removes the whitespace on a string_view in place
- * 
- * @param s 
+ *
+ * @param s
  */
 inline void trimInPlace(absl::string_view& s)
 {
@@ -54,9 +54,9 @@ inline void trimInPlace(absl::string_view& s)
 
 /**
  * @brief Removes the whitespace on a string_view and return a new string_view
- * 
- * @param s 
- * @return absl::string_view 
+ *
+ * @param s
+ * @return absl::string_view
  */
 inline absl::string_view trim(absl::string_view s)
 {
@@ -69,12 +69,12 @@ constexpr uint64_t Fnv1aPrime = 0x01000193;
 
 /**
  * @brief Compile-time hashing function to be used mostly with switch/case statements.
- * 
+ *
  * See e.g. the Region.cpp file
- * 
+ *
  * @param s the input string to be hashed
  * @param h the hashing seed to use
- * @return uint64_t 
+ * @return uint64_t
  */
 constexpr uint64_t hash(absl::string_view s, uint64_t h = Fnv1aBasis)
 {
