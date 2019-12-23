@@ -85,6 +85,24 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
     oversampler.stream(*baseBuffer, output, filledFrames);
 }
 
+sfz::FilePool::FilePool()
+    {
+        for (int i = 0; i < config::numBackgroundThreads; ++i)
+            threadPool.emplace_back( &FilePool::loadingThread, this );
+
+        threadPool.emplace_back( &FilePool::clearingThread, this );
+
+        for (int i = 0; i < config::maxFilePromises; ++i)
+            emptyPromises.push_back(std::make_shared<FilePromise>());
+    }
+
+sfz::FilePool::~FilePool()
+{
+    quitThread = true;
+    for (auto& thread: threadPool)
+        thread.join();
+}
+
 absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename) noexcept
 {
     fs::path file { rootDirectory / filename };
@@ -147,15 +165,21 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
 
 sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) noexcept
 {
-    auto promise = std::make_shared<FilePromise>();
+    if (emptyPromises.empty())
+        return {};
+
     const auto preloaded = preloadedFiles.find(filename);
-    if (preloaded != preloadedFiles.end()) {
-        promise->filename = preloaded->first;
-        promise->preloadedData = preloaded->second.preloadedData;
-        promise->sampleRate = preloaded->second.sampleRate;
-        promise->oversamplingFactor = oversamplingFactor;
-        promiseQueue.try_enqueue(promise);
-    }
+    if (preloaded == preloadedFiles.end())
+        return {};
+
+    auto promise = emptyPromises.back();
+    promise->filename = preloaded->first;
+    promise->preloadedData = preloaded->second.preloadedData;
+    promise->sampleRate = preloaded->second.sampleRate;
+    promise->oversamplingFactor = oversamplingFactor;
+    promiseQueue.try_enqueue(promise);
+    emptyPromises.pop_back();
+
     return promise;
 }
 
@@ -179,7 +203,10 @@ void sfz::FilePool::tryToClearPromises()
     while (addingPromisesToClear)
         std::this_thread::sleep_for(1ms);
 
-    promisesToClear.clear();
+    for (auto& promise: promisesToClear) {
+        if (promise->dataReady)
+            promise->reset();
+    }
 }
 
 void sfz::FilePool::clearingThread()
@@ -227,6 +254,7 @@ void sfz::FilePool::loadingThread() noexcept
             DBG("Error enqueuing the file for " << promise->filename << " in the filledPromiseQueue");
             std::this_thread::sleep_for(1ms);
         }
+
         promise.reset();
     }
 }
@@ -246,21 +274,37 @@ void sfz::FilePool::cleanupPromises() noexcept
     if (!canAddPromisesToClear)
         return;
 
+    // The garbage collection cleared the data from these so we can move them
+    // back to the empty queue
+    auto clearedIterator = promisesToClear.begin();
+    auto clearedSentinel = promisesToClear.end() - 1;
+    while (clearedIterator != promisesToClear.end()) {
+        if (clearedIterator->get()->dataReady == false) {
+            emptyPromises.push_back(*clearedIterator);
+            std::iter_swap(clearedIterator, clearedSentinel);
+            clearedSentinel--;
+            promisesToClear.pop_back();
+        } else {
+            clearedIterator++;
+        }
+    }
+
     FilePromisePtr promise;
-    // Remove stuff from the filled queue and put them in a linear storage
+    // Remove the promises from the filled queue and put them in a linear
+    // storage
     while (filledPromiseQueue.try_dequeue(promise))
         temporaryFilePromises.push_back(promise);
 
-    auto promiseIterator = temporaryFilePromises.begin();
-    auto sentinel = temporaryFilePromises.end() - 1;
-    while (promiseIterator != temporaryFilePromises.end()) {
-        if (promiseIterator->use_count() == 1) {
-            promisesToClear.push_back(*promiseIterator);
-            std::iter_swap(promiseIterator, sentinel);
-            sentinel--;
+    auto filledIterator = temporaryFilePromises.begin();
+    auto filledSentinel = temporaryFilePromises.end() - 1;
+    while (filledIterator != temporaryFilePromises.end()) {
+        if (filledIterator->use_count() == 1) {
+            promisesToClear.push_back(*filledIterator);
+            std::iter_swap(filledIterator, filledSentinel);
+            filledSentinel--;
             temporaryFilePromises.pop_back();
         } else {
-            promiseIterator++;
+            filledIterator++;
         }
     }
 }
