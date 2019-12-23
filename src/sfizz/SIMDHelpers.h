@@ -254,10 +254,7 @@ namespace _internals {
             *rightCoeff = floatIndex - *index;
             *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
         }
-        index++;
-        leftCoeff++;
-        rightCoeff++;
-        jump++;
+        incrementAll(index, leftCoeff, rightCoeff, jump);
     }
 }
 
@@ -313,10 +310,7 @@ namespace _internals {
         *index = static_cast<int>(floatIndex);
         *rightCoeff = floatIndex - *index;
         *leftCoeff = 1.0f - *rightCoeff;
-        index++;
-        leftCoeff++;
-        rightCoeff++;
-        jump++;
+        incrementAll(index, leftCoeff, rightCoeff, jump);
     }
 }
 
@@ -878,10 +872,7 @@ namespace _internals {
         *jump = static_cast<int>(*floatJump);
         *rightCoeff = *floatJump - static_cast<float>(*jump);
         *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
-        leftCoeff++;
-        jump++;
-        rightCoeff++;
-        floatJump++;
+        incrementAll(floatJump, leftCoeff, rightCoeff, jump);
     }
 }
 
