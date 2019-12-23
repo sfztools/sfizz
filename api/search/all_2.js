@@ -2,8 +2,8 @@ var searchData=
 [
   ['callback',['callback',['../classsfz_1_1_synth.html#a84f8e1bb11b83516b5be76b64dc4c196',1,'sfz::Synth']]],
   ['canbestolen',['canBeStolen',['../classsfz_1_1_voice.html#a06150d71de68d82cb17c5901fdc583b8',1,'sfz::Voice']]],
-  ['cc',['cc',['../classsfz_1_1_synth.html#a814241fbdb01a77a805337034f76f485',1,'sfz::Synth']]],
-  ['ccevent',['ccEvent',['../classsfz_1_1_midi_state.html#af842db8448e586a14f2e5df1bec4dc9c',1,'sfz::MidiState']]],
+  ['cc',['cc',['../classsfz_1_1_synth.html#aadf74366bb17e532a64aed8bf12952c0',1,'sfz::Synth']]],
+  ['ccevent',['ccEvent',['../classsfz_1_1_midi_state.html#a73a1fdb9f0f87a172514522321a8158c',1,'sfz::MidiState']]],
   ['ccmap',['CCMap',['../classsfz_1_1_c_c_map.html',1,'sfz::CCMap&lt; ValueType &gt;'],['../classsfz_1_1_c_c_map.html#a02a7160337593535d36ce12e0f338e45',1,'sfz::CCMap::CCMap()']]],
   ['ccmap_3c_20sfz_3a_3arange_3c_20uint8_5ft_20_3e_20_3e',['CCMap&lt; sfz::Range&lt; uint8_t &gt; &gt;',['../classsfz_1_1_c_c_map.html',1,'sfz']]],
   ['ccswitchedvalue',['ccSwitchedValue',['../namespacesfz.html#a11ed5c444b21ac2033875210cdd626ab',1,'sfz']]],

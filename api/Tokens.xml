@@ -128,7 +128,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>sfizz_8h.html</Path>
-    <Anchor>a83507ae0a57f3f6a6d2e261b0d838601</Anchor>
+    <Anchor>acd95f84924b073b0f1031cd8aef7b3e8</Anchor>
     <Abstract>Send a note on event to the synth. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
@@ -139,7 +139,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>sfizz_8h.html</Path>
-    <Anchor>ac2ffd934d2237580009595a4075ecf71</Anchor>
+    <Anchor>a25a81af3753b3e35159079a35df20a9f</Anchor>
     <Abstract>Send a note off event to the synth. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
@@ -150,7 +150,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>sfizz_8h.html</Path>
-    <Anchor>a8fc801aaefd86c4b8ff9c4fc0e937cbe</Anchor>
+    <Anchor>a1a4fba5b82cb7fbd4306409950426b73</Anchor>
     <Abstract>Send a CC event to the synth. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
@@ -161,7 +161,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>sfizz_8h.html</Path>
-    <Anchor>a2f06affe178c4a9a47e9e81266b0fe92</Anchor>
+    <Anchor>a725faf6c345ab5e8aa3bddef76ea5cfa</Anchor>
     <Abstract>Send a pitch wheel event. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
@@ -172,7 +172,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>sfizz_8h.html</Path>
-    <Anchor>af50f65810c2d279eb0c697f08b4bd2f8</Anchor>
+    <Anchor>ab56b7f1df6249fcc82fa736ce00da089</Anchor>
     <Abstract>Send an aftertouch event. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
@@ -2583,7 +2583,7 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a3621ff211fcdaef0f4ca7c93d60d1901</Anchor>
+    <Anchor>a06971a2b813884edfe8ffb6c39e4d15c</Anchor>
     <Abstract>Update the state after a note on event. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2595,7 +2595,7 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>ac2c2b824d0aef00236645ccaa2fedca1</Anchor>
+    <Anchor>a26d9632b6b2daa5c39945d60270ee2db</Anchor>
     <Abstract>Register a note off and get the note duration. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2607,7 +2607,7 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a0c105a23260675c27d7e66b3f7dc4a2d</Anchor>
+    <Anchor>af96e7279289527dc9e65d4249e5311fb</Anchor>
     <Abstract>Get the note on velocity for a given note. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2619,7 +2619,7 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a9a23eed112561347f04f508d0992b825</Anchor>
+    <Anchor>a2aced451eb434b46ddf7b66bc61ce001</Anchor>
     <Abstract>Register a pitch bend event. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2631,8 +2631,8 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a365f0c4928d5bc372bd29f66264c86a8</Anchor>
-    <Abstract>Get the pitch bend status on a channel. </Abstract>
+    <Anchor>af3680dbd85a19d385473b2c84f4155cb</Anchor>
+    <Abstract>Get the pitch bend status. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
@@ -2643,7 +2643,7 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>af842db8448e586a14f2e5df1bec4dc9c</Anchor>
+    <Anchor>a73a1fdb9f0f87a172514522321a8158c</Anchor>
     <Abstract>Register a CC event. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
@@ -2655,8 +2655,8 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a12179d36ac37d65f3de4af12ed0de604</Anchor>
-    <Abstract>Get the CC value for a specific channel and cc number. </Abstract>
+    <Anchor>a7fc5424778613527212c4d3ef9614a92</Anchor>
+    <Abstract>Get the CC value for CC number. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
@@ -2667,8 +2667,8 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>ad51014e33e86cb73d1927505bbedc11b</Anchor>
-    <Abstract>Get the full CC status for a specific channel. </Abstract>
+    <Anchor>a19eeae5eb977759128fcdb415b1e5e17</Anchor>
+    <Abstract>Get the full CC status. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
@@ -2691,8 +2691,8 @@
       <Scope>sfz::MidiState</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>a373d9097a2f5dac879ad8a6d34a7de6c</Anchor>
-    <Abstract>Res. </Abstract>
+    <Anchor>a14c5c39d60b61d508f5e3e626344d0db</Anchor>
+    <Abstract>Reset all the controllers. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
@@ -2974,7 +2974,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>a03b7557c437110de9bbe43847bfb4e15</Anchor>
+    <Anchor>a94970ced99958b9955b24f6d34d8f18a</Anchor>
     <Abstract>Register a new note on event. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -2986,7 +2986,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>a2e0706695d26ab544b1ac2ad067e8597</Anchor>
+    <Anchor>af2e48bce04bb56561f80521001b45840</Anchor>
     <Abstract>Register a new note off event. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -2998,7 +2998,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>a39de135658d150230935c059a468d3e0</Anchor>
+    <Anchor>a39e027d0ee5740d941c02874471f95a0</Anchor>
     <Abstract>Register a new CC event. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -3010,7 +3010,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>a399b2cad35b2bcf85d33c2240cacde6b</Anchor>
+    <Anchor>aae9a7c5196806ffaf430d5d72a7a9a70</Anchor>
     <Abstract>Register a new pitch wheel event. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -3022,7 +3022,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>afdf4eb9c42313e6b8a353ce91d502b69</Anchor>
+    <Anchor>a4a0aa074ba715db28fb9870565ad8aa1</Anchor>
     <Abstract>Register a new aftertouch event. </Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -3082,7 +3082,7 @@
       <Scope>sfz::Region</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_region.html</Path>
-    <Anchor>abe5ddb612bb580c99f78fe2f7ff46fdc</Anchor>
+    <Anchor>af316a3ebdc75c016db37aa54a050cdf5</Anchor>
     <Abstract>Get the base volume of the region depending on which note has been pressed to trigger the region...</Abstract>
     <DeclaredIn>Region.h</DeclaredIn>
   </Token>
@@ -3369,7 +3369,7 @@
       <Scope>sfz::Synth</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_synth.html</Path>
-    <Anchor>af2722a574cdc477d441bc37767237c24</Anchor>
+    <Anchor>acb204cbc70f439d8fe5260f4b910157b</Anchor>
     <Abstract>Send a note on event to the synth. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
@@ -3381,7 +3381,7 @@
       <Scope>sfz::Synth</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_synth.html</Path>
-    <Anchor>a59b7e00aa54657d52bbccdb95daa3ff5</Anchor>
+    <Anchor>a522c431f0ff565a69ab88925b7b89af3</Anchor>
     <Abstract>Send a note off event to the synth. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
@@ -3393,7 +3393,7 @@
       <Scope>sfz::Synth</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_synth.html</Path>
-    <Anchor>a814241fbdb01a77a805337034f76f485</Anchor>
+    <Anchor>aadf74366bb17e532a64aed8bf12952c0</Anchor>
     <Abstract>Send a CC event to the synth. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
@@ -3405,7 +3405,7 @@
       <Scope>sfz::Synth</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_synth.html</Path>
-    <Anchor>a8c9450d3dcdec76ce18024ebd76507a7</Anchor>
+    <Anchor>af082ebe877007a2206134161abe9be7c</Anchor>
     <Abstract>Send a pitch bend event to the synth. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
@@ -3417,7 +3417,7 @@
       <Scope>sfz::Synth</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_synth.html</Path>
-    <Anchor>a09d8c207f01af508656ed886a75118f6</Anchor>
+    <Anchor>ae9e07c2e7a68ff428003246bdc2d6b12</Anchor>
     <Abstract>Send a aftertouch event to the synth. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
@@ -3680,7 +3680,7 @@
       <Scope>sfz::Voice</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>a4fdea019d6bc45fa273ee7b70acd4a04</Anchor>
+    <Anchor>ae4d2941f9a0f71ed4f4743f1af38e2a8</Anchor>
     <Abstract>Start playing a region after a short delay for different triggers (note on, off, cc) ...</Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
@@ -3692,7 +3692,7 @@
       <Scope>sfz::Voice</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>af17b6c4d0a40500c0e7785b994da10d4</Anchor>
+    <Anchor>aa673b80ceb9c0496d0c01e78d9693ace</Anchor>
     <Abstract>Register a note-off event; this may trigger a release. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
@@ -3704,7 +3704,7 @@
       <Scope>sfz::Voice</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>a0cab9da8d20cd32d699264a80c61edba</Anchor>
+    <Anchor>a5846eedce9e4e246c30eb4439b391cc9</Anchor>
     <Abstract>Register a CC event; this may trigger a release. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
@@ -3716,7 +3716,7 @@
       <Scope>sfz::Voice</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>addeee083b60f434534389635eb7bce58</Anchor>
+    <Anchor>a0c5e8098f4277ff85efb0f3e6e324be7</Anchor>
     <Abstract>Register a pitch wheel event; for now this does nothing. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
@@ -3728,7 +3728,7 @@
       <Scope>sfz::Voice</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>a2a8b4f7af6150e6b489b0dba8a5144a3</Anchor>
+    <Anchor>a4ec0d3bf26b312844dded96a9a2fe4d6</Anchor>
     <Abstract>Register an aftertouch event; for now this does nothing. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
@@ -3802,18 +3802,6 @@
     <Path>classsfz_1_1_voice.html</Path>
     <Anchor>a1c2ae3b23508f971a422ffe86d779f36</Anchor>
     <Abstract>Get the number that triggered the voice (note number or cc number) </Abstract>
-    <DeclaredIn>Voice.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>getTriggerChannel</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>sfz::Voice</Scope>
-    </TokenIdentifier>
-    <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>aff78f079865b09f62e2d3dd03d61e3b1</Anchor>
-    <Abstract>Get the channel that triggered the voice. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
   <Token>

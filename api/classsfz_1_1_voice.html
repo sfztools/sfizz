@@ -133,21 +133,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5394dccc480fa35282b24d29ff3cd20b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a5394dccc480fa35282b24d29ff3cd20b">getSamplesPerBlock</a> () const noexcept</td></tr>
 <tr class="memdesc:a5394dccc480fa35282b24d29ff3cd20b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the expected block size.  <a href="#a5394dccc480fa35282b24d29ff3cd20b">More...</a><br /></td></tr>
 <tr class="separator:a5394dccc480fa35282b24d29ff3cd20b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fdea019d6bc45fa273ee7b70acd4a04"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a4fdea019d6bc45fa273ee7b70acd4a04">startVoice</a> (<a class="el" href="structsfz_1_1_region.html">Region</a> *region, int delay, int channel, int number, uint8_t value, TriggerType triggerType) noexcept</td></tr>
-<tr class="memdesc:a4fdea019d6bc45fa273ee7b70acd4a04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start playing a region after a short delay for different triggers (note on, off, cc)  <a href="#a4fdea019d6bc45fa273ee7b70acd4a04">More...</a><br /></td></tr>
-<tr class="separator:a4fdea019d6bc45fa273ee7b70acd4a04"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af17b6c4d0a40500c0e7785b994da10d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#af17b6c4d0a40500c0e7785b994da10d4">registerNoteOff</a> (int delay, int channel, int noteNumber, uint8_t velocity) noexcept</td></tr>
-<tr class="memdesc:af17b6c4d0a40500c0e7785b994da10d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a note-off event; this may trigger a release.  <a href="#af17b6c4d0a40500c0e7785b994da10d4">More...</a><br /></td></tr>
-<tr class="separator:af17b6c4d0a40500c0e7785b994da10d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0cab9da8d20cd32d699264a80c61edba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a0cab9da8d20cd32d699264a80c61edba">registerCC</a> (int delay, int channel, int ccNumber, uint8_t ccValue) noexcept</td></tr>
-<tr class="memdesc:a0cab9da8d20cd32d699264a80c61edba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a CC event; this may trigger a release.  <a href="#a0cab9da8d20cd32d699264a80c61edba">More...</a><br /></td></tr>
-<tr class="separator:a0cab9da8d20cd32d699264a80c61edba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:addeee083b60f434534389635eb7bce58"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#addeee083b60f434534389635eb7bce58">registerPitchWheel</a> (int delay, int channel, int pitch) noexcept</td></tr>
-<tr class="memdesc:addeee083b60f434534389635eb7bce58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a pitch wheel event; for now this does nothing.  <a href="#addeee083b60f434534389635eb7bce58">More...</a><br /></td></tr>
-<tr class="separator:addeee083b60f434534389635eb7bce58"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a8b4f7af6150e6b489b0dba8a5144a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a2a8b4f7af6150e6b489b0dba8a5144a3">registerAftertouch</a> (int delay, int channel, uint8_t aftertouch) noexcept</td></tr>
-<tr class="memdesc:a2a8b4f7af6150e6b489b0dba8a5144a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register an aftertouch event; for now this does nothing.  <a href="#a2a8b4f7af6150e6b489b0dba8a5144a3">More...</a><br /></td></tr>
-<tr class="separator:a2a8b4f7af6150e6b489b0dba8a5144a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4d2941f9a0f71ed4f4743f1af38e2a8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#ae4d2941f9a0f71ed4f4743f1af38e2a8">startVoice</a> (<a class="el" href="structsfz_1_1_region.html">Region</a> *region, int delay, int number, uint8_t value, TriggerType triggerType) noexcept</td></tr>
+<tr class="memdesc:ae4d2941f9a0f71ed4f4743f1af38e2a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start playing a region after a short delay for different triggers (note on, off, cc)  <a href="#ae4d2941f9a0f71ed4f4743f1af38e2a8">More...</a><br /></td></tr>
+<tr class="separator:ae4d2941f9a0f71ed4f4743f1af38e2a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa673b80ceb9c0496d0c01e78d9693ace"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#aa673b80ceb9c0496d0c01e78d9693ace">registerNoteOff</a> (int delay, int noteNumber, uint8_t velocity) noexcept</td></tr>
+<tr class="memdesc:aa673b80ceb9c0496d0c01e78d9693ace"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a note-off event; this may trigger a release.  <a href="#aa673b80ceb9c0496d0c01e78d9693ace">More...</a><br /></td></tr>
+<tr class="separator:aa673b80ceb9c0496d0c01e78d9693ace"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5846eedce9e4e246c30eb4439b391cc9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a5846eedce9e4e246c30eb4439b391cc9">registerCC</a> (int delay, int ccNumber, uint8_t ccValue) noexcept</td></tr>
+<tr class="memdesc:a5846eedce9e4e246c30eb4439b391cc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a CC event; this may trigger a release.  <a href="#a5846eedce9e4e246c30eb4439b391cc9">More...</a><br /></td></tr>
+<tr class="separator:a5846eedce9e4e246c30eb4439b391cc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c5e8098f4277ff85efb0f3e6e324be7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a0c5e8098f4277ff85efb0f3e6e324be7">registerPitchWheel</a> (int delay, int pitch) noexcept</td></tr>
+<tr class="memdesc:a0c5e8098f4277ff85efb0f3e6e324be7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a pitch wheel event; for now this does nothing.  <a href="#a0c5e8098f4277ff85efb0f3e6e324be7">More...</a><br /></td></tr>
+<tr class="separator:a0c5e8098f4277ff85efb0f3e6e324be7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ec0d3bf26b312844dded96a9a2fe4d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a4ec0d3bf26b312844dded96a9a2fe4d6">registerAftertouch</a> (int delay, uint8_t aftertouch) noexcept</td></tr>
+<tr class="memdesc:a4ec0d3bf26b312844dded96a9a2fe4d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register an aftertouch event; for now this does nothing.  <a href="#a4ec0d3bf26b312844dded96a9a2fe4d6">More...</a><br /></td></tr>
+<tr class="separator:a4ec0d3bf26b312844dded96a9a2fe4d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9505cfc20b1c8c994ba8b10e497555a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a9505cfc20b1c8c994ba8b10e497555a3">registerTempo</a> (int delay, float secondsPerQuarter) noexcept</td></tr>
 <tr class="memdesc:a9505cfc20b1c8c994ba8b10e497555a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a tempo event; for now this does nothing.  <a href="#a9505cfc20b1c8c994ba8b10e497555a3">More...</a><br /></td></tr>
 <tr class="separator:a9505cfc20b1c8c994ba8b10e497555a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -166,9 +166,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1c2ae3b23508f971a422ffe86d779f36"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a1c2ae3b23508f971a422ffe86d779f36">getTriggerNumber</a> () const noexcept</td></tr>
 <tr class="memdesc:a1c2ae3b23508f971a422ffe86d779f36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number that triggered the voice (note number or cc number)  <a href="#a1c2ae3b23508f971a422ffe86d779f36">More...</a><br /></td></tr>
 <tr class="separator:a1c2ae3b23508f971a422ffe86d779f36"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff78f079865b09f62e2d3dd03d61e3b1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#aff78f079865b09f62e2d3dd03d61e3b1">getTriggerChannel</a> () const noexcept</td></tr>
-<tr class="memdesc:aff78f079865b09f62e2d3dd03d61e3b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the channel that triggered the voice.  <a href="#aff78f079865b09f62e2d3dd03d61e3b1">More...</a><br /></td></tr>
-<tr class="separator:aff78f079865b09f62e2d3dd03d61e3b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00c8871c5a8b4b2a9f459365b7953742"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_voice.html#a00c8871c5a8b4b2a9f459365b7953742">getTriggerValue</a> () const noexcept</td></tr>
 <tr class="memdesc:a00c8871c5a8b4b2a9f459365b7953742"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the value that triggered the voice (note velocity or cc value)  <a href="#a00c8871c5a8b4b2a9f459365b7953742">More...</a><br /></td></tr>
 <tr class="separator:a00c8871c5a8b4b2a9f459365b7953742"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -451,34 +448,6 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="aff78f079865b09f62e2d3dd03d61e3b1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aff78f079865b09f62e2d3dd03d61e3b1">&#9670;&nbsp;</a></span>getTriggerChannel()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">int sfz::Voice::getTriggerChannel </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get the channel that triggered the voice. </p>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
-
-</div>
-</div>
 <a id="a1c2ae3b23508f971a422ffe86d779f36"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1c2ae3b23508f971a422ffe86d779f36">&#9670;&nbsp;</a></span>getTriggerNumber()</h2>
 
@@ -593,8 +562,8 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="a2a8b4f7af6150e6b489b0dba8a5144a3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2a8b4f7af6150e6b489b0dba8a5144a3">&#9670;&nbsp;</a></span>registerAftertouch()</h2>
+<a id="a4ec0d3bf26b312844dded96a9a2fe4d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ec0d3bf26b312844dded96a9a2fe4d6">&#9670;&nbsp;</a></span>registerAftertouch()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -607,12 +576,6 @@ false </dd></dl>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>delay</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>channel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -637,7 +600,6 @@ false </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td></td></tr>
-    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">aftertouch</td><td></td></tr>
   </table>
   </dd>
@@ -645,8 +607,8 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="a0cab9da8d20cd32d699264a80c61edba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0cab9da8d20cd32d699264a80c61edba">&#9670;&nbsp;</a></span>registerCC()</h2>
+<a id="a5846eedce9e4e246c30eb4439b391cc9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5846eedce9e4e246c30eb4439b391cc9">&#9670;&nbsp;</a></span>registerCC()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -659,12 +621,6 @@ false </dd></dl>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>delay</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>channel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -696,7 +652,6 @@ false </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td></td></tr>
-    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">ccNumber</td><td></td></tr>
     <tr><td class="paramname">ccValue</td><td></td></tr>
   </table>
@@ -705,8 +660,8 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="af17b6c4d0a40500c0e7785b994da10d4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af17b6c4d0a40500c0e7785b994da10d4">&#9670;&nbsp;</a></span>registerNoteOff()</h2>
+<a id="aa673b80ceb9c0496d0c01e78d9693ace"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa673b80ceb9c0496d0c01e78d9693ace">&#9670;&nbsp;</a></span>registerNoteOff()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -719,12 +674,6 @@ false </dd></dl>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>delay</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>channel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -755,7 +704,6 @@ false </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td></td></tr>
-    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">noteNumber</td><td></td></tr>
     <tr><td class="paramname">velocity</td><td></td></tr>
   </table>
@@ -764,8 +712,8 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="addeee083b60f434534389635eb7bce58"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#addeee083b60f434534389635eb7bce58">&#9670;&nbsp;</a></span>registerPitchWheel()</h2>
+<a id="a0c5e8098f4277ff85efb0f3e6e324be7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c5e8098f4277ff85efb0f3e6e324be7">&#9670;&nbsp;</a></span>registerPitchWheel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -778,12 +726,6 @@ false </dd></dl>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>delay</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>channel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -808,7 +750,6 @@ false </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td></td></tr>
-    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">pitch</td><td></td></tr>
   </table>
   </dd>
@@ -854,7 +795,6 @@ false </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td></td></tr>
-    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">pitch</td><td></td></tr>
   </table>
   </dd>
@@ -993,8 +933,8 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="a4fdea019d6bc45fa273ee7b70acd4a04"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fdea019d6bc45fa273ee7b70acd4a04">&#9670;&nbsp;</a></span>startVoice()</h2>
+<a id="ae4d2941f9a0f71ed4f4743f1af38e2a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4d2941f9a0f71ed4f4743f1af38e2a8">&#9670;&nbsp;</a></span>startVoice()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1013,12 +953,6 @@ false </dd></dl>
           <td></td>
           <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>delay</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>channel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1056,7 +990,6 @@ false </dd></dl>
   <table class="params">
     <tr><td class="paramname">region</td><td></td></tr>
     <tr><td class="paramname">delay</td><td></td></tr>
-    <tr><td class="paramname">channel</td><td>(0-based) </td></tr>
     <tr><td class="paramname">number</td><td></td></tr>
     <tr><td class="paramname">value</td><td></td></tr>
     <tr><td class="paramname">triggerType</td><td></td></tr>
@@ -1070,7 +1003,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated on Sun Dec 22 2019 23:21:41 for sfizz by
+					<span style="float:right">Generated on Mon Dec 23 2019 00:28:12 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
