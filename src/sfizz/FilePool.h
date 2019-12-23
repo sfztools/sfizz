@@ -58,6 +58,17 @@ struct FilePromise
             return AudioSpan<const float>(*preloadedData);
     }
 
+    void reset()
+    {
+        fileData.reset();
+        preloadedData.reset();
+        filename = "";
+        availableFrames = 0;
+        dataReady = false;
+        oversamplingFactor = config::defaultOversamplingFactor;
+        sampleRate = config::defaultSampleRate;
+    }
+
     absl::string_view filename {};
     AudioBufferPtr preloadedData {};
     AudioBuffer<float> fileData {};
@@ -214,6 +225,7 @@ private:
     std::atomic<int> threadsLoading { 0 };
 
     // File promises data structures along with their guards.
+    std::vector<FilePromisePtr> emptyPromises;
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
     std::atomic<bool> addingPromisesToClear { false };

@@ -40,6 +40,7 @@ namespace config {
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
     constexpr int maxVoices { 256 };
+    constexpr int maxFilePromises { maxVoices * 2 };
     constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };
     constexpr int resetCC { 121 };
