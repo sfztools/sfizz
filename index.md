@@ -5,7 +5,7 @@ layout: "home"
 
 ## Building
 
-[![Travis Build Status](https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
+[![Travis Build Status]](https://travis-ci.com/sfztools/sfizz)
 
 Sfizz depends on the [sndfile] library.
 The [JACK] client that you will probably build depends on the `jack` library.
@@ -64,6 +64,8 @@ git submodule update --init --recursive
 You can build with `clang`, although in that case the CMakeFile
 defaults to using `libc++` instead of `libstdc++`.
 
+
+[Travis Build Status]: https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux-macOS&style=popout&logo=travis
 [JACK]:    https://jackaudio.org/
 [sndfile]: http://mega-nerd.com/libsndfile/
 [here]:    macos
