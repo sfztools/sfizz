@@ -1,5 +1,7 @@
 # sfizz
 
+## Building
+
 [![Travis Build Status]](https://travis-ci.com/sfztools/sfizz)
 
 Sfizz depends on the [sndfile] library.
