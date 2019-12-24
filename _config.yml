@@ -1,38 +1,46 @@
 defaults:
-  - scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "default"
+- scope:
+    path: ""
+  values:
+    lang: "en"
 
-  - scope:
-      path: ""
-      type: "posts"
-    values:
-      layout: "post"
+- scope:
+    path: ""
+    type: "pages"
+  values:
+    layout: "default"
+
+- scope:
+    path: ""
+    type: "posts"
+  values:
+    layout:     "post"
+    date_fmt:   "%F"
+    categories: "news"
+    comments:   false
 
 exclude:
-  - vendor/bundle/
-  - vendor/cache/
-  - vendor/gems/
-  - vendor/ruby/
-  - Gemfile
-  - Gemfile.lock
-  - LICENSE
-  - new_post
-  - node_modules
-  - package.json
-  - package-lock.json
-  - README.md
-  - setup.sh
-  - assets/css/style.css
-  - TODO.md
-  - yarn.lock
-  - yarn-error.log
+- vendor/bundle/
+- vendor/cache/
+- vendor/gems/
+- vendor/ruby/
+- Gemfile
+- Gemfile.lock
+- LICENSE
+- new_post
+- node_modules
+- package.json
+- package-lock.json
+- README.md
+- setup.sh
+- assets/css/style.css
+- TODO.md
+- yarn.lock
+- yarn-error.log
 
 plugins:
-  - jekyll-sitemap
-  - jemoji
+- jekyll-sitemap
+- jemoji
 
 organization:
   name: "SFZTools"
