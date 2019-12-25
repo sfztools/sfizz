@@ -1,5 +1,3 @@
-project(sfizz)
-
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FilePool.cpp
@@ -48,7 +46,7 @@ if (SFIZZ_SHARED)
     add_library (sfizz_shared SHARED sfizz.h)
     set_target_properties (sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER sfizz.h)
     target_link_libraries (sfizz_shared sfizz::sfizz)
-    configure_file (${CMAKE_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
+    configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
     if (UNIX)
         include (GNUInstallDirs)
         install (TARGETS sfizz_shared
