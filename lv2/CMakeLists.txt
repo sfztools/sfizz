@@ -20,6 +20,7 @@ set (LV2PLUGIN_TTL_SRC_FILES
     ${PROJECT_NAME}.ttl.in
 )
 add_library (${LV2PLUGIN_PRJ_NAME} SHARED ${PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_FILES})
+set_source_files_properties(${PROJECT_NAME}.c LANGUAGE CXX)
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
 
 # Fetch required LV2 include files
