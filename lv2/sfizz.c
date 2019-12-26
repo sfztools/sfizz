@@ -373,6 +373,7 @@ instantiate(const LV2_Descriptor *descriptor,
         return NULL;
     }
 
+    self->synth = sfizz_create_synth();
     return (LV2_Handle)self;
 }
 
@@ -380,6 +381,7 @@ static void
 cleanup(LV2_Handle instance)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    sfizz_free(self->synth);
     free(self);
 }
 
@@ -387,21 +389,14 @@ static void
 activate(LV2_Handle instance)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    self->synth = sfizz_create_synth();
     sfizz_set_samples_per_block(self->synth, self->max_block_size);
     sfizz_set_sample_rate(self->synth, self->sample_rate);
-    if (strlen(self->sfz_file_path) > 0)
-    {
-        lv2_log_note(&self->logger, "Current file is: %s\n", self->sfz_file_path);
-        sfizz_load_file(self->synth, self->sfz_file_path);
-    }
 }
 
 static void
 deactivate(LV2_Handle instance)
 {
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    sfizz_free(self->synth);
+    UNUSED(instance);
 }
 
 static void
