@@ -752,6 +752,24 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
     return LV2_OPTIONS_SUCCESS;
 }
 
+static void
+sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char* file_path)
+{
+    strcpy(self->sfz_file_path, file_path);
+    stat(self->sfz_file_path, &self->sfz_file_info);
+
+    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", self->sfz_file_path);
+    char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
+    if (unknown_opcodes)
+    {
+        lv2_log_note(&self->logger, "[sfizz] Unknown opcodes: %s\n", unknown_opcodes);
+        free(unknown_opcodes);
+    }
+    lv2_log_note(&self->logger, "[sfizz] Number of masters: %d\n", sfizz_get_num_masters(self->synth));
+    lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
+    lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
+}
+
 static LV2_State_Status
 restore(LV2_Handle instance,
         LV2_State_Retrieve_Function retrieve,
@@ -772,9 +790,9 @@ restore(LV2_Handle instance,
     if (value)
     {
         lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", (const char *)value);
-        if (sfizz_load_file(self->synth, (const char *)value)) {
-            strcpy(self->sfz_file_path, (const char *)value);
-            stat(self->sfz_file_path, &self->sfz_file_info);
+        if (sfizz_load_file(self->synth, (const char *)value))
+        {
+            sfizz_lv2_update_file_info(self, (const char *)value);
         }
     }
 
@@ -882,18 +900,7 @@ work(LV2_Handle instance,
         const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
         if (sfizz_load_file(self->synth, sfz_file_path))
         {
-            strcpy(self->sfz_file_path, sfz_file_path);
-            stat(self->sfz_file_path, &self->sfz_file_info);
-            lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", sfz_file_path);
-            char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
-            if (unknown_opcodes)
-            {
-                lv2_log_note(&self->logger, "[sfizz] Unknown opcodes: %s\n", unknown_opcodes);
-                free(unknown_opcodes);
-            }
-            lv2_log_note(&self->logger, "[sfizz] Number of masters: %d\n", sfizz_get_num_masters(self->synth));
-            lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
-            lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
+            sfizz_lv2_update_file_info(self, sfz_file_path);
         }
         else
         {
