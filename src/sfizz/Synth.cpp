@@ -147,6 +147,7 @@ void sfz::Synth::clear()
     masterOpcodes.clear();
     groupOpcodes.clear();
     unknownOpcodes.clear();
+    modificationTime = fs::file_time_type::min();
 }
 
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
@@ -289,6 +290,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
 
     DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
     regions.resize(std::distance(regions.begin(), lastRegion) + 1);
+    modificationTime = checkModificationTime();
 
     return parserReturned;
 }
@@ -632,4 +634,20 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
         for (int cc = 0; cc < config::numCCs; ++cc)
             region->registerCC(cc, 0);
     }
+}
+
+fs::file_time_type sfz::Synth::checkModificationTime()
+{
+    auto returnedTime = modificationTime;
+    for (auto file: getIncludedFiles()) {
+        const auto fileTime = fs::last_write_time(file);
+        if (returnedTime < fileTime)
+            returnedTime = fileTime;
+    }
+    return returnedTime;
+}
+
+bool sfz::Synth::shouldReloadFile()
+{
+    return (checkModificationTime() > modificationTime);
 }

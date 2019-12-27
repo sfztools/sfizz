@@ -342,6 +342,17 @@ public:
     void disableFreeWheeling() noexcept;
 
     const MidiState& getMidiState() const noexcept { return midiState; }
+
+    /**
+     * @brief Check if the SFZ should be reloaded.
+     *
+     * Depending on the platform this can create file descriptors.
+     *
+     * @return true if any included files (including the root file) have
+     *              been modified since the sfz file was loaded.
+     * @return false
+     */
+    bool shouldReloadFile();
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -400,6 +411,8 @@ private:
      */
     void buildRegion(const std::vector<Opcode>& regionOpcodes);
 
+    fs::file_time_type checkModificationTime();
+
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block
     std::vector<Opcode> globalOpcodes;
@@ -453,6 +466,8 @@ private:
     std::string defaultPath { "" };
     int noteOffset { 0 };
     int octaveOffset { 0 };
+
+    fs::file_time_type modificationTime { };
 
     LEAK_DETECTOR(Synth);
 };

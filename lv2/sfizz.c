@@ -132,7 +132,6 @@ typedef struct
     sfizz_synth_t *synth;
     bool expect_nominal_block_length;
     char sfz_file_path[MAX_PATH_SIZE];
-    struct stat sfz_file_info;
     int num_voices;
     unsigned int preload_size;
     sfizz_oversampling_factor_t oversampling;
@@ -274,7 +273,6 @@ instantiate(const LV2_Descriptor *descriptor,
     self->sample_rate = (float)rate;
     self->expect_nominal_block_length = false;
     self->sfz_file_path[0] = '\0';
-    self->sfz_file_info.st_mtime = (time_t)(-1);
     self->num_voices = DEFAULT_VOICES;
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
@@ -524,25 +522,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
     }
 }
 
-static bool
-sfizz_lv2_check_modification(sfizz_plugin_t *self)
-{
-    if (self->sfz_file_path == NULL)
-        return false;
-
-    if (strlen(self->sfz_file_path) == 0)
-        return false;
-
-    struct stat new_file_info;
-    if (stat(self->sfz_file_path, &new_file_info) != 0)
-        return false;
-
-    if (new_file_info.st_mtim.tv_sec > self->sfz_file_info.st_mtim.tv_sec)
-        return true;
-
-    return false;
-}
-
 static void
 sfizz_lv2_status_log(sfizz_plugin_t *self)
 {
@@ -787,7 +766,6 @@ static void
 sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char* file_path)
 {
     strcpy(self->sfz_file_path, file_path);
-    stat(self->sfz_file_path, &self->sfz_file_info);
 
     lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", self->sfz_file_path);
     char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
@@ -972,7 +950,7 @@ work(LV2_Handle instance,
     }
     else if (atom->type == self->sfizz_check_modification_uri)
     {
-        if (sfizz_lv2_check_modification(self))
+        if (sfizz_should_reload_file(self->synth))
         {
             lv2_log_note(&self->logger, "[sfizz] File %s seems to have been updated, reloading.\n", self->sfz_file_path);
             if (sfizz_load_file(self->synth, self->sfz_file_path))

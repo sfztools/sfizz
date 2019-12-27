@@ -344,6 +344,19 @@ void sfizz_disable_freewheeling(sfizz_synth_t* synth);
  * @return char*
  */
 char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth);
+
+/**
+ * @brief Check if the SFZ should be reloaded.
+ *
+ * Depending on the platform this can create file descriptors.
+ *
+ * @param synth
+ * @return true if any included files (including the root file) have
+ *              been modified since the sfz file was loaded.
+ * @return false
+ */
+bool sfizz_should_reload_file(sfizz_synth_t* synth);
+
 #ifdef __cplusplus
 }
 #endif

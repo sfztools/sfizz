@@ -239,6 +239,12 @@ char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth)
     return opcodeList;
 }
 
+bool sfizz_should_reload_file(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->shouldReloadFile();
+}
+
 #ifdef __cplusplus
 }
 #endif
