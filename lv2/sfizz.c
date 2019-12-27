@@ -55,8 +55,9 @@
 #define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
 #define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
 #define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
-// This one is just for the worker
+// These ones are just for the worker
 #define SFIZZ__logStatus "http://sfztools.github.io/sfizz:log_status"
+#define SFIZZ__checkModification "http://sfztools.github.io/sfizz:check_modification"
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -68,7 +69,7 @@
 #define DEFAULT_VOICES 64
 #define DEFAULT_OVERSAMPLING SFIZZ_OVERSAMPLING_X1
 #define DEFAULT_PRELOAD 8192
-#define LOG_SAMPLE_COUNT 96000
+#define LOG_SAMPLE_COUNT 48000
 #define UNUSED(x) (void)(x)
 
 #ifndef NDEBUG
@@ -125,6 +126,7 @@ typedef struct
     LV2_URID sfizz_preload_size_uri;
     LV2_URID sfizz_oversampling_uri;
     LV2_URID sfizz_log_status_uri;
+    LV2_URID sfizz_check_modification_uri;
 
     // Sfizz related data
     sfizz_synth_t *synth;
@@ -178,6 +180,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
+    self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
 }
 
 static void
@@ -521,6 +524,25 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
     }
 }
 
+static bool
+sfizz_lv2_check_modification(sfizz_plugin_t *self)
+{
+    if (self->sfz_file_path == NULL)
+        return false;
+
+    if (strlen(self->sfz_file_path) == 0)
+        return false;
+
+    struct stat new_file_info;
+    if (stat(self->sfz_file_path, &new_file_info) != 0)
+        return false;
+
+    if (new_file_info.st_mtim.tv_sec > self->sfz_file_info.st_mtim.tv_sec)
+        return true;
+
+    return false;
+}
+
 static void
 sfizz_lv2_status_log(sfizz_plugin_t *self)
 {
@@ -661,23 +683,32 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_lv2_check_oversampling(self);
     sfizz_lv2_check_num_voices(self);
 
-#ifndef NDEBUG
     // Log the buffer usage
     self->sample_counter += (int)sample_count;
     if (self->sample_counter > LOG_SAMPLE_COUNT)
     {
+        self->changing_state = true; // We potentially change
         LV2_Atom atom;
-        atom.type = self->sfizz_log_status_uri;
         atom.size = 0;
+        atom.type = self->sfizz_check_modification_uri;
+        if (!(self->worker->schedule_work(self->worker->handle,
+                                         lv2_atom_total_size((LV2_Atom *)&atom),
+                                         &atom) == LV2_WORKER_SUCCESS))
+        {
+            self->changing_state = false;
+            lv2_log_error(&self->logger, "[sfizz] There was an issue sending a notice to check the modification of the SFZ file to the background worker");
+        }
+#ifndef NDEBUG
+        atom.type = self->sfizz_log_status_uri;
         if (!(self->worker->schedule_work(self->worker->handle,
                                          lv2_atom_total_size((LV2_Atom *)&atom),
                                          &atom) == LV2_WORKER_SUCCESS))
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue sending a logging message to the background worker");
         }
+#endif
         self->sample_counter -= LOG_SAMPLE_COUNT;
     }
-#endif
 
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
@@ -939,6 +970,21 @@ work(LV2_Handle instance,
     {
         sfizz_lv2_status_log(self);
     }
+    else if (atom->type == self->sfizz_check_modification_uri)
+    {
+        if (sfizz_lv2_check_modification(self))
+        {
+            lv2_log_note(&self->logger, "[sfizz] File %s seems to have been updated, reloading.\n", self->sfz_file_path);
+            if (sfizz_load_file(self->synth, self->sfz_file_path))
+            {
+                sfizz_lv2_update_file_info(self, self->sfz_file_path);
+            }
+            else
+            {
+                lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded.\n", self->sfz_file_path);
+            }
+        }
+    }
     else
     {
         lv2_log_error(&self->logger, "[sfizz] Got an unknown atom in work.\n");
@@ -985,6 +1031,10 @@ work_response(LV2_Handle instance,
     else if (atom->type == self->sfizz_log_status_uri)
     {
         // Nothing to do
+    }
+    else if (atom->type == self->sfizz_check_modification_uri)
+    {
+        self->changing_state = false;
     }
     else
     {
