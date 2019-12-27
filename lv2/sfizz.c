@@ -45,6 +45,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
 #define DEFAULT_SFZ_FILE "/home/paul/Documents/AVL_Percussions/AVL_Drumkits_Percussion-1.0-Alt.sfz"
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
@@ -128,6 +130,7 @@ typedef struct
     sfizz_synth_t *synth;
     bool expect_nominal_block_length;
     char sfz_file_path[MAX_PATH_SIZE];
+    struct stat sfz_file_info;
     int num_voices;
     unsigned int preload_size;
     sfizz_oversampling_factor_t oversampling;
@@ -268,6 +271,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->sample_rate = (float)rate;
     self->expect_nominal_block_length = false;
     self->sfz_file_path[0] = '\0';
+    self->sfz_file_info.st_mtime = (time_t)(-1);
     self->num_voices = DEFAULT_VOICES;
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
@@ -768,8 +772,10 @@ restore(LV2_Handle instance,
     if (value)
     {
         lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", (const char *)value);
-        if (sfizz_load_file(self->synth, (const char *)value))
+        if (sfizz_load_file(self->synth, (const char *)value)) {
             strcpy(self->sfz_file_path, (const char *)value);
+            stat(self->sfz_file_path, &self->sfz_file_info);
+        }
     }
 
     value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
@@ -877,6 +883,7 @@ work(LV2_Handle instance,
         if (sfizz_load_file(self->synth, sfz_file_path))
         {
             strcpy(self->sfz_file_path, sfz_file_path);
+            stat(self->sfz_file_path, &self->sfz_file_info);
             lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", sfz_file_path);
             char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
             if (unknown_opcodes)
