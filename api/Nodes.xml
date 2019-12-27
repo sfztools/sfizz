@@ -960,6 +960,11 @@
                 <Anchor>adcc74a8304e6a13fde764c9928d2e385</Anchor>
                </Node>
                <Node>
+                <Name>shouldReloadFile</Name>
+                <Path>classsfz_1_1_synth.html</Path>
+                <Anchor>a34f084abd0b159544ff741cdf8804caf</Anchor>
+               </Node>
+               <Node>
                 <Name>tempo</Name>
                 <Path>classsfz_1_1_synth.html</Path>
                 <Anchor>ab54482367777b572cc9e62b108ffea25</Anchor>
@@ -1657,6 +1662,11 @@
                 <Name>sfizz_set_volume</Name>
                 <Path>sfizz_8h.html</Path>
                 <Anchor>a8120595c2d3c0d785e8010728e076bc9</Anchor>
+               </Node>
+               <Node>
+                <Name>sfizz_should_reload_file</Name>
+                <Path>sfizz_8h.html</Path>
+                <Anchor>a6cbe7e33de049c6c2a428699eb880ad8</Anchor>
                </Node>
               </Subnodes>
              </Node>

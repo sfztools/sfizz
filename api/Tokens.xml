@@ -343,6 +343,17 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>sfizz_should_reload_file</Name>
+      <APILanguage>c</APILanguage>
+      <Type>func</Type>
+    </TokenIdentifier>
+    <Path>sfizz_8h.html</Path>
+    <Anchor>a6cbe7e33de049c6c2a428699eb880ad8</Anchor>
+    <Abstract>Check if the SFZ should be reloaded. </Abstract>
+    <DeclaredIn>sfizz.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>db2pow</Name>
       <APILanguage>c</APILanguage>
       <Type>func</Type>
@@ -3634,6 +3645,18 @@
     <Path>classsfz_1_1_synth.html</Path>
     <Anchor>a437a8b23e6597254279898c2707f611b</Anchor>
     <Abstract>Disable freewheeling on the synth. </Abstract>
+    <DeclaredIn>Synth.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>shouldReloadFile</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Synth</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_synth.html</Path>
+    <Anchor>a34f084abd0b159544ff741cdf8804caf</Anchor>
+    <Abstract>Check if the SFZ should be reloaded. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
   <Token>

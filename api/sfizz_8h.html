@@ -209,6 +209,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ac0cb89abd2668ad218b4d17ed4f19fc2"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#ac0cb89abd2668ad218b4d17ed4f19fc2">sfizz_get_unknown_opcodes</a> (sfizz_synth_t *synth)</td></tr>
 <tr class="memdesc:ac0cb89abd2668ad218b4d17ed4f19fc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a comma separated list of unknown opcodes.  <a href="#ac0cb89abd2668ad218b4d17ed4f19fc2">More...</a><br /></td></tr>
 <tr class="separator:ac0cb89abd2668ad218b4d17ed4f19fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cbe7e33de049c6c2a428699eb880ad8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sfizz_8h.html#a6cbe7e33de049c6c2a428699eb880ad8">sfizz_should_reload_file</a> (sfizz_synth_t *synth)</td></tr>
+<tr class="memdesc:a6cbe7e33de049c6c2a428699eb880ad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the SFZ should be reloaded.  <a href="#a6cbe7e33de049c6c2a428699eb880ad8">More...</a><br /></td></tr>
+<tr class="separator:a6cbe7e33de049c6c2a428699eb880ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>sfizz public C API </p>
@@ -1277,6 +1280,36 @@ false if some error occured while loading. </dd></dl>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a6cbe7e33de049c6c2a428699eb880ad8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cbe7e33de049c6c2a428699eb880ad8">&#9670;&nbsp;</a></span>sfizz_should_reload_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool sfizz_should_reload_file </td>
+          <td>(</td>
+          <td class="paramtype">sfizz_synth_t *&#160;</td>
+          <td class="paramname"><em>synth</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check if the SFZ should be reloaded. </p>
+<p>Depending on the platform this can create file descriptors.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">synth</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if any included files (including the root file) have been modified since the sfz file was loaded. </dd>
+<dd>
+false </dd></dl>
 
 </div>
 </div>
