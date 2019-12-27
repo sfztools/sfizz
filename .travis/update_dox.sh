@@ -3,7 +3,7 @@
 set -x # No fail, we need to go back to the original branch at the end
 
 # Build documentation only from Linux x86_64 builds
-if [[ ${TRAVIS_CPU_ARCH} != "amd64" && ${TRAVIS_OS_NAME} != "linux" ]]; then
+if [[ ${TRAVIS_CPU_ARCH} != "amd64" || ${TRAVIS_OS_NAME} != "linux" ]]; then
   exit 0
 fi
 
