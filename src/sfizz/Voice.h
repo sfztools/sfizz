@@ -267,6 +267,7 @@ private:
     TriggerType triggerType;
     int triggerNumber;
     uint8_t triggerValue;
+    absl::optional<int> triggerDelay;
 
     float speedRatio { 1.0 };
     float pitchRatio { 1.0 };

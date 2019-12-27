@@ -101,6 +101,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     pitchBendEnvelope.reset(midiState.getPitchBend());
 
     sourcePosition = region->getOffset();
+    triggerDelay = delay;
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
     bendStepFactor = centsFactor(region->bendStep);
@@ -267,6 +268,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         reset();
 
     powerHistory.push(buffer.meanSquared());
+    this->triggerDelay = absl::nullopt;
 }
 
 void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
@@ -487,6 +489,9 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 {
     if (region == nullptr)
+        return false;
+
+    if (delay == this->triggerDelay)
         return false;
 
     if (triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
