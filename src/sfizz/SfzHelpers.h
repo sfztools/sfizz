@@ -65,6 +65,20 @@ constexpr float normalizeCC(T ccValue)
 }
 
 /**
+ * @brief Normalize a velocity between (T)0.0 and (T)1.0
+ *
+ * @tparam T
+ * @param ccValue
+ * @return constexpr float
+ */
+template<class T>
+constexpr float normalizeVelocity(T velocity)
+{
+    return normalizeCC(velocity);
+}
+
+
+/**
  * @brief Normalize a percentage between 0 and 1
  *
  * @tparam T
