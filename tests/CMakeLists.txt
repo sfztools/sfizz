@@ -9,6 +9,7 @@ set(SFIZZ_TEST_SOURCES
     HelpersT.cpp
     HelpersT.cpp
     AudioBufferT.cpp
+    EGDescriptionT.cpp
     RangeT.cpp
     OpcodeT.cpp
     BufferT.cpp
