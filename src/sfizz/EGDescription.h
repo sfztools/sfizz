@@ -79,7 +79,7 @@ struct EGDescription
      */
     float getAttack(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccAttack, attack) + normalizeVelocity(velocity)*vel2attack;
+        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccAttack, attack) + normalizeVelocity(velocity)*vel2attack);
     }
     /**
      * @brief Get the decay with possibly a CC modifier and a velocity modifier
@@ -90,7 +90,7 @@ struct EGDescription
      */
     float getDecay(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccDecay, decay) + normalizeVelocity(velocity)*vel2decay;
+        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccDecay, decay) + normalizeVelocity(velocity)*vel2decay);
     }
     /**
      * @brief Get the delay with possibly a CC modifier and a velocity modifier
@@ -101,7 +101,7 @@ struct EGDescription
      */
     float getDelay(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccDelay, delay) + normalizeVelocity(velocity)*vel2delay;
+        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccDelay, delay) + normalizeVelocity(velocity)*vel2delay);
     }
     /**
      * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
@@ -112,7 +112,7 @@ struct EGDescription
      */
     float getHold(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccHold, hold) + normalizeVelocity(velocity)*vel2hold;
+        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccHold, hold) + normalizeVelocity(velocity)*vel2hold);
     }
     /**
      * @brief Get the release duration with possibly a CC modifier and a velocity modifier
@@ -123,7 +123,7 @@ struct EGDescription
      */
     float getRelease(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccRelease, release) + normalizeVelocity(velocity)*vel2release;
+        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccRelease, release) + normalizeVelocity(velocity)*vel2release);
     }
     /**
      * @brief Get the starting level with possibly a CC modifier and a velocity modifier
@@ -134,7 +134,7 @@ struct EGDescription
      */
     float getStart(const SfzCCArray &ccValues, uint8_t velocity [[maybe_unused]]) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccStart, start);
+        return Default::egPercentRange.clamp(ccSwitchedValue(ccValues, ccStart, start));
     }
     /**
      * @brief Get the sustain level with possibly a CC modifier and a velocity modifier
@@ -145,7 +145,7 @@ struct EGDescription
      */
     float getSustain(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
-        return ccSwitchedValue(ccValues, ccSustain, sustain) + normalizeVelocity(velocity)*vel2sustain;
+        return Default::egPercentRange.clamp(ccSwitchedValue(ccValues, ccSustain, sustain) + normalizeVelocity(velocity)*vel2sustain);
     }
     LEAK_DETECTOR(EGDescription);
 };
