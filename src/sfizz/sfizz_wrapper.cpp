@@ -222,20 +222,19 @@ char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth)
     const auto unknownOpcodes = self->getUnknownOpcodes();
     int totalLength = 0;
     for (auto& opcode: unknownOpcodes)
-        totalLength += opcode.length();
+        totalLength += opcode.length() + 1;
 
     if (totalLength == 0)
         return nullptr;
 
-    auto opcodeList = (char *)std::malloc(totalLength + unknownOpcodes.size());
+    auto opcodeList = (char *)std::malloc(totalLength);
 
     auto listIterator = opcodeList;
-    for (auto& opcode: unknownOpcodes) {
+    for (auto& opcode : unknownOpcodes) {
         std::copy(opcode.begin(), opcode.end(), listIterator);
         listIterator += opcode.length();
-        *listIterator++ = ',';
+        *listIterator++ = (opcode == *unknownOpcodes.rbegin()) ? '\0' : ',';
     }
-    opcodeList[totalLength] = '\0';
     return opcodeList;
 }
 
