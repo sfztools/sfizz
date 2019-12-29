@@ -122,7 +122,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
 
     SF_INSTRUMENT instrumentInfo;
     sndFile.command(SFC_GET_INSTRUMENT, &instrumentInfo, sizeof(instrumentInfo));
-    if (instrumentInfo.loop_count == 1) {
+    if (instrumentInfo.loop_count > 0) {
         returnedValue.loopBegin = instrumentInfo.loops[0].start;
         returnedValue.loopEnd = instrumentInfo.loops[0].end;
     }
