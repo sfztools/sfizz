@@ -578,6 +578,11 @@
                 <Anchor>af3680dbd85a19d385473b2c84f4155cb</Anchor>
                </Node>
                <Node>
+                <Name>noteOffEvent</Name>
+                <Path>classsfz_1_1_midi_state.html</Path>
+                <Anchor>af8e3a3f7d094d2137b4a6d3c47a70448</Anchor>
+               </Node>
+               <Node>
                 <Name>noteOnEvent</Name>
                 <Path>classsfz_1_1_midi_state.html</Path>
                 <Anchor>a06971a2b813884edfe8ffb6c39e4d15c</Anchor>
