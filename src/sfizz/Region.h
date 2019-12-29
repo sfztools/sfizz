@@ -219,6 +219,8 @@ struct Region {
     uint32_t loopStart(Oversampling factor = Oversampling::x1) const noexcept;
     uint32_t loopEnd(Oversampling factor = Oversampling::x1) const noexcept;
 
+    bool hasKeyswitches() const noexcept { return keyswitchDown || keyswitchUp || keyswitch || previousNote; }
+
     // Sound source: sample playback
     std::string sample {}; // Sample
     float delay { Default::delay }; // delay

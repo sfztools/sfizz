@@ -273,7 +273,8 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         }
 
         for (auto note = 0; note < 128; note++) {
-            if (region->keyRange.containsWithEnd(note) || region->keyswitchRange.containsWithEnd(note))
+            if (region->keyRange.containsWithEnd(note) ||
+                (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
                 noteActivationLists[note].push_back(region);
         }
 
