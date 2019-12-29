@@ -90,9 +90,11 @@ namespace Default
 	constexpr Range<float> volumeCCRange { -144.0, 48.0 };
 	constexpr float amplitude { 100.0 };
 	constexpr Range<float> amplitudeRange { 0.0, 100.0 };
+	constexpr Range<float> normalizedRange { 0.0, 1.0 };
 	constexpr float pan { 0.0 };
 	constexpr Range<float> panRange { -100.0, 100.0 };
 	constexpr Range<float> panCCRange { -200.0, 200.0 };
+	constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
 	constexpr float position { 0.0 };
 	constexpr Range<float> positionRange { -100.0, 100.0 };
 	constexpr Range<float> positionCCRange { -200.0, 200.0 };

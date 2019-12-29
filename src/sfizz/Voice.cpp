@@ -73,25 +73,25 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     float gain { baseGain };
     if (region->amplitudeCC)
         gain *= normalizeCC(midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
-    amplitudeEnvelope.reset(gain);
+    amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
         pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
-    panEnvelope.reset(pan);
+    panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
     basePosition = normalizeNegativePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
         position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
-    positionEnvelope.reset(position);
+    positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
         width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
-    widthEnvelope.reset(width);
+    widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
         const auto normalizedBend = normalizeBend(pitchValue);
@@ -180,27 +180,27 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     // TODO: gain-type events at time 0 may trigger sharp discontinuities; maybe add a minimum delay?
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {
         const float newGain { baseGain * normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) };
-        amplitudeEnvelope.registerEvent(delay, newGain);
+        amplitudeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(newGain));
     }
 
     if (region->volumeCC && ccNumber == region->volumeCC->first) {
-        const float newVolumedB { Default::volumeRange.clamp(baseVolumedB + normalizeCC(ccValue) * region->volumeCC->second) };
-        volumeEnvelope.registerEvent(delay, db2mag(newVolumedB));
+        const float newVolumedB { baseVolumedB + normalizeCC(ccValue) * region->volumeCC->second };
+        volumeEnvelope.registerEvent(delay, db2mag(Default::volumeRange.clamp(newVolumedB)));
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
         const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->panCC->second) };
-        panEnvelope.registerEvent(delay, newPan);
+        panEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPan));
     }
 
     if (region->positionCC && ccNumber == region->positionCC->first) {
         const float newPosition { basePosition + normalizeCC(ccValue) * normalizeNegativePercents(region->positionCC->second) };
-        positionEnvelope.registerEvent(delay, newPosition);
+        positionEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPosition));
     }
 
     if (region->widthCC && ccNumber == region->widthCC->first) {
         const float newWidth { baseWidth + normalizeCC(ccValue) * normalizeNegativePercents(region->widthCC->second) };
-        widthEnvelope.registerEvent(delay, newWidth);
+        widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 }
 
