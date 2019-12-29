@@ -251,7 +251,13 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
                 continue;
             }
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
-            region->loopRange.shrinkIfSmaller(fileInformation->loopBegin, fileInformation->loopEnd);
+
+            if (region->loopRange.getStart() == Default::loopRange.getStart())
+                region->loopRange.setStart(fileInformation->loopBegin);
+
+            if (region->loopRange.getEnd() == Default::loopRange.getEnd())
+                region->loopRange.setEnd(fileInformation->loopEnd);
+            
             if (fileInformation->numChannels == 2)
                 region->isStereo = true;
 
