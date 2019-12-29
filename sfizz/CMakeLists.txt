@@ -57,7 +57,7 @@ set(SFIZZ_SOURCES ${SFIZZ_SOURCES} ${SFIZZ_SIMD_SOURCES})
 add_library(sfizz_parser STATIC)
 target_sources(sfizz_parser PRIVATE Parser.cpp Opcode.cpp)
 target_include_directories(sfizz_parser PUBLIC .)
-target_link_libraries(sfizz_parser PRIVATE absl::strings)
+target_link_libraries(sfizz_parser PUBLIC absl::strings)
 
 
 add_library(sfizz STATIC ${SFIZZ_SOURCES})
