@@ -112,3 +112,22 @@ TEST_CASE("[Range] shrinkIfSmaller")
     intRange.shrinkIfSmaller(6, 5);
     REQUIRE(intRange == sfz::Range<int>(5, 6));
 }
+
+TEST_CASE("[Range] expandTo")
+{
+    sfz::Range<int> intRange { 2, 10 };
+    intRange.expandTo(5);
+    REQUIRE(intRange == sfz::Range<int>(2, 10));
+    intRange.expandTo(10);
+    REQUIRE(intRange == sfz::Range<int>(2, 10));
+    intRange.expandTo(2);
+    REQUIRE(intRange == sfz::Range<int>(2, 10));
+    intRange.expandTo(1);
+    REQUIRE(intRange == sfz::Range<int>(1, 10));
+    intRange.expandTo(-10);
+    REQUIRE(intRange == sfz::Range<int>(-10, 10));
+    intRange.expandTo(12);
+    REQUIRE(intRange == sfz::Range<int>(-10, 12));
+    intRange.expandTo(6);
+    REQUIRE(intRange == sfz::Range<int>(-10, 12));
+}

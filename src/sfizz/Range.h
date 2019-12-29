@@ -125,6 +125,17 @@ public:
             _end = end;
     }
 
+    void expandTo(Type value)
+    {
+        if (containsWithEnd(value))
+            return;
+
+        if (value > _end)
+            _end = value;
+        else
+            _start = value;
+    }
+
 private:
     Type _start { static_cast<Type>(0.0) };
     Type _end { static_cast<Type>(0.0) };
