@@ -935,6 +935,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>normalizeVelocity</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a6fd3f3f2641b8065321f00b8e2e3cbec</Anchor>
+    <Abstract>Normalize a velocity between (T)0.0 and (T)1.0. </Abstract>
+    <DeclaredIn>SfzHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>normalizePercents</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
