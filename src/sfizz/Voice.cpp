@@ -60,11 +60,10 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     pitchRatio = region->getBasePitchVariation(number, value);
 
     baseVolumedB = region->getBaseVolumedB(number);
-
     auto volumedB { baseVolumedB };
     if (region->volumeCC)
         volumedB += normalizeCC(midiState.getCCValue(region->volumeCC->first)) * region->volumeCC->second;
-    volumeEnvelope.reset(db2mag(volumedB));
+    volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
 
     baseGain = region->getBaseGain();
     baseGain *= region->getCrossfadeGain(midiState.getCCArray());
@@ -177,14 +176,15 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
 
+    // TODO: gain-type events at time 0 may trigger sharp discontinuities; maybe add a minimum delay?
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {
         const float newGain { baseGain * normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) };
         amplitudeEnvelope.registerEvent(delay, newGain);
     }
 
     if (region->volumeCC && ccNumber == region->volumeCC->first) {
-        const float newVolumedB { baseVolumedB + normalizeCC(ccValue) * region->volumeCC->second };
-        amplitudeEnvelope.registerEvent(delay, db2mag(newVolumedB));
+        const float newVolumedB { Default::volumeRange.clamp(baseVolumedB + normalizeCC(ccValue) * region->volumeCC->second) };
+        volumeEnvelope.registerEvent(delay, db2mag(newVolumedB));
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
@@ -282,6 +282,10 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     amplitudeEnvelope.getBlock(span1);
     applyGain<float>(span1, leftBuffer);
 
+    // Volume envelope
+    volumeEnvelope.getBlock(span1);
+    applyGain<float>(span1, leftBuffer);
+
     // AmpEG envelope
     egEnvelope.getBlock(span1);
     applyGain<float>(span1, leftBuffer);
@@ -316,6 +320,10 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 
     // Amplitude envelope
     amplitudeEnvelope.getBlock(span1);
+    buffer.applyGain(span1);
+
+    // Volume envelope
+    volumeEnvelope.getBlock(span1);
     buffer.applyGain(span1);
 
     // AmpEG envelope

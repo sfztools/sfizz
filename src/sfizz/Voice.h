@@ -300,12 +300,12 @@ private:
     Resources& resources;
 
     ADSREnvelope<float> egEnvelope;
-    LinearEnvelope<float> volumeEnvelope; // dB events but the envelope output is linear gain
     LinearEnvelope<float> amplitudeEnvelope; // linear events
     LinearEnvelope<float> panEnvelope;
     LinearEnvelope<float> positionEnvelope;
     LinearEnvelope<float> widthEnvelope;
     MultiplicativeEnvelope<float> pitchBendEnvelope;
+    MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
 
     HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
