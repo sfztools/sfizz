@@ -491,10 +491,10 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
     if (region == nullptr)
         return false;
 
-    if (delay == this->triggerDelay)
+    if (delay <= this->triggerDelay)
         return false;
 
-    if (triggerType == TriggerType::NoteOn && region->offBy && *region->offBy == group) {
+    if (triggerType == TriggerType::NoteOn && region->offBy == group) {
         release(delay, region->offMode == SfzOffMode::fast);
         return true;
     }
