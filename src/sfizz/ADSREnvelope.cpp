@@ -58,7 +58,10 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 {
     if (shouldRelease && releaseDelay-- == 0) {
         currentState = State::Release;
-        step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue)) / (release > 0 ? release : 1));
+        if (currentValue > config::virtuallyZero)
+            step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue + config::virtuallyZero)) / (release > 0 ? release : 1));
+        else
+            step = 1;
     }
 
     switch (currentState) {
@@ -82,7 +85,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         if (hold-- > 0)
             return currentValue;
 
-        step = std::exp(std::log(sustain) / (decay > 0 ? decay : 1));
+        step = std::exp(std::log(sustain + config::virtuallyZero) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
         [[fallthrough]];
     case State::Decay:
@@ -150,7 +153,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         if (remainingSamples == 0)
             break;
 
-        step = std::exp(std::log(sustain) / (decay > 0 ? decay : 1));
+        step = std::exp(std::log(sustain + config::virtuallyZero) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
         [[fallthrough]];
     case State::Decay:
@@ -196,7 +199,10 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         originalSpan.remove_prefix(releaseDelay);
         if (originalSpan.size() > 0)
             currentValue = originalSpan.front();
-        step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue)) / (release > 0 ? release : 1));
+        if (currentValue > config::virtuallyZero)
+            step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue)) / (release > 0 ? release : 1));
+        else
+            step = 1;
         remainingSamples -= releaseDelay;
         length = min(remainingSamples, release);
         currentState = State::Release;
