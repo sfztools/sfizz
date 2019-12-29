@@ -87,7 +87,7 @@ namespace Default
     // Performance parameters: amplifier
 	constexpr float volume { -3.0 };
 	constexpr Range<float> volumeRange { -144.0, 6.0 };
-	constexpr Range<float> volumeCCRange { -144.0, 6.0 };
+	constexpr Range<float> volumeCCRange { -144.0, 48.0 };
 	constexpr float amplitude { 100.0 };
 	constexpr Range<float> amplitudeRange { 0.0, 100.0 };
 	constexpr float pan { 0.0 };

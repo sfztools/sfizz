@@ -260,10 +260,11 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("volume"):
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
-    // case hash("volume_oncc"):
-    //     if (opcode.parameter)
-    //         setValueFromOpcode(opcode, volumeCCTriggers[*opcode.parameter], Default::volumeCCRange);
-    //     break;
+    case hash("gain_cc"):
+    case hash("gain_oncc"):
+    case hash("volume_oncc"):
+        setCCPairFromOpcode(opcode, volumeCC, Default::volumeCCRange);
+        break;
     case hash("amplitude"):
         setValueFromOpcode(opcode, amplitude, Default::amplitudeRange);
         break;
