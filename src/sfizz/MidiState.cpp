@@ -25,8 +25,8 @@ void sfz::MidiState::noteOffEvent(int noteNumber, uint8_t velocity [[maybe_unuse
     ASSERT(velocity >= 0 && velocity <= 127);
 
     if (noteNumber >= 0 && noteNumber < 128) {
-        activeNotes--;
-        ASSERT(activeNotes >= 0);
+        if (activeNotes > 0)
+            activeNotes--;
     }
 
 }
