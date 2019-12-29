@@ -409,22 +409,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     if (!canEnterCallback)
         return;
 
-    auto randValue = randNoteDistribution(Random::randomGenerator);
-
-    for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            for (auto& voice : voices) {
-                if (voice->checkOffGroup(delay, region->group))
-                    noteOff(delay, voice->getTriggerNumber(), 0);
-            }
-
-            auto voice = findFreeVoice();
-            if (voice == nullptr)
-                continue;
-
-            voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
-        }
-    }
+    noteOnDispatch(delay, noteNumber, velocity);
 }
 
 void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
@@ -439,19 +424,43 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
-    auto randValue = randNoteDistribution(Random::randomGenerator);
+    const auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : voices)
         voice->registerNoteOff(delay, noteNumber, replacedVelocity);
 
+    noteOffDispatch(delay, noteNumber, replacedVelocity);
+}
+
+void sfz::Synth::noteOffDispatch(int delay, int noteNumber, uint8_t velocity) noexcept
+{
+    const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOff(noteNumber, replacedVelocity, randValue)) {
+        if (region->registerNoteOff(noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, noteNumber, replacedVelocity, Voice::TriggerType::NoteOff);
+            voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOff);
+        }
+    }
+}
+
+void sfz::Synth::noteOnDispatch(int delay, int noteNumber, uint8_t velocity) noexcept
+{
+    const auto randValue = randNoteDistribution(Random::randomGenerator);
+    for (auto& region : noteActivationLists[noteNumber]) {
+        if (region->registerNoteOn(noteNumber, velocity, randValue)) {
+            for (auto& voice : voices) {
+                if (voice->checkOffGroup(delay, region->group))
+                    noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
+            }
+
+            auto voice = findFreeVoice();
+            if (voice == nullptr)
+                continue;
+
+            voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
         }
     }
 }
