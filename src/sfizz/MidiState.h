@@ -24,6 +24,16 @@ public:
 	void noteOnEvent(int noteNumber, uint8_t velocity) noexcept;
 
     /**
+     * @brief Update the state after a note off event
+     *
+     * @param noteNumber
+     * @param velocity
+     */
+	void noteOffEvent(int noteNumber, uint8_t velocity) noexcept;
+
+    int getActiveNotes() const noexcept { return activeNotes; }
+
+    /**
      * @brief Register a note off and get the note duration
      *
      * @param noteNumber
@@ -91,6 +101,7 @@ private:
     template<class T>
     using MidiNoteArray = std::array<T, 128>;
     using NoteOnTime = std::chrono::steady_clock::time_point;
+	int activeNotes { 0 };
     /**
      * @brief Stores the note on times.
      *

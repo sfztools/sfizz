@@ -523,9 +523,6 @@ bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randVal
 
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
     if (keyOk) {
-        // Update the number of notes playing for the region
-        activeNotesInRange++;
-
         // Sequence activation
         sequenceCounter += 1;
         if ((sequenceCounter % sequenceLength) == sequencePosition - 1)
@@ -552,9 +549,9 @@ bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randVal
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
-    const bool firstLegatoNote = (trigger == SfzTrigger::first && activeNotesInRange == 0);
+    const bool firstLegatoNote = (trigger == SfzTrigger::first && midiState.getActiveNotes() == 1);
     const bool attackTrigger = (trigger == SfzTrigger::attack);
-    const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && activeNotesInRange > 0);
+    const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && midiState.getActiveNotes() > 1);
 
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
@@ -570,10 +567,6 @@ bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity [[maybe_unuse
     }
 
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
-
-    // Update the number of notes playing for the region
-    if (keyOk)
-        activeNotesInRange--;
 
     if (!isSwitchedOn())
         return false;

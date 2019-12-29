@@ -319,7 +319,6 @@ private:
     bool triggerOnCC { false };
     absl::string_view defaultPath { "" };
 
-    int activeNotesInRange { -1 };
     int sequenceCounter { 0 };
 
     std::uniform_real_distribution<float> volumeDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };

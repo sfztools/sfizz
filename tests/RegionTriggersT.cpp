@@ -152,10 +152,15 @@ TEST_CASE("Legato triggers", "Region triggers")
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "50" });
         region.parseOpcode({ "trigger", "first" });
+        midiState.noteOnEvent(40, 64);
         REQUIRE(region.registerNoteOn(40, 64, 0.5f));
+        midiState.noteOnEvent(41, 64);
         REQUIRE(!region.registerNoteOn(41, 64, 0.5f));
+        midiState.noteOffEvent(40, 0);
         region.registerNoteOff(40, 0, 0.5f);
+        midiState.noteOffEvent(41, 0);
         region.registerNoteOff(41, 0, 0.5f);
+        midiState.noteOnEvent(42, 64);
         REQUIRE(region.registerNoteOn(42, 64, 0.5f));
     }
 
@@ -164,10 +169,15 @@ TEST_CASE("Legato triggers", "Region triggers")
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "50" });
         region.parseOpcode({ "trigger", "legato" });
+        midiState.noteOnEvent(40, 64);
         REQUIRE(!region.registerNoteOn(40, 64, 0.5f));
+        midiState.noteOnEvent(41, 64);
         REQUIRE(region.registerNoteOn(41, 64, 0.5f));
+        midiState.noteOffEvent(40, 64);
         region.registerNoteOff(40, 0, 0.5f);
+        midiState.noteOffEvent(41, 64);
         region.registerNoteOff(41, 0, 0.5f);
+        midiState.noteOnEvent(42, 64);
         REQUIRE(!region.registerNoteOn(42, 64, 0.5f));
     }
 }

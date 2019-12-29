@@ -14,7 +14,21 @@ void sfz::MidiState::noteOnEvent(int noteNumber, uint8_t velocity) noexcept
     if (noteNumber >= 0 && noteNumber < 128) {
         lastNoteVelocities[noteNumber] = velocity;
         noteOnTimes[noteNumber] = std::chrono::steady_clock::now();
+        activeNotes++;
     }
+
+}
+
+void sfz::MidiState::noteOffEvent(int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+{
+    ASSERT(noteNumber >= 0 && noteNumber <= 127);
+    ASSERT(velocity >= 0 && velocity <= 127);
+
+    if (noteNumber >= 0 && noteNumber < 128) {
+        activeNotes--;
+        ASSERT(activeNotes >= 0);
+    }
+
 }
 
 float sfz::MidiState::getNoteDuration(int noteNumber) const
@@ -78,6 +92,7 @@ void sfz::MidiState::reset() noexcept
         ccValue = 0;
 
     pitchBend = 0;
+    activeNotes = 0;
 }
 
 void sfz::MidiState::resetAllControllers() noexcept

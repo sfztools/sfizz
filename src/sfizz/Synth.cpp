@@ -417,6 +417,8 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    midiState.noteOffEvent(noteNumber, velocity);
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
