@@ -99,7 +99,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("loop_mode")
     {
-        REQUIRE(region.loopMode == SfzLoopMode::no_loop);
+        REQUIRE( !region.loopMode );
         region.parseOpcode({ "loop_mode", "no_loop" });
         REQUIRE(region.loopMode == SfzLoopMode::no_loop);
         region.parseOpcode({ "loop_mode", "one_shot" });
@@ -112,7 +112,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("loopmode")
     {
-        REQUIRE(region.loopMode == SfzLoopMode::no_loop);
+        REQUIRE( !region.loopMode );
         region.parseOpcode({ "loopmode", "no_loop" });
         REQUIRE(region.loopMode == SfzLoopMode::no_loop);
         region.parseOpcode({ "loopmode", "one_shot" });

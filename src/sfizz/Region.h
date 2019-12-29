@@ -227,7 +227,7 @@ struct Region {
     uint32_t offsetRandom { Default::offsetRandom }; // offset_random
     uint32_t sampleEnd { Default::sampleEndRange.getEnd() }; // end
     absl::optional<uint32_t> sampleCount {}; // count
-    SfzLoopMode loopMode { Default::loopMode }; // loopmode
+    absl::optional<SfzLoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopRange }; //loopstart and loopend
 
     // Instrument settings: voice lifecycle
