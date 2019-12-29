@@ -404,6 +404,53 @@ TEST_CASE("[Files] Note and octave offsets")
     REQUIRE( synth.getRegionView(6)->pitchKeycenter == 50 );
 }
 
+TEST_CASE("[Files] Off by with different delays")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    synth.noteOn(0, 63, 63);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    auto group1Voice = synth.getVoiceView(0);
+    REQUIRE( group1Voice->getRegion()->group == 1ul );
+    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
+    synth.noteOn(100, 64, 63);
+    REQUIRE( group1Voice->canBeStolen() );
+}
+
+TEST_CASE("[Files] Off by with the same delays")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    synth.noteOn(0, 63, 63);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    auto group1Voice = synth.getVoiceView(0);
+    REQUIRE( group1Voice->getRegion()->group == 1ul );
+    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
+    synth.noteOn(0, 64, 63);
+    REQUIRE( !group1Voice->canBeStolen() );
+}
+
+TEST_CASE("[Files] Off by with the same notes at the same time")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    synth.noteOn(0, 65, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.noteOn(0, 65, 63);
+    REQUIRE( synth.getNumActiveVoices() == 4 );
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.renderBlock(buffer);
+    synth.noteOn(0, 65, 63);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+}
+
 TEST_CASE("[Files] Off modes")
 {
     sfz::Synth synth;
@@ -427,7 +474,6 @@ TEST_CASE("[Files] Off modes")
     REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( fastVoice->isFree() );
     REQUIRE( !normalVoice->isFree() );
-
 }
 
 TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
