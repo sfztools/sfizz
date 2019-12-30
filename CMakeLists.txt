@@ -13,8 +13,8 @@ set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
 
 # On macOS add the needed directories for both library and jack client
 if (APPLE)
-	include_directories (SYSTEM /usr/local/opt/libsndfile/include)
-	link_directories (/usr/local/opt/libsndfile/lib)
+    include_directories (SYSTEM /usr/local/opt/libsndfile/include)
+    link_directories (/usr/local/opt/libsndfile/lib)
 endif()
 
 option (ENABLE_LTO       "Enable Link Time Optimization [default: ON]" ON)

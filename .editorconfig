@@ -13,6 +13,6 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{ttl,ttl.in,sh,yml}]
+[*.{ttl,in,sh,yml}]
 indent_size = 2
 indent_style = space
