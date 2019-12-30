@@ -18,26 +18,31 @@
 <#config>
   a pg:Group ;
   lv2:symbol "config" ;
-  lv2:name   "Configuration" .
+  lv2:name "Configuration",
+    "Impostazioni"@it .
 
 <@LV2PLUGIN_URI@:sfzfile>
   a lv2:Parameter ;
-  rdfs:label "SFZ file" ;
+  rdfs:label "SFZ file",
+    "File SFZ"@it ;
   rdfs:range atom:Path .
 
 <@LV2PLUGIN_URI@:numvoices>
   a lv2:Parameter ;
-  rdfs:label "Polyphony" ;
+  rdfs:label "Polyphony",
+    "Polifonia"@it ;
   rdfs:range atom:Int .
 
 <@LV2PLUGIN_URI@:preload_size>
   a lv2:Parameter ;
-  rdfs:label "Preload size" ;
+  rdfs:label "Preload size",
+  "Grandezza precaricamento"@it ;
   rdfs:range atom:Int .
 
 <@LV2PLUGIN_URI@:oversampling>
   a lv2:Parameter ;
-  rdfs:label "Oversampling" ;
+  rdfs:label "Oversampling",
+    "Sovracampionamento"@it ;
   rdfs:range atom:Int .
 
 <@LV2PLUGIN_URI@>
@@ -49,7 +54,8 @@
     foaf:name     "@LV2PLUGIN_AUTHOR@" ;
     foaf:homepage <@LV2PLUGIN_URI@> ;
   ] ;
-  rdfs:comment "@LV2PLUGIN_COMMENT@" ;
+  rdfs:comment "@LV2PLUGIN_COMMENT@",
+    "Campionatore SFZ"@it ;
 
   lv2:minorVersion @LV2PLUGIN_VERSION_MINOR@ ;
   lv2:microVersion @LV2PLUGIN_VERSION_MICRO@ ;
@@ -77,15 +83,17 @@
     lv2:symbol "notify" ;
     lv2:name "Notify" ;
   ] , [
-    a lv2:AudioPort , lv2:OutputPort ;
+    a lv2:AudioPort, lv2:OutputPort ;
     lv2:index 2 ;
     lv2:symbol "out_left" ;
-    lv2:name "Left Output"
+    lv2:name "Left Output",
+      "Uscita Sinistra"@it
   ] , [
-    a lv2:AudioPort , lv2:OutputPort ;
+    a lv2:AudioPort, lv2:OutputPort ;
     lv2:index 3 ;
     lv2:symbol "out_right" ;
-    lv2:name "Right Output"
+    lv2:name "Right Output",
+      "Uscita Destra"@it
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
     lv2:index 4 ;
@@ -100,7 +108,8 @@
     a lv2:InputPort, lv2:ControlPort ;
     lv2:index 5 ;
     lv2:symbol "num_voices" ;
-    lv2:name "Polyphony" ;
+    lv2:name "Polyphony",
+      "Polifonia"@it ;
     pg:group <#config> ;
     lv2:portProperty pprop:notAutomatic ;
     lv2:portProperty pprop:expensive ;
@@ -109,17 +118,36 @@
     lv2:default 64 ;
     lv2:minimum 8 ;
     lv2:maximum 256 ;
-    lv2:scalePoint [ rdfs:label "8 voices"; rdf:value 8 ] ;
-    lv2:scalePoint [ rdfs:label "16 voices"; rdf:value 16 ] ;
-    lv2:scalePoint [ rdfs:label "32 voices"; rdf:value 32 ] ;
-    lv2:scalePoint [ rdfs:label "64 voices"; rdf:value 64 ] ;
-    lv2:scalePoint [ rdfs:label "128 voices"; rdf:value 128 ] ;
-    lv2:scalePoint [ rdfs:label "256 voices"; rdf:value 256 ] ;
+    lv2:scalePoint [ rdfs:label "8 voices",
+      "8 Voci"@it;
+      rdf:value 8
+    ] ;
+    lv2:scalePoint [ rdfs:label "16 voices",
+      "16 Voci"@it;
+      rdf:value 16
+    ] ;
+    lv2:scalePoint [ rdfs:label "32 voices",
+      "32 Voci"@it;
+      rdf:value 32
+    ] ;
+    lv2:scalePoint [ rdfs:label "64 voices",
+      "64 Voci"@it;
+      rdf:value 64
+    ] ;
+    lv2:scalePoint [ rdfs:label "128 voices",
+      "128 Voci"@it;
+      rdf:value 128
+    ] ;
+    lv2:scalePoint [ rdfs:label "256 voices",
+      "256 Voci"@it;
+      rdf:value 256
+    ] ;
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
     lv2:index 6 ;
     lv2:symbol "oversampling" ;
-    lv2:name "Internal oversampling factor" ;
+    lv2:name "Internal oversampling factor",
+      "Fattore Sovracampionamento Interno"@it ;
     pg:group <#config> ;
     lv2:portProperty pprop:notAutomatic ;
     lv2:portProperty pprop:expensive ;
@@ -128,15 +156,28 @@
     lv2:default 1 ;
     lv2:minimum 1 ;
     lv2:maximum 8 ;
-    lv2:scalePoint [ rdfs:label "x1 oversampling"; rdf:value 1 ] ;
-    lv2:scalePoint [ rdfs:label "x2 oversampling"; rdf:value 2 ] ;
-    lv2:scalePoint [ rdfs:label "x4 oversampling"; rdf:value 4 ] ;
-    lv2:scalePoint [ rdfs:label "x8 oversampling"; rdf:value 8 ] ;
-  ], [
+    lv2:scalePoint [ rdfs:label "x1 oversampling",
+      "x1 Sovracampionamento"@it;
+      rdf:value 1
+    ] ;
+    lv2:scalePoint [ rdfs:label "x2 oversampling",
+      "x2 Sovracampionamento"@it;
+      rdf:value 2
+    ] ;
+    lv2:scalePoint [ rdfs:label "x4 oversampling",
+      "x4 Sovracampionamento"@it;
+      rdf:value 4
+    ] ;
+    lv2:scalePoint [ rdfs:label "x8 oversampling",
+      "x8 Sovracampionamento"@it;
+      rdf:value 8
+    ] ;
+  ] , [
     a lv2:InputPort, lv2:ControlPort ;
     lv2:index 7 ;
     lv2:symbol "preload_size" ;
-    lv2:name "Preload size" ;
+    lv2:name "Preload size",
+      "Grandezza Precaricamento"@it ;
     pg:group <#config> ;
     lv2:portProperty pprop:notAutomatic ;
     lv2:portProperty pprop:expensive ;
@@ -145,21 +186,43 @@
     lv2:default 8192 ;
     lv2:minimum 1024 ;
     lv2:maximum 65536 ;
-    lv2:scalePoint [ rdfs:label "4 Ko"; rdf:value 1024 ] ;
-    lv2:scalePoint [ rdfs:label "8 Ko"; rdf:value 2048 ] ;
-    lv2:scalePoint [ rdfs:label "16 Ko"; rdf:value 4096 ] ;
-    lv2:scalePoint [ rdfs:label "32 Ko"; rdf:value 8192 ] ;
-    lv2:scalePoint [ rdfs:label "64 Ko"; rdf:value 16384 ] ;
-    lv2:scalePoint [ rdfs:label "128 Ko"; rdf:value 32768 ] ;
-    lv2:scalePoint [ rdfs:label "256 Ko"; rdf:value 65536 ] ;
-  ], [
+    lv2:scalePoint [ rdfs:label "4 KB",
+      "4 Ko"@fr;
+      rdf:value 1024
+    ] ;
+    lv2:scalePoint [ rdfs:label "8 KB",
+      "8 Ko"@fr;
+      rdf:value 2048
+    ] ;
+    lv2:scalePoint [ rdfs:label "16 KB",
+      "16 Ko"@fr;
+      rdf:value 4096
+    ] ;
+    lv2:scalePoint [ rdfs:label "32 KB",
+      "32 Ko"@fr;
+      rdf:value 8192
+    ] ;
+    lv2:scalePoint [ rdfs:label "64 KB",
+      "64 Ko"@fr;
+      rdf:value 16384
+    ] ;
+    lv2:scalePoint [ rdfs:label "128 KB",
+      "128 Ko"@fr;
+      rdf:value 32768
+    ] ;
+    lv2:scalePoint [ rdfs:label "256 KB",
+      "256 Ko"@fr;
+      rdf:value 65536
+    ] ;
+  ] , [
     a lv2:InputPort, lv2:ControlPort ;
     lv2:index 8 ;
     lv2:symbol "freewheeling" ;
-    lv2:name "Freewheeling" ;
+    lv2:name "Freewheeling",
+      "A Ruota Libera"@it ;
     lv2:designation lv2:freeWheeling ;
     lv2:portProperty lv2:toggled ;
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 1 ;
-  ].
+  ] .
