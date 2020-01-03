@@ -29,7 +29,6 @@
 #include "Oversampler.h"
 #include "AtomicGuard.h"
 #include "absl/types/span.h"
-#include <chrono>
 #include <memory>
 #include <sndfile.hh>
 #include <thread>
@@ -181,6 +180,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
     promise->preloadedData = preloaded->second.preloadedData;
     promise->sampleRate = preloaded->second.sampleRate;
     promise->oversamplingFactor = oversamplingFactor;
+    promise->creationTime = std::chrono::high_resolution_clock::now();
 
     if (!promiseQueue.try_push(promise)) {
         DBG("[sfizz] Could not enqueue the promise for " << filename << " (queue size " << promiseQueue.size() << ")");
@@ -229,7 +229,7 @@ void sfz::FilePool::loadingThread() noexcept
 {
     FilePromisePtr promise;
     while (!quitThread) {
-        
+
         if (emptyQueue) {
             while(promiseQueue.try_pop(promise)) {
                 // We're just dequeuing
@@ -244,6 +244,9 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         threadsLoading++;
+        const auto waitDuration = std::chrono::high_resolution_clock::now() - promise->creationTime;
+        [[maybe_unused]] const auto waitDurationMillis = std::chrono::duration<double,std::milli>(waitDuration).count();
+
         fs::path file { rootDirectory / std::string(promise->filename) };
         SndfileHandle sndFile(file.c_str());
         if (sndFile.error() != 0) {
@@ -254,6 +257,10 @@ void sfz::FilePool::loadingThread() noexcept
         streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
         promise->dataReady = true;
         threadsLoading--;
+
+        const auto duration = std::chrono::high_resolution_clock::now() - promise->creationTime;
+        [[maybe_unused]] const auto durationMillis = std::chrono::duration<double,std::milli>(duration).count();
+        DBG("Promise filled in " << durationMillis << " ms (waiting for " << waitDurationMillis << " ms)");
 
         while (!filledPromiseQueue.try_push(promise)) {
             DBG("[sfizz] Error enqueuing the promise for " << promise->filename << " in the filledPromiseQueue");

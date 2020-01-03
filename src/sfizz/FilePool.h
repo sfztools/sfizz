@@ -34,6 +34,7 @@
 #include "absl/strings/string_view.h"
 // #include "moodycamel/concurrentqueue.h"
 #include "atomic_queue/atomic_queue.h"
+#include <chrono>
 #include <thread>
 #include <sndfile.hh>
 
@@ -77,6 +78,7 @@ struct FilePromise
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic_size_t availableFrames { 0 };
     std::atomic<bool> dataReady { false };
+    std::chrono::time_point<std::chrono::high_resolution_clock> creationTime;
 
     LEAK_DETECTOR(FilePromise);
 };
