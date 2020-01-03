@@ -14,7 +14,7 @@ static inline void spin_loop_pause() noexcept {
     _mm_pause();
 }
 } // namespace atomic_queue
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
 // TODO: These need to be verified as I do not have access to ARM platform.
 namespace atomic_queue {
 constexpr int CACHE_LINE_SIZE = 64;
