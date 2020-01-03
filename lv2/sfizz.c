@@ -135,7 +135,8 @@ typedef struct
     int num_voices;
     unsigned int preload_size;
     sfizz_oversampling_factor_t oversampling;
-    bool changing_state;
+    // TODO: use atomic flags
+    volatile bool changing_state;
     int max_block_size;
     int sample_counter;
     float sample_rate;
@@ -950,7 +951,7 @@ work(LV2_Handle instance,
     }
     else if (atom->type == self->sfizz_check_modification_uri)
     {
-        if (sfizz_should_reload_file(self->synth))
+        if (!self->changing_state && sfizz_should_reload_file(self->synth))
         {
             lv2_log_note(&self->logger, "[sfizz] File %s seems to have been updated, reloading.\n", self->sfz_file_path);
             if (sfizz_load_file(self->synth, self->sfz_file_path))
