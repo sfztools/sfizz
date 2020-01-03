@@ -32,7 +32,8 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
 #include "absl/strings/string_view.h"
-#include "moodycamel/blockingconcurrentqueue.h"
+// #include "moodycamel/concurrentqueue.h"
+#include "atomic_queue/atomic_queue.h"
 #include <thread>
 #include <sndfile.hh>
 
@@ -215,8 +216,10 @@ private:
     void clearingThread();
     void tryToClearPromises();
 
-    moodycamel::BlockingConcurrentQueue<FilePromisePtr> promiseQueue { config::maxVoices };
-    moodycamel::BlockingConcurrentQueue<FilePromisePtr> filledPromiseQueue { config::maxVoices };
+    // moodycamel::ConcurrentQueue<FilePromisePtr> promiseQueue { config::maxVoices };
+    // moodycamel::ConcurrentQueue<FilePromisePtr> filledPromiseQueue { config::maxVoices };
+    atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
+    atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals

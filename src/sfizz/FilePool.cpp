@@ -86,15 +86,15 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
 }
 
 sfz::FilePool::FilePool()
-    {
-        for (int i = 0; i < config::numBackgroundThreads; ++i)
-            threadPool.emplace_back( &FilePool::loadingThread, this );
+{
+    for (int i = 0; i < config::numBackgroundThreads; ++i)
+        threadPool.emplace_back( &FilePool::loadingThread, this );
 
-        threadPool.emplace_back( &FilePool::clearingThread, this );
+    threadPool.emplace_back( &FilePool::clearingThread, this );
 
-        for (int i = 0; i < config::maxFilePromises; ++i)
-            emptyPromises.push_back(std::make_shared<FilePromise>());
-    }
+    for (int i = 0; i < config::maxFilePromises; ++i)
+        emptyPromises.push_back(std::make_shared<FilePromise>());
+}
 
 sfz::FilePool::~FilePool()
 {
@@ -165,21 +165,29 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
 
 sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) noexcept
 {
-    if (emptyPromises.empty())
+    if (emptyPromises.empty()) {
+        DBG("[sfizz] No empty promises left to honor the one for " << filename);
         return {};
+    }
 
     const auto preloaded = preloadedFiles.find(filename);
-    if (preloaded == preloadedFiles.end())
+    if (preloaded == preloadedFiles.end()) {
+        DBG("[sfizz] File not found in the preloaded files: " << filename);
         return {};
+    }
 
     auto promise = emptyPromises.back();
     promise->filename = preloaded->first;
     promise->preloadedData = preloaded->second.preloadedData;
     promise->sampleRate = preloaded->second.sampleRate;
     promise->oversamplingFactor = oversamplingFactor;
-    promiseQueue.try_enqueue(promise);
-    emptyPromises.pop_back();
 
+    if (!promiseQueue.try_push(promise)) {
+        DBG("[sfizz] Could not enqueue the promise for " << filename << " (queue size " << promiseQueue.size() << ")");
+        return {};
+    }
+
+    emptyPromises.pop_back();
     return promise;
 }
 
@@ -221,37 +229,34 @@ void sfz::FilePool::loadingThread() noexcept
 {
     FilePromisePtr promise;
     while (!quitThread) {
+        
         if (emptyQueue) {
-            while(promiseQueue.try_dequeue(promise)) {
+            while(promiseQueue.try_pop(promise)) {
                 // We're just dequeuing
             }
             emptyQueue = false;
             continue;
         }
 
-        if (!promiseQueue.wait_dequeue_timed(promise, 50ms)) {
+        if (!promiseQueue.try_pop(promise)) {
+            std::this_thread::sleep_for(1ms);
             continue;
         }
 
-        // The voice abandoned the promise already we just don't care
-        if (promise.use_count() != 1) {
-            threadsLoading++;
-
-            fs::path file { rootDirectory / std::string(promise->filename) };
-            SndfileHandle sndFile(file.c_str());
-            if (sndFile.error() != 0)
-                continue;
-
-            DBG("Loading file for " << promise->filename << " in the background");
-            const uint32_t frames = sndFile.frames();
-            streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
-            promise->dataReady = true;
-
-            threadsLoading--;
+        threadsLoading++;
+        fs::path file { rootDirectory / std::string(promise->filename) };
+        SndfileHandle sndFile(file.c_str());
+        if (sndFile.error() != 0) {
+            DBG("[sfizz] libsndfile errored for " << promise->filename << " with message " << sndFile.strError());
+            continue;
         }
+        const uint32_t frames = sndFile.frames();
+        streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
+        promise->dataReady = true;
+        threadsLoading--;
 
-        while (!filledPromiseQueue.try_enqueue(promise)) {
-            DBG("Error enqueuing the file for " << promise->filename << " in the filledPromiseQueue");
+        while (!filledPromiseQueue.try_push(promise)) {
+            DBG("[sfizz] Error enqueuing the promise for " << promise->filename << " in the filledPromiseQueue");
             std::this_thread::sleep_for(1ms);
         }
 
@@ -292,7 +297,7 @@ void sfz::FilePool::cleanupPromises() noexcept
     FilePromisePtr promise;
     // Remove the promises from the filled queue and put them in a linear
     // storage
-    while (filledPromiseQueue.try_dequeue(promise))
+    while (filledPromiseQueue.try_pop(promise))
         temporaryFilePromises.push_back(promise);
 
     auto filledIterator = temporaryFilePromises.begin();
@@ -346,7 +351,7 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
     // TODO: validate that this is enough, otherwise we will need an atomic count
     // of the files we need to load still.
     // Spinlocking on the size of the background queue
-    while (promiseQueue.size_approx() > 0)
+    while (promiseQueue.size() > 0)
         std::this_thread::sleep_for(0.1ms);
     // Spinlocking on the threads possibly logging in the background
     while (threadsLoading > 0)
