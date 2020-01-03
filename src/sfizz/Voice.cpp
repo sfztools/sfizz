@@ -398,26 +398,31 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
     add<int>(sourcePosition, indices);
 
-    //FIXME : all this casting is driving me crazy
-    const auto sampleEnd = min(
-        static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
-        static_cast<int>(source.getNumFrames())
-    ) - 2;
+    absl::optional<int> releaseAt {};
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
-        const auto offset = sampleEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
+        const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor)) - 1;
+        const auto offset = loopEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
-            if (*index > sampleEnd) {
+            if (*index >= loopEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
                 subtract<int>(offset, { index, remainingElements });
             }
         }
     } else {
+        const auto sampleEnd = min(
+            static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
+            static_cast<int>(source.getNumFrames())
+        ) - 2;
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
-            if (*index > sampleEnd) {
+            if (*index >= sampleEnd) {
+                releaseAt = static_cast<int>(std::distance(indices.begin(), index));
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
-                if (*index >= static_cast<int>(source.getNumFrames()) && source.getNumFrames() != region->trueSampleEnd(currentPromise->oversamplingFactor)) {
-                    DBG("[sfizz] Underflow: source available samples " << source.getNumFrames() << "/" << region->trueSampleEnd(currentPromise->oversamplingFactor) << " for sample " << region->sample);
+                if (source.getNumFrames() != region->trueSampleEnd(currentPromise->oversamplingFactor)) {
+                    DBG("[sfizz] Underflow: source available samples "
+                        << source.getNumFrames() << "/"
+                        << region->trueSampleEnd(currentPromise->oversamplingFactor)
+                        << " for sample " << region->sample);
                 }
                 fill<int>(indices.last(remainingElements), sampleEnd);
                 fill<float>(leftCoeffs.last(remainingElements), 0.0f);
@@ -450,10 +455,10 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     sourcePosition = indices.back();
     floatPositionOffset = rightCoeffs.back();
 
-    if (state != State::release && !region->shouldLoop() && sourcePosition == sampleEnd) {
-        auto last = std::distance(indices.begin(), absl::c_find(indices, sampleEnd));
-        release(last);
-        buffer.subspan(last).fill(0.0f);
+    if (state != State::release && releaseAt) {
+        release(*releaseAt);
+        // TODO: not needed probably
+        buffer.subspan(*releaseAt).fill(0.0f);
     }
 }
 
