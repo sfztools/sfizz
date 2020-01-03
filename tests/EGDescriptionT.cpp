@@ -29,10 +29,10 @@ using namespace Catch::literals;
 TEST_CASE("[EGDescription] Attack range")
 {
     sfz::EGDescription eg;
+    sfz::SfzCCArray ccArray { 0 };
     eg.attack = 1;
     eg.vel2attack = -1.27;
     eg.ccAttack = { 63, 1.27f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getAttack(ccArray, 0) == 1.0f );
     REQUIRE( eg.getAttack(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
@@ -45,10 +45,10 @@ TEST_CASE("[EGDescription] Attack range")
 TEST_CASE("[EGDescription] Delay range")
 {
     sfz::EGDescription eg;
+    sfz::SfzCCArray ccArray { 0 };
     eg.delay = 1;
     eg.vel2delay = -1.27;
     eg.ccDelay = { 63, 1.27f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getDelay(ccArray, 0) == 1.0f );
     REQUIRE( eg.getDelay(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
@@ -61,10 +61,10 @@ TEST_CASE("[EGDescription] Delay range")
 TEST_CASE("[EGDescription] Decay range")
 {
     sfz::EGDescription eg;
-    eg.decay = 1;
-    eg.vel2decay = -1.27;
+    sfz::SfzCCArray ccArray { 0 };
+    eg.decay = 1.0f;
+    eg.vel2decay = -1.27f;
     eg.ccDecay = { 63, 1.27f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getDecay(ccArray, 0) == 1.0f );
     REQUIRE( eg.getDecay(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
@@ -77,10 +77,10 @@ TEST_CASE("[EGDescription] Decay range")
 TEST_CASE("[EGDescription] Release range")
 {
     sfz::EGDescription eg;
+    sfz::SfzCCArray ccArray { 0 };
     eg.release = 1;
     eg.vel2release = -1.27;
     eg.ccRelease = { 63, 1.27f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getRelease(ccArray, 0) == 1.0f );
     REQUIRE( eg.getRelease(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
@@ -93,10 +93,10 @@ TEST_CASE("[EGDescription] Release range")
 TEST_CASE("[EGDescription] Hold range")
 {
     sfz::EGDescription eg;
+    sfz::SfzCCArray ccArray { 0 };
     eg.hold = 1;
     eg.vel2hold = -1.27;
     eg.ccHold = { 63, 1.27f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getHold(ccArray, 0) == 1.0f );
     REQUIRE( eg.getHold(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
@@ -109,10 +109,10 @@ TEST_CASE("[EGDescription] Hold range")
 TEST_CASE("[EGDescription] Sustain level")
 {
     sfz::EGDescription eg;
+    sfz::SfzCCArray ccArray { 0 };
     eg.sustain = 50;
     eg.vel2sustain = -100;
     eg.ccSustain = { 63, 100.0f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getSustain(ccArray, 0) == 50.0f );
     REQUIRE( eg.getSustain(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
@@ -124,9 +124,9 @@ TEST_CASE("[EGDescription] Sustain level")
 TEST_CASE("[EGDescription] Start level")
 {
     sfz::EGDescription eg;
+    sfz::SfzCCArray ccArray { 0 };
     eg.start = 0;
     eg.ccStart = { 63, 127.0f };
-    sfz::SfzCCArray ccArray;
     REQUIRE( eg.getStart(ccArray, 0) == 0.0f );
     REQUIRE( eg.getStart(ccArray, 127) == 0.0f );
     ccArray[63] = 127;
