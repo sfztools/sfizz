@@ -260,7 +260,7 @@ void sfz::FilePool::loadingThread() noexcept
 
         const auto duration = std::chrono::high_resolution_clock::now() - promise->creationTime;
         [[maybe_unused]] const auto durationMillis = std::chrono::duration<double,std::milli>(duration).count();
-        DBG("Promise filled in " << durationMillis << " ms (waiting for " << waitDurationMillis << " ms)");
+        // DBG("Promise filled in " << durationMillis << " ms (waiting for " << waitDurationMillis << " ms)");
 
         while (!filledPromiseQueue.try_push(promise)) {
             DBG("[sfizz] Error enqueuing the promise for " << promise->filename << " in the filledPromiseQueue");
