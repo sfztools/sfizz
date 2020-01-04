@@ -55,12 +55,12 @@ namespace config {
     constexpr int halfCCThreshold { 64 };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };
-    constexpr float fastReleaseDuration { 0.01 };
+    constexpr float fastReleaseDuration { 0.01f };
     constexpr char defineCharacter { '$' };
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr unsigned powerHistoryLength { 16 };
-    constexpr float voiceStealingThreshold { 0.00001 };
+    constexpr float voiceStealingThreshold { 0.00001f };
     constexpr int numCCs { 143 };
     constexpr int chunkSize { 1024 };
 } // namespace config
