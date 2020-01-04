@@ -37,7 +37,7 @@ endfunction(SFIZZ_LINK_LIBSNDFILE)
 
 function(SFIZZ_LINK_LIBSAMPLERATE TARGET)
     if (WIN32)
-        target_link_libraries (${TARGET} PRIVATE libsamplerate-0)
+        target_link_libraries (${TARGET} PRIVATE samplerate)
         target_include_directories(${TARGET} PRIVATE ${SAMPLERATE_INCLUDE_DIR})
     else()
         target_link_libraries(${TARGET} PRIVATE samplerate)
