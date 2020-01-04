@@ -98,9 +98,9 @@ constexpr float normalizePercents(T percentValue)
  * @param bendValue
  * @return constexpr float
  */
-constexpr float normalizeBend(int bendValue)
+constexpr float normalizeBend(float bendValue)
 {
-    return std::min(std::max(static_cast<float>(bendValue), -8191.0f), 8191.0f) / 8191.0f;
+    return std::min(std::max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
 }
 
 /**
