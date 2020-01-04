@@ -54,7 +54,7 @@ TEST_CASE("[ADSREnvelope] Basic state")
         out = envelope.getNextValue();
     REQUIRE(approxEqual<float>(output, expected));
 
-    absl::c_fill(output, -1.0);
+    absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 }
@@ -70,7 +70,7 @@ TEST_CASE("[ADSREnvelope] Attack")
     REQUIRE(approxEqual<float>(output, expected));
 
     envelope.reset(2, 0);
-    absl::c_fill(output, -1.0);
+    absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 }
