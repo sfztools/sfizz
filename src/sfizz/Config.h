@@ -23,6 +23,11 @@
 
 #pragma once
 
+#ifdef _WIN32
+// There's a spurious min/max function in MSVC that makes everything go badly...
+#define NOMINMAX
+#endif
+
 namespace sfz {
 enum class Oversampling: int {
     x1 = 1,
