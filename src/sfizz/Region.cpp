@@ -104,6 +104,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     // Instrument settings: voice lifecycle
     case hash("group"):
+    case hash("polyphony_group"):
         setValueFromOpcode(opcode, group, Default::groupRange);
         break;
     case hash("offby"):
@@ -248,10 +249,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         }
         break;
     case hash("on_locc"):
+    case hash("start_locc"):
         if (opcode.parameter)
             setRangeStartFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccTriggerValueRange);
         break;
     case hash("on_hicc"):
+    case hash("start_hicc"):
         if (opcode.parameter)
             setRangeEndFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccTriggerValueRange);
         break;
@@ -412,6 +415,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setValueFromOpcode(opcode, transpose, Default::transposeRange);
         break;
     case hash("tune"):
+    case hash("pitch"):
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
     case hash("bend_up"):
@@ -464,24 +468,31 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("ampeg_vel2sustain"):
         setValueFromOpcode(opcode, amplitudeEG.vel2sustain, Default::egOnCCPercentRange);
         break;
+    case hash("ampeg_attackcc"):
     case hash("ampeg_attack_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccAttack, Default::egOnCCTimeRange);
         break;
+    case hash("ampeg_decaycc"):
     case hash("ampeg_decay_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccDecay, Default::egOnCCTimeRange);
         break;
+    case hash("ampeg_delaycc"):
     case hash("ampeg_delay_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccDelay, Default::egOnCCTimeRange);
         break;
+    case hash("ampeg_holdcc"):
     case hash("ampeg_hold_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccHold, Default::egOnCCTimeRange);
         break;
+    case hash("ampeg_releasecc"):
     case hash("ampeg_release_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccRelease, Default::egOnCCTimeRange);
         break;
+    case hash("ampeg_startcc"):
     case hash("ampeg_start_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccStart, Default::egOnCCPercentRange);
         break;
+    case hash("ampeg_sustaincc"):
     case hash("ampeg_sustain_oncc"):
         setCCPairFromOpcode(opcode, amplitudeEG.ccSustain, Default::egOnCCPercentRange);
         break;
