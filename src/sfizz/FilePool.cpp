@@ -140,7 +140,7 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
         return false;
 
     // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
-    const uint32_t frames = sndFile.frames();
+    const auto frames = static_cast<uint32_t>(sndFile.frames());
     const auto framesToLoad = [&]() {
         if (preloadSize == 0)
             return frames;
@@ -196,7 +196,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     // Update all the preloaded sizes
     for (auto& preloadedFile : preloadedFiles) {
         const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / static_cast<int>(oversamplingFactor);
-        const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
+        const auto maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(file.string().c_str());
         preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, oversamplingFactor);
@@ -253,7 +253,7 @@ void sfz::FilePool::loadingThread() noexcept
             DBG("[sfizz] libsndfile errored for " << promise->filename << " with message " << sndFile.strError());
             continue;
         }
-        const uint32_t frames = sndFile.frames();
+        const auto frames = static_cast<uint32_t>(sndFile.frames());
         streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
         promise->dataReady = true;
         threadsLoading--;
@@ -326,7 +326,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
     float samplerateChange { static_cast<float>(factor) / static_cast<float>(this->oversamplingFactor) };
     for (auto& preloadedFile : preloadedFiles) {
         const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / static_cast<int>(this->oversamplingFactor);
-        const uint32_t maxOffset = numFrames > this->preloadSize ? numFrames - this->preloadSize : 0;
+        const uint32_t maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(file.string().c_str());
         preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor);
