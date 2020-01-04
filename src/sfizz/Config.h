@@ -22,12 +22,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-
 #ifdef _WIN32
 // There's a spurious min/max function in MSVC that makes everything go badly...
 #define NOMINMAX
 #define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
 #endif
+#include <cstddef>
 
 namespace sfz {
 enum class Oversampling: int {
