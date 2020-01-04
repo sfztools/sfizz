@@ -126,18 +126,18 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
             const auto inputChunk = input.getSpan(chanIdx).subspan(inputFrameCounter, thisChunkSize);
             const auto outputChunk = output.getSpan(chanIdx).subspan(outputFrameCounter, outputChunkSize);
             if (factor == Oversampling::x2) {
-                upsampler2x[chanIdx].process_block(outputChunk.data(), inputChunk.data(), thisChunkSize);
+                upsampler2x[chanIdx].process_block(outputChunk.data(), inputChunk.data(), static_cast<long>(thisChunkSize));
                 continue;
             }
             if (factor == Oversampling::x4) {
-                upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), thisChunkSize);
-                upsampler4x[chanIdx].process_block(outputChunk.data(), span1.data(), thisChunkSize * 2);
+                upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), static_cast<long>(thisChunkSize));
+                upsampler4x[chanIdx].process_block(outputChunk.data(), span1.data(), static_cast<long>(thisChunkSize * 2));
                 continue;
             }
             else if (factor == Oversampling::x8) {
-                upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), thisChunkSize);
-                upsampler4x[chanIdx].process_block(span2.data(), span1.data(), thisChunkSize * 2);
-                upsampler8x[chanIdx].process_block(outputChunk.data(), span2.data(), thisChunkSize * 4);
+                upsampler2x[chanIdx].process_block(span1.data(), inputChunk.data(), static_cast<long>(thisChunkSize));
+                upsampler4x[chanIdx].process_block(span2.data(), span1.data(), static_cast<long>(thisChunkSize * 2));
+                upsampler8x[chanIdx].process_block(outputChunk.data(), span2.data(), static_cast<long>(thisChunkSize * 4));
                 continue;
             }
         }
