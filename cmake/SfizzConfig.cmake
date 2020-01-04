@@ -16,7 +16,32 @@ if (UNIX)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
     add_compile_options(-fPIC)
+    endif()
+
+if (WIN32)
+    find_package(LibSndFile REQUIRED)
+    find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
+    find_path(SAMPLERATE_INCLUDE_DIR samplerate.h)
+    add_compile_options(/std:c++17)
 endif()
+
+function(SFIZZ_LINK_LIBSNDFILE TARGET)
+    if (WIN32)
+        target_link_libraries (${TARGET} PRIVATE sndfile-shared)
+        target_include_directories(${TARGET} PRIVATE ${SNDFILE_INCLUDE_DIR})
+    else()
+        target_link_libraries(${TARGET} PRIVATE sndfile)
+    endif()
+endfunction(SFIZZ_LINK_LIBSNDFILE)
+
+function(SFIZZ_LINK_LIBSAMPLERATE TARGET)
+    if (WIN32)
+        target_link_libraries (${TARGET} PRIVATE libsamplerate-0)
+        target_include_directories(${TARGET} PRIVATE ${SAMPLERATE_INCLUDE_DIR})
+    else()
+        target_link_libraries(${TARGET} PRIVATE samplerate)
+    endif()
+endfunction(SFIZZ_LINK_LIBSAMPLERATE)
 
 # If we build with Clang use libc++
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
