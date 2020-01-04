@@ -64,7 +64,7 @@ void upsample2xStage(absl::Span<const float> input, absl::Span<float> output)
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xFpu<coeffsStage2x.size()> upsampler;
     upsampler.set_coefs(coeffsStage2x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 
@@ -74,7 +74,7 @@ void upsample4xStage(absl::Span<const float> input, absl::Span<float> output)
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xFpu<coeffsStage4x.size()> upsampler;
     upsampler.set_coefs(coeffsStage4x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 template<bool SIMD=false>
@@ -83,7 +83,7 @@ void upsample8xStage(absl::Span<const float> input, absl::Span<float> output)
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xFpu<coeffsStage8x.size()> upsampler;
     upsampler.set_coefs(coeffsStage8x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -94,7 +94,7 @@ void upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> outp
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xSse<coeffsStage2x.size()> upsampler;
     upsampler.set_coefs(coeffsStage2x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 template<>
@@ -103,7 +103,7 @@ void upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> outp
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xSse<coeffsStage4x.size()> upsampler;
     upsampler.set_coefs(coeffsStage4x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 template<>
@@ -112,7 +112,7 @@ void upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> outp
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xSse<coeffsStage8x.size()> upsampler;
     upsampler.set_coefs(coeffsStage8x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 #elif defined(__arm__) || defined (__aarch64__)
@@ -125,7 +125,7 @@ void upsample2xStage<true>(absl::Span<const float> input, absl::Span<float> outp
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xNeon<coeffsStage2x.size()> upsampler;
     upsampler.set_coefs(coeffsStage2x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 template<>
@@ -134,7 +134,7 @@ void upsample4xStage<true>(absl::Span<const float> input, absl::Span<float> outp
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xNeon<coeffsStage4x.size()> upsampler;
     upsampler.set_coefs(coeffsStage4x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 template<>
@@ -143,7 +143,7 @@ void upsample8xStage<true>(absl::Span<const float> input, absl::Span<float> outp
     ASSERT(output.size() >= 2 * input.size());
     hiir::Upsampler2xNeon<coeffsStage8x.size()> upsampler;
     upsampler.set_coefs(coeffsStage8x.data());
-    upsampler.process_block(output.data(), input.data(), input.size());
+    upsampler.process_block(output.data(), input.data(), static_cast<long>(input.size()));
 }
 
 #else
@@ -240,8 +240,8 @@ public:
         #endif
     }
 
-    int numChannels;
-    int numFrames;
+    size_t numChannels;
+    size_t numFrames;
     std::unique_ptr<sfz::Buffer<float>> interleavedBuffer;
 };
 
@@ -313,9 +313,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC2x_BEST)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 2.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_BEST_QUALITY, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_BEST_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -330,9 +330,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC2x_MEDIUM)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 2.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -347,9 +347,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC2x_FASTEST)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 2.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_FASTEST, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_FASTEST, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -365,9 +365,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC4x_BEST)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 4.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_BEST_QUALITY, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_BEST_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -382,9 +382,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC4x_MEDIUM)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 4.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -399,9 +399,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC4x_FASTEST)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 4.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_FASTEST, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_FASTEST, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -416,9 +416,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_BEST)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 8.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_BEST_QUALITY, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_BEST_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -433,9 +433,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_MEDIUM)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 8.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
@@ -450,9 +450,9 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_FASTEST)(benchmark::State& state)
         srcData.data_in = interleavedBuffer->data();
         srcData.data_out = intermediateBuffer->data();
         srcData.src_ratio = 8.0;
-        srcData.input_frames = numFrames;
-        srcData.output_frames = 2 * numFrames;
-        src_simple(&srcData, SRC_SINC_FASTEST, numChannels);
+        srcData.input_frames = static_cast<long>(numFrames);
+        srcData.output_frames = static_cast<long>(2 * numFrames);
+        src_simple(&srcData, SRC_SINC_FASTEST, static_cast<int>(numChannels));
         auto outBuffer = std::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
         sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);

@@ -36,7 +36,7 @@ public:
     {
         std::random_device rd {};
         std::mt19937 gen { rd() };
-        std::uniform_real_distribution<float> dist { 0.1, 1 };
+        std::uniform_real_distribution<float> dist { 0.1f, 1.0f };
         source = std::vector<float>(state.range(0));
         result = std::vector<float>(state.range(0));
         std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
