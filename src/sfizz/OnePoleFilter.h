@@ -59,7 +59,7 @@ public:
 
     Type getGain() const { return gain; }
 
-    int processLowpass(absl::Span<const Type> input, absl::Span<Type> lowpass)
+    size_t processLowpass(absl::Span<const Type> input, absl::Span<Type> lowpass)
     {
         auto in = input.begin();
         auto out = lowpass.begin();
@@ -73,7 +73,7 @@ public:
         return size;
     }
 
-    int processHighpass(absl::Span<const Type> input, absl::Span<Type> highpass)
+    size_t processHighpass(absl::Span<const Type> input, absl::Span<Type> highpass)
     {
         auto in = input.begin();
         auto out = highpass.begin();
@@ -87,7 +87,7 @@ public:
         return size;
     }
 
-    int processLowpassVariableGain(absl::Span<const Type> input, absl::Span<Type> lowpass, absl::Span<const Type> gain)
+    size_t processLowpassVariableGain(absl::Span<const Type> input, absl::Span<Type> lowpass, absl::Span<const Type> gain)
     {
         auto in = input.begin();
         auto out = lowpass.begin();
@@ -104,7 +104,7 @@ public:
         return size;
     }
 
-    int processHighpassVariableGain(absl::Span<const Type> input, absl::Span<Type> highpass, absl::Span<const Type> gain)
+    size_t processHighpassVariableGain(absl::Span<const Type> input, absl::Span<Type> highpass, absl::Span<const Type> gain)
     {
         auto in = input.begin();
         auto out = highpass.begin();

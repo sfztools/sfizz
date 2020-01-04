@@ -86,7 +86,7 @@ namespace sfz
  * @tparam Type the underlying buffer type
  * @tparam MaxChannels the maximum number of channels. Defaults to sfz::config::numChannels
  */
-template <class Type, int MaxChannels = sfz::config::numChannels>
+template <class Type, size_t MaxChannels = sfz::config::numChannels>
 class AudioSpan {
 public:
     using size_type = size_t;
@@ -102,7 +102,7 @@ public:
      * @param offset starting offset for the AudioSpan
      * @param numFrames size of the AudioSpan
      */
-    AudioSpan(const std::array<Type*, MaxChannels>& spans, int numChannels, size_type offset, size_type numFrames)
+    AudioSpan(const std::array<Type*, MaxChannels>& spans, size_type numChannels, size_type offset, size_type numFrames)
         : numFrames(numFrames)
         , numChannels(numChannels)
     {
@@ -169,7 +169,7 @@ public:
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
     {
-        for (int i = 0; i < numChannels; i++) {
+        for (size_t i = 0; i < numChannels; i++) {
             this->spans[i] = audioBuffer.channelReader(i);
         }
     }
@@ -190,7 +190,7 @@ public:
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
     {
-        for (int i = 0; i < numChannels; i++) {
+        for (size_t i = 0; i < numChannels; i++) {
             this->spans[i] = audioBuffer.channelWriter(i);
         }
     }
@@ -205,7 +205,7 @@ public:
         : numFrames(other.getNumFrames())
         , numChannels(other.getNumChannels())
     {
-        for (int i = 0; i < numChannels; i++) {
+        for (size_t i = 0; i < numChannels; i++) {
             this->spans[i] = other.getChannel(i);
         }
     }
@@ -216,7 +216,7 @@ public:
      * @param channelIndex the channel
      * @return Type* the raw pointer to the channel
      */
-    Type* getChannel(int channelIndex)
+    Type* getChannel(size_t channelIndex)
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -231,7 +231,7 @@ public:
      * @param channelIndex the channel
      * @return absl::Span<Type>
      */
-    absl::Span<Type> getSpan(int channelIndex)
+    absl::Span<Type> getSpan(size_t channelIndex)
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -246,7 +246,7 @@ public:
      * @param channelIndex the channel
      * @return absl::Span<const Type>
      */
-    absl::Span<const Type> getConstSpan(int channelIndex)
+    absl::Span<const Type> getConstSpan(size_t channelIndex)
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -265,7 +265,7 @@ public:
         if (numChannels == 0)
             return 0.0;
         Type result = 0.0;
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             result += sfz::meanSquared<Type>(getConstSpan(i));
         return result / numChannels;
     }
@@ -278,7 +278,7 @@ public:
     void fill(Type value) noexcept
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             sfz::fill<Type>(getSpan(i), value);
     }
 
@@ -290,7 +290,7 @@ public:
     void applyGain(absl::Span<const Type> gain) noexcept
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             sfz::applyGain<Type>(gain, getSpan(i));
     }
 
@@ -302,7 +302,7 @@ public:
     void applyGain(Type gain) noexcept
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             sfz::applyGain<Type>(gain, getSpan(i));
     }
 
@@ -318,7 +318,7 @@ public:
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
-            for (int i = 0; i < numChannels; ++i)
+            for (size_t i = 0; i < numChannels; ++i)
                 sfz::add<Type>(other.getConstSpan(i), getSpan(i));
         }
     }
@@ -335,7 +335,7 @@ public:
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         ASSERT(other.getNumChannels() == numChannels);
         if (other.getNumChannels() == numChannels) {
-            for (int i = 0; i < numChannels; ++i)
+            for (size_t i = 0; i < numChannels; ++i)
                 sfz::copy<Type>(other.getConstSpan(i), getSpan(i));
         }
     }
@@ -355,7 +355,7 @@ public:
      *
      * @returns size_type the number of channels in the AudioSpan
      */
-    int getNumChannels()
+    size_t getNumChannels()
     {
         return numChannels;
     }
@@ -413,6 +413,6 @@ private:
     static_assert(MaxChannels > 0, "Need a positive number of channels");
     std::array<Type*, MaxChannels> spans;
     size_type numFrames { 0 };
-    int numChannels { 0 };
+    size_type numChannels { 0 };
 };
 }

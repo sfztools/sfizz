@@ -250,7 +250,7 @@ public:
     //     return *this;
     // }
 
-    Type& operator[](int idx) { return *(normalData + idx); }
+    Type& operator[](size_t idx) { return *(normalData + idx); }
     constexpr pointer data() const noexcept { return normalData; }
     constexpr size_type size() const noexcept { return alignedSize; }
     constexpr bool empty() const noexcept { return alignedSize == 0; }

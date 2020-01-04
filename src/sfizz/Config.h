@@ -26,6 +26,7 @@
 #ifdef _WIN32
 // There's a spurious min/max function in MSVC that makes everything go badly...
 #define NOMINMAX
+#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
 #endif
 
 namespace sfz {
@@ -41,7 +42,7 @@ namespace config {
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
     constexpr int preloadSize { 8192 };
-    constexpr int numChannels { 2 };
+    constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
     constexpr int maxVoices { 256 };
@@ -59,7 +60,7 @@ namespace config {
     constexpr char defineCharacter { '$' };
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
-    constexpr unsigned powerHistoryLength { 16 };
+    constexpr size_t powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001f };
     constexpr int numCCs { 143 };
     constexpr int chunkSize { 1024 };

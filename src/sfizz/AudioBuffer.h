@@ -42,7 +42,7 @@ namespace sfz
  * @tparam MaxChannels the maximum number of channels in the buffer
  * @tparam Alignment the alignment for the buffers
  */
-template <class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
+template <class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
 public:
     using value_type = std::remove_cv_t<Type>;
@@ -50,7 +50,6 @@ public:
     using const_pointer = const value_type*;
     using iterator = pointer;
     using const_iterator = const_pointer;
-    using size_type = size_t;
 
     /**
      * @brief Construct a new Audio Buffer object
@@ -67,7 +66,7 @@ public:
      * @param numChannels
      * @param numFrames
      */
-    AudioBuffer(int numChannels, int numFrames)
+    AudioBuffer(size_t numChannels, size_t numFrames)
         : numChannels(numChannels)
         , numFrames(numFrames)
     {
@@ -82,7 +81,7 @@ public:
      * @return true if the resize worked
      * @return false otherwise
      */
-    bool resize(size_type newSize)
+    bool resize(size_t newSize)
     {
         bool returnedOK = true;
 
@@ -101,7 +100,7 @@ public:
      * @param channelIndex
      * @return iterator
      */
-    iterator channelWriter(int channelIndex)
+    iterator channelWriter(size_t channelIndex)
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -116,7 +115,7 @@ public:
      * @param channelIndex
      * @return iterator
      */
-    iterator channelWriterEnd(int channelIndex)
+    iterator channelWriterEnd(size_t channelIndex)
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -131,7 +130,7 @@ public:
      * @param channelIndex
      * @return const_iterator
      */
-    const_iterator channelReader(int channelIndex) const
+    const_iterator channelReader(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -146,7 +145,7 @@ public:
      * @param channelIndex
      * @return const_iterator
      */
-    const_iterator channelReaderEnd(int channelIndex) const
+    const_iterator channelReaderEnd(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -161,7 +160,7 @@ public:
      * @param channelIndex
      * @return absl::Span<value_type>
      */
-    absl::Span<value_type> getSpan(int channelIndex) const
+    absl::Span<value_type> getSpan(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels)
         if (channelIndex < numChannels)
@@ -176,7 +175,7 @@ public:
      * @param channelIndex
      * @return absl::Span<const value_type>
      */
-    absl::Span<const value_type> getConstSpan(int channelIndex) const
+    absl::Span<const value_type> getConstSpan(size_t channelIndex) const
     {
         return getSpan(channelIndex);
     }
@@ -194,9 +193,9 @@ public:
     /**
      * @brief Get the number of elements in each buffer
      *
-     * @return size_type
+     * @return size_t
      */
-    size_type getNumFrames() const
+    size_t getNumFrames() const
     {
         return numFrames;
     }
@@ -206,7 +205,7 @@ public:
      *
      * @return int
      */
-    int getNumChannels() const
+    size_t getNumChannels() const
     {
         return numChannels;
     }
@@ -231,7 +230,7 @@ public:
      * @param frameIndex
      * @return Type&
      */
-    Type& getSample(int channelIndex, size_type frameIndex)
+    Type& getSample(size_t channelIndex, size_t frameIndex)
     {
         // Uhoh
         ASSERT(buffers[channelIndex] != nullptr);
@@ -247,7 +246,7 @@ public:
      * @param frameIndex
      * @return Type&
      */
-    Type& operator()(int channelIndex, size_type frameIndex)
+    Type& operator()(size_t channelIndex, size_t frameIndex)
     {
         return getSample(channelIndex, frameIndex);
     }
@@ -258,7 +257,7 @@ public:
      */
     void reset()
     {
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             buffers[i].reset();
         numFrames = 0;
         numChannels = 0;
@@ -269,10 +268,10 @@ public:
      *
      * @param numChannels
      */
-    void addChannels(int numChannels)
+    void addChannels(size_t numChannels)
     {
         ASSERT(this->numChannels + numChannels <= MaxChannels);
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             addChannel();
     }
 
@@ -281,7 +280,7 @@ private:
     using buffer_ptr = std::unique_ptr<buffer_type>;
     static_assert(MaxChannels > 0, "Need a positive number of channels");
     std::array<buffer_ptr, MaxChannels> buffers;
-    int numChannels { 0 };
-    size_type numFrames { 0 };
+    size_t numChannels { 0 };
+    size_t numFrames { 0 };
 };
 }
