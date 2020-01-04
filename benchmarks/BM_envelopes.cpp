@@ -21,6 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
@@ -28,7 +29,6 @@
 #include <cmath>
 #include <iostream>
 #include "EventEnvelopes.h"
-#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
 #include "FloatEnvelopes.cpp"
@@ -59,7 +59,7 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Linear)(benchmark::State& state) {
     sfz::LinearEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(state.range(0) - 1, dist(gen));
+        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
         envelope.getBlock(absl::MakeSpan(output));
     }
 }
@@ -68,7 +68,7 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, LinearQuantized)(benchmark::State& state) {
     sfz::LinearEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(state.range(0) - 1, dist(gen));
+        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
         envelope.getQuantizedBlock(absl::MakeSpan(output), 0.5);
     }
 }
@@ -77,7 +77,7 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Multiplicative)(benchmark::State& state) {
     sfz::MultiplicativeEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(state.range(0) - 1, dist(gen));
+        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
         envelope.getBlock(absl::MakeSpan(output));
     }
 }
@@ -86,7 +86,7 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeQuantized)(benchmark::State& s
     sfz::MultiplicativeEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(state.range(0) - 1, dist(gen));
+        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
         envelope.getQuantizedBlock(absl::MakeSpan(output), 1.5);
     }
 }

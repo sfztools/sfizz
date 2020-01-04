@@ -21,6 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "Config.h"
 #include <benchmark/benchmark.h>
 #include <absl/types/span.h>
 #include <random>
@@ -111,7 +112,7 @@ static void Low(benchmark::State& state) {
     std::vector<float> output(state.range(0));
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    
+
     std::normal_distribution<float> dist { };
     std::generate(input.begin(), input.end(), [&]() {
         return dist(gen);
@@ -126,7 +127,7 @@ static void High(benchmark::State& state) {
     std::vector<float> output(state.range(0));
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    
+
     std::normal_distribution<float> dist { };
     std::generate(input.begin(), input.end(), [&]() {
         return dist(gen);
@@ -141,7 +142,7 @@ static void High_Raw(benchmark::State& state) {
     std::vector<float> output(state.range(0));
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    
+
     std::normal_distribution<float> dist { };
     std::generate(input.begin(), input.end(), [&]() {
         return dist(gen);
@@ -156,7 +157,7 @@ static void High_SSE(benchmark::State& state) {
     std::vector<float> output(state.range(0));
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    
+
     std::normal_distribution<float> dist { };
     std::generate(input.begin(), input.end(), [&]() {
         return dist(gen);

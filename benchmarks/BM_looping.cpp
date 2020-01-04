@@ -22,11 +22,11 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <benchmark/benchmark.h>
+#include "SIMDHelpers.h"
 #include <vector>
 #include <random>
 #include <numeric>
 #include <absl/algorithm/container.h>
-#include "SIMDHelpers.h"
 
 // In this one we have an array of indices
 

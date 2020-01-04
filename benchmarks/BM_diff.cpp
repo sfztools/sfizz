@@ -21,13 +21,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
 class DiffArray : public benchmark::Fixture {
@@ -35,7 +35,7 @@ public:
   void SetUp(const ::benchmark::State& state) {
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 0.1, 1 };
+    std::uniform_real_distribution<float> dist { 0.1f, 1.0f };
     input = std::vector<float>(state.range(0));
     output = std::vector<float>(state.range(0));
     std::generate(input.begin(), input.end(), [&]() { return dist(gen); });

@@ -20,11 +20,11 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include "Buffer.h"
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <sndfile.hh>
 #include "ghc/filesystem.hpp"
-#include "Buffer.h"
-#include "SIMDHelpers.h"
 #include "Oversampler.h"
 #include "AudioBuffer.h"
 #include <memory>
@@ -139,14 +139,14 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleAtOnce)(benchmark::State& state) {
         sndfile.readf(buffer.data(), numFrames);
         sfz::readInterleaved<float>(buffer, output->getSpan(0), output->getSpan(1));
 
-        upsampler2x.process_block(temp.data(), output->channelReader(0), numFrames);
-        upsampler4x.process_block(output->channelWriter(0), temp.data(), numFrames * 2);
+        upsampler2x.process_block(temp.data(), output->channelReader(0), static_cast<long>(numFrames));
+        upsampler4x.process_block(output->channelWriter(0), temp.data(), static_cast<long>(numFrames * 2));
 
         upsampler2x.clear_buffers();
         upsampler4x.clear_buffers();
 
-        upsampler2x.process_block(temp.data(), output->channelReader(1), numFrames);
-        upsampler4x.process_block(output->channelWriter(1), temp.data(), numFrames * 2);
+        upsampler2x.process_block(temp.data(), output->channelReader(1), static_cast<long>(numFrames));
+        upsampler4x.process_block(output->channelWriter(1), temp.data(), static_cast<long>(numFrames * 2));
     }
 }
 
@@ -189,11 +189,11 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleInChunks)(benchmark::State& state) {
 
             sfz::readInterleaved<float>(bufferChunk, leftSpan, rightSpan);
 
-            upsampler2xLeft.process_block(chunkSpan.data(), leftSpan.data(), thisChunkSize);
-            upsampler4xLeft.process_block(output->channelWriter(0) + outputFrameCounter, chunkSpan.data(), thisChunkSize * 2);
+            upsampler2xLeft.process_block(chunkSpan.data(), leftSpan.data(), static_cast<long>(thisChunkSize));
+            upsampler4xLeft.process_block(output->channelWriter(0) + outputFrameCounter, chunkSpan.data(), static_cast<long>(thisChunkSize * 2));
 
-            upsampler2xRight.process_block(chunkSpan.data(), rightSpan.data(), thisChunkSize);
-            upsampler4xRight.process_block(output->channelWriter(1) + outputFrameCounter, chunkSpan.data(), thisChunkSize * 2);
+            upsampler2xRight.process_block(chunkSpan.data(), rightSpan.data(), static_cast<long>(thisChunkSize));
+            upsampler4xRight.process_block(output->channelWriter(1) + outputFrameCounter, chunkSpan.data(), static_cast<long>(thisChunkSize * 2));
 
             inputFrameCounter += chunkSize;
             outputFrameCounter += chunkSize * 4;

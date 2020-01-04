@@ -29,6 +29,7 @@
  * @date 2019-11-23
  */
 #pragma once
+#include "Config.h"
 #include <algorithm>
 #include <cmath>
 #include <cassert>
@@ -156,14 +157,14 @@ constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueTy
 }
 
 template <class Type>
-constexpr Type pi { 3.141592653589793238462643383279502884 };
+constexpr Type pi { static_cast<Type>(3.141592653589793238462643383279502884) };
 template <class Type>
-constexpr Type twoPi { 2 * pi<Type> };
+constexpr Type twoPi { static_cast<Type>(2) * pi<Type> };
 template <class Type>
-constexpr Type piTwo { pi<Type> / 2 };
+constexpr Type piTwo { pi<Type> / static_cast<Type>(2) };
 template <class Type>
-constexpr Type piFour { pi<Type> / 4 };
+constexpr Type piFour { pi<Type> / static_cast<Type>(4) };
 template <class Type>
-constexpr Type sqrtTwo { 1.414213562373095048801688724209698078569671875376948073176 };
+constexpr Type sqrtTwo { static_cast<Type>(1.414213562373095048801688724209698078569671875376948073176) };
 template <class Type>
-constexpr Type sqrtTwoInv { 0.707106781186547524400844362104849039284835937688474036588 };
+constexpr Type sqrtTwoInv { static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588) };

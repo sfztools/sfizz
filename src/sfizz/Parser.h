@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include "Config.h"
 #include "Opcode.h"
 #include "ghc/fs_std.hpp"
 #include <map>

@@ -21,9 +21,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <benchmark/benchmark.h>
 #include "SIMDHelpers.h"
 #include "Buffer.h"
+#include <benchmark/benchmark.h>
 #include <algorithm>
 #include <numeric>
 #include <absl/types/span.h>

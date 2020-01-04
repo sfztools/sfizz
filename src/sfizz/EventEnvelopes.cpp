@@ -73,7 +73,7 @@ void EventEnvelope<Type>::prepareEvents()
     absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
         return lhs.first < rhs.first;
     });
-    
+
     resetEvents = true;
 }
 
@@ -134,7 +134,7 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
     EventEnvelope<Type>::getQuantizedBlock(output, quantizationStep);
     auto& events = EventEnvelope<Type>::events;
     auto& currentValue = EventEnvelope<Type>::currentValue;
-    
+
     ASSERT(quantizationStep != 0.0);
     int index { 0 };
 
@@ -167,7 +167,7 @@ void LinearEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type quant
             continue;
         }
 
-        const int numSteps = difference / quantizationStep;
+        const auto numSteps = static_cast<int>(difference / quantizationStep);
         const auto stepLength = static_cast<int>(length / numSteps);
         for (int i = 0; i < numSteps; ++i) {
             fill<Type>(output.subspan(index, stepLength), currentValue);
@@ -218,15 +218,15 @@ void MultiplicativeEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Ty
     EventEnvelope<Type>::getQuantizedBlock(output, quantizationStep);
     auto& events = EventEnvelope<Type>::events;
     auto& currentValue = EventEnvelope<Type>::currentValue;
-    
+
     ASSERT(quantizationStep != 0.0);
     int index { 0 };
 
     const auto logStep = std::log(quantizationStep);
     // If we assume that a = b.q^r for b in (1, q) then
-    // log a     log b     
-    // -----  =  -----  +  r  
-    // log q     log q  
+    // log a     log b
+    // -----  =  -----  +  r
+    // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](Type value) -> Type {
         return std::exp(logStep * std::round(std::log(value)/logStep));
@@ -257,11 +257,11 @@ void MultiplicativeEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Ty
             continue;
         }
 
-        const int numSteps = std::log(difference) / logStep;
+        const auto numSteps = static_cast<int>(std::log(difference) / logStep);
         const auto stepLength = static_cast<int>(length / numSteps);
         for (int i = 0; i < numSteps; ++i) {
             fill<Type>(output.subspan(index, stepLength), currentValue);
-            const auto delta = newValue > currentValue ? 
+            const auto delta = newValue > currentValue ?
                     quantize(currentValue) / currentValue * quantizationStep :
                     quantize(currentValue) / currentValue / quantizationStep ;
             currentValue *= delta;
