@@ -237,9 +237,9 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
 
     resources.filePool.setRootDirectory(this->originalDirectory);
 
-    auto lastRegion = regions.end() - 1;
     auto currentRegion = regions.begin();
-    while (currentRegion <= lastRegion) {
+    auto lastRegion = regions.rbegin();
+    while (currentRegion < lastRegion.base()) {
         auto region = currentRegion->get();
 
         if (!region->isGenerator()) {
@@ -247,7 +247,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
             if (!fileInformation) {
                 DBG("Removing the region with sample " << region->sample);
                 std::iter_swap(currentRegion, lastRegion);
-                lastRegion--;
+                ++lastRegion;
                 continue;
             }
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
@@ -298,11 +298,11 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         region->registerAftertouch(0);
         region->registerTempo(2.0f);
 
-        currentRegion++;
+        ++currentRegion;
     }
-
-    DBG("Removed " << regions.size() - std::distance(regions.begin(), lastRegion) - 1 << " out of " << regions.size() << " regions.");
-    regions.resize(std::distance(regions.begin(), lastRegion) + 1);
+    const auto remainingRegions = std::distance(regions.begin(), lastRegion.base());
+    DBG("Removing " << (regions.size() - remainingRegions) << " out of " << regions.size() << " regions");
+    regions.resize(remainingRegions);
     modificationTime = checkModificationTime();
 
     return parserReturned;

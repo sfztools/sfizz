@@ -289,17 +289,17 @@ void sfz::FilePool::cleanupPromises() noexcept
     // The garbage collection cleared the data from these so we can move them
     // back to the empty queue
     auto clearedIterator = promisesToClear.begin();
-    auto clearedSentinel = promisesToClear.end() - 1;
-    while (clearedIterator != promisesToClear.end()) {
+    auto clearedSentinel = promisesToClear.rbegin();
+    while (clearedIterator < clearedSentinel.base()) {
         if (clearedIterator->get()->dataReady == false) {
             emptyPromises.push_back(*clearedIterator);
             std::iter_swap(clearedIterator, clearedSentinel);
-            clearedSentinel--;
-            promisesToClear.pop_back();
+            ++clearedSentinel;
         } else {
-            clearedIterator++;
+            ++clearedIterator;
         }
     }
+    promisesToClear.resize(std::distance(promisesToClear.begin(), clearedSentinel.base()));
 
     FilePromisePtr promise;
     // Remove the promises from the filled queue and put them in a linear
@@ -308,17 +308,17 @@ void sfz::FilePool::cleanupPromises() noexcept
         temporaryFilePromises.push_back(promise);
 
     auto filledIterator = temporaryFilePromises.begin();
-    auto filledSentinel = temporaryFilePromises.end() - 1;
-    while (filledIterator != temporaryFilePromises.end()) {
+    auto filledSentinel = temporaryFilePromises.rbegin();
+    while (filledIterator < filledSentinel.base()) {
         if (filledIterator->use_count() == 1) {
             promisesToClear.push_back(*filledIterator);
             std::iter_swap(filledIterator, filledSentinel);
-            filledSentinel--;
-            temporaryFilePromises.pop_back();
+            ++filledSentinel;
         } else {
-            filledIterator++;
+            ++filledIterator;
         }
     }
+    temporaryFilePromises.resize(std::distance(temporaryFilePromises.begin(), filledSentinel.base()));
 }
 
 void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
