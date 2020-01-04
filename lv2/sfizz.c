@@ -412,7 +412,7 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self)
     lv2_atom_forge_key(&self->forge, self->patch_property_uri);
     lv2_atom_forge_urid(&self->forge, self->sfizz_sfz_file_uri);
     lv2_atom_forge_key(&self->forge, self->patch_value_uri);
-    lv2_atom_forge_path(&self->forge, self->sfz_file_path, strlen(self->sfz_file_path));
+    lv2_atom_forge_path(&self->forge, self->sfz_file_path, (uint32_t)strlen(self->sfz_file_path));
     lv2_atom_forge_pop(&self->forge, &frame);
 }
 
