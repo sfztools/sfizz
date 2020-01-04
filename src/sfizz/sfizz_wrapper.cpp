@@ -66,7 +66,7 @@ int sfizz_get_num_curves(sfizz_synth_t* synth)
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->getNumCurves();
 }
-int sfizz_get_num_preloaded_samples(sfizz_synth_t* synth)
+size_t sfizz_get_num_preloaded_samples(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->getNumPreloadedSamples();
@@ -220,7 +220,7 @@ char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     const auto unknownOpcodes = self->getUnknownOpcodes();
-    int totalLength = 0;
+    size_t totalLength = 0;
     for (auto& opcode: unknownOpcodes)
         totalLength += opcode.length() + 1;
 

@@ -107,7 +107,7 @@ int sfizz_get_num_curves(sfizz_synth_t* synth);
  *
  * @return     int the number of preloaded samples
  */
-int sfizz_get_num_preloaded_samples(sfizz_synth_t* synth);
+size_t sfizz_get_num_preloaded_samples(sfizz_synth_t* synth);
 /**
  * @brief      Returns the number of active voices. Note that this function is a
  *             basic indicator and does not aim to be perfect. In particular, it
@@ -116,7 +116,7 @@ int sfizz_get_num_preloaded_samples(sfizz_synth_t* synth);
  *
  * @param      synth  The synth
  *
- * @return     int the number of playing voices
+ * @return     size_t the number of playing voices
  */
 int sfizz_get_num_active_voices(sfizz_synth_t* synth);
 
