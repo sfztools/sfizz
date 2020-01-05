@@ -358,9 +358,12 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
     // TODO: validate that this is enough, otherwise we will need an atomic count
     // of the files we need to load still.
     // Spinlocking on the size of the background queue
-    while (promiseQueue.size() > 0)
+    while (!promiseQueue.was_empty()){
         std::this_thread::sleep_for(0.1ms);
+    }
+    
     // Spinlocking on the threads possibly logging in the background
-    while (threadsLoading > 0)
+    while (threadsLoading > 0) {
         std::this_thread::sleep_for(0.1ms);
+    }
 }
