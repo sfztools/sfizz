@@ -58,7 +58,7 @@ Assuming you want to build for x64, install the relevant packages as follows
 
 In the sfizz source directory, you can then build with CMake as usual, although you should clone the windows branch:
 ```powershell
-git clone --branch windows --recursive https://github.com/sfztools/sfizz.git
+git clone --recursive https://github.com/sfztools/sfizz.git
 cd sfizz
 mkdir build
 cd build
