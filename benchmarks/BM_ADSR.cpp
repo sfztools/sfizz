@@ -21,8 +21,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <benchmark/benchmark.h>
+#include "Config.h"
 #include "ADSREnvelope.h"
+#include <benchmark/benchmark.h>
 #include <algorithm>
 #include <random>
 #include <numeric>
@@ -44,12 +45,12 @@ static void Point(benchmark::State& state) {
     for (auto _ : state) {
         envelope.reset(attack, release, 1.0, fixedAmount, decay, fixedAmount);
         envelope.startRelease(releaseTime);
-        for(int offset = 0; offset < envelopeSize; offset += state.range(0))
+        for(int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
             for (auto& out: output)
                 out = envelope.getNextValue();
         benchmark::DoNotOptimize(output);
     }
-    state.counters["Per block"] = benchmark::Counter(envelopeSize / state.range(0), benchmark::Counter::kIsRate);
+    state.counters["Per block"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsRate);
 }
 
 static void Block(benchmark::State& state) {
@@ -58,12 +59,12 @@ static void Block(benchmark::State& state) {
     for (auto _ : state) {
         envelope.reset(attack, release, 1.0, fixedAmount, decay, fixedAmount);
         envelope.startRelease(releaseTime);
-        for(int offset = 0; offset < envelopeSize; offset += state.range(0))
+        for(int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
             envelope.getBlock(absl::MakeSpan(output));
         benchmark::DoNotOptimize(output);
     }
 
-    state.counters["Per block"] = benchmark::Counter(envelopeSize / state.range(0), benchmark::Counter::kIsRate);
+    state.counters["Per block"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsRate);
 }
 
 BENCHMARK(Point)->RangeMultiplier(2)->Range((2<<6), (2<<11));

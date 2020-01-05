@@ -61,15 +61,15 @@ TEST_CASE("[AudioBuffer] Access")
     const int size { 5 };
     sfz::AudioBuffer<float> buffer(2, size);
     for (size_t frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx) {
-        buffer.getSample(0, frameIdx) = static_cast<double>(buffer.getNumFrames()) + frameIdx;
-        buffer.getSample(1, frameIdx) = static_cast<double>(buffer.getNumFrames()) - frameIdx;
+        buffer.getSample(0, frameIdx) = static_cast<float>(buffer.getNumFrames()) + frameIdx;
+        buffer.getSample(1, frameIdx) = static_cast<float>(buffer.getNumFrames()) - frameIdx;
     }
 
     for (size_t frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx) {
-        REQUIRE(buffer.getSample(0, frameIdx) == static_cast<double>(buffer.getNumFrames()) + frameIdx);
-        REQUIRE(buffer(0, frameIdx) == static_cast<double>(buffer.getNumFrames()) + frameIdx);
-        REQUIRE(buffer.getSample(1, frameIdx) == static_cast<double>(buffer.getNumFrames()) - frameIdx);
-        REQUIRE(buffer(1, frameIdx) == static_cast<double>(buffer.getNumFrames()) - frameIdx);
+        REQUIRE(buffer.getSample(0, frameIdx) == static_cast<float>(buffer.getNumFrames()) + frameIdx);
+        REQUIRE(buffer(0, frameIdx) == static_cast<float>(buffer.getNumFrames()) + frameIdx);
+        REQUIRE(buffer.getSample(1, frameIdx) == static_cast<float>(buffer.getNumFrames()) - frameIdx);
+        REQUIRE(buffer(1, frameIdx) == static_cast<float>(buffer.getNumFrames()) - frameIdx);
     }
 }
 
@@ -98,5 +98,5 @@ TEST_CASE("[AudioSpan] Constructions")
     sfz::AudioSpan<float> manualSpan { { buffer.channelWriter(0), buffer.channelWriter(1) }, buffer.getNumFrames() };
     sfz::AudioSpan<const float> manualConstSpan { { buffer.channelReader(0), buffer.channelReader(1) }, buffer.getNumFrames() };
     sfz::AudioSpan<float> manualSpan2 { {buffer.getSpan(0), buffer.getSpan(1) } };
-    sfz::AudioSpan<const float> manualConstSpan2 { {buffer.getConstSpan(0), buffer.getConstSpan(1) } };
+    sfz::AudioSpan<const float> manualConstSpan2 { { buffer.getConstSpan(0), buffer.getConstSpan(1) } };
 }

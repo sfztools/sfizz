@@ -21,13 +21,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "SIMDHelpers.h"
 #include "Config.h"
 #include "absl/types/span.h"
 
@@ -36,7 +36,7 @@ public:
   void SetUp(const ::benchmark::State& state) {
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 0.001, 1 };
+    std::uniform_real_distribution<float> dist { 0.001f, 1.0f };
     pan = std::vector<float>(state.range(0));
     left = std::vector<float>(state.range(0));
     right = std::vector<float>(state.range(0));

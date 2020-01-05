@@ -95,10 +95,10 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
         const auto normalizedBend = normalizeBend(pitchValue);
-        const auto bendInCents = normalizedBend > 0 ? normalizedBend * region->bendUp : -normalizedBend * region->bendDown;
+        const auto bendInCents = normalizedBend > 0.0f ? normalizedBend * region->bendUp : -normalizedBend * region->bendDown;
         return centsFactor(bendInCents);
     });
-    pitchBendEnvelope.reset(midiState.getPitchBend());
+    pitchBendEnvelope.reset(static_cast<float>(midiState.getPitchBend()));
 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
@@ -209,7 +209,7 @@ void sfz::Voice::registerPitchWheel(int delay, int pitch) noexcept
     if (state == State::idle)
         return;
 
-    pitchBendEnvelope.registerEvent(delay, pitch);
+    pitchBendEnvelope.registerEvent(delay, static_cast<float>(pitch));
 }
 
 void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
@@ -246,13 +246,13 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     buffer.fill(0.0f);
 
     if (state == State::idle || region == nullptr) {
-        powerHistory.push(0.0);
+        powerHistory.push(0.0f);
         return;
     }
 
-    auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
+    const auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
-    initialDelay -= delay;
+    initialDelay -= static_cast<int>(delay);
 
     if (region->isGenerator())
         fillWithGenerator(delayed_buffer);

@@ -68,6 +68,21 @@ public:
         bytes.fetch_sub(size);
     }
 
+    void bufferDeleted(size_t size)
+    {
+        bufferDeleted(static_cast<int>(size));
+    }
+
+    void bufferResized(size_t oldSize, size_t newSize)
+    {
+        bufferResized(static_cast<int>(oldSize), static_cast<int>(newSize));
+    }
+
+    void newBuffer(size_t size)
+    {
+        newBuffer(static_cast<int>(size));
+    }
+
     int getNumBuffers() { return numBuffers; }
     int getTotalBytes() { return bytes; }
 private:
@@ -165,7 +180,7 @@ public:
      */
     void clear()
     {
-        counter().bufferResized(largerSize * sizeof(value_type), 0);
+        counter().bufferResized(largerSize * sizeof(value_type), static_cast<size_t>(0));
         largerSize = 0;
         alignedSize = 0;
         std::free(paddedData);
@@ -235,7 +250,7 @@ public:
     //     return *this;
     // }
 
-    Type& operator[](int idx) { return *(normalData + idx); }
+    Type& operator[](size_t idx) { return *(normalData + idx); }
     constexpr pointer data() const noexcept { return normalData; }
     constexpr size_type size() const noexcept { return alignedSize; }
     constexpr bool empty() const noexcept { return alignedSize == 0; }

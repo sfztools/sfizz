@@ -33,7 +33,7 @@ using namespace Catch::literals;
 constexpr int smallBufferSize { 3 };
 constexpr int bigBufferSize { 4095 };
 constexpr int medBufferSize { 127 };
-constexpr double fillValue { 1.3 };
+constexpr float fillValue { 1.3f };
 
 template <class Type>
 inline bool approxEqualMargin(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
@@ -334,7 +334,7 @@ TEST_CASE("[Helpers] Interleaved write SIMD vs Scalar")
     std::array<float, medBufferSize * 2> outputScalar;
     std::array<float, medBufferSize * 2> outputSIMD;
     std::iota(leftInput.begin(), leftInput.end(), 0.0f);
-    std::iota(rightInput.begin(), rightInput.end(), medBufferSize);
+    std::iota(rightInput.begin(), rightInput.end(), static_cast<float>(medBufferSize));
     sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(outputScalar));
     sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(outputSIMD));
     REQUIRE(outputScalar == outputSIMD);
@@ -414,7 +414,7 @@ TEST_CASE("[Helpers] Gain, spans and inplace (SIMD)")
 
 TEST_CASE("[Helpers] SFZ looping index")
 {
-    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
     std::array<int, 6> indices;
     std::array<float, 6> leftCoeffs;
     std::array<float, 6> rightCoeffs;
@@ -429,7 +429,7 @@ TEST_CASE("[Helpers] SFZ looping index")
 
 TEST_CASE("[Helpers] SFZ looping index (SIMD)")
 {
-    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
     std::array<int, 6> indices;
     std::array<float, 6> leftCoeffs;
     std::array<float, 6> rightCoeffs;
@@ -458,13 +458,13 @@ TEST_CASE("[Helpers] SFZ looping index (SIMD)")
 //     sfz::loopingSFZIndex<float, false>(jumps, absl::MakeSpan(leftCoeffs), absl::MakeSpan(rightCoeffs), absl::MakeSpan(indices), 1.0f, medBufferSize, 1);
 //     sfz::loopingSFZIndex<float, true>(jumps, absl::MakeSpan(leftCoeffsSIMD), absl::MakeSpan(rightCoeffsSIMD), absl::MakeSpan(indicesSIMD), 1.0f, medBufferSize, 1);
 //     for (int i = 0; i < bigBufferSize; ++i)
-//         REQUIRE( ((static_cast<float>(indices[i]) + rightCoeffs[i] == Approx(static_cast<float>(indicesSIMD[i]) + rightCoeffsSIMD[i]).margin(1e-2)) 
+//         REQUIRE( ((static_cast<float>(indices[i]) + rightCoeffs[i] == Approx(static_cast<float>(indicesSIMD[i]) + rightCoeffsSIMD[i]).margin(1e-2))
 //                 || (static_cast<float>(indices[i]) + rightCoeffs[i] == Approx(static_cast<float>(indicesSIMD[i]) + rightCoeffsSIMD[i] - static_cast<float>(medBufferSize)).margin(2e-2))) );
 // }
 
 TEST_CASE("[Helpers] SFZ saturating index")
 {
-    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
     std::array<int, 6> indices;
     std::array<float, 6> leftCoeffs;
     std::array<float, 6> rightCoeffs;
@@ -479,7 +479,7 @@ TEST_CASE("[Helpers] SFZ saturating index")
 
 TEST_CASE("[Helpers] SFZ saturating index (SIMD)")
 {
-    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
+    std::array<float, 6> jumps { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
     std::array<int, 6> indices;
     std::array<float, 6> leftCoeffs;
     std::array<float, 6> rightCoeffs;
@@ -558,7 +558,7 @@ TEST_CASE("[Helpers] Multiplicative Ramp")
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v * v, v * v * v, v * v * v * v, v * v * v * v * v, v * v * v * v * v * v };
     sfz::multiplicativeRamp<float, false>(absl::MakeSpan(output), start, v);
-    REQUIRE(output == expected);
+    REQUIRE(approxEqual<float>(output, expected));
 }
 
 TEST_CASE("[Helpers] Multiplicative Ramp (SIMD)")
@@ -568,7 +568,7 @@ TEST_CASE("[Helpers] Multiplicative Ramp (SIMD)")
     std::array<float, 6> output;
     std::array<float, 6> expected { v, v * v, v * v * v, v * v * v * v, v * v * v * v * v, v * v * v * v * v * v };
     sfz::multiplicativeRamp<float, true>(absl::MakeSpan(output), start, v);
-    REQUIRE(output == expected);
+    REQUIRE(approxEqual<float>(output, expected));
 }
 
 TEST_CASE("[Helpers] Multiplicative Ramp (SIMD vs scalar)")
@@ -595,7 +595,7 @@ TEST_CASE("[Helpers] Add")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> expected { 2.0, 3.0, 4.0, 5.0, 6.0 };
+    std::array<float, 5> expected { 2.0f, 3.0f, 4.0f, 5.0f, 6.0f };
     sfz::add<float, false>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
@@ -604,7 +604,7 @@ TEST_CASE("[Helpers] Add (SIMD)")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> expected { 2.0, 3.0, 4.0, 5.0, 6.0 };
+    std::array<float, 5> expected { 2.0f, 3.0f, 4.0f, 5.0f, 6.0f };
     sfz::add<float, true>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
@@ -614,9 +614,9 @@ TEST_CASE("[Helpers] Add (SIMD vs scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    absl::c_iota(input, 0.0);
-    absl::c_fill(outputScalar, 0.0);
-    absl::c_fill(outputSIMD, 0.0);
+    absl::c_iota(input, 0.0f);
+    absl::c_fill(outputScalar, 0.0f);
+    absl::c_fill(outputSIMD, 0.0f);
 
     sfz::add<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::add<float, true>(input, absl::MakeSpan(outputSIMD));
@@ -627,7 +627,7 @@ TEST_CASE("[Helpers] Subtract")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> expected { 0.0, -1.0, -2.0, -3.0, -4.0 };
+    std::array<float, 5> expected { 0.0f, -1.0f, -2.0f, -3.0f, -4.0f };
     sfz::subtract<float, false>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
@@ -635,7 +635,7 @@ TEST_CASE("[Helpers] Subtract")
 TEST_CASE("[Helpers] Subtract 2")
 {
     std::array<float, 5> output { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::array<float, 5> expected { 0.0, 1.0, 2.0, 3.0, 4.0 };
+    std::array<float, 5> expected { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f };
     sfz::subtract<float, false>(1.0f, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
@@ -645,7 +645,7 @@ TEST_CASE("[Helpers] Subtract (SIMD)")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> expected { 0.0, -1.0, -2.0, -3.0, -4.0 };
+    std::array<float, 5> expected { 0.0f, -1.0f, -2.0f, -3.0f, -4.0f };
     sfz::subtract<float, true>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
@@ -655,9 +655,9 @@ TEST_CASE("[Helpers] Subtract (SIMD vs scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    absl::c_iota(input, 0.0);
-    absl::c_fill(outputScalar, 0.0);
-    absl::c_fill(outputSIMD, 0.0);
+    absl::c_iota(input, 0.0f);
+    absl::c_fill(outputScalar, 0.0f);
+    absl::c_fill(outputSIMD, 0.0f);
 
     sfz::subtract<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::subtract<float, true>(input, absl::MakeSpan(outputSIMD));
@@ -668,8 +668,8 @@ TEST_CASE("[Helpers] Subtract 2 (SIMD vs scalar)")
 {
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    absl::c_iota(outputScalar, 0.0);
-    absl::c_iota(outputSIMD, 0.0);
+    absl::c_iota(outputScalar, 0.0f);
+    absl::c_iota(outputSIMD, 0.0f);
 
     sfz::subtract<float, false>(1.2f, absl::MakeSpan(outputScalar));
     sfz::subtract<float, true>(1.2f, absl::MakeSpan(outputSIMD));
@@ -697,9 +697,9 @@ TEST_CASE("[Helpers] copy (SIMD vs scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    absl::c_iota(input, 0.0);
-    absl::c_fill(outputScalar, 0.0);
-    absl::c_fill(outputSIMD, 0.0);
+    absl::c_iota(input, 0.0f);
+    absl::c_fill(outputScalar, 0.0f);
+    absl::c_fill(outputSIMD, 0.0f);
 
     sfz::add<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::add<float, true>(input, absl::MakeSpan(outputSIMD));
@@ -716,7 +716,7 @@ TEST_CASE("[Helpers] Mean")
 TEST_CASE("[Helpers] Mean (SIMD vs scalar)")
 {
     std::vector<float> input(bigBufferSize);
-    absl::c_iota(input, 0.0);
+    absl::c_iota(input, 0.0f);
     REQUIRE(sfz::mean<float, false>(input) == Approx(sfz::mean<float, true>(input)).margin(0.001));
 }
 
@@ -730,14 +730,14 @@ TEST_CASE("[Helpers] Mean Squared")
 TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
 {
     std::vector<float> input(medBufferSize);
-    absl::c_iota(input, 0.0);
+    absl::c_iota(input, 0.0f);
     REQUIRE(sfz::meanSquared<float, false>(input) == sfz::meanSquared<float, true>(input));
 }
 
 TEST_CASE("[Helpers] Cumulative sum ")
 {
-    std::array<float, 6> input { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0 6.5 8.1
-    std::array<float, 6> output; 
+    std::array<float, 6> input { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
+    std::array<float, 6> output;
     std::array<float, 6> expected { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
     sfz::cumsum<float, false>(input, absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -748,7 +748,7 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    sfz::linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
+    sfz::linearRamp<float>(absl::MakeSpan(input), 0.0f, 0.1f);
     sfz::cumsum<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
@@ -757,7 +757,7 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
 TEST_CASE("[Helpers] Diff ")
 {
     std::array<float, 6> input { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
-    std::array<float, 6> output; 
+    std::array<float, 6> output;
     std::array<float, 6> expected { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f };
     sfz::diff<float, false>(input, absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -768,7 +768,7 @@ TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    sfz::linearRamp<float>(absl::MakeSpan(input), 0.0, 0.1);
+    sfz::linearRamp<float>(absl::MakeSpan(input), 0.0f, 0.1f);
     sfz::diff<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::diff<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));

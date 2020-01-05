@@ -61,6 +61,15 @@ TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
     REQUIRE(synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain);
 }
 
+TEST_CASE("[Files] (regions_bad.sfz)")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_bad.sfz");
+    REQUIRE(synth.getNumRegions() == 2);
+    REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
+    REQUIRE(synth.getRegionView(1)->sample == "dummy.wav");
+}
+
 TEST_CASE("[Files] Local include")
 {
     sfz::Synth synth;

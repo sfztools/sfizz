@@ -45,8 +45,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/time.h>
 
 #define DEFAULT_SFZ_FILE "/home/paul/Documents/AVL_Percussions/AVL_Drumkits_Percussion-1.0-Alt.sfz"
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
@@ -414,7 +412,7 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self)
     lv2_atom_forge_key(&self->forge, self->patch_property_uri);
     lv2_atom_forge_urid(&self->forge, self->sfizz_sfz_file_uri);
     lv2_atom_forge_key(&self->forge, self->patch_value_uri);
-    lv2_atom_forge_path(&self->forge, self->sfz_file_path, strlen(self->sfz_file_path));
+    lv2_atom_forge_path(&self->forge, self->sfz_file_path, (uint32_t)strlen(self->sfz_file_path));
     lv2_atom_forge_pop(&self->forge, &frame);
 }
 
@@ -463,7 +461,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
 
         const uint32_t original_atom_size = lv2_atom_total_size((const LV2_Atom *)atom);
         const uint32_t null_terminated_atom_size = original_atom_size + 1;
-        char atom_buffer[null_terminated_atom_size];
+        char atom_buffer[MAX_PATH_SIZE];
         memcpy(&atom_buffer, atom, original_atom_size);
         atom_buffer[original_atom_size] = 0; // Null terminate the string for safety
         LV2_Atom *sfz_file_path = (LV2_Atom *)&atom_buffer;

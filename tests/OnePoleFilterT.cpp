@@ -73,7 +73,7 @@ void testLowpass(const fs::path& inputNumpyFile, const fs::path& outputNumpyFile
     REQUIRE(approxEqual(outputData, expectedData));
 
     filter.reset();
-    std::fill(outputData.begin(), outputData.end(), 0.0);
+    std::fill(outputData.begin(), outputData.end(), 0.0f);
     std::vector<Type> gains(size);
     std::fill(gains.begin(), gains.end(), gain);
     filter.processLowpassVariableGain(inputData, absl::MakeSpan(outputData), gains);
@@ -108,7 +108,7 @@ void testHighpass(const fs::path& inputNumpyFile, const fs::path& outputNumpyFil
     REQUIRE(approxEqual(outputData, expectedData));
 
     filter.reset();
-    std::fill(outputData.begin(), outputData.end(), 0.0);
+    std::fill(outputData.begin(), outputData.end(), 0.0f);
     std::vector<Type> gains(size);
     std::fill(gains.begin(), gains.end(), gain);
     filter.processHighpassVariableGain(inputData, absl::MakeSpan(outputData), gains);

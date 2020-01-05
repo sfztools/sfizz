@@ -26,7 +26,7 @@ public:
      *
      * @param size
      */
-	void resize(int size)
+	void resize(size_t size)
 	{
 		buffer.resize(size);
 		fill<ValueType>(absl::MakeSpan(buffer), 0.0);

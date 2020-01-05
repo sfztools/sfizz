@@ -22,8 +22,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "ADSREnvelope.h"
 #include "Config.h"
+#include "ADSREnvelope.h"
 #include "EventEnvelopes.h"
 #include "HistoricalBuffer.h"
 #include "Region.h"

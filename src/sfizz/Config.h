@@ -22,6 +22,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#ifdef _WIN32
+// There's a spurious min/max function in MSVC that makes everything go badly...
+#define NOMINMAX
+#define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
+#endif
+#include <cstddef>
 
 namespace sfz {
 enum class Oversampling: int {
@@ -36,7 +42,7 @@ namespace config {
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
     constexpr int preloadSize { 8192 };
-    constexpr int numChannels { 2 };
+    constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
     constexpr int maxVoices { 256 };
@@ -50,12 +56,12 @@ namespace config {
     constexpr int halfCCThreshold { 64 };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };
-    constexpr float fastReleaseDuration { 0.01 };
+    constexpr float fastReleaseDuration { 0.01f };
     constexpr char defineCharacter { '$' };
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
-    constexpr unsigned powerHistoryLength { 16 };
-    constexpr float voiceStealingThreshold { 0.00001 };
+    constexpr size_t powerHistoryLength { 16 };
+    constexpr float voiceStealingThreshold { 0.00001f };
     constexpr int numCCs { 143 };
     constexpr int chunkSize { 1024 };
 } // namespace config

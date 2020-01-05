@@ -70,7 +70,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
             return start;
 
         currentState = State::Attack;
-        step = (1.0 - currentValue) / (attack > 0 ? attack : 1);
+        step = (static_cast<Type>(1.0) - currentValue) / (attack > 0 ? attack : 1);
         [[fallthrough]];
     case State::Attack:
         if (attack-- > 0) {

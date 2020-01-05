@@ -20,11 +20,11 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include "SIMDHelpers.h"
+#include "Buffer.h"
 #include <benchmark/benchmark.h>
 #include <sndfile.hh>
 #include "ghc/filesystem.hpp"
-#include "Buffer.h"
-#include "SIMDHelpers.h"
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 #include "AudioBuffer.h"

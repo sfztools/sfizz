@@ -21,10 +21,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <absl/algorithm/container.h>
-#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 
 constexpr int bigNumber { 2399132 };
@@ -33,8 +33,8 @@ class IterOffset : public benchmark::Fixture {
 public:
   void SetUp(const ::benchmark::State& state [[maybe_unused]]) {
     std::random_device rd { };
-    std::mt19937 gen { rd() };    
-    std::uniform_real_distribution<float> dist { 0.001, 1 };
+    std::mt19937 gen { rd() };
+    std::uniform_real_distribution<float> dist { 0.001f, 1.0f };
     std::uniform_int_distribution<int> jumpDist { 0, 3 };
     source = std::vector<float>(bigNumber);
     result.resize(state.range(0));
@@ -57,7 +57,7 @@ public:
 
 BENCHMARK_DEFINE_F(IterOffset, Pointers)(benchmark::State& state) {
     for (auto _ : state)
-    {   
+    {
         sfz::diff<int>(offsets, absl::MakeSpan(jumps));
         auto jump = jumps.begin();
         auto in = source.begin();
@@ -71,7 +71,7 @@ BENCHMARK_DEFINE_F(IterOffset, Pointers)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(IterOffset, Offsets)(benchmark::State& state) {
     for (auto _ : state)
-    {   
+    {
         auto offset = offsets.begin();
         auto out = result.begin();
         while (offset < offsets.end())

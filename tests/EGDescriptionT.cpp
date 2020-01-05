@@ -31,7 +31,7 @@ TEST_CASE("[EGDescription] Attack range")
     sfz::EGDescription eg;
     sfz::SfzCCArray ccArray { 0 };
     eg.attack = 1;
-    eg.vel2attack = -1.27;
+    eg.vel2attack = -1.27f;
     eg.ccAttack = { 63, 1.27f };
     REQUIRE( eg.getAttack(ccArray, 0) == 1.0f );
     REQUIRE( eg.getAttack(ccArray, 127) == 0.0f );
@@ -47,7 +47,7 @@ TEST_CASE("[EGDescription] Delay range")
     sfz::EGDescription eg;
     sfz::SfzCCArray ccArray { 0 };
     eg.delay = 1;
-    eg.vel2delay = -1.27;
+    eg.vel2delay = -1.27f;
     eg.ccDelay = { 63, 1.27f };
     REQUIRE( eg.getDelay(ccArray, 0) == 1.0f );
     REQUIRE( eg.getDelay(ccArray, 127) == 0.0f );
@@ -79,7 +79,7 @@ TEST_CASE("[EGDescription] Release range")
     sfz::EGDescription eg;
     sfz::SfzCCArray ccArray { 0 };
     eg.release = 1;
-    eg.vel2release = -1.27;
+    eg.vel2release = -1.27f;
     eg.ccRelease = { 63, 1.27f };
     REQUIRE( eg.getRelease(ccArray, 0) == 1.0f );
     REQUIRE( eg.getRelease(ccArray, 127) == 0.0f );
@@ -95,7 +95,7 @@ TEST_CASE("[EGDescription] Hold range")
     sfz::EGDescription eg;
     sfz::SfzCCArray ccArray { 0 };
     eg.hold = 1;
-    eg.vel2hold = -1.27;
+    eg.vel2hold = -1.27f;
     eg.ccHold = { 63, 1.27f };
     REQUIRE( eg.getHold(ccArray, 0) == 1.0f );
     REQUIRE( eg.getHold(ccArray, 127) == 0.0f );

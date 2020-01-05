@@ -20,23 +20,27 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include "Buffer.h"
 #include <benchmark/benchmark.h>
 #include <sndfile.hh>
 #define DR_FLAC_IMPLEMENTATION
 #include "dr_flac.h"
 #include "ghc/filesystem.hpp"
-#include "Buffer.h"
 #include <memory>
 #ifndef NDEBUG
 #include <iostream>
 #endif
+#include "libnyquist/Decoders.h"
 
 class FileFixture : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State& state) {
-        rootPath1 = getPath() / "sample1.flac";
-        rootPath2 = getPath() / "sample2.flac";
-        if (!ghc::filesystem::exists(rootPath1) || !ghc::filesystem::exists(rootPath2)) {
+        filePath1 = getPath() / "sample1.flac";
+        filePath2 = getPath() / "sample2.flac";
+        filePath3 = getPath() / "sample3.flac";
+        if (    !ghc::filesystem::exists(filePath1) 
+            ||  !ghc::filesystem::exists(filePath2)
+            ||  !ghc::filesystem::exists(filePath3) ) {
         #ifndef NDEBUG
             std::cerr << "Can't find path" << '\n';
         #endif
@@ -62,15 +66,16 @@ public:
 
     std::unique_ptr<sfz::Buffer<float>> buffer;
 
-    ghc::filesystem::path rootPath1;
-    ghc::filesystem::path rootPath2;
+    ghc::filesystem::path filePath1;
+    ghc::filesystem::path filePath2;
+    ghc::filesystem::path filePath3;
 };
 
 
 BENCHMARK_DEFINE_F(FileFixture, SndFile)(benchmark::State& state) {
     for (auto _ : state)
     {
-        SndfileHandle sndfile(rootPath1.c_str());
+        SndfileHandle sndfile(filePath1.c_str());
         buffer = std::make_unique<sfz::Buffer<float>>(sndfile.channels() * sndfile.frames());
         sndfile.readf(buffer->data(), sndfile.frames());
     }
@@ -79,12 +84,23 @@ BENCHMARK_DEFINE_F(FileFixture, SndFile)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(FileFixture, DrFlac)(benchmark::State& state) {
     for (auto _ : state)
     {
-        auto* flac = drflac_open_file(rootPath2.c_str(), nullptr);
+        auto* flac = drflac_open_file(filePath2.c_str(), nullptr);
         buffer = std::make_unique<sfz::Buffer<float>>(flac->channels * flac->totalPCMFrameCount);
         drflac_read_pcm_frames_f32(flac, flac->totalPCMFrameCount, buffer->data());
     }
 }
 
+BENCHMARK_DEFINE_F(FileFixture, LibNyquist)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        nqr::AudioData data;
+        nqr::NyquistIO loader;
+        loader.Load(&data, filePath3.string());
+        benchmark::DoNotOptimize(data);
+    }
+}
+
 BENCHMARK_REGISTER_F(FileFixture, SndFile);
 BENCHMARK_REGISTER_F(FileFixture, DrFlac);
+BENCHMARK_REGISTER_F(FileFixture, LibNyquist);
 BENCHMARK_MAIN();
