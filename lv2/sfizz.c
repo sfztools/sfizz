@@ -241,7 +241,7 @@ sfizz_lv2_parse_sample_rate(sfizz_plugin_t* self, const LV2_Options_Option* opt)
     }
     else
     {
-        lv2_log_warning(&self->logger, "[sfizz] Got a sample rate but could not resolve the type of the atom.");
+        lv2_log_warning(&self->logger, "[sfizz] Got a sample rate but could not resolve the type of the atom\n");
         if (self->unmap)
             lv2_log_warning(&self->logger,
                             "[sfizz] Atom URI: %s\n",
@@ -311,7 +311,7 @@ instantiate(const LV2_Descriptor *descriptor,
     // The map feature is required
     if (!self->map)
     {
-        lv2_log_error(&self->logger, "Map feature not found, aborting...\n");
+        lv2_log_error(&self->logger, "Map feature not found, aborting..\n");
         free(self);
         return NULL;
     }
@@ -319,7 +319,7 @@ instantiate(const LV2_Descriptor *descriptor,
     // The worker feature is required
     if (!self->worker)
     {
-        lv2_log_error(&self->logger, "Worker feature not found, aborting...\n");
+        lv2_log_error(&self->logger, "Worker feature not found, aborting..\n");
         free(self);
         return NULL;
     }
@@ -372,7 +372,7 @@ instantiate(const LV2_Descriptor *descriptor,
     if (!supports_bounded_block_size && !supports_fixed_block_size && !options_has_block_size)
     {
         lv2_log_error(&self->logger,
-                      "Bounded block size not supported and options gave no block size, aborting...\n");
+                      "Bounded block size not supported and options gave no block size, aborting..\n");
         free(self);
         return NULL;
     }
@@ -425,14 +425,14 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
     if (!property)
     {
         lv2_log_error(&self->logger,
-                      "[sfizz] Could not get the property from the patch object, aborting.\n");
+                      "[sfizz] Could not get the property from the patch object, aborting\n");
         return;
     }
 
     if (property->type != self->atom_urid_uri)
     {
         lv2_log_error(&self->logger,
-                      "[sfizz] Atom type was not a URID, aborting.\n");
+                      "[sfizz] Atom type was not a URID, aborting\n");
         return;
     }
 
@@ -441,7 +441,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
     lv2_atom_object_get(obj, self->patch_value_uri, &atom, 0);
     if (!atom)
     {
-        lv2_log_error(&self->logger, "[sfizz] Error retrieving the atom, aborting.\n");
+        lv2_log_error(&self->logger, "[sfizz] Error retrieving the atom, aborting\n");
         if (self->unmap)
             lv2_log_warning(&self->logger,
                             "Atom URI: %s\n",
@@ -474,7 +474,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
     }
     else
     {
-        lv2_log_warning(&self->logger, "[sfizz] Unknown or unsupported object.\n");
+        lv2_log_warning(&self->logger, "[sfizz] Unknown or unsupported object\n");
         if (self->unmap)
             lv2_log_warning(&self->logger,
                             "Object URI: %s\n",
@@ -639,7 +639,7 @@ run(LV2_Handle instance, uint32_t sample_count)
             }
             else
             {
-                lv2_log_warning(&self->logger, "[sfizz] Got an Object atom but it was not supported.\n");
+                lv2_log_warning(&self->logger, "[sfizz] Got an Object atom but it was not supported\n");
                 if (self->unmap)
                     lv2_log_warning(&self->logger,
                                     "Object URI: %s\n",
@@ -675,7 +675,7 @@ run(LV2_Handle instance, uint32_t sample_count)
                                          &atom) == LV2_WORKER_SUCCESS))
         {
             self->changing_state = false;
-            lv2_log_error(&self->logger, "[sfizz] There was an issue sending a notice to check the modification of the SFZ file to the background worker");
+            lv2_log_error(&self->logger, "[sfizz] There was an issue sending a notice to check the modification of the SFZ file to the background worker\n");
         }
 #ifndef NDEBUG
         atom.type = self->sfizz_log_status_uri;
@@ -683,7 +683,7 @@ run(LV2_Handle instance, uint32_t sample_count)
                                          lv2_atom_total_size((LV2_Atom *)&atom),
                                          &atom) == LV2_WORKER_SUCCESS))
         {
-            lv2_log_error(&self->logger, "[sfizz] There was an issue sending a logging message to the background worker");
+            lv2_log_error(&self->logger, "[sfizz] There was an issue sending a logging message to the background worker\n");
         }
 #endif
         self->sample_counter -= LOG_SAMPLE_COUNT;
@@ -899,7 +899,7 @@ work(LV2_Handle instance,
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     if (!data)
     {
-        lv2_log_error(&self->logger, "[sfizz] Ignoring empty data in the worker thread.\n");
+        lv2_log_error(&self->logger, "[sfizz] Ignoring empty data in the worker thread\n");
         return LV2_WORKER_ERR_UNKNOWN;
     }
 
@@ -913,7 +913,7 @@ work(LV2_Handle instance,
         }
         else
         {
-            lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded.\n", sfz_file_path);
+            lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
     }
     else if (atom->type == self->sfizz_num_voices_uri)
@@ -952,20 +952,20 @@ work(LV2_Handle instance,
     {
         if (!self->changing_state && sfizz_should_reload_file(self->synth))
         {
-            lv2_log_note(&self->logger, "[sfizz] File %s seems to have been updated, reloading.\n", self->sfz_file_path);
+            lv2_log_note(&self->logger, "[sfizz] File %s seems to have been updated, reloading\n", self->sfz_file_path);
             if (sfizz_load_file(self->synth, self->sfz_file_path))
             {
                 sfizz_lv2_update_file_info(self, self->sfz_file_path);
             }
             else
             {
-                lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded.\n", self->sfz_file_path);
+                lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
         }
     }
     else
     {
-        lv2_log_error(&self->logger, "[sfizz] Got an unknown atom in work.\n");
+        lv2_log_error(&self->logger, "[sfizz] Got an unknown atom in work\n");
         if (self->unmap)
             lv2_log_error(&self->logger,
                           "URI: %s\n",
@@ -1016,7 +1016,7 @@ work_response(LV2_Handle instance,
     }
     else
     {
-        lv2_log_error(&self->logger, "[sfizz] Got an unknown atom in work response.\n");
+        lv2_log_error(&self->logger, "[sfizz] Got an unknown atom in work response\n");
         if (self->unmap)
             lv2_log_error(&self->logger,
                           "URI: %s\n",
