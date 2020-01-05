@@ -32,7 +32,6 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
 #include "absl/strings/string_view.h"
-// #include "moodycamel/concurrentqueue.h"
 #include "atomic_queue/atomic_queue.h"
 #include <chrono>
 #include <thread>
@@ -218,8 +217,6 @@ private:
     void clearingThread();
     void tryToClearPromises();
 
-    // moodycamel::ConcurrentQueue<FilePromisePtr> promiseQueue { config::maxVoices };
-    // moodycamel::ConcurrentQueue<FilePromisePtr> filledPromiseQueue { config::maxVoices };
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
     uint32_t preloadSize { config::preloadSize };
