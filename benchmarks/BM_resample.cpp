@@ -170,7 +170,7 @@ std::unique_ptr<sfz::AudioBuffer<T>> upsample2x(const sfz::AudioBuffer<T>& buffe
 {
     // auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
     auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 2);
-    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
+    for (size_t channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
         upsample2xStage<SIMD>(buffer.getConstSpan(channelIdx), outputBuffer->getSpan(channelIdx));
     }
     return outputBuffer;
@@ -181,7 +181,7 @@ std::unique_ptr<sfz::AudioBuffer<T>> upsample4x(const sfz::AudioBuffer<T>& buffe
 {
     auto tempBuffer = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
     auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 4);
-    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
+    for (size_t channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
         upsample2xStage<SIMD>(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer));
         upsample4xStage<SIMD>(absl::MakeConstSpan(*tempBuffer), outputBuffer->getSpan(channelIdx));
     }
@@ -194,7 +194,7 @@ std::unique_ptr<sfz::AudioBuffer<T>> upsample8x(const sfz::AudioBuffer<T>& buffe
     auto tempBuffer2x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 2);
     auto tempBuffer4x = std::make_unique<sfz::Buffer<T>>(buffer.getNumFrames() * 4);
     auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(buffer.getNumChannels(), buffer.getNumFrames() * 8);
-    for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
+    for (size_t channelIdx = 0; channelIdx < buffer.getNumChannels(); channelIdx++) {
         upsample2xStage<SIMD>(buffer.getConstSpan(channelIdx), absl::MakeSpan(*tempBuffer2x));
         upsample4xStage<SIMD>(absl::MakeConstSpan(*tempBuffer2x), absl::MakeSpan(*tempBuffer4x));
         upsample8xStage<SIMD>(absl::MakeConstSpan(*tempBuffer4x), outputBuffer->getSpan(channelIdx));

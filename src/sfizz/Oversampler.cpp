@@ -104,7 +104,7 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
             upsampler.set_coefs(coeffsStage2x.data());
         break;
     case Oversampling::x1:
-        for (int i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             copy<float>(input.getConstSpan(i), output.getSpan(i));
         return;
     }
@@ -122,7 +122,7 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
         // std::cout << "Input frames: " << inputFrameCounter << "/" << numFrames << '\n';
         const auto thisChunkSize = std::min(chunkSize, numFrames - inputFrameCounter);
         const auto outputChunkSize { thisChunkSize * static_cast<int>(factor) };
-        for (int chanIdx = 0; chanIdx < numChannels; chanIdx++) {
+        for (size_t chanIdx = 0; chanIdx < numChannels; chanIdx++) {
             const auto inputChunk = input.getSpan(chanIdx).subspan(inputFrameCounter, thisChunkSize);
             const auto outputChunk = output.getSpan(chanIdx).subspan(outputFrameCounter, outputChunkSize);
             if (factor == Oversampling::x2) {
