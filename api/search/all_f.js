@@ -27,7 +27,7 @@ var searchData=
   ['sfizz_5fget_5fnum_5fcurves',['sfizz_get_num_curves',['../sfizz_8h.html#a89c9d54d7ed0fbf3d9dd36a0a5701d28',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fgroups',['sfizz_get_num_groups',['../sfizz_8h.html#a1f48f36bd8c6019a742c2f4e0bc77c30',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fmasters',['sfizz_get_num_masters',['../sfizz_8h.html#a147c6f9b27cc6668d79f7294d5a77971',1,'sfizz.h']]],
-  ['sfizz_5fget_5fnum_5fpreloaded_5fsamples',['sfizz_get_num_preloaded_samples',['../sfizz_8h.html#a25b3debbcdf1e9babf170b59fdc850d9',1,'sfizz.h']]],
+  ['sfizz_5fget_5fnum_5fpreloaded_5fsamples',['sfizz_get_num_preloaded_samples',['../sfizz_8h.html#a2fc8bc59263cb70bdecb210e51204ff2',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fregions',['sfizz_get_num_regions',['../sfizz_8h.html#ac96835f2e4ad2f9272b75727b666ee06',1,'sfizz.h']]],
   ['sfizz_5fget_5fnum_5fvoices',['sfizz_get_num_voices',['../sfizz_8h.html#a1e3e264fba927016d4d83f50ed3eeeec',1,'sfizz.h']]],
   ['sfizz_5fget_5foversampling_5ffactor',['sfizz_get_oversampling_factor',['../sfizz_8h.html#a0c1b726f791047e32a94334301f40ebb',1,'sfizz.h']]],
