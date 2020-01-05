@@ -119,13 +119,25 @@ add_executable(bm_envelopes BM_envelopes.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_envelopes PRIVATE benchmark absl::span absl::algorithm)
 target_include_directories(bm_envelopes PRIVATE ../src/sfizz ../src/external)
 
+include(FetchContent)
+FetchContent_Declare(
+  libnyquist
+  GIT_REPOSITORY https://github.com/paulfd/libnyquist
+)
+
+FetchContent_GetProperties(libnyquist)
+if(NOT libnyquist_POPULATED)
+  FetchContent_Populate(libnyquist)
+  add_subdirectory(${libnyquist_SOURCE_DIR} ${libnyquist_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
 add_executable(bm_wavfile BM_wavfile.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_wavfile PRIVATE benchmark absl::span absl::algorithm)
+target_link_libraries(bm_wavfile PRIVATE benchmark absl::span absl::algorithm libnyquist)
 sfizz_link_libsndfile(bm_wavfile)
 target_include_directories(bm_wavfile PRIVATE ../src/sfizz ../src/external)
 
 add_executable(bm_flacfile BM_flacfile.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_flacfile PRIVATE benchmark absl::span absl::algorithm)
+target_link_libraries(bm_flacfile PRIVATE benchmark absl::span absl::algorithm libnyquist)
 sfizz_link_libsndfile(bm_flacfile)
 target_include_directories(bm_flacfile PRIVATE ../src/sfizz ../src/external)
 
@@ -172,5 +184,7 @@ add_dependencies(sfizz_benchmarks
 
 file(COPY "sample1.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
 file(COPY "sample2.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample3.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
 file(COPY "sample1.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
 file(COPY "sample2.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample3.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
