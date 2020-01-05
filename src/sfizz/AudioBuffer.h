@@ -70,7 +70,7 @@ public:
         : numChannels(numChannels)
         , numFrames(numFrames)
     {
-        for (auto i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             buffers[i] = std::make_unique<buffer_type>(numFrames);
     }
 
@@ -85,7 +85,7 @@ public:
     {
         bool returnedOK = true;
 
-        for (auto i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             returnedOK &= buffers[i]->resize(newSize);
 
         if (returnedOK)

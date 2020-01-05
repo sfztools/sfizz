@@ -107,7 +107,7 @@ public:
         , numChannels(numChannels)
     {
         ASSERT(numChannels <= MaxChannels);
-        for (auto i = 0; i < numChannels; ++i)
+        for (size_t i = 0; i < numChannels; ++i)
             this->spans[i] = spans[i] + offset;
     }
 
@@ -164,7 +164,7 @@ public:
      * @tparam Alignment the alignment block size for the platform
      * @param audioBuffer the source AudioBuffer.
      */
-    template <class U, int N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>, typename = std::enable_if_t<std::is_const<U>::value, int>>
+    template <class U, size_t N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>, typename = std::enable_if_t<std::is_const<U>::value, int>>
     AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
@@ -185,7 +185,7 @@ public:
      * @tparam Alignment the alignment block size for the platform
      * @param audioBuffer the source AudioBuffer.
      */
-    template <class U, int N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>>
+    template <class U, size_t N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>>
     AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
@@ -200,7 +200,7 @@ public:
      *
      * @param other the other AudioSpan
      */
-    template <class U, int N, typename = std::enable_if<N <= MaxChannels>>
+    template <class U, size_t N, typename = std::enable_if<N <= MaxChannels>>
     AudioSpan(const AudioSpan<U, N>& other)
         : numFrames(other.getNumFrames())
         , numChannels(other.getNumChannels())
@@ -312,7 +312,7 @@ public:
      *
      * @param other the other AudioSpan
      */
-    template <class U, int N, typename = std::enable_if<N <= MaxChannels>>
+    template <class U, size_t N, typename = std::enable_if<N <= MaxChannels>>
     void add(AudioSpan<U, N>& other)
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
@@ -329,7 +329,7 @@ public:
      *
      * @param other the other AudioSpan
      */
-    template <class U, int N, typename = std::enable_if<N <= MaxChannels>>
+    template <class U, size_t N, typename = std::enable_if<N <= MaxChannels>>
     void copy(AudioSpan<U, N>& other)
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
