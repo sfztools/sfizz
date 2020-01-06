@@ -7,3 +7,11 @@ set (LV2PLUGIN_COMMENT         "SFZ sampler")
 set (LV2PLUGIN_URI             "http://sfztools.github.io/sfizz")
 set (LV2PLUGIN_AUTHOR          "Paul Ferrand")
 set (LV2PLUGIN_SPDX_LICENSE_ID "ISC")
+
+if (WIN32)
+    set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lv2" CACHE STRING
+    "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lv2}]")
+else()
+    set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
+    "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/lv2}]")
+endif()

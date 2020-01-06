@@ -3,5 +3,5 @@
 
 <@LV2PLUGIN_URI@>
   a lv2:Plugin ;
-  lv2:binary <@CMAKE_PROJECT_NAME@.@LV2PLUGIN_EXT@> ;
-  rdfs:seeAlso <@CMAKE_PROJECT_NAME@.ttl> .
+  lv2:binary <@PROJECT_NAME@@CMAKE_SHARED_LIBRARY_SUFFIX@> ;
+  rdfs:seeAlso <@PROJECT_NAME@.ttl> .

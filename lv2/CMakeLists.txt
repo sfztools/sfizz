@@ -6,14 +6,6 @@ set (PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${PROJECT_NAME}.lv2")
 # LV2 plugin specific settings
 include (LV2Config)
 
-if (WIN32)
-    set (LV2PLUGIN_EXT "dll")
-elseif (APPLE)
-    set (LV2PLUGIN_EXT "dylib")
-else()
-    set (LV2PLUGIN_EXT "so")
-endif()
-
 # Keep non build turtle files in IDE
 set (LV2PLUGIN_TTL_SRC_FILES
     manifest.ttl.in
@@ -23,19 +15,19 @@ add_library (${LV2PLUGIN_PRJ_NAME} SHARED ${PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
 
 # Fetch required LV2 include files
-include(FetchContent)
+include (FetchContent)
 FetchContent_Declare(
-  lv2
-  GIT_REPOSITORY https://gitlab.com/lv2/lv2.git
-  GIT_TAG        v1.16.0
+    lv2
+    GIT_REPOSITORY https://gitlab.com/lv2/lv2.git
+    GIT_TAG        v1.16.0
 )
 FetchContent_GetProperties(lv2)
-if(NOT lv2_POPULATED)
-  FetchContent_Populate(lv2)
-  target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE ${lv2_SOURCE_DIR})
+if (NOT lv2_POPULATED)
+  FetchContent_Populate (lv2)
+  target_include_directories (${LV2PLUGIN_PRJ_NAME} PRIVATE ${lv2_SOURCE_DIR})
 endif()
 
-sfizz_enable_lto_if_needed(${LV2PLUGIN_PRJ_NAME})
+sfizz_enable_lto_if_needed (${LV2PLUGIN_PRJ_NAME})
 
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir
 # <build_dir>/lv2/<plugin_name>_lv2.<ext> to
