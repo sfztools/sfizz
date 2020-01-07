@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required (VERSION 3.13)
 project (sfizz VERSION 1.0.0 LANGUAGES CXX C)
 
 # External configuration CMake scripts
@@ -48,7 +48,7 @@ if (SFIZZ_TESTS)
 endif()
 
 message (STATUS "
-Project name:                  ${CMAKE_PROJECT_NAME}
+Project name:                  ${PROJECT_NAME}
 Build type:                    ${CMAKE_BUILD_TYPE}
 Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
