@@ -16,7 +16,7 @@ if (UNIX)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
     add_compile_options(-fPIC)
-    endif()
+endif()
 
 if (WIN32)
     find_package(LibSndFile REQUIRED)
