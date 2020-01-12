@@ -377,6 +377,8 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
+    const auto callbackStartTime = std::chrono::high_resolution_clock::now();
+
     buffer.fill(0.0f);
 
     resources.filePool.cleanupPromises();
@@ -397,6 +399,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     buffer.applyGain(db2mag(volume));
+
+    const auto callbackDuration = std::chrono::high_resolution_clock::now() - callbackStartTime;
+    resources.logger.logCallbackTime(callbackDuration);
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept

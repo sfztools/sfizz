@@ -6,7 +6,7 @@ namespace sfz
 {
 struct Resources
 {
-    FilePool filePool;
     Logger logger;
+    FilePool filePool { logger };
 };
 }

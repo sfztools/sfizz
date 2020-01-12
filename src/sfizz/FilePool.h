@@ -33,6 +33,7 @@
 #include <absl/types/optional.h>
 #include "absl/strings/string_view.h"
 #include "atomic_queue/atomic_queue.h"
+#include "Logger.h"
 #include <chrono>
 #include <thread>
 #include <sndfile.hh>
@@ -111,7 +112,7 @@ public:
      * This creates the background threads based on config::numBackgroundThreads
      * as well as the garbage collection thread.
      */
-    FilePool();
+    FilePool(Logger& logger);
 
     ~FilePool();
     /**
@@ -212,6 +213,7 @@ public:
      */
     void waitForBackgroundLoading() noexcept;
 private:
+    Logger& logger;
     fs::path rootDirectory;
     void loadingThread() noexcept;
     void clearingThread();

@@ -84,7 +84,8 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
     oversampler.stream(*baseBuffer, output, filledFrames);
 }
 
-sfz::FilePool::FilePool()
+sfz::FilePool::FilePool(sfz::Logger& logger)
+: logger(logger)
 {
     for (int i = 0; i < config::numBackgroundThreads; ++i)
         threadPool.emplace_back( &FilePool::loadingThread, this );
@@ -244,8 +245,9 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         threadsLoading++;
-        const auto waitDuration = std::chrono::high_resolution_clock::now() - promise->creationTime;
-        [[maybe_unused]] const auto waitDurationMillis = std::chrono::duration<double,std::milli>(waitDuration).count();
+        const auto loadStartTime = std::chrono::high_resolution_clock::now();
+        const auto waitDuration = loadStartTime - promise->creationTime;
+        logger.logFileWaitTime(waitDuration);
 
         fs::path file { rootDirectory / std::string(promise->filename) };
         SndfileHandle sndFile(file.string().c_str());
@@ -256,11 +258,12 @@ void sfz::FilePool::loadingThread() noexcept
         const auto frames = static_cast<uint32_t>(sndFile.frames());
         streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
         promise->dataReady = true;
+        const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
+        logger.logFileLoadTime(loadDuration, frames, promise->filename);
+
         threadsLoading--;
 
-        const auto duration = std::chrono::high_resolution_clock::now() - promise->creationTime;
-        [[maybe_unused]] const auto durationMillis = std::chrono::duration<double,std::milli>(duration).count();
-        // DBG("Promise filled in " << durationMillis << " ms (waiting for " << waitDurationMillis << " ms)");
+
 
         while (!filledPromiseQueue.try_push(promise)) {
             DBG("[sfizz] Error enqueuing the promise for " << promise->filename << " in the filledPromiseQueue");
@@ -361,7 +364,7 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
     while (!promiseQueue.was_empty()){
         std::this_thread::sleep_for(0.1ms);
     }
-    
+
     // Spinlocking on the threads possibly logging in the background
     while (threadsLoading > 0) {
         std::this_thread::sleep_for(0.1ms);
