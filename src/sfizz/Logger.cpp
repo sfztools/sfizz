@@ -2,6 +2,7 @@
 #include "absl/algorithm/container.h"
 #include "ghc/fs_std.hpp"
 #include <iostream>
+#include <fstream>
 #include <cmath>
 
 using namespace std::chrono_literals;
@@ -19,13 +20,16 @@ void printStatistics(std::vector<T>& data)
     const auto sum = absl::c_accumulate(data, 0.0);
     const auto size = static_cast<T>(data.size());
     const auto mean = sum / size;
-    std::vector<T> squares;
-    absl::c_transform(data, std::back_inserter(squares), [mean](T x) { return x * x; });
-    const auto sumOfSquares = absl::c_accumulate(squares, 0.0);
-    const auto variance = sumOfSquares / (size - 1.0) - (mean * mean) / size / (size - 1.0);
     std::cout << "Mean: " << mean << '\n';
-    std::cout << "Variance: " << variance << '\n';
-    std::cout << "(Biased) deviation: " << std::sqrt(variance) << '\n';
+    if (data.size() > 1) {
+        std::vector<T> squares;
+        absl::c_transform(data, std::back_inserter(squares), [mean](T x) { return x * x; });
+        const auto sumOfSquares = absl::c_accumulate(squares, 0.0);
+        const auto variance = sumOfSquares / (size - 1.0) - (mean * mean) / size / (size - 1.0);
+        std::cout << "Variance: " << variance << '\n';
+        std::cout << "(Biased) deviation: " << std::sqrt(variance) << '\n';
+    }
+
     std::cout << "Maximum values:";
     for (auto& value: maxValues)
         std::cout << value << ' ';
@@ -37,66 +41,49 @@ sfz::Logger::~Logger()
     keepRunning.clear();
     loggingThread.join();
 
-    if (!loadTimes.empty()) {
-        std::vector<double> loadTimesStats;
-        std::vector<double> normLoadTimesStats;
-        absl::c_transform(loadTimes, std::back_inserter(loadTimesStats), [](auto x) { return x.value.count(); });
-        absl::c_transform(loadTimes, std::back_inserter(normLoadTimesStats), [](auto x) {
-            if (x.fileSize == 0)
-                return x.value.count();
-
-            return x.value.count() / static_cast<double>(x.fileSize);
-        });
-        std::cout << "\nFile load times" << '\n';
-        printStatistics(loadTimesStats);
-        std::cout << "\nNormalized file load times (per sample)" << '\n';
-        printStatistics(normLoadTimesStats);
-    }
-
-    if (!waitTimes.empty()) {
-        std::vector<double> waitTimesStats;
-        absl::c_transform(waitTimes, std::back_inserter(waitTimesStats), [](auto x) { return x.count(); });
-        std::cout << "\nWaiting times" << '\n';
-        printStatistics(waitTimesStats);
+    if (!fileTimes.empty()) {
+        fs::path loadLogPath{ fs::current_path() / "file_times.csv" };
+        std::ofstream loadLogFile { loadLogPath.string() };
+        loadLogFile << "WaitDuration,LoadDuration,FileSize,FileName" << '\n';
+        for (auto& time: fileTimes)
+            loadLogFile << time.waitDuration.count() << ','
+                        << time.loadDuration.count() << ','
+                        << time.fileSize << ','
+                        << time.filename << '\n';
     }
 
     if (!callbackTimes.empty()) {
-        std::vector<double> callbackTimesStats;
-        absl::c_transform(callbackTimes, std::back_inserter(callbackTimesStats), [](auto x) { return x.count(); });
-        std::cout << "\nCallback times" << '\n';
-        printStatistics(callbackTimesStats);
+        fs::path callbackLogPath{ fs::current_path() / "callback_times.csv" };
+        std::ofstream callbackLogFile { callbackLogPath.string() };
+        callbackLogFile << "Duration,NumVoices,NumSamples" << '\n';
+        for (auto& time: callbackTimes)
+            callbackLogFile << time.duration.count() << ','
+                            << time.numVoices << ','
+                            << time.numSamples << '\n';
     }
 }
 
 
-void sfz::Logger::logCallbackTime(std::chrono::duration<double> value)
+void sfz::Logger::logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples)
 {
-    callbackTimeQueue.try_push(value);
+    callbackTimeQueue.try_push<CallbackTime>({ duration, numVoices, numSamples });
 }
-void sfz::Logger::logFileWaitTime(std::chrono::duration<double> value)
+
+void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename)
 {
-    fileWaitTimeQueue.try_push(value);
-}
-void sfz::Logger::logFileLoadTime(std::chrono::duration<double> value, uint32_t fileSize, absl::string_view filename)
-{
-    FileLoadTime toPush { value, fileSize, filename };
-    fileLoadTimeQueue.try_push(toPush);
+    fileTimeQueue.try_push<FileTime>({ waitDuration, loadDuration, fileSize, filename });
 }
 
 void sfz::Logger::moveEvents()
 {
     while(keepRunning.test_and_set()) {
-        std::chrono::duration<double> callbackTime;
+        CallbackTime callbackTime;
         while (callbackTimeQueue.try_pop(callbackTime))
             callbackTimes.push_back(callbackTime);
 
-        std::chrono::duration<double> waitTime;
-        while (fileWaitTimeQueue.try_pop(waitTime))
-            waitTimes.push_back(waitTime);
-
-        sfz::FileLoadTime loadTime;
-        while (fileLoadTimeQueue.try_pop(loadTime))
-            loadTimes.push_back(loadTime);
+        sfz::FileTime fileTime;
+        while (fileTimeQueue.try_pop(fileTime))
+            fileTimes.push_back(fileTime);
 
         std::this_thread::sleep_for(50ms);
     }

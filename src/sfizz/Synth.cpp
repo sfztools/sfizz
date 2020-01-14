@@ -391,8 +391,10 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
 
     auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
+    int numActiveVoices { 0 };
     for (auto& voice : voices) {
         if (!voice->isFree()) {
+            numActiveVoices++;
             voice->renderBlock(tempSpan);
             buffer.add(tempSpan);
         }
@@ -401,7 +403,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     buffer.applyGain(db2mag(volume));
 
     const auto callbackDuration = std::chrono::high_resolution_clock::now() - callbackStartTime;
-    resources.logger.logCallbackTime(callbackDuration);
+    resources.logger.logCallbackTime(callbackDuration, numActiveVoices, buffer.getNumFrames());
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept

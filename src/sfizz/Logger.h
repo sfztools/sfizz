@@ -32,11 +32,19 @@
 namespace sfz
 {
 
-struct FileLoadTime
+struct FileTime
 {
-    std::chrono::duration<double> value;
+    std::chrono::duration<double> waitDuration;
+    std::chrono::duration<double> loadDuration;
     uint32_t fileSize;
     absl::string_view filename;
+};
+
+struct CallbackTime
+{
+    std::chrono::duration<double> duration;
+    int numVoices;
+    int numSamples;
 };
 
 class Logger
@@ -44,17 +52,16 @@ class Logger
 public:
     Logger() = default;
     ~Logger();
-    void logCallbackTime(std::chrono::duration<double> value);
-    void logFileWaitTime(std::chrono::duration<double> value);
-    void logFileLoadTime(std::chrono::duration<double> value, uint32_t fileSize, absl::string_view filename);
+    void logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples);
+    void logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename);
 private:
     void moveEvents();
-    atomic_queue::AtomicQueue2<std::chrono::duration<double>, config::loggerQueueSize, true, true, false, true> callbackTimeQueue;
-    atomic_queue::AtomicQueue2<FileLoadTime, config::loggerQueueSize, true, true, false, true> fileLoadTimeQueue;
-    atomic_queue::AtomicQueue2<std::chrono::duration<double>, config::loggerQueueSize, true, true, false, true> fileWaitTimeQueue;
-    std::vector<std::chrono::duration<double>> callbackTimes;
-    std::vector<FileLoadTime> loadTimes;
-    std::vector<std::chrono::duration<double>> waitTimes;
+
+    atomic_queue::AtomicQueue2<CallbackTime, config::loggerQueueSize, true, true, false, true> callbackTimeQueue;
+    atomic_queue::AtomicQueue2<FileTime, config::loggerQueueSize, true, true, false, true> fileTimeQueue;
+    std::vector<CallbackTime> callbackTimes;
+    std::vector<FileTime> fileTimes;
+
     std::atomic_flag keepRunning;
     std::thread loggingThread { &Logger::moveEvents, this };
 };

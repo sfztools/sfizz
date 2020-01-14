@@ -247,7 +247,6 @@ void sfz::FilePool::loadingThread() noexcept
         threadsLoading++;
         const auto loadStartTime = std::chrono::high_resolution_clock::now();
         const auto waitDuration = loadStartTime - promise->creationTime;
-        logger.logFileWaitTime(waitDuration);
 
         fs::path file { rootDirectory / std::string(promise->filename) };
         SndfileHandle sndFile(file.string().c_str());
@@ -259,7 +258,7 @@ void sfz::FilePool::loadingThread() noexcept
         streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
         promise->dataReady = true;
         const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
-        logger.logFileLoadTime(loadDuration, frames, promise->filename);
+        logger.logFileTime(waitDuration, loadDuration, frames, promise->filename);
 
         threadsLoading--;
 
