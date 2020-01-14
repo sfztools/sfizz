@@ -135,6 +135,7 @@ void sfz::Synth::clear()
         list.clear();
     regions.clear();
     resources.filePool.clear();
+    resources.logger.clear();
     numGroups = 0;
     numMasters = 0;
     numCurves = 0;
@@ -220,7 +221,7 @@ void addEndpointsToVelocityCurve(sfz::Region& region)
     }
 }
 
-bool sfz::Synth::loadSfzFile(const fs::path& filename)
+bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
@@ -228,7 +229,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
     }
 
     clear();
-    auto parserReturned = sfz::Parser::loadSfzFile(filename);
+    auto parserReturned = sfz::Parser::loadSfzFile(file);
     if (!parserReturned)
         return false;
 
@@ -236,6 +237,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& filename)
         return false;
 
     resources.filePool.setRootDirectory(this->originalDirectory);
+    resources.logger.setPrefix(file.filename());
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();

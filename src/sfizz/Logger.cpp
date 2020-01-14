@@ -1,8 +1,10 @@
 #include "Logger.h"
+#include "Debug.h"
 #include "absl/algorithm/container.h"
 #include "ghc/fs_std.hpp"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 
 using namespace std::chrono_literals;
@@ -36,14 +38,26 @@ void printStatistics(std::vector<T>& data)
     std::cout << '\n';
 }
 
+sfz::Logger::Logger()
+{
+    keepRunning.test_and_set();
+    clearFlag.test_and_set();
+    loggingThread = std::thread(&Logger::moveEvents, this);
+}
+
 sfz::Logger::~Logger()
 {
     keepRunning.clear();
     loggingThread.join();
 
     if (!fileTimes.empty()) {
-        fs::path loadLogPath{ fs::current_path() / "file_times.csv" };
-        std::ofstream loadLogFile { loadLogPath.string() };
+        std::stringstream fileLogFilename;
+        fileLogFilename << this << "_"
+                        << prefix
+                        << "_file_log.csv";
+        fs::path fileLogPath{ fs::current_path() / fileLogFilename.str() };
+        DBG("Logging file times to " << fileLogPath.filename());
+        std::ofstream loadLogFile { fileLogPath.string() };
         loadLogFile << "WaitDuration,LoadDuration,FileSize,FileName" << '\n';
         for (auto& time: fileTimes)
             loadLogFile << time.waitDuration.count() << ','
@@ -53,7 +67,12 @@ sfz::Logger::~Logger()
     }
 
     if (!callbackTimes.empty()) {
-        fs::path callbackLogPath{ fs::current_path() / "callback_times.csv" };
+        std::stringstream callbackLogFilename;
+        callbackLogFilename << this << "_"
+                            << prefix
+                            << "_callback_log.csv";
+        fs::path callbackLogPath{ fs::current_path() / callbackLogFilename.str() };
+        DBG("Logging callback times to " << callbackLogPath.filename());
         std::ofstream callbackLogFile { callbackLogPath.string() };
         callbackLogFile << "Duration,NumVoices,NumSamples" << '\n';
         for (auto& time: callbackTimes)
@@ -74,6 +93,17 @@ void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::c
     fileTimeQueue.try_push<FileTime>({ waitDuration, loadDuration, fileSize, filename });
 }
 
+void sfz::Logger::setPrefix(const std::string& prefix)
+{
+    this->prefix = prefix;
+}
+
+void sfz::Logger::clear()
+{
+    clearFlag.clear();
+    prefix.clear();
+}
+
 void sfz::Logger::moveEvents()
 {
     while(keepRunning.test_and_set()) {
@@ -84,6 +114,11 @@ void sfz::Logger::moveEvents()
         sfz::FileTime fileTime;
         while (fileTimeQueue.try_pop(fileTime))
             fileTimes.push_back(fileTime);
+
+        if (!clearFlag.test_and_set()) {
+            fileTimes.clear();
+            callbackTimes.clear();
+        }
 
         std::this_thread::sleep_for(50ms);
     }

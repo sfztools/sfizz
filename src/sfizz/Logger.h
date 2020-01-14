@@ -25,6 +25,7 @@
 #include "Config.h"
 #include "atomic_queue/atomic_queue.h"
 #include <vector>
+#include <string>
 #include <chrono>
 #include <thread>
 #include "absl/strings/string_view.h"
@@ -50,20 +51,26 @@ struct CallbackTime
 class Logger
 {
 public:
-    Logger() = default;
+    Logger();
     ~Logger();
+    void setPrefix(const std::string& prefix);
+    void clear();
     void logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples);
     void logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename);
 private:
     void moveEvents();
+
+    std::string prefix { "" };
 
     atomic_queue::AtomicQueue2<CallbackTime, config::loggerQueueSize, true, true, false, true> callbackTimeQueue;
     atomic_queue::AtomicQueue2<FileTime, config::loggerQueueSize, true, true, false, true> fileTimeQueue;
     std::vector<CallbackTime> callbackTimes;
     std::vector<FileTime> fileTimes;
 
+
     std::atomic_flag keepRunning;
-    std::thread loggingThread { &Logger::moveEvents, this };
+    std::atomic_flag clearFlag;
+    std::thread loggingThread;
 };
 
 }
