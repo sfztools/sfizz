@@ -43,6 +43,7 @@ namespace config {
     constexpr int maxBlockSize { 8192 };
     constexpr int preloadSize { 8192 };
     constexpr int loggerQueueSize { 16 };
+    constexpr bool loggingEnabled { true };
     constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };

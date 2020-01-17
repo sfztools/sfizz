@@ -55,18 +55,19 @@ public:
     ~Logger();
     void setPrefix(const std::string& prefix);
     void clear();
+    void enableLogging();
+    void disableLogging();
     void logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples);
     void logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename);
 private:
     void moveEvents();
-
+    bool loggingEnabled { config::loggingEnabled };
     std::string prefix { "" };
 
     atomic_queue::AtomicQueue2<CallbackTime, config::loggerQueueSize, true, true, false, true> callbackTimeQueue;
     atomic_queue::AtomicQueue2<FileTime, config::loggerQueueSize, true, true, false, true> fileTimeQueue;
     std::vector<CallbackTime> callbackTimes;
     std::vector<FileTime> fileTimes;
-
 
     std::atomic_flag keepRunning;
     std::atomic_flag clearFlag;

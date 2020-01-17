@@ -50,6 +50,9 @@ sfz::Logger::~Logger()
     keepRunning.clear();
     loggingThread.join();
 
+    if (!loggingEnabled)
+        return;
+
     if (!fileTimes.empty()) {
         std::stringstream fileLogFilename;
         fileLogFilename << this << "_"
@@ -85,11 +88,17 @@ sfz::Logger::~Logger()
 
 void sfz::Logger::logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples)
 {
+    if (!loggingEnabled)
+        return;
+
     callbackTimeQueue.try_push<CallbackTime>({ duration, numVoices, numSamples });
 }
 
 void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename)
 {
+    if (!loggingEnabled)
+        return;
+
     fileTimeQueue.try_push<FileTime>({ waitDuration, loadDuration, fileSize, filename });
 }
 
@@ -122,4 +131,15 @@ void sfz::Logger::moveEvents()
 
         std::this_thread::sleep_for(50ms);
     }
+}
+
+void sfz::Logger::enableLogging()
+{
+    loggingEnabled = false;
+}
+
+void sfz::Logger::disableLogging()
+{
+    loggingEnabled = false;
+    clearFlag.clear();
 }
