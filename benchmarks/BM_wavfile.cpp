@@ -30,11 +30,11 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif
-#include "libnyquist/Decoders.h"
+// #include "libnyquist/Decoders.h"
 
 class FileFixture : public benchmark::Fixture {
 public:
-    void SetUp(const ::benchmark::State& state) {
+    void SetUp(const ::benchmark::State& state [[maybe_unused]]) {
         filePath1 = getPath() / "sample1.wav";
         filePath2 = getPath() / "sample2.wav";
         filePath3 = getPath() / "sample3.wav";
@@ -96,17 +96,17 @@ BENCHMARK_DEFINE_F(FileFixture, DrWav)(benchmark::State& state) {
     }
 }
 
-BENCHMARK_DEFINE_F(FileFixture, LibNyquist)(benchmark::State& state) {
-    for (auto _ : state)
-    {
-        nqr::AudioData data;
-        nqr::NyquistIO loader;
-        loader.Load(&data, filePath3.string());
-        benchmark::DoNotOptimize(data);
-    }
-}
+// BENCHMARK_DEFINE_F(FileFixture, LibNyquist)(benchmark::State& state) {
+//     for (auto _ : state)
+//     {
+//         nqr::AudioData data;
+//         nqr::NyquistIO loader;
+//         loader.Load(&data, filePath3.string());
+//         benchmark::DoNotOptimize(data);
+//     }
+// }
 
 BENCHMARK_REGISTER_F(FileFixture, SndFile);
 BENCHMARK_REGISTER_F(FileFixture, DrWav);
-BENCHMARK_REGISTER_F(FileFixture, LibNyquist);
+// BENCHMARK_REGISTER_F(FileFixture, LibNyquist);
 BENCHMARK_MAIN();

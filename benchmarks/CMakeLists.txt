@@ -1,21 +1,5 @@
 project(sfizz)
 
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
-
-include(FetchContent)
-FetchContent_Declare(
-  benchmark
-  GIT_REPOSITORY https://github.com/google/benchmark.git
-  GIT_TAG        v1.5.0
-)
-
-FetchContent_GetProperties(benchmark)
-if(NOT benchmark_POPULATED)
-  FetchContent_Populate(benchmark)
-  add_subdirectory(${benchmark_SOURCE_DIR} ${benchmark_BINARY_DIR})
-endif()
-
 # Check SIMD
 include (SfizzSIMDSourceFilesCheck)
 set(BENCHMARK_SIMD_SOURCES ${SFIZZ_SIMD_SOURCES})
@@ -119,25 +103,13 @@ add_executable(bm_envelopes BM_envelopes.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_envelopes PRIVATE benchmark absl::span absl::algorithm)
 target_include_directories(bm_envelopes PRIVATE ../src/sfizz ../src/external)
 
-include(FetchContent)
-FetchContent_Declare(
-  libnyquist
-  GIT_REPOSITORY https://github.com/paulfd/libnyquist
-)
-
-FetchContent_GetProperties(libnyquist)
-if(NOT libnyquist_POPULATED)
-  FetchContent_Populate(libnyquist)
-  add_subdirectory(${libnyquist_SOURCE_DIR} ${libnyquist_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
 add_executable(bm_wavfile BM_wavfile.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_wavfile PRIVATE benchmark absl::span absl::algorithm libnyquist)
+target_link_libraries(bm_wavfile PRIVATE benchmark absl::span absl::algorithm)
 sfizz_link_libsndfile(bm_wavfile)
 target_include_directories(bm_wavfile PRIVATE ../src/sfizz ../src/external)
 
 add_executable(bm_flacfile BM_flacfile.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_flacfile PRIVATE benchmark absl::span absl::algorithm libnyquist)
+target_link_libraries(bm_flacfile PRIVATE benchmark absl::span absl::algorithm)
 sfizz_link_libsndfile(bm_flacfile)
 target_include_directories(bm_flacfile PRIVATE ../src/sfizz ../src/external)
 
