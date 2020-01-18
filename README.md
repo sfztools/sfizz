@@ -64,7 +64,7 @@ cd vcpkg
 
 Assuming you want to build for x64, install the relevant packages as follows
 ```powershell
-.\vcpkg.exe install libsndfile:x64-windows zlib:x64-windows libsamplerate:x64-windows
+.\vcpkg.exe install libsndfile:x64-windows-static zlib:x64-windows-static libsamplerate:x64-windows-static
 ```
 
 In the sfizz source directory, you can then build with CMake as usual, although you should clone the windows branch:
@@ -73,7 +73,7 @@ git clone --recursive https://github.com/sfztools/sfizz.git
 cd sfizz
 mkdir build
 cd build
-cmake .. -DSFIZZ_JACK=OFF "-DCMAKE_TOOLCHAIN_FILE=C:\Users\Paul\source\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+cmake .. -DSFIZZ_JACK=OFF "-DCMAKE_TOOLCHAIN_FILE=C:\Users\Paul\source\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static
 cmake --build . -j 16 --config Release
 ```
 

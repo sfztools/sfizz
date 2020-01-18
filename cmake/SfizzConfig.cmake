@@ -30,7 +30,7 @@ endif()
 
 function(SFIZZ_LINK_LIBSNDFILE TARGET)
     if (WIN32)
-        target_link_libraries (${TARGET} PRIVATE sndfile-shared)
+        target_link_libraries (${TARGET} PRIVATE sndfile-static)
         target_include_directories(${TARGET} PRIVATE ${SNDFILE_INCLUDE_DIR})
     else()
         target_link_libraries(${TARGET} PRIVATE sndfile)
