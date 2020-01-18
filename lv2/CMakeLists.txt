@@ -13,6 +13,7 @@ set (LV2PLUGIN_TTL_SRC_FILES
 )
 add_library (${LV2PLUGIN_PRJ_NAME} SHARED ${PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_FILES})
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
+target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE .)
 sfizz_enable_lto_if_needed (${LV2PLUGIN_PRJ_NAME})
 
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir
