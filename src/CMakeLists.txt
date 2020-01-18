@@ -36,7 +36,7 @@ target_link_libraries (sfizz_static PRIVATE sfizz_objects)
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external) # Object dependency is not transitive?
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span) # Object dependency is not transitive?
-sfizz_enable_lto_if_needed(sfizz)
+sfizz_enable_lto_if_needed(sfizz_static)
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
