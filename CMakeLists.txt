@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.13)
+cmake_policy(SET CMP0091 NEW)
 project (sfizz VERSION 1.0.0 LANGUAGES CXX C)
 
 # External configuration CMake scripts
