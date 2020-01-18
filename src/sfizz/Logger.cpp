@@ -86,7 +86,7 @@ sfz::Logger::~Logger()
 }
 
 
-void sfz::Logger::logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples)
+void sfz::Logger::logCallbackTime(std::chrono::duration<double> duration, int numVoices, size_t numSamples)
 {
     if (!loggingEnabled)
         return;

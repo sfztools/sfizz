@@ -45,7 +45,7 @@ struct CallbackTime
 {
     std::chrono::duration<double> duration;
     int numVoices;
-    int numSamples;
+    size_t numSamples;
 };
 
 class Logger
@@ -57,7 +57,7 @@ public:
     void clear();
     void enableLogging();
     void disableLogging();
-    void logCallbackTime(std::chrono::duration<double> duration, int numVoices, int numSamples);
+    void logCallbackTime(std::chrono::duration<double> duration, int numVoices, size_t numSamples);
     void logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename);
 private:
     void moveEvents();

@@ -237,7 +237,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         return false;
 
     resources.filePool.setRootDirectory(this->originalDirectory);
-    resources.logger.setPrefix(file.filename());
+    resources.logger.setPrefix(file.filename().string());
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();
