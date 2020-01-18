@@ -2,6 +2,10 @@
 include (CheckIPOSupported)
 check_ipo_supported (RESULT result OUTPUT output)
 
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL armv7l)
+    set(ENABLE_LTO OFF)
+endif()
+
 if (result AND ENABLE_LTO AND CMAKE_BUILD_TYPE STREQUAL "Release")
     message (STATUS "\nLTO enabled.")
 else()

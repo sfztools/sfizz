@@ -51,6 +51,6 @@ ScopedFTZ::~ScopedFTZ()
 #if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
     _mm_setcsr(registerState);
 #elif HAVE_ARM_NEON_H
-    asm volatile("vmsr %0, fpscr" : : "ri"(registerState));
+    asm volatile("vmrs %0, fpscr" : : "ri"(registerState));
 #endif
 }
