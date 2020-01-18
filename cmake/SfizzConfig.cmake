@@ -8,6 +8,9 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Only install what's explicitely said
 set (CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+set (CMAKE_POSITION_INDEPENDENT_CODE ON)
+set (CMAKE_CXX_VISIBILITY_PRESET hidden)
+set (CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 # Add required flags for the builds
 if (UNIX)
@@ -15,7 +18,6 @@ if (UNIX)
     add_compile_options(-Wextra)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
-    add_compile_options(-fPIC)
 endif()
 
 if (WIN32)
@@ -76,3 +78,4 @@ Compiler CXX min size flags:   ${CMAKE_CXX_FLAGS_MINSIZEREL}
     endif()
 endfunction()
 
+find_package (Threads REQUIRED)
