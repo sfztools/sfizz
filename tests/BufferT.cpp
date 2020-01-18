@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "Buffer.h"
+#include "sfizz/Buffer.h"
 #include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;

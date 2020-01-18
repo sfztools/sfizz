@@ -21,9 +21,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "EventEnvelopes.h"
-#include "SfzHelpers.h"
-#include "Buffer.h"
+#include "sfizz/EventEnvelopes.h"
+#include "sfizz/SfzHelpers.h"
+#include "sfizz/Buffer.h"
 #include "catch2/catch.hpp"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>

@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "Synth.h"
+#include "sfizz/Synth.h"
 #include "catch2/catch.hpp"
 #include "ghc/fs_std.hpp"
 using namespace Catch::literals;

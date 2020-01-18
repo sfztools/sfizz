@@ -21,13 +21,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "Defaults.h"
-#include "Region.h"
+#include "sfizz/Defaults.h"
+#include "sfizz/Region.h"
+#include "sfizz/SfzHelpers.h"
+#include "sfizz/MidiState.h"
 #include "catch2/catch.hpp"
-#include <SfzHelpers.h>
 #include <chrono>
 #include <thread>
-#include "MidiState.h"
 using namespace Catch::literals;
 constexpr int numRandomTests { 64 };
 TEST_CASE("[Region] Crossfade in on key")

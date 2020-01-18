@@ -22,7 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#include "EGDescription.h"
+#include "sfizz/EGDescription.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 

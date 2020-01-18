@@ -27,7 +27,7 @@
  * and SynthT.cpp.
  */
 
-#include "MidiState.h"
+#include "sfizz/MidiState.h"
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"
 using namespace Catch::literals;
