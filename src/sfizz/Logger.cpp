@@ -113,7 +113,7 @@ void sfz::Logger::clear()
     prefix.clear();
 }
 
-void sfz::Logger::moveEvents()
+void sfz::Logger::moveEvents() noexcept
 {
     while(keepRunning.test_and_set()) {
         CallbackTime callbackTime;
