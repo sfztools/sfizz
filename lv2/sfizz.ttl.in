@@ -102,7 +102,6 @@
     lv2:default 0.0 ;
     lv2:minimum -80.0 ;
     lv2:maximum 6.0 ;
-    lv2:portProperty pprop:notAutomatic ;
     units:unit units:db
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
