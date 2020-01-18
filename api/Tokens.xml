@@ -84,7 +84,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>sfizz_8h.html</Path>
-    <Anchor>a2fc8bc59263cb70bdecb210e51204ff2</Anchor>
+    <Anchor>a25b3debbcdf1e9babf170b59fdc850d9</Anchor>
     <Abstract>Returns the number of preloaded samples for the current SFZ file. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
@@ -339,17 +339,6 @@
     <Path>sfizz_8h.html</Path>
     <Anchor>ac0cb89abd2668ad218b4d17ed4f19fc2</Anchor>
     <Abstract>Get a comma separated list of unknown opcodes. </Abstract>
-    <DeclaredIn>sfizz.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>sfizz_should_reload_file</Name>
-      <APILanguage>c</APILanguage>
-      <Type>func</Type>
-    </TokenIdentifier>
-    <Path>sfizz_8h.html</Path>
-    <Anchor>a6cbe7e33de049c6c2a428699eb880ad8</Anchor>
-    <Abstract>Check if the SFZ should be reloaded. </Abstract>
     <DeclaredIn>sfizz.h</DeclaredIn>
   </Token>
   <Token>
@@ -935,18 +924,6 @@
   </Token>
   <Token>
     <TokenIdentifier>
-      <Name>normalizeVelocity</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>sfz</Scope>
-    </TokenIdentifier>
-    <Path>namespacesfz.html</Path>
-    <Anchor>a6fd3f3f2641b8065321f00b8e2e3cbec</Anchor>
-    <Abstract>Normalize a velocity between (T)0.0 and (T)1.0. </Abstract>
-    <DeclaredIn>SfzHelpers.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
       <Name>normalizePercents</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
@@ -965,7 +942,7 @@
       <Scope>sfz</Scope>
     </TokenIdentifier>
     <Path>namespacesfz.html</Path>
-    <Anchor>a082ee2dc6715392c07a5f6a5216c537b</Anchor>
+    <Anchor>a8ce09dc9086cece4592820b163644829</Anchor>
     <Abstract>Normalize bends between -1 and 1. </Abstract>
     <DeclaredIn>SfzHelpers.h</DeclaredIn>
   </Token>
@@ -1525,7 +1502,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a94d656cec7a7409248a1692f2acba9a4</Anchor>
+    <Anchor>ab1dbcd9971a757c162f5e1593dee0747</Anchor>
     <Abstract>Construct a new Audio Buffer object with a specified number of channels and frames. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1537,7 +1514,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>acdd9c86a3da3abf7f14b0b78b4ed73db</Anchor>
+    <Anchor>a30ae68dea76dbb15b85eddd8b2a2306a</Anchor>
     <Abstract>Resizes all the underlying buffers to a new size. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1549,7 +1526,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a074119211f828ad0efe4d11ff9cf5774</Anchor>
+    <Anchor>ad2d9ef31c48d7398dede29da41c27f02</Anchor>
     <Abstract>Return an iterator to a specific channel with a non-const type. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1561,7 +1538,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>ab5303f191b0145e3debceeaa1f51e554</Anchor>
+    <Anchor>a0d63ef28fa763af9ffac6bf4e4abbdc0</Anchor>
     <Abstract>Returns a sentinel for the channelWriter(channelIndex) iterator. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1573,7 +1550,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a7bb8e2ed6d5c816b1ec2a4b281a86ccf</Anchor>
+    <Anchor>ae3a77506efa8f5e09572a137ec344604</Anchor>
     <Abstract>Returns a const iterator for a specific channel. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1585,7 +1562,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>ae8979ec36dd1cfa03d05f6f99034393b</Anchor>
+    <Anchor>a30bd42620f320f93a166d8ffaf5d648e</Anchor>
     <Abstract>Returns a sentinel for the channelReader(channelIndex) iterator. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1597,7 +1574,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>ac794c2735763616947c7cdb87c00f29d</Anchor>
+    <Anchor>afd97e15776c9d33e8857218e6b5906db</Anchor>
     <Abstract>Get a Span for a specific channel. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1609,7 +1586,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a5983fd1053a613788a4f6c651b723ab7</Anchor>
+    <Anchor>a3830369c62967d83089c657f3dbcceb9</Anchor>
     <Abstract>Get a const Span object for a specific channel. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1633,7 +1610,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a93ec759a3f7d76a1c1c60f35a5cbd315</Anchor>
+    <Anchor>a4eb0816e449da5c0a48f71e709bcaf95</Anchor>
     <Abstract>Get the number of elements in each buffer. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1645,7 +1622,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a1461ee8bcedfa492f6d455b89e3160c6</Anchor>
+    <Anchor>ae0a24416d8b0b4009c8f20ca2ad9d517</Anchor>
     <Abstract>Get the number of channels. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1669,7 +1646,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>afa6f70f8f67400687d9996ffcc458aee</Anchor>
+    <Anchor>a503864d51de64c8303aeea411efd8186</Anchor>
     <Abstract>Get a reference to a given element in a given buffer. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1681,7 +1658,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a69740b05fc6cf9ca68a202b2b6ff36a6</Anchor>
+    <Anchor>a6d484a51580b0fb7db43ef8356a8582e</Anchor>
     <Abstract>Alias for getSample(...) </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1705,7 +1682,7 @@
       <Scope>sfz::AudioBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_buffer.html</Path>
-    <Anchor>a1b4e5fc79b8b1328cdcf5a23ef802dce</Anchor>
+    <Anchor>a457d4d2ecd3cee9993c93ccb969646c5</Anchor>
     <Abstract>Add a positive number of channels to the buffer. </Abstract>
     <DeclaredIn>AudioBuffer.h</DeclaredIn>
   </Token>
@@ -1728,7 +1705,7 @@
       <Scope>sfz::AudioSpan</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_span.html</Path>
-    <Anchor>a13a869dfe27a428cafde1c0c91a0046d</Anchor>
+    <Anchor>ac6b2e51b6f0088916d9d606ae5583887</Anchor>
     <Abstract>Construct a new Audio Span object. </Abstract>
     <DeclaredIn>AudioSpan.h</DeclaredIn>
   </Token>
@@ -1764,7 +1741,7 @@
       <Scope>sfz::AudioSpan</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_span.html</Path>
-    <Anchor>a91eb3a657291d7953466dde11ed9c1cc</Anchor>
+    <Anchor>aad7bb493e7d7da0086c22319ce2f2f1e</Anchor>
     <Abstract>Get a raw pointer to a specific channel from the AudioSpan. </Abstract>
     <DeclaredIn>AudioSpan.h</DeclaredIn>
   </Token>
@@ -1776,7 +1753,7 @@
       <Scope>sfz::AudioSpan</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_span.html</Path>
-    <Anchor>a3e52171cc3bc33246880a16010c750d7</Anchor>
+    <Anchor>a734dc5a7ae6cc6d6ec8f84fb8c4bce13</Anchor>
     <Abstract>Get a Span&lt;Type&gt; corresponding to a specific channel. </Abstract>
     <DeclaredIn>AudioSpan.h</DeclaredIn>
   </Token>
@@ -1788,7 +1765,7 @@
       <Scope>sfz::AudioSpan</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_audio_span.html</Path>
-    <Anchor>aec8a5fbc1e563ae78964b3bc139c1d3a</Anchor>
+    <Anchor>a25e9bf67a92487a895bdd32e1d47efce</Anchor>
     <Abstract>Get a Span&lt;const Type&gt; corresponding to a specific channel. </Abstract>
     <DeclaredIn>AudioSpan.h</DeclaredIn>
   </Token>
@@ -2273,7 +2250,7 @@
       <Scope>sfz::FilePool</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_file_pool.html</Path>
-    <Anchor>a1efdaef6de822f72ba822ebfebb4a17a</Anchor>
+    <Anchor>a4f05e6f6842acb1e238268f5a964b80e</Anchor>
     <Abstract>Construct a new File Pool object. </Abstract>
     <DeclaredIn>FilePool.h</DeclaredIn>
   </Token>
@@ -2452,7 +2429,7 @@
       <Scope>sfz::HistoricalBuffer</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_historical_buffer.html</Path>
-    <Anchor>aa4fa629241e3ba596b5cc2dfc3b8f668</Anchor>
+    <Anchor>ad544c6dbad9f58a618f474b192937b69</Anchor>
     <Abstract>Resize the underlying buffer. </Abstract>
     <DeclaredIn>HistoricalBuffer.h</DeclaredIn>
   </Token>
@@ -2620,18 +2597,6 @@
     <Path>classsfz_1_1_midi_state.html</Path>
     <Anchor>a06971a2b813884edfe8ffb6c39e4d15c</Anchor>
     <Abstract>Update the state after a note on event. </Abstract>
-    <DeclaredIn>MidiState.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>noteOffEvent</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>sfz::MidiState</Scope>
-    </TokenIdentifier>
-    <Path>classsfz_1_1_midi_state.html</Path>
-    <Anchor>af8e3a3f7d094d2137b4a6d3c47a70448</Anchor>
-    <Abstract>Update the state after a note off event. </Abstract>
     <DeclaredIn>MidiState.h</DeclaredIn>
   </Token>
   <Token>
@@ -3669,18 +3634,6 @@
     <Path>classsfz_1_1_synth.html</Path>
     <Anchor>a437a8b23e6597254279898c2707f611b</Anchor>
     <Abstract>Disable freewheeling on the synth. </Abstract>
-    <DeclaredIn>Synth.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>shouldReloadFile</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>instm</Type>
-      <Scope>sfz::Synth</Scope>
-    </TokenIdentifier>
-    <Path>classsfz_1_1_synth.html</Path>
-    <Anchor>a34f084abd0b159544ff741cdf8804caf</Anchor>
-    <Abstract>Check if the SFZ should be reloaded. </Abstract>
     <DeclaredIn>Synth.h</DeclaredIn>
   </Token>
   <Token>

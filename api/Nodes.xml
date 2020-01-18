@@ -115,7 +115,7 @@
                <Node>
                 <Name>AudioBuffer</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a94d656cec7a7409248a1692f2acba9a4</Anchor>
+                <Anchor>ab1dbcd9971a757c162f5e1593dee0747</Anchor>
                </Node>
                <Node>
                 <Name>addChannel</Name>
@@ -125,27 +125,27 @@
                <Node>
                 <Name>addChannels</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a1b4e5fc79b8b1328cdcf5a23ef802dce</Anchor>
+                <Anchor>a457d4d2ecd3cee9993c93ccb969646c5</Anchor>
                </Node>
                <Node>
                 <Name>channelReader</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a7bb8e2ed6d5c816b1ec2a4b281a86ccf</Anchor>
+                <Anchor>ae3a77506efa8f5e09572a137ec344604</Anchor>
                </Node>
                <Node>
                 <Name>channelReaderEnd</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>ae8979ec36dd1cfa03d05f6f99034393b</Anchor>
+                <Anchor>a30bd42620f320f93a166d8ffaf5d648e</Anchor>
                </Node>
                <Node>
                 <Name>channelWriter</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a074119211f828ad0efe4d11ff9cf5774</Anchor>
+                <Anchor>ad2d9ef31c48d7398dede29da41c27f02</Anchor>
                </Node>
                <Node>
                 <Name>channelWriterEnd</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>ab5303f191b0145e3debceeaa1f51e554</Anchor>
+                <Anchor>a0d63ef28fa763af9ffac6bf4e4abbdc0</Anchor>
                </Node>
                <Node>
                 <Name>empty</Name>
@@ -155,32 +155,32 @@
                <Node>
                 <Name>getConstSpan</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a5983fd1053a613788a4f6c651b723ab7</Anchor>
+                <Anchor>a3830369c62967d83089c657f3dbcceb9</Anchor>
                </Node>
                <Node>
                 <Name>getNumChannels</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a1461ee8bcedfa492f6d455b89e3160c6</Anchor>
+                <Anchor>ae0a24416d8b0b4009c8f20ca2ad9d517</Anchor>
                </Node>
                <Node>
                 <Name>getNumFrames</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a93ec759a3f7d76a1c1c60f35a5cbd315</Anchor>
+                <Anchor>a4eb0816e449da5c0a48f71e709bcaf95</Anchor>
                </Node>
                <Node>
                 <Name>getSample</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>afa6f70f8f67400687d9996ffcc458aee</Anchor>
+                <Anchor>a503864d51de64c8303aeea411efd8186</Anchor>
                </Node>
                <Node>
                 <Name>getSpan</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>ac794c2735763616947c7cdb87c00f29d</Anchor>
+                <Anchor>afd97e15776c9d33e8857218e6b5906db</Anchor>
                </Node>
                <Node>
                 <Name>operator()</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>a69740b05fc6cf9ca68a202b2b6ff36a6</Anchor>
+                <Anchor>a6d484a51580b0fb7db43ef8356a8582e</Anchor>
                </Node>
                <Node>
                 <Name>reset</Name>
@@ -190,7 +190,7 @@
                <Node>
                 <Name>resize</Name>
                 <Path>classsfz_1_1_audio_buffer.html</Path>
-                <Anchor>acdd9c86a3da3abf7f14b0b78b4ed73db</Anchor>
+                <Anchor>a30ae68dea76dbb15b85eddd8b2a2306a</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -201,7 +201,7 @@
                <Node>
                 <Name>AudioSpan</Name>
                 <Path>classsfz_1_1_audio_span.html</Path>
-                <Anchor>a13a869dfe27a428cafde1c0c91a0046d</Anchor>
+                <Anchor>ac6b2e51b6f0088916d9d606ae5583887</Anchor>
                </Node>
                <Node>
                 <Name>AudioSpan</Name>
@@ -231,17 +231,17 @@
                <Node>
                 <Name>getChannel</Name>
                 <Path>classsfz_1_1_audio_span.html</Path>
-                <Anchor>a91eb3a657291d7953466dde11ed9c1cc</Anchor>
+                <Anchor>aad7bb493e7d7da0086c22319ce2f2f1e</Anchor>
                </Node>
                <Node>
                 <Name>getConstSpan</Name>
                 <Path>classsfz_1_1_audio_span.html</Path>
-                <Anchor>aec8a5fbc1e563ae78964b3bc139c1d3a</Anchor>
+                <Anchor>a25e9bf67a92487a895bdd32e1d47efce</Anchor>
                </Node>
                <Node>
                 <Name>getSpan</Name>
                 <Path>classsfz_1_1_audio_span.html</Path>
-                <Anchor>a3e52171cc3bc33246880a16010c750d7</Anchor>
+                <Anchor>a734dc5a7ae6cc6d6ec8f84fb8c4bce13</Anchor>
                </Node>
                <Node>
                 <Name>meanSquared</Name>
@@ -437,7 +437,7 @@
                <Node>
                 <Name>FilePool</Name>
                 <Path>classsfz_1_1_file_pool.html</Path>
-                <Anchor>a1efdaef6de822f72ba822ebfebb4a17a</Anchor>
+                <Anchor>a4f05e6f6842acb1e238268f5a964b80e</Anchor>
                </Node>
                <Node>
                 <Name>cleanupPromises</Name>
@@ -523,7 +523,7 @@
                <Node>
                 <Name>resize</Name>
                 <Path>classsfz_1_1_historical_buffer.html</Path>
-                <Anchor>aa4fa629241e3ba596b5cc2dfc3b8f668</Anchor>
+                <Anchor>ad544c6dbad9f58a618f474b192937b69</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -576,11 +576,6 @@
                 <Name>getPitchBend</Name>
                 <Path>classsfz_1_1_midi_state.html</Path>
                 <Anchor>af3680dbd85a19d385473b2c84f4155cb</Anchor>
-               </Node>
-               <Node>
-                <Name>noteOffEvent</Name>
-                <Path>classsfz_1_1_midi_state.html</Path>
-                <Anchor>af8e3a3f7d094d2137b4a6d3c47a70448</Anchor>
                </Node>
                <Node>
                 <Name>noteOnEvent</Name>
@@ -963,11 +958,6 @@
                 <Name>setVolume</Name>
                 <Path>classsfz_1_1_synth.html</Path>
                 <Anchor>adcc74a8304e6a13fde764c9928d2e385</Anchor>
-               </Node>
-               <Node>
-                <Name>shouldReloadFile</Name>
-                <Path>classsfz_1_1_synth.html</Path>
-                <Anchor>a34f084abd0b159544ff741cdf8804caf</Anchor>
                </Node>
                <Node>
                 <Name>tempo</Name>
@@ -1566,7 +1556,7 @@
                <Node>
                 <Name>sfizz_get_num_preloaded_samples</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a2fc8bc59263cb70bdecb210e51204ff2</Anchor>
+                <Anchor>a25b3debbcdf1e9babf170b59fdc850d9</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_regions</Name>
@@ -1667,11 +1657,6 @@
                 <Name>sfizz_set_volume</Name>
                 <Path>sfizz_8h.html</Path>
                 <Anchor>a8120595c2d3c0d785e8010728e076bc9</Anchor>
-               </Node>
-               <Node>
-                <Name>sfizz_should_reload_file</Name>
-                <Path>sfizz_8h.html</Path>
-                <Anchor>a6cbe7e33de049c6c2a428699eb880ad8</Anchor>
                </Node>
               </Subnodes>
              </Node>

@@ -226,9 +226,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a437a8b23e6597254279898c2707f611b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#a437a8b23e6597254279898c2707f611b">disableFreeWheeling</a> () noexcept</td></tr>
 <tr class="memdesc:a437a8b23e6597254279898c2707f611b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable freewheeling on the synth.  <a href="#a437a8b23e6597254279898c2707f611b">More...</a><br /></td></tr>
 <tr class="separator:a437a8b23e6597254279898c2707f611b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a34f084abd0b159544ff741cdf8804caf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#a34f084abd0b159544ff741cdf8804caf">shouldReloadFile</a> ()</td></tr>
-<tr class="memdesc:a34f084abd0b159544ff741cdf8804caf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the SFZ should be reloaded.  <a href="#a34f084abd0b159544ff741cdf8804caf">More...</a><br /></td></tr>
-<tr class="separator:a34f084abd0b159544ff741cdf8804caf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -1411,29 +1408,6 @@ false if the file was not found or no regions were loaded. </dd></dl>
 
 </div>
 </div>
-<a id="a34f084abd0b159544ff741cdf8804caf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a34f084abd0b159544ff741cdf8804caf">&#9670;&nbsp;</a></span>shouldReloadFile()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool sfz::Synth::shouldReloadFile </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Check if the SFZ should be reloaded. </p>
-<p>Depending on the platform this can create file descriptors.</p>
-<dl class="section return"><dt>Returns</dt><dd>true if any included files (including the root file) have been modified since the sfz file was loaded. </dd>
-<dd>
-false </dd></dl>
-
-</div>
-</div>
 <a id="ab54482367777b572cc9e62b108ffea25"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab54482367777b572cc9e62b108ffea25">&#9670;&nbsp;</a></span>tempo()</h2>
 
@@ -1483,7 +1457,7 @@ false </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated for sfizz by
+					<span style="float:right">Generated on Sat Jan 18 2020 09:10:00 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

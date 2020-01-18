@@ -216,17 +216,13 @@ Functions</h2></td></tr>
 <tr class="memitem:a9b65015c18e6461f96cb9af4e30cdee8"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a9b65015c18e6461f96cb9af4e30cdee8">normalizeCC</a> (T ccValue)</td></tr>
 <tr class="memdesc:a9b65015c18e6461f96cb9af4e30cdee8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a CC value between (T)0.0 and (T)1.0.  <a href="#a9b65015c18e6461f96cb9af4e30cdee8">More...</a><br /></td></tr>
 <tr class="separator:a9b65015c18e6461f96cb9af4e30cdee8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fd3f3f2641b8065321f00b8e2e3cbec"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a6fd3f3f2641b8065321f00b8e2e3cbec"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a6fd3f3f2641b8065321f00b8e2e3cbec">normalizeVelocity</a> (T velocity)</td></tr>
-<tr class="memdesc:a6fd3f3f2641b8065321f00b8e2e3cbec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a velocity between (T)0.0 and (T)1.0.  <a href="#a6fd3f3f2641b8065321f00b8e2e3cbec">More...</a><br /></td></tr>
-<tr class="separator:a6fd3f3f2641b8065321f00b8e2e3cbec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#ac1f49ce61c8d1db977f17efc4ee199bf">normalizePercents</a> (T percentValue)</td></tr>
 <tr class="memdesc:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a percentage between 0 and 1.  <a href="#ac1f49ce61c8d1db977f17efc4ee199bf">More...</a><br /></td></tr>
 <tr class="separator:ac1f49ce61c8d1db977f17efc4ee199bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a082ee2dc6715392c07a5f6a5216c537b"><td class="memItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a082ee2dc6715392c07a5f6a5216c537b">normalizeBend</a> (float bendValue)</td></tr>
-<tr class="memdesc:a082ee2dc6715392c07a5f6a5216c537b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize bends between -1 and 1.  <a href="#a082ee2dc6715392c07a5f6a5216c537b">More...</a><br /></td></tr>
-<tr class="separator:a082ee2dc6715392c07a5f6a5216c537b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ce09dc9086cece4592820b163644829"><td class="memItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a8ce09dc9086cece4592820b163644829">normalizeBend</a> (int bendValue)</td></tr>
+<tr class="memdesc:a8ce09dc9086cece4592820b163644829"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize bends between -1 and 1.  <a href="#a8ce09dc9086cece4592820b163644829">More...</a><br /></td></tr>
+<tr class="separator:a8ce09dc9086cece4592820b163644829"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#abfcbb9f0d7899c187863d5e457a84fca">normalizeNegativePercents</a> (T percentValue)</td></tr>
 <tr class="memdesc:abfcbb9f0d7899c187863d5e457a84fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a possibly negative percentage between -1 and 1.  <a href="#abfcbb9f0d7899c187863d5e457a84fca">More...</a><br /></td></tr>
@@ -1806,8 +1802,8 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
 
 </div>
 </div>
-<a id="a082ee2dc6715392c07a5f6a5216c537b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a082ee2dc6715392c07a5f6a5216c537b">&#9670;&nbsp;</a></span>normalizeBend()</h2>
+<a id="a8ce09dc9086cece4592820b163644829"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ce09dc9086cece4592820b163644829">&#9670;&nbsp;</a></span>normalizeBend()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1815,7 +1811,7 @@ template&lt;class T , bool SIMD = SIMDConfig::multiplyAdd&gt; </div>
         <tr>
           <td class="memname">constexpr float sfz::normalizeBend </td>
           <td>(</td>
-          <td class="paramtype">float&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>bendValue</em></td><td>)</td>
           <td></td>
         </tr>
@@ -1932,41 +1928,6 @@ template&lt;class T &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">percentValue</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>constexpr float </dd></dl>
-
-</div>
-</div>
-<a id="a6fd3f3f2641b8065321f00b8e2e3cbec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6fd3f3f2641b8065321f00b8e2e3cbec">&#9670;&nbsp;</a></span>normalizeVelocity()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr float sfz::normalizeVelocity </td>
-          <td>(</td>
-          <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>velocity</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Normalize a velocity between (T)0.0 and (T)1.0. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">T</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ccValue</td><td></td></tr>
   </table>
   </dd>
 </dl>
@@ -2906,7 +2867,7 @@ template&lt;class T , bool SIMD = SIMDConfig::writeInterleaved&gt; </div>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated for sfizz by
+					<span style="float:right">Generated on Sat Jan 18 2020 09:10:00 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>

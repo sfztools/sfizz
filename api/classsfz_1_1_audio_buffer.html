@@ -121,57 +121,57 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4bafdd16884645d66848542d0341bbf4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a4bafdd16884645d66848542d0341bbf4">AudioBuffer</a> ()</td></tr>
 <tr class="memdesc:a4bafdd16884645d66848542d0341bbf4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new Audio <a class="el" href="classsfz_1_1_buffer.html" title="A heap buffer structure that tries to align its beginning and adds a small offset at the end for alig...">Buffer</a> object.  <a href="#a4bafdd16884645d66848542d0341bbf4">More...</a><br /></td></tr>
 <tr class="separator:a4bafdd16884645d66848542d0341bbf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94d656cec7a7409248a1692f2acba9a4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a94d656cec7a7409248a1692f2acba9a4">AudioBuffer</a> (size_t numChannels, size_t numFrames)</td></tr>
-<tr class="memdesc:a94d656cec7a7409248a1692f2acba9a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new Audio <a class="el" href="classsfz_1_1_buffer.html" title="A heap buffer structure that tries to align its beginning and adds a small offset at the end for alig...">Buffer</a> object with a specified number of channels and frames.  <a href="#a94d656cec7a7409248a1692f2acba9a4">More...</a><br /></td></tr>
-<tr class="separator:a94d656cec7a7409248a1692f2acba9a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdd9c86a3da3abf7f14b0b78b4ed73db"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#acdd9c86a3da3abf7f14b0b78b4ed73db">resize</a> (size_t newSize)</td></tr>
-<tr class="memdesc:acdd9c86a3da3abf7f14b0b78b4ed73db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes all the underlying buffers to a new size.  <a href="#acdd9c86a3da3abf7f14b0b78b4ed73db">More...</a><br /></td></tr>
-<tr class="separator:acdd9c86a3da3abf7f14b0b78b4ed73db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a074119211f828ad0efe4d11ff9cf5774"><td class="memItemLeft" align="right" valign="top">iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a074119211f828ad0efe4d11ff9cf5774">channelWriter</a> (size_t channelIndex)</td></tr>
-<tr class="memdesc:a074119211f828ad0efe4d11ff9cf5774"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return an iterator to a specific channel with a non-const type.  <a href="#a074119211f828ad0efe4d11ff9cf5774">More...</a><br /></td></tr>
-<tr class="separator:a074119211f828ad0efe4d11ff9cf5774"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5303f191b0145e3debceeaa1f51e554"><td class="memItemLeft" align="right" valign="top">iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ab5303f191b0145e3debceeaa1f51e554">channelWriterEnd</a> (size_t channelIndex)</td></tr>
-<tr class="memdesc:ab5303f191b0145e3debceeaa1f51e554"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sentinel for the channelWriter(channelIndex) iterator.  <a href="#ab5303f191b0145e3debceeaa1f51e554">More...</a><br /></td></tr>
-<tr class="separator:ab5303f191b0145e3debceeaa1f51e554"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7bb8e2ed6d5c816b1ec2a4b281a86ccf"><td class="memItemLeft" align="right" valign="top">const_iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a7bb8e2ed6d5c816b1ec2a4b281a86ccf">channelReader</a> (size_t channelIndex) const</td></tr>
-<tr class="memdesc:a7bb8e2ed6d5c816b1ec2a4b281a86ccf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator for a specific channel.  <a href="#a7bb8e2ed6d5c816b1ec2a4b281a86ccf">More...</a><br /></td></tr>
-<tr class="separator:a7bb8e2ed6d5c816b1ec2a4b281a86ccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8979ec36dd1cfa03d05f6f99034393b"><td class="memItemLeft" align="right" valign="top">const_iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ae8979ec36dd1cfa03d05f6f99034393b">channelReaderEnd</a> (size_t channelIndex) const</td></tr>
-<tr class="memdesc:ae8979ec36dd1cfa03d05f6f99034393b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sentinel for the channelReader(channelIndex) iterator.  <a href="#ae8979ec36dd1cfa03d05f6f99034393b">More...</a><br /></td></tr>
-<tr class="separator:ae8979ec36dd1cfa03d05f6f99034393b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac794c2735763616947c7cdb87c00f29d"><td class="memItemLeft" align="right" valign="top">absl::Span&lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ac794c2735763616947c7cdb87c00f29d">getSpan</a> (size_t channelIndex) const</td></tr>
-<tr class="memdesc:ac794c2735763616947c7cdb87c00f29d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a Span for a specific channel.  <a href="#ac794c2735763616947c7cdb87c00f29d">More...</a><br /></td></tr>
-<tr class="separator:ac794c2735763616947c7cdb87c00f29d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5983fd1053a613788a4f6c651b723ab7"><td class="memItemLeft" align="right" valign="top">absl::Span&lt; const value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a5983fd1053a613788a4f6c651b723ab7">getConstSpan</a> (size_t channelIndex) const</td></tr>
-<tr class="memdesc:a5983fd1053a613788a4f6c651b723ab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a const Span object for a specific channel.  <a href="#a5983fd1053a613788a4f6c651b723ab7">More...</a><br /></td></tr>
-<tr class="separator:a5983fd1053a613788a4f6c651b723ab7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1dbcd9971a757c162f5e1593dee0747"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ab1dbcd9971a757c162f5e1593dee0747">AudioBuffer</a> (int numChannels, int numFrames)</td></tr>
+<tr class="memdesc:ab1dbcd9971a757c162f5e1593dee0747"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new Audio <a class="el" href="classsfz_1_1_buffer.html" title="A heap buffer structure that tries to align its beginning and adds a small offset at the end for alig...">Buffer</a> object with a specified number of channels and frames.  <a href="#ab1dbcd9971a757c162f5e1593dee0747">More...</a><br /></td></tr>
+<tr class="separator:ab1dbcd9971a757c162f5e1593dee0747"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30ae68dea76dbb15b85eddd8b2a2306a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a30ae68dea76dbb15b85eddd8b2a2306a">resize</a> (size_type newSize)</td></tr>
+<tr class="memdesc:a30ae68dea76dbb15b85eddd8b2a2306a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes all the underlying buffers to a new size.  <a href="#a30ae68dea76dbb15b85eddd8b2a2306a">More...</a><br /></td></tr>
+<tr class="separator:a30ae68dea76dbb15b85eddd8b2a2306a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2d9ef31c48d7398dede29da41c27f02"><td class="memItemLeft" align="right" valign="top">iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ad2d9ef31c48d7398dede29da41c27f02">channelWriter</a> (int channelIndex)</td></tr>
+<tr class="memdesc:ad2d9ef31c48d7398dede29da41c27f02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return an iterator to a specific channel with a non-const type.  <a href="#ad2d9ef31c48d7398dede29da41c27f02">More...</a><br /></td></tr>
+<tr class="separator:ad2d9ef31c48d7398dede29da41c27f02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d63ef28fa763af9ffac6bf4e4abbdc0"><td class="memItemLeft" align="right" valign="top">iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a0d63ef28fa763af9ffac6bf4e4abbdc0">channelWriterEnd</a> (int channelIndex)</td></tr>
+<tr class="memdesc:a0d63ef28fa763af9ffac6bf4e4abbdc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sentinel for the channelWriter(channelIndex) iterator.  <a href="#a0d63ef28fa763af9ffac6bf4e4abbdc0">More...</a><br /></td></tr>
+<tr class="separator:a0d63ef28fa763af9ffac6bf4e4abbdc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3a77506efa8f5e09572a137ec344604"><td class="memItemLeft" align="right" valign="top">const_iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ae3a77506efa8f5e09572a137ec344604">channelReader</a> (int channelIndex) const</td></tr>
+<tr class="memdesc:ae3a77506efa8f5e09572a137ec344604"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const iterator for a specific channel.  <a href="#ae3a77506efa8f5e09572a137ec344604">More...</a><br /></td></tr>
+<tr class="separator:ae3a77506efa8f5e09572a137ec344604"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30bd42620f320f93a166d8ffaf5d648e"><td class="memItemLeft" align="right" valign="top">const_iterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a30bd42620f320f93a166d8ffaf5d648e">channelReaderEnd</a> (int channelIndex) const</td></tr>
+<tr class="memdesc:a30bd42620f320f93a166d8ffaf5d648e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a sentinel for the channelReader(channelIndex) iterator.  <a href="#a30bd42620f320f93a166d8ffaf5d648e">More...</a><br /></td></tr>
+<tr class="separator:a30bd42620f320f93a166d8ffaf5d648e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd97e15776c9d33e8857218e6b5906db"><td class="memItemLeft" align="right" valign="top">absl::Span&lt; value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#afd97e15776c9d33e8857218e6b5906db">getSpan</a> (int channelIndex) const</td></tr>
+<tr class="memdesc:afd97e15776c9d33e8857218e6b5906db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a Span for a specific channel.  <a href="#afd97e15776c9d33e8857218e6b5906db">More...</a><br /></td></tr>
+<tr class="separator:afd97e15776c9d33e8857218e6b5906db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3830369c62967d83089c657f3dbcceb9"><td class="memItemLeft" align="right" valign="top">absl::Span&lt; const value_type &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a3830369c62967d83089c657f3dbcceb9">getConstSpan</a> (int channelIndex) const</td></tr>
+<tr class="memdesc:a3830369c62967d83089c657f3dbcceb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a const Span object for a specific channel.  <a href="#a3830369c62967d83089c657f3dbcceb9">More...</a><br /></td></tr>
+<tr class="separator:a3830369c62967d83089c657f3dbcceb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a176b89f64851bdc7134ddd02b5c115"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a2a176b89f64851bdc7134ddd02b5c115">addChannel</a> ()</td></tr>
 <tr class="memdesc:a2a176b89f64851bdc7134ddd02b5c115"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a channel to the buffer with the current number of frames.  <a href="#a2a176b89f64851bdc7134ddd02b5c115">More...</a><br /></td></tr>
 <tr class="separator:a2a176b89f64851bdc7134ddd02b5c115"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93ec759a3f7d76a1c1c60f35a5cbd315"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a93ec759a3f7d76a1c1c60f35a5cbd315">getNumFrames</a> () const</td></tr>
-<tr class="memdesc:a93ec759a3f7d76a1c1c60f35a5cbd315"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of elements in each buffer.  <a href="#a93ec759a3f7d76a1c1c60f35a5cbd315">More...</a><br /></td></tr>
-<tr class="separator:a93ec759a3f7d76a1c1c60f35a5cbd315"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1461ee8bcedfa492f6d455b89e3160c6"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a1461ee8bcedfa492f6d455b89e3160c6">getNumChannels</a> () const</td></tr>
-<tr class="memdesc:a1461ee8bcedfa492f6d455b89e3160c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of channels.  <a href="#a1461ee8bcedfa492f6d455b89e3160c6">More...</a><br /></td></tr>
-<tr class="separator:a1461ee8bcedfa492f6d455b89e3160c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4eb0816e449da5c0a48f71e709bcaf95"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a4eb0816e449da5c0a48f71e709bcaf95">getNumFrames</a> () const</td></tr>
+<tr class="memdesc:a4eb0816e449da5c0a48f71e709bcaf95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of elements in each buffer.  <a href="#a4eb0816e449da5c0a48f71e709bcaf95">More...</a><br /></td></tr>
+<tr class="separator:a4eb0816e449da5c0a48f71e709bcaf95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0a24416d8b0b4009c8f20ca2ad9d517"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#ae0a24416d8b0b4009c8f20ca2ad9d517">getNumChannels</a> () const</td></tr>
+<tr class="memdesc:ae0a24416d8b0b4009c8f20ca2ad9d517"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of channels.  <a href="#ae0a24416d8b0b4009c8f20ca2ad9d517">More...</a><br /></td></tr>
+<tr class="separator:ae0a24416d8b0b4009c8f20ca2ad9d517"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39e8d91018c396244e71f79e99b1fa5f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a39e8d91018c396244e71f79e99b1fa5f">empty</a> () const</td></tr>
 <tr class="memdesc:a39e8d91018c396244e71f79e99b1fa5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the buffers contains no elements.  <a href="#a39e8d91018c396244e71f79e99b1fa5f">More...</a><br /></td></tr>
 <tr class="separator:a39e8d91018c396244e71f79e99b1fa5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa6f70f8f67400687d9996ffcc458aee"><td class="memItemLeft" align="right" valign="top">Type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#afa6f70f8f67400687d9996ffcc458aee">getSample</a> (size_t channelIndex, size_t frameIndex)</td></tr>
-<tr class="memdesc:afa6f70f8f67400687d9996ffcc458aee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a reference to a given element in a given buffer.  <a href="#afa6f70f8f67400687d9996ffcc458aee">More...</a><br /></td></tr>
-<tr class="separator:afa6f70f8f67400687d9996ffcc458aee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a69740b05fc6cf9ca68a202b2b6ff36a6"><td class="memItemLeft" align="right" valign="top">Type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a69740b05fc6cf9ca68a202b2b6ff36a6">operator()</a> (size_t channelIndex, size_t frameIndex)</td></tr>
-<tr class="memdesc:a69740b05fc6cf9ca68a202b2b6ff36a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alias for getSample(...)  <a href="#a69740b05fc6cf9ca68a202b2b6ff36a6">More...</a><br /></td></tr>
-<tr class="separator:a69740b05fc6cf9ca68a202b2b6ff36a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a503864d51de64c8303aeea411efd8186"><td class="memItemLeft" align="right" valign="top">Type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a503864d51de64c8303aeea411efd8186">getSample</a> (int channelIndex, size_type frameIndex)</td></tr>
+<tr class="memdesc:a503864d51de64c8303aeea411efd8186"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a reference to a given element in a given buffer.  <a href="#a503864d51de64c8303aeea411efd8186">More...</a><br /></td></tr>
+<tr class="separator:a503864d51de64c8303aeea411efd8186"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d484a51580b0fb7db43ef8356a8582e"><td class="memItemLeft" align="right" valign="top">Type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a6d484a51580b0fb7db43ef8356a8582e">operator()</a> (int channelIndex, size_type frameIndex)</td></tr>
+<tr class="memdesc:a6d484a51580b0fb7db43ef8356a8582e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alias for getSample(...)  <a href="#a6d484a51580b0fb7db43ef8356a8582e">More...</a><br /></td></tr>
+<tr class="separator:a6d484a51580b0fb7db43ef8356a8582e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a193ca9915de973ebc7f3712c4c6ac9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a4a193ca9915de973ebc7f3712c4c6ac9">reset</a> ()</td></tr>
 <tr class="memdesc:a4a193ca9915de973ebc7f3712c4c6ac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all channels from the buffer and reset it to empty.  <a href="#a4a193ca9915de973ebc7f3712c4c6ac9">More...</a><br /></td></tr>
 <tr class="separator:a4a193ca9915de973ebc7f3712c4c6ac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b4e5fc79b8b1328cdcf5a23ef802dce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a1b4e5fc79b8b1328cdcf5a23ef802dce">addChannels</a> (size_t numChannels)</td></tr>
-<tr class="memdesc:a1b4e5fc79b8b1328cdcf5a23ef802dce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a positive number of channels to the buffer.  <a href="#a1b4e5fc79b8b1328cdcf5a23ef802dce">More...</a><br /></td></tr>
-<tr class="separator:a1b4e5fc79b8b1328cdcf5a23ef802dce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a457d4d2ecd3cee9993c93ccb969646c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_audio_buffer.html#a457d4d2ecd3cee9993c93ccb969646c5">addChannels</a> (int numChannels)</td></tr>
+<tr class="memdesc:a457d4d2ecd3cee9993c93ccb969646c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a positive number of channels to the buffer.  <a href="#a457d4d2ecd3cee9993c93ccb969646c5">More...</a><br /></td></tr>
+<tr class="separator:a457d4d2ecd3cee9993c93ccb969646c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt;<br />
+<div class="textblock"><h3>template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt;<br />
 class sfz::AudioBuffer&lt; Type, MaxChannels, Alignment &gt;</h3>
 
 <p>A class to handle a collection of buffers, where each buffer has the same size. </p>
@@ -191,7 +191,7 @@ class sfz::AudioBuffer&lt; Type, MaxChannels, Alignment &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -214,13 +214,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a94d656cec7a7409248a1692f2acba9a4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94d656cec7a7409248a1692f2acba9a4">&#9670;&nbsp;</a></span>AudioBuffer() <span class="overload">[2/2]</span></h2>
+<a id="ab1dbcd9971a757c162f5e1593dee0747"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab1dbcd9971a757c162f5e1593dee0747">&#9670;&nbsp;</a></span>AudioBuffer() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -228,13 +228,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname"><a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::<a class="el" href="classsfz_1_1_audio_buffer.html">AudioBuffer</a> </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>numChannels</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>numFrames</em>&#160;</td>
         </tr>
         <tr>
@@ -268,7 +268,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -291,13 +291,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a1b4e5fc79b8b1328cdcf5a23ef802dce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b4e5fc79b8b1328cdcf5a23ef802dce">&#9670;&nbsp;</a></span>addChannels()</h2>
+<a id="a457d4d2ecd3cee9993c93ccb969646c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a457d4d2ecd3cee9993c93ccb969646c5">&#9670;&nbsp;</a></span>addChannels()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -305,7 +305,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">void <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::addChannels </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>numChannels</em></td><td>)</td>
           <td></td>
         </tr>
@@ -327,13 +327,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a7bb8e2ed6d5c816b1ec2a4b281a86ccf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7bb8e2ed6d5c816b1ec2a4b281a86ccf">&#9670;&nbsp;</a></span>channelReader()</h2>
+<a id="ae3a77506efa8f5e09572a137ec344604"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3a77506efa8f5e09572a137ec344604">&#9670;&nbsp;</a></span>channelReader()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -341,7 +341,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">const_iterator <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::channelReader </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -364,13 +364,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="ae8979ec36dd1cfa03d05f6f99034393b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8979ec36dd1cfa03d05f6f99034393b">&#9670;&nbsp;</a></span>channelReaderEnd()</h2>
+<a id="a30bd42620f320f93a166d8ffaf5d648e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30bd42620f320f93a166d8ffaf5d648e">&#9670;&nbsp;</a></span>channelReaderEnd()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -378,7 +378,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">const_iterator <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::channelReaderEnd </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -401,13 +401,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a074119211f828ad0efe4d11ff9cf5774"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a074119211f828ad0efe4d11ff9cf5774">&#9670;&nbsp;</a></span>channelWriter()</h2>
+<a id="ad2d9ef31c48d7398dede29da41c27f02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2d9ef31c48d7398dede29da41c27f02">&#9670;&nbsp;</a></span>channelWriter()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -415,7 +415,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">iterator <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::channelWriter </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em></td><td>)</td>
           <td></td>
         </tr>
@@ -438,13 +438,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="ab5303f191b0145e3debceeaa1f51e554"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab5303f191b0145e3debceeaa1f51e554">&#9670;&nbsp;</a></span>channelWriterEnd()</h2>
+<a id="a0d63ef28fa763af9ffac6bf4e4abbdc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d63ef28fa763af9ffac6bf4e4abbdc0">&#9670;&nbsp;</a></span>channelWriterEnd()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -452,7 +452,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">iterator <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::channelWriterEnd </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em></td><td>)</td>
           <td></td>
         </tr>
@@ -481,7 +481,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -507,13 +507,13 @@ false </dd></dl>
 
 </div>
 </div>
-<a id="a5983fd1053a613788a4f6c651b723ab7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5983fd1053a613788a4f6c651b723ab7">&#9670;&nbsp;</a></span>getConstSpan()</h2>
+<a id="a3830369c62967d83089c657f3dbcceb9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3830369c62967d83089c657f3dbcceb9">&#9670;&nbsp;</a></span>getConstSpan()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -521,7 +521,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">absl::Span&lt;const value_type&gt; <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getConstSpan </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -544,19 +544,19 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a1461ee8bcedfa492f6d455b89e3160c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1461ee8bcedfa492f6d455b89e3160c6">&#9670;&nbsp;</a></span>getNumChannels()</h2>
+<a id="ae0a24416d8b0b4009c8f20ca2ad9d517"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0a24416d8b0b4009c8f20ca2ad9d517">&#9670;&nbsp;</a></span>getNumChannels()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">size_t <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getNumChannels </td>
+          <td class="memname">int <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getNumChannels </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -574,19 +574,19 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a93ec759a3f7d76a1c1c60f35a5cbd315"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a93ec759a3f7d76a1c1c60f35a5cbd315">&#9670;&nbsp;</a></span>getNumFrames()</h2>
+<a id="a4eb0816e449da5c0a48f71e709bcaf95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4eb0816e449da5c0a48f71e709bcaf95">&#9670;&nbsp;</a></span>getNumFrames()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">size_t <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getNumFrames </td>
+          <td class="memname">size_type <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getNumFrames </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -600,17 +600,17 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 </div><div class="memdoc">
 
 <p>Get the number of elements in each buffer. </p>
-<dl class="section return"><dt>Returns</dt><dd>size_t </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>size_type </dd></dl>
 
 </div>
 </div>
-<a id="afa6f70f8f67400687d9996ffcc458aee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa6f70f8f67400687d9996ffcc458aee">&#9670;&nbsp;</a></span>getSample()</h2>
+<a id="a503864d51de64c8303aeea411efd8186"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a503864d51de64c8303aeea411efd8186">&#9670;&nbsp;</a></span>getSample()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -618,13 +618,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">Type&amp; <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getSample </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">size_type&#160;</td>
           <td class="paramname"><em>frameIndex</em>&#160;</td>
         </tr>
         <tr>
@@ -653,13 +653,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="ac794c2735763616947c7cdb87c00f29d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac794c2735763616947c7cdb87c00f29d">&#9670;&nbsp;</a></span>getSpan()</h2>
+<a id="afd97e15776c9d33e8857218e6b5906db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd97e15776c9d33e8857218e6b5906db">&#9670;&nbsp;</a></span>getSpan()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -667,7 +667,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">absl::Span&lt;value_type&gt; <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::getSpan </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -690,13 +690,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="a69740b05fc6cf9ca68a202b2b6ff36a6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69740b05fc6cf9ca68a202b2b6ff36a6">&#9670;&nbsp;</a></span>operator()()</h2>
+<a id="a6d484a51580b0fb7db43ef8356a8582e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d484a51580b0fb7db43ef8356a8582e">&#9670;&nbsp;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -704,13 +704,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">Type&amp; <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::operator() </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">int&#160;</td>
           <td class="paramname"><em>channelIndex</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">size_type&#160;</td>
           <td class="paramname"><em>frameIndex</em>&#160;</td>
         </tr>
         <tr>
@@ -744,7 +744,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -767,13 +767,13 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
 
 </div>
 </div>
-<a id="acdd9c86a3da3abf7f14b0b78b4ed73db"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acdd9c86a3da3abf7f14b0b78b4ed73db">&#9670;&nbsp;</a></span>resize()</h2>
+<a id="a30ae68dea76dbb15b85eddd8b2a2306a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30ae68dea76dbb15b85eddd8b2a2306a">&#9670;&nbsp;</a></span>resize()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
+template&lt;class Type, int MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -781,7 +781,7 @@ template&lt;class Type, size_t MaxChannels = sfz::config::numChannels, unsigned 
         <tr>
           <td class="memname">bool <a class="el" href="classsfz_1_1_audio_buffer.html">sfz::AudioBuffer</a>&lt; Type, MaxChannels, Alignment &gt;::resize </td>
           <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">size_type&#160;</td>
           <td class="paramname"><em>newSize</em></td><td>)</td>
           <td></td>
         </tr>
@@ -810,7 +810,7 @@ false otherwise </dd></dl>
 			<hr>
 			<footer>
 				<p style="text-align:left">Copyright &copy; 2019 Paul Ferrand
-					<span style="float:right">Generated for sfizz by
+					<span style="float:right">Generated on Sat Jan 18 2020 09:10:00 for sfizz by
 						<a href="http://www.doxygen.org/index.html"
 							target="_new">Doxygen</a> 1.8.13</span>
 				</p>
