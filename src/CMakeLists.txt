@@ -27,7 +27,6 @@ target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
 target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads)
 sfizz_link_libsndfile(sfizz_static)
-sfizz_enable_lto_if_needed(sfizz_static)
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
