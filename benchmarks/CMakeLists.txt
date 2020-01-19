@@ -95,10 +95,10 @@ target_link_libraries(bm_pointerIterationOrOffsets PRIVATE absl::span absl::algo
 target_include_directories(bm_pointerIterationOrOffsets PRIVATE ../src/sfizz ../src/external)
 
 if (NOT WIN32)
-add_executable(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main samplerate)
-sfizz_link_libsndfile(bm_resample)
-target_include_directories(bm_resample PRIVATE ../src/sfizz ../src/external)
+	add_executable(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
+	target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main samplerate)
+	sfizz_link_libsndfile(bm_resample)
+	target_include_directories(bm_resample PRIVATE ../src/sfizz ../src/external)
 endif()
 
 add_executable(bm_envelopes BM_envelopes.cpp ${BENCHMARK_SIMD_SOURCES})
@@ -156,7 +156,7 @@ add_dependencies(sfizz_benchmarks
 )
 
 if (NOT WIN32)
-add_dependencies(sfizz_benchmarks bm_resample)
+	add_dependencies(sfizz_benchmarks bm_resample)
 endif()
 
 file(COPY "sample1.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
