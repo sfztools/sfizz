@@ -303,10 +303,6 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     egEnvelope.getBlock(span1);
     applyGain<float>(span1, leftBuffer);
 
-    // Volume envelope
-    volumeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
-
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
 
@@ -345,10 +341,6 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 
     // AmpEG envelope
     egEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
-
-    // Volume envelope
-    volumeEnvelope.getBlock(span1);
     buffer.applyGain(span1);
 
     // Create mid/side from left/right in the output buffer
