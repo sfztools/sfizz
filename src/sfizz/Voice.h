@@ -302,6 +302,7 @@ private:
 
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> amplitudeEnvelope; // linear events
+    LinearEnvelope<float> crossfadeEnvelope;
     LinearEnvelope<float> panEnvelope;
     LinearEnvelope<float> positionEnvelope;
     LinearEnvelope<float> widthEnvelope;
