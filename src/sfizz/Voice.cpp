@@ -66,7 +66,6 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
 
     baseGain = region->getBaseGain();
-    baseGain *= region->getCrossfadeGain(midiState.getCCArray());
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
 
@@ -74,6 +73,9 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     if (region->amplitudeCC)
         gain *= normalizeCC(midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
+
+    float crossfadeGain { region->getCrossfadeGain(midiState.getCCArray()) };
+    crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan { basePan };
@@ -202,6 +204,11 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
         const float newWidth { baseWidth + normalizeCC(ccValue) * normalizeNegativePercents(region->widthCC->second) };
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
+
+    if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
+      const float crossfadeGain = region->getCrossfadeGain(midiState.getCCArray());
+      crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
+    }
 }
 
 void sfz::Voice::registerPitchWheel(int delay, int pitch) noexcept
@@ -284,6 +291,10 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     amplitudeEnvelope.getBlock(span1);
     applyGain<float>(span1, leftBuffer);
 
+    // Crossfade envelope
+    crossfadeEnvelope.getBlock(span1);
+    applyGain<float>(span1, leftBuffer);
+
     // Volume envelope
     volumeEnvelope.getBlock(span1);
     applyGain<float>(span1, leftBuffer);
@@ -322,6 +333,10 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 
     // Amplitude envelope
     amplitudeEnvelope.getBlock(span1);
+    buffer.applyGain(span1);
+
+    // Crossfade envelope
+    crossfadeEnvelope.getBlock(span1);
     buffer.applyGain(span1);
 
     // Volume envelope
