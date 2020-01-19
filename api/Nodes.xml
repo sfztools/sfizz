@@ -1516,162 +1516,162 @@
                <Node>
                 <Name>sfizz_create_synth</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a463b1ec989c4632a5d3f6ba000a7de4c</Anchor>
+                <Anchor>a5833814d7befbccc93c93700b036dc00</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_disable_freewheeling</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a8c42c49a6b073cfe76f29ccf4cb62e13</Anchor>
+                <Anchor>af0236d41298634d5715f0bd15367db22</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_enable_freewheeling</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a54865ae4cd54abd1500e860bf324e10d</Anchor>
+                <Anchor>a9d18eaf0d9b17546655633483d5c534a</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_free</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>abaee61a443deabf621f435b501500e1e</Anchor>
+                <Anchor>a47fbf4b15adb59175fcaa234c24d99c0</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_active_voices</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>acec4532bfd04af82f205922b4fec7a69</Anchor>
+                <Anchor>a96c434533f95022ed907ba5270679902</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_buffers</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a3ebb02917388939ce9b17ad8bd084be0</Anchor>
+                <Anchor>aa4c60d91e0414eb3516828b7226ea99a</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_bytes</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a73d40f7001b7496153347a38d903cb85</Anchor>
+                <Anchor>a3c594195d40428a5d79f02cb274afc5a</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_curves</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a89c9d54d7ed0fbf3d9dd36a0a5701d28</Anchor>
+                <Anchor>ae99e2a39ed7e908625b942faf315bbde</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_groups</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a1f48f36bd8c6019a742c2f4e0bc77c30</Anchor>
+                <Anchor>a5610a937429837a02b88aa710b7daa59</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_masters</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a147c6f9b27cc6668d79f7294d5a77971</Anchor>
+                <Anchor>a1a58b63f5284066396337e2a9fa87858</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_preloaded_samples</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a2fc8bc59263cb70bdecb210e51204ff2</Anchor>
+                <Anchor>a2d4791d1f40ae976f5bbbb7573955511</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_regions</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>ac96835f2e4ad2f9272b75727b666ee06</Anchor>
+                <Anchor>a99743b62aa4a56b6af89eb40bb8c78bc</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_num_voices</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a1e3e264fba927016d4d83f50ed3eeeec</Anchor>
+                <Anchor>afeed08b80c4c2d5a0913dab88a22a153</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_oversampling_factor</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a0c1b726f791047e32a94334301f40ebb</Anchor>
+                <Anchor>ad9edc40593d05de8b2ea95bcb63fce4e</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_preload_size</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a08bc2f0edf593d294754399a456f121c</Anchor>
+                <Anchor>afe62939ce7648c1c4c4c7bc2a5bf7191</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_unknown_opcodes</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>ac0cb89abd2668ad218b4d17ed4f19fc2</Anchor>
+                <Anchor>a5fc5960d946b347d8c6b314e9ce68691</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_get_volume</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a6055b7cc07e3bcfc3797b1a48466c40c</Anchor>
+                <Anchor>ad8db0c89467abc4de0ff0b214b3fbadb</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_load_file</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>af55242966c4d4ae6ccf1d3faa80bfc12</Anchor>
+                <Anchor>a3b52ff6e9ad7a8d7e9f5b60d010311ca</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_render_block</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a3a6b63cd5a344fbfee9aac9924526c76</Anchor>
+                <Anchor>a40757584901175974d05d687570bd39a</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_send_aftertouch</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>ab56b7f1df6249fcc82fa736ce00da089</Anchor>
+                <Anchor>a1955b112fa8fa7162c665ada79d3badd</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_send_cc</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a1a4fba5b82cb7fbd4306409950426b73</Anchor>
+                <Anchor>a0f951e0297fa4faff0457f3ef99a9530</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_send_note_off</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a25a81af3753b3e35159079a35df20a9f</Anchor>
+                <Anchor>a2cff4a46cf2efe947a820068be8ab374</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_send_note_on</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>acd95f84924b073b0f1031cd8aef7b3e8</Anchor>
+                <Anchor>a8138cb3f374c5ebc25d2f8de61b60a8d</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_send_pitch_wheel</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a725faf6c345ab5e8aa3bddef76ea5cfa</Anchor>
+                <Anchor>aa37aa3daabbba80a2497eb4a2e604b1a</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_send_tempo</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a9bde64a9b34824a38f2c662c9e98904b</Anchor>
+                <Anchor>a5e24f99a94ee71cb5bd2dfa48e2b7ea0</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_set_num_voices</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a3b8d75648f4559835a93a4156669a996</Anchor>
+                <Anchor>a77ab0c8b6eaf0b2256823a2b6502585d</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_set_oversampling_factor</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a09c7ffdc9f26c21a0d7dd97bebccb77c</Anchor>
+                <Anchor>a8a0b832acb46c28bb9928275cf771d75</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_set_preload_size</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a60d4f0bc1ff11b2ad4da2afe6e496a42</Anchor>
+                <Anchor>a674c7e0a28e241c5e82e59d01246e373</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_set_sample_rate</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>af0f8b0d64c668ec3ea933e1a3887c8c8</Anchor>
+                <Anchor>a405d0f8f3ba3605b39c6bf5f21968e42</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_set_samples_per_block</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a05c1993fe37dc48b38e646990914be5e</Anchor>
+                <Anchor>ad31787b359d564f7ec930373596af801</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_set_volume</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a8120595c2d3c0d785e8010728e076bc9</Anchor>
+                <Anchor>ae7efac24193ff27b80adcc4a5c5e96cb</Anchor>
                </Node>
                <Node>
                 <Name>sfizz_should_reload_file</Name>
                 <Path>sfizz_8h.html</Path>
-                <Anchor>a6cbe7e33de049c6c2a428699eb880ad8</Anchor>
+                <Anchor>a5361eee6fe64da7e0f0cf200a900620b</Anchor>
                </Node>
               </Subnodes>
              </Node>
