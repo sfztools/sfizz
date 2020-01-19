@@ -170,6 +170,11 @@ int main(int argc, char** argv)
 {
     // std::ios::sync_with_stdio(false);
     auto arguments = absl::ParseCommandLine(argc, argv);
+    if (arguments.size() < 2) {
+        std::cout << "You need to specify an SFZ file to load." << '\n';
+        return -1;
+    }
+
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
