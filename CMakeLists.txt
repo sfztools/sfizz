@@ -47,20 +47,4 @@ if (SFIZZ_TESTS)
     add_subdirectory (tests)
 endif()
 
-message (STATUS "
-Project name:                  ${PROJECT_NAME}
-Build type:                    ${CMAKE_BUILD_TYPE}
-Build using LTO:               ${ENABLE_LTO}
-Build as shared library:       ${SFIZZ_SHARED}
-Build JACK stand-alone client: ${SFIZZ_JACK}
-Build LV2 plug-in:             ${SFIZZ_LV2}
-Build benchmarks:              ${SFIZZ_BENCHMARKS}
-Build tests:                   ${SFIZZ_TESTS}
-
-Install prefix:                ${CMAKE_INSTALL_PREFIX}
-LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
-
-Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
-Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}
-Compiler CXX min size flags:   ${CMAKE_CXX_FLAGS_MINSIZEREL}
-")
+show_build_info_if_needed()

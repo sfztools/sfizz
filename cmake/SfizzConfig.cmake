@@ -52,3 +52,27 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
     add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
+
+# Don't show build information when building a different project
+function (show_build_info_if_needed)
+    if (CMAKE_PROJECT_NAME STREQUAL "sfizz")
+        message (STATUS "
+Project name:                  ${PROJECT_NAME}
+Build type:                    ${CMAKE_BUILD_TYPE}
+Build using LTO:               ${ENABLE_LTO}
+Build as shared library:       ${SFIZZ_SHARED}
+Build JACK stand-alone client: ${SFIZZ_JACK}
+Build LV2 plug-in:             ${SFIZZ_LV2}
+Build benchmarks:              ${SFIZZ_BENCHMARKS}
+Build tests:                   ${SFIZZ_TESTS}
+
+Install prefix:                ${CMAKE_INSTALL_PREFIX}
+LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
+
+Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
+Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}
+Compiler CXX min size flags:   ${CMAKE_CXX_FLAGS_MINSIZEREL}
+")
+    endif()
+endfunction()
+
