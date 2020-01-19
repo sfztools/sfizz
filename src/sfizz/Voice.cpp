@@ -205,7 +205,7 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 
-    if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCInRange.contains(ccNumber)) {
+    if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
       const float crossfadeGain = region->getCrossfadeGain(midiState.getCCArray());
       crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
     }
