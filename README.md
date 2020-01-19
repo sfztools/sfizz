@@ -11,6 +11,8 @@ In Debian-based distributions, this translates into
 ```
 sudo apt install libjack-jackd2-dev libsndfile1-dev
 ```
+The benchmarks depend on the `benchmark` library (https://github.com/google/benchmark).
+If you wish to build the benchmarks you should either build it from source and install the static library, or use the library from your distribution---Ubuntu proposes a `libbenchmark-dev` package that does this.
 
 The process is as follows:
 1. Clone the repository with all the submodules
@@ -64,7 +66,7 @@ cd vcpkg
 
 Assuming you want to build for x64, install the relevant packages as follows
 ```powershell
-.\vcpkg.exe install libsndfile:x64-windows-static zlib:x64-windows-static libsamplerate:x64-windows-static benchmark:x64-windows-static
+.\vcpkg.exe install libsndfile:x64-windows-static benchmark:x64-windows-static
 ```
 
 In the sfizz source directory, you can then build with CMake as usual, although you should clone the windows branch:
