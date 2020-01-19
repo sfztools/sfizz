@@ -293,7 +293,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 
     // Crossfade envelope
     crossfadeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    applyGain<float>(span1, leftBuffer);
 
     // Volume envelope
     volumeEnvelope.getBlock(span1);
