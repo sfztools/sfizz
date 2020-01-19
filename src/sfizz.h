@@ -34,7 +34,7 @@ extern "C" {
 
 #if defined SFIZZ_EXPORT_SYMBOLS
   #if defined _WIN32
-    #define SFIZZ_EXPORTED_API
+    #define SFIZZ_EXPORTED_API __declspec(dllexport)
   #else
     #define SFIZZ_EXPORTED_API __attribute__ ((visibility ("default")))
   #endif
