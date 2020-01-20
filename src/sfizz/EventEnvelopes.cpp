@@ -65,15 +65,33 @@ void EventEnvelope<Type>::registerEvent(int timestamp, Type inputValue)
 }
 
 template <class Type>
-void EventEnvelope<Type>::prepareEvents()
+void EventEnvelope<Type>::prepareEvents(int blockLength)
 {
     if (resetEvents)
         clear();
-
-    absl::c_sort(events, [](const auto& lhs, const auto& rhs) {
+    
+    absl::c_stable_sort(events, [](const auto& lhs, const auto& rhs) {
         return lhs.first < rhs.first;
     });
 
+    auto eventIt = events.begin();
+    while (eventIt < events.end()) {
+        if (eventIt->first >= blockLength) {
+            eventIt->first = blockLength - 1;
+            eventIt->second = events.back().second;
+            ++eventIt;
+            break;
+        }
+
+        auto nextEventIt = std::next(eventIt);
+        while (nextEventIt < events.end() && eventIt->first == nextEventIt->first ) {
+            eventIt->second = nextEventIt->second;
+            ++nextEventIt;
+        }
+        ++eventIt;
+    }
+    events.resize(std::distance(events.begin(), eventIt));
+    
     resetEvents = true;
 }
 
@@ -93,15 +111,15 @@ void EventEnvelope<Type>::reset(Type value)
 }
 
 template <class Type>
-void EventEnvelope<Type>::getBlock(absl::Span<Type>)
+void EventEnvelope<Type>::getBlock(absl::Span<Type> output)
 {
-    prepareEvents();
+    prepareEvents(output.size());
 }
 
 template <class Type>
-void EventEnvelope<Type>::getQuantizedBlock(absl::Span<Type>, Type)
+void EventEnvelope<Type>::getQuantizedBlock(absl::Span<Type> output, Type)
 {
-    prepareEvents();
+    prepareEvents(output.size());
 }
 
 template <class Type>

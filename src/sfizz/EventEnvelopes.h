@@ -113,7 +113,7 @@ private:
     static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
     std::function<Type(Type)> function { [](Type input) { return input; } };
     int maxCapacity { config::defaultSamplesPerBlock };
-    void prepareEvents();
+    void prepareEvents(int blockLength);
     bool resetEvents { false };
     LEAK_DETECTOR(EventEnvelope);
 };
