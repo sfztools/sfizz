@@ -179,7 +179,10 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
 
-    // TODO: gain-type events at time 0 may trigger sharp discontinuities; maybe add a minimum delay?
+    // Add a minimum delay for smoothing the envelopes
+    // TODO: this feels like a hack, revisit this along with the smoothed envelopes...
+    delay = max(delay, minEnvelopeDelay);
+
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {
         const float newGain { baseGain * normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) };
         amplitudeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(newGain));
@@ -206,8 +209,8 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
-      const float crossfadeGain = region->getCrossfadeGain(midiState.getCCArray());
-      crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
+        const float crossfadeGain = region->getCrossfadeGain(midiState.getCCArray());
+        crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
     }
 }
 
@@ -237,6 +240,7 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
+    this->minEnvelopeDelay = samplesPerBlock / 2;
     tempBuffer1.resize(samplesPerBlock);
     tempBuffer2.resize(samplesPerBlock);
     tempBuffer3.resize(samplesPerBlock);

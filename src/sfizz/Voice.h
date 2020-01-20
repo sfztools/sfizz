@@ -295,6 +295,7 @@ private:
     absl::Span<int> indexSpan { absl::MakeSpan(indexBuffer) };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
+    int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
     float sampleRate { config::defaultSampleRate };
 
     const MidiState& midiState;
