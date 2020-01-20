@@ -36,6 +36,18 @@
 #include <random>
 
 template<class T>
+constexpr T max(T op1, T op2)
+{
+    return std::max(op1, op2);
+}
+
+template<class T, class... Args>
+constexpr T max(T op1, Args... rest)
+{
+    return std::max(op1, max(rest...));
+}
+
+template<class T>
 constexpr T min(T op1, T op2)
 {
     return std::min(op1, op2);
