@@ -8,5 +8,5 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
 Requires:
-Libs: -L${libdir} -lmylib
+Libs: -L${libdir} -l@PROJECT_NAME@
 Cflags: -I${includedir}
