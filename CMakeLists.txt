@@ -4,7 +4,8 @@ cmake_policy(SET CMP0091 NEW)
 else()
 cmake_minimum_required (VERSION 3.11)
 endif()
-project (sfizz VERSION 1.0.0 LANGUAGES CXX C)
+project (sfizz VERSION 0.2.0 LANGUAGES CXX C)
+set(PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 
 # External configuration CMake scripts
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
