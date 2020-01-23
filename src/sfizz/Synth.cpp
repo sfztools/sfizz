@@ -105,7 +105,7 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
             }
 
             if (!lastRegion->parseOpcode(opcode))
-                unknownOpcodes.insert(opcode.opcode);
+                unknownOpcodes.emplace_back(opcode.opcode);
         }
     };
 
@@ -556,7 +556,7 @@ const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
 }
 
-std::set<absl::string_view> sfz::Synth::getUnknownOpcodes() const noexcept
+const std::vector<std::string>& sfz::Synth::getUnknownOpcodes() const noexcept
 {
     return unknownOpcodes;
 }

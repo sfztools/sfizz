@@ -21,7 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "sfizz.hpp"
+#include "sfizz/Synth.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
 #include <absl/types/span.h>

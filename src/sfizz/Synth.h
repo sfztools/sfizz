@@ -154,7 +154,7 @@ public:
      *
      * @return std::set<absl::string_view>
      */
-    std::set<absl::string_view> getUnknownOpcodes() const noexcept;
+    const std::vector<std::string>& getUnknownOpcodes() const noexcept;
     /**
      * @brief Get the number of preloaded samples in the synth
      *
@@ -432,7 +432,7 @@ private:
     std::vector<CCNamePair> ccNames;
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;
-    std::set<absl::string_view> unknownOpcodes;
+    std::vector<std::string> unknownOpcodes;
     using RegionPtrVector = std::vector<Region*>;
     using VoicePtrVector = std::vector<Voice*>;
     std::vector<std::unique_ptr<Region>> regions;
