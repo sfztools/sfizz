@@ -53,7 +53,7 @@ var searchData=
   ['gettriggernumber',['getTriggerNumber',['../classsfz_1_1_voice.html#a1c2ae3b23508f971a422ffe86d779f36',1,'sfz::Voice']]],
   ['gettriggertype',['getTriggerType',['../classsfz_1_1_voice.html#a3ecbfa53a4c4f8d1a3fcde2f6e2e818d',1,'sfz::Voice']]],
   ['gettriggervalue',['getTriggerValue',['../classsfz_1_1_voice.html#a00c8871c5a8b4b2a9f459365b7953742',1,'sfz::Voice']]],
-  ['getunknownopcodes',['getUnknownOpcodes',['../classsfz_1_1_synth.html#ad83ae265b530f3a9e3aa5a97a4b069a1',1,'sfz::Synth']]],
+  ['getunknownopcodes',['getUnknownOpcodes',['../classsfz_1_1_synth.html#a681f9419e9007f6414f0207a8465bce4',1,'sfz::Synth']]],
   ['getvoiceview',['getVoiceView',['../classsfz_1_1_synth.html#ab0bd46a930df0e8fe7106a745db55872',1,'sfz::Synth']]],
   ['getvolume',['getVolume',['../classsfz_1_1_synth.html#a5c693f7a10813afd3a9c06cefee6f99a',1,'sfz::Synth']]],
   ['getwithdefault',['getWithDefault',['../classsfz_1_1_c_c_map.html#a5fd9ade3276c6b444f22644365744c38',1,'sfz::CCMap']]],

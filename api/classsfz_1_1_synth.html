@@ -151,9 +151,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab0bd46a930df0e8fe7106a745db55872"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classsfz_1_1_voice.html">Voice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ab0bd46a930df0e8fe7106a745db55872">getVoiceView</a> (int idx) const noexcept</td></tr>
 <tr class="memdesc:ab0bd46a930df0e8fe7106a745db55872"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a raw view into a specific voice.  <a href="#ab0bd46a930df0e8fe7106a745db55872">More...</a><br /></td></tr>
 <tr class="separator:ab0bd46a930df0e8fe7106a745db55872"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad83ae265b530f3a9e3aa5a97a4b069a1"><td class="memItemLeft" align="right" valign="top">std::set&lt; absl::string_view &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#ad83ae265b530f3a9e3aa5a97a4b069a1">getUnknownOpcodes</a> () const noexcept</td></tr>
-<tr class="memdesc:ad83ae265b530f3a9e3aa5a97a4b069a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of unknown opcodes.  <a href="#ad83ae265b530f3a9e3aa5a97a4b069a1">More...</a><br /></td></tr>
-<tr class="separator:ad83ae265b530f3a9e3aa5a97a4b069a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a681f9419e9007f6414f0207a8465bce4"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::string &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#a681f9419e9007f6414f0207a8465bce4">getUnknownOpcodes</a> () const noexcept</td></tr>
+<tr class="memdesc:a681f9419e9007f6414f0207a8465bce4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a list of unknown opcodes.  <a href="#a681f9419e9007f6414f0207a8465bce4">More...</a><br /></td></tr>
+<tr class="separator:a681f9419e9007f6414f0207a8465bce4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bbbd2db16396a529dff87b36b6e3c5c"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_synth.html#a8bbbd2db16396a529dff87b36b6e3c5c">getNumPreloadedSamples</a> () const noexcept</td></tr>
 <tr class="memdesc:a8bbbd2db16396a529dff87b36b6e3c5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of preloaded samples in the synth.  <a href="#a8bbbd2db16396a529dff87b36b6e3c5c">More...</a><br /></td></tr>
 <tr class="separator:a8bbbd2db16396a529dff87b36b6e3c5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -886,8 +886,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ad83ae265b530f3a9e3aa5a97a4b069a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad83ae265b530f3a9e3aa5a97a4b069a1">&#9670;&nbsp;</a></span>getUnknownOpcodes()</h2>
+<a id="a681f9419e9007f6414f0207a8465bce4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a681f9419e9007f6414f0207a8465bce4">&#9670;&nbsp;</a></span>getUnknownOpcodes()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -896,7 +896,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::set&lt;absl::string_view&gt; sfz::Synth::getUnknownOpcodes </td>
+          <td class="memname">const std::vector&lt;std::string&gt;&amp; sfz::Synth::getUnknownOpcodes </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
