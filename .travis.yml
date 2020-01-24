@@ -57,11 +57,10 @@ deploy:
 notifications:
   irc:
     channels:
-    - "ircs://chat.freenode.net:7070/#sfztools-dev"
+    - "ircs://chat.freenode.net:7070/#sfztools"
 
     template:
-    - "Build %{build_number}: %{message}"
-    - "%{author} committed in [%{repository_name}:%{branch}]"
-    - "%{commit_subject}"
+    - "[%{repository_name}:%{branch}] Build #%{build_number}: %{message}"
+    - "%{author} : %{commit_subject}"
     - "Commit URL    : https://github.com/%{repository_slug}/commit/%{commit}"
     - "Build Details : %{build_url}"
