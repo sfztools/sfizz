@@ -61,7 +61,7 @@ notifications:
 
     template:
     - "Build %{build_number}: %{message}"
-    - "13%{author} committed in 13[%{repository_name}:%{branch}]"
-    - "13%{commit_subject}"
+    - "%{author} committed in [%{repository_name}:%{branch}]"
+    - "%{commit_subject}"
     - "Commit URL    : https://github.com/%{repository_slug}/commit/%{commit}"
     - "Build Details : %{build_url}"
