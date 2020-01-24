@@ -23,7 +23,7 @@ def case_insensitive_check(filename):
 		if path != '':
 			path += '/'
 		found = False
-		
+
 		if os.path.exists(root_directory + path + e):
 			path += e
 			continue

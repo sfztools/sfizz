@@ -198,7 +198,7 @@ bool sfz::findOpcode(absl::string_view& source, absl::string_view& opcode, absl:
     auto opcodeEnd = source.find("=");
     if (opcodeEnd == absl::string_view::npos)
         return false;
-    
+
     const auto valueStart = opcodeEnd + 1;
     const auto nextOpcodeEnd = source.find("=", valueStart);
 
@@ -212,11 +212,11 @@ bool sfz::findOpcode(absl::string_view& source, absl::string_view& opcode, absl:
     auto valueEnd = nextOpcodeEnd;
     while (source[valueEnd] != ' ' && valueEnd != valueStart)
         valueEnd--;
-    
+
     opcode = source.substr(0, opcodeEnd);
     value = source.substr(valueStart, valueEnd - valueStart);
     source.remove_prefix(valueEnd);
-    return true;        
+    return true;
 }
 
 
@@ -225,7 +225,7 @@ bool sfz::findDefine(absl::string_view line, absl::string_view& variable, absl::
     const auto defPosition = line.find("#define");
     if (defPosition == absl::string_view::npos)
         return false;
-    
+
     const auto variableStart = line.find("$", 7);
     if (variableStart == absl::string_view::npos)
         return false;
@@ -240,7 +240,7 @@ bool sfz::findDefine(absl::string_view line, absl::string_view& variable, absl::
 
     const auto valueEnd = line.find_first_of(" \r\t\n\f\v", valueStart);
     variable = line.substr(variableStart, variableEnd - variableStart);
-    value = valueEnd != absl::string_view::npos 
+    value = valueEnd != absl::string_view::npos
         ? line.substr(valueStart, valueEnd - valueStart)
         : line.substr(valueStart);
     return true;
@@ -251,7 +251,7 @@ bool sfz::findInclude(absl::string_view line, std::string& path)
     const auto defPosition = line.find("#include");
     if (defPosition == absl::string_view::npos)
         return false;
-    
+
     const auto pathStart = line.find("\"", 8);
     if (pathStart == absl::string_view::npos)
         return false;

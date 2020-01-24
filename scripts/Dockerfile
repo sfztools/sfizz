@@ -8,10 +8,10 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/nul
     && apt-get install -y cmake
 
 RUN cd /tmp \
-    && git clone https://github.com/Microsoft/vcpkg.git \ 
+    && git clone https://github.com/Microsoft/vcpkg.git \
     && cd vcpkg \
     && ./bootstrap-vcpkg.sh -disableMetrics \
-    && ./vcpkg integrate install 
+    && ./vcpkg integrate install
 
 COPY x64-linux-hidden.cmake .
 

@@ -30,7 +30,7 @@ if (WIN32 OR SFIZZ_USE_VCPKG)
     find_package(LibSndFile REQUIRED)
     find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
 endif()
-    
+
 function(SFIZZ_LINK_LIBSNDFILE TARGET)
     if (WIN32 OR SFIZZ_USE_VCPKG)
         target_link_libraries (${TARGET} PRIVATE sndfile-static)

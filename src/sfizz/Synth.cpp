@@ -382,7 +382,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     const auto callbackStartTime = std::chrono::high_resolution_clock::now();
 
     buffer.fill(0.0f);
-    
+
     resources.filePool.cleanupPromises();
 
     if (freeWheeling)
@@ -490,7 +490,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
         resetAllControllers(delay);
         return;
     }
-    
+
     midiState.ccEvent(ccNumber, ccValue);
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, ccValue);

@@ -23,7 +23,7 @@
 
 /**
  * @brief Flush floating points to zero and disable denormals as an RAII helper.
- * 
+ *
  */
 class ScopedFTZ {
 

@@ -23,7 +23,7 @@
 
 #include "ScopedFTZ.h"
 #if (HAVE_X86INTRIN_H)
-#include <x86intrin.h> 
+#include <x86intrin.h>
 #elif (HAVE_INTRIN_H)
 #include <intrin.h>
 #elif (HAVE_ARM_NEON_H)
