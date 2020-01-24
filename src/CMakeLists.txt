@@ -30,9 +30,9 @@ sfizz_link_libsndfile(sfizz_static)
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
-
-# install(TARGETS sfizz_parser DESTINATION . EXCLUDE_FROM_ALL)
-# install(TARGETS sfizz DESTINATION . EXCLUDE_FROM_ALL)
+if (UNIX AND NOT APPLE)
+    target_link_libraries (sfizz_static PRIVATE atomic)
+endif()
 
 # Shared library and installation target
 if (SFIZZ_SHARED)
@@ -55,8 +55,9 @@ if (SFIZZ_SHARED)
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
         install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     endif()
+
+    if (UNIX AND NOT APPLE)
+        target_link_libraries (sfizz_shared PRIVATE atomic)
+    endif()
 endif()
-if (UNIX AND NOT APPLE)
-    target_link_libraries (sfizz_static PRIVATE atomic)
-    target_link_libraries (sfizz_shared PRIVATE atomic)
-endif()
+
