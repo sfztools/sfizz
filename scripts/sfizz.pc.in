@@ -7,6 +7,6 @@ Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
-Requires:
+Requires.private: sndfile
 Libs: -L${libdir} -l@PROJECT_NAME@
 Cflags: -I${includedir}
