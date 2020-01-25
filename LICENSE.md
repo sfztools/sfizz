@@ -7,6 +7,8 @@ Contributors include:
 - Paul Ferrand (2019-) paul at ferrand dot cc
 - Andrea Zanellato (2019-)
 - Jean-Pierre Cimalando (2020-)
+- Michael Willis (2020-)
+- Alexander Mitchell (2020-)
 
 All rights reserved.
 
