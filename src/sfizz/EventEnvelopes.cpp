@@ -1,4 +1,6 @@
-// Copyright (c) 2019, Paul Ferrand
+// SPDX-License-Identifier: BSD-2-Clause
+
+// Copyright (c) 2019-2020, Paul Ferrand
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -69,7 +71,7 @@ void EventEnvelope<Type>::prepareEvents(int blockLength)
 {
     if (resetEvents)
         clear();
-    
+
     absl::c_stable_sort(events, [](const auto& lhs, const auto& rhs) {
         return lhs.first < rhs.first;
     });
@@ -91,7 +93,7 @@ void EventEnvelope<Type>::prepareEvents(int blockLength)
         ++eventIt;
     }
     events.resize(std::distance(events.begin(), eventIt));
-    
+
     resetEvents = true;
 }
 

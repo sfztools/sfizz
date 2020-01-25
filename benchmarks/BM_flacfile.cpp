@@ -1,4 +1,6 @@
-// Copyright (c) 2019, Paul Ferrand
+// SPDX-License-Identifier: BSD-2-Clause
+
+// Copyright (c) 2019-2020, Paul Ferrand
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -20,6 +22,7 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #include "Buffer.h"
 #include <benchmark/benchmark.h>
 #include <sndfile.hh>
@@ -38,7 +41,7 @@ public:
         filePath1 = getPath() / "sample1.flac";
         filePath2 = getPath() / "sample2.flac";
         filePath3 = getPath() / "sample3.flac";
-        if (    !ghc::filesystem::exists(filePath1) 
+        if (    !ghc::filesystem::exists(filePath1)
             ||  !ghc::filesystem::exists(filePath2)
             ||  !ghc::filesystem::exists(filePath3) ) {
         #ifndef NDEBUG

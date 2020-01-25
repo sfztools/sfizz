@@ -1,7 +1,9 @@
 /*
+  SPDX-License-Identifier: ISC
+
   Sfizz LV2 plugin
 
-  Copyright 2019, Paul Ferrand <paul@ferrand.cc>
+  Copyright 2019-2020, Paul Ferrand <paul@ferrand.cc>
 
   This file was based on skeleton and example code from the LV2 plugin
   distribution available at http://lv2plug.in/

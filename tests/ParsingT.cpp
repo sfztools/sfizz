@@ -1,4 +1,6 @@
-// Copyright (c) 2019, Paul Ferrand
+// SPDX-License-Identifier: BSD-2-Clause
+
+// Copyright (c) 2019-2020, Paul Ferrand
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +56,7 @@ void defineTest(const std::string& line, const std::string& variable, const std:
 {
     absl::string_view variableMatch;
     absl::string_view valueMatch;
-    
+
     auto found = sfz::findDefine(line, variableMatch, valueMatch);
     REQUIRE(found);
     REQUIRE(variableMatch == variable);

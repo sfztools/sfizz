@@ -1,4 +1,6 @@
-// Copyright (c) 2019, Paul Ferrand
+// SPDX-License-Identifier: BSD-2-Clause
+
+// Copyright (c) 2019-2020, Paul Ferrand
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -20,7 +22,6 @@
 // ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>

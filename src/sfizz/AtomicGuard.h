@@ -1,4 +1,6 @@
-// Copyright (c) 2019, Paul Ferrand
+// SPDX-License-Identifier: BSD-2-Clause
+
+// Copyright (c) 2019-2020, Paul Ferrand
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -26,35 +28,35 @@
  * of lock-free mutex-type protection adapter to audio applications where you have 1 priority thread
  * that should never block and would rather return silence than wait, and another low-priority
  * thread that handles long computations.
- * 
+ *
  * @code{.cpp}
- * 
+ *
  * // Somewhere in a class...
  * std::atomic<bool> canEnterCallback;
  * std::atomic<bool> inCallback;
- * 
+ *
  * void functionThatSuspendsCallback()
  * {
  *     AtomicDisabler callbackDisabler { canEnterCallback };
- *     
+ *
  *     while (inCallback) {
  *         std::this_thread::sleep_for(1ms);
  *     }
- * 
+ *
  * 	   // Do your thing.
  * }
- * 
+ *
  * void callback(int samplesPerBlock) noexcept
  * {
  *     AtomicGuard callbackGuard { inCallback };
  *     if (!canEnterCallback)
  *         return;
- * 
+ *
  * 	   // Do your thing.
  * }
  * @endcode
  * There are probably many ways to improve these and probably even debug them.
- * The spinlocking itself could be integrated in the constructor, although the 
+ * The spinlocking itself could be integrated in the constructor, although the
  * check for return in the callback could not.
  */
 #include <atomic>
@@ -64,13 +66,13 @@ namespace sfz
 /**
  * @brief Simple class to set an atomic to true and automatically set it back to false on
  * destruction.
- * 
+ *
  * You call it like this assuming you need indicate that you are in e.g. a callback
  * @code{.cpp}
  * void functionToProtect()
  * {
  * 		AtomicGuard { guard };
- * 
+ *
  * 		// Do stuff, the atomic will be set back to false as soon as you're back
  * }
  * @endcode
@@ -98,13 +100,13 @@ private:
 /**
  * @brief Simple class to set an atomic to false and automatically set it back to true on
  * destruction.
- * 
+ *
  * You call it like this assuming you need to disable e.g. a callback
  * @code{.cpp}
  * void functionThatDisableAnotherFunction()
  * {
  * 		AtomicDisabler { disabler };
- * 
+ *
  * 		// Do stuff, the atomic will be set back to true as soon as you're back
  * }
  * @endcode
