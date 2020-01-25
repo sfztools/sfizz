@@ -22,5 +22,5 @@ RUN cd /tmp \
     && cd sfizz \
     && mkdir build \
     && cd build \
-    && cmake .. -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF "-DCMAKE_TOOLCHAIN_FILE=/tmp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-linux-hidden -DCMAKE_BUILD_TYPE=Release -DSFIZZ_USE_VCPKG=ON\
+    && cmake .. -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF -DSFIZZ_LV2=ON "-DCMAKE_TOOLCHAIN_FILE=/tmp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-linux-hidden -DCMAKE_BUILD_TYPE=Release -DSFIZZ_USE_VCPKG=ON\
     && make -j 16

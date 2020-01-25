@@ -22,7 +22,7 @@ endif()
 
 option (ENABLE_LTO       "Enable Link Time Optimization [default: ON]" ON)
 option (SFIZZ_JACK       "Enable JACK stand-alone build [default: ON]" ON)
-option (SFIZZ_LV2        "Enable LV2 plug-in build [default: ON]" ON)
+option (SFIZZ_LV2        "Enable LV2 plug-in build [default: OFF]" OFF)
 option (SFIZZ_BENCHMARKS "Enable benchmarks build [default: OFF]" OFF)
 option (SFIZZ_TESTS      "Enable tests build [default: OFF]" OFF)
 option (SFIZZ_SHARED     "Enable shared library build [default: ON]" ON)

@@ -4,9 +4,20 @@
 
 ## Building
 
+Most people will probably want the LV2 plugin with `libsndfile` built-in statically.
+You can directly build it this way through Docker:
+```
+wget https://raw.githubusercontent.com/sfztools/sfizz/develop/scripts/Dockerfile
+wget https://raw.githubusercontent.com/sfztools/sfizz/develop/scripts/x64-linux-hidden.cmake
+docker build -t sfizz .
+docker cp $(docker create sfizz:latest):/tmp/sfizz/build/sfizz.lv2 .
+```
+Note that the statically linked LV2 plugin is to be distributed under the LGPL license, as per the terms of the `libsndfile` library.
+
+### More generic builds and development
+
 `sfizz` depends mainly on the `libsndfile` library.
-The JACK client depends on the `jack` library.
-To build `sfizz` you need to install both as shared libraries on the system.
+To build the other `sfizz` targets you need to install both `libsndfile` and `JACK` as shared libraries on the system.
 In Debian-based distributions, this translates into
 ```
 sudo apt install libjack-jackd2-dev libsndfile1-dev
@@ -32,17 +43,17 @@ sudo make install
 ```
 
 By default this builds and installs:
-- The shared library version of sfizz
+- The shared library version of sfizz with both C and C++ interfaces
 - The JACK client
-- The LV2 plugin with system libraries dynamically loaded
 
 The JACK client client will forcefully connect to the system output, and open an event input in Jack for you to connect a midi capable software or hardware (e.g. `jack-keyboard`).
 
 Note that you can disable all targets but the LV2 plugin using
 ```sh
-cmake -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF ..
+cmake -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF -DSFIZZ_LV2=ON ..
 ```
 and process as before.
+In this case, the LV2 plugin will load `libsndfile` dynamically from your system.
 
 ### Possible pitfalls and alternatives
 
