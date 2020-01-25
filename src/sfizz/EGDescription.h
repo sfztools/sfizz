@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-// Copyright (c) 2019-2020, Paul Ferrand
+// Copyright (c) 2019-2020, Paul Ferrand, Andrea Zanellato
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
