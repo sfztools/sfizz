@@ -53,6 +53,7 @@
   doap:maintainer [
     foaf:name     "@LV2PLUGIN_AUTHOR@" ;
     foaf:homepage <@LV2PLUGIN_URI@> ;
+    foaf:email    "@LV2PLUGIN_EMAIL@";
   ] ;
   rdfs:comment "@LV2PLUGIN_COMMENT@",
     "Campionatore SFZ"@it ;

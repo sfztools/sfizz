@@ -6,6 +6,7 @@ set (LV2PLUGIN_NAME            "sfizz")
 set (LV2PLUGIN_COMMENT         "SFZ sampler")
 set (LV2PLUGIN_URI             "http://sfztools.github.io/sfizz")
 set (LV2PLUGIN_AUTHOR          "Paul Ferrand")
+set (LV2PLUGIN_EMAIL           "paul at ferrand dot cc")
 set (LV2PLUGIN_SPDX_LICENSE_ID "ISC")
 
 if (WIN32)
