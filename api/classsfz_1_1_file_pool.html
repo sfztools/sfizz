@@ -133,6 +133,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3430758f4b1ab97c27620de5fc727155"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a3430758f4b1ab97c27620de5fc727155">preloadFile</a> (const std::string &amp;filename, uint32_t maxOffset) noexcept</td></tr>
 <tr class="memdesc:a3430758f4b1ab97c27620de5fc727155"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check that a file is preloaded with the proper offset bounds.  <a href="#a3430758f4b1ab97c27620de5fc727155">More...</a><br /></td></tr>
 <tr class="separator:a3430758f4b1ab97c27620de5fc727155"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a246c4468a5f60ce4ad34898c6474d9aa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a246c4468a5f60ce4ad34898c6474d9aa">checkSample</a> (std::string &amp;filename) const noexcept</td></tr>
+<tr class="memdesc:a246c4468a5f60ce4ad34898c6474d9aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check that the sample exists.  <a href="#a246c4468a5f60ce4ad34898c6474d9aa">More...</a><br /></td></tr>
+<tr class="separator:a246c4468a5f60ce4ad34898c6474d9aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e9b651ad7b87601df6470cc6ecd9432"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432">clear</a> ()</td></tr>
 <tr class="memdesc:a1e9b651ad7b87601df6470cc6ecd9432"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear all preloaded files.  <a href="#a1e9b651ad7b87601df6470cc6ecd9432">More...</a><br /></td></tr>
 <tr class="separator:a1e9b651ad7b87601df6470cc6ecd9432"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,6 +191,44 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a246c4468a5f60ce4ad34898c6474d9aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a246c4468a5f60ce4ad34898c6474d9aa">&#9670;&nbsp;</a></span>checkSample()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool sfz::FilePool::checkSample </td>
+          <td>(</td>
+          <td class="paramtype">std::string &amp;&#160;</td>
+          <td class="paramname"><em>filename</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check that the sample exists. </p>
+<p>If not, try to find it in a case insensitive way.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>the sample filename; may be updated by the method </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the sample exists or was updated properly </dd>
+<dd>
+false if no sample was found even with a case insensitive search </dd></dl>
+
+</div>
+</div>
 <a id="a73f46234da3ccee6c40f4ddb354cfb01"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a73f46234da3ccee6c40f4ddb354cfb01">&#9670;&nbsp;</a></span>cleanupPromises()</h2>
 

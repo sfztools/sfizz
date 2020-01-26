@@ -2327,6 +2327,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>checkSample</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilePool</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_file_pool.html</Path>
+    <Anchor>a246c4468a5f60ce4ad34898c6474d9aa</Anchor>
+    <Abstract>Check that the sample exists. </Abstract>
+    <DeclaredIn>FilePool.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>clear</Name>
       <APILanguage>cpp</APILanguage>
       <Type>instm</Type>

@@ -440,6 +440,11 @@
                 <Anchor>a1efdaef6de822f72ba822ebfebb4a17a</Anchor>
                </Node>
                <Node>
+                <Name>checkSample</Name>
+                <Path>classsfz_1_1_file_pool.html</Path>
+                <Anchor>a246c4468a5f60ce4ad34898c6474d9aa</Anchor>
+               </Node>
+               <Node>
                 <Name>cleanupPromises</Name>
                 <Path>classsfz_1_1_file_pool.html</Path>
                 <Anchor>a73f46234da3ccee6c40f4ddb354cfb01</Anchor>

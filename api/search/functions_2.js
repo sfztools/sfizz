@@ -12,6 +12,7 @@ var searchData=
   ['channelwriter',['channelWriter',['../classsfz_1_1_audio_buffer.html#a074119211f828ad0efe4d11ff9cf5774',1,'sfz::AudioBuffer']]],
   ['channelwriterend',['channelWriterEnd',['../classsfz_1_1_audio_buffer.html#ab5303f191b0145e3debceeaa1f51e554',1,'sfz::AudioBuffer']]],
   ['checkoffgroup',['checkOffGroup',['../classsfz_1_1_voice.html#a0d12582ad73d0f3a61a2f7433e7b2d90',1,'sfz::Voice']]],
+  ['checksample',['checkSample',['../classsfz_1_1_file_pool.html#a246c4468a5f60ce4ad34898c6474d9aa',1,'sfz::FilePool']]],
   ['clamp',['clamp',['../classsfz_1_1_range.html#aef58ceb857807af2c9d2984d240d0aec',1,'sfz::Range::clamp()'],['../_math_helpers_8h.html#aca20a33a33fccbc4953c3403e62fd372',1,'clamp():&#160;MathHelpers.h']]],
   ['cleanuppromises',['cleanupPromises',['../classsfz_1_1_file_pool.html#a73f46234da3ccee6c40f4ddb354cfb01',1,'sfz::FilePool']]],
   ['clear',['clear',['../classsfz_1_1_buffer.html#a3fe4689394573298ac4471df3a82cff7',1,'sfz::Buffer::clear()'],['../classsfz_1_1_event_envelope.html#a1b20138c47700a0fd6f14f0acdbe923d',1,'sfz::EventEnvelope::clear()'],['../classsfz_1_1_file_pool.html#a1e9b651ad7b87601df6470cc6ecd9432',1,'sfz::FilePool::clear()']]],
