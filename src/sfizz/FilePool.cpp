@@ -113,6 +113,9 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
     if (fs::exists(path, ec))
         return true;
 
+#if WIN32
+    return false;
+#else
     fs::path oldPath = std::move(path);
     path = oldPath.root_path();
 
@@ -160,6 +163,7 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
     DBG("Updating " << filename << " to " << newPath.native());
     filename = newPath.string();
     return true;
+#endif
 }
 
 absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename) noexcept
