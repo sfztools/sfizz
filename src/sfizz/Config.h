@@ -49,6 +49,7 @@ namespace config {
     constexpr float voiceStealingThreshold { 0.00001f };
     constexpr int numCCs { 143 };
     constexpr int chunkSize { 1024 };
+    constexpr float defaultAmpEGRelease { 0.02f };
 } // namespace config
 
 // Enable or disable SIMD accelerators by default
