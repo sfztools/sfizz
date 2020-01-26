@@ -224,17 +224,30 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();
+    auto removeCurrentRegion = [&currentRegion, &lastRegion]() {
+        if (currentRegion->get() == nullptr)
+            return;
+
+        DBG("Removing the region with sample " << currentRegion->get()->sample);
+        std::iter_swap(currentRegion, lastRegion);
+        ++lastRegion;
+    };
+
     while (currentRegion < lastRegion.base()) {
         auto region = currentRegion->get();
 
         if (!region->isGenerator()) {
-            auto fileInformation = resources.filePool.getFileInformation(region->sample);
-            if (!fileInformation) {
-                DBG("Removing the region with sample " << region->sample);
-                std::iter_swap(currentRegion, lastRegion);
-                ++lastRegion;
+            if (!resources.filePool.checkSample(region->sample)) {
+                removeCurrentRegion();
                 continue;
             }
+
+            const auto fileInformation = resources.filePool.getFileInformation(region->sample);
+            if (!fileInformation) {
+                removeCurrentRegion();
+                continue;
+            }
+
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
 
             if (fileInformation->loopBegin != Default::loopRange.getStart() &&
@@ -254,7 +267,8 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
             // TODO: adjust with LFO targets
             const auto maxOffset { region->offset + region->offsetRandom };
-            resources.filePool.preloadFile(region->sample, maxOffset);
+            if (!resources.filePool.preloadFile(region->sample, maxOffset))
+                removeCurrentRegion();
         }
 
         for (auto note = 0; note < 128; note++) {

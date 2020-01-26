@@ -31,6 +31,7 @@
 #include "Oversampler.h"
 #include "AtomicGuard.h"
 #include "absl/types/span.h"
+#include "absl/strings/match.h"
 #include <memory>
 #include <sndfile.hh>
 #include <thread>
@@ -105,11 +106,69 @@ sfz::FilePool::~FilePool()
         thread.join();
 }
 
+bool sfz::FilePool::checkSample(std::string& filename) const noexcept
+{
+    fs::path path { rootDirectory / filename };
+    std::error_code ec;
+    if (fs::exists(path, ec))
+        return true;
+
+#if WIN32
+    return false;
+#else
+    fs::path oldPath = std::move(path);
+    path = oldPath.root_path();
+
+    static const fs::path dot { "." };
+    static const fs::path dotdot { ".." };
+
+    for (const fs::path &part : oldPath.relative_path()) {
+        if (part == dot || part == dotdot) {
+            path /= part;
+            continue;
+        }
+
+        if (fs::exists(path / part, ec)) {
+            path /= part;
+            continue;
+        }
+
+        auto it = path.empty() ? fs::directory_iterator{ dot, ec } : fs::directory_iterator{ path, ec };
+        if (ec) {
+            DBG("Error creating a directory iterator for " << filename << " (Error code: " << ec.message() << ")");
+            return false;
+        }
+
+        auto searchPredicate = [&part](const fs::directory_entry &ent) -> bool {
+            return absl::EqualsIgnoreCase(
+                ent.path().filename().native(), part.native());
+        };
+
+        while (it != fs::directory_iterator{} && !searchPredicate(*it))
+            it.increment(ec);
+
+        if (it == fs::directory_iterator{}) {
+            DBG("File not found, could not resolve " << filename);
+            return false;
+        }
+
+        path /= it->path().filename();
+    }
+
+    const auto newPath = fs::relative(path, rootDirectory, ec);
+    if (ec) {
+        DBG("Error extracting the new relative path for " << filename << " (Error code: " << ec.message() << ")");
+        return false;
+    }
+    DBG("Updating " << filename << " to " << newPath.native());
+    filename = newPath.string();
+    return true;
+#endif
+}
+
 absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename) noexcept
 {
     fs::path file { rootDirectory / filename };
-    if (!fs::exists(file))
-        return {};
 
     SndfileHandle sndFile(file.string().c_str());
     if (sndFile.channels() != 1 && sndFile.channels() != 2) {
@@ -135,6 +194,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
 bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset) noexcept
 {
     fs::path file { rootDirectory / filename };
+
     if (!fs::exists(file))
         return false;
 
