@@ -102,31 +102,6 @@ Install a Docker version and use the `Dockerfile` located in `scripts/`.
 The `scripts/` directory also contains a `docker_lv2_release.sh` file that automates downloading the current `develop` branch and building an LV2 release plugin.
 Note that the statically linked LV2 plugin is to be distributed under the LGPL license, as per the terms of the `libsndfile` library.
 
-## Case issues in SFZ libraries
-
-Most SFZ libraries are built for Windows or macOS and both systems use case-insensitive file systems by default.
-This means that SFZ library developers may miss that the sample names used in their file does not have the same case as the ones in their filesystems.
-This will be painful for Linux folks.
-If you see that this is the case for a library you want to use, you can apply the `sfz_sample_checks.py` script located in the `scripts` directory of this repo to the `.sfz` file.
-The usage is as follows:
-
-```sh
-usage: sfz_sample_checks.py [-h] [--output OUTPUT] [--test] file
-
-Simple script to update the sample names in an existing SFZ files
-
-positional arguments:
-  file             SFZ input file
-
-optional arguments:
-  -h, --help       show this help message and exit
-  --output OUTPUT  Output file name; if not specified, _corrected will be
-                   appended to the input
-  --test           Test run
-```
-
-Don't hesitate to propose to the sfz library maker to give him the updated file or use the script by himself or herself; this will be transparent for Windows or macOS users and make life of Linux users much easier.
-
 ## License and contribution information
 
 Contributors to `sfizz` include:
