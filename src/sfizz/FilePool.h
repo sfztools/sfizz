@@ -158,6 +158,15 @@ public:
     bool preloadFile(const std::string& filename, uint32_t maxOffset) noexcept;
 
     /**
+     * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
+     *
+     * @param filename the sample filename; may be updated by the method
+     * @return true if the sample exists or was updated properly
+     * @return false if no sample was found even with a case insensitive search
+     */
+    bool checkSample(std::string& filename) const noexcept;
+
+    /**
      * @brief Clear all preloaded files.
      *
      */
