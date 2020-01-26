@@ -152,15 +152,14 @@ public:
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
      * @brief Render an block of audio data in the buffer. This call will reset
-     * the synth in its waiting state for the next batch of events. The size of
-     * the block is integrated in the AudioSpan object. You can build an
-     * AudioSpan implicitely from a large number of source objects; check the
-     * AudioSpan reference for more precision.
+     * the synth in its waiting state for the next batch of events. The buffers must
+     * be float[numSamples][numOutputs * 2].
      *
-     * @param buffer the buffer to write the next block into
-     * @param numSamples the number of samples
+     * @param buffers the buffers to write the next block into
+     * @param numSamples the number of stereo frames in the block
+     * @param numOutputs the number of stereo outputs
      */
-    void renderBlock(float** buffers, size_t numSamples, int numOutputs) noexcept;
+    void renderBlock(float** buffers, size_t numFrames, int numOutputs = 1) noexcept;
 
     /**
      * @brief Get the number of active voices
