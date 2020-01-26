@@ -431,7 +431,7 @@ private:
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
-    float volume { Default::volume };
+    float volume { Default::globalVolume };
     int numVoices { config::numVoices };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
