@@ -488,8 +488,9 @@ TEST_CASE("[Files] Case sentitiveness")
 {
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/case_insensitive.sfz");
-    REQUIRE(synth.getNumRegions() == 3);
+    REQUIRE(synth.getNumRegions() == 4);
     REQUIRE(synth.getRegionView(0)->sample == "dummy1.wav");
     REQUIRE(synth.getRegionView(1)->sample == "Regions/dummy.wav");
     REQUIRE(synth.getRegionView(2)->sample == "Regions/dummy.wav");
+    REQUIRE(synth.getRegionView(3)->sample == "Regions/dummy.wav");
 }
