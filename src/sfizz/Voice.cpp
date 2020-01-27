@@ -395,10 +395,10 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     absl::optional<int> releaseAt {};
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
-        const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor)) - 1;
-        const auto offset = loopEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
+        const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
+        const auto offset = loopEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor)) + 1;
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
-            if (*index >= loopEnd) {
+            if (*index > loopEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
                 subtract<int>(offset, { index, remainingElements });
             }
@@ -429,8 +429,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto ind = indices.data();
     auto leftCoeff = leftCoeffs.data();
     auto rightCoeff = rightCoeffs.data();
+    auto leftSource = source.getConstSpan(0);
     auto left = buffer.getChannel(0);
-    auto leftSource = source.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
             *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
@@ -438,7 +438,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     } else {
         auto right = buffer.getChannel(1);
-        auto rightSource = source.getChannel(1);
+        auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
             *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
             *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *leftCoeff, *rightCoeff);
