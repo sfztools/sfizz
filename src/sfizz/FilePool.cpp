@@ -177,7 +177,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
     }
 
     FileInformation returnedValue;
-    returnedValue.end = static_cast<uint32_t>(sndFile.frames());
+    returnedValue.end = static_cast<uint32_t>(sndFile.frames()) - 1;
     returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
     returnedValue.numChannels = sndFile.channels();
 
@@ -185,7 +185,7 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
     sndFile.command(SFC_GET_INSTRUMENT, &instrumentInfo, sizeof(instrumentInfo));
     if (instrumentInfo.loop_count > 0) {
         returnedValue.loopBegin = instrumentInfo.loops[0].start;
-        returnedValue.loopEnd = instrumentInfo.loops[0].end;
+        returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
     }
 
     return returnedValue;
