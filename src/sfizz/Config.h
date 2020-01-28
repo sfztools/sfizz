@@ -11,6 +11,7 @@
 #define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
 #endif
 #include <cstddef>
+#include <cstdint>
 
 namespace sfz {
 enum class Oversampling: int {
@@ -47,7 +48,7 @@ namespace config {
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001f };
-    constexpr int numCCs { 143 };
+    constexpr uint8_t numCCs { 143 };
     constexpr int chunkSize { 1024 };
     constexpr float defaultAmpEGRelease { 0.02f };
 } // namespace config

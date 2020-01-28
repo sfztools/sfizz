@@ -10,6 +10,7 @@
 // #include "ghc/fs_std.hpp"
 #include <absl/types/span.h>
 #include <algorithm>
+#include <array>
 #include <string>
 #include <iostream>
 using namespace Catch::literals;
