@@ -7,8 +7,8 @@
 Most people will probably want the LV2 plugin with `libsndfile` built-in statically.
 You can directly build it this way through Docker:
 ```
-wget https://raw.githubusercontent.com/sfztools/sfizz/develop/scripts/Dockerfile
-wget https://raw.githubusercontent.com/sfztools/sfizz/develop/scripts/x64-linux-hidden.cmake
+wget https://raw.githubusercontent.com/sfztools/sfizz/master/scripts/Dockerfile
+wget https://raw.githubusercontent.com/sfztools/sfizz/master/scripts/x64-linux-hidden.cmake
 docker build -t sfizz .
 docker cp $(docker create sfizz:latest):/tmp/sfizz/build/sfizz.lv2 .
 ```
