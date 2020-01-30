@@ -5,7 +5,7 @@
 ## Building
 
 Most people will probably want the LV2 plugin with `libsndfile` built-in statically.
-You can directly build it this way through Docker:
+You can directly build it this way through Docker by calling these in an *empty* directory :
 ```
 wget https://raw.githubusercontent.com/sfztools/sfizz/master/scripts/Dockerfile
 wget https://raw.githubusercontent.com/sfztools/sfizz/master/scripts/x64-linux-hidden.cmake
