@@ -15,12 +15,13 @@ RUN cd /tmp \
 
 COPY x64-linux-hidden.cmake .
 
-RUN ./tmp/vcpkg/vcpkg --overlay-triplets=. install libsndfile:x64-linux-hidden benchmark:x64-linux-hidden
+RUN /tmp/vcpkg/vcpkg --overlay-triplets=. install libsndfile:x64-linux-hidden benchmark:x64-linux-hidden
 
+ADD https://api.github.com/repos/sfztools/sfizz/git/refs/heads/master version.json
 RUN cd /tmp \
-    && git clone --branch develop --recursive https://github.com/sfztools/sfizz.git \
+    && git clone --branch master --recursive https://github.com/sfztools/sfizz.git \
     && cd sfizz \
     && mkdir build \
     && cd build \
-    && cmake .. -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF -DSFIZZ_LV2=ON "-DCMAKE_TOOLCHAIN_FILE=/tmp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-linux-hidden -DCMAKE_BUILD_TYPE=Release -DSFIZZ_USE_VCPKG=ON\
+    && cmake .. -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF "-DCMAKE_TOOLCHAIN_FILE=/tmp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-linux-hidden -DCMAKE_BUILD_TYPE=Release -DSFIZZ_USE_VCPKG=ON\
     && make -j 16
