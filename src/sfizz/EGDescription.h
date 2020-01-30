@@ -60,7 +60,7 @@ struct EGDescription
     float vel2decay     { Default::decay };
     float vel2delay     { Default::delayEG };
     float vel2hold      { Default::hold };
-    float vel2release   { Default::release };
+    float vel2release   { Default::vel2release };
     float vel2sustain   { Default::vel2sustain };
     int   vel2depth     { Default::depth };
 
