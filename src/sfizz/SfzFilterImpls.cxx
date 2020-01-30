@@ -8,6 +8,11 @@ struct dsp {};
 struct Meta {};
 struct UI {};
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include "gen/filters/sfzApf1p.cxx"
 #include "gen/filters/sfzBpf1p.cxx"
 #include "gen/filters/sfzBpf2p.cxx"
@@ -55,6 +60,10 @@ struct UI {};
 #include "gen/filters/sfz2chLsh.cxx"
 #include "gen/filters/sfz2chHsh.cxx"
 #include "gen/filters/sfz2chPeq.cxx"
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 template <class F> struct sfzFilter : public F {
     void setCutoff(float v) { F::fCutoff = v; }
