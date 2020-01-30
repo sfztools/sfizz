@@ -18,6 +18,11 @@
   purpose with or without fee is hereby granted, provided that the above
   copyright notice and this permission notice appear in all copies.
 
+  Compiling this plugin statically against libsndfile implies distributing it
+  under the terms of the LGPL v3 license. See the LICENSE.md file for more
+  information. If you did not receive a LICENSE.md file, inform the current
+  maintainer.
+
   THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR

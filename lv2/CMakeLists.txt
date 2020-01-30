@@ -28,6 +28,10 @@ set_target_properties (${LV2PLUGIN_PRJ_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
 file (MAKE_DIRECTORY ${PROJECT_BINARY_DIR})
 configure_file (manifest.ttl.in ${PROJECT_BINARY_DIR}/manifest.ttl)
 configure_file (${PROJECT_NAME}.ttl.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.ttl)
+configure_file (LICENSE.md.in ${PROJECT_BINARY_DIR}/LICENSE.md)
+if (SFIZZ_USE_VCPKG)
+    file(COPY "lgpl-3.0.txt" DESTINATION ${PROJECT_BINARY_DIR})
+endif()
 
 # Installation
 install (DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR})
