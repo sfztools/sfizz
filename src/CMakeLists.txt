@@ -17,7 +17,7 @@ add_library (sfizz_parser STATIC)
 target_sources (sfizz_parser PRIVATE sfizz/Parser.cpp sfizz/Opcode.cpp sfizz/SfzHelpers.cpp)
 target_include_directories (sfizz_parser PUBLIC sfizz)
 target_include_directories (sfizz_parser PUBLIC external)
-target_link_libraries (sfizz_parser PRIVATE absl::strings)
+target_link_libraries (sfizz_parser PUBLIC absl::strings)
 
 # Sfizz static library
 add_library(sfizz_static STATIC)
