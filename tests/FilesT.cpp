@@ -479,8 +479,8 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
     REQUIRE( synth.getRegionView(1)->loopMode == SfzLoopMode::no_loop );
     REQUIRE( synth.getRegionView(2)->loopMode == SfzLoopMode::loop_continuous );
 
-    REQUIRE( synth.getRegionView(0)->loopRange == sfz::Range<uint32_t>{ 77554, 186582 } );
-    REQUIRE( synth.getRegionView(1)->loopRange == sfz::Range<uint32_t>{ 77554, 186582 } );
+    REQUIRE( synth.getRegionView(0)->loopRange == sfz::Range<uint32_t>{ 77554, 186581 } );
+    REQUIRE( synth.getRegionView(1)->loopRange == sfz::Range<uint32_t>{ 77554, 186581 } );
     REQUIRE( synth.getRegionView(2)->loopRange == sfz::Range<uint32_t>{ 4, 124 } );
 }
 
