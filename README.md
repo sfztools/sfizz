@@ -50,7 +50,7 @@ The JACK client client will forcefully connect to the system output, and open an
 
 Note that you can disable all targets but the LV2 plugin using
 ```sh
-cmake -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF -DSFIZZ_LV2=ON ..
+cmake -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF ..
 ```
 and process as before.
 In this case, the LV2 plugin will load `libsndfile` dynamically from your system.
