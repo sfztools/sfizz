@@ -1,0 +1,3 @@
+<region> group=1 off_by=2 key=64 off_mode=fast ampeg_release=0.1 sample=mono_sample.wav
+<region> group=1 off_by=2 key=64 off_mode=normal ampeg_release=0.1 sample=mono_sample.wav
+<region> group=2 key=63 off_mode=normal ampeg_release=0.1 sample=mono_sample.wav

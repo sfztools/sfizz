@@ -1,0 +1,19 @@
+The `sfizz` LV2 plugin is able to be built statically against all its components,
+which is a desirable property for audio plugin hosts. These components include
+`libsndfile` from Erik de Castro Lopo (http://www.mega-nerd.com/libsndfile).
+`libsndfile` is distributed under the terms of the LGPL v2 or v3. As such,
+statically-linked LV2 version of `sfizz` are to be distributed under the terms
+of the LGPL-v3.0 license. You should be able to rebuild from source the sfizz LV2
+plugin using any `libsndfile` version you wish to use.
+
+See the file `lgpl-3.0.txt` or (https://www.gnu.org/licenses/lgpl-3.0.txt) for more
+information about the LGPL v3 license.
+
+Most of the code in the plug comes from various examples in the LV2 distribution and
+example plugins. As such, the source code of the LV2 plugin version of `sfizz` is
+distributed under the same terms as the LV2 specification, which is the ISC license.
+Binaries of this LV2 plugin dynamically linked against e.g. a system installation
+of `libsndfile` thus have to respect the terms of the ISC license and BSD 2-clause
+license. Check the LICENSE.md at (@LV2PLUGIN_REPOSITORY@) file for more
+information about the license of the source code of the `sfizz` library and its
+contributors.

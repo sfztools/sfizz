@@ -1,30 +1,13 @@
-// Copyright (c) 2019, Paul Ferrand
-// All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <absl/algorithm/container.h>
-#include "../sfizz/SIMDHelpers.h"
 #include "absl/types/span.h"
 
 constexpr int bigNumber { 2399132 };
@@ -33,8 +16,8 @@ class IterOffset : public benchmark::Fixture {
 public:
   void SetUp(const ::benchmark::State& state [[maybe_unused]]) {
     std::random_device rd { };
-    std::mt19937 gen { rd() };    
-    std::uniform_real_distribution<float> dist { 0.001, 1 };
+    std::mt19937 gen { rd() };
+    std::uniform_real_distribution<float> dist { 0.001f, 1.0f };
     std::uniform_int_distribution<int> jumpDist { 0, 3 };
     source = std::vector<float>(bigNumber);
     result.resize(state.range(0));
@@ -57,7 +40,7 @@ public:
 
 BENCHMARK_DEFINE_F(IterOffset, Pointers)(benchmark::State& state) {
     for (auto _ : state)
-    {   
+    {
         sfz::diff<int>(offsets, absl::MakeSpan(jumps));
         auto jump = jumps.begin();
         auto in = source.begin();
@@ -71,7 +54,7 @@ BENCHMARK_DEFINE_F(IterOffset, Pointers)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(IterOffset, Offsets)(benchmark::State& state) {
     for (auto _ : state)
-    {   
+    {
         auto offset = offsets.begin();
         auto out = result.begin();
         while (offset < offsets.end())

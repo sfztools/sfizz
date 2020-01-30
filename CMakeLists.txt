@@ -1,98 +1,56 @@
-cmake_minimum_required(VERSION 3.13)
-project(sfizz VERSION 1.0.0 LANGUAGES CXX)
+if(WIN32)
+cmake_minimum_required (VERSION 3.15)
+cmake_policy(SET CMP0091 NEW)
+else()
+cmake_minimum_required (VERSION 3.11)
+endif()
+project (sfizz VERSION 0.2.0 LANGUAGES CXX C)
+set(PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 
-# Do not override if set to more than 14
-if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
-    set(CMAKE_CXX_STANDARD 14)
+# External configuration CMake scripts
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include (SfizzConfig)
+
+# Build Options
+set (BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests [default: OFF]")
+
+# On macOS add the needed directories for both library and jack client
+if (APPLE)
+    include_directories (SYSTEM /usr/local/opt/libsndfile/include)
+    link_directories (/usr/local/opt/libsndfile/lib)
 endif()
 
-# Enable LTO
-set(CMAKE_POLICY_DEFAULT_CMP0069 NEW) # To override the policy in abseil and benchmark
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+option (ENABLE_LTO       "Enable Link Time Optimization [default: ON]" ON)
+option (SFIZZ_JACK       "Enable JACK stand-alone build [default: ON]" ON)
+option (SFIZZ_LV2        "Enable LV2 plug-in build [default: ON]" ON)
+option (SFIZZ_BENCHMARKS "Enable benchmarks build [default: OFF]" OFF)
+option (SFIZZ_TESTS      "Enable tests build [default: OFF]" OFF)
+option (SFIZZ_SHARED     "Enable shared library build [default: ON]" ON)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
-    set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
-    add_compile_options(-stdlib=libc++)
-    # Presumably need the above for linking too, maybe other options missing as well
-    add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-    add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
+# Don't use IPO in non Release builds
+include (CheckIPO)
+
+# Add Abseil
+add_subdirectory (external/abseil-cpp EXCLUDE_FROM_ALL)
+
+# Add the static library targets and sources
+add_subdirectory (src)
+
+# Optional targets
+if (SFIZZ_JACK)
+    add_subdirectory (clients)
 endif()
 
-if (UNIX) 
-    add_compile_options(-Wall)
-    add_compile_options(-Wextra)
-    add_compile_options(-ffast-math)
-    add_compile_options(-fno-omit-frame-pointer)
-endif()
-
-if (WIN32)
-    # TODO: Remove when abseil updates (deprecation warning from c++17 onwards)
-    add_compile_options(/wd4996)
-    # add_compile_options(/W3)
-    # add_compile_options(/GR-)
-    # add_compile_options(/permissive-)
-    # add_compile_options(/fp:fast)
-endif()
-
-message("Cmake flags: ${CMAKE_CXX_FLAGS}")
-
-# Export the compile_commands.json file
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# find_package(Git QUIET)
-# if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-# Update submodules as needed
-#     option(GIT_SUBMODULE "Check submodules during build" ON)
- #    if(GIT_SUBMODULE)
- #        message(STATUS "Submodule update")
- #        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote 
- #                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
- #                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
- #        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-#             message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-#         endif()
-#     endif()
-# endif()
-
-# Build options and includes
-set(BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests")
-add_subdirectory(external/abseil-cpp EXCLUDE_FROM_ALL)
-
-# Download libsndfile
-if (WIN32)
-    # file(DOWNLOAD https://github.com/bastibe/libsndfile-binaries/raw/master/libsndfile32bit.dll external/libsndfile-win/libsndfile32bit.dll)
-    # file(DOWNLOAD https://github.com/bastibe/libsndfile-binaries/raw/master/libsndfile64bit.dll external/libsndfile-win/libsndfile64bit.dll)
-    # message(STATUS "Downloading libsndfile")
-    # # find_library(sndfile libsndfile-1.lib HINTS ${WIN_SNDFILE_PATH}/lib)
-    set(WIN_SNDFILE_PATH "C:/Program Files/Mega-Nerd/libsndfile")
-    add_library(sndfile STATIC IMPORTED)
-    set_target_properties(sndfile PROPERTIES IMPORTED_LOCATION "${WIN_SNDFILE_PATH}/lib/libsndfile-1.lib")
-    set_target_properties(sndfile PROPERTIES LINKER_LANGUAGE CXX)
-    file(COPY "${WIN_SNDFILE_PATH}/bin/libsndfile-1.dll" DESTINATION ${CMAKE_BINARY_DIR})
-    target_include_directories(sndfile INTERFACE "${WIN_SNDFILE_PATH}/include")
-elseif(APPLE)
-    find_path(SNDFILE_INCLUDE_DIR NAMES sndfile.hh PATHS "/usr/local/include")
-    find_library(SNDFILE_LIBRARY  NAMES sndfile    PATHS "/usr/local/lib")
-    message(STATUS "include dir: " ${SNDFILE_INCLUDE_DIR} " lib: " ${SNDFILE_LIBRARY})
-    add_library(sndfile SHARED IMPORTED GLOBAL)
-    target_include_directories(sndfile INTERFACE ${SNDFILE_INCLUDE_DIR})
-    target_link_libraries(sndfile INTERFACE ${SNDFILE_LIBRARY})
-endif()
-
-add_subdirectory(sfizz)
-
-if (SFIZZ_CLIENTS)
-add_subdirectory(clients)
-endif()
-
-if (SFIZZ_TESTS)
-add_subdirectory(tests)
+if (SFIZZ_LV2)
+    add_subdirectory (lv2)
 endif()
 
 if (SFIZZ_BENCHMARKS)
-# Benchmarks
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark tests")
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable Google Benchmark install")
-add_subdirectory(external/benchmark EXCLUDE_FROM_ALL)
-add_subdirectory(benchmarks)
+    add_subdirectory (benchmarks)
 endif()
+
+if (SFIZZ_TESTS)
+    add_subdirectory (tests)
+endif()
+
+show_build_info_if_needed()

@@ -1,43 +1,66 @@
 language: cpp
+env:
+  global:
+  - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
 
-matrix:
+jobs:
   include:
-  - os: linux
-    dist: xenial
+  - os:   linux
+    arch: amd64
+    dist: bionic
     addons:
       apt:
         sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - gcc-8
-        - g++-8
-    env:
-    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - sourceline: 'ppa:ubuntu-toolchain-r/test'
 
-# - os: osx
-#   osx_image: xcode10.1
+        packages:
+        - doxygen
+
+  - os:   linux
+    arch: arm64
+    dist: bionic
+    addons:
+      apt:
+        sources:
+        - sourceline: 'ppa:ubuntu-toolchain-r/test'
+
+  - os: osx
+    osx_image: xcode10.1
 
 before_install:
-- sh ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
+- bash ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
 
 install:
-- sh ${TRAVIS_BUILD_DIR}/.travis/install.sh
+- bash ${TRAVIS_BUILD_DIR}/.travis/install.sh
 
 script:
-- sh ${TRAVIS_BUILD_DIR}/.travis/script.sh
+- bash ${TRAVIS_BUILD_DIR}/.travis/script.sh
 
 after_failure:
-- sh ${TRAVIS_BUILD_DIR}/.travis/after_failure.sh
+- bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh failure
 
 after_success:
-- sh ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
+- bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
+- bash ${TRAVIS_BUILD_DIR}/.travis/update_dox.sh
+- bash ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
 
 deploy:
-  provider: releases
+  provider:     releases
   skip_cleanup: true
-  api_key:
-    secure: cc6IkdalZRb+lOWzPkubCUvTcP9lBwiNBBPkXWVmeX7YXkdQlsoVQ11bZThd1Go+5Lt+jGFtEqEjJ0L7GxpdatEeBMEK5HXl0QtHAybl9J4Ax7hKba8FSX5RqPFOuKixCob6eCqJRchT26qRsQE/WYMY8DmproEFGMBHk0K4HXDWEq0HP8dbWVx3KudvellCYszUrVQYb2s49sDiF8OwSog5TiqdBqO5PRcqyt2ySmHgqwBYq7XV0pb+DxcKJcc7/gCBpBN7nyEhl8gmKELypLF81l8xUDBUjRy1jjf0r33ISHpX1MWeWIN9YzSNL0aLPQvwynAQ7OeckFAIMABah2UuYcxdd4ioXduPTbprVYpSwIyyxkeafK2jxgxwoKWi9GJZ3yAUHNS/V7Gh5DsFb7C6QDqr5gOxOMtjHwjmHnxmD44SsugjSosVzirvQR+JbrSsPsmZThQjCvwG+7hO3JatX4BXA7bp9WtgsoMrCH61gCp2GogQVLvYpgRpVErKK8PMTkt71OouewTDqD5iwc3N/2pNWP3cXxpPegerjl4R2sY0sZ57WRfW8ts7akPyqJZa2uKpzpM0eXy35fZl6WoJSlIv3akCnzdtLtaWAptzfXhgRSlF/33+gZ3jRcSP7ca2YpUviuZ+KYk+uGfMh092CMRMjPv1Et5h7zYGD+o=
-  file: "$DEPLOYFILE"
+  file:         "${INSTALL_DIR}.tar.gz"
+  token:
+    secure: jBIMWMPva8OazC8Wnqc2vqATa3exjvGDGvejEu6fgwt/BMDkgJCsJ7gS3ITpYFuO0HoHtLGfTVrFcZIE+agGVRdRGRni5xZRp5Vuf9hvLf8hCTaxkS/HYoliYYPp9FLY6J4yq9mp/R/QyGrwgssQEjhYlI2GL4+lJzt750AcmYibnQo2AMe5SSOp3q8KdLBG1vca1o1BZWBhW/S7l2hA1aJ7y1ytwm0ETIdrTZHxgfz7bqdqQcw/Ytqjm1rgzty6iQKX3B/InaZNB6CqXy6FoGLf771lery8nWJbjTjKYD4QK2NelExldyp1vrdHGvknWguFk+8vlQ16Dt0+R7Byr/LOPRLTCf/T+IehMQGtVA9/gjrkH8LqHy9oVFB+33p11gGu3h6hvg7yB6z3sSck0u4FHjrlpNd5XmmCsKQVQ9vI1cPPkVkbMHIewc7uOu+bD6cmotFj1vJ9UYesvN6n4siyCiPOIhgV9++bjcyiLqX3DWP5UWyZ9/VT8bz5VcxUdJnEYtdNPx4x5pRW4081VUjIf2EmHhQTrjb1iz6FAGwNU/fpefA8x+bBxXP9MkFFgU0tbCDKw2y6o0GOXX82mZr/IB0/DIBg7UllTzCBKTuiJQV1prFPlZLc6V22H5ozAXHgu3E+qNjvHoMsoYjGssX3+AYHwu8isBINo/gGo6Y=
   on:
-    repo: sfztools/sfizz
+    repo: ${TRAVIS_REPO_SLUG}
     tags: true
+
+notifications:
+  irc:
+    channels:
+    - "ircs://chat.freenode.net:7070/#sfztools"
+
+    template:
+    - "[%{repository_name}:%{branch}] Build #%{build_number}: %{message}"
+    - "%{author} : %{commit_subject}"
+    - "Commit URL    : https://github.com/%{repository_slug}/commit/%{commit}"
+    - "Build Details : %{build_url}"

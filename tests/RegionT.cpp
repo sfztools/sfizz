@@ -1,28 +1,11 @@
-// Copyright (c) 2019, Paul Ferrand
-// All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#include "MidiState.h"
-#include "Region.h"
+#include "sfizz/MidiState.h"
+#include "sfizz/Region.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 
@@ -30,7 +13,7 @@ TEST_CASE("[Region] Parsing opcodes")
 {
     sfz::MidiState midiState;
     sfz::Region region { midiState };
-    
+
     SECTION("sample")
     {
         REQUIRE(region.sample == "");
@@ -99,7 +82,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("loop_mode")
     {
-        REQUIRE(region.loopMode == SfzLoopMode::no_loop);
+        REQUIRE( !region.loopMode );
         region.parseOpcode({ "loop_mode", "no_loop" });
         REQUIRE(region.loopMode == SfzLoopMode::no_loop);
         region.parseOpcode({ "loop_mode", "one_shot" });
@@ -112,7 +95,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("loopmode")
     {
-        REQUIRE(region.loopMode == SfzLoopMode::no_loop);
+        REQUIRE( !region.loopMode );
         region.parseOpcode({ "loopmode", "no_loop" });
         REQUIRE(region.loopMode == SfzLoopMode::no_loop);
         region.parseOpcode({ "loopmode", "one_shot" });
@@ -234,23 +217,6 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 0));
         region.parseOpcode({ "hivel", "128" });
         REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 127));
-    }
-
-    SECTION("lochan, hichan")
-    {
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 16));
-        region.parseOpcode({ "lochan", "4" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(4, 16));
-        region.parseOpcode({ "lochan", "128" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(16, 16));
-        region.parseOpcode({ "lochan", "-3" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 16));
-        region.parseOpcode({ "hichan", "13" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 13));
-        region.parseOpcode({ "hichan", "-1" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 1));
-        region.parseOpcode({ "hichan", "128" });
-        REQUIRE(region.channelRange == sfz::Range<uint8_t>(1, 16));
     }
 
     SECTION("lobend, hibend")
@@ -467,7 +433,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("volume")
     {
-        REQUIRE(region.volume == -3.0f);
+        REQUIRE(region.volume == 0.0f);
         region.parseOpcode({ "volume", "4.2" });
         REQUIRE(region.volume == 4.2f);
         region.parseOpcode({ "volume", "-4.2" });
@@ -832,6 +798,35 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.tune == -100);
     }
 
+    SECTION("bend_up, bend_down, bend_step")
+    {
+        REQUIRE(region.bendUp == 200);
+        REQUIRE(region.bendDown == -200);
+        REQUIRE(region.bendStep == 1);
+        region.parseOpcode({ "bend_up", "400" });
+        REQUIRE(region.bendUp == 400);
+        region.parseOpcode({ "bend_up", "-200" });
+        REQUIRE(region.bendUp == -200);
+        region.parseOpcode({ "bend_up", "9700" });
+        REQUIRE(region.bendUp == 9600);
+        region.parseOpcode({ "bend_up", "-9700" });
+        REQUIRE(region.bendUp == -9600);
+        region.parseOpcode({ "bend_down", "400" });
+        REQUIRE(region.bendDown == 400);
+        region.parseOpcode({ "bend_down", "-200" });
+        REQUIRE(region.bendDown == -200);
+        region.parseOpcode({ "bend_down", "9700" });
+        REQUIRE(region.bendDown == 9600);
+        region.parseOpcode({ "bend_down", "-9700" });
+        REQUIRE(region.bendDown == -9600);
+        region.parseOpcode({ "bend_step", "400" });
+        REQUIRE(region.bendStep == 400);
+        region.parseOpcode({ "bend_step", "-200" });
+        REQUIRE(region.bendStep == 1);
+        region.parseOpcode({ "bend_step", "9700" });
+        REQUIRE(region.bendStep == 1200);
+    }
+
     SECTION("ampeg")
     {
         // Defaults
@@ -839,7 +834,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeEG.decay == 0.0f);
         REQUIRE(region.amplitudeEG.delay == 0.0f);
         REQUIRE(region.amplitudeEG.hold == 0.0f);
-        REQUIRE(region.amplitudeEG.release == 0.0f);
+        REQUIRE(region.amplitudeEG.release == 0.02f);
         REQUIRE(region.amplitudeEG.start == 0.0f);
         REQUIRE(region.amplitudeEG.sustain == 100.0f);
         REQUIRE(region.amplitudeEG.depth == 0);

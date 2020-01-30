@@ -2,7 +2,9 @@
 #define $KICKKEY 36
 #define $SNAREKEY 38
 #define $HATKEY 42
+#define $vol_db -12
 
 <region>key=$KICKKEY sample=kick.wav
 <region>key=$SNAREKEY sample=snare.wav
 <region>key=$HATKEY sample=closedhat.wav
+<region>volume=$vol_db sample=*sine

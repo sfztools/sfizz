@@ -1,0 +1,3 @@
+<region> sample=looped_flute.wav
+<region> loop_mode=no_loop sample=looped_flute.wav
+<region> loop_start=4 loop_end=124 sample=looped_flute.wav

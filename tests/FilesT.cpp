@@ -1,29 +1,12 @@
-// Copyright (c) 2019, Paul Ferrand
-// All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#include "Synth.h"
+#include "sfizz/Synth.h"
 #include "catch2/catch.hpp"
-#include "../sfizz/ghc/fs_std.hpp"
+#include "ghc/fs_std.hpp"
 using namespace Catch::literals;
 
 TEST_CASE("[Files] Single region (regions_one.sfz)")
@@ -50,7 +33,7 @@ TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->channelRange == sfz::Range<uint8_t>(2, 14));
+    REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(2, 14));
 }
 
 TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
@@ -59,6 +42,15 @@ TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/underscore_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain);
+}
+
+TEST_CASE("[Files] (regions_bad.sfz)")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_bad.sfz");
+    REQUIRE(synth.getNumRegions() == 2);
+    REQUIRE(synth.getRegionView(0)->sample == "dummy.wav");
+    REQUIRE(synth.getRegionView(1)->sample == "dummy.wav");
 }
 
 TEST_CASE("[Files] Local include")
@@ -127,10 +119,11 @@ TEST_CASE("[Files] Define test")
 {
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/defines.sfz");
-    REQUIRE(synth.getNumRegions() == 3);
+    REQUIRE(synth.getNumRegions() == 4);
     REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(36, 36));
     REQUIRE(synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(38, 38));
     REQUIRE(synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(42, 42));
+    REQUIRE(synth.getRegionView(3)->volume == -12.0f);
 }
 
 TEST_CASE("[Files] Group from AVL")
@@ -257,9 +250,9 @@ TEST_CASE("[Files] Channels (channels.sfz)")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "mono_sample.wav");
-    REQUIRE(!synth.getRegionView(0)->isStereo());
+    REQUIRE(!synth.getRegionView(0)->isStereo);
     REQUIRE(synth.getRegionView(1)->sample == "stereo_sample.wav");
-    REQUIRE(synth.getRegionView(1)->isStereo());
+    REQUIRE(synth.getRegionView(1)->isStereo);
 }
 
 TEST_CASE("[Files] sw_default")
@@ -282,20 +275,20 @@ TEST_CASE("[Files] sw_default and playing with switches")
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
-    synth.noteOn(0, 1, 41, 64);
-    synth.noteOff(0, 1, 41, 0);
+    synth.noteOn(0, 41, 64);
+    synth.noteOff(0, 41, 0);
     REQUIRE( synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
-    synth.noteOn(0, 1, 42, 64);
-    synth.noteOff(0, 1, 42, 0);
+    synth.noteOn(0, 42, 64);
+    synth.noteOff(0, 42, 0);
     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
-    synth.noteOn(0, 1, 40, 64);
-    synth.noteOff(0, 1, 40, 64);
+    synth.noteOn(0, 40, 64);
+    synth.noteOff(0, 40, 64);
     REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
@@ -315,4 +308,191 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
     REQUIRE( synth.getRegionView(2)->amplitudeCC );
     REQUIRE( synth.getRegionView(2)->amplitudeCC->first == 10 );
     REQUIRE( synth.getRegionView(2)->amplitudeCC->second == 34.0f );
+}
+
+TEST_CASE("[Files] Specific bug: relative path with backslashes")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/win_backslashes.sfz");
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->sample == R"(Xylo/Subfolder/closedhat.wav)");
+}
+
+TEST_CASE("[Files] Default path")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path.sfz");
+    REQUIRE(synth.getNumRegions() == 4);
+    REQUIRE(synth.getRegionView(0)->sample == R"(DefaultPath/SubPath1/sample1.wav)");
+    REQUIRE(synth.getRegionView(1)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
+    REQUIRE(synth.getRegionView(2)->sample == R"(DefaultPath/SubPath1/sample1.wav)");
+    REQUIRE(synth.getRegionView(3)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
+}
+
+TEST_CASE("[Files] Default path reset when calling loadSfzFile again")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path.sfz");
+    REQUIRE(synth.getNumRegions() == 4);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path_reset.sfz");
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->sample == R"(DefaultPath/SubPath2/sample2.wav)");
+}
+
+TEST_CASE("[Files] Default path is ignored for generators")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path_generator.sfz");
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->sample == R"(*sine)");
+}
+
+TEST_CASE("[Files] Set CC applies properly")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_cc.sfz");
+    REQUIRE(synth.getMidiState().getCCValue(142) == 63);
+    REQUIRE(synth.getMidiState().getCCValue(61) == 122);
+}
+
+TEST_CASE("[Files] Note and octave offsets")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/note_offset.sfz");
+    REQUIRE( synth.getNumRegions() == 7 );
+
+    REQUIRE( synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(64, 64) );
+    REQUIRE( synth.getRegionView(0)->pitchKeycenter == 64 );
+    REQUIRE( synth.getRegionView(0)->keyswitchRange == sfz::Default::keyRange );
+    REQUIRE( synth.getRegionView(0)->crossfadeKeyInRange == sfz::Default::crossfadeKeyInRange );
+    REQUIRE( synth.getRegionView(0)->crossfadeKeyOutRange == sfz::Default::crossfadeKeyOutRange );
+
+    REQUIRE( synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(51, 56) );
+    REQUIRE( synth.getRegionView(1)->pitchKeycenter == 51 );
+
+    REQUIRE( synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(41, 45) );
+    REQUIRE( synth.getRegionView(2)->pitchKeycenter == 41 );
+    REQUIRE( synth.getRegionView(2)->crossfadeKeyInRange == sfz::Range<uint8_t>(37, 41) );
+    REQUIRE( synth.getRegionView(2)->crossfadeKeyOutRange == sfz::Range<uint8_t>(45, 49) );
+
+    REQUIRE( synth.getRegionView(3)->keyRange == sfz::Range<uint8_t>(62, 62) );
+    REQUIRE( synth.getRegionView(3)->keyswitchRange == sfz::Range<uint8_t>(23, 27) );
+    REQUIRE( synth.getRegionView(3)->keyswitch );
+    REQUIRE( *synth.getRegionView(3)->keyswitch == 24 );
+    REQUIRE( synth.getRegionView(3)->keyswitchUp );
+    REQUIRE( *synth.getRegionView(3)->keyswitchUp == 24 );
+    REQUIRE( synth.getRegionView(3)->keyswitchDown );
+    REQUIRE( *synth.getRegionView(3)->keyswitchDown == 24 );
+    REQUIRE( synth.getRegionView(3)->previousNote );
+    REQUIRE( *synth.getRegionView(3)->previousNote == 61 );
+
+    REQUIRE( synth.getRegionView(4)->keyRange == sfz::Range<uint8_t>(76, 76) );
+    REQUIRE( synth.getRegionView(4)->pitchKeycenter == 76 );
+
+    REQUIRE( synth.getRegionView(5)->keyRange == sfz::Range<uint8_t>(50, 50) );
+    REQUIRE( synth.getRegionView(5)->pitchKeycenter == 50 );
+
+    REQUIRE( synth.getRegionView(6)->keyRange == sfz::Range<uint8_t>(50, 50) );
+    REQUIRE( synth.getRegionView(6)->pitchKeycenter == 50 );
+}
+
+TEST_CASE("[Files] Off by with different delays")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    synth.noteOn(0, 63, 63);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    auto group1Voice = synth.getVoiceView(0);
+    REQUIRE( group1Voice->getRegion()->group == 1ul );
+    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
+    synth.noteOn(100, 64, 63);
+    REQUIRE( group1Voice->canBeStolen() );
+}
+
+TEST_CASE("[Files] Off by with the same delays")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    synth.noteOn(0, 63, 63);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    auto group1Voice = synth.getVoiceView(0);
+    REQUIRE( group1Voice->getRegion()->group == 1ul );
+    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
+    synth.noteOn(0, 64, 63);
+    REQUIRE( !group1Voice->canBeStolen() );
+}
+
+TEST_CASE("[Files] Off by with the same notes at the same time")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
+    REQUIRE( synth.getNumRegions() == 4 );
+    synth.noteOn(0, 65, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.noteOn(0, 65, 63);
+    REQUIRE( synth.getNumActiveVoices() == 4 );
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.renderBlock(buffer);
+    synth.noteOn(0, 65, 63);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+}
+
+TEST_CASE("[Files] Off modes")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
+    REQUIRE( synth.getNumRegions() == 3 );
+    synth.noteOn(0, 64, 63);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    const auto* fastVoice =
+        synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
+            synth.getVoiceView(0) :
+            synth.getVoiceView(1) ;
+    const auto* normalVoice =
+        synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
+            synth.getVoiceView(1) :
+            synth.getVoiceView(0) ;
+    synth.noteOn(100, 63, 63);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( fastVoice->isFree() );
+    REQUIRE( !normalVoice->isFree() );
+}
+
+TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(256);
+    synth.setSampleRate(44100);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/looped_regions.sfz");
+    REQUIRE( synth.getNumRegions() == 3 );
+    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(1)->loopMode == SfzLoopMode::no_loop );
+    REQUIRE( synth.getRegionView(2)->loopMode == SfzLoopMode::loop_continuous );
+
+    REQUIRE( synth.getRegionView(0)->loopRange == sfz::Range<uint32_t>{ 77554, 186581 } );
+    REQUIRE( synth.getRegionView(1)->loopRange == sfz::Range<uint32_t>{ 77554, 186581 } );
+    REQUIRE( synth.getRegionView(2)->loopRange == sfz::Range<uint32_t>{ 4, 124 } );
+}
+
+TEST_CASE("[Files] Case sentitiveness")
+{
+#ifndef WIN32
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/case_insensitive.sfz");
+    REQUIRE(synth.getNumRegions() == 4);
+    REQUIRE(synth.getRegionView(0)->sample == "dummy1.wav");
+    REQUIRE(synth.getRegionView(1)->sample == "Regions/dummy.wav");
+    REQUIRE(synth.getRegionView(2)->sample == "Regions/dummy.wav");
+    REQUIRE(synth.getRegionView(3)->sample == "Regions/dummy.wav");
+#endif
 }

@@ -2,7 +2,3 @@
 	path = external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
 	branch = lts_2019_08_08
-[submodule "external/benchmark"]
-	path = external/benchmark
-	url = https://github.com/google/benchmark
-	branch = master

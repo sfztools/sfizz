@@ -1,0 +1,10 @@
+<region> sample=DefaultPath/SubPath1/sample1.wav
+
+<control> default_path=DefaultPath\SubPath2\
+<region> sample=sample2.wav
+
+<control> default_path=DefaultPath/SubPath1/sample
+<region> sample=1.wav
+
+<control> // New control headers reset the default path
+<region> sample=DefaultPath/SubPath2/sample2.wav

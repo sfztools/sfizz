@@ -1,9 +1,5 @@
-build
-build-arm
-build-asan
-build-release
-build-reldeb
-build-debug
+build*
+docs
 .vscode
 perf.data
 perf.data.old
@@ -15,6 +11,7 @@ cmake_install.cmake
 compile_commands.json
 *.a
 *.txt.user
+*.autosave
 
 .DS_Store
 
@@ -22,10 +19,15 @@ clients/sfizz_jack
 clients/sfzprint
 
 # gh-pages unstaged files:
-
-.bundle/
-Gemfile.lock
+_api/
 _site/
+.bundle/
+api/
 assets/
 node_modules/
-yarn.lock
+.jekyll-cache
+.jekyll-metadata
+.sass-cache
+*.lock
+*.sublime-*
+*.code-*

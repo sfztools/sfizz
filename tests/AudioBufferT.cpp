@@ -1,28 +1,11 @@
-// Copyright (c) 2019, Paul Ferrand
-// All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#include "AudioBuffer.h"
-#include "AudioSpan.h"
+#include "sfizz/AudioBuffer.h"
+#include "sfizz/AudioSpan.h"
 #include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;
@@ -61,15 +44,15 @@ TEST_CASE("[AudioBuffer] Access")
     const int size { 5 };
     sfz::AudioBuffer<float> buffer(2, size);
     for (size_t frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx) {
-        buffer.getSample(0, frameIdx) = static_cast<double>(buffer.getNumFrames()) + frameIdx;
-        buffer.getSample(1, frameIdx) = static_cast<double>(buffer.getNumFrames()) - frameIdx;
+        buffer.getSample(0, frameIdx) = static_cast<float>(buffer.getNumFrames()) + frameIdx;
+        buffer.getSample(1, frameIdx) = static_cast<float>(buffer.getNumFrames()) - frameIdx;
     }
 
     for (size_t frameIdx = 0; frameIdx < buffer.getNumFrames(); ++frameIdx) {
-        REQUIRE(buffer.getSample(0, frameIdx) == static_cast<double>(buffer.getNumFrames()) + frameIdx);
-        REQUIRE(buffer(0, frameIdx) == static_cast<double>(buffer.getNumFrames()) + frameIdx);
-        REQUIRE(buffer.getSample(1, frameIdx) == static_cast<double>(buffer.getNumFrames()) - frameIdx);
-        REQUIRE(buffer(1, frameIdx) == static_cast<double>(buffer.getNumFrames()) - frameIdx);
+        REQUIRE(buffer.getSample(0, frameIdx) == static_cast<float>(buffer.getNumFrames()) + frameIdx);
+        REQUIRE(buffer(0, frameIdx) == static_cast<float>(buffer.getNumFrames()) + frameIdx);
+        REQUIRE(buffer.getSample(1, frameIdx) == static_cast<float>(buffer.getNumFrames()) - frameIdx);
+        REQUIRE(buffer(1, frameIdx) == static_cast<float>(buffer.getNumFrames()) - frameIdx);
     }
 }
 
@@ -98,5 +81,5 @@ TEST_CASE("[AudioSpan] Constructions")
     sfz::AudioSpan<float> manualSpan { { buffer.channelWriter(0), buffer.channelWriter(1) }, buffer.getNumFrames() };
     sfz::AudioSpan<const float> manualConstSpan { { buffer.channelReader(0), buffer.channelReader(1) }, buffer.getNumFrames() };
     sfz::AudioSpan<float> manualSpan2 { {buffer.getSpan(0), buffer.getSpan(1) } };
-    sfz::AudioSpan<const float> manualConstSpan2 { {buffer.getConstSpan(0), buffer.getConstSpan(1) } };
+    sfz::AudioSpan<const float> manualConstSpan2 { { buffer.getConstSpan(0), buffer.getConstSpan(1) } };
 }

@@ -1,95 +1,133 @@
 project(sfizz)
 
 # Check SIMD
-include(CheckIncludeFiles)
-CHECK_INCLUDE_FILES(x86intrin.h HAVE_X86INTRIN_H)
-CHECK_INCLUDE_FILES(intrin.h HAVE_INTRIN_H)
-CHECK_INCLUDE_FILES(arm_neon.h HAVE_ARM_NEON_H)
-
-# SIMD checks
-if (HAVE_X86INTRIN_H AND UNIX)
-    add_compile_options(-DHAVE_X86INTRIN_H)
-    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDSSE.cpp)
-elseif (HAVE_INTRIN_H AND WIN32)
-    add_compile_options(/DHAVE_INTRIN_H)
-    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDSSE.cpp)
-elseif (HAVE_ARM_NEON_H AND UNIX)
-    add_compile_options(-DHAVE_ARM_NEON_H)
-    add_compile_options(-mfpu=neon-fp-armv8)
-    add_compile_options(-march=native)
-    add_compile_options(-mtune=cortex-a53)
-    add_compile_options(-funsafe-math-optimizations)
-    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDNEON.cpp)
-else()
-    set(SFIZZ_SIMD_SOURCES ../sfizz/SIMDDummy.cpp)
-endif()
+include (SfizzSIMDSourceFilesCheck)
+set(BENCHMARK_SIMD_SOURCES ${SFIZZ_SIMD_SOURCES})
+list(TRANSFORM BENCHMARK_SIMD_SOURCES PREPEND "../src/")
+find_package(benchmark CONFIG REQUIRED)
 
 add_executable(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
-target_link_libraries(bm_opf_high_vs_low benchmark absl::span)
+target_link_libraries(bm_opf_high_vs_low PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_opf_high_vs_low PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_write BM_writeInterleaved.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_write benchmark absl::span)
+add_executable(bm_write BM_writeInterleaved.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_write PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_write PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_read BM_readInterleaved.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_read benchmark absl::span)
+add_executable(bm_read BM_readInterleaved.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_read PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_read PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_fill BM_fill.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_fill benchmark absl::span)
+add_executable(bm_fill BM_fill.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_fill PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_fill PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_mathfuns BM_mathfuns.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_mathfuns benchmark absl::span)
+add_executable(bm_mathfuns BM_mathfuns.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_mathfuns PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_mathfuns PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_gain BM_gain.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_gain benchmark absl::span)
+add_executable(bm_gain BM_gain.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_gain PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_gain PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_looping BM_looping.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_looping benchmark absl::span absl::algorithm)
+add_executable(bm_divide BM_divide.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_divide PRIVATE absl::span benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_divide PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_saturating BM_saturating.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_saturating benchmark absl::span absl::algorithm)
+add_executable(bm_looping BM_looping.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_looping PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_looping PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_ramp BM_ramp.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_ramp benchmark absl::span absl::algorithm)
+add_executable(bm_saturating BM_saturating.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_saturating PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_saturating PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_ADSR BM_ADSR.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_ADSR benchmark absl::span absl::algorithm)
+add_executable(bm_ramp BM_ramp.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_ramp PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_ramp PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_add BM_add.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_add benchmark absl::span absl::algorithm)
+add_executable(bm_ADSR BM_ADSR.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_ADSR PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_ADSR PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_multiplyAdd BM_multiplyAdd.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_multiplyAdd benchmark absl::span absl::algorithm)
+add_executable(bm_add BM_add.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_add PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_add PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_subtract BM_subtract.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_subtract benchmark absl::span absl::algorithm)
+add_executable(bm_multiplyAdd BM_multiplyAdd.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_multiplyAdd PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_multiplyAdd PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_copy BM_copy.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_copy benchmark absl::span absl::algorithm)
+add_executable(bm_subtract BM_subtract.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_subtract PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_subtract PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_pan BM_pan.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_pan benchmark absl::span absl::algorithm)
+add_executable(bm_copy BM_copy.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_copy PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_copy PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_mean BM_mean.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_mean benchmark absl::span absl::algorithm)
+add_executable(bm_pan BM_pan.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_pan PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_pan PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_meanSquared BM_meanSquared.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_meanSquared benchmark absl::span absl::algorithm)
+add_executable(bm_mean BM_mean.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_mean PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_mean PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_cumsum BM_cumsum.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_cumsum benchmark absl::span absl::algorithm)
+add_executable(bm_meanSquared BM_meanSquared.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_meanSquared PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_meanSquared PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_diff BM_diff.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_diff benchmark absl::span absl::algorithm)
+add_executable(bm_cumsum BM_cumsum.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_cumsum PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_cumsum PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_interpolationCast BM_interpolationCast.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_interpolationCast benchmark absl::span absl::algorithm)
+add_executable(bm_diff BM_diff.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_diff PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_diff PRIVATE ../src/sfizz ../src/external)
 
-add_executable(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp ${SFIZZ_SIMD_SOURCES})
-target_link_libraries(bm_pointerIterationOrOffsets benchmark absl::span absl::algorithm)
+add_executable(bm_interpolationCast BM_interpolationCast.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_interpolationCast PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_interpolationCast PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_pointerIterationOrOffsets PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_pointerIterationOrOffsets PRIVATE ../src/sfizz ../src/external)
+
+if (NOT WIN32)
+	add_executable(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
+	target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main samplerate)
+	sfizz_link_libsndfile(bm_resample)
+	target_include_directories(bm_resample PRIVATE ../src/sfizz ../src/external)
+endif()
+
+add_executable(bm_envelopes BM_envelopes.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_envelopes PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(bm_envelopes PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_wavfile BM_wavfile.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_wavfile PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+sfizz_link_libsndfile(bm_wavfile)
+target_include_directories(bm_wavfile PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_flacfile BM_flacfile.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_flacfile PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+sfizz_link_libsndfile(bm_flacfile)
+target_include_directories(bm_flacfile PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_readChunk BM_readChunk.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_readChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+sfizz_link_libsndfile(bm_readChunk)
+target_include_directories(bm_readChunk PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_resampleChunk BM_resampleChunk.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_resampleChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
+sfizz_link_libsndfile(bm_resampleChunk)
+target_include_directories(bm_resampleChunk PRIVATE ../src/sfizz ../src/external)
 
 add_custom_target(sfizz_benchmarks)
-add_dependencies(sfizz_benchmarks 
-	bm_opf_high_vs_low 
+add_dependencies(sfizz_benchmarks
+	bm_opf_high_vs_low
 	bm_write
 	bm_pointerIterationOrOffsets
 	bm_read
@@ -101,6 +139,7 @@ add_dependencies(sfizz_benchmarks
 	bm_interpolationCast
 	bm_mathfuns
 	bm_gain
+	bm_divide
 	bm_looping
 	bm_saturating
 	bm_ramp
@@ -109,4 +148,20 @@ add_dependencies(sfizz_benchmarks
 	bm_pan
 	bm_subtract
 	bm_multiplyAdd
+	bm_readChunk
+	bm_resampleChunk
+	bm_envelopes
+	bm_wavfile
+	bm_flacfile
 )
+
+if (NOT WIN32)
+	add_dependencies(sfizz_benchmarks bm_resample)
+endif()
+
+file(COPY "sample1.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample2.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample3.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample1.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample2.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+file(COPY "sample3.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)

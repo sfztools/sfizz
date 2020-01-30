@@ -21,9 +21,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "AudioSpan.h"
-#include "Synth.h"
+#include "sfizz/Synth.h"
 #include <absl/flags/parse.h>
+#include <absl/flags/flag.h>
 #include <absl/types/span.h>
 #include <atomic>
 #include <cstddef>
@@ -64,6 +64,11 @@ constexpr uint8_t channel(uint8_t midiStatusByte)
 {
     return midiStatusByte & channelMask;
 }
+
+constexpr int buildAndCenterPitch(uint8_t firstByte, uint8_t secondByte)
+{
+    return (int)(((unsigned int)secondByte << 7) + (unsigned int)firstByte) - 8192;
+}
 }
 
 static std::atomic<bool> keepRunning [[maybe_unused]] { true };
@@ -88,31 +93,32 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
 
         switch (midi::status(event.buffer[0])) {
         case midi::noteOff:
-            DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
-            synth->noteOff(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
+            // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
+            synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
-            DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
-            synth->noteOn(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
+            // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
+            synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
-            DBG("[MIDI] Polyphonic pressure on at time " << event.time);
+            // DBG("[MIDI] Polyphonic pressure on at time " << event.time);
             break;
         case midi::controlChange:
-            DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
-            synth->cc(event.time, midi::channel(event.buffer[0]) + 1, event.buffer[1], event.buffer[2]);
+            // DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
+            synth->cc(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::programChange:
-            DBG("[MIDI] Program change at time " << event.time);
+            // DBG("[MIDI] Program change at time " << event.time);
             break;
         case midi::channelPressure:
-            DBG("[MIDI] Channel pressure at time " << event.time);
+            // DBG("[MIDI] Channel pressure at time " << event.time);
             break;
         case midi::pitchBend:
-            DBG("[MIDI] Pitch bend at time " << event.time);
+            synth->pitchWheel(event.time, midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));
+            // DBG("[MIDI] Pitch bend at time " << event.time);
             break;
         case midi::systemMessage:
-            DBG("[MIDI] System message at time " << event.time);
+            // DBG("[MIDI] System message at time " << event.time);
             break;
         }
     }
@@ -130,7 +136,7 @@ int sampleBlockChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
         return 0;
 
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
-    DBG("Sample per block changed to " << nframes);
+    // DBG("Sample per block changed to " << nframes);
     synth->setSamplesPerBlock(nframes);
     return 0;
 }
@@ -141,7 +147,7 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
         return 0;
 
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
-    DBG("Sample rate changed to " << nframes);
+    // DBG("Sample rate changed to " << nframes);
     synth->setSampleRate(nframes);
     return 0;
 }
@@ -157,17 +163,41 @@ static void done(int sig [[maybe_unused]])
     // exit(0);
 }
 
+ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
+ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+
 int main(int argc, char** argv)
 {
     // std::ios::sync_with_stdio(false);
     auto arguments = absl::ParseCommandLine(argc, argv);
+    if (arguments.size() < 2) {
+        std::cout << "You need to specify an SFZ file to load." << '\n';
+        return -1;
+    }
+
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
+    const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
+    const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+
+    std::cout << "Flags" << '\n';
+    std::cout << "- Oversampling: " << oversampling << '\n';
+    std::cout << "- Preloaded Size: " << preload_size << '\n';
+    const auto factor = [&]() {
+        if (oversampling == "x1") return sfz::Oversampling::x1;
+        if (oversampling == "x2") return sfz::Oversampling::x2;
+        if (oversampling == "x4") return sfz::Oversampling::x4;
+        if (oversampling == "x8") return sfz::Oversampling::x8;
+        return sfz::Oversampling::x1;
+    }();
+
     std::cout << "Positional arguments:";
     for (auto& file : filesToParse)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
     sfz::Synth synth;
+    synth.setOversamplingFactor(factor);
+    synth.setPreloadSize(preload_size);
     synth.loadSfzFile(filesToParse[0]);
     std::cout << "==========" << '\n';
     std::cout << "Total:" << '\n';
@@ -254,8 +284,11 @@ int main(int argc, char** argv)
     signal(SIGQUIT, done);
 
     while (!shouldClose){
-        // synth.garbageCollect();
-        std::this_thread::sleep_for(1s);
+#ifndef NDEBUG
+        std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
+        std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
+#endif
+        std::this_thread::sleep_for(2s);
     }
 
     std::cout << "Closing..." << '\n';

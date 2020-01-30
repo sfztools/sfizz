@@ -1,30 +1,13 @@
-// Copyright (c) 2019, Paul Ferrand
-// All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#include "SIMDHelpers.h"
 #include <benchmark/benchmark.h>
 #include <random>
-#include "../sfizz/SIMDHelpers.h"
-#include "../sfizz/Buffer.h"
+#include "Buffer.h"
 
 
 static void Dummy(benchmark::State& state) {
@@ -133,6 +116,63 @@ static void MulSIMDUnaligned(benchmark::State& state) {
     }
 }
 
+static void LogDomainScalar(benchmark::State& state) {
+    sfz::Buffer<float> output(state.range(0));
+    std::random_device rd { };
+    std::mt19937 gen { rd() };
+    std::uniform_real_distribution<float> dist { 1, 2 };
+    for (auto _ : state)
+    {
+        auto value = dist(gen);
+        sfz::linearRamp<float, false>(absl::MakeSpan(output), 1.0f, value);
+        sfz::applyGain<float, false>(std::log(2.0f), absl::MakeSpan(output));
+        sfz::exp<float, false>(output, absl::MakeSpan(output));
+    }
+}
+
+static void LogDomainSIMD(benchmark::State& state) {
+    sfz::Buffer<float> output(state.range(0));
+    std::random_device rd { };
+    std::mt19937 gen { rd() };
+    std::uniform_real_distribution<float> dist { 1, 2 };
+    for (auto _ : state)
+    {
+        auto value = dist(gen);
+        sfz::linearRamp<float, true>(absl::MakeSpan(output), 1.0f, value);
+        sfz::applyGain<float, true>(std::log(2.0f), absl::MakeSpan(output));
+        sfz::exp<float, true>(output, absl::MakeSpan(output));
+    }
+}
+static void LogDomainScalarUnaligned(benchmark::State& state) {
+    sfz::Buffer<float> output(state.range(0));
+    std::random_device rd { };
+    std::mt19937 gen { rd() };
+    std::uniform_real_distribution<float> dist { 1, 2 };
+    for (auto _ : state)
+    {
+        auto value = dist(gen);
+        auto outputSpan = absl::MakeSpan(output).subspan(1);
+        sfz::linearRamp<float, false>(outputSpan, 1.0f, value);
+        sfz::applyGain<float, false>(std::log(2.0f), outputSpan);
+        sfz::exp<float, false>(outputSpan, outputSpan);
+    }
+}
+
+static void LogDomainSIMDUnaligned(benchmark::State& state) {
+    sfz::Buffer<float> output(state.range(0));
+    std::random_device rd { };
+    std::mt19937 gen { rd() };
+    std::uniform_real_distribution<float> dist { 1, 2 };
+    for (auto _ : state)
+    {
+        auto value = dist(gen);
+        auto outputSpan = absl::MakeSpan(output).subspan(1);
+        sfz::linearRamp<float, true>(outputSpan, 1.0f, value);
+        sfz::applyGain<float, true>(std::log(2.0f), outputSpan);
+        sfz::exp<float, true>(outputSpan, outputSpan);
+    }
+}
+
 // Register the function as a benchmark
 BENCHMARK(Dummy)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(LinearScalar)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
@@ -143,4 +183,8 @@ BENCHMARK(MulScalar)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(MulSIMD)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(MulScalarUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(MulSIMDUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
+BENCHMARK(LogDomainScalar)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
+BENCHMARK(LogDomainSIMD)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
+BENCHMARK(LogDomainScalarUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
+BENCHMARK(LogDomainSIMDUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK_MAIN();
