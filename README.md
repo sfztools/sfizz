@@ -95,8 +95,7 @@ cmake --build . -j 16 --config Release
 ```
 
 This builds the lv2 plugin in `build\lv2\Release` and the Turtle files in `build\sfizz.lv2`, but the installation procedure is not entirely automatic yet.
-In particular, having the required DLLs along with `sfizz.dll` is actually not helpful because the system cannot find dlls from another dll's root directory.
-You thus need to add all of `FLAC.dll`, `libsndfile-1.dll`, `vorbis.dll`, `ogg.dll`, `vorbisenc.dll` in some directory in your `PATH` variable, and manually add `sfizz.dll` to the `sfizz.lv2` directory, and the the `sfizz.lv2` directory to `%APPDATA%\Roaming\LV2`.
+You need to manually add `lv2\Release\sfizz.dll` to the `build\sfizz.lv2` directory, and the the `sfizz.lv2` directory to `%APPDATA%\Roaming\LV2`.
 Ardour should then find the plugin correctly and load it without issues.
 
 ### Building the LV2 plugin with static linkage to `libsndfile` on Linux
