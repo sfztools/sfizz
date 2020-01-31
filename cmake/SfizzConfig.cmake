@@ -28,6 +28,11 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_compile_options(/Zc:__cplusplus)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        add_compile_options(-msse2)
+    endif()
+endif()
 
 add_library(sfizz-sndfile INTERFACE)
 
