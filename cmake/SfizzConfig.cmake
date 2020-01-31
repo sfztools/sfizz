@@ -12,33 +12,36 @@ set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 set (CMAKE_CXX_VISIBILITY_PRESET hidden)
 set (CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
+# Set Windows compatibility level to Vista
+if (WIN32)
+    add_compile_definitions(_WIN32_WINNT=0x600)
+endif()
+
 # Add required flags for the builds
-if (UNIX)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
-endif()
-
-if (WIN32)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_STANDARD 17)
     add_compile_options(/Zc:__cplusplus)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-if (WIN32 OR SFIZZ_USE_VCPKG)
+add_library(sfizz-sndfile INTERFACE)
+
+if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     find_package(LibSndFile REQUIRED)
     find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
+    target_include_directories(sfizz-sndfile INTERFACE "${SNDFILE_INCLUDE_DIR}")
+    target_link_libraries(sfizz-sndfile INTERFACE sndfile-static)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SNDFILE "sndfile" REQUIRED)
+    target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
+    target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
 endif()
-
-function(SFIZZ_LINK_LIBSNDFILE TARGET)
-    if (WIN32 OR SFIZZ_USE_VCPKG)
-        target_link_libraries (${TARGET} PRIVATE sndfile-static)
-        target_include_directories(${TARGET} PUBLIC ${SNDFILE_INCLUDE_DIR})
-    else()
-        target_link_libraries(${TARGET} PRIVATE sndfile)
-    endif()
-endfunction(SFIZZ_LINK_LIBSNDFILE)
 
 # If we build with Clang use libc++
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)

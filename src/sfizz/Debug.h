@@ -27,7 +27,9 @@
 #endif
 
 #elif (_WIN32 || _WIN64)
+#ifdef _MSC_VER
 #pragma intrinsic(__debugbreak)
+#endif
 #define ASSERTFALSE                                                              \
     {                                                                            \
         std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
