@@ -43,10 +43,12 @@ endfunction(SFIZZ_LINK_LIBSNDFILE)
 # If we build with Clang use libc++
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
-    add_compile_options(-stdlib=libc++)
-    # Presumably need the above for linking too, maybe other options missing as well
-    add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-    add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
+    if (USE_LIBCPP)
+        add_compile_options(-stdlib=libc++)
+        # Presumably need the above for linking too, maybe other options missing as well
+        add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
+        add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
+    endif()
 endif()
 
 # Don't show build information when building a different project
