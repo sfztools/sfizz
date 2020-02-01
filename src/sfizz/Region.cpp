@@ -767,7 +767,7 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
     return gain;
 }
 
-constexpr uint8_t offsetAndClamp(uint8_t key, int offset, sfz::Range<uint8_t> range)
+uint8_t offsetAndClamp(uint8_t key, int offset, sfz::Range<uint8_t> range)
 {
     const int offsetKey { key + offset };
     if (offsetKey > std::numeric_limits<uint8_t>::max())

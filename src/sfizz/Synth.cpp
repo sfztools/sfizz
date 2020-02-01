@@ -165,7 +165,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             [[fallthrough]];
         case hash("label_cc"):
             if (member.parameter && Default::ccNumberRange.containsWithEnd(*member.parameter))
-                ccNames.emplace_back(*member.parameter, member.value);
+                ccNames.emplace_back(*member.parameter, std::string(member.value));
             break;
         case hash("Default_path"):
             [[fallthrough]];
