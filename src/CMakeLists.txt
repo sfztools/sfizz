@@ -1,3 +1,5 @@
+include(CheckLibraryExists)
+
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FilePool.cpp
@@ -30,7 +32,10 @@ target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Thr
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
 if (UNIX AND NOT APPLE)
-    target_link_libraries (sfizz_static PRIVATE atomic)
+    check_library_exists(atomic __atomic_load "" LIBATOMIC_FOUND)
+    if (LIBATOMIC_FOUND)
+        target_link_libraries (sfizz_static PRIVATE atomic)
+    endif()
 endif()
 
 # Shared library and installation target
@@ -55,7 +60,9 @@ if (SFIZZ_SHARED)
     endif()
 
     if (UNIX AND NOT APPLE)
-        target_link_libraries (sfizz_shared PRIVATE atomic)
+        if (LIBATOMIC_FOUND)
+            target_link_libraries (sfizz_shared PRIVATE atomic)
+        endif()
     endif()
 endif()
 
