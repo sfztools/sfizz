@@ -96,8 +96,7 @@ target_include_directories(bm_pointerIterationOrOffsets PRIVATE ../src/sfizz ../
 
 if (NOT WIN32)
 	add_executable(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-	target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main samplerate)
-	sfizz_link_libsndfile(bm_resample)
+	target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main samplerate sfizz-sndfile)
 	target_include_directories(bm_resample PRIVATE ../src/sfizz ../src/external)
 endif()
 
@@ -106,23 +105,19 @@ target_link_libraries(bm_envelopes PRIVATE absl::span absl::algorithm benchmark:
 target_include_directories(bm_envelopes PRIVATE ../src/sfizz ../src/external)
 
 add_executable(bm_wavfile BM_wavfile.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_wavfile PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
-sfizz_link_libsndfile(bm_wavfile)
+target_link_libraries(bm_wavfile PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
 target_include_directories(bm_wavfile PRIVATE ../src/sfizz ../src/external)
 
 add_executable(bm_flacfile BM_flacfile.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_flacfile PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
-sfizz_link_libsndfile(bm_flacfile)
+target_link_libraries(bm_flacfile PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
 target_include_directories(bm_flacfile PRIVATE ../src/sfizz ../src/external)
 
 add_executable(bm_readChunk BM_readChunk.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_readChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
-sfizz_link_libsndfile(bm_readChunk)
+target_link_libraries(bm_readChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
 target_include_directories(bm_readChunk PRIVATE ../src/sfizz ../src/external)
 
 add_executable(bm_resampleChunk BM_resampleChunk.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resampleChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main)
-sfizz_link_libsndfile(bm_resampleChunk)
+target_link_libraries(bm_resampleChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
 target_include_directories(bm_resampleChunk PRIVATE ../src/sfizz ../src/external)
 
 add_custom_target(sfizz_benchmarks)
