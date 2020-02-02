@@ -4,8 +4,8 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "Config.h"
 #include "SfzFilter.h"
-#include "SfzFilterDefs.h"
 #include "SfzFilterImpls.cxx"
 #include <cstring>
 #include <cassert>
@@ -174,8 +174,8 @@ void Filter<NCh>::Impl::processModulated(F &filter, const float *const in[NCh], 
     while (frame < nframes) {
         unsigned current = nframes - frame;
 
-        if (current > kFilterControlInterval)
-            current = kFilterControlInterval;
+        if (current > config::filterControlInterval)
+            current = config::filterControlInterval;
 
         const float *current_in[NCh];
         float *current_out[NCh];
