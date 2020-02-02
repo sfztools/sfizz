@@ -7,7 +7,9 @@
 #pragma once
 #ifdef _WIN32
 // There's a spurious min/max function in MSVC that makes everything go badly...
-#define NOMINMAX
+#ifndef NOMINMAX
+#define NOMINMAX 1
+#endif
 #define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
 #endif
 #include <cstddef>
