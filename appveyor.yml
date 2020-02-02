@@ -1,0 +1,31 @@
+version: 0.2.0-{build}
+image: Visual Studio 2017
+configuration: Release
+platform:
+#- Win32
+- x64
+
+install:
+- cmd: if %platform%==Win32 set VCPKG_TRIPLET=x86-windows-static
+- cmd: if %platform%==x64   set VCPKG_TRIPLET=x64-windows-static
+- cmd: vcpkg install libsndfile:%VCPKG_TRIPLET%
+
+before_build:
+- cmd: git submodule update --init
+- cmd: mkdir CMakeBuild
+- cmd: cd CMakeBuild
+- cmd: if %platform%==Win32 set CMAKE_GENERATOR=Visual Studio 15 2017
+- cmd: if %platform%==x64   set CMAKE_GENERATOR=Visual Studio 15 2017 Win64
+- cmd: cmake .. -G"%CMAKE_GENERATOR%" -DSFIZZ_JACK=OFF -DSFIZZ_BENCHMARKS=OFF -DSFIZZ_TESTS=OFF -DSFIZZ_LV2=ON -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+build_script:
+- cmd: cmake --build . --config Release
+
+after_build:
+- cmd: cp lv2/Release/sfizz.dll sfizz.lv2/
+- cmd: 7z a sfizz-%version%-lv2.zip sfizz.lv2
+- cmd: 7z a sfizz-%version%-library.zip src/Release/sfizz*
+
+artifacts:
+- name: package
+  path: 'CMakeBuild/sfizz*.zip'
