@@ -6,6 +6,11 @@ env:
 jobs:
   include:
   - os:   linux
+    env:
+    - CROSS_COMPILE=mingw32
+    - CONTAINER=cross
+
+  - os:   linux
     arch: amd64
     dist: bionic
     addons:
