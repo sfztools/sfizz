@@ -8,7 +8,7 @@ if [[ ${TRAVIS_OS_NAME} == "linux" || ${TRAVIS_OS_NAME} == "osx" ]]; then
 fi
 
 # buildenv runs a command in host machine or container, depending on build
-if [[ ${CROSS_COMPILE} == "mingw32" ]]; then
+if [[ ${CROSS_COMPILE} == "mingw32" || ${CROSS_COMPILE} == "mingw64" ]]; then
   buildenv() {
     setup_container archlinux
     docker exec -w "$(pwd)" -i -t "$container" "$@"

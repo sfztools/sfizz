@@ -11,6 +11,11 @@ jobs:
     - CONTAINER=cross
 
   - os:   linux
+    env:
+    - CROSS_COMPILE=mingw64
+    - CONTAINER=cross
+
+  - os:   linux
     arch: amd64
     dist: bionic
     addons:

@@ -7,7 +7,7 @@ cmake_dir="cmake-3.13.0-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
 cmake_arc="${cmake_dir}.tar.gz"
 cmake_url="https://github.com/sfztools/cmake/releases/download/${TRAVIS_OS_NAME}/${cmake_arc}"
 
-if [[ ${CROSS_COMPILE} == "mingw32" ]]; then
+if [[ ${CROSS_COMPILE} == "mingw32" || ${CROSS_COMPILE} == "mingw64" ]]; then
   buildenv bash -c "echo Hello from container" # ensure to start the container
   docker cp "$container":/etc/pacman.conf pacman.conf
   cat >>pacman.conf <<EOF
