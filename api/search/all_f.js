@@ -14,6 +14,7 @@ var searchData=
   ['setrootdirectory',['setRootDirectory',['../classsfz_1_1_file_pool.html#a8af2ebf9ec28ebccf2e119a4b38eead7',1,'sfz::FilePool']]],
   ['setsamplerate',['setSampleRate',['../classsfz_1_1_synth.html#aaa9ee5acbc1c406472e41194f0088dc0',1,'sfz::Synth::setSampleRate()'],['../classsfz_1_1_voice.html#a926b7a7e7d1979e7ae20bf4869dee56e',1,'sfz::Voice::setSampleRate()']]],
   ['setsamplesperblock',['setSamplesPerBlock',['../classsfz_1_1_synth.html#acb7f5d0059c82d5354cb5c8e9e7b02a2',1,'sfz::Synth::setSamplesPerBlock()'],['../classsfz_1_1_voice.html#a5d3be569e83f0011f9a49d0adebe8117',1,'sfz::Voice::setSamplesPerBlock()']]],
+  ['settype',['setType',['../classsfz_1_1_filter.html#a64881f1b6f705f69cb9aad21b71ecf79',1,'sfz::Filter']]],
   ['setvaluefromopcode',['setValueFromOpcode',['../namespacesfz.html#a83aae00d3fce9c8f65838d7b3a1ee5e9',1,'sfz::setValueFromOpcode(const Opcode &amp;opcode, ValueType &amp;target, const Range&lt; ValueType &gt; &amp;validRange)'],['../namespacesfz.html#a31aeb210ef9bc2aae030c9979a8a2cc0',1,'sfz::setValueFromOpcode(const Opcode &amp;opcode, absl::optional&lt; ValueType &gt; &amp;target, const Range&lt; ValueType &gt; &amp;validRange)']]],
   ['setvolume',['setVolume',['../classsfz_1_1_synth.html#adcc74a8304e6a13fde764c9928d2e385',1,'sfz::Synth']]],
   ['sfizz_2eh',['sfizz.h',['../sfizz_8h.html',1,'']]],

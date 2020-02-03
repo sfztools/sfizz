@@ -512,6 +512,42 @@
               </Subnodes>
              </Node>
              <Node>
+              <Name>Filter</Name>
+              <Path>classsfz_1_1_filter.html</Path>
+              <Subnodes>
+               <Node>
+                <Name>clear</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>a31f2e92f4e7e55bcab40934d6db204e6</Anchor>
+               </Node>
+               <Node>
+                <Name>init</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>a5ef470686bb94107558284e888a60202</Anchor>
+               </Node>
+               <Node>
+                <Name>process</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>a205c453cd9bc613e0fe7cbde2674cd3c</Anchor>
+               </Node>
+               <Node>
+                <Name>processModulated</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>ad5f464b9f021b64cfa9f0a00ac0fe6e5</Anchor>
+               </Node>
+               <Node>
+                <Name>setType</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>a64881f1b6f705f69cb9aad21b71ecf79</Anchor>
+               </Node>
+               <Node>
+                <Name>type</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>a15aeb9e8aff313edaa64b39fd514cc4c</Anchor>
+               </Node>
+              </Subnodes>
+             </Node>
+             <Node>
               <Name>HistoricalBuffer</Name>
               <Path>classsfz_1_1_historical_buffer.html</Path>
               <Subnodes>
@@ -1208,6 +1244,10 @@
            <Node>
             <Name>sfz::FilePool</Name>
             <Path>classsfz_1_1_file_pool.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::Filter&lt; NCh &gt;</Name>
+            <Path>classsfz_1_1_filter.html</Path>
            </Node>
            <Node>
             <Name>sfz::HistoricalBuffer&lt; ValueType &gt;</Name>

@@ -2447,6 +2447,89 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>sfz::Filter</Name>
+      <APILanguage>c</APILanguage>
+      <Type>tmplt</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Abstract>Multi-mode filter for SFZ v2 Available for mono and stereo. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>init</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Anchor>a5ef470686bb94107558284e888a60202</Anchor>
+    <Abstract>Set up the filter constants. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>clear</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Anchor>a31f2e92f4e7e55bcab40934d6db204e6</Anchor>
+    <Abstract>Reinitialize the filter memory to zeros. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>process</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Anchor>a205c453cd9bc613e0fe7cbde2674cd3c</Anchor>
+    <Abstract>Process one cycle of the filter without modulating cutoff or Q. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>processModulated</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Anchor>ad5f464b9f021b64cfa9f0a00ac0fe6e5</Anchor>
+    <Abstract>Process one cycle of the filter with cutoff and Q values varying over time. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>type</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Anchor>a15aeb9e8aff313edaa64b39fd514cc4c</Anchor>
+    <Abstract>Get the type of filter. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>setType</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Filter</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter.html</Path>
+    <Anchor>a64881f1b6f705f69cb9aad21b71ecf79</Anchor>
+    <Abstract>Set the type of filter. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>sfz::HistoricalBuffer</Name>
       <APILanguage>c</APILanguage>
       <Type>tmplt</Type>

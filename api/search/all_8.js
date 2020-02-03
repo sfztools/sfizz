@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['init',['init',['../classsfz_1_1_filter.html#a5ef470686bb94107558284e888a60202',1,'sfz::Filter']]],
   ['isfree',['isFree',['../classsfz_1_1_voice.html#a85986785825cc15c0ec37fea3dfb4b96',1,'sfz::Voice']]],
   ['isgenerator',['isGenerator',['../structsfz_1_1_region.html#a8c59582c10085c1a9afb4c590955b9e6',1,'sfz::Region']]],
   ['isrelease',['isRelease',['../structsfz_1_1_region.html#a7c2e846ea9b2c9d3249be1866229d838',1,'sfz::Region']]],
