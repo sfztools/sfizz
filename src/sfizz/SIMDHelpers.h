@@ -710,6 +710,8 @@ template <class T, bool SIMD = SIMDConfig::copy>
 void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     ASSERT(output.size() >= input.size());
+    if (output.data() == input.data() && output.size() == input.size())
+        return;
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());

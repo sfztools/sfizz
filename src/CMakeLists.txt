@@ -11,6 +11,7 @@ set (SFIZZ_SOURCES
     sfizz/Oversampler.cpp
     sfizz/FloatEnvelopes.cpp
     sfizz/Logger.cpp
+    sfizz/SfzFilter.cpp
 )
 include (SfizzSIMDSourceFilesCheck)
 
