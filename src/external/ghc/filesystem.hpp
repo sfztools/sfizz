@@ -1578,6 +1578,11 @@ GHC_INLINE std::string systemErrorText(ErrorNumber code = 0)
 using CreateSymbolicLinkW_fp = BOOLEAN(WINAPI*)(LPCWSTR, LPCWSTR, DWORD);
 using CreateHardLinkW_fp = BOOLEAN(WINAPI*)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+
 GHC_INLINE void create_symlink(const path& target_name, const path& new_symlink, bool to_directory, std::error_code& ec)
 {
     std::error_code tec;
@@ -1613,6 +1618,11 @@ GHC_INLINE void create_hardlink(const path& target_name, const path& new_hardlin
         ec = detail::make_system_error(ERROR_NOT_SUPPORTED);
     }
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 #else
 GHC_INLINE void create_symlink(const path& target_name, const path& new_symlink, bool, std::error_code& ec)
 {
