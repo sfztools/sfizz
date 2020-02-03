@@ -9,6 +9,7 @@
 #include "SfzFilterImpls.cxx"
 #include <cstring>
 #include <cassert>
+#include "SIMDHelpers.h"
 
 namespace sfz {
 
@@ -128,12 +129,8 @@ template <unsigned NCh>
 void Filter<NCh>::process(const float *const in[NCh], float *const out[NCh], float cutoff, float q, float pksh, unsigned nframes)
 {
     if (P->fType == kFilterNone) {
-        for (unsigned c = 0; c < NCh; ++c) {
-            const float *ch_in = in[c];
-            float *ch_out = out[c];
-            if (ch_in != ch_out)
-                std::memcpy(ch_out, ch_in, nframes * sizeof(float));
-        }
+        for (unsigned c = 0; c < NCh; ++c)
+            copy<float>({ in[c], nframes }, { out[c], nframes });
         return;
     }
 
@@ -198,12 +195,8 @@ template <unsigned NCh>
 void Filter<NCh>::processModulated(const float *const in[NCh], float *const out[NCh], const float *cutoff, const float *q, const float *pksh, unsigned nframes)
 {
     if (P->fType == kFilterNone) {
-        for (unsigned c = 0; c < NCh; ++c) {
-            const float *ch_in = in[c];
-            float *ch_out = out[c];
-            if (ch_in != ch_out)
-                std::memcpy(ch_out, ch_in, nframes * sizeof(float));
-        }
+        for (unsigned c = 0; c < NCh; ++c)
+            copy<float>({ in[c], nframes }, { out[c], nframes });
         return;
     }
 
