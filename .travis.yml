@@ -37,6 +37,30 @@ jobs:
   - os: osx
     osx_image: xcode10.1
 
+  - os:   linux
+    env:
+    - BUILD_TYPE=source
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
+    addons:
+      apt:
+        packages:
+        - python-pip
+
+    before_install:
+    - true
+
+    install:
+    - sudo pip install git-archive-all
+
+    script:
+    - git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
+
+    after_failure:
+    - true
+
+    after_success:
+    - true
+
 before_install:
 - bash ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
 
