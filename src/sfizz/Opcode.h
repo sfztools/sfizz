@@ -12,6 +12,7 @@
 #include "StringViewHelpers.h"
 #include <absl/types/optional.h>
 #include <string_view>
+#include <vector>
 #include <type_traits>
 
 // charconv support is still sketchy with clang/gcc so we use abseil's numbers
@@ -29,8 +30,10 @@ struct Opcode {
     Opcode(absl::string_view inputOpcode, absl::string_view inputValue);
     absl::string_view opcode {};
     absl::string_view value {};
-    // This is to handle the integer parameter of some opcodes
-    absl::optional<uint8_t> parameter;
+    uint64_t lettersOnlyHash { Fnv1aBasis };
+    // This is to handle the integer parameters of some opcodes
+    std::vector<uint8_t> parameters;
+    absl::optional<uint8_t> backParameter {};
     LEAK_DETECTOR(Opcode);
 };
 
@@ -186,8 +189,8 @@ template <class ValueType>
 inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCValuePair>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
-    if (value && opcode.parameter && Default::ccNumberRange.containsWithEnd(*opcode.parameter))
-        target = std::make_pair(*opcode.parameter, *value);
+    if (value && opcode.backParameter && Default::ccNumberRange.containsWithEnd(*opcode.backParameter))
+        target = std::make_pair(*opcode.backParameter, *value);
     else
         target = {};
 }

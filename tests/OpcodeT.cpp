@@ -14,34 +14,89 @@ TEST_CASE("[Opcode] Construction")
     {
         sfz::Opcode opcode { "sample", "dummy" };
         REQUIRE(opcode.opcode == "sample");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample"));
+        REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(!opcode.parameter);
+        REQUIRE(!opcode.backParameter);
     }
 
     SECTION("Normal construction with underscore")
     {
         sfz::Opcode opcode { "sample_underscore", "dummy" };
         REQUIRE(opcode.opcode == "sample_underscore");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
+        REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(!opcode.parameter);
+        REQUIRE(!opcode.backParameter);
     }
 
     SECTION("Parameterized opcode")
     {
         sfz::Opcode opcode { "sample123", "dummy" };
-        REQUIRE(opcode.opcode == "sample");
+        REQUIRE(opcode.opcode == "sample123");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample"));
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(opcode.parameter);
-        REQUIRE(*opcode.parameter == 123);
+        REQUIRE(opcode.parameters.empty());
+        REQUIRE(opcode.backParameter);
+        REQUIRE(*opcode.backParameter == 123);
     }
 
     SECTION("Parameterized opcode with underscore")
     {
         sfz::Opcode opcode { "sample_underscore123", "dummy" };
-        REQUIRE(opcode.opcode == "sample_underscore");
+        REQUIRE(opcode.opcode == "sample_underscore123");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(opcode.parameter);
-        REQUIRE(*opcode.parameter == 123);
+        REQUIRE(opcode.parameters.empty());
+        REQUIRE(opcode.backParameter);
+        REQUIRE(*opcode.backParameter == 123);
+    }
+
+    SECTION("Parameterized opcode within the opcode")
+    {
+        sfz::Opcode opcode { "sample1_underscore", "dummy" };
+        REQUIRE(opcode.opcode == "sample1_underscore");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
+        REQUIRE(opcode.value == "dummy");
+        REQUIRE(opcode.parameters.size() == 1);
+        REQUIRE(opcode.parameters[0] == 1);
+        REQUIRE(!opcode.backParameter);
+    }
+
+    SECTION("Parameterized opcode within the opcode")
+    {
+        sfz::Opcode opcode { "sample123_underscore", "dummy" };
+        REQUIRE(opcode.opcode == "sample123_underscore");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
+        REQUIRE(opcode.value == "dummy");
+        REQUIRE(opcode.parameters.size() == 1);
+        REQUIRE(opcode.parameters[0] == 123);
+        REQUIRE(!opcode.backParameter);
+    }
+
+    SECTION("Parameterized opcode within the opcode twice")
+    {
+        sfz::Opcode opcode { "sample123_double44_underscore", "dummy" };
+        REQUIRE(opcode.opcode == "sample123_double44_underscore");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_double_underscore"));
+        REQUIRE(opcode.value == "dummy");
+        REQUIRE(opcode.parameters.size() == 2);
+        REQUIRE(opcode.parameters[0] == 123);
+        REQUIRE(opcode.parameters[1] == 44);
+        REQUIRE(!opcode.backParameter);
+    }
+
+    SECTION("Parameterized opcode within the opcode twice, with a back parameter")
+    {
+        sfz::Opcode opcode { "sample123_double44_underscore23", "dummy" };
+        REQUIRE(opcode.opcode == "sample123_double44_underscore23");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_double_underscore"));
+        REQUIRE(opcode.value == "dummy");
+        REQUIRE(opcode.parameters.size() == 2);
+        REQUIRE(opcode.parameters[0] == 123);
+        REQUIRE(opcode.parameters[1] == 44);
+        REQUIRE(opcode.backParameter);
+        REQUIRE(*opcode.backParameter == 23);
     }
 }
 

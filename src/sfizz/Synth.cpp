@@ -137,7 +137,7 @@ void sfz::Synth::clear()
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
-        switch (hash(member.opcode)) {
+        switch (member.lettersOnlyHash) {
         case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
             break;
@@ -152,20 +152,20 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
-        switch (hash(member.opcode)) {
+        switch (member.lettersOnlyHash) {
         case hash("Set_cc"):
             [[fallthrough]];
         case hash("set_cc"):
-            if (member.parameter && Default::ccNumberRange.containsWithEnd(*member.parameter)) {
+            if (member.backParameter && Default::ccNumberRange.containsWithEnd(*member.backParameter)) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                midiState.ccEvent(*member.parameter, ccValue);
+                midiState.ccEvent(*member.backParameter, ccValue);
             }
             break;
         case hash("Label_cc"):
             [[fallthrough]];
         case hash("label_cc"):
-            if (member.parameter && Default::ccNumberRange.containsWithEnd(*member.parameter))
-                ccNames.emplace_back(*member.parameter, std::string(member.value));
+            if (member.backParameter && Default::ccNumberRange.containsWithEnd(*member.backParameter))
+                ccNames.emplace_back(*member.backParameter, std::string(member.value));
             break;
         case hash("Default_path"):
             [[fallthrough]];

@@ -6,21 +6,37 @@
 
 #include "Opcode.h"
 #include "StringViewHelpers.h"
-
+#include "absl/strings/charconv.h"
+#include <cctype>
 sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     : opcode(inputOpcode)
     , value(inputValue)
 {
-    const auto lastCharIndex = inputOpcode.find_last_not_of("1234567890");
-    if (lastCharIndex != inputOpcode.npos) {
-        int returnedValue;
-        absl::string_view parameterView = inputOpcode;
-        parameterView.remove_prefix(lastCharIndex + 1);
-        if (absl::SimpleAtoi(parameterView, &returnedValue)) {
-            parameter = returnedValue;
-            opcode.remove_suffix(opcode.size() - lastCharIndex - 1);
-        }
-    }
     trimInPlace(value);
     trimInPlace(opcode);
+    size_t firstCharIndex { 0 };
+    auto firstNumIndex = opcode.find_first_of("1234567890");
+    while (firstNumIndex != opcode.npos) {
+        lettersOnlyHash = hash(opcode.substr(firstCharIndex, firstNumIndex - firstCharIndex), lettersOnlyHash);
+        firstCharIndex = opcode.find_first_not_of("1234567890", firstNumIndex);
+
+        uint32_t returnedValue;
+        if (firstCharIndex == absl::string_view::npos) {
+            if (absl::SimpleAtoi(opcode.substr(firstNumIndex), &returnedValue)) {
+                ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
+                backParameter = static_cast<uint8_t>(returnedValue);
+                break;
+            }
+        } else {
+            if (absl::SimpleAtoi(opcode.substr(firstNumIndex, firstCharIndex - firstNumIndex), &returnedValue)) {
+                ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
+                parameters.push_back(static_cast<uint8_t>(returnedValue));
+            }
+        }
+        firstNumIndex = opcode.find_first_of("1234567890", firstCharIndex);
+    }
+
+    if (firstCharIndex != opcode.npos)
+        lettersOnlyHash = hash(opcode.substr(firstCharIndex), lettersOnlyHash);
+
 }
