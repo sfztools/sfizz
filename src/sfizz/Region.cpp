@@ -17,13 +17,14 @@
 
 bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
+    const auto backParameter = opcode.backParameter();
     // Check that the parameter is well formed
-    if (opcode.parameter && !sfz::Default::ccNumberRange.containsWithEnd(*opcode.parameter)) {
-        DBG("Wrong parameter value (" << std::to_string(*opcode.parameter) << ") for opcode " << opcode.opcode);
+    if (backParameter && !sfz::Default::ccNumberRange.containsWithEnd(*backParameter)) {
+        DBG("Wrong parameter value (" << std::to_string(*backParameter) << ") for opcode " << opcode.opcode);
         return false;
     }
 
-    switch (hash(opcode.opcode)) {
+    switch (opcode.lettersOnlyHash) {
     // Sound source: sample playback
     case hash("sample"):
         {
@@ -135,13 +136,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
         break;
     case hash("locc"):
-        if (opcode.parameter) {
-            setRangeStartFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeStartFromOpcode(opcode, ccConditions[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("hicc"):
-        if (opcode.parameter)
-            setRangeEndFromOpcode(opcode, ccConditions[*opcode.parameter], Default::ccValueRange);
+        if (backParameter)
+            setRangeEndFromOpcode(opcode, ccConditions[*backParameter], Default::ccValueRange);
         break;
     case hash("sw_lokey"):
         setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
@@ -233,13 +234,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("on_locc"):
     case hash("start_locc"):
-        if (opcode.parameter)
-            setRangeStartFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccTriggerValueRange);
+        if (backParameter)
+            setRangeStartFromOpcode(opcode, ccTriggers[*backParameter], Default::ccTriggerValueRange);
         break;
     case hash("on_hicc"):
     case hash("start_hicc"):
-        if (opcode.parameter)
-            setRangeEndFromOpcode(opcode, ccTriggers[*opcode.parameter], Default::ccTriggerValueRange);
+        if (backParameter)
+            setRangeEndFromOpcode(opcode, ccTriggers[*backParameter], Default::ccTriggerValueRange);
         break;
 
     // Performance parameters: amplifier
@@ -293,7 +294,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         {
             auto value = readOpcode(opcode.value, Default::ampVelcurveRange);
             if (value)
-                velocityPoints.emplace_back(*opcode.parameter, *value);
+                velocityPoints.emplace_back(*backParameter, *value);
         }
         break;
     case hash("xfin_lokey"):
@@ -345,23 +346,23 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         }
         break;
     case hash("xfin_locc"):
-        if (opcode.parameter) {
-            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xfin_hicc"):
-        if (opcode.parameter) {
-            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*opcode.parameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xfout_locc"):
-        if (opcode.parameter) {
-            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xfout_hicc"):
-        if (opcode.parameter) {
-            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*opcode.parameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xf_cccurve"):
@@ -433,23 +434,29 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("ampeg_sustain"):
         setValueFromOpcode(opcode, amplitudeEG.sustain, Default::egPercentRange);
         break;
-    case hash("ampeg_vel2attack"):
-        setValueFromOpcode(opcode, amplitudeEG.vel2attack, Default::egOnCCTimeRange);
+    case hash("ampeg_velattack"):
+        if (!opcode.parameters.empty() && opcode.parameters.front() == 2)
+            setValueFromOpcode(opcode, amplitudeEG.vel2attack, Default::egOnCCTimeRange);
         break;
-    case hash("ampeg_vel2decay"):
-        setValueFromOpcode(opcode, amplitudeEG.vel2decay, Default::egOnCCTimeRange);
+    case hash("ampeg_veldecay"):
+        if (!opcode.parameters.empty() && opcode.parameters.front() == 2)
+            setValueFromOpcode(opcode, amplitudeEG.vel2decay, Default::egOnCCTimeRange);
         break;
-    case hash("ampeg_vel2delay"):
-        setValueFromOpcode(opcode, amplitudeEG.vel2delay, Default::egOnCCTimeRange);
+    case hash("ampeg_veldelay"):
+        if (!opcode.parameters.empty() && opcode.parameters.front() == 2)
+            setValueFromOpcode(opcode, amplitudeEG.vel2delay, Default::egOnCCTimeRange);
         break;
-    case hash("ampeg_vel2hold"):
-        setValueFromOpcode(opcode, amplitudeEG.vel2hold, Default::egOnCCTimeRange);
+    case hash("ampeg_velhold"):
+        if (!opcode.parameters.empty() && opcode.parameters.front() == 2)
+            setValueFromOpcode(opcode, amplitudeEG.vel2hold, Default::egOnCCTimeRange);
         break;
-    case hash("ampeg_vel2release"):
-        setValueFromOpcode(opcode, amplitudeEG.vel2release, Default::egOnCCTimeRange);
+    case hash("ampeg_velrelease"):
+        if (!opcode.parameters.empty() && opcode.parameters.front() == 2)
+            setValueFromOpcode(opcode, amplitudeEG.vel2release, Default::egOnCCTimeRange);
         break;
-    case hash("ampeg_vel2sustain"):
-        setValueFromOpcode(opcode, amplitudeEG.vel2sustain, Default::egOnCCPercentRange);
+    case hash("ampeg_velsustain"):
+        if (!opcode.parameters.empty() && opcode.parameters.front() == 2)
+            setValueFromOpcode(opcode, amplitudeEG.vel2sustain, Default::egOnCCPercentRange);
         break;
     case hash("ampeg_attackcc"):
     case hash("ampeg_attack_oncc"):
