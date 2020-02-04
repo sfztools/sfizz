@@ -6,8 +6,8 @@
 
 #include "Opcode.h"
 #include "StringViewHelpers.h"
-#include "absl/strings/charconv.h"
 #include <cctype>
+
 sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     : opcode(inputOpcode)
     , value(inputValue)
