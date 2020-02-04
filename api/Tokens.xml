@@ -2975,7 +2975,7 @@
       <Scope>sfz::Opcode</Scope>
     </TokenIdentifier>
     <Path>structsfz_1_1_opcode.html</Path>
-    <Abstract>Opcode description class; should be very lightweight to use and move around. </Abstract>
+    <Abstract>Opcode description class. </Abstract>
     <DeclaredIn>Opcode.h</DeclaredIn>
   </Token>
   <Token>
