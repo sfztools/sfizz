@@ -17,9 +17,10 @@
 
 bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
+    const auto backParameter = opcode.backParameter();
     // Check that the parameter is well formed
-    if (opcode.backParameter && !sfz::Default::ccNumberRange.containsWithEnd(*opcode.backParameter)) {
-        DBG("Wrong parameter value (" << std::to_string(*opcode.backParameter) << ") for opcode " << opcode.opcode);
+    if (backParameter && !sfz::Default::ccNumberRange.containsWithEnd(*backParameter)) {
+        DBG("Wrong parameter value (" << std::to_string(*backParameter) << ") for opcode " << opcode.opcode);
         return false;
     }
 
@@ -135,13 +136,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
         break;
     case hash("locc"):
-        if (opcode.backParameter) {
-            setRangeStartFromOpcode(opcode, ccConditions[*opcode.backParameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeStartFromOpcode(opcode, ccConditions[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("hicc"):
-        if (opcode.backParameter)
-            setRangeEndFromOpcode(opcode, ccConditions[*opcode.backParameter], Default::ccValueRange);
+        if (backParameter)
+            setRangeEndFromOpcode(opcode, ccConditions[*backParameter], Default::ccValueRange);
         break;
     case hash("sw_lokey"):
         setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
@@ -233,13 +234,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("on_locc"):
     case hash("start_locc"):
-        if (opcode.backParameter)
-            setRangeStartFromOpcode(opcode, ccTriggers[*opcode.backParameter], Default::ccTriggerValueRange);
+        if (backParameter)
+            setRangeStartFromOpcode(opcode, ccTriggers[*backParameter], Default::ccTriggerValueRange);
         break;
     case hash("on_hicc"):
     case hash("start_hicc"):
-        if (opcode.backParameter)
-            setRangeEndFromOpcode(opcode, ccTriggers[*opcode.backParameter], Default::ccTriggerValueRange);
+        if (backParameter)
+            setRangeEndFromOpcode(opcode, ccTriggers[*backParameter], Default::ccTriggerValueRange);
         break;
 
     // Performance parameters: amplifier
@@ -293,7 +294,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         {
             auto value = readOpcode(opcode.value, Default::ampVelcurveRange);
             if (value)
-                velocityPoints.emplace_back(*opcode.backParameter, *value);
+                velocityPoints.emplace_back(*backParameter, *value);
         }
         break;
     case hash("xfin_lokey"):
@@ -345,23 +346,23 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         }
         break;
     case hash("xfin_locc"):
-        if (opcode.backParameter) {
-            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*opcode.backParameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeStartFromOpcode(opcode, crossfadeCCInRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xfin_hicc"):
-        if (opcode.backParameter) {
-            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*opcode.backParameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeEndFromOpcode(opcode, crossfadeCCInRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xfout_locc"):
-        if (opcode.backParameter) {
-            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*opcode.backParameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeStartFromOpcode(opcode, crossfadeCCOutRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xfout_hicc"):
-        if (opcode.backParameter) {
-            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*opcode.backParameter], Default::ccValueRange);
+        if (backParameter) {
+            setRangeEndFromOpcode(opcode, crossfadeCCOutRange[*backParameter], Default::ccValueRange);
         }
         break;
     case hash("xf_cccurve"):

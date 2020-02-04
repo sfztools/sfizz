@@ -20,20 +20,23 @@
 
 namespace sfz {
 /**
- * @brief Opcode description class; should be very lightweight to use
- * and move around. The class parses the parameters of the opcode
- * on construction.
+ * @brief Opcode description class. The class parses the parameters
+ * of the opcode on construction.
  *
  */
 struct Opcode {
     Opcode() = delete;
+    absl::optional<uint8_t> backParameter() const noexcept;
+    absl::optional<uint8_t> firstParameter() const noexcept;
+    absl::optional<uint8_t> middleParameter() const noexcept;
     Opcode(absl::string_view inputOpcode, absl::string_view inputValue);
     absl::string_view opcode {};
     absl::string_view value {};
     uint64_t lettersOnlyHash { Fnv1aBasis };
     // This is to handle the integer parameters of some opcodes
     std::vector<uint8_t> parameters;
-    absl::optional<uint8_t> backParameter {};
+    std::vector<int> parameterPositions;
+    bool hasBackParameter { false };
     LEAK_DETECTOR(Opcode);
 };
 
@@ -189,8 +192,9 @@ template <class ValueType>
 inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCValuePair>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
-    if (value && opcode.backParameter && Default::ccNumberRange.containsWithEnd(*opcode.backParameter))
-        target = std::make_pair(*opcode.backParameter, *value);
+    const auto backParameter = opcode.backParameter();
+    if (value && backParameter && Default::ccNumberRange.containsWithEnd(*backParameter))
+        target = std::make_pair(*backParameter, *value);
     else
         target = {};
 }
