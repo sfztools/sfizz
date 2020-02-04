@@ -9,6 +9,8 @@
 #include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
+#include "EQDescription.h"
+#include "FilterDescription.h"
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
@@ -274,6 +276,9 @@ struct Region {
     CCMap<Range<uint8_t>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
 
+    // Filters and EQs
+    std::vector<EQDescription> equalizers;
+    std::vector<FilterDescription> filters;
 
     // Performance parameters: pitch
     uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter

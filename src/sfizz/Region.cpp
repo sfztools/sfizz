@@ -15,6 +15,18 @@
 #include "absl/strings/str_cat.h"
 #include <random>
 
+template<class T>
+bool extendIfNecessary(std::vector<T>& vec, unsigned size)
+{
+    if (size == 0)
+        return false;
+
+    if (vec.size() < size)
+        vec.resize(size);
+
+    return true;
+}
+
 bool sfz::Region::parseOpcode(const Opcode& opcode)
 {
     const auto backParameter = opcode.backParameter();
@@ -381,6 +393,226 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setValueFromOpcode(opcode, rtDecay, Default::rtDecayRange);
         break;
 
+    // Performance parameters: filters
+    case hash("cutoff"):
+        {
+            const auto filterIndex { backParameter.value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+            setValueFromOpcode(opcode, filters[filterIndex].cutoff, Default::filterCutoffRange);
+        }
+        break;
+    case hash("resonance"):
+        {
+            const auto filterIndex { backParameter.value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+            setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
+        }
+        break;
+    case hash("cutoff_cc"):
+        {
+            if (!backParameter)
+                return false;
+
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            setValueFromOpcode(
+                opcode,
+                filters[filterIndex].cutoffCC[*backParameter],
+                Default::filterCutoffModRange
+            );
+        }
+        break;
+    case hash("resonance_cc"):
+        {
+            if (!backParameter)
+                return false;
+
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            setValueFromOpcode(
+                opcode,
+                filters[filterIndex].resonanceCC[*backParameter],
+                Default::filterResonanceRange
+            );
+        }
+        break;
+    case hash("fil_keytrack"):
+        {
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            setValueFromOpcode(opcode, filters[filterIndex].keytrack, Default::filterKeytrackRange);
+        }
+        break;
+    case hash("fil_keycenter"):
+        {
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            setValueFromOpcode(opcode, filters[filterIndex].keycenter, Default::keyRange);
+        }
+        break;
+    case hash("fil_veltrack"):
+        {
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            setValueFromOpcode(opcode, filters[filterIndex].veltrack, Default::filterVeltrackRange);
+        }
+        break;
+    case hash("fil_random"):
+        {
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            setValueFromOpcode(opcode, filters[filterIndex].random, Default::filterRandomRange);
+        }
+        break;
+    case hash("fil_type"):
+        {
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1))
+                return false;
+
+            switch (hash(opcode.value)) {
+                case hash("lpf_1p"): filters[filterIndex].type = FilterType::kFilterLpf1p; break;
+                case hash("hpf_1p"): filters[filterIndex].type = FilterType::kFilterHpf1p; break;
+                case hash("lpf_2p"): filters[filterIndex].type = FilterType::kFilterLpf2p; break;
+                case hash("hpf_2p"): filters[filterIndex].type = FilterType::kFilterHpf2p; break;
+                case hash("bpf_2p"): filters[filterIndex].type = FilterType::kFilterBpf2p; break;
+                case hash("brf_2p"): filters[filterIndex].type = FilterType::kFilterBrf2p; break;
+                case hash("bpf_1p"): filters[filterIndex].type = FilterType::kFilterBpf1p; break;
+                case hash("brf_1p"): filters[filterIndex].type = FilterType::kFilterBrf1p; break;
+                case hash("apf_1p"): filters[filterIndex].type = FilterType::kFilterApf1p; break;
+                case hash("lpf_2p_sv"): filters[filterIndex].type = FilterType::kFilterLpf2pSv; break;
+                case hash("hpf_2p_sv"): filters[filterIndex].type = FilterType::kFilterHpf2pSv; break;
+                case hash("bpf_2p_sv"): filters[filterIndex].type = FilterType::kFilterBpf2pSv; break;
+                case hash("brf_2p_sv"): filters[filterIndex].type = FilterType::kFilterBrf2pSv; break;
+                case hash("lpf_4p"): filters[filterIndex].type = FilterType::kFilterLpf4p; break;
+                case hash("hpf_4p"): filters[filterIndex].type = FilterType::kFilterHpf4p; break;
+                case hash("lpf_6p"): filters[filterIndex].type = FilterType::kFilterLpf6p; break;
+                case hash("hpf_6p"): filters[filterIndex].type = FilterType::kFilterHpf6p; break;
+                case hash("pink"): filters[filterIndex].type = FilterType::kFilterPink; break;
+                case hash("lsh"): filters[filterIndex].type = FilterType::kFilterLsh; break;
+                case hash("hsh"): filters[filterIndex].type = FilterType::kFilterHsh; break;
+                case hash("peq"): filters[filterIndex].type = FilterType::kFilterPeq; break;
+                default:
+                     filters[filterIndex].type = FilterType::kFilterNone;
+                    DBG("Unknown filter type: " << std::string(opcode.value));
+            }
+        }
+        break;
+    // Performance parameters: EQ
+    case hash("eq_bw"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].bandwidth, Default::eqBandwidthRange);
+        }
+        break;
+    case hash("eq_bw_oncc"): [[fallthrough]];
+    case hash("eq_bwcc"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!backParameter)
+                return false;
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].bandwidthCC[*backParameter], Default::eqBandwidthModRange);
+        }
+        break;
+    case hash("eq_freq"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].frequency, Default::eqFrequencyRange);
+        }
+        break;
+    case hash("eq_freq_oncc"): [[fallthrough]];
+    case hash("eq_freqcc"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!backParameter)
+                return false;
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].frequencyCC[*backParameter], Default::eqFrequencyModRange);
+        }
+        break;
+    case hash("eq_velfreq"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            const auto check2 = opcode.middleParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!check2 || *check2 != 2 || opcode.parameterPositions[1] != 6)
+                return false; // was eqN_vel3freq or something else than eqN_vel2freq
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].vel2frequency, Default::eqFrequencyModRange);
+        }
+        break;
+    case hash("eq_gain"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].gain, Default::eqGainRange);
+        }
+        break;
+    case hash("eq_gain_oncc"): [[fallthrough]];
+    case hash("eq_gaincc"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!backParameter)
+                return false;
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].gainCC[*backParameter], Default::eqGainModRange);
+        }
+        break;
+    case hash("eq_velgain"):
+        {
+            const auto eqNumber = opcode.firstParameter();
+            const auto check2 = opcode.middleParameter();
+            if (!eqNumber || *eqNumber == 0)
+                return false;
+            if (!check2 || *check2 != 2 || opcode.parameterPositions[1] != 6)
+                return false; // was eqN_vel3gain or something else than eqN_vel2gain
+            if (!extendIfNecessary(equalizers, *eqNumber))
+                return false;
+
+            setValueFromOpcode(opcode, equalizers[*eqNumber - 1].vel2gain, Default::eqGainModRange);
+        }
+        break;
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
