@@ -14,29 +14,29 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
 {
     trimInPlace(value);
     trimInPlace(opcode);
-    size_t firstCharIndex { 0 };
-    auto firstNumIndex = opcode.find_first_of("1234567890");
-    while (firstNumIndex != opcode.npos) {
-        lettersOnlyHash = hash(opcode.substr(firstCharIndex, firstNumIndex - firstCharIndex), lettersOnlyHash);
-        firstCharIndex = opcode.find_first_not_of("1234567890", firstNumIndex);
+    size_t nextCharIndex { 0 };
+    auto nextNumIndex = opcode.find_first_of("1234567890");
+    while (nextNumIndex != opcode.npos) {
+        lettersOnlyHash = hash(opcode.substr(nextCharIndex, nextNumIndex - nextCharIndex), lettersOnlyHash);
+        nextCharIndex = opcode.find_first_not_of("1234567890", nextNumIndex);
 
         uint32_t returnedValue;
-        if (firstCharIndex == absl::string_view::npos) {
-            if (absl::SimpleAtoi(opcode.substr(firstNumIndex), &returnedValue)) {
+        if (nextCharIndex == absl::string_view::npos) {
+            if (absl::SimpleAtoi(opcode.substr(nextNumIndex), &returnedValue)) {
                 ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
                 backParameter = static_cast<uint8_t>(returnedValue);
                 break;
             }
         } else {
-            if (absl::SimpleAtoi(opcode.substr(firstNumIndex, firstCharIndex - firstNumIndex), &returnedValue)) {
+            if (absl::SimpleAtoi(opcode.substr(nextNumIndex, nextCharIndex - nextNumIndex), &returnedValue)) {
                 ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
                 parameters.push_back(static_cast<uint8_t>(returnedValue));
             }
         }
-        firstNumIndex = opcode.find_first_of("1234567890", firstCharIndex);
+        nextNumIndex = opcode.find_first_of("1234567890", nextCharIndex);
     }
 
-    if (firstCharIndex != opcode.npos)
-        lettersOnlyHash = hash(opcode.substr(firstCharIndex), lettersOnlyHash);
+    if (nextCharIndex != opcode.npos)
+        lettersOnlyHash = hash(opcode.substr(nextCharIndex), lettersOnlyHash);
 
 }
