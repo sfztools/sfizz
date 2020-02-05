@@ -11,7 +11,7 @@ sk = library("sallenkey_modulable.dsp");
 // Generators
 
 // the SFZ *noise generator
-sfzNoise = no.noise : *(gate) : *(0.25);
+sfzNoise = no.noise : *(0.25);
 
 //==============================================================================
 // Filters
@@ -90,6 +90,12 @@ sfzHsh = fm.rbjHighShelfSmooth(smoothCoefs,cutoff,pkShGain,Q);
 // the SFZ peaking EQ filter
 sfzPeq = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q);
 
+// the SFZ equalizer band
+sfzEq = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
+  Q = 1./(2.*ma.sinh(0.5*log(2)*bandwidth*w0/sin(w0)));
+  w0 = 2*ma.PI*max(0,cutoff)/ma.SR;
+};
+
 //==============================================================================
 // Filters (stereo)
 
@@ -116,6 +122,7 @@ sfz2chBrf2pSv = par(i,2,sfzBrf2pSv);
 sfz2chLsh = par(i,2,sfzLsh);
 sfz2chHsh = par(i,2,sfzHsh);
 sfz2chPeq = par(i,2,sfzPeq);
+sfz2chEq = par(i,2,sfzEq);
 
 //==============================================================================
 // Filter parameters
@@ -123,6 +130,7 @@ sfz2chPeq = par(i,2,sfzPeq);
 cutoff = hslider("[01] Cutoff [unit:Hz] [scale:log]", 440.0, 50.0, 10000.0, 1.0);
 Q = vslider("[02] Resonance [unit:dB]", 0.0, 0.0, 40.0, 0.1) : ba.db2linear;
 pkShGain = vslider("[03] Peak/shelf gain [unit:dB]", 0.0, 0.0, 40.0, 0.1);
+bandwidth = vslider("[04] Bandwidth [unit:octave]", 1.0, 0.1, 10.0, 0.01);
 
 // smoothing function to prevent fast changes of filter coefficients
 smoothCoefs = si.smoo; // TODO check if this is appropriate otherwise replace
