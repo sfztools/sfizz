@@ -125,22 +125,29 @@ namespace Default
 	constexpr Range<float> rtDecayRange { 0.0f, 200.0f };
 
     // Performance parameters: Filters
+    constexpr float numFilters { 2 };
     constexpr float filterCutoff { 0 };
     constexpr float filterResonance { 0 };
+    constexpr float filterGain { 0 };
     constexpr int filterKeytrack { 0 };
     constexpr uint8_t filterKeycenter { 60 };
     constexpr int filterRandom { 60 };
     constexpr int filterVeltrack { 0 };
     constexpr int filterCutoffCC { 0 };
     constexpr float filterResonanceCC { 0 };
-    constexpr Range<float> filterCutoffRange { 0.0f, 96000.0f };
+    constexpr float filterGainCC { 0 };
+    constexpr Range<float> filterCutoffRange { 0.0f, 20000.0f };
     constexpr Range<int> filterCutoffModRange { -9600, 9600 };
+    constexpr Range<float> filterGainRange { -96.0f, 24.0f };
+    constexpr Range<float> filterGainModRange { -96.0f, 24.0f };
     constexpr Range<int> filterKeytrackRange { 0, 1200 };
     constexpr Range<int> filterRandomRange { 0, 9600 };
     constexpr Range<int> filterVeltrackRange { -9600, 9600 };
-    constexpr Range<float> filterResonanceRange { 0, 40 };
+    constexpr Range<float> filterResonanceRange { 0.0f, 40.0f };
+    constexpr Range<float> filterResonanceModRange { 0.0f, 40.0f };
 
     // Performance parameters: EQ
+    constexpr float numEQs { 3 };
     constexpr float eqBandwidth { 1.0f };
     constexpr float eqBandwidthCC { 0.0f };
     constexpr float eqFrequencyUnset { 0.0f };

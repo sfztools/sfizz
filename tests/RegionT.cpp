@@ -1041,9 +1041,11 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[0].keycenter == 60);
         REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf2p);
         REQUIRE(region.filters[0].keytrack == 0);
+        REQUIRE(region.filters[0].gain == 0);
         REQUIRE(region.filters[0].veltrack == 0);
         REQUIRE(region.filters[0].resonance == 0.0f);
         REQUIRE(region.filters[0].cutoffCC.empty());
+        REQUIRE(region.filters[0].gainCC.empty());
         REQUIRE(region.filters[0].resonanceCC.empty());
 
         region.parseOpcode({ "cutoff2", "5000" });
@@ -1053,9 +1055,11 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[1].keycenter == 60);
         REQUIRE(region.filters[1].type == sfz::FilterType::kFilterLpf2p);
         REQUIRE(region.filters[1].keytrack == 0);
+        REQUIRE(region.filters[1].gain == 0);
         REQUIRE(region.filters[1].veltrack == 0);
         REQUIRE(region.filters[1].resonance == 0.0f);
         REQUIRE(region.filters[1].cutoffCC.empty());
+        REQUIRE(region.filters[1].gainCC.empty());
         REQUIRE(region.filters[1].resonanceCC.empty());
 
         region.parseOpcode({ "cutoff4", "50" });
@@ -1066,16 +1070,20 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[2].keycenter == 60);
         REQUIRE(region.filters[2].type == sfz::FilterType::kFilterLpf2p);
         REQUIRE(region.filters[2].keytrack == 0);
+        REQUIRE(region.filters[2].gain == 0);
         REQUIRE(region.filters[2].veltrack == 0);
         REQUIRE(region.filters[2].resonance == 0.0f);
         REQUIRE(region.filters[2].cutoffCC.empty());
+        REQUIRE(region.filters[2].gainCC.empty());
         REQUIRE(region.filters[2].resonanceCC.empty());
         REQUIRE(region.filters[3].keycenter == 60);
         REQUIRE(region.filters[3].type == sfz::FilterType::kFilterLpf2p);
         REQUIRE(region.filters[3].keytrack == 0);
+        REQUIRE(region.filters[3].gain == 0);
         REQUIRE(region.filters[3].veltrack == 0);
         REQUIRE(region.filters[3].resonance == 0.0f);
         REQUIRE(region.filters[3].cutoffCC.empty());
+        REQUIRE(region.filters[3].gainCC.empty());
         REQUIRE(region.filters[3].resonanceCC.empty());
     }
 
@@ -1086,6 +1094,12 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[2].cutoff == 50.0f);
         region.parseOpcode({ "resonance2", "3" });
         REQUIRE(region.filters[1].resonance == 3.0f);
+        region.parseOpcode({ "fil2_gain", "-5" });
+        REQUIRE(region.filters[1].gain == -5.0f);
+        region.parseOpcode({ "fil_gain", "5" });
+        REQUIRE(region.filters[0].gain == 5.0f);
+        region.parseOpcode({ "fil1_gain", "-5" });
+        REQUIRE(region.filters[0].gain == -5.0f);
         region.parseOpcode({ "fil2_veltrack", "-100" });
         REQUIRE(region.filters[1].veltrack == -100);
         region.parseOpcode({ "fil3_keytrack", "100" });
@@ -1097,6 +1111,10 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "resonance3_cc24", "10" });
         REQUIRE(region.filters[2].resonanceCC.contains(24));
         REQUIRE(region.filters[2].resonanceCC[24] == 10);
+        region.parseOpcode({ "fil2_gaincc12", "-50" });
+        REQUIRE(region.filters[1].gainCC.contains(12));
+        REQUIRE(region.filters[1].gainCC[12] == -50.0f);
+
     }
 
     SECTION("Filter values")
@@ -1138,6 +1156,21 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[0].keycenter == 127);
         region.parseOpcode({ "fil_keycenter", "c4" });
         REQUIRE(region.filters[0].keycenter == 60);
+
+        region.parseOpcode({ "fil_gain", "25" });
+        REQUIRE(region.filters[0].gain == 24.0f);
+        region.parseOpcode({ "fil_gain", "-200" });
+        REQUIRE(region.filters[0].gain == -96.0f);
+
+        region.parseOpcode({ "cutoff_cc43", "10000" });
+        REQUIRE(region.filters[0].cutoffCC[43] == 9600);
+        region.parseOpcode({ "cutoff_cc43", "-10000" });
+        REQUIRE(region.filters[0].cutoffCC[43] == -9600);
+
+        region.parseOpcode({ "resonance_cc43", "100" });
+        REQUIRE(region.filters[0].resonanceCC[43] == 40.0f);
+        region.parseOpcode({ "resonance_cc43", "-5" });
+        REQUIRE(region.filters[0].resonanceCC[43] == 0.0f);
     }
 
     SECTION("Filter types")

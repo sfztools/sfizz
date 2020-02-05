@@ -16,10 +16,13 @@
 #include <random>
 
 template<class T>
-bool extendIfNecessary(std::vector<T>& vec, unsigned size)
+bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapacity)
 {
     if (size == 0)
         return false;
+
+    if (vec.capacity() == 0)
+        vec.reserve(defaultCapacity);
 
     if (vec.size() < size)
         vec.resize(size);
@@ -397,7 +400,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("cutoff"):
         {
             const auto filterIndex { backParameter.value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
             setValueFromOpcode(opcode, filters[filterIndex].cutoff, Default::filterCutoffRange);
         }
@@ -405,7 +408,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("resonance"):
         {
             const auto filterIndex { backParameter.value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
             setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
         }
@@ -416,7 +419,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
 
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             setValueFromOpcode(
@@ -432,20 +435,20 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
 
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             setValueFromOpcode(
                 opcode,
                 filters[filterIndex].resonanceCC[*backParameter],
-                Default::filterResonanceRange
+                Default::filterResonanceModRange
             );
         }
         break;
     case hash("fil_keytrack"):
         {
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             setValueFromOpcode(opcode, filters[filterIndex].keytrack, Default::filterKeytrackRange);
@@ -454,7 +457,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("fil_keycenter"):
         {
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             setValueFromOpcode(opcode, filters[filterIndex].keycenter, Default::keyRange);
@@ -463,7 +466,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("fil_veltrack"):
         {
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             setValueFromOpcode(opcode, filters[filterIndex].veltrack, Default::filterVeltrackRange);
@@ -472,16 +475,41 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("fil_random"):
         {
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             setValueFromOpcode(opcode, filters[filterIndex].random, Default::filterRandomRange);
         }
         break;
+    case hash("fil_gain"):
+        {
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            setValueFromOpcode(opcode, filters[filterIndex].gain, Default::filterGainRange);
+        }
+        break;
+    case hash("fil_gaincc"):
+        {
+            if (!backParameter)
+                return false;
+
+            const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            setValueFromOpcode(
+                opcode,
+                filters[filterIndex].gainCC[*backParameter],
+                Default::filterGainModRange
+            );
+        }
+        break;
     case hash("fil_type"):
         {
             const auto filterIndex { opcode.firstParameter().value_or(1) - 1 };
-            if (!extendIfNecessary(filters, filterIndex + 1))
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
             switch (hash(opcode.value)) {
@@ -505,6 +533,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 case hash("pink"): filters[filterIndex].type = FilterType::kFilterPink; break;
                 case hash("lsh"): filters[filterIndex].type = FilterType::kFilterLsh; break;
                 case hash("hsh"): filters[filterIndex].type = FilterType::kFilterHsh; break;
+                case hash("pkf_2p"): [[fallthrough]];
                 case hash("peq"): filters[filterIndex].type = FilterType::kFilterPeq; break;
                 default:
                      filters[filterIndex].type = FilterType::kFilterNone;
@@ -512,13 +541,14 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             }
         }
         break;
+
     // Performance parameters: EQ
     case hash("eq_bw"):
         {
             const auto eqNumber = opcode.firstParameter();
             if (!eqNumber || *eqNumber == 0)
                 return false;
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].bandwidth, Default::eqBandwidthRange);
         }
@@ -531,7 +561,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
             if (!backParameter)
                 return false;
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
 
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].bandwidthCC[*backParameter], Default::eqBandwidthModRange);
@@ -542,7 +572,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             const auto eqNumber = opcode.firstParameter();
             if (!eqNumber || *eqNumber == 0)
                 return false;
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].frequency, Default::eqFrequencyRange);
         }
@@ -555,7 +585,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
             if (!backParameter)
                 return false;
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
 
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].frequencyCC[*backParameter], Default::eqFrequencyModRange);
@@ -569,7 +599,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
             if (!check2 || *check2 != 2 || opcode.parameterPositions[1] != 6)
                 return false; // was eqN_vel3freq or something else than eqN_vel2freq
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
 
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].vel2frequency, Default::eqFrequencyModRange);
@@ -580,7 +610,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             const auto eqNumber = opcode.firstParameter();
             if (!eqNumber || *eqNumber == 0)
                 return false;
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].gain, Default::eqGainRange);
         }
@@ -593,7 +623,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
             if (!backParameter)
                 return false;
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
 
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].gainCC[*backParameter], Default::eqGainModRange);
@@ -607,7 +637,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 return false;
             if (!check2 || *check2 != 2 || opcode.parameterPositions[1] != 6)
                 return false; // was eqN_vel3gain or something else than eqN_vel2gain
-            if (!extendIfNecessary(equalizers, *eqNumber))
+            if (!extendIfNecessary(equalizers, *eqNumber, Default::numEQs))
                 return false;
 
             setValueFromOpcode(opcode, equalizers[*eqNumber - 1].vel2gain, Default::eqGainModRange);
