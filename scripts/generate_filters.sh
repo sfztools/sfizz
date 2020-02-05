@@ -21,6 +21,7 @@ faustgen() {
     local cutoffVar=`echo "$code" | $SED -r 's%.*\("Cutoff", &[ \t]*([a-zA-Z0-9_]+).*%\1%;t;d'`
     local resoVar=`echo "$code" | $SED -r 's%.*\("Resonance", &[ \t]*([a-zA-Z0-9_]+).*%\1%;t;d'`
     local pkshVar=`echo "$code" | $SED -r 's%.*\("Peak/shelf gain", &[ \t]*([a-zA-Z0-9_]+).*%\1%;t;d'`
+    local bwVar=`echo "$code" | $SED -r 's%.*\("Bandwidth", &[ \t]*([a-zA-Z0-9_]+).*%\1%;t;d'`
 
     # suppress some faust-specific stuff we don't care
     echo "$code" \
@@ -47,6 +48,9 @@ faustgen() {
     if test ! -z "$pkshVar"; then
         $SED -r -i 's/\b'"$pkshVar"'\b/fPkShGain/' "$outfile"
     fi
+    if test ! -z "$bwVar"; then
+        $SED -r -i 's/\b'"$bwVar"'\b/fBandwidth/' "$outfile"
+    fi
 }
 
 for f in \
@@ -57,7 +61,8 @@ for f in \
     Brf1p Brf2p \
     Lsh Hsh Peq \
     Pink \
-    Lpf2pSv Hpf2pSv Bpf2pSv Brf2pSv
+    Lpf2pSv Hpf2pSv Bpf2pSv Brf2pSv \
+    Eq
 do
     faustgen "$f"
     faustgen "2ch$f"
