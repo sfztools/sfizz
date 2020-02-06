@@ -2530,6 +2530,65 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>sfz::FilterEq</Name>
+      <APILanguage>c</APILanguage>
+      <Type>tmplt</Type>
+      <Scope>sfz::FilterEq</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter_eq.html</Path>
+    <Abstract>Equalizer filter for SFZ v1 Available for mono and stereo. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>init</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilterEq</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter_eq.html</Path>
+    <Anchor>a07fd2156325f7e06c42508e69609e198</Anchor>
+    <Abstract>Set up the filter constants. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>clear</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilterEq</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter_eq.html</Path>
+    <Anchor>a0c6690982e1fa93eab60af95b80a9223</Anchor>
+    <Abstract>Reinitialize the filter memory to zeros. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>process</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilterEq</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter_eq.html</Path>
+    <Anchor>aa5065a3bd6dd49841a07db1283a6b08b</Anchor>
+    <Abstract>Process one cycle of the filter without modulating cutoff or bandwidth. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>processModulated</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::FilterEq</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_filter_eq.html</Path>
+    <Anchor>aba368ce0bdec4862ce219a53da780a98</Anchor>
+    <Abstract>Process one cycle of the filter with cutoff and bandwidth values varying over time. </Abstract>
+    <DeclaredIn>SfzFilter.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>sfz::HistoricalBuffer</Name>
       <APILanguage>c</APILanguage>
       <Type>tmplt</Type>

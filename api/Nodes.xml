@@ -548,6 +548,32 @@
               </Subnodes>
              </Node>
              <Node>
+              <Name>FilterEq</Name>
+              <Path>classsfz_1_1_filter_eq.html</Path>
+              <Subnodes>
+               <Node>
+                <Name>clear</Name>
+                <Path>classsfz_1_1_filter_eq.html</Path>
+                <Anchor>a0c6690982e1fa93eab60af95b80a9223</Anchor>
+               </Node>
+               <Node>
+                <Name>init</Name>
+                <Path>classsfz_1_1_filter_eq.html</Path>
+                <Anchor>a07fd2156325f7e06c42508e69609e198</Anchor>
+               </Node>
+               <Node>
+                <Name>process</Name>
+                <Path>classsfz_1_1_filter_eq.html</Path>
+                <Anchor>aa5065a3bd6dd49841a07db1283a6b08b</Anchor>
+               </Node>
+               <Node>
+                <Name>processModulated</Name>
+                <Path>classsfz_1_1_filter_eq.html</Path>
+                <Anchor>aba368ce0bdec4862ce219a53da780a98</Anchor>
+               </Node>
+              </Subnodes>
+             </Node>
+             <Node>
               <Name>HistoricalBuffer</Name>
               <Path>classsfz_1_1_historical_buffer.html</Path>
               <Subnodes>
@@ -1248,6 +1274,10 @@
            <Node>
             <Name>sfz::Filter&lt; NCh &gt;</Name>
             <Path>classsfz_1_1_filter.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::FilterEq&lt; NCh &gt;</Name>
+            <Path>classsfz_1_1_filter_eq.html</Path>
            </Node>
            <Node>
             <Name>sfz::HistoricalBuffer&lt; ValueType &gt;</Name>
