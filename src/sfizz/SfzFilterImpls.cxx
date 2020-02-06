@@ -36,6 +36,7 @@ struct UI {};
 #include "gen/filters/sfzLsh.cxx"
 #include "gen/filters/sfzHsh.cxx"
 #include "gen/filters/sfzPeq.cxx"
+#include "gen/filters/sfzEq.cxx"
 
 #include "gen/filters/sfz2chApf1p.cxx"
 #include "gen/filters/sfz2chBpf1p.cxx"
@@ -60,32 +61,59 @@ struct UI {};
 #include "gen/filters/sfz2chLsh.cxx"
 #include "gen/filters/sfz2chHsh.cxx"
 #include "gen/filters/sfz2chPeq.cxx"
+#include "gen/filters/sfz2chEq.cxx"
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 
+/**
+   Wrapper of the most common kind of resonant filter
+   Parameterized by cutoff and Q
+ */
 template <class F> struct sfzFilter : public F {
     void setCutoff(float v) { F::fCutoff = v; }
     void setQ(float v) { F::fQ = v; }
     void setPkShGain(float) {}
 };
 
+/**
+   Wrapper of non resonant filters
+   Parameterized by cutoff only
+ */
 template <class F> struct sfzFilterNoQ : public F {
     void setCutoff(float v) { F::fCutoff = v; }
     void setQ(float) {}
     void setPkShGain(float) {}
 };
 
+/**
+   Wrapper of fixed filters
+   Not parameterized
+ */
 template <class F> struct sfzFilterNoCutoff : public F {
     void setCutoff(float) {}
     void setQ(float) {}
     void setPkShGain(float) {}
 };
 
-template <class F> struct sfzFilterEq : public F {
+/**
+   Wrapper of resonant filters with a gain control for peak or shelf
+   Parameterized by cutoff, Q, peak/shelf gain
+ */
+template <class F> struct sfzFilterPkSh : public F {
     void setCutoff(float v) { F::fCutoff = v; }
     void setQ(float v) { F::fQ = v; }
+    void setPkShGain(float v) { F::fPkShGain = v; }
+};
+
+/**
+   Wrapper of equalizer filters with a bandwidth control
+   Parameterized by cutoff, bandwidth, peak/shelf gain
+ */
+template <class F> struct sfzFilterEq : public F {
+    void setCutoff(float v) { F::fCutoff = v; }
+    void setBandwidth(float v) { F::fBandwidth = v; }
     void setPkShGain(float v) { F::fPkShGain = v; }
 };
 
@@ -112,6 +140,7 @@ template <unsigned NCh> struct sfzBrf2pSv;
 template <unsigned NCh> struct sfzLsh;
 template <unsigned NCh> struct sfzHsh;
 template <unsigned NCh> struct sfzPeq;
+template <unsigned NCh> struct sfzEq;
 
 template<> struct sfzLpf1p<1> : public sfzFilterNoQ<faustLpf1p> {};
 template<> struct sfzLpf2p<1> : public sfzFilter<faustLpf2p> {};
@@ -133,9 +162,10 @@ template<> struct sfzLpf2pSv<1> : public sfzFilter<faustLpf2pSv> {};
 template<> struct sfzHpf2pSv<1> : public sfzFilter<faustHpf2pSv> {};
 template<> struct sfzBpf2pSv<1> : public sfzFilter<faustBpf2pSv> {};
 template<> struct sfzBrf2pSv<1> : public sfzFilter<faustBrf2pSv> {};
-template<> struct sfzLsh<1> : public sfzFilterEq<faustLsh> {};
-template<> struct sfzHsh<1> : public sfzFilterEq<faustHsh> {};
-template<> struct sfzPeq<1> : public sfzFilterEq<faustPeq> {};
+template<> struct sfzLsh<1> : public sfzFilterPkSh<faustLsh> {};
+template<> struct sfzHsh<1> : public sfzFilterPkSh<faustHsh> {};
+template<> struct sfzPeq<1> : public sfzFilterPkSh<faustPeq> {};
+template<> struct sfzEq<1> : public sfzFilterEq<faustEq> {};
 
 template<> struct sfzLpf1p<2> : public sfzFilterNoQ<faust2chLpf1p> {};
 template<> struct sfzLpf2p<2> : public sfzFilter<faust2chLpf2p> {};
@@ -157,6 +187,7 @@ template<> struct sfzLpf2pSv<2> : public sfzFilter<faust2chLpf2pSv> {};
 template<> struct sfzHpf2pSv<2> : public sfzFilter<faust2chHpf2pSv> {};
 template<> struct sfzBpf2pSv<2> : public sfzFilter<faust2chBpf2pSv> {};
 template<> struct sfzBrf2pSv<2> : public sfzFilter<faust2chBrf2pSv> {};
-template<> struct sfzLsh<2> : public sfzFilterEq<faust2chLsh> {};
-template<> struct sfzHsh<2> : public sfzFilterEq<faust2chHsh> {};
-template<> struct sfzPeq<2> : public sfzFilterEq<faust2chPeq> {};
+template<> struct sfzLsh<2> : public sfzFilterPkSh<faust2chLsh> {};
+template<> struct sfzHsh<2> : public sfzFilterPkSh<faust2chHsh> {};
+template<> struct sfzPeq<2> : public sfzFilterPkSh<faust2chPeq> {};
+template<> struct sfzEq<2> : public sfzFilterEq<faust2chEq> {};

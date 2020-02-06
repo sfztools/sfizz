@@ -13,6 +13,9 @@
 
 namespace sfz {
 
+//------------------------------------------------------------------------------
+// SFZ v2 multi-mode filter
+
 template <unsigned NCh>
 struct Filter<NCh>::Impl {
     FilterType fType = kFilterNone;
@@ -245,5 +248,85 @@ void Filter<NCh>::setType(FilterType type)
 
 template class Filter<1>;
 template class Filter<2>;
+
+//------------------------------------------------------------------------------
+// SFZ v1 equalizer filter
+
+
+template <unsigned NCh>
+struct FilterEq<NCh>::Impl {
+    sfzEq<NCh> fDsp;
+};
+
+template <unsigned NCh>
+FilterEq<NCh>::FilterEq()
+    : P{new Impl}
+{
+}
+
+template <unsigned NCh>
+FilterEq<NCh>::~FilterEq()
+{
+}
+
+template <unsigned NCh>
+void FilterEq<NCh>::init(double sampleRate)
+{
+    sfzEq<NCh> &filter = P->fDsp;
+
+    filter.init(sampleRate);
+}
+
+template <unsigned NCh>
+void FilterEq<NCh>::clear()
+{
+    sfzEq<NCh> &filter = P->fDsp;
+
+    filter.instanceClear();
+}
+
+template <unsigned NCh>
+void FilterEq<NCh>::process(const float *const in[NCh], float *const out[NCh], float cutoff, float bw, float pksh, unsigned nframes)
+{
+    sfzEq<NCh> &filter = P->fDsp;
+
+    filter.setCutoff(cutoff);
+    filter.setBandwidth(bw);
+    filter.setPkShGain(pksh);
+    filter.compute(nframes, const_cast<float **>(in), const_cast<float **>(out));
+}
+
+template <unsigned NCh>
+void FilterEq<NCh>::processModulated(const float *const in[NCh], float *const out[NCh], const float *cutoff, const float *bw, const float *pksh, unsigned nframes)
+{
+    sfzEq<NCh> &filter = P->fDsp;
+
+    unsigned frame = 0;
+
+    while (frame < nframes) {
+        unsigned current = nframes - frame;
+
+        if (current > config::filterControlInterval)
+            current = config::filterControlInterval;
+
+        const float *current_in[NCh];
+        float *current_out[NCh];
+
+        for (unsigned c = 0; c < NCh; ++c) {
+            current_in[c] = in[c] + frame;
+            current_out[c] = out[c] + frame;
+        }
+
+        filter.setCutoff(cutoff[frame]);
+        filter.setBandwidth(bw[frame]);
+        filter.setPkShGain(pksh[frame]);
+        filter.compute(current, const_cast<float **>(current_in), const_cast<float **>(current_out));
+
+        frame += current;
+    }
+}
+
+template class FilterEq<1>;
+template class FilterEq<2>;
 
 } // namespace sfz
