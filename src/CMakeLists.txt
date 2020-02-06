@@ -28,6 +28,7 @@ set (SFIZZ_SOURCES
     sfizz/effects/Rectify.cpp
     sfizz/effects/Gain.cpp
     sfizz/effects/Width.cpp
+    sfizz/LFO.cpp
 )
 include (SfizzSIMDSourceFiles)
 

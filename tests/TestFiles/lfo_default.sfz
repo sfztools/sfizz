@@ -1,0 +1,9 @@
+<region>
+sample=*noise
+lokey=0
+hikey=127
+cutoff=1000.0
+fil_type=brf_2p
+lfo1_cutoff=1200.0
+//
+lfo1_freq=1
