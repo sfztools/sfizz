@@ -116,9 +116,7 @@ void Filter::process(const float *const in[], float *const out[], float cutoff, 
         return;
     }
 
-    dsp->setCutoff(cutoff);
-    dsp->setQ(q);
-    dsp->setPkShGain(pksh);
+    dsp->configureStandard(cutoff, q, pksh);
     dsp->compute(nframes, const_cast<float **>(in), const_cast<float **>(out));
 }
 
@@ -148,9 +146,7 @@ void Filter::processModulated(const float *const in[], float *const out[], const
             current_out[c] = out[c] + frame;
         }
 
-        dsp->setCutoff(cutoff[frame]);
-        dsp->setQ(q[frame]);
-        dsp->setPkShGain(pksh[frame]);
+        dsp->configureStandard(cutoff[frame], q[frame], pksh[frame]);
         dsp->compute(current, const_cast<float **>(current_in), const_cast<float **>(current_out));
 
         frame += current;
@@ -289,9 +285,7 @@ void FilterEq::process(const float *const in[], float *const out[], float cutoff
         return;
     }
 
-    dsp->setCutoff(cutoff);
-    dsp->setBandwidth(bw);
-    dsp->setPkShGain(pksh);
+    dsp->configureEq(cutoff, bw, pksh);
     dsp->compute(nframes, const_cast<float **>(in), const_cast<float **>(out));
 }
 
@@ -321,9 +315,7 @@ void FilterEq::processModulated(const float *const in[], float *const out[], con
             current_out[c] = out[c] + frame;
         }
 
-        dsp->setCutoff(cutoff[frame]);
-        dsp->setBandwidth(bw[frame]);
-        dsp->setPkShGain(pksh[frame]);
+        dsp->configureEq(cutoff[frame], bw[frame], pksh[frame]);
         dsp->compute(current, const_cast<float **>(current_in), const_cast<float **>(current_out));
 
         frame += current;

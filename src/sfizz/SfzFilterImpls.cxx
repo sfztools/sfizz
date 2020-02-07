@@ -18,10 +18,8 @@ public:
     virtual void instanceClear() = 0;
     virtual void compute(int, float **, float **) = 0;
 
-    virtual void setCutoff(float) {}
-    virtual void setQ(float) {}
-    virtual void setBandwidth(float) {}
-    virtual void setPkShGain(float) {}
+    virtual void configureStandard(float, float, float) {}
+    virtual void configureEq(float, float, float) {}
 };
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -88,8 +86,12 @@ public:
    Parameterized by cutoff and Q
  */
 template <class F> struct sfzFilter : public F {
-    void setCutoff(float v) override { F::fCutoff = v; }
-    void setQ(float v) override { F::fQ = v; }
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        F::fQ = q;
+        (void)pksh;
+    }
 };
 
 /**
@@ -97,7 +99,12 @@ template <class F> struct sfzFilter : public F {
    Parameterized by cutoff only
  */
 template <class F> struct sfzFilterNoQ : public F {
-    void setCutoff(float v) override { F::fCutoff = v; }
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        (void)q;
+        (void)pksh;
+    }
 };
 
 /**
@@ -105,6 +112,12 @@ template <class F> struct sfzFilterNoQ : public F {
    Not parameterized
  */
 template <class F> struct sfzFilterNoCutoff : public F {
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        (void)cutoff;
+        (void)q;
+        (void)pksh;
+    }
 };
 
 /**
@@ -112,9 +125,12 @@ template <class F> struct sfzFilterNoCutoff : public F {
    Parameterized by cutoff, Q, peak/shelf gain
  */
 template <class F> struct sfzFilterPkSh : public F {
-    void setCutoff(float v) override { F::fCutoff = v; }
-    void setQ(float v) override { F::fQ = v; }
-    void setPkShGain(float v) override { F::fPkShGain = v; }
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        F::fQ = q;
+        F::fPkShGain = pksh;
+    }
 };
 
 /**
@@ -122,9 +138,12 @@ template <class F> struct sfzFilterPkSh : public F {
    Parameterized by cutoff, bandwidth, peak/shelf gain
  */
 template <class F> struct sfzFilterEq : public F {
-    void setCutoff(float v) override { F::fCutoff = v; }
-    void setBandwidth(float v) override { F::fBandwidth = v; }
-    void setPkShGain(float v) override { F::fPkShGain = v; }
+    void configureEq(float cutoff, float bw, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        F::fBandwidth = bw;
+        F::fPkShGain = pksh;
+    }
 };
 
 struct sfzLpf1p final : public sfzFilterNoQ<faustLpf1p> {};
