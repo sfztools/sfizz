@@ -120,6 +120,14 @@ add_executable(bm_resampleChunk BM_resampleChunk.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_resampleChunk PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
 target_include_directories(bm_resampleChunk PRIVATE ../src/sfizz ../src/external)
 
+add_executable(bm_filterModulation BM_filterModulation.cpp ${BENCHMARK_SIMD_SOURCES} ../src/sfizz/SfzFilter.cpp)
+target_link_libraries(bm_filterModulation PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
+target_include_directories(bm_filterModulation PRIVATE ../src/sfizz ../src/external)
+
+add_executable(bm_filterStereoMono BM_filterStereoMono.cpp ${BENCHMARK_SIMD_SOURCES} ../src/sfizz/SfzFilter.cpp)
+target_link_libraries(bm_filterStereoMono PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-sndfile)
+target_include_directories(bm_filterStereoMono PRIVATE ../src/sfizz ../src/external)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
 	bm_opf_high_vs_low
@@ -148,6 +156,8 @@ add_dependencies(sfizz_benchmarks
 	bm_envelopes
 	bm_wavfile
 	bm_flacfile
+	bm_filterModulation
+	bm_filterStereoMono
 )
 
 if (NOT WIN32)
