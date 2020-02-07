@@ -1232,6 +1232,14 @@
             <Path>classsfz_1_1_c_c_map.html</Path>
            </Node>
            <Node>
+            <Name>sfz::CCMap&lt; float &gt;</Name>
+            <Path>classsfz_1_1_c_c_map.html</Path>
+           </Node>
+           <Node>
+            <Name>sfz::CCMap&lt; int &gt;</Name>
+            <Path>classsfz_1_1_c_c_map.html</Path>
+           </Node>
+           <Node>
             <Name>sfz::CCMap&lt; sfz::Range&lt; uint8_t &gt; &gt;</Name>
             <Path>classsfz_1_1_c_c_map.html</Path>
            </Node>

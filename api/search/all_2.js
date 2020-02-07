@@ -5,6 +5,8 @@ var searchData=
   ['cc',['cc',['../classsfz_1_1_synth.html#aadf74366bb17e532a64aed8bf12952c0',1,'sfz::Synth']]],
   ['ccevent',['ccEvent',['../classsfz_1_1_midi_state.html#a73a1fdb9f0f87a172514522321a8158c',1,'sfz::MidiState']]],
   ['ccmap',['CCMap',['../classsfz_1_1_c_c_map.html',1,'sfz::CCMap&lt; ValueType &gt;'],['../classsfz_1_1_c_c_map.html#a02a7160337593535d36ce12e0f338e45',1,'sfz::CCMap::CCMap()']]],
+  ['ccmap_3c_20float_20_3e',['CCMap&lt; float &gt;',['../classsfz_1_1_c_c_map.html',1,'sfz']]],
+  ['ccmap_3c_20int_20_3e',['CCMap&lt; int &gt;',['../classsfz_1_1_c_c_map.html',1,'sfz']]],
   ['ccmap_3c_20sfz_3a_3arange_3c_20uint8_5ft_20_3e_20_3e',['CCMap&lt; sfz::Range&lt; uint8_t &gt; &gt;',['../classsfz_1_1_c_c_map.html',1,'sfz']]],
   ['ccswitchedvalue',['ccSwitchedValue',['../namespacesfz.html#a11ed5c444b21ac2033875210cdd626ab',1,'sfz']]],
   ['centsfactor',['centsFactor',['../namespacesfz.html#ace381c89be8ea56969614a371b7edae2',1,'sfz']]],
