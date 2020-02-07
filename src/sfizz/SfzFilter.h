@@ -13,14 +13,13 @@ enum FilterType : int;
 
 /**
    Multi-mode filter for SFZ v2
-   Available for mono and stereo. (NCh=1, NCh=2)
+   Available for mono and stereo. (channels=1, channels=2)
 
    Parameters:
      `cutoff`: it's the opcode `filN_cutoff` (Hz)
      `q`: it's the opcode `filN_resonance` (dB)
      `pksh`: it's the opcode `filN_gain` (dB)
  */
-template <unsigned NCh>
 class Filter {
 public:
     Filter();
@@ -44,7 +43,7 @@ public:
        `pksh` is a peak/shelf gain expressed in dB.
        `in[i]` and `out[i]` may refer to identical buffers, for in-place processing
      */
-    void process(const float *const in[NCh], float *const out[NCh], float cutoff, float q, float pksh, unsigned nframes);
+    void process(const float *const in[], float *const out[], float cutoff, float q, float pksh, unsigned nframes);
 
     /**
        Process one cycle of the filter with cutoff and Q values varying over time.
@@ -53,7 +52,17 @@ public:
        `pksh` is a peak/shelf gain expressed in dB.
        `in[i]` and `out[i]` may refer to identical buffers, for in-place processing
      */
-    void processModulated(const float *const in[NCh], float *const out[NCh], const float *cutoff, const float *q, const float *pksh, unsigned nframes);
+    void processModulated(const float *const in[], float *const out[], const float *cutoff, const float *q, const float *pksh, unsigned nframes);
+
+    /**
+       Get the number of channels.
+     */
+    unsigned channels() const;
+
+    /**
+       Set the number of channels.
+     */
+    void setChannels(unsigned channels);
 
     /**
        Get the type of filter.
@@ -99,14 +108,13 @@ enum FilterType : int {
 
 /**
    Equalizer filter for SFZ v1
-   Available for mono and stereo. (NCh=1, NCh=2)
+   Available for mono and stereo. (channels=1, channels=2)
 
    Parameters:
      `cutoff`: it's the opcode `egN_freq` (Hz)
      `bw`: it's the opcode `eqN_bw` (octave)
      `pksh`: it's the opcode `eqN_gain` (dB)
  */
-template <unsigned NCh>
 class FilterEq {
 public:
     FilterEq();
@@ -130,7 +138,7 @@ public:
        `pksh` is a peak/shelf gain expressed in dB.
        `in[i]` and `out[i]` may refer to identical buffers, for in-place processing
      */
-    void process(const float *const in[NCh], float *const out[NCh], float cutoff, float bw, float pksh, unsigned nframes);
+    void process(const float *const in[], float *const out[], float cutoff, float bw, float pksh, unsigned nframes);
 
     /**
        Process one cycle of the filter with cutoff and bandwidth values varying over time.
@@ -139,7 +147,17 @@ public:
        `pksh` is a peak/shelf gain expressed in dB.
        `in[i]` and `out[i]` may refer to identical buffers, for in-place processing
      */
-    void processModulated(const float *const in[NCh], float *const out[NCh], const float *cutoff, const float *bw, const float *pksh, unsigned nframes);
+    void processModulated(const float *const in[], float *const out[], const float *cutoff, const float *bw, const float *pksh, unsigned nframes);
+
+    /**
+       Get the number of channels.
+     */
+    unsigned channels() const;
+
+    /**
+       Set the number of channels.
+     */
+    void setChannels(unsigned channels);
 
 private:
     struct Impl;
