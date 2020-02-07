@@ -27,7 +27,7 @@ Compilation options: -lang cpp -inpl -double -ftz 0
 #define exp10 __exp10
 #endif
 
-class faustLpf2pSv : public dsp {
+class faustLpf2pSv : public sfzFilterDsp {
 	
  public:
 	
@@ -46,13 +46,13 @@ class faustLpf2pSv : public dsp {
 	void metadata(Meta* m) { 
 	}
 
-	 int getNumInputs() {
+	virtual int getNumInputs() {
 		return 1;
 	}
-	 int getNumOutputs() {
+	virtual int getNumOutputs() {
 		return 1;
 	}
-	 int getInputRate(int channel) {
+	virtual int getInputRate(int channel) {
 		int rate;
 		switch ((channel)) {
 			case 0: {
@@ -66,7 +66,7 @@ class faustLpf2pSv : public dsp {
 		}
 		return rate;
 	}
-	 int getOutputRate(int channel) {
+	virtual int getOutputRate(int channel) {
 		int rate;
 		switch ((channel)) {
 			case 0: {
@@ -84,17 +84,17 @@ class faustLpf2pSv : public dsp {
 	static void classInit(int sample_rate) {
 	}
 	
-	 void instanceConstants(int sample_rate) {
+	virtual void instanceConstants(int sample_rate) {
 		fSampleRate = sample_rate;
 		fConst0 = (3.1415926535897931 / std::min<double>(192000.0, std::max<double>(1.0, double(fSampleRate))));
 	}
 	
-	 void instanceResetUserInterface() {
+	virtual void instanceResetUserInterface() {
 		fCutoff = FAUSTFLOAT(440.0);
 		fQ = FAUSTFLOAT(0.0);
 	}
 	
-	 void instanceClear() {
+	virtual void instanceClear() {
 		for (int l0 = 0; (l0 < 2); l0 = (l0 + 1)) {
 			fRec3[l0] = 0.0;
 		}
@@ -112,28 +112,28 @@ class faustLpf2pSv : public dsp {
 		}
 	}
 	
-	 void init(int sample_rate) {
+	virtual void init(int sample_rate) {
 		classInit(sample_rate);
 		instanceInit(sample_rate);
 	}
-	 void instanceInit(int sample_rate) {
+	virtual void instanceInit(int sample_rate) {
 		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
 	}
 	
-	 faustLpf2pSv* clone() {
+	virtual faustLpf2pSv* clone() {
 		return new faustLpf2pSv();
 	}
 	
-	 int getSampleRate() {
+	virtual int getSampleRate() {
 		return fSampleRate;
 	}
 	
-	 void buildUserInterface(UI* ui_interface) {
+	virtual void buildUserInterface(UI* ui_interface) {
 	}
 	
-	 void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
+	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
 		FAUSTFLOAT* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		double fSlow0 = (0.0010000000000000009 * std::tan((fConst0 * double(fCutoff))));
