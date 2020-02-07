@@ -1029,6 +1029,327 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "sostenuto_sw", "obladi" });
         REQUIRE(region.checkSostenuto);
     }
+
+    SECTION("Filter stacking and cutoffs")
+    {
+        REQUIRE(region.filters.empty());
+
+        region.parseOpcode({ "cutoff", "500" });
+        REQUIRE(region.filters.size() == 1);
+        REQUIRE(region.filters[0].cutoff == 500.0f);
+        // Check filter defaults
+        REQUIRE(region.filters[0].keycenter == 60);
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf2p);
+        REQUIRE(region.filters[0].keytrack == 0);
+        REQUIRE(region.filters[0].gain == 0);
+        REQUIRE(region.filters[0].veltrack == 0);
+        REQUIRE(region.filters[0].resonance == 0.0f);
+        REQUIRE(region.filters[0].cutoffCC.empty());
+        REQUIRE(region.filters[0].gainCC.empty());
+        REQUIRE(region.filters[0].resonanceCC.empty());
+
+        region.parseOpcode({ "cutoff2", "5000" });
+        REQUIRE(region.filters.size() == 2);
+        REQUIRE(region.filters[1].cutoff == 5000.0f);
+        // Check filter defaults
+        REQUIRE(region.filters[1].keycenter == 60);
+        REQUIRE(region.filters[1].type == sfz::FilterType::kFilterLpf2p);
+        REQUIRE(region.filters[1].keytrack == 0);
+        REQUIRE(region.filters[1].gain == 0);
+        REQUIRE(region.filters[1].veltrack == 0);
+        REQUIRE(region.filters[1].resonance == 0.0f);
+        REQUIRE(region.filters[1].cutoffCC.empty());
+        REQUIRE(region.filters[1].gainCC.empty());
+        REQUIRE(region.filters[1].resonanceCC.empty());
+
+        region.parseOpcode({ "cutoff4", "50" });
+        REQUIRE(region.filters.size() == 4);
+        REQUIRE(region.filters[2].cutoff == 0.0f);
+        REQUIRE(region.filters[3].cutoff == 50.0f);
+        // Check filter defaults
+        REQUIRE(region.filters[2].keycenter == 60);
+        REQUIRE(region.filters[2].type == sfz::FilterType::kFilterLpf2p);
+        REQUIRE(region.filters[2].keytrack == 0);
+        REQUIRE(region.filters[2].gain == 0);
+        REQUIRE(region.filters[2].veltrack == 0);
+        REQUIRE(region.filters[2].resonance == 0.0f);
+        REQUIRE(region.filters[2].cutoffCC.empty());
+        REQUIRE(region.filters[2].gainCC.empty());
+        REQUIRE(region.filters[2].resonanceCC.empty());
+        REQUIRE(region.filters[3].keycenter == 60);
+        REQUIRE(region.filters[3].type == sfz::FilterType::kFilterLpf2p);
+        REQUIRE(region.filters[3].keytrack == 0);
+        REQUIRE(region.filters[3].gain == 0);
+        REQUIRE(region.filters[3].veltrack == 0);
+        REQUIRE(region.filters[3].resonance == 0.0f);
+        REQUIRE(region.filters[3].cutoffCC.empty());
+        REQUIRE(region.filters[3].gainCC.empty());
+        REQUIRE(region.filters[3].resonanceCC.empty());
+    }
+
+    SECTION("Filter parameter dispatch")
+    {
+        region.parseOpcode({ "cutoff3", "50" });
+        REQUIRE(region.filters.size() == 3);
+        REQUIRE(region.filters[2].cutoff == 50.0f);
+        region.parseOpcode({ "resonance2", "3" });
+        REQUIRE(region.filters[1].resonance == 3.0f);
+        region.parseOpcode({ "fil2_gain", "-5" });
+        REQUIRE(region.filters[1].gain == -5.0f);
+        region.parseOpcode({ "fil_gain", "5" });
+        REQUIRE(region.filters[0].gain == 5.0f);
+        region.parseOpcode({ "fil1_gain", "-5" });
+        REQUIRE(region.filters[0].gain == -5.0f);
+        region.parseOpcode({ "fil2_veltrack", "-100" });
+        REQUIRE(region.filters[1].veltrack == -100);
+        region.parseOpcode({ "fil3_keytrack", "100" });
+        REQUIRE(region.filters[2].keytrack == 100);
+        REQUIRE(region.filters[0].cutoffCC.empty());
+        region.parseOpcode({ "cutoff1_cc15", "210" });
+        REQUIRE(region.filters[0].cutoffCC.contains(15));
+        REQUIRE(region.filters[0].cutoffCC[15] == 210);
+        region.parseOpcode({ "resonance3_cc24", "10" });
+        REQUIRE(region.filters[2].resonanceCC.contains(24));
+        REQUIRE(region.filters[2].resonanceCC[24] == 10);
+        region.parseOpcode({ "fil2_gaincc12", "-50" });
+        REQUIRE(region.filters[1].gainCC.contains(12));
+        REQUIRE(region.filters[1].gainCC[12] == -50.0f);
+
+    }
+
+    SECTION("Filter values")
+    {
+        REQUIRE(region.filters.empty());
+
+        region.parseOpcode({ "cutoff", "500" });
+        REQUIRE(region.filters.size() == 1);
+        REQUIRE(region.filters[0].cutoff == 500.0f);
+        region.parseOpcode({ "cutoff", "-100" });
+        REQUIRE(region.filters[0].cutoff == 0.0f);
+        region.parseOpcode({ "cutoff", "2000000" });
+        REQUIRE(region.filters[0].cutoff == 20000.0f);
+
+        REQUIRE(region.filters[0].resonance == 0.0f);
+        region.parseOpcode({ "resonance", "5" });
+        REQUIRE(region.filters[0].resonance == 5.0f);
+        region.parseOpcode({ "resonance", "-5" });
+        REQUIRE(region.filters[0].resonance == 0.0f);
+        region.parseOpcode({ "resonance", "500" });
+        REQUIRE(region.filters[0].resonance == 96.0f);
+
+        REQUIRE(region.filters[0].veltrack == 0);
+        region.parseOpcode({ "fil_veltrack", "50" });
+        REQUIRE(region.filters[0].veltrack == 50);
+        region.parseOpcode({ "fil_veltrack", "-5" });
+        REQUIRE(region.filters[0].veltrack == -5);
+        region.parseOpcode({ "fil_veltrack", "10000" });
+        REQUIRE(region.filters[0].veltrack == 9600);
+        region.parseOpcode({ "fil_veltrack", "-10000" });
+        REQUIRE(region.filters[0].veltrack == -9600);
+
+        REQUIRE(region.filters[0].keycenter == 60);
+        region.parseOpcode({ "fil_keycenter", "50" });
+        REQUIRE(region.filters[0].keycenter == 50);
+        region.parseOpcode({ "fil_keycenter", "-2" });
+        REQUIRE(region.filters[0].keycenter == 0);
+        region.parseOpcode({ "fil_keycenter", "1000" });
+        REQUIRE(region.filters[0].keycenter == 127);
+        region.parseOpcode({ "fil_keycenter", "c4" });
+        REQUIRE(region.filters[0].keycenter == 60);
+
+        region.parseOpcode({ "fil_gain", "250" });
+        REQUIRE(region.filters[0].gain == 96.0f);
+        region.parseOpcode({ "fil_gain", "-200" });
+        REQUIRE(region.filters[0].gain == -96.0f);
+
+        region.parseOpcode({ "cutoff_cc43", "10000" });
+        REQUIRE(region.filters[0].cutoffCC[43] == 9600);
+        region.parseOpcode({ "cutoff_cc43", "-10000" });
+        REQUIRE(region.filters[0].cutoffCC[43] == -9600);
+
+        region.parseOpcode({ "resonance_cc43", "100" });
+        REQUIRE(region.filters[0].resonanceCC[43] == 96.0f);
+        region.parseOpcode({ "resonance_cc43", "-5" });
+        REQUIRE(region.filters[0].resonanceCC[43] == 0.0f);
+    }
+
+    SECTION("Filter types")
+    {
+        REQUIRE(region.filters.empty());
+
+        region.parseOpcode({ "fil_type", "lpf_1p" });
+        REQUIRE(region.filters.size() == 1);
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf1p);
+        region.parseOpcode({ "fil_type", "lpf_2p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf2p);
+        region.parseOpcode({ "fil_type", "hpf_1p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHpf1p);
+        region.parseOpcode({ "fil_type", "hpf_2p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHpf2p);
+        region.parseOpcode({ "fil_type", "bpf_2p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterBpf2p);
+        region.parseOpcode({ "fil_type", "brf_2p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterBrf2p);
+        region.parseOpcode({ "fil_type", "bpf_1p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterBpf1p);
+        region.parseOpcode({ "fil_type", "brf_1p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterBrf1p);
+        region.parseOpcode({ "fil_type", "apf_1p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterApf1p);
+        region.parseOpcode({ "fil_type", "lpf_2p_sv" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf2pSv);
+        region.parseOpcode({ "fil_type", "hpf_2p_sv" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHpf2pSv);
+        region.parseOpcode({ "fil_type", "bpf_2p_sv" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterBpf2pSv);
+        region.parseOpcode({ "fil_type", "brf_2p_sv" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterBrf2pSv);
+        region.parseOpcode({ "fil_type", "lpf_4p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf4p);
+        region.parseOpcode({ "fil_type", "hpf_4p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHpf4p);
+        region.parseOpcode({ "fil_type", "lpf_6p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLpf6p);
+        region.parseOpcode({ "fil_type", "hpf_6p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHpf6p);
+        region.parseOpcode({ "fil_type", "pink" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterPink);
+        region.parseOpcode({ "fil_type", "lsh" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterLsh);
+        region.parseOpcode({ "fil_type", "hsh" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHsh);
+        region.parseOpcode({ "fil_type", "peq" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterPeq);
+        region.parseOpcode({ "fil_type", "unknown" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterNone);
+    }
+
+    SECTION("EQ stacking and gains")
+    {
+        REQUIRE(region.equalizers.empty());
+
+        region.parseOpcode({ "eq1_gain", "6" });
+        REQUIRE(region.equalizers.size() == 1);
+        REQUIRE(region.equalizers[0].gain == 6.0f);
+        // Check defaults
+        REQUIRE(region.equalizers[0].bandwidth == 1.0f);
+        REQUIRE(region.equalizers[0].frequency == 0.0f);
+        REQUIRE(region.equalizers[0].vel2frequency == 0);
+        REQUIRE(region.equalizers[0].vel2gain == 0);
+        REQUIRE(region.equalizers[0].frequencyCC.empty());
+        REQUIRE(region.equalizers[0].bandwidthCC.empty());
+        REQUIRE(region.equalizers[0].gainCC.empty());
+
+        region.parseOpcode({ "eq2_gain", "-400" });
+        REQUIRE(region.equalizers.size() == 2);
+        REQUIRE(region.equalizers[1].gain == -96.0f);
+        // Check defaults
+        REQUIRE(region.equalizers[1].bandwidth == 1.0f);
+        REQUIRE(region.equalizers[1].frequency == 0.0f);
+        REQUIRE(region.equalizers[1].vel2frequency == 0);
+        REQUIRE(region.equalizers[1].vel2gain == 0);
+        REQUIRE(region.equalizers[1].frequencyCC.empty());
+        REQUIRE(region.equalizers[1].bandwidthCC.empty());
+        REQUIRE(region.equalizers[1].gainCC.empty());
+
+        region.parseOpcode({ "eq4_gain", "500" });
+        REQUIRE(region.equalizers.size() == 4);
+        REQUIRE(region.equalizers[2].gain == 0.0f);
+        REQUIRE(region.equalizers[3].gain == 96.0f);
+        // Check defaults
+        REQUIRE(region.equalizers[2].bandwidth == 1.0f);
+        REQUIRE(region.equalizers[2].frequency == 0.0f);
+        REQUIRE(region.equalizers[2].vel2frequency == 0);
+        REQUIRE(region.equalizers[2].vel2gain == 0);
+        REQUIRE(region.equalizers[2].frequencyCC.empty());
+        REQUIRE(region.equalizers[2].bandwidthCC.empty());
+        REQUIRE(region.equalizers[2].gainCC.empty());
+        REQUIRE(region.equalizers[3].bandwidth == 1.0f);
+        REQUIRE(region.equalizers[3].frequency == 0.0f);
+        REQUIRE(region.equalizers[3].vel2frequency == 0);
+        REQUIRE(region.equalizers[3].vel2gain == 0);
+        REQUIRE(region.equalizers[3].frequencyCC.empty());
+        REQUIRE(region.equalizers[3].bandwidthCC.empty());
+        REQUIRE(region.equalizers[3].gainCC.empty());
+    }
+
+    SECTION("EQ parameter dispatch")
+    {
+        region.parseOpcode({ "eq3_bw", "2" });
+        REQUIRE(region.equalizers.size() == 3);
+        REQUIRE(region.equalizers[2].bandwidth == 2.0f);
+        region.parseOpcode({ "eq1_gain", "-25" });
+        REQUIRE(region.equalizers[0].gain == -25.0f);
+        region.parseOpcode({ "eq2_freq", "300" });
+        REQUIRE(region.equalizers[1].frequency == 300.0f);
+        region.parseOpcode({ "eq3_vel2gain", "10" });
+        REQUIRE(region.equalizers[2].vel2gain == 10.0f);
+        region.parseOpcode({ "eq1_vel2freq", "100" });
+        REQUIRE(region.equalizers[0].vel2frequency == 100.0f);
+        REQUIRE(region.equalizers[0].bandwidthCC.empty());
+        region.parseOpcode({ "eq1_bwcc24", "0.5" });
+        REQUIRE(region.equalizers[0].bandwidthCC.contains(24));
+        REQUIRE(region.equalizers[0].bandwidthCC[24] == 0.5f);
+        region.parseOpcode({ "eq1_bw_oncc24", "1.5" });
+        REQUIRE(region.equalizers[0].bandwidthCC[24] == 1.5f);
+        region.parseOpcode({ "eq3_freqcc15", "10" });
+        REQUIRE(region.equalizers[2].frequencyCC.contains(15));
+        REQUIRE(region.equalizers[2].frequencyCC[15] == 10.0f);
+        region.parseOpcode({ "eq3_freq_oncc15", "20" });
+        REQUIRE(region.equalizers[2].frequencyCC[15] == 20.0f);
+        region.parseOpcode({ "eq2_gaincc123", "2" });
+        REQUIRE(region.equalizers[1].gainCC.contains(123));
+        REQUIRE(region.equalizers[1].gainCC[123] == 2.0f);
+        region.parseOpcode({ "eq2_gain_oncc123", "-2" });
+        REQUIRE(region.equalizers[1].gainCC[123] == -2.0f);
+    }
+
+    SECTION("EQ parameter values")
+    {
+        region.parseOpcode({ "eq1_bw", "2" });
+        REQUIRE(region.equalizers.size() == 1);
+        REQUIRE(region.equalizers[0].bandwidth == 2.0f);
+        region.parseOpcode({ "eq1_bw", "5" });
+        REQUIRE(region.equalizers[0].bandwidth == 4.0f);
+        region.parseOpcode({ "eq1_bw", "0" });
+        REQUIRE(region.equalizers[0].bandwidth == 0.001f);
+        region.parseOpcode({ "eq1_freq", "300" });
+        REQUIRE(region.equalizers[0].frequency == 300.0f);
+        region.parseOpcode({ "eq1_freq", "-300" });
+        REQUIRE(region.equalizers[0].frequency == 0.0f);
+        region.parseOpcode({ "eq1_freq", "35000" });
+        REQUIRE(region.equalizers[0].frequency == 30000.0f);
+        region.parseOpcode({ "eq1_vel2gain", "4" });
+        REQUIRE(region.equalizers[0].vel2gain == 4.0f);
+        region.parseOpcode({ "eq1_vel2gain", "250" });
+        REQUIRE(region.equalizers[0].vel2gain == 96.0f);
+        region.parseOpcode({ "eq1_vel2gain", "-123" });
+        REQUIRE(region.equalizers[0].vel2gain == -96.0f);
+        region.parseOpcode({ "eq1_vel2freq", "40" });
+        REQUIRE(region.equalizers[0].vel2frequency == 40.0f);
+        region.parseOpcode({ "eq1_vel2freq", "35000" });
+        REQUIRE(region.equalizers[0].vel2frequency == 30000.0f);
+        region.parseOpcode({ "eq1_vel2freq", "-35000" });
+        REQUIRE(region.equalizers[0].vel2frequency == -30000.0f);
+        region.parseOpcode({ "eq1_bwcc15", "2" });
+        REQUIRE(region.equalizers[0].bandwidthCC[15] == 2.0f);
+        region.parseOpcode({ "eq1_bwcc15", "-5" });
+        REQUIRE(region.equalizers[0].bandwidthCC[15] == -4.0f);
+        region.parseOpcode({ "eq1_bwcc15", "5" });
+        REQUIRE(region.equalizers[0].bandwidthCC[15] == 4.0f);
+        region.parseOpcode({ "eq1_gaincc15", "2" });
+        REQUIRE(region.equalizers[0].gainCC[15] == 2.0f);
+        region.parseOpcode({ "eq1_gaincc15", "-500" });
+        REQUIRE(region.equalizers[0].gainCC[15] == -96.0f);
+        region.parseOpcode({ "eq1_gaincc15", "500" });
+        REQUIRE(region.equalizers[0].gainCC[15] == 96.0f);
+        region.parseOpcode({ "eq1_freqcc15", "200" });
+        REQUIRE(region.equalizers[0].frequencyCC[15] == 200.0f);
+        region.parseOpcode({ "eq1_freqcc15", "-50000" });
+        REQUIRE(region.equalizers[0].frequencyCC[15] == -30000.0f);
+        region.parseOpcode({ "eq1_freqcc15", "50000" });
+        REQUIRE(region.equalizers[0].frequencyCC[15] == 30000.0f);
+    }
 }
 
 // Specific region bugs

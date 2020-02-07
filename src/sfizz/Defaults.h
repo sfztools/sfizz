@@ -124,6 +124,48 @@ namespace Default
 	constexpr float rtDecay { 0.0f };
 	constexpr Range<float> rtDecayRange { 0.0f, 200.0f };
 
+    // Performance parameters: Filters
+    constexpr float numFilters { 2 };
+    constexpr float filterCutoff { 0 };
+    constexpr float filterResonance { 0 };
+    constexpr float filterGain { 0 };
+    constexpr int filterKeytrack { 0 };
+    constexpr uint8_t filterKeycenter { 60 };
+    constexpr int filterRandom { 60 };
+    constexpr int filterVeltrack { 0 };
+    constexpr int filterCutoffCC { 0 };
+    constexpr float filterResonanceCC { 0 };
+    constexpr float filterGainCC { 0 };
+    constexpr Range<float> filterCutoffRange { 0.0f, 20000.0f };
+    constexpr Range<int> filterCutoffModRange { -9600, 9600 };
+    constexpr Range<float> filterGainRange { -96.0f, 96.0f };
+    constexpr Range<float> filterGainModRange { -96.0f, 96.0f };
+    constexpr Range<int> filterKeytrackRange { 0, 1200 };
+    constexpr Range<int> filterRandomRange { 0, 9600 };
+    constexpr Range<int> filterVeltrackRange { -9600, 9600 };
+    constexpr Range<float> filterResonanceRange { 0.0f, 96.0f };
+    constexpr Range<float> filterResonanceModRange { 0.0f, 96.0f };
+
+    // Performance parameters: EQ
+    constexpr float numEQs { 3 };
+    constexpr float eqBandwidth { 1.0f };
+    constexpr float eqBandwidthCC { 0.0f };
+    constexpr float eqFrequencyUnset { 0.0f };
+    constexpr float eqFrequency1 { 50.0f };
+    constexpr float eqFrequency2 { 500.0f };
+    constexpr float eqFrequency3 { 5000.0f };
+    constexpr float eqFrequencyCC { 0.0f };
+    constexpr float eqGain { 0.0f };
+    constexpr float eqGainCC { 0.0f };
+    constexpr float eqVel2frequency { 0.0f };
+    constexpr float eqVel2gain { 0.0f };
+    constexpr Range<float> eqBandwidthRange { 0.001f, 4.0f };
+    constexpr Range<float> eqBandwidthModRange { -4.0f, 4.0f };
+    constexpr Range<float> eqFrequencyRange { 0.0f, 30000.0f };
+    constexpr Range<float> eqFrequencyModRange { -30000.0f, 30000.0f };
+    constexpr Range<float> eqGainRange { -96.0f, 96.0f };
+    constexpr Range<float> eqGainModRange { -96.0f, 96.0f };
+
      // Performance parameters: pitch
 	constexpr uint8_t pitchKeycenter { 60 };
 	constexpr int pitchKeytrack { 100 };

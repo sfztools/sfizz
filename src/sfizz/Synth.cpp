@@ -295,6 +295,23 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             region->registerNoteOff(*defaultSwitch, 0, 1.0);
         }
 
+        // Set the default frequencies on equalizers if needed
+        if (region->equalizers.size() > 0
+            && region->equalizers[0].frequency == Default::eqFrequencyUnset)
+        {
+            region->equalizers[0].frequency = Default::eqFrequency1;
+            if (region->equalizers.size() > 1
+                && region->equalizers[1].frequency == Default::eqFrequencyUnset)
+            {
+                region->equalizers[1].frequency = Default::eqFrequency2;
+                if (region->equalizers.size() > 2
+                    && region->equalizers[2].frequency == Default::eqFrequencyUnset)
+                {
+                    region->equalizers[2].frequency = Default::eqFrequency3;
+                }
+            }
+        }
+
         addEndpointsToVelocityCurve(*region);
         region->registerPitchWheel(0);
         region->registerAftertouch(0);
