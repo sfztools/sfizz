@@ -43,6 +43,7 @@
 #include "MathHelpers.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
+#include <array>
 #include <cmath>
 
 namespace sfz {
