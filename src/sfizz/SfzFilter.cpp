@@ -8,8 +8,8 @@
 #include "SfzFilter.h"
 #include "SfzFilterImpls.cxx"
 #include <cstring>
-#include <cassert>
 #include "SIMDHelpers.h"
+#include "Debug.h"
 
 namespace sfz {
 
@@ -160,7 +160,7 @@ unsigned Filter::channels() const
 
 void Filter::setChannels(unsigned channels)
 {
-    assert(channels < Impl::maxChannels);
+    ASSERT(channels < Impl::maxChannels);
     if (P->fChannels != channels) {
         P->fChannels = channels;
         clear();
@@ -330,7 +330,7 @@ unsigned FilterEq::channels() const
 
 void FilterEq::setChannels(unsigned channels)
 {
-    assert(channels < Impl::maxChannels);
+    ASSERT(channels < Impl::maxChannels);
     if (P->fChannels != channels) {
         P->fChannels = channels;
         clear();
