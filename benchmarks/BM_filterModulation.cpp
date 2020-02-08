@@ -66,6 +66,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_VA)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_Faust)(benchmark::State& state) {
     sfz::Filter filter;
+    filter.init(sampleRate);
     filter.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
     {
@@ -85,6 +86,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Faust)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Faust)(benchmark::State& state) {
     sfz::Filter filter;
+    filter.init(sampleRate);
     filter.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -106,6 +108,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Faust)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPoleShelf_Faust)(benchmark::State& state) {
     sfz::Filter filter;
+    filter.init(sampleRate);
     filter.setType(sfz::FilterType::kFilterLsh);
     for (auto _ : state)
     {

@@ -51,7 +51,7 @@ public:
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
     sfz::Filter filterLeft;
-    sfz::Filter filterRight;
+    filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
     {
@@ -72,7 +72,9 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
     sfz::Filter filterLeft;
     sfz::Filter filterRight;
+    filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf1p);
+    filterRight.init(sampleRate);
     filterRight.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
     {
@@ -97,6 +99,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
     sfz::Filter filter;
+    filter.init(sampleRate);
     filter.setChannels(2);
     filter.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
@@ -123,7 +126,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
     sfz::Filter filterLeft;
-    sfz::Filter filterRight;
+    filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -146,7 +149,9 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
     sfz::Filter filterLeft;
     sfz::Filter filterRight;
+    filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
+    filterRight.init(sampleRate);
     filterRight.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -173,6 +178,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
     sfz::Filter filter;
+    filter.init(sampleRate);
     filter.setChannels(2);
     filter.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
@@ -201,7 +207,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
     sfz::Filter filterLeft;
-    sfz::Filter filterRight;
+    filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -226,7 +232,9 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
     sfz::Filter filterLeft;
     sfz::Filter filterRight;
+    filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
+    filterRight.init(sampleRate);
     filterRight.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -255,6 +263,7 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_Stereo)(benchmark::State& state) {
     sfz::Filter filter;
+    filter.init(sampleRate);
     filter.setChannels(2);
     filter.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
