@@ -50,8 +50,8 @@ public:
 };
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
-    sfz::Filter<1> filterLeft;
-    sfz::Filter<1> filterRight;
+    sfz::Filter filterLeft;
+    sfz::Filter filterRight;
     filterLeft.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
     {
@@ -70,8 +70,8 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
-    sfz::Filter<1> filterLeft;
-    sfz::Filter<1> filterRight;
+    sfz::Filter filterLeft;
+    sfz::Filter filterRight;
     filterLeft.setType(sfz::FilterType::kFilterLpf1p);
     filterRight.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
@@ -96,7 +96,8 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
-    sfz::Filter<2> filter;
+    sfz::Filter filter;
+    filter.setChannels(2);
     filter.setType(sfz::FilterType::kFilterLpf1p);
     for (auto _ : state)
     {
@@ -121,8 +122,8 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
-    sfz::Filter<1> filterLeft;
-    sfz::Filter<1> filterRight;
+    sfz::Filter filterLeft;
+    sfz::Filter filterRight;
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -143,8 +144,8 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
-    sfz::Filter<1> filterLeft;
-    sfz::Filter<1> filterRight;
+    sfz::Filter filterLeft;
+    sfz::Filter filterRight;
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     filterRight.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
@@ -171,7 +172,8 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
-    sfz::Filter<2> filter;
+    sfz::Filter filter;
+    filter.setChannels(2);
     filter.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -198,8 +200,8 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
-    sfz::Filter<1> filterLeft;
-    sfz::Filter<1> filterRight;
+    sfz::Filter filterLeft;
+    sfz::Filter filterRight;
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
@@ -222,8 +224,8 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
-    sfz::Filter<1> filterLeft;
-    sfz::Filter<1> filterRight;
+    sfz::Filter filterLeft;
+    sfz::Filter filterRight;
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     filterRight.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
@@ -252,7 +254,8 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_Stereo)(benchmark::State& state) {
-    sfz::Filter<2> filter;
+    sfz::Filter filter;
+    filter.setChannels(2);
     filter.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
