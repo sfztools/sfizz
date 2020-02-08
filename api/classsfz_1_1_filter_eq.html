@@ -107,7 +107,7 @@ $(function() {
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classsfz_1_1_filter_eq-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">sfz::FilterEq&lt; NCh &gt; Class Template Reference</div>  </div>
+<div class="title">sfz::FilterEq Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -118,37 +118,57 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a07fd2156325f7e06c42508e69609e198"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#a07fd2156325f7e06c42508e69609e198">init</a> (double sampleRate)</td></tr>
-<tr class="memdesc:a07fd2156325f7e06c42508e69609e198"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set up the filter constants.  <a href="#a07fd2156325f7e06c42508e69609e198">More...</a><br /></td></tr>
-<tr class="separator:a07fd2156325f7e06c42508e69609e198"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c6690982e1fa93eab60af95b80a9223"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#a0c6690982e1fa93eab60af95b80a9223">clear</a> ()</td></tr>
-<tr class="memdesc:a0c6690982e1fa93eab60af95b80a9223"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reinitialize the filter memory to zeros.  <a href="#a0c6690982e1fa93eab60af95b80a9223">More...</a><br /></td></tr>
-<tr class="separator:a0c6690982e1fa93eab60af95b80a9223"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5065a3bd6dd49841a07db1283a6b08b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#aa5065a3bd6dd49841a07db1283a6b08b">process</a> (const float *const in[NCh], float *const out[NCh], float cutoff, float bw, float pksh, unsigned nframes)</td></tr>
-<tr class="memdesc:aa5065a3bd6dd49841a07db1283a6b08b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process one cycle of the filter without modulating cutoff or bandwidth.  <a href="#aa5065a3bd6dd49841a07db1283a6b08b">More...</a><br /></td></tr>
-<tr class="separator:aa5065a3bd6dd49841a07db1283a6b08b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba368ce0bdec4862ce219a53da780a98"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#aba368ce0bdec4862ce219a53da780a98">processModulated</a> (const float *const in[NCh], float *const out[NCh], const float *cutoff, const float *bw, const float *pksh, unsigned nframes)</td></tr>
-<tr class="memdesc:aba368ce0bdec4862ce219a53da780a98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process one cycle of the filter with cutoff and bandwidth values varying over time.  <a href="#aba368ce0bdec4862ce219a53da780a98">More...</a><br /></td></tr>
-<tr class="separator:aba368ce0bdec4862ce219a53da780a98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1f95b670a2b860386a501e1cda33160"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#ae1f95b670a2b860386a501e1cda33160">init</a> (double sampleRate)</td></tr>
+<tr class="memdesc:ae1f95b670a2b860386a501e1cda33160"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set up the filter constants.  <a href="#ae1f95b670a2b860386a501e1cda33160">More...</a><br /></td></tr>
+<tr class="separator:ae1f95b670a2b860386a501e1cda33160"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac4a0edd1f076696d56e011d0d4f3739"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#aac4a0edd1f076696d56e011d0d4f3739">clear</a> ()</td></tr>
+<tr class="memdesc:aac4a0edd1f076696d56e011d0d4f3739"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reinitialize the filter memory to zeros.  <a href="#aac4a0edd1f076696d56e011d0d4f3739">More...</a><br /></td></tr>
+<tr class="separator:aac4a0edd1f076696d56e011d0d4f3739"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21f94c3d809505486fee71d86dfd7b1e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#a21f94c3d809505486fee71d86dfd7b1e">process</a> (const float *const in[], float *const out[], float cutoff, float bw, float pksh, unsigned nframes)</td></tr>
+<tr class="memdesc:a21f94c3d809505486fee71d86dfd7b1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process one cycle of the filter without modulating cutoff or bandwidth.  <a href="#a21f94c3d809505486fee71d86dfd7b1e">More...</a><br /></td></tr>
+<tr class="separator:a21f94c3d809505486fee71d86dfd7b1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12d26a0e2c8f0c6eb0eb641489725ac7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#a12d26a0e2c8f0c6eb0eb641489725ac7">processModulated</a> (const float *const in[], float *const out[], const float *cutoff, const float *bw, const float *pksh, unsigned nframes)</td></tr>
+<tr class="memdesc:a12d26a0e2c8f0c6eb0eb641489725ac7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process one cycle of the filter with cutoff and bandwidth values varying over time.  <a href="#a12d26a0e2c8f0c6eb0eb641489725ac7">More...</a><br /></td></tr>
+<tr class="separator:a12d26a0e2c8f0c6eb0eb641489725ac7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48341400ddf69e1020bfd57b7dac67a2"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#a48341400ddf69e1020bfd57b7dac67a2">channels</a> () const</td></tr>
+<tr class="memdesc:a48341400ddf69e1020bfd57b7dac67a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the number of channels.  <a href="#a48341400ddf69e1020bfd57b7dac67a2">More...</a><br /></td></tr>
+<tr class="separator:a48341400ddf69e1020bfd57b7dac67a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6347773e9b24da4d5886d2cbb3b4a9c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsfz_1_1_filter_eq.html#a6347773e9b24da4d5886d2cbb3b4a9c8">setChannels</a> (unsigned <a class="el" href="classsfz_1_1_filter_eq.html#a48341400ddf69e1020bfd57b7dac67a2">channels</a>)</td></tr>
+<tr class="memdesc:a6347773e9b24da4d5886d2cbb3b4a9c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the number of channels.  <a href="#a6347773e9b24da4d5886d2cbb3b4a9c8">More...</a><br /></td></tr>
+<tr class="separator:a6347773e9b24da4d5886d2cbb3b4a9c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;unsigned NCh&gt;<br />
-class sfz::FilterEq&lt; NCh &gt;</h3>
-
-<p>Equalizer filter for SFZ v1 Available for mono and stereo. </p>
-<p>(NCh=1, NCh=2)</p>
+<div class="textblock"><p>Equalizer filter for SFZ v1 Available for mono and stereo. </p>
+<p>(channels=1, channels=2)</p>
 <p>Parameters: <code>cutoff</code>: it's the opcode <code>egN_freq</code> (Hz) <code>bw</code>: it's the opcode <code>eqN_bw</code> (octave) <code>pksh</code>: it's the opcode <code>eqN_gain</code> (dB) </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a0c6690982e1fa93eab60af95b80a9223"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0c6690982e1fa93eab60af95b80a9223">&#9670;&nbsp;</a></span>clear()</h2>
+<a id="a48341400ddf69e1020bfd57b7dac67a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48341400ddf69e1020bfd57b7dac67a2">&#9670;&nbsp;</a></span>channels()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;unsigned NCh&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classsfz_1_1_filter_eq.html">sfz::FilterEq</a>&lt; NCh &gt;::clear </td>
+          <td class="memname">unsigned sfz::FilterEq::channels </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the number of channels. </p>
+
+</div>
+</div>
+<a id="aac4a0edd1f076696d56e011d0d4f3739"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac4a0edd1f076696d56e011d0d4f3739">&#9670;&nbsp;</a></span>clear()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilterEq::clear </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -160,16 +180,14 @@ template&lt;unsigned NCh&gt; </div>
 
 </div>
 </div>
-<a id="a07fd2156325f7e06c42508e69609e198"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07fd2156325f7e06c42508e69609e198">&#9670;&nbsp;</a></span>init()</h2>
+<a id="ae1f95b670a2b860386a501e1cda33160"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1f95b670a2b860386a501e1cda33160">&#9670;&nbsp;</a></span>init()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;unsigned NCh&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classsfz_1_1_filter_eq.html">sfz::FilterEq</a>&lt; NCh &gt;::init </td>
+          <td class="memname">void sfz::FilterEq::init </td>
           <td>(</td>
           <td class="paramtype">double&#160;</td>
           <td class="paramname"><em>sampleRate</em></td><td>)</td>
@@ -183,25 +201,23 @@ template&lt;unsigned NCh&gt; </div>
 
 </div>
 </div>
-<a id="aa5065a3bd6dd49841a07db1283a6b08b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa5065a3bd6dd49841a07db1283a6b08b">&#9670;&nbsp;</a></span>process()</h2>
+<a id="a21f94c3d809505486fee71d86dfd7b1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21f94c3d809505486fee71d86dfd7b1e">&#9670;&nbsp;</a></span>process()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;unsigned NCh&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classsfz_1_1_filter_eq.html">sfz::FilterEq</a>&lt; NCh &gt;::process </td>
+          <td class="memname">void sfz::FilterEq::process </td>
           <td>(</td>
           <td class="paramtype">const float *const&#160;</td>
-          <td class="paramname"><em>in</em>[NCh], </td>
+          <td class="paramname"><em>in</em>[], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">float *const&#160;</td>
-          <td class="paramname"><em>out</em>[NCh], </td>
+          <td class="paramname"><em>out</em>[], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -240,25 +256,23 @@ template&lt;unsigned NCh&gt; </div>
 
 </div>
 </div>
-<a id="aba368ce0bdec4862ce219a53da780a98"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aba368ce0bdec4862ce219a53da780a98">&#9670;&nbsp;</a></span>processModulated()</h2>
+<a id="a12d26a0e2c8f0c6eb0eb641489725ac7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12d26a0e2c8f0c6eb0eb641489725ac7">&#9670;&nbsp;</a></span>processModulated()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;unsigned NCh&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classsfz_1_1_filter_eq.html">sfz::FilterEq</a>&lt; NCh &gt;::processModulated </td>
+          <td class="memname">void sfz::FilterEq::processModulated </td>
           <td>(</td>
           <td class="paramtype">const float *const&#160;</td>
-          <td class="paramname"><em>in</em>[NCh], </td>
+          <td class="paramname"><em>in</em>[], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">float *const&#160;</td>
-          <td class="paramname"><em>out</em>[NCh], </td>
+          <td class="paramname"><em>out</em>[], </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -294,6 +308,26 @@ template&lt;unsigned NCh&gt; </div>
 
 <p>Process one cycle of the filter with cutoff and bandwidth values varying over time. </p>
 <p><code>cutoff</code> is a frequency expressed in Hz. <code>bw</code> is a bandwidth expressed in octaves. <code>pksh</code> is a peak/shelf gain expressed in dB. <code>in[i]</code> and <code>out[i]</code> may refer to identical buffers, for in-place processing </p>
+
+</div>
+</div>
+<a id="a6347773e9b24da4d5886d2cbb3b4a9c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6347773e9b24da4d5886d2cbb3b4a9c8">&#9670;&nbsp;</a></span>setChannels()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::FilterEq::setChannels </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>channels</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the number of channels. </p>
 
 </div>
 </div>

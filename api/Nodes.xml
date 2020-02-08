@@ -516,34 +516,44 @@
               <Path>classsfz_1_1_filter.html</Path>
               <Subnodes>
                <Node>
+                <Name>channels</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>afe482284ac17bf751466a27362b25a3e</Anchor>
+               </Node>
+               <Node>
                 <Name>clear</Name>
                 <Path>classsfz_1_1_filter.html</Path>
-                <Anchor>a31f2e92f4e7e55bcab40934d6db204e6</Anchor>
+                <Anchor>a03066db973f2966108e09948b7bd18ff</Anchor>
                </Node>
                <Node>
                 <Name>init</Name>
                 <Path>classsfz_1_1_filter.html</Path>
-                <Anchor>a5ef470686bb94107558284e888a60202</Anchor>
+                <Anchor>a216c4d411fe2fccd0805eabd93bca820</Anchor>
                </Node>
                <Node>
                 <Name>process</Name>
                 <Path>classsfz_1_1_filter.html</Path>
-                <Anchor>a205c453cd9bc613e0fe7cbde2674cd3c</Anchor>
+                <Anchor>a0452fa77f2755d895b71af7ef4f162e6</Anchor>
                </Node>
                <Node>
                 <Name>processModulated</Name>
                 <Path>classsfz_1_1_filter.html</Path>
-                <Anchor>ad5f464b9f021b64cfa9f0a00ac0fe6e5</Anchor>
+                <Anchor>a0495abb6f0f97d16bbc6c380b0b7d9bd</Anchor>
+               </Node>
+               <Node>
+                <Name>setChannels</Name>
+                <Path>classsfz_1_1_filter.html</Path>
+                <Anchor>a87347a9741b6a31f983e1218e9324a02</Anchor>
                </Node>
                <Node>
                 <Name>setType</Name>
                 <Path>classsfz_1_1_filter.html</Path>
-                <Anchor>a64881f1b6f705f69cb9aad21b71ecf79</Anchor>
+                <Anchor>af0dea416df3a9db569e6ff9cbaa55807</Anchor>
                </Node>
                <Node>
                 <Name>type</Name>
                 <Path>classsfz_1_1_filter.html</Path>
-                <Anchor>a15aeb9e8aff313edaa64b39fd514cc4c</Anchor>
+                <Anchor>ad89e911fe1a770efcb246097c9c20a93</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -552,24 +562,34 @@
               <Path>classsfz_1_1_filter_eq.html</Path>
               <Subnodes>
                <Node>
+                <Name>channels</Name>
+                <Path>classsfz_1_1_filter_eq.html</Path>
+                <Anchor>a48341400ddf69e1020bfd57b7dac67a2</Anchor>
+               </Node>
+               <Node>
                 <Name>clear</Name>
                 <Path>classsfz_1_1_filter_eq.html</Path>
-                <Anchor>a0c6690982e1fa93eab60af95b80a9223</Anchor>
+                <Anchor>aac4a0edd1f076696d56e011d0d4f3739</Anchor>
                </Node>
                <Node>
                 <Name>init</Name>
                 <Path>classsfz_1_1_filter_eq.html</Path>
-                <Anchor>a07fd2156325f7e06c42508e69609e198</Anchor>
+                <Anchor>ae1f95b670a2b860386a501e1cda33160</Anchor>
                </Node>
                <Node>
                 <Name>process</Name>
                 <Path>classsfz_1_1_filter_eq.html</Path>
-                <Anchor>aa5065a3bd6dd49841a07db1283a6b08b</Anchor>
+                <Anchor>a21f94c3d809505486fee71d86dfd7b1e</Anchor>
                </Node>
                <Node>
                 <Name>processModulated</Name>
                 <Path>classsfz_1_1_filter_eq.html</Path>
-                <Anchor>aba368ce0bdec4862ce219a53da780a98</Anchor>
+                <Anchor>a12d26a0e2c8f0c6eb0eb641489725ac7</Anchor>
+               </Node>
+               <Node>
+                <Name>setChannels</Name>
+                <Path>classsfz_1_1_filter_eq.html</Path>
+                <Anchor>a6347773e9b24da4d5886d2cbb3b4a9c8</Anchor>
                </Node>
               </Subnodes>
              </Node>
@@ -1280,11 +1300,11 @@
             <Path>classsfz_1_1_file_pool.html</Path>
            </Node>
            <Node>
-            <Name>sfz::Filter&lt; NCh &gt;</Name>
+            <Name>sfz::Filter</Name>
             <Path>classsfz_1_1_filter.html</Path>
            </Node>
            <Node>
-            <Name>sfz::FilterEq&lt; NCh &gt;</Name>
+            <Name>sfz::FilterEq</Name>
             <Path>classsfz_1_1_filter_eq.html</Path>
            </Node>
            <Node>

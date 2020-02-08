@@ -2,6 +2,7 @@ var searchData=
 [
   ['saturatingsfzindex',['saturatingSFZIndex',['../namespacesfz.html#a3c7883329dc3ff5455577487a444b5e8',1,'sfz']]],
   ['setccpairfromopcode',['setCCPairFromOpcode',['../namespacesfz.html#aef36c198066be8bee85b445c483f71a1',1,'sfz']]],
+  ['setchannels',['setChannels',['../classsfz_1_1_filter.html#a87347a9741b6a31f983e1218e9324a02',1,'sfz::Filter::setChannels()'],['../classsfz_1_1_filter_eq.html#a6347773e9b24da4d5886d2cbb3b4a9c8',1,'sfz::FilterEq::setChannels()']]],
   ['setfunction',['setFunction',['../classsfz_1_1_event_envelope.html#a476ee78b5fa80e28bc1a9efe7c02d244',1,'sfz::EventEnvelope']]],
   ['setmaxcapacity',['setMaxCapacity',['../classsfz_1_1_event_envelope.html#a0e1dde09bc0070b87da9971c95b0d5e4',1,'sfz::EventEnvelope']]],
   ['setnumvoices',['setNumVoices',['../classsfz_1_1_synth.html#a6b577d397db6f577b6602b1e4f55d91f',1,'sfz::Synth']]],
@@ -12,7 +13,7 @@ var searchData=
   ['setrootdirectory',['setRootDirectory',['../classsfz_1_1_file_pool.html#a8af2ebf9ec28ebccf2e119a4b38eead7',1,'sfz::FilePool']]],
   ['setsamplerate',['setSampleRate',['../classsfz_1_1_synth.html#aaa9ee5acbc1c406472e41194f0088dc0',1,'sfz::Synth::setSampleRate()'],['../classsfz_1_1_voice.html#a926b7a7e7d1979e7ae20bf4869dee56e',1,'sfz::Voice::setSampleRate()']]],
   ['setsamplesperblock',['setSamplesPerBlock',['../classsfz_1_1_synth.html#acb7f5d0059c82d5354cb5c8e9e7b02a2',1,'sfz::Synth::setSamplesPerBlock()'],['../classsfz_1_1_voice.html#a5d3be569e83f0011f9a49d0adebe8117',1,'sfz::Voice::setSamplesPerBlock()']]],
-  ['settype',['setType',['../classsfz_1_1_filter.html#a64881f1b6f705f69cb9aad21b71ecf79',1,'sfz::Filter']]],
+  ['settype',['setType',['../classsfz_1_1_filter.html#af0dea416df3a9db569e6ff9cbaa55807',1,'sfz::Filter']]],
   ['setvaluefromopcode',['setValueFromOpcode',['../namespacesfz.html#a83aae00d3fce9c8f65838d7b3a1ee5e9',1,'sfz::setValueFromOpcode(const Opcode &amp;opcode, ValueType &amp;target, const Range&lt; ValueType &gt; &amp;validRange)'],['../namespacesfz.html#a31aeb210ef9bc2aae030c9979a8a2cc0',1,'sfz::setValueFromOpcode(const Opcode &amp;opcode, absl::optional&lt; ValueType &gt; &amp;target, const Range&lt; ValueType &gt; &amp;validRange)']]],
   ['setvolume',['setVolume',['../classsfz_1_1_synth.html#adcc74a8304e6a13fde764c9928d2e385',1,'sfz::Synth']]],
   ['sfizz_5fcreate_5fsynth',['sfizz_create_synth',['../sfizz_8h.html#a5833814d7befbccc93c93700b036dc00',1,'sfizz.h']]],
