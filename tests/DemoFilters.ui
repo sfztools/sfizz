@@ -82,7 +82,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="widget">
+      <widget class="QWidget" name="widget_2">
        <layout class="QGridLayout" name="gridLayout_3">
         <property name="leftMargin">
          <number>0</number>
@@ -120,7 +120,7 @@
          </widget>
         </item>
         <item row="0" column="1" rowspan="3">
-         <widget class="QWidget" name="widget" native="true"/>
+         <widget class="QWidget" name="widget_3" native="true"/>
         </item>
        </layout>
       </widget>
