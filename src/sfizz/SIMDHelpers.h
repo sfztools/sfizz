@@ -723,12 +723,39 @@ template <>
 void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 namespace _internals {
+    // Number of elements in the table, odd for equal volume at center
+    constexpr int panSize = 4095;
+
+    // Table of pan values for the left channel, extra element for safety
+    const auto panData = []()
+    {
+        std::array<float, panSize + 1> pan;
+        int i = 0;
+
+        for (; i < panSize; ++i)
+            pan[i] = std::cos(i * (piTwo<double> / (panSize - 1)));
+
+        for (; i < static_cast<int>(pan.size()); ++i)
+            pan[i] = pan[panSize - 1];
+
+        return pan;
+    }();
+
     template <class T>
     inline void snippetPan(const T*& pan, T*& left, T*& right)
     {
-        const auto circlePan = piFour<float> * (static_cast<T>(1.0) + *pan++);
-        *left++ *= std::cos(circlePan);
-        *right++ *= std::sin(circlePan);
+        T p = ((*pan++) + T{1.0}) * T{0.5};
+        p = std::max<T>(0, std::min<T>(p, 1));
+
+        auto lookUp = [](T pan) -> T
+        {
+            // reduce range, round to nearest
+            int index = static_cast<int>(T{0.5} + pan * (panSize - 1));
+            return panData[index];
+        };
+
+        *left++ = lookUp(p);
+        *right++ = lookUp(1 - p);
     }
 }
 
