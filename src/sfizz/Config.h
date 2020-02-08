@@ -53,6 +53,7 @@ namespace config {
     constexpr uint8_t numCCs { 143 };
     constexpr int chunkSize { 1024 };
     constexpr float defaultAmpEGRelease { 0.02f };
+    constexpr int defaultNumFilters { maxVoices * 2 };
     /**
        Minimum interval in frames between recomputations of coefficients of the
        modulated filter. The lower, the more CPU resources are consumed.

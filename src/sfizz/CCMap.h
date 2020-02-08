@@ -86,7 +86,9 @@ public:
      */
     bool contains(int index) const noexcept { return container.find(index) != container.end(); }
     typename std::map<int, ValueType>::iterator begin() { return container.begin(); }
+    typename std::map<int, ValueType>::const_iterator begin() const { return container.cbegin(); }
     typename std::map<int, ValueType>::iterator end() { return container.end(); }
+    typename std::map<int, ValueType>::const_iterator end() const { return container.cend(); }
 private:
     const ValueType defaultValue;
     std::map<int, ValueType> container;
