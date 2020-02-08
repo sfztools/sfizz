@@ -15,7 +15,7 @@ faustgen() {
     mkdir -p src/sfizz/gen/filters
     local outfile=src/sfizz/gen/filters/sfz"$1".cxx
 
-    local code=`faust $FAUSTARGS -pn sfz"$1" -cn faust"$1" src/sfizz/dsp/filters/sfz_filters.dsp`
+    local code=`faust $FAUSTARGS -pn sfz"$1" -cn faust"$1" -scn sfzFilterDsp src/sfizz/dsp/filters/sfz_filters.dsp`
 
     # find variable names of our controls
     local cutoffVar=`echo "$code" | $SED -r 's%.*\("Cutoff", &[ \t]*([a-zA-Z0-9_]+).*%\1%;t;d'`
@@ -35,8 +35,6 @@ faustgen() {
 
     # direct access to parameter variables
     $SED -r -i 's/\bprivate:/public:/' "$outfile"
-    # no virtuals please
-    $SED -r -i 's/\bvirtual\b//' "$outfile"
 
     # rename the variables for us to access more easily
     if test ! -z "$cutoffVar"; then

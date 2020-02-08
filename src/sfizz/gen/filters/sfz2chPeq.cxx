@@ -27,7 +27,7 @@ Compilation options: -lang cpp -inpl -double -ftz 0
 #define exp10 __exp10
 #endif
 
-class faust2chPeq : public dsp {
+class faust2chPeq : public sfzFilterDsp {
 	
  public:
 	
@@ -48,13 +48,13 @@ class faust2chPeq : public dsp {
 	void metadata(Meta* m) { 
 	}
 
-	 int getNumInputs() {
+	virtual int getNumInputs() {
 		return 2;
 	}
-	 int getNumOutputs() {
+	virtual int getNumOutputs() {
 		return 2;
 	}
-	 int getInputRate(int channel) {
+	virtual int getInputRate(int channel) {
 		int rate;
 		switch ((channel)) {
 			case 0: {
@@ -72,7 +72,7 @@ class faust2chPeq : public dsp {
 		}
 		return rate;
 	}
-	 int getOutputRate(int channel) {
+	virtual int getOutputRate(int channel) {
 		int rate;
 		switch ((channel)) {
 			case 0: {
@@ -94,18 +94,18 @@ class faust2chPeq : public dsp {
 	static void classInit(int sample_rate) {
 	}
 	
-	 void instanceConstants(int sample_rate) {
+	virtual void instanceConstants(int sample_rate) {
 		fSampleRate = sample_rate;
 		fConst0 = (6.2831853071795862 / std::min<double>(192000.0, std::max<double>(1.0, double(fSampleRate))));
 	}
 	
-	 void instanceResetUserInterface() {
+	virtual void instanceResetUserInterface() {
 		fCutoff = FAUSTFLOAT(440.0);
 		fQ = FAUSTFLOAT(0.0);
 		fPkShGain = FAUSTFLOAT(0.0);
 	}
 	
-	 void instanceClear() {
+	virtual void instanceClear() {
 		for (int l0 = 0; (l0 < 2); l0 = (l0 + 1)) {
 			fRec1[l0] = 0.0;
 		}
@@ -126,28 +126,28 @@ class faust2chPeq : public dsp {
 		}
 	}
 	
-	 void init(int sample_rate) {
+	virtual void init(int sample_rate) {
 		classInit(sample_rate);
 		instanceInit(sample_rate);
 	}
-	 void instanceInit(int sample_rate) {
+	virtual void instanceInit(int sample_rate) {
 		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
 	}
 	
-	 faust2chPeq* clone() {
+	virtual faust2chPeq* clone() {
 		return new faust2chPeq();
 	}
 	
-	 int getSampleRate() {
+	virtual int getSampleRate() {
 		return fSampleRate;
 	}
 	
-	 void buildUserInterface(UI* ui_interface) {
+	virtual void buildUserInterface(UI* ui_interface) {
 	}
 	
-	 void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
+	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
 		FAUSTFLOAT* input0 = inputs[0];
 		FAUSTFLOAT* input1 = inputs[1];
 		FAUSTFLOAT* output0 = outputs[0];

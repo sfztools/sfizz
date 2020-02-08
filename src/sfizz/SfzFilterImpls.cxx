@@ -4,9 +4,23 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-struct dsp {};
 struct Meta {};
 struct UI {};
+
+/**
+   Base of the faust DSP for filters
+ */
+struct sfzFilterDsp {
+public:
+    virtual ~sfzFilterDsp() {}
+
+    virtual void init(int) = 0;
+    virtual void instanceClear() = 0;
+    virtual void compute(int, float **, float **) = 0;
+
+    virtual void configureStandard(float, float, float) {}
+    virtual void configureEq(float, float, float) {}
+};
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -72,9 +86,12 @@ struct UI {};
    Parameterized by cutoff and Q
  */
 template <class F> struct sfzFilter : public F {
-    void setCutoff(float v) { F::fCutoff = v; }
-    void setQ(float v) { F::fQ = v; }
-    void setPkShGain(float) {}
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        F::fQ = q;
+        (void)pksh;
+    }
 };
 
 /**
@@ -82,9 +99,12 @@ template <class F> struct sfzFilter : public F {
    Parameterized by cutoff only
  */
 template <class F> struct sfzFilterNoQ : public F {
-    void setCutoff(float v) { F::fCutoff = v; }
-    void setQ(float) {}
-    void setPkShGain(float) {}
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        (void)q;
+        (void)pksh;
+    }
 };
 
 /**
@@ -92,9 +112,12 @@ template <class F> struct sfzFilterNoQ : public F {
    Not parameterized
  */
 template <class F> struct sfzFilterNoCutoff : public F {
-    void setCutoff(float) {}
-    void setQ(float) {}
-    void setPkShGain(float) {}
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        (void)cutoff;
+        (void)q;
+        (void)pksh;
+    }
 };
 
 /**
@@ -102,9 +125,12 @@ template <class F> struct sfzFilterNoCutoff : public F {
    Parameterized by cutoff, Q, peak/shelf gain
  */
 template <class F> struct sfzFilterPkSh : public F {
-    void setCutoff(float v) { F::fCutoff = v; }
-    void setQ(float v) { F::fQ = v; }
-    void setPkShGain(float v) { F::fPkShGain = v; }
+    void configureStandard(float cutoff, float q, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        F::fQ = q;
+        F::fPkShGain = pksh;
+    }
 };
 
 /**
@@ -112,82 +138,60 @@ template <class F> struct sfzFilterPkSh : public F {
    Parameterized by cutoff, bandwidth, peak/shelf gain
  */
 template <class F> struct sfzFilterEq : public F {
-    void setCutoff(float v) { F::fCutoff = v; }
-    void setBandwidth(float v) { F::fBandwidth = v; }
-    void setPkShGain(float v) { F::fPkShGain = v; }
+    void configureEq(float cutoff, float bw, float pksh) override
+    {
+        F::fCutoff = cutoff;
+        F::fBandwidth = bw;
+        F::fPkShGain = pksh;
+    }
 };
 
-template <unsigned NCh> struct sfzLpf1p;
-template <unsigned NCh> struct sfzLpf2p;
-template <unsigned NCh> struct sfzLpf4p;
-template <unsigned NCh> struct sfzLpf6p;
-template <unsigned NCh> struct sfzHpf1p;
-template <unsigned NCh> struct sfzHpf2p;
-template <unsigned NCh> struct sfzHpf4p;
-template <unsigned NCh> struct sfzHpf6p;
-template <unsigned NCh> struct sfzBpf1p;
-template <unsigned NCh> struct sfzBpf2p;
-template <unsigned NCh> struct sfzBpf4p;
-template <unsigned NCh> struct sfzBpf6p;
-template <unsigned NCh> struct sfzApf1p;
-template <unsigned NCh> struct sfzBrf1p;
-template <unsigned NCh> struct sfzBrf2p;
-template <unsigned NCh> struct sfzPink;
-template <unsigned NCh> struct sfzLpf2pSv;
-template <unsigned NCh> struct sfzHpf2pSv;
-template <unsigned NCh> struct sfzBpf2pSv;
-template <unsigned NCh> struct sfzBrf2pSv;
-template <unsigned NCh> struct sfzLsh;
-template <unsigned NCh> struct sfzHsh;
-template <unsigned NCh> struct sfzPeq;
-template <unsigned NCh> struct sfzEq;
+struct sfzLpf1p final : public sfzFilterNoQ<faustLpf1p> {};
+struct sfzLpf2p final : public sfzFilter<faustLpf2p> {};
+struct sfzLpf4p final : public sfzFilter<faustLpf4p> {};
+struct sfzLpf6p final : public sfzFilter<faustLpf6p> {};
+struct sfzHpf1p final : public sfzFilterNoQ<faustHpf1p> {};
+struct sfzHpf2p final : public sfzFilter<faustHpf2p> {};
+struct sfzHpf4p final : public sfzFilter<faustHpf4p> {};
+struct sfzHpf6p final : public sfzFilter<faustHpf6p> {};
+struct sfzBpf1p final : public sfzFilterNoQ<faustBpf1p> {};
+struct sfzBpf2p final : public sfzFilter<faustBpf2p> {};
+struct sfzBpf4p final : public sfzFilter<faustBpf4p> {};
+struct sfzBpf6p final : public sfzFilter<faustBpf6p> {};
+struct sfzApf1p final : public sfzFilterNoQ<faustApf1p> {};
+struct sfzBrf1p final : public sfzFilterNoQ<faustBrf1p> {};
+struct sfzBrf2p final : public sfzFilter<faustBrf2p> {};
+struct sfzPink final : public sfzFilterNoCutoff<faustPink> {};
+struct sfzLpf2pSv final : public sfzFilter<faustLpf2pSv> {};
+struct sfzHpf2pSv final : public sfzFilter<faustHpf2pSv> {};
+struct sfzBpf2pSv final : public sfzFilter<faustBpf2pSv> {};
+struct sfzBrf2pSv final : public sfzFilter<faustBrf2pSv> {};
+struct sfzLsh final : public sfzFilterPkSh<faustLsh> {};
+struct sfzHsh final : public sfzFilterPkSh<faustHsh> {};
+struct sfzPeq final : public sfzFilterPkSh<faustPeq> {};
+struct sfzEq final : public sfzFilterEq<faustEq> {};
 
-template<> struct sfzLpf1p<1> : public sfzFilterNoQ<faustLpf1p> {};
-template<> struct sfzLpf2p<1> : public sfzFilter<faustLpf2p> {};
-template<> struct sfzLpf4p<1> : public sfzFilter<faustLpf4p> {};
-template<> struct sfzLpf6p<1> : public sfzFilter<faustLpf6p> {};
-template<> struct sfzHpf1p<1> : public sfzFilterNoQ<faustHpf1p> {};
-template<> struct sfzHpf2p<1> : public sfzFilter<faustHpf2p> {};
-template<> struct sfzHpf4p<1> : public sfzFilter<faustHpf4p> {};
-template<> struct sfzHpf6p<1> : public sfzFilter<faustHpf6p> {};
-template<> struct sfzBpf1p<1> : public sfzFilterNoQ<faustBpf1p> {};
-template<> struct sfzBpf2p<1> : public sfzFilter<faustBpf2p> {};
-template<> struct sfzBpf4p<1> : public sfzFilter<faustBpf4p> {};
-template<> struct sfzBpf6p<1> : public sfzFilter<faustBpf6p> {};
-template<> struct sfzApf1p<1> : public sfzFilterNoQ<faustApf1p> {};
-template<> struct sfzBrf1p<1> : public sfzFilterNoQ<faustBrf1p> {};
-template<> struct sfzBrf2p<1> : public sfzFilter<faustBrf2p> {};
-template<> struct sfzPink<1> : public sfzFilterNoCutoff<faustPink> {};
-template<> struct sfzLpf2pSv<1> : public sfzFilter<faustLpf2pSv> {};
-template<> struct sfzHpf2pSv<1> : public sfzFilter<faustHpf2pSv> {};
-template<> struct sfzBpf2pSv<1> : public sfzFilter<faustBpf2pSv> {};
-template<> struct sfzBrf2pSv<1> : public sfzFilter<faustBrf2pSv> {};
-template<> struct sfzLsh<1> : public sfzFilterPkSh<faustLsh> {};
-template<> struct sfzHsh<1> : public sfzFilterPkSh<faustHsh> {};
-template<> struct sfzPeq<1> : public sfzFilterPkSh<faustPeq> {};
-template<> struct sfzEq<1> : public sfzFilterEq<faustEq> {};
-
-template<> struct sfzLpf1p<2> : public sfzFilterNoQ<faust2chLpf1p> {};
-template<> struct sfzLpf2p<2> : public sfzFilter<faust2chLpf2p> {};
-template<> struct sfzLpf4p<2> : public sfzFilter<faust2chLpf4p> {};
-template<> struct sfzLpf6p<2> : public sfzFilter<faust2chLpf6p> {};
-template<> struct sfzHpf1p<2> : public sfzFilterNoQ<faust2chHpf1p> {};
-template<> struct sfzHpf2p<2> : public sfzFilter<faust2chHpf2p> {};
-template<> struct sfzHpf4p<2> : public sfzFilter<faust2chHpf4p> {};
-template<> struct sfzHpf6p<2> : public sfzFilter<faust2chHpf6p> {};
-template<> struct sfzBpf1p<2> : public sfzFilterNoQ<faust2chBpf1p> {};
-template<> struct sfzBpf2p<2> : public sfzFilter<faust2chBpf2p> {};
-template<> struct sfzBpf4p<2> : public sfzFilter<faust2chBpf4p> {};
-template<> struct sfzBpf6p<2> : public sfzFilter<faust2chBpf6p> {};
-template<> struct sfzApf1p<2> : public sfzFilterNoQ<faust2chApf1p> {};
-template<> struct sfzBrf1p<2> : public sfzFilterNoQ<faust2chBrf1p> {};
-template<> struct sfzBrf2p<2> : public sfzFilter<faust2chBrf2p> {};
-template<> struct sfzPink<2> : public sfzFilterNoCutoff<faust2chPink> {};
-template<> struct sfzLpf2pSv<2> : public sfzFilter<faust2chLpf2pSv> {};
-template<> struct sfzHpf2pSv<2> : public sfzFilter<faust2chHpf2pSv> {};
-template<> struct sfzBpf2pSv<2> : public sfzFilter<faust2chBpf2pSv> {};
-template<> struct sfzBrf2pSv<2> : public sfzFilter<faust2chBrf2pSv> {};
-template<> struct sfzLsh<2> : public sfzFilterPkSh<faust2chLsh> {};
-template<> struct sfzHsh<2> : public sfzFilterPkSh<faust2chHsh> {};
-template<> struct sfzPeq<2> : public sfzFilterPkSh<faust2chPeq> {};
-template<> struct sfzEq<2> : public sfzFilterEq<faust2chEq> {};
+struct sfz2chLpf1p final : public sfzFilterNoQ<faust2chLpf1p> {};
+struct sfz2chLpf2p final : public sfzFilter<faust2chLpf2p> {};
+struct sfz2chLpf4p final : public sfzFilter<faust2chLpf4p> {};
+struct sfz2chLpf6p final : public sfzFilter<faust2chLpf6p> {};
+struct sfz2chHpf1p final : public sfzFilterNoQ<faust2chHpf1p> {};
+struct sfz2chHpf2p final : public sfzFilter<faust2chHpf2p> {};
+struct sfz2chHpf4p final : public sfzFilter<faust2chHpf4p> {};
+struct sfz2chHpf6p final : public sfzFilter<faust2chHpf6p> {};
+struct sfz2chBpf1p final : public sfzFilterNoQ<faust2chBpf1p> {};
+struct sfz2chBpf2p final : public sfzFilter<faust2chBpf2p> {};
+struct sfz2chBpf4p final : public sfzFilter<faust2chBpf4p> {};
+struct sfz2chBpf6p final : public sfzFilter<faust2chBpf6p> {};
+struct sfz2chApf1p final : public sfzFilterNoQ<faust2chApf1p> {};
+struct sfz2chBrf1p final : public sfzFilterNoQ<faust2chBrf1p> {};
+struct sfz2chBrf2p final : public sfzFilter<faust2chBrf2p> {};
+struct sfz2chPink final : public sfzFilterNoCutoff<faust2chPink> {};
+struct sfz2chLpf2pSv final : public sfzFilter<faust2chLpf2pSv> {};
+struct sfz2chHpf2pSv final : public sfzFilter<faust2chHpf2pSv> {};
+struct sfz2chBpf2pSv final : public sfzFilter<faust2chBpf2pSv> {};
+struct sfz2chBrf2pSv final : public sfzFilter<faust2chBrf2pSv> {};
+struct sfz2chLsh final : public sfzFilterPkSh<faust2chLsh> {};
+struct sfz2chHsh final : public sfzFilterPkSh<faust2chHsh> {};
+struct sfz2chPeq final : public sfzFilterPkSh<faust2chPeq> {};
+struct sfz2chEq final : public sfzFilterEq<faust2chEq> {};
