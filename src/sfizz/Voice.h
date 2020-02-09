@@ -196,6 +196,18 @@ public:
      * @return
      */
     const Region* getRegion() const noexcept { return region; }
+    /**
+     * @brief Set the max number of filters per voice
+     *
+     * @param numFilters
+     */
+    void setMaxFiltersPerVoice(size_t numFilters);
+    /**
+     * @brief Set the max number of EQs per voice
+     *
+     * @param numFilters
+     */
+    void setMaxEQsPerVoice(size_t numEQs);
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
@@ -282,6 +294,9 @@ private:
     float sampleRate { config::defaultSampleRate };
 
     Resources& resources;
+
+    std::vector<FilterHolderPtr> filters;
+    std::vector<FilterHolderPtr> equalizers;
 
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> amplitudeEnvelope; // linear events

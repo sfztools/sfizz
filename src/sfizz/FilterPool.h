@@ -77,7 +77,7 @@ public:
      * @param state the associated midi state
      * @param numFilters the number of inactive filters to hold in the pool
      */
-    FilterPool(const MidiState& state, int numFilters = config::defaultNumFilters);
+    FilterPool(const MidiState& state, int numFilters = config::filtersInPool);
     /**
      * @brief Get a filter object to use in Voices
      *

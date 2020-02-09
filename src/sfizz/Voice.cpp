@@ -17,6 +17,8 @@
 sfz::Voice::Voice(sfz::Resources& resources)
 : resources(resources)
 {
+    filters.reserve(config::filtersPerVoice);
+    equalizers.reserve(config::filtersPerVoice);
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
@@ -84,6 +86,18 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         return centsFactor(bendInCents);
     });
     pitchBendEnvelope.reset(static_cast<float>(resources.midiState.getPitchBend()));
+
+    // Check that we can handle the number of filters; filters should be cleared here
+    ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
+    ASSERT((equalizers.capacity() - equalizers.size()) >= region->equalizers.size());
+
+    for(auto& filter: region->filters) {
+        auto newFilter = resources.filterPool.getFilter(filter, number, value);
+        if (newFilter)
+            filters.push_back(newFilter);
+    }
+
+    // TODO: Equalizers
 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
@@ -257,6 +271,12 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         processStereo(buffer);
     else
         processMono(buffer);
+
+    const float* inputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
+    float* outputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
+    for (auto filter: filters) {
+        filter->process(inputChannels, outputChannels, buffer.getNumFrames());
+    }
 
     if (!egEnvelope.isSmoothing())
         reset();
@@ -528,6 +548,8 @@ void sfz::Voice::reset() noexcept
     sourcePosition = 0;
     floatPositionOffset = 0.0f;
     noteIsOff = false;
+    filters.clear();
+    equalizers.clear();
 }
 
 float sfz::Voice::getMeanSquaredAverage() const noexcept
@@ -543,4 +565,18 @@ bool sfz::Voice::canBeStolen() const noexcept
 uint32_t sfz::Voice::getSourcePosition() const noexcept
 {
     return sourcePosition;
+}
+
+void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
+{
+    // There are filters in there, this call is unexpected
+    ASSERT(filters.size() == 0);
+    filters.reserve(numFilters);
+}
+
+void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
+{
+    // There are filters in there, this call is unexpected
+    ASSERT(filters.size() == 0);
+    filters.reserve(numFilters);
 }

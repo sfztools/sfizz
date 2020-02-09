@@ -234,6 +234,9 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         ++lastRegion;
     };
 
+    size_t maxFilters { 0 };
+    size_t maxEQs { 0 };
+
     while (currentRegion < lastRegion.base()) {
         auto region = currentRegion->get();
 
@@ -316,6 +319,8 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         region->registerPitchWheel(0);
         region->registerAftertouch(0);
         region->registerTempo(2.0f);
+        maxFilters = max(maxFilters, region->filters.size());
+        maxEQs = max(maxEQs, region->equalizers.size());
 
         ++currentRegion;
     }
@@ -323,6 +328,11 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     DBG("Removing " << (regions.size() - remainingRegions) << " out of " << regions.size() << " regions");
     regions.resize(remainingRegions);
     modificationTime = checkModificationTime();
+
+    for (auto& voice: voices) {
+        voice->setMaxFiltersPerVoice(maxFilters);
+        voice->setMaxEQsPerVoice(maxEQs);
+    }
 
     return parserReturned;
 }
