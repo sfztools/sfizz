@@ -743,20 +743,29 @@ namespace _internals {
     }();
 
     template <class T>
+    inline T panLookup(T pan)
+    {
+        // reduce range, round to nearest
+        int index = static_cast<int>(T{0.5} + pan * (panSize - 1));
+        return panData[index];
+    }
+
+    template <class T>
     inline void snippetPan(const T*& pan, T*& left, T*& right)
     {
         T p = ((*pan++) + T{1.0}) * T{0.5};
         p = clamp<T>(p, 0, 1);
+        *left++ *= panLookup(p);
+        *right++ *= panLookup(1 - p);
+    }
 
-        auto lookUp = [](T pan) -> T
-        {
-            // reduce range, round to nearest
-            int index = static_cast<int>(T{0.5} + pan * (panSize - 1));
-            return panData[index];
-        };
-
-        *left++ *= lookUp(p);
-        *right++ *= lookUp(1 - p);
+    template <class T>
+    inline void snippetWidth(const T*& pan, T*& mid, T*& side)
+    {
+        T p = std::abs(*pan);
+        p = clamp<T>(p, 0, 1);
+        *mid++ *= panLookup(p);
+        *side++ *= *pan++ > 0 ? panLookup(1 - p) : -panLookup(1 - p);
     }
 }
 
@@ -786,6 +795,19 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
 
 template <>
 void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
+
+template <class T, bool SIMD = SIMDConfig::pan>
+void width(absl::Span<const T> widthEnvelope, absl::Span<T> midBuffer, absl::Span<T> sideBuffer) noexcept
+{
+    ASSERT(midBuffer.size() >= widthEnvelope.size());
+    ASSERT(sideBuffer.size() >= widthEnvelope.size());
+    auto* width = widthEnvelope.begin();
+    auto* mid = midBuffer.begin();
+    auto* side = sideBuffer.begin();
+    auto* sentinel = width + min(widthEnvelope.size(), midBuffer.size(), sideBuffer.size());
+    while (width < sentinel)
+        _internals::snippetWidth(width, mid, side);
+}
 
 /**
  * @brief Computes the mean of a span
