@@ -26,74 +26,33 @@ macro(sfizz_add_benchmark TARGET)
 	add_executable("${TARGET}" ${ARGN})
 	target_link_libraries("${TARGET}"
 		PRIVATE absl::span absl::algorithm
-		PRIVATE benchmark::benchmark benchmark::benchmark_main)
+		PRIVATE benchmark::benchmark benchmark::benchmark_main
+		PRIVATE bm_simd bm_ftz)
 	target_include_directories("${TARGET}" PRIVATE ../src/sfizz ../src/external)
 endmacro()
 
 sfizz_add_benchmark(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
-
 sfizz_add_benchmark(bm_write BM_writeInterleaved.cpp)
-target_link_libraries(bm_write PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_read BM_readInterleaved.cpp)
-target_link_libraries(bm_read PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_fill BM_fill.cpp)
-target_link_libraries(bm_fill PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_mathfuns BM_mathfuns.cpp)
-target_link_libraries(bm_mathfuns PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_gain BM_gain.cpp)
-target_link_libraries(bm_gain PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_divide BM_divide.cpp)
-target_link_libraries(bm_divide PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_looping BM_looping.cpp)
-target_link_libraries(bm_looping PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_saturating BM_saturating.cpp)
-target_link_libraries(bm_saturating PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_ramp BM_ramp.cpp)
-target_link_libraries(bm_ramp PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_ADSR BM_ADSR.cpp)
-target_link_libraries(bm_ADSR PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_add BM_add.cpp)
-target_link_libraries(bm_add PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_multiplyAdd BM_multiplyAdd.cpp)
-target_link_libraries(bm_multiplyAdd PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_subtract BM_subtract.cpp)
-target_link_libraries(bm_subtract PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_copy BM_copy.cpp)
-target_link_libraries(bm_copy PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_pan BM_pan.cpp)
-target_link_libraries(bm_pan PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_mean BM_mean.cpp)
-target_link_libraries(bm_mean PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_meanSquared BM_meanSquared.cpp)
-target_link_libraries(bm_meanSquared PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_cumsum BM_cumsum.cpp)
-target_link_libraries(bm_cumsum PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_diff BM_diff.cpp)
-target_link_libraries(bm_diff PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_interpolationCast BM_interpolationCast.cpp)
-target_link_libraries(bm_interpolationCast PRIVATE bm_simd bm_ftz)
-
 sfizz_add_benchmark(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp)
-target_link_libraries(bm_pointerIterationOrOffsets PRIVATE bm_simd bm_ftz)
 
 if (TARGET sfizz-samplerate)
 	sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
@@ -101,25 +60,24 @@ if (TARGET sfizz-samplerate)
 endif()
 
 sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
-target_link_libraries(bm_envelopes PRIVATE bm_simd bm_ftz)
 
 sfizz_add_benchmark(bm_wavfile BM_wavfile.cpp)
-target_link_libraries(bm_wavfile PRIVATE sfizz-sndfile bm_simd bm_ftz)
+target_link_libraries(bm_wavfile PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_flacfile BM_flacfile.cpp)
-target_link_libraries(bm_flacfile PRIVATE sfizz-sndfile bm_simd bm_ftz)
+target_link_libraries(bm_flacfile PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_readChunk BM_readChunk.cpp)
-target_link_libraries(bm_readChunk PRIVATE sfizz-sndfile bm_simd bm_ftz)
+target_link_libraries(bm_readChunk PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_resampleChunk BM_resampleChunk.cpp)
-target_link_libraries(bm_resampleChunk PRIVATE sfizz-sndfile bm_simd bm_ftz)
+target_link_libraries(bm_resampleChunk PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_filterModulation BM_filterModulation.cpp ../src/sfizz/SfzFilter.cpp)
-target_link_libraries(bm_filterModulation PRIVATE sfizz-sndfile bm_simd bm_ftz)
+target_link_libraries(bm_filterModulation PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_filterStereoMono BM_filterStereoMono.cpp ../src/sfizz/SfzFilter.cpp)
-target_link_libraries(bm_filterStereoMono PRIVATE sfizz-sndfile bm_simd bm_ftz)
+target_link_libraries(bm_filterStereoMono PRIVATE sfizz-sndfile)
 
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
