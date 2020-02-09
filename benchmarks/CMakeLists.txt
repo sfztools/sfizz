@@ -6,6 +6,17 @@ set(BENCHMARK_SIMD_SOURCES ${SFIZZ_SIMD_SOURCES})
 list(TRANSFORM BENCHMARK_SIMD_SOURCES PREPEND "../src/")
 find_package(benchmark CONFIG REQUIRED)
 
+# Check libsamplerate
+find_library(SAMPLERATE_LIBRARY "samplerate")
+find_path(SAMPLERATE_INCLUDE_DIR "samplerate.h")
+message(STATUS "Checking samplerate library: ${SAMPLERATE_LIBRARY}")
+message(STATUS "Checking samplerate includes: ${SAMPLERATE_INCLUDE_DIR}")
+if(SAMPLERATE_LIBRARY AND SAMPLERATE_INCLUDE_DIR)
+    add_library(sfizz-samplerate INTERFACE)
+    target_include_directories(sfizz-samplerate INTERFACE "${SAMPLERATE_INCLUDE_DIR}")
+    target_link_libraries(sfizz-samplerate INTERFACE "${SAMPLERATE_LIBRARY}")
+endif()
+
 add_library(bm_simd STATIC ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_simd PRIVATE absl::span)
 target_include_directories(bm_simd PRIVATE ../src/external)
@@ -99,9 +110,9 @@ add_executable(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp)
 target_link_libraries(bm_pointerIterationOrOffsets PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main bm_simd bm_ftz)
 target_include_directories(bm_pointerIterationOrOffsets PRIVATE ../src/sfizz ../src/external)
 
-if (NOT WIN32)
+if (TARGET sfizz-samplerate)
 	add_executable(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-	target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main samplerate sfizz-sndfile)
+	target_link_libraries(bm_resample PRIVATE absl::span absl::algorithm benchmark::benchmark benchmark::benchmark_main sfizz-samplerate sfizz-sndfile)
 	target_include_directories(bm_resample PRIVATE ../src/sfizz ../src/external)
 endif()
 
@@ -165,7 +176,7 @@ add_dependencies(sfizz_benchmarks
 	bm_filterStereoMono
 )
 
-if (NOT WIN32)
+if (TARGET bm_resample)
 	add_dependencies(sfizz_benchmarks bm_resample)
 endif()
 
