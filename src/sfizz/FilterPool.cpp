@@ -59,7 +59,7 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
 
     lastGain = baseGain;
     for (auto& mod: description->gainCC) {
-        lastResonance += midiState.getCCValue(mod.first) * mod.second;
+        lastGain += midiState.getCCValue(mod.first) * mod.second;
     }
 
     filter.process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);
@@ -131,4 +131,15 @@ size_t sfz::FilterPool::setNumFilters(size_t numFilters)
         filters.emplace_back(std::make_shared<FilterHolder>(midiState));
 
     return filters.size();
+}
+
+void sfz::FilterPool::setSampleRate(float sampleRate)
+{
+    for (auto& filter: filters)
+        filter->setSampleRate(sampleRate);
+}
+
+void sfz::FilterHolder::setSampleRate(float sampleRate)
+{
+    filter.init(static_cast<double>(sampleRate));
 }

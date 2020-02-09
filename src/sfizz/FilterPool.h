@@ -47,6 +47,12 @@ public:
      * @return float
      */
     float getLastGain() const;
+    /**
+     * @brief Set the sample rate for a filter
+     *
+     * @param sampleRate
+     */
+    void setSampleRate(float sampleRate);
 private:
     /**
      * Reset the filter. Is called internally when using setup().
@@ -103,10 +109,16 @@ public:
      * @return size_t the actual number of filters in the pool
      */
     size_t setNumFilters(size_t numFilters);
+    /**
+     * @brief Set the sample rate for all filters
+     *
+     * @param sampleRate
+     */
+    void setSampleRate(float sampleRate);
 private:
     std::atomic<bool> givingOutFilters { false };
     std::atomic<bool> canGiveOutFilters { true };
-
+    float sampleRate { config::defaultSampleRate };
     const MidiState& midiState;
     std::vector<FilterHolderPtr> filters;
 };

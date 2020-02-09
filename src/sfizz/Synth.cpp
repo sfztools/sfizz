@@ -401,6 +401,8 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
         voice->setSampleRate(sampleRate);
+
+    resources.filterPool.setSampleRate(sampleRate);
 }
 
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
