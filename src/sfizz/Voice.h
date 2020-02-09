@@ -34,7 +34,7 @@ public:
      *
      * @param midiState
      */
-    Voice(const MidiState& midiState, Resources& resources);
+    Voice(Resources& resources);
     enum class TriggerType {
         NoteOn,
         NoteOff,
@@ -281,7 +281,6 @@ private:
     int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
     float sampleRate { config::defaultSampleRate };
 
-    const MidiState& midiState;
     Resources& resources;
 
     ADSREnvelope<float> egEnvelope;

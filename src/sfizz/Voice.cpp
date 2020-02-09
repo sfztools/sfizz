@@ -14,8 +14,8 @@
 #include "absl/algorithm/container.h"
 #include <memory>
 
-sfz::Voice::Voice(const sfz::MidiState& midiState, sfz::Resources& resources)
-    : midiState(midiState), resources(resources)
+sfz::Voice::Voice(sfz::Resources& resources)
+: resources(resources)
 {
 }
 
@@ -45,7 +45,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     baseVolumedB = region->getBaseVolumedB(number);
     auto volumedB { baseVolumedB };
     if (region->volumeCC)
-        volumedB += normalizeCC(midiState.getCCValue(region->volumeCC->first)) * region->volumeCC->second;
+        volumedB += normalizeCC(resources.midiState.getCCValue(region->volumeCC->first)) * region->volumeCC->second;
     volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
 
     baseGain = region->getBaseGain();
@@ -54,28 +54,28 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
 
     float gain { baseGain };
     if (region->amplitudeCC)
-        gain *= normalizeCC(midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
+        gain *= normalizeCC(resources.midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
 
-    float crossfadeGain { region->getCrossfadeGain(midiState.getCCArray()) };
+    float crossfadeGain { region->getCrossfadeGain(resources.midiState.getCCArray()) };
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
     basePan = normalizeNegativePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
-        pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
+        pan += normalizeCC(resources.midiState.getCCValue(region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
     basePosition = normalizeNegativePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
-        position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
+        position += normalizeCC(resources.midiState.getCCValue(region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
-        width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
+        width += normalizeCC(resources.midiState.getCCValue(region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
@@ -83,7 +83,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         const auto bendInCents = normalizedBend > 0.0f ? normalizedBend * region->bendUp : -normalizedBend * region->bendDown;
         return centsFactor(bendInCents);
     });
-    pitchBendEnvelope.reset(static_cast<float>(midiState.getPitchBend()));
+    pitchBendEnvelope.reset(static_cast<float>(resources.midiState.getPitchBend()));
 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
@@ -98,7 +98,7 @@ void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
     auto secondsToSamples = [this](auto timeInSeconds) {
         return static_cast<int>(timeInSeconds * sampleRate);
     };
-    const auto& ccArray = midiState.getCCArray();
+    const auto& ccArray = resources.midiState.getCCArray();
     egEnvelope.reset(
         secondsToSamples(region->amplitudeEG.getAttack(ccArray, velocity)),
         secondsToSamples(region->amplitudeEG.getRelease(ccArray, velocity)),
@@ -141,7 +141,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, uint8_t velocity [[m
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (!region->checkSustain || midiState.getCCValue(config::sustainCC) < config::halfCCThreshold)
+        if (!region->checkSustain || resources.midiState.getCCValue(config::sustainCC) < config::halfCCThreshold)
             release(delay);
     }
 }
@@ -192,7 +192,7 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
-        const float crossfadeGain = region->getCrossfadeGain(midiState.getCCArray());
+        const float crossfadeGain = region->getCrossfadeGain(resources.midiState.getCCArray());
         crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
     }
 }

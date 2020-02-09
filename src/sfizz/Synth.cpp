@@ -611,7 +611,7 @@ void sfz::Synth::resetVoices(int numVoices)
 
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(resources.midiState, resources));
+        voices.push_back(std::make_unique<Voice>(resources));
 
     for (auto& voice: voices) {
         voice->setSampleRate(this->sampleRate);
