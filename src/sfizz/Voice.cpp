@@ -274,7 +274,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     const float* inputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
     float* outputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
-    for (auto filter: filters) {
+    for (auto& filter: filters) {
         filter->process(inputChannels, outputChannels, buffer.getNumFrames());
     }
 
