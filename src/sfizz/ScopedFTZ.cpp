@@ -5,22 +5,21 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ScopedFTZ.h"
-#if (HAVE_X86INTRIN_H)
-#include <x86intrin.h>
-#elif (HAVE_INTRIN_H)
-#include <intrin.h>
-#elif (HAVE_ARM_NEON_H)
+#include "SIMDConfig.h"
+#if SFIZZ_HAVE_SSE
+#include <pmmintrin.h> // x86 CSR is SSE, but FTZ bits SSE3 and up
+#elif SFIZZ_HAVE_NEON
 #include "arm_neon.h"
 #endif
 
 
 ScopedFTZ::ScopedFTZ()
 {
-#if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
+#if SFIZZ_HAVE_SSE
     unsigned mask = _MM_DENORMALS_ZERO_MASK | _MM_FLUSH_ZERO_MASK;
     registerState = _mm_getcsr();
     _mm_setcsr((registerState & (~mask)) | mask);
-#elif HAVE_ARM_NEON_H
+#elif SFIZZ_HAVE_NEON
     intptr_t mask = (1 << 24);
     asm volatile("vmrs %0, fpscr" : "=r"(registerState));
     asm volatile("vmsr fpscr, %0" : : "ri"((registerState & (~mask)) | mask));
@@ -29,9 +28,9 @@ ScopedFTZ::ScopedFTZ()
 
 ScopedFTZ::~ScopedFTZ()
 {
-#if (HAVE_X86INTRIN_H || HAVE_INTRIN_H)
+#if SFIZZ_HAVE_SSE
     _mm_setcsr(registerState);
-#elif HAVE_ARM_NEON_H
+#elif SFIZZ_HAVE_NEON
     asm volatile("vmrs %0, fpscr" : : "ri"(registerState));
 #endif
 }

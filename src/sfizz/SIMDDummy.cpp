@@ -4,6 +4,10 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "SIMDConfig.h"
+
+#if !(SFIZZ_HAVE_SSE2 || SFIZZ_HAVE_NEON)
+
 #include "SIMDHelpers.h"
 
 template <>
@@ -163,3 +167,5 @@ void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> out
 {
     diff<float, false>(input, output);
 }
+
+#endif // !(SFIZZ_HAVE_SSE2 || SFIZZ_HAVE_NEON)
