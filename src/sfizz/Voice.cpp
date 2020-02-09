@@ -478,35 +478,41 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 {
-    if (region->sample != "*sine")
-        return;
+    const auto leftSpan = buffer.getSpan(0);
+    const auto rightSpan  = buffer.getSpan(1);
+    if (region->sample == "*noise") {
+        absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
+        absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
+    }
+    else if (region->sample == "*sine") {
+        // TODO: wavetables for sine and other generators
+        if (buffer.getNumFrames() == 0)
+            return;
 
-    if (buffer.getNumFrames() == 0)
-        return;
+        auto jumps = tempSpan1.first(buffer.getNumFrames());
+        auto bends = tempSpan2.first(buffer.getNumFrames());
+        auto phases = tempSpan2.first(buffer.getNumFrames());
 
-    auto jumps = tempSpan1.first(buffer.getNumFrames());
-    auto bends = tempSpan2.first(buffer.getNumFrames());
-    auto phases = tempSpan2.first(buffer.getNumFrames());
+        const float step = baseFrequency * twoPi<float> / sampleRate;
+        fill<float>(jumps, step);
 
-    const float step = baseFrequency * twoPi<float> / sampleRate;
-    fill<float>(jumps, step);
+        if (region->bendStep > 1)
+            pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
+        else
+            pitchBendEnvelope.getBlock(bends);
 
-    if (region->bendStep > 1)
-        pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
-    else
-        pitchBendEnvelope.getBlock(bends);
+        applyGain<float>(bends, jumps);
+        jumps[0] += phase;
+        cumsum<float>(jumps, phases);
+        phase = phases.back();
 
-    applyGain<float>(bends, jumps);
-    jumps[0] += phase;
-    cumsum<float>(jumps, phases);
-    phase = phases.back();
+        sin<float>(phases, leftSpan);
+        copy<float>(leftSpan, rightSpan);
 
-    sin<float>(phases, buffer.getSpan(0));
-    copy<float>(buffer.getSpan(0), buffer.getSpan(1));
-
-    // Wrap the phase so we don't loose too much precision on longer notes
-    const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>);
-    phase -= twoPi<float> * static_cast<float>(numTwoPiWraps);
+        // Wrap the phase so we don't loose too much precision on longer notes
+        const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>);
+        phase -= twoPi<float> * static_cast<float>(numTwoPiWraps);
+    }
 }
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept

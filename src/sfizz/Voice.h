@@ -18,6 +18,7 @@
 #include <absl/types/span.h>
 #include <atomic>
 #include <memory>
+#include <random>
 
 namespace sfz {
 /**
@@ -307,6 +308,8 @@ private:
     MultiplicativeEnvelope<float> pitchBendEnvelope;
     MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
+
+    std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
     HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
     LEAK_DETECTOR(Voice);
