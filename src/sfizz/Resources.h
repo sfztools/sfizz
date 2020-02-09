@@ -16,5 +16,6 @@ struct Resources
     MidiState midiState;
     Logger logger;
     FilePool filePool { logger };
+    FilterPool filterPool { midiState };
 };
 }
