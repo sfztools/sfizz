@@ -327,33 +327,28 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     copy<float>(rightBuffer, span1);
     add<float>(leftBuffer, rightBuffer);
     subtract<float>(span1, leftBuffer);
-    applyGain<float>(sqrtTwoInv<float>, leftBuffer);
-    applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+
+    // Add const aliases to be slightly more readable
+    const auto midBuffer = leftBuffer;
+    const auto sideBuffer = rightBuffer;
+    applyGain<float>(sqrtTwoInv<float>, midBuffer);
+    applyGain<float>(sqrtTwoInv<float>, sideBuffer);
 
     // Apply the width process
     widthEnvelope.getBlock(span1);
-    fill<float>(span2, 1.0f);
-    add<float>(span1, span2);
-    applyGain<float>(piFour<float>, span2);
-    cos<float>(span2, span1);
-    sin<float>(span2, span2);
-    applyGain<float>(span1, leftBuffer);
-    applyGain<float>(span2, rightBuffer);
+    width<float>(span1, midBuffer, sideBuffer);
 
-    // Apply a position to the "left" channel which is supposed to be our mid channel
-    // TODO: add panning here too?
+    // Copy the mid channel into another span
+    const auto midBufferRight = span2;
+    copy<float>(midBuffer, midBufferRight);
     positionEnvelope.getBlock(span1);
-    fill<float>(span2, 1.0f);
-    add<float>(span1, span2);
-    applyGain<float>(piFour<float>, span2);
-    cos<float>(span2, span1);
-    sin<float>(span2, span2);
-    copy<float>(leftBuffer, span3);
-    copy<float>(rightBuffer, leftBuffer);
-    multiplyAdd<float>(span1, span3, leftBuffer);
-    multiplyAdd<float>(span2, span3, rightBuffer);
-    applyGain<float>(sqrtTwoInv<float>, leftBuffer);
-    applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+    pan<float>(span1, midBuffer, midBufferRight);
+
+    // Rebuild left/right
+    add<float>(sideBuffer, midBuffer);
+    applyGain(sqrtTwoInv<float>, leftBuffer);
+    add<float>(midBufferRight, sideBuffer);
+    applyGain(sqrtTwoInv<float>, rightBuffer);
 }
 
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
