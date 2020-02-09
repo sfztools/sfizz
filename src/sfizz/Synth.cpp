@@ -403,6 +403,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
         voice->setSampleRate(sampleRate);
 
     resources.filterPool.setSampleRate(sampleRate);
+    resources.eqPool.setSampleRate(sampleRate);
 }
 
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
