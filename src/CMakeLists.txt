@@ -13,7 +13,7 @@ set (SFIZZ_SOURCES
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
 )
-include (SfizzSIMDSourceFilesCheck)
+include (SfizzSIMDSourceFiles)
 
 # Parser core library
 add_library (sfizz_parser STATIC)
