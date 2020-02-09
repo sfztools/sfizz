@@ -15,7 +15,6 @@
 #include "Config.h"
 #include <algorithm>
 #include <cmath>
-#include <cassert>
 #include <random>
 
 template<class T>
@@ -128,9 +127,9 @@ inline float midiNoteFrequency(const int noteNumber)
 template<class T>
 constexpr T clamp( T v, T lo, T hi )
 {
-	v = std::min(v, hi);
-	v = std::max(v, lo);
-	return v;
+    v = std::min(v, hi);
+    v = std::max(v, lo);
+    return v;
 }
 
 template<int Increment = 1, class T>
