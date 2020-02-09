@@ -49,17 +49,18 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_VA)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto inputIterator = input.begin();
-        auto outputIterator = output.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto inputPtr = input.data();
+        auto outputPtr = output.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            const auto gain = sfz::OnePoleFilter<float>::normalizedGain(*cutoffIterator, sampleRate);
+            const auto gain = sfz::OnePoleFilter<float>::normalizedGain(*cutoffPtr, sampleRate);
             filter.setGain(gain);
-            filter.processLowpass({ inputIterator.base(), step }, { outputIterator.base(), step } );
-            cutoffIterator += step;
-            inputIterator += step;
-            outputIterator += step;
+            filter.processLowpass({ inputPtr, step }, { outputPtr, step } );
+            cutoffPtr += step;
+            inputPtr += step;
+            outputPtr += step;
         }
     }
 }
@@ -71,15 +72,16 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Faust)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto inputIterator = input.begin();
-        auto outputIterator = output.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto inputPtr = input.data();
+        auto outputPtr = output.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filter.process(&inputIterator.base(), &outputIterator.base(), *cutoffIterator, 0.0, 0.0, step);
-            cutoffIterator += step;
-            inputIterator += step;
-            outputIterator += step;
+            filter.process(&inputPtr, &outputPtr, *cutoffPtr, 0.0, 0.0, step);
+            cutoffPtr += step;
+            inputPtr += step;
+            outputPtr += step;
         }
     }
 }
@@ -91,17 +93,18 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Faust)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
+        auto cutoffPtr = cutoff.data();
         auto qIterator = q.begin();
-        auto inputIterator = input.begin();
-        auto outputIterator = output.begin();
-        while (cutoffIterator < cutoff.end())
+        auto inputPtr = input.data();
+        auto outputPtr = output.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filter.process(&inputIterator.base(), &outputIterator.base(), *cutoffIterator, *qIterator, 0.0, step);
+            filter.process(&inputPtr, &outputPtr, *cutoffPtr, *qIterator, 0.0, step);
             qIterator += step;
-            cutoffIterator += step;
-            inputIterator += step;
-            outputIterator += step;
+            cutoffPtr += step;
+            inputPtr += step;
+            outputPtr += step;
         }
     }
 }
@@ -113,19 +116,20 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPoleShelf_Faust)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
+        auto cutoffPtr = cutoff.data();
         auto qIterator = q.begin();
         auto pkshIterator = pksh.begin();
-        auto inputIterator = input.begin();
-        auto outputIterator = output.begin();
-        while (cutoffIterator < cutoff.end())
+        auto inputPtr = input.data();
+        auto outputPtr = output.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filter.process(&inputIterator.base(), &outputIterator.base(), *cutoffIterator, *qIterator, *pkshIterator, step);
+            filter.process(&inputPtr, &outputPtr, *cutoffPtr, *qIterator, *pkshIterator, step);
             qIterator += step;
-            cutoffIterator += step;
+            cutoffPtr += step;
             pkshIterator += step;
-            inputIterator += step;
-            outputIterator += step;
+            inputPtr += step;
+            outputPtr += step;
         }
     }
 }

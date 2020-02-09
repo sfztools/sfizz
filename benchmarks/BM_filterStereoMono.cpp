@@ -19,7 +19,7 @@ constexpr float sampleRate { 48000.0f };
 
 class FilterFixture : public benchmark::Fixture {
 public:
-    void SetUp(const ::benchmark::State&) {
+    void SetUp(const ::benchmark::State& state) {
         inputLeft = std::vector<float>(blockSize);
         inputRight = std::vector<float>(blockSize);
         outputLeft = std::vector<float>(blockSize);
@@ -56,15 +56,16 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto inLIterator = inputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto inLPtr = inputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filterLeft.process( &inLIterator.base(), &outLIterator.base(), *cutoffIterator, 0.0, 0.0, step);
-            cutoffIterator += step;
-            inLIterator += step;
-            outLIterator += step;
+            filterLeft.process( &inLPtr, &outLPtr, *cutoffPtr, 0.0, 0.0, step);
+            cutoffPtr += step;
+            inLPtr += step;
+            outLPtr += step;
         }
     }
 }
@@ -79,20 +80,21 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto inLIterator = inputLeft.begin();
-        auto inRIterator = inputRight.begin();
-        auto outRIterator = outputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto inLPtr = inputLeft.data();
+        auto inRPtr = inputRight.data();
+        auto outRPtr = outputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filterLeft.process( &inLIterator.base(), &outLIterator.base(), *cutoffIterator, 0.0, 0.0, step);
-            filterRight.process(&inRIterator.base(), &outRIterator.base(), *cutoffIterator, 0.0, 0.0, step);
-            cutoffIterator += step;
-            inLIterator += step;
-            inRIterator += step;
-            outLIterator += step;
-            outRIterator += step;
+            filterLeft.process( &inLPtr, &outLPtr, *cutoffPtr, 0.0, 0.0, step);
+            filterRight.process(&inRPtr, &outRPtr, *cutoffPtr, 0.0, 0.0, step);
+            cutoffPtr += step;
+            inLPtr += step;
+            inRPtr += step;
+            outLPtr += step;
+            outRPtr += step;
         }
     }
 }
@@ -105,21 +107,22 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto inLIterator = inputLeft.begin();
-        auto inRIterator = inputRight.begin();
-        auto outRIterator = outputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto inLPtr = inputLeft.data();
+        auto inRPtr = inputRight.data();
+        auto outRPtr = outputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            float * inputs[2] = { inLIterator.base(), inRIterator.base() };
-            float * outputs[2] = { outLIterator.base(), outRIterator.base() };
-            filter.process(inputs, outputs, *cutoffIterator, 0.0, 0.0, step);
-            cutoffIterator += step;
-            inLIterator += step;
-            inRIterator += step;
-            outLIterator += step;
-            outRIterator += step;
+            float * inputs[2] = { inLPtr, inRPtr };
+            float * outputs[2] = { outLPtr, outRPtr };
+            filter.process(inputs, outputs, *cutoffPtr, 0.0, 0.0, step);
+            cutoffPtr += step;
+            inLPtr += step;
+            inRPtr += step;
+            outLPtr += step;
+            outRPtr += step;
         }
     }
 }
@@ -131,17 +134,18 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto qIterator = q.begin();
-        auto inLIterator = inputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto qPtr = q.data();
+        auto inLPtr = inputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filterLeft.process(&inLIterator.base(), &outLIterator.base(), *cutoffIterator, *qIterator, 0.0, step);
-            cutoffIterator += step;
-            qIterator += step;
-            inLIterator += step;
-            outLIterator += step;
+            filterLeft.process(&inLPtr, &outLPtr, *cutoffPtr, *qPtr, 0.0, step);
+            cutoffPtr += step;
+            qPtr += step;
+            inLPtr += step;
+            outLPtr += step;
         }
     }
 }
@@ -156,22 +160,23 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto qIterator = q.begin();
-        auto inLIterator = inputLeft.begin();
-        auto inRIterator = inputRight.begin();
-        auto outRIterator = outputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto qPtr = q.data();
+        auto inLPtr = inputLeft.data();
+        auto inRPtr = inputRight.data();
+        auto outRPtr = outputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filterLeft.process( &inLIterator.base(), &outLIterator.base(), *cutoffIterator, *qIterator, 0.0, step);
-            filterRight.process(&inRIterator.base(), &outRIterator.base(), *cutoffIterator, *qIterator, 0.0, step);
-            cutoffIterator += step;
-            qIterator += step;
-            inLIterator += step;
-            inRIterator += step;
-            outLIterator += step;
-            outRIterator += step;
+            filterLeft.process( &inLPtr, &outLPtr, *cutoffPtr, *qPtr, 0.0, step);
+            filterRight.process(&inRPtr, &outRPtr, *cutoffPtr, *qPtr, 0.0, step);
+            cutoffPtr += step;
+            qPtr += step;
+            inLPtr += step;
+            inRPtr += step;
+            outLPtr += step;
+            outRPtr += step;
         }
     }
 }
@@ -184,23 +189,24 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto qIterator = q.begin();
-        auto inLIterator = inputLeft.begin();
-        auto inRIterator = inputRight.begin();
-        auto outRIterator = outputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto qPtr = q.data();
+        auto inLPtr = inputLeft.data();
+        auto inRPtr = inputRight.data();
+        auto outRPtr = outputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            float * inputs[2] = { inLIterator.base(), inRIterator.base() };
-            float * outputs[2] = { outLIterator.base(), outRIterator.base() };
-            filter.process(inputs, outputs, *cutoffIterator, *qIterator, 0.0, step);
-            cutoffIterator += step;
-            qIterator += step;
-            inLIterator += step;
-            inRIterator += step;
-            outLIterator += step;
-            outRIterator += step;
+            float * inputs[2] = { inLPtr, inRPtr };
+            float * outputs[2] = { outLPtr, outRPtr };
+            filter.process(inputs, outputs, *cutoffPtr, *qPtr, 0.0, step);
+            cutoffPtr += step;
+            qPtr += step;
+            inLPtr += step;
+            inRPtr += step;
+            outLPtr += step;
+            outRPtr += step;
         }
     }
 }
@@ -212,19 +218,20 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto qIterator = q.begin();
-        auto pkshIterator = pksh.begin();
-        auto inLIterator = inputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto qPtr = q.data();
+        auto pkshPtr = pksh.data();
+        auto inLPtr = inputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filterLeft.process(&inLIterator.base(), &outLIterator.base(), *cutoffIterator, *qIterator, *pkshIterator, step);
-            cutoffIterator += step;
-            qIterator += step;
-            pkshIterator += step;
-            inLIterator += step;
-            outLIterator += step;
+            filterLeft.process(&inLPtr, &outLPtr, *cutoffPtr, *qPtr, *pkshPtr, step);
+            cutoffPtr += step;
+            qPtr += step;
+            pkshPtr += step;
+            inLPtr += step;
+            outLPtr += step;
         }
     }
 }
@@ -235,28 +242,28 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
     filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
     filterRight.init(sampleRate);
-    filterRight.setType(sfz::FilterType::kFilterLpf2p);
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto qIterator = q.begin();
-        auto pkshIterator = pksh.begin();
-        auto inLIterator = inputLeft.begin();
-        auto inRIterator = inputRight.begin();
-        auto outRIterator = outputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto qPtr = q.data();
+        auto pkshPtr = pksh.data();
+        auto inLPtr = inputLeft.data();
+        auto inRPtr = inputRight.data();
+        auto outRPtr = outputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            filterLeft.process( &inLIterator.base(), &outLIterator.base(), *cutoffIterator, *qIterator, *pkshIterator, step);
-            filterRight.process(&inRIterator.base(), &outRIterator.base(), *cutoffIterator, *qIterator, *pkshIterator, step);
-            cutoffIterator += step;
-            qIterator += step;
-            pkshIterator += step;
-            inLIterator += step;
-            inRIterator += step;
-            outLIterator += step;
-            outRIterator += step;
+            filterLeft.process( &inLPtr, &outLPtr, *cutoffPtr, *qPtr, *pkshPtr, step);
+            filterRight.process(&inRPtr, &outRPtr, *cutoffPtr, *qPtr, *pkshPtr, step);
+            cutoffPtr += step;
+            qPtr += step;
+            pkshPtr += step;
+            inLPtr += step;
+            inRPtr += step;
+            outLPtr += step;
+            outRPtr += step;
         }
     }
 }
@@ -269,25 +276,26 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_Stereo)(benchmark::State& state) {
     for (auto _ : state)
     {
         const auto step = static_cast<size_t>(state.range(0));
-        auto cutoffIterator = cutoff.begin();
-        auto qIterator = q.begin();
-        auto pkshIterator = pksh.begin();
-        auto inLIterator = inputLeft.begin();
-        auto inRIterator = inputRight.begin();
-        auto outRIterator = outputLeft.begin();
-        auto outLIterator = outputRight.begin();
-        while (cutoffIterator < cutoff.end())
+        auto cutoffPtr = cutoff.data();
+        auto qPtr = q.data();
+        auto pkshPtr = pksh.data();
+        auto inLPtr = inputLeft.data();
+        auto inRPtr = inputRight.data();
+        auto outRPtr = outputLeft.data();
+        auto outLPtr = outputRight.data();
+        const auto sentinel = cutoff.data() + blockSize;
+        while (cutoffPtr < sentinel)
         {
-            float * inputs[2] = { inLIterator.base(), inRIterator.base() };
-            float * outputs[2] = { outLIterator.base(), outRIterator.base() };
-            filter.process(inputs, outputs, *cutoffIterator, *qIterator, *pkshIterator, step);
-            cutoffIterator += step;
-            qIterator += step;
-            pkshIterator += step;
-            inLIterator += step;
-            inRIterator += step;
-            outLIterator += step;
-            outRIterator += step;
+            float * inputs[2] = { inLPtr, inRPtr };
+            float * outputs[2] = { outLPtr, outRPtr };
+            filter.process(inputs, outputs, *cutoffPtr, *qPtr, *pkshPtr, step);
+            cutoffPtr += step;
+            qPtr += step;
+            pkshPtr += step;
+            inLPtr += step;
+            inRPtr += step;
+            outLPtr += step;
+            outRPtr += step;
         }
     }
 }
@@ -302,4 +310,3 @@ BENCHMARK_REGISTER_F(FilterFixture, Shelf_MonoOnce)->RangeMultiplier(2)->Range(1
 BENCHMARK_REGISTER_F(FilterFixture, Shelf_MonoTwice)->RangeMultiplier(2)->Range(1, 1 << 8);
 BENCHMARK_REGISTER_F(FilterFixture, Shelf_Stereo)->RangeMultiplier(2)->Range(1, 1 << 8);
 BENCHMARK_MAIN();
-
