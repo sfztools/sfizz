@@ -32,6 +32,7 @@ void sfz::FilterHolder::setup(const FilterDescription& description, int noteNumb
     baseCutoff *= centsFactor(keytrack);
     const auto veltrack = description.veltrack * normalizeVelocity(velocity);
     baseCutoff *= centsFactor(veltrack);
+    baseCutoff = Default::filterCutoffRange.clamp(baseCutoff);
 
     baseGain = description.gain;
     baseResonance = description.resonance;
@@ -51,16 +52,19 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
     for (auto& mod: description->cutoffCC) {
         lastCutoff *= centsFactor(midiState.getCCValue(mod.first) * mod.second);
     }
+    lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
     lastResonance = baseResonance;
     for (auto& mod: description->resonanceCC) {
         lastResonance += midiState.getCCValue(mod.first) * mod.second;
     }
+    lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
     lastGain = baseGain;
     for (auto& mod: description->gainCC) {
         lastGain += midiState.getCCValue(mod.first) * mod.second;
     }
+    lastGain = Default::filterGainRange.clamp(lastGain);
 
     filter.process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);
 }
