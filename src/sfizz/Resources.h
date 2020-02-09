@@ -6,12 +6,14 @@
 
 #pragma once
 #include "FilePool.h"
+#include "FilterPool.h"
 #include "Logger.h"
 
 namespace sfz
 {
 struct Resources
 {
+    MidiState midiState;
     Logger logger;
     FilePool filePool { logger };
 };
