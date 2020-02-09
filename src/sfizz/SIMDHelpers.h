@@ -760,12 +760,12 @@ namespace _internals {
     }
 
     template <class T>
-    inline void snippetWidth(const T*& pan, T*& mid, T*& side)
+    inline void snippetWidth(const T*& width, T*& mid, T*& side)
     {
-        T p = std::abs(*pan);
-        p = clamp<T>(p, 0, 1);
-        *mid++ *= panLookup(p);
-        *side++ *= *pan++ > 0 ? panLookup(1 - p) : -panLookup(1 - p);
+        T w = std::abs(*width) * T{0.5};
+        w = clamp<T>(w, 0, 1);
+        *mid++ *= panLookup(w);
+        *side++ *= *width++ > 0 ? panLookup(1 - w) : -panLookup(1 - w);
     }
 }
 
