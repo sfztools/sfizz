@@ -60,22 +60,22 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     float crossfadeGain { region->getCrossfadeGain(midiState.getCCArray()) };
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
-    basePan = normalizeNegativePercents(region->pan);
+    basePan = normalizePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
-        pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * region->panCC->second / 100.0f;
+        pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * normalizePercents(region->panCC->second);
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
-    basePosition = normalizeNegativePercents(region->position);
+    basePosition = normalizePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
-        position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * region->positionCC->second / 100.0f;
+        position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * normalizePercents(region->positionCC->second);
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
-    baseWidth = normalizeNegativePercents(region->width);
+    baseWidth = normalizePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
-        width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * region->widthCC->second / 100.0f;
+        width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * normalizePercents(region->widthCC->second);
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
@@ -177,17 +177,17 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
-        const float newPan { basePan + normalizeCC(ccValue) * region->panCC->second / 100.0f };
+        const float newPan { basePan + normalizeCC(ccValue) * normalizePercents(region->panCC->second) };
         panEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPan));
     }
 
     if (region->positionCC && ccNumber == region->positionCC->first) {
-        const float newPosition { basePosition + normalizeCC(ccValue) * region->positionCC->second / 100.0f };
+        const float newPosition { basePosition + normalizeCC(ccValue) * normalizePercents(region->positionCC->second) };
         positionEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPosition));
     }
 
     if (region->widthCC && ccNumber == region->widthCC->first) {
-        const float newWidth { baseWidth + normalizeCC(ccValue) * region->widthCC->second / 100.0f };
+        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizePercents(region->widthCC->second) };
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 
