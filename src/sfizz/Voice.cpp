@@ -18,7 +18,7 @@ sfz::Voice::Voice(sfz::Resources& resources)
 : resources(resources)
 {
     filters.reserve(config::filtersPerVoice);
-    equalizers.reserve(config::filtersPerVoice);
+    equalizers.reserve(config::eqsPerVoice);
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
@@ -91,13 +91,17 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
     ASSERT((equalizers.capacity() - equalizers.size()) >= region->equalizers.size());
 
-    for(auto& filter: region->filters) {
+    for (auto& filter: region->filters) {
         auto newFilter = resources.filterPool.getFilter(filter, number, value);
         if (newFilter)
             filters.push_back(newFilter);
     }
 
-    // TODO: Equalizers
+    for (auto& eq: region->equalizers) {
+        auto newEQ = resources.eqPool.getEQ(eq, value);
+        if (newEQ)
+            equalizers.push_back(newEQ);
+    }
 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
@@ -274,8 +278,13 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     const float* inputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
     float* outputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
+
     for (auto& filter: filters) {
         filter->process(inputChannels, outputChannels, buffer.getNumFrames());
+    }
+
+    for (auto& eq: equalizers) {
+        eq->process(inputChannels, outputChannels, buffer.getNumFrames());
     }
 
     if (!egEnvelope.isSmoothing())

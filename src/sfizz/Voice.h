@@ -297,7 +297,7 @@ private:
     Resources& resources;
 
     std::vector<FilterHolderPtr> filters;
-    std::vector<FilterHolderPtr> equalizers;
+    std::vector<EQHolderPtr> equalizers;
 
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> amplitudeEnvelope; // linear events
