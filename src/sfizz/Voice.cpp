@@ -302,8 +302,6 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
     auto span1 = tempSpan1.first(numSamples);
-    auto span2 = tempSpan2.first(numSamples);
-    auto span3 = tempSpan3.first(numSamples);
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
@@ -339,7 +337,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     width<float>(span1, midBuffer, sideBuffer);
 
     // Copy the mid channel into another span
-    const auto midBufferRight = span2;
+    const auto midBufferRight = tempSpan2.first(numSamples);
     copy<float>(midBuffer, midBufferRight);
     positionEnvelope.getBlock(span1);
     pan<float>(span1, midBuffer, midBufferRight);
