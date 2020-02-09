@@ -71,7 +71,7 @@ constexpr float normalizeVelocity(T velocity)
 template<class T>
 constexpr float normalizePercents(T percentValue)
 {
-    return std::min(std::max(static_cast<float>(percentValue), 0.0f), 100.0f) / 100.0f;
+    return percentValue * 0.01f;
 }
 
 /**
@@ -84,19 +84,6 @@ constexpr float normalizePercents(T percentValue)
 constexpr float normalizeBend(float bendValue)
 {
     return std::min(std::max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
-}
-
-/**
- * @brief Normalize a possibly negative percentage between -1 and 1
- *
- * @tparam T
- * @param percentValue
- * @return constexpr float
- */
-template<class T>
-constexpr float normalizeNegativePercents(T percentValue)
-{
-    return std::min(std::max(static_cast<float>(percentValue), -100.0f), 100.0f) / 100.0f;
 }
 
 /**
