@@ -272,7 +272,6 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     auto span1 = tempSpan1.first(numSamples);
-    auto span2 = tempSpan2.first(numSamples);
 
     // Amplitude envelope
     amplitudeEnvelope.getBlock(span1);
