@@ -7,6 +7,7 @@
 #include "SIMDHelpers.h"
 #include "OnePoleFilter.h"
 #include "SfzFilter.h"
+#include "ScopedFTZ.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
@@ -50,6 +51,7 @@ public:
 };
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filterLeft;
     filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf1p);
@@ -71,6 +73,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoOnce)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filterLeft;
     sfz::Filter filterRight;
     filterLeft.init(sampleRate);
@@ -100,6 +103,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_MonoTwice)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filter;
     filter.init(sampleRate);
     filter.setChannels(2);
@@ -128,6 +132,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Stereo)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filterLeft;
     filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
@@ -151,6 +156,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoOnce)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filterLeft;
     sfz::Filter filterRight;
     filterLeft.init(sampleRate);
@@ -182,6 +188,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_MonoTwice)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filter;
     filter.init(sampleRate);
     filter.setChannels(2);
@@ -212,6 +219,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Stereo)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filterLeft;
     filterLeft.init(sampleRate);
     filterLeft.setType(sfz::FilterType::kFilterLpf2p);
@@ -237,6 +245,7 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoOnce)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filterLeft;
     sfz::Filter filterRight;
     filterLeft.init(sampleRate);
@@ -269,6 +278,7 @@ BENCHMARK_DEFINE_F(FilterFixture, Shelf_MonoTwice)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, Shelf_Stereo)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filter;
     filter.init(sampleRate);
     filter.setChannels(2);

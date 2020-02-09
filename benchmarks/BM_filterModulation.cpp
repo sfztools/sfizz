@@ -7,6 +7,7 @@
 #include "SIMDHelpers.h"
 #include "OnePoleFilter.h"
 #include "SfzFilter.h"
+#include "ScopedFTZ.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
@@ -45,6 +46,7 @@ public:
 };
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_VA)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::OnePoleFilter<float> filter;
     for (auto _ : state)
     {
@@ -66,6 +68,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_VA)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, OnePole_Faust)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filter;
     filter.init(sampleRate);
     filter.setType(sfz::FilterType::kFilterLpf1p);
@@ -87,6 +90,7 @@ BENCHMARK_DEFINE_F(FilterFixture, OnePole_Faust)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Faust)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filter;
     filter.init(sampleRate);
     filter.setType(sfz::FilterType::kFilterLpf2p);
@@ -110,6 +114,7 @@ BENCHMARK_DEFINE_F(FilterFixture, TwoPole_Faust)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(FilterFixture, TwoPoleShelf_Faust)(benchmark::State& state) {
+    ScopedFTZ ftz;
     sfz::Filter filter;
     filter.init(sampleRate);
     filter.setType(sfz::FilterType::kFilterLsh);
