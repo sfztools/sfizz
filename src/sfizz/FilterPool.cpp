@@ -127,8 +127,10 @@ size_t sfz::FilterPool::setNumFilters(size_t numFilters)
     }
 
     filters.resize(std::distance(filters.begin(), filterSentinel.base()));
-    for (size_t i = filters.size(); i < numFilters; ++i)
-        filters.emplace_back(std::make_shared<FilterHolder>(midiState));
+    for (size_t i = filters.size(); i < numFilters; ++i) {
+        auto filter = filters.emplace_back(std::make_shared<FilterHolder>(midiState));
+        filter->setSampleRate(sampleRate);
+    }
 
     return filters.size();
 }
