@@ -6,7 +6,7 @@
 
 #include "Config.h"
 #include "ADSREnvelope.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <algorithm>
 #include <random>
 #include <numeric>

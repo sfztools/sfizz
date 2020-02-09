@@ -6,7 +6,7 @@
 
 #include "SIMDHelpers.h"
 #include "Buffer.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <algorithm>
 #include <numeric>
 #include <absl/types/span.h>

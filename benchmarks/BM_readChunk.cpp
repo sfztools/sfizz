@@ -6,7 +6,7 @@
 
 #include "SIMDHelpers.h"
 #include "Buffer.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <sndfile.hh>
 #include "ghc/filesystem.hpp"
 #define DR_WAV_IMPLEMENTATION

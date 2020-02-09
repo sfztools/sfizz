@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 #include "Buffer.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <sndfile.hh>
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"

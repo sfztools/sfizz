@@ -7,7 +7,7 @@
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "SIMDHelpers.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <memory>
 #include <samplerate.h>
 #include <sndfile.hh>

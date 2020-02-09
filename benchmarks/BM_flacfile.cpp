@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Buffer.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <sndfile.hh>
 #define DR_FLAC_IMPLEMENTATION
 #include "dr_flac.h"

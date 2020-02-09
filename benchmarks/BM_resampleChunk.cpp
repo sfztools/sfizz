@@ -6,7 +6,7 @@
 
 #include "Buffer.h"
 #include "SIMDHelpers.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <sndfile.hh>
 #include "ghc/filesystem.hpp"
 #include "Oversampler.h"

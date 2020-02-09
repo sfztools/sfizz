@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include "SIMDHelpers.h"
 #include <vector>
 #include <random>

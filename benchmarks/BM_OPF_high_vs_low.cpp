@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Config.h"
-#include <benchmark/benchmark.h>
+#include "BM.h"
 #include <absl/types/span.h>
 #include <random>
 #include <algorithm>
