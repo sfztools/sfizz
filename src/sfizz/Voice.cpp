@@ -63,19 +63,19 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     basePan = normalizeNegativePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
-        pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
+        pan += normalizeCC(midiState.getCCValue(region->panCC->first)) * region->panCC->second / 100.0f;
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
     basePosition = normalizeNegativePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
-        position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
+        position += normalizeCC(midiState.getCCValue(region->positionCC->first)) * region->positionCC->second / 100.0f;
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
     baseWidth = normalizeNegativePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
-        width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
+        width += normalizeCC(midiState.getCCValue(region->widthCC->first)) * region->widthCC->second / 100.0f;
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
