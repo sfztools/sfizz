@@ -30,7 +30,7 @@ void sfz::FilterHolder::setup(const FilterDescription& description, int noteNumb
     }
     const auto keytrack = description.keytrack * (noteNumber - description.keycenter);
     baseCutoff *= centsFactor(keytrack);
-    const auto veltrack = description.veltrack * velocity;
+    const auto veltrack = description.veltrack * normalizeVelocity(velocity);
     baseCutoff *= centsFactor(veltrack);
 
     baseGain = description.gain;
