@@ -746,7 +746,7 @@ namespace _internals {
     inline void snippetPan(const T*& pan, T*& left, T*& right)
     {
         T p = ((*pan++) + T{1.0}) * T{0.5};
-        p = std::max<T>(0, std::min<T>(p, 1));
+        p = clamp<T>(p, 0, 1);
 
         auto lookUp = [](T pan) -> T
         {
