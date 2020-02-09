@@ -182,12 +182,12 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     if (region->positionCC && ccNumber == region->positionCC->first) {
-        const float newPosition { basePosition + normalizeCC(ccValue) * region->panCC->second / 100.0f };
+        const float newPosition { basePosition + normalizeCC(ccValue) * region->positionCC->second / 100.0f };
         positionEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPosition));
     }
 
     if (region->widthCC && ccNumber == region->widthCC->first) {
-        const float newWidth { baseWidth + normalizeCC(ccValue) * region->panCC->second / 100.0f };
+        const float newWidth { baseWidth + normalizeCC(ccValue) * region->widthCC->second / 100.0f };
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 
