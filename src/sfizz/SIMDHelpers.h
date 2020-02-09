@@ -755,8 +755,8 @@ namespace _internals {
             return panData[index];
         };
 
-        *left++ = lookUp(p);
-        *right++ = lookUp(1 - p);
+        *left++ *= lookUp(p);
+        *right++ *= lookUp(1 - p);
     }
 }
 
