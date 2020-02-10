@@ -17,10 +17,11 @@ public:
      * @brief Setup a new filter based on a filter description, and a triggering note parameters.
      *
      * @param description the filter description
+     * @param numChannels the number of channels
      * @param noteNumber the triggering note number
-     * @param velocity the triggering note velocity
+     * @param velocity the triggering note velocity/value
      */
-    void setup(const FilterDescription& description, int noteNumber = static_cast<int>(Default::filterKeycenter), uint8_t velocity = 0);
+    void setup(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), uint8_t velocity = 0);
     /**
      * @brief Process a block of stereo inputs
      *
@@ -88,11 +89,12 @@ public:
      * @brief Get a filter object to use in Voices
      *
      * @param description the filter description to bind to the filter
+     * @param numChannels the number of channels in the underlying filter
      * @param noteNumber the triggering note number
      * @param velocity the triggering note velocity
      * @return FilterHolderPtr release this when done with the filter; no deallocation will be done
      */
-    FilterHolderPtr getFilter(const FilterDescription& description, int noteNumber = static_cast<int>(Default::filterKeycenter), uint8_t velocity = 0);
+    FilterHolderPtr getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), uint8_t velocity = 0);
     /**
      * @brief Get the number of active filters
      *

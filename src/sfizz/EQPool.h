@@ -17,8 +17,10 @@ public:
      * @brief Setup a new EQ based on an EQ description.
      *
      * @param description the EQ description
+     * @param numChannels the number of channels for the EQ
+     * @param description the triggering velocity/value
      */
-    void setup(const EQDescription& description, uint8_t velocity);
+    void setup(const EQDescription& description, unsigned numChannels, uint8_t velocity);
     /**
      * @brief Process a block of stereo inputs
      *
@@ -84,11 +86,11 @@ public:
      * @brief Get an EQ object to use in Voices
      *
      * @param description the filter description to bind to the EQ
-     * @param noteNumber the triggering note number
-     * @param velocity the triggering note velocity
+     * @param numChannels the number of channels for the EQ
+     * @param velocity the triggering note velocity/value
      * @return EQHolderPtr release this when done with the filter; no deallocation will be done
      */
-    EQHolderPtr getEQ(const EQDescription& description, uint8_t velocity);
+    EQHolderPtr getEQ(const EQDescription& description, unsigned numChannels, uint8_t velocity);
     /**
      * @brief Get the number of active EQs
      *

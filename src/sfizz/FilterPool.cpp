@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 sfz::FilterHolder::FilterHolder(const MidiState& midiState)
 : midiState(midiState)
 {
-    filter.setChannels(2);
+
 }
 
 void sfz::FilterHolder::reset()
@@ -17,11 +17,12 @@ void sfz::FilterHolder::reset()
     filter.clear();
 }
 
-void sfz::FilterHolder::setup(const FilterDescription& description, int noteNumber, uint8_t velocity)
+void sfz::FilterHolder::setup(const FilterDescription& description, unsigned numChannels, int noteNumber, uint8_t velocity)
 {
     reset();
     this->description = &description;
     filter.setType(description.type);
+    filter.setChannels(numChannels);
 
     baseCutoff = description.cutoff;
     if (description.random != 0) {
@@ -88,7 +89,7 @@ sfz::FilterPool::FilterPool(const MidiState& state, int numFilters)
     setNumFilters(numFilters);
 }
 
-sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, int noteNumber, uint8_t velocity)
+sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber, uint8_t velocity)
 {
     AtomicGuard guard { givingOutFilters };
     if (!canGiveOutFilters)
@@ -101,7 +102,7 @@ sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& descrip
     if (filter == filters.end())
         return {};
 
-    (**filter).setup(description, noteNumber, velocity);
+    (**filter).setup(description, numChannels, noteNumber, velocity);
     return *filter;
 }
 

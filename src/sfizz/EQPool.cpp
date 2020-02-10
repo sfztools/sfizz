@@ -8,7 +8,7 @@ using namespace std::chrono_literals;
 sfz::EQHolder::EQHolder(const MidiState& state)
 :midiState(state)
 {
-    eq.setChannels(2);
+
 }
 
 void sfz::EQHolder::reset()
@@ -16,9 +16,10 @@ void sfz::EQHolder::reset()
     eq.clear();
 }
 
-void sfz::EQHolder::setup(const EQDescription& description, uint8_t velocity)
+void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels, uint8_t velocity)
 {
     reset();
+    eq.setChannels(numChannels);
     this->description = &description;
     const auto normalizedVelocity = normalizeVelocity(velocity);
 
@@ -80,7 +81,7 @@ sfz::EQPool::EQPool(const MidiState& state, int numEQs)
     setnumEQs(numEQs);
 }
 
-sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, uint8_t velocity)
+sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned numChannels, uint8_t velocity)
 {
     AtomicGuard guard { givingOutEQs };
     if (!canGiveOutEQs)
@@ -93,7 +94,7 @@ sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, uint8_t ve
     if (eq == eqs.end())
         return {};
 
-    (**eq).setup(description, velocity);
+    (**eq).setup(description, numChannels, velocity);
     return *eq;
 }
 

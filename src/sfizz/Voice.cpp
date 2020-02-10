@@ -91,14 +91,15 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
     ASSERT((equalizers.capacity() - equalizers.size()) >= region->equalizers.size());
 
+    const unsigned numChannels = region->isStereo ? 2 : 1;
     for (auto& filter: region->filters) {
-        auto newFilter = resources.filterPool.getFilter(filter, number, value);
+        auto newFilter = resources.filterPool.getFilter(filter, numChannels, number, value);
         if (newFilter)
             filters.push_back(newFilter);
     }
 
     for (auto& eq: region->equalizers) {
-        auto newEQ = resources.eqPool.getEQ(eq, value);
+        auto newEQ = resources.eqPool.getEQ(eq, numChannels, value);
         if (newEQ)
             equalizers.push_back(newEQ);
     }
@@ -276,17 +277,6 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     else
         processMono(buffer);
 
-    const float* inputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
-    float* outputChannels[2] { buffer.getChannel(0), buffer.getChannel(1) };
-
-    for (auto& filter: filters) {
-        filter->process(inputChannels, outputChannels, buffer.getNumFrames());
-    }
-
-    for (auto& eq: equalizers) {
-        eq->process(inputChannels, outputChannels, buffer.getNumFrames());
-    }
-
     if (!egEnvelope.isSmoothing())
         reset();
 
@@ -318,6 +308,17 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     // AmpEG envelope
     egEnvelope.getBlock(span1);
     applyGain<float>(span1, leftBuffer);
+
+    // Filtering and EQ
+    const float* inputChannel[1] { leftBuffer.data() };
+    float* outputChannel[1] { leftBuffer.data() };
+    for (auto& filter: filters) {
+        filter->process(inputChannel, outputChannel, numSamples);
+    }
+
+    for (auto& eq: equalizers) {
+        eq->process(inputChannel, outputChannel, numSamples);
+    }
 
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
@@ -390,6 +391,18 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     multiplyAdd<float>(span2, span3, rightBuffer);
     applyGain<float>(sqrtTwoInv<float>, leftBuffer);
     applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+
+    // Filtering and EQ
+    const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
+    float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
+
+    for (auto& filter: filters) {
+        filter->process(inputChannels, outputChannels, numSamples);
+    }
+
+    for (auto& eq: equalizers) {
+        eq->process(inputChannels, outputChannels, numSamples);
+    }
 }
 
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
