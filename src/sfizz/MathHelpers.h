@@ -126,10 +126,11 @@ inline float midiNoteFrequency(const int noteNumber)
  * @return T
  */
 template<class T>
-constexpr T clamp( const T& v, const T& lo, const T& hi )
+constexpr T clamp( T v, T lo, T hi )
 {
-	assert( !(hi < lo) );
-	return (v < lo) ? lo : (hi < v) ? hi : v;
+	v = std::min(v, hi);
+	v = std::max(v, lo);
+	return v;
 }
 
 template<int Increment = 1, class T>
