@@ -1072,7 +1072,7 @@
                <Node>
                 <Name>Voice</Name>
                 <Path>classsfz_1_1_voice.html</Path>
-                <Anchor>a82d3899e05531ff6ce843a8f684286a8</Anchor>
+                <Anchor>a102d2cb8855f7c4ab6421299f806d890</Anchor>
                </Node>
                <Node>
                 <Name>canBeStolen</Name>
@@ -1163,6 +1163,16 @@
                 <Name>reset</Name>
                 <Path>classsfz_1_1_voice.html</Path>
                 <Anchor>a3c5fe85515b2edfa7228b75b134e5b89</Anchor>
+               </Node>
+               <Node>
+                <Name>setMaxEQsPerVoice</Name>
+                <Path>classsfz_1_1_voice.html</Path>
+                <Anchor>a928423a1c6580400ec664179c02fa87d</Anchor>
+               </Node>
+               <Node>
+                <Name>setMaxFiltersPerVoice</Name>
+                <Path>classsfz_1_1_voice.html</Path>
+                <Anchor>a1c46989c59ca8b3f62b973b3138f01d1</Anchor>
                </Node>
                <Node>
                 <Name>setSampleRate</Name>

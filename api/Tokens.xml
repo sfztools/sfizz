@@ -3916,7 +3916,7 @@
       <Scope>sfz::Voice</Scope>
     </TokenIdentifier>
     <Path>classsfz_1_1_voice.html</Path>
-    <Anchor>a82d3899e05531ff6ce843a8f684286a8</Anchor>
+    <Anchor>a102d2cb8855f7c4ab6421299f806d890</Anchor>
     <Abstract>Construct a new voice with the midistate singleton. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
@@ -4170,6 +4170,30 @@
     <Path>classsfz_1_1_voice.html</Path>
     <Anchor>a9d36436f417f8f52a34f51bd450d3af7</Anchor>
     <Abstract>Returns the region that is currently playing. </Abstract>
+    <DeclaredIn>Voice.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>setMaxFiltersPerVoice</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Voice</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_voice.html</Path>
+    <Anchor>a1c46989c59ca8b3f62b973b3138f01d1</Anchor>
+    <Abstract>Set the max number of filters per voice. </Abstract>
+    <DeclaredIn>Voice.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>setMaxEQsPerVoice</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>instm</Type>
+      <Scope>sfz::Voice</Scope>
+    </TokenIdentifier>
+    <Path>classsfz_1_1_voice.html</Path>
+    <Anchor>a928423a1c6580400ec664179c02fa87d</Anchor>
+    <Abstract>Set the max number of EQs per voice. </Abstract>
     <DeclaredIn>Voice.h</DeclaredIn>
   </Token>
 </Tokens>
