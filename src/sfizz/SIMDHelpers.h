@@ -751,21 +751,21 @@ namespace _internals {
     }
 
     template <class T>
-    inline void snippetPan(const T*& pan, T*& left, T*& right)
+    inline void snippetPan(T pan, T& left, T& right)
     {
-        T p = ((*pan++) + T{1.0}) * T{0.5};
-        p = clamp<T>(p, 0, 1);
-        *left++ *= panLookup(p);
-        *right++ *= panLookup(1 - p);
+        pan = (pan + T{1.0}) * T{0.5};
+        pan = clamp<T>(pan, 0, 1);
+        left *= panLookup(pan);
+        right *= panLookup(1 - pan);
     }
 
     template <class T>
-    inline void snippetWidth(const T*& width, T*& mid, T*& side)
+    inline void snippetWidth(const T& width, T& mid, T& side)
     {
-        T w = std::abs(*width) * T{0.5};
+        T w = std::abs(width) * T{0.5};
         w = clamp<T>(w, 0, 1);
-        *mid++ *= panLookup(w);
-        *side++ *= *width++ > 0 ? panLookup(1 - w) : -panLookup(1 - w);
+        mid *= panLookup(w);
+        side *= width > 0 ? panLookup(1 - w) : -panLookup(1 - w);
     }
 }
 
@@ -789,8 +789,10 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
     auto* left = leftBuffer.begin();
     auto* right = rightBuffer.begin();
     auto* sentinel = pan + min(panEnvelope.size(), leftBuffer.size(), rightBuffer.size());
-    while (pan < sentinel)
-        _internals::snippetPan(pan, left, right);
+    while (pan < sentinel) {
+        _internals::snippetPan(*pan, *left, *right);
+        incrementAll(pan, left, right);
+    }
 }
 
 template <>
@@ -805,8 +807,10 @@ void width(absl::Span<const T> widthEnvelope, absl::Span<T> midBuffer, absl::Spa
     auto* mid = midBuffer.begin();
     auto* side = sideBuffer.begin();
     auto* sentinel = width + min(widthEnvelope.size(), midBuffer.size(), sideBuffer.size());
-    while (width < sentinel)
-        _internals::snippetWidth(width, mid, side);
+    while (width < sentinel) {
+        _internals::snippetWidth(*width, *mid, *side);
+        incrementAll(width, mid, side);
+    }
 }
 
 /**

@@ -594,8 +594,10 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
     auto* sentinel = pan + min(panEnvelope.size(), leftBuffer.size(), rightBuffer.size());
     const auto* lastAligned = prevAligned(sentinel);
 
-    while (unaligned(pan, left, right) && pan < lastAligned)
-        _internals::snippetPan(pan, left, right);
+    while (unaligned(pan, left, right) && pan < lastAligned) {
+        _internals::snippetPan(*pan, *left, *right);
+        incrementAll(pan, left, right);
+    }
 
     const auto mmOne = _mm_set_ps1(1.0f);
     const auto mmPiFour = _mm_set_ps1(piFour<float>);
@@ -613,8 +615,10 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
         incrementAll<TypeAlignment>(pan, left, right);
     }
 
-    while (pan < sentinel)
-        _internals::snippetPan(pan, left, right);
+    while (pan < sentinel){
+        _internals::snippetPan(*pan, *left, *right);
+        incrementAll(pan, left, right);
+    }
 }
 
 template <>
