@@ -51,6 +51,7 @@ sfizz_add_benchmark(bm_mean BM_mean.cpp)
 sfizz_add_benchmark(bm_meanSquared BM_meanSquared.cpp)
 sfizz_add_benchmark(bm_cumsum BM_cumsum.cpp)
 sfizz_add_benchmark(bm_diff BM_diff.cpp)
+sfizz_add_benchmark(bm_widthPos BM_widthPos.cpp)
 sfizz_add_benchmark(bm_interpolationCast BM_interpolationCast.cpp)
 sfizz_add_benchmark(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp)
 
@@ -106,6 +107,7 @@ add_dependencies(sfizz_benchmarks
 	bm_resampleChunk
 	bm_envelopes
 	bm_wavfile
+	bm_widthPos
 	bm_flacfile
 	bm_filterModulation
 	bm_filterStereoMono

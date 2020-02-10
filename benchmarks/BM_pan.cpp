@@ -12,6 +12,7 @@
 #include <cmath>
 #include <iostream>
 #include "Config.h"
+#include "ScopedFTZ.h"
 #include "absl/types/span.h"
 
 class PanArray : public benchmark::Fixture {
@@ -47,6 +48,7 @@ public:
 
 
 BENCHMARK_DEFINE_F(PanArray, Scalar)(benchmark::State& state) {
+    ScopedFTZ ftz;
     for (auto _ : state)
     {
         sfz::pan<float, false>(pan, absl::MakeSpan(left), absl::MakeSpan(right));
@@ -54,6 +56,7 @@ BENCHMARK_DEFINE_F(PanArray, Scalar)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(PanArray, SIMD)(benchmark::State& state) {
+    ScopedFTZ ftz;
     for (auto _ : state)
     {
         sfz::pan<float, true>(pan, absl::MakeSpan(left), absl::MakeSpan(right));
@@ -61,6 +64,7 @@ BENCHMARK_DEFINE_F(PanArray, SIMD)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(PanArray, BlockOps)(benchmark::State& state) {
+    ScopedFTZ ftz;
     for (auto _ : state)
     {
         sfz::fill<float>(span2, 1.0f);
