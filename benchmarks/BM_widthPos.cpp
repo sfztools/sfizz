@@ -64,6 +64,17 @@ BENCHMARK_DEFINE_F(WidthPosArray, Scalar)(benchmark::State& state) {
     }
 }
 
+BENCHMARK_DEFINE_F(WidthPosArray, SIMD)(benchmark::State& state) {
+    ScopedFTZ ftz;
+    const auto leftBuffer = absl::MakeSpan(left);
+    const auto rightBuffer = absl::MakeSpan(right);
+    for (auto _ : state)
+    {
+        sfz::width<float, true>(width, leftBuffer, rightBuffer);
+        sfz::pan<float, true>(position, leftBuffer, rightBuffer);
+    }
+}
 
 BENCHMARK_REGISTER_F(WidthPosArray, Scalar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(WidthPosArray, SIMD)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_MAIN();

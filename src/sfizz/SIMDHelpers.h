@@ -802,6 +802,18 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
 template <>
 void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
 
+/**
+ * @brief Controls the width of a stereo signal, setting it to mono when width = 0 and inverting the channels
+ * when width = -1. Width = 1 has no effect.
+ *
+ * The output size will be the minimum of the width envelope span and left and right buffer span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param panEnvelope
+ * @param leftBuffer
+ * @param rightBuffer
+ */
 template <class T, bool SIMD = SIMDConfig::pan>
 void width(absl::Span<const T> widthEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
 {
@@ -816,6 +828,9 @@ void width(absl::Span<const T> widthEnvelope, absl::Span<T> leftBuffer, absl::Sp
         incrementAll(width, left, right);
     }
 }
+
+template <>
+void width<float, true>(absl::Span<const float> widthEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
 
 /**
  * @brief Computes the mean of a span
