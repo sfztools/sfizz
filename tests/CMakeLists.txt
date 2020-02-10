@@ -42,6 +42,11 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     target_include_directories(sfizz_demo_filters PRIVATE ${JACK_INCLUDE_DIRS})
     target_link_libraries(sfizz_demo_filters PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
     set_target_properties(sfizz_demo_filters PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_stereo DemoStereo.cpp)
+    target_include_directories(sfizz_demo_stereo PRIVATE ${JACK_INCLUDE_DIRS})
+    target_link_libraries(sfizz_demo_stereo PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
+    set_target_properties(sfizz_demo_stereo PROPERTIES AUTOUIC ON)
 endif()
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)
