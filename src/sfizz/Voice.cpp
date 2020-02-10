@@ -290,23 +290,23 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
-    auto span1 = tempSpan1.first(numSamples);
+    auto modulationSpan = tempSpan1.first(numSamples);
 
     // Amplitude envelope
-    amplitudeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    amplitudeEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // Crossfade envelope
-    crossfadeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    crossfadeEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // Volume envelope
-    volumeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    volumeEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // AmpEG envelope
-    egEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    egEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // Filtering and EQ
     const float* inputChannel[1] { leftBuffer.data() };
@@ -322,59 +322,67 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
 
-    panEnvelope.getBlock(span1);
-    copy<float>(leftBuffer, rightBuffer);
-    pan<float>(span1, leftBuffer, rightBuffer);
+    // Apply panning
+    panEnvelope.getBlock(modulationSpan);
+    pan<float>(modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
-    auto span1 = tempSpan1.first(numSamples);
+    auto modulationSpan = tempSpan1.first(numSamples);
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
     // Amplitude envelope
-    amplitudeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    amplitudeEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // Crossfade envelope
-    crossfadeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    crossfadeEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // Volume envelope
-    volumeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    volumeEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // AmpEG envelope
-    egEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    egEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // Create mid/side from left/right in the output buffer
-    copy<float>(rightBuffer, span1);
-    add<float>(leftBuffer, rightBuffer);
-    subtract<float>(span1, leftBuffer);
-
     // Add const aliases to be slightly more readable
+    const auto leftBufferCopy = tempSpan2.first(numSamples);
+    copy<float>(leftBuffer, leftBufferCopy);
+
     const auto midBuffer = leftBuffer;
+    add<float>(rightBuffer, midBuffer);
+
     const auto sideBuffer = rightBuffer;
+    applyGain<float>(-1.0f, sideBuffer);
+    add<float>(leftBufferCopy, sideBuffer);
+
     applyGain<float>(sqrtTwoInv<float>, midBuffer);
     applyGain<float>(sqrtTwoInv<float>, sideBuffer);
 
     // Apply the width process
-    widthEnvelope.getBlock(span1);
-    width<float>(span1, midBuffer, sideBuffer);
+    widthEnvelope.getBlock(modulationSpan);
+    width<float>(modulationSpan, midBuffer, sideBuffer);
 
     // Copy the mid channel into another span
-    const auto midBufferRight = tempSpan2.first(numSamples);
-    copy<float>(midBuffer, midBufferRight);
-    positionEnvelope.getBlock(span1);
-    pan<float>(span1, midBuffer, midBufferRight);
+    const auto midBufferCopy = tempSpan3.first(numSamples);
+    copy<float>(midBuffer, midBufferCopy);
+    positionEnvelope.getBlock(modulationSpan);
+    pan<float>(modulationSpan, midBuffer, midBufferCopy);
 
     // Rebuild left/right
-    add<float>(sideBuffer, midBuffer);
+    // Recall that midBuffer and leftBuffer point to the same buffer
+    add<float>(sideBuffer, leftBuffer);
     applyGain(sqrtTwoInv<float>, leftBuffer);
-    add<float>(midBufferRight, sideBuffer);
+
+    // Recall that sideBuffer and rightBuffer point to the same buffer
+    applyGain<float>(-1.0f, sideBuffer);
+    add<float>(midBufferCopy, sideBuffer);
     applyGain(sqrtTwoInv<float>, rightBuffer);
 
     // Filtering and EQ
