@@ -350,40 +350,11 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     egEnvelope.getBlock(modulationSpan);
     buffer.applyGain(modulationSpan);
 
-    // Create mid/side from left/right in the output buffer
-    // Add const aliases to be slightly more readable
-    const auto leftBufferCopy = tempSpan2.first(numSamples);
-    copy<float>(leftBuffer, leftBufferCopy);
-
-    const auto midBuffer = leftBuffer;
-    add<float>(rightBuffer, midBuffer);
-
-    const auto sideBuffer = rightBuffer;
-    applyGain<float>(-1.0f, sideBuffer);
-    add<float>(leftBufferCopy, sideBuffer);
-
-    applyGain<float>(sqrtTwoInv<float>, midBuffer);
-    applyGain<float>(sqrtTwoInv<float>, sideBuffer);
-
-    // Apply the width process
+    // Apply the width/position process
     widthEnvelope.getBlock(modulationSpan);
-    width<float>(modulationSpan, midBuffer, sideBuffer);
-
-    // Copy the mid channel into another span
-    const auto midBufferCopy = tempSpan3.first(numSamples);
-    copy<float>(midBuffer, midBufferCopy);
+    width<float>(modulationSpan, leftBuffer, rightBuffer);
     positionEnvelope.getBlock(modulationSpan);
-    pan<float>(modulationSpan, midBuffer, midBufferCopy);
-
-    // Rebuild left/right
-    // Recall that midBuffer and leftBuffer point to the same buffer
-    add<float>(sideBuffer, leftBuffer);
-    applyGain(sqrtTwoInv<float>, leftBuffer);
-
-    // Recall that sideBuffer and rightBuffer point to the same buffer
-    applyGain<float>(-1.0f, sideBuffer);
-    add<float>(midBufferCopy, sideBuffer);
-    applyGain(sqrtTwoInv<float>, rightBuffer);
+    pan<float>(modulationSpan, leftBuffer, rightBuffer);
 
     // Filtering and EQ
     const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
