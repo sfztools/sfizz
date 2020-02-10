@@ -3,6 +3,8 @@ include(CheckLibraryExists)
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FilePool.cpp
+    sfizz/FilterPool.cpp
+    sfizz/EQPool.cpp
     sfizz/Region.cpp
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp

@@ -18,6 +18,7 @@
 #include <absl/types/span.h>
 #include <atomic>
 #include <memory>
+#include <random>
 
 namespace sfz {
 /**
@@ -34,7 +35,7 @@ public:
      *
      * @param midiState
      */
-    Voice(const MidiState& midiState, Resources& resources);
+    Voice(Resources& resources);
     enum class TriggerType {
         NoteOn,
         NoteOff,
@@ -196,6 +197,18 @@ public:
      * @return
      */
     const Region* getRegion() const noexcept { return region; }
+    /**
+     * @brief Set the max number of filters per voice
+     *
+     * @param numFilters
+     */
+    void setMaxFiltersPerVoice(size_t numFilters);
+    /**
+     * @brief Set the max number of EQs per voice
+     *
+     * @param numFilters
+     */
+    void setMaxEQsPerVoice(size_t numEQs);
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
@@ -281,8 +294,10 @@ private:
     int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
     float sampleRate { config::defaultSampleRate };
 
-    const MidiState& midiState;
     Resources& resources;
+
+    std::vector<FilterHolderPtr> filters;
+    std::vector<EQHolderPtr> equalizers;
 
     ADSREnvelope<float> egEnvelope;
     LinearEnvelope<float> amplitudeEnvelope; // linear events
@@ -293,6 +308,8 @@ private:
     MultiplicativeEnvelope<float> pitchBendEnvelope;
     MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
+
+    std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
     HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
     LEAK_DETECTOR(Voice);

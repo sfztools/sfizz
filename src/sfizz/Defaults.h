@@ -131,7 +131,7 @@ namespace Default
     constexpr float filterGain { 0 };
     constexpr int filterKeytrack { 0 };
     constexpr uint8_t filterKeycenter { 60 };
-    constexpr int filterRandom { 60 };
+    constexpr int filterRandom { 0 };
     constexpr int filterVeltrack { 0 };
     constexpr int filterCutoffCC { 0 };
     constexpr float filterResonanceCC { 0 };

@@ -324,7 +324,7 @@ public:
      */
     void disableFreeWheeling() noexcept;
 
-    const MidiState& getMidiState() const noexcept { return midiState; }
+    const MidiState& getMidiState() const noexcept { return resources.midiState; }
 
     /**
      * @brief Check if the SFZ should be reloaded.
@@ -446,7 +446,6 @@ private:
 
     // Singletons passed as references to the voices
     Resources resources;
-    MidiState midiState;
 
     // Control opcodes
     std::string defaultPath { "" };
