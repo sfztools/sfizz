@@ -160,42 +160,8 @@ int DemoApp::processAudio(jack_nframes_t nframes, void *cbdata)
     std::fill(positionEnvelope.begin(), positionEnvelope.end(), self->fPan * 0.01f);
 
     using namespace sfz;
-
-    /* TODO(jpc) have this code in common instead of copy-paste */
-
-    // Create mid/side from left/right in the output buffer
-    // Add const aliases to be slightly more readable
-    const auto leftBufferCopy = tempSpan1;
-    copy<float>(leftBuffer, leftBufferCopy);
-
-    const auto midBuffer = leftBuffer;
-    add<float>(rightBuffer, midBuffer);
-
-    const auto sideBuffer = rightBuffer;
-    applyGain<float>(-1.0f, sideBuffer);
-    add<float>(leftBufferCopy, sideBuffer);
-
-    applyGain<float>(sqrtTwoInv<float>, midBuffer);
-    applyGain<float>(sqrtTwoInv<float>, sideBuffer);
-
-    // Apply the width process
-    width<float>(widthEnvelope, midBuffer, sideBuffer);
-
-    // Copy the mid channel into another span
-    const auto midBufferCopy = tempSpan1;
-    copy<float>(midBuffer, midBufferCopy);
-    pan<float>(positionEnvelope, midBuffer, midBufferCopy);
-
-    // Rebuild left/right
-    // Recall that midBuffer and leftBuffer point to the same buffer
-    add<float>(sideBuffer, leftBuffer);
-    applyGain(sqrtTwoInv<float>, leftBuffer);
-
-    // Recall that sideBuffer and rightBuffer point to the same buffer
-    applyGain<float>(-1.0f, sideBuffer);
-    add<float>(midBufferCopy, sideBuffer);
-    applyGain(sqrtTwoInv<float>, rightBuffer);
-
+    width<float>(widthEnvelope, leftBuffer, rightBuffer);
+    pan<float>(positionEnvelope, leftBuffer, rightBuffer);
     return 0;
 }
 
