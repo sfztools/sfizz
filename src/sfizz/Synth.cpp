@@ -78,7 +78,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_unique<Region>(midiState, defaultPath);
+    auto lastRegion = std::make_unique<Region>(resources.midiState, defaultPath);
 
     auto parseOpcodes = [&](const auto& opcodes) {
         for (auto& opcode : opcodes) {
@@ -125,7 +125,7 @@ void sfz::Synth::clear()
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    midiState.reset();
+    resources.midiState.reset();
     ccNames.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
@@ -159,7 +159,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("set_cc"):
             if (backParameter && Default::ccNumberRange.containsWithEnd(*backParameter)) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                midiState.ccEvent(*backParameter, ccValue);
+                resources.midiState.ccEvent(*backParameter, ccValue);
             }
             break;
         case hash("Label_cc"):
@@ -234,6 +234,9 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         ++lastRegion;
     };
 
+    size_t maxFilters { 0 };
+    size_t maxEQs { 0 };
+
     while (currentRegion < lastRegion.base()) {
         auto region = currentRegion->get();
 
@@ -287,7 +290,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
         // Defaults
         for (int ccIndex = 0; ccIndex < config::numCCs; ccIndex++) {
-            region->registerCC(ccIndex, midiState.getCCValue(ccIndex));
+            region->registerCC(ccIndex, resources.midiState.getCCValue(ccIndex));
         }
 
         if (defaultSwitch) {
@@ -316,6 +319,8 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         region->registerPitchWheel(0);
         region->registerAftertouch(0);
         region->registerTempo(2.0f);
+        maxFilters = max(maxFilters, region->filters.size());
+        maxEQs = max(maxEQs, region->equalizers.size());
 
         ++currentRegion;
     }
@@ -323,6 +328,11 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     DBG("Removing " << (regions.size() - remainingRegions) << " out of " << regions.size() << " regions");
     regions.resize(remainingRegions);
     modificationTime = checkModificationTime();
+
+    for (auto& voice: voices) {
+        voice->setMaxFiltersPerVoice(maxFilters);
+        voice->setMaxEQsPerVoice(maxEQs);
+    }
 
     return parserReturned;
 }
@@ -391,6 +401,9 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
         voice->setSampleRate(sampleRate);
+
+    resources.filterPool.setSampleRate(sampleRate);
+    resources.eqPool.setSampleRate(sampleRate);
 }
 
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
@@ -430,7 +443,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    midiState.noteOnEvent(noteNumber, velocity);
+    resources.midiState.noteOnEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -444,7 +457,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    midiState.noteOffEvent(noteNumber, velocity);
+    resources.midiState.noteOffEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -453,7 +466,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    const auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
+    const auto replacedVelocity = resources.midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : voices)
         voice->registerNoteOff(delay, noteNumber, replacedVelocity);
@@ -508,7 +521,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
         return;
     }
 
-    midiState.ccEvent(ccNumber, ccValue);
+    resources.midiState.ccEvent(ccNumber, ccValue);
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, ccValue);
 
@@ -528,7 +541,7 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
 
-    midiState.pitchBendEvent(pitch);
+    resources.midiState.pitchBendEvent(pitch);
 
     for (auto& region: regions) {
         region->registerPitchWheel(pitch);
@@ -611,7 +624,7 @@ void sfz::Synth::resetVoices(int numVoices)
 
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(midiState, resources));
+        voices.push_back(std::make_unique<Voice>(resources));
 
     for (auto& voice: voices) {
         voice->setSampleRate(this->sampleRate);
@@ -678,7 +691,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
     if (!canEnterCallback)
         return;
 
-    midiState.resetAllControllers();
+    resources.midiState.resetAllControllers();
     for (auto& voice: voices) {
         voice->registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)

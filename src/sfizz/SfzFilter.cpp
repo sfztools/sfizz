@@ -160,7 +160,7 @@ unsigned Filter::channels() const
 
 void Filter::setChannels(unsigned channels)
 {
-    ASSERT(channels < Impl::maxChannels);
+    ASSERT(channels <= Impl::maxChannels);
     if (P->fChannels != channels) {
         P->fChannels = channels;
         clear();
@@ -330,7 +330,7 @@ unsigned FilterEq::channels() const
 
 void FilterEq::setChannels(unsigned channels)
 {
-    ASSERT(channels < Impl::maxChannels);
+    ASSERT(channels <= Impl::maxChannels);
     if (P->fChannels != channels) {
         P->fChannels = channels;
         clear();

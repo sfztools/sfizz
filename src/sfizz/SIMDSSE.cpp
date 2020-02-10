@@ -4,16 +4,14 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "SIMDConfig.h"
+
+#if SFIZZ_HAVE_SSE2
+
 #include "SIMDHelpers.h"
 #include <array>
 #include <xmmintrin.h>
-#if HAVE_X86INTRIN_H
-#include <x86intrin.h>
-#endif
-
-#if HAVE_INTRIN_H
-#include <intrin.h>
-#endif
+#include <emmintrin.h>
 
 #include "mathfuns/sse_mathfun.h"
 
@@ -783,3 +781,5 @@ void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> out
     while (in < sentinel)
         _internals::snippetDiff(in, out);
 }
+
+#endif // SFIZZ_HAVE_SSE2

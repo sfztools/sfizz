@@ -3,6 +3,8 @@ include(CheckLibraryExists)
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FilePool.cpp
+    sfizz/FilterPool.cpp
+    sfizz/EQPool.cpp
     sfizz/Region.cpp
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp
@@ -13,7 +15,7 @@ set (SFIZZ_SOURCES
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
 )
-include (SfizzSIMDSourceFilesCheck)
+include (SfizzSIMDSourceFiles)
 
 # Parser core library
 add_library (sfizz_parser STATIC)

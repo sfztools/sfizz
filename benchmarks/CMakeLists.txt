@@ -1,7 +1,7 @@
 project(sfizz)
 
 # Check SIMD
-include (SfizzSIMDSourceFilesCheck)
+include (SfizzSIMDSourceFiles)
 set(BENCHMARK_SIMD_SOURCES ${SFIZZ_SIMD_SOURCES})
 list(TRANSFORM BENCHMARK_SIMD_SOURCES PREPEND "../src/")
 find_package(benchmark CONFIG REQUIRED)

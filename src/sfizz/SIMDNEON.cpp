@@ -21,8 +21,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <arm_neon.h>
+#include "SIMDConfig.h"
+
+#if SFIZZ_HAVE_NEON
+
 #include "SIMDHelpers.h"
+#include <arm_neon.h>
 
 using Type = float;
 [[maybe_unused]] constexpr uintptr_t TypeAlignment { 4 };
@@ -234,3 +238,5 @@ void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> out
 {
     diff<float, false>(input, output);
 }
+
+#endif // SFIZZ_HAVE_NEON

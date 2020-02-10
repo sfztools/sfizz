@@ -5,17 +5,14 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Config.h"
+#include "SIMDConfig.h"
 #include <benchmark/benchmark.h>
 #include <absl/types/span.h>
 #include <random>
 #include <algorithm>
 
-#if HAVE_X86INTRIN_H
-#include <x86intrin.h>
-#endif
-
-#if HAVE_INTRIN_H
-#include <intrin.h>
+#if SFIZZ_HAVE_SSE2
+#include <emmintrin.h>
 #endif
 
 constexpr float filterGain { 0.25f };
