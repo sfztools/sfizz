@@ -414,7 +414,7 @@
       <Type>func</Type>
     </TokenIdentifier>
     <Path>_math_helpers_8h.html</Path>
-    <Anchor>aca20a33a33fccbc4953c3403e62fd372</Anchor>
+    <Anchor>a84c36a4fe27bb1788d1afb8fd3a96601</Anchor>
     <Abstract>Clamps a value between bounds, including the bounds! </Abstract>
     <DeclaredIn>MathHelpers.h</DeclaredIn>
   </Token>
