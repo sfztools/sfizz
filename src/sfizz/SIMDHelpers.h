@@ -760,12 +760,16 @@ namespace _internals {
     }
 
     template <class T>
-    inline void snippetWidth(const T& width, T& mid, T& side)
+    inline void snippetWidth(T width, T& left, T& right)
     {
-        T w = std::abs(width) * T{0.5};
+        T w = (width + T{1.0}) * T{0.5};
         w = clamp<T>(w, 0, 1);
-        mid *= panLookup(w);
-        side *= width > 0 ? panLookup(1 - w) : -panLookup(1 - w);
+        const auto coeff1 = panLookup(w);
+        const auto coeff2 = panLookup(1 - w);
+        const auto l = left;
+        const auto r = right;
+        left = l * coeff2 + r * coeff1;
+        right = l * coeff1 + r * coeff2;
     }
 }
 
@@ -799,17 +803,17 @@ template <>
 void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
 
 template <class T, bool SIMD = SIMDConfig::pan>
-void width(absl::Span<const T> widthEnvelope, absl::Span<T> midBuffer, absl::Span<T> sideBuffer) noexcept
+void width(absl::Span<const T> widthEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
 {
-    ASSERT(midBuffer.size() >= widthEnvelope.size());
-    ASSERT(sideBuffer.size() >= widthEnvelope.size());
+    ASSERT(leftBuffer.size() >= widthEnvelope.size());
+    ASSERT(rightBuffer.size() >= widthEnvelope.size());
     auto* width = widthEnvelope.begin();
-    auto* mid = midBuffer.begin();
-    auto* side = sideBuffer.begin();
-    auto* sentinel = width + min(widthEnvelope.size(), midBuffer.size(), sideBuffer.size());
+    auto* left = leftBuffer.begin();
+    auto* right = rightBuffer.begin();
+    auto* sentinel = width + min(widthEnvelope.size(), leftBuffer.size(), rightBuffer.size());
     while (width < sentinel) {
-        _internals::snippetWidth(*width, *mid, *side);
-        incrementAll(width, mid, side);
+        _internals::snippetWidth(*width, *left, *right);
+        incrementAll(width, left, right);
     }
 }
 
