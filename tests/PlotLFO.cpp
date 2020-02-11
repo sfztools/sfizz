@@ -67,6 +67,23 @@ static void configureLFOwithRegion(
             lfo->countSubs = std::max<unsigned>(lfo->countSubs, iSub + 1);
             return &lfo->sub[iSub];
         };
+        auto getStepSeq = [&getLfo](uint8_t iLfo) -> sfz::LFO::Control::StepSequence* {
+            sfz::LFO::Control* lfo = getLfo(iLfo);
+            sfz::LFO::Control::StepSequence* seq = lfo->stepSequence.get();
+            if (!seq) {
+                seq = new sfz::LFO::Control::StepSequence;
+                lfo->stepSequence.reset(seq);
+            }
+            return seq;
+        };
+        auto getStep = [&getStepSeq](uint8_t iLfo, uint8_t iStep) -> float* {
+            if (iStep >= sfz::LFO::Control::StepSequence::maximumSteps)
+                return nullptr;
+            sfz::LFO::Control::StepSequence* seq = getStepSeq(iLfo);
+            if (!seq)
+                return nullptr;
+            return &seq->steps[iStep];
+        };
 
         switch (opc.lettersOnlyHash) {
         case hash("lfo_freq"): {
@@ -123,6 +140,20 @@ static void configureLFOwithRegion(
             sfz::LFO::Control::Sub* sub = getSub(lfoIndex, subwaveIndex);
             if (!sub || !absl::SimpleAtof(opc.value, &sub->scale))
                 break;
+            break;
+        }
+        case hash("lfo_steps"): {
+            sfz::LFO::Control::StepSequence* seq = getStepSeq(lfoIndex);
+            if (!seq || !absl::SimpleAtoi(opc.value, &seq->numSteps))
+                break;
+            break;
+        }
+        case hash("lfo_step"): {
+            float* step = getStep(lfoIndex, subwaveIndex);
+            float value;
+            if (!step || !absl::SimpleAtof(opc.value, &value))
+                break;
+            *step = value * 0.01f;
             break;
         }
         }

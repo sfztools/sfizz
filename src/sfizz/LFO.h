@@ -6,6 +6,7 @@
 
 #pragma once
 #include <array>
+#include <memory>
 
 namespace sfz {
 
@@ -17,8 +18,15 @@ namespace sfz {
   lfoN_delay: Delay
   lfoN_fade: Time to fade-in
   lfoN_count: Number of repetitions - Defective in ARIA? (does not stop)
+  lfoN_steps: Length of the step sequence - 1 to 128
+  lfoN_stepX: Value of the Xth step of the sequence - -100% to +100%
+  lfoN_stepX_onccY: ??? TODO(jpc) check this. override/modulate step in sequence?
 
     note: LFO evaluates between -1 to +1
+
+    note: make the step sequencer override the main wave when present.
+          subwaves are ARIA, step sequencer is Cakewalk, so do our own thing
+          which makes the most sense.
 
   * Subwaveforms
     X: - #1/omitted: the main wave
@@ -60,6 +68,12 @@ public:
             float ratio = 1; // lfoN_ratio[X]
             float scale = 1; // lfoN_scale[X]
         };
+        struct StepSequence {
+            unsigned numSteps = 1;
+            enum { maximumSteps = 128 };
+            std::array<float, maximumSteps> steps {}; // lfoN_stepX - normalized to unity
+        };
+        std::unique_ptr<StepSequence> stepSequence;
         unsigned countSubs = 1;
         enum { maximumSubs = 8 };
         std::array<Sub, maximumSubs> sub;
@@ -107,6 +121,11 @@ private:
      */
     template <Wave W>
     void processWave(unsigned nth, float* out, unsigned nframes);
+
+    /**
+       Process the step sequencer, adding to the buffer.
+     */
+    void processSteps(float* out, unsigned nframes);
 
 private:
     float sampleRate = 0;

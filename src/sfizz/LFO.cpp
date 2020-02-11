@@ -113,7 +113,42 @@ void LFO::processWave(unsigned nth, float* out, unsigned nframes)
 
         float incrPhase = ratio * samplePeriod * baseFreq;
         phase += incrPhase;
-        unsigned numWraps = (int)phase;
+        int numWraps = (int)phase;
+        phase -= numWraps;
+    }
+
+    subPhases[nth] = phase;
+}
+
+void LFO::processSteps(float* out, unsigned nframes)
+{
+    unsigned nth = 0;
+    const Control& ctl = *control;
+    const Control::Sub& sub = ctl.sub[nth];
+
+    const Control::StepSequence* seq = ctl.stepSequence.get();
+    const float* steps = seq->steps.data();
+    unsigned numSteps = seq->numSteps;
+
+    if (numSteps <= 0)
+        return;
+
+    float samplePeriod = 1.0f / sampleRate;
+    float phase = subPhases[nth];
+    float baseFreq = ctl.freq;
+    float offset = sub.offset;
+    float ratio = sub.ratio;
+    float scale = sub.scale;
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float step = steps[static_cast<int>(phase * numSteps)];
+        out[i] += offset + scale * step;
+
+        // TODO(jpc) lfoN_count: number of repetitions
+
+        float incrPhase = ratio * samplePeriod * baseFreq;
+        phase += incrPhase;
+        int numWraps = (int)phase;
         phase -= numWraps;
     }
 
@@ -133,31 +168,39 @@ void LFO::process(float* out, unsigned nframes)
         nframes -= skipFrames;
     }
 
-    for (unsigned i = 0, n = ctl.countSubs; i < n; ++i) {
-        switch (ctl.sub[i].wave) {
+    unsigned subno = 0;
+    const Control::StepSequence* seq = ctl.stepSequence.get();
+
+    if (seq) {
+        processSteps(out, nframes);
+        ++subno;
+    }
+
+    for (unsigned n = ctl.countSubs; subno < n; ++subno) {
+        switch (ctl.sub[subno].wave) {
         case kTriangle:
-            processWave<kTriangle>(i, out, nframes);
+            processWave<kTriangle>(subno, out, nframes);
             break;
         case kSine:
-            processWave<kSine>(i, out, nframes);
+            processWave<kSine>(subno, out, nframes);
             break;
         case kPulse75:
-            processWave<kPulse75>(i, out, nframes);
+            processWave<kPulse75>(subno, out, nframes);
             break;
         case kSquare:
-            processWave<kSquare>(i, out, nframes);
+            processWave<kSquare>(subno, out, nframes);
             break;
         case kPulse25:
-            processWave<kPulse25>(i, out, nframes);
+            processWave<kPulse25>(subno, out, nframes);
             break;
         case kPulse12_5:
-            processWave<kPulse12_5>(i, out, nframes);
+            processWave<kPulse12_5>(subno, out, nframes);
             break;
         case kRamp:
-            processWave<kRamp>(i, out, nframes);
+            processWave<kRamp>(subno, out, nframes);
             break;
         case kSaw:
-            processWave<kSaw>(i, out, nframes);
+            processWave<kSaw>(subno, out, nframes);
             break;
         }
     }
