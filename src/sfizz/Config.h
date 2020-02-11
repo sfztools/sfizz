@@ -81,7 +81,7 @@ namespace SIMDConfig {
     constexpr bool subtract { false };
     constexpr bool multiplyAdd { false };
     constexpr bool copy { false };
-    constexpr bool pan { true };
+    constexpr bool pan { false };
     constexpr bool cumsum { true };
     constexpr bool diff { false };
     constexpr bool sfzInterpolationCast { true };

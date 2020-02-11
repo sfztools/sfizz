@@ -62,22 +62,22 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     float crossfadeGain { region->getCrossfadeGain(resources.midiState.getCCArray()) };
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
-    basePan = normalizeNegativePercents(region->pan);
+    basePan = normalizePercents(region->pan);
     auto pan { basePan };
     if (region->panCC)
-        pan += normalizeCC(resources.midiState.getCCValue(region->panCC->first)) * normalizeNegativePercents(region->panCC->second);
+        pan += normalizeCC(resources.midiState.getCCValue(region->panCC->first)) * normalizePercents(region->panCC->second);
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
-    basePosition = normalizeNegativePercents(region->position);
+    basePosition = normalizePercents(region->position);
     auto position { basePosition };
     if (region->positionCC)
-        position += normalizeCC(resources.midiState.getCCValue(region->positionCC->first)) * normalizeNegativePercents(region->positionCC->second);
+        position += normalizeCC(resources.midiState.getCCValue(region->positionCC->first)) * normalizePercents(region->positionCC->second);
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
-    baseWidth = normalizeNegativePercents(region->width);
+    baseWidth = normalizePercents(region->width);
     auto width { baseWidth };
     if (region->widthCC)
-        width += normalizeCC(resources.midiState.getCCValue(region->widthCC->first)) * normalizeNegativePercents(region->widthCC->second);
+        width += normalizeCC(resources.midiState.getCCValue(region->widthCC->first)) * normalizePercents(region->widthCC->second);
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
@@ -196,17 +196,17 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     if (region->panCC && ccNumber == region->panCC->first) {
-        const float newPan { basePan + normalizeCC(ccValue) * normalizeNegativePercents(region->panCC->second) };
+        const float newPan { basePan + normalizeCC(ccValue) * normalizePercents(region->panCC->second) };
         panEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPan));
     }
 
     if (region->positionCC && ccNumber == region->positionCC->first) {
-        const float newPosition { basePosition + normalizeCC(ccValue) * normalizeNegativePercents(region->positionCC->second) };
+        const float newPosition { basePosition + normalizeCC(ccValue) * normalizePercents(region->positionCC->second) };
         positionEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPosition));
     }
 
     if (region->widthCC && ccNumber == region->widthCC->first) {
-        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizeNegativePercents(region->widthCC->second) };
+        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizePercents(region->widthCC->second) };
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 
@@ -290,24 +290,23 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
-    auto span1 = tempSpan1.first(numSamples);
-    auto span2 = tempSpan2.first(numSamples);
+    auto modulationSpan = tempSpan1.first(numSamples);
 
     // Amplitude envelope
-    amplitudeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    amplitudeEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // Crossfade envelope
-    crossfadeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    crossfadeEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // Volume envelope
-    volumeEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    volumeEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // AmpEG envelope
-    egEnvelope.getBlock(span1);
-    applyGain<float>(span1, leftBuffer);
+    egEnvelope.getBlock(modulationSpan);
+    applyGain<float>(modulationSpan, leftBuffer);
 
     // Filtering and EQ
     const float* inputChannel[1] { leftBuffer.data() };
@@ -323,74 +322,39 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
 
-    panEnvelope.getBlock(span1);
-    // We assume that the pan envelope is already normalized between -1 and 1
-    // Check bm_pan for your architecture to check if it's interesting to use the pan helper instead
-    fill<float>(span2, 1.0f);
-    add<float>(span1, span2);
-    applyGain<float>(piFour<float>, span2);
-    cos<float>(span2, span1);
-    sin<float>(span2, span2);
-    applyGain<float>(span1, leftBuffer);
-    applyGain<float>(span2, rightBuffer);
+    // Apply panning
+    panEnvelope.getBlock(modulationSpan);
+    pan<float>(modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
-    auto span1 = tempSpan1.first(numSamples);
-    auto span2 = tempSpan2.first(numSamples);
-    auto span3 = tempSpan3.first(numSamples);
+    auto modulationSpan = tempSpan1.first(numSamples);
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
     // Amplitude envelope
-    amplitudeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    amplitudeEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // Crossfade envelope
-    crossfadeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    crossfadeEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // Volume envelope
-    volumeEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    volumeEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
     // AmpEG envelope
-    egEnvelope.getBlock(span1);
-    buffer.applyGain(span1);
+    egEnvelope.getBlock(modulationSpan);
+    buffer.applyGain(modulationSpan);
 
-    // Create mid/side from left/right in the output buffer
-    copy<float>(rightBuffer, span1);
-    add<float>(leftBuffer, rightBuffer);
-    subtract<float>(span1, leftBuffer);
-    applyGain<float>(sqrtTwoInv<float>, leftBuffer);
-    applyGain<float>(sqrtTwoInv<float>, rightBuffer);
-
-    // Apply the width process
-    widthEnvelope.getBlock(span1);
-    fill<float>(span2, 1.0f);
-    add<float>(span1, span2);
-    applyGain<float>(piFour<float>, span2);
-    cos<float>(span2, span1);
-    sin<float>(span2, span2);
-    applyGain<float>(span1, leftBuffer);
-    applyGain<float>(span2, rightBuffer);
-
-    // Apply a position to the "left" channel which is supposed to be our mid channel
-    // TODO: add panning here too?
-    positionEnvelope.getBlock(span1);
-    fill<float>(span2, 1.0f);
-    add<float>(span1, span2);
-    applyGain<float>(piFour<float>, span2);
-    cos<float>(span2, span1);
-    sin<float>(span2, span2);
-    copy<float>(leftBuffer, span3);
-    copy<float>(rightBuffer, leftBuffer);
-    multiplyAdd<float>(span1, span3, leftBuffer);
-    multiplyAdd<float>(span2, span3, rightBuffer);
-    applyGain<float>(sqrtTwoInv<float>, leftBuffer);
-    applyGain<float>(sqrtTwoInv<float>, rightBuffer);
+    // Apply the width/position process
+    widthEnvelope.getBlock(modulationSpan);
+    width<float>(modulationSpan, leftBuffer, rightBuffer);
+    positionEnvelope.getBlock(modulationSpan);
+    pan<float>(modulationSpan, leftBuffer, rightBuffer);
 
     // Filtering and EQ
     const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };

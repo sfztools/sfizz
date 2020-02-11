@@ -756,3 +756,61 @@ TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
     sfz::diff<float, true>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
+
+TEST_CASE("[Helpers] Pan Scalar")
+{
+    std::array<float, 1> leftValue { 1.0f };
+    std::array<float, 1> rightValue { 1.0f };
+    auto left = absl::MakeSpan(leftValue);
+    auto right = absl::MakeSpan(rightValue);
+    SECTION("Pan = 0")
+    {
+        std::array<float, 1> pan { 0.0f };
+        sfz::pan<float, false>(pan, left, right);
+        REQUIRE(left[0] == Approx(0.70711f).margin(0.001f));
+        REQUIRE(right[0] == Approx(0.70711f).margin(0.001f));
+    }
+    SECTION("Pan = 1")
+    {
+        std::array<float, 1> pan { 1.0f };
+        sfz::pan<float, false>(pan, left, right);
+        REQUIRE(left[0] == Approx(0.0f).margin(0.001f));
+        REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
+    }
+    SECTION("Pan = -1")
+    {
+        std::array<float, 1> pan { -1.0f };
+        sfz::pan<float, false>(pan, left, right);
+        REQUIRE(left[0] == Approx(1.0f).margin(0.001f));
+        REQUIRE(right[0] == Approx(0.0f).margin(0.001f));
+    }
+}
+
+TEST_CASE("[Helpers] Width Scalar")
+{
+    std::array<float, 1> leftValue { 1.0f };
+    std::array<float, 1> rightValue { 1.0f };
+    auto left = absl::MakeSpan(leftValue);
+    auto right = absl::MakeSpan(rightValue);
+    SECTION("width = 1")
+    {
+        std::array<float, 1> width { 1.0f };
+        sfz::width<float, false>(width, left, right);
+        REQUIRE(left[0] == Approx(1.0f).margin(0.001f));
+        REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
+    }
+    SECTION("width = 0")
+    {
+        std::array<float, 1> width { 0.0f };
+        sfz::width<float, false>(width, left, right);
+        REQUIRE(left[0] == Approx(1.414f).margin(0.001f));
+        REQUIRE(right[0] == Approx(1.414f).margin(0.001f));
+    }
+    SECTION("width = -1")
+    {
+        std::array<float, 1> width { -1.0f };
+        sfz::width<float, false>(width, left, right);
+        REQUIRE(left[0] == Approx(1.0f).margin(0.001f));
+        REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
+    }
+}

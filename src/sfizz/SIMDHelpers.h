@@ -743,20 +743,33 @@ namespace _internals {
     }();
 
     template <class T>
-    inline void snippetPan(const T*& pan, T*& left, T*& right)
+    inline T panLookup(T pan)
     {
-        T p = ((*pan++) + T{1.0}) * T{0.5};
-        p = clamp<T>(p, 0, 1);
+        // reduce range, round to nearest
+        int index = static_cast<int>(T{0.5} + pan * (panSize - 1));
+        return panData[index];
+    }
 
-        auto lookUp = [](T pan) -> T
-        {
-            // reduce range, round to nearest
-            int index = static_cast<int>(T{0.5} + pan * (panSize - 1));
-            return panData[index];
-        };
+    template <class T>
+    inline void snippetPan(T pan, T& left, T& right)
+    {
+        pan = (pan + T{1.0}) * T{0.5};
+        pan = clamp<T>(pan, 0, 1);
+        left *= panLookup(pan);
+        right *= panLookup(1 - pan);
+    }
 
-        *left++ = lookUp(p);
-        *right++ = lookUp(1 - p);
+    template <class T>
+    inline void snippetWidth(T width, T& left, T& right)
+    {
+        T w = (width + T{1.0}) * T{0.5};
+        w = clamp<T>(w, 0, 1);
+        const auto coeff1 = panLookup(w);
+        const auto coeff2 = panLookup(1 - w);
+        const auto l = left;
+        const auto r = right;
+        left = l * coeff2 + r * coeff1;
+        right = l * coeff1 + r * coeff2;
     }
 }
 
@@ -780,12 +793,44 @@ void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T
     auto* left = leftBuffer.begin();
     auto* right = rightBuffer.begin();
     auto* sentinel = pan + min(panEnvelope.size(), leftBuffer.size(), rightBuffer.size());
-    while (pan < sentinel)
-        _internals::snippetPan(pan, left, right);
+    while (pan < sentinel) {
+        _internals::snippetPan(*pan, *left, *right);
+        incrementAll(pan, left, right);
+    }
 }
 
 template <>
 void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
+
+/**
+ * @brief Controls the width of a stereo signal, setting it to mono when width = 0 and inverting the channels
+ * when width = -1. Width = 1 has no effect.
+ *
+ * The output size will be the minimum of the width envelope span and left and right buffer span sizes.
+ *
+ * @tparam T the underlying type
+ * @tparam SIMD use the SIMD version or the scalar version
+ * @param panEnvelope
+ * @param leftBuffer
+ * @param rightBuffer
+ */
+template <class T, bool SIMD = SIMDConfig::pan>
+void width(absl::Span<const T> widthEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
+{
+    ASSERT(leftBuffer.size() >= widthEnvelope.size());
+    ASSERT(rightBuffer.size() >= widthEnvelope.size());
+    auto* width = widthEnvelope.begin();
+    auto* left = leftBuffer.begin();
+    auto* right = rightBuffer.begin();
+    auto* sentinel = width + min(widthEnvelope.size(), leftBuffer.size(), rightBuffer.size());
+    while (width < sentinel) {
+        _internals::snippetWidth(*width, *left, *right);
+        incrementAll(width, left, right);
+    }
+}
+
+template <>
+void width<float, true>(absl::Span<const float> widthEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept;
 
 /**
  * @brief Computes the mean of a span
