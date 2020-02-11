@@ -418,7 +418,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             if (*index >= sampleEnd) {
                 releaseAt = static_cast<int>(std::distance(indices.begin(), index));
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
-                if (source.getNumFrames() != region->trueSampleEnd(currentPromise->oversamplingFactor)) {
+                if (source.getNumFrames() - 1 < region->trueSampleEnd(currentPromise->oversamplingFactor)) {
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
                         << region->trueSampleEnd(currentPromise->oversamplingFactor)
