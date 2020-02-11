@@ -56,7 +56,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
 
     float gain { baseGain };
     if (region->amplitudeCC)
-        gain *= normalizeCC(resources.midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
+        gain += normalizeCC(resources.midiState.getCCValue(region->amplitudeCC->first)) * normalizePercents(region->amplitudeCC->second);
     amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
 
     float crossfadeGain { region->getCrossfadeGain(resources.midiState.getCCArray()) };
@@ -186,7 +186,7 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     delay = max(delay, minEnvelopeDelay);
 
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->first) {
-        const float newGain { baseGain * normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) };
+        const float newGain { baseGain + normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->second) };
         amplitudeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(newGain));
     }
 
