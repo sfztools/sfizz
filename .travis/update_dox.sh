@@ -4,7 +4,7 @@ set -x # No fail, we need to go back to the original branch at the end
 . .travis/environment.sh
 
 # Build documentation only from Linux x86_64 builds
-if [[ ${TRAVIS_CPU_ARCH} != "amd64" || ${TRAVIS_OS_NAME} != "linux" || "${CROSS_COMPILE}" != "" ]]; then
+if [[ ${TRAVIS_CPU_ARCH} != "amd64" || ${TRAVIS_OS_NAME} != "linux" || "${CROSS_COMPILE}" != "" || ${TRAVIS_TAG} == "" ]]; then
   exit 0
 fi
 
