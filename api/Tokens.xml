@@ -696,6 +696,18 @@
   </Token>
   <Token>
     <TokenIdentifier>
+      <Name>width</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a50a603b6fd13732140b7c9fd026a7eee</Anchor>
+    <Abstract>Controls the width of a stereo signal, setting it to mono when width = 0 and inverting the channels w...</Abstract>
+    <DeclaredIn>SIMDHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
       <Name>mean</Name>
       <APILanguage>cpp</APILanguage>
       <Type>func</Type>
@@ -967,18 +979,6 @@
     <Path>namespacesfz.html</Path>
     <Anchor>a082ee2dc6715392c07a5f6a5216c537b</Anchor>
     <Abstract>Normalize bends between -1 and 1. </Abstract>
-    <DeclaredIn>SfzHelpers.h</DeclaredIn>
-  </Token>
-  <Token>
-    <TokenIdentifier>
-      <Name>normalizeNegativePercents</Name>
-      <APILanguage>cpp</APILanguage>
-      <Type>func</Type>
-      <Scope>sfz</Scope>
-    </TokenIdentifier>
-    <Path>namespacesfz.html</Path>
-    <Anchor>abfcbb9f0d7899c187863d5e457a84fca</Anchor>
-    <Abstract>Normalize a possibly negative percentage between -1 and 1. </Abstract>
     <DeclaredIn>SfzHelpers.h</DeclaredIn>
   </Token>
   <Token>
@@ -1327,6 +1327,18 @@
     <Path>namespacesfz.html</Path>
     <Anchor>a3e5453bbc1c786fad5635026eebeaded</Anchor>
     <Abstract>Pans a mono signal left or right. </Abstract>
+    <DeclaredIn>SIMDHelpers.h</DeclaredIn>
+  </Token>
+  <Token>
+    <TokenIdentifier>
+      <Name>width</Name>
+      <APILanguage>cpp</APILanguage>
+      <Type>func</Type>
+      <Scope>sfz</Scope>
+    </TokenIdentifier>
+    <Path>namespacesfz.html</Path>
+    <Anchor>a50a603b6fd13732140b7c9fd026a7eee</Anchor>
+    <Abstract>Controls the width of a stereo signal, setting it to mono when width = 0 and inverting the channels w...</Abstract>
     <DeclaredIn>SIMDHelpers.h</DeclaredIn>
   </Token>
   <Token>

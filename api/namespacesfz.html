@@ -233,10 +233,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a082ee2dc6715392c07a5f6a5216c537b"><td class="memItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a082ee2dc6715392c07a5f6a5216c537b">normalizeBend</a> (float bendValue)</td></tr>
 <tr class="memdesc:a082ee2dc6715392c07a5f6a5216c537b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize bends between -1 and 1.  <a href="#a082ee2dc6715392c07a5f6a5216c537b">More...</a><br /></td></tr>
 <tr class="separator:a082ee2dc6715392c07a5f6a5216c537b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:abfcbb9f0d7899c187863d5e457a84fca"><td class="memTemplItemLeft" align="right" valign="top">constexpr float&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#abfcbb9f0d7899c187863d5e457a84fca">normalizeNegativePercents</a> (T percentValue)</td></tr>
-<tr class="memdesc:abfcbb9f0d7899c187863d5e457a84fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize a possibly negative percentage between -1 and 1.  <a href="#abfcbb9f0d7899c187863d5e457a84fca">More...</a><br /></td></tr>
-<tr class="separator:abfcbb9f0d7899c187863d5e457a84fca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11ed5c444b21ac2033875210cdd626ab"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a11ed5c444b21ac2033875210cdd626ab">ccSwitchedValue</a> (const SfzCCArray &amp;ccValues, const absl::optional&lt; CCValuePair &gt; &amp;ccSwitch, float value) noexcept</td></tr>
 <tr class="memdesc:a11ed5c444b21ac2033875210cdd626ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.  <a href="#a11ed5c444b21ac2033875210cdd626ab">More...</a><br /></td></tr>
 <tr class="separator:a11ed5c444b21ac2033875210cdd626ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -347,6 +343,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a3e5453bbc1c786fad5635026eebeaded"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a3e5453bbc1c786fad5635026eebeaded">pan</a> (absl::Span&lt; const T &gt; panEnvelope, absl::Span&lt; T &gt; leftBuffer, absl::Span&lt; T &gt; rightBuffer) noexcept</td></tr>
 <tr class="memdesc:a3e5453bbc1c786fad5635026eebeaded"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pans a mono signal left or right.  <a href="#a3e5453bbc1c786fad5635026eebeaded">More...</a><br /></td></tr>
 <tr class="separator:a3e5453bbc1c786fad5635026eebeaded"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50a603b6fd13732140b7c9fd026a7eee"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::pan&gt; </td></tr>
+<tr class="memitem:a50a603b6fd13732140b7c9fd026a7eee"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a50a603b6fd13732140b7c9fd026a7eee">width</a> (absl::Span&lt; const T &gt; widthEnvelope, absl::Span&lt; T &gt; leftBuffer, absl::Span&lt; T &gt; rightBuffer) noexcept</td></tr>
+<tr class="memdesc:a50a603b6fd13732140b7c9fd026a7eee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Controls the width of a stereo signal, setting it to mono when width = 0 and inverting the channels when width = -1.  <a href="#a50a603b6fd13732140b7c9fd026a7eee">More...</a><br /></td></tr>
+<tr class="separator:a50a603b6fd13732140b7c9fd026a7eee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a699ab4ea2fc4d6179cbd6c4dd9a2f07b"><td class="memTemplParams" colspan="2">template&lt;class T , bool SIMD = SIMDConfig::mean&gt; </td></tr>
 <tr class="memitem:a699ab4ea2fc4d6179cbd6c4dd9a2f07b"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesfz.html#a699ab4ea2fc4d6179cbd6c4dd9a2f07b">mean</a> (absl::Span&lt; const T &gt; vector) noexcept</td></tr>
 <tr class="memdesc:a699ab4ea2fc4d6179cbd6c4dd9a2f07b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the mean of a span.  <a href="#a699ab4ea2fc4d6179cbd6c4dd9a2f07b">More...</a><br /></td></tr>
@@ -1875,41 +1875,6 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="abfcbb9f0d7899c187863d5e457a84fca"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abfcbb9f0d7899c187863d5e457a84fca">&#9670;&nbsp;</a></span>normalizeNegativePercents()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr float sfz::normalizeNegativePercents </td>
-          <td>(</td>
-          <td class="paramtype">T&#160;</td>
-          <td class="paramname"><em>percentValue</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Normalize a possibly negative percentage between -1 and 1. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">T</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">percentValue</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>constexpr float </dd></dl>
-
-</div>
-</div>
 <a id="ac1f49ce61c8d1db977f17efc4ee199bf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac1f49ce61c8d1db977f17efc4ee199bf">&#9670;&nbsp;</a></span>normalizePercents()</h2>
 
@@ -2840,6 +2805,69 @@ template&lt;class T , bool SIMD = SIMDConfig::subtract&gt; </div>
   <table class="params">
     <tr><td class="paramname">input</td><td></td></tr>
     <tr><td class="paramname">output</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a50a603b6fd13732140b7c9fd026a7eee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50a603b6fd13732140b7c9fd026a7eee">&#9670;&nbsp;</a></span>width()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T , bool SIMD = SIMDConfig::pan&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sfz::width </td>
+          <td>(</td>
+          <td class="paramtype">absl::Span&lt; const T &gt;&#160;</td>
+          <td class="paramname"><em>widthEnvelope</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::Span&lt; T &gt;&#160;</td>
+          <td class="paramname"><em>leftBuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">absl::Span&lt; T &gt;&#160;</td>
+          <td class="paramname"><em>rightBuffer</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Controls the width of a stereo signal, setting it to mono when width = 0 and inverting the channels when width = -1. </p>
+<p>Width = 1 has no effect.</p>
+<p>The output size will be the minimum of the width envelope span and left and right buffer span sizes.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>the underlying type </td></tr>
+    <tr><td class="paramname">SIMD</td><td>use the SIMD version or the scalar version </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">panEnvelope</td><td></td></tr>
+    <tr><td class="paramname">leftBuffer</td><td></td></tr>
+    <tr><td class="paramname">rightBuffer</td><td></td></tr>
   </table>
   </dd>
 </dl>
