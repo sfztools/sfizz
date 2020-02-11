@@ -30,9 +30,13 @@ void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels
 
 void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numFrames)
 {
-    if (description == nullptr) {
+    auto justCopy = [&]() {
         for (unsigned channelIdx = 0; channelIdx < eq.channels(); channelIdx++)
             copy<float>({ inputs[channelIdx], numFrames }, { outputs[channelIdx], numFrames });
+    };
+
+    if (description == nullptr) {
+        justCopy();
         return;
     }
 
@@ -55,6 +59,11 @@ void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numF
         lastGain += midiState.getCCValue(mod.first) * mod.second;
     }
     lastGain = Default::eqGainRange.clamp(lastGain);
+
+    if (lastGain == 0.0f) {
+        justCopy();
+        return;
+    }
 
     eq.process(inputs, outputs, lastFrequency, lastBandwidth, lastGain, numFrames);
 }
