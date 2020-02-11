@@ -17,7 +17,7 @@ namespace sfz {
   lfoN_phase: Initial phase
   lfoN_delay: Delay
   lfoN_fade: Time to fade-in
-  lfoN_count: Number of repetitions - Defective in ARIA? (does not stop)
+  lfoN_count: Number of repetitions - not implemented in ARIA
   lfoN_steps: Length of the step sequence - 1 to 128
   lfoN_stepX: Value of the Xth step of the sequence - -100% to +100%
   lfoN_stepX_onccY: ??? TODO(jpc) check this. override/modulate step in sequence?
