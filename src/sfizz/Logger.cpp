@@ -141,7 +141,7 @@ void sfz::Logger::moveEvents() noexcept
 
 void sfz::Logger::enableLogging()
 {
-    loggingEnabled = false;
+    loggingEnabled = true;
 }
 
 void sfz::Logger::disableLogging()
