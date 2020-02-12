@@ -1,5 +1,7 @@
 # sfizz
 
+![alt tag](sfizz_screenshot.png)
+
 [![Travis Build Status](https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis)](https://travis-ci.com/sfztools/sfizz)
 
 ## Building
