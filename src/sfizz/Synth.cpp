@@ -708,6 +708,9 @@ fs::file_time_type sfz::Synth::checkModificationTime()
 {
     auto returnedTime = modificationTime;
     for (auto file: getIncludedFiles()) {
+        if (file.empty()) {
+            return fs::file_time_type::min();
+            }
         const auto fileTime = fs::last_write_time(file);
         if (returnedTime < fileTime)
             returnedTime = fileTime;
