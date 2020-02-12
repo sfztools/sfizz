@@ -496,3 +496,12 @@ TEST_CASE("[Files] Case sentitiveness")
     REQUIRE(synth.getRegionView(3)->sample == "Regions/dummy.wav");
 #endif
 }
+
+TEST_CASE("[Files] Empty file")
+{
+    sfz::Synth synth;
+    REQUIRE(!synth.loadSfzFile(""));
+    REQUIRE(synth.getIncludedFiles().empty());
+    REQUIRE(!synth.loadSfzFile({}));
+    REQUIRE(synth.getIncludedFiles().empty());
+}
