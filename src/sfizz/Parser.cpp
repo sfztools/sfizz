@@ -23,7 +23,8 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
 {
     includedFiles.clear();
 
-    const auto sfzFile = file.is_absolute() ? file : originalDirectory / file;
+    const auto sfzFile =
+        (file.empty() || file.is_absolute()) ? file : originalDirectory / file;
     if (!fs::exists(sfzFile))
         return false;
 
