@@ -28,10 +28,10 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
     if (!fs::exists(sfzFile))
         return false;
 
-    originalDirectory = file.parent_path();
-    includedFiles.push_back(file);
+    originalDirectory = sfzFile.parent_path();
+    includedFiles.push_back(sfzFile);
     std::vector<std::string> lines;
-    readSfzFile(file, lines);
+    readSfzFile(sfzFile, lines);
 
     aggregatedContent = absl::StrJoin(lines, " ");
     absl::string_view aggregatedView { aggregatedContent };
