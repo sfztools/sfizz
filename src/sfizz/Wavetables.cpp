@@ -142,4 +142,36 @@ WavetableRange WavetableRange::getRangeForFrequency(float f)
     return getRangeForOctave(oct);
 }
 
+//------------------------------------------------------------------------------
+WavetableMulti WavetableMulti::createForHarmonicProfile(
+    const HarmonicProfile& hp, unsigned tableSize, double refSampleRate)
+{
+    WavetableMulti wm;
+    constexpr unsigned multiSize = wm.multiSize();
+
+    // amplitude to match ARIA's default generator output
+    constexpr double amplitude = 0.25;
+
+    wm._tableSize = tableSize;
+    wm._multiData.reset(new float[tableSize * multiSize]);
+
+    for (unsigned m = 0; m < multiSize; ++m) {
+        WavetableRange range = WavetableRange::getRangeForOctave(m);
+
+        double freq = range.maxFrequency;
+
+        // A spectrum S of fundamental F has: S[1]=F and S[N/2]=Fs'/2
+        // which lets it generate frequency up to Fs'/2=F*N/2.
+        // Therefore it's desired to cut harmonics at C=0.5*Fs/Fs'=0.5*Fs/(F*N).
+        double cutoff = (0.5 * refSampleRate / tableSize) / freq;
+
+        float* ptr = &wm._multiData[m * tableSize];
+        absl::Span<float> table(ptr, tableSize);
+
+        hp.generate(table, amplitude, cutoff);
+    }
+
+    return wm;
+}
+
 } // namespace sfz

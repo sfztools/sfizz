@@ -11,7 +11,7 @@
 
 static void usage()
 {
-    std::cerr << "Usage: sfizz_plot_wavetables [-w wave] [-a amplitude] [-c cutoff]\n";
+    std::cerr << "Usage: sfizz_plot_wavetables [-w wave] [-a amplitude] [-c cutoff] [-m]\n";
 }
 
 int main(int argc, char* argv[])
@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
     absl::string_view waveName;
     double amplitude = 1.0;
     double cutoff = 0.5;
+    bool generateMulti = false;
 
     for (int i = 1; i < argc; ++i) {
         absl::string_view arg = argv[i];
@@ -33,9 +34,14 @@ int main(int argc, char* argv[])
         } else if (arg == "-c") {
             if (i + 1 >= argc || !absl::SimpleAtod(argv[++i], &cutoff))
                 return usage(), 1;
-        } else
+        } else if (arg == "-m")
+            generateMulti = true;
+        else
             return usage(), 1;
     }
+
+    if (waveName.empty())
+        waveName = "saw";
 
     const sfz::HarmonicProfile* hp = nullptr;
     if (waveName == "sine")
@@ -54,10 +60,37 @@ int main(int argc, char* argv[])
     constexpr size_t tableSize = 2048;
     float table[tableSize];
 
-    hp->generate(table, amplitude, cutoff);
+    if (!generateMulti) {
+        hp->generate(table, amplitude, cutoff);
 
-    for (size_t i = 0; i < tableSize; ++i)
-        std::cout << (i * (1.0 / tableSize)) << ' ' << table[i] << '\n';
+        for (size_t i = 0; i < tableSize; ++i)
+            std::cout << (i * (1.0 / tableSize)) << ' ' << table[i] << '\n';
+    } else {
+        sfz::WavetableMulti multi = sfz::WavetableMulti::createForHarmonicProfile(
+            *hp, tableSize);
+        unsigned multiSize = multi.multiSize();
+
+        if (true) {
+            // print all tables one after another
+            for (unsigned m = 0; m < multiSize; ++m) {
+                absl::Span<const float> table = multi.getTable(m);
+                for (size_t i = 0; i < tableSize; ++i) {
+                    std::cout << ((i + m * tableSize) * (1.0 / tableSize))
+                              << ' ' << table[i] << '\n';
+                }
+            }
+        } else {
+            // print all tables separately
+            for (size_t i = 0; i < tableSize; ++i) {
+                std::cout << (i * (1.0 / tableSize));
+                for (unsigned m = 0; m < multiSize; ++m) {
+                    absl::Span<const float> table = multi.getTable(m);
+                    std::cout << ' ' << table[i];
+                }
+                std::cout << '\n';
+            }
+        }
+    }
 
     return 0;
 }

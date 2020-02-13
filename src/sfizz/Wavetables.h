@@ -6,6 +6,7 @@
 
 #pragma once
 #include <absl/types/span.h>
+#include <memory>
 #include <complex>
 
 namespace sfz {
@@ -68,6 +69,46 @@ public:
     //     octave 7: 2560 Hz - 5120 Hz
     //     octave 8: 5120 Hz - 10240 Hz
     //     octave 9: 10240 Hz - 20480 Hz
+};
+
+/**
+   Multisample of a wavetable, which is a collection of FFT-filtered mipmaps
+   adapted for various playback frequencies.
+ */
+class WavetableMulti {
+public:
+    // number of tables in the multisample
+    unsigned tableSize() const { return _tableSize; }
+
+    // number of tables in the multisample
+    static constexpr unsigned multiSize() { return WavetableRange::countOctaves; }
+
+    // get the N-th table in the multisample
+    absl::Span<const float> getTable(unsigned index) const
+    {
+        unsigned size = _tableSize;
+        const float* ptr = &_multiData[index * _tableSize];
+        return { ptr, size };
+    }
+
+    // get the table which is adequate for a given playback frequency
+    absl::Span<const float> getTableForFrequency(float freq) const
+    {
+        return getTable(WavetableRange::getOctaveForFrequency(freq));
+    }
+
+    // create a multisample according to a given harmonic profile
+    // the reference sample rate is the minimum value accepted by the DSP
+    // system (most defavorable wrt. aliasing)
+    static WavetableMulti createForHarmonicProfile(
+        const HarmonicProfile& hp, unsigned tableSize, double refSampleRate = 44100.0);
+
+private:
+    // length of each individual table of the multisample
+    unsigned _tableSize = 0;
+
+    // internal storage, having `multiSize` rows and `tableSize` columns.
+    std::unique_ptr<float[]> _multiData;
 };
 
 } // namespace sfz
