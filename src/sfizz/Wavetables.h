@@ -38,4 +38,36 @@ public:
     void generate(absl::Span<float> table, double amplitude, double cutoff) const;
 };
 
+/**
+   A helper to select ranges of a multi-sampled oscillator, according to the
+   frequency of an oscillator.
+
+   The ranges are identified by octave numbers; not octaves in a musical sense,
+   but as logarithmic divisions of the frequency range.
+ */
+class WavetableRange {
+public:
+    float minFrequency = 0;
+    float maxFrequency = 0;
+
+    static constexpr unsigned countOctaves = 10;
+    static constexpr float frequencyScaleFactor = 0.05;
+
+    static unsigned getOctaveForFrequency(float f);
+    static WavetableRange getRangeForOctave(int o);
+    static WavetableRange getRangeForFrequency(float f);
+
+    // Note: using the frequency factor 0.05, octaves are as follows:
+    //     octave 0: 20 Hz - 40 Hz
+    //     octave 1: 40 Hz - 80 Hz
+    //     octave 2: 80 Hz - 160 Hz
+    //     octave 3: 160 Hz - 320 Hz
+    //     octave 4: 320 Hz - 640 Hz
+    //     octave 5: 640 Hz - 1280 Hz
+    //     octave 6: 1280 Hz - 2560 Hz
+    //     octave 7: 2560 Hz - 5120 Hz
+    //     octave 8: 5120 Hz - 10240 Hz
+    //     octave 9: 10240 Hz - 20480 Hz
+};
+
 } // namespace sfz

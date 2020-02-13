@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Wavetables.h"
+#include "MathHelpers.h"
 #include <kiss_fftr.h>
 #include <memory>
 
@@ -110,6 +111,35 @@ const HarmonicProfile& HarmonicProfile::getSaw()
 const HarmonicProfile& HarmonicProfile::getSquare()
 {
     return squareProfile;
+}
+
+//------------------------------------------------------------------------------
+constexpr unsigned WavetableRange::countOctaves;
+constexpr float WavetableRange::frequencyScaleFactor;
+
+unsigned WavetableRange::getOctaveForFrequency(float f)
+{
+    int oct = fp_exponent(frequencyScaleFactor * f);
+    return clamp<int>(oct, 0, countOctaves - 1);
+}
+
+WavetableRange WavetableRange::getRangeForOctave(int o)
+{
+    WavetableRange range;
+
+    Fraction<uint64_t> mant = fp_mantissa(0.0f);
+    float k = 1.0f / frequencyScaleFactor;
+
+    range.minFrequency = k * fp_from_parts<float>(0, o, 0);
+    range.maxFrequency = k * fp_from_parts<float>(0, o, mant.den - 1);
+
+    return range;
+}
+
+WavetableRange WavetableRange::getRangeForFrequency(float f)
+{
+    int oct = getOctaveForFrequency(f);
+    return getRangeForOctave(oct);
 }
 
 } // namespace sfz
