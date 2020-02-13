@@ -17,6 +17,7 @@ set (SFIZZ_SOURCES
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
     sfizz/Curve.cpp
+    sfizz/Wavetables.cpp
     sfizz/Effects.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
