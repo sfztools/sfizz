@@ -101,7 +101,7 @@ constexpr Type mag2db(Type in)
  */
 namespace Random {
 	static std::random_device randomDevice;
-	static std::mt19937 randomGenerator { randomDevice() };
+	static std::minstd_rand randomGenerator { randomDevice() };
 } // namespace Random
 
 /**
