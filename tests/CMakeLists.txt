@@ -24,6 +24,7 @@ set(SFIZZ_TEST_SOURCES
     MainT.cpp
     SynthT.cpp
     RegionTriggersT.cpp
+    FloatHelpersT.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})

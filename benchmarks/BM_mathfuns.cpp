@@ -22,6 +22,7 @@ public:
         std::uniform_real_distribution<float> dist { 0.1f, 1.0f };
         source = std::vector<float>(state.range(0));
         result = std::vector<float>(state.range(0));
+        intResult = std::vector<int>(state.range(0));
         std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
     }
 
@@ -31,6 +32,7 @@ public:
 
     std::vector<float> source;
     std::vector<float> result;
+    std::vector<int> intResult;
 };
 
 BENCHMARK_DEFINE_F(MyFixture, Dummy)
@@ -133,6 +135,29 @@ BENCHMARK_DEFINE_F(MyFixture, SIMDCos)
     }
 }
 
+BENCHMARK_DEFINE_F(MyFixture, ScalarLibmFloorLog2)
+(benchmark::State& state)
+{
+    for (auto _ : state) {
+        for (size_t i = 0, n = source.size(); i < n; ++i) {
+            intResult[i] = static_cast<int>(
+                std::floor(std::log2(std::fabs(source[i]))));
+        }
+        benchmark::DoNotOptimize(intResult);
+    }
+}
+
+BENCHMARK_DEFINE_F(MyFixture, ScalarFastFloorLog2)
+(benchmark::State& state)
+{
+    for (auto _ : state) {
+        for (size_t i = 0, n = source.size(); i < n; ++i) {
+            intResult[i] = fp_exponent(source[i]);
+        }
+        benchmark::DoNotOptimize(intResult);
+    }
+}
+
 BENCHMARK_REGISTER_F(MyFixture, Dummy)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 BENCHMARK_REGISTER_F(MyFixture, ScalarExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 BENCHMARK_REGISTER_F(MyFixture, SIMDExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
@@ -144,5 +169,7 @@ BENCHMARK_REGISTER_F(MyFixture, ScalarSin)->RangeMultiplier(4)->Range(1 << 6, 1 
 BENCHMARK_REGISTER_F(MyFixture, SIMDSin)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 BENCHMARK_REGISTER_F(MyFixture, ScalarCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 BENCHMARK_REGISTER_F(MyFixture, SIMDCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, ScalarLibmFloorLog2)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
+BENCHMARK_REGISTER_F(MyFixture, ScalarFastFloorLog2)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 
 BENCHMARK_MAIN();

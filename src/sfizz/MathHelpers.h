@@ -163,3 +163,124 @@ template <class Type>
 constexpr Type sqrtTwo { static_cast<Type>(1.414213562373095048801688724209698078569671875376948073176) };
 template <class Type>
 constexpr Type sqrtTwoInv { static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588) };
+
+/**
+   @brief A fraction which is parameterized by integer type
+ */
+template <class I>
+struct Fraction {
+    typedef I value_type;
+
+    operator double() const noexcept;
+    operator float() const noexcept;
+
+    I num;
+    I den;
+};
+
+template <class I>
+inline Fraction<I>::operator double() const noexcept
+{
+    return static_cast<double>(num) / static_cast<double>(den);
+}
+
+template <class I>
+inline Fraction<I>::operator float() const noexcept
+{
+    return static_cast<float>(num) / static_cast<float>(den);
+}
+
+/**
+   @brief Characteristics of IEEE754 floating point representations
+ */
+template <class F>
+struct FP_traits;
+
+template <> struct FP_traits<double>
+{
+    typedef double type;
+    typedef uint64_t same_size_int;
+    static_assert(sizeof(type) == sizeof(same_size_int),
+                  "Unexpected size of floating point type");
+    static constexpr int e_bits = 11;
+    static constexpr int m_bits = 52;
+    static constexpr int e_offset = -1023;
+};
+
+template <> struct FP_traits<float>
+{
+    typedef float type;
+    typedef uint32_t same_size_int;
+    static_assert(sizeof(type) == sizeof(same_size_int),
+                  "Unexpected size of floating point type");
+    static constexpr int e_bits = 8;
+    static constexpr int m_bits = 23;
+    static constexpr int e_offset = -127;
+};
+
+/**
+   @brief Get the sign part of a IEEE754 floating point number.
+
+   The number is reconstructed as `(-1^sign)*(1+mantissa)*(2^exponent)`.
+   See also `fp_exponent` and `fp_mantissa`.
+ */
+template <class F>
+inline bool fp_sign(F x)
+{
+    typedef FP_traits<F> T;
+    union { F real; typename T::same_size_int integer; } u;
+    u.real = x;
+    return ((u.integer >> (T::e_bits + T::m_bits)) & 1) != 0;
+}
+
+/**
+   @brief Get the exponent part of a IEEE754 floating point number.
+
+   The number is reconstructed as `(-1^sign)*(1+mantissa)*(2^exponent)`.
+   See also `fp_sign` and `fp_mantissa`.
+
+   It is a faster way of computing `floor(log2(abs(x)))`.
+ */
+template <class F>
+inline int fp_exponent(F x)
+{
+    typedef FP_traits<F> T;
+    union { F real; typename T::same_size_int integer; } u;
+    u.real = x;
+    int ex = (u.integer >> T::m_bits) & ((1u << T::e_bits) - 1);
+    return ex + T::e_offset;
+}
+
+/**
+   @brief Get the mantissa part of a IEEE754 floating point number.
+   The number is reconstructed as `(-1^sign)*(1+mantissa)*(2^exponent)`.
+   See also `fp_sign` and `fp_exponent`.
+ */
+template <class F>
+inline Fraction<uint64_t> fp_mantissa(F x)
+{
+    typedef FP_traits<F> T;
+    union { F real; typename T::same_size_int integer; } u;
+    u.real = x;
+    Fraction<uint64_t> f;
+    f.den = uint64_t{1} << T::m_bits;
+    f.num = u.integer & (f.den - 1);
+    return f;
+}
+
+/**
+   @brief Reconstruct a IEEE754 floating point number from its parts.
+
+   The parts must be in their range of validity.
+ */
+template <class F>
+inline F fp_from_parts(bool sgn, int ex, uint64_t mant)
+{
+    typedef FP_traits<F> T;
+    typedef typename T::same_size_int I;
+    union { F real; I integer; } u;
+    u.integer = mant |
+        (static_cast<I>(ex - T::e_offset) << T::m_bits) |
+        (static_cast<I>(sgn) << (T::e_bits + T::m_bits));
+    return u.real;
+}
