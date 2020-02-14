@@ -143,17 +143,18 @@ WavetableRange WavetableRange::getRangeForFrequency(float f)
 }
 
 //------------------------------------------------------------------------------
+constexpr unsigned WavetableMulti::_tableExtra;
+
 WavetableMulti WavetableMulti::createForHarmonicProfile(
     const HarmonicProfile& hp, unsigned tableSize, double refSampleRate)
 {
     WavetableMulti wm;
-    constexpr unsigned multiSize = wm.multiSize();
+    constexpr unsigned multiSize = WavetableMulti::multiSize();
 
     // amplitude to match ARIA's default generator output
     constexpr double amplitude = 0.25;
 
-    wm._tableSize = tableSize;
-    wm._multiData.reset(new float[tableSize * multiSize]);
+    wm.allocateStorage(tableSize);
 
     for (unsigned m = 0; m < multiSize; ++m) {
         WavetableRange range = WavetableRange::getRangeForOctave(m);
@@ -165,13 +166,34 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
         // Therefore it's desired to cut harmonics at C=0.5*Fs/Fs'=0.5*Fs/(F*N).
         double cutoff = (0.5 * refSampleRate / tableSize) / freq;
 
-        float* ptr = &wm._multiData[m * tableSize];
+        float* ptr = const_cast<float*>(wm.getTablePointer(m));
         absl::Span<float> table(ptr, tableSize);
 
         hp.generate(table, amplitude, cutoff);
     }
 
+    wm.fillExtra();
+
     return wm;
+}
+
+void WavetableMulti::allocateStorage(unsigned tableSize)
+{
+    _multiData.reset(new float[(tableSize + _tableExtra) * multiSize()]());
+    _tableSize = tableSize;
+}
+
+void WavetableMulti::fillExtra()
+{
+    unsigned tableSize = _tableSize;
+    constexpr unsigned tableExtra = _tableExtra;
+    constexpr unsigned multiSize = WavetableMulti::multiSize();
+
+    for (unsigned m = 0; m < multiSize; ++m) {
+        float* ptr = const_cast<float*>(getTablePointer(m));
+        for (unsigned i = 0; i < tableExtra; ++i)
+            ptr[tableSize + i] = ptr[i % tableSize];
+    }
 }
 
 } // namespace sfz

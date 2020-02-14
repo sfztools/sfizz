@@ -86,9 +86,7 @@ public:
     // get the N-th table in the multisample
     absl::Span<const float> getTable(unsigned index) const
     {
-        unsigned size = _tableSize;
-        const float* ptr = &_multiData[index * _tableSize];
-        return { ptr, size };
+        return { getTablePointer(index), _tableSize };
     }
 
     // get the table which is adequate for a given playback frequency
@@ -104,8 +102,23 @@ public:
         const HarmonicProfile& hp, unsigned tableSize, double refSampleRate = 44100.0);
 
 private:
+    // get a pointer to the beginning of the N-th table
+    const float* getTablePointer(unsigned index) const
+    {
+        return &_multiData[index * (_tableSize + _tableExtra)];
+    }
+
+    // allocate the internal data for tables of the given size
+    void allocateStorage(unsigned tableSize);
+
+    // fill extra data at table ends with repetitions of the first samples
+    void fillExtra();
+
     // length of each individual table of the multisample
     unsigned _tableSize = 0;
+
+    // number X of extra elements, for safe interpolations up to X-th order.
+    static constexpr unsigned _tableExtra = 4;
 
     // internal storage, having `multiSize` rows and `tableSize` columns.
     std::unique_ptr<float[]> _multiData;
