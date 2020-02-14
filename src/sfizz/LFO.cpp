@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "LFO.h"
+#include "MathHelpers.h"
 #include <algorithm>
 #include <cmath>
 
@@ -28,6 +29,7 @@ void LFO::start()
     const Control& ctl = *control;
 
     subPhases.fill(ctl.phase0);
+    sampleHoldMem.fill(0.0f);
 
     delayFramesLeft = (unsigned)std::ceil(sampleRate * ctl.delay);
 
@@ -120,6 +122,44 @@ void LFO::processWave(unsigned nth, float* out, unsigned nframes)
     subPhases[nth] = phase;
 }
 
+template <LFO::Wave W>
+void LFO::processSH(unsigned nth, float* out, unsigned nframes)
+{
+    const Control& ctl = *control;
+    const Control::Sub& sub = ctl.sub[nth];
+
+    float samplePeriod = 1.0f / sampleRate;
+    float phase = subPhases[nth];
+    float baseFreq = ctl.freq;
+    float offset = sub.offset;
+    float ratio = sub.ratio;
+    float scale = sub.scale;
+    float sampleHoldValue = sampleHoldMem[nth];
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        out[i] += offset + scale * sampleHoldValue;
+
+        // TODO(jpc) lfoN_count: number of repetitions
+
+        float incrPhase = ratio * samplePeriod * baseFreq;
+
+        // value updates twice every period
+        bool updateValue = (int)(phase * 2.0) != (int)((phase + incrPhase) * 2.0);
+
+        phase += incrPhase;
+        int numWraps = (int)phase;
+        phase -= numWraps;
+
+        if (updateValue) {
+            std::uniform_real_distribution<float> dist(-1.0f, +1.0f);
+            sampleHoldValue = dist(Random::randomGenerator);
+        }
+    }
+
+    subPhases[nth] = phase;
+    sampleHoldMem[nth] = sampleHoldValue;
+}
+
 void LFO::processSteps(float* out, unsigned nframes)
 {
     unsigned nth = 0;
@@ -201,6 +241,9 @@ void LFO::process(float* out, unsigned nframes)
             break;
         case kSaw:
             processWave<kSaw>(subno, out, nframes);
+            break;
+        case kRandomSH:
+            processSH<kRandomSH>(subno, out, nframes);
             break;
         }
     }

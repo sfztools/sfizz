@@ -54,6 +54,8 @@ public:
         kPulse12_5,
         kRamp,
         kSaw,
+        // ARIA extra
+        kRandomSH = 12,
     };
 
     struct Control {
@@ -123,6 +125,12 @@ private:
     void processWave(unsigned nth, float* out, unsigned nframes);
 
     /**
+       Process a sample-and-hold subwaveform, adding to the buffer.
+     */
+    template <Wave W>
+    void processSH(unsigned nth, float* out, unsigned nframes);
+
+    /**
        Process the step sequencer, adding to the buffer.
      */
     void processSteps(float* out, unsigned nframes);
@@ -138,6 +146,7 @@ private:
     float fadeInPole = 0;
     float fadeInMemory = 0;
     std::array<float, 8> subPhases {};
+    std::array<float, 8> sampleHoldMem {};
 };
 
 } // namespace sfz
