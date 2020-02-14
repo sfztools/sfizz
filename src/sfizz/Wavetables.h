@@ -11,6 +11,53 @@
 
 namespace sfz {
 
+class WavetableMulti;
+
+/**
+   An oscillator based on wavetables
+ */
+class WavetableOscillator {
+public:
+    /**
+       Initialize with the given sample rate.
+       Run it once after instantiating.
+     */
+    void init(double sampleRate);
+
+    /**
+       Reset the oscillation to the initial phase.
+     */
+    void clear();
+
+    /**
+       Set the wavetable to generate with this oscillator.
+     */
+    void setWavetable(const WavetableMulti* wave);
+
+    /**
+       Compute a cycle of the oscillator, with constant frequency.
+     */
+    void process(float frequency, float* output, unsigned nframes);
+
+    /**
+       Compute a cycle of the oscillator, with varying frequency.
+     */
+    void processModulated(const float* frequencies, float* output, unsigned nframes);
+
+private:
+    /**
+       Interpolate a value from a part of table, with delta in 0 to 1 excluded.
+       There are `TableExtra` elements available for reading.
+       (cf. WavetableMulti)
+     */
+    static float interpolate(const float* x, float delta);
+
+private:
+    float _phase = 0.0f;
+    float _sampleInterval = 0.0f;
+    const WavetableMulti* _multi = nullptr;
+};
+
 /**
    A description of the harmonics of a particular wave form
  */
@@ -100,6 +147,9 @@ public:
     // system (most defavorable wrt. aliasing)
     static WavetableMulti createForHarmonicProfile(
         const HarmonicProfile& hp, unsigned tableSize, double refSampleRate = 44100.0);
+
+    // create the tiniest wavetable with null content for use with oscillators
+    static WavetableMulti createSilence();
 
 private:
     // get a pointer to the beginning of the N-th table

@@ -11,6 +11,78 @@
 
 namespace sfz {
 
+static WavetableMulti silenceMulti = WavetableMulti::createSilence();
+
+void WavetableOscillator::init(double sampleRate)
+{
+    _sampleInterval = 1.0 / sampleRate;
+    _multi = &silenceMulti;
+    clear();
+}
+
+void WavetableOscillator::clear()
+{
+    _phase = 0.0f;
+}
+
+void WavetableOscillator::setWavetable(const WavetableMulti* wave)
+{
+    _multi = wave ? wave : &silenceMulti;
+}
+
+void WavetableOscillator::process(float frequency, float* output, unsigned nframes)
+{
+    float phase = _phase;
+    float phaseInc = frequency * _sampleInterval;
+
+    const WavetableMulti& multi = *_multi;
+    unsigned tableSize = multi.tableSize();
+    absl::Span<const float> table = multi.getTableForFrequency(frequency);
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float position = phase * tableSize;
+        unsigned index = static_cast<unsigned>(position);
+        float frac = position - index;
+        output[i] = interpolate(&table[index], frac);
+
+        phase += phaseInc;
+        phase -= static_cast<int>(phase);
+    }
+
+    _phase = phase;
+}
+
+void WavetableOscillator::processModulated(const float* frequencies, float* output, unsigned nframes)
+{
+    float phase = _phase;
+    float sampleInterval = _sampleInterval;
+
+    const WavetableMulti& multi = *_multi;
+    unsigned tableSize = multi.tableSize();
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float frequency = frequencies[i];
+        float phaseInc = frequency * sampleInterval;
+        absl::Span<const float> table = multi.getTableForFrequency(frequency);
+
+        float position = phase * tableSize;
+        unsigned index = static_cast<unsigned>(position);
+        float frac = position - index;
+        output[i] = interpolate(&table[index], frac);
+
+        phase += phaseInc;
+        phase -= static_cast<int>(phase);
+    }
+
+    _phase = phase;
+}
+
+float WavetableOscillator::interpolate(const float* x, float delta)
+{
+    return x[0] + delta * (x[1] - x[0]);
+}
+
+//------------------------------------------------------------------------------
 void HarmonicProfile::generate(
     absl::Span<float> table, double amplitude, double cutoff) const
 {
@@ -174,6 +246,14 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
 
     wm.fillExtra();
 
+    return wm;
+}
+
+WavetableMulti WavetableMulti::createSilence()
+{
+    WavetableMulti wm;
+    wm.allocateStorage(1);
+    wm.fillExtra();
     return wm;
 }
 
