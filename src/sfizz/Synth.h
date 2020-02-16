@@ -456,6 +456,8 @@ private:
     int noteOffset { 0 };
     int octaveOffset { 0 };
 
+    Duration dispatchDuration { 0 };
+
     fs::file_time_type modificationTime { };
 
     LEAK_DETECTOR(Synth);

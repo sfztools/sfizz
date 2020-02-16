@@ -10,23 +10,46 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <functional>
 #include <thread>
 #include "absl/strings/string_view.h"
 
 namespace sfz
 {
 
+using Duration = std::chrono::duration<double>;
+
+struct ScopedLogger
+{
+    using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+    ScopedLogger() = delete;
+    ScopedLogger(std::function<void(Duration)> callback);
+    ~ScopedLogger();
+    const std::function<void(Duration)> callback;
+    const TimePoint creationTime { std::chrono::high_resolution_clock::now() };
+};
+
 struct FileTime
 {
-    std::chrono::duration<double> waitDuration;
-    std::chrono::duration<double> loadDuration;
+    Duration waitDuration;
+    Duration loadDuration;
     uint32_t fileSize;
     absl::string_view filename;
 };
 
+struct CallbackBreakdown
+{
+    Duration dispatch { 0 };
+    Duration renderMethod { 0 };
+    Duration data { 0 };
+    Duration amplitude { 0 };
+    Duration filters { 0 };
+    Duration panning { 0 };
+};
+
 struct CallbackTime
 {
-    std::chrono::duration<double> duration;
+    CallbackBreakdown breakdown;
     int numVoices;
     size_t numSamples;
 };
@@ -40,8 +63,8 @@ public:
     void clear();
     void enableLogging();
     void disableLogging();
-    void logCallbackTime(std::chrono::duration<double> duration, int numVoices, size_t numSamples);
-    void logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename);
+    void logCallbackTime(CallbackBreakdown&& breakdown, int numVoices, size_t numSamples);
+    void logFileTime(Duration waitDuration, Duration loadDuration, uint32_t fileSize, absl::string_view filename);
 private:
     void moveEvents() noexcept;
     bool loggingEnabled { config::loggingEnabled };

@@ -411,6 +411,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
     const auto callbackStartTime = std::chrono::high_resolution_clock::now();
+    CallbackBreakdown callbackBreakdown;
+    callbackBreakdown.dispatch = dispatchDuration;
 
     buffer.fill(0.0f);
 
@@ -430,13 +432,20 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             numActiveVoices++;
             voice->renderBlock(tempSpan);
             buffer.add(tempSpan);
+            callbackBreakdown.data += voice->getLastDataDuration();
+            callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
+            callbackBreakdown.filters += voice->getLastFilterDuration();
+            callbackBreakdown.panning += voice->getLastPanningDuration();
         }
     }
 
     buffer.applyGain(db2mag(volume));
 
-    const auto callbackDuration = std::chrono::high_resolution_clock::now() - callbackStartTime;
-    resources.logger.logCallbackTime(callbackDuration, numActiveVoices, buffer.getNumFrames());
+    callbackBreakdown.renderMethod = std::chrono::high_resolution_clock::now() - callbackStartTime;
+    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, buffer.getNumFrames());
+
+    // Reset the dispatch counter
+    dispatchDuration = Duration(0);
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -444,6 +453,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    ScopedLogger logger { [this](auto&& duration){ dispatchDuration += duration; } };
     resources.midiState.noteOnEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -458,6 +468,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    ScopedLogger logger { [this](auto&& duration){ dispatchDuration += duration; } };
     resources.midiState.noteOffEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -513,6 +524,8 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
+    ScopedLogger logger { [this](auto&& duration){ dispatchDuration += duration; } };
+
     resources.midiState.ccEvent(ccNumber, ccValue);
 
     AtomicGuard callbackGuard { inCallback };
@@ -543,6 +556,8 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
 
+    ScopedLogger logger { [this](auto&& duration){ dispatchDuration += duration; } };
+
     resources.midiState.pitchBendEvent(pitch);
 
     for (auto& region: regions) {
@@ -555,10 +570,11 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 }
 void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
 {
+    ScopedLogger logger { [this](auto&& duration){ dispatchDuration += duration; } };
 }
 void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
 {
-
+    ScopedLogger logger { [this](auto&& duration){ dispatchDuration += duration; } };
 }
 
 int sfz::Synth::getNumRegions() const noexcept

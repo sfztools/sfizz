@@ -66,7 +66,7 @@ sfz::Logger::~Logger()
                         << "_file_log.csv";
         fs::path fileLogPath{ fs::current_path() / fileLogFilename.str() };
         DBG("Logging file times to " << fileLogPath.filename());
-        std::ofstream loadLogFile { fileLogPath.string() };
+        std::ofstream loadLogFile { fileLogPath.native() };
         loadLogFile << "WaitDuration,LoadDuration,FileSize,FileName" << '\n';
         for (auto& time: fileTimes)
             loadLogFile << time.waitDuration.count() << ','
@@ -82,22 +82,27 @@ sfz::Logger::~Logger()
                             << "_callback_log.csv";
         fs::path callbackLogPath{ fs::current_path() / callbackLogFilename.str() };
         DBG("Logging callback times to " << callbackLogPath.filename());
-        std::ofstream callbackLogFile { callbackLogPath.string() };
-        callbackLogFile << "Duration,NumVoices,NumSamples" << '\n';
+        std::ofstream callbackLogFile { callbackLogPath.native() };
+        callbackLogFile << "Dispatch,RenderMethod,Data,Amplitude,Filters,Panning,NumVoices,NumSamples" << '\n';
         for (auto& time: callbackTimes)
-            callbackLogFile << time.duration.count() << ','
+            callbackLogFile << time.breakdown.dispatch.count() << ','
+                            << time.breakdown.renderMethod.count() << ','
+                            << time.breakdown.data.count() << ','
+                            << time.breakdown.amplitude.count() << ','
+                            << time.breakdown.filters.count() << ','
+                            << time.breakdown.panning.count() << ','
                             << time.numVoices << ','
                             << time.numSamples << '\n';
     }
 }
 
 
-void sfz::Logger::logCallbackTime(std::chrono::duration<double> duration, int numVoices, size_t numSamples)
+void sfz::Logger::logCallbackTime(CallbackBreakdown&& breakdown, int numVoices, size_t numSamples)
 {
     if (!loggingEnabled)
         return;
 
-    callbackTimeQueue.try_push<CallbackTime>({ duration, numVoices, numSamples });
+    callbackTimeQueue.try_push<CallbackTime>({ std::move(breakdown), numVoices, numSamples });
 }
 
 void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename)
@@ -126,7 +131,7 @@ void sfz::Logger::moveEvents() noexcept
         while (callbackTimeQueue.try_pop(callbackTime))
             callbackTimes.push_back(callbackTime);
 
-        sfz::FileTime fileTime;
+        FileTime fileTime;
         while (fileTimeQueue.try_pop(fileTime))
             fileTimes.push_back(fileTime);
 
@@ -135,7 +140,7 @@ void sfz::Logger::moveEvents() noexcept
             callbackTimes.clear();
         }
 
-        std::this_thread::sleep_for(50ms);
+        std::this_thread::sleep_for(10ms);
     }
 }
 
@@ -148,4 +153,15 @@ void sfz::Logger::disableLogging()
 {
     loggingEnabled = false;
     clearFlag.clear();
+}
+
+sfz::ScopedLogger::ScopedLogger(std::function<void(std::chrono::duration<double>)> callback)
+: callback(std::move(callback))
+{
+
+}
+
+sfz::ScopedLogger::~ScopedLogger()
+{
+    callback(std::chrono::high_resolution_clock::now() - creationTime);
 }
