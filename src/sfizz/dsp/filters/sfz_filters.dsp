@@ -133,4 +133,14 @@ pkShGain = vslider("[03] Peak/shelf gain [unit:dB]", 0.0, 0.0, 40.0, 0.1);
 bandwidth = vslider("[04] Bandwidth [unit:octave]", 1.0, 0.1, 10.0, 0.01);
 
 // smoothing function to prevent fast changes of filter coefficients
-smoothCoefs = si.smoo; // TODO check if this is appropriate otherwise replace
+// The basic si.smoo is a bit longish and creates strange modulation sounds
+// The smoothing coefficients seem to start at 0, and thus there's a small
+// time where the coefficients go e.g. from 0 to cutoff.
+// smoothCoefs = si.smoo;
+
+// The below line uses no smoothing at all. This could require smoothing in code
+// done on the filter parameters rather than directly on the biquad's coefficients.
+// smoothCoefs = _ ; // No smoothing applied at all
+
+// This applies a quicker smoothing but which may render the filter unstable
+smoothCoefs = si.smooth(ba.tau2pole(0.001)) ; // time constant = 1ms
