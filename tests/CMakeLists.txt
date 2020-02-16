@@ -34,7 +34,7 @@ sfizz_enable_lto_if_needed(sfizz_tests)
 
 find_package(PkgConfig)
 if(PKGCONFIG_FOUND)
-    pkg_check_modules(JACK "jack")
+pkg_check_modules(JACK "jack")
 endif()
 find_package(Qt5 COMPONENTS Widgets)
 
@@ -49,5 +49,12 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     target_link_libraries(sfizz_demo_stereo PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
     set_target_properties(sfizz_demo_stereo PROPERTIES AUTOUIC ON)
 endif()
+
+add_executable(eq_apply EQ.cpp)
+target_link_libraries(eq_apply PRIVATE sfizz::sfizz)
+
+add_executable(filter_apply Filter.cpp)
+target_link_libraries(filter_apply PRIVATE sfizz::sfizz)
+
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)
