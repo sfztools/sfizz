@@ -62,12 +62,3 @@ hp1Smooth(s,f) = fi.iir((0.5*(1.+p),-0.5*(1+p)),(0.-p)) with {
 ap1Smooth(s,f) = fi.iir((a,1.),(a)) with {
   a = (-1.+2.*ma.PI*f/ma.SR) : s;
 };
-
-//------------------------------------------------------------------------------
-// Example
-//------------------------------------------------------------------------------
-process = rbjPeakingEqSmooth(si.smooth(ba.tau2pole(0.001)), cutoff, gain, resonance) with {
-  cutoff = hslider("[1] Cutoff [unit:Hz] [scale:log]", 50.0, 50.0, 10000.0, 1.0);
-    resonance = hslider("[2] Resonance [unit:dB]", 1.0, 0.0, 40.0, 0.1);
-	gain = hslider("[2] gain [unit:dB]", 1.0, -80.0, 80.0, 0.1);
- };
