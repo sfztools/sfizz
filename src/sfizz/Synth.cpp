@@ -512,6 +512,8 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
+    resources.midiState.ccEvent(ccNumber, ccValue);
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
@@ -521,7 +523,6 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
         return;
     }
 
-    resources.midiState.ccEvent(ccNumber, ccValue);
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, ccValue);
 
