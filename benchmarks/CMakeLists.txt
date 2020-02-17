@@ -32,6 +32,7 @@ macro(sfizz_add_benchmark TARGET)
 endmacro()
 
 sfizz_add_benchmark(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
+sfizz_add_benchmark(bm_clock BM_clock.cpp)
 sfizz_add_benchmark(bm_write BM_writeInterleaved.cpp)
 sfizz_add_benchmark(bm_read BM_readInterleaved.cpp)
 sfizz_add_benchmark(bm_fill BM_fill.cpp)
@@ -56,6 +57,9 @@ sfizz_add_benchmark(bm_diff BM_diff.cpp)
 sfizz_add_benchmark(bm_widthPos BM_widthPos.cpp)
 sfizz_add_benchmark(bm_interpolationCast BM_interpolationCast.cpp)
 sfizz_add_benchmark(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp)
+
+sfizz_add_benchmark(bm_logger BM_logger.cpp)
+target_link_libraries(bm_logger PRIVATE sfizz::sfizz)
 
 if (TARGET sfizz-samplerate)
 	sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
@@ -86,6 +90,7 @@ add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
 	bm_opf_high_vs_low
 	bm_write
+	bm_clock
 	bm_pointerIterationOrOffsets
 	bm_read
 	bm_mean
@@ -102,6 +107,7 @@ add_dependencies(sfizz_benchmarks
 	bm_ramp
 	bm_ADSR
 	bm_add
+	bm_logger
 	bm_pan
 	bm_subtract
 	bm_multiplyAdd
