@@ -109,23 +109,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
     bendStepFactor = centsFactor(region->bendStep);
-    prepareEGEnvelope(initialDelay, value);
-}
-
-void sfz::Voice::prepareEGEnvelope(int delay, uint8_t velocity) noexcept
-{
-    auto secondsToSamples = [this](auto timeInSeconds) {
-        return static_cast<int>(timeInSeconds * sampleRate);
-    };
-    const auto& ccArray = resources.midiState.getCCArray();
-    egEnvelope.reset(
-        secondsToSamples(region->amplitudeEG.getAttack(ccArray, velocity)),
-        secondsToSamples(region->amplitudeEG.getRelease(ccArray, velocity)),
-        normalizePercents(region->amplitudeEG.getSustain(ccArray, velocity)),
-        delay + secondsToSamples(region->amplitudeEG.getDelay(ccArray, velocity)),
-        secondsToSamples(region->amplitudeEG.getDecay(ccArray, velocity)),
-        secondsToSamples(region->amplitudeEG.getHold(ccArray, velocity)),
-        normalizePercents(region->amplitudeEG.getStart(ccArray, velocity)));
+    egEnvelope.reset(*region, resources.midiState, delay, value, sampleRate);
 }
 
 bool sfz::Voice::isFree() const noexcept
