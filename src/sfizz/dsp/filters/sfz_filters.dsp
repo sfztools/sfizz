@@ -15,6 +15,9 @@ sfzNoise = no.noise : *(0.25);
 
 //==============================================================================
 // Filters
+// To generate a specific filter from this file, use:
+//      faust2jack -double -pn sfzPeq src/sfizz/dsp/filters/sfz_filters.dsp
+// and replace sfzPeq by the filter you want
 
 // the SFZ lowpass 1-pole filter
 sfzLpf1p = fm.lp1Smooth(smoothCoefs,cutoff);
