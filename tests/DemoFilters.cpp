@@ -13,6 +13,7 @@
 #include <QDebug>
 #include <jack/jack.h>
 #include <memory>
+#include <cmath>
 
 ///
 struct jack_delete {
@@ -38,6 +39,8 @@ private:
     void valueChangedPkShGain(int value);
     void valueChangedBandwidth(int value);
     void valueChangedFilterMode(int value);
+    void valueChangedCutoffModSpeed(int value);
+    void valueChangedCutoffModRange(int value);
 
 private:
     QMainWindow *fWindow = nullptr;
@@ -55,11 +58,21 @@ private:
     static constexpr int bwMin = 1.0;
     static constexpr int bwMax = 10.0;
 
+    static constexpr float lfoRateMin = 0.1;
+    static constexpr float lfoRateMax = 10.0;
+
+    static constexpr int cutoffModMin = 1;
+    static constexpr int cutoffModMax = 48;
+
     int fType = sfz::kFilterNone;
     int fCutoff = 500.0;
     int fReso = 0.0;
     int fPksh = 20.0;
     int fBw = 1.0;
+    float fCutoffRate = 1.0;
+    int fCutoffMod = 24.0;
+
+    float fCutoffLfoPhase = 0.0f;
 
     sfz::Filter fFilter;
     sfz::FilterEq fFilterEq;
@@ -72,6 +85,11 @@ private:
 
     jack_client_u fClient;
     jack_port_t *fPorts[4] = {};
+
+    std::unique_ptr<float[]> fTempCutoff;
+    std::unique_ptr<float[]> fTempReso;
+    std::unique_ptr<float[]> fTempBw;
+    std::unique_ptr<float[]> fTempPksh;
 };
 
 DemoApp::DemoApp(int &argc, char **argv)
@@ -92,12 +110,18 @@ bool DemoApp::initSound()
     fClient.reset(client);
 
     double sampleRate = jack_get_sample_rate(client);
+    unsigned bufferSize = jack_get_buffer_size(client);
 
     fFilter.init(sampleRate);
     fFilter.setChannels(2);
 
     fFilterEq.init(sampleRate);
     fFilterEq.setChannels(2);
+
+    fTempCutoff.reset(new float[bufferSize]);
+    fTempReso.reset(new float[bufferSize]);
+    fTempBw.reset(new float[bufferSize]);
+    fTempPksh.reset(new float[bufferSize]);
 
     fPorts[0] = jack_port_register(client, "in_left", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
     fPorts[1] = jack_port_register(client, "in_right", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
@@ -167,6 +191,8 @@ void DemoApp::initWindow()
     fUi.spinResonance->setRange(resoMin, resoMax);
     fUi.spinPkShGain->setRange(pkshMin, pkshMax);
     fUi.spinBandwidth->setRange(bwMin, bwMax);
+    fUi.valCutoffModSpeed->setRange(lfoRateMin * 1e3, lfoRateMax * 1e3);
+    fUi.valCutoffModRange->setRange(cutoffModMin, cutoffModMax);
 
     fUi.dialCutoff->setValue(fCutoff);
     fUi.dialResonance->setValue(fReso);
@@ -176,6 +202,10 @@ void DemoApp::initWindow()
     fUi.spinResonance->setValue(fReso);
     fUi.spinPkShGain->setValue(fPksh);
     fUi.spinBandwidth->setValue(fBw);
+    fUi.valCutoffModSpeed->setValue(fCutoffRate * 1e3);
+    fUi.valCutoffModRange->setValue(fCutoffMod);
+    fUi.lblCutoffModSpeed->setText(QString::number(fCutoffRate));
+    fUi.lblCutoffModRange->setText(QString::number(fCutoffMod));
 
     connect(
         fUi.dialCutoff, &QDial::valueChanged,
@@ -201,6 +231,12 @@ void DemoApp::initWindow()
     connect(
         fUi.spinBandwidth, QOverload<int>::of(&QSpinBox::valueChanged),
         this, [this](int value) { valueChangedBandwidth(value); });
+    connect(
+        fUi.valCutoffModSpeed, &QSlider::valueChanged,
+        this, [this](int value) { valueChangedCutoffModSpeed(value); });
+    connect(
+        fUi.valCutoffModRange, &QSlider::valueChanged,
+        this, [this](int value) { valueChangedCutoffModRange(value); });
 
     QButtonGroup *grpMode = new QButtonGroup(this);
     grpMode->addButton(fUi.btnMultiMode, kFilterModeMulti);
@@ -233,16 +269,48 @@ int DemoApp::processAudio(jack_nframes_t nframes, void *cbdata)
     outs[0] = reinterpret_cast<float *>(jack_port_get_buffer(self->fPorts[2], nframes));
     outs[1] = reinterpret_cast<float *>(jack_port_get_buffer(self->fPorts[3], nframes));
 
+    float *tempCutoff = self->fTempCutoff.get();
+    float *tempReso = self->fTempReso.get();
+    float *tempBw = self->fTempBw.get();
+    float *tempPksh = self->fTempPksh.get();
+
+    std::fill(tempCutoff, tempCutoff + nframes, self->fCutoff);
+    std::fill(tempReso, tempReso + nframes, self->fReso);
+    std::fill(tempBw, tempBw + nframes, self->fBw);
+    std::fill(tempPksh, tempPksh + nframes, self->fPksh);
+
+    float cutoffLfoPhase = self->fCutoffLfoPhase;
+    float cutoffRate = self->fCutoffRate;
+    float cutoffMod = self->fCutoffMod;
+
+    float sampleTime = 1.0 / jack_get_sample_rate(self->fClient.get());
+
+    auto triangleLfo = [](float phase) -> float {
+        float y = -4 * phase + 2;
+        y = (phase < 0.25f) ? (4 * phase) : y;
+        y = (phase > 0.75f) ? (4 * phase - 4) : y;
+        return y;
+    };
+
+    for (jack_nframes_t i = 0; i < nframes; ++i) {
+        float lfo = cutoffMod * triangleLfo(cutoffLfoPhase);
+        tempCutoff[i] *= std::exp2(lfo * (1.0f / 12.0f));
+        cutoffLfoPhase += cutoffRate * sampleTime;
+        cutoffLfoPhase -= (int)cutoffLfoPhase;
+    }
+
     switch (self->fFilterMode) {
     default:
     case kFilterModeMulti:
         self->fFilter.setType(static_cast<sfz::FilterType>(self->fType));
-        self->fFilter.process(ins, outs, self->fCutoff, self->fReso, self->fPksh, nframes);
+        self->fFilter.processModulated(ins, outs, tempCutoff, tempReso, tempPksh, nframes);
         break;
     case kFilterModeEq:
-        self->fFilterEq.process(ins, outs, self->fCutoff, self->fBw, self->fPksh, nframes);
+        self->fFilterEq.processModulated(ins, outs, tempCutoff, tempBw, tempPksh, nframes);
         break;
     }
+
+    self->fCutoffLfoPhase = cutoffLfoPhase;
 
     return 0;
 }
@@ -310,6 +378,20 @@ void DemoApp::valueChangedFilterMode(int value)
     fUi.stackedWidget->setCurrentIndex(value);
 
     fFilterMode = static_cast<FilterMode>(value);
+}
+
+void DemoApp::valueChangedCutoffModSpeed(int value)
+{
+    fUi.lblCutoffModSpeed->setText(QString::number(value * 1e-3));
+
+    fCutoffRate = value * 1e-3;
+}
+
+void DemoApp::valueChangedCutoffModRange(int value)
+{
+    fUi.lblCutoffModRange->setText(QString::number(value));
+
+    fCutoffMod = value;
 }
 
 int main(int argc, char *argv[])
