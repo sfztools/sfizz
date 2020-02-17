@@ -6,6 +6,8 @@
 
 #pragma once
 #include "LeakDetector.h"
+#include "Region.h"
+#include "MidiState.h"
 #include <absl/types/span.h>
 namespace sfz {
 /**
@@ -19,19 +21,15 @@ class ADSREnvelope {
 public:
     ADSREnvelope() = default;
     /**
-     * @brief Resets the ADSR envelope. There's alot of parameter but what can you do.
-     * They all match the SFZ specification.
+     * @brief Resets the ADSR envelope given a Region, the current midi state, and a delay and
+     * trigger velocity
      *
-     * @param attack
-     * @param release
-     * @param sustain
+     * @param region
+     * @param state
      * @param delay
-     * @param decay
-     * @param hold
-     * @param start
-     * @param depth
+     * @param velocity
      */
-    void reset(int attack, int release, Type sustain = 1.0, int delay = 0, int decay = 0, int hold = 0, Type start = 0.0, Type depth = 1) noexcept;
+    void reset(const Region& region, const MidiState& state, int delay, uint8_t velocity, float sampleRate) noexcept;
     /**
      * @brief Get the next value for the envelope
      *
@@ -91,6 +89,7 @@ private:
     Type sustain { 0 };
     int releaseDelay { 0 };
     bool shouldRelease { false };
+    bool freeRunning { false };
     LEAK_DETECTOR(ADSREnvelope);
 };
 

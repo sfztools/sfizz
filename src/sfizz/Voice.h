@@ -225,13 +225,6 @@ private:
      */
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
     /**
-     * @brief Computes the values for the envelope depending on the note or CC number and the velocity/cc value
-     *
-     * @param delay
-     * @param velocity
-     */
-    void prepareEGEnvelope(int delay, uint8_t velocity) noexcept;
-    /**
      * @brief The function processing a mono sample source
      *
      * @param buffer

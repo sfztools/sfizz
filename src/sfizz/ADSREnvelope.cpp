@@ -12,25 +12,25 @@
 namespace sfz {
 
 template <class Type>
-void ADSREnvelope<Type>::reset(int attack, int release, Type sustain, int delay, int decay, int hold, Type start, Type depth) noexcept
+void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int delay, uint8_t velocity, float sampleRate) noexcept
 {
-    ASSERT(start <= 1.0f);
-    ASSERT(sustain <= 1.0f);
+    auto secondsToSamples = [sampleRate](auto timeInSeconds) {
+        return static_cast<int>(timeInSeconds * sampleRate);
+    };
 
-    sustain = clamp<Type>(sustain, 0.0, 1.0);
-    start = clamp<Type>(start, 0.0, 1.0);
+    const auto ccArray = state.getCCArray();
+    this->delay = delay + secondsToSamples(region.amplitudeEG.getDelay(ccArray, velocity));
+    this->attack = secondsToSamples(region.amplitudeEG.getAttack(ccArray, velocity));
+    this->decay = secondsToSamples(region.amplitudeEG.getDecay(ccArray, velocity));
+    this->release = secondsToSamples(region.amplitudeEG.getRelease(ccArray, velocity));
+    this->hold = secondsToSamples(region.amplitudeEG.getHold(ccArray, velocity));
+    this->peak = 1.0;
+    this->sustain =  normalizePercents(region.amplitudeEG.getSustain(ccArray, velocity));
+    this->start = this->peak * normalizePercents(region.amplitudeEG.getStart(ccArray, velocity));
 
-    currentState = State::Done;
-    this->delay = delay;
-    this->attack = attack;
-    this->decay = decay;
-    this->release = release;
-    this->hold = hold;
-    this->start = depth * start;
-    this->sustain = depth * sustain;
-    this->peak = depth;
     releaseDelay = 0;
     shouldRelease = false;
+    freeRunning = ((region.trigger == SfzTrigger::release) || (region.trigger == SfzTrigger::release_key));
     step = 0.0;
     currentValue = this->start;
     currentState = State::Delay;
@@ -53,7 +53,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
             return start;
 
         currentState = State::Attack;
-        step = (static_cast<Type>(1.0) - currentValue) / (attack > 0 ? attack : 1);
+        step = (peak - currentValue) / (attack > 0 ? attack : 1);
         [[fallthrough]];
     case State::Attack:
         if (attack-- > 0) {
@@ -62,7 +62,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         }
 
         currentState = State::Hold;
-        currentValue = 1.0;
+        currentValue = peak;
         [[fallthrough]];
     case State::Hold:
         if (hold-- > 0)
@@ -81,6 +81,8 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         currentValue = sustain;
         [[fallthrough]];
     case State::Sustain:
+        if (freeRunning)
+            shouldRelease = true;
         return currentValue;
     case State::Release:
         if (release-- > 0) {
@@ -152,6 +154,8 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         currentState = State::Sustain;
         [[fallthrough]];
     case State::Sustain:
+        if (freeRunning)
+            shouldRelease = true;
         break;
     case State::Release:
         length = min(remainingSamples, release);
