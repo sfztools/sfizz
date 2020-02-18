@@ -166,13 +166,44 @@ TEST_CASE("[Synth] Releasing after the initial and normal mode does not trigger 
 TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at the end of the envelope")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(1024);
-    sfz::AudioBuffer<float> buffer(2, 1024);
+    synth.setSampleRate(48000);
+    synth.setSamplesPerBlock(480);
+    sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/envelope_trigger_release.sfz");
-    synth.noteOn(10, 60, 63);
-    synth.noteOff(10, 60, 63);
+    synth.noteOn(0, 60, 63);
+    synth.noteOff(0, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
+    synth.renderBlock(buffer); // Attack (0.02)
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer); // Decay (0.02)
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer); // Release (0.1)
+    REQUIRE( synth.getVoiceView(0)->canBeStolen() );
+    // Release is 0.1s
+    for (int i = 0; i < 10; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getVoiceView(0)->isFree() );
+}
+
+TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice at the end of the envelope")
+{
+    sfz::Synth synth;
+    synth.setSampleRate(48000);
+    synth.setSamplesPerBlock(480);
+    sfz::AudioBuffer<float> buffer(2, 480);
+    synth.setNumVoices(1);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/envelope_trigger_release_key.sfz");
+    synth.noteOn(0, 60, 63);
+    synth.noteOff(0, 60, 63);
+    REQUIRE( !synth.getVoiceView(0)->isFree() );
+    synth.renderBlock(buffer); // Attack (0.02)
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer); // Decay (0.02)
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer); // Release (0.1)
+    REQUIRE( synth.getVoiceView(0)->canBeStolen() );
+    // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
     REQUIRE( synth.getVoiceView(0)->isFree() );
