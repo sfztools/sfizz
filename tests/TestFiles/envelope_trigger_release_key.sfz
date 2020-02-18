@@ -4,7 +4,7 @@ lovel=0
 hivel=127
 
 <region>
-trigger=release
+trigger=release_key
 sample=*noise
 loop_mode=one_shot
 ampeg_attack=0.02
