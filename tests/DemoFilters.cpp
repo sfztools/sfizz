@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/SfzFilter.h"
+#include "sfizz/MathHelpers.h"
 #include "ui_DemoFilters.h"
 #include <QApplication>
 #include <QMainWindow>
@@ -294,7 +295,10 @@ int DemoApp::processAudio(jack_nframes_t nframes, void *cbdata)
 
     for (jack_nframes_t i = 0; i < nframes; ++i) {
         float lfo = cutoffMod * triangleLfo(cutoffLfoPhase);
-        tempCutoff[i] *= std::exp2(lfo * (1.0f / 12.0f));
+        float modCutoff = tempCutoff[i];
+        modCutoff *= std::exp2(lfo * (1.0f / 12.0f));
+        modCutoff = clamp(modCutoff, 0.0f, 20000.0f);
+        tempCutoff[i] = modCutoff;
         cutoffLfoPhase += cutoffRate * sampleTime;
         cutoffLfoPhase -= (int)cutoffLfoPhase;
     }
