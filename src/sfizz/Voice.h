@@ -247,8 +247,7 @@ private:
 
     enum class State {
         idle,
-        playing,
-        release
+        playing
     };
     State state { State::idle };
     bool noteIsOff { false };
