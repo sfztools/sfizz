@@ -184,3 +184,13 @@ bool sfz::Sfizz::shouldReloadFile()
 {
     return synth->shouldReloadFile();
 }
+
+void sfz::Sfizz::enableLogging() noexcept
+{
+    synth->enableLogging();
+}
+
+void sfz::Sfizz::disableLogging() noexcept
+{
+    synth->disableLogging();
+}

@@ -822,3 +822,13 @@ bool sfz::Synth::shouldReloadFile()
 {
     return (checkModificationTime() > modificationTime);
 }
+
+void sfz::Synth::enableLogging() noexcept
+{
+    resources.logger.enableLogging();
+}
+
+void sfz::Synth::disableLogging() noexcept
+{
+    resources.logger.disableLogging();
+}
