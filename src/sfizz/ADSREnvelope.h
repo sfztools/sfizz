@@ -58,7 +58,14 @@ public:
      * @return true
      * @return false
      */
-    bool isSmoothing() noexcept;
+    bool isSmoothing() const noexcept;
+    /**
+     * @brief Is the envelope released?
+     *
+     * @return true
+     * @return false
+     */
+    bool isReleased() const noexcept;
     /**
      * @brief Get the remaining delay samples
      *
