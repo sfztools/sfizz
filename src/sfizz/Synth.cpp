@@ -348,7 +348,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     for (auto& voice : voices)
         if (voice->canBeStolen())
             voiceViewArray.push_back(voice.get());
-    absl::c_sort(voices, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
+    absl::c_sort(voiceViewArray, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
 
     for (auto* voice : voiceViewArray) {
         if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
