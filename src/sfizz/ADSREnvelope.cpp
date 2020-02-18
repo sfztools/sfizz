@@ -205,9 +205,15 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
     }
 }
 template <class Type>
-bool ADSREnvelope<Type>::isSmoothing() noexcept
+bool ADSREnvelope<Type>::isSmoothing() const noexcept
 {
-    return currentState != State::Done;
+    return (currentState != State::Done);
+}
+
+template <class Type>
+bool ADSREnvelope<Type>::isReleased() const noexcept
+{
+    return (currentState == State::Release);
 }
 
 template <class Type>
@@ -221,6 +227,9 @@ void ADSREnvelope<Type>::startRelease(int releaseDelay, bool fastRelease) noexce
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
+
+    if (releaseDelay == 0)
+        currentState = State::Release;
 
     if (fastRelease)
         this->release = 0;

@@ -125,7 +125,6 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     if (egEnvelope.getRemainingDelay() > std::max(0, delay - initialDelay)) {
         reset();
     } else {
-        state = State::release;
         egEnvelope.startRelease(delay, fastRelease);
     }
 }
@@ -382,8 +381,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
     add<int>(sourcePosition, indices);
 
-    absl::optional<int> releaseAt {};
-
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
         const auto offset = loopEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor)) + 1;
@@ -400,7 +397,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         ) - 2;
         for (auto* index = indices.begin(); index < indices.end(); ++index) {
             if (*index >= sampleEnd) {
-                releaseAt = static_cast<int>(std::distance(indices.begin(), index));
+                release(static_cast<int>(std::distance(indices.begin(), index)));
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
                 if (source.getNumFrames() - 1 < region->trueSampleEnd(currentPromise->oversamplingFactor)) {
                     DBG("[sfizz] Underflow: source available samples "
@@ -438,12 +435,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     sourcePosition = indices.back();
     floatPositionOffset = rightCoeffs.back();
-
-    if (state != State::release && releaseAt) {
-        release(*releaseAt);
-        // TODO: not needed probably
-        buffer.subspan(*releaseAt).fill(0.0f);
-    }
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
@@ -535,7 +526,7 @@ float sfz::Voice::getMeanSquaredAverage() const noexcept
 
 bool sfz::Voice::canBeStolen() const noexcept
 {
-    return state == State::release;
+    return state == State::idle || egEnvelope.isReleased();
 }
 
 uint32_t sfz::Voice::getSourcePosition() const noexcept
