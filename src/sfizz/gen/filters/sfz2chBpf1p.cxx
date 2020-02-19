@@ -34,7 +34,6 @@ class faust2chBpf1p : public sfzFilterDsp {
 	double fConst0;
 	double fConst1;
 	double fConst2;
-	double fConst3;
 	FAUSTFLOAT fCutoff;
 	double fRec2[2];
 	double fRec1[2];
@@ -104,8 +103,7 @@ class faust2chBpf1p : public sfzFilterDsp {
 		fSamplingFreq = samplingFreq;
 		fConst0 = std::min<double>(192000.0, std::max<double>(1.0, double(fSamplingFreq)));
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
-		fConst2 = (1.0 - fConst1);
-		fConst3 = (1.0 / fConst0);
+		fConst2 = (1.0 / fConst0);
 		
 	}
 	
@@ -167,11 +165,12 @@ class faust2chBpf1p : public sfzFilterDsp {
 		FAUSTFLOAT* input1 = inputs[1];
 		FAUSTFLOAT* output0 = outputs[0];
 		FAUSTFLOAT* output1 = outputs[1];
-		double fSlow0 = (fConst2 * std::exp((fConst3 * (0.0 - (6.2831853071795862 * double(fCutoff))))));
+		double fSlow0 = (fSmoothEnable?fConst1:0.0);
+		double fSlow1 = (std::exp((fConst2 * (0.0 - (6.2831853071795862 * double(fCutoff))))) * (1.0 - fSlow0));
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			double fTemp1 = double(input1[i]);
-			fRec2[0] = (fSlow0 + (fConst1 * fRec2[1]));
+			fRec2[0] = ((fRec2[1] * fSlow0) + fSlow1);
 			fRec1[0] = ((fRec2[0] * fRec1[1]) + fTemp0);
 			double fTemp2 = (1.0 - fRec2[0]);
 			fRec0[0] = ((fRec1[0] * fTemp2) + (fRec2[0] * fRec0[1]));

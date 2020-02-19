@@ -33,10 +33,8 @@ class faust2chHsh : public sfzFilterDsp {
 	int fSamplingFreq;
 	double fConst0;
 	double fConst1;
-	double fConst2;
-	double fConst3;
 	FAUSTFLOAT fPkShGain;
-	double fConst4;
+	double fConst2;
 	FAUSTFLOAT fCutoff;
 	FAUSTFLOAT fQ;
 	double fRec1[2];
@@ -109,9 +107,7 @@ class faust2chHsh : public sfzFilterDsp {
 		fSamplingFreq = samplingFreq;
 		fConst0 = std::min<double>(192000.0, std::max<double>(1.0, double(fSamplingFreq)));
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
-		fConst2 = (1.0 - fConst1);
-		fConst3 = (2.0 * fConst2);
-		fConst4 = (6.2831853071795862 / fConst0);
+		fConst2 = (6.2831853071795862 / fConst0);
 		
 	}
 	
@@ -183,28 +179,30 @@ class faust2chHsh : public sfzFilterDsp {
 		FAUSTFLOAT* input1 = inputs[1];
 		FAUSTFLOAT* output0 = outputs[0];
 		FAUSTFLOAT* output1 = outputs[1];
-		double fSlow0 = std::pow(10.0, (0.025000000000000001 * double(fPkShGain)));
-		double fSlow1 = (fConst4 * std::max<double>(0.0, double(fCutoff)));
-		double fSlow2 = std::cos(fSlow1);
-		double fSlow3 = ((fSlow0 + 1.0) * fSlow2);
-		double fSlow4 = ((std::sqrt(fSlow0) * std::sin(fSlow1)) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fQ)))));
-		double fSlow5 = ((fSlow0 + -1.0) * fSlow2);
-		double fSlow6 = ((fSlow0 + fSlow4) + (1.0 - fSlow5));
-		double fSlow7 = (fConst3 * ((fSlow0 + (-1.0 - fSlow3)) / fSlow6));
-		double fSlow8 = (fConst2 * ((fSlow0 + (1.0 - (fSlow5 + fSlow4))) / fSlow6));
-		double fSlow9 = (fSlow5 + fSlow0);
-		double fSlow10 = (fConst2 * ((((fSlow9 + fSlow4) + 1.0) * fSlow0) / fSlow6));
-		double fSlow11 = (fConst2 * (((0.0 - (2.0 * fSlow0)) * ((fSlow3 + fSlow0) + -1.0)) / fSlow6));
-		double fSlow12 = (fConst2 * (((fSlow9 + (1.0 - fSlow4)) * fSlow0) / fSlow6));
+		double fSlow0 = (fSmoothEnable?fConst1:0.0);
+		double fSlow1 = std::pow(10.0, (0.025000000000000001 * double(fPkShGain)));
+		double fSlow2 = (fConst2 * std::max<double>(0.0, double(fCutoff)));
+		double fSlow3 = std::cos(fSlow2);
+		double fSlow4 = ((fSlow1 + 1.0) * fSlow3);
+		double fSlow5 = ((std::sqrt(fSlow1) * std::sin(fSlow2)) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fQ)))));
+		double fSlow6 = ((fSlow1 + -1.0) * fSlow3);
+		double fSlow7 = ((fSlow1 + fSlow5) + (1.0 - fSlow6));
+		double fSlow8 = (1.0 - fSlow0);
+		double fSlow9 = ((2.0 * ((fSlow1 + (-1.0 - fSlow4)) / fSlow7)) * fSlow8);
+		double fSlow10 = (((fSlow1 + (1.0 - (fSlow6 + fSlow5))) / fSlow7) * fSlow8);
+		double fSlow11 = (fSlow6 + fSlow1);
+		double fSlow12 = (((((fSlow11 + fSlow5) + 1.0) * fSlow1) / fSlow7) * fSlow8);
+		double fSlow13 = ((((0.0 - (2.0 * fSlow1)) * ((fSlow4 + fSlow1) + -1.0)) / fSlow7) * fSlow8);
+		double fSlow14 = ((((fSlow11 + (1.0 - fSlow5)) * fSlow1) / fSlow7) * fSlow8);
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			double fTemp1 = double(input1[i]);
-			fRec1[0] = (fSlow7 + (fConst1 * fRec1[1]));
-			fRec2[0] = (fSlow8 + (fConst1 * fRec2[1]));
+			fRec1[0] = ((fRec1[1] * fSlow0) + fSlow9);
+			fRec2[0] = ((fRec2[1] * fSlow0) + fSlow10);
 			fRec0[0] = (fTemp0 - ((fRec1[0] * fRec0[1]) + (fRec2[0] * fRec0[2])));
-			fRec3[0] = (fSlow10 + (fConst1 * fRec3[1]));
-			fRec4[0] = (fSlow11 + (fConst1 * fRec4[1]));
-			fRec5[0] = (fSlow12 + (fConst1 * fRec5[1]));
+			fRec3[0] = ((fRec3[1] * fSlow0) + fSlow12);
+			fRec4[0] = ((fRec4[1] * fSlow0) + fSlow13);
+			fRec5[0] = ((fRec5[1] * fSlow0) + fSlow14);
 			output0[i] = FAUSTFLOAT((((fRec0[0] * fRec3[0]) + (fRec4[0] * fRec0[1])) + (fRec5[0] * fRec0[2])));
 			fRec6[0] = (fTemp1 - ((fRec1[0] * fRec6[1]) + (fRec2[0] * fRec6[2])));
 			output1[i] = FAUSTFLOAT((((fRec3[0] * fRec6[0]) + (fRec4[0] * fRec6[1])) + (fRec5[0] * fRec6[2])));
