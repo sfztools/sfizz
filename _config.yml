@@ -51,7 +51,7 @@ project:
   url: "https://sfztools.github.io/sfizz"
   copyright_owner: "Paul Ferrand"
   spdx_license_id: "BSD-2-Clause"
-  docs_path: "master/docs"
+  docs_path: "gh-pages"
   authors:
     content: "Paul Ferrand"
     web: "RedTide"
