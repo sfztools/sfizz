@@ -11,45 +11,61 @@
 #include <random>
 #include <numeric>
 
-constexpr int fixedAmount { 12 };
-constexpr int envelopeSize { 2 << 16 };
-constexpr int attack = static_cast<int>(envelopeSize / 4) - fixedAmount;
-constexpr int decay = attack;
-constexpr int release = attack;
-constexpr int releaseTime = envelopeSize - static_cast<int>(envelopeSize / 4);
+constexpr int fixedAmount{12};
+constexpr float sampleRate{100.0f};
+constexpr int envelopeSize{2 << 16};
+constexpr float attack = static_cast<float>(static_cast<int>(envelopeSize / 4) - fixedAmount) / sampleRate;
+constexpr float decay = attack;
+constexpr float release = attack;
+constexpr float releaseTime = envelopeSize - static_cast<int>(envelopeSize / 4);
 
-// Explicitely instantiate class
-#include "ADSREnvelope.cpp"
-template class sfz::ADSREnvelope<float>;
+class EnvelopeFixture : public benchmark::Fixture
+{
+public:
+    void SetUp(const ::benchmark::State &state)
+    {
+        region.amplitudeEG.attack = attack;
+        region.amplitudeEG.release = release;
+        region.amplitudeEG.decay = decay;
+        output.resize(state.range(0));
+    }
 
-static void Point(benchmark::State& state) {
-    std::vector<float> output(state.range(0));
+    void TearDown(const ::benchmark::State &state[[maybe_unused]])
+    {
+    }
+
+    sfz::MidiState midiState;
+    sfz::Region region{midiState};
     sfz::ADSREnvelope<float> envelope;
+    std::vector<float> output;
+};
+
+BENCHMARK_DEFINE_F(EnvelopeFixture, Scalar)(benchmark::State& state)
+{
     for (auto _ : state) {
-        envelope.reset(attack, release, 1.0, fixedAmount, decay, fixedAmount);
+        envelope.reset(region, midiState, 0, 0, sampleRate);
         envelope.startRelease(releaseTime);
-        for(int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
+        for (int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
             for (auto& out: output)
                 out = envelope.getNextValue();
         benchmark::DoNotOptimize(output);
     }
-    state.counters["Per block"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsRate);
+    state.counters["Blocks"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsIterationInvariantRate);
 }
 
-static void Block(benchmark::State& state) {
-    std::vector<float> output(state.range(0));
-    sfz::ADSREnvelope<float> envelope;
+BENCHMARK_DEFINE_F(EnvelopeFixture, Block)(benchmark::State& state)
+{
     for (auto _ : state) {
-        envelope.reset(attack, release, 1.0, fixedAmount, decay, fixedAmount);
+        envelope.reset(region, midiState, 0, 0, sampleRate);
         envelope.startRelease(releaseTime);
-        for(int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
+        for (int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
             envelope.getBlock(absl::MakeSpan(output));
         benchmark::DoNotOptimize(output);
     }
 
-    state.counters["Per block"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsRate);
+    state.counters["Blocks"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsIterationInvariantRate);
 }
 
-BENCHMARK(Point)->RangeMultiplier(2)->Range((2<<6), (2<<11));
-BENCHMARK(Block)->RangeMultiplier(2)->Range((2<<6), (2<<11));
+BENCHMARK_REGISTER_F(EnvelopeFixture, Scalar)->RangeMultiplier(2)->Range((2 << 6), (2 << 11));
+BENCHMARK_REGISTER_F(EnvelopeFixture, Block)->RangeMultiplier(2)->Range((2 << 6), (2 << 11));
 BENCHMARK_MAIN();
