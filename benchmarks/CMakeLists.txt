@@ -42,6 +42,8 @@ sfizz_add_benchmark(bm_looping BM_looping.cpp)
 sfizz_add_benchmark(bm_saturating BM_saturating.cpp)
 sfizz_add_benchmark(bm_ramp BM_ramp.cpp)
 sfizz_add_benchmark(bm_ADSR BM_ADSR.cpp)
+target_link_libraries(bm_ADSR PRIVATE sfizz::sfizz)
+
 sfizz_add_benchmark(bm_add BM_add.cpp)
 sfizz_add_benchmark(bm_multiplyAdd BM_multiplyAdd.cpp)
 sfizz_add_benchmark(bm_subtract BM_subtract.cpp)
@@ -60,7 +62,7 @@ if (TARGET sfizz-samplerate)
 	target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile)
 endif()
 
-sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
+sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp ../src/sfizz/MidiState.cpp ../src/sfizz/FloatEnvelopes.cpp)
 
 sfizz_add_benchmark(bm_wavfile BM_wavfile.cpp)
 target_link_libraries(bm_wavfile PRIVATE sfizz-sndfile)

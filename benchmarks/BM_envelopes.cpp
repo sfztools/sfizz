@@ -13,8 +13,6 @@
 #include "EventEnvelopes.h"
 #include "absl/types/span.h"
 
-#include "FloatEnvelopes.cpp"
-
 class EnvelopeFixture : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State& state)
