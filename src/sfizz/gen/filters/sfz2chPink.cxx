@@ -2,8 +2,8 @@
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.15.11 (https://faust.grame.fr)
-Compilation options: -inpl -double -ftz 0
+Code generated with Faust 2.20.2 (https://faust.grame.fr)
+Compilation options: -lang cpp -inpl -double -ftz 0
 ------------------------------------------------------------ */
 
 #ifndef  __faust2chPink_H__
@@ -20,6 +20,7 @@ Compilation options: -inpl -double -ftz 0
 #ifndef FAUSTCLASS 
 #define FAUSTCLASS faust2chPink
 #endif
+
 #ifdef __APPLE__ 
 #define exp10f __exp10f
 #define exp10 __exp10
@@ -31,7 +32,7 @@ class faust2chPink : public sfzFilterDsp {
 	
 	double fRec0[4];
 	double fRec1[4];
-	int fSamplingFreq;
+	int fSampleRate;
 	
  public:
 	
@@ -40,15 +41,13 @@ class faust2chPink : public sfzFilterDsp {
 
 	virtual int getNumInputs() {
 		return 2;
-		
 	}
 	virtual int getNumOutputs() {
 		return 2;
-		
 	}
 	virtual int getInputRate(int channel) {
 		int rate;
-		switch (channel) {
+		switch ((channel)) {
 			case 0: {
 				rate = 1;
 				break;
@@ -61,14 +60,12 @@ class faust2chPink : public sfzFilterDsp {
 				rate = -1;
 				break;
 			}
-			
 		}
 		return rate;
-		
 	}
 	virtual int getOutputRate(int channel) {
 		int rate;
-		switch (channel) {
+		switch ((channel)) {
 			case 0: {
 				rate = 1;
 				break;
@@ -81,44 +78,35 @@ class faust2chPink : public sfzFilterDsp {
 				rate = -1;
 				break;
 			}
-			
 		}
 		return rate;
-		
 	}
 	
-	static void classInit(int samplingFreq) {
-		
+	static void classInit(int sample_rate) {
 	}
 	
-	virtual void instanceConstants(int samplingFreq) {
-		fSamplingFreq = samplingFreq;
-		
+	virtual void instanceConstants(int sample_rate) {
+		fSampleRate = sample_rate;
 	}
 	
 	virtual void instanceResetUserInterface() {
-		
 	}
 	
 	virtual void instanceClear() {
 		for (int l0 = 0; (l0 < 4); l0 = (l0 + 1)) {
 			fRec0[l0] = 0.0;
-			
 		}
 		for (int l1 = 0; (l1 < 4); l1 = (l1 + 1)) {
 			fRec1[l1] = 0.0;
-			
 		}
-		
 	}
 	
-	virtual void init(int samplingFreq) {
-		classInit(samplingFreq);
-		instanceInit(samplingFreq);
+	virtual void init(int sample_rate) {
+		classInit(sample_rate);
+		instanceInit(sample_rate);
 	}
-	
-	virtual void instanceInit(int samplingFreq) {
-		instanceConstants(samplingFreq);
+	virtual void instanceInit(int sample_rate) {
+		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
 	}
@@ -128,12 +116,10 @@ class faust2chPink : public sfzFilterDsp {
 	}
 	
 	virtual int getSampleRate() {
-		return fSamplingFreq;
-		
+		return fSampleRate;
 	}
 	
 	virtual void buildUserInterface(UI* ui_interface) {
-		
 	}
 	
 	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
@@ -144,21 +130,17 @@ class faust2chPink : public sfzFilterDsp {
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			double fTemp1 = double(input1[i]);
-			fRec0[0] = ((((2.4949560019999999 * fRec0[1]) + (0.52218940000000003 * fRec0[3])) + fTemp0) - (2.0172658750000001 * fRec0[2]));
+			fRec0[0] = ((fTemp0 + ((2.4949560019999999 * fRec0[1]) + (0.52218940000000003 * fRec0[3]))) - (2.0172658750000001 * fRec0[2]));
 			output0[i] = FAUSTFLOAT((((0.049922034999999997 * fRec0[0]) + (0.050612698999999997 * fRec0[2])) - ((0.095993537000000004 * fRec0[1]) + (0.0044087859999999996 * fRec0[3]))));
-			fRec1[0] = ((((2.4949560019999999 * fRec1[1]) + (0.52218940000000003 * fRec1[3])) + fTemp1) - (2.0172658750000001 * fRec1[2]));
+			fRec1[0] = ((fTemp1 + ((2.4949560019999999 * fRec1[1]) + (0.52218940000000003 * fRec1[3]))) - (2.0172658750000001 * fRec1[2]));
 			output1[i] = FAUSTFLOAT((((0.049922034999999997 * fRec1[0]) + (0.050612698999999997 * fRec1[2])) - ((0.095993537000000004 * fRec1[1]) + (0.0044087859999999996 * fRec1[3]))));
 			for (int j0 = 3; (j0 > 0); j0 = (j0 - 1)) {
 				fRec0[j0] = fRec0[(j0 - 1)];
-				
 			}
 			for (int j1 = 3; (j1 > 0); j1 = (j1 - 1)) {
 				fRec1[j1] = fRec1[(j1 - 1)];
-				
 			}
-			
 		}
-		
 	}
 
 };

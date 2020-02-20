@@ -146,4 +146,8 @@ bandwidth = vslider("[04] Bandwidth [unit:octave]", 1.0, 0.1, 10.0, 0.01);
 // smoothCoefs = _ ; // No smoothing applied at all
 
 // This applies a quicker smoothing but which may render the filter unstable
-smoothCoefs = si.smooth(ba.tau2pole(0.001)) ; // time constant = 1ms
+smoothCoefs = si.smooth(ba.if(smoothEnable, pole, 0.0)) with {
+  timeConstant = 1e-3; // time constant = 1ms
+  pole = ba.tau2pole(timeConstant);
+  smoothEnable = fvariable(int fSmoothEnable, <math.h>);
+};

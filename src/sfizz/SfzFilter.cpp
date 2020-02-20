@@ -105,6 +105,29 @@ void Filter::clear()
         dsp->instanceClear();
 }
 
+void Filter::prepare(float cutoff, float q, float pksh)
+{
+    sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
+
+    if (!dsp)
+        return;
+
+    // compute a dummy 1-frame cycle with smoothing off
+
+    float buffer[Impl::maxChannels] = {0};
+    float *inout[Impl::maxChannels];
+    bool en = dsp->isSmoothingEnabled();
+
+    for (unsigned i = 0; i < Impl::maxChannels; ++i)
+        inout[i] = &buffer[i];
+
+    dsp->instanceClear();
+    dsp->configureStandard(cutoff, q, pksh);
+    dsp->setSmoothingEnabled(false);
+    dsp->compute(1, inout, inout);
+    dsp->setSmoothingEnabled(en);
+}
+
 void Filter::process(const float *const in[], float *const out[], float cutoff, float q, float pksh, unsigned nframes)
 {
     unsigned channels = P->fChannels;
@@ -272,6 +295,29 @@ void FilterEq::clear()
 
     if (dsp)
         dsp->instanceClear();
+}
+
+void FilterEq::prepare(float cutoff, float bw, float pksh)
+{
+    sfzFilterDsp *dsp = P->getDsp(P->fChannels);
+
+    if (!dsp)
+        return;
+
+    // compute a dummy 1-frame cycle with smoothing off
+
+    float buffer[Impl::maxChannels] = {0};
+    float *inout[Impl::maxChannels];
+    bool en = dsp->isSmoothingEnabled();
+
+    for (unsigned i = 0; i < Impl::maxChannels; ++i)
+        inout[i] = &buffer[i];
+
+    dsp->instanceClear();
+    dsp->configureEq(cutoff, bw, pksh);
+    dsp->setSmoothingEnabled(false);
+    dsp->compute(1, inout, inout);
+    dsp->setSmoothingEnabled(en);
 }
 
 void FilterEq::process(const float *const in[], float *const out[], float cutoff, float bw, float pksh, unsigned nframes)
