@@ -1,7 +1,4 @@
 language: cpp
-env:
-  global:
-  - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
 
 jobs:
   include:
@@ -9,15 +6,19 @@ jobs:
     env:
     - CROSS_COMPILE=mingw32
     - CONTAINER=cross
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw32"
 
   - os:   linux
     env:
     - CROSS_COMPILE=mingw64
     - CONTAINER=cross
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw64"
 
   - os:   linux
     arch: amd64
     dist: bionic
+    env:
+      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
         sources:
@@ -29,6 +30,30 @@ jobs:
   - os:   linux
     arch: arm64
     dist: bionic
+    env:
+      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    addons:
+      apt:
+        sources:
+        - sourceline: 'ppa:ubuntu-toolchain-r/test'
+
+  - os:   linux
+    arch: arm64
+    dist: bionic
+    env:
+      - BUILD_TYPE=lv2
+      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}-lv2"
+    addons:
+      apt:
+        sources:
+        - sourceline: 'ppa:ubuntu-toolchain-r/test'
+
+  - os:   linux
+    arch: amd64
+    dist: bionic
+    env:
+      - BUILD_TYPE=lv2
+      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}-lv2"
     addons:
       apt:
         sources:
