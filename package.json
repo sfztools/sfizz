@@ -1,8 +1,8 @@
 {
-	"name": "Jekyllize",
-	"version": "0.1.0",
+	"name": "sfizz_website",
+	"version": "0.2.0",
 	"author": "RedTide <redtid3@gmail.com>",
-	"homepage": "https://jekyllize.github.io",
+	"homepage": "https://sfztools.github.io/sfizz",
 	"scripts": {
 		"css": "node node_modules/npm-run-all/bin/run-s/index.js css-compile css-prefix css-minify",
 		"css-compile": "node node_modules/node-sass/bin/node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 _assets/scss/style.scss assets/css/style.css",
@@ -17,10 +17,10 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git@github.com:jekyllize/jekyllize.github.io.git"
+		"url": "git@github.com:sfztools/sfizz.git"
 	},
 	"bugs": {
-		"url": "https://github.com/jekyllize/jekyllize.github.io/issues"
+		"url": "https://github.com/sfztools/sfizz/issues/"
 	},
 	"license": "MPL-2.0",
 	"engines": {
