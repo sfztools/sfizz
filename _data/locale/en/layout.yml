@@ -56,7 +56,12 @@ navigation:
   - label: "Status"
     icon_type: "tasks"
     icon_category: "fas"
-    url: "/status"
+    url: "/development/status"
+
+  - label: "Build"
+    icon_type: "code"
+    icon_category: "fas"
+    url: "/development/build"
 
 #- label: "Downloads"
 #  type: "normal"
