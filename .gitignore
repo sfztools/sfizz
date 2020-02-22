@@ -14,7 +14,7 @@ yarn.lock
 *.log
 
 # Unstaged files in other branches
-build*
+/build*
 external/abseil-cpp/
 *.txt.user*
 *.code-workspace
