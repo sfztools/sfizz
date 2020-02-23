@@ -163,6 +163,7 @@ static void done(int sig [[maybe_unused]])
     // exit(0);
 }
 
+ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
 ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
 
@@ -176,10 +177,12 @@ int main(int argc, char** argv)
     }
 
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
+    const std::string clientName = absl::GetFlag(FLAGS_client_name);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
 
     std::cout << "Flags" << '\n';
+    std::cout << "- Client name: " << clientName << '\n';
     std::cout << "- Oversampling: " << oversampling << '\n';
     std::cout << "- Preloaded Size: " << preload_size << '\n';
     const auto factor = [&]() {
@@ -221,9 +224,8 @@ int main(int argc, char** argv)
     std::cout << '\n';
     // std::cout << std::flush;
 
-    auto defaultName = "sfizz";
     jack_status_t status;
-    client = jack_client_open(defaultName, JackNullOption, &status);
+    client = jack_client_open(clientName.c_str(), JackNullOption, &status);
     if (client == nullptr) {
         std::cerr << "Could not open JACK client" << '\n';
         // if (status & JackFailure)
