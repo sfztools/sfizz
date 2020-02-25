@@ -53,8 +53,9 @@
 #include <sfizz.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <stdatomic.h>
 #include <string.h>
+
+#include "atomic_compat.h"
 
 #define DEFAULT_SFZ_FILE "/home/paul/Documents/AVL_Percussions/AVL_Drumkits_Percussion-1.0-Alt.sfz"
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
@@ -149,7 +150,7 @@ typedef struct
     int max_block_size;
     int sample_counter;
     float sample_rate;
-    _Atomic(bool) must_update_midnam;
+    atomic_int must_update_midnam;
 } sfizz_plugin_t;
 
 enum
@@ -693,7 +694,7 @@ run(LV2_Handle instance, uint32_t sample_count)
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
 
-    if (self->midnam && atomic_exchange(&self->must_update_midnam, false))
+    if (self->midnam && atomic_exchange(&self->must_update_midnam, 0))
     {
         self->midnam->update(self->midnam->handle);
     }
@@ -784,7 +785,7 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char* file_path)
     lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
     lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
 
-    atomic_store(&self->must_update_midnam, true);
+    atomic_store(&self->must_update_midnam, 1);
 }
 
 static LV2_State_Status
