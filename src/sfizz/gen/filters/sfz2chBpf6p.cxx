@@ -38,10 +38,10 @@ class faust2chBpf6p : public sfzFilterDsp {
 	FAUSTFLOAT fCutoff;
 	FAUSTFLOAT fQ;
 	double fRec0[2];
-	double fRec3[2];
+	double fRec4[2];
 	double fRec5[2];
+	double fRec3[3];
 	double fRec6[2];
-	double fRec4[3];
 	double fRec7[2];
 	double fRec2[3];
 	double fRec1[3];
@@ -203,11 +203,11 @@ class faust2chBpf6p : public sfzFilterDsp {
 			fRec8[0] = ((((fRec0[0] * fRec9[0]) + (fRec6[0] * fRec9[1])) + (fRec7[0] * fRec9[2])) - ((fRec4[0] * fRec8[1]) + (fRec5[0] * fRec8[2])));
 			output1[i] = FAUSTFLOAT((((fRec0[0] * fRec8[0]) + (fRec6[0] * fRec8[1])) + (fRec7[0] * fRec8[2])));
 			fRec0[1] = fRec0[0];
-			fRec3[1] = fRec3[0];
-			fRec5[1] = fRec5[0];
-			fRec6[1] = fRec6[0];
-			fRec4[2] = fRec4[1];
 			fRec4[1] = fRec4[0];
+			fRec5[1] = fRec5[0];
+			fRec3[2] = fRec3[1];
+			fRec3[1] = fRec3[0];
+			fRec6[1] = fRec6[0];
 			fRec7[1] = fRec7[0];
 			fRec2[2] = fRec2[1];
 			fRec2[1] = fRec2[0];

@@ -11,31 +11,31 @@ Compilation options: -lang cpp -inpl -double -ftz 0
 
 #ifndef FAUSTFLOAT
 #define FAUSTFLOAT float
-#endif 
+#endif
 
 #include <algorithm>
 #include <cmath>
 
 
-#ifndef FAUSTCLASS 
+#ifndef FAUSTCLASS
 #define FAUSTCLASS faustPink
 #endif
 
-#ifdef __APPLE__ 
+#ifdef __APPLE__
 #define exp10f __exp10f
 #define exp10 __exp10
 #endif
 
 class faustPink : public sfzFilterDsp {
-	
+
  public:
-	
+
 	double fRec0[4];
 	int fSampleRate;
-	
+
  public:
-	
-	void metadata(Meta* m) { 
+
+	void metadata(Meta* m) {
 	}
 
 	virtual int getNumInputs() {
@@ -72,23 +72,23 @@ class faustPink : public sfzFilterDsp {
 		}
 		return rate;
 	}
-	
+
 	static void classInit(int sample_rate) {
 	}
-	
+
 	virtual void instanceConstants(int sample_rate) {
 		fSampleRate = sample_rate;
 	}
-	
+
 	virtual void instanceResetUserInterface() {
 	}
-	
+
 	virtual void instanceClear() {
 		for (int l0 = 0; (l0 < 4); l0 = (l0 + 1)) {
 			fRec0[l0] = 0.0;
 		}
 	}
-	
+
 	virtual void init(int sample_rate) {
 		classInit(sample_rate);
 		instanceInit(sample_rate);
@@ -98,18 +98,18 @@ class faustPink : public sfzFilterDsp {
 		instanceResetUserInterface();
 		instanceClear();
 	}
-	
+
 	virtual faustPink* clone() {
 		return new faustPink();
 	}
-	
+
 	virtual int getSampleRate() {
 		return fSampleRate;
 	}
-	
+
 	virtual void buildUserInterface(UI* ui_interface) {
 	}
-	
+
 	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
 		FAUSTFLOAT* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];

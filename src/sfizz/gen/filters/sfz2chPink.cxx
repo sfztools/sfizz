@@ -11,32 +11,32 @@ Compilation options: -lang cpp -inpl -double -ftz 0
 
 #ifndef FAUSTFLOAT
 #define FAUSTFLOAT float
-#endif 
+#endif
 
 #include <algorithm>
 #include <cmath>
 
 
-#ifndef FAUSTCLASS 
+#ifndef FAUSTCLASS
 #define FAUSTCLASS faust2chPink
 #endif
 
-#ifdef __APPLE__ 
+#ifdef __APPLE__
 #define exp10f __exp10f
 #define exp10 __exp10
 #endif
 
 class faust2chPink : public sfzFilterDsp {
-	
+
  public:
-	
+
 	double fRec0[4];
 	double fRec1[4];
 	int fSampleRate;
-	
+
  public:
-	
-	void metadata(Meta* m) { 
+
+	void metadata(Meta* m) {
 	}
 
 	virtual int getNumInputs() {
@@ -81,17 +81,17 @@ class faust2chPink : public sfzFilterDsp {
 		}
 		return rate;
 	}
-	
+
 	static void classInit(int sample_rate) {
 	}
-	
+
 	virtual void instanceConstants(int sample_rate) {
 		fSampleRate = sample_rate;
 	}
-	
+
 	virtual void instanceResetUserInterface() {
 	}
-	
+
 	virtual void instanceClear() {
 		for (int l0 = 0; (l0 < 4); l0 = (l0 + 1)) {
 			fRec0[l0] = 0.0;
@@ -100,7 +100,7 @@ class faust2chPink : public sfzFilterDsp {
 			fRec1[l1] = 0.0;
 		}
 	}
-	
+
 	virtual void init(int sample_rate) {
 		classInit(sample_rate);
 		instanceInit(sample_rate);
@@ -110,18 +110,18 @@ class faust2chPink : public sfzFilterDsp {
 		instanceResetUserInterface();
 		instanceClear();
 	}
-	
+
 	virtual faust2chPink* clone() {
 		return new faust2chPink();
 	}
-	
+
 	virtual int getSampleRate() {
 		return fSampleRate;
 	}
-	
+
 	virtual void buildUserInterface(UI* ui_interface) {
 	}
-	
+
 	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
 		FAUSTFLOAT* input0 = inputs[0];
 		FAUSTFLOAT* input1 = inputs[1];

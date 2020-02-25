@@ -38,10 +38,10 @@ class faustBpf6p : public sfzFilterDsp {
 	FAUSTFLOAT fCutoff;
 	FAUSTFLOAT fQ;
 	double fRec0[2];
-	double fRec3[2];
+	double fRec4[2];
 	double fRec5[2];
+	double fRec3[3];
 	double fRec6[2];
-	double fRec4[3];
 	double fRec7[2];
 	double fRec2[3];
 	double fRec1[3];
@@ -106,16 +106,16 @@ class faustBpf6p : public sfzFilterDsp {
 			fRec0[l0] = 0.0;
 		}
 		for (int l1 = 0; (l1 < 2); l1 = (l1 + 1)) {
-			fRec3[l1] = 0.0;
+			fRec4[l1] = 0.0;
 		}
 		for (int l2 = 0; (l2 < 2); l2 = (l2 + 1)) {
 			fRec5[l2] = 0.0;
 		}
-		for (int l3 = 0; (l3 < 2); l3 = (l3 + 1)) {
-			fRec6[l3] = 0.0;
+		for (int l3 = 0; (l3 < 3); l3 = (l3 + 1)) {
+			fRec3[l3] = 0.0;
 		}
-		for (int l4 = 0; (l4 < 3); l4 = (l4 + 1)) {
-			fRec4[l4] = 0.0;
+		for (int l4 = 0; (l4 < 2); l4 = (l4 + 1)) {
+			fRec6[l4] = 0.0;
 		}
 		for (int l5 = 0; (l5 < 2); l5 = (l5 + 1)) {
 			fRec7[l5] = 0.0;
@@ -167,20 +167,20 @@ class faustBpf6p : public sfzFilterDsp {
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			fRec0[0] = ((fSlow0 * fRec0[1]) + fSlow8);
-			fRec3[0] = (fSlow0 * fRec3[1]);
-			fRec5[0] = ((fSlow0 * fRec5[1]) + fSlow9);
-			fRec6[0] = ((fSlow0 * fRec6[1]) + fSlow10);
-			fRec4[0] = (fTemp0 - ((fRec5[0] * fRec4[1]) + (fRec6[0] * fRec4[2])));
+			fRec4[0] = ((fSlow0 * fRec4[1]) + fSlow9);
+			fRec5[0] = ((fSlow0 * fRec5[1]) + fSlow10);
+			fRec3[0] = (fTemp0 - ((fRec4[0] * fRec3[1]) + (fRec5[0] * fRec3[2])));
+			fRec6[0] = (fSlow0 * fRec6[1]);
 			fRec7[0] = ((fSlow0 * fRec7[1]) + fSlow11);
-			fRec2[0] = (((fRec3[0] * fRec4[1]) + ((fRec4[0] * fRec0[0]) + (fRec7[0] * fRec4[2]))) - ((fRec5[0] * fRec2[1]) + (fRec6[0] * fRec2[2])));
-			fRec1[0] = ((((fRec0[0] * fRec2[0]) + (fRec3[0] * fRec2[1])) + (fRec7[0] * fRec2[2])) - ((fRec5[0] * fRec1[1]) + (fRec6[0] * fRec1[2])));
-			output0[i] = FAUSTFLOAT((((fRec0[0] * fRec1[0]) + (fRec3[0] * fRec1[1])) + (fRec7[0] * fRec1[2])));
+			fRec2[0] = ((((fRec3[0] * fRec0[0]) + (fRec6[0] * fRec3[1])) + (fRec7[0] * fRec3[2])) - ((fRec4[0] * fRec2[1]) + (fRec5[0] * fRec2[2])));
+			fRec1[0] = ((((fRec0[0] * fRec2[0]) + (fRec6[0] * fRec2[1])) + (fRec7[0] * fRec2[2])) - ((fRec4[0] * fRec1[1]) + (fRec5[0] * fRec1[2])));
+			output0[i] = FAUSTFLOAT((((fRec0[0] * fRec1[0]) + (fRec6[0] * fRec1[1])) + (fRec7[0] * fRec1[2])));
 			fRec0[1] = fRec0[0];
-			fRec3[1] = fRec3[0];
-			fRec5[1] = fRec5[0];
-			fRec6[1] = fRec6[0];
-			fRec4[2] = fRec4[1];
 			fRec4[1] = fRec4[0];
+			fRec5[1] = fRec5[0];
+			fRec3[2] = fRec3[1];
+			fRec3[1] = fRec3[0];
+			fRec6[1] = fRec6[0];
 			fRec7[1] = fRec7[0];
 			fRec2[2] = fRec2[1];
 			fRec2[1] = fRec2[0];
