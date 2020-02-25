@@ -112,6 +112,10 @@ public:
      */
     int getNumCurves() const noexcept;
     /**
+     * @brief Export a MIDI Name document describing the loaded instrument
+     */
+    std::string exportMidnam(absl::string_view model = {}) const;
+    /**
      * @brief Get a raw view into a specific region. This is mostly used
      * for testing.
      *

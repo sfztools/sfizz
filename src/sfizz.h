@@ -95,6 +95,16 @@ SFIZZ_EXPORTED_API int sfizz_get_num_masters(sfizz_synth_t* synth);
  */
 SFIZZ_EXPORTED_API int sfizz_get_num_curves(sfizz_synth_t* synth);
 /**
+ * @brief      Export a MIDI Name document describing the the currently loaded
+ *             SFZ file.
+ *
+ * @param      synth        The synth
+ * @param      model        the model name used if a non-empty string, otherwise generated
+ *
+ * @return     char* a newly allocated XML string, which must be freed after use
+ */
+SFIZZ_EXPORTED_API char* sfizz_export_midnam(sfizz_synth_t* synth, const char* model);
+/**
  * @brief      Returns the number of preloaded samples for the current SFZ file.
  *
  * @param      synth  The synth

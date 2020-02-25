@@ -47,10 +47,13 @@
 #include <lv2/log/logger.h>
 #include <lv2/log/log.h>
 
+#include <ardour/lv2_extensions.h>
+
 #include <math.h>
 #include <sfizz.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #define DEFAULT_SFZ_FILE "/home/paul/Documents/AVL_Percussions/AVL_Drumkits_Percussion-1.0-Alt.sfz"
@@ -90,6 +93,7 @@ typedef struct
     LV2_URID_Unmap *unmap;
     LV2_Worker_Schedule *worker;
     LV2_Log_Log *log;
+    LV2_Midnam *midnam;
 
     // Ports
     const LV2_Atom_Sequence *control_port;
@@ -145,6 +149,7 @@ typedef struct
     int max_block_size;
     int sample_counter;
     float sample_rate;
+    _Atomic(bool) must_update_midnam;
 } sfizz_plugin_t;
 
 enum
@@ -310,6 +315,9 @@ instantiate(const LV2_Descriptor *descriptor,
 
         if (!strcmp((**f).URI, LV2_LOG__log))
             self->log = (**f).data;
+
+        if (!strcmp((**f).URI, LV2_MIDNAM__update))
+            self->midnam = (**f).data;
     }
 
     // Setup the loggers
@@ -684,6 +692,11 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
+
+    if (self->midnam && atomic_exchange(&self->must_update_midnam, false))
+    {
+        self->midnam->update(self->midnam->handle);
+    }
 }
 
 static uint32_t
@@ -770,6 +783,8 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char* file_path)
     lv2_log_note(&self->logger, "[sfizz] Number of masters: %d\n", sfizz_get_num_masters(self->synth));
     lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
     lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
+
+    atomic_store(&self->must_update_midnam, true);
 }
 
 static LV2_State_Status
@@ -1066,12 +1081,44 @@ work_response(LV2_Handle instance,
     return LV2_WORKER_SUCCESS;
 }
 
+static char *
+midnam_model(LV2_Handle instance)
+{
+    char *model = malloc(64);
+    if (!model)
+        return NULL;
+
+    sprintf(model, "Sfizz LV2:%p", instance);
+    return model;
+}
+
+static char *
+midnam_export(LV2_Handle instance)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+
+    char *model = midnam_model(instance);
+    if (!model)
+        return NULL;
+
+    char *xml = sfizz_export_midnam(self->synth, model);
+    free(model);
+    return xml;
+}
+
+static void
+midnam_free(char *string)
+{
+    free(string);
+}
+
 static const void *
 extension_data(const char *uri)
 {
     static const LV2_Options_Interface options = {lv2_get_options, lv2_set_options};
     static const LV2_State_Interface state = {save, restore};
     static const LV2_Worker_Interface worker = {work, work_response, NULL};
+    static const LV2_Midnam_Interface midnam = {midnam_export, midnam_model, midnam_free};
 
     // Advertise the extensions we support
     if (!strcmp(uri, LV2_OPTIONS__interface))
@@ -1080,6 +1127,8 @@ extension_data(const char *uri)
         return &state;
     else if (!strcmp(uri, LV2_WORKER__interface))
         return &worker;
+    else if (!strcmp(uri, LV2_MIDNAM__interface))
+        return &midnam;
 
     return NULL;
 }
