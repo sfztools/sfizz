@@ -22,10 +22,16 @@ using Duration = std::chrono::duration<double>;
 struct ScopedLogger
 {
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+    enum class Operation
+    {
+        addToDuration,
+        replaceDuration
+    };
     ScopedLogger() = delete;
-    ScopedLogger(std::function<void(Duration)> callback);
+    ScopedLogger(Duration& targetDuration, Operation op = Operation::replaceDuration);
     ~ScopedLogger();
-    const std::function<void(Duration)> callback;
+    Duration& targetDuration;
+    const Operation operation;
     const TimePoint creationTime { std::chrono::high_resolution_clock::now() };
 };
 

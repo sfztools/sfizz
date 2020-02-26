@@ -155,13 +155,21 @@ void sfz::Logger::disableLogging()
     clearFlag.clear();
 }
 
-sfz::ScopedLogger::ScopedLogger(std::function<void(std::chrono::duration<double>)> callback)
-: callback(std::move(callback))
+sfz::ScopedLogger::ScopedLogger(Duration& targetDuration, Operation operation)
+: targetDuration(targetDuration), operation(operation)
 {
 
 }
 
 sfz::ScopedLogger::~ScopedLogger()
 {
-    callback(std::chrono::high_resolution_clock::now() - creationTime);
+    switch(operation)
+    {
+    case(Operation::replaceDuration):
+        targetDuration = std::chrono::high_resolution_clock::now() - creationTime;
+        break;
+    case(Operation::addToDuration):
+        targetDuration += std::chrono::high_resolution_clock::now() - creationTime;
+        break;
+    }
 }
