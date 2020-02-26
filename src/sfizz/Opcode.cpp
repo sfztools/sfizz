@@ -27,7 +27,7 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
         hasBackParameter = (nextCharIndex == opcode.npos);
         const auto numDigits = hasBackParameter ? opcode.npos : nextCharIndex - nextNumIndex;
         if (absl::SimpleAtoi(opcode.substr(nextNumIndex, numDigits), &returnedValue)) {
-            ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
+            // ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
             parameterPositions.push_back(parameterPosition);
             parameters.push_back(returnedValue);
         }

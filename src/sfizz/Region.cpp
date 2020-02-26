@@ -413,6 +413,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
         }
         break;
+    case hash("cutoff_oncc"):
     case hash("cutoff_cc"):
         {
             if (!backParameter)
@@ -429,6 +430,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             );
         }
         break;
+    case hash("resonance_oncc"):
     case hash("resonance_cc"):
         {
             if (!backParameter)

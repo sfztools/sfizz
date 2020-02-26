@@ -8,6 +8,8 @@
 #include <chrono>
 #include <array>
 #include "SfzHelpers.h"
+#include "CCMap.h"
+#include "Range.h"
 
 namespace sfz
 {
@@ -102,6 +104,26 @@ public:
      * @brief Reset all the controllers
      */
     void resetAllControllers() noexcept;
+
+    /**
+     * @brief Modulate a value using the last entered CCs in the midiState
+     *
+     * @tparam T
+     * @tparam U
+     * @param value the base value
+     * @param modifiers the list of CC modifiers
+     * @param validRange a range to clamp the output
+     * @param lambda the function to apply for each modifier
+     * @return T
+     */
+    template<class T, class U>
+    T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
+    {
+        for (auto& mod: modifiers) {
+            lambda(value, normalizeCC(getCCValue(mod.first)) * mod.second);
+        }
+        return validRange.clamp(value);
+    }
 
 private:
     template<class T>

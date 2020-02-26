@@ -37,6 +37,14 @@ public:
     void clear();
 
     /**
+       Clear the filter memory, and compute the initial coefficients unaffected
+       by any smoothing.
+
+       Make sure to set the filter type and channel count first.
+     */
+    void prepare(float cutoff, float q, float pksh);
+
+    /**
        Process one cycle of the filter without modulating cutoff or Q.
        `cutoff` is a frequency expressed in Hz.
        `q` is a resonance expressed in dB.
@@ -130,6 +138,14 @@ public:
        Reinitialize the filter memory to zeros.
      */
     void clear();
+
+    /**
+       Clear the filter memory, and compute the initial coefficients unaffected
+       by any smoothing.
+
+       Make sure to set the channel count first.
+     */
+    void prepare(float cutoff, float bw, float pksh);
 
     /**
        Process one cycle of the filter without modulating cutoff or bandwidth.

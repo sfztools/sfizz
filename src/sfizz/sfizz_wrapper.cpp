@@ -49,6 +49,11 @@ int sfizz_get_num_curves(sfizz_synth_t* synth)
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->getNumCurves();
 }
+char* sfizz_export_midnam(sfizz_synth_t* synth, const char* model)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return strdup(self->exportMidnam(model ? model : "").c_str());
+}
 size_t sfizz_get_num_preloaded_samples(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);

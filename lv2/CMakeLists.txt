@@ -13,7 +13,6 @@ set (LV2PLUGIN_TTL_SRC_FILES
 )
 add_library (${LV2PLUGIN_PRJ_NAME} MODULE ${PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_FILES})
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
-
 # Explicitely strip all symbols on Linux but lv2_descriptor()
 # MacOS linker does not support this apparently https://bugs.webkit.org/show_bug.cgi?id=144555
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -21,8 +20,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${LV2PLUGIN_PRJ_NAME} "-Wl,--version-script=lv2.version")
     # target_link_libraries(${LV2PLUGIN_PRJ_NAME} "-Wl,-u,lv2_descriptor")
 endif()
-
-target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE .)
+target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE . external/ardour)
 sfizz_enable_lto_if_needed (${LV2PLUGIN_PRJ_NAME})
 
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir

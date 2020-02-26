@@ -49,6 +49,9 @@ faustgen() {
     if test ! -z "$bwVar"; then
         $SED -r -i 's/\b'"$bwVar"'\b/fBandwidth/' "$outfile"
     fi
+
+    # remove trailing whitespace
+    $SED -r -i 's/[ \t]+$//' "$outfile"
 }
 
 for f in \

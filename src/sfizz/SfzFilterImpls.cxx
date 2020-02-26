@@ -20,6 +20,19 @@ public:
 
     virtual void configureStandard(float, float, float) {}
     virtual void configureEq(float, float, float) {}
+
+    bool isSmoothingEnabled() const
+    {
+        return fSmoothEnable;
+    }
+
+    void setSmoothingEnabled(bool smooth)
+    {
+        fSmoothEnable = smooth;
+    }
+
+protected:
+    bool fSmoothEnable = true; // external variable used from faust code
 };
 
 #if defined(__GNUC__) || defined(__clang__)

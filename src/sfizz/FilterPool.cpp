@@ -19,11 +19,11 @@ void sfz::FilterHolder::reset()
 
 void sfz::FilterHolder::setup(const FilterDescription& description, unsigned numChannels, int noteNumber, uint8_t velocity)
 {
-    reset();
     this->description = &description;
     filter.setType(description.type);
     filter.setChannels(numChannels);
 
+    // Setup the base values
     baseCutoff = description.cutoff;
     if (description.random != 0) {
        dist.param(filterRandomDist::param_type(0, description.random));
@@ -37,6 +37,14 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
 
     baseGain = description.gain;
     baseResonance = description.resonance;
+
+    // Setup the modulated values
+    lastCutoff = midiState.modulate<float, int>(baseCutoff, description.cutoffCC, Default::filterCutoffRange, multiplyByCents);
+    lastResonance = midiState.modulate(baseResonance, description.resonanceCC, Default::filterResonanceRange);
+    baseGain = midiState.modulate(baseGain, description.gainCC, Default::filterGainRange);
+
+    // Initialize the filter
+    filter.prepare(lastCutoff, lastResonance, lastGain);
 }
 
 void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned numFrames)
@@ -49,23 +57,10 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
 
     // TODO: Once the midistate envelopes are done, add modulation in there!
     // For now we take the last value
-    lastCutoff = baseCutoff;
-    for (auto& mod: description->cutoffCC) {
-        lastCutoff *= centsFactor(midiState.getCCValue(mod.first) * mod.second);
-    }
-    lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
-
-    lastResonance = baseResonance;
-    for (auto& mod: description->resonanceCC) {
-        lastResonance += midiState.getCCValue(mod.first) * mod.second;
-    }
-    lastResonance = Default::filterResonanceRange.clamp(lastResonance);
-
-    lastGain = baseGain;
-    for (auto& mod: description->gainCC) {
-        lastGain += midiState.getCCValue(mod.first) * mod.second;
-    }
-    lastGain = Default::filterGainRange.clamp(lastGain);
+    // TODO: the template deduction could be automatic here?
+    lastCutoff = midiState.modulate<float, int>(baseCutoff, description->cutoffCC, Default::filterCutoffRange, multiplyByCents);
+    lastResonance = midiState.modulate(baseResonance, description->resonanceCC, Default::filterResonanceRange);
+    baseGain = midiState.modulate(baseGain, description->gainCC, Default::filterGainRange);
 
     filter.process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);
 }
