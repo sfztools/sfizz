@@ -19,6 +19,10 @@ namespace sfz
 
 using Duration = std::chrono::duration<double>;
 
+/**
+ * @brief Creates an RAII logger which fills or adds to a duration on destruction
+ *
+ */
 struct ScopedLogger
 {
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -28,6 +32,12 @@ struct ScopedLogger
         replaceDuration
     };
     ScopedLogger() = delete;
+    /**
+     * @brief Construct a new Scoped Logger object
+     *
+     * @param targetDuration
+     * @param op
+     */
     ScopedLogger(Duration& targetDuration, Operation op = Operation::replaceDuration);
     ~ScopedLogger();
     Duration& targetDuration;
@@ -65,13 +75,53 @@ class Logger
 public:
     Logger();
     ~Logger();
+    /**
+     * @brief Set the prefix for the output log files
+     *
+     * @param prefix
+     */
     void setPrefix(const std::string& prefix);
+
+    /**
+     * @brief Removes all logged data
+     *
+     */
     void clear();
+
+    /**
+     * @brief Enables logging and writing to log files on destruction
+     *
+     */
     void enableLogging();
+
+    /**
+     * @brief Disables logging and writing to log files on destruction
+     *
+     */
     void disableLogging();
+
+    /**
+     * @brief Logs the callback duration, with breakdown per operations
+     *
+     * @param breakdown The different timings for the callback
+     * @param numVoices The number of active voices
+     * @param numSamples The number of samples in the callback
+     */
     void logCallbackTime(CallbackBreakdown&& breakdown, int numVoices, size_t numSamples);
+
+    /**
+     * @brief Log a file loading and waiting duration
+     *
+     * @param waitDuration The time spent waiting before loading the file
+     * @param loadDuration The time it took to load the file
+     * @param fileSize The file size
+     * @param filename The file name
+     */
     void logFileTime(Duration waitDuration, Duration loadDuration, uint32_t fileSize, absl::string_view filename);
 private:
+    /**
+     * @brief Move all events from the real time queues to the non-realtime vectors
+     */
     void moveEvents() noexcept;
     bool loggingEnabled { config::loggingEnabled };
     std::string prefix { "" };
