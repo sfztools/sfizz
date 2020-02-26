@@ -45,7 +45,11 @@ else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(SNDFILE "sndfile" REQUIRED)
     target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
-    target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
+    if (SFIZZ_STATIC_LIBSNDFILE)
+        target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
+    else()
+        target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
+    endif()
 endif()
 
 add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
@@ -74,6 +78,8 @@ Build JACK stand-alone client: ${SFIZZ_JACK}
 Build LV2 plug-in:             ${SFIZZ_LV2}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
+Use vcpkg:                     ${SFIZZ_USE_VCPKG}
+Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
