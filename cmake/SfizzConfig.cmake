@@ -48,6 +48,9 @@ else()
     target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
 endif()
 
+add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+target_include_directories(sfizz-pugixml PUBLIC "src/external/pugixml/src")
+
 # If we build with Clang use libc++
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
