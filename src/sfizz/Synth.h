@@ -9,6 +9,7 @@
 #include "Parser.h"
 #include "Voice.h"
 #include "Region.h"
+#include "Effects.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
@@ -401,6 +402,12 @@ private:
      */
     void handleControlOpcodes(const std::vector<Opcode>& members);
     /**
+     * @brief Helper function to dispatch <effect> opcodes
+     *
+     * @param members the opcodes of the <effect> block
+     */
+    void handleEffectOpcodes(const std::vector<Opcode>& members);
+    /**
      * @brief Helper function to merge all the currently active opcodes
      * as set by the successive callbacks and create a new region to store
      * in the synth.
@@ -441,8 +448,14 @@ private:
     std::array<RegionPtrVector, 128> noteActivationLists;
     std::array<RegionPtrVector, config::numCCs> ccActivationLists;
 
-    // Internal temporary buffer
+    // Effect factory and buses
+    EffectFactory effectFactory;
+    typedef std::unique_ptr<EffectBus> EffectBusPtr;
+    std::vector<EffectBusPtr> effectBuses; // 0 is "main", 1-N are "fx1"-"fxN"
+
+    // Intermediate buffers
     AudioBuffer<float> tempBuffer { 2, config::defaultSamplesPerBlock };
+    AudioBuffer<float> tempMixNodeBuffer { 2, config::defaultSamplesPerBlock };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };

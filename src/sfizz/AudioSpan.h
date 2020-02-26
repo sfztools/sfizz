@@ -210,6 +210,22 @@ public:
     }
 
     /**
+     * @brief Convert implicitly to a pointer of channels
+     */
+    operator const float* const *() const noexcept
+    {
+        return spans.data();
+    }
+
+    /**
+     * @brief Convert implicitly to a pointer of channels
+     */
+    operator float* const *() noexcept
+    {
+        return spans.data();
+    }
+
+    /**
      * @brief Get a Span<Type> corresponding to a specific channel
      *
      * @param channelIndex the channel

@@ -15,6 +15,9 @@ set (SFIZZ_SOURCES
     sfizz/FloatEnvelopes.cpp
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
+    sfizz/Effects.cpp
+    sfizz/effects/Nothing.cpp
+    sfizz/effects/Lofi.cpp
 )
 include (SfizzSIMDSourceFiles)
 

@@ -39,6 +39,9 @@ struct Region {
     : midiState(midiState), defaultPath(std::move(defaultPath))
     {
         ccSwitched.set();
+
+        gainToEffect.reserve(5); // sufficient room for main and fx1-4
+        gainToEffect.push_back(1.0); // contribute 100% into the main bus
     }
     Region(const Region&) = default;
     ~Region() = default;
@@ -206,6 +209,12 @@ struct Region {
 
     bool hasKeyswitches() const noexcept { return keyswitchDown || keyswitchUp || keyswitch || previousNote; }
 
+    /**
+     * @brief Get the gain this region contributes into the input of the Nth
+     *        effect bus
+     */
+    float getGainToEffectBus(unsigned number) const noexcept;
+
     // Sound source: sample playback
     std::string sample {}; // Sample
     float delay { Default::delay }; // delay
@@ -297,6 +306,10 @@ struct Region {
     EGDescription filterEG;
 
     bool isStereo { false };
+
+    // Effects
+    std::vector<float> gainToEffect;
+
 private:
     const MidiState& midiState;
     bool keySwitched { true };

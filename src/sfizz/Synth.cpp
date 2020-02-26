@@ -21,12 +21,16 @@
 using namespace std::literals;
 
 sfz::Synth::Synth()
+    : Synth(config::numVoices)
 {
-    resetVoices(this->numVoices);
 }
 
 sfz::Synth::Synth(int numVoices)
 {
+    effectFactory.registerStandardEffectTypes();
+
+    effectBuses.reserve(5); // sufficient room for main and fx1-4
+
     resetVoices(numVoices);
 }
 
@@ -70,7 +74,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
         numCurves++;
         break;
     case hash("effect"):
-        // TODO: implement effects
+        handleEffectOpcodes(members);
         break;
     default:
         std::cerr << "Unknown header: " << header << '\n';
@@ -118,6 +122,10 @@ void sfz::Synth::clear()
     for (auto& list: ccActivationLists)
         list.clear();
     regions.clear();
+    effectBuses.clear();
+    EffectBus* mainBus = new EffectBus;
+    effectBuses.emplace_back(mainBus);
+    mainBus->setGainToMain(1.0);
     resources.filePool.clear();
     resources.logger.clear();
     numGroups = 0;
@@ -183,6 +191,75 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             DBG("Unsupported control opcode: " << member.opcode);
         }
     }
+}
+
+void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
+{
+    absl::string_view busName = "main";
+
+    auto getOrCreateBus = [this](unsigned index) -> EffectBus& {
+        if (index + 1 > effectBuses.size())
+            effectBuses.resize(index + 1);
+        EffectBusPtr &slot = effectBuses[index];
+        if (!slot)
+            slot.reset(new EffectBus);
+        return *slot;
+    };
+
+    for (const Opcode& opcode : members) {
+        switch (opcode.lettersOnlyHash) {
+        case hash("bus"):
+            busName = opcode.value;
+            break;
+
+        // note(jpc): gain opcodes are linear volumes in % units
+
+        case hash("directtomain"):
+            if (auto valueOpt = readOpcode<float>(opcode.value, {0, 100}))
+                getOrCreateBus(0).setGainToMain(*valueOpt / 100);
+            break;
+
+        case hash("fxtomain"): // fx&tomain
+            if (auto numberOpt = opcode.firstParameter()) {
+                unsigned number = *numberOpt;
+                if (number < 1 || number > config::maxEffectBuses)
+                    break;
+                if (auto valueOpt = readOpcode<float>(opcode.value, {0, 100}))
+                    getOrCreateBus(number).setGainToMain(*valueOpt / 100);
+            }
+            break;
+
+        case hash("fxtomix"): // fx&tomix
+            if (auto numberOpt = opcode.firstParameter()) {
+                unsigned number = *numberOpt;
+                if (number < 1 || number > config::maxEffectBuses)
+                    break;
+                if (auto valueOpt = readOpcode<float>(opcode.value, {0, 100}))
+                    getOrCreateBus(number).setGainToMix(*valueOpt / 100);
+            }
+            break;
+        }
+    }
+
+    unsigned busIndex;
+    if (busName.empty() || busName == "main")
+        busIndex = 0;
+    else if (busName.size() > 2 && busName.substr(0, 2) == "fx" &&
+             absl::SimpleAtoi(busName.substr(2), &busIndex) &&
+             busIndex >= 1 && busIndex <= config::maxEffectBuses) {
+        // an effect bus fxN, with N usually in [1,4]
+    }
+    else {
+        DBG("Unsupported effect bus: " << busName);
+        return;
+    }
+
+    // create the effect and add it
+    EffectBus& bus = getOrCreateBus(busIndex);
+    Effect* fx = effectFactory.makeEffect(members);
+    bus.addEffect(std::unique_ptr<Effect>(fx));
+
+    fx->init(sampleRate);
 }
 
 void addEndpointsToVelocityCurve(sfz::Region& region)
@@ -385,6 +462,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
     this->samplesPerBlock = samplesPerBlock;
     this->tempBuffer.resize(samplesPerBlock);
+    this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
 }
@@ -402,12 +480,16 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 
     resources.filterPool.setSampleRate(sampleRate);
     resources.eqPool.setSampleRate(sampleRate);
+
+    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+        if (EffectBus* bus = effectBuses[i].get())
+            bus->init(sampleRate);
+    }
 }
 
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
-
 
     if (freeWheeling)
         resources.filePool.waitForBackgroundLoading();
@@ -416,32 +498,71 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (!canEnterCallback)
         return;
 
+    size_t numFrames = buffer.getNumFrames();
+    size_t numEffectBuses = effectBuses.size();
+    auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
+    auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
+
+    // Prepare the effect inputs. They are mixes of per-region outputs.
+    for (size_t i = 0; i < numEffectBuses; ++i) {
+        if (EffectBus* bus = effectBuses[i].get())
+            bus->clearInputs(numFrames);
+    }
+
+    //
     CallbackBreakdown callbackBreakdown;
     int numActiveVoices { 0 };
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod };
         buffer.fill(0.0f);
+        tempMixNode.fill(0.0f);
         resources.filePool.cleanupPromises();
 
-
-        auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
         for (auto& voice : voices) {
-            if (!voice->isFree()) {
-                numActiveVoices++;
-                voice->renderBlock(tempSpan);
-                buffer.add(tempSpan);
-                callbackBreakdown.data += voice->getLastDataDuration();
-                callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
-                callbackBreakdown.filters += voice->getLastFilterDuration();
-                callbackBreakdown.panning += voice->getLastPanningDuration();
-            }
-        }
+            if (voice->isFree())
+                continue;
 
-        buffer.applyGain(db2mag(volume));
+            const Region* region = voice->getRegion();
+
+            numActiveVoices++;
+            voice->renderBlock(temp);
+
+            // Add the output into the effects linked to this region
+            for (size_t i = 0; i < numEffectBuses; ++i) {
+                if (EffectBus* bus = effectBuses[i].get()) {
+                    float addGain = region->getGainToEffectBus(i);
+                    bus->addToInputs(temp, addGain, numFrames);
+                }
+            }
+
+            callbackBreakdown.data += voice->getLastDataDuration();
+            callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
+            callbackBreakdown.filters += voice->getLastFilterDuration();
+            callbackBreakdown.panning += voice->getLastPanningDuration();
+        }
     }
 
+    // Apply effect buses
+    // -- note(jpc) there is always a "main" bus which is initially empty.
+    //    without any <effect>, the signal is just going to flow through it.
+    for (size_t i = 0; i < numEffectBuses; ++i) {
+        if (EffectBus* bus = effectBuses[i].get()) {
+            bus->process(numFrames);
+            bus->mixOutputsTo(buffer, tempMixNode, numFrames);
+        }
+    }
+
+    // Add the Mix output (fxNtomix opcodes)
+    // -- note(jpc) the purpose of the Mix output is not known.
+    //    perhaps it's designed as extension point for custom processing?
+    //    as default behavior, it adds itself to the Main signal.
+    buffer.add(tempMixNode);
+
+    // Apply the master volume
+    buffer.applyGain(db2mag(volume));
+
     callbackBreakdown.dispatch = dispatchDuration;
-    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, buffer.getNumFrames());
+    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, numFrames);
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);
