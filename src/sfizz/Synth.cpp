@@ -581,13 +581,10 @@ int sfz::Synth::getNumCurves() const noexcept
 std::string sfz::Synth::exportMidnam(absl::string_view model) const
 {
     pugi::xml_document doc;
-
-    // TODO: perhaps define this somewhere, or use some metadata from the SFZ
-    const char *manufacturer = "Paul Ferrand";
-    const char *defaultModel = "Sfizz";
+    absl::string_view manufacturer = config::midnamManufacturer;
 
     if (model.empty())
-        model = defaultModel;
+        model = config::midnamModel;
 
     doc.append_child(pugi::node_doctype).set_value(
         "MIDINameDocument PUBLIC"
@@ -603,7 +600,7 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
 
     pugi::xml_node device = root.append_child("MasterDeviceNames");
     device.append_child("Manufacturer")
-        .append_child(pugi::node_pcdata).set_value(manufacturer);
+        .append_child(pugi::node_pcdata).set_value(std::string(manufacturer).c_str());
     device.append_child("Model")
         .append_child(pugi::node_pcdata).set_value(std::string(model).c_str());
 

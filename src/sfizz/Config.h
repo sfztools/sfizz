@@ -12,6 +12,7 @@
 #endif
 #define _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
 #endif
+#include "absl/strings/string_view.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -62,6 +63,11 @@ namespace config {
        modulated filter. The lower, the more CPU resources are consumed.
     */
     constexpr int filterControlInterval { 16 };
+    /**
+       Default metadata for MIDIName documents
+     */
+    const absl::string_view midnamManufacturer { "The Sfizz authors" };
+    const absl::string_view midnamModel { "Sfizz" };
 } // namespace config
 
 // Enable or disable SIMD accelerators by default
