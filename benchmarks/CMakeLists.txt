@@ -46,6 +46,7 @@ target_link_libraries(bm_ADSR PRIVATE sfizz::sfizz)
 
 sfizz_add_benchmark(bm_add BM_add.cpp)
 sfizz_add_benchmark(bm_multiplyAdd BM_multiplyAdd.cpp)
+sfizz_add_benchmark(bm_multiplyAddFixedGain BM_multiplyAddFixedGain.cpp)
 sfizz_add_benchmark(bm_subtract BM_subtract.cpp)
 sfizz_add_benchmark(bm_copy BM_copy.cpp)
 sfizz_add_benchmark(bm_pan BM_pan.cpp)
