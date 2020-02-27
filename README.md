@@ -1,6 +1,7 @@
 # sfizz
 
 [![Travis Build Status]](https://travis-ci.com/sfztools/sfizz)
+[![AppVeyor Build Status]](https://ci.appveyor.com/project/sfztools/sfizz)
 
 SFZ library and LV2 plugin, please check [our website] for more details.
 
@@ -42,4 +43,5 @@ The sfizz library also uses in some subprojects:
 [libsndfile]:   https://github.com/erikd/libsndfile/
 [LV2]:          https://lv2plug.in/
 [our website]:  https://sfz.tools/sfizz
-[Travis Build Status]: https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
+[AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
+[Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
