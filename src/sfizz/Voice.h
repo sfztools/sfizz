@@ -209,6 +209,12 @@ public:
      * @param numFilters
      */
     void setMaxEQsPerVoice(size_t numEQs);
+
+    Duration getLastDataDuration() const noexcept { return dataDuration; }
+    Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
+    Duration getLastFilterDuration() const noexcept { return filterDuration; }
+    Duration getLastPanningDuration() const noexcept { return panningDuration; }
+
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
@@ -300,6 +306,11 @@ private:
     MultiplicativeEnvelope<float> pitchBendEnvelope;
     MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
+
+    Duration dataDuration;
+    Duration amplitudeDuration;
+    Duration panningDuration;
+    Duration filterDuration;
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 

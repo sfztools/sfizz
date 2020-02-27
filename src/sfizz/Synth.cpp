@@ -410,11 +410,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
-    const auto callbackStartTime = std::chrono::high_resolution_clock::now();
 
-    buffer.fill(0.0f);
-
-    resources.filePool.cleanupPromises();
 
     if (freeWheeling)
         resources.filePool.waitForBackgroundLoading();
@@ -423,20 +419,35 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (!canEnterCallback)
         return;
 
-    auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
+    CallbackBreakdown callbackBreakdown;
     int numActiveVoices { 0 };
-    for (auto& voice : voices) {
-        if (!voice->isFree()) {
-            numActiveVoices++;
-            voice->renderBlock(tempSpan);
-            buffer.add(tempSpan);
+    { // Main render block
+        ScopedTiming logger { callbackBreakdown.renderMethod };
+        buffer.fill(0.0f);
+        resources.filePool.cleanupPromises();
+
+
+        auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
+        for (auto& voice : voices) {
+            if (!voice->isFree()) {
+                numActiveVoices++;
+                voice->renderBlock(tempSpan);
+                buffer.add(tempSpan);
+                callbackBreakdown.data += voice->getLastDataDuration();
+                callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
+                callbackBreakdown.filters += voice->getLastFilterDuration();
+                callbackBreakdown.panning += voice->getLastPanningDuration();
+            }
         }
+
+        buffer.applyGain(db2mag(volume));
     }
 
-    buffer.applyGain(db2mag(volume));
+    callbackBreakdown.dispatch = dispatchDuration;
+    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, buffer.getNumFrames());
 
-    const auto callbackDuration = std::chrono::high_resolution_clock::now() - callbackStartTime;
-    resources.logger.logCallbackTime(callbackDuration, numActiveVoices, buffer.getNumFrames());
+    // Reset the dispatch counter
+    dispatchDuration = Duration(0);
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -444,6 +455,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOnEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -458,6 +470,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -513,6 +526,8 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+
     resources.midiState.ccEvent(ccNumber, ccValue);
 
     AtomicGuard callbackGuard { inCallback };
@@ -543,6 +558,8 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
 
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+
     resources.midiState.pitchBendEvent(pitch);
 
     for (auto& region: regions) {
@@ -555,10 +572,11 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 }
 void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
 {
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 }
 void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
 {
-
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 }
 
 int sfz::Synth::getNumRegions() const noexcept
@@ -805,4 +823,14 @@ fs::file_time_type sfz::Synth::checkModificationTime()
 bool sfz::Synth::shouldReloadFile()
 {
     return (checkModificationTime() > modificationTime);
+}
+
+void sfz::Synth::enableLogging() noexcept
+{
+    resources.logger.enableLogging();
+}
+
+void sfz::Synth::disableLogging() noexcept
+{
+    resources.logger.disableLogging();
 }

@@ -361,6 +361,21 @@ SFIZZ_EXPORTED_API char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth);
  */
 SFIZZ_EXPORTED_API bool sfizz_should_reload_file(sfizz_synth_t* synth);
 
+/**
+ * @brief Enable logging of timings to sidecar CSV files. This can produce
+ * many outputs so use with caution.
+ *
+ * @param synth
+ */
+SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth);
+
+/**
+ * @brief Disable logging
+ *
+ * @param synth
+ */
+SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
+
 #ifdef __cplusplus
 }
 #endif

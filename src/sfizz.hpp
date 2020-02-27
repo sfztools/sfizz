@@ -248,6 +248,17 @@ public:
      * @return false
      */
     bool shouldReloadFile();
+    /**
+     * @brief Enable logging of timings to sidecar CSV files. This can produce
+     * many outputs so use with caution.
+     *
+     */
+    void enableLogging() noexcept;
+    /**
+     * @brief Disable logging;
+     *
+     */
+    void disableLogging() noexcept;
 private:
     std::unique_ptr<sfz::Synth> synth;
 };

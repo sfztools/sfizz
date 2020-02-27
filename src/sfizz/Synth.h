@@ -340,6 +340,17 @@ public:
      * @return false
      */
     bool shouldReloadFile();
+    /**
+     * @brief Enable logging of timings to sidecar CSV files. This can produce
+     * many outputs so use with caution.
+     *
+     */
+    void enableLogging() noexcept;
+    /**
+     * @brief Disable logging;
+     *
+     */
+    void disableLogging() noexcept;
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -455,6 +466,8 @@ private:
     std::string defaultPath { "" };
     int noteOffset { 0 };
     int octaveOffset { 0 };
+
+    Duration dispatchDuration { 0 };
 
     fs::file_time_type modificationTime { };
 

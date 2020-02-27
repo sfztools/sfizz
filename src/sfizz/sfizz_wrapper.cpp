@@ -232,6 +232,17 @@ bool sfizz_should_reload_file(sfizz_synth_t* synth)
     return self->shouldReloadFile();
 }
 
+void sfizz_enable_logging(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->enableLogging();
+}
+void sfizz_disable_logging(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->disableLogging();
+}
+
 #ifdef __cplusplus
 }
 #endif

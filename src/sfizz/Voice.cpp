@@ -250,10 +250,13 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     auto delayed_buffer = buffer.subspan(delay);
     initialDelay -= static_cast<int>(delay);
 
-    if (region->isGenerator())
-        fillWithGenerator(delayed_buffer);
-    else
-        fillWithData(delayed_buffer);
+    { // Fill buffer with raw data
+        ScopedTiming logger { dataDuration };
+        if (region->isGenerator())
+            fillWithGenerator(delayed_buffer);
+        else
+            fillWithData(delayed_buffer);
+    }
 
     if (region->isStereo)
         processStereo(buffer);
@@ -275,39 +278,50 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 
     auto modulationSpan = tempSpan1.first(numSamples);
 
-    // Amplitude envelope
-    amplitudeEnvelope.getBlock(modulationSpan);
-    applyGain<float>(modulationSpan, leftBuffer);
+    { // Amplitude processing
+        ScopedTiming logger { amplitudeDuration };
 
-    // Crossfade envelope
-    crossfadeEnvelope.getBlock(modulationSpan);
-    applyGain<float>(modulationSpan, leftBuffer);
+        // Amplitude envelope
+        amplitudeEnvelope.getBlock(modulationSpan);
+        applyGain<float>(modulationSpan, leftBuffer);
 
-    // Volume envelope
-    volumeEnvelope.getBlock(modulationSpan);
-    applyGain<float>(modulationSpan, leftBuffer);
+        // Crossfade envelope
+        crossfadeEnvelope.getBlock(modulationSpan);
+        applyGain<float>(modulationSpan, leftBuffer);
 
-    // AmpEG envelope
-    egEnvelope.getBlock(modulationSpan);
-    applyGain<float>(modulationSpan, leftBuffer);
+        // Volume envelope
+        volumeEnvelope.getBlock(modulationSpan);
+        applyGain<float>(modulationSpan, leftBuffer);
 
-    // Filtering and EQ
-    const float* inputChannel[1] { leftBuffer.data() };
-    float* outputChannel[1] { leftBuffer.data() };
-    for (auto& filter: filters) {
-        filter->process(inputChannel, outputChannel, numSamples);
+        // AmpEG envelope
+        egEnvelope.getBlock(modulationSpan);
+        applyGain<float>(modulationSpan, leftBuffer);
     }
 
-    for (auto& eq: equalizers) {
-        eq->process(inputChannel, outputChannel, numSamples);
+    { // Filtering and EQ
+        ScopedTiming logger { filterDuration };
+
+        const float* inputChannel[1] { leftBuffer.data() };
+        float* outputChannel[1] { leftBuffer.data() };
+        for (auto& filter: filters) {
+            filter->process(inputChannel, outputChannel, numSamples);
+        }
+
+        for (auto& eq: equalizers) {
+            eq->process(inputChannel, outputChannel, numSamples);
+        }
     }
 
-    // Prepare for stereo output
-    copy<float>(leftBuffer, rightBuffer);
+    { // Panning and stereo processing
+        ScopedTiming logger { panningDuration };
 
-    // Apply panning
-    panEnvelope.getBlock(modulationSpan);
-    pan<float>(modulationSpan, leftBuffer, rightBuffer);
+        // Prepare for stereo output
+        copy<float>(leftBuffer, rightBuffer);
+
+        // Apply panning
+        panEnvelope.getBlock(modulationSpan);
+        pan<float>(modulationSpan, leftBuffer, rightBuffer);
+    }
 }
 
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
@@ -317,38 +331,49 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
-    // Amplitude envelope
-    amplitudeEnvelope.getBlock(modulationSpan);
-    buffer.applyGain(modulationSpan);
+    { // Amplitude processing
+        ScopedTiming logger { amplitudeDuration };
 
-    // Crossfade envelope
-    crossfadeEnvelope.getBlock(modulationSpan);
-    buffer.applyGain(modulationSpan);
+        // Amplitude envelope
+        amplitudeEnvelope.getBlock(modulationSpan);
+        buffer.applyGain(modulationSpan);
 
-    // Volume envelope
-    volumeEnvelope.getBlock(modulationSpan);
-    buffer.applyGain(modulationSpan);
+        // Crossfade envelope
+        crossfadeEnvelope.getBlock(modulationSpan);
+        buffer.applyGain(modulationSpan);
 
-    // AmpEG envelope
-    egEnvelope.getBlock(modulationSpan);
-    buffer.applyGain(modulationSpan);
+        // Volume envelope
+        volumeEnvelope.getBlock(modulationSpan);
+        buffer.applyGain(modulationSpan);
 
-    // Apply the width/position process
-    widthEnvelope.getBlock(modulationSpan);
-    width<float>(modulationSpan, leftBuffer, rightBuffer);
-    positionEnvelope.getBlock(modulationSpan);
-    pan<float>(modulationSpan, leftBuffer, rightBuffer);
-
-    // Filtering and EQ
-    const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
-    float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
-
-    for (auto& filter: filters) {
-        filter->process(inputChannels, outputChannels, numSamples);
+        // AmpEG envelope
+        egEnvelope.getBlock(modulationSpan);
+        buffer.applyGain(modulationSpan);
     }
 
-    for (auto& eq: equalizers) {
-        eq->process(inputChannels, outputChannels, numSamples);
+    { // Panning and stereo processing
+        ScopedTiming logger { panningDuration };
+
+        // Apply the width/position process
+        widthEnvelope.getBlock(modulationSpan);
+        width<float>(modulationSpan, leftBuffer, rightBuffer);
+        positionEnvelope.getBlock(modulationSpan);
+        pan<float>(modulationSpan, leftBuffer, rightBuffer);
+    }
+
+    { // Filtering and EQ
+        ScopedTiming logger { filterDuration };
+
+        const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
+        float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
+
+        for (auto& filter: filters) {
+            filter->process(inputChannels, outputChannels, numSamples);
+        }
+
+        for (auto& eq: equalizers) {
+            eq->process(inputChannels, outputChannels, numSamples);
+        }
     }
 }
 
