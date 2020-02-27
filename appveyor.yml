@@ -4,6 +4,8 @@ configuration: Release
 platform:
 - Win32
 - x64
+cache:
+  - c:\tools\vcpkg\installed\ -> appveyor.yml
 
 install:
 - cmd: choco install -y innosetup
