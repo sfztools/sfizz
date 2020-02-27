@@ -155,13 +155,13 @@ void sfz::Logger::disableLogging()
     clearFlag.clear();
 }
 
-sfz::ScopedLogger::ScopedLogger(Duration& targetDuration, Operation operation)
+sfz::ScopedTiming::ScopedTiming(Duration& targetDuration, Operation operation)
 : targetDuration(targetDuration), operation(operation)
 {
 
 }
 
-sfz::ScopedLogger::~ScopedLogger()
+sfz::ScopedTiming::~ScopedTiming()
 {
     switch(operation)
     {

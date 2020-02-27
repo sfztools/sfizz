@@ -23,7 +23,7 @@ using Duration = std::chrono::duration<double>;
  * @brief Creates an RAII logger which fills or adds to a duration on destruction
  *
  */
-struct ScopedLogger
+struct ScopedTiming
 {
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
     enum class Operation
@@ -31,15 +31,15 @@ struct ScopedLogger
         addToDuration,
         replaceDuration
     };
-    ScopedLogger() = delete;
+    ScopedTiming() = delete;
     /**
      * @brief Construct a new Scoped Logger object
      *
      * @param targetDuration
      * @param op
      */
-    ScopedLogger(Duration& targetDuration, Operation op = Operation::replaceDuration);
-    ~ScopedLogger();
+    ScopedTiming(Duration& targetDuration, Operation op = Operation::replaceDuration);
+    ~ScopedTiming();
     Duration& targetDuration;
     const Operation operation;
     const TimePoint creationTime { std::chrono::high_resolution_clock::now() };

@@ -251,7 +251,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     initialDelay -= static_cast<int>(delay);
 
     { // Fill buffer with raw data
-        ScopedLogger logger { dataDuration };
+        ScopedTiming logger { dataDuration };
         if (region->isGenerator())
             fillWithGenerator(delayed_buffer);
         else
@@ -279,7 +279,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto modulationSpan = tempSpan1.first(numSamples);
 
     { // Amplitude processing
-        ScopedLogger logger { amplitudeDuration };
+        ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
         amplitudeEnvelope.getBlock(modulationSpan);
@@ -299,7 +299,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     }
 
     { // Filtering and EQ
-        ScopedLogger logger { filterDuration };
+        ScopedTiming logger { filterDuration };
 
         const float* inputChannel[1] { leftBuffer.data() };
         float* outputChannel[1] { leftBuffer.data() };
@@ -313,7 +313,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     }
 
     { // Panning and stereo processing
-        ScopedLogger logger { panningDuration };
+        ScopedTiming logger { panningDuration };
 
         // Prepare for stereo output
         copy<float>(leftBuffer, rightBuffer);
@@ -332,7 +332,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     { // Amplitude processing
-        ScopedLogger logger { amplitudeDuration };
+        ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
         amplitudeEnvelope.getBlock(modulationSpan);
@@ -352,7 +352,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     }
 
     { // Panning and stereo processing
-        ScopedLogger logger { panningDuration };
+        ScopedTiming logger { panningDuration };
 
         // Apply the width/position process
         widthEnvelope.getBlock(modulationSpan);
@@ -362,7 +362,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     }
 
     { // Filtering and EQ
-        ScopedLogger logger { filterDuration };
+        ScopedTiming logger { filterDuration };
 
         const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
         float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };

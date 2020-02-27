@@ -422,7 +422,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     CallbackBreakdown callbackBreakdown;
     int numActiveVoices { 0 };
     { // Main render block
-        ScopedLogger logger { callbackBreakdown.renderMethod };
+        ScopedTiming logger { callbackBreakdown.renderMethod };
         buffer.fill(0.0f);
         resources.filePool.cleanupPromises();
 
@@ -455,7 +455,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    ScopedLogger logger { dispatchDuration, ScopedLogger::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOnEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -470,7 +470,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    ScopedLogger logger { dispatchDuration, ScopedLogger::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
@@ -526,7 +526,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
-    ScopedLogger logger { dispatchDuration, ScopedLogger::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 
     resources.midiState.ccEvent(ccNumber, ccValue);
 
@@ -558,7 +558,7 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
 
-    ScopedLogger logger { dispatchDuration, ScopedLogger::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 
     resources.midiState.pitchBendEvent(pitch);
 
@@ -572,11 +572,11 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 }
 void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
 {
-    ScopedLogger logger { dispatchDuration, ScopedLogger::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 }
 void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
 {
-    ScopedLogger logger { dispatchDuration, ScopedLogger::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 }
 
 int sfz::Synth::getNumRegions() const noexcept

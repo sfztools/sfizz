@@ -324,8 +324,6 @@ void sfz::FilePool::loadingThread() noexcept
 
         threadsLoading--;
 
-
-
         while (!filledPromiseQueue.try_push(promise)) {
             DBG("[sfizz] Error enqueuing the promise for " << promise->filename << " in the filledPromiseQueue");
             std::this_thread::sleep_for(1ms);
