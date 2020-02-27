@@ -65,7 +65,7 @@ sfz::Logger::~Logger()
                         << prefix
                         << "_file_log.csv";
         fs::path fileLogPath{ fs::current_path() / fileLogFilename.str() };
-        std::cout << "Logging file times to " << fileLogPath.filename() << '\n';
+        std::cout << "Logging " << fileTimes.size() << " file times to " << fileLogPath.filename() << '\n';
         std::ofstream loadLogFile { fileLogPath.native() };
         loadLogFile << "WaitDuration,LoadDuration,FileSize,FileName" << '\n';
         for (auto& time: fileTimes)
@@ -81,7 +81,7 @@ sfz::Logger::~Logger()
                             << prefix
                             << "_callback_log.csv";
         fs::path callbackLogPath{ fs::current_path() / callbackLogFilename.str() };
-        std::cout << "Logging callback times to " << callbackLogPath.filename() << '\n';
+        std::cout << "Logging " << callbackTimes.size() << " callback times to " << callbackLogPath.filename() << '\n';
         std::ofstream callbackLogFile { callbackLogPath.native() };
         callbackLogFile << "Dispatch,RenderMethod,Data,Amplitude,Filters,Panning,NumVoices,NumSamples" << '\n';
         for (auto& time: callbackTimes)

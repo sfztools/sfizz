@@ -410,21 +410,22 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
+
+
+    if (freeWheeling)
+        resources.filePool.waitForBackgroundLoading();
+
+    AtomicGuard callbackGuard { inCallback };
+    if (!canEnterCallback)
+        return;
+
     CallbackBreakdown callbackBreakdown;
     int numActiveVoices { 0 };
-
     { // Main render block
         ScopedLogger logger { callbackBreakdown.renderMethod };
         buffer.fill(0.0f);
-
         resources.filePool.cleanupPromises();
 
-        if (freeWheeling)
-            resources.filePool.waitForBackgroundLoading();
-
-        AtomicGuard callbackGuard { inCallback };
-        if (!canEnterCallback)
-            return;
 
         auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
         for (auto& voice : voices) {
