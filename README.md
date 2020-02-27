@@ -7,15 +7,6 @@ SFZ library and LV2 plugin, please check [our website] for more details.
 
 ![Screenshot](screenshot.png)
 
-## Author and contributors
-
-Contributors to `sfizz` include:
-- Paul Ferrand (2019-2020) (maintainer)
-- Andrea Zanellato (2019-2020) (devops, documentation and distribution)
-- Jean-Pierre Cimalando (2020)
-- Michael Willis (2020)
-- Alexander Mitchell (2020)
-
 ## Dependencies and licenses
 
 The sfizz library makes primary use of:
