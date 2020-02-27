@@ -68,4 +68,3 @@ if (SFIZZ_SHARED)
         endif()
     endif()
 endif()
-

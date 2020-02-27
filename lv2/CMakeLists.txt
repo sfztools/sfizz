@@ -22,6 +22,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE . external/ardour)
 sfizz_enable_lto_if_needed (${LV2PLUGIN_PRJ_NAME})
+if (MINGW)
+    target_link_options (${LV2PLUGIN_PRJ_NAME} PRIVATE "-static")
+endif()
 
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir
 # <build_dir>/lv2/<plugin_name>_lv2.<ext> to
