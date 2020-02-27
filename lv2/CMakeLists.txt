@@ -23,7 +23,7 @@ endif()
 target_include_directories(${LV2PLUGIN_PRJ_NAME} PRIVATE . external/ardour)
 sfizz_enable_lto_if_needed (${LV2PLUGIN_PRJ_NAME})
 if (MINGW)
-    target_link_options (${LV2PLUGIN_PRJ_NAME} PRIVATE "-static")
+    set_target_properties (${LV2PLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
 endif()
 
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir
