@@ -31,7 +31,7 @@ after_build:
 - cmd: if %platform%==Win32 set RELEASE_ARCH=x86
 - cmd: if %platform%==x64   set RELEASE_ARCH=x64
 - cmd: 7z a sfizz-lv2-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip sfizz.lv2
-- cmd: 7z a sfizz-library-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip src/Release/sfizz*
+- cmd: 7z a sfizz-lib-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip src/Release/sfizz*
 - cmd: iscc.exe ./../innosetup.iss
 - cmd: mv ./../Output/sfizz-lv2-setup.exe sfizz-lv2-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc-setup.exe
 
@@ -44,7 +44,7 @@ artifacts:
 deploy:
 - provider: GitHub
   auth_token:
-    secure: B2BErA5BKmo5u1EE1o2Ss0uNjIe1RyeytHmwkdOuSYAFJysz3aEiSRlt3U08jADt
+    secure: F0hK0o5SHzUO/tlk1qMiVCbeZtNPUZzfhOw8YEfTs/72AIaWCUo9J4zptDYE2Z7F
   artifact: Packages
   draft: false
   prerelease: false
