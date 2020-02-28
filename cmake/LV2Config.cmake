@@ -14,8 +14,7 @@ else()
     set (LV2PLUGIN_SPDX_LICENSE_ID "ISC")
 endif()
 
-
-if (WIN32)
+if (MSVC)
     set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lv2" CACHE STRING
     "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lv2}]")
 else()
