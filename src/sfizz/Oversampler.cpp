@@ -7,6 +7,7 @@
 #include "Oversampler.h"
 #include "Buffer.h"
 #include "AudioSpan.h"
+#include "SIMDConfig.h"
 
 constexpr std::array<double, 12> coeffsStage2x {
     0.036681502163648017,
@@ -37,12 +38,12 @@ constexpr std::array<double, 3> coeffsStage8x {
 };
 
 
-#if defined(__x86_64__) || defined(__i386__)
+#if SFIZZ_HAVE_SSE
 #include "hiir/Upsampler2xSse.h"
 using Upsampler2x = hiir::Upsampler2xSse<coeffsStage2x.size()>;
 using Upsampler4x = hiir::Upsampler2xSse<coeffsStage4x.size()>;
 using Upsampler8x = hiir::Upsampler2xSse<coeffsStage8x.size()>;
-#elif defined(__arm__) || defined(__aarch64__)
+#elif SFIZZ_HAVE_NEON
 #include "hiir/Upsampler2xNeon.h"
 using Upsampler2x = hiir::Upsampler2xNeon<coeffsStage2x.size()>;
 using Upsampler4x = hiir::Upsampler2xNeon<coeffsStage4x.size()>;
