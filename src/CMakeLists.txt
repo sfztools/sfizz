@@ -1,4 +1,5 @@
-include(CheckLibraryExists)
+include (GNUInstallDirs)
+include (CheckLibraryExists)
 
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
@@ -31,6 +32,12 @@ target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
 target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml)
+set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
+
+install (TARGETS sfizz_static
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
@@ -46,21 +53,19 @@ if (SFIZZ_SHARED)
     add_library (sfizz_shared SHARED)
     target_sources(sfizz_shared PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
-    target_include_directories (sfizz_static PRIVATE external)
+    target_include_directories (sfizz_shared PRIVATE external)
     target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml)
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
     set_target_properties (sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
     set_property (TARGET sfizz_shared PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
     sfizz_enable_lto_if_needed(sfizz_shared)
     configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
-    if (UNIX)
-        include (GNUInstallDirs)
-        install (TARGETS sfizz_shared
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+
+    install (TARGETS sfizz_shared
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-    endif()
 
     if (UNIX AND NOT APPLE)
         if (LIBATOMIC_FOUND)
@@ -68,3 +73,6 @@ if (SFIZZ_SHARED)
         endif()
     endif()
 endif()
+
+install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
