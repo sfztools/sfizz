@@ -39,8 +39,10 @@ if (NOT MSVC)
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+    configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
 else()
-	configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
+    configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
 endif()
 
 add_library (sfizz::parser ALIAS sfizz_parser)
@@ -63,7 +65,6 @@ if (SFIZZ_SHARED)
     set_target_properties (sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
     set_property (TARGET sfizz_shared PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
     sfizz_enable_lto_if_needed(sfizz_shared)
-    configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
 
     if (NOT MSVC)
         install (TARGETS sfizz_shared
