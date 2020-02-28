@@ -42,7 +42,7 @@ jobs:
     dist: bionic
     env:
       - BUILD_TYPE=lv2
-      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}-lv2"
+      - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
         sources:
@@ -53,7 +53,7 @@ jobs:
     dist: bionic
     env:
       - BUILD_TYPE=lv2
-      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}-lv2"
+      - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
         sources:
