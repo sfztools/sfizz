@@ -1,5 +1,5 @@
 #define MyAppName      "sfizz-lv2"
-#define MyAppVersion   "0.3.0"
+#define MyAppVersion   "@PROJECT_VERSION@"
 #define MyAppPublisher "sfizz Team"
 #define MyAppURL       "https://sfztools.github.io/sfizz/"
 
@@ -31,7 +31,7 @@ SolidCompression=yes
 DefaultDirName={commoncf}\LV2
 DefaultGroupName={#MyAppPublisher}
 DisableDirPage=yes
-LicenseFile=CMakeBuild\sfizz.lv2\LICENSE.md
+LicenseFile="sfizz.lv2\LICENSE.md"
 OutputBaseFileName={#MyAppName}-{#MyAppVersion}-{#Arch}-msvc-setup
 OutputDir=CMakeBuild
 UninstallFilesDir={commonpf}\{#MyAppName}
@@ -42,11 +42,11 @@ WizardSmallImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernSmallImage-IS
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "CMakeBuild\sfizz.lv2\sfizz.dll";    DestDir: {commoncf}\LV2\sfizz.lv2; Flags: ignoreversion
-Source: "CMakeBuild\sfizz.lv2\manifest.ttl"; DestDir: {commoncf}\LV2\sfizz.lv2
-Source: "CMakeBuild\sfizz.lv2\sfizz.ttl";    DestDir: {commoncf}\LV2\sfizz.lv2
-Source: "CMakeBuild\sfizz.lv2\lgpl-3.0.txt"; DestDir: {commonpf}\{#MyAppName}
-Source: "CMakeBuild\sfizz.lv2\LICENSE.md";   DestDir: {commonpf}\{#MyAppName}
+Source: "sfizz.lv2\sfizz.dll";    DestDir: {commoncf}\LV2\sfizz.lv2; Flags: ignoreversion
+Source: "sfizz.lv2\manifest.ttl"; DestDir: {commoncf}\LV2\sfizz.lv2
+Source: "sfizz.lv2\sfizz.ttl";    DestDir: {commoncf}\LV2\sfizz.lv2
+Source: "sfizz.lv2\lgpl-3.0.txt"; DestDir: {commonpf}\{#MyAppName}
+Source: "sfizz.lv2\LICENSE.md";   DestDir: {commonpf}\{#MyAppName}
 ;Source: "setup\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

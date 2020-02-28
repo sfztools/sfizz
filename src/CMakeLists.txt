@@ -39,6 +39,8 @@ if (NOT MSVC)
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+else()
+	configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${CMAKE_CURRENT_BINARY_DIR}/../innosetup.iss @ONLY)
 endif()
 
 add_library (sfizz::parser ALIAS sfizz_parser)
