@@ -33,7 +33,6 @@ after_build:
 - cmd: 7z a sfizz-lv2-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip sfizz.lv2
 - cmd: 7z a sfizz-lib-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip src/Release/sfizz*
 - cmd: iscc.exe /dARCH=%RELEASE_ARCH% ./../innosetup.iss
-- cmd: mv ./../Output/sfizz-lv2-setup.exe sfizz-lv2-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc-setup.exe
 
 artifacts:
 - name: Packages

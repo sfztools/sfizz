@@ -1,7 +1,11 @@
-#define MyAppName "sfizz-lv2"
-#define MyAppVersion "0.3.0"
+#define MyAppName      "sfizz-lv2"
+#define MyAppVersion   "0.3.0"
 #define MyAppPublisher "sfizz Team"
-#define MyAppURL "https://sfztools.github.io/sfizz/"
+#define MyAppURL       "https://sfztools.github.io/sfizz/"
+
+#ifndef Arch
+#define Arch "x64"
+#endif
 
 [Setup]
 AlwaysShowDirOnReadyPage=yes
@@ -16,15 +20,20 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppVersion={#MyAppVersion}
-ArchitecturesAllowed=x86 x64
-ArchitecturesInstallIn64BitMode=x64
+
+#if Arch=="x64"
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode={#Arch}
+#endif
+
 Compression=lzma
 SolidCompression=yes
 DefaultDirName={commoncf}\LV2
 DefaultGroupName={#MyAppPublisher}
 DisableDirPage=yes
 LicenseFile=CMakeBuild\sfizz.lv2\LICENSE.md
-OutputBaseFilename={#MyAppName}-setup
+OutputBaseFileName={#MyAppName}-{#MyAppVersion}-{#Arch}-msvc-setup
+OutputDir=CMakeBuild
 UninstallFilesDir={commonpf}\{#MyAppName}
 WizardImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernImage-IS.bmp"
 WizardSmallImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernSmallImage-IS.bmp"
