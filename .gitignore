@@ -4,6 +4,7 @@ docs
 perf.data
 perf.data.old
 
+CMakeBuild/
 Makefile
 CMakeCache.txt
 CMakeFiles/
