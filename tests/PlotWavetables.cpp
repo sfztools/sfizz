@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
             std::cout << (i * (1.0 / tableSize)) << ' ' << table[i] << '\n';
     } else {
         sfz::WavetableMulti multi = sfz::WavetableMulti::createForHarmonicProfile(
-            *hp, tableSize);
+            *hp, 1.0, tableSize);
         unsigned multiSize = multi.multiSize();
 
         if (true) {

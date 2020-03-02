@@ -12,6 +12,8 @@
 
 namespace sfz
 {
+class WavetableMulti;
+
 struct Resources
 {
     MidiState midiState;
@@ -19,5 +21,12 @@ struct Resources
     FilePool filePool { logger };
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
+
+    const WavetableMulti* waveSin { nullptr };
+    const WavetableMulti* waveTriangle { nullptr };
+    const WavetableMulti* waveSaw { nullptr };
+    const WavetableMulti* waveSquare { nullptr };
+
+    Resources();
 };
 }

@@ -218,13 +218,10 @@ WavetableRange WavetableRange::getRangeForFrequency(float f)
 constexpr unsigned WavetableMulti::_tableExtra;
 
 WavetableMulti WavetableMulti::createForHarmonicProfile(
-    const HarmonicProfile& hp, unsigned tableSize, double refSampleRate)
+    const HarmonicProfile& hp, double amplitude, unsigned tableSize, double refSampleRate)
 {
     WavetableMulti wm;
     constexpr unsigned multiSize = WavetableMulti::multiSize();
-
-    // amplitude to match ARIA's default generator output
-    constexpr double amplitude = 0.25;
 
     wm.allocateStorage(tableSize);
 

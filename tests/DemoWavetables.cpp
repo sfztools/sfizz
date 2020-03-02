@@ -84,13 +84,13 @@ bool DemoApp::initSound()
     fTmpFrequency.reset(new float[bufferSize]);
 
     fMulti[0] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getSine(), 2048);
+        sfz::HarmonicProfile::getSine(), 1.0, 2048);
     fMulti[1] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getTriangle(), 2048);
+        sfz::HarmonicProfile::getTriangle(), 1.0, 2048);
     fMulti[2] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getSaw(), 2048);
+        sfz::HarmonicProfile::getSaw(), 1.0, 2048);
     fMulti[3] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getSquare(), 2048);
+        sfz::HarmonicProfile::getSquare(), 1.0, 2048);
 
     fClient.reset(client);
 

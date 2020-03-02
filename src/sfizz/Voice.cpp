@@ -20,6 +20,8 @@ sfz::Voice::Voice(sfz::Resources& resources)
 {
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);
+
+    waveOscillator.init(sampleRate);
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
@@ -35,7 +37,28 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     if (delay < 0)
         delay = 0;
 
-    if (!region->isGenerator()) {
+    if (region->isGenerator()) {
+        const WavetableMulti* wave = nullptr;
+        switch (hash(region->sample)) {
+        default:
+        case hash("*silence"):
+            break;
+        case hash("*sine"):
+            wave = resources.waveSin;
+            break;
+        case hash("*triangle"):
+        case hash("*tri"):
+            wave = resources.waveTriangle;
+            break;
+        case hash("*square"):
+            wave = resources.waveSquare;
+            break;
+        case hash("*saw"):
+            wave = resources.waveSaw;
+            break;
+        }
+        waveOscillator.setWavetable(wave);
+    } else {
         currentPromise = resources.filePool.getFilePromise(region->sample);
         if (currentPromise == nullptr) {
             reset();
@@ -226,6 +249,8 @@ void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
+
+    waveOscillator.init(sampleRate);
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -472,38 +497,26 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 {
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
+
     if (region->sample == "*noise") {
         absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
-    }
-    else if (region->sample == "*sine") {
-        // TODO: wavetables for sine and other generators
-        if (buffer.getNumFrames() == 0)
-            return;
-
-        auto jumps = tempSpan1.first(buffer.getNumFrames());
+    } else {
+        // wavetables for sine and other generators
+        auto frequencies = tempSpan1.first(buffer.getNumFrames());
         auto bends = tempSpan2.first(buffer.getNumFrames());
-        auto phases = tempSpan2.first(buffer.getNumFrames());
 
-        const float step = baseFrequency * twoPi<float>() / sampleRate;
-        fill<float>(jumps, step);
+        fill<float>(frequencies, baseFrequency);
 
         if (region->bendStep > 1)
             pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
         else
             pitchBendEnvelope.getBlock(bends);
 
-        applyGain<float>(bends, jumps);
-        jumps[0] += phase;
-        cumsum<float>(jumps, phases);
-        phase = phases.back();
+        applyGain<float>(bends, frequencies);
 
-        sin<float>(phases, leftSpan);
+        waveOscillator.processModulated(frequencies.data(), leftSpan.data(), buffer.getNumFrames());
         copy<float>(leftSpan, rightSpan);
-
-        // Wrap the phase so we don't loose too much precision on longer notes
-        const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>());
-        phase -= twoPi<float>() * static_cast<float>(numTwoPiWraps);
     }
 }
 

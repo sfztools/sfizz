@@ -146,7 +146,7 @@ public:
     // the reference sample rate is the minimum value accepted by the DSP
     // system (most defavorable wrt. aliasing)
     static WavetableMulti createForHarmonicProfile(
-        const HarmonicProfile& hp, unsigned tableSize, double refSampleRate = 44100.0);
+        const HarmonicProfile& hp, double amplitude, unsigned tableSize, double refSampleRate = 44100.0);
 
     // create the tiniest wavetable with null content for use with oscillators
     static WavetableMulti createSilence();

@@ -12,6 +12,7 @@
 #include "Region.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
+#include "Wavetables.h"
 #include "Resources.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
@@ -306,6 +307,8 @@ private:
     MultiplicativeEnvelope<float> pitchBendEnvelope;
     MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
+
+    WavetableOscillator waveOscillator;
 
     Duration dataDuration;
     Duration amplitudeDuration;
