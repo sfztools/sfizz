@@ -11,6 +11,7 @@
 #include "Debug.h"
 #include "LeakDetector.h"
 #include "SIMDHelpers.h"
+#include "absl/types/span.h"
 #include <array>
 #include <initializer_list>
 #include <type_traits>
@@ -303,6 +304,43 @@ public:
         if (other.getNumChannels() == numChannels) {
             for (size_t i = 0; i < numChannels; ++i)
                 sfz::add<Type>(other.getConstSpan(i), getSpan(i));
+        }
+    }
+
+    /**
+     * @brief Add another AudioSpan with a compatible number of channels to the current
+     * AudioSpan, applying an elementwise gain to the operand.
+     *
+     * @param other the other AudioSpan
+     * @param gain the gain to apply
+     */
+    template <class U, size_t N, typename = std::enable_if<N <= MaxChannels>>
+    void multiplyAdd(AudioSpan<U, N>& other, absl::Span<const Type> gain)
+    {
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
+        ASSERT(other.getNumChannels() == numChannels);
+        ASSERT(gain.size() == numFrames);
+        if (other.getNumChannels() == numChannels) {
+            for (size_t i = 0; i < numChannels; ++i)
+                sfz::multiplyAdd(gain, other.getConstSpan(i), getSpan(i));
+        }
+    }
+
+    /**
+     * @brief Add another AudioSpan with a compatible number of channels to the current
+     * AudioSpan, applying a fixed gain to the operand.
+     *
+     * @param other the other AudioSpan
+     * @param gain the gain to apply
+     */
+    template <class U, size_t N, typename = std::enable_if<N <= MaxChannels>>
+    void multiplyAdd(AudioSpan<U, N>& other, const Type gain)
+    {
+        static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
+        ASSERT(other.getNumChannels() == numChannels);
+        if (other.getNumChannels() == numChannels) {
+            for (size_t i = 0; i < numChannels; ++i)
+                sfz::multiplyAdd(gain, other.getConstSpan(i), getSpan(i));
         }
     }
 
