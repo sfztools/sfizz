@@ -606,6 +606,57 @@ TEST_CASE("[Helpers] Add (SIMD vs scalar)")
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
+TEST_CASE("[Helpers] MultiplyAdd (SIMD)")
+{
+    std::array<float, 5> gain { 0.0f, 0.1f, 0.2f, 0.3f, 0.4f };
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 5.0f, 4.0f, 3.0f, 2.0f, 1.0f };
+    std::array<float, 5> expected { 5.0f, 4.2f, 3.6f, 3.2f, 3.0f };
+    sfz::multiplyAdd<float, true>(gain, input, absl::MakeSpan(output));
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[Helpers] MultiplyAdd (SIMD vs scalar)")
+{
+    std::vector<float> gain(bigBufferSize);
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(gain, 0.0f);
+    absl::c_iota(input, 0.0f);
+    absl::c_iota(outputScalar, 0.0f);
+    absl::c_iota(outputSIMD, 0.0f);
+
+    sfz::multiplyAdd<float, false>(gain, input, absl::MakeSpan(outputScalar));
+    sfz::multiplyAdd<float, true>(gain, input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}
+
+TEST_CASE("[Helpers] MultiplyAdd fixed gain (SIMD)")
+{
+    float gain = 0.3f;
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 5.0f, 4.0f, 3.0f, 2.0f, 1.0f };
+    std::array<float, 5> expected { 5.3f, 4.6f, 3.9f, 3.2f, 2.5f };
+    sfz::multiplyAdd<float, true>(gain, input, absl::MakeSpan(output));
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[Helpers] MultiplyAdd fixed gain (SIMD vs scalar)")
+{
+    float gain = 0.3f;
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(input, 0.0f);
+    absl::c_iota(outputScalar, 0.0f);
+    absl::c_iota(outputSIMD, 0.0f);
+
+    sfz::multiplyAdd<float, false>(gain, input, absl::MakeSpan(outputScalar));
+    sfz::multiplyAdd<float, true>(gain, input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}
+
 TEST_CASE("[Helpers] Subtract")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
@@ -717,7 +768,7 @@ TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
     REQUIRE(sfz::meanSquared<float, false>(input) == sfz::meanSquared<float, true>(input));
 }
 
-TEST_CASE("[Helpers] Cumulative sum ")
+TEST_CASE("[Helpers] Cumulative sum")
 {
     std::array<float, 6> input { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
     std::array<float, 6> output;
@@ -737,7 +788,7 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
-TEST_CASE("[Helpers] Diff ")
+TEST_CASE("[Helpers] Diff")
 {
     std::array<float, 6> input { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
     std::array<float, 6> output;
