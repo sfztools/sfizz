@@ -159,6 +159,9 @@ void Curve::splineFill(const bool fillStatus[NumValues])
         }
     }
 
+    if (count < 3)
+        return lerpFill(fillStatus);
+
     Spline spline(x.data(), y.data(), count);
     for (unsigned i = 0; i < NumValues; ++i) {
         if (!fillStatus[i])
