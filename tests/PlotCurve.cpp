@@ -45,7 +45,7 @@ public:
 
     void callback(absl::string_view header, const std::vector<sfz::Opcode>& members) override
     {
-        if (header == "effect")
+        if (header == "curve")
             curveSet.addCurveFromHeader(members);
     }
 
