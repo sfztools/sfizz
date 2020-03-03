@@ -115,6 +115,11 @@ public:
      */
     const Curve& getCurve(unsigned index) const;
 
+    /**
+     * @brief Get the number of slots.
+     */
+    unsigned getNumCurves() const;
+
 private:
     std::vector<std::unique_ptr<Curve>> _curves;
     bool _useExplicitIndexing = false;

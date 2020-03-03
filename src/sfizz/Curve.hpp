@@ -30,4 +30,10 @@ inline float Curve::evalNormalized(float value) const
     return evalCC7(127 * value);
 }
 
+///
+inline unsigned CurveSet::getNumCurves() const
+{
+    return static_cast<unsigned>(_curves.size());
+}
+
 } // namespace sfz
