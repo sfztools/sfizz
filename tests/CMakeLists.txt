@@ -56,5 +56,7 @@ target_link_libraries(eq_apply PRIVATE sfizz::sfizz)
 add_executable(filter_apply Filter.cpp)
 target_link_libraries(filter_apply PRIVATE sfizz::sfizz)
 
+add_executable(sfizz_plot_curve PlotCurve.cpp)
+target_link_libraries(sfizz_plot_curve PRIVATE sfizz::sfizz)
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)
