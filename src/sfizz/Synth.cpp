@@ -135,7 +135,7 @@ void sfz::Synth::clear()
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    resources.midiState.reset();
+    resources.midiState.reset(0);
     ccNames.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
@@ -167,7 +167,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                resources.midiState.ccEvent(member.parameters.back(), ccValue);
+                resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
             }
             break;
         case hash("Label_cc&"): [[fallthrough]];
@@ -579,7 +579,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber >= 0);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOnEvent(noteNumber, velocity);
+    resources.midiState.noteOnEvent(delay, noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -594,7 +594,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber >= 0);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOffEvent(noteNumber, velocity);
+    resources.midiState.noteOffEvent(delay, noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -650,8 +650,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ASSERT(ccNumber >= 0);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-
-    resources.midiState.ccEvent(ccNumber, ccValue);
+    resources.midiState.ccEvent(delay, ccNumber, ccValue);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -682,8 +681,7 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ASSERT(pitch >= -8192);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-
-    resources.midiState.pitchBendEvent(pitch);
+    resources.midiState.pitchBendEvent(delay, pitch);
 
     for (auto& region: regions) {
         region->registerPitchWheel(pitch);
@@ -924,7 +922,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
     if (!canEnterCallback)
         return;
 
-    resources.midiState.resetAllControllers();
+    resources.midiState.resetAllControllers(delay);
     for (auto& voice: voices) {
         voice->registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)

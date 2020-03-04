@@ -9,10 +9,10 @@
 
 sfz::MidiState::MidiState()
 {
-    reset();
+    reset(0);
 }
 
-void sfz::MidiState::noteOnEvent(int noteNumber, uint8_t velocity) noexcept
+void sfz::MidiState::noteOnEvent(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
     ASSERT(velocity >= 0 && velocity <= 127);
@@ -25,7 +25,7 @@ void sfz::MidiState::noteOnEvent(int noteNumber, uint8_t velocity) noexcept
 
 }
 
-void sfz::MidiState::noteOffEvent(int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::MidiState::noteOffEvent(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
 {
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
     ASSERT(velocity >= 0 && velocity <= 127);
@@ -57,7 +57,7 @@ uint8_t sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
     return lastNoteVelocities[noteNumber];
 }
 
-void sfz::MidiState::pitchBendEvent(int pitchBendValue) noexcept
+void sfz::MidiState::pitchBendEvent(int delay, int pitchBendValue) noexcept
 {
     ASSERT(pitchBendValue >= -8192 && pitchBendValue <= 8192);
 
@@ -69,7 +69,7 @@ int sfz::MidiState::getPitchBend() const noexcept
     return pitchBend;
 }
 
-void sfz::MidiState::ccEvent(int ccNumber, uint8_t ccValue) noexcept
+void sfz::MidiState::ccEvent(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
     ASSERT(ccValue >= 0 && ccValue <= 127);
@@ -89,7 +89,7 @@ const sfz::SfzCCArray& sfz::MidiState::getCCArray() const noexcept
     return cc;
 }
 
-void sfz::MidiState::reset() noexcept
+void sfz::MidiState::reset(int delay) noexcept
 {
     for (auto& velocity: lastNoteVelocities)
         velocity = 0;
@@ -101,7 +101,7 @@ void sfz::MidiState::reset() noexcept
     activeNotes = 0;
 }
 
-void sfz::MidiState::resetAllControllers() noexcept
+void sfz::MidiState::resetAllControllers(int delay) noexcept
 {
     for (int idx = 0; idx < config::numCCs; idx++)
         cc[idx] = 0;
