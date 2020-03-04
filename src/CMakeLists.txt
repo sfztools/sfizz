@@ -27,7 +27,7 @@ target_link_libraries (sfizz_parser PUBLIC absl::strings)
 
 # Sfizz static library
 add_library(sfizz_static STATIC)
-target_sources(sfizz_static PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp)
+target_sources(sfizz_static PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
