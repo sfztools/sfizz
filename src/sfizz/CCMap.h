@@ -6,7 +6,8 @@
 
 #pragma once
 #include "LeakDetector.h"
-#include <map>
+#include <vector>
+#include <absl/algorithm/container.h>
 
 namespace sfz {
 /**
@@ -42,7 +43,7 @@ public:
      */
     const ValueType& getWithDefault(int index) const noexcept
     {
-        auto it = container.find(index);
+        auto it = absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; });
         if (it == container.end()) {
             return defaultValue;
         } else {
@@ -51,16 +52,20 @@ public:
     }
 
     /**
-     * @brief Get the value at index key or emplace a new one if not present
+     * @brief Get the value at index or emplace a new one if not present
      *
-     * @param key the index of the element
+     * @param index the index of the element
      * @return ValueType&
      */
-    ValueType& operator[](const int& key) noexcept
+    ValueType& operator[](const int& index) noexcept
     {
-        if (!contains(key))
-            container.emplace(key, defaultValue);
-        return container.operator[](key);
+        auto it = absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; });
+        if (it == container.end()) {
+            container.emplace_back(index, defaultValue);
+            return container.back().second;
+        } else {
+            return it->second;
+        }
     }
 
     /**
@@ -71,27 +76,23 @@ public:
      */
     inline bool empty() const { return container.empty(); }
     /**
-     * @brief Returns the value at index with bounds checking (and possibly exceptions)
-     *
-     * @param index
-     * @return const ValueType&
-     */
-    const ValueType& at(int index) const { return container.at(index); }
-    /**
      * @brief Returns true if the container containers an element at index
      *
      * @param index
      * @return true
      * @return false
      */
-    bool contains(int index) const noexcept { return container.find(index) != container.end(); }
-    typename std::map<int, ValueType>::iterator begin() { return container.begin(); }
-    typename std::map<int, ValueType>::const_iterator begin() const { return container.cbegin(); }
-    typename std::map<int, ValueType>::iterator end() { return container.end(); }
-    typename std::map<int, ValueType>::const_iterator end() const { return container.cend(); }
+    bool contains(int index) const noexcept
+    {
+        return absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; }) != container.end();
+    }
+    typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
+    typename std::vector<std::pair<int, ValueType>>::const_iterator begin() const { return container.cbegin(); }
+    typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
+    typename std::vector<std::pair<int, ValueType>>::const_iterator end() const { return container.cend(); }
 private:
     const ValueType defaultValue;
-    std::map<int, ValueType> container;
+    std::vector<std::pair<int, ValueType>> container;
     LEAK_DETECTOR(CCMap);
 };
 }

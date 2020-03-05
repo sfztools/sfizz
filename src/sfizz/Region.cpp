@@ -854,7 +854,7 @@ bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
     if (!triggerOnCC)
         return false;
 
-    if (ccTriggers.contains(ccNumber) && ccTriggers.at(ccNumber).containsWithEnd(ccValue))
+    if (ccTriggers.contains(ccNumber) && ccTriggers[ccNumber].containsWithEnd(ccValue))
         return true;
     else
         return false;
