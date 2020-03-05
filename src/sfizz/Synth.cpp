@@ -123,9 +123,8 @@ void sfz::Synth::clear()
         list.clear();
     regions.clear();
     effectBuses.clear();
-    EffectBus* mainBus = new EffectBus;
-    effectBuses.emplace_back(mainBus);
-    mainBus->setGainToMain(1.0);
+    effectBuses.emplace_back(new EffectBus);
+    effectBuses[0]->setGainToMain(1.0);
     resources.filePool.clear();
     resources.logger.clear();
     numGroups = 0;
