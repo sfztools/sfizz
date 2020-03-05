@@ -107,14 +107,12 @@ namespace fx {
 
     void Lofi::Bitred::setDepth(float depth)
     {
-        fDepth = std::max(0.0f, std::min(100.0f, depth));
+        fDepth = clamp(depth, 0.0f, 100.0f);
     }
 
     void Lofi::Bitred::process(const float* in, float* out, uint32_t nframes)
     {
-        float depth = fDepth;
-
-        if (depth == 0) {
+        if (fDepth == 0) {
             if (in != out)
                 std::memcpy(out, in, nframes * sizeof(float));
             clear();
@@ -124,12 +122,13 @@ namespace fx {
         float lastValue = fLastValue;
         hiir::Downsampler2xFpu<12>& downsampler2x = fDownsampler2x;
 
-        float steps = (1.0f + (100.0f - depth)) * 0.75f;
+        const float steps = (1.0f + (100.0f - fDepth)) * 0.75f;
+        const float invSteps = 1.0f / steps;
 
         for (uint32_t i = 0; i < nframes; ++i) {
             float x = in[i];
 
-            float y = std::copysign((int)(0.5f + std::fabs(x * steps)), x) * (1 / steps);
+            float y = std::copysign((int)(0.5f + std::fabs(x * steps)), x) * invSteps;
 
             float y2x[2];
             y2x[0] = (y != lastValue) ? (0.5f * (y + lastValue)) : y;
@@ -162,27 +161,24 @@ namespace fx {
 
     void Lofi::Decim::setDepth(float depth)
     {
-        fDepth = std::max(0.0f, std::min(100.0f, depth));
+        fDepth = clamp(depth, 0.0f, 100.0f);
     }
 
     void Lofi::Decim::process(const float* in, float* out, uint32_t nframes)
     {
-        float depth = fDepth;
-
-        if (depth == 0) {
+        if (fDepth == 0) {
             if (in != out)
                 std::memcpy(out, in, nframes * sizeof(float));
             clear();
             return;
         }
 
-        float dt;
-        {
+        const float dt = [this]() {
             // exponential curve fit
-            float a = 1.289079e+00, b = 1.384141e-01, c = 1.313298e-04;
-            dt = std::pow(a, b * depth) * c - c;
-            dt = fSampleTime / dt;
-        }
+            const float a = 1.289079e+00, b = 1.384141e-01, c = 1.313298e-04;
+            const float denom = std::pow(a, b * fDepth) * c - c;
+            return fSampleTime / denom;
+        }();
 
         float phase = fPhase;
         float lastValue = fLastValue;
@@ -193,7 +189,7 @@ namespace fx {
 
             phase += dt;
             float y = (phase > 1.0f) ? x : lastValue;
-            phase -= (int)phase;
+            phase -= static_cast<int>(phase);
 
             float y2x[2];
             y2x[0] = (y != lastValue) ? (0.5f * (y + lastValue)) : y;
