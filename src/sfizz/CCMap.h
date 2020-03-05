@@ -61,8 +61,9 @@ public:
     {
         auto it = absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; });
         if (it == container.end()) {
-            container.emplace_back(index, defaultValue);
-            return container.back().second;
+            auto newElement = std::make_pair(index, defaultValue);
+            auto inserted = container.insert(absl::c_upper_bound(container, newElement, [](auto& lhs, auto& rhs) { return lhs.first < rhs.first; }), newElement);
+            return inserted->second;
         } else {
             return it->second;
         }
@@ -86,11 +87,11 @@ public:
     {
         return absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; }) != container.end();
     }
-    typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
     typename std::vector<std::pair<int, ValueType>>::const_iterator begin() const { return container.cbegin(); }
-    typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
     typename std::vector<std::pair<int, ValueType>>::const_iterator end() const { return container.cend(); }
 private:
+    // typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
+    // typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
     const ValueType defaultValue;
     std::vector<std::pair<int, ValueType>> container;
     LEAK_DETECTOR(CCMap);
