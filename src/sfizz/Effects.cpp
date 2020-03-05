@@ -45,12 +45,8 @@ std::unique_ptr<Effect> EffectFactory::makeEffect(absl::Span<const Opcode> membe
 
     absl::string_view type = opcode->value;
 
-    auto it = _entries.begin();
-    auto end = _entries.end();
-    for (; it != end && it->name != type; ++it)
-        ;
-
-    if (it == end) {
+    const auto it = absl::c_find_if(_entries, [&](auto&& entry) { return entry.name == type; });
+    if (it == _entries.end()) {
         DBG("Unsupported effect type: " << type);
         return std::make_unique<sfz::fx::Nothing>();
     }
