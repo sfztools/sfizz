@@ -734,18 +734,18 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
 
     case hash("effect"): // effect&
-        {
-            const auto effectNumber = opcode.backParameter();
-            if (!effectNumber || *effectNumber < 1 || *effectNumber > config::maxEffectBuses)
-                break;
-            auto value = readOpcode<float>(opcode.value, {0, 100});
-            if (!value)
-                break;
-            if (static_cast<size_t>(*effectNumber + 1) > gainToEffect.size())
-                gainToEffect.resize(*effectNumber + 1);
-            gainToEffect[*effectNumber] = *value / 100;
+    {
+        const auto effectNumber = opcode.backParameter();
+        if (!effectNumber || *effectNumber < 1 || *effectNumber > config::maxEffectBuses)
             break;
-        }
+        auto value = readOpcode<float>(opcode.value, { 0, 100 });
+        if (!value)
+            break;
+        if (static_cast<size_t>(*effectNumber + 1) > gainToEffect.size())
+            gainToEffect.resize(*effectNumber + 1);
+        gainToEffect[*effectNumber] = *value / 100;
+        break;
+    }
 
     // Ignored opcodes
     case hash("hichan"):

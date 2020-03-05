@@ -86,7 +86,7 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
         return;
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
-        absl::Span<const float> addIn{ addInput[c], nframes };
+        absl::Span<const float> addIn { addInput[c], nframes };
         sfz::multiplyAdd(addGain, addIn, _inputs.getSpan(c));
     }
 }

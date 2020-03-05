@@ -46,7 +46,7 @@ public:
        @brief Type of the factory function used to instantiate an effect given
               the contents of the <effect> block
      */
-    typedef std::unique_ptr<Effect> (MakeInstance)(absl::Span<const Opcode> members);
+    typedef std::unique_ptr<Effect>(MakeInstance)(absl::Span<const Opcode> members);
 };
 
 /**
@@ -146,7 +146,7 @@ public:
 private:
     std::vector<std::unique_ptr<Effect>> _effects;
     AudioBuffer<float> _inputs { EffectChannels, config::defaultSamplesPerBlock };
-    AudioBuffer<float> _outputs { EffectChannels,  config::defaultSamplesPerBlock };
+    AudioBuffer<float> _outputs { EffectChannels, config::defaultSamplesPerBlock };
     float _gainToMain = 0.0;
     float _gainToMix = 0.0;
 };

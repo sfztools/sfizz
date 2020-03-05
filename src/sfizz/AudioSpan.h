@@ -212,7 +212,7 @@ public:
     /**
      * @brief Convert implicitly to a pointer of channels
      */
-    operator const float* const *() const noexcept
+    operator const float* const*() const noexcept
     {
         return spans.data();
     }
@@ -220,7 +220,7 @@ public:
     /**
      * @brief Convert implicitly to a pointer of channels
      */
-    operator float* const *() noexcept
+    operator float* const*() noexcept
     {
         return spans.data();
     }

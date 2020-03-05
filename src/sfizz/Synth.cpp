@@ -201,7 +201,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
     auto getOrCreateBus = [this](unsigned index) -> EffectBus& {
         if (index + 1 > effectBuses.size())
             effectBuses.resize(index + 1);
-        EffectBusPtr &slot = effectBuses[index];
+        EffectBusPtr& slot = effectBuses[index];
         if (!slot)
             slot.reset(new EffectBus);
         return *slot;
@@ -213,10 +213,10 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
             busName = opcode.value;
             break;
 
-        // note(jpc): gain opcodes are linear volumes in % units
+            // note(jpc): gain opcodes are linear volumes in % units
 
         case hash("directtomain"):
-            if (auto valueOpt = readOpcode<float>(opcode.value, {0, 100}))
+            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
                 getOrCreateBus(0).setGainToMain(*valueOpt / 100);
             break;
 
@@ -225,7 +225,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
                 unsigned number = *numberOpt;
                 if (number < 1 || number > config::maxEffectBuses)
                     break;
-                if (auto valueOpt = readOpcode<float>(opcode.value, {0, 100}))
+                if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
                     getOrCreateBus(number).setGainToMain(*valueOpt / 100);
             }
             break;
@@ -235,7 +235,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
                 unsigned number = *numberOpt;
                 if (number < 1 || number > config::maxEffectBuses)
                     break;
-                if (auto valueOpt = readOpcode<float>(opcode.value, {0, 100}))
+                if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
                     getOrCreateBus(number).setGainToMix(*valueOpt / 100);
             }
             break;
@@ -245,12 +245,9 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
     unsigned busIndex;
     if (busName.empty() || busName == "main")
         busIndex = 0;
-    else if (busName.size() > 2 && busName.substr(0, 2) == "fx" &&
-             absl::SimpleAtoi(busName.substr(2), &busIndex) &&
-             busIndex >= 1 && busIndex <= config::maxEffectBuses) {
+    else if (busName.size() > 2 && busName.substr(0, 2) == "fx" && absl::SimpleAtoi(busName.substr(2), &busIndex) && busIndex >= 1 && busIndex <= config::maxEffectBuses) {
         // an effect bus fxN, with N usually in [1,4]
-    }
-    else {
+    } else {
         DBG("Unsupported effect bus: " << busName);
         return;
     }
@@ -465,7 +462,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
-    for (auto& bus: effectBuses)
+    for (auto& bus : effectBuses)
         bus->setSamplesPerBlock(samplesPerBlock);
 }
 
