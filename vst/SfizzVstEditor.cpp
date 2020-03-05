@@ -12,11 +12,9 @@
 
 using namespace VSTGUI;
 
-static constexpr int kEditorWidth = 800;
-static constexpr int kEditorHeight = 40;
-
 SfizzVstEditor::SfizzVstEditor(void *controller)
-    : VSTGUIEditor(controller)
+    : VSTGUIEditor(controller),
+      _logo("logo.png")
 {
     static_cast<SfizzVstController*>(getController())->addStateListener(this);
 }
@@ -28,7 +26,7 @@ SfizzVstEditor::~SfizzVstEditor()
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
 {
-    CRect wsize(0, 0, kEditorWidth, kEditorHeight);
+    CRect wsize(0, 0, _logo.getWidth(), _logo.getHeight());
     CFrame *frame = new CFrame(wsize, this);
     this->frame = frame;
 
@@ -67,8 +65,7 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
         if (value != 1)
             break;
 
-        chooseSfzFile();
-
+        Call::later([this]() { chooseSfzFile(); });
         break;
     }
 }
@@ -95,18 +92,23 @@ void SfizzVstEditor::chooseSfzFile()
 
 void SfizzVstEditor::loadSfzFile(const std::string& filePath)
 {
-    _fileLabel->setText(filePath.c_str());
-
     Vst::EditController* ctl = getController();
 
+
     Vst::IMessage *msg = ctl->allocateMessage();
-    if (msg) {
-        msg->setMessageID("LoadSfz");
-        Vst::IAttributeList* attr = msg->getAttributes();
-        attr->setString("File", Steinberg::String(filePath.c_str()).text());
-        ctl->sendMessage(msg);
-        msg->release();
+    if (!msg) {
+        fprintf(stderr, "[Sfizz] UI could not allocate message\n");
+        return;
     }
+
+    msg->setMessageID("LoadSfz");
+    Vst::IAttributeList* attr = msg->getAttributes();
+    attr->setString("File", Steinberg::String(filePath.c_str()).text());
+    ctl->sendMessage(msg);
+    msg->release();
+
+    if (_fileLabel)
+        _fileLabel->setText(("File: " + filePath).c_str());
 }
 
 ///
@@ -156,17 +158,43 @@ void SfizzVstEditor::createFrameContents()
     CFrame* frame = this->frame;
     CRect bounds = frame->getViewSize();
 
-    CTextLabel *label;
-    CRect rect;
-    CRect rect2;
+    frame->setBackgroundColor(CColor(0xff, 0xff, 0xff));
 
-    rect = CRect(10.0, 10.0, 120.0, 30.0);
-    frame->addView(new SimpleButton(rect, this, kTagLoadSfzFile, "Load SFZ file"));
+    CKickButton* sfizzButton = new CKickButton(bounds, this, kTagLoadSfzFile, &_logo);
+    frame->addView(sfizzButton);
 
-    rect2 = CRect(150.0, 10.0, bounds.right - 10.0, 30.0);
-    frame->addView((label = new CTextLabel(rect2, "no file")));
-    label->setHoriAlign(kLeftText);
-    _fileLabel = label;
+    CRect bottomRow = bounds;
+    bottomRow.top = bottomRow.bottom - 30;
+
+    CRect topRow = bounds;
+    topRow.bottom = topRow.top + 30;
+
+    CTextLabel* descLabel = new CTextLabel(
+        bottomRow, "Paul Ferrand and the SFZ Tools work group");
+    descLabel->setFontColor(CColor(0x00, 0x00, 0x00));
+    descLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+    frame->addView(descLabel);
+
+    CRect fileBox = topRow;
+    fileBox.right = fileBox.left + 400;
+    CTextLabel* fileLabel = new CTextLabel(fileBox, "No file loaded");
+    fileLabel->setFontColor(CColor(0x00, 0x00, 0x00));
+    fileLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+    // fileLabel->setHoriAlign(kLeftText);
+    frame->addView(fileLabel);
+    _fileLabel = fileLabel;
+
+    // CTextLabel *label;
+    // CRect rect;
+    // CRect rect2;
+
+    // rect = CRect(10.0, 10.0, 120.0, 30.0);
+    // frame->addView(new SimpleButton(rect, this, kTagLoadSfzFile, "Load SFZ file"));
+
+    // rect2 = CRect(150.0, 10.0, bounds.right - 10.0, 30.0);
+    // frame->addView((label = new CTextLabel(rect2, "no file")));
+    // label->setHoriAlign(kLeftText);
+    // _fileLabel = label;
 }
 
 void SfizzVstEditor::updateStateDisplay()
@@ -176,5 +204,6 @@ void SfizzVstEditor::updateStateDisplay()
 
     const SfizzVstState& state = static_cast<SfizzVstController*>(getController())->getSfizzState();
 
-    _fileLabel->setText(state.sfzFile.c_str());
+    if (_fileLabel)
+        _fileLabel->setText(("File: " + state.sfzFile).c_str());
 }

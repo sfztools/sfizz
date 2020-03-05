@@ -36,5 +36,6 @@ private:
         kTagLoadSfzFile,
     };
 
+    CBitmap _logo;
     CTextLabel* _fileLabel = nullptr;
 };
