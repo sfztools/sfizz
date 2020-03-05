@@ -67,6 +67,11 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
 
         Call::later([this]() { chooseSfzFile(); });
         break;
+
+    default:
+        if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel)
+            setActivePanel(tag - kTagFirstChangePanel);
+        break;
     }
 }
 
@@ -111,48 +116,6 @@ void SfizzVstEditor::loadSfzFile(const std::string& filePath)
         _fileLabel->setText(("File: " + filePath).c_str());
 }
 
-///
-class SimpleButton : public CControl {
-public:
-    explicit SimpleButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
-        : CControl(size, listener, tag), _title(title ? title : "") {
-    }
-
-    void draw(CDrawContext *dc) override
-    {
-        CRect bounds = getViewSize();
-        dc->setFrameColor(CColor(0xff, 0xff, 0xff));
-        dc->drawRect(bounds, kDrawStroked);
-        dc->drawString(_title.c_str(), bounds);
-    }
-
-    CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override
-    {
-        if (!buttons.isLeftButton())
-            return kMouseEventNotHandled;
-
-        value = getMin();
-        if (isDirty()) {
-            valueChanged();
-            invalid();
-        }
-        value = getMax();
-        if (isDirty())
-        {
-            valueChanged();
-            invalid();
-        }
-
-        return kMouseEventHandled;
-    }
-
-    CLASS_METHODS(SimpleButton, CControl)
-
-private:
-    std::string _title;
-};
-
-///
 void SfizzVstEditor::createFrameContents()
 {
     CFrame* frame = this->frame;
@@ -160,41 +123,80 @@ void SfizzVstEditor::createFrameContents()
 
     frame->setBackgroundColor(CColor(0xff, 0xff, 0xff));
 
-    CKickButton* sfizzButton = new CKickButton(bounds, this, kTagLoadSfzFile, &_logo);
-    frame->addView(sfizzButton);
-
     CRect bottomRow = bounds;
     bottomRow.top = bottomRow.bottom - 30;
 
     CRect topRow = bounds;
     topRow.bottom = topRow.top + 30;
 
-    CTextLabel* descLabel = new CTextLabel(
-        bottomRow, "Paul Ferrand and the SFZ Tools work group");
-    descLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-    descLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-    frame->addView(descLabel);
+    CViewContainer* panel;
+    _activePanel = kPanelGeneral;
 
-    CRect fileBox = topRow;
-    fileBox.right = fileBox.left + 400;
-    CTextLabel* fileLabel = new CTextLabel(fileBox, "No file loaded");
-    fileLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-    fileLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-    // fileLabel->setHoriAlign(kLeftText);
-    frame->addView(fileLabel);
-    _fileLabel = fileLabel;
+    CRect topLeftLabelBox = topRow;
+    topLeftLabelBox.right -= 20 * kNumPanels;
 
-    // CTextLabel *label;
-    // CRect rect;
-    // CRect rect2;
+    // general panel
+    {
+        panel = new CViewContainer(bounds);
+        frame->addView(panel);
+        panel->setTransparency(true);
 
-    // rect = CRect(10.0, 10.0, 120.0, 30.0);
-    // frame->addView(new SimpleButton(rect, this, kTagLoadSfzFile, "Load SFZ file"));
+        CKickButton* sfizzButton = new CKickButton(bounds, this, kTagLoadSfzFile, &_logo);
+        panel->addView(sfizzButton);
 
-    // rect2 = CRect(150.0, 10.0, bounds.right - 10.0, 30.0);
-    // frame->addView((label = new CTextLabel(rect2, "no file")));
-    // label->setHoriAlign(kLeftText);
-    // _fileLabel = label;
+        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "No file loaded");
+        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
+        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        panel->addView(topLeftLabel);
+        _fileLabel = topLeftLabel;
+
+        _subPanels[kPanelGeneral] = panel;
+    }
+
+    // settings panel
+    {
+        panel = new CViewContainer(bounds);
+        frame->addView(panel);
+        panel->setTransparency(true);
+
+        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Settings");
+        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
+        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        panel->addView(topLeftLabel);
+
+        _subPanels[kPanelSettings] = panel;
+    }
+
+    // all panels
+    for (unsigned currentPanel = 0; currentPanel < kNumPanels; ++currentPanel) {
+        panel = _subPanels[currentPanel];
+
+        CTextLabel* descLabel = new CTextLabel(
+            bottomRow, "Paul Ferrand and the SFZ Tools work group");
+        descLabel->setFontColor(CColor(0x00, 0x00, 0x00));
+        descLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        panel->addView(descLabel);
+
+        for (unsigned i = 0; i < kNumPanels; ++i) {
+            CRect btnRect = topRow;
+            btnRect.left = topRow.right - (kNumPanels - i) * 20;
+            btnRect.right = btnRect.left + 20;
+
+            const char *text;
+            switch (i) {
+            case kPanelGeneral: text = "G"; break;
+            case kPanelSettings: text = "S"; break;
+            default: text = "?"; break;
+            }
+
+            CTextButton* changePanelButton = new CTextButton(btnRect, this, kTagFirstChangePanel + i, text);
+            panel->addView(changePanelButton);
+
+            changePanelButton->setRoundRadius(0.0);
+        }
+
+        panel->setVisible(currentPanel == _activePanel);
+    }
 }
 
 void SfizzVstEditor::updateStateDisplay()
@@ -206,4 +208,13 @@ void SfizzVstEditor::updateStateDisplay()
 
     if (_fileLabel)
         _fileLabel->setText(("File: " + state.sfzFile).c_str());
+}
+
+void SfizzVstEditor::setActivePanel(unsigned panelId)
+{
+    if (_activePanel != panelId) {
+        _subPanels[_activePanel]->setVisible(false);
+        _subPanels[panelId]->setVisible(true);
+        _activePanel = panelId;
+    }
 }

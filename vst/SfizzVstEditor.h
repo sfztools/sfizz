@@ -31,9 +31,22 @@ private:
 
     void createFrameContents();
     void updateStateDisplay();
+    void setActivePanel(unsigned panelId);
+
+    enum {
+        kPanelGeneral,
+        // kPanelControls,
+        kPanelSettings,
+        kNumPanels,
+    };
+
+    unsigned _activePanel = 0;
+    CViewContainer* _subPanels[kNumPanels] = {};
 
     enum {
         kTagLoadSfzFile,
+        kTagFirstChangePanel,
+        kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
 
     CBitmap _logo;
