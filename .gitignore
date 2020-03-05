@@ -32,3 +32,6 @@ node_modules/
 *.lock
 *.sublime-*
 *.code-*
+
+/vst/download
+/vst/external/VST_SDK
