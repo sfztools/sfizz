@@ -43,7 +43,7 @@ std::unique_ptr<Effect> EffectFactory::makeEffect(absl::Span<const Opcode> membe
         return std::make_unique<sfz::fx::Nothing>();
     }
 
-    absl::string_view type = opcode->value;
+    const absl::string_view type = opcode->value;
 
     const auto it = absl::c_find_if(_entries, [&](auto&& entry) { return entry.name == type; });
     if (it == _entries.end()) {
@@ -86,7 +86,7 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
         return;
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
-        absl::Span<const float> addIn(addInput[c], nframes);
+        absl::Span<const float> addIn{ addInput[c], nframes };
         sfz::multiplyAdd(addGain, addIn, _inputs.getSpan(c));
     }
 }
