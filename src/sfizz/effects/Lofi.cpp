@@ -120,7 +120,6 @@ namespace fx {
         }
 
         float lastValue = fLastValue;
-        hiir::Downsampler2xFpu<12>& downsampler2x = fDownsampler2x;
 
         const float steps = (1.0f + (100.0f - fDepth)) * 0.75f;
         const float invSteps = 1.0f / steps;
@@ -136,7 +135,7 @@ namespace fx {
 
             lastValue = y;
 
-            y = downsampler2x.process_sample(y2x);
+            y = fDownsampler2x.process_sample(y2x);
             out[i] = y;
         }
 
@@ -182,7 +181,6 @@ namespace fx {
 
         float phase = fPhase;
         float lastValue = fLastValue;
-        hiir::Downsampler2xFpu<12>& downsampler2x = fDownsampler2x;
 
         for (uint32_t i = 0; i < nframes; ++i) {
             float x = in[i];
@@ -197,7 +195,7 @@ namespace fx {
 
             lastValue = y;
 
-            y = downsampler2x.process_sample(y2x);
+            y = fDownsampler2x.process_sample(y2x);
             out[i] = y;
         }
 
