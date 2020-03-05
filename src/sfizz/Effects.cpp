@@ -51,7 +51,7 @@ std::unique_ptr<Effect> EffectFactory::makeEffect(absl::Span<const Opcode> membe
         return std::make_unique<sfz::fx::Nothing>();
     }
 
-    auto fx = std::unique_ptr<Effect>(it->make(members));
+    auto fx = it->make(members);
     if (!fx) {
         DBG("Could not instantiate effect of type: " << type);
         return std::make_unique<sfz::fx::Nothing>();
