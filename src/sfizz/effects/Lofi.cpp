@@ -72,9 +72,9 @@ namespace fx {
         }
     }
 
-    Effect* Lofi::makeInstance(absl::Span<const Opcode> members)
+    std::unique_ptr<Effect> Lofi::makeInstance(absl::Span<const Opcode> members)
     {
-        std::unique_ptr<Lofi> fx { new Lofi };
+        auto fx = std::make_unique<Lofi>();
 
         for (const Opcode& opcode : members) {
             switch (opcode.lettersOnlyHash) {
@@ -87,7 +87,7 @@ namespace fx {
             }
         }
 
-        return fx.release();
+        return fx;
     }
 
     ///

@@ -34,7 +34,7 @@ namespace fx {
         /**
           * @brief Instantiates given the contents of the <effect> block.
           */
-        static Effect* makeInstance(absl::Span<const Opcode> members);
+        static std::unique_ptr<Effect> makeInstance(absl::Span<const Opcode> members);
 
     private:
         float _bitred_depth = 0;

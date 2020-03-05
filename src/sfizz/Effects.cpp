@@ -29,7 +29,7 @@ void EffectFactory::registerEffectType(absl::string_view name, Effect::MakeInsta
     _entries.push_back(std::move(ent));
 }
 
-Effect* EffectFactory::makeEffect(absl::Span<const Opcode> members)
+std::unique_ptr<Effect> EffectFactory::makeEffect(absl::Span<const Opcode> members)
 {
     const Opcode* opcode = nullptr;
 
@@ -40,7 +40,7 @@ Effect* EffectFactory::makeEffect(absl::Span<const Opcode> members)
 
     if (!opcode) {
         DBG("The effect does not specify a type");
-        return new sfz::fx::Nothing;
+        return std::make_unique<sfz::fx::Nothing>();
     }
 
     absl::string_view type = opcode->value;
@@ -52,13 +52,13 @@ Effect* EffectFactory::makeEffect(absl::Span<const Opcode> members)
 
     if (it == end) {
         DBG("Unsupported effect type: " << type);
-        return new sfz::fx::Nothing;
+        return std::make_unique<sfz::fx::Nothing>();
     }
 
-    Effect* fx = it->make(members);
+    auto fx = std::unique_ptr<Effect>(it->make(members));
     if (!fx) {
         DBG("Could not instantiate effect of type: " << type);
-        return new sfz::fx::Nothing;
+        return std::make_unique<sfz::fx::Nothing>();
     }
 
     return fx;

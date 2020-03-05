@@ -46,7 +46,7 @@ public:
        @brief Type of the factory function used to instantiate an effect given
               the contents of the <effect> block
      */
-    typedef Effect* (MakeInstance)(absl::Span<const Opcode> members);
+    typedef std::unique_ptr<Effect> (MakeInstance)(absl::Span<const Opcode> members);
 };
 
 /**
@@ -67,7 +67,7 @@ public:
     /**
        @brief Instantiates an effect given the contents of the <effect> block.
      */
-    Effect* makeEffect(absl::Span<const Opcode> members);
+    std::unique_ptr<Effect> makeEffect(absl::Span<const Opcode> members);
 
 private:
     struct FactoryEntry {

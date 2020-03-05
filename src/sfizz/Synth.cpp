@@ -256,10 +256,9 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
 
     // create the effect and add it
     EffectBus& bus = getOrCreateBus(busIndex);
-    Effect* fx = effectFactory.makeEffect(members);
-    bus.addEffect(std::unique_ptr<Effect>(fx));
-
+    auto fx = effectFactory.makeEffect(members);
     fx->init(sampleRate);
+    bus.addEffect(std::move(fx));
 }
 
 void addEndpointsToVelocityCurve(sfz::Region& region)
