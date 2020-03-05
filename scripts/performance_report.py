@@ -96,9 +96,9 @@ def set_axis_and_legend(figure, xlabel=None, ylabel=None, hide_on_click=True):
         hide_on_click {bool} -- whether to hide the legend when clicking (default: {True})
     """
     if xlabel is not None:
-        figure.xaxis.axis_label = 'Callback index'
+        figure.xaxis.axis_label = xlabel
     if ylabel is not None:
-        figure.yaxis.axis_label = 'Number of voices'
+        figure.yaxis.axis_label = ylabel
     if hide_on_click:
         figure.legend.click_policy = "hide"
 
@@ -247,7 +247,7 @@ for file_name in file_log_list:
         hist, edges = np.histogram(np.array(load_times[extension]), bins=100, density=True)
         fig_load_times.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                fill_color=next(colors), alpha=0.5, legend_label=extension)
-    set_axis_and_legend(fig_norm_load_times, 'Load time (µs)')
+    set_axis_and_legend(fig_load_times, 'Load time (µs)')
 
     # Add a row to the report
     file_figures.append(row(fig_wait_times, fig_load_times, fig_norm_load_times))
