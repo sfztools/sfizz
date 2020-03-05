@@ -125,6 +125,8 @@ void sfz::Synth::clear()
     effectBuses.clear();
     effectBuses.emplace_back(new EffectBus);
     effectBuses[0]->setGainToMain(1.0);
+    effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
+    effectBuses[0]->init(sampleRate);
     resources.filePool.clear();
     resources.logger.clear();
     numGroups = 0;
@@ -463,6 +465,8 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
+    for (auto& bus: effectBuses)
+        bus->setSamplesPerBlock(samplesPerBlock);
 }
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept

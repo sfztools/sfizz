@@ -136,10 +136,17 @@ public:
      */
     void mixOutputsTo(float* const mainOutput[], float* const mixOutput[], unsigned nframes);
 
+    /**
+     * @brief Sets the maximum number of frames to render at a time. The actual value can be lower
+     * but should never be higher.
+     *
+     */
+    void setSamplesPerBlock(int samplesPerBlock) noexcept;
+
 private:
     std::vector<std::unique_ptr<Effect>> _effects;
     AudioBuffer<float> _inputs { EffectChannels, config::defaultSamplesPerBlock };
-    AudioBuffer<float> _outputs { EffectChannels, config::defaultSamplesPerBlock };
+    AudioBuffer<float> _outputs { EffectChannels,  config::defaultSamplesPerBlock };
     float _gainToMain = 0.0;
     float _gainToMix = 0.0;
 };

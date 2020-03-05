@@ -124,10 +124,16 @@ void EffectBus::mixOutputsTo(float* const mainOutput[], float* const mixOutput[]
     const float gainToMix = _gainToMix;
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
-        absl::Span<const float> fxOut = _outputs.getConstSpan(c);
+        auto fxOut = _outputs.getConstSpan(c);
         sfz::multiplyAdd(gainToMain, fxOut, absl::Span<float>(mainOutput[c], nframes));
         sfz::multiplyAdd(gainToMix, fxOut, absl::Span<float>(mixOutput[c], nframes));
     }
+}
+
+void EffectBus::setSamplesPerBlock(int samplesPerBlock) noexcept
+{
+    _inputs.resize(samplesPerBlock);
+    _outputs.resize(samplesPerBlock);
 }
 
 } // namespace sfz
