@@ -35,7 +35,7 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123 }));
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
     }
 
     SECTION("Parameterized opcode with underscore")
@@ -44,7 +44,7 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.opcode == "sample_underscore123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore&"));
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123 }));
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
     }
 
     SECTION("Parameterized opcode within the opcode")
@@ -53,7 +53,7 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.opcode == "sample1_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 1 }));
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 1 }));
     }
 
     SECTION("Parameterized opcode within the opcode")
@@ -75,7 +75,7 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.parameters.size() == 2);
         REQUIRE(opcode.parameters[0] == 123);
         REQUIRE(opcode.parameters[1] == 44);
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123, 44 }));
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123, 44 }));
     }
 
     SECTION("Parameterized opcode within the opcode twice, with a back parameter")
@@ -85,7 +85,7 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 3);
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123, 44, 23 }));
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123, 44, 23 }));
     }
 }
 

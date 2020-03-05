@@ -31,7 +31,7 @@ struct Opcode {
     absl::string_view value {};
     uint64_t lettersOnlyHash { Fnv1aBasis };
     // This is to handle the integer parameters of some opcodes
-    std::vector<uint8_t> parameters;
+    std::vector<uint16_t> parameters;
     LEAK_DETECTOR(Opcode);
 };
 

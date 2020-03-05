@@ -26,8 +26,6 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
         uint32_t returnedValue;
         const auto numDigits = (nextCharIndex == opcode.npos) ? opcode.npos : nextCharIndex - nextNumIndex;
         if (absl::SimpleAtoi(opcode.substr(nextNumIndex, numDigits), &returnedValue)) {
-            // ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
-            // parameterPositions.push_back(parameterPosition);
             lettersOnlyHash = hash("&", lettersOnlyHash);
             parameters.push_back(returnedValue);
         }
