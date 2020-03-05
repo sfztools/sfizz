@@ -66,3 +66,24 @@ constexpr uint64_t hash(absl::string_view s, uint64_t h = Fnv1aBasis)
 
     return h;
 }
+
+/**
+ * @brief Same function as `hash()` but ignores ampersands (&)
+ *
+ * See e.g. the Region.cpp file
+ *
+ * @param s the input string to be hashed
+ * @param h the hashing seed to use
+ * @return uint64_t
+ */
+constexpr uint64_t hashNoAmpersand(absl::string_view s, uint64_t h = Fnv1aBasis)
+{
+    if (s.length() > 0) {
+        if (s.front() == '&')
+            return hashNoAmpersand( { s.data() + 1, s.length() - 1 }, h );
+        else
+            return hashNoAmpersand( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime );
+    }
+
+    return h;
+}

@@ -28,10 +28,38 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.value == "dummy");
     }
 
+    SECTION("Normal construction with ampersand")
+    {
+        sfz::Opcode opcode { "sample&_ampersand", "dummy" };
+        REQUIRE(opcode.opcode == "sample&_ampersand");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
+        REQUIRE(opcode.parameters.empty());
+        REQUIRE(opcode.value == "dummy");
+    }
+
+    SECTION("Normal construction with multiple ampersands")
+    {
+        sfz::Opcode opcode { "&sample&_ampersand&", "dummy" };
+        REQUIRE(opcode.opcode == "&sample&_ampersand&");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
+        REQUIRE(opcode.parameters.empty());
+        REQUIRE(opcode.value == "dummy");
+    }
+
     SECTION("Parameterized opcode")
     {
         sfz::Opcode opcode { "sample123", "dummy" };
         REQUIRE(opcode.opcode == "sample123");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
+        REQUIRE(opcode.value == "dummy");
+        REQUIRE(opcode.parameters.size() == 1);
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
+    }
+
+    SECTION("Parameterized opcode with ampersand")
+    {
+        sfz::Opcode opcode { "sample&123", "dummy" };
+        REQUIRE(opcode.opcode == "sample&123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);

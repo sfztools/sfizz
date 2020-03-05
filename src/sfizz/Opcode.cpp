@@ -20,7 +20,7 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     while (nextNumIndex != opcode.npos) {
         const auto numLetters = nextNumIndex - nextCharIndex;
         parameterPosition += numLetters;
-        lettersOnlyHash = hash(opcode.substr(nextCharIndex, numLetters), lettersOnlyHash);
+        lettersOnlyHash = hashNoAmpersand(opcode.substr(nextCharIndex, numLetters), lettersOnlyHash);
         nextCharIndex = opcode.find_first_not_of("1234567890", nextNumIndex);
 
         uint32_t returnedValue;
@@ -34,5 +34,5 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     }
 
     if (nextCharIndex != opcode.npos)
-        lettersOnlyHash = hash(opcode.substr(nextCharIndex), lettersOnlyHash);
+        lettersOnlyHash = hashNoAmpersand(opcode.substr(nextCharIndex), lettersOnlyHash);
 }
