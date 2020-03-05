@@ -19,8 +19,16 @@ public:
     bool PLUGIN_API open(void* parent, const VSTGUI::PlatformType& platformType = VSTGUI::kDefaultNative) override;
     void PLUGIN_API close() override;
 
+    SfizzVstController* getController() const
+    {
+        return static_cast<SfizzVstController*>(Vst::VSTGUIEditor::getController());
+    }
+
     // IControlListener
     void valueChanged(CControl* ctl) override;
+    void enterOrLeaveEdit(CControl* ctl, bool enter);
+    void controlBeginEdit(CControl* ctl) override;
+    void controlEndEdit(CControl* ctl) override;
 
     // SfizzVstController::StateListener
     void onStateChanged() override;
@@ -32,6 +40,14 @@ private:
     void createFrameContents();
     void updateStateDisplay();
     void setActivePanel(unsigned panelId);
+
+    template <class Control>
+    void adjustMinMaxToRangeParam(Control* c, Vst::ParamID id)
+    {
+        auto* p = static_cast<Vst::RangeParameter*>(getController()->getParameterObject(id));
+        c->setMin(p->getMin());
+        c->setMax(p->getMax());
+    }
 
     enum {
         kPanelGeneral,
@@ -45,10 +61,12 @@ private:
 
     enum {
         kTagLoadSfzFile,
+        kTagSetVolume,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
 
     CBitmap _logo;
     CTextLabel* _fileLabel = nullptr;
+    CSliderBase *_volumeSlider = nullptr;
 };

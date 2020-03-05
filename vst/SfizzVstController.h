@@ -24,22 +24,12 @@ public:
 
     tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id) override;
 
-    enum { numControllerParams = 128 };
-
     // interfaces
     OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditController)
     DEFINE_INTERFACES
     DEF_INTERFACE(Vst::IMidiMapping)
     END_DEFINE_INTERFACES(Vst::EditController)
     REFCOUNT_METHODS(Vst::EditController)
-
-    enum {
-        kPidMidiCC0,
-        kPidMidiCCLast = kPidMidiCC0 + numControllerParams - 1,
-        kPidMidiAftertouch,
-        kPidMidiPitchBend,
-        /* Reserved */
-    };
 };
 
 class SfizzVstController : public SfizzVstControllerNoUi, public VSTGUI::VST3EditorDelegate {
@@ -47,6 +37,8 @@ public:
     IPlugView* PLUGIN_API createView(FIDString name) override;
 
     tresult PLUGIN_API setParamNormalized(Vst::ParamID tag, Vst::ParamValue value) override;
+    tresult PLUGIN_API setState(IBStream* state) override;
+    tresult PLUGIN_API getState(IBStream* state) override;
     tresult PLUGIN_API setComponentState(IBStream* state) override;
 
     struct StateListener {
@@ -55,8 +47,11 @@ public:
 
     const SfizzVstState& getSfizzState() const { return _state; }
 
-    void addStateListener(StateListener* listener);
-    void removeStateListener(StateListener* listener);
+    const SfizzUiState& getSfizzUiState() const { return _uiState; }
+    SfizzUiState& getSfizzUiState() { return _uiState; }
+
+    void addSfizzStateListener(StateListener* listener);
+    void removeSfizzStateListener(StateListener* listener);
 
     ///
     static FUnknown* createInstance(void*);
@@ -65,5 +60,6 @@ public:
 
 private:
     SfizzVstState _state;
+    SfizzUiState _uiState;
     std::vector<StateListener*> _stateListeners;
 };

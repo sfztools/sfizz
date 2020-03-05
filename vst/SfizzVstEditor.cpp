@@ -6,6 +6,7 @@
 
 #include "SfizzVstEditor.h"
 #include "SfizzVstState.h"
+#include "GUIComponents.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "x11runloop.h"
 #endif
@@ -16,12 +17,12 @@ SfizzVstEditor::SfizzVstEditor(void *controller)
     : VSTGUIEditor(controller),
       _logo("logo.png")
 {
-    static_cast<SfizzVstController*>(getController())->addStateListener(this);
+    getController()->addSfizzStateListener(this);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
 {
-    static_cast<SfizzVstController*>(getController())->removeStateListener(this);
+    getController()->removeSfizzStateListener(this);
 }
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
@@ -59,6 +60,8 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
 {
     int32_t tag = ctl->getTag();
     float value = ctl->getValue();
+    float valueNorm = ctl->getValueNormalized();
+    SfizzVstController* controller = getController();
 
     switch (tag) {
     case kTagLoadSfzFile:
@@ -68,11 +71,43 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
         Call::later([this]() { chooseSfzFile(); });
         break;
 
+    case kTagSetVolume:
+        controller->setParamNormalized(kPidVolume, valueNorm);
+        controller->performEdit(kPidVolume, valueNorm);
+        break;
+
     default:
         if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel)
             setActivePanel(tag - kTagFirstChangePanel);
         break;
     }
+}
+
+void SfizzVstEditor::enterOrLeaveEdit(CControl* ctl, bool enter)
+{
+    int32_t tag = ctl->getTag();
+    Vst::ParamID id;
+
+    switch (tag) {
+    case kTagSetVolume: id = kPidVolume; break;
+    default: return;
+    }
+
+    SfizzVstController* controller = getController();
+    if (enter)
+        controller->beginEdit(id);
+    else
+        controller->endEdit(id);
+}
+
+void SfizzVstEditor::controlBeginEdit(CControl* ctl)
+{
+    enterOrLeaveEdit(ctl, true);
+}
+
+void SfizzVstEditor::controlEndEdit(CControl* ctl)
+{
+    enterOrLeaveEdit(ctl, false);
 }
 
 void SfizzVstEditor::onStateChanged()
@@ -97,8 +132,7 @@ void SfizzVstEditor::chooseSfzFile()
 
 void SfizzVstEditor::loadSfzFile(const std::string& filePath)
 {
-    Vst::EditController* ctl = getController();
-
+    SfizzVstController* ctl = getController();
 
     Vst::IMessage *msg = ctl->allocateMessage();
     if (!msg) {
@@ -118,6 +152,9 @@ void SfizzVstEditor::loadSfzFile(const std::string& filePath)
 
 void SfizzVstEditor::createFrameContents()
 {
+    SfizzVstController* controller = getController();
+    const SfizzUiState& uiState = controller->getSfizzUiState();
+
     CFrame* frame = this->frame;
     CRect bounds = frame->getViewSize();
 
@@ -130,7 +167,7 @@ void SfizzVstEditor::createFrameContents()
     topRow.bottom = topRow.top + 30;
 
     CViewContainer* panel;
-    _activePanel = kPanelGeneral;
+    _activePanel = std::max(0, std::min(kNumPanels - 1, static_cast<int>(uiState.activePanel)));
 
     CRect topLeftLabelBox = topRow;
     topLeftLabelBox.right -= 20 * kNumPanels;
@@ -163,6 +200,88 @@ void SfizzVstEditor::createFrameContents()
         topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
         topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         panel->addView(topLeftLabel);
+
+        CRect row = topRow;
+        row.top += 200.0;
+        row.bottom += 200.0;
+        row.left += 100.0;
+        row.right -= 100.0;
+
+        CCoord interRow = 35.0;
+
+        auto leftSide = [&row]() -> CRect {
+            CRect div = row;
+            div.right = 0.5 * (div.left + div.right);
+            return div;
+        };
+
+        auto rightSide = [&row]() -> CRect {
+            CRect div = row;
+            div.left = 0.5 * (div.left + div.right);
+            return div;
+        };
+
+        CTextLabel* label;
+        SimpleSlider* slider;
+
+        label = new CTextLabel(leftSide(), "Volume");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        slider = new SimpleSlider(rightSide(), this, kTagSetVolume);
+        adjustMinMaxToRangeParam(slider, kPidVolume);
+        panel->addView(slider);
+        _volumeSlider = slider;
+
+        // row.top += interRow;
+        // row.bottom += interRow;
+
+        // label = new CTextLabel(leftSide(), "Polyphony");
+        // label->setFontColor(CColor(0x00, 0x00, 0x00));
+        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setHoriAlign(kLeftText);
+        // panel->addView(label);
+        // slider = new SimpleSlider(rightSide(), this, -1);
+        // panel->addView(slider);
+
+        // row.top += interRow;
+        // row.bottom += interRow;
+
+        // label = new CTextLabel(leftSide(), "Oversampling");
+        // label->setFontColor(CColor(0x00, 0x00, 0x00));
+        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setHoriAlign(kLeftText);
+        // panel->addView(label);
+        // slider = new SimpleSlider(rightSide(), this, -1);
+        // panel->addView(slider);
+
+        // row.top += interRow;
+        // row.bottom += interRow;
+
+        // label = new CTextLabel(leftSide(), "Preload size");
+        // label->setFontColor(CColor(0x00, 0x00, 0x00));
+        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setHoriAlign(kLeftText);
+        // panel->addView(label);
+        // slider = new SimpleSlider(rightSide(), this, -1);
+        // panel->addView(slider);
+
+        // row.top += interRow;
+        // row.bottom += interRow;
+
+        // label = new CTextLabel(leftSide(), "Freewheel");
+        // label->setFontColor(CColor(0x00, 0x00, 0x00));
+        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        // label->setHoriAlign(kLeftText);
+        // panel->addView(label);
+        // slider = new SimpleSlider(rightSide(), this, -1);
+        // panel->addView(slider);
 
         _subPanels[kPanelSettings] = panel;
     }
@@ -204,17 +323,31 @@ void SfizzVstEditor::updateStateDisplay()
     if (!frame)
         return;
 
-    const SfizzVstState& state = static_cast<SfizzVstController*>(getController())->getSfizzState();
+    SfizzVstController* controller = getController();
+    const SfizzVstState& state = controller->getSfizzState();
+    const SfizzUiState& uiState = controller->getSfizzUiState();
 
     if (_fileLabel)
         _fileLabel->setText(("File: " + state.sfzFile).c_str());
+    if (_volumeSlider)
+        _volumeSlider->setValue(state.volume);
+
+    setActivePanel(uiState.activePanel);
 }
 
 void SfizzVstEditor::setActivePanel(unsigned panelId)
 {
+    panelId = std::max(0, std::min(kNumPanels - 1, static_cast<int>(panelId)));
+
+    getController()->getSfizzUiState().activePanel = panelId;
+
     if (_activePanel != panelId) {
-        _subPanels[_activePanel]->setVisible(false);
-        _subPanels[panelId]->setVisible(true);
+        if (frame)
+            _subPanels[_activePanel]->setVisible(false);
+
         _activePanel = panelId;
+
+        if (frame)
+            _subPanels[panelId]->setVisible(true);
     }
 }

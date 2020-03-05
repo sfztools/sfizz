@@ -34,6 +34,8 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     addAudioOutput(STR16("Audio Output"), Vst::SpeakerArr::kStereo);
     addEventInput(STR16("Event Input"), 1);
 
+    _state = SfizzVstState();
+
     return result;
 }
 
@@ -47,28 +49,37 @@ tresult PLUGIN_API SfizzVstProcessor::setBusArrangements(Vst::SpeakerArrangement
     return AudioEffect::setBusArrangements(inputs, numIns, outputs, numOuts);
 }
 
-tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* state)
+tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
 {
     SfizzVstState s;
 
-    tresult r = s.load(state);
+    tresult r = s.load(stream);
     if (r != kResultTrue)
         return r;
 
-    loadSfzFile(s.sfzFile);
+    std::lock_guard<std::mutex> lock(_processMutex);
+    _state = s;
+
+    syncStateToSynth();
 
     return r;
 }
 
-tresult PLUGIN_API SfizzVstProcessor::getState(IBStream* state)
+tresult PLUGIN_API SfizzVstProcessor::getState(IBStream* stream)
 {
-    SfizzVstState s;
-    {
-        std::lock_guard<std::mutex> lock(_processMutex);
-        s.sfzFile = _sfzFile;
-    }
+    std::lock_guard<std::mutex> lock(_processMutex);
+    return _state.store(stream);
+}
 
-    return s.store(state);
+void SfizzVstProcessor::syncStateToSynth()
+{
+    sfz::Sfizz* synth = _synth.get();
+
+    if (!synth)
+        return;
+
+    synth->loadSfzFile(_state.sfzFile);
+    synth->setVolume(_state.volume);
 }
 
 tresult PLUGIN_API SfizzVstProcessor::canProcessSampleSize(int32 symbolicSampleSize)
@@ -92,7 +103,7 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
 
-        loadSfzFile(_sfzFile);
+        syncStateToSynth();
 
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
@@ -104,6 +115,11 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
 tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 {
     sfz::Sfizz& synth = *_synth;
+
+    if (Vst::IParameterChanges* pc = data.inputParameterChanges) {
+        std::unique_lock<std::mutex> lock(_processMutex, std::try_to_lock);
+        processParameterChanges(*pc);
+    }
 
     if (data.numOutputs < 1)  // flush mode
         return kResultTrue;
@@ -118,6 +134,7 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         outputs[c] = data.outputs[0].channelBuffers32[c];
 
     std::unique_lock<std::mutex> lock(_processMutex, std::try_to_lock);
+
     if (!lock.owns_lock()) {
         for (unsigned c = 0; c < numChannels; ++c)
             std::memset(outputs[c], 0, numFrames * sizeof(float));
@@ -125,76 +142,111 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         return kResultTrue;
     }
 
-    if (Vst::IParameterChanges* pc = data.inputParameterChanges) {
-        uint32 paramCount = pc->getParameterCount();
+    if (Vst::IParameterChanges* pc = data.inputParameterChanges)
+        processControllerChanges(*pc);
 
-        for (uint32 paramIndex = 0; paramIndex < paramCount; ++paramIndex) {
-            Vst::IParamValueQueue* vq = pc->getParameterData(paramIndex);
+    if (Vst::IEventList* events = data.inputEvents)
+        processEvents(*events);
 
-            Vst::ParamID id = vq->getParameterId();
-
-            switch (id) {
-            default:
-                if (id >= SfizzVstController::kPidMidiCC0 && id <= SfizzVstController::kPidMidiCCLast) {
-                    int ccNumber = id - SfizzVstController::kPidMidiCC0;
-                    for (uint32 pointIndex = 0, pointCount = vq->getPointCount(); pointIndex < pointCount; ++pointIndex) {
-                        int32 sampleOffset;
-                        Vst::ParamValue value;
-                        if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                            synth.cc(sampleOffset, ccNumber, (int)(0.5 + value * 127.0));
-                    }
-                }
-                break;
-
-            case SfizzVstController::kPidMidiAftertouch:
-                for (uint32 pointIndex = 0, pointCount = vq->getPointCount(); pointIndex < pointCount; ++pointIndex) {
-                    int32 sampleOffset;
-                    Vst::ParamValue value;
-                    if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                        synth.aftertouch(sampleOffset, (int)(0.5 + value * 127.0));
-                }
-                break;
-
-            case SfizzVstController::kPidMidiPitchBend:
-                for (uint32 pointIndex = 0, pointCount = vq->getPointCount(); pointIndex < pointCount; ++pointIndex) {
-                    int32 sampleOffset;
-                    Vst::ParamValue value;
-                    if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                        synth.pitchWheel(sampleOffset, (int)(0.5 + value * 16383) - 8192);
-                }
-                break;
-            }
-        }
-    }
-
-    if (Vst::IEventList* events = data.inputEvents) {
-        uint32 numEvents = events->getEventCount();
-
-        for (uint32 i = 0; i < numEvents; i++) {
-            Vst::Event e;
-            if (events->getEvent(i, e) != kResultTrue)
-                continue;
-
-            auto convertVelocityFromFloat = [](float x) -> int {
-                return std::min(127, std::max(0, (int)(x * 127.0f)));
-            };
-
-            switch (e.type) {
-            case Vst::Event::kNoteOnEvent:
-                synth.noteOn(e.sampleOffset, e.noteOn.pitch, convertVelocityFromFloat(e.noteOn.velocity));
-                break;
-            case Vst::Event::kNoteOffEvent:
-                synth.noteOff(e.sampleOffset, e.noteOff.pitch, convertVelocityFromFloat(e.noteOff.velocity));
-                break;
-            // case Vst::Event::kPolyPressureEvent:
-            //     synth.aftertouch(e.sampleOffset, convertVelocityFromFloat(e.polyPressure.pressure));
-            //     break;
-            }
-        }
-    }
+    synth.setVolume(_state.volume);
 
     synth.renderBlock(outputs, numFrames, numChannels);
     return kResultTrue;
+}
+
+void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
+{
+    uint32 paramCount = pc.getParameterCount();
+
+    for (uint32 paramIndex = 0; paramIndex < paramCount; ++paramIndex) {
+        Vst::IParamValueQueue* vq = pc.getParameterData(paramIndex);
+        if (!vq)
+            continue;
+
+        Vst::ParamID id = vq->getParameterId();
+        uint32 pointCount = vq->getPointCount();
+        int32 sampleOffset;
+        Vst::ParamValue value;
+
+        switch (id) {
+        case kPidVolume:
+            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
+                _state.volume = kParamVolumeRange.denormalize(value);
+            break;
+        }
+    }
+}
+
+void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
+{
+    sfz::Sfizz& synth = *_synth;
+    uint32 paramCount = pc.getParameterCount();
+
+    for (uint32 paramIndex = 0; paramIndex < paramCount; ++paramIndex) {
+        Vst::IParamValueQueue* vq = pc.getParameterData(paramIndex);
+        if (!vq)
+            continue;
+
+        Vst::ParamID id = vq->getParameterId();
+        uint32 pointCount = vq->getPointCount();
+        int32 sampleOffset;
+        Vst::ParamValue value;
+
+        switch (id) {
+        default:
+            if (id >= kPidMidiCC0 && id <= kPidMidiCCLast) {
+                int ccNumber = id - kPidMidiCC0;
+                for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
+                    if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
+                        synth.cc(sampleOffset, ccNumber, (int)(0.5 + value * 127.0));
+                }
+            }
+            break;
+
+        case kPidMidiAftertouch:
+            for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
+                if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
+                    synth.aftertouch(sampleOffset, (int)(0.5 + value * 127.0));
+            }
+            break;
+
+        case kPidMidiPitchBend:
+            for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
+                if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
+                    synth.pitchWheel(sampleOffset, (int)(0.5 + value * 16383) - 8192);
+            }
+            break;
+        }
+    }
+}
+
+void SfizzVstProcessor::processEvents(Vst::IEventList& events)
+{
+    sfz::Sfizz& synth = *_synth;
+    uint32 numEvents = events.getEventCount();
+
+    for (uint32 i = 0; i < numEvents; i++) {
+        Vst::Event e;
+        if (events.getEvent(i, e) != kResultTrue)
+            continue;
+
+        switch (e.type) {
+        case Vst::Event::kNoteOnEvent:
+            synth.noteOn(e.sampleOffset, e.noteOn.pitch, convertVelocityFromFloat(e.noteOn.velocity));
+            break;
+        case Vst::Event::kNoteOffEvent:
+            synth.noteOff(e.sampleOffset, e.noteOff.pitch, convertVelocityFromFloat(e.noteOff.velocity));
+            break;
+        // case Vst::Event::kPolyPressureEvent:
+        //     synth.aftertouch(e.sampleOffset, convertVelocityFromFloat(e.polyPressure.pressure));
+        //     break;
+        }
+    }
+}
+
+int SfizzVstProcessor::convertVelocityFromFloat(float x)
+{
+    return std::min(127, std::max(0, (int)(x * 127.0f)));
 }
 
 tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
@@ -215,18 +267,6 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 FUnknown* SfizzVstProcessor::createInstance(void*)
 {
     return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessor);
-}
-
-void SfizzVstProcessor::loadSfzFile(std::string file)
-{
-    std::lock_guard<std::mutex> lock(_processMutex);
-
-    if (_synth) {
-        fprintf(stderr, "[Sfizz] load SFZ file: %s\n", file.c_str());
-        _synth->loadSfzFile(file);
-    }
-
-    _sfzFile = std::move(file);
 }
 
 void SfizzVstProcessor::doBackgroundWork()
@@ -250,8 +290,11 @@ void SfizzVstProcessor::doBackgroundWork()
 
         if (!std::strcmp(id, "LoadSfz")) {
             std::vector<Vst::TChar> path(maxPathLen + 1);
-            if (attr->getString("File", path.data(), maxPathLen) == kResultTrue)
-                loadSfzFile(Steinberg::String(path.data()).text8());
+            if (attr->getString("File", path.data(), maxPathLen) == kResultTrue) {
+                std::lock_guard<std::mutex> lock(_processMutex);
+                _state.sfzFile = Steinberg::String(path.data()).text8();
+                _synth->loadSfzFile(_state.sfzFile);
+            }
         }
 
         msg->release();

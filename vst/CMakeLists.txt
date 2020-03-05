@@ -40,6 +40,7 @@ add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
+    GUIComponents.cpp
     VstPluginFactory.cpp)
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE ${PROJECT_NAME}::${PROJECT_NAME})

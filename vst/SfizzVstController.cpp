@@ -17,8 +17,14 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 
     Vst::ParamID pid = 0;
 
+    // Ordinary parameters
+    parameters.addParameter(
+        kParamVolumeRange.createParameter(
+            Steinberg::String("Volume"), pid++, Steinberg::String("dB"),
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+
     // MIDI controllers
-    for (unsigned i = 0; i < numControllerParams; ++i) {
+    for (unsigned i = 0; i < kNumControllerParams; ++i) {
         Steinberg::String title;
         Steinberg::String shortTitle;
         title.printf("Controller %u", i);
@@ -53,7 +59,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 bus
         return kResultTrue;
 
     default:
-        if (midiControllerNumber < 0 || midiControllerNumber >= numControllerParams)
+        if (midiControllerNumber < 0 || midiControllerNumber >= kNumControllerParams)
             return kResultFalse;
 
         id = kPidMidiCC0 + midiControllerNumber;
@@ -73,13 +79,51 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
     return new SfizzVstEditor(this);
 }
 
-tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst::ParamValue value)
+tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst::ParamValue normValue)
 {
-    tresult r = SfizzVstControllerNoUi::setParamNormalized(tag, value);
+    tresult r = SfizzVstControllerNoUi::setParamNormalized(tag, normValue);
     if (r != kResultTrue)
         return r;
 
+    float *slot = nullptr;
+    float value = 0;
+
+    switch (tag) {
+    case kPidVolume: {
+        slot = &_state.volume;
+        value = kParamVolumeRange.denormalize(normValue);
+        break;
+    }
+    }
+
+    if (slot && *slot != value) {
+        *slot = value;
+        for (StateListener* listener : _stateListeners)
+            listener->onStateChanged();
+    }
+
     return kResultTrue;
+}
+
+tresult PLUGIN_API SfizzVstController::setState(IBStream* state)
+{
+    SfizzUiState s;
+
+    tresult r = s.load(state);
+    if (r != kResultTrue)
+        return r;
+
+    _uiState = s;
+
+    for (StateListener* listener : _stateListeners)
+        listener->onStateChanged();
+
+    return kResultTrue;
+}
+
+tresult PLUGIN_API SfizzVstController::getState(IBStream* state)
+{
+    return _uiState.store(state);
 }
 
 tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
@@ -90,19 +134,22 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
     if (r != kResultTrue)
         return r;
 
+    _state = s;
+
+    setParamNormalized(kPidVolume, kParamVolumeRange.normalize(s.volume));
+
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();
 
-    _state = s;
     return kResultTrue;
 }
 
-void SfizzVstController::addStateListener(StateListener* listener)
+void SfizzVstController::addSfizzStateListener(StateListener* listener)
 {
     _stateListeners.push_back(listener);
 }
 
-void SfizzVstController::removeStateListener(StateListener* listener)
+void SfizzVstController::removeSfizzStateListener(StateListener* listener)
 {
     auto it = std::find(_stateListeners.begin(), _stateListeners.end(), listener);
     if (it != _stateListeners.end())

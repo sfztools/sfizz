@@ -16,14 +16,13 @@ tresult SfizzVstState::load(IBStream* state)
     if (!s.readInt64u(version))
         return kResultFalse;
 
-    while (const char* key = s.readStr8()) {
-        if (!std::strcmp(key, "SfzFile")) {
-            const char* value = s.readStr8();
-            if (!value)
-                return kResultFalse;
-            sfzFile = value;
-        }
-    }
+    if (const char* str = s.readStr8())
+        sfzFile = str;
+    else
+        return kResultFalse;
+
+    if (!s.readFloat(volume))
+        return kResultFalse;
 
     return kResultTrue;
 }
@@ -35,7 +34,37 @@ tresult SfizzVstState::store(IBStream* state) const
     if (!s.writeInt64u(currentStateVersion))
         return kResultFalse;
 
-    if (!s.writeStr8("SfzFile") || !s.writeStr8(sfzFile.c_str()))
+    if (!s.writeStr8(sfzFile.c_str()))
+        return kResultFalse;
+
+    if (!s.writeFloat(volume))
+        return kResultFalse;
+
+    return kResultTrue;
+}
+
+tresult SfizzUiState::load(IBStream* state)
+{
+    IBStreamer s(state, kLittleEndian);
+
+    uint64 version = 0;
+    if (!s.readInt64u(version))
+        return kResultFalse;
+
+    if (!s.readInt32u(activePanel))
+        return kResultFalse;
+
+    return kResultTrue;
+}
+
+tresult SfizzUiState::store(IBStream* state) const
+{
+    IBStreamer s(state, kLittleEndian);
+
+    if (!s.writeInt64u(currentStateVersion))
+        return kResultFalse;
+
+    if (!s.writeInt32u(activePanel))
         return kResultFalse;
 
     return kResultTrue;
