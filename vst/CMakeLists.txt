@@ -63,7 +63,9 @@ execute_process (
 if(WIN32)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-win")
-    # TODO: make desktop.ini, Plugin.ico
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/win/Plugin.ico"
+        "${CMAKE_CURRENT_SOURCE_DIR}/win/desktop.ini"
+        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
 elseif(APPLE)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         SUFFIX ""
@@ -74,7 +76,8 @@ elseif(APPLE)
     set(SFIZZ_VST3_BUNDLE_VERSION "${PROJECT_VERSION}")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist"
         "${CMAKE_CURRENT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Info.plist" @ONLY)
-    # TODO: create icons as sfizz.icns, and fill it in as CFBundleIconFile
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mac/Plugin.icns"
+        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 else()
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux")
