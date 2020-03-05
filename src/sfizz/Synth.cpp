@@ -529,7 +529,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             voice->renderBlock(temp);
 
             { // Add the output into the effects linked to this region
-                ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
+                ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
                 for (size_t i = 0; i < numEffectBuses; ++i) {
                     if (EffectBus* bus = effectBuses[i].get()) {
                         float addGain = region->getGainToEffectBus(i);
@@ -548,7 +548,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     { // Apply effect buses
         // -- note(jpc) there is always a "main" bus which is initially empty.
         //    without any <effect>, the signal is just going to flow through it.
-        ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
+        ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
 
         for (size_t i = 0; i < numEffectBuses; ++i) {
             if (EffectBus* bus = effectBuses[i].get()) {
