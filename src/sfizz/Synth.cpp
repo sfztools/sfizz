@@ -501,14 +501,16 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
     auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
 
-    // Prepare the effect inputs. They are mixes of per-region outputs.
-    for (size_t i = 0; i < numEffectBuses; ++i) {
-        if (EffectBus* bus = effectBuses[i].get())
-            bus->clearInputs(numFrames);
+    CallbackBreakdown callbackBreakdown;
+
+    { // Prepare the effect inputs. They are mixes of per-region outputs.
+        ScopedTiming logger { callbackBreakdown.effects };
+        for (size_t i = 0; i < numEffectBuses; ++i) {
+            if (EffectBus* bus = effectBuses[i].get())
+                bus->clearInputs(numFrames);
+        }
     }
 
-    //
-    CallbackBreakdown callbackBreakdown;
     int numActiveVoices { 0 };
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod };
@@ -525,11 +527,13 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             numActiveVoices++;
             voice->renderBlock(temp);
 
-            // Add the output into the effects linked to this region
-            for (size_t i = 0; i < numEffectBuses; ++i) {
-                if (EffectBus* bus = effectBuses[i].get()) {
-                    float addGain = region->getGainToEffectBus(i);
-                    bus->addToInputs(temp, addGain, numFrames);
+            { // Add the output into the effects linked to this region
+                ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
+                for (size_t i = 0; i < numEffectBuses; ++i) {
+                    if (EffectBus* bus = effectBuses[i].get()) {
+                        float addGain = region->getGainToEffectBus(i);
+                        bus->addToInputs(temp, addGain, numFrames);
+                    }
                 }
             }
 
@@ -540,13 +544,16 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         }
     }
 
-    // Apply effect buses
-    // -- note(jpc) there is always a "main" bus which is initially empty.
-    //    without any <effect>, the signal is just going to flow through it.
-    for (size_t i = 0; i < numEffectBuses; ++i) {
-        if (EffectBus* bus = effectBuses[i].get()) {
-            bus->process(numFrames);
-            bus->mixOutputsTo(buffer, tempMixNode, numFrames);
+    { // Apply effect buses
+        // -- note(jpc) there is always a "main" bus which is initially empty.
+        //    without any <effect>, the signal is just going to flow through it.
+        ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
+
+        for (size_t i = 0; i < numEffectBuses; ++i) {
+            if (EffectBus* bus = effectBuses[i].get()) {
+                bus->process(numFrames);
+                bus->mixOutputsTo(buffer, tempMixNode, numFrames);
+            }
         }
     }
 

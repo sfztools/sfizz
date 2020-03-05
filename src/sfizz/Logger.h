@@ -61,6 +61,7 @@ struct CallbackBreakdown
     Duration amplitude { 0 };
     Duration filters { 0 };
     Duration panning { 0 };
+    Duration effects { 0 };
 };
 
 struct CallbackTime
