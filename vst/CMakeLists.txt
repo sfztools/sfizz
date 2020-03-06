@@ -90,6 +90,18 @@ else()
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux")
 endif()
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(${VSTPLUGIN_PRJ_NAME} PRIVATE
+        "-Wno-extra"
+        "-Wno-multichar"
+        "-Wno-reorder"
+        "-Wno-class-memaccess"
+        "-Wno-ignored-qualifiers"
+        "-Wno-unused-function"
+        "-Wno-unused-parameter"
+        "-Wno-unused-variable")
+endif()
+
 # To help debugging the link only
 if (FALSE)
     target_link_options(${VSTPLUGIN_PRJ_NAME} PRIVATE "-Wl,-no-undefined")
