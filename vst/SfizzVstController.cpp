@@ -35,6 +35,10 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
             Steinberg::String("Preload size"), pid++, nullptr,
             0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
+    // MIDI special controllers
+    parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
+    parameters.addParameter(Steinberg::String("Pitch Bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
+
     // MIDI controllers
     for (unsigned i = 0; i < kNumControllerParams; ++i) {
         Steinberg::String title;
@@ -46,10 +50,6 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
             title, nullptr, 0, 0, Vst::ParameterInfo::kCanAutomate,
             pid++, Vst::kRootUnitId, shortTitle);
     }
-
-    // MIDI extra controllers
-    parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
-    parameters.addParameter(Steinberg::String("Pitch Bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
 
     return kResultTrue;
 }

@@ -22,10 +22,10 @@ enum {
     kPidNumVoices,
     kPidOversampling,
     kPidPreloadSize,
-    kPidMidiCC0,
-    kPidMidiCCLast = kPidMidiCC0 + kNumControllerParams - 1,
     kPidMidiAftertouch,
     kPidMidiPitchBend,
+    kPidMidiCC0,
+    kPidMidiCCLast = kPidMidiCC0 + kNumControllerParams - 1,
     /* Reserved */
 };
 
