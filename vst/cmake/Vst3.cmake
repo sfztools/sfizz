@@ -189,6 +189,9 @@ function(plugin_add_vstgui NAME)
             "${WINDOWSCODECS_LIBRARY}"
             "${SHLWAPI_LIBRARY}")
     elseif(APPLE)
+        find_library(COCOA_LIBRARY "Cocoa")
+        target_link_libraries("${NAME}" PRIVATE
+            "${COCOA_LIBRARY}")
         #
     else()
         find_package(X11 REQUIRED)
