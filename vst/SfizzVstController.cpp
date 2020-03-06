@@ -100,12 +100,12 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID ta
     switch (tag) {
     case kPidOversampling:
         {
-            int factor;
+            int32 factor;
             if (!Steinberg::String::scanInt32(string, factor, false) || factor < 1)
                 factor = 1;
 
-            int log2Factor = 0;
-            for (int f = factor; f > 1; f /= 2)
+            int32 log2Factor = 0;
+            for (int32 f = factor; f > 1; f /= 2)
                 ++log2Factor;
 
             valueNormalized = kParamOversamplingRange.normalize(log2Factor);

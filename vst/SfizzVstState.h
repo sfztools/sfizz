@@ -33,9 +33,9 @@ class SfizzVstState {
 public:
     std::string sfzFile;
     float volume = 0;
-    int numVoices = 64;
-    int oversamplingLog2 = 0;
-    int preloadSize = 8192;
+    int32 numVoices = 64;
+    int32 oversamplingLog2 = 0;
+    int32 preloadSize = 8192;
 
     static constexpr uint64 currentStateVersion = 0;
 
@@ -45,7 +45,7 @@ public:
 
 class SfizzUiState {
 public:
-    unsigned activePanel = 0;
+    uint32 activePanel = 0;
 
     static constexpr uint64 currentStateVersion = 0;
 
