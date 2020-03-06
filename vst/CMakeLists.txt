@@ -70,6 +70,11 @@ file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources/logo.png"
 if(WIN32)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-win")
+    foreach(config ${CMAKE_CONFIGURATION_TYPES})
+        string(TOUPPER "${config}" config)
+        set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
+            "LIBRARY_OUTPUT_DIRECTORY_${config}" "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-win")
+    endforeach()
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/win/Plugin.ico"
         "${CMAKE_CURRENT_SOURCE_DIR}/win/desktop.ini"
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
