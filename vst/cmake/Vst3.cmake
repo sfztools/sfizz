@@ -175,7 +175,19 @@ function(plugin_add_vstgui NAME)
     target_include_directories("${NAME}" PRIVATE "${VST3SDK_BASEDIR}/vstgui4")
 
     if(WIN32)
-        #
+        find_library(OPENGL32_LIBRARY "opengl32")
+        find_library(D2D1_LIBRARY "d2d1")
+        find_library(DWRITE_LIBRARY "dwrite")
+        find_library(DWMAPI_LIBRARY "dwmapi")
+        find_library(WINDOWSCODECS_LIBRARY "windowscodecs")
+        find_library(SHLWAPI_LIBRARY "shlwapi")
+        target_link_libraries("${NAME}" PRIVATE
+            "${OPENGL32_LIBRARY}"
+            "${D2D1_LIBRARY}"
+            "${DWRITE_LIBRARY}"
+            "${DWMAPI_LIBRARY}"
+            "${WINDOWSCODECS_LIBRARY}"
+            "${SHLWAPI_LIBRARY}")
     elseif(APPLE)
         #
     else()
