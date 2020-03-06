@@ -189,10 +189,19 @@ function(plugin_add_vstgui NAME)
             "${WINDOWSCODECS_LIBRARY}"
             "${SHLWAPI_LIBRARY}")
     elseif(APPLE)
-        find_library(COCOA_LIBRARY "Cocoa")
+        find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
+        find_library(APPLE_COCOA_LIBRARY "Cocoa")
+        find_library(APPLE_OPENGL_LIBRARY "OpenGL")
+        find_library(APPLE_ACCELERATE_LIBRARY "Accelerate")
+        find_library(APPLE_QUARTZCORE_LIBRARY "QuartzCore")
+        find_library(APPLE_CARBON_LIBRARY "Carbon")
         target_link_libraries("${NAME}" PRIVATE
-            "${COCOA_LIBRARY}")
-        #
+            "${APPLE_COREFOUNDATION_LIBRARY}"
+            "${APPLE_COCOA_LIBRARY}"
+            "${APPLE_OPENGL_LIBRARY}"
+            "${APPLE_ACCELERATE_LIBRARY}"
+            "${APPLE_QUARTZCORE_LIBRARY}"
+            "${APPLE_CARBON_LIBRARY}")
     else()
         find_package(X11 REQUIRED)
         find_package(Freetype REQUIRED)
