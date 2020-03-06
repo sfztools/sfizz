@@ -95,6 +95,9 @@ else()
         LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux")
 endif()
 
+file(COPY "gpl-3.0.txt"
+    DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${VSTPLUGIN_PRJ_NAME} PRIVATE
         "-Wno-extra"
