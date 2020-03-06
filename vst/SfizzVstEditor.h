@@ -64,6 +64,7 @@ private:
         kTagSetVolume,
         kTagSetNumVoices,
         kTagSetOversampling,
+        kTagSetPreloadSize,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -73,4 +74,5 @@ private:
     CSliderBase *_volumeSlider = nullptr;
     CSliderBase *_numVoicesSlider = nullptr;
     CSliderBase *_oversamplingSlider = nullptr;
+    CSliderBase *_preloadSizeSlider = nullptr;
 };

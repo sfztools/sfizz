@@ -86,6 +86,11 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
         controller->performEdit(kPidOversampling, valueNorm);
         break;
 
+    case kTagSetPreloadSize:
+        controller->setParamNormalized(kPidPreloadSize, valueNorm);
+        controller->performEdit(kPidPreloadSize, valueNorm);
+        break;
+
     default:
         if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel)
             setActivePanel(tag - kTagFirstChangePanel);
@@ -102,6 +107,7 @@ void SfizzVstEditor::enterOrLeaveEdit(CControl* ctl, bool enter)
     case kTagSetVolume: id = kPidVolume; break;
     case kTagSetNumVoices: id = kPidNumVoices; break;
     case kTagSetOversampling: id = kPidOversampling; break;
+    case kTagSetPreloadSize: id = kPidPreloadSize; break;
     default: return;
     }
 
@@ -275,19 +281,19 @@ void SfizzVstEditor::createFrameContents()
         adjustMinMaxToRangeParam(slider, kPidOversampling);
         _oversamplingSlider = slider;
 
-        // row.top += interRow;
-        // row.bottom += interRow;
+        row.top += interRow;
+        row.bottom += interRow;
 
-        // label = new CTextLabel(leftSide(), "Preload size");
-        // label->setFontColor(CColor(0x00, 0x00, 0x00));
-        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        // label->setHoriAlign(kLeftText);
-        // panel->addView(label);
-        // slider = new SimpleSlider(rightSide(), this, kTag);
-        // panel->addView(slider);
-        // adjustMinMaxToRangeParam(slider, kPid);
-        // _aSlider = slider;
+        label = new CTextLabel(leftSide(), "Preload size");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        slider = new SimpleSlider(rightSide(), this, kTagSetPreloadSize);
+        panel->addView(slider);
+        adjustMinMaxToRangeParam(slider, kPidPreloadSize);
+        _preloadSizeSlider = slider;
 
         // row.top += interRow;
         // row.bottom += interRow;
@@ -354,7 +360,9 @@ void SfizzVstEditor::updateStateDisplay()
     if (_numVoicesSlider)
         _numVoicesSlider->setValue(state.numVoices);
     if (_oversamplingSlider)
-        _oversamplingSlider->setValue(state.oversampling);
+        _oversamplingSlider->setValue(state.oversamplingLog2);
+    if (_preloadSizeSlider)
+        _preloadSizeSlider->setValue(state.preloadSize);
 
     setActivePanel(uiState.activePanel);
 }

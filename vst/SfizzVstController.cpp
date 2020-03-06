@@ -30,6 +30,10 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         kParamOversamplingRange.createParameter(
             Steinberg::String("Oversampling"), pid++, nullptr,
             0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        kParamPreloadSizeRange.createParameter(
+            Steinberg::String("Preload size"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI controllers
     for (unsigned i = 0; i < kNumControllerParams; ++i) {
@@ -80,10 +84,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID ta
     switch (tag) {
     case kPidOversampling:
         {
-            int factor = SfizzMisc::adaptOversamplingFactor(
-                kParamOversamplingRange.denormalize(valueNormalized));
+            int factorLog2 = kParamOversamplingRange.denormalize(valueNormalized);
             Steinberg::String buf;
-            buf.printf("%dX", factor);
+            buf.printf("%dX", 1 << factorLog2);
             buf.copyTo(string);
             return kResultTrue;
         }
@@ -98,10 +101,14 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID ta
     case kPidOversampling:
         {
             int factor;
-            if (!Steinberg::String::scanInt32(string, factor, false))
+            if (!Steinberg::String::scanInt32(string, factor, false) || factor < 1)
                 factor = 1;
-            valueNormalized = kParamOversamplingRange.normalize(
-                SfizzMisc::adaptOversamplingFactor(factor));
+
+            int log2Factor = 0;
+            for (int f = factor; f > 1; f /= 2)
+                ++log2Factor;
+
+            valueNormalized = kParamOversamplingRange.normalize(log2Factor);
             return kResultTrue;
         }
     }
@@ -143,8 +150,13 @@ tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst:
         break;
     }
     case kPidOversampling: {
-        slotI32 = &_state.oversampling;
+        slotI32 = &_state.oversamplingLog2;
         value = kParamOversamplingRange.denormalize(normValue);
+        break;
+    }
+    case kPidPreloadSize: {
+        slotI32 = &_state.preloadSize;
+        value = kParamPreloadSizeRange.denormalize(normValue);
         break;
     }
     }
@@ -201,7 +213,8 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
 
     setParamNormalized(kPidVolume, kParamVolumeRange.normalize(s.volume));
     setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
-    setParamNormalized(kPidOversampling, kParamOversamplingRange.normalize(s.oversampling));
+    setParamNormalized(kPidOversampling, kParamOversamplingRange.normalize(s.oversamplingLog2));
+    setParamNormalized(kPidPreloadSize, kParamPreloadSizeRange.normalize(s.preloadSize));
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();

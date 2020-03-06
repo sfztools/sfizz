@@ -81,8 +81,8 @@ void SfizzVstProcessor::syncStateToSynth()
     synth->loadSfzFile(_state.sfzFile);
     synth->setVolume(_state.volume);
     synth->setNumVoices(_state.numVoices);
-    synth->setOversamplingFactor(
-        SfizzMisc::adaptOversamplingFactor(_state.oversampling));
+    synth->setOversamplingFactor(1 << _state.oversamplingLog2);
+    synth->setPreloadSize(_state.preloadSize);
 }
 
 tresult PLUGIN_API SfizzVstProcessor::canProcessSampleSize(int32 symbolicSampleSize)
@@ -199,6 +199,21 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                 msg->setMessageID("SetOversampling");
                 Vst::IAttributeList* attr = msg->getAttributes();
                 attr->setInt("Oversampling", kParamOversamplingRange.denormalize(value));
+                if (!_fifoToWorker.push(msg)) {
+                    msg->release();
+                    break;
+                }
+                _semaToWorker.post();
+            }
+            break;
+        case kPidPreloadSize:
+            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
+                Vst::IMessage* msg = allocateMessage();
+                if (!msg)
+                    break;
+                msg->setMessageID("SetPreloadSize");
+                Vst::IAttributeList* attr = msg->getAttributes();
+                attr->setInt("PreloadSize", kParamPreloadSizeRange.denormalize(value));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
@@ -339,9 +354,15 @@ void SfizzVstProcessor::doBackgroundWork()
         else if (!std::strcmp(id, "SetOversampling")) {
             int64 value;
             if (attr->getInt("Oversampling", value) == kResultTrue) {
-                _state.oversampling = value;
-                _synth->setOversamplingFactor(
-                    SfizzMisc::adaptOversamplingFactor(value));
+                _state.oversamplingLog2 = value;
+                _synth->setOversamplingFactor(1 << value);
+            }
+        }
+        else if (!std::strcmp(id, "SetPreloadSize")) {
+            int64 value;
+            if (attr->getInt("PreloadSize", value) == kResultTrue) {
+                _state.preloadSize = value;
+                _synth->setPreloadSize(value);
             }
         }
 
