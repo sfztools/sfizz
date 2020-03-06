@@ -107,6 +107,20 @@ public:
     void setGainToMix(float gain) { _gainToMix = gain; }
 
     /**
+     * @brief Returns the gain for the main out
+     *
+     * @return float
+     */
+    float gainToMain() const { return _gainToMain; }
+
+    /**
+     * @brief Returns the gain for the mix out
+     *
+     * @return float
+     */
+    float gainToMix() const { return _gainToMix; }
+
+    /**
        @brief Resets the input buffers to zero.
      */
     void clearInputs(unsigned nframes);
@@ -143,6 +157,12 @@ public:
      */
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
 
+    /**
+     * @brief Return the number of effects in the bus
+     *
+     * @return size_t
+     */
+    size_t numEffects() const noexcept;
 private:
     std::vector<std::unique_ptr<Effect>> _effects;
     AudioBuffer<float> _inputs { EffectChannels, config::defaultSamplesPerBlock };
