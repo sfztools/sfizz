@@ -10,7 +10,7 @@
 namespace sfz {
 namespace fx {
 
-    void Nothing::init(double sampleRate)
+    void Nothing::setSampleRate(double sampleRate)
     {
         (void)sampleRate;
     }

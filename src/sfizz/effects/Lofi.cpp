@@ -45,7 +45,7 @@
 namespace sfz {
 namespace fx {
 
-    void Lofi::init(double sampleRate)
+    void Lofi::setSampleRate(double sampleRate)
     {
         for (unsigned c = 0; c < EffectChannels; ++c) {
             _bitred[c].init(sampleRate);

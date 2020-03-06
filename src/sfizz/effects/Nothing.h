@@ -18,7 +18,7 @@ namespace fx {
         /**
          * @brief Initializes with the given sample rate.
          */
-        void init(double sampleRate) override;
+        void setSampleRate(double sampleRate) override;
 
         /**
          * @brief Reset the state to initial.

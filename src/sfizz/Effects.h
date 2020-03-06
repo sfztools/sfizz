@@ -30,7 +30,7 @@ public:
     /**
        @brief Initializes with the given sample rate.
      */
-    virtual void init(double sampleRate) = 0;
+    virtual void setSampleRate(double sampleRate) = 0;
 
     /**
        @brief Reset the state to initial.
@@ -133,7 +133,7 @@ public:
     /**
        @brief Initializes all effects in the bus with the given sample rate.
      */
-    void init(double sampleRate);
+    void setSampleRate(double sampleRate);
 
     /**
        @brief Resets the state of all effects in the bus.

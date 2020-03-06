@@ -126,7 +126,7 @@ void sfz::Synth::clear()
     effectBuses.emplace_back(new EffectBus);
     effectBuses[0]->setGainToMain(1.0);
     effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
-    effectBuses[0]->init(sampleRate);
+    effectBuses[0]->setSampleRate(sampleRate);
     resources.filePool.clear();
     resources.logger.clear();
     numGroups = 0;
@@ -201,10 +201,13 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
     auto getOrCreateBus = [this](unsigned index) -> EffectBus& {
         if (index + 1 > effectBuses.size())
             effectBuses.resize(index + 1);
-        EffectBusPtr& slot = effectBuses[index];
-        if (!slot)
-            slot.reset(new EffectBus);
-        return *slot;
+        EffectBusPtr& bus = effectBuses[index];
+        if (!bus) {
+            bus.reset(new EffectBus);
+            bus->setSampleRate(sampleRate);
+            bus->setSamplesPerBlock(samplesPerBlock);
+        }
+        return *bus;
     };
 
     for (const Opcode& opcode : members) {
@@ -255,7 +258,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
     // create the effect and add it
     EffectBus& bus = getOrCreateBus(busIndex);
     auto fx = effectFactory.makeEffect(members);
-    fx->init(sampleRate);
+    fx->setSampleRate(sampleRate);
     bus.addEffect(std::move(fx));
 }
 
@@ -482,7 +485,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 
     for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
         if (EffectBus* bus = effectBuses[i].get())
-            bus->init(sampleRate);
+            bus->setSampleRate(sampleRate);
     }
 }
 

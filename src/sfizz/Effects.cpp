@@ -91,10 +91,10 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
     }
 }
 
-void EffectBus::init(double sampleRate)
+void EffectBus::setSampleRate(double sampleRate)
 {
     for (const auto& effectPtr : _effects)
-        effectPtr->init(sampleRate);
+        effectPtr->setSampleRate(sampleRate);
 }
 
 void EffectBus::clear()
@@ -130,6 +130,10 @@ void EffectBus::mixOutputsTo(float* const mainOutput[], float* const mixOutput[]
     }
 }
 
+size_t EffectBus::numEffects() const noexcept
+{
+    return _effects.size();
+}
 void EffectBus::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     _inputs.resize(samplesPerBlock);
