@@ -47,7 +47,9 @@ if (NOT MSVC)
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
     configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
-else()
+endif()
+if(WIN32)
+    include(VSTConfig)
     configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
 endif()
 
