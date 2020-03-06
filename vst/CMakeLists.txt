@@ -57,6 +57,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/vst3.version")
 endif()
+sfizz_enable_lto_if_needed (${VSTPLUGIN_PRJ_NAME})
+if (MINGW)
+    set_target_properties (${VSTPLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
+endif()
 
 # Create the bundle (see "VST 3 Locations / Format")
 execute_process (
