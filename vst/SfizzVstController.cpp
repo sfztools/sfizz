@@ -26,6 +26,10 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         kParamNumVoicesRange.createParameter(
             Steinberg::String("Polyphony"), pid++, nullptr,
             0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        kParamOversamplingRange.createParameter(
+            Steinberg::String("Oversampling"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI controllers
     for (unsigned i = 0; i < kNumControllerParams; ++i) {
@@ -71,6 +75,40 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 bus
     }
 }
 
+tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string)
+{
+    switch (tag) {
+    case kPidOversampling:
+        {
+            int factor = SfizzMisc::adaptOversamplingFactor(
+                kParamOversamplingRange.denormalize(valueNormalized));
+            Steinberg::String buf;
+            buf.printf("%dX", factor);
+            buf.copyTo(string);
+            return kResultTrue;
+        }
+    }
+
+    return EditController::getParamStringByValue(tag, valueNormalized, string);
+}
+
+tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized)
+{
+    switch (tag) {
+    case kPidOversampling:
+        {
+            int factor;
+            if (!Steinberg::String::scanInt32(string, factor, false))
+                factor = 1;
+            valueNormalized = kParamOversamplingRange.normalize(
+                SfizzMisc::adaptOversamplingFactor(factor));
+            return kResultTrue;
+        }
+    }
+
+    return EditController::getParamValueByString(tag, string, valueNormalized);
+}
+
 // --- Controller with UI --- //
 
 IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
@@ -102,6 +140,11 @@ tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst:
     case kPidNumVoices: {
         slotI32 = &_state.numVoices;
         value = kParamNumVoicesRange.denormalize(normValue);
+        break;
+    }
+    case kPidOversampling: {
+        slotI32 = &_state.oversampling;
+        value = kParamOversamplingRange.denormalize(normValue);
         break;
     }
     }
@@ -158,6 +201,7 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
 
     setParamNormalized(kPidVolume, kParamVolumeRange.normalize(s.volume));
     setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
+    setParamNormalized(kPidOversampling, kParamOversamplingRange.normalize(s.oversampling));
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();

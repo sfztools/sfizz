@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SfizzVstState.h"
+#include <sfizz.h>
 #include <mutex>
 #include <cstring>
 
@@ -27,6 +28,9 @@ tresult SfizzVstState::load(IBStream* state)
     if (!s.readInt32(numVoices))
         return kResultFalse;
 
+    if (!s.readInt32(oversampling))
+        return kResultFalse;
+
     return kResultTrue;
 }
 
@@ -44,6 +48,9 @@ tresult SfizzVstState::store(IBStream* state) const
         return kResultFalse;
 
     if (!s.writeInt32(numVoices))
+        return kResultFalse;
+
+    if (!s.writeInt32(oversampling))
         return kResultFalse;
 
     return kResultTrue;
@@ -74,4 +81,17 @@ tresult SfizzUiState::store(IBStream* state) const
         return kResultFalse;
 
     return kResultTrue;
+}
+
+///
+int SfizzMisc::adaptOversamplingFactor(int valueDenorm)
+{
+    if (valueDenorm >= 8)
+        return SFIZZ_OVERSAMPLING_X8;
+    else if (valueDenorm >= 4)
+        return SFIZZ_OVERSAMPLING_X4;
+    else if (valueDenorm >= 2)
+        return SFIZZ_OVERSAMPLING_X2;
+    else
+        return SFIZZ_OVERSAMPLING_X1;
 }

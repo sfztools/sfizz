@@ -24,6 +24,10 @@ public:
 
     tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id) override;
 
+    tresult PLUGIN_API getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) override;
+    tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized) override;
+
+
     // interfaces
     OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditController)
     DEFINE_INTERFACES

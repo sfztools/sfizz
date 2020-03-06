@@ -20,6 +20,7 @@ enum {
 enum {
     kPidVolume,
     kPidNumVoices,
+    kPidOversampling,
     kPidMidiCC0,
     kPidMidiCCLast = kPidMidiCC0 + kNumControllerParams - 1,
     kPidMidiAftertouch,
@@ -32,6 +33,7 @@ public:
     std::string sfzFile;
     float volume = 0;
     int numVoices = 64;
+    int oversampling = 1;
 
     static constexpr uint64 currentStateVersion = 0;
 
@@ -75,3 +77,9 @@ struct SfizzParameterRange {
 
 static constexpr SfizzParameterRange kParamVolumeRange(0.0, -60.0, +6.0);
 static constexpr SfizzParameterRange kParamNumVoicesRange(64.0, 1.0, 256.0);
+static constexpr SfizzParameterRange kParamOversamplingRange(1.0, 1.0, 8.0);
+
+class SfizzMisc {
+public:
+    static int adaptOversamplingFactor(int factor);
+};

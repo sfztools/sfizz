@@ -63,6 +63,7 @@ private:
         kTagLoadSfzFile,
         kTagSetVolume,
         kTagSetNumVoices,
+        kTagSetOversampling,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -71,4 +72,5 @@ private:
     CTextLabel* _fileLabel = nullptr;
     CSliderBase *_volumeSlider = nullptr;
     CSliderBase *_numVoicesSlider = nullptr;
+    CSliderBase *_oversamplingSlider = nullptr;
 };
