@@ -54,7 +54,7 @@ Source: "sfizz.lv2\sfizz.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.l
 Source: "sfizz.lv2\lgpl-3.0.txt"; Components: main; DestDir: "{app}"
 Source: "sfizz.lv2\LICENSE.md"; Components: main; DestDir: "{app}"
 Source: "sfizz.vst3\desktop.ini"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
-Source: "sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win\sfizz.dll"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win"; Flags: ignoreversion
+Source: "sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win\sfizz.vst3"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win"; Flags: ignoreversion
 Source: "sfizz.vst3\Contents\Resources\logo.png"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\Resources"
 Source: "sfizz.vst3\Plugin.ico"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
 Source: "sfizz.vst3\gpl-3.0.txt"; Components: main; DestDir: "{app}"
