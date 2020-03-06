@@ -13,7 +13,7 @@ constexpr int blockSize { 256 };
 TEST_CASE("[Synth] Play and check active voices")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(256);
+    synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
 
@@ -29,7 +29,7 @@ TEST_CASE("[Synth] Play and check active voices")
 TEST_CASE("[Synth] Change the number of voice while playing")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(256);
+    synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
 
@@ -209,4 +209,53 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
     REQUIRE( synth.getVoiceView(0)->isFree() );
+}
+
+TEST_CASE("[Synth] Number of effect buses and resetting behavior")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(blockSize);
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+
+    REQUIRE( synth.getEffectBusView(0) == nullptr); // No effects at first
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/base.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    REQUIRE( synth.getEffectBusView(1) != nullptr); // and an FX bus
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/base.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    REQUIRE( synth.getEffectBusView(1) == nullptr); // and no FX bus
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    REQUIRE( synth.getEffectBusView(1) == nullptr); // empty/uninitialized fx bus
+    REQUIRE( synth.getEffectBusView(2) == nullptr); // empty/uninitialized fx bus
+    REQUIRE( synth.getEffectBusView(3) != nullptr); // and an FX bus (because we built up to fx3)
+    REQUIRE( synth.getEffectBusView(3)->numEffects() == 1);
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+}
+
+TEST_CASE("[Synth] No effect in the main bus")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/base.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
 }
