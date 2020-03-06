@@ -42,6 +42,9 @@ add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     SfizzVstState.cpp
     GUIComponents.cpp
     VstPluginFactory.cpp)
+if(WIN32)
+    target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
+endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE ${PROJECT_NAME}::${PROJECT_NAME})
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
