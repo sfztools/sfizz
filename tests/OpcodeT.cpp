@@ -17,9 +17,6 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.lettersOnlyHash == hash("sample"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(!opcode.backParameter());
-        REQUIRE(!opcode.firstParameter());
-        REQUIRE(!opcode.middleParameter());
     }
 
     SECTION("Normal construction with underscore")
@@ -29,56 +26,69 @@ TEST_CASE("[Opcode] Construction")
         REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(!opcode.backParameter());
-        REQUIRE(!opcode.firstParameter());
-        REQUIRE(!opcode.middleParameter());
+    }
+
+    SECTION("Normal construction with ampersand")
+    {
+        sfz::Opcode opcode { "sample&_ampersand", "dummy" };
+        REQUIRE(opcode.opcode == "sample&_ampersand");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
+        REQUIRE(opcode.parameters.empty());
+        REQUIRE(opcode.value == "dummy");
+    }
+
+    SECTION("Normal construction with multiple ampersands")
+    {
+        sfz::Opcode opcode { "&sample&_ampersand&", "dummy" };
+        REQUIRE(opcode.opcode == "&sample&_ampersand&");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
+        REQUIRE(opcode.parameters.empty());
+        REQUIRE(opcode.value == "dummy");
     }
 
     SECTION("Parameterized opcode")
     {
         sfz::Opcode opcode { "sample123", "dummy" };
         REQUIRE(opcode.opcode == "sample123");
-        REQUIRE(opcode.lettersOnlyHash == hash("sample"));
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123 }));
-        REQUIRE(opcode.parameterPositions == std::vector<int>({ 6 }));
-        REQUIRE(opcode.backParameter());
-        REQUIRE(*opcode.backParameter() == 123);
-        REQUIRE(!opcode.firstParameter());
-        REQUIRE(!opcode.middleParameter());
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
+    }
+
+    SECTION("Parameterized opcode with ampersand")
+    {
+        sfz::Opcode opcode { "sample&123", "dummy" };
+        REQUIRE(opcode.opcode == "sample&123");
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
+        REQUIRE(opcode.value == "dummy");
+        REQUIRE(opcode.parameters.size() == 1);
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
     }
 
     SECTION("Parameterized opcode with underscore")
     {
         sfz::Opcode opcode { "sample_underscore123", "dummy" };
         REQUIRE(opcode.opcode == "sample_underscore123");
-        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
+        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore&"));
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123 }));
-        REQUIRE(opcode.parameterPositions == std::vector<int>({ 17 }));
-        REQUIRE(opcode.backParameter());
-        REQUIRE(*opcode.backParameter() == 123);
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
     }
 
     SECTION("Parameterized opcode within the opcode")
     {
         sfz::Opcode opcode { "sample1_underscore", "dummy" };
         REQUIRE(opcode.opcode == "sample1_underscore");
-        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 1 }));
-        REQUIRE(!opcode.backParameter());
-        REQUIRE(opcode.firstParameter());
-        REQUIRE(*opcode.firstParameter() == 1);
-        REQUIRE(!opcode.middleParameter());
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 1 }));
     }
 
     SECTION("Parameterized opcode within the opcode")
     {
         sfz::Opcode opcode { "sample123_underscore", "dummy" };
         REQUIRE(opcode.opcode == "sample123_underscore");
-        REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
         REQUIRE(opcode.parameters[0] == 123);
@@ -88,35 +98,22 @@ TEST_CASE("[Opcode] Construction")
     {
         sfz::Opcode opcode { "sample123_double44_underscore", "dummy" };
         REQUIRE(opcode.opcode == "sample123_double44_underscore");
-        REQUIRE(opcode.lettersOnlyHash == hash("sample_double_underscore"));
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 2);
         REQUIRE(opcode.parameters[0] == 123);
         REQUIRE(opcode.parameters[1] == 44);
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123, 44 }));
-        REQUIRE(opcode.parameterPositions == std::vector<int>({ 6, 13 }));
-        REQUIRE(!opcode.backParameter());
-        REQUIRE(opcode.firstParameter());
-        REQUIRE(*opcode.firstParameter() == 123);
-        REQUIRE(opcode.middleParameter());
-        REQUIRE(*opcode.middleParameter() == 44);
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123, 44 }));
     }
 
     SECTION("Parameterized opcode within the opcode twice, with a back parameter")
     {
         sfz::Opcode opcode { "sample123_double44_underscore23", "dummy" };
         REQUIRE(opcode.opcode == "sample123_double44_underscore23");
-        REQUIRE(opcode.lettersOnlyHash == hash("sample_double_underscore"));
+        REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 3);
-        REQUIRE(opcode.parameters == std::vector<uint8_t>({ 123, 44, 23 }));
-        REQUIRE(opcode.parameterPositions == std::vector<int>({ 6, 13, 24 }));
-        REQUIRE(opcode.backParameter());
-        REQUIRE(*opcode.backParameter() == 23);
-        REQUIRE(opcode.firstParameter());
-        REQUIRE(*opcode.firstParameter() == 123);
-        REQUIRE(opcode.middleParameter());
-        REQUIRE(*opcode.middleParameter() == 44);
+        REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123, 44, 23 }));
     }
 }
 

@@ -153,21 +153,18 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
-        const auto backParameter = member.backParameter();
         switch (member.lettersOnlyHash) {
-        case hash("Set_cc"):
-            [[fallthrough]];
-        case hash("set_cc"):
-            if (backParameter && Default::ccNumberRange.containsWithEnd(*backParameter)) {
+        case hash("Set_cc&"): [[fallthrough]];
+        case hash("set_cc&"):
+            if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                resources.midiState.ccEvent(*backParameter, ccValue);
+                resources.midiState.ccEvent(member.parameters.back(), ccValue);
             }
             break;
-        case hash("Label_cc"):
-            [[fallthrough]];
-        case hash("label_cc"):
-            if (backParameter && Default::ccNumberRange.containsWithEnd(*backParameter))
-                ccNames.emplace_back(*backParameter, std::string(member.value));
+        case hash("Label_cc&"): [[fallthrough]];
+        case hash("label_cc&"):
+            if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
+                ccNames.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
             [[fallthrough]];
