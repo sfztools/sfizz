@@ -88,7 +88,7 @@ inline bool RTSemaphore::try_wait()
 #elif defined(_WIN32)
 inline RTSemaphore::RTSemaphore(unsigned value)
 {
-    sem_ = CreateRTSemaphore(nullptr, value, LONG_MAX, nullptr);
+    sem_ = CreateSemaphore(nullptr, value, LONG_MAX, nullptr);
     if (!sem_)
         throw std::runtime_error("RTSemaphore::RTSemaphore");
 }
@@ -100,7 +100,7 @@ inline RTSemaphore::~RTSemaphore()
 
 inline void RTSemaphore::post()
 {
-    if (!ReleaseRTSemaphore(sem_, 1, nullptr))
+    if (!ReleaseSemaphore(sem_, 1, nullptr))
         throw std::runtime_error("RTSemaphore::post");
 }
 
