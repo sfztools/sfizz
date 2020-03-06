@@ -138,6 +138,9 @@ void EffectBus::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     _inputs.resize(samplesPerBlock);
     _outputs.resize(samplesPerBlock);
+
+    for (const auto& effectPtr : _effects)
+        effectPtr->setSamplesPerBlock(samplesPerBlock);
 }
 
 } // namespace sfz

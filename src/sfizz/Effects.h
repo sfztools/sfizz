@@ -33,6 +33,12 @@ public:
     virtual void setSampleRate(double sampleRate) = 0;
 
     /**
+     * @brief Sets the maximum number of frames to render at a time. The actual
+     * value can be lower but should never be higher.
+     */
+    virtual void setSamplesPerBlock(int samplesPerBlock) = 0;
+
+    /**
        @brief Reset the state to initial.
      */
     virtual void clear() = 0;

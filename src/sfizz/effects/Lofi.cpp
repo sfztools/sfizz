@@ -53,6 +53,11 @@ namespace fx {
         }
     }
 
+    void Lofi::setSamplesPerBlock(int samplesPerBlock)
+    {
+        (void)samplesPerBlock;
+    }
+
     void Lofi::clear()
     {
         for (unsigned c = 0; c < EffectChannels; ++c) {

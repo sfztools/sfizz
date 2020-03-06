@@ -15,6 +15,11 @@ namespace fx {
         (void)sampleRate;
     }
 
+    void Nothing::setSamplesPerBlock(int samplesPerBlock)
+    {
+        (void)samplesPerBlock;
+    }
+
     void Nothing::clear()
     {
     }

@@ -22,6 +22,12 @@ namespace fx {
         void setSampleRate(double sampleRate) override;
 
         /**
+         * @brief Sets the maximum number of frames to render at a time. The actual
+         * value can be lower but should never be higher.
+         */
+        void setSamplesPerBlock(int samplesPerBlock) override;
+
+        /**
          * @brief Reset the state to initial.
          */
         void clear() override;
