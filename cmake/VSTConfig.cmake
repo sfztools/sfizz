@@ -19,7 +19,7 @@ if(NOT VST3_PACKAGE_ARCHITECTURE)
     if(APPLE)
         # VST3 packages are universal on Apple, architecture string not needed
     else()
-        if(VST3_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+        if(VST3_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64)$")
             set(VST3_PACKAGE_ARCHITECTURE "x86_64")
         elseif(VST3_SYSTEM_PROCESSOR MATCHES "^(i.86|x86|X86)$")
             if(WIN32)
