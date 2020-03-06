@@ -62,6 +62,7 @@ private:
     enum {
         kTagLoadSfzFile,
         kTagSetVolume,
+        kTagSetNumVoices,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -69,4 +70,5 @@ private:
     CBitmap _logo;
     CTextLabel* _fileLabel = nullptr;
     CSliderBase *_volumeSlider = nullptr;
+    CSliderBase *_numVoicesSlider = nullptr;
 };

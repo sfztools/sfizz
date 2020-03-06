@@ -76,6 +76,11 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
         controller->performEdit(kPidVolume, valueNorm);
         break;
 
+    case kTagSetNumVoices:
+        controller->setParamNormalized(kPidNumVoices, valueNorm);
+        controller->performEdit(kPidNumVoices, valueNorm);
+        break;
+
     default:
         if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel)
             setActivePanel(tag - kTagFirstChangePanel);
@@ -90,6 +95,7 @@ void SfizzVstEditor::enterOrLeaveEdit(CControl* ctl, bool enter)
 
     switch (tag) {
     case kTagSetVolume: id = kPidVolume; break;
+    case kTagSetNumVoices: id = kPidNumVoices; break;
     default: return;
     }
 
@@ -231,21 +237,23 @@ void SfizzVstEditor::createFrameContents()
         label->setHoriAlign(kLeftText);
         panel->addView(label);
         slider = new SimpleSlider(rightSide(), this, kTagSetVolume);
-        adjustMinMaxToRangeParam(slider, kPidVolume);
         panel->addView(slider);
+        adjustMinMaxToRangeParam(slider, kPidVolume);
         _volumeSlider = slider;
 
-        // row.top += interRow;
-        // row.bottom += interRow;
+        row.top += interRow;
+        row.bottom += interRow;
 
-        // label = new CTextLabel(leftSide(), "Polyphony");
-        // label->setFontColor(CColor(0x00, 0x00, 0x00));
-        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        // label->setHoriAlign(kLeftText);
-        // panel->addView(label);
-        // slider = new SimpleSlider(rightSide(), this, -1);
-        // panel->addView(slider);
+        label = new CTextLabel(leftSide(), "Polyphony");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        slider = new SimpleSlider(rightSide(), this, kTagSetNumVoices);
+        panel->addView(slider);
+        adjustMinMaxToRangeParam(slider, kPidNumVoices);
+        _numVoicesSlider = slider;
 
         // row.top += interRow;
         // row.bottom += interRow;
@@ -331,6 +339,8 @@ void SfizzVstEditor::updateStateDisplay()
         _fileLabel->setText(("File: " + state.sfzFile).c_str());
     if (_volumeSlider)
         _volumeSlider->setValue(state.volume);
+    if (_numVoicesSlider)
+        _numVoicesSlider->setValue(state.numVoices);
 
     setActivePanel(uiState.activePanel);
 }

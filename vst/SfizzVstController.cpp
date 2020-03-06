@@ -22,6 +22,10 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         kParamVolumeRange.createParameter(
             Steinberg::String("Volume"), pid++, Steinberg::String("dB"),
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        kParamNumVoicesRange.createParameter(
+            Steinberg::String("Polyphony"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI controllers
     for (unsigned i = 0; i < kNumControllerParams; ++i) {
@@ -85,19 +89,35 @@ tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst:
     if (r != kResultTrue)
         return r;
 
-    float *slot = nullptr;
+    float *slotF32 = nullptr;
+    int32 *slotI32 = nullptr;
     float value = 0;
 
     switch (tag) {
     case kPidVolume: {
-        slot = &_state.volume;
+        slotF32 = &_state.volume;
         value = kParamVolumeRange.denormalize(normValue);
+        break;
+    }
+    case kPidNumVoices: {
+        slotI32 = &_state.numVoices;
+        value = kParamNumVoicesRange.denormalize(normValue);
         break;
     }
     }
 
-    if (slot && *slot != value) {
-        *slot = value;
+    bool update = false;
+
+    if (slotF32 && *slotF32 != value) {
+        *slotF32 = value;
+        update = true;
+    }
+    else if (slotI32 && *slotI32 != (int32)value) {
+        *slotI32 = (int32)value;
+        update = true;
+    }
+
+    if (update) {
         for (StateListener* listener : _stateListeners)
             listener->onStateChanged();
     }
@@ -137,6 +157,7 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
     _state = s;
 
     setParamNormalized(kPidVolume, kParamVolumeRange.normalize(s.volume));
+    setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();

@@ -24,6 +24,9 @@ tresult SfizzVstState::load(IBStream* state)
     if (!s.readFloat(volume))
         return kResultFalse;
 
+    if (!s.readInt32(numVoices))
+        return kResultFalse;
+
     return kResultTrue;
 }
 
@@ -38,6 +41,9 @@ tresult SfizzVstState::store(IBStream* state) const
         return kResultFalse;
 
     if (!s.writeFloat(volume))
+        return kResultFalse;
+
+    if (!s.writeInt32(numVoices))
         return kResultFalse;
 
     return kResultTrue;

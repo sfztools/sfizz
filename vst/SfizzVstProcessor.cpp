@@ -80,6 +80,7 @@ void SfizzVstProcessor::syncStateToSynth()
 
     synth->loadSfzFile(_state.sfzFile);
     synth->setVolume(_state.volume);
+    synth->setNumVoices(_state.numVoices);
 }
 
 tresult PLUGIN_API SfizzVstProcessor::canProcessSampleSize(int32 symbolicSampleSize)
@@ -172,6 +173,21 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
         case kPidVolume:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
                 _state.volume = kParamVolumeRange.denormalize(value);
+            break;
+        case kPidNumVoices:
+            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
+                Vst::IMessage* msg = allocateMessage();
+                if (!msg)
+                    break;
+                msg->setMessageID("SetNumVoices");
+                Vst::IAttributeList* attr = msg->getAttributes();
+                attr->setInt("NumVoices", kParamNumVoicesRange.denormalize(value));
+                if (!_fifoToWorker.push(msg)) {
+                    msg->release();
+                    break;
+                }
+                _semaToWorker.post();
+            }
             break;
         }
     }
@@ -294,6 +310,13 @@ void SfizzVstProcessor::doBackgroundWork()
                 std::lock_guard<std::mutex> lock(_processMutex);
                 _state.sfzFile = Steinberg::String(path.data()).text8();
                 _synth->loadSfzFile(_state.sfzFile);
+            }
+        }
+        else if (!std::strcmp(id, "SetNumVoices")) {
+            int64 value;
+            if (attr->getInt("NumVoices", value) == kResultTrue) {
+                _state.numVoices = value;
+                _synth->setNumVoices(value);
             }
         }
 
