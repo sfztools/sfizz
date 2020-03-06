@@ -21,3 +21,6 @@ if(NOT VST3_PACKAGE_ARCHITECTURE)
         endif()
     endif()
 endif()
+
+message(STATUS "The system architecture is: ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "The VST3 architecture is deduced as: ${VST3_PACKAGE_ARCHITECTURE}")
