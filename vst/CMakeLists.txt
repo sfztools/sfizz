@@ -97,6 +97,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         "-Wno-reorder"
         "-Wno-class-memaccess"
         "-Wno-ignored-qualifiers"
+        "-Wno-unknown-pragmas"
         "-Wno-unused-function"
         "-Wno-unused-parameter"
         "-Wno-unused-variable")
