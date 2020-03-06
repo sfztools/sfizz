@@ -145,6 +145,11 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         return kResultTrue;
     }
 
+    if (data.processMode == Vst::kOffline)
+        synth.enableFreeWheeling();
+    else
+        synth.disableFreeWheeling();
+
     if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processControllerChanges(*pc);
 
