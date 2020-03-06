@@ -133,6 +133,14 @@ public:
      */
     const Voice* getVoiceView(int idx) const noexcept;
     /**
+     * @brief Get a raw view into a specific voice. This is mostly used
+     * for testing.
+     *
+     * @param idx
+     * @return const Region*
+     */
+    const EffectBus* getEffectBusView(int idx) const noexcept;
+    /**
      * @brief Get a list of unknown opcodes. The lifetime of the
      * string views in the code are linked to the currently loaded
      * sfz file.

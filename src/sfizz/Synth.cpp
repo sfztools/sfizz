@@ -810,6 +810,11 @@ const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
     return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
 }
 
+const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
+{
+    return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
+}
+
 const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
 {
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
