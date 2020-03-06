@@ -254,4 +254,6 @@ function(plugin_add_vstgui NAME)
 
     target_include_directories("${NAME}" PRIVATE
         external/steinberg/src)
+
+    target_compile_definitions("${NAME}" PRIVATE "SMTG_MODULE_IS_BUNDLE=1")
 endfunction()

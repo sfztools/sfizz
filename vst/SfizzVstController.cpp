@@ -122,6 +122,8 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
 {
     ConstString name(_name);
 
+    fprintf(stderr, "[sfizz] about to create view: %s\n", _name);
+
     if (name != Vst::ViewType::kEditor)
         return nullptr;
 

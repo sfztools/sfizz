@@ -27,6 +27,8 @@ SfizzVstEditor::~SfizzVstEditor()
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
 {
+    fprintf(stderr, "[sfizz] about to open view with parent %p\n", parent);
+
     CRect wsize(0, 0, _logo.getWidth(), _logo.getHeight());
     CFrame *frame = new CFrame(wsize, this);
     this->frame = frame;
@@ -42,7 +44,11 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     createFrameContents();
     updateStateDisplay();
 
-    frame->open(parent, platformType, config);
+    if (!frame->open(parent, platformType, config)) {
+        fprintf(stderr, "[sfizz] error opening frame\n");
+        return false;
+    }
+
     return true;
 }
 
