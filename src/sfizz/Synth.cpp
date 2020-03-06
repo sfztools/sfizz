@@ -223,24 +223,18 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
                 getOrCreateBus(0).setGainToMain(*valueOpt / 100);
             break;
 
-        case hash("fxtomain"): // fx&tomain
-            if (auto numberOpt = opcode.firstParameter()) {
-                unsigned number = *numberOpt;
-                if (number < 1 || number > config::maxEffectBuses)
-                    break;
-                if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
-                    getOrCreateBus(number).setGainToMain(*valueOpt / 100);
-            }
+        case hash("fx&tomain"): // fx&tomain
+            if (opcode.parameters.front() < 1 || opcode.parameters.front() > config::maxEffectBuses)
+                break;
+            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
+                getOrCreateBus(opcode.parameters.front()).setGainToMain(*valueOpt / 100);
             break;
 
-        case hash("fxtomix"): // fx&tomix
-            if (auto numberOpt = opcode.firstParameter()) {
-                unsigned number = *numberOpt;
-                if (number < 1 || number > config::maxEffectBuses)
-                    break;
-                if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
-                    getOrCreateBus(number).setGainToMix(*valueOpt / 100);
-            }
+        case hash("fx&tomix"): // fx&tomix
+            if (opcode.parameters.front() < 1 || opcode.parameters.front() > config::maxEffectBuses)
+                break;
+            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
+                getOrCreateBus(opcode.parameters.front()).setGainToMix(*valueOpt / 100);
             break;
         }
     }
