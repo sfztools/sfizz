@@ -459,8 +459,10 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
-    for (auto& bus : effectBuses)
-        bus->setSamplesPerBlock(samplesPerBlock);
+    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+        if (EffectBus* bus = effectBuses[i].get())
+            bus->setSamplesPerBlock(samplesPerBlock);
+    }
 }
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
