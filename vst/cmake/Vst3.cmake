@@ -175,6 +175,7 @@ function(plugin_add_vstgui NAME)
     target_include_directories("${NAME}" PRIVATE "${VST3SDK_BASEDIR}/vstgui4")
 
     if(WIN32)
+        target_compile_definitions("${NAME}" PRIVATE "NOMINMAX=1")
         if (NOT MSVC)
             # autolinked on MSVC with pragmas
             find_library(OPENGL32_LIBRARY "opengl32")
