@@ -46,6 +46,10 @@ function(plugin_add_vst3sdk NAME)
     endif()
     target_include_directories("${NAME}" PRIVATE "${VST3SDK_BASEDIR}")
     target_link_libraries("${NAME}" PRIVATE Threads::Threads)
+    if(MINGW)
+        target_compile_definitions("${NAME}" PRIVATE
+            "_NATIVE_WCHAR_T_DEFINED=1" "__wchar_t=wchar_t")
+    endif()
 endfunction()
 
 # --- VSTGUI ---
