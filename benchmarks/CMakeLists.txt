@@ -58,6 +58,8 @@ sfizz_add_benchmark(bm_diff BM_diff.cpp)
 sfizz_add_benchmark(bm_widthPos BM_widthPos.cpp)
 sfizz_add_benchmark(bm_interpolationCast BM_interpolationCast.cpp)
 sfizz_add_benchmark(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp)
+sfizz_add_benchmark(bm_maps BM_maps.cpp)
+target_link_libraries(bm_maps PRIVATE absl::flat_hash_map)
 
 sfizz_add_benchmark(bm_logger BM_logger.cpp)
 target_link_libraries(bm_logger PRIVATE sfizz::sfizz)
