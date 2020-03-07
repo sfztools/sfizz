@@ -2,6 +2,7 @@
 lokey=0
 hikey=127
 sample=*sine
+effect1=100
 
 <effect>
 fx1tomix=50

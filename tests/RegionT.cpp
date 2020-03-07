@@ -1350,6 +1350,23 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "eq1_freqcc15", "50000" });
         REQUIRE(region.equalizers[0].frequencyCC[15] == 30000.0f);
     }
+
+    SECTION("Effects send")
+    {
+        REQUIRE(region.gainToEffect.size() == 1);
+        REQUIRE(region.gainToEffect[0] == 1.0f);
+        region.parseOpcode({ "effect1", "50.4" });
+        REQUIRE(region.gainToEffect.size() == 2);
+        REQUIRE(region.gainToEffect[1] == 0.504f);
+        region.parseOpcode({ "effect3", "100" });
+        REQUIRE(region.gainToEffect.size() == 4);
+        REQUIRE(region.gainToEffect[2] == 0.0f);
+        REQUIRE(region.gainToEffect[3] == 1.0f);
+        region.parseOpcode({ "effect3", "150.1" });
+        REQUIRE(region.gainToEffect[3] == 1.0f);
+        region.parseOpcode({ "effect3", "-50.65" });
+        REQUIRE(region.gainToEffect[3] == 0.0f);
+    }
 }
 
 // Specific region bugs
