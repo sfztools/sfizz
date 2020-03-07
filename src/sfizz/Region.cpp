@@ -733,6 +733,20 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setCCPairFromOpcode(opcode, amplitudeEG.ccSustain, Default::egOnCCPercentRange);
         break;
 
+    case hash("effect&"):
+    {
+        const auto effectNumber = opcode.parameters.back();
+        if (!effectNumber || effectNumber < 1 || effectNumber > config::maxEffectBuses)
+            break;
+        auto value = readOpcode<float>(opcode.value, { 0, 100 });
+        if (!value)
+            break;
+        if (static_cast<size_t>(effectNumber + 1) > gainToEffect.size())
+            gainToEffect.resize(effectNumber + 1);
+        gainToEffect[effectNumber] = *value / 100;
+        break;
+    }
+
     // Ignored opcodes
     case hash("hichan"):
     case hash("lochan"):
@@ -1072,4 +1086,12 @@ void sfz::Region::offsetAllKeys(int offset) noexcept
         crossfadeKeyOutRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
         crossfadeKeyOutRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
     }
+}
+
+float sfz::Region::getGainToEffectBus(unsigned number) const noexcept
+{
+    if (number >= gainToEffect.size())
+        return 0.0;
+
+    return gainToEffect[number];
 }

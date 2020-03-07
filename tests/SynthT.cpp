@@ -13,7 +13,7 @@ constexpr int blockSize { 256 };
 TEST_CASE("[Synth] Play and check active voices")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(256);
+    synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
 
@@ -29,7 +29,7 @@ TEST_CASE("[Synth] Play and check active voices")
 TEST_CASE("[Synth] Change the number of voice while playing")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(256);
+    synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
 
@@ -77,6 +77,7 @@ TEST_CASE("[Synth] Check that we can change the size of the preload before and a
 {
     sfz::Synth synth;
     synth.setPreloadSize(512);
+    synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     synth.setPreloadSize(1024);
@@ -92,6 +93,7 @@ TEST_CASE("[Synth] Check that we can change the oversampling factor before and a
 {
     sfz::Synth synth;
     synth.setOversamplingFactor(sfz::Oversampling::x2);
+    synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     synth.setOversamplingFactor(sfz::Oversampling::x4);
@@ -207,4 +209,113 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
     REQUIRE( synth.getVoiceView(0)->isFree() );
+}
+
+TEST_CASE("[Synth] Number of effect buses and resetting behavior")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(blockSize);
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+
+    REQUIRE( synth.getEffectBusView(0) == nullptr); // No effects at first
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/base.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    REQUIRE( synth.getEffectBusView(1) != nullptr); // and an FX bus
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/base.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    REQUIRE( synth.getEffectBusView(1) == nullptr); // and no FX bus
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz");
+    REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
+    REQUIRE( synth.getEffectBusView(1) == nullptr); // empty/uninitialized fx bus
+    REQUIRE( synth.getEffectBusView(2) == nullptr); // empty/uninitialized fx bus
+    REQUIRE( synth.getEffectBusView(3) != nullptr); // and an FX bus (because we built up to fx3)
+    REQUIRE( synth.getEffectBusView(3)->numEffects() == 1);
+    // Check that we can render blocks
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+}
+
+TEST_CASE("[Synth] No effect in the main bus")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/base.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+TEST_CASE("[Synth] One effect")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_1.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+TEST_CASE("[Synth] Effect on a second bus")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+
+TEST_CASE("[Synth] Effect on a third bus")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(3);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+TEST_CASE("[Synth] Gain to mix")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/to_mix.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0 );
+    REQUIRE( bus->gainToMix() == 0.5 );
 }
