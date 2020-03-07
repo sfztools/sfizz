@@ -32,13 +32,11 @@ Curve Curve::buildCurveFromHeader(
     setPoint(NumValues - 1, 1.0);
 
     for (const Opcode& opc : members) {
-        unsigned index;
-
-        if (opc.lettersOnlyHash != hash("v"))
+        if (opc.lettersOnlyHash != hash("v&"))
             continue;
 
-        auto indexOpt = opc.backParameter();
-        if (!indexOpt || (index = *indexOpt) >= NumValues)
+        unsigned index = opc.parameters.back();
+        if (index >= NumValues)
             continue;
 
         auto valueOpt = readOpcode<float>(opc.value, fullRange);
