@@ -459,8 +459,9 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
-    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-        if (EffectBus* bus = effectBuses[i].get())
+
+    for (auto& bus: effectBuses) {
+        if (bus)
             bus->setSamplesPerBlock(samplesPerBlock);
     }
 }
@@ -479,8 +480,8 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     resources.filterPool.setSampleRate(sampleRate);
     resources.eqPool.setSampleRate(sampleRate);
 
-    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-        if (EffectBus* bus = effectBuses[i].get())
+    for (auto& bus: effectBuses) {
+        if (bus)
             bus->setSampleRate(sampleRate);
     }
 }
@@ -497,7 +498,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
 
     size_t numFrames = buffer.getNumFrames();
-    size_t numEffectBuses = effectBuses.size();
     auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
     auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
 
@@ -505,8 +505,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Prepare the effect inputs. They are mixes of per-region outputs.
         ScopedTiming logger { callbackBreakdown.effects };
-        for (size_t i = 0; i < numEffectBuses; ++i) {
-            if (EffectBus* bus = effectBuses[i].get())
+        for (auto& bus: effectBuses) {
+            if (bus)
                 bus->clearInputs(numFrames);
         }
     }
@@ -529,8 +529,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
             { // Add the output into the effects linked to this region
                 ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
-                for (size_t i = 0; i < numEffectBuses; ++i) {
-                    if (EffectBus* bus = effectBuses[i].get()) {
+                for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+                    if (auto& bus = effectBuses[i]) {
                         float addGain = region->getGainToEffectBus(i);
                         bus->addToInputs(temp, addGain, numFrames);
                     }
@@ -549,8 +549,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         //    without any <effect>, the signal is just going to flow through it.
         ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
 
-        for (size_t i = 0; i < numEffectBuses; ++i) {
-            if (EffectBus* bus = effectBuses[i].get()) {
+        for (auto& bus: effectBuses) {
+            if (bus) {
                 bus->process(numFrames);
                 bus->mixOutputsTo(buffer, tempMixNode, numFrames);
             }
