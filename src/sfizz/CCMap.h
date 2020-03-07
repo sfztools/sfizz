@@ -44,7 +44,7 @@ public:
      */
     const ValueType& getWithDefault(int index) const noexcept
     {
-        auto it = absl::c_lower_bound(container, index, CompareCC<ValueType>{});
+        auto it = absl::c_lower_bound(container, index, CCValuePairComparator<ValueType>{});
         if (it == container.end() || it->cc != index) {
             return defaultValue;
         } else {
@@ -60,7 +60,7 @@ public:
      */
     ValueType& operator[](const int& index) noexcept
     {
-        auto it = absl::c_lower_bound(container, index, CompareCC<ValueType>{});
+        auto it = absl::c_lower_bound(container, index, CCValuePairComparator<ValueType>{});
         if (it == container.end() || it->cc != index) {
             auto inserted = container.insert(it, { index, defaultValue });
             return inserted->value;
@@ -85,7 +85,7 @@ public:
      */
     bool contains(int index) const noexcept
     {
-        return absl::c_binary_search(container, index, CompareCC<ValueType>{});
+        return absl::c_binary_search(container, index, CCValuePairComparator<ValueType>{});
     }
     typename std::vector<CCValuePair<ValueType>>::const_iterator begin() const { return container.cbegin(); }
     typename std::vector<CCValuePair<ValueType>>::const_iterator end() const { return container.cend(); }

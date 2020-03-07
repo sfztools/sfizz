@@ -24,8 +24,8 @@ struct CCValuePair {
     ValueType value;
 };
 
-template<class ValueType>
-struct CompareCC {
+template<class ValueType, bool CompareValue = false>
+struct CCValuePairComparator {
     bool operator()(const CCValuePair<ValueType>& valuePair, const int& cc)
     {
         return (valuePair.cc < cc);
@@ -39,6 +39,24 @@ struct CompareCC {
     bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
     {
         return (lhs.cc < rhs.cc);
+    }
+};
+
+template<class ValueType>
+struct CCValuePairComparator<ValueType, true> {
+    bool operator()(const CCValuePair<ValueType>& valuePair, const ValueType& value)
+    {
+        return (valuePair.value < value);
+    }
+
+    bool operator()(const ValueType& value, const CCValuePair<ValueType>& valuePair)
+    {
+        return (value < valuePair.value);
+    }
+
+    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
+    {
+        return (lhs.value < rhs.value);
     }
 };
 
