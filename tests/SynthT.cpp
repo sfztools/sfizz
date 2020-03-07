@@ -259,3 +259,63 @@ TEST_CASE("[Synth] No effect in the main bus")
     REQUIRE( bus->gainToMain() == 1 );
     REQUIRE( bus->gainToMix() == 0 );
 }
+
+TEST_CASE("[Synth] One effect")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_1.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+TEST_CASE("[Synth] Effect on a second bus")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+
+TEST_CASE("[Synth] Effect on a third bus")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(3);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+}
+
+TEST_CASE("[Synth] Gain to mix")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Effects/to_mix.sfz");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr); // We have a main bus
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0 );
+    REQUIRE( bus->gainToMix() == 0.5 );
+}
