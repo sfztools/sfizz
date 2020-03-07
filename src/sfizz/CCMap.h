@@ -6,6 +6,7 @@
 
 #pragma once
 #include "LeakDetector.h"
+#include "SfzHelpers.h"
 #include <vector>
 #include <absl/algorithm/container.h>
 
@@ -43,11 +44,11 @@ public:
      */
     const ValueType& getWithDefault(int index) const noexcept
     {
-        auto it = absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; });
-        if (it == container.end()) {
+        auto it = absl::c_lower_bound(container, index, CompareCC<ValueType>{});
+        if (it == container.end() || it->cc != index) {
             return defaultValue;
         } else {
-            return it->second;
+            return it->value;
         }
     }
 
@@ -59,13 +60,12 @@ public:
      */
     ValueType& operator[](const int& index) noexcept
     {
-        auto it = absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; });
-        if (it == container.end()) {
-            auto newElement = std::make_pair(index, defaultValue);
-            auto inserted = container.insert(absl::c_upper_bound(container, newElement, [](auto& lhs, auto& rhs) { return lhs.first < rhs.first; }), newElement);
-            return inserted->second;
+        auto it = absl::c_lower_bound(container, index, CompareCC<ValueType>{});
+        if (it == container.end() || it->cc != index) {
+            auto inserted = container.insert(it, { index, defaultValue });
+            return inserted->value;
         } else {
-            return it->second;
+            return it->value;
         }
     }
 
@@ -85,15 +85,16 @@ public:
      */
     bool contains(int index) const noexcept
     {
-        return absl::c_find_if(container, [&](auto&& pair){ return pair.first == index; }) != container.end();
+        return absl::c_binary_search(container, index, CompareCC<ValueType>{});
     }
-    typename std::vector<std::pair<int, ValueType>>::const_iterator begin() const { return container.cbegin(); }
-    typename std::vector<std::pair<int, ValueType>>::const_iterator end() const { return container.cend(); }
+    typename std::vector<CCValuePair<ValueType>>::const_iterator begin() const { return container.cbegin(); }
+    typename std::vector<CCValuePair<ValueType>>::const_iterator end() const { return container.cend(); }
 private:
     // typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
     // typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
+
     const ValueType defaultValue;
-    std::vector<std::pair<int, ValueType>> container;
+    std::vector<CCValuePair<ValueType>> container;
     LEAK_DETECTOR(CCMap);
 };
 }

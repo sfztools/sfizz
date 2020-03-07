@@ -120,7 +120,7 @@ public:
     T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
     {
         for (auto& mod: modifiers) {
-            lambda(value, normalizeCC(getCCValue(mod.first)) * mod.second);
+            lambda(value, normalizeCC(getCCValue(mod.cc)) * mod.value);
         }
         return validRange.clamp(value);
     }

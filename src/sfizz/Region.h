@@ -264,11 +264,11 @@ struct Region {
     float pan { Default::pan }; // pan
     float width { Default::width }; // width
     float position { Default::position }; // position
-    absl::optional<CCValuePair> volumeCC; // volume_oncc
-    absl::optional<CCValuePair> amplitudeCC; // amplitude_oncc
-    absl::optional<CCValuePair> panCC; // pan_oncc
-    absl::optional<CCValuePair> widthCC; // width_oncc
-    absl::optional<CCValuePair> positionCC; // position_oncc
+    absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
+    absl::optional<CCValuePair<float>> amplitudeCC; // amplitude_oncc
+    absl::optional<CCValuePair<float>> panCC; // pan_oncc
+    absl::optional<CCValuePair<float>> widthCC; // width_oncc
+    absl::optional<CCValuePair<float>> positionCC; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
