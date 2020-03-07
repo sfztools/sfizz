@@ -119,10 +119,8 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 {
     sfz::Sfizz& synth = *_synth;
 
-    if (Vst::IParameterChanges* pc = data.inputParameterChanges) {
-        std::unique_lock<std::mutex> lock(_processMutex, std::try_to_lock);
+    if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processParameterChanges(*pc);
-    }
 
     if (data.numOutputs < 1)  // flush mode
         return kResultTrue;
