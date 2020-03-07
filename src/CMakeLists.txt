@@ -1,5 +1,4 @@
 include (GNUInstallDirs)
-include (CheckLibraryExists)
 
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
@@ -55,11 +54,8 @@ endif()
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
-if (UNIX AND NOT APPLE)
-    check_library_exists(atomic __atomic_load "" LIBATOMIC_FOUND)
-    if (LIBATOMIC_FOUND)
-        target_link_libraries (sfizz_static PRIVATE atomic)
-    endif()
+if (LIBATOMIC_FOUND)
+    target_link_libraries (sfizz_static PRIVATE atomic)
 endif()
 
 # Shared library and installation target

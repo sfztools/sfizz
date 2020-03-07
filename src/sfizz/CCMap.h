@@ -6,7 +6,9 @@
 
 #pragma once
 #include "LeakDetector.h"
-#include <map>
+#include "SfzHelpers.h"
+#include <vector>
+#include <absl/algorithm/container.h>
 
 namespace sfz {
 /**
@@ -42,25 +44,29 @@ public:
      */
     const ValueType& getWithDefault(int index) const noexcept
     {
-        auto it = container.find(index);
-        if (it == container.end()) {
+        auto it = absl::c_lower_bound(container, index, CCValuePairComparator<ValueType>{});
+        if (it == container.end() || it->cc != index) {
             return defaultValue;
         } else {
-            return it->second;
+            return it->value;
         }
     }
 
     /**
-     * @brief Get the value at index key or emplace a new one if not present
+     * @brief Get the value at index or emplace a new one if not present
      *
-     * @param key the index of the element
+     * @param index the index of the element
      * @return ValueType&
      */
-    ValueType& operator[](const int& key) noexcept
+    ValueType& operator[](const int& index) noexcept
     {
-        if (!contains(key))
-            container.emplace(key, defaultValue);
-        return container.operator[](key);
+        auto it = absl::c_lower_bound(container, index, CCValuePairComparator<ValueType>{});
+        if (it == container.end() || it->cc != index) {
+            auto inserted = container.insert(it, { index, defaultValue });
+            return inserted->value;
+        } else {
+            return it->value;
+        }
     }
 
     /**
@@ -71,27 +77,24 @@ public:
      */
     inline bool empty() const { return container.empty(); }
     /**
-     * @brief Returns the value at index with bounds checking (and possibly exceptions)
-     *
-     * @param index
-     * @return const ValueType&
-     */
-    const ValueType& at(int index) const { return container.at(index); }
-    /**
      * @brief Returns true if the container containers an element at index
      *
      * @param index
      * @return true
      * @return false
      */
-    bool contains(int index) const noexcept { return container.find(index) != container.end(); }
-    typename std::map<int, ValueType>::iterator begin() { return container.begin(); }
-    typename std::map<int, ValueType>::const_iterator begin() const { return container.cbegin(); }
-    typename std::map<int, ValueType>::iterator end() { return container.end(); }
-    typename std::map<int, ValueType>::const_iterator end() const { return container.cend(); }
+    bool contains(int index) const noexcept
+    {
+        return absl::c_binary_search(container, index, CCValuePairComparator<ValueType>{});
+    }
+    typename std::vector<CCValuePair<ValueType>>::const_iterator begin() const { return container.cbegin(); }
+    typename std::vector<CCValuePair<ValueType>>::const_iterator end() const { return container.cend(); }
 private:
+    // typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
+    // typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
+
     const ValueType defaultValue;
-    std::map<int, ValueType> container;
+    std::vector<CCValuePair<ValueType>> container;
     LEAK_DETECTOR(CCMap);
 };
 }

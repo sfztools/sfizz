@@ -854,7 +854,7 @@ bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
     if (!triggerOnCC)
         return false;
 
-    if (ccTriggers.contains(ccNumber) && ccTriggers.at(ccNumber).containsWithEnd(ccValue))
+    if (ccTriggers.contains(ccNumber) && ccTriggers[ccNumber].containsWithEnd(ccValue))
         return true;
     else
         return false;
@@ -992,14 +992,14 @@ float sfz::Region::getCrossfadeGain(const sfz::SfzCCArray& ccState) noexcept
 
     // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
-        const auto ccValue = ccState[valuePair.first];
-        const auto crossfadeRange = valuePair.second;
+        const auto ccValue = ccState[valuePair.cc];
+        const auto crossfadeRange = valuePair.value;
         gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     for (const auto& valuePair : crossfadeCCOutRange) {
-        const auto ccValue = ccState[valuePair.first];
-        const auto crossfadeRange = valuePair.second;
+        const auto ccValue = ccState[valuePair.cc];
+        const auto crossfadeRange = valuePair.value;
         gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 

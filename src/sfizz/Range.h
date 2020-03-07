@@ -22,27 +22,12 @@ class Range {
 
 public:
     constexpr Range() = default;
-    // constexpr Range(std::initializer_list<Type> list)
-    // {
-    //     switch(list.size())
-    //     {
-    //     case 0:
-    //         break;
-    //     case 1:
-    //         _start = *list.begin();
-    //         _end = _start;
-    //         break;
-    //     default:
-    //         _start = *list.begin();
-    //         _end = *(list.begin() + 1);
-    //     }
-    // }
     constexpr Range(Type start, Type end) noexcept
         : _start(start)
         , _end(std::max(start, end))
     {
+
     }
-    ~Range() = default;
     Type getStart() const noexcept { return _start; }
     Type getEnd() const noexcept { return _end; }
     /**
@@ -51,8 +36,6 @@ public:
      * @return std::pair<Type, Type>
      */
     std::pair<Type, Type> getPair() const noexcept { return std::make_pair<Type, Type>(_start, _end); }
-    Range(const Range<Type>& range) = default;
-    Range(Range<Type>&& range) = default;
     constexpr Type length() const { return _end - _start; }
     void setStart(Type start) noexcept
     {
