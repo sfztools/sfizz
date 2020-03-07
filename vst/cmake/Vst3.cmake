@@ -50,6 +50,14 @@ function(plugin_add_vst3sdk NAME)
         target_compile_definitions("${NAME}" PRIVATE
             "_NATIVE_WCHAR_T_DEFINED=1" "__wchar_t=wchar_t")
     endif()
+
+    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        target_compile_definitions("${NAME}" PRIVATE "DEVELOPMENT")
+    endif()
+
+    if(${CMAKE_BUILD_TYPE} MATCHES "Release")
+        target_compile_definitions("${NAME}" PRIVATE "RELEASE")
+    endif()
 endfunction()
 
 # --- VSTGUI ---
@@ -256,4 +264,12 @@ function(plugin_add_vstgui NAME)
         external/steinberg/src)
 
     target_compile_definitions("${NAME}" PRIVATE "SMTG_MODULE_IS_BUNDLE=1")
+
+    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        target_compile_definitions("${NAME}" PRIVATE "DEVELOPMENT")
+    endif()
+
+    if(${CMAKE_BUILD_TYPE} MATCHES "Release")
+        target_compile_definitions("${NAME}" PRIVATE "RELEASE")
+    endif()
 endfunction()

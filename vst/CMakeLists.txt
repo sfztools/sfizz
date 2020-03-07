@@ -42,6 +42,7 @@ add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     SfizzVstState.cpp
     GUIComponents.cpp
     VstPluginFactory.cpp)
+
 if(WIN32)
     target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
 endif()
