@@ -12,9 +12,9 @@ set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 set (CMAKE_CXX_VISIBILITY_PRESET hidden)
 set (CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
-# Set Windows compatibility level to Vista
+# Set Windows compatibility level to 7
 if (WIN32)
-    add_compile_definitions(_WIN32_WINNT=0x600)
+    add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
 # Add required flags for the builds

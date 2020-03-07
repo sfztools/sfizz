@@ -1,4 +1,5 @@
-#define MyAppName      "sfizz-lv2"
+; -*- mode: iss; -*-
+#define MyAppName      "sfizz"
 #define MyAppVersion   "@PROJECT_VERSION@"
 #define MyAppPublisher "sfizz Team"
 #define MyAppURL       "https://sfztools.github.io/sfizz/"
@@ -28,25 +29,35 @@ ArchitecturesInstallIn64BitMode={#Arch}
 
 Compression=lzma
 SolidCompression=yes
-DefaultDirName={commoncf}\LV2
+DefaultDirName={commonpf}\{#MyAppName}
 DefaultGroupName={#MyAppPublisher}
-DisableDirPage=yes
+;DisableDirPage=yes
 LicenseFile="sfizz.lv2\LICENSE.md"
 OutputBaseFileName={#MyAppName}-{#MyAppVersion}-{#Arch}-msvc-setup
 OutputDir=.
-UninstallFilesDir={commonpf}\{#MyAppName}
+UninstallFilesDir={app}
 WizardImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernImage-IS.bmp"
 WizardSmallImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernSmallImage-IS.bmp"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Components]
+Name: "main"; Description: "Shared files"; Types: full custom; Flags: fixed
+Name: "lv2"; Description: "LV2 plugin"; Types: full custom;
+Name: "vst3"; Description: "VST3 plugin"; Types: full custom;
+
 [Files]
-Source: "sfizz.lv2\sfizz.dll";    DestDir: {commoncf}\LV2\sfizz.lv2; Flags: ignoreversion
-Source: "sfizz.lv2\manifest.ttl"; DestDir: {commoncf}\LV2\sfizz.lv2
-Source: "sfizz.lv2\sfizz.ttl";    DestDir: {commoncf}\LV2\sfizz.lv2
-Source: "sfizz.lv2\lgpl-3.0.txt"; DestDir: {commonpf}\{#MyAppName}
-Source: "sfizz.lv2\LICENSE.md";   DestDir: {commonpf}\{#MyAppName}
+Source: "sfizz.lv2\sfizz.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"; Flags: ignoreversion
+Source: "sfizz.lv2\manifest.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
+Source: "sfizz.lv2\sfizz.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
+Source: "sfizz.lv2\lgpl-3.0.txt"; Components: main; DestDir: "{app}"
+Source: "sfizz.lv2\LICENSE.md"; Components: main; DestDir: "{app}"
+Source: "sfizz.vst3\desktop.ini"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
+Source: "sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win\sfizz.vst3"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win"; Flags: ignoreversion
+Source: "sfizz.vst3\Contents\Resources\logo.png"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\Resources"
+Source: "sfizz.vst3\Plugin.ico"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
+Source: "sfizz.vst3\gpl-3.0.txt"; Components: main; DestDir: "{app}"
 ;Source: "setup\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
