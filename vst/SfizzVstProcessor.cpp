@@ -342,7 +342,6 @@ void SfizzVstProcessor::doBackgroundWork()
         if (!std::strcmp(id, "LoadSfz")) {
             std::vector<Vst::TChar> path(maxPathLen + 1);
             if (attr->getString("File", path.data(), maxPathLen) == kResultTrue) {
-                std::lock_guard<std::mutex> lock(_processMutex);
                 _state.sfzFile = Steinberg::String(path.data()).text8();
                 _synth->loadSfzFile(_state.sfzFile);
             }
