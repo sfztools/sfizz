@@ -66,6 +66,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
     endif()
 endif()
 
+include (CheckLibraryExists)
+if (UNIX AND NOT APPLE)
+    check_library_exists(atomic __atomic_load "" LIBATOMIC_FOUND)
+endif()
+
 # Don't show build information when building a different project
 function (show_build_info_if_needed)
     if (CMAKE_PROJECT_NAME STREQUAL "sfizz")
