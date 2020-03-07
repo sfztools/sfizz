@@ -27,8 +27,8 @@ TEST_CASE("[MidiState] Set and get CCs")
 {
     sfz::MidiState state;
     const auto& cc = state.getCCArray();
-    state.ccEvent(24, 23);
-    state.ccEvent(123, 124);
+    state.ccEvent(0, 24, 23);
+    state.ccEvent(0, 123, 124);
     REQUIRE(state.getCCValue(24) == 23);
     REQUIRE(cc[24] == 23);
     REQUIRE(state.getCCValue(123) == 124);
@@ -38,19 +38,19 @@ TEST_CASE("[MidiState] Set and get CCs")
 TEST_CASE("[MidiState] Set and get pitch bends")
 {
     sfz::MidiState state;
-    state.pitchBendEvent(894);
+    state.pitchBendEvent(0, 894);
     REQUIRE(state.getPitchBend() == 894);
-    state.pitchBendEvent(0);
+    state.pitchBendEvent(0, 0);
     REQUIRE(state.getPitchBend() == 0);
 }
 
 TEST_CASE("[MidiState] Reset")
 {
     sfz::MidiState state;
-    state.pitchBendEvent(894);
-    state.noteOnEvent(64, 24);
-    state.ccEvent(123, 124);
-    state.reset();
+    state.pitchBendEvent(0, 894);
+    state.noteOnEvent(0, 64, 24);
+    state.ccEvent(0, 123, 124);
+    state.reset(0);
     REQUIRE(state.getPitchBend() == 0);
     REQUIRE(state.getNoteVelocity(64) == 0);
     REQUIRE(state.getCCValue(123) == 0);
@@ -59,9 +59,9 @@ TEST_CASE("[MidiState] Reset")
 TEST_CASE("[MidiState] Set and get note velocities")
 {
     sfz::MidiState state;
-    state.noteOnEvent(64, 24);
+    state.noteOnEvent(0, 64, 24);
     REQUIRE(+state.getNoteVelocity(64) == 24);
-    state.noteOnEvent(64, 123);
+    state.noteOnEvent(0, 64, 123);
     REQUIRE(+state.getNoteVelocity(64) == 123);
 }
 
@@ -69,5 +69,5 @@ TEST_CASE("[MidiState] Extended CCs")
 {
     sfz::MidiState state;
     REQUIRE(state.getCCArray().size() >= 142);
-    state.ccEvent(142, 64); // should not trap
+    state.ccEvent(0, 142, 64); // should not trap
 }
