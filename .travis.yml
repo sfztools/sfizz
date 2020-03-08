@@ -1,133 +1,143 @@
 language: cpp
+os: linux
+dist: bionic
 
 jobs:
-  - os:   linux
+  include:
+  - name: "clang-tidy checks"
     stage: "Tests"
-    name: "clang-tidy checks"
-    dist: bionic
     addons:
       apt:
         packages:
         - clang-tidy
         - libsndfile-dev
-    before_install:
-    - true
-    install:
-    - true
-    script:
-    - scripts/run_clang_tidy.sh
-    after_success:
-    - true
-  - os:   linux
-    name: "Linux amd64 tests"
+    install: skip
+    script: scripts/run_clang_tidy.sh
+
+  - name: "Linux amd64 tests"
     arch: amd64
-    dist: bionic
-    env:
-      - BUILD_TYPE="test"
-      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
-        sources:
-        - sourceline: 'ppa:ubuntu-toolchain-r/test'
-    after_success:
-    - true
-  - os:   linux
-    name: "Linux arm64 tests"
+        packages:
+        - libasound2-dev
+        - libjack-jackd2-dev
+        - libsndfile1-dev
+    install: .travis/download_cmake.sh
+    script: .travis/script_test.sh
+
+  - name: "Linux arm64 tests"
     arch: amd64
-    dist: bionic
-    env:
-      - BUILD_TYPE="test"
-      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
-        sources:
-        - sourceline: 'ppa:ubuntu-toolchain-r/test'
-    after_success:
-    - true
-  - os:   linux
+        packages:
+        - libasound2-dev
+        - libjack-jackd2-dev
+        - libsndfile1-dev
+    install: .travis/download_cmake.sh
+    script: .travis/script_test.sh
+
+  - name: "Windows mingw32"
     stage: "Build"
-    name: "Windows mingw32"
     env:
     - CROSS_COMPILE=mingw32
     - CONTAINER=cross
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw32"
-  - os:   linux
-    name: "Windows mingw64"
+    before_install: .travis/before_install_mingw.sh
+    install: .travis/install_mingw.sh
+    script: .travis/script_mingw.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Windows mingw64"
     env:
     - CROSS_COMPILE=mingw64
     - CONTAINER=cross
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw64"
-  - os:   linux
-    name: "Linux amd64 library"
+    before_install: .travis/before_install_mingw.sh
+    install: .travis/install_mingw.sh
+    script: .travis/script_mingw.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Linux amd64 library"
     arch: amd64
-    dist: bionic
     env:
-      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
-        sources:
-        - sourceline: 'ppa:ubuntu-toolchain-r/test'
-  - os:   linux
-    name: "Linux arm64 library"
+        packages:
+        - libasound2-dev
+        - libjack-jackd2-dev
+        - libsndfile1-dev
+    install: .travis/download_cmake.sh
+    script: .travis/script_library.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Linux arm64 library"
     arch: arm64
-    dist: bionic
     env:
-      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
-        sources:
-        - sourceline: 'ppa:ubuntu-toolchain-r/test'
-  - os:   linux
-    name: "Linux arm64 static LV2"
+        packages:
+        - libasound2-dev
+        - libjack-jackd2-dev
+        - libsndfile1-dev
+    install: .travis/download_cmake.sh
+    script: .travis/script_library.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Linux arm64 static LV2"
     arch: arm64
-    dist: bionic
     env:
-      - BUILD_TYPE=lv2
-      - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
-        sources:
-        - sourceline: 'ppa:ubuntu-toolchain-r/test'
-  - os:   linux
-    name: "Linux amd64 static LV2"
-    dist: bionic
+        packages:
+        - libasound2-dev
+        - libjack-jackd2-dev
+        - libsndfile1-dev
+    install:
+    - .travis/download_cmake.sh
+    - .travis/download_static_libs.sh
+    script: .travis/script_lv2.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Linux amd64 static LV2"
     env:
-      - BUILD_TYPE=lv2
-      - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
       apt:
-        sources:
-        - sourceline: 'ppa:ubuntu-toolchain-r/test'
-  - os: osx
-    name: "macOS"
+        packages:
+        - libasound2-dev
+        - libjack-jackd2-dev
+        - libsndfile1-dev
+    install:
+    - .travis/download_cmake.sh
+    - .travis/download_static_libs.sh
+    script: .travis/script_lv2.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "macOS"
+    os: osx
     osx_image: xcode10.1
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    install: .travis/install_osx.sh
+    script: .travis/script_osx.sh
+    after_success: .travis/prepare_tarball.sh
 
-  - os:   linux
-    stage: "Deploy"
+  - stage: "Deploy"
     name: "Source packaging"
+    if: (tag IS present) AND (branch = master)
     env:
-    - BUILD_TYPE=source
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
     addons:
       apt:
         packages:
         - python-pip
-    before_install:
-    - true
-    install:
-    - sudo pip install git-archive-all
-    script:
-    - git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
-    after_failure:
-    - true
-    after_success:
-    - true
+    install: sudo pip install git-archive-all
+    script: git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
 
-  - os:   linux
-    name: "Generate documentation"
-    dist: bionic
+  - name: "Generate documentation"
     if: (tag IS present) AND (branch = master)
     addons:
       apt:
@@ -135,42 +145,16 @@ jobs:
         - doxygen
         - cmake
         - libsndfile-dev
-    before_install:
-    - true
-    install:
-    - true
-    script:
-    - .travis/update_dox.sh
-    after_failure:
-    - true
-    after_success:
-    - true
-  - os:   linux
-    name: "Discord Webhook"
-    dist: bionic
-    before_install:
-    - true
-    install:
-    - true
-    script:
-    - true
-    after_success:
-    - bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
+    install: skip
+    script: .travis/update_dox.sh
 
-before_install:
-- bash ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
+  - name: "Discord Webhook"
+    install: skip
+    script: bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
 
-install:
-- bash ${TRAVIS_BUILD_DIR}/.travis/install.sh
-
-script:
-- bash ${TRAVIS_BUILD_DIR}/.travis/script.sh
-
+# Signal discord on failure
 after_failure:
 - bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh failure
-
-after_success:
-- bash ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
 
 deploy:
   provider:     releases
