@@ -52,6 +52,8 @@ if(WIN32)
     configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
 endif()
 
+configure_file (${PROJECT_SOURCE_DIR}/scripts/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)
+
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
 if (LIBATOMIC_FOUND)
