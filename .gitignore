@@ -13,7 +13,7 @@ compile_commands.json
 *.a
 *.txt.user
 *.autosave
-
+/Doxyfile
 .DS_Store
 
 clients/sfizz_jack
