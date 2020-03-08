@@ -253,6 +253,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
     EffectBus& bus = getOrCreateBus(busIndex);
     auto fx = effectFactory.makeEffect(members);
     fx->setSampleRate(sampleRate);
+    fx->setSamplesPerBlock(samplesPerBlock);
     bus.addEffect(std::move(fx));
 }
 
