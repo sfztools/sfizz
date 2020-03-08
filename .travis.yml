@@ -19,6 +19,32 @@ jobs:
     after_success:
     - true
   - os:   linux
+    name: "Linux amd64 tests"
+    arch: amd64
+    dist: bionic
+    env:
+      - BUILD_TYPE="test"
+      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    addons:
+      apt:
+        sources:
+        - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    after_success:
+    - true
+  - os:   linux
+    name: "Linux arm64 tests"
+    arch: amd64
+    dist: bionic
+    env:
+      - BUILD_TYPE="test"
+      - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    addons:
+      apt:
+        sources:
+        - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    after_success:
+    - true
+  - os:   linux
     stage: "Build"
     name: "Windows mingw32"
     env:
