@@ -47,7 +47,6 @@ jobs:
         - sourceline: 'ppa:ubuntu-toolchain-r/test'
   - os:   linux
     name: "Linux amd64 static LV2"
-    name: "sfizz-linux-amd64-lv2"
     dist: bionic
     env:
       - BUILD_TYPE=lv2
@@ -86,8 +85,6 @@ jobs:
   - os:   linux
     name: "Generate documentation"
     dist: bionic
-    # Change before integrating...
-    # if: (tag IS present) AND (branch = master)
     if: (tag IS present) AND (branch = master)
     addons:
       apt:
@@ -105,6 +102,17 @@ jobs:
     - true
     after_success:
     - true
+  - os:   linux
+    name: "Discord Webhook"
+    dist: bionic
+    before_install:
+    - true
+    install:
+    - true
+    script:
+    - true
+    after_success:
+    - bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
 
 before_install:
 - bash ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
@@ -119,7 +127,6 @@ after_failure:
 - bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh failure
 
 after_success:
-- bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
 - bash ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
 
 deploy:
