@@ -82,7 +82,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
         const auto normalizedBend = normalizeBend(pitchValue);
-        const auto bendInCents = normalizedBend > 0.0f ? normalizedBend * region->bendUp : -normalizedBend * region->bendDown;
+        const auto bendInCents = normalizedBend > 0.0f ? normalizedBend * static_cast<float>(region->bendUp) : -normalizedBend * static_cast<float>(region->bendDown);
         return centsFactor(bendInCents);
     });
     pitchBendEnvelope.reset(static_cast<float>(resources.midiState.getPitchBend()));
@@ -106,7 +106,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
-    initialDelay = delay + static_cast<uint32_t>(region->getDelay() * sampleRate);
+    initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
     bendStepFactor = centsFactor(region->bendStep);
     egEnvelope.reset(*region, resources.midiState, delay, value, sampleRate);

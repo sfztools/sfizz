@@ -88,6 +88,31 @@ jobs:
     after_success:
     - true
 
+  - os:   linux
+    dist: bionic
+    env:
+    - BUILD_TYPE=tidy
+    addons:
+      apt:
+        packages:
+        - clang-tidy
+        - libsndfile-dev
+
+    before_install:
+    - true
+
+    install:
+    - true
+
+    script:
+    - scripts/run_clang_tidy.sh
+
+    after_failure:
+    - true
+
+    after_success:
+    - true
+
 before_install:
 - bash ${TRAVIS_BUILD_DIR}/.travis/before_install.sh
 

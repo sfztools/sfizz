@@ -108,7 +108,7 @@ public:
      * @param numVoices The number of active voices
      * @param numSamples The number of samples in the callback
      */
-    void logCallbackTime(CallbackBreakdown&& breakdown, int numVoices, size_t numSamples);
+    void logCallbackTime(const CallbackBreakdown& breakdown, int numVoices, size_t numSamples);
 
     /**
      * @brief Log a file loading and waiting duration
