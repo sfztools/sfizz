@@ -1,20 +1,21 @@
 language: cpp
 
 jobs:
-  include:
   - os:   linux
+    stage: "Build"
+    name: "Windows mingw32"
     env:
     - CROSS_COMPILE=mingw32
     - CONTAINER=cross
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw32"
-
   - os:   linux
+    name: "Windows mingw64"
     env:
     - CROSS_COMPILE=mingw64
     - CONTAINER=cross
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw64"
-
   - os:   linux
+    name: "Linux amd64 library"
     arch: amd64
     dist: bionic
     env:
@@ -23,11 +24,8 @@ jobs:
       apt:
         sources:
         - sourceline: 'ppa:ubuntu-toolchain-r/test'
-
-        packages:
-        - doxygen
-
   - os:   linux
+    name: "Linux arm64 library"
     arch: arm64
     dist: bionic
     env:
@@ -36,8 +34,8 @@ jobs:
       apt:
         sources:
         - sourceline: 'ppa:ubuntu-toolchain-r/test'
-
   - os:   linux
+    name: "Linux arm64 static LV2"
     arch: arm64
     dist: bionic
     env:
@@ -47,9 +45,9 @@ jobs:
       apt:
         sources:
         - sourceline: 'ppa:ubuntu-toolchain-r/test'
-
   - os:   linux
-    arch: amd64
+    name: "Linux amd64 static LV2"
+    name: "sfizz-linux-amd64-lv2"
     dist: bionic
     env:
       - BUILD_TYPE=lv2
@@ -58,13 +56,15 @@ jobs:
       apt:
         sources:
         - sourceline: 'ppa:ubuntu-toolchain-r/test'
-
   - os: osx
+    name: "macOS"
     osx_image: xcode10.1
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
 
   - os:   linux
+    stage: "Deploy"
+    name: "Source packaging"
     env:
     - BUILD_TYPE=source
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
@@ -72,19 +72,37 @@ jobs:
       apt:
         packages:
         - python-pip
-
     before_install:
     - true
-
     install:
     - sudo pip install git-archive-all
-
     script:
     - git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
-
     after_failure:
     - true
+    after_success:
+    - true
 
+  - os:   linux
+    name: "Generate documentation"
+    dist: bionic
+    # Change before integrating...
+    # if: (tag IS present) AND (branch = master)
+    if: (tag IS present) AND (branch = master)
+    addons:
+      apt:
+        packages:
+        - doxygen
+        - cmake
+        - libsndfile-dev
+    before_install:
+    - true
+    install:
+    - true
+    script:
+    - .travis/update_dox.sh
+    after_failure:
+    - true
     after_success:
     - true
 
@@ -102,7 +120,6 @@ after_failure:
 
 after_success:
 - bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
-- bash ${TRAVIS_BUILD_DIR}/.travis/update_dox.sh
 - bash ${TRAVIS_BUILD_DIR}/.travis/after_success.sh
 
 deploy:
