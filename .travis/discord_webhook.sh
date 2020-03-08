@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -ex
-. .travis/environment.sh
 
 # Travis Webhook
 wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh

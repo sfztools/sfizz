@@ -31,7 +31,7 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
     }
     const auto keytrack = description.keytrack * (noteNumber - description.keycenter);
     baseCutoff *= centsFactor(keytrack);
-    const auto veltrack = description.veltrack * normalizeVelocity(velocity);
+    const auto veltrack = static_cast<float>(description.veltrack) * normalizeVelocity(velocity);
     baseCutoff *= centsFactor(veltrack);
     baseCutoff = Default::filterCutoffRange.clamp(baseCutoff);
 

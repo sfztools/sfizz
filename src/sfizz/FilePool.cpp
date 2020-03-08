@@ -218,7 +218,7 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
     } else {
         preloadedFiles.insert_or_assign(filename, {
             readFromFile<float>(sndFile, framesToLoad, oversamplingFactor),
-            static_cast<float>(oversamplingFactor) * sndFile.samplerate()
+            static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate())
         });
     }
 

@@ -125,7 +125,7 @@ namespace Default
 	constexpr Range<float> rtDecayRange { 0.0f, 200.0f };
 
     // Performance parameters: Filters
-    constexpr float numFilters { 2 };
+    constexpr int numFilters { 2 };
     constexpr float filterCutoff { 0 };
     constexpr float filterResonance { 0 };
     constexpr float filterGain { 0 };
@@ -147,7 +147,7 @@ namespace Default
     constexpr Range<float> filterResonanceModRange { 0.0f, 96.0f };
 
     // Performance parameters: EQ
-    constexpr float numEQs { 3 };
+    constexpr int numEQs { 3 };
     constexpr float eqBandwidth { 1.0f };
     constexpr float eqBandwidthCC { 0.0f };
     constexpr float eqFrequencyUnset { 0.0f };

@@ -132,7 +132,7 @@ namespace fx {
         for (uint32_t i = 0; i < nframes; ++i) {
             float x = in[i];
 
-            float y = std::copysign((int)(0.5f + std::fabs(x * steps)), x) * invSteps;
+            float y = std::copysign((int)(0.5f + std::fabs(x * steps)), x) * invSteps; // NOLINT
 
             float y2x[2];
             y2x[0] = (y != lastValue) ? (0.5f * (y + lastValue)) : y;
@@ -150,7 +150,7 @@ namespace fx {
     ///
     void Lofi::Decim::init(double sampleRate)
     {
-        fSampleTime = 1.0 / sampleRate;
+        fSampleTime = 1.0f / static_cast<float>(sampleRate);
 
         static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
         fDownsampler2x.set_coefs(coefs2x);
@@ -192,7 +192,7 @@ namespace fx {
 
             phase += dt;
             float y = (phase > 1.0f) ? x : lastValue;
-            phase -= static_cast<int>(phase);
+            phase -= static_cast<float>(static_cast<int>(phase));
 
             float y2x[2];
             y2x[0] = (y != lastValue) ? (0.5f * (y + lastValue)) : y;

@@ -1,0 +1,7 @@
+#!/bin/bash
+set -ex
+
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_TESTS=ON -DSFIZZ_SHARED=OFF -DSFIZZ_STATIC_LIBSNDFILE=OFF -DSFIZZ_LV2=OFF ..
+make -j$(nproc) sfizz_tests
+tests/sfizz_tests
