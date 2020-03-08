@@ -178,7 +178,8 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 
     if (shouldRelease) {
         remainingSamples = static_cast<int>(originalSpan.size());
-        if (releaseDelay > remainingSamples) {
+        if (releaseDelay > remainingSamples)
+        {
             releaseDelay -= remainingSamples;
             return;
         }

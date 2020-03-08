@@ -2,6 +2,23 @@ language: cpp
 
 jobs:
   - os:   linux
+    stage: "Tests"
+    name: "clang-tidy checks"
+    dist: bionic
+    addons:
+      apt:
+        packages:
+        - clang-tidy
+        - libsndfile-dev
+    before_install:
+    - true
+    install:
+    - true
+    script:
+    - scripts/run_clang_tidy.sh
+    after_success:
+    - true
+  - os:   linux
     stage: "Build"
     name: "Windows mingw32"
     env:

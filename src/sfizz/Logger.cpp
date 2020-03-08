@@ -98,12 +98,12 @@ sfz::Logger::~Logger()
 }
 
 
-void sfz::Logger::logCallbackTime(CallbackBreakdown&& breakdown, int numVoices, size_t numSamples)
+void sfz::Logger::logCallbackTime(const CallbackBreakdown& breakdown, int numVoices, size_t numSamples)
 {
     if (!loggingEnabled)
         return;
 
-    callbackTimeQueue.try_push<CallbackTime>({ std::move(breakdown), numVoices, numSamples });
+    callbackTimeQueue.try_push<CallbackTime>({ breakdown, numVoices, numSamples });
 }
 
 void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename)

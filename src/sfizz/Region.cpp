@@ -250,7 +250,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("volume"):
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
-    case hash("gain_cc&"): [[fallthrough]];
+    case hash("gain_cc&"):
     case hash("gain_oncc&"): [[fallthrough]];
     case hash("volume_oncc&"):
         setCCPairFromOpcode(opcode, volumeCC, Default::volumeCCRange);
@@ -395,8 +395,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
         }
         break;
-    case hash("cutoff_oncc&"): [[fallthrough]];
-    case hash("cutoff_cc&"): [[fallthrough]];
+    case hash("cutoff_oncc&"):
+    case hash("cutoff_cc&"):
     case hash("cutoff&_oncc&"): [[fallthrough]];
     case hash("cutoff&_cc&"):
         {
@@ -411,8 +411,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             );
         }
         break;
-    case hash("resonance&_oncc&"): [[fallthrough]];
-    case hash("resonance&_cc&"): [[fallthrough]];
+    case hash("resonance&_oncc&"):
+    case hash("resonance&_cc&"):
     case hash("resonance_oncc&"): [[fallthrough]];
     case hash("resonance_cc&"):
         {
