@@ -16,8 +16,49 @@ namespace sfz
 {
 
 using SfzCCArray = std::array<uint8_t, config::numCCs>;
-using CCValuePair = std::pair<uint8_t, float> ;
 using CCNamePair = std::pair<uint8_t, std::string>;
+
+template<class ValueType>
+struct CCValuePair {
+    int cc;
+    ValueType value;
+};
+
+template<class ValueType, bool CompareValue = false>
+struct CCValuePairComparator {
+    bool operator()(const CCValuePair<ValueType>& valuePair, const int& cc)
+    {
+        return (valuePair.cc < cc);
+    }
+
+    bool operator()(const int& cc, const CCValuePair<ValueType>& valuePair)
+    {
+        return (cc < valuePair.cc);
+    }
+
+    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
+    {
+        return (lhs.cc < rhs.cc);
+    }
+};
+
+template<class ValueType>
+struct CCValuePairComparator<ValueType, true> {
+    bool operator()(const CCValuePair<ValueType>& valuePair, const ValueType& value)
+    {
+        return (valuePair.value < value);
+    }
+
+    bool operator()(const ValueType& value, const CCValuePair<ValueType>& valuePair)
+    {
+        return (value < valuePair.value);
+    }
+
+    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
+    {
+        return (lhs.value < rhs.value);
+    }
+};
 
 /**
  * @brief Converts cents to a pitch ratio
@@ -94,10 +135,10 @@ constexpr float normalizeBend(float bendValue)
  * @param value
  * @return float
  */
-inline float ccSwitchedValue(const SfzCCArray& ccValues, const absl::optional<CCValuePair>& ccSwitch, float value) noexcept
+inline float ccSwitchedValue(const SfzCCArray& ccValues, const absl::optional<CCValuePair<float>>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)
-        return value + ccSwitch->second * normalizeCC(ccValues[ccSwitch->first]);
+        return value + ccSwitch->value * normalizeCC(ccValues[ccSwitch->cc]);
     else
         return value;
 }

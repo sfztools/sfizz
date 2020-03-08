@@ -1,0 +1,9 @@
+<region>
+lokey=0
+hikey=127
+sample=*sine
+
+<effect>
+type=lofi
+bitred=90
+decim=10

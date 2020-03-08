@@ -3,11 +3,7 @@
 set -x # No fail, we need to go back to the original branch at the end
 . .travis/environment.sh
 
-# Build documentation only from Linux x86_64 builds
-if [[ ${TRAVIS_CPU_ARCH} != "amd64" || ${TRAVIS_OS_NAME} != "linux" || "${CROSS_COMPILE}" != "" || ${TRAVIS_TAG} == "" ]]; then
-  exit 0
-fi
-
+mkdir build && cd build && cmake -DSFIZZ_JACK=OFF -DSFIZZ_SHARED=OFF -DSFIZZ_LV2=OFF .. && cd ..
 doxygen Doxyfile
 git fetch --depth=1 https://github.com/${TRAVIS_REPO_SLUG}.git refs/heads/gh-pages:refs/remotes/origin/gh-pages
 git checkout origin/gh-pages

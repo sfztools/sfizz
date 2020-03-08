@@ -20,15 +20,13 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     while (nextNumIndex != opcode.npos) {
         const auto numLetters = nextNumIndex - nextCharIndex;
         parameterPosition += numLetters;
-        lettersOnlyHash = hash(opcode.substr(nextCharIndex, numLetters), lettersOnlyHash);
+        lettersOnlyHash = hashNoAmpersand(opcode.substr(nextCharIndex, numLetters), lettersOnlyHash);
         nextCharIndex = opcode.find_first_not_of("1234567890", nextNumIndex);
 
         uint32_t returnedValue;
-        hasBackParameter = (nextCharIndex == opcode.npos);
-        const auto numDigits = hasBackParameter ? opcode.npos : nextCharIndex - nextNumIndex;
+        const auto numDigits = (nextCharIndex == opcode.npos) ? opcode.npos : nextCharIndex - nextNumIndex;
         if (absl::SimpleAtoi(opcode.substr(nextNumIndex, numDigits), &returnedValue)) {
-            // ASSERT(returnedValue < std::numeric_limits<uint8_t>::max());
-            parameterPositions.push_back(parameterPosition);
+            lettersOnlyHash = hash("&", lettersOnlyHash);
             parameters.push_back(returnedValue);
         }
 
@@ -36,35 +34,5 @@ sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     }
 
     if (nextCharIndex != opcode.npos)
-        lettersOnlyHash = hash(opcode.substr(nextCharIndex), lettersOnlyHash);
-}
-
-absl::optional<uint8_t> sfz::Opcode::backParameter() const noexcept
-{
-    if (hasBackParameter && !parameters.empty())
-        return parameters.back();
-
-    return {};
-}
-
-absl::optional<uint8_t> sfz::Opcode::firstParameter() const noexcept
-{
-    if (!hasBackParameter && !parameters.empty())
-        return parameters.front();
-
-    if (hasBackParameter && parameters.size() > 1)
-        return parameters.front();
-
-    return {};
-}
-
-absl::optional<uint8_t> sfz::Opcode::middleParameter() const noexcept
-{
-    if (!hasBackParameter && parameters.size() > 1)
-        return parameters[1];
-
-    if (hasBackParameter && parameters.size() > 2)
-        return parameters[1];
-
-    return {};
+        lettersOnlyHash = hashNoAmpersand(opcode.substr(nextCharIndex), lettersOnlyHash);
 }

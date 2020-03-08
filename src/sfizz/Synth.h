@@ -9,6 +9,7 @@
 #include "Parser.h"
 #include "Voice.h"
 #include "Region.h"
+#include "Effects.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
@@ -131,6 +132,14 @@ public:
      * @return const Region*
      */
     const Voice* getVoiceView(int idx) const noexcept;
+    /**
+     * @brief Get a raw view into a specific voice. This is mostly used
+     * for testing.
+     *
+     * @param idx
+     * @return const Region*
+     */
+    const EffectBus* getEffectBusView(int idx) const noexcept;
     /**
      * @brief Get a list of unknown opcodes. The lifetime of the
      * string views in the code are linked to the currently loaded
@@ -401,6 +410,12 @@ private:
      */
     void handleControlOpcodes(const std::vector<Opcode>& members);
     /**
+     * @brief Helper function to dispatch <effect> opcodes
+     *
+     * @param members the opcodes of the <effect> block
+     */
+    void handleEffectOpcodes(const std::vector<Opcode>& members);
+    /**
      * @brief Helper function to merge all the currently active opcodes
      * as set by the successive callbacks and create a new region to store
      * in the synth.
@@ -441,8 +456,14 @@ private:
     std::array<RegionPtrVector, 128> noteActivationLists;
     std::array<RegionPtrVector, config::numCCs> ccActivationLists;
 
-    // Internal temporary buffer
+    // Effect factory and buses
+    EffectFactory effectFactory;
+    typedef std::unique_ptr<EffectBus> EffectBusPtr;
+    std::vector<EffectBusPtr> effectBuses; // 0 is "main", 1-N are "fx1"-"fxN"
+
+    // Intermediate buffers
     AudioBuffer<float> tempBuffer { 2, config::defaultSamplesPerBlock };
+    AudioBuffer<float> tempMixNodeBuffer { 2, config::defaultSamplesPerBlock };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };

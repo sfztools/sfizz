@@ -6,6 +6,7 @@ platform:
 - x64
 cache:
   - c:\tools\vcpkg\installed\ -> appveyor.yml
+  - vst\download
 
 install:
 - cmd: choco install -y innosetup
@@ -18,9 +19,7 @@ before_build:
 - cmd: git submodule update --init
 - cmd: mkdir CMakeBuild
 - cmd: cd CMakeBuild
-- cmd: if %platform%==Win32 set CMAKE_GENERATOR=Visual Studio 15 2017
-- cmd: if %platform%==x64   set CMAKE_GENERATOR=Visual Studio 15 2017 Win64
-- cmd: cmake .. -G"%CMAKE_GENERATOR%" -DSFIZZ_JACK=OFF -DSFIZZ_BENCHMARKS=OFF -DSFIZZ_TESTS=OFF -DSFIZZ_LV2=ON -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=%VCPKG_TRIPLET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
+- cmd: cmake .. -G"Visual Studio 15 2017" -A"%platform%" -DSFIZZ_JACK=OFF -DSFIZZ_BENCHMARKS=OFF -DSFIZZ_TESTS=OFF -DSFIZZ_LV2=ON -DSFIZZ_VST=ON -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=%VCPKG_TRIPLET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 build_script:
 - cmd: cmake --build . --config Release -j
@@ -31,6 +30,7 @@ after_build:
 - cmd: if %platform%==Win32 set RELEASE_ARCH=x86
 - cmd: if %platform%==x64   set RELEASE_ARCH=x64
 - cmd: 7z a sfizz-lv2-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip sfizz.lv2
+- cmd: 7z a sfizz-vst3-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip sfizz.vst3
 - cmd: 7z a sfizz-lib-%APPVEYOR_REPO_TAG_NAME%-%RELEASE_ARCH%-msvc.zip src/Release/sfizz*
 - cmd: iscc.exe /dARCH=%RELEASE_ARCH% innosetup.iss
 

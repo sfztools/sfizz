@@ -39,6 +39,9 @@ struct Region {
     : midiState(midiState), defaultPath(std::move(defaultPath))
     {
         ccSwitched.set();
+
+        gainToEffect.reserve(5); // sufficient room for main and fx1-4
+        gainToEffect.push_back(1.0); // contribute 100% into the main bus
     }
     Region(const Region&) = default;
     ~Region() = default;
@@ -206,6 +209,12 @@ struct Region {
 
     bool hasKeyswitches() const noexcept { return keyswitchDown || keyswitchUp || keyswitch || previousNote; }
 
+    /**
+     * @brief Get the gain this region contributes into the input of the Nth
+     *        effect bus
+     */
+    float getGainToEffectBus(unsigned number) const noexcept;
+
     // Sound source: sample playback
     std::string sample {}; // Sample
     float delay { Default::delay }; // delay
@@ -255,11 +264,11 @@ struct Region {
     float pan { Default::pan }; // pan
     float width { Default::width }; // width
     float position { Default::position }; // position
-    absl::optional<CCValuePair> volumeCC; // volume_oncc
-    absl::optional<CCValuePair> amplitudeCC; // amplitude_oncc
-    absl::optional<CCValuePair> panCC; // pan_oncc
-    absl::optional<CCValuePair> widthCC; // width_oncc
-    absl::optional<CCValuePair> positionCC; // position_oncc
+    absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
+    absl::optional<CCValuePair<float>> amplitudeCC; // amplitude_oncc
+    absl::optional<CCValuePair<float>> panCC; // pan_oncc
+    absl::optional<CCValuePair<float>> widthCC; // width_oncc
+    absl::optional<CCValuePair<float>> positionCC; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
@@ -297,6 +306,10 @@ struct Region {
     EGDescription filterEG;
 
     bool isStereo { false };
+
+    // Effects
+    std::vector<float> gainToEffect;
+
 private:
     const MidiState& midiState;
     bool keySwitched { true };

@@ -29,7 +29,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEvent(int noteNumber, uint8_t velocity) noexcept;
+	void noteOnEvent(int delay, int noteNumber, uint8_t velocity) noexcept;
 
     /**
      * @brief Update the state after a note off event
@@ -37,7 +37,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOffEvent(int noteNumber, uint8_t velocity) noexcept;
+	void noteOffEvent(int delay, int noteNumber, uint8_t velocity) noexcept;
 
     int getActiveNotes() const noexcept { return activeNotes; }
 
@@ -62,7 +62,7 @@ public:
      *
      * @param pitchBendValue
      */
-    void pitchBendEvent(int pitchBendValue) noexcept;
+    void pitchBendEvent(int delay, int pitchBendValue) noexcept;
 
     /**
      * @brief Get the pitch bend status
@@ -77,7 +77,7 @@ public:
      * @param ccNumber
      * @param ccValue
      */
-    void ccEvent(int ccNumber, uint8_t ccValue) noexcept;
+    void ccEvent(int delay, int ccNumber, uint8_t ccValue) noexcept;
 
     /**
      * @brief Get the CC value for CC number
@@ -98,12 +98,12 @@ public:
      * @brief Reset the midi state (does not impact the last note on time)
      *
      */
-    void reset() noexcept;
+    void reset(int delay) noexcept;
 
     /**
      * @brief Reset all the controllers
      */
-    void resetAllControllers() noexcept;
+    void resetAllControllers(int delay) noexcept;
 
     /**
      * @brief Modulate a value using the last entered CCs in the midiState
@@ -120,7 +120,7 @@ public:
     T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
     {
         for (auto& mod: modifiers) {
-            lambda(value, normalizeCC(getCCValue(mod.first)) * mod.second);
+            lambda(value, normalizeCC(getCCValue(mod.cc)) * mod.value);
         }
         return validRange.clamp(value);
     }

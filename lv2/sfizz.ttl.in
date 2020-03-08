@@ -5,6 +5,7 @@
 @prefix lv2:     <http://lv2plug.in/ns/lv2core#> .
 @prefix midi:    <http://lv2plug.in/ns/ext/midi#> .
 @prefix opts:    <http://lv2plug.in/ns/ext/options#> .
+@prefix param:   <http://lv2plug.in/ns/ext/parameters#> .
 @prefix patch:   <http://lv2plug.in/ns/ext/patch#> .
 @prefix pg:      <http://lv2plug.in/ns/ext/port-groups#> .
 @prefix pprop:   <http://lv2plug.in/ns/ext/port-props#> .
@@ -57,7 +58,7 @@ midnam:update a lv2:Feature .
   doap:maintainer [
     foaf:name     "@LV2PLUGIN_AUTHOR@" ;
     foaf:homepage <@LV2PLUGIN_URI@> ;
-    foaf:email    "@LV2PLUGIN_EMAIL@";
+    foaf:mbox     <mailto:@LV2PLUGIN_EMAIL@> ;
   ] ;
   rdfs:comment "@LV2PLUGIN_COMMENT@",
     "Campionatore SFZ"@it ;
@@ -71,6 +72,9 @@ midnam:update a lv2:Feature .
 
   lv2:optionalFeature midnam:update ;
   lv2:extensionData midnam:interface ;
+
+  opts:supportedOption param:sampleRate ;
+  opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ;
 

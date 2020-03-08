@@ -491,6 +491,12 @@ namespace _internals {
     {
         *output++ += (*gain++) * (*input++);
     }
+
+    template <class T>
+    inline void snippetMultiplyAdd(const T gain, const T*& input, T*& output)
+    {
+        *output++ += gain * (*input++);
+    }
 }
 
 /**
@@ -519,6 +525,20 @@ void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span
 
 template <>
 void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
+
+template <class T, bool SIMD = SIMDConfig::multiplyAdd>
+void multiplyAdd(const T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    ASSERT(input.size() <= output.size());
+    auto* in = input.begin();
+    auto* out = output.begin();
+    auto* sentinel = out + std::min(output.size(), input.size());
+    while (out < sentinel)
+        _internals::snippetMultiplyAdd<T>(gain, in, out);
+}
+
+template <>
+void multiplyAdd<float, true>(const float gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 namespace _internals {
     template <class T>

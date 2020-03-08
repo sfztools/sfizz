@@ -21,12 +21,16 @@
 using namespace std::literals;
 
 sfz::Synth::Synth()
+    : Synth(config::numVoices)
 {
-    resetVoices(this->numVoices);
 }
 
 sfz::Synth::Synth(int numVoices)
 {
+    effectFactory.registerStandardEffectTypes();
+
+    effectBuses.reserve(5); // sufficient room for main and fx1-4
+
     resetVoices(numVoices);
 }
 
@@ -70,7 +74,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
         numCurves++;
         break;
     case hash("effect"):
-        // TODO: implement effects
+        handleEffectOpcodes(members);
         break;
     default:
         std::cerr << "Unknown header: " << header << '\n';
@@ -118,6 +122,11 @@ void sfz::Synth::clear()
     for (auto& list: ccActivationLists)
         list.clear();
     regions.clear();
+    effectBuses.clear();
+    effectBuses.emplace_back(new EffectBus);
+    effectBuses[0]->setGainToMain(1.0);
+    effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
+    effectBuses[0]->setSampleRate(sampleRate);
     resources.filePool.clear();
     resources.logger.clear();
     numGroups = 0;
@@ -126,7 +135,7 @@ void sfz::Synth::clear()
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    resources.midiState.reset();
+    resources.midiState.reset(0);
     ccNames.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
@@ -153,21 +162,18 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
-        const auto backParameter = member.backParameter();
         switch (member.lettersOnlyHash) {
-        case hash("Set_cc"):
-            [[fallthrough]];
-        case hash("set_cc"):
-            if (backParameter && Default::ccNumberRange.containsWithEnd(*backParameter)) {
+        case hash("Set_cc&"): [[fallthrough]];
+        case hash("set_cc&"):
+            if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                resources.midiState.ccEvent(*backParameter, ccValue);
+                resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
             }
             break;
-        case hash("Label_cc"):
-            [[fallthrough]];
-        case hash("label_cc"):
-            if (backParameter && Default::ccNumberRange.containsWithEnd(*backParameter))
-                ccNames.emplace_back(*backParameter, std::string(member.value));
+        case hash("Label_cc&"): [[fallthrough]];
+        case hash("label_cc&"):
+            if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
+                ccNames.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
             [[fallthrough]];
@@ -186,6 +192,68 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             DBG("Unsupported control opcode: " << member.opcode);
         }
     }
+}
+
+void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
+{
+    absl::string_view busName = "main";
+
+    auto getOrCreateBus = [this](unsigned index) -> EffectBus& {
+        if (index + 1 > effectBuses.size())
+            effectBuses.resize(index + 1);
+        EffectBusPtr& bus = effectBuses[index];
+        if (!bus) {
+            bus.reset(new EffectBus);
+            bus->setSampleRate(sampleRate);
+            bus->setSamplesPerBlock(samplesPerBlock);
+        }
+        return *bus;
+    };
+
+    for (const Opcode& opcode : members) {
+        switch (opcode.lettersOnlyHash) {
+        case hash("bus"):
+            busName = opcode.value;
+            break;
+
+            // note(jpc): gain opcodes are linear volumes in % units
+
+        case hash("directtomain"):
+            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
+                getOrCreateBus(0).setGainToMain(*valueOpt / 100);
+            break;
+
+        case hash("fx&tomain"): // fx&tomain
+            if (opcode.parameters.front() < 1 || opcode.parameters.front() > config::maxEffectBuses)
+                break;
+            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
+                getOrCreateBus(opcode.parameters.front()).setGainToMain(*valueOpt / 100);
+            break;
+
+        case hash("fx&tomix"): // fx&tomix
+            if (opcode.parameters.front() < 1 || opcode.parameters.front() > config::maxEffectBuses)
+                break;
+            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
+                getOrCreateBus(opcode.parameters.front()).setGainToMix(*valueOpt / 100);
+            break;
+        }
+    }
+
+    unsigned busIndex;
+    if (busName.empty() || busName == "main")
+        busIndex = 0;
+    else if (busName.size() > 2 && busName.substr(0, 2) == "fx" && absl::SimpleAtoi(busName.substr(2), &busIndex) && busIndex >= 1 && busIndex <= config::maxEffectBuses) {
+        // an effect bus fxN, with N usually in [1,4]
+    } else {
+        DBG("Unsupported effect bus: " << busName);
+        return;
+    }
+
+    // create the effect and add it
+    EffectBus& bus = getOrCreateBus(busIndex);
+    auto fx = effectFactory.makeEffect(members);
+    fx->setSampleRate(sampleRate);
+    bus.addEffect(std::move(fx));
 }
 
 void addEndpointsToVelocityCurve(sfz::Region& region)
@@ -388,8 +456,14 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
     this->samplesPerBlock = samplesPerBlock;
     this->tempBuffer.resize(samplesPerBlock);
+    this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
+
+    for (auto& bus: effectBuses) {
+        if (bus)
+            bus->setSamplesPerBlock(samplesPerBlock);
+    }
 }
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
@@ -405,12 +479,16 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 
     resources.filterPool.setSampleRate(sampleRate);
     resources.eqPool.setSampleRate(sampleRate);
+
+    for (auto& bus: effectBuses) {
+        if (bus)
+            bus->setSampleRate(sampleRate);
+    }
 }
 
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
-
 
     if (freeWheeling)
         resources.filePool.waitForBackgroundLoading();
@@ -419,32 +497,77 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (!canEnterCallback)
         return;
 
+    size_t numFrames = buffer.getNumFrames();
+    auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
+    auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
+
     CallbackBreakdown callbackBreakdown;
+
+    { // Prepare the effect inputs. They are mixes of per-region outputs.
+        ScopedTiming logger { callbackBreakdown.effects };
+        for (auto& bus: effectBuses) {
+            if (bus)
+                bus->clearInputs(numFrames);
+        }
+    }
+
     int numActiveVoices { 0 };
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod };
         buffer.fill(0.0f);
+        tempMixNode.fill(0.0f);
         resources.filePool.cleanupPromises();
 
-
-        auto tempSpan = AudioSpan<float>(tempBuffer).first(buffer.getNumFrames());
         for (auto& voice : voices) {
-            if (!voice->isFree()) {
-                numActiveVoices++;
-                voice->renderBlock(tempSpan);
-                buffer.add(tempSpan);
-                callbackBreakdown.data += voice->getLastDataDuration();
-                callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
-                callbackBreakdown.filters += voice->getLastFilterDuration();
-                callbackBreakdown.panning += voice->getLastPanningDuration();
-            }
-        }
+            if (voice->isFree())
+                continue;
 
-        buffer.applyGain(db2mag(volume));
+            const Region* region = voice->getRegion();
+
+            numActiveVoices++;
+            voice->renderBlock(temp);
+
+            { // Add the output into the effects linked to this region
+                ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
+                for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+                    if (auto& bus = effectBuses[i]) {
+                        float addGain = region->getGainToEffectBus(i);
+                        bus->addToInputs(temp, addGain, numFrames);
+                    }
+                }
+            }
+
+            callbackBreakdown.data += voice->getLastDataDuration();
+            callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
+            callbackBreakdown.filters += voice->getLastFilterDuration();
+            callbackBreakdown.panning += voice->getLastPanningDuration();
+        }
     }
 
+    { // Apply effect buses
+        // -- note(jpc) there is always a "main" bus which is initially empty.
+        //    without any <effect>, the signal is just going to flow through it.
+        ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
+
+        for (auto& bus: effectBuses) {
+            if (bus) {
+                bus->process(numFrames);
+                bus->mixOutputsTo(buffer, tempMixNode, numFrames);
+            }
+        }
+    }
+
+    // Add the Mix output (fxNtomix opcodes)
+    // -- note(jpc) the purpose of the Mix output is not known.
+    //    perhaps it's designed as extension point for custom processing?
+    //    as default behavior, it adds itself to the Main signal.
+    buffer.add(tempMixNode);
+
+    // Apply the master volume
+    buffer.applyGain(db2mag(volume));
+
     callbackBreakdown.dispatch = dispatchDuration;
-    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, buffer.getNumFrames());
+    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, numFrames);
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);
@@ -456,7 +579,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber >= 0);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOnEvent(noteNumber, velocity);
+    resources.midiState.noteOnEvent(delay, noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -471,7 +594,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unu
     ASSERT(noteNumber >= 0);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOffEvent(noteNumber, velocity);
+    resources.midiState.noteOffEvent(delay, noteNumber, velocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -527,8 +650,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ASSERT(ccNumber >= 0);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-
-    resources.midiState.ccEvent(ccNumber, ccValue);
+    resources.midiState.ccEvent(delay, ccNumber, ccValue);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -559,8 +681,7 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ASSERT(pitch >= -8192);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-
-    resources.midiState.pitchBendEvent(pitch);
+    resources.midiState.pitchBendEvent(delay, pitch);
 
     for (auto& region: regions) {
         region->registerPitchWheel(pitch);
@@ -686,6 +807,11 @@ const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
     return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
 }
 
+const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
+{
+    return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
+}
+
 const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
 {
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
@@ -796,7 +922,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
     if (!canEnterCallback)
         return;
 
-    resources.midiState.resetAllControllers();
+    resources.midiState.resetAllControllers(delay);
     for (auto& voice: voices) {
         voice->registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)

@@ -83,7 +83,7 @@ sfz::Logger::~Logger()
         fs::path callbackLogPath{ fs::current_path() / callbackLogFilename.str() };
         std::cout << "Logging " << callbackTimes.size() << " callback times to " << callbackLogPath.filename() << '\n';
         std::ofstream callbackLogFile { callbackLogPath.string() };
-        callbackLogFile << "Dispatch,RenderMethod,Data,Amplitude,Filters,Panning,NumVoices,NumSamples" << '\n';
+        callbackLogFile << "Dispatch,RenderMethod,Data,Amplitude,Filters,Panning,Effects,NumVoices,NumSamples" << '\n';
         for (auto& time: callbackTimes)
             callbackLogFile << time.breakdown.dispatch.count() << ','
                             << time.breakdown.renderMethod.count() << ','
@@ -91,6 +91,7 @@ sfz::Logger::~Logger()
                             << time.breakdown.amplitude.count() << ','
                             << time.breakdown.filters.count() << ','
                             << time.breakdown.panning.count() << ','
+                            << time.breakdown.effects.count() << ','
                             << time.numVoices << ','
                             << time.numSamples << '\n';
     }

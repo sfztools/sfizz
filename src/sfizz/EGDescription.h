@@ -64,13 +64,13 @@ struct EGDescription
     float vel2sustain   { Default::vel2sustain };
     int   vel2depth     { Default::depth };
 
-	absl::optional<CCValuePair> ccAttack;
-	absl::optional<CCValuePair> ccDecay;
-	absl::optional<CCValuePair> ccDelay;
-	absl::optional<CCValuePair> ccHold;
-	absl::optional<CCValuePair> ccRelease;
-	absl::optional<CCValuePair> ccStart;
-	absl::optional<CCValuePair> ccSustain;
+	absl::optional<CCValuePair<float>> ccAttack;
+	absl::optional<CCValuePair<float>> ccDecay;
+	absl::optional<CCValuePair<float>> ccDelay;
+	absl::optional<CCValuePair<float>> ccHold;
+	absl::optional<CCValuePair<float>> ccRelease;
+	absl::optional<CCValuePair<float>> ccStart;
+	absl::optional<CCValuePair<float>> ccSustain;
 
     /**
      * @brief Get the attack with possibly a CC modifier and a velocity modifier

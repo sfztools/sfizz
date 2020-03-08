@@ -12,9 +12,9 @@ set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 set (CMAKE_CXX_VISIBILITY_PRESET hidden)
 set (CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
-# Set Windows compatibility level to Vista
+# Set Windows compatibility level to 7
 if (WIN32)
-    add_compile_definitions(_WIN32_WINNT=0x600)
+    add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
 # Add required flags for the builds
@@ -64,6 +64,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
         add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
         add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
     endif()
+endif()
+
+include (CheckLibraryExists)
+if (UNIX AND NOT APPLE)
+    check_library_exists(atomic __atomic_load "" LIBATOMIC_FOUND)
 endif()
 
 # Don't show build information when building a different project

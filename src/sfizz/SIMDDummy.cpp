@@ -77,6 +77,12 @@ void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<cons
 }
 
 template <>
+void sfz::multiplyAdd<float, true>(const float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
+{
+    multiplyAdd<float, false>(gain, input, output);
+}
+
+template <>
 float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps, absl::Span<float> leftCoeff, absl::Span<float> rightCoeff, absl::Span<int> indices, float floatIndex, float loopEnd, float loopStart) noexcept
 {
     return loopingSFZIndex<float, false>(jumps, leftCoeff, rightCoeff, indices, floatIndex, loopEnd, loopStart);

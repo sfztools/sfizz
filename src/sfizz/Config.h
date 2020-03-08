@@ -69,6 +69,10 @@ namespace config {
      */
     const absl::string_view midnamManufacturer { "The Sfizz authors" };
     const absl::string_view midnamModel { "Sfizz" };
+    /**
+       Limit of how many "fxN" buses are accepted (in SFZv2, maximum is 4)
+     */
+    constexpr int maxEffectBuses { 256 };
 } // namespace config
 
 // Enable or disable SIMD accelerators by default
