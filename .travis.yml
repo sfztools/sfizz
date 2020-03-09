@@ -19,7 +19,6 @@ jobs:
     addons:
       apt:
         packages:
-        - libasound2-dev
         - libjack-jackd2-dev
         - libsndfile1-dev
     install: .travis/download_cmake.sh
@@ -30,7 +29,6 @@ jobs:
     addons:
       apt:
         packages:
-        - libasound2-dev
         - libjack-jackd2-dev
         - libsndfile1-dev
     install: .travis/download_cmake.sh
@@ -64,7 +62,6 @@ jobs:
     addons:
       apt:
         packages:
-        - libasound2-dev
         - libjack-jackd2-dev
         - libsndfile1-dev
     install: .travis/download_cmake.sh
@@ -78,7 +75,6 @@ jobs:
     addons:
       apt:
         packages:
-        - libasound2-dev
         - libjack-jackd2-dev
         - libsndfile1-dev
     install: .travis/download_cmake.sh
@@ -92,7 +88,6 @@ jobs:
     addons:
       apt:
         packages:
-        - libasound2-dev
         - libjack-jackd2-dev
         - libsndfile1-dev
     install:
@@ -107,7 +102,6 @@ jobs:
     addons:
       apt:
         packages:
-        - libasound2-dev
         - libjack-jackd2-dev
         - libsndfile1-dev
     install:
