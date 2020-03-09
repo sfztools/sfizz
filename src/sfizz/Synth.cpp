@@ -568,7 +568,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     buffer.applyGain(db2mag(volume));
 
     callbackBreakdown.dispatch = dispatchDuration;
-    resources.logger.logCallbackTime(std::move(callbackBreakdown), numActiveVoices, numFrames);
+    resources.logger.logCallbackTime(callbackBreakdown, numActiveVoices, numFrames);
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);
@@ -939,7 +939,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 fs::file_time_type sfz::Synth::checkModificationTime()
 {
     auto returnedTime = modificationTime;
-    for (auto file: getIncludedFiles()) {
+    for (const auto& file: getIncludedFiles()) {
         const auto fileTime = fs::last_write_time(file);
         if (returnedTime < fileTime)
             returnedTime = fileTime;
