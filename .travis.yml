@@ -159,6 +159,7 @@ deploy:
   on:
     repo: "sfztools/sfizz"
     tags: true
+    condition: ${TRAVIS_TAG} =~ ^v[0-9]
 
 notifications:
   irc:
