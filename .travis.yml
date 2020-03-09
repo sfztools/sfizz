@@ -121,7 +121,7 @@ jobs:
 
   - stage: "Deploy"
     name: "Source packaging"
-    if: (tag IS present) AND (branch = master)
+    if: (tag IS present) AND (branch = master) AND (type = push)
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
     addons:
@@ -132,7 +132,7 @@ jobs:
     script: git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
 
   - name: "Generate documentation"
-    if: (tag IS present) AND (branch = master)
+    if: (tag IS present) AND (branch = master) AND (type = push)
     addons:
       apt:
         packages:
