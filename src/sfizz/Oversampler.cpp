@@ -105,7 +105,7 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
     {
         // std::cout << "Input frames: " << inputFrameCounter << "/" << numFrames << '\n';
         const auto thisChunkSize = std::min(chunkSize, numFrames - inputFrameCounter);
-        const auto outputChunkSize { thisChunkSize * static_cast<int>(factor) };
+        const auto outputChunkSize = thisChunkSize * static_cast<int>(factor);
         for (size_t chanIdx = 0; chanIdx < numChannels; chanIdx++) {
             const auto inputChunk = input.getSpan(chanIdx).subspan(inputFrameCounter, thisChunkSize);
             const auto outputChunk = output.getSpan(chanIdx).subspan(outputFrameCounter, outputChunkSize);

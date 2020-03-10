@@ -342,7 +342,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 region->isStereo = true;
 
             // TODO: adjust with LFO targets
-            const auto maxOffset { region->offset + region->offsetRandom };
+            const auto maxOffset = region->offset + region->offsetRandom;
             if (!resources.filePool.preloadFile(region->sample, maxOffset))
                 removeCurrentRegion();
         }
@@ -432,7 +432,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 
 int sfz::Synth::getNumActiveVoices() const noexcept
 {
-    auto activeVoices { 0 };
+    auto activeVoices = 0;
     for (const auto& voice : voices) {
         if (!voice->isFree())
             activeVoices++;
