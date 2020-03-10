@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -ex
-. .travis/mingw_container.sh
+. .travis/docker_container.sh
 
 buildenv pacman -Sqy --noconfirm
 buildenv pacman -Sq --noconfirm base-devel wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile

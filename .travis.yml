@@ -38,7 +38,7 @@ jobs:
     stage: "Build"
     env:
     - CROSS_COMPILE=mingw32
-    - CONTAINER=cross
+    - CONTAINER=archlinux
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw32"
     before_install: .travis/before_install_mingw.sh
     install: .travis/install_mingw.sh
@@ -48,7 +48,7 @@ jobs:
   - name: "Windows mingw64"
     env:
     - CROSS_COMPILE=mingw64
-    - CONTAINER=cross
+    - CONTAINER=archlinux
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw64"
     before_install: .travis/before_install_mingw.sh
     install: .travis/install_mingw.sh

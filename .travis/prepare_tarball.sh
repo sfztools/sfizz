@@ -1,7 +1,12 @@
 #!/bin/bash
 
 set -ex
-. .travis/mingw_container.sh
+
+if ! [ -z "$CONTAINER" ]; then
+  . .travis/docker_container.sh
+else
+  . .travis/no_container.sh
+fi
 
 # Do not prepare a tarball without a tag
 if [[ ${TRAVIS_TAG} == "" ]]; then
