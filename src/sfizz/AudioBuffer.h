@@ -28,7 +28,7 @@ namespace sfz
 template <class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
 public:
-    using value_type = std::remove_cv_t<Type>;
+    using value_type = typename std::remove_cv<Type>::type;
     using pointer = value_type*;
     using const_pointer = const value_type*;
     using iterator = pointer;
