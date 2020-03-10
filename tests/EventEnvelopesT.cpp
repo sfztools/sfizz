@@ -134,7 +134,7 @@ TEST_CASE("[LinearEnvelope] 2 events, with another block call")
 TEST_CASE("[LinearEnvelope] 2 events, function")
 {
     sfz::LinearEnvelope<float> envelope;
-    envelope.setFunction([](auto x) { return 2 * x; });
+    envelope.setFunction([](float x) { return 2 * x; });
     envelope.registerEvent(2, 1.0f);
     envelope.registerEvent(6, 2.0f);
     std::array<float, 8> output;
