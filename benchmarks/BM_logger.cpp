@@ -10,11 +10,11 @@
 
 class Logger : public benchmark::Fixture {
 public:
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& /* state */) {
 
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  void TearDown(const ::benchmark::State& /* state */) {
 
   }
 

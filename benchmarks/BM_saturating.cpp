@@ -29,7 +29,7 @@ public:
     absl::c_generate(jumps, [&]() { return dist(gen); });
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  void TearDown(const ::benchmark::State& /* state */) {
 
   }
 

@@ -78,7 +78,7 @@ public:
         output = std::make_unique<sfz::AudioBuffer<float>>(sndfile.channels(), numFrames * 4);
     }
 
-    void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+    void TearDown(const ::benchmark::State& /* state */) {
     }
 
     ghc::filesystem::path getPath()

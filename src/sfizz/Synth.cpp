@@ -8,6 +8,7 @@
 #include "AtomicGuard.h"
 #include "Config.h"
 #include "Debug.h"
+#include "Macros.h"
 #include "MidiState.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
@@ -589,10 +590,11 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOnDispatch(delay, noteNumber, velocity);
 }
 
-void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    UNUSED(velocity);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(delay, noteNumber, velocity);

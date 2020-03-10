@@ -32,7 +32,7 @@ public:
         std::generate(input.begin(), input.end(), [&]() { return dist(gen); });
     }
 
-    void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+    void TearDown(const ::benchmark::State& /* state */) {
 
     }
     std::random_device rd { };

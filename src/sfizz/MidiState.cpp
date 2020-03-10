@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "MidiState.h"
+#include "Macros.h"
 #include "Debug.h"
 
 sfz::MidiState::MidiState()
@@ -25,11 +26,11 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, uint8_t velocity) no
 
 }
 
-void sfz::MidiState::noteOffEvent(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::MidiState::noteOffEvent(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
     ASSERT(velocity >= 0 && velocity <= 127);
-
+    UNUSED(velocity);
     if (noteNumber >= 0 && noteNumber < 128) {
         if (activeNotes > 0)
             activeNotes--;

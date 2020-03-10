@@ -14,7 +14,7 @@ constexpr int bigNumber { 2399132 };
 
 class IterOffset : public benchmark::Fixture {
 public:
-  void SetUp(const ::benchmark::State& state [[maybe_unused]]) {
+  void SetUp(const ::benchmark::State& /* state */) {
     std::random_device rd { };
     std::mt19937 gen { rd() };
     std::uniform_real_distribution<float> dist { 0.001f, 1.0f };
@@ -28,7 +28,7 @@ public:
     sfz::cumsum<int>(jumps, absl::MakeSpan(offsets));
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  void TearDown(const ::benchmark::State& /* state */) {
 
   }
 

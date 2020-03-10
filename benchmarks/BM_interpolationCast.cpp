@@ -28,7 +28,7 @@ public:
     absl::c_generate(floatJumps, [&]() { return dist(gen); });
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  void TearDown(const ::benchmark::State& /* state */) {
 
   }
 

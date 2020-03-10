@@ -16,10 +16,10 @@
 #include "mathfuns/sse_mathfun.h"
 
 using Type = float;
-[[maybe_unused]] constexpr uintptr_t TypeAlignment { 4 };
-[[maybe_unused]] constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 };
-[[maybe_unused]] constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
-[[maybe_unused]] constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
+constexpr uintptr_t TypeAlignment { 4 };
+constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 };
+constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
+constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
 
 struct AlignmentSentinels {
     float* nextAligned;

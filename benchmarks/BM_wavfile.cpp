@@ -17,7 +17,7 @@
 
 class FileFixture : public benchmark::Fixture {
 public:
-    void SetUp(const ::benchmark::State& state [[maybe_unused]]) {
+    void SetUp(const ::benchmark::State& state) {
         filePath1 = getPath() / "sample1.wav";
         filePath2 = getPath() / "sample2.wav";
         filePath3 = getPath() / "sample3.wav";
@@ -31,7 +31,7 @@ public:
         }
     }
 
-    void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+    void TearDown(const ::benchmark::State& /* state */) {
     }
 
     ghc::filesystem::path getPath()

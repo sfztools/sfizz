@@ -206,7 +206,7 @@ public:
         sndfile.readf(interleavedBuffer->data(), sndfile.frames());
     }
 
-    void TearDown(const ::benchmark::State& state [[maybe_unused]])
+    void TearDown(const ::benchmark::State& /* state */)
     {
     }
 

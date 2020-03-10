@@ -37,7 +37,7 @@ public:
     span3 = absl::MakeSpan(temp3);
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  void TearDown(const ::benchmark::State& /* state */) {
 
   }
 

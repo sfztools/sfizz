@@ -7,6 +7,7 @@
 #include "Region.h"
 #include "Defaults.h"
 #include "MathHelpers.h"
+#include "Macros.h"
 #include "Debug.h"
 #include "Opcode.h"
 #include "StringViewHelpers.h"
@@ -817,7 +818,7 @@ bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randVal
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity [[maybe_unused]], float randValue) noexcept
+bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept
 {
     if (keyswitchRange.containsWithEnd(noteNumber)) {
         if (keyswitchDown && *keyswitchDown == noteNumber)
