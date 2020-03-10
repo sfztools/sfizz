@@ -17,25 +17,25 @@
 template<class T>
 constexpr T max(T op1, T op2)
 {
-    return std::max(op1, op2);
+    return op1 > op2 ? op1 : op2;
 }
 
 template<class T, class... Args>
 constexpr T max(T op1, Args... rest)
 {
-    return std::max(op1, max(rest...));
+    return max(op1, max(rest...));
 }
 
 template<class T>
 constexpr T min(T op1, T op2)
 {
-    return std::min(op1, op2);
+    return op1 > op2 ? op2 : op1;
 }
 
 template<class T, class... Args>
 constexpr T min(T op1, Args... rest)
 {
-    return std::min(op1, min(rest...));
+    return min(op1, min(rest...));
 }
 
 /**

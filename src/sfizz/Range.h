@@ -24,7 +24,7 @@ public:
     constexpr Range() = default;
     constexpr Range(Type start, Type end) noexcept
         : _start(start)
-        , _end(std::max(start, end))
+        , _end(max(start, end))
     {
 
     }
