@@ -11,6 +11,7 @@
 #include "SfzHelpers.h"
 #include "StringViewHelpers.h"
 #include <absl/types/optional.h>
+#include "absl/meta/type_traits.h"
 #include <string_view>
 #include <vector>
 #include <type_traits>
@@ -45,7 +46,7 @@ struct Opcode {
  * @param validRange the range of admitted values
  * @return absl::optional<ValueType> the cast value, or null
  */
-template <typename ValueType, typename std::enable_if<std::is_integral<ValueType>::value, int>::type = 0>
+template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
         int64_t returnedValue;
@@ -74,7 +75,7 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
  * @param validRange the range of admitted values
  * @return absl::optional<ValueType> the cast value, or null
  */
-template <typename ValueType, typename std::enable_if<std::is_floating_point<ValueType>::value, int>::type = 0>
+template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
     float returnedValue;
