@@ -1,6 +1,6 @@
 # Do not override the C++ standard if set to more than 14
-if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
-    set(CMAKE_CXX_STANDARD 14)
+if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 11)
+    set(CMAKE_CXX_STANDARD 11)
 endif()
 
 # Export the compile_commands.json file
