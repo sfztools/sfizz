@@ -78,11 +78,11 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
     case Oversampling::x8:
         for (auto& upsampler: upsampler8x)
             upsampler.set_coefs(coeffsStage8x.data());
-        [[fallthrough]];
+        // fallthrough
     case Oversampling::x4:
         for (auto& upsampler: upsampler4x)
             upsampler.set_coefs(coeffsStage4x.data());
-        [[fallthrough]];
+        // fallthrough
     case Oversampling::x2:
         for (auto& upsampler: upsampler2x)
             upsampler.set_coefs(coeffsStage2x.data());

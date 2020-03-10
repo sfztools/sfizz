@@ -54,7 +54,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 
         currentState = State::Attack;
         step = (peak - currentValue) / (attack > 0 ? attack : 1);
-        [[fallthrough]];
+        // fallthrough
     case State::Attack:
         if (attack-- > 0) {
             currentValue += step;
@@ -63,14 +63,14 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 
         currentState = State::Hold;
         currentValue = peak;
-        [[fallthrough]];
+        // fallthrough
     case State::Hold:
         if (hold-- > 0)
             return currentValue;
 
         step = std::exp(std::log(sustain + config::virtuallyZero) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
-        [[fallthrough]];
+        // fallthrough
     case State::Decay:
         if (decay-- > 0) {
             currentValue *= step;
@@ -79,7 +79,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 
         currentState = State::Sustain;
         currentValue = sustain;
-        [[fallthrough]];
+        // fallthrough
     case State::Sustain:
         if (freeRunning)
             shouldRelease = true;
@@ -92,7 +92,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 
         currentState = State::Done;
         currentValue = 0.0;
-        [[fallthrough]];
+        // fallthrough
     default:
         return 0.0;
     }
@@ -116,7 +116,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 
         currentState = State::Attack;
         step = (peak - start) / (attack > 0 ? attack : 1);
-        [[fallthrough]];
+        // fallthrough
     case State::Attack:
         length = min(remainingSamples, attack);
         currentValue = linearRamp<Type>(output, currentValue, step);
@@ -128,7 +128,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 
         currentValue = peak;
         currentState = State::Hold;
-        [[fallthrough]];
+        // fallthrough
     case State::Hold:
         length = min(remainingSamples, hold);
         fill<Type>(output, currentValue);
@@ -140,7 +140,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 
         step = std::exp(std::log(sustain + config::virtuallyZero) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
-        [[fallthrough]];
+        // fallthrough
     case State::Decay:
         length = min(remainingSamples, decay);
         currentValue = multiplicativeRamp<Type>(output, currentValue, step);
@@ -152,7 +152,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 
         currentValue = sustain;
         currentState = State::Sustain;
-        [[fallthrough]];
+        // fallthrough
     case State::Sustain:
         if (freeRunning)
             shouldRelease = true;
@@ -168,9 +168,9 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 
         currentValue = 0.0;
         currentState = State::Done;
-        [[fallthrough]];
+        // fallthrough
     case State::Done:
-        [[fallthrough]];
+        // fallthrough
     default:
         break;
     }

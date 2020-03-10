@@ -163,20 +163,20 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
         switch (member.lettersOnlyHash) {
-        case hash("Set_cc&"): [[fallthrough]];
+        case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
                 resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
             }
             break;
-        case hash("Label_cc&"): [[fallthrough]];
+        case hash("Label_cc&"): // fallthrough
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
                 ccNames.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
-            [[fallthrough]];
+            // fallthrough
         case hash("default_path"):
             defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             DBG("Changing default sample path to " << defaultPath);
