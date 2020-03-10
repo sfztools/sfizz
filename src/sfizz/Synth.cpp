@@ -260,7 +260,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
 void addEndpointsToVelocityCurve(sfz::Region& region)
 {
     if (region.velocityPoints.size() > 0) {
-        absl::c_sort(region.velocityPoints, [](auto& lhs, auto& rhs) { return lhs.first < rhs.first; });
+        absl::c_sort(region.velocityPoints, [](const std::pair<int, float>& lhs, const std::pair<int, float>& rhs) { return lhs.first < rhs.first; });
         if (region.ampVeltrack > 0) {
             if (region.velocityPoints.back().first != sfz::Default::velocityRange.getEnd())
                 region.velocityPoints.push_back(std::make_pair<int, float>(127, 1.0f));
@@ -409,7 +409,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
-    auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
+    auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) { return voice->isFree(); });
     if (freeVoice != voices.end())
         return freeVoice->get();
 
@@ -418,7 +418,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     for (auto& voice : voices)
         if (voice->canBeStolen())
             voiceViewArray.push_back(voice.get());
-    absl::c_sort(voiceViewArray, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
+    absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
 
     for (auto* voice : voiceViewArray) {
         if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
