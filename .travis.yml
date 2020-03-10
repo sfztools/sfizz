@@ -135,6 +135,17 @@ jobs:
     script: .travis/script_osx.sh
     after_success: .travis/prepare_tarball.sh
 
+  - name: "MOD devices arm"
+    stage: "Build"
+    env:
+    - CONTAINER=jpcima/mod-plugin-builder
+    - CROSS_COMPILE=moddevices-arm
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
+    before_install: .travis/before_install_moddevices.sh
+    install: .travis/install_moddevices.sh
+    script: .travis/script_moddevices.sh
+    after_success: .travis/prepare_tarball.sh
+
   - stage: "Deploy"
     name: "Source packaging"
     if: (tag IS present) AND (branch = master) AND (type = push)
