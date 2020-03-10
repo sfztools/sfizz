@@ -124,8 +124,8 @@ inline float midiNoteFrequency(const int noteNumber)
 template<class T>
 constexpr T clamp( T v, T lo, T hi )
 {
-    v = std::min(v, hi);
-    v = std::max(v, lo);
+    v = min(v, hi);
+    v = max(v, lo);
     return v;
 }
 
@@ -148,18 +148,19 @@ constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueTy
     return left * leftCoeff + right * rightCoeff;
 }
 
-template <class Type>
-constexpr Type pi { static_cast<Type>(3.141592653589793238462643383279502884) };
-template <class Type>
-constexpr Type twoPi { static_cast<Type>(2) * pi<Type> };
-template <class Type>
-constexpr Type piTwo { pi<Type> / static_cast<Type>(2) };
-template <class Type>
-constexpr Type piFour { pi<Type> / static_cast<Type>(4) };
-template <class Type>
-constexpr Type sqrtTwo { static_cast<Type>(1.414213562373095048801688724209698078569671875376948073176) };
-template <class Type>
-constexpr Type sqrtTwoInv { static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588) };
+constexpr double dPi { 3.141592653589793238462643383279502884};
+constexpr double dTwoPi { dPi * 2 };
+constexpr double dPiTwo { dPi / 2 };
+constexpr double dPiFour { dPi / 4 };
+constexpr double dSqrtTwo { 1.414213562373095048801688724209698078569671875376948073176 };
+constexpr double dSqrtTwoInv { 0.707106781186547524400844362104849039284835937688474036588 };
+
+constexpr float fPi { 3.141592653589793238462643383279502884};
+constexpr float fTwoPi { fPi * 2 };
+constexpr float fPiTwo { fPi / 2 };
+constexpr float fPiFour { fPi / 4 };
+constexpr float fSqrtTwo { 1.414213562373095048801688724209698078569671875376948073176 };
+constexpr float fSqrtTwoInv { 0.707106781186547524400844362104849039284835937688474036588 };
 
 /**
    @brief A fraction which is parameterized by integer type
