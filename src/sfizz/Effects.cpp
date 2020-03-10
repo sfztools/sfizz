@@ -44,21 +44,21 @@ std::unique_ptr<Effect> EffectFactory::makeEffect(absl::Span<const Opcode> membe
 
     if (!opcode) {
         DBG("The effect does not specify a type");
-        return std::make_unique<sfz::fx::Nothing>();
+        return absl::make_unique<sfz::fx::Nothing>();
     }
 
     const absl::string_view type = opcode->value;
 
-    const auto it = absl::c_find_if(_entries, [&](auto&& entry) { return entry.name == type; });
+    const auto it = absl::c_find_if(_entries, [&](const FactoryEntry& entry) { return entry.name == type; });
     if (it == _entries.end()) {
         DBG("Unsupported effect type: " << type);
-        return std::make_unique<sfz::fx::Nothing>();
+        return absl::make_unique<sfz::fx::Nothing>();
     }
 
     auto fx = it->make(members);
     if (!fx) {
         DBG("Could not instantiate effect of type: " << type);
-        return std::make_unique<sfz::fx::Nothing>();
+        return absl::make_unique<sfz::fx::Nothing>();
     }
 
     return fx;

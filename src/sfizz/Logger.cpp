@@ -13,8 +13,6 @@
 #include <sstream>
 #include <cmath>
 
-using namespace std::chrono_literals;
-
 template<class T>
 void printStatistics(std::vector<T>& data)
 {
@@ -141,7 +139,7 @@ void sfz::Logger::moveEvents() noexcept
             callbackTimes.clear();
         }
 
-        std::this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
