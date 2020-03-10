@@ -37,7 +37,6 @@
 #include <string_view>
 #include <chrono>
 #include <thread>
-using namespace std::literals;
 
 static jack_port_t* midiInputPort;
 static jack_port_t* outputPort1;
@@ -290,7 +289,7 @@ int main(int argc, char** argv)
         std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
         std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
 #endif
-        std::this_thread::sleep_for(2s);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     std::cout << "Closing..." << '\n';
