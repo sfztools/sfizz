@@ -47,10 +47,10 @@ struct ScopedTiming
 
 struct FileTime
 {
-    Duration waitDuration;
-    Duration loadDuration;
-    uint32_t fileSize;
-    absl::string_view filename;
+    Duration waitDuration { 0 };
+    Duration loadDuration { 0 };
+    uint32_t fileSize { 0 };
+    absl::string_view filename {};
 };
 
 struct CallbackBreakdown
@@ -66,9 +66,9 @@ struct CallbackBreakdown
 
 struct CallbackTime
 {
-    CallbackBreakdown breakdown;
-    int numVoices;
-    size_t numSamples;
+    CallbackBreakdown breakdown {};
+    int numVoices { 0 };
+    size_t numSamples { 0 };
 };
 
 class Logger
