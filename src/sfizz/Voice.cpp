@@ -479,7 +479,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         auto bends = tempSpan2.first(buffer.getNumFrames());
         auto phases = tempSpan2.first(buffer.getNumFrames());
 
-        const float step = baseFrequency * fTwoPi / sampleRate;
+        const float step = baseFrequency * twoPi<float>() / sampleRate;
         fill<float>(jumps, step);
 
         if (region->bendStep > 1)
@@ -496,8 +496,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         copy<float>(leftSpan, rightSpan);
 
         // Wrap the phase so we don't loose too much precision on longer notes
-        const auto numTwoPiWraps = static_cast<int>(phase / fTwoPi);
-        phase -= fTwoPi * static_cast<float>(numTwoPiWraps);
+        const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>());
+        phase -= twoPi<float>() * static_cast<float>(numTwoPiWraps);
     }
 }
 
