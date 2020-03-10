@@ -52,7 +52,7 @@ struct PreloadedFileHandle
 
 struct FilePromise
 {
-    auto getData()
+    AudioSpan<const float> getData()
     {
         if (dataReady)
             return AudioSpan<const float>(fileData);
