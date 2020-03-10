@@ -1011,7 +1011,7 @@ float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
     float gain { 1.0f };
 
     if (velocityPoints.size() > 0) { // Custom velocity curve
-        auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](auto& val) { return val.first >= velocity; });
+        auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](const std::pair<int, float>& val) { return val.first >= velocity; });
         auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
         // Linear interpolation
         float relativePositionInSegment {

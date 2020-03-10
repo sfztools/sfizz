@@ -53,7 +53,7 @@ void EventEnvelope<Type>::prepareEvents(int blockLength)
     if (resetEvents)
         clear();
 
-    absl::c_stable_sort(events, [](const auto& lhs, const auto& rhs) {
+    absl::c_stable_sort(events, [](const std::pair<int, Type>& lhs, const std::pair<int, Type>& rhs) {
         return lhs.first < rhs.first;
     });
 
