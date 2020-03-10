@@ -6,10 +6,11 @@
 
 #include "Synth.h"
 #include "sfizz.hpp"
+#include "absl/memory/memory.h"
 
 sfz::Sfizz::Sfizz()
 {
-    synth = std::make_unique<sfz::Synth>();
+    synth = absl::make_unique<sfz::Synth>();
 }
 
 sfz::Sfizz::~Sfizz()

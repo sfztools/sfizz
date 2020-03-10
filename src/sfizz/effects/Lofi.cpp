@@ -37,7 +37,7 @@
 
 #include "Lofi.h"
 #include "Opcode.h"
-#include <memory>
+#include "absl/memory/memory.h"
 #include <algorithm>
 #include <cstring>
 #include <cmath>
@@ -79,7 +79,7 @@ namespace fx {
 
     std::unique_ptr<Effect> Lofi::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = std::make_unique<Lofi>();
+        auto fx = absl::make_unique<Lofi>();
 
         for (const Opcode& opcode : members) {
             switch (opcode.lettersOnlyHash) {
@@ -92,7 +92,7 @@ namespace fx {
             }
         }
 
-        return fx;
+        return std::move(fx);
     }
 
     ///
