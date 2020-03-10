@@ -13,12 +13,12 @@
 #include "StringViewHelpers.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_replace.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <utility>
-using namespace std::literals;
 
 sfz::Synth::Synth()
     : Synth(config::numVoices)
@@ -38,7 +38,7 @@ sfz::Synth::~Synth()
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto& voice: voices)
@@ -83,9 +83,9 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_unique<Region>(resources.midiState, defaultPath);
+    auto lastRegion = absl::make_unique<Region>(resources.midiState, defaultPath);
 
-    auto parseOpcodes = [&](const auto& opcodes) {
+    auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
             const auto unknown = absl::c_find_if(unknownOpcodes, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
             if (unknown != unknownOpcodes.end()) {
@@ -112,7 +112,7 @@ void sfz::Synth::clear()
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto &voice: voices)
@@ -279,7 +279,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     clear();
@@ -452,7 +452,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     AtomicDisabler callbackDisabler { canEnterCallback };
 
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     this->samplesPerBlock = samplesPerBlock;
@@ -471,7 +471,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     this->sampleRate = sampleRate;
@@ -851,12 +851,12 @@ void sfz::Synth::resetVoices(int numVoices)
 {
     AtomicDisabler callbackDisabler{ canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(resources));
+        voices.push_back(absl::make_unique<Voice>(resources));
 
     for (auto& voice: voices) {
         voice->setSampleRate(this->sampleRate);
@@ -871,7 +871,7 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
     AtomicDisabler callbackDisabler{ canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto& voice: voices)
@@ -891,7 +891,7 @@ void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     AtomicDisabler callbackDisabler{ canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     resources.filePool.setPreloadSize(preloadSize);
