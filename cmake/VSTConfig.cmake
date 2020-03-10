@@ -3,6 +3,14 @@ set (VSTPLUGIN_VENDOR          "Paul Ferrand")
 set (VSTPLUGIN_URL             "http://sfztools.github.io/sfizz")
 set (VSTPLUGIN_EMAIL           "paul@ferrand.cc")
 
+if (MSVC)
+    set (VSTPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/vst3" CACHE STRING
+    "Install destination for VST bundle [default: ${CMAKE_INSTALL_PREFIX}/vst3}]")
+else()
+    set (VSTPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/vst3" CACHE STRING
+    "Install destination for VST bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/vst3}]")
+endif()
+
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
 # see https://gitlab.kitware.com/cmake/cmake/issues/15170
 

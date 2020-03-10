@@ -120,3 +120,9 @@ endif()
 if (FALSE)
     target_link_options(${VSTPLUGIN_PRJ_NAME} PRIVATE "-Wl,-no-undefined")
 endif()
+
+# Installation
+if (NOT MSVC)
+    install (DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
+        DESTINATION "${VSTPLUGIN_INSTALL_DIR}")
+endif()
