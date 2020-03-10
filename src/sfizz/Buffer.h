@@ -31,6 +31,8 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <atomic>
+
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -92,6 +94,8 @@ private:
     std::atomic<int> bytes { 0 };
 };
 
+
+
 /**
  * @brief      A heap buffer structure that tries to align its beginning and
  *             adds a small offset at the end for alignment too.
@@ -109,7 +113,7 @@ private:
 template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class Buffer {
 public:
-    using value_type = std::remove_cv_t<Type>;
+    using value_type = typename std::remove_cv<Type>::type;
     using pointer = value_type*;
     using const_pointer = const value_type*;
     using reference = value_type&;
@@ -165,7 +169,7 @@ public:
         largerSize = tempSize;
         alignedSize = newSize;
         paddedData = static_cast<pointer>(newData);
-        normalData = static_cast<pointer>(std::align(Alignment, alignedSize, newData, tempSize));
+        normalData = static_cast<pointer>(align(Alignment, alignedSize, newData, tempSize));
         normalEnd = normalData + alignedSize;
 		auto endMisalignment = (alignedSize & TypeAlignmentMask);
 		if (endMisalignment != 0)
@@ -274,12 +278,22 @@ public:
         return counter;
     }
 private:
-    static constexpr auto AlignmentMask { Alignment - 1 };
-    static constexpr auto TypeAlignment { Alignment / sizeof(value_type) };
-    static constexpr auto TypeAlignmentMask { TypeAlignment - 1 };
+    static constexpr int AlignmentMask { Alignment - 1 };
+    static constexpr int TypeAlignment { Alignment / sizeof(value_type) };
+    static constexpr int TypeAlignmentMask { TypeAlignment - 1 };
     static_assert(std::is_arithmetic<value_type>::value, "Type should be arithmetic");
     static_assert(Alignment == 0 || Alignment == 4 || Alignment == 8 || Alignment == 16, "Bad alignment value");
     static_assert(TypeAlignment * sizeof(value_type) == Alignment, "The alignment does not appear to be divided by the size of the Type");
+    void* align(std::size_t alignment, std::size_t size, void *&ptr, std::size_t &space )
+    {
+        std::uintptr_t pn = reinterpret_cast< std::uintptr_t>( ptr );
+        std::uintptr_t aligned = ( pn + alignment - 1 ) & - alignment;
+        std::size_t padding = aligned - pn;
+        if ( space < size + padding ) return nullptr;
+        space -= padding;
+        return ptr = reinterpret_cast< void * >( aligned );
+    }
+
     size_type largerSize { 0 };
     size_type alignedSize { 0 };
     pointer normalData { nullptr };
