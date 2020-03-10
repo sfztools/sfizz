@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -ex
-. .travis/mingw_container.sh
+. .travis/docker_container.sh
 
 mkdir -p build/${INSTALL_DIR} && cd build
 if [[ ${CROSS_COMPILE} == "mingw32" ]]; then

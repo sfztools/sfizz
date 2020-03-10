@@ -1,7 +1,7 @@
 #!/bin/bash
 
 buildenv() {
-  setup_container archlinux
+  setup_container "$CONTAINER"
   docker exec -w "$(pwd)" -i -t "$container" "$@"
 }
 
