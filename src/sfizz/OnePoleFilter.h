@@ -26,7 +26,7 @@ public:
     template <class C>
     static Type normalizedGain(Type cutoff, C sampleRate)
     {
-        return std::tan(cutoff / static_cast<Type>(sampleRate) * fPi);
+        return std::tan(cutoff / static_cast<Type>(sampleRate) * pi<float>());
     }
 
     OnePoleFilter(Type gain)
