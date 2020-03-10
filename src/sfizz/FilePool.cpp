@@ -32,10 +32,10 @@
 #include "AtomicGuard.h"
 #include "absl/types/span.h"
 #include "absl/strings/match.h"
+#include "absl/memory/memory.h"
 #include <memory>
 #include <sndfile.hh>
 #include <thread>
-using namespace std::chrono_literals;
 
 template <class T>
 void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t numFrames)
@@ -57,13 +57,13 @@ void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t 
 template <class T>
 std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor)
 {
-    auto baseBuffer = std::make_unique<sfz::AudioBuffer<T>>();
+    auto baseBuffer = absl::make_unique<sfz::AudioBuffer<T>>();
     readBaseFile(sndFile, *baseBuffer, numFrames);
 
     if (factor == sfz::Oversampling::x1)
         return baseBuffer;
 
-    auto outputBuffer = std::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor));
+    auto outputBuffer = absl::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor));
     sfz::Oversampler oversampler { factor };
     oversampler.stream(*baseBuffer, *outputBuffer);
     return outputBuffer;
@@ -216,10 +216,9 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
             preloadedFiles[filename].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor);
         }
     } else {
-        preloadedFiles.insert_or_assign(filename, {
-            readFromFile<float>(sndFile, framesToLoad, oversamplingFactor),
-            static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate())
-        });
+        const float sourceSampleRate { static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate()) };
+        PreloadedFileHandle handle { readFromFile<float>(sndFile, framesToLoad, oversamplingFactor), sourceSampleRate };
+        preloadedFiles.insert_or_assign(filename, handle);
     }
 
     return true;
@@ -272,7 +271,7 @@ void sfz::FilePool::tryToClearPromises()
     AtomicDisabler disabler { canAddPromisesToClear };
 
     while (addingPromisesToClear)
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     for (auto& promise: promisesToClear) {
         if (promise->dataReady)
@@ -284,7 +283,7 @@ void sfz::FilePool::clearingThread()
 {
     while (!quitThread) {
         tryToClearPromises();
-        std::this_thread::sleep_for(50ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
@@ -302,7 +301,7 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         if (!promiseQueue.try_pop(promise)) {
-            std::this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
 
@@ -326,7 +325,7 @@ void sfz::FilePool::loadingThread() noexcept
 
         while (!filledPromiseQueue.try_push(promise)) {
             DBG("[sfizz] Error enqueuing the promise for " << promise->filename << " in the filledPromiseQueue");
-            std::this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         promise.reset();
@@ -412,7 +411,7 @@ void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
     while (emptyQueue)
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
@@ -421,11 +420,11 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
     // of the files we need to load still.
     // Spinlocking on the size of the background queue
     while (!promiseQueue.was_empty()){
-        std::this_thread::sleep_for(0.1ms);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 
     // Spinlocking on the threads possibly logging in the background
     while (threadsLoading > 0) {
-        std::this_thread::sleep_for(0.1ms);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 }

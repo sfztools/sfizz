@@ -44,10 +44,11 @@ namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
 
 
+// Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct PreloadedFileHandle
 {
-    std::shared_ptr<AudioBuffer<float>> preloadedData {};
-    float sampleRate { config::defaultSampleRate };
+    std::shared_ptr<AudioBuffer<float>> preloadedData;
+    float sampleRate;
 };
 
 struct FilePromise
@@ -78,7 +79,7 @@ struct FilePromise
     AudioBuffer<float> fileData {};
     float sampleRate { config::defaultSampleRate };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
-    std::atomic_size_t availableFrames { 0 };
+    std::atomic<size_t> availableFrames { 0 };
     std::atomic<bool> dataReady { false };
     std::chrono::time_point<std::chrono::high_resolution_clock> creationTime;
 
