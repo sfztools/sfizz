@@ -11,6 +11,7 @@
 #include <array>
 #include <cmath>
 #include "Config.h"
+#include "MathHelpers.h"
 
 namespace sfz
 {
@@ -85,7 +86,7 @@ template<class T>
 constexpr float normalizeCC(T ccValue)
 {
     static_assert(std::is_integral<T>::value, "Requires an integral T");
-    return static_cast<float>(std::min(std::max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
+    return static_cast<float>(min(max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
 }
 
 /**
@@ -124,7 +125,7 @@ constexpr float normalizePercents(T percentValue)
  */
 constexpr float normalizeBend(float bendValue)
 {
-    return std::min(std::max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
+    return min(max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
 }
 
 /**
