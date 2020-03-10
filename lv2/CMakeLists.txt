@@ -3,6 +3,9 @@ set (LV2PLUGIN_PRJ_NAME "${PROJECT_NAME}_lv2")
 # Set the build directory as <build_dir>/lv2/<plugin_name>.lv2/
 set (PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${PROJECT_NAME}.lv2")
 
+# C99 or higher is needed
+set(CMAKE_C_STANDARD 99)
+
 # LV2 plugin specific settings
 include (LV2Config)
 
