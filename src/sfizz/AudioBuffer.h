@@ -10,7 +10,7 @@
 #include "Debug.h"
 #include "LeakDetector.h"
 #include "absl/types/span.h"
-#include <memory>
+#include "absl/memory/memory.h"
 #include <array>
 
 namespace sfz
@@ -54,7 +54,7 @@ public:
         , numFrames(numFrames)
     {
         for (size_t i = 0; i < numChannels; ++i)
-            buffers[i] = std::make_unique<buffer_type>(numFrames);
+            buffers[i] = absl::make_unique<buffer_type>(numFrames);
     }
 
     /**
@@ -170,7 +170,7 @@ public:
     void addChannel()
     {
         if (numChannels < MaxChannels)
-            buffers[numChannels++] = std::make_unique<buffer_type>(numFrames);
+            buffers[numChannels++] = absl::make_unique<buffer_type>(numFrames);
     }
 
     /**
