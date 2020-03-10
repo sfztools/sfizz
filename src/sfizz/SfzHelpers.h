@@ -241,7 +241,7 @@ constexpr void addToBase(T& base, T modifier)
  * @param base
  * @param modifier
  */
-void multiplyByCents(float& base, int modifier)
+inline void multiplyByCents(float& base, int modifier)
 {
     base *= centsFactor(modifier);
 }
