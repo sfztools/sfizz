@@ -231,7 +231,7 @@ using modFunction = std::function<void(T&, U)>;
  * @param modifier the modifier value
  */
 template<class T>
-CONSTEXPR_OR_INLINE void addToBase(T& base, T modifier)
+inline CXX14_CONSTEXPR void addToBase(T& base, T modifier)
 {
     base += modifier;
 }
@@ -242,7 +242,7 @@ CONSTEXPR_OR_INLINE void addToBase(T& base, T modifier)
  * @param base
  * @param modifier
  */
-CONSTEXPR_OR_INLINE void multiplyByCents(float& base, int modifier)
+inline CXX14_CONSTEXPR void multiplyByCents(float& base, int modifier)
 {
     base *= centsFactor(modifier);
 }

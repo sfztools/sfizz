@@ -19,7 +19,7 @@
 #endif
 
 #if __cplusplus > 201103L
-#define CONSTEXPR_OR_INLINE constexpr
+#define CXX14_CONSTEXPR constexpr
 #else
-#define CONSTEXPR_OR_INLINE inline
+#define CXX14_CONSTEXPR
 #endif

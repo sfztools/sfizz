@@ -129,13 +129,13 @@ constexpr T clamp( T v, T lo, T hi )
 }
 
 template<int Increment = 1, class T>
-CONSTEXPR_OR_INLINE void incrementAll(T& only)
+inline CXX14_CONSTEXPR void incrementAll(T& only)
 {
     only += Increment;
 }
 
 template<int Increment = 1, class T, class... Args>
-CONSTEXPR_OR_INLINE void incrementAll(T& first, Args&... rest)
+inline CXX14_CONSTEXPR void incrementAll(T& first, Args&... rest)
 {
     first += Increment;
     incrementAll<Increment>(rest...);
