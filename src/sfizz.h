@@ -36,7 +36,9 @@ typedef enum {
 
 /**
  * @brief      Creates a sfizz synth. This object has to be freed by the caller
- *             using sfizz_free().
+ *             using sfizz_free(). The synth by default is set at 48 kHz
+ *             and a maximum block size of 1024. You should change these values
+ *             if they are not correct for your application.
  *
  * @return     sfizz_synth_t*
  */

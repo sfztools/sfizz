@@ -24,6 +24,12 @@ class Synth;
 class SFIZZ_EXPORTED_API Sfizz
 {
 public:
+    /**
+     * @brief Construct a new Sfizz object. The synth by default is set at 48 kHz
+     * and a block size of 1024. You should change these values if they are not
+     * suited to your application.
+     *
+     */
     Sfizz();
     ~Sfizz();
     /**
