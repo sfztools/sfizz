@@ -20,7 +20,7 @@
 midnam:interface a lv2:ExtensionData .
 midnam:update a lv2:Feature .
 
-<#config>
+<@LV2PLUGIN_URI@#config>
   a pg:Group ;
   lv2:symbol "config" ;
   lv2:name "Configuration",
@@ -33,27 +33,6 @@ midnam:update a lv2:Feature .
     "Fichier SFZ"@fr ,
     "File SFZ"@it ;
   rdfs:range atom:Path .
-
-<@LV2PLUGIN_URI@:numvoices>
-  a lv2:Parameter ;
-  rdfs:label "Polyphony",
-    "Polyphonie"@fr ,
-    "Polifonia"@it ;
-  rdfs:range atom:Int .
-
-<@LV2PLUGIN_URI@:preload_size>
-  a lv2:Parameter ;
-  rdfs:label "Preload size",
-  "Taille préchargée"@fr ,
-  "Grandezza precaricamento"@it ;
-  rdfs:range atom:Int .
-
-<@LV2PLUGIN_URI@:oversampling>
-  a lv2:Parameter ;
-  rdfs:label "Oversampling",
-    "Suréchantillonnage"@fr ,
-    "Sovracampionamento"@it ;
-  rdfs:range atom:Int .
 
 <@LV2PLUGIN_URI@>
   a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
@@ -130,7 +109,7 @@ midnam:update a lv2:Feature .
     lv2:name "Polyphony",
       "Polyphonie"@fr ,
       "Polifonia"@it ;
-    pg:group <#config> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:portProperty pprop:notAutomatic ;
     lv2:portProperty pprop:expensive ;
     lv2:portProperty lv2:integer ;
@@ -175,7 +154,7 @@ midnam:update a lv2:Feature .
     lv2:name "Internal oversampling factor",
       "Facteur de suréchantillonnage interne"@fr ,
       "Fattore Sovracampionamento Interno"@it ;
-    pg:group <#config> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:portProperty pprop:notAutomatic ;
     lv2:portProperty pprop:expensive ;
     lv2:portProperty lv2:integer ;
@@ -210,7 +189,7 @@ midnam:update a lv2:Feature .
     lv2:name "Preload size",
       "Taille préchargée"@fr ,
       "Grandezza Precaricamento"@it ;
-    pg:group <#config> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:portProperty pprop:notAutomatic ;
     lv2:portProperty pprop:expensive ;
     lv2:portProperty lv2:integer ;
