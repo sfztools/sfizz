@@ -7,16 +7,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-
-#if defined SFIZZ_EXPORT_SYMBOLS
-  #if defined _WIN32
-    #define SFIZZ_EXPORTED_API __declspec(dllexport)
-  #else
-    #define SFIZZ_EXPORTED_API __attribute__ ((visibility ("default")))
-  #endif
-#else
-  #define SFIZZ_EXPORTED_API
-#endif
+#include "sfizz/Macros.h"
 
 namespace sfz
 {
