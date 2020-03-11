@@ -13,8 +13,10 @@
 
 using namespace VSTGUI;
 
+static ViewRect sfizzUiViewRect {0, 0, 684, 684};
+
 SfizzVstEditor::SfizzVstEditor(void *controller)
-    : VSTGUIEditor(controller),
+    : VSTGUIEditor(controller, &sfizzUiViewRect),
       _logo("logo.png")
 {
     getController()->addSfizzStateListener(this);
@@ -29,7 +31,7 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
 {
     fprintf(stderr, "[sfizz] about to open view with parent %p\n", parent);
 
-    CRect wsize(0, 0, _logo.getWidth(), _logo.getHeight());
+    CRect wsize(0, 0, sfizzUiViewRect.getWidth(), sfizzUiViewRect.getHeight());
     CFrame *frame = new CFrame(wsize, this);
     this->frame = frame;
 
