@@ -6,6 +6,7 @@
 
 #pragma once
 #include "Config.h"
+#include "LeakDetector.h"
 #include "atomic_queue/atomic_queue.h"
 #include <vector>
 #include <string>
@@ -58,6 +59,7 @@ struct FileTime
     Duration loadDuration { 0 };
     uint32_t fileSize { 0 };
     absl::string_view filename {};
+    LEAK_DETECTOR(FileTime);
 };
 
 struct CallbackBreakdown
@@ -69,6 +71,7 @@ struct CallbackBreakdown
     Duration filters { 0 };
     Duration panning { 0 };
     Duration effects { 0 };
+    LEAK_DETECTOR(CallbackBreakdown);
 };
 
 struct CallbackTime
@@ -83,6 +86,7 @@ struct CallbackTime
     CallbackBreakdown breakdown {};
     int numVoices { 0 };
     size_t numSamples { 0 };
+    LEAK_DETECTOR(CallbackTime);
 };
 
 class Logger
@@ -149,6 +153,7 @@ private:
     std::atomic_flag keepRunning;
     std::atomic_flag clearFlag;
     std::thread loggingThread;
+    LEAK_DETECTOR(Logger);
 };
 
 }
