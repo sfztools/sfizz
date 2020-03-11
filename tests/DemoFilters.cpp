@@ -117,6 +117,7 @@ bool DemoApp::initSound()
     fFilter.setChannels(2);
 
     fFilterEq.init(sampleRate);
+    fFilterEq.setType(sfz::kEqPeak); // TODO: make a chooser of EQ type
     fFilterEq.setChannels(2);
 
     fTempCutoff.reset(new float[bufferSize]);
