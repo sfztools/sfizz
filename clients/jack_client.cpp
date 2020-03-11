@@ -71,8 +71,6 @@ constexpr int buildAndCenterPitch(uint8_t firstByte, uint8_t secondByte)
 }
 }
 
-static std::atomic<bool> keepRunning { true };
-
 int process(jack_nframes_t numFrames, void* arg)
 {
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
