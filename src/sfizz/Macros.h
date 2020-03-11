@@ -17,3 +17,9 @@
 #else
   #define SFIZZ_EXPORTED_API
 #endif
+
+#if __cplusplus > 201103L
+#define CONSTEXPR_OR_INLINE constexpr
+#else
+#define CONSTEXPR_OR_INLINE inline
+#endif

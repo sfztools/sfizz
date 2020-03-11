@@ -10,6 +10,7 @@
 //#include <string>
 #include <array>
 #include <cmath>
+#include "Macros.h"
 #include "Config.h"
 #include "MathHelpers.h"
 
@@ -230,7 +231,7 @@ using modFunction = std::function<void(T&, U)>;
  * @param modifier the modifier value
  */
 template<class T>
-constexpr void addToBase(T& base, T modifier)
+CONSTEXPR_OR_INLINE void addToBase(T& base, T modifier)
 {
     base += modifier;
 }
@@ -241,7 +242,7 @@ constexpr void addToBase(T& base, T modifier)
  * @param base
  * @param modifier
  */
-inline void multiplyByCents(float& base, int modifier)
+CONSTEXPR_OR_INLINE void multiplyByCents(float& base, int modifier)
 {
     base *= centsFactor(modifier);
 }

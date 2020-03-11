@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "Config.h"
+#include "Macros.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -128,13 +129,13 @@ constexpr T clamp( T v, T lo, T hi )
 }
 
 template<int Increment = 1, class T>
-constexpr void incrementAll(T& only)
+CONSTEXPR_OR_INLINE void incrementAll(T& only)
 {
     only += Increment;
 }
 
 template<int Increment = 1, class T, class... Args>
-constexpr void incrementAll(T& first, Args&... rest)
+CONSTEXPR_OR_INLINE void incrementAll(T& first, Args&... rest)
 {
     first += Increment;
     incrementAll<Increment>(rest...);
