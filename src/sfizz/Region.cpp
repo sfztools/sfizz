@@ -621,6 +621,25 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2gain, Default::eqGainModRange);
         }
         break;
+    case hash("eq&_type"):
+        {
+            const auto eqNumber = opcode.parameters.front();
+            if (eqNumber == 0)
+                return false;
+            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+                return false;
+
+            switch (hash(opcode.value)) {
+                case hash("peak"): equalizers[eqNumber - 1].type = EqType::kEqPeak; break;
+                case hash("lshelf"): equalizers[eqNumber - 1].type = EqType::kEqLowShelf; break;
+                case hash("hshelf"): equalizers[eqNumber - 1].type = EqType::kEqHighShelf; break;
+                default:
+                    equalizers[eqNumber - 1].type = EqType::kEqNone;
+                    DBG("Unknown EQ type: " << std::string(opcode.value));
+            }
+        }
+        break;
+
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);

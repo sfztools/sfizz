@@ -114,6 +114,8 @@ enum FilterType : int {
     kFilterPeq,
 };
 
+enum EqType : int;
+
 /**
    Equalizer filter for SFZ v1
    Available for mono and stereo. (channels=1, channels=2)
@@ -175,9 +177,26 @@ public:
      */
     void setChannels(unsigned channels);
 
+    /**
+       Get the type of filter.
+     */
+    EqType type() const;
+
+    /**
+       Set the type of filter.
+     */
+    void setType(EqType type);
+
 private:
     struct Impl;
     std::unique_ptr<Impl> P;
+};
+
+enum EqType : int {
+    kEqNone,
+    kEqPeak,
+    kEqLowShelf,
+    kEqHighShelf,
 };
 
 } // namespace sfz

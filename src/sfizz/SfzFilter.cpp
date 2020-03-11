@@ -263,13 +263,24 @@ sfzFilterDsp *Filter::Impl::getDsp(unsigned channels, FilterType type)
 
 
 struct FilterEq::Impl {
+    EqType fType = kEqNone;
     unsigned fChannels = 1;
     enum { maxChannels = 2 };
 
-    sfzEq fDsp;
-    sfz2chEq fDsp2ch;
+    sfzEqPeak fDspPeak;
+    sfzEqLshelf fDspLshelf;
+    sfzEqHshelf fDspHshelf;
 
-    sfzFilterDsp *getDsp(unsigned channels);
+    sfz2chEqPeak fDsp2chPeak;
+    sfz2chEqLshelf fDsp2chLshelf;
+    sfz2chEqHshelf fDsp2chHshelf;
+
+    sfzFilterDsp *getDsp(unsigned channels, EqType type);
+
+    static constexpr uint32_t idDsp(unsigned channels, EqType type)
+    {
+        return static_cast<unsigned>(type)|(channels << 16);
+    }
 };
 
 FilterEq::FilterEq()
@@ -284,14 +295,17 @@ FilterEq::~FilterEq()
 void FilterEq::init(double sampleRate)
 {
     for (unsigned channels = 1; channels <= Impl::maxChannels; ++channels) {
-        sfzFilterDsp *dsp = P->getDsp(channels);
-        dsp->init(sampleRate);
+        EqType ftype = static_cast<EqType>(1);
+        while (sfzFilterDsp *dsp = P->getDsp(channels, ftype)) {
+            dsp->init(sampleRate);
+            ftype = static_cast<EqType>(static_cast<int>(ftype) + 1);
+        }
     }
 }
 
 void FilterEq::clear()
 {
-    sfzFilterDsp *dsp = P->getDsp(P->fChannels);
+    sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
 
     if (dsp)
         dsp->instanceClear();
@@ -299,7 +313,7 @@ void FilterEq::clear()
 
 void FilterEq::prepare(float cutoff, float bw, float pksh)
 {
-    sfzFilterDsp *dsp = P->getDsp(P->fChannels);
+    sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
 
     if (!dsp)
         return;
@@ -323,7 +337,7 @@ void FilterEq::prepare(float cutoff, float bw, float pksh)
 void FilterEq::process(const float *const in[], float *const out[], float cutoff, float bw, float pksh, unsigned nframes)
 {
     unsigned channels = P->fChannels;
-    sfzFilterDsp *dsp = P->getDsp(channels);
+    sfzFilterDsp *dsp = P->getDsp(channels, P->fType);
 
     if (!dsp) {
         for (unsigned c = 0; c < channels; ++c)
@@ -338,7 +352,7 @@ void FilterEq::process(const float *const in[], float *const out[], float cutoff
 void FilterEq::processModulated(const float *const in[], float *const out[], const float *cutoff, const float *bw, const float *pksh, unsigned nframes)
 {
     unsigned channels = P->fChannels;
-    sfzFilterDsp *dsp = P->getDsp(channels);
+    sfzFilterDsp *dsp = P->getDsp(channels, P->fType);
 
     if (!dsp) {
         for (unsigned c = 0; c < channels; ++c)
@@ -383,13 +397,31 @@ void FilterEq::setChannels(unsigned channels)
     }
 }
 
-sfzFilterDsp *FilterEq::Impl::getDsp(unsigned channels)
+EqType FilterEq::type() const
 {
-    switch (channels) {
+    return P->fType;
+}
+
+void FilterEq::setType(EqType type)
+{
+    if (P->fType != type) {
+        P->fType = type;
+        clear();
+    }
+}
+
+sfzFilterDsp *FilterEq::Impl::getDsp(unsigned channels, EqType type)
+{
+    switch (idDsp(channels, type)) {
     default: return nullptr;
 
-    case 1: return &fDsp;
-    case 2: return &fDsp2ch;
+    case idDsp(1, kEqPeak): return &fDspPeak;
+    case idDsp(1, kEqLowShelf): return &fDspLshelf;
+    case idDsp(1, kEqHighShelf): return &fDspHshelf;
+
+    case idDsp(2, kEqPeak): return &fDsp2chPeak;
+    case idDsp(2, kEqLowShelf): return &fDsp2chLshelf;
+    case idDsp(2, kEqHighShelf): return &fDsp2chHshelf;
     }
 }
 

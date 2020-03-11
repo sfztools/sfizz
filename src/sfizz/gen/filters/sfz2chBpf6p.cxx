@@ -196,7 +196,7 @@ class faust2chBpf6p : public sfzFilterDsp {
 			fRec6[0] = (fSlow0 * fRec6[1]);
 			fRec7[0] = ((fSlow0 * fRec7[1]) + fSlow11);
 			fRec2[0] = ((((fRec3[0] * fRec0[0]) + (fRec6[0] * fRec3[1])) + (fRec7[0] * fRec3[2])) - ((fRec4[0] * fRec2[1]) + (fRec5[0] * fRec2[2])));
-			fRec1[0] = ((((fRec0[0] * fRec2[0]) + (fRec6[0] * fRec2[1])) + (fRec7[0] * fRec2[2])) - ((fRec4[0] * fRec1[1]) + (fRec5[0] * fRec1[2])));
+			fRec1[0] = (((fRec0[0] * fRec2[0]) + ((fRec6[0] * fRec2[1]) + (fRec7[0] * fRec2[2]))) - ((fRec4[0] * fRec1[1]) + (fRec5[0] * fRec1[2])));
 			output0[i] = FAUSTFLOAT((((fRec0[0] * fRec1[0]) + (fRec6[0] * fRec1[1])) + (fRec7[0] * fRec1[2])));
 			fRec10[0] = (fTemp1 - ((fRec4[0] * fRec10[1]) + (fRec5[0] * fRec10[2])));
 			fRec9[0] = ((((fRec0[0] * fRec10[0]) + (fRec6[0] * fRec10[1])) + (fRec7[0] * fRec10[2])) - ((fRec4[0] * fRec9[1]) + (fRec5[0] * fRec9[2])));

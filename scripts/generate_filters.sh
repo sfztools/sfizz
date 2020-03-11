@@ -63,7 +63,7 @@ for f in \
     Lsh Hsh Peq \
     Pink \
     Lpf2pSv Hpf2pSv Bpf2pSv Brf2pSv \
-    Eq
+    EqPeak EqLshelf EqHshelf
 do
     faustgen "$f"
     faustgen "2ch$f"

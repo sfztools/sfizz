@@ -18,6 +18,7 @@ void sfz::EQHolder::reset()
 
 void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels, uint8_t velocity)
 {
+    eq.setType(description.type);
     eq.setChannels(numChannels);
     this->description = &description;
     const auto normalizedVelocity = normalizeVelocity(velocity);

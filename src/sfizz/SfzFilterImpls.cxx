@@ -63,7 +63,9 @@ protected:
 #include "gen/filters/sfzLsh.cxx"
 #include "gen/filters/sfzHsh.cxx"
 #include "gen/filters/sfzPeq.cxx"
-#include "gen/filters/sfzEq.cxx"
+#include "gen/filters/sfzEqPeak.cxx"
+#include "gen/filters/sfzEqLshelf.cxx"
+#include "gen/filters/sfzEqHshelf.cxx"
 
 #include "gen/filters/sfz2chApf1p.cxx"
 #include "gen/filters/sfz2chBpf1p.cxx"
@@ -88,7 +90,9 @@ protected:
 #include "gen/filters/sfz2chLsh.cxx"
 #include "gen/filters/sfz2chHsh.cxx"
 #include "gen/filters/sfz2chPeq.cxx"
-#include "gen/filters/sfz2chEq.cxx"
+#include "gen/filters/sfz2chEqPeak.cxx"
+#include "gen/filters/sfz2chEqLshelf.cxx"
+#include "gen/filters/sfz2chEqHshelf.cxx"
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
@@ -182,7 +186,9 @@ struct sfzBrf2pSv final : public sfzFilter<faustBrf2pSv> {};
 struct sfzLsh final : public sfzFilterPkSh<faustLsh> {};
 struct sfzHsh final : public sfzFilterPkSh<faustHsh> {};
 struct sfzPeq final : public sfzFilterPkSh<faustPeq> {};
-struct sfzEq final : public sfzFilterEq<faustEq> {};
+struct sfzEqPeak final : public sfzFilterEq<faustEqPeak> {};
+struct sfzEqLshelf final : public sfzFilterEq<faustEqLshelf> {};
+struct sfzEqHshelf final : public sfzFilterEq<faustEqHshelf> {};
 
 struct sfz2chLpf1p final : public sfzFilterNoQ<faust2chLpf1p> {};
 struct sfz2chLpf2p final : public sfzFilter<faust2chLpf2p> {};
@@ -207,4 +213,6 @@ struct sfz2chBrf2pSv final : public sfzFilter<faust2chBrf2pSv> {};
 struct sfz2chLsh final : public sfzFilterPkSh<faust2chLsh> {};
 struct sfz2chHsh final : public sfzFilterPkSh<faust2chHsh> {};
 struct sfz2chPeq final : public sfzFilterPkSh<faust2chPeq> {};
-struct sfz2chEq final : public sfzFilterEq<faust2chEq> {};
+struct sfz2chEqPeak final : public sfzFilterEq<faust2chEqPeak> {};
+struct sfz2chEqLshelf final : public sfzFilterEq<faust2chEqLshelf> {};
+struct sfz2chEqHshelf final : public sfzFilterEq<faust2chEqHshelf> {};
