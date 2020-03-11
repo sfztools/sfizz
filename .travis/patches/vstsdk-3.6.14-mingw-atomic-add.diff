@@ -1,0 +1,12 @@
+diff -Nru VST_SDK.orig/VST3_SDK/pluginterfaces/base/funknown.cpp VST_SDK/VST3_SDK/pluginterfaces/base/funknown.cpp
+--- VST_SDK.orig/VST3_SDK/pluginterfaces/base/funknown.cpp	2019-12-02 13:58:41.000000000 +0100
++++ VST_SDK/VST3_SDK/pluginterfaces/base/funknown.cpp	2020-03-10 22:02:26.220911670 +0100
+@@ -84,7 +84,7 @@
+ int32 PLUGIN_API atomicAdd (int32& var, int32 d)
+ {
+ #if SMTG_OS_WINDOWS
+-	return InterlockedExchangeAdd (&var, d) + d;
++	return InterlockedExchangeAdd ((LONG*)&var, d) + d;
+ #elif SMTG_OS_MACOS
+ #if SMTG_MACOS_USE_STDATOMIC
+ 	return atomic_fetch_add (reinterpret_cast<atomic_int_least32_t*> (&var), d) + d;

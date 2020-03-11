@@ -2,6 +2,10 @@ language: cpp
 os: linux
 dist: bionic
 
+cache:
+  directories:
+  - vst/download/
+
 jobs:
   include:
   - name: "clang-tidy checks"
@@ -81,10 +85,11 @@ jobs:
     script: .travis/script_library.sh
     after_success: .travis/prepare_tarball.sh
 
-  - name: "Linux arm64 static LV2"
+  - name: "Linux arm64 static plugins"
     arch: arm64
     env:
-    - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - ENABLE_VST_PLUGIN=OFF
     addons:
       apt:
         packages:
@@ -93,21 +98,31 @@ jobs:
     install:
     - .travis/download_cmake.sh
     - .travis/download_static_libs.sh
-    script: .travis/script_lv2.sh
+    script: .travis/script_plugins.sh
     after_success: .travis/prepare_tarball.sh
 
-  - name: "Linux amd64 static LV2"
+  - name: "Linux amd64 static plugins"
     env:
-    - INSTALL_DIR="sfizz-lv2-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    - ENABLE_VST_PLUGIN=ON
     addons:
       apt:
         packages:
         - libjack-jackd2-dev
         - libsndfile1-dev
+        - libcairo2-dev
+        - libfontconfig1-dev
+        - libx11-xcb-dev
+        - libxcb-util-dev
+        - libxcb-cursor-dev
+        - libxcb-xkb-dev
+        - libxkbcommon-dev
+        - libxkbcommon-x11-dev
+        - libxcb-keysyms1-dev
     install:
     - .travis/download_cmake.sh
     - .travis/download_static_libs.sh
-    script: .travis/script_lv2.sh
+    script: .travis/script_plugins.sh
     after_success: .travis/prepare_tarball.sh
 
   - name: "macOS"
