@@ -1,3 +1,10 @@
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND (CMAKE_CXX_STANDARD LESS 14 OR NOT CMAKE_CXX_STANDARD))
+    # There is a strange segfault in clang in c++11 when instantiating the
+    # envelopes in FloatEnvelopes.cpp.
+    message("Forcing C++14 to bypass a clang segfault")
+    set(CMAKE_CXX_STANDARD 14)
+endif()
+
 # Do not override the C++ standard if set to more than 11
 if (NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 11)
     set(CMAKE_CXX_STANDARD 11)
