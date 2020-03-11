@@ -260,9 +260,9 @@ public:
     constexpr pointer data() const noexcept { return normalData; }
     constexpr size_type size() const noexcept { return alignedSize; }
     constexpr bool empty() const noexcept { return alignedSize == 0; }
-    constexpr iterator begin() noexcept { return data(); }
-    constexpr iterator end() noexcept { return normalEnd; }
-    constexpr pointer alignedEnd() noexcept { return _alignedEnd; }
+    constexpr iterator begin() const noexcept  { return data(); }
+    constexpr iterator end() const noexcept { return normalEnd; }
+    constexpr pointer alignedEnd() const noexcept { return _alignedEnd; }
 
 
     /**
