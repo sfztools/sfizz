@@ -4,6 +4,8 @@ set (VSTPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.vst3")
 set (VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
 set (VST3SDK_ARCHIVE "vst-sdk_3.6.14_build-24_2019-11-29.zip")
 
+file (MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external")
+
 if (NOT EXISTS "${VST3SDK_BASEDIR}")
     message (STATUS "VST3 SDK is not found, downloading")
 
@@ -41,7 +43,8 @@ add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     SfizzVstEditor.cpp
     SfizzVstState.cpp
     GUIComponents.cpp
-    VstPluginFactory.cpp)
+    VstPluginFactory.cpp
+    X11RunLoop.cpp)
 
 if(WIN32)
     target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
