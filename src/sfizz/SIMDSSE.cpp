@@ -17,7 +17,6 @@
 
 using Type = float;
 constexpr uintptr_t TypeAlignment { 4 };
-constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 };
 constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
 constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
 
