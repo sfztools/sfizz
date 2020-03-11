@@ -411,7 +411,7 @@ void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
     while (emptyQueue)
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
