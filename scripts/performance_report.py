@@ -6,7 +6,7 @@ import os
 from bokeh.io import output_file, show
 from bokeh.plotting import figure
 from bokeh.layouts import column, row
-from bokeh.palettes import Dark2_5 as palette
+from bokeh.palettes import Dark2_6 as palette
 from bokeh.models.widgets import Div
 from bokeh.models import ColumnDataSource
 import itertools
@@ -18,7 +18,7 @@ file_log_suffix = "_file_log.csv"
 file_prefix_length = 14 # length of the pointer prefix
 
 # sfizz 0.3.0 logs
-callback_log_columns = ['Dispatch', 'RenderMethod', 'Data', 'Amplitude', 'Filters', 'Panning', 'NumVoices', 'NumSamples']
+callback_log_columns = ['Dispatch', 'RenderMethod', 'Data', 'Amplitude', 'Filters', 'Panning', 'Effects', 'NumVoices', 'NumSamples']
 file_log_columns = ['WaitDuration', 'LoadDuration', 'FileSize', 'FileName']
 
 # Helper functions
@@ -149,12 +149,13 @@ for file_name in callback_log_list:
     csv_data = pd.read_csv(file_name)
 
     # Scale the data and add some columns
-    scale_columns(csv_data, ['Dispatch', 'RenderMethod', 'Data', 'Amplitude', 'Panning', 'Filters'], 1e6)
+    scale_columns(csv_data, ['Dispatch', 'RenderMethod', 'Data', 'Amplitude', 'Panning', 'Filters', 'Effects'], 1e6)
     csv_data['DataPerVoice'] = csv_data['Data'] / csv_data['NumVoices']
     csv_data['AmplitudePerVoice'] = csv_data['Amplitude'] / csv_data['NumVoices']
     csv_data['FiltersPerVoice'] = csv_data['Filters'] / csv_data['NumVoices']
     csv_data['PanningPerVoice'] = csv_data['Panning'] / csv_data['NumVoices']
-    csv_data['Residual'] = (csv_data['RenderMethod'] - csv_data['Panning'] - csv_data['Filters'] - csv_data['Amplitude'] - csv_data['Data']) / csv_data['NumVoices']
+    csv_data['EffectsPerVoice'] = csv_data['Effects'] / csv_data['NumVoices']
+    csv_data['Residual'] = (csv_data['RenderMethod'] - csv_data['Panning'] - csv_data['Filters'] - csv_data['Amplitude'] - csv_data['Data'] - csv_data['Effects']) / csv_data['NumVoices']
 
     # Prep the summary
     summary_title = f"Callback statistics summary for {sfz_file_name} ({file_prefix[-4:]})"
@@ -166,20 +167,21 @@ for file_name in callback_log_list:
         f"Source data reading/generation (avg/max): {csv_data['Data'].mean():.2f}/{csv_data['Data'].max():.2f} µs",
         f"Amplitude processing (avg/max): {csv_data['Amplitude'].mean():.2f}/{csv_data['Amplitude'].max():.2f} µs",
         f"Panning processing (avg/max): {csv_data['Panning'].mean():.2f}/{csv_data['Panning'].max():.2f} µs",
-        f"Filter processing (avg/max): {csv_data['Filters'].mean():.2f}/{csv_data['Filters'].max():.2f} µs"
+        f"Filter processing (avg/max): {csv_data['Filters'].mean():.2f}/{csv_data['Filters'].max():.2f} µs",
+        f"Effect processing (avg/max): {csv_data['Effects'].mean():.2f}/{csv_data['Effects'].max():.2f} µs"
     ]
     callback_figures.append(Div(text=f"<h3>{summary_title}</h3>" + html_list(summary_lines), width=600))
     if args.verbose:
         print_summary_to_console(summary_title, summary_lines)
 
     # Callback breakdown figure
-    stacked_column_names = ['DataPerVoice', 'AmplitudePerVoice', 'FiltersPerVoice', 'PanningPerVoice', 'Residual']
-    stacked_column_legends = ['Data', 'Amplitude', 'Filters', 'Panning', 'Residual']
+    stacked_column_names = ['DataPerVoice', 'AmplitudePerVoice', 'FiltersPerVoice', 'PanningPerVoice', 'EffectsPerVoice', 'Residual']
+    stacked_column_legends = ['Data', 'Amplitude', 'Filters', 'Panning', 'Effects', 'Residual']
     source = ColumnDataSource(csv_data)
     source.add(csv_data.index, 'index')
 
     fig_breakdown = figure(plot_width=600, plot_height=400, title=f"{sfz_file_name} - Callback breakdown")
-    fig_breakdown.varea_stack(stacked_column_names, x='index', source=source, legend_label=stacked_column_legends, color=palette[:5])
+    fig_breakdown.varea_stack(stacked_column_names, x='index', source=source, legend_label=stacked_column_legends, color=palette[:6])
     set_axis_and_legend(fig_breakdown, 'Callback index', 'Aggregate duration (per voice, average, µs)')
 
     # Breakdown histogram figure
