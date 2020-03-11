@@ -52,19 +52,19 @@ else()
     endif()
 endif()
 
-add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
-target_include_directories(sfizz-pugixml PUBLIC "src/external/pugixml/src")
-
 # If we build with Clang use libc++
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
-    set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
-    if (USE_LIBCPP)
-        add_compile_options(-stdlib=libc++)
-        # Presumably need the above for linking too, maybe other options missing as well
-        add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-        add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
-    endif()
+set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
+if (USE_LIBCPP)
+add_compile_options(-stdlib=libc++)
+# Presumably need the above for linking too, maybe other options missing as well
+add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
+add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
+endif()
+
+add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+target_include_directories(sfizz-pugixml PUBLIC "src/external/pugixml/src")
 
 include (CheckLibraryExists)
 if (UNIX AND NOT APPLE)
