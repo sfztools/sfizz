@@ -10,6 +10,7 @@
 #define DR_FLAC_IMPLEMENTATION
 #include "dr_flac.h"
 #include "ghc/filesystem.hpp"
+#include "absl/memory/memory.h"
 #include <memory>
 #ifndef NDEBUG
 #include <iostream>
@@ -60,7 +61,7 @@ BENCHMARK_DEFINE_F(FileFixture, SndFile)(benchmark::State& state) {
     for (auto _ : state)
     {
         SndfileHandle sndfile(filePath1.c_str());
-        buffer = std::make_unique<sfz::Buffer<float>>(sndfile.channels() * sndfile.frames());
+        buffer = absl::make_unique<sfz::Buffer<float>>(sndfile.channels() * sndfile.frames());
         sndfile.readf(buffer->data(), sndfile.frames());
     }
 }
@@ -69,7 +70,7 @@ BENCHMARK_DEFINE_F(FileFixture, DrFlac)(benchmark::State& state) {
     for (auto _ : state)
     {
         auto* flac = drflac_open_file(filePath2.c_str(), nullptr);
-        buffer = std::make_unique<sfz::Buffer<float>>(flac->channels * flac->totalPCMFrameCount);
+        buffer = absl::make_unique<sfz::Buffer<float>>(flac->channels * flac->totalPCMFrameCount);
         drflac_read_pcm_frames_f32(flac, flac->totalPCMFrameCount, buffer->data());
     }
 }

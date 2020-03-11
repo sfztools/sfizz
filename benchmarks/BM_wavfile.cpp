@@ -9,7 +9,7 @@
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 #include "ghc/filesystem.hpp"
-#include <memory>
+#include "absl/memory/memory.h"
 #ifndef NDEBUG
 #include <iostream>
 #endif
@@ -17,7 +17,7 @@
 
 class FileFixture : public benchmark::Fixture {
 public:
-    void SetUp(const ::benchmark::State& state) {
+    void SetUp(const ::benchmark::State& /* state */) {
         filePath1 = getPath() / "sample1.wav";
         filePath2 = getPath() / "sample2.wav";
         filePath3 = getPath() / "sample3.wav";
@@ -59,7 +59,7 @@ BENCHMARK_DEFINE_F(FileFixture, SndFile)(benchmark::State& state) {
     for (auto _ : state)
     {
         SndfileHandle sndfile(filePath1.c_str());
-        buffer = std::make_unique<sfz::Buffer<float>>(sndfile.channels() * sndfile.frames());
+        buffer = absl::make_unique<sfz::Buffer<float>>(sndfile.channels() * sndfile.frames());
         sndfile.readf(buffer->data(), sndfile.frames());
     }
 }
@@ -74,7 +74,7 @@ BENCHMARK_DEFINE_F(FileFixture, DrWav)(benchmark::State& state) {
             #endif
             std::terminate();
         }
-        buffer = std::make_unique<sfz::Buffer<float>>(wav.channels * wav.totalPCMFrameCount);
+        buffer = absl::make_unique<sfz::Buffer<float>>(wav.channels * wav.totalPCMFrameCount);
         drwav_read_pcm_frames_f32(&wav, wav.totalPCMFrameCount, buffer->data());
     }
 }

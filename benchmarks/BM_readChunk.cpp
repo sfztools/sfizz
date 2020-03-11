@@ -12,7 +12,7 @@
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 #include "AudioBuffer.h"
-#include <memory>
+#include "absl/memory/memory.h"
 #ifndef NDEBUG
 #include <iostream>
 #endif
@@ -30,7 +30,7 @@ public:
 
         sndfile = SndfileHandle(rootPath.c_str());
         numFrames = static_cast<size_t>(sndfile.frames());
-        output = std::make_unique<sfz::AudioBuffer<float>>(sndfile.channels(), sndfile.frames());
+        output = absl::make_unique<sfz::AudioBuffer<float>>(sndfile.channels(), sndfile.frames());
     }
 
     void TearDown(const ::benchmark::State& /* state */) {

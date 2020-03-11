@@ -11,7 +11,7 @@
 #include "ghc/filesystem.hpp"
 #include "Oversampler.h"
 #include "AudioBuffer.h"
-#include <memory>
+#include "absl/memory/memory.h"
 #include <iostream>
 
 
@@ -75,7 +75,7 @@ public:
 
         sndfile = SndfileHandle(rootPath.c_str());
         numFrames = static_cast<size_t>(sndfile.frames());
-        output = std::make_unique<sfz::AudioBuffer<float>>(sndfile.channels(), numFrames * 4);
+        output = absl::make_unique<sfz::AudioBuffer<float>>(sndfile.channels(), numFrames * 4);
     }
 
     void TearDown(const ::benchmark::State& /* state */) {
