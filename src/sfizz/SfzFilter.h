@@ -5,6 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 #include <memory>
 
 namespace sfz {
@@ -81,6 +83,11 @@ public:
        Set the type of filter.
      */
     void setType(FilterType type);
+
+    /**
+       Get the filter type associated with the given name.
+     */
+    static absl::optional<FilterType> typeFromName(absl::string_view name);
 
 private:
     struct Impl;
@@ -186,6 +193,11 @@ public:
        Set the type of filter.
      */
     void setType(EqType type);
+
+    /**
+       Get the filter type associated with the given name.
+     */
+    static absl::optional<EqType> typeFromName(absl::string_view name);
 
 private:
     struct Impl;
