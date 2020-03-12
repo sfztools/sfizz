@@ -498,32 +498,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            switch (hash(opcode.value)) {
-                case hash("lpf_1p"): filters[filterIndex].type = FilterType::kFilterLpf1p; break;
-                case hash("hpf_1p"): filters[filterIndex].type = FilterType::kFilterHpf1p; break;
-                case hash("lpf_2p"): filters[filterIndex].type = FilterType::kFilterLpf2p; break;
-                case hash("hpf_2p"): filters[filterIndex].type = FilterType::kFilterHpf2p; break;
-                case hash("bpf_2p"): filters[filterIndex].type = FilterType::kFilterBpf2p; break;
-                case hash("brf_2p"): filters[filterIndex].type = FilterType::kFilterBrf2p; break;
-                case hash("bpf_1p"): filters[filterIndex].type = FilterType::kFilterBpf1p; break;
-                case hash("brf_1p"): filters[filterIndex].type = FilterType::kFilterBrf1p; break;
-                case hash("apf_1p"): filters[filterIndex].type = FilterType::kFilterApf1p; break;
-                case hash("lpf_2p_sv"): filters[filterIndex].type = FilterType::kFilterLpf2pSv; break;
-                case hash("hpf_2p_sv"): filters[filterIndex].type = FilterType::kFilterHpf2pSv; break;
-                case hash("bpf_2p_sv"): filters[filterIndex].type = FilterType::kFilterBpf2pSv; break;
-                case hash("brf_2p_sv"): filters[filterIndex].type = FilterType::kFilterBrf2pSv; break;
-                case hash("lpf_4p"): filters[filterIndex].type = FilterType::kFilterLpf4p; break;
-                case hash("hpf_4p"): filters[filterIndex].type = FilterType::kFilterHpf4p; break;
-                case hash("lpf_6p"): filters[filterIndex].type = FilterType::kFilterLpf6p; break;
-                case hash("hpf_6p"): filters[filterIndex].type = FilterType::kFilterHpf6p; break;
-                case hash("pink"): filters[filterIndex].type = FilterType::kFilterPink; break;
-                case hash("lsh"): filters[filterIndex].type = FilterType::kFilterLsh; break;
-                case hash("hsh"): filters[filterIndex].type = FilterType::kFilterHsh; break;
-                case hash("pkf_2p"): [[fallthrough]];
-                case hash("peq"): filters[filterIndex].type = FilterType::kFilterPeq; break;
-                default:
-                     filters[filterIndex].type = FilterType::kFilterNone;
-                    DBG("Unknown filter type: " << std::string(opcode.value));
+            absl::optional<FilterType> ftype = Filter::typeFromName(opcode.value);
+
+            if (ftype)
+                filters[filterIndex].type = *ftype;
+            else {
+                filters[filterIndex].type = FilterType::kFilterNone;
+                DBG("Unknown filter type: " << std::string(opcode.value));
             }
         }
         break;
@@ -621,6 +602,25 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2gain, Default::eqGainModRange);
         }
         break;
+    case hash("eq&_type"):
+        {
+            const auto eqNumber = opcode.parameters.front();
+            if (eqNumber == 0)
+                return false;
+            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+                return false;
+
+            absl::optional<EqType> ftype = FilterEq::typeFromName(opcode.value);
+
+            if (ftype)
+                equalizers[eqNumber - 1].type = *ftype;
+            else {
+                equalizers[eqNumber - 1].type = EqType::kEqNone;
+                DBG("Unknown EQ type: " << std::string(opcode.value));
+            }
+        }
+        break;
+
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);

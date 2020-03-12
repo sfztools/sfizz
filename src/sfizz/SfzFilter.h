@@ -5,6 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 #include <memory>
 
 namespace sfz {
@@ -82,6 +84,11 @@ public:
      */
     void setType(FilterType type);
 
+    /**
+       Get the filter type associated with the given name.
+     */
+    static absl::optional<FilterType> typeFromName(absl::string_view name);
+
 private:
     struct Impl;
     std::unique_ptr<Impl> P;
@@ -113,6 +120,8 @@ enum FilterType : int {
     kFilterHsh,
     kFilterPeq,
 };
+
+enum EqType : int;
 
 /**
    Equalizer filter for SFZ v1
@@ -175,9 +184,31 @@ public:
      */
     void setChannels(unsigned channels);
 
+    /**
+       Get the type of filter.
+     */
+    EqType type() const;
+
+    /**
+       Set the type of filter.
+     */
+    void setType(EqType type);
+
+    /**
+       Get the filter type associated with the given name.
+     */
+    static absl::optional<EqType> typeFromName(absl::string_view name);
+
 private:
     struct Impl;
     std::unique_ptr<Impl> P;
+};
+
+enum EqType : int {
+    kEqNone,
+    kEqPeak,
+    kEqLowShelf,
+    kEqHighShelf,
 };
 
 } // namespace sfz

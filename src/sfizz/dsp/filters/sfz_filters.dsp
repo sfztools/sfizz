@@ -94,9 +94,33 @@ sfzHsh = fm.rbjHighShelfSmooth(smoothCoefs,cutoff,pkShGain,Q);
 sfzPeq = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q);
 
 // the SFZ equalizer band
-sfzEq = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
+sfzEqPeak = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
   Q = 1./(2.*ma.sinh(0.5*log(2)*bandwidth*w0/sin(w0)));
   w0 = 2*ma.PI*max(0,cutoff)/ma.SR;
+};
+
+// the SFZ low-shelf with EQ controls
+sfzEqLshelf = fm.rbjLowShelfSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
+  slope = bandwidth; // in this case eqN_bw meaning is not bandwith but slope
+  Q = sfzGetQFromSlope(slope);
+};
+
+// the SFZ high-shelf with EQ controls
+sfzEqHshelf = fm.rbjHighShelfSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
+  slope = bandwidth; // in this case eqN_bw meaning is not bandwith but slope
+  Q = sfzGetQFromSlope(slope);
+};
+
+//==============================================================================
+// Utility
+
+// a common function that computes the EQ shelf parameter
+sfzGetQFromSlope(slope) = 1.0/sqrt((A+1.0/A)*(1.0/S-1.0)+2.0) with {
+  // note(jpc) slope is a 0-1 control that is reduced into a domain of validity,
+  //   and clamped to avoid the extremes at both sides.
+  S = (slope*root) : max(1e-2) : min(root-1e-2);
+  A = 10^(pkShGain/40);
+  root = (A*A+1)/((A-1)*(A-1)); // the root of the expression under sqrt()
 };
 
 //==============================================================================
@@ -125,7 +149,9 @@ sfz2chBrf2pSv = par(i,2,sfzBrf2pSv);
 sfz2chLsh = par(i,2,sfzLsh);
 sfz2chHsh = par(i,2,sfzHsh);
 sfz2chPeq = par(i,2,sfzPeq);
-sfz2chEq = par(i,2,sfzEq);
+sfz2chEqPeak = par(i,2,sfzEqPeak);
+sfz2chEqLshelf = par(i,2,sfzEqLshelf);
+sfz2chEqHshelf = par(i,2,sfzEqHshelf);
 
 //==============================================================================
 // Filter parameters

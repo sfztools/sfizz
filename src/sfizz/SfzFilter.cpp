@@ -7,6 +7,7 @@
 #include "Config.h"
 #include "SfzFilter.h"
 #include "SfzFilterImpls.cxx"
+#include "StringViewHelpers.h"
 #include <cstring>
 #include "SIMDHelpers.h"
 #include "Debug.h"
@@ -203,6 +204,39 @@ void Filter::setType(FilterType type)
     }
 }
 
+absl::optional<FilterType> Filter::typeFromName(absl::string_view name)
+{
+    absl::optional<FilterType> ftype;
+
+    switch (hash(name)) {
+    case hash("lpf_1p"): ftype = kFilterLpf1p; break;
+    case hash("hpf_1p"): ftype = kFilterHpf1p; break;
+    case hash("lpf_2p"): ftype = kFilterLpf2p; break;
+    case hash("hpf_2p"): ftype = kFilterHpf2p; break;
+    case hash("bpf_2p"): ftype = kFilterBpf2p; break;
+    case hash("brf_2p"): ftype = kFilterBrf2p; break;
+    case hash("bpf_1p"): ftype = kFilterBpf1p; break;
+    case hash("brf_1p"): ftype = kFilterBrf1p; break;
+    case hash("apf_1p"): ftype = kFilterApf1p; break;
+    case hash("lpf_2p_sv"): ftype = kFilterLpf2pSv; break;
+    case hash("hpf_2p_sv"): ftype = kFilterHpf2pSv; break;
+    case hash("bpf_2p_sv"): ftype = kFilterBpf2pSv; break;
+    case hash("brf_2p_sv"): ftype = kFilterBrf2pSv; break;
+    case hash("lpf_4p"): ftype = kFilterLpf4p; break;
+    case hash("hpf_4p"): ftype = kFilterHpf4p; break;
+    case hash("lpf_6p"): ftype = kFilterLpf6p; break;
+    case hash("hpf_6p"): ftype = kFilterHpf6p; break;
+    case hash("pink"): ftype = kFilterPink; break;
+    case hash("lsh"): ftype = kFilterLsh; break;
+    case hash("hsh"): ftype = kFilterHsh; break;
+    case hash("bpk_2p"): [[fallthrough]];
+    case hash("pkf_2p"): [[fallthrough]];
+    case hash("peq"): ftype = kFilterPeq; break;
+    }
+
+    return ftype;
+}
+
 sfzFilterDsp *Filter::Impl::getDsp(unsigned channels, FilterType type)
 {
     switch (idDsp(channels, type)) {
@@ -263,13 +297,24 @@ sfzFilterDsp *Filter::Impl::getDsp(unsigned channels, FilterType type)
 
 
 struct FilterEq::Impl {
+    EqType fType = kEqNone;
     unsigned fChannels = 1;
     enum { maxChannels = 2 };
 
-    sfzEq fDsp;
-    sfz2chEq fDsp2ch;
+    sfzEqPeak fDspPeak;
+    sfzEqLshelf fDspLshelf;
+    sfzEqHshelf fDspHshelf;
 
-    sfzFilterDsp *getDsp(unsigned channels);
+    sfz2chEqPeak fDsp2chPeak;
+    sfz2chEqLshelf fDsp2chLshelf;
+    sfz2chEqHshelf fDsp2chHshelf;
+
+    sfzFilterDsp *getDsp(unsigned channels, EqType type);
+
+    static constexpr uint32_t idDsp(unsigned channels, EqType type)
+    {
+        return static_cast<unsigned>(type)|(channels << 16);
+    }
 };
 
 FilterEq::FilterEq()
@@ -284,14 +329,17 @@ FilterEq::~FilterEq()
 void FilterEq::init(double sampleRate)
 {
     for (unsigned channels = 1; channels <= Impl::maxChannels; ++channels) {
-        sfzFilterDsp *dsp = P->getDsp(channels);
-        dsp->init(sampleRate);
+        EqType ftype = static_cast<EqType>(1);
+        while (sfzFilterDsp *dsp = P->getDsp(channels, ftype)) {
+            dsp->init(sampleRate);
+            ftype = static_cast<EqType>(static_cast<int>(ftype) + 1);
+        }
     }
 }
 
 void FilterEq::clear()
 {
-    sfzFilterDsp *dsp = P->getDsp(P->fChannels);
+    sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
 
     if (dsp)
         dsp->instanceClear();
@@ -299,7 +347,7 @@ void FilterEq::clear()
 
 void FilterEq::prepare(float cutoff, float bw, float pksh)
 {
-    sfzFilterDsp *dsp = P->getDsp(P->fChannels);
+    sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
 
     if (!dsp)
         return;
@@ -323,7 +371,7 @@ void FilterEq::prepare(float cutoff, float bw, float pksh)
 void FilterEq::process(const float *const in[], float *const out[], float cutoff, float bw, float pksh, unsigned nframes)
 {
     unsigned channels = P->fChannels;
-    sfzFilterDsp *dsp = P->getDsp(channels);
+    sfzFilterDsp *dsp = P->getDsp(channels, P->fType);
 
     if (!dsp) {
         for (unsigned c = 0; c < channels; ++c)
@@ -338,7 +386,7 @@ void FilterEq::process(const float *const in[], float *const out[], float cutoff
 void FilterEq::processModulated(const float *const in[], float *const out[], const float *cutoff, const float *bw, const float *pksh, unsigned nframes)
 {
     unsigned channels = P->fChannels;
-    sfzFilterDsp *dsp = P->getDsp(channels);
+    sfzFilterDsp *dsp = P->getDsp(channels, P->fType);
 
     if (!dsp) {
         for (unsigned c = 0; c < channels; ++c)
@@ -383,13 +431,44 @@ void FilterEq::setChannels(unsigned channels)
     }
 }
 
-sfzFilterDsp *FilterEq::Impl::getDsp(unsigned channels)
+EqType FilterEq::type() const
 {
-    switch (channels) {
+    return P->fType;
+}
+
+void FilterEq::setType(EqType type)
+{
+    if (P->fType != type) {
+        P->fType = type;
+        clear();
+    }
+}
+
+absl::optional<EqType> FilterEq::typeFromName(absl::string_view name)
+{
+    absl::optional<EqType> ftype;
+
+    switch (hash(name)) {
+    case hash("peak"): ftype = kEqPeak; break;
+    case hash("lshelf"): ftype = kEqLowShelf; break;
+    case hash("hshelf"): ftype = kEqHighShelf; break;
+    }
+
+    return ftype;
+}
+
+sfzFilterDsp *FilterEq::Impl::getDsp(unsigned channels, EqType type)
+{
+    switch (idDsp(channels, type)) {
     default: return nullptr;
 
-    case 1: return &fDsp;
-    case 2: return &fDsp2ch;
+    case idDsp(1, kEqPeak): return &fDspPeak;
+    case idDsp(1, kEqLowShelf): return &fDspLshelf;
+    case idDsp(1, kEqHighShelf): return &fDspHshelf;
+
+    case idDsp(2, kEqPeak): return &fDsp2chPeak;
+    case idDsp(2, kEqLowShelf): return &fDsp2chLshelf;
+    case idDsp(2, kEqHighShelf): return &fDsp2chHshelf;
     }
 }
 
