@@ -36,7 +36,6 @@ namespace fx {
     void Eq::setSampleRate(double sampleRate)
     {
         _filter.init(sampleRate);
-        _filter.clear();
     }
 
     void Eq::setSamplesPerBlock(int samplesPerBlock)
@@ -67,7 +66,7 @@ namespace fx {
         EQDescription desc;
 
         for (const Opcode& opc : members) {
-            switch (hash(opc.value)) {
+            switch (opc.lettersOnlyHash) {
             case hash("eq_freq"):
                 setValueFromOpcode(opc, desc.frequency, Default::eqFrequencyRange);
                 break;

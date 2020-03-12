@@ -38,7 +38,6 @@ namespace fx {
     void Filter::setSampleRate(double sampleRate)
     {
         _filter.init(sampleRate);
-        _filter.clear();
     }
 
     void Filter::setSamplesPerBlock(int samplesPerBlock)
@@ -69,7 +68,7 @@ namespace fx {
         FilterDescription desc;
 
         for (const Opcode& opc : members) {
-            switch (hash(opc.value)) {
+            switch (opc.lettersOnlyHash) {
             case hash("filter_cutoff"):
                 setValueFromOpcode(opc, desc.cutoff, Default::filterCutoffRange);
                 break;

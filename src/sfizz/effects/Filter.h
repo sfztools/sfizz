@@ -48,7 +48,7 @@ namespace fx {
     private:
         sfz::Filter _filter;
         FilterDescription _desc;
-        AudioBuffer<float> _tempBuffer { 3, config::defaultSamplesPerBlock };
+        AudioBuffer<float, 3> _tempBuffer { 3, config::defaultSamplesPerBlock };
     };
 
 } // namespace fx
