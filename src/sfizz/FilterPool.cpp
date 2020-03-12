@@ -41,7 +41,7 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
     // Setup the modulated values
     lastCutoff = midiState.modulate<float, int>(baseCutoff, description.cutoffCC, Default::filterCutoffRange, multiplyByCents);
     lastResonance = midiState.modulate(baseResonance, description.resonanceCC, Default::filterResonanceRange);
-    baseGain = midiState.modulate(baseGain, description.gainCC, Default::filterGainRange);
+    lastGain = midiState.modulate(baseGain, description.gainCC, Default::filterGainRange);
 
     // Initialize the filter
     filter.prepare(lastCutoff, lastResonance, lastGain);
