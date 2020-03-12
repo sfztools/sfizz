@@ -12,7 +12,13 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <cstring>
 
-#pragma message("TODO: send tempo")
+#pragma message("TODO: send tempo") // NOLINT
+
+template<class T>
+constexpr int fastRound(T x)
+{
+    return static_cast<int>(x + T{ 0.5 }); // NOLINT
+}
 
 SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(1024)
@@ -22,7 +28,11 @@ SfizzVstProcessor::SfizzVstProcessor()
 
 SfizzVstProcessor::~SfizzVstProcessor()
 {
-    setActive(false); // to be sure
+    try {
+        stopBackgroundWork();
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Caught exception: %s\n", e.what());
+    }
 }
 
 tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
@@ -249,7 +259,7 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
                 int ccNumber = id - kPidMidiCC0;
                 for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                     if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                        synth.cc(sampleOffset, ccNumber, (int)(0.5 + value * 127.0));
+                        synth.cc(sampleOffset, ccNumber, fastRound(value * 127.0));
                 }
             }
             break;
@@ -257,14 +267,14 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
         case kPidMidiAftertouch:
             for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                 if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                    synth.aftertouch(sampleOffset, (int)(0.5 + value * 127.0));
+                    synth.aftertouch(sampleOffset, fastRound(value * 127.0));
             }
             break;
 
         case kPidMidiPitchBend:
             for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                 if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                    synth.pitchWheel(sampleOffset, (int)(0.5 + value * 16383) - 8192);
+                    synth.pitchWheel(sampleOffset, fastRound(value * 16383) - 8192);
             }
             break;
         }
