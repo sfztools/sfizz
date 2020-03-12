@@ -1220,6 +1220,12 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[0].type == sfz::FilterType::kFilterHsh);
         region.parseOpcode({ "fil_type", "peq" });
         REQUIRE(region.filters[0].type == sfz::FilterType::kFilterPeq);
+        region.parseOpcode({ "fil_type", "lpf_1p" });
+        region.parseOpcode({ "fil_type", "pkf_2p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterPeq);
+        region.parseOpcode({ "fil_type", "lpf_1p" });
+        region.parseOpcode({ "fil_type", "bpk_2p" });
+        REQUIRE(region.filters[0].type == sfz::FilterType::kFilterPeq);
         region.parseOpcode({ "fil_type", "unknown" });
         REQUIRE(region.filters[0].type == sfz::FilterType::kFilterNone);
     }
@@ -1232,6 +1238,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.equalizers.size() == 1);
         REQUIRE(region.equalizers[0].gain == 6.0f);
         // Check defaults
+        REQUIRE(region.equalizers[0].type == sfz::EqType::kEqPeak);
         REQUIRE(region.equalizers[0].bandwidth == 1.0f);
         REQUIRE(region.equalizers[0].frequency == 0.0f);
         REQUIRE(region.equalizers[0].vel2frequency == 0);
@@ -1244,6 +1251,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.equalizers.size() == 2);
         REQUIRE(region.equalizers[1].gain == -96.0f);
         // Check defaults
+        REQUIRE(region.equalizers[1].type == sfz::EqType::kEqPeak);
         REQUIRE(region.equalizers[1].bandwidth == 1.0f);
         REQUIRE(region.equalizers[1].frequency == 0.0f);
         REQUIRE(region.equalizers[1].vel2frequency == 0);
@@ -1255,6 +1263,7 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "eq4_gain", "500" });
         REQUIRE(region.equalizers.size() == 4);
         REQUIRE(region.equalizers[2].gain == 0.0f);
+        REQUIRE(region.equalizers[3].type == sfz::EqType::kEqPeak);
         REQUIRE(region.equalizers[3].gain == 96.0f);
         // Check defaults
         REQUIRE(region.equalizers[2].bandwidth == 1.0f);
@@ -1273,6 +1282,18 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.equalizers[3].gainCC.empty());
     }
 
+    SECTION("EQ types")
+    {
+        region.parseOpcode({ "eq1_type", "hshelf" });
+        REQUIRE(region.equalizers[0].type == sfz::EqType::kEqHighShelf);
+        region.parseOpcode({ "eq1_type", "somethingsomething" });
+        REQUIRE(region.equalizers[0].type == sfz::EqType::kEqNone);
+        region.parseOpcode({ "eq1_type", "lshelf" });
+        REQUIRE(region.equalizers[0].type == sfz::EqType::kEqLowShelf);
+        region.parseOpcode({ "eq1_type", "peak" });
+        REQUIRE(region.equalizers[0].type == sfz::EqType::kEqPeak);
+    }
+
     SECTION("EQ parameter dispatch")
     {
         region.parseOpcode({ "eq3_bw", "2" });
@@ -1282,6 +1303,8 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.equalizers[0].gain == -25.0f);
         region.parseOpcode({ "eq2_freq", "300" });
         REQUIRE(region.equalizers[1].frequency == 300.0f);
+        region.parseOpcode({ "eq3_type", "lshelf" });
+        REQUIRE(region.equalizers[2].type == sfz::EqType::kEqLowShelf);
         region.parseOpcode({ "eq3_vel2gain", "10" });
         REQUIRE(region.equalizers[2].vel2gain == 10.0f);
         region.parseOpcode({ "eq1_vel2freq", "100" });
@@ -1297,6 +1320,8 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.equalizers[2].frequencyCC[15] == 10.0f);
         region.parseOpcode({ "eq3_freq_oncc15", "20" });
         REQUIRE(region.equalizers[2].frequencyCC[15] == 20.0f);
+        region.parseOpcode({ "eq1_type", "hshelf" });
+        REQUIRE(region.equalizers[0].type == sfz::EqType::kEqHighShelf);
         region.parseOpcode({ "eq2_gaincc123", "2" });
         REQUIRE(region.equalizers[1].gainCC.contains(123));
         REQUIRE(region.equalizers[1].gainCC[123] == 2.0f);
