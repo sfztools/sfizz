@@ -8,13 +8,15 @@
 #include "SfizzVstState.h"
 #include "GUIComponents.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
-#include "x11runloop.h"
+#include "X11RunLoop.h"
 #endif
 
 using namespace VSTGUI;
 
+static ViewRect sfizzUiViewRect {0, 0, 684, 684};
+
 SfizzVstEditor::SfizzVstEditor(void *controller)
-    : VSTGUIEditor(controller),
+    : VSTGUIEditor(controller, &sfizzUiViewRect),
       _logo("logo.png")
 {
     getController()->addSfizzStateListener(this);
@@ -29,7 +31,7 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
 {
     fprintf(stderr, "[sfizz] about to open view with parent %p\n", parent);
 
-    CRect wsize(0, 0, _logo.getWidth(), _logo.getHeight());
+    CRect wsize(0, 0, sfizzUiViewRect.getWidth(), sfizzUiViewRect.getHeight());
     CFrame *frame = new CFrame(wsize, this);
     this->frame = frame;
 
@@ -37,7 +39,9 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
 
 #if !defined(__APPLE__) && !defined(_WIN32)
     X11::FrameConfig x11config;
-    x11config.runLoop = VSTGUI::owned(new RunLoop(plugFrame));
+    if (!_runLoop)
+        _runLoop = new RunLoop(plugFrame);
+    x11config.runLoop = _runLoop;
     config = &x11config;
 #endif
 
@@ -56,8 +60,13 @@ void PLUGIN_API SfizzVstEditor::close()
 {
     CFrame *frame = this->frame;
     if (frame) {
-        frame->forget();
-        this->frame = nullptr;
+        frame->removeAll();
+        if (frame->getNbReference() != 1)
+            frame->forget ();
+        else {
+            frame->close();
+            this->frame = nullptr;
+        }
     }
 }
 
@@ -132,6 +141,30 @@ void SfizzVstEditor::controlBeginEdit(CControl* ctl)
 void SfizzVstEditor::controlEndEdit(CControl* ctl)
 {
     enterOrLeaveEdit(ctl, false);
+}
+
+CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
+{
+    CMessageResult result = VSTGUIEditor::notify(sender, message);
+
+    if (result != kMessageNotified)
+        return result;
+
+#if !defined(__APPLE__) && !defined(_WIN32)
+    if (message == CVSTGUITimer::kMsgTimer) {
+        SharedPointer<VSTGUI::RunLoop> runLoop = RunLoop::get();
+        if (runLoop) {
+            // note(jpc) I don't find a reliable way to check if the host
+            //   notifier of X11 events is working. If there is, remove this and
+            //   avoid polluting Linux hosts which implement the loop correctly.
+            runLoop->processSomeEvents();
+
+            runLoop->cleanupDeadHandlers();
+        }
+    }
+#endif
+
+    return result;
 }
 
 void SfizzVstEditor::onStateChanged()

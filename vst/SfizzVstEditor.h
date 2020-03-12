@@ -7,6 +7,9 @@
 #pragma once
 #include "SfizzVstController.h"
 #include "public.sdk/source/vst/vstguieditor.h"
+#if !defined(__APPLE__) && !defined(_WIN32)
+namespace VSTGUI { class RunLoop; }
+#endif
 
 using namespace Steinberg;
 using namespace VSTGUI;
@@ -29,6 +32,9 @@ public:
     void enterOrLeaveEdit(CControl* ctl, bool enter);
     void controlBeginEdit(CControl* ctl) override;
     void controlEndEdit(CControl* ctl) override;
+
+    // VSTGUIEditor
+    CMessageResult notify(CBaseObject* sender, const char* message) override;
 
     // SfizzVstController::StateListener
     void onStateChanged() override;
@@ -75,4 +81,8 @@ private:
     CSliderBase *_numVoicesSlider = nullptr;
     CSliderBase *_oversamplingSlider = nullptr;
     CSliderBase *_preloadSizeSlider = nullptr;
+
+#if !defined(__APPLE__) && !defined(_WIN32)
+    SharedPointer<RunLoop> _runLoop;
+#endif
 };
