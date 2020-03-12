@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "effects/Nothing.h"
 #include "effects/Filter.h"
+#include "effects/Eq.h"
 #include "effects/Lofi.h"
 #include <algorithm>
 
@@ -20,6 +21,7 @@ void EffectFactory::registerStandardEffectTypes()
 {
     // TODO
     registerEffectType("filter", fx::Filter::makeInstance);
+    registerEffectType("eq", fx::Eq::makeInstance);
     registerEffectType("lofi", fx::Lofi::makeInstance);
 }
 
