@@ -256,7 +256,7 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
         switch (id) {
         default:
             if (id >= kPidMidiCC0 && id <= kPidMidiCCLast) {
-                int ccNumber = id - kPidMidiCC0;
+                auto ccNumber = static_cast<int>(id - kPidMidiCC0);
                 for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                     if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
                         synth.cc(sampleOffset, ccNumber, fastRound(value * 127.0));
