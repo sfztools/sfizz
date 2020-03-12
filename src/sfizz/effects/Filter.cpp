@@ -82,7 +82,7 @@ namespace fx {
                         desc.type = *ftype;
                     else {
                         desc.type = FilterType::kFilterNone;
-                        DBG("Unknown filter type: " << std::string(opcode.value));
+                        DBG("Unknown filter type: " << std::string(opc.value));
                     }
                     break;
                 }

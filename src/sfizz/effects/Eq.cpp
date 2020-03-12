@@ -83,7 +83,7 @@ namespace fx {
                         desc.type = *ftype;
                     else {
                         desc.type = EqType::kEqNone;
-                        DBG("Unknown EQ type: " << std::string(opcode.value));
+                        DBG("Unknown EQ type: " << std::string(opc.value));
                     }
                     break;
                 }
