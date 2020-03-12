@@ -46,6 +46,9 @@ namespace fx {
         static std::unique_ptr<Effect> makeInstance(absl::Span<const Opcode> members);
 
     private:
+        void prepareFilter();
+
+    private:
         sfz::Filter _filter;
         FilterDescription _desc;
         AudioBuffer<float, 3> _tempBuffer { 3, config::defaultSamplesPerBlock };

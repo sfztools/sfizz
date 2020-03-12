@@ -38,6 +38,7 @@ namespace fx {
     void Filter::setSampleRate(double sampleRate)
     {
         _filter.init(sampleRate);
+        prepareFilter();
     }
 
     void Filter::setSamplesPerBlock(int samplesPerBlock)
@@ -48,6 +49,7 @@ namespace fx {
     void Filter::clear()
     {
         _filter.clear();
+        prepareFilter();
     }
 
     void Filter::process(const float* const inputs[], float* const outputs[], unsigned nframes)
@@ -94,6 +96,11 @@ namespace fx {
         }
 
         return absl::make_unique<Filter>(desc);
+    }
+
+    void Filter::prepareFilter()
+    {
+        _filter.prepare(_desc.cutoff, _desc.resonance, _desc.gain);
     }
 
 } // namespace fx

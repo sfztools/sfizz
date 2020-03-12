@@ -36,6 +36,7 @@ namespace fx {
     void Eq::setSampleRate(double sampleRate)
     {
         _filter.init(sampleRate);
+        prepareFilter();
     }
 
     void Eq::setSamplesPerBlock(int samplesPerBlock)
@@ -46,6 +47,7 @@ namespace fx {
     void Eq::clear()
     {
         _filter.clear();
+        prepareFilter();
     }
 
     void Eq::process(const float* const inputs[], float* const outputs[], unsigned nframes)
@@ -91,6 +93,11 @@ namespace fx {
         }
 
         return absl::make_unique<Eq>(desc);
+    }
+
+    void Eq::prepareFilter()
+    {
+        _filter.prepare(_desc.frequency, _desc.bandwidth, _desc.gain);
     }
 
 } // namespace fx
