@@ -48,6 +48,8 @@ if (NOT MSVC)
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
     configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
+    install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 if(WIN32)
     include(VSTConfig)
@@ -89,9 +91,4 @@ if (SFIZZ_SHARED)
             target_link_libraries (sfizz_shared PRIVATE atomic)
         endif()
     endif()
-endif()
-
-if (NOT MSVC)
-    install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
