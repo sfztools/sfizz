@@ -94,15 +94,4 @@ Compiler CXX min size flags:   ${CMAKE_CXX_FLAGS_MINSIZEREL}
     endif()
 endfunction()
 
-if(NOT TARGET uninstall)
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MakeUninstall.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/MakeUninstall.cmake"
-        IMMEDIATE @ONLY)
-
-    add_custom_target(uninstall
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/MakeUninstall.cmake)
-endif()
-
-
 find_package (Threads REQUIRED)

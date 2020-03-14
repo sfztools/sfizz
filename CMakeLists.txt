@@ -64,4 +64,9 @@ if (SFIZZ_TESTS)
     add_subdirectory (tests)
 endif()
 
+# Put it at the end so that the vst/lv2 directories are registered
+if (NOT MSVC)
+    include(SfizzUninstall)
+endif()
+
 show_build_info_if_needed()
