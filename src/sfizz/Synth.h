@@ -59,7 +59,7 @@ namespace sfz {
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.
  */
-class Synth : public Parser {
+class Synth : public OldParser {
 public:
     /**
      * @brief Construct a new Synth object with no voices. If you want sound

@@ -19,6 +19,8 @@ set (SFIZZ_SOURCES
     sfizz/Curve.cpp
     sfizz/Wavetables.cpp
     sfizz/Effects.cpp
+    sfizz/parser/Parser.cpp
+    sfizz/parser/ParserPrivate.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
     sfizz/effects/Eq.cpp

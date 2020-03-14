@@ -283,7 +283,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     }
 
     clear();
-    auto parserReturned = sfz::Parser::loadSfzFile(file);
+    auto parserReturned = sfz::OldParser::loadSfzFile(file);
     if (!parserReturned)
         return false;
 

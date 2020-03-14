@@ -14,9 +14,9 @@
 #include <vector>
 
 namespace sfz {
-class Parser {
+class OldParser {
 public:
-    virtual ~Parser() = default;
+    virtual ~OldParser() = default;
     virtual bool loadSfzFile(const fs::path& file);
     const std::map<std::string, std::string>& getDefines() const noexcept { return defines; }
     const std::vector<fs::path>& getIncludedFiles() const noexcept { return includedFiles; }

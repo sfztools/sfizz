@@ -36,7 +36,7 @@ static void usage()
 /**
  * @brief Parser which extracts the configuration of curves
  */
-class CurveParser : public sfz::Parser {
+class CurveParser : public sfz::OldParser {
 public:
     explicit CurveParser(sfz::CurveSet& curveSet)
         : curveSet(curveSet)
