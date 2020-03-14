@@ -196,7 +196,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                     break;
                 msg->setMessageID("SetNumVoices");
                 Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("NumVoices", kParamNumVoicesRange.denormalize(value));
+                attr->setInt("NumVoices", static_cast<Steinberg::int64>(kParamNumVoicesRange.denormalize(value)));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
@@ -211,7 +211,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                     break;
                 msg->setMessageID("SetOversampling");
                 Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("Oversampling", kParamOversamplingRange.denormalize(value));
+                attr->setInt("Oversampling", static_cast<Steinberg::int64>(kParamOversamplingRange.denormalize(value)));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
@@ -226,7 +226,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                     break;
                 msg->setMessageID("SetPreloadSize");
                 Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("PreloadSize", kParamPreloadSizeRange.denormalize(value));
+                attr->setInt("PreloadSize", static_cast<Steinberg::int64>(kParamPreloadSizeRange.denormalize(value)));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
