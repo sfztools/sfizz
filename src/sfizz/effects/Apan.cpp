@@ -21,6 +21,7 @@
 */
 
 #include "Apan.h"
+#include "Macros.h"
 #include "CommonLFO.h"
 #include "Opcode.h"
 #include <limits>
@@ -108,7 +109,7 @@ namespace fx {
             }
         }
 
-        return fx;
+        return CXX11_MOVE(fx);
     }
 
     void Apan::computeLfos(float* left, float* right, unsigned nframes)

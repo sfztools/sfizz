@@ -92,7 +92,7 @@ namespace fx {
             }
         }
 
-        return std::move(fx);
+        return CXX11_MOVE(fx);
     }
 
     ///
