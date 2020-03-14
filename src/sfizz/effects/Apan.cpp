@@ -80,30 +80,30 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("apan_waveform"):
-                if (auto value = readOpcode(opc.value, Range<int> { 0, std::numeric_limits<int>::max() }))
+                if (auto value = readOpcode(opc.value, Default::apanWaveformRange))
                     fx->_lfoWave = *value;
                 break;
             case hash("apan_freq"):
-                if (auto value = readOpcode(opc.value, Range<float> { 0.0, std::numeric_limits<float>::max() }))
+                if (auto value = readOpcode(opc.value, Default::apanFrequencyRange))
                     fx->_lfoFrequency = *value;
                 break;
             case hash("apan_phase"):
-                if (auto value = readOpcode(opc.value, Range<float> { 0.0, 360.0 })) {
+                if (auto value = readOpcode(opc.value, Default::apanPhaseRange)) {
                     float phase = *value / 360.0f;
                     phase -= (int)phase;
                     fx->_lfoPhaseOffset = phase;
                 }
                 break;
             case hash("apan_dry"):
-                if (auto value = readOpcode(opc.value, Range<float> { 0.0, 100.0 }))
+                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
                     fx->_dry = *value / 100.0f;
                 break;
             case hash("apan_wet"):
-                if (auto value = readOpcode(opc.value, Range<float> { 0.0, 100.0 }))
+                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
                     fx->_wet = *value / 100.0f;
                 break;
             case hash("apan_depth"):
-                if (auto value = readOpcode(opc.value, Range<float> { 0.0, 100.0 }))
+                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
                     fx->_depth = *value / 100.0f;
                 break;
             }
