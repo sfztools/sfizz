@@ -37,8 +37,8 @@ namespace fx {
 
     void Apan::setSamplesPerBlock(int samplesPerBlock)
     {
-        _lfoOutLeft.reset(new float[samplesPerBlock]);
-        _lfoOutRight.reset(new float[samplesPerBlock]);
+        _lfoOutLeft.resize(samplesPerBlock);
+        _lfoOutRight.resize(samplesPerBlock);
     }
 
     void Apan::clear()
@@ -51,8 +51,8 @@ namespace fx {
         float dry = _dry;
         float wet = _wet;
         float depth = _depth;
-        float* modL = _lfoOutLeft.get();
-        float* modR = _lfoOutRight.get();
+        float* modL = _lfoOutLeft.data();
+        float* modR = _lfoOutRight.data();
 
         computeLfos(modL, modR, nframes);
 

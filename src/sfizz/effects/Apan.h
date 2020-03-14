@@ -6,7 +6,7 @@
 
 #pragma once
 #include "Effects.h"
-#include <memory>
+#include "Buffer.h"
 
 namespace sfz {
 namespace fx {
@@ -48,8 +48,8 @@ namespace fx {
 
     private:
         float _samplePeriod = 0.0;
-        std::unique_ptr<float[]> _lfoOutLeft;
-        std::unique_ptr<float[]> _lfoOutRight;
+        sfz::Buffer<float> _lfoOutLeft { config::defaultSamplesPerBlock };
+        sfz::Buffer<float> _lfoOutRight { config::defaultSamplesPerBlock };
 
         // Controls
         float _dry = 0.0;
