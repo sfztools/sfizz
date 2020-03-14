@@ -229,8 +229,8 @@ absl::optional<FilterType> Filter::typeFromName(absl::string_view name)
     case hash("pink"): ftype = kFilterPink; break;
     case hash("lsh"): ftype = kFilterLsh; break;
     case hash("hsh"): ftype = kFilterHsh; break;
-    case hash("bpk_2p"): [[fallthrough]];
-    case hash("pkf_2p"): [[fallthrough]];
+    case hash("bpk_2p"): //fallthrough
+    case hash("pkf_2p"): //fallthrough
     case hash("peq"): ftype = kFilterPeq; break;
     }
 
