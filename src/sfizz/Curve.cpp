@@ -219,7 +219,7 @@ void CurveSet::addCurveFromHeader(absl::Span<const Opcode> members)
         if (auto opt = readOpcode<int>(opc->value, {0, 255}))
             curveIndex = *opt;
         else
-            DBG("Invalid value for curve index: " << opc.value);
+            DBG("Invalid value for curve index: " << opc->value);
     }
 
 #if 0 // potential sfizz extension
