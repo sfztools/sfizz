@@ -90,7 +90,7 @@ namespace fx {
             case hash("apan_phase"):
                 if (auto value = readOpcode(opc.value, Default::apanPhaseRange)) {
                     float phase = *value / 360.0f;
-                    phase -= (int)phase;
+                    phase -= static_cast<int>(phase);
                     fx->_lfoPhaseOffset = phase;
                 }
                 break;
@@ -139,13 +139,13 @@ namespace fx {
 
         for (unsigned i = 0; i < nframes; ++i) {
             float phaseRight = phaseLeft + offset;
-            phaseRight -= (int)phaseRight;
+            phaseRight -= static_cast<int>(phaseRight);
 
             left[i] = lfo::evaluateAtPhase<Wave>(phaseLeft);
             right[i] = lfo::evaluateAtPhase<Wave>(phaseRight);
 
             phaseLeft += frequency * samplePeriod;
-            phaseLeft -= (int)phaseLeft;
+            phaseLeft -= static_cast<int>(phaseLeft);
         }
 
         _lfoPhase = phaseLeft;
