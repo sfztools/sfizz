@@ -150,7 +150,7 @@ protected:
 
     // The special member functions are not thread-safe.
 
-    AtomicQueueCommon() noexcept = default;
+    AtomicQueueCommon() = default;
 
     AtomicQueueCommon(AtomicQueueCommon const& b) noexcept
         : head_(b.head_.load(X))
@@ -417,7 +417,7 @@ class AtomicQueue2 : public AtomicQueueCommon<AtomicQueue2<T, SIZE, MINIMIZE_CON
 public:
     using value_type = T;
 
-    AtomicQueue2() noexcept = default;
+    AtomicQueue2() = default;
     AtomicQueue2(AtomicQueue2 const&) = delete;
     AtomicQueue2& operator=(AtomicQueue2 const&) = delete;
 };
