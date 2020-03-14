@@ -19,6 +19,14 @@ clang-tidy \
   src/sfizz/SIMDSSE.cpp \
   src/sfizz/Synth.cpp \
   src/sfizz/Voice.cpp \
+  src/sfizz/effects/Eq.cpp \
+  src/sfizz/effects/Filter.cpp \
   src/sfizz/effects/Lofi.cpp \
   src/sfizz/effects/Nothing.cpp \
-  -- -Iexternal/abseil-cpp -Isrc/external -Isrc/external/pugixml/src -Isrc/sfizz -Isrc
+  vst/SfizzVstController.cpp \
+  vst/SfizzVstProcessor.cpp \
+  vst/SfizzVstEditor.cpp \
+  vst/SfizzVstState.cpp \
+  -- -Iexternal/abseil-cpp -Isrc/external -Isrc/external/pugixml/src \
+      -Isrc/sfizz -Isrc \
+      -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -DNDEBUG

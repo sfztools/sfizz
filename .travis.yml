@@ -14,8 +14,10 @@ jobs:
       apt:
         packages:
         - clang-tidy
+        - wget
+        - unzip
         - libsndfile-dev
-    install: skip
+    install: .travis/download_vst_sdk.sh
     script: scripts/run_clang_tidy.sh
 
   - name: "Linux amd64 tests"

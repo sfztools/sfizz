@@ -12,7 +12,13 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <cstring>
 
-#pragma message("TODO: send tempo")
+#pragma message("TODO: send tempo") // NOLINT
+
+template<class T>
+constexpr int fastRound(T x)
+{
+    return static_cast<int>(x + T{ 0.5 }); // NOLINT
+}
 
 SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(1024)
@@ -22,7 +28,11 @@ SfizzVstProcessor::SfizzVstProcessor()
 
 SfizzVstProcessor::~SfizzVstProcessor()
 {
-    setActive(false); // to be sure
+    try {
+        stopBackgroundWork();
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Caught exception: %s\n", e.what());
+    }
 }
 
 tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
@@ -186,7 +196,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                     break;
                 msg->setMessageID("SetNumVoices");
                 Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("NumVoices", kParamNumVoicesRange.denormalize(value));
+                attr->setInt("NumVoices", static_cast<Steinberg::int64>(kParamNumVoicesRange.denormalize(value)));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
@@ -201,7 +211,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                     break;
                 msg->setMessageID("SetOversampling");
                 Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("Oversampling", kParamOversamplingRange.denormalize(value));
+                attr->setInt("Oversampling", static_cast<Steinberg::int64>(kParamOversamplingRange.denormalize(value)));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
@@ -216,7 +226,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                     break;
                 msg->setMessageID("SetPreloadSize");
                 Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("PreloadSize", kParamPreloadSizeRange.denormalize(value));
+                attr->setInt("PreloadSize", static_cast<Steinberg::int64>(kParamPreloadSizeRange.denormalize(value)));
                 if (!_fifoToWorker.push(msg)) {
                     msg->release();
                     break;
@@ -246,10 +256,10 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
         switch (id) {
         default:
             if (id >= kPidMidiCC0 && id <= kPidMidiCCLast) {
-                int ccNumber = id - kPidMidiCC0;
+                auto ccNumber = static_cast<int>(id - kPidMidiCC0);
                 for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                     if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                        synth.cc(sampleOffset, ccNumber, (int)(0.5 + value * 127.0));
+                        synth.cc(sampleOffset, ccNumber, fastRound(value * 127.0));
                 }
             }
             break;
@@ -257,14 +267,14 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
         case kPidMidiAftertouch:
             for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                 if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                    synth.aftertouch(sampleOffset, (int)(0.5 + value * 127.0));
+                    synth.aftertouch(sampleOffset, fastRound(value * 127.0));
             }
             break;
 
         case kPidMidiPitchBend:
             for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                 if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                    synth.pitchWheel(sampleOffset, (int)(0.5 + value * 16383) - 8192);
+                    synth.pitchWheel(sampleOffset, fastRound(value * 16383) - 8192);
             }
             break;
         }

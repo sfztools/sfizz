@@ -84,7 +84,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID ta
     switch (tag) {
     case kPidOversampling:
         {
-            int factorLog2 = kParamOversamplingRange.denormalize(valueNormalized);
+            auto factorLog2 = static_cast<int>(kParamOversamplingRange.denormalize(valueNormalized));
             Steinberg::String buf;
             buf.printf("%dX", 1 << factorLog2);
             buf.copyTo(string);
