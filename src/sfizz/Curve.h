@@ -6,6 +6,8 @@
 
 #pragma once
 #include "absl/types/span.h"
+#include "MathHelpers.h"
+#include "SfzHelpers.h"
 #include <array>
 #include <vector>
 #include <memory>
@@ -22,17 +24,29 @@ public:
     /**
      * @brief Compute the curve for integral x in domain [0:127]
      */
-    float evalCC7(int value7) const;
-
+    float evalCC7(int value7) const
+    {
+        return _points[clamp(value7, 0, 127)];
+    }
     /**
      * @brief Compute the curve for real x in domain [0:127]
      */
-    float evalCC7(float value7) const;
+    float evalCC7(float value7) const
+    {
+        value7 = clamp(value7, 0.0f, 127.0f);
+        int i1 = static_cast<int>(value7);
+        int i2 = std::min(127, i1 + 1);
+        float mu = value7 - i1;
+        return _points[i1] + mu * (_points[i2] - _points[i1]);
+    }
 
     /**
      * @brief Compute the curve for real x in domain [0:1]
      */
-    float evalNormalized(float value) const;
+    float evalNormalized(float value) const
+    {
+        return evalCC7(denormalize7Bits<int>(value));
+    }
 
     /**
      * @brief Kind of curve interpolator
@@ -118,7 +132,10 @@ public:
     /**
      * @brief Get the number of slots.
      */
-    unsigned getNumCurves() const;
+    unsigned getNumCurves() const
+    {
+        return static_cast<unsigned>(_curves.size());
+    }
 
 private:
     std::vector<std::unique_ptr<Curve>> _curves;
@@ -126,5 +143,3 @@ private:
 };
 
 } // namespace sfz
-
-#include "Curve.hpp"
