@@ -30,7 +30,7 @@ public:
         output.resize(state.range(0));
     }
 
-    void TearDown(const ::benchmark::State &state[[maybe_unused]])
+    void TearDown(const ::benchmark::State& /* state */)
     {
     }
 

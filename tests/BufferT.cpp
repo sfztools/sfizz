@@ -73,7 +73,7 @@ TEST_CASE("[Buffer] Resize 10 floats ")
     REQUIRE(buffer.resize(smallSize));
     checkBoundaries(buffer, smallSize);
 
-    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }));
+    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](float value) { return value == 1.0f; }));
 
     REQUIRE(buffer.resize(bigSize));
     checkBoundaries(buffer, bigSize);
@@ -95,7 +95,7 @@ TEST_CASE("[Buffer] Resize 4096 floats ")
     REQUIRE(buffer.resize(smallSize));
     checkBoundaries(buffer, smallSize);
 
-    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }));
+    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](float value) { return value == 1.0f; }));
 
     REQUIRE(buffer.resize(bigSize));
     checkBoundaries(buffer, bigSize);
@@ -117,7 +117,7 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
     REQUIRE(buffer.resize(smallSize));
     checkBoundaries(buffer, smallSize);
 
-    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](auto value) { return value == 1.0f; }));
+    REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](float value) { return value == 1.0f; }));
 
     REQUIRE(buffer.resize(bigSize));
     checkBoundaries(buffer, bigSize);
@@ -134,11 +134,11 @@ TEST_CASE("[Buffer] Copy and move")
     std::fill(copied.begin(), copied.end(), 2.0f);
     copied = buffer;
     checkBoundaries(copied, baseSize);
-    REQUIRE(std::all_of(copied.begin(), copied.end(), [](auto value) { return value == 1.0f; }));
+    REQUIRE(std::all_of(copied.begin(), copied.end(), [](float value) { return value == 1.0f; }));
 
     sfz::Buffer<float> copyConstructed { buffer };
     checkBoundaries(copyConstructed, baseSize);
-    REQUIRE(std::all_of(copyConstructed.begin(), copyConstructed.end(), [](auto value) { return value == 1.0f; }));
+    REQUIRE(std::all_of(copyConstructed.begin(), copyConstructed.end(), [](float value) { return value == 1.0f; }));
 
     // sfz::Buffer<float> moveConstructed { std::move(buffer) };
     // REQUIRE(buffer.empty());

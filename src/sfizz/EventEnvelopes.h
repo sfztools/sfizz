@@ -94,7 +94,7 @@ protected:
     Type currentValue { 0.0 };
 private:
     static_assert(std::is_arithmetic<Type>::value, "Type should be arithmetic");
-    std::function<Type(Type)> function { [](Type input) { return input; } };
+    std::function<Type(Type)> function { [](Type input) -> Type { return input; } };
     int maxCapacity { config::defaultSamplesPerBlock };
     void prepareEvents(int blockLength);
     bool resetEvents { false };

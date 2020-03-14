@@ -10,7 +10,7 @@
 #include "Debug.h"
 #include "LeakDetector.h"
 #include "absl/types/span.h"
-#include <memory>
+#include "absl/memory/memory.h"
 #include <array>
 
 namespace sfz
@@ -28,7 +28,7 @@ namespace sfz
 template <class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
 class AudioBuffer {
 public:
-    using value_type = std::remove_cv_t<Type>;
+    using value_type = typename std::remove_cv<Type>::type;
     using pointer = value_type*;
     using const_pointer = const value_type*;
     using iterator = pointer;
@@ -54,7 +54,7 @@ public:
         , numFrames(numFrames)
     {
         for (size_t i = 0; i < numChannels; ++i)
-            buffers[i] = std::make_unique<buffer_type>(numFrames);
+            buffers[i] = absl::make_unique<buffer_type>(numFrames);
     }
 
     /**
@@ -170,7 +170,7 @@ public:
     void addChannel()
     {
         if (numChannels < MaxChannels)
-            buffers[numChannels++] = std::make_unique<buffer_type>(numFrames);
+            buffers[numChannels++] = absl::make_unique<buffer_type>(numFrames);
     }
 
     /**

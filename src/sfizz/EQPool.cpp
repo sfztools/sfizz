@@ -3,7 +3,6 @@
 #include <thread>
 #include "absl/algorithm/container.h"
 #include "SIMDHelpers.h"
-using namespace std::chrono_literals;
 
 sfz::EQHolder::EQHolder(const MidiState& state)
 :midiState(state)
@@ -114,7 +113,7 @@ size_t sfz::EQPool::setnumEQs(size_t numEQs)
     AtomicDisabler disabler { canGiveOutEQs };
 
     while(givingOutEQs)
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     auto eqIterator = eqs.begin();
     auto eqSentinel = eqs.rbegin();

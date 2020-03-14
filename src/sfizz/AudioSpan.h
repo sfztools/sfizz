@@ -148,7 +148,7 @@ public:
      * @tparam Alignment the alignment block size for the platform
      * @param audioBuffer the source AudioBuffer.
      */
-    template <class U, size_t N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>, typename = std::enable_if_t<std::is_const<U>::value, int>>
+    template <class U, size_t N, unsigned int Alignment, typename = typename std::enable_if<N <= MaxChannels>::type, typename = typename std::enable_if<std::is_const<U>::value, int>::type>
     AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())

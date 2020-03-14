@@ -134,13 +134,13 @@ private:
      * @brief Stores the note on times.
      *
      */
-	MidiNoteArray<NoteOnTime> noteOnTimes { };
+	MidiNoteArray<NoteOnTime> noteOnTimes;
     /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
      *
      */
-	MidiNoteArray<uint8_t> lastNoteVelocities { };
+	MidiNoteArray<uint8_t> lastNoteVelocities;
     /**
      * @brief Current known values for the CCs.
      *

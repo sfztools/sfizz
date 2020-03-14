@@ -5,10 +5,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Config.h"
+#include "Macros.h"
 #include "Synth.h"
 #include "sfizz.h"
 
-#define UNUSED(x) (void)(x)
 #ifdef __cplusplus
 extern "C" {
 #endif

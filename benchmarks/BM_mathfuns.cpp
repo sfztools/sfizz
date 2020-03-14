@@ -26,7 +26,7 @@ public:
         std::generate(source.begin(), source.end(), [&]() { return dist(gen); });
     }
 
-    void TearDown(const ::benchmark::State& state [[maybe_unused]])
+    void TearDown(const ::benchmark::State& /* state */)
     {
     }
 

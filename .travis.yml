@@ -129,7 +129,6 @@ jobs:
 
   - name: "macOS"
     os: osx
-    osx_image: xcode10.1
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     install: .travis/install_osx.sh

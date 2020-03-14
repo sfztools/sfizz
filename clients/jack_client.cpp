@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "sfizz/Synth.h"
+#include "sfizz/Macros.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
 #include <absl/types/span.h>
@@ -37,7 +38,6 @@
 #include <string_view>
 #include <chrono>
 #include <thread>
-using namespace std::literals;
 
 static jack_port_t* midiInputPort;
 static jack_port_t* outputPort1;
@@ -71,9 +71,7 @@ constexpr int buildAndCenterPitch(uint8_t firstByte, uint8_t secondByte)
 }
 }
 
-static std::atomic<bool> keepRunning [[maybe_unused]] { true };
-
-int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
+int process(jack_nframes_t numFrames, void* arg)
 {
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
 
@@ -130,7 +128,7 @@ int process(jack_nframes_t numFrames, void* arg [[maybe_unused]])
     return 0;
 }
 
-int sampleBlockChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
+int sampleBlockChanged(jack_nframes_t nframes, void* arg)
 {
     if (arg == nullptr)
         return 0;
@@ -141,7 +139,7 @@ int sampleBlockChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
     return 0;
 }
 
-int sampleRateChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
+int sampleRateChanged(jack_nframes_t nframes, void* arg)
 {
     if (arg == nullptr)
         return 0;
@@ -154,10 +152,11 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg [[maybe_unused]])
 
 static bool shouldClose { false };
 
-static void done(int sig [[maybe_unused]])
+static void done(int sig)
 {
     std::cout << "Signal received" << '\n';
     shouldClose = true;
+    UNUSED(sig);
     // if (client != nullptr)
 
     // exit(0);
@@ -290,7 +289,7 @@ int main(int argc, char** argv)
         std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
         std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
 #endif
-        std::this_thread::sleep_for(2s);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     std::cout << "Closing..." << '\n';

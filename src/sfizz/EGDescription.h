@@ -26,6 +26,7 @@
 #pragma once
 #include "Config.h"
 #include "Defaults.h"
+#include "Macros.h"
 #include "LeakDetector.h"
 #include "SfzHelpers.h"
 #include <absl/types/optional.h>
@@ -134,8 +135,9 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getStart(const SfzCCArray &ccValues, uint8_t velocity [[maybe_unused]]) const noexcept
+    float getStart(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
     {
+        UNUSED(velocity);
         return Default::egPercentRange.clamp(ccSwitchedValue(ccValues, ccStart, start));
     }
     /**

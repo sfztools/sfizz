@@ -25,7 +25,7 @@ public:
     sfz::cumsum<float, false>(input, absl::MakeSpan(input));
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
+  void TearDown(const ::benchmark::State& /* state */) {
 
   }
 

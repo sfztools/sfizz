@@ -12,18 +12,9 @@
 #pragma once
 #include <stddef.h>
 #include <stdbool.h>
+#include "sfizz/Macros.h"
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#if defined SFIZZ_EXPORT_SYMBOLS
-  #if defined _WIN32
-    #define SFIZZ_EXPORTED_API __declspec(dllexport)
-  #else
-    #define SFIZZ_EXPORTED_API __attribute__ ((visibility ("default")))
-  #endif
-#else
-  #define SFIZZ_EXPORTED_API
 #endif
 
 typedef struct sfizz_synth_t sfizz_synth_t;

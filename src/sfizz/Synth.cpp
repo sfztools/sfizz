@@ -8,17 +8,18 @@
 #include "AtomicGuard.h"
 #include "Config.h"
 #include "Debug.h"
+#include "Macros.h"
 #include "MidiState.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_replace.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <utility>
-using namespace std::literals;
 
 sfz::Synth::Synth()
     : Synth(config::numVoices)
@@ -38,7 +39,7 @@ sfz::Synth::~Synth()
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto& voice: voices)
@@ -83,9 +84,9 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = std::make_unique<Region>(resources.midiState, defaultPath);
+    auto lastRegion = absl::make_unique<Region>(resources.midiState, defaultPath);
 
-    auto parseOpcodes = [&](const auto& opcodes) {
+    auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
             const auto unknown = absl::c_find_if(unknownOpcodes, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
             if (unknown != unknownOpcodes.end()) {
@@ -112,7 +113,7 @@ void sfz::Synth::clear()
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto &voice: voices)
@@ -163,20 +164,20 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& member : members) {
         switch (member.lettersOnlyHash) {
-        case hash("Set_cc&"): [[fallthrough]];
+        case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
                 resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
             }
             break;
-        case hash("Label_cc&"): [[fallthrough]];
+        case hash("Label_cc&"): // fallthrough
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
                 ccNames.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
-            [[fallthrough]];
+            // fallthrough
         case hash("default_path"):
             defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             DBG("Changing default sample path to " << defaultPath);
@@ -260,7 +261,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
 void addEndpointsToVelocityCurve(sfz::Region& region)
 {
     if (region.velocityPoints.size() > 0) {
-        absl::c_sort(region.velocityPoints, [](auto& lhs, auto& rhs) { return lhs.first < rhs.first; });
+        absl::c_sort(region.velocityPoints, [](const std::pair<int, float>& lhs, const std::pair<int, float>& rhs) { return lhs.first < rhs.first; });
         if (region.ampVeltrack > 0) {
             if (region.velocityPoints.back().first != sfz::Default::velocityRange.getEnd())
                 region.velocityPoints.push_back(std::make_pair<int, float>(127, 1.0f));
@@ -279,7 +280,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     clear();
@@ -342,7 +343,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 region->isStereo = true;
 
             // TODO: adjust with LFO targets
-            const auto maxOffset { region->offset + region->offsetRandom };
+            const auto maxOffset = region->offset + region->offsetRandom;
             if (!resources.filePool.preloadFile(region->sample, maxOffset))
                 removeCurrentRegion();
         }
@@ -409,7 +410,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
-    auto freeVoice = absl::c_find_if(voices, [](const auto& voice) { return voice->isFree(); });
+    auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) { return voice->isFree(); });
     if (freeVoice != voices.end())
         return freeVoice->get();
 
@@ -418,7 +419,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     for (auto& voice : voices)
         if (voice->canBeStolen())
             voiceViewArray.push_back(voice.get());
-    absl::c_sort(voiceViewArray, [](const auto& lhs, const auto& rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
+    absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
 
     for (auto* voice : voiceViewArray) {
         if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
@@ -432,7 +433,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 
 int sfz::Synth::getNumActiveVoices() const noexcept
 {
-    auto activeVoices { 0 };
+    auto activeVoices = 0;
     for (const auto& voice : voices) {
         if (!voice->isFree())
             activeVoices++;
@@ -452,7 +453,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     AtomicDisabler callbackDisabler { canEnterCallback };
 
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     this->samplesPerBlock = samplesPerBlock;
@@ -471,7 +472,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
     AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     this->sampleRate = sampleRate;
@@ -589,10 +590,11 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOnDispatch(delay, noteNumber, velocity);
 }
 
-void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    UNUSED(velocity);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(delay, noteNumber, velocity);
@@ -851,12 +853,12 @@ void sfz::Synth::resetVoices(int numVoices)
 {
     AtomicDisabler callbackDisabler{ canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(std::make_unique<Voice>(resources));
+        voices.push_back(absl::make_unique<Voice>(resources));
 
     for (auto& voice: voices) {
         voice->setSampleRate(this->sampleRate);
@@ -871,7 +873,7 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
     AtomicDisabler callbackDisabler{ canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     for (auto& voice: voices)
@@ -891,7 +893,7 @@ void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     AtomicDisabler callbackDisabler{ canEnterCallback };
     while (inCallback) {
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     resources.filePool.setPreloadSize(preloadSize);

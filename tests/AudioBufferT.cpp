@@ -64,8 +64,8 @@ TEST_CASE("[AudioBuffer] Iterators")
     std::fill(buffer.channelWriter(0), buffer.channelWriterEnd(0), fillValue);
     std::fill(buffer.channelWriter(1), buffer.channelWriterEnd(1), fillValue);
 
-    REQUIRE(std::all_of(buffer.channelReader(0), buffer.channelReaderEnd(0), [fillValue](auto value) { return value == fillValue; }));
-    REQUIRE(std::all_of(buffer.channelReader(1), buffer.channelReaderEnd(1), [fillValue](auto value) { return value == fillValue; }));
+    REQUIRE(std::all_of(buffer.channelReader(0), buffer.channelReaderEnd(0), [fillValue](float value) { return value == fillValue; }));
+    REQUIRE(std::all_of(buffer.channelReader(1), buffer.channelReaderEnd(1), [fillValue](float value) { return value == fillValue; }));
 }
 
 TEST_CASE("[AudioSpan] Constructions")

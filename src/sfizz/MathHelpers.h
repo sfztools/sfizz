@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "Config.h"
+#include "Macros.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -17,25 +18,25 @@
 template<class T>
 constexpr T max(T op1, T op2)
 {
-    return std::max(op1, op2);
+    return op1 > op2 ? op1 : op2;
 }
 
 template<class T, class... Args>
 constexpr T max(T op1, Args... rest)
 {
-    return std::max(op1, max(rest...));
+    return max(op1, max(rest...));
 }
 
 template<class T>
 constexpr T min(T op1, T op2)
 {
-    return std::min(op1, op2);
+    return op1 > op2 ? op2 : op1;
 }
 
 template<class T, class... Args>
 constexpr T min(T op1, Args... rest)
 {
-    return std::min(op1, min(rest...));
+    return min(op1, min(rest...));
 }
 
 /**
@@ -124,19 +125,17 @@ inline float midiNoteFrequency(const int noteNumber)
 template<class T>
 constexpr T clamp( T v, T lo, T hi )
 {
-    v = std::min(v, hi);
-    v = std::max(v, lo);
-    return v;
+    return max(min(v, hi), lo);
 }
 
 template<int Increment = 1, class T>
-constexpr void incrementAll(T& only)
+inline CXX14_CONSTEXPR void incrementAll(T& only)
 {
     only += Increment;
 }
 
 template<int Increment = 1, class T, class... Args>
-constexpr void incrementAll(T& first, Args&... rest)
+inline CXX14_CONSTEXPR void incrementAll(T& first, Args&... rest)
 {
     first += Increment;
     incrementAll<Increment>(rest...);
@@ -148,18 +147,18 @@ constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueTy
     return left * leftCoeff + right * rightCoeff;
 }
 
-template <class Type>
-constexpr Type pi { static_cast<Type>(3.141592653589793238462643383279502884) };
-template <class Type>
-constexpr Type twoPi { static_cast<Type>(2) * pi<Type> };
-template <class Type>
-constexpr Type piTwo { pi<Type> / static_cast<Type>(2) };
-template <class Type>
-constexpr Type piFour { pi<Type> / static_cast<Type>(4) };
-template <class Type>
-constexpr Type sqrtTwo { static_cast<Type>(1.414213562373095048801688724209698078569671875376948073176) };
-template <class Type>
-constexpr Type sqrtTwoInv { static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588) };
+template<class Type>
+constexpr Type pi() { return static_cast<Type>(3.141592653589793238462643383279502884); };
+template<class Type>
+constexpr Type twoPi() { return pi<Type>() * 2; };
+template<class Type>
+constexpr Type piTwo() { return pi<Type>() / 2; };
+template<class Type>
+constexpr Type piFour() { return pi<Type>() / 4; };
+template<class Type>
+constexpr Type sqrtTwo() { return static_cast<Type>(1.414213562373095048801688724209698078569671875376948073176); };
+template<class Type>
+constexpr Type sqrtTwoInv() { return static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588); };
 
 /**
    @brief A fraction which is parameterized by integer type

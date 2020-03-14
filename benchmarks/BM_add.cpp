@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SIMDHelpers.h"
+#include "Macros.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
@@ -24,8 +25,8 @@ public:
     std::generate(input.begin(), input.end(), [&]() { return dist(gen); });
   }
 
-  void TearDown(const ::benchmark::State& state [[maybe_unused]]) {
-
+  void TearDown(const ::benchmark::State& state) {
+      UNUSED(state);
   }
 
   std::vector<float> input;

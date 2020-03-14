@@ -16,10 +16,9 @@
 #include "mathfuns/sse_mathfun.h"
 
 using Type = float;
-[[maybe_unused]] constexpr uintptr_t TypeAlignment { 4 };
-[[maybe_unused]] constexpr uintptr_t TypeAlignmentMask { TypeAlignment - 1 };
-[[maybe_unused]] constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
-[[maybe_unused]] constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
+constexpr uintptr_t TypeAlignment { 4 };
+constexpr uintptr_t ByteAlignment { TypeAlignment * sizeof(Type) };
+constexpr uintptr_t ByteAlignmentMask { ByteAlignment - 1 };
 
 struct AlignmentSentinels {
     float* nextAligned;
@@ -623,7 +622,7 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
     }
 
     const auto mmOne = _mm_set_ps1(1.0f);
-    const auto mmPiFour = _mm_set_ps1(piFour<float>);
+    const auto mmPiFour = _mm_set_ps1(piFour<float>());
     __m128 mmCos;
     __m128 mmSin;
     while (pan < lastAligned) {
@@ -660,7 +659,7 @@ void sfz::width<float, true>(absl::Span<const float> widthEnvelope, absl::Span<f
         incrementAll(width, left, right);
     }
 
-    const auto mmPiFour = _mm_set_ps1(piFour<float>);
+    const auto mmPiFour = _mm_set_ps1(piFour<float>());
     __m128 mmCos;
     __m128 mmSin;
     while (width < lastAligned) {

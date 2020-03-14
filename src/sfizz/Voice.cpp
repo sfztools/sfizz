@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "Macros.h"
 #include "Voice.h"
 #include "AudioSpan.h"
 #include "Config.h"
@@ -45,7 +46,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     pitchRatio = region->getBasePitchVariation(number, value);
 
     baseVolumedB = region->getBaseVolumedB(number);
-    auto volumedB { baseVolumedB };
+    auto volumedB = baseVolumedB;
     if (region->volumeCC)
         volumedB += normalizeCC(resources.midiState.getCCValue(region->volumeCC->cc)) * region->volumeCC->value;
     volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
@@ -63,19 +64,19 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
     basePan = normalizePercents(region->pan);
-    auto pan { basePan };
+    auto pan = basePan;
     if (region->panCC)
         pan += normalizeCC(resources.midiState.getCCValue(region->panCC->cc)) * normalizePercents(region->panCC->value);
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
     basePosition = normalizePercents(region->position);
-    auto position { basePosition };
+    auto position = basePosition;
     if (region->positionCC)
         position += normalizeCC(resources.midiState.getCCValue(region->positionCC->cc)) * normalizePercents(region->positionCC->value);
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
     baseWidth = normalizePercents(region->width);
-    auto width { baseWidth };
+    auto width = baseWidth;
     if (region->widthCC)
         width += normalizeCC(resources.midiState.getCCValue(region->widthCC->cc)) * normalizePercents(region->widthCC->value);
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
@@ -129,8 +130,9 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     }
 }
 
-void sfz::Voice::registerNoteOff(int delay, int noteNumber, uint8_t velocity [[maybe_unused]]) noexcept
+void sfz::Voice::registerNoteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 {
+    UNUSED(velocity);
     if (region == nullptr)
         return;
 
@@ -207,14 +209,18 @@ void sfz::Voice::registerPitchWheel(int delay, int pitch) noexcept
     pitchBendEnvelope.registerEvent(delay, static_cast<float>(pitch));
 }
 
-void sfz::Voice::registerAftertouch(int delay [[maybe_unused]], uint8_t aftertouch [[maybe_unused]]) noexcept
+void sfz::Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
 {
     // TODO
+    UNUSED(delay);
+    UNUSED(aftertouch);
 }
 
-void sfz::Voice::registerTempo(int delay [[maybe_unused]], float secondsPerQuarter [[maybe_unused]]) noexcept
+void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 {
     // TODO
+    UNUSED(delay);
+    UNUSED(secondsPerQuarter);
 }
 
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
@@ -479,7 +485,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         auto bends = tempSpan2.first(buffer.getNumFrames());
         auto phases = tempSpan2.first(buffer.getNumFrames());
 
-        const float step = baseFrequency * twoPi<float> / sampleRate;
+        const float step = baseFrequency * twoPi<float>() / sampleRate;
         fill<float>(jumps, step);
 
         if (region->bendStep > 1)
@@ -496,8 +502,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         copy<float>(leftSpan, rightSpan);
 
         // Wrap the phase so we don't loose too much precision on longer notes
-        const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>);
-        phase -= twoPi<float> * static_cast<float>(numTwoPiWraps);
+        const auto numTwoPiWraps = static_cast<int>(phase / twoPi<float>());
+        phase -= twoPi<float>() * static_cast<float>(numTwoPiWraps);
     }
 }
 

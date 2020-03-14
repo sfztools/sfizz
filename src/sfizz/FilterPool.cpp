@@ -4,7 +4,6 @@
 #include "AtomicGuard.h"
 #include <thread>
 #include <chrono>
-using namespace std::chrono_literals;
 
 sfz::FilterHolder::FilterHolder(const MidiState& midiState)
 : midiState(midiState)
@@ -113,7 +112,7 @@ size_t sfz::FilterPool::setNumFilters(size_t numFilters)
     AtomicDisabler disabler { canGiveOutFilters };
 
     while(givingOutFilters)
-        std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     auto filterIterator = filters.begin();
     auto filterSentinel = filters.rbegin();

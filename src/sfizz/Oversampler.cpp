@@ -78,11 +78,11 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
     case Oversampling::x8:
         for (auto& upsampler: upsampler8x)
             upsampler.set_coefs(coeffsStage8x.data());
-        [[fallthrough]];
+        // fallthrough
     case Oversampling::x4:
         for (auto& upsampler: upsampler4x)
             upsampler.set_coefs(coeffsStage4x.data());
-        [[fallthrough]];
+        // fallthrough
     case Oversampling::x2:
         for (auto& upsampler: upsampler2x)
             upsampler.set_coefs(coeffsStage2x.data());
@@ -105,7 +105,7 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
     {
         // std::cout << "Input frames: " << inputFrameCounter << "/" << numFrames << '\n';
         const auto thisChunkSize = std::min(chunkSize, numFrames - inputFrameCounter);
-        const auto outputChunkSize { thisChunkSize * static_cast<int>(factor) };
+        const auto outputChunkSize = thisChunkSize * static_cast<int>(factor);
         for (size_t chanIdx = 0; chanIdx < numChannels; chanIdx++) {
             const auto inputChunk = input.getSpan(chanIdx).subspan(inputFrameCounter, thisChunkSize);
             const auto outputChunk = output.getSpan(chanIdx).subspan(outputFrameCounter, outputChunkSize);

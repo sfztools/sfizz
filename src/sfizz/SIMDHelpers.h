@@ -748,7 +748,7 @@ namespace _internals {
         int i = 0;
 
         for (; i < panSize; ++i)
-            pan[i] = std::cos(i * (piTwo<double> / (panSize - 1)));
+            pan[i] = std::cos(i * (piTwo<double>() / (panSize - 1)));
 
         for (; i < static_cast<int>(pan.size()); ++i)
             pan[i] = pan[panSize - 1];
