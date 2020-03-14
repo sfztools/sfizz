@@ -75,7 +75,6 @@ if (SFIZZ_SHARED)
         target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
     endif()
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties (sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
     set_property (TARGET sfizz_shared PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
     sfizz_enable_lto_if_needed(sfizz_shared)
 
