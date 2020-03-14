@@ -6,10 +6,7 @@
 
 /**
  * @file MathHelpers.h
- * @author Paul Ferrand (paul@ferrand.cc)
  * @brief Contains math helper functions and math constants
- * @version 0.1
- * @date 2019-11-23
  */
 #pragma once
 #include "Config.h"

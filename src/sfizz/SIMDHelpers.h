@@ -6,7 +6,6 @@
 
 /**
  * @file SIMDHelpers.h
- * @author Paul Ferrand (paul@ferrand.cc)
  * @brief This file contains useful functions to treat buffers of numerical values
  * (e.g. a buffer of floats usually).
  *
@@ -30,11 +29,6 @@
  * will be very dependent on the processor architecture. Modern processors can also organize their
  * instructions so that scalar non-SIMD code runs sometimes much more efficiently than SIMD code
  * especially when the latter does not operate on misaligned buffers.
- *
- * @version 0.1
- * @date 2019-11-23
- *
- * @copyright Copyright (c) 2019
  *
  */
 #pragma once

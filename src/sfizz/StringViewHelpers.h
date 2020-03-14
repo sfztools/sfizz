@@ -6,12 +6,7 @@
 
 /**
  * @file StringViewHelpers.h
- * @author Paul Ferrand (paul@ferrand.cc)
  * @brief Contains some helper functions for string views
- * @version 0.1
- * @date 2019-11-23
- *
- * @copyright Copyright (c) 2019
  *
  */
 
