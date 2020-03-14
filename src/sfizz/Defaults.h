@@ -206,5 +206,10 @@ namespace Default
 	constexpr bool checkSostenuto { true }; // sostenuto_sw
     constexpr Range<int> octaveOffsetRange { -10, 10 }; // octave_offset
     constexpr Range<int> noteOffsetRange { -127, 127 }; // note_offset
+
+    constexpr Range<int> apanWaveformRange { 0, std::numeric_limits<int>::max() };
+    constexpr Range<float> apanFrequencyRange { 0, std::numeric_limits<float>::max() };
+    constexpr Range<float> apanPhaseRange { 0.0, 360.0 };
+    constexpr Range<float> apanLevelRange { 0.0, 100.0 };
 }
 }

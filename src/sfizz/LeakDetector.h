@@ -47,6 +47,8 @@ public:
         }
     }
 
+    LeakDetector& operator=(const LeakDetector&) = default;
+
 private:
     struct ObjectCounter {
         ObjectCounter() = default;

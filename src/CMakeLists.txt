@@ -18,6 +18,7 @@ set (SFIZZ_SOURCES
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
     sfizz/effects/Eq.cpp
+    sfizz/effects/Apan.cpp
     sfizz/effects/Lofi.cpp
 )
 include (SfizzSIMDSourceFiles)
