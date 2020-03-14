@@ -245,7 +245,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
     promise->creationTime = std::chrono::high_resolution_clock::now();
 
     if (!promiseQueue.try_push(promise)) {
-        DBG("[sfizz] Could not enqueue the promise for " << filename << " (queue size " << promiseQueue.size() << ")");
+        DBG("[sfizz] Could not enqueue the promise for " << filename << " (queue capacity " << promiseQueue.capacity() << ")");
         return {};
     }
 
