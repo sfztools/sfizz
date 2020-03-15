@@ -275,11 +275,36 @@ void WavetableMulti::fillExtra()
 
 
 WavetablePool::WavetablePool()
-: waveSin(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getSine(), config::amplitudeSine))
-, waveTriangle(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getTriangle(), config::amplitudeTriangle))
-, waveSaw(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getSaw(), config::amplitudeSaw))
-, waveSquare(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getSquare(), config::amplitudeSquare))
-{ }
+{
+    getWaveSin();
+    getWaveTriangle();
+    getWaveSaw();
+    getWaveSquare();
+}
 
+const WavetableMulti* WavetablePool::getWaveSin()
+{
+    static auto wave = WavetableMulti::createForHarmonicProfile(
+            HarmonicProfile::getSine(), config::amplitudeSine);
+    return &wave;
+}
+const WavetableMulti* WavetablePool::getWaveTriangle()
+{
+    static auto wave = WavetableMulti::createForHarmonicProfile(
+            HarmonicProfile::getTriangle(), config::amplitudeTriangle);
+    return &wave;
+}
+const WavetableMulti* WavetablePool::getWaveSaw()
+{
+    static auto wave = WavetableMulti::createForHarmonicProfile(
+            HarmonicProfile::getSaw(), config::amplitudeSaw);
+    return &wave;
+}
+const WavetableMulti* WavetablePool::getWaveSquare()
+{
+    static auto wave = WavetableMulti::createForHarmonicProfile(
+            HarmonicProfile::getSquare(), config::amplitudeSquare);
+    return &wave;
+}
 
 } // namespace sfz

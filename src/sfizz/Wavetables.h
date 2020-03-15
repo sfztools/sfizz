@@ -183,20 +183,12 @@ private:
  * @brief Holds predefined wavetables.
  *
  */
-class WavetablePool {
-public:
+struct WavetablePool {
     WavetablePool();
-    const WavetableMulti* getWaveSin() const { return &waveSin; }
-    const WavetableMulti* getWaveTriangle() const { return &waveTriangle; }
-    const WavetableMulti* getWaveSaw() const { return &waveSaw; }
-    const WavetableMulti* getWaveSquare() const { return &waveSquare; };
-private:
-    const WavetableMulti waveSin;
-    const WavetableMulti waveTriangle;
-    const WavetableMulti waveSaw;
-    const WavetableMulti waveSquare;
-    LEAK_DETECTOR(WavetablePool);
-
+    static const WavetableMulti* getWaveSin();
+    static const WavetableMulti* getWaveTriangle();
+    static const WavetableMulti* getWaveSaw();
+    static const WavetableMulti* getWaveSquare();
 };
 
 } // namespace sfz
