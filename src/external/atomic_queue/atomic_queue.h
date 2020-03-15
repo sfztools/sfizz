@@ -28,34 +28,13 @@ namespace details {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<size_t elements_per_cache_line>
-struct GetCacheLineIndexBits {
-    static int constexpr value = 0;
-};
-template<>
-struct GetCacheLineIndexBits<64> {
-    static int constexpr value = 6;
-};
-template<>
-struct GetCacheLineIndexBits<32> {
-    static int constexpr value = 5;
-};
-template<>
-struct GetCacheLineIndexBits<16> {
-    static int constexpr value = 4;
-};
-template<>
-struct GetCacheLineIndexBits<8> {
-    static int constexpr value = 3;
-};
-template<>
-struct GetCacheLineIndexBits<4> {
-    static int constexpr value = 2;
-};
-template<>
-struct GetCacheLineIndexBits<2> {
-    static int constexpr value = 1;
-};
+template<size_t elements_per_cache_line> struct GetCacheLineIndexBits { static int constexpr value = 0; };
+template<> struct GetCacheLineIndexBits<64> { static int constexpr value = 6; };
+template<> struct GetCacheLineIndexBits<32> { static int constexpr value = 5; };
+template<> struct GetCacheLineIndexBits<16> { static int constexpr value = 4; };
+template<> struct GetCacheLineIndexBits< 8> { static int constexpr value = 3; };
+template<> struct GetCacheLineIndexBits< 4> { static int constexpr value = 2; };
+template<> struct GetCacheLineIndexBits< 2> { static int constexpr value = 1; };
 
 template<bool minimize_contention, unsigned array_size, size_t elements_per_cache_line>
 struct GetIndexShuffleBits {
@@ -321,7 +300,7 @@ public:
         static_cast<Derived&>(*this).do_push(std::forward<T>(element), head);
     }
 
-    Derived& pop() noexcept {
+    Derived pop() noexcept {
         unsigned tail;
         if(Derived::spsc_) {
             tail = tail_.load(X);
@@ -342,7 +321,7 @@ public:
         return static_cast<int>(head_.load(X) - tail_.load(X)) >= static_cast<int>(static_cast<Derived const&>(*this).size_);
     }
 
-    unsigned size() const noexcept {
+    unsigned capacity() const noexcept {
         return static_cast<Derived const&>(*this).size_;
     }
 };
@@ -491,7 +470,7 @@ public:
 
     void swap(AtomicQueueB& b) noexcept {
         using std::swap;
-        swap(static_cast<Base&>(*this), static_cast<Base&>(b));
+        this->Base::swap(b);
         swap(static_cast<AllocatorElements&>(*this), static_cast<AllocatorElements&>(b));
         swap(size_, b.size_);
         swap(elements_, b.elements_);
@@ -532,13 +511,13 @@ class AtomicQueueB2 : public AtomicQueueCommon<AtomicQueueB2<T, A, MAXIMIZE_THRO
     static_assert(SHUFFLE_BITS, "Unexpected SHUFFLE_BITS.");
 
     T do_pop(unsigned tail) noexcept {
-        unsigned index = details::remap_index<SHUFFLE_BITS>(tail % (size_ - 1));
+        unsigned index = details::remap_index<SHUFFLE_BITS>(tail & (size_ - 1));
         return Base::template do_pop_any(states_[index], elements_[index]);
     }
 
     template<class U>
     void do_push(U&& element, unsigned head) noexcept {
-        unsigned index = details::remap_index<SHUFFLE_BITS>(head % (size_ - 1));
+        unsigned index = details::remap_index<SHUFFLE_BITS>(head & (size_ - 1));
         Base::template do_push_any(std::forward<U>(element), states_[index], elements_[index]);
     }
 
@@ -588,7 +567,7 @@ public:
 
     void swap(AtomicQueueB2& b) noexcept {
         using std::swap;
-        swap(static_cast<Base&>(*this), static_cast<Base&>(b));
+        this->Base::swap(b);
         swap(static_cast<AllocatorElements&>(*this), static_cast<AllocatorElements&>(b));
         swap(static_cast<AllocatorStates&>(*this), static_cast<AllocatorStates&>(b));
         swap(size_, b.size_);
