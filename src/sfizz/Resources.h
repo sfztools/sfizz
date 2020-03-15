@@ -9,9 +9,12 @@
 #include "FilterPool.h"
 #include "EQPool.h"
 #include "Logger.h"
+#include "Wavetables.h"
 
 namespace sfz
 {
+class WavetableMulti;
+
 struct Resources
 {
     MidiState midiState;
@@ -19,5 +22,6 @@ struct Resources
     FilePool filePool { logger };
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
+    WavetablePool wavePool;
 };
 }

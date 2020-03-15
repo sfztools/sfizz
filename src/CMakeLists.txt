@@ -1,5 +1,7 @@
 include (GNUInstallDirs)
 
+add_subdirectory(external/kiss_fft)
+
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FilePool.cpp
@@ -15,6 +17,7 @@ set (SFIZZ_SOURCES
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
     sfizz/Curve.cpp
+    sfizz/Wavetables.cpp
     sfizz/Effects.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
@@ -37,7 +40,7 @@ target_sources(sfizz_static PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfi
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
-target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline)
+target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft)
 set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
 if (WIN32)
     target_compile_definitions (sfizz_static PRIVATE _USE_MATH_DEFINES)
@@ -70,7 +73,7 @@ if (SFIZZ_SHARED)
     target_sources(sfizz_shared PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
     target_include_directories (sfizz_shared PRIVATE external)
-    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline)
+    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft)
     if (WIN32)
         target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
     endif()
