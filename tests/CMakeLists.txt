@@ -23,6 +23,7 @@ set(SFIZZ_TEST_SOURCES
     EventEnvelopesT.cpp
     MainT.cpp
     SynthT.cpp
+    CurveT.cpp
     RegionTriggersT.cpp
     FloatHelpersT.cpp
 )
