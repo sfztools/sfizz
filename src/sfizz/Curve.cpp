@@ -44,7 +44,7 @@ Curve Curve::buildCurveFromHeader(
         if (!valueOpt)
             continue;
 
-        setPoint(index, *valueOpt);
+        setPoint(static_cast<int>(index), *valueOpt);
     }
 
     curve.fill(itp, fillStatus);
