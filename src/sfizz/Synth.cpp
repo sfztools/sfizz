@@ -716,7 +716,7 @@ int sfz::Synth::getNumMasters() const noexcept
 }
 int sfz::Synth::getNumCurves() const noexcept
 {
-    return curves.getNumCurves();
+    return static_cast<int>(curves.getNumCurves());
 }
 
 std::string sfz::Synth::exportMidnam(absl::string_view model) const
