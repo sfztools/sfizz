@@ -2,6 +2,7 @@
 
 clang-tidy \
   src/sfizz/ADSREnvelope.cpp \
+  src/sfizz/Curve.cpp \
   src/sfizz/Effects.cpp \
   src/sfizz/EQPool.cpp \
   src/sfizz/EventEnvelopes.cpp \
@@ -28,5 +29,5 @@ clang-tidy \
   vst/SfizzVstEditor.cpp \
   vst/SfizzVstState.cpp \
   -- -Iexternal/abseil-cpp -Isrc/external -Isrc/external/pugixml/src \
-      -Isrc/sfizz -Isrc \
+      -Isrc/sfizz -Isrc -Isrc/external/spline \
       -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -DNDEBUG
