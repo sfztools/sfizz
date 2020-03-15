@@ -8,7 +8,7 @@
 #include "Opcode.h"
 #include "SIMDHelpers.h"
 #include "Debug.h"
-#include <spline/spline.h>
+#include "spline/spline.h"
 #include <cmath>
 
 namespace sfz
@@ -179,7 +179,7 @@ CurveSet CurveSet::createPredefined()
     CurveSet cs;
     cs._curves.reserve(16);
 
-    for (unsigned i = 0; i < Curve::NumPredefinedCurves; ++i) {
+    for (int i = 0; i < Curve::NumPredefinedCurves; ++i) {
         Curve curve = Curve::buildPredefinedCurve(i);
         cs._curves.emplace_back(new Curve(curve));
     }
