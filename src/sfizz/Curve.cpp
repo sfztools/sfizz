@@ -153,7 +153,7 @@ void Curve::splineFill(const bool fillStatus[NumValues])
 {
     std::array<double, NumValues> x;
     std::array<double, NumValues> y;
-    unsigned count = 0;
+    int count = 0;
 
     for (unsigned i = 0; i < NumValues; ++i) {
         if (fillStatus[i]) {
