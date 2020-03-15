@@ -157,6 +157,23 @@ TEST_CASE("[Curve] Custom 4")
     REQUIRE( curve.evalCC7(70) == Approx(0.54).margin(1e-3) );
 }
 
+TEST_CASE("[Curve] Custom 5")
+{
+    auto curve = sfz::Curve::buildCurveFromHeader({
+        { "v000", "1" },
+        { "v064", "0.9" },
+        { "v100", "0.9" },
+        { "v127", "0" }
+    }, sfz::Curve::Interpolator::Linear);
+    REQUIRE( curve.evalCC7(0) == 1.0f );
+    REQUIRE( curve.evalCC7(15) == Approx(0.977).margin(1e-3) );
+    REQUIRE( curve.evalCC7(64) == 0.9f );
+    REQUIRE( curve.evalCC7(90) == 0.9f );
+    REQUIRE( curve.evalCC7(100) == 0.9f );
+    REQUIRE( curve.evalCC7(110) == Approx(0.567).margin(1e-3) );
+    REQUIRE( curve.evalCC7(127) == 0.0f );
+}
+
 TEST_CASE("[Curve] Add curves to CurveSet")
 {
     sfz::CurveSet curveSet;
