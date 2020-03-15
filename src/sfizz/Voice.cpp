@@ -46,7 +46,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         case hash("*sine"):
             wave = resources.waveSin;
             break;
-        case hash("*triangle"):
+        case hash("*triangle"): // fallthrough
         case hash("*tri"):
             wave = resources.waveTriangle;
             break;
