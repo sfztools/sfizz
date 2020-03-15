@@ -123,8 +123,8 @@ TEST_CASE("[Curve] Custom 2")
     }, sfz::Curve::Interpolator::Linear);
     REQUIRE( curve.evalCC7(0) == 0.0f );
     REQUIRE( curve.evalCC7(127) == 1.0f );
-    REQUIRE( curve.evalCC7(63) == 1.0f );
     REQUIRE( curve.evalCC7(2) == Approx(0.032).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == 1.0f );
     REQUIRE( curve.evalCC7(70) == 1.0f );
 }
 
@@ -136,11 +136,26 @@ TEST_CASE("[Curve] Custom 3")
     }, sfz::Curve::Interpolator::Linear);
     REQUIRE( curve.evalCC7(0) == 0.0f );
     REQUIRE( curve.evalCC7(127) == 1.0f );
-    REQUIRE( curve.evalCC7(63) == 1.0f );
     REQUIRE( curve.evalCC7(2) == Approx(0.032).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == 1.0f );
+    REQUIRE( curve.evalCC7(64) == 0.5f );
     REQUIRE( curve.evalCC7(70) == Approx(0.548).margin(1e-3) );
 }
 
+TEST_CASE("[Curve] Custom 4")
+{
+    auto curve = sfz::Curve::buildCurveFromHeader({
+        { "v063", "1" },
+        { "v065", "0.5" }
+    }, sfz::Curve::Interpolator::Linear);
+    REQUIRE( curve.evalCC7(0) == 0.0f );
+    REQUIRE( curve.evalCC7(127) == 1.0f );
+    REQUIRE( curve.evalCC7(2) == Approx(0.032).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == 1.0f );
+    REQUIRE( curve.evalCC7(64) == Approx(0.75).margin(1e-3) );
+    REQUIRE( curve.evalCC7(65) == 0.5f );
+    REQUIRE( curve.evalCC7(70) == Approx(0.54).margin(1e-3) );
+}
 
 TEST_CASE("[Curve] Add curves to CurveSet")
 {
