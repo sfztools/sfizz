@@ -64,6 +64,7 @@ Curve Curve::buildPredefinedCurve(int index)
     switch (index) {
     default:
         ASSERTFALSE;
+        // fallthrough
     case 0:
         curve = buildBipolar(0, 1);
         break;

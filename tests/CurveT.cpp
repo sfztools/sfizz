@@ -127,6 +127,7 @@ TEST_CASE("[Curve] Custom 2")
     REQUIRE( curve.evalCC7(2) == Approx(0.032).margin(1e-3) );
     REQUIRE( curve.evalCC7(70) == 1.0f );
 }
+
 TEST_CASE("[Curve] Custom 3")
 {
     auto curve = sfz::Curve::buildCurveFromHeader({
