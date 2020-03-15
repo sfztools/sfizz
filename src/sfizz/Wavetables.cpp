@@ -221,11 +221,11 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
     const HarmonicProfile& hp, double amplitude, unsigned tableSize, double refSampleRate)
 {
     WavetableMulti wm;
-    constexpr unsigned multiSize = WavetableMulti::multiSize();
+    constexpr unsigned numTables = WavetableMulti::numTables();
 
     wm.allocateStorage(tableSize);
 
-    for (unsigned m = 0; m < multiSize; ++m) {
+    for (unsigned m = 0; m < numTables; ++m) {
         WavetableRange range = WavetableRange::getRangeForOctave(m);
 
         double freq = range.maxFrequency;
@@ -256,7 +256,7 @@ WavetableMulti WavetableMulti::createSilence()
 
 void WavetableMulti::allocateStorage(unsigned tableSize)
 {
-    _multiData.reset(new float[(tableSize + _tableExtra) * multiSize()]());
+    _multiData.resize((tableSize + _tableExtra) * numTables());
     _tableSize = tableSize;
 }
 
@@ -264,9 +264,9 @@ void WavetableMulti::fillExtra()
 {
     unsigned tableSize = _tableSize;
     constexpr unsigned tableExtra = _tableExtra;
-    constexpr unsigned multiSize = WavetableMulti::multiSize();
+    constexpr unsigned numTables = WavetableMulti::numTables();
 
-    for (unsigned m = 0; m < multiSize; ++m) {
+    for (unsigned m = 0; m < numTables; ++m) {
         float* ptr = const_cast<float*>(getTablePointer(m));
         for (unsigned i = 0; i < tableExtra; ++i)
             ptr[tableSize + i] = ptr[i % tableSize];

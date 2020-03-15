@@ -68,11 +68,11 @@ int main(int argc, char* argv[])
     } else {
         sfz::WavetableMulti multi = sfz::WavetableMulti::createForHarmonicProfile(
             *hp, 1.0, tableSize);
-        unsigned multiSize = multi.multiSize();
+        unsigned numTables = multi.numTables();
 
         if (true) {
             // print all tables one after another
-            for (unsigned m = 0; m < multiSize; ++m) {
+            for (unsigned m = 0; m < numTables; ++m) {
                 absl::Span<const float> table = multi.getTable(m);
                 for (size_t i = 0; i < tableSize; ++i) {
                     std::cout << ((i + m * tableSize) * (1.0 / tableSize))
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
             // print all tables separately
             for (size_t i = 0; i < tableSize; ++i) {
                 std::cout << (i * (1.0 / tableSize));
-                for (unsigned m = 0; m < multiSize; ++m) {
+                for (unsigned m = 0; m < numTables; ++m) {
                     absl::Span<const float> table = multi.getTable(m);
                     std::cout << ' ' << table[i];
                 }

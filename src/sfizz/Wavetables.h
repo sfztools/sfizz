@@ -7,6 +7,7 @@
 #pragma once
 #include "Config.h"
 #include "LeakDetector.h"
+#include "Buffer.h"
 #include <absl/types/span.h>
 #include <memory>
 #include <complex>
@@ -131,7 +132,7 @@ public:
     unsigned tableSize() const { return _tableSize; }
 
     // number of tables in the multisample
-    static constexpr unsigned multiSize() { return WavetableRange::countOctaves; }
+    static constexpr unsigned numTables() { return WavetableRange::countOctaves; }
 
     // get the N-th table in the multisample
     absl::Span<const float> getTable(unsigned index) const
@@ -158,7 +159,7 @@ private:
     // get a pointer to the beginning of the N-th table
     const float* getTablePointer(unsigned index) const
     {
-        return &_multiData[index * (_tableSize + _tableExtra)];
+        return _multiData.data() + index * (_tableSize + _tableExtra);
     }
 
     // allocate the internal data for tables of the given size
@@ -174,7 +175,7 @@ private:
     static constexpr unsigned _tableExtra = 4;
 
     // internal storage, having `multiSize` rows and `tableSize` columns.
-    std::unique_ptr<float[]> _multiData;
+    sfz::Buffer<float> _multiData;
     LEAK_DETECTOR(WavetableMulti);
 };
 
