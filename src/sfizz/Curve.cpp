@@ -6,6 +6,7 @@
 
 #include "Curve.h"
 #include "Opcode.h"
+#include "SIMDHelpers.h"
 #include "Debug.h"
 #include <spline/spline.h>
 #include <cmath>
@@ -133,13 +134,18 @@ void Curve::fill(Interpolator itp, const bool fillStatus[NumValues])
 
 void Curve::lerpFill(const bool fillStatus[NumValues])
 {
-    for (int iCurr = 1; iCurr < NumValues - 1; ++iCurr) {
-        int iLeft, iRight;
-        iLeft = iCurr - 1;
-        for (iRight = iCurr + 1; iRight < 127 && !fillStatus[iRight]; ++iRight);
+    int left { 0 };
+    int right { 1 };
+    auto pointSpan = absl::MakeSpan(_points);
 
-        float mu = static_cast<float>(iCurr - iLeft) / (iRight - iLeft);
-        _points[iCurr] = _points[iLeft] + mu * (_points[iRight] - _points[iLeft]);
+    while (right < NumValues) {
+        for (; right < NumValues && !fillStatus[right]; ++right);
+        const auto length = right - left;
+        if (length > 1) {
+            const float mu = (_points[right] - _points[left]) / length;
+            linearRamp<float>(pointSpan.subspan(left + 1, length - 1), _points[left], mu);
+        }
+        left = right++;
     }
 }
 
