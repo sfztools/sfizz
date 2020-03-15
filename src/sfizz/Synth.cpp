@@ -965,6 +965,11 @@ void sfz::Synth::disableLogging() noexcept
 
 void sfz::Synth::allSoundOff() noexcept
 {
+    AtomicDisabler callbackDisabler{ canEnterCallback };
+    while (inCallback) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
     for (auto &voice: voices)
         voice->reset();
     for (auto& effectBus: effectBuses)
