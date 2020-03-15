@@ -44,17 +44,17 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         case hash("*silence"):
             break;
         case hash("*sine"):
-            wave = resources.waveSin;
+            wave = resources.wavePool.getWaveSin();
             break;
         case hash("*triangle"): // fallthrough
         case hash("*tri"):
-            wave = resources.waveTriangle;
+            wave = resources.wavePool.getWaveTriangle();
             break;
         case hash("*square"):
-            wave = resources.waveSquare;
+            wave = resources.wavePool.getWaveSquare();
             break;
         case hash("*saw"):
-            wave = resources.waveSaw;
+            wave = resources.wavePool.getWaveSaw();
             break;
         }
         waveOscillator.setWavetable(wave);

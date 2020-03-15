@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Config.h"
 #include <absl/types/span.h>
 #include <memory>
 #include <complex>
@@ -146,7 +147,7 @@ public:
     // the reference sample rate is the minimum value accepted by the DSP
     // system (most defavorable wrt. aliasing)
     static WavetableMulti createForHarmonicProfile(
-        const HarmonicProfile& hp, double amplitude, unsigned tableSize, double refSampleRate = 44100.0);
+        const HarmonicProfile& hp, double amplitude, unsigned tableSize = config::tableSize, double refSampleRate = 44100.0);
 
     // create the tiniest wavetable with null content for use with oscillators
     static WavetableMulti createSilence();
@@ -172,6 +173,24 @@ private:
 
     // internal storage, having `multiSize` rows and `tableSize` columns.
     std::unique_ptr<float[]> _multiData;
+};
+
+/**
+ * @brief Holds predefined wavetables.
+ *
+ */
+class WavetablePool {
+public:
+    WavetablePool();
+    const WavetableMulti* getWaveSin() const { return &waveSin; }
+    const WavetableMulti* getWaveTriangle() const { return &waveTriangle; }
+    const WavetableMulti* getWaveSaw() const { return &waveSaw; }
+    const WavetableMulti* getWaveSquare() const { return &waveSquare; };
+private:
+    const WavetableMulti waveSin;
+    const WavetableMulti waveTriangle;
+    const WavetableMulti waveSaw;
+    const WavetableMulti waveSquare;
 };
 
 } // namespace sfz

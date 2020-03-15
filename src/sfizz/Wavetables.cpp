@@ -273,4 +273,13 @@ void WavetableMulti::fillExtra()
     }
 }
 
+
+WavetablePool::WavetablePool()
+: waveSin(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getSine(), config::amplitudeSine))
+, waveTriangle(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getTriangle(), config::amplitudeTriangle))
+, waveSaw(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getSaw(), config::amplitudeSaw))
+, waveSquare(WavetableMulti::createForHarmonicProfile(HarmonicProfile::getSquare(), config::amplitudeSquare))
+{ }
+
+
 } // namespace sfz

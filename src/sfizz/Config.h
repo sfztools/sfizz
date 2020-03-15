@@ -73,6 +73,12 @@ namespace config {
        Limit of how many "fxN" buses are accepted (in SFZv2, maximum is 4)
      */
     constexpr int maxEffectBuses { 256 };
+    // Wavetable constants; amplitude values are matched to reference
+    static constexpr unsigned tableSize = 1024;
+    static constexpr double amplitudeSine = 0.625;
+    static constexpr double amplitudeTriangle = 0.625;
+    static constexpr double amplitudeSaw = 0.515;
+    static constexpr double amplitudeSquare = 0.515;
 } // namespace config
 
 // Enable or disable SIMD accelerators by default
