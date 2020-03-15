@@ -114,12 +114,13 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
         return kResultFalse;
 
     if (state) {
-        _synth->setSampleRate(processSetup.sampleRate);
-        _synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
+        synth->setSampleRate(processSetup.sampleRate);
+        synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
 
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
     } else {
+        synth->allSoundOff();
         stopBackgroundWork();
     }
 
