@@ -48,10 +48,6 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
 
     fprintf(stderr, "[sfizz] new synth\n");
     _synth.reset(new sfz::Sfizz);
-    if (!_synth) {
-        fprintf(stderr, "[sfizz] Could not create synth!\n");
-        return kResultFalse;
-    }
 
     return result;
 }
@@ -114,16 +110,8 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
 {
     sfz::Sfizz* synth = _synth.get();
 
-    if (!synth) {
-        fprintf(stderr, "[sfizz] Synth was destroyed? Trying to recreate...\n");
-        synth = new sfz::Sfizz;
-        if (!synth) {
-            fprintf(stderr, "[sfizz] Something is very wrong\n");
-            return kResultFalse;
-        }
-        _synth.reset(synth);
-        syncStateToSynth();
-    }
+    if (!synth)
+        return kResultFalse;
 
     if (state) {
         _synth->setSampleRate(processSetup.sampleRate);
