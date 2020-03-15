@@ -361,6 +361,12 @@ public:
      *
      */
     void disableLogging() noexcept;
+
+    /**
+     * @brief Shuts down the current processing, clear buffers and reset the voices.
+     *
+     */
+    void allSoundOff() noexcept;
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time

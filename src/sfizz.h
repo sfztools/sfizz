@@ -369,6 +369,13 @@ SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth);
  */
 SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
 
+/**
+ * @brief Shuts down the current processing, clear buffers and reset the voices.
+ *
+ * @param synth
+ */
+SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
+
 #ifdef __cplusplus
 }
 #endif
