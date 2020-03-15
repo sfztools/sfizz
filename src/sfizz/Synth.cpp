@@ -71,8 +71,7 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
         buildRegion(members);
         break;
     case hash("curve"):
-        // TODO: implement curves
-        numCurves++;
+        curves.addCurveFromHeader(members);
         break;
     case hash("effect"):
         handleEffectOpcodes(members);
@@ -128,11 +127,11 @@ void sfz::Synth::clear()
     effectBuses[0]->setGainToMain(1.0);
     effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
     effectBuses[0]->setSampleRate(sampleRate);
+    curves = CurveSet::createPredefined();
     resources.filePool.clear();
     resources.logger.clear();
     numGroups = 0;
     numMasters = 0;
-    numCurves = 0;
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
@@ -717,7 +716,7 @@ int sfz::Synth::getNumMasters() const noexcept
 }
 int sfz::Synth::getNumCurves() const noexcept
 {
-    return numCurves;
+    return static_cast<int>(curves.getNumCurves());
 }
 
 std::string sfz::Synth::exportMidnam(absl::string_view model) const

@@ -50,6 +50,7 @@ else()
     endif()
 endif()
 
+
 # If we build with Clang use libc++
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
 set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
@@ -63,6 +64,9 @@ endif()
 
 add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
 target_include_directories(sfizz-pugixml PUBLIC "src/external/pugixml/src")
+
+add_library(sfizz-spline STATIC "src/external/spline/spline/spline.cpp")
+target_include_directories(sfizz-spline PUBLIC "src/external/spline")
 
 include (CheckLibraryExists)
 if (UNIX AND NOT APPLE)

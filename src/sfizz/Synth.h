@@ -10,6 +10,7 @@
 #include "Voice.h"
 #include "Region.h"
 #include "Effects.h"
+#include "Curve.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
@@ -382,7 +383,6 @@ private:
 
     int numGroups { 0 };
     int numMasters { 0 };
-    int numCurves { 0 };
 
     /**
      * @brief Remove all regions, resets all voices and clears everything
@@ -460,6 +460,9 @@ private:
     EffectFactory effectFactory;
     typedef std::unique_ptr<EffectBus> EffectBusPtr;
     std::vector<EffectBusPtr> effectBuses; // 0 is "main", 1-N are "fx1"-"fxN"
+
+    // Curves
+    CurveSet curves;
 
     // Intermediate buffers
     AudioBuffer<float> tempBuffer { 2, config::defaultSamplesPerBlock };

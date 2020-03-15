@@ -13,6 +13,7 @@
 #include "Macros.h"
 #include "Config.h"
 #include "MathHelpers.h"
+#include "absl/meta/type_traits.h"
 
 namespace sfz
 {
@@ -76,8 +77,20 @@ constexpr float centsFactor(T cents, T centsPerOctave = 1200)
     return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
 }
 
+template<class T, absl::enable_if_t<std::is_integral<T>::value, int> = 0>
+constexpr T denormalize7Bits(float value)
+{
+    return static_cast<T>(value * 127.0f);
+}
+
+template<class T>
+constexpr float normalize7Bits(T value)
+{
+    return static_cast<float>(min(max(value, T{ 0 }), T{ 127 })) / 127.0f;
+}
+
 /**
- * @brief Normalize a CC value between (T)0.0 and (T)1.0
+ * @brief Normalize a CC value between 0.0 and 1.0
  *
  * @tparam T
  * @param ccValue
@@ -86,12 +99,11 @@ constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 template<class T>
 constexpr float normalizeCC(T ccValue)
 {
-    static_assert(std::is_integral<T>::value, "Requires an integral T");
-    return static_cast<float>(min(max(ccValue, static_cast<T>(0)), static_cast<T>(127))) / 127.0f;
+    return normalize7Bits(ccValue);
 }
 
 /**
- * @brief Normalize a velocity between (T)0.0 and (T)1.0
+ * @brief Normalize a velocity between 0.0 and 1.0
  *
  * @tparam T
  * @param ccValue
@@ -100,7 +112,7 @@ constexpr float normalizeCC(T ccValue)
 template<class T>
 constexpr float normalizeVelocity(T velocity)
 {
-    return normalizeCC(velocity);
+    return normalize7Bits(velocity);
 }
 
 

@@ -85,7 +85,7 @@ public:
      */
     iterator channelWriter(size_t channelIndex)
     {
-        ASSERT(channelIndex < numChannels)
+        ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
             return buffers[channelIndex]->data();
 
@@ -100,7 +100,7 @@ public:
      */
     iterator channelWriterEnd(size_t channelIndex)
     {
-        ASSERT(channelIndex < numChannels)
+        ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
             return buffers[channelIndex]->end();
 
@@ -115,7 +115,7 @@ public:
      */
     const_iterator channelReader(size_t channelIndex) const
     {
-        ASSERT(channelIndex < numChannels)
+        ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
             return buffers[channelIndex]->data();
 
@@ -130,7 +130,7 @@ public:
      */
     const_iterator channelReaderEnd(size_t channelIndex) const
     {
-        ASSERT(channelIndex < numChannels)
+        ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
             return buffers[channelIndex]->end();
 
@@ -145,7 +145,7 @@ public:
      */
     absl::Span<value_type> getSpan(size_t channelIndex) const
     {
-        ASSERT(channelIndex < numChannels)
+        ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
             return { buffers[channelIndex]->data(), buffers[channelIndex]->size() };
 
