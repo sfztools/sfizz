@@ -149,6 +149,10 @@ TEST_CASE("[Curve] Add curves to CurveSet")
     REQUIRE( curveSet.getNumCurves() == 2 );
     REQUIRE( curveSet.getCurve(0).evalCC7(0) == 0.0f );
     REQUIRE( curveSet.getCurve(1).evalCC7(0) == 1.0f );
+    // Out of bound curve defaults to linear
+    REQUIRE( curveSet.getCurve(2).evalCC7(0) == 0.0f );
+    REQUIRE( curveSet.getCurve(2).evalCC7(127) == 1.0f );
+    // Change a curve in a position
     curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), 1);
     REQUIRE(curveSet.getNumCurves() == 2);
     REQUIRE( curveSet.getCurve(1).evalCC7(0) == 0.0f );
