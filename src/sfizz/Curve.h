@@ -96,7 +96,7 @@ private:
     void splineFill(const bool fillStatus[NumValues]);
 
 private:
-    std::array<float, NumValues> _points { };
+    std::array<float, NumValues> _points = {};
 };
 
 /**
