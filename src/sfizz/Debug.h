@@ -45,7 +45,7 @@
     ASSERTFALSE
 
 // Debug message
-#define DBG(ostream) std::cerr << ostream << '\n'
+#define DBG(ostream) do { std::cerr << ostream << '\n'; } while (0)
 
 #else // NDEBUG
 
