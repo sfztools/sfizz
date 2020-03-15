@@ -43,7 +43,8 @@
 #define ASSERT(expression) \
     do {                   \
         if (!(expression)) \
-            ASSERTFALSE    \
+            ASSERTFALSE;    \
+    } \
     while (0)
 
 // Debug message
