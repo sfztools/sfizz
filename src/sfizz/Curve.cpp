@@ -222,10 +222,11 @@ void CurveSet::addCurveFromHeader(absl::Span<const Opcode> members)
     Curve::Interpolator itp = Curve::Interpolator::Linear;
 
     if (const Opcode* opc = findOpcode(hash("curve_index"))) {
-        if (auto opt = readOpcode<int>(opc->value, {0, 255}))
+        if (auto opt = readOpcode<int>(opc->value, {0, 255})) {
             curveIndex = *opt;
-        else
+        } else {
             DBG("Invalid value for curve index: " << opc->value);
+        }
     }
 
 #if 0 // potential sfizz extension
