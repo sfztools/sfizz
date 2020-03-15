@@ -579,8 +579,6 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
 
-    DBG("Note on at " << noteNumber << " (" << +velocity << ")");
-
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOnEvent(delay, noteNumber, velocity);
 
@@ -596,8 +594,6 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     UNUSED(velocity);
-
-    DBG("Note off at " << noteNumber << " (" << +velocity << ")");
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(delay, noteNumber, velocity);
