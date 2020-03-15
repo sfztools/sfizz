@@ -6,6 +6,7 @@
 
 #pragma once
 #include "Config.h"
+#include "LeakDetector.h"
 #include <absl/types/span.h>
 #include <memory>
 #include <complex>
@@ -57,6 +58,7 @@ private:
     float _phase = 0.0f;
     float _sampleInterval = 0.0f;
     const WavetableMulti* _multi = nullptr;
+    LEAK_DETECTOR(WavetableOscillator);
 };
 
 /**
@@ -173,6 +175,7 @@ private:
 
     // internal storage, having `multiSize` rows and `tableSize` columns.
     std::unique_ptr<float[]> _multiData;
+    LEAK_DETECTOR(WavetableMulti);
 };
 
 /**
@@ -191,6 +194,8 @@ private:
     const WavetableMulti waveTriangle;
     const WavetableMulti waveSaw;
     const WavetableMulti waveSquare;
+    LEAK_DETECTOR(WavetablePool);
+
 };
 
 } // namespace sfz
