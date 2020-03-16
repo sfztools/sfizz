@@ -19,7 +19,7 @@ namespace sfz
 {
 
 using SfzCCArray = std::array<uint8_t, config::numCCs>;
-using CCNamePair = std::pair<uint8_t, std::string>;
+using CCNamePair = std::pair<uint16_t, std::string>;
 
 template<class ValueType>
 struct CCValuePair {
