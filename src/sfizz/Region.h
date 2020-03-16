@@ -152,7 +152,7 @@ struct Region {
      * @param ccState
      * @return float
      */
-    float getCrossfadeGain(const SfzCCArray& ccState) const noexcept;
+    float getCrossfadeGain() const noexcept;
     /**
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.

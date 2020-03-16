@@ -89,7 +89,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         gain += normalizeCC(resources.midiState.getCCValue(region->amplitudeCC->cc)) * normalizePercents(region->amplitudeCC->value);
     amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
 
-    float crossfadeGain { region->getCrossfadeGain(resources.midiState.getCCArray()) };
+    float crossfadeGain { region->getCrossfadeGain() };
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
     basePan = normalizePercents(region->pan);
@@ -225,7 +225,7 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
-        const float crossfadeGain = region->getCrossfadeGain(resources.midiState.getCCArray());
+        const float crossfadeGain = region->getCrossfadeGain();
         crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
     }
 }

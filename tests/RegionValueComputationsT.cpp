@@ -166,13 +166,13 @@ TEST_CASE("[Region] Crossfade in on CC")
     region.parseOpcode({ "xfin_locc24", "20" });
     region.parseOpcode({ "xfin_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
-	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
-	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
-	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.5_a );
-	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.70711_a );
-	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.86603_a );
-	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
-	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
+	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain() == 0.0_a );
+	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain() == 0.0_a );
+	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain() == 0.5_a );
+	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain() == 0.70711_a );
+	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain() == 0.86603_a );
+	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain() == 1.0_a );
+	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain() == 1.0_a );
 }
 
 TEST_CASE("[Region] Crossfade in on CC - gain")
@@ -184,13 +184,13 @@ TEST_CASE("[Region] Crossfade in on CC - gain")
     region.parseOpcode({ "xfin_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
     region.parseOpcode({ "xf_cccurve", "gain" });
-	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
-	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
-	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.25_a );
-	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.5_a );
-	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.75_a );
-	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
-	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
+	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain() == 0.0_a );
+	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain() == 0.0_a );
+	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain() == 0.25_a );
+	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain() == 0.5_a );
+	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain() == 0.75_a );
+	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain() == 1.0_a );
+	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain() == 1.0_a );
 }
 TEST_CASE("[Region] Crossfade out on CC")
 {
@@ -200,13 +200,13 @@ TEST_CASE("[Region] Crossfade out on CC")
     region.parseOpcode({ "xfout_locc24", "20" });
     region.parseOpcode({ "xfout_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
-	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
-	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
-	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.86603_a );
-	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.70711_a );
-	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.5_a );
-	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
-	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
+	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain() == 1.0_a );
+	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain() == 1.0_a );
+	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain() == 0.86603_a );
+	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain() == 0.70711_a );
+	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain() == 0.5_a );
+	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain() == 0.0_a );
+	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain() == 0.0_a );
 }
 
 TEST_CASE("[Region] Crossfade out on CC - gain")
@@ -218,13 +218,13 @@ TEST_CASE("[Region] Crossfade out on CC - gain")
     region.parseOpcode({ "xfout_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
     region.parseOpcode({ "xf_cccurve", "gain" });
-	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
-	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 1.0_a );
-	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.75_a );
-	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.5_a );
-	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.25_a );
-	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
-	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain(midiState.getCCArray()) == 0.0_a );
+	midiState.ccEvent(0, 24, 19); REQUIRE( region.getCrossfadeGain() == 1.0_a );
+	midiState.ccEvent(0, 24, 20); REQUIRE( region.getCrossfadeGain() == 1.0_a );
+	midiState.ccEvent(0, 24, 21); REQUIRE( region.getCrossfadeGain() == 0.75_a );
+	midiState.ccEvent(0, 24, 22); REQUIRE( region.getCrossfadeGain() == 0.5_a );
+	midiState.ccEvent(0, 24, 23); REQUIRE( region.getCrossfadeGain() == 0.25_a );
+	midiState.ccEvent(0, 24, 24); REQUIRE( region.getCrossfadeGain() == 0.0_a );
+	midiState.ccEvent(0, 24, 25); REQUIRE( region.getCrossfadeGain() == 0.0_a );
 }
 
 TEST_CASE("[Region] Velocity bug for extreme values - veltrack at 0")

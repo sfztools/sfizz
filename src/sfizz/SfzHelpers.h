@@ -18,7 +18,6 @@
 namespace sfz
 {
 
-using SfzCCArray = std::array<uint8_t, config::numCCs>;
 using CCNamePair = std::pair<uint16_t, std::string>;
 
 template<class ValueType>
@@ -83,6 +82,16 @@ constexpr T denormalize7Bits(float value)
     return static_cast<T>(value * 127.0f);
 }
 
+constexpr uint8_t denormalizeCC(float value)
+{
+    return denormalize7Bits<uint8_t>(value);
+}
+
+constexpr uint8_t denormalizeVelocity(float value)
+{
+    return denormalize7Bits<uint8_t>(value);
+}
+
 template<class T>
 constexpr float normalize7Bits(T value)
 {
@@ -139,22 +148,6 @@ constexpr float normalizePercents(T percentValue)
 constexpr float normalizeBend(float bendValue)
 {
     return min(max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
-}
-
-/**
- * @brief If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.
- *
- * @param ccValues
- * @param ccSwitch
- * @param value
- * @return float
- */
-inline float ccSwitchedValue(const SfzCCArray& ccValues, const absl::optional<CCValuePair<float>>& ccSwitch, float value) noexcept
-{
-    if (ccSwitch)
-        return value + ccSwitch->value * normalizeCC(ccValues[ccSwitch->cc]);
-    else
-        return value;
 }
 
 /**

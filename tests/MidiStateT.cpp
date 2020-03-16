@@ -18,21 +18,18 @@ using namespace Catch::literals;
 TEST_CASE("[MidiState] Initial values")
 {
     sfz::MidiState state;
-    for (auto& cc: state.getCCArray())
-        REQUIRE( cc == 0 );
+    for (unsigned cc = 0; cc < sfz::config::numCCs; cc++)
+        REQUIRE( state.getCCValue(cc) == 0 );
     REQUIRE( state.getPitchBend() == 0 );
 }
 
 TEST_CASE("[MidiState] Set and get CCs")
 {
     sfz::MidiState state;
-    const auto& cc = state.getCCArray();
     state.ccEvent(0, 24, 23);
     state.ccEvent(0, 123, 124);
     REQUIRE(state.getCCValue(24) == 23);
-    REQUIRE(cc[24] == 23);
     REQUIRE(state.getCCValue(123) == 124);
-    REQUIRE(cc[123] == 124);
 }
 
 TEST_CASE("[MidiState] Set and get pitch bends")
@@ -68,6 +65,5 @@ TEST_CASE("[MidiState] Set and get note velocities")
 TEST_CASE("[MidiState] Extended CCs")
 {
     sfz::MidiState state;
-    REQUIRE(state.getCCArray().size() >= 142);
     state.ccEvent(0, 142, 64); // should not trap
 }

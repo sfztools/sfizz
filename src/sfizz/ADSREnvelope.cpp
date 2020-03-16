@@ -18,15 +18,14 @@ void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int
         return static_cast<int>(timeInSeconds * sampleRate);
     };
 
-    const auto ccArray = state.getCCArray();
-    this->delay = delay + secondsToSamples(region.amplitudeEG.getDelay(ccArray, velocity));
-    this->attack = secondsToSamples(region.amplitudeEG.getAttack(ccArray, velocity));
-    this->decay = secondsToSamples(region.amplitudeEG.getDecay(ccArray, velocity));
-    this->release = secondsToSamples(region.amplitudeEG.getRelease(ccArray, velocity));
-    this->hold = secondsToSamples(region.amplitudeEG.getHold(ccArray, velocity));
+    this->delay = delay + secondsToSamples(region.amplitudeEG.getDelay(state, velocity));
+    this->attack = secondsToSamples(region.amplitudeEG.getAttack(state, velocity));
+    this->decay = secondsToSamples(region.amplitudeEG.getDecay(state, velocity));
+    this->release = secondsToSamples(region.amplitudeEG.getRelease(state, velocity));
+    this->hold = secondsToSamples(region.amplitudeEG.getHold(state, velocity));
     this->peak = 1.0;
-    this->sustain =  normalizePercents(region.amplitudeEG.getSustain(ccArray, velocity));
-    this->start = this->peak * normalizePercents(region.amplitudeEG.getStart(ccArray, velocity));
+    this->sustain =  normalizePercents(region.amplitudeEG.getSustain(state, velocity));
+    this->start = this->peak * normalizePercents(region.amplitudeEG.getStart(state, velocity));
 
     releaseDelay = 0;
     shouldRelease = false;

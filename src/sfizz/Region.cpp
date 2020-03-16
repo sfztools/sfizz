@@ -1009,19 +1009,19 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) const noexcept
     return baseGain;
 }
 
-float sfz::Region::getCrossfadeGain(const sfz::SfzCCArray& ccState) const noexcept
+float sfz::Region::getCrossfadeGain() const noexcept
 {
     float gain { 1.0f };
 
     // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
-        const auto ccValue = ccState[valuePair.cc];
+        const auto ccValue = midiState.getCCValue(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     for (const auto& valuePair : crossfadeCCOutRange) {
-        const auto ccValue = ccState[valuePair.cc];
+        const auto ccValue = midiState.getCCValue(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
     }

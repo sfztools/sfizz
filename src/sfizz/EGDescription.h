@@ -29,6 +29,7 @@
 #include "Macros.h"
 #include "LeakDetector.h"
 #include "SfzHelpers.h"
+#include "MidiState.h"
 #include <absl/types/optional.h>
 
 
@@ -42,6 +43,23 @@ namespace sfz
  * TODO: should be updated for SFZ v2
  *
  */
+
+/**
+ * @brief If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.
+ *
+ * @param ccValues
+ * @param ccSwitch
+ * @param value
+ * @return float
+ */
+inline float ccSwitchedValue(const MidiState& state, const absl::optional<CCValuePair<float>>& ccSwitch, float value) noexcept
+{
+    if (ccSwitch)
+        return value + ccSwitch->value * normalizeCC(state.getCCValue(ccSwitch->cc));
+    else
+        return value;
+}
+
 struct EGDescription
 {
     EGDescription() = default;
@@ -76,80 +94,80 @@ struct EGDescription
     /**
      * @brief Get the attack with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getAttack(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getAttack(const MidiState &state, uint8_t velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccAttack, attack) + normalizeVelocity(velocity)*vel2attack);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccAttack, attack) + normalizeVelocity(velocity)*vel2attack);
     }
     /**
      * @brief Get the decay with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getDecay(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getDecay(const MidiState &state, uint8_t velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccDecay, decay) + normalizeVelocity(velocity)*vel2decay);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDecay, decay) + normalizeVelocity(velocity)*vel2decay);
     }
     /**
      * @brief Get the delay with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getDelay(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getDelay(const MidiState &state, uint8_t velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccDelay, delay) + normalizeVelocity(velocity)*vel2delay);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDelay, delay) + normalizeVelocity(velocity)*vel2delay);
     }
     /**
      * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getHold(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getHold(const MidiState &state, uint8_t velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccHold, hold) + normalizeVelocity(velocity)*vel2hold);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccHold, hold) + normalizeVelocity(velocity)*vel2hold);
     }
     /**
      * @brief Get the release duration with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getRelease(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getRelease(const MidiState &state, uint8_t velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(ccValues, ccRelease, release) + normalizeVelocity(velocity)*vel2release);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccRelease, release) + normalizeVelocity(velocity)*vel2release);
     }
     /**
      * @brief Get the starting level with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getStart(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getStart(const MidiState &state, uint8_t velocity) const noexcept
     {
         UNUSED(velocity);
-        return Default::egPercentRange.clamp(ccSwitchedValue(ccValues, ccStart, start));
+        return Default::egPercentRange.clamp(ccSwitchedValue(state, ccStart, start));
     }
     /**
      * @brief Get the sustain level with possibly a CC modifier and a velocity modifier
      *
-     * @param ccValues
+     * @param state
      * @param velocity
      * @return float
      */
-    float getSustain(const SfzCCArray &ccValues, uint8_t velocity) const noexcept
+    float getSustain(const MidiState &state, uint8_t velocity) const noexcept
     {
-        return Default::egPercentRange.clamp(ccSwitchedValue(ccValues, ccSustain, sustain) + normalizeVelocity(velocity)*vel2sustain);
+        return Default::egPercentRange.clamp(ccSwitchedValue(state, ccSustain, sustain) + normalizeVelocity(velocity)*vel2sustain);
     }
     LEAK_DETECTOR(EGDescription);
 };
