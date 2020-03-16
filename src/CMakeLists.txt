@@ -53,6 +53,8 @@ if (NOT MSVC)
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
     configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
+    install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 if(WIN32)
     include(VSTConfig)
@@ -78,7 +80,6 @@ if (SFIZZ_SHARED)
         target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
     endif()
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties (sfizz_shared PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
     set_property (TARGET sfizz_shared PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
     sfizz_enable_lto_if_needed(sfizz_shared)
 
@@ -86,8 +87,7 @@ if (SFIZZ_SHARED)
         install (TARGETS sfizz_shared
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
 
     if (UNIX AND NOT APPLE)
@@ -95,9 +95,4 @@ if (SFIZZ_SHARED)
             target_link_libraries (sfizz_shared PRIVATE atomic)
         endif()
     endif()
-endif()
-
-if (NOT MSVC)
-    install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
