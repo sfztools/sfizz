@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Wavetables.h"
+#include "FilePool.h"
 #include "MathHelpers.h"
 #include <kiss_fftr.h>
-#include <memory>
 
 namespace sfz {
 
@@ -279,6 +279,31 @@ void WavetableMulti::fillExtra()
     }
 }
 
+//------------------------------------------------------------------------------
+
+/**
+ * @brief Harmonic profile which takes its values from a table.
+ */
+class TabulatedHarmonicProfile : public HarmonicProfile {
+public:
+    explicit TabulatedHarmonicProfile(absl::Span<const std::complex<float>> harmonics)
+        : _harmonics(harmonics)
+    {
+    }
+
+    std::complex<double> getHarmonic(size_t index) const override
+    {
+        if (index >= _harmonics.size())
+            return {};
+
+        return _harmonics[index];
+    }
+
+private:
+    absl::Span<const std::complex<float>> _harmonics;
+};
+
+//------------------------------------------------------------------------------
 
 WavetablePool::WavetablePool()
 {
@@ -311,6 +336,67 @@ const WavetableMulti* WavetablePool::getWaveSquare()
     static auto wave = WavetableMulti::createForHarmonicProfile(
             HarmonicProfile::getSquare(), config::amplitudeSquare);
     return &wave;
+}
+
+const WavetableMulti* WavetablePool::getFileWave(const std::string& filename)
+{
+    auto it = _fileWaves.find(filename);
+    if (it == _fileWaves.end())
+        return nullptr;
+
+    return it->second.get();
+}
+
+void WavetablePool::clearFileWaves()
+{
+    _fileWaves.clear();
+}
+
+const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const std::string& filename)
+{
+    if (const WavetableMulti* wave = getFileWave(filename))
+        return wave;
+
+    if (!filePool.preloadFile(filename, 0))
+        return nullptr;
+
+    FilePromisePtr fp = filePool.getFilePromise(filename);
+    if (!fp)
+        return nullptr;
+
+    fp->waitCompletion();
+    if (fp->dataStatus == FilePromise::DataStatus::Error)
+        return nullptr;
+
+    // use 1 channel only, maybe warn if file has more channels
+    auto audioData = fp->fileData.getSpan(0);
+    size_t fftSize = audioData.size();
+    size_t specSize = fftSize / 2 + 1;
+
+    typedef std::complex<kiss_fft_scalar> cpx;
+    std::unique_ptr<cpx[]> spec { new cpx[specSize] };
+
+    kiss_fftr_cfg cfg = kiss_fftr_alloc(fftSize, false, nullptr, nullptr);
+    if (!cfg)
+        throw std::bad_alloc();
+
+    kiss_fftr(cfg, audioData.data(), reinterpret_cast<kiss_fft_cpx*>(spec.get()));
+    kiss_fftr_free(cfg);
+
+    // scale transform, and normalize amplitude and phase
+    const std::complex<double> k = std::polar(2.0 / fftSize, -M_PI / 2);
+    for (size_t i = 0; i < specSize; ++i)
+        spec[i] *= k;
+
+    TabulatedHarmonicProfile hp {
+        absl::Span<const std::complex<float>> { spec.get(), specSize }
+    };
+
+    auto wave = std::make_shared<WavetableMulti>(
+        WavetableMulti::createForHarmonicProfile(hp, 1.0));
+
+    _fileWaves[filename] = wave;
+    return wave.get();
 }
 
 } // namespace sfz

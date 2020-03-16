@@ -306,6 +306,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         return false;
 
     resources.filePool.setRootDirectory(parser.originalDirectory());
+    resources.wavePool.clearFileWaves();
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();
@@ -324,7 +325,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     while (currentRegion < lastRegion.base()) {
         auto region = currentRegion->get();
 
-        if (!region->isGenerator()) {
+        if (!region->oscillator && !region->isGenerator()) {
             if (!resources.filePool.checkSample(region->sample)) {
                 removeCurrentRegion();
                 continue;
@@ -359,6 +360,9 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             const auto maxOffset = region->offset + region->offsetRandom;
             if (!resources.filePool.preloadFile(region->sample, maxOffset))
                 removeCurrentRegion();
+        }
+        else if (region->oscillator && !region->isGenerator()) {
+            resources.wavePool.createFileWave(resources.filePool, region->sample);
         }
 
         for (auto note = 0; note < 128; note++) {

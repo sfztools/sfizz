@@ -55,7 +55,7 @@ struct FilePromise
 {
     AudioSpan<const float> getData()
     {
-        if (dataReady)
+        if (dataStatus == DataStatus::Ready)
             return AudioSpan<const float>(fileData);
         else if (availableFrames > preloadedData->getNumFrames())
             return AudioSpan<const float>(fileData).first(availableFrames);
@@ -69,10 +69,22 @@ struct FilePromise
         preloadedData.reset();
         filename = "";
         availableFrames = 0;
-        dataReady = false;
+        dataStatus = DataStatus::Wait;
         oversamplingFactor = config::defaultOversamplingFactor;
         sampleRate = config::defaultSampleRate;
     }
+
+    void waitCompletion()
+    {
+        while (dataStatus == DataStatus::Wait)
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    enum class DataStatus {
+        Wait = 0,
+        Ready,
+        Error,
+    };
 
     absl::string_view filename {};
     AudioBufferPtr preloadedData {};
@@ -80,7 +92,7 @@ struct FilePromise
     float sampleRate { config::defaultSampleRate };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic<size_t> availableFrames { 0 };
-    std::atomic<bool> dataReady { false };
+    std::atomic<DataStatus> dataStatus { DataStatus::Wait };
     std::chrono::time_point<std::chrono::high_resolution_clock> creationTime;
 
     LEAK_DETECTOR(FilePromise);

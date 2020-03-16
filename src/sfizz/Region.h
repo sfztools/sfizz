@@ -228,6 +228,7 @@ struct Region {
 
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase };
+    bool oscillator = false;
 
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group

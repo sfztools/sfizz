@@ -9,10 +9,12 @@
 #include "LeakDetector.h"
 #include "Buffer.h"
 #include <absl/types/span.h>
+#include <absl/container/flat_hash_map.h>
 #include <memory>
 #include <complex>
 
 namespace sfz {
+class FilePool;
 
 class WavetableMulti;
 
@@ -185,15 +187,23 @@ private:
 };
 
 /**
- * @brief Holds predefined wavetables.
+ * @brief Holds predefined and loaded wavetables.
  *
  */
 struct WavetablePool {
     WavetablePool();
+
+    const WavetableMulti* getFileWave(const std::string& filename);
+    const WavetableMulti* createFileWave(FilePool& filePool, const std::string& filename);
+    void clearFileWaves();
+
     static const WavetableMulti* getWaveSin();
     static const WavetableMulti* getWaveTriangle();
     static const WavetableMulti* getWaveSaw();
     static const WavetableMulti* getWaveSquare();
+
+private:
+    absl::flat_hash_map<std::string, std::shared_ptr<WavetableMulti>> _fileWaves;
 };
 
 } // namespace sfz

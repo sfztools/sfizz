@@ -274,7 +274,7 @@ void sfz::FilePool::tryToClearPromises()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     for (auto& promise: promisesToClear) {
-        if (promise->dataReady)
+        if (promise->dataStatus != FilePromise::DataStatus::Wait)
             promise->reset();
     }
 }
@@ -313,11 +313,12 @@ void sfz::FilePool::loadingThread() noexcept
         SndfileHandle sndFile(file.string().c_str());
         if (sndFile.error() != 0) {
             DBG("[sfizz] libsndfile errored for " << promise->filename << " with message " << sndFile.strError());
+            promise->dataStatus = FilePromise::DataStatus::Error;
             continue;
         }
         const auto frames = static_cast<uint32_t>(sndFile.frames());
         streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
-        promise->dataReady = true;
+        promise->dataStatus = FilePromise::DataStatus::Ready;
         const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
         logger.logFileTime(waitDuration, loadDuration, frames, promise->filename);
 
@@ -352,7 +353,7 @@ void sfz::FilePool::cleanupPromises() noexcept
     auto clearedIterator = promisesToClear.begin();
     auto clearedSentinel = promisesToClear.rbegin();
     while (clearedIterator < clearedSentinel.base()) {
-        if (clearedIterator->get()->dataReady == false) {
+        if (clearedIterator->get()->dataStatus == FilePromise::DataStatus::Wait) {
             emptyPromises.push_back(*clearedIterator);
             std::iter_swap(clearedIterator, clearedSentinel);
             ++clearedSentinel;
