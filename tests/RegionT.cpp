@@ -792,10 +792,10 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.tune == 40);
         region.parseOpcode({ "tune", "-1" });
         REQUIRE(region.tune == -1);
-        region.parseOpcode({ "tune", "154" });
-        REQUIRE(region.tune == 100);
-        region.parseOpcode({ "tune", "-154" });
-        REQUIRE(region.tune == -100);
+        region.parseOpcode({ "tune", "15432" });
+        REQUIRE(region.tune == 9600);
+        region.parseOpcode({ "tune", "-15432" });
+        REQUIRE(region.tune == -9600);
     }
 
     SECTION("bend_up, bend_down, bend_step")

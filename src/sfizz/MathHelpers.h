@@ -110,7 +110,7 @@ namespace Random {
  */
 inline float midiNoteFrequency(const int noteNumber)
 {
-    return 440.0f * std::pow(2.0f, (noteNumber - 69) / 12.0f);
+    return 440.0f * std::pow(2.0f, (noteNumber - 69) * (1.0f / 12.0f));
 }
 
 /**

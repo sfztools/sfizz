@@ -506,7 +506,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         auto frequencies = tempSpan1.first(buffer.getNumFrames());
         auto bends = tempSpan2.first(buffer.getNumFrames());
 
-        fill<float>(frequencies, baseFrequency);
+        float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
+        fill<float>(frequencies, pitchRatio * keycenterFrequency);
 
         if (region->bendStep > 1)
             pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
