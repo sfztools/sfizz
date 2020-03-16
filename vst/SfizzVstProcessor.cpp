@@ -46,6 +46,9 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
 
     _state = SfizzVstState();
 
+    fprintf(stderr, "[sfizz] new synth\n");
+    _synth.reset(new sfz::Sfizz);
+
     return result;
 }
 
@@ -105,21 +108,20 @@ tresult PLUGIN_API SfizzVstProcessor::canProcessSampleSize(int32 symbolicSampleS
 
 tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
 {
-    stopBackgroundWork();
-    _synth.reset();
+    sfz::Sfizz* synth = _synth.get();
+
+    if (!synth)
+        return kResultFalse;
 
     if (state) {
-        fprintf(stderr, "[Sfizz] new synth\n");
-        sfz::Sfizz* synth = new sfz::Sfizz;
-        _synth.reset(synth);
-
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
 
-        syncStateToSynth();
-
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
+    } else {
+        synth->allSoundOff();
+        stopBackgroundWork();
     }
 
     return kResultTrue;

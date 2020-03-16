@@ -26,6 +26,17 @@ TEST_CASE("[Synth] Play and check active voices")
     REQUIRE(synth.getNumActiveVoices() == 0);
 }
 
+TEST_CASE("[Synth] All sound off")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.noteOn(0, 36, 24);
+    synth.noteOn(0, 36, 89);
+    REQUIRE(synth.getNumActiveVoices() == 2);
+    synth.allSoundOff();
+    REQUIRE(synth.getNumActiveVoices() == 0);
+}
+
 TEST_CASE("[Synth] Change the number of voice while playing")
 {
     sfz::Synth synth;

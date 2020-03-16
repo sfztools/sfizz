@@ -256,6 +256,11 @@ public:
      *
      */
     void disableLogging() noexcept;
+    /**
+     * @brief Shuts down the current processing, clear buffers and reset the voices.
+     *
+     */
+    void allSoundOff() noexcept;
 private:
     std::unique_ptr<sfz::Synth> synth;
 };

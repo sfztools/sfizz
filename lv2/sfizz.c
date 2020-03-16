@@ -416,7 +416,8 @@ activate(LV2_Handle instance)
 static void
 deactivate(LV2_Handle instance)
 {
-    UNUSED(instance);
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    sfizz_all_sound_off(self->synth);
 }
 
 static void

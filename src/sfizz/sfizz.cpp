@@ -195,3 +195,8 @@ void sfz::Sfizz::disableLogging() noexcept
 {
     synth->disableLogging();
 }
+
+void sfz::Sfizz::allSoundOff() noexcept
+{
+    synth->allSoundOff();
+}

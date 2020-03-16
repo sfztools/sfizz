@@ -237,10 +237,17 @@ void sfizz_enable_logging(sfizz_synth_t* synth)
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->enableLogging();
 }
+
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->disableLogging();
+}
+
+void sfizz_all_sound_off(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->allSoundOff();
 }
 
 #ifdef __cplusplus
