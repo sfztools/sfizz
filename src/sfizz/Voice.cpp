@@ -58,6 +58,17 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
             break;
         }
         waveOscillator.setWavetable(wave);
+
+        float phase;
+        float phaseParam = region->oscillatorPhase;
+        if (phaseParam >= 0) {
+            phase = phaseParam * (1.0f / 360.0f);
+            phase -= static_cast<int>(phase);
+        } else {
+            std::uniform_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
+            phase = phaseDist(Random::randomGenerator);
+        }
+        waveOscillator.setPhase(phase);
     } else {
         currentPromise = resources.filePool.getFilePromise(region->sample);
         if (currentPromise == nullptr) {

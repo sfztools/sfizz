@@ -226,6 +226,9 @@ struct Region {
     absl::optional<SfzLoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopRange }; //loopstart and loopend
 
+    // Wavetable oscillator
+    float oscillatorPhase { Default::oscillatorPhase };
+
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
