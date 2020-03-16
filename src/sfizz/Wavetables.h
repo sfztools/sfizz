@@ -128,7 +128,7 @@ public:
  */
 class WavetableMulti {
 public:
-    // number of tables in the multisample
+    // number of elements in each table
     unsigned tableSize() const { return _tableSize; }
 
     // number of tables in the multisample
