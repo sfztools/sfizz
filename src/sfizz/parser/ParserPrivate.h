@@ -9,6 +9,7 @@
 #include "ghc/fs_std.hpp"
 #include "absl/strings/string_view.h"
 #include <string>
+#include <fstream>
 
 namespace sfz {
 

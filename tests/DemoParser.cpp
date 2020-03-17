@@ -1,5 +1,5 @@
 #include "ui_DemoParser.h"
-#include "sfizz/parser/Parser.h"
+#include "parser/Parser.h"
 #include <QApplication>
 #include <QTimer>
 #include <QTemporaryFile>
