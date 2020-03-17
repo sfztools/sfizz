@@ -61,6 +61,10 @@ private:
     jack_port_t* fPorts[2] = {};
 };
 
+constexpr float DemoApp::sweepMin;
+constexpr float DemoApp::sweepMax;
+constexpr float DemoApp::sweepDuration;
+
 DemoApp::DemoApp(int& argc, char** argv)
     : QApplication(argc, argv)
 {
