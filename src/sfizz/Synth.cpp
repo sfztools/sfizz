@@ -28,6 +28,8 @@ sfz::Synth::Synth()
 
 sfz::Synth::Synth(int numVoices)
 {
+    parser.setListener(this);
+
     effectFactory.registerStandardEffectTypes();
 
     effectBuses.reserve(5); // sufficient room for main and fx1-4
@@ -48,7 +50,7 @@ sfz::Synth::~Synth()
     resources.filePool.emptyFileLoadingQueues();
 }
 
-void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& members)
+void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
     switch (hash(header)) {
     case hash("global"):
@@ -79,6 +81,16 @@ void sfz::Synth::callback(absl::string_view header, const std::vector<Opcode>& m
     default:
         std::cerr << "Unknown header: " << header << '\n';
     }
+}
+
+void sfz::Synth::onParseError(const SourceRange& range, const std::string& message)
+{
+    std::cerr << "Parse error L" << range.start.lineNumber << ": " << message << '\n';
+}
+
+void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& message)
+{
+    std::cerr << "Parse warning L" << range.start.lineNumber << ": " << message << '\n';
 }
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
@@ -283,14 +295,15 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     }
 
     clear();
-    auto parserReturned = sfz::OldParser::loadSfzFile(file);
-    if (!parserReturned)
+
+    parser.parseFile(file);
+    if (parser.getErrorCount() > 0)
         return false;
 
     if (regions.empty())
         return false;
 
-    resources.filePool.setRootDirectory(this->originalDirectory);
+    resources.filePool.setRootDirectory(parser.originalDirectory());
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();
@@ -403,7 +416,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         voice->setMaxEQsPerVoice(maxEQs);
     }
 
-    return parserReturned;
+    return true;
 }
 
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
@@ -939,7 +952,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 fs::file_time_type sfz::Synth::checkModificationTime()
 {
     auto returnedTime = modificationTime;
-    for (const auto& file: getIncludedFiles()) {
+    for (const auto& file: parser.getIncludedFiles()) {
         const auto fileTime = fs::last_write_time(file);
         if (returnedTime < fileTime)
             returnedTime = fileTime;

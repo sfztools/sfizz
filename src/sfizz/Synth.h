@@ -14,6 +14,7 @@
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
+#include "parser/Parser.h"
 #include "absl/types/span.h"
 #include <absl/types/optional.h>
 #include <random>
@@ -59,7 +60,7 @@ namespace sfz {
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.
  */
-class Synth : public OldParser {
+class Synth final : public Parser::Listener {
 public:
     /**
      * @brief Construct a new Synth object with no voices. If you want sound
@@ -88,7 +89,7 @@ public:
      * @return true
      * @return false if the file was not found or no regions were loaded.
      */
-    bool loadSfzFile(const fs::path& file) final;
+    bool loadSfzFile(const fs::path& file);
     /**
      * @brief Get the current number of regions loaded
      *
@@ -373,6 +374,20 @@ public:
      *
      */
     void allSoundOff() noexcept;
+
+    /**
+     * @brief      Get the parser.
+     *
+     * @return     A reference to the parser.
+     */
+    Parser& getParser() noexcept { return parser; }
+    /**
+     * @brief      Get the parser.
+     *
+     * @return     A reference to the parser.
+     */
+    const Parser& getParser() const noexcept { return parser; }
+
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -382,7 +397,17 @@ protected:
      * @param header the header for the set of opcodes
      * @param members the opcode members
      */
-    void callback(absl::string_view header, const std::vector<Opcode>& members) final;
+    void onParseFullBlock(const std::string& header, const std::vector<Opcode>& members) override;
+
+    /**
+     * @brief The parser callback when an error occurs.
+     */
+    void onParseError(const SourceRange& range, const std::string& message) override;
+
+    /**
+     * @brief The parser callback when a warning occurs.
+     */
+    void onParseWarning(const SourceRange& range, const std::string& message) override;
 
 private:
     /**
@@ -505,6 +530,7 @@ private:
 
     Duration dispatchDuration { 0 };
 
+    Parser parser;
     fs::file_time_type modificationTime { };
 
     LEAK_DETECTOR(Synth);

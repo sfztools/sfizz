@@ -5,7 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "../Opcode.h"
 #include "ghc/fs_std.hpp"
+#include "absl/types/optional.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include <string>
@@ -28,17 +30,32 @@ public:
     void addDefinition(absl::string_view id, absl::string_view value);
     void parseFile(const fs::path& path);
 
+    void setRecursiveIncludeGuardEnabled(bool en) { _recursiveIncludeGuardEnabled = en; }
+    void setMaximumIncludeDepth(size_t depth) { _maxIncludeDepth = depth; }
+
+    const fs::path& originalDirectory() const noexcept { return _originalDirectory; }
+
+    typedef absl::flat_hash_set<std::string> IncludeFileSet;
+    typedef absl::flat_hash_map<std::string, std::string> DefinitionSet;
+
+    const IncludeFileSet& getIncludedFiles() const noexcept { return _pathsIncluded; }
+    const DefinitionSet& getDefines() const noexcept { return _definitions; }
+
     size_t getErrorCount() const noexcept { return _errorCount; }
     size_t getWarningCount() const noexcept { return _warningCount; }
 
     class Listener {
     public:
-        virtual void onParseBegin() = 0;
-        virtual void onParseEnd() = 0;
-        virtual void onParseHeader(const SourceRange& range, const std::string& header) = 0;
-        virtual void onParseOpcode(const SourceRange& rangeOpcode, const SourceRange& rangeValue, const std::string& name, const std::string& value) = 0;
-        virtual void onParseError(const SourceRange& range, const std::string& message) = 0;
-        virtual void onParseWarning(const SourceRange& range, const std::string& message) = 0;
+        // low-level parsing
+        virtual void onParseBegin() {}
+        virtual void onParseEnd() {}
+        virtual void onParseHeader(const SourceRange& /*range*/, const std::string& /*header*/) {}
+        virtual void onParseOpcode(const SourceRange& /*rangeOpcode*/, const SourceRange& /*rangeValue*/, const std::string& /*name*/, const std::string& /*value*/) {}
+        virtual void onParseError(const SourceRange& /*range*/, const std::string& /*message*/) {}
+        virtual void onParseWarning(const SourceRange& /*range*/, const std::string& /*message*/) {}
+
+        // high-level parsing
+        virtual void onParseFullBlock(const std::string& /*header*/, const std::vector<Opcode>& /*opcodes*/) {}
     };
 
     void setListener(Listener* listener) noexcept { _listener = listener; }
@@ -57,6 +74,9 @@ private:
     // recover after error
     void recover();
 
+    // state handling
+    void flushCurrentHeader();
+
     // helpers
     static bool hasComment(Reader& reader);
     static size_t skipComment(Reader& reader);
@@ -73,16 +93,19 @@ private:
     Listener* _listener = nullptr;
 
     fs::path _originalDirectory { fs::current_path() };
-    absl::flat_hash_map<std::string, std::string> _definitions;
+    DefinitionSet _definitions;
 
     // a current list of files included, last one at the back
     std::vector<std::unique_ptr<Reader>> _included;
 
     // recursive include guard
-    absl::flat_hash_set<std::string> _pathsIncluded;
+    size_t _maxIncludeDepth = 32;
+    bool _recursiveIncludeGuardEnabled = false;
+    IncludeFileSet _pathsIncluded;
 
     // parsing state
-    std::string _lastHeader;
+    absl::optional<std::string> _currentHeader;
+    std::vector<Opcode> _currentOpcodes;
 
     // errors and warnings
     size_t _errorCount = 0;

@@ -210,11 +210,11 @@ int main(int argc, char** argv)
     std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Included files:" << '\n';
-    for (auto& file : synth.getIncludedFiles())
-        std::cout << '\t' << file.string() << '\n';
+    for (auto& file : synth.getParser().getIncludedFiles())
+        std::cout << '\t' << file << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Defines:" << '\n';
-    for (auto& define : synth.getDefines())
+    for (auto& define : synth.getParser().getDefines())
         std::cout << '\t' << define.first << '=' << define.second << '\n';
     std::cout << "==========" << '\n';
     std::cout << "Unknown opcodes:";

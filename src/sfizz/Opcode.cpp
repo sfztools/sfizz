@@ -9,11 +9,9 @@
 #include <cctype>
 
 sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
-    : opcode(inputOpcode)
-    , value(inputValue)
+    : opcode(trim(inputOpcode))
+    , value(trim(inputValue))
 {
-    trimInPlace(value);
-    trimInPlace(opcode);
     size_t nextCharIndex { 0 };
     int parameterPosition { 0 };
     auto nextNumIndex = opcode.find_first_of("1234567890");

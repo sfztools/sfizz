@@ -16,7 +16,7 @@
  */
 
 #include "sfizz/Curve.h"
-#include "sfizz/Parser.h"
+#include "sfizz/parser/Parser.h"
 #include "absl/strings/numbers.h"
 #include "absl/types/span.h"
 #include <iostream>
@@ -34,16 +34,16 @@ static void usage()
 }
 
 /**
- * @brief Parser which extracts the configuration of curves
+ * @brief Parser listener which extracts the configuration of curves
  */
-class CurveParser : public sfz::OldParser {
+class CurveParserListener : public sfz::Parser::Listener {
 public:
-    explicit CurveParser(sfz::CurveSet& curveSet)
+    explicit CurveParserListener(sfz::CurveSet& curveSet)
         : curveSet(curveSet)
     {
     }
 
-    void callback(absl::string_view header, const std::vector<sfz::Opcode>& members) override
+    void onParseFullBlock(const std::string& header, const std::vector<sfz::Opcode>& members) override
     {
         if (header == "curve")
             curveSet.addCurveFromHeader(members);
@@ -73,8 +73,11 @@ int main(int argc, char* argv[])
     sfz::CurveSet curveSet = sfz::CurveSet::createPredefined();
 
     if (!filePath.empty()) {
-        CurveParser parser(curveSet);
-        if (!parser.loadSfzFile(filePath)) {
+        sfz::Parser parser;
+        CurveParserListener listener(curveSet);
+        parser.setListener(&listener);
+        parser.parseFile(filePath);
+        if (parser.getErrorCount() > 0) {
             std::cerr << "Cannot load SFZ: " << filePath << "\n";
             return 1;
         }

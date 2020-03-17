@@ -26,7 +26,8 @@ void Parser::addDefinition(absl::string_view id, absl::string_view value)
 void Parser::parseFile(const fs::path& path)
 {
     _pathsIncluded.clear();
-    _lastHeader.clear();
+    _currentHeader.reset();
+    _currentOpcodes.clear();
     _errorCount = 0;
     _warningCount = 0;
 
@@ -35,6 +36,7 @@ void Parser::parseFile(const fs::path& path)
 
     includeNewFile(path);
     processTopLevel();
+    flushCurrentHeader();
 
     if (_listener)
         _listener->onParseEnd();
@@ -45,15 +47,28 @@ void Parser::includeNewFile(const fs::path& path)
     fs::path fullPath =
         (path.empty() || path.is_absolute()) ? path : _originalDirectory / path;
 
-    if (!_pathsIncluded.insert(fullPath.string()).second)
+    if (_pathsIncluded.empty())
+        _originalDirectory = fullPath.parent_path();
+    else if (_pathsIncluded.find(fullPath.string()) != _pathsIncluded.end()) {
+        if (_recursiveIncludeGuardEnabled)
+            return;
+    }
+
+    if (_included.size() == _maxIncludeDepth) {
+        SourceLocation loc;
+        loc.filePath = std::make_shared<fs::path>(fullPath);
+        emitError({ loc, loc }, "Exceeded maximum include depth (" + std::to_string(_maxIncludeDepth) + ")");
         return;
+    }
 
     auto fileReader = absl::make_unique<FileReader>(fullPath);
     if (fileReader->hasError()) {
         SourceLocation loc = fileReader->location();
         emitError({ loc, loc }, "Cannot open file for reading: " + fullPath.string());
+        return;
     }
 
+    _pathsIncluded.insert(fullPath.string());
     _included.push_back(std::move(fileReader));
 }
 
@@ -174,7 +189,9 @@ void Parser::processHeader()
         return;
     }
 
-    _lastHeader = name;
+    flushCurrentHeader();
+
+    _currentHeader = name;
     if (_listener)
         _listener->onParseHeader({ start, end }, name);
 }
@@ -245,10 +262,12 @@ void Parser::processOpcode()
     }
     SourceLocation valueEnd = reader.location();
 
-    if (_lastHeader.empty())
+    if (!_currentHeader)
         emitWarning({ opcodeStart, valueEnd }, "The opcode is not under any header.");
 
     std::string valueExpanded = expandDollarVars({ valueStart, valueEnd }, valueRaw);
+    _currentOpcodes.emplace_back(nameExpanded, valueExpanded);
+
     if (_listener)
         _listener->onParseOpcode({ opcodeStart, opcodeEnd }, { valueStart, valueEnd }, nameExpanded, valueExpanded);
 }
@@ -273,6 +292,17 @@ void Parser::recover()
 
     // skip the current line and let the parser proceed at the next
     reader.skipWhile([](char c) { return c != '\n'; });
+}
+
+void Parser::flushCurrentHeader()
+{
+    if (_currentHeader) {
+        if (_listener)
+            _listener->onParseFullBlock(*_currentHeader, _currentOpcodes);
+        _currentHeader.reset();
+    }
+
+    _currentOpcodes.clear();
 }
 
 bool Parser::hasComment(Reader& reader)
