@@ -148,6 +148,7 @@ void Parser::processDirective()
             return;
         }
 
+        std::replace(path.begin(), path.end(), '\\', '/');
         includeNewFile(path);
     }
     else {
