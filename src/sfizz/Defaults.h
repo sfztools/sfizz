@@ -101,7 +101,7 @@ namespace Default
 	constexpr float position { 0.0 };
 	constexpr Range<float> positionRange { -100.0, 100.0 };
 	constexpr Range<float> positionCCRange { -200.0, 200.0 };
-	constexpr float width { 0.0 };
+	constexpr float width { 100.0 };
 	constexpr Range<float> widthRange { -100.0, 100.0 };
 	constexpr Range<float> widthCCRange { -200.0, 200.0 };
 	constexpr uint8_t ampKeycenter { 60 };
