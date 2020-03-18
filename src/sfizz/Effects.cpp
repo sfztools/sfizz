@@ -15,6 +15,7 @@
 #include "effects/Apan.h"
 #include "effects/Lofi.h"
 #include "effects/Limiter.h"
+#include "effects/Rectify.h"
 #include <algorithm>
 
 namespace sfz {
@@ -27,6 +28,9 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("apan", fx::Apan::makeInstance);
     registerEffectType("lofi", fx::Lofi::makeInstance);
     registerEffectType("limiter", fx::Limiter::makeInstance);
+
+    // extensions (book)
+    registerEffectType("rectify", fx::Rectify::makeInstance);
 }
 
 void EffectFactory::registerEffectType(absl::string_view name, Effect::MakeInstance& make)
