@@ -470,7 +470,7 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("width")
     {
-        REQUIRE(region.width == 0.0f);
+        REQUIRE(region.width == 100.0f);
         region.parseOpcode({ "width", "4.2" });
         REQUIRE(region.width == 4.2f);
         region.parseOpcode({ "width", "-4.2" });
