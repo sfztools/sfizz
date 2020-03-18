@@ -26,6 +26,7 @@ set (SFIZZ_SOURCES
     sfizz/effects/Lofi.cpp
     sfizz/effects/Limiter.cpp
     sfizz/effects/Rectify.cpp
+    sfizz/effects/Gain.cpp
 )
 include (SfizzSIMDSourceFiles)
 

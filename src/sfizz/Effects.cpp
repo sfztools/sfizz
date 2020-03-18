@@ -16,6 +16,7 @@
 #include "effects/Lofi.h"
 #include "effects/Limiter.h"
 #include "effects/Rectify.h"
+#include "effects/Gain.h"
 #include <algorithm>
 
 namespace sfz {
@@ -31,6 +32,7 @@ void EffectFactory::registerStandardEffectTypes()
 
     // extensions (book)
     registerEffectType("rectify", fx::Rectify::makeInstance);
+    registerEffectType("gain", fx::Gain::makeInstance);
 }
 
 void EffectFactory::registerEffectType(absl::string_view name, Effect::MakeInstance& make)
