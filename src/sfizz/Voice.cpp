@@ -385,6 +385,10 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     { // Panning and stereo processing
         ScopedTiming logger { panningDuration };
 
+        // Apply panning
+        panEnvelope.getBlock(modulationSpan);
+        pan<float>(modulationSpan, leftBuffer, rightBuffer);
+
         // Apply the width/position process
         widthEnvelope.getBlock(modulationSpan);
         width<float>(modulationSpan, leftBuffer, rightBuffer);
