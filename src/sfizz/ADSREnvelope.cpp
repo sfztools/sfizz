@@ -12,20 +12,20 @@
 namespace sfz {
 
 template <class Type>
-void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
+void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
 {
     auto secondsToSamples = [sampleRate](Type timeInSeconds) {
         return static_cast<int>(timeInSeconds * sampleRate);
     };
 
-    this->delay = delay + secondsToSamples(region.amplitudeEG.getDelay(state, velocity));
-    this->attack = secondsToSamples(region.amplitudeEG.getAttack(state, velocity));
-    this->decay = secondsToSamples(region.amplitudeEG.getDecay(state, velocity));
-    this->release = secondsToSamples(region.amplitudeEG.getRelease(state, velocity));
-    this->hold = secondsToSamples(region.amplitudeEG.getHold(state, velocity));
+    this->delay = delay + secondsToSamples(desc.getDelay(state, velocity));
+    this->attack = secondsToSamples(desc.getAttack(state, velocity));
+    this->decay = secondsToSamples(desc.getDecay(state, velocity));
+    this->release = secondsToSamples(desc.getRelease(state, velocity));
+    this->hold = secondsToSamples(desc.getHold(state, velocity));
     this->peak = 1.0;
-    this->sustain = normalizePercents(region.amplitudeEG.getSustain(state, velocity));
-    this->start = this->peak * normalizePercents(region.amplitudeEG.getStart(state, velocity));
+    this->sustain =  normalizePercents(desc.getSustain(state, velocity));
+    this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
     shouldRelease = false;
@@ -204,6 +204,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         }
     }
 }
+
 template <class Type>
 bool ADSREnvelope<Type>::isSmoothing() const noexcept
 {

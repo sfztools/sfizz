@@ -24,12 +24,13 @@ public:
      * @brief Resets the ADSR envelope given a Region, the current midi state, and a delay and
      * trigger velocity
      *
+     * @param desc
      * @param region
      * @param state
      * @param delay
      * @param velocity
      */
-    void reset(const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
+    void reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
     /**
      * @brief Get the next value for the envelope
      *
