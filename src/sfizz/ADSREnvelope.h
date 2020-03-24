@@ -86,11 +86,10 @@ private:
     };
     State currentState { State::Done };
     Type currentValue { 0.0 };
-    Type step { 0.0 };
     int delay { 0 };
-    int attack { 0 };
-    int decay { 0 };
-    int release { 0 };
+    Type attackStep { 0 };
+    Type decayRate { 0 };
+    Type releaseRate { 0 };
     int hold { 0 };
     Type start { 0 };
     Type peak { 0 };
