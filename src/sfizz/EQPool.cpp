@@ -15,17 +15,17 @@ void sfz::EQHolder::reset()
     eq.clear();
 }
 
-void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels, uint8_t velocity)
+void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels, float velocity)
 {
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
     eq.setType(description.type);
     eq.setChannels(numChannels);
     this->description = &description;
-    const auto normalizedVelocity = normalizeVelocity(velocity);
 
     // Setup the base values
-    baseFrequency = description.frequency + normalizedVelocity * description.vel2frequency;
+    baseFrequency = description.frequency + velocity * description.vel2frequency;
     baseBandwidth = description.bandwidth;
-    baseGain = description.gain + normalizedVelocity * description.vel2gain;
+    baseGain = description.gain + velocity * description.vel2gain;
 
     // Setup the modulated values
     lastFrequency = midiState.modulate(baseFrequency, description.frequencyCC, Default::eqFrequencyRange);
@@ -84,7 +84,7 @@ sfz::EQPool::EQPool(const MidiState& state, int numEQs)
     setnumEQs(numEQs);
 }
 
-sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned numChannels, uint8_t velocity)
+sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned numChannels, float velocity)
 {
     AtomicGuard guard { givingOutEQs };
     if (!canGiveOutEQs)
