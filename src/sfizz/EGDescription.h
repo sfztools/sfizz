@@ -32,9 +32,7 @@
 #include "MidiState.h"
 #include <absl/types/optional.h>
 
-
-namespace sfz
-{
+namespace sfz {
 /**
  * @brief A description for an SFZ envelope generator, with its envelope parameters
  * and possible CC modulation. This is a structure to be integrated directly in a
@@ -60,36 +58,35 @@ inline float ccSwitchedValue(const MidiState& state, const absl::optional<CCValu
         return value;
 }
 
-struct EGDescription
-{
+struct EGDescription {
     EGDescription() = default;
     EGDescription(const EGDescription&) = default;
     EGDescription(EGDescription&&) = default;
     ~EGDescription() = default;
 
-    float attack        { Default::attack };
-    float decay         { Default::decay };
-    float delay         { Default::delayEG };
-    float hold          { Default::hold };
-    float release       { Default::release };
-    float start         { Default::start };
-    float sustain       { Default::sustain };
-    int   depth         { Default::depth };
-    float vel2attack    { Default::attack };
-    float vel2decay     { Default::decay };
-    float vel2delay     { Default::delayEG };
-    float vel2hold      { Default::hold };
-    float vel2release   { Default::vel2release };
-    float vel2sustain   { Default::vel2sustain };
-    int   vel2depth     { Default::depth };
+    float attack { Default::attack };
+    float decay { Default::decay };
+    float delay { Default::delayEG };
+    float hold { Default::hold };
+    float release { Default::release };
+    float start { Default::start };
+    float sustain { Default::sustain };
+    int depth { Default::depth };
+    float vel2attack { Default::attack };
+    float vel2decay { Default::decay };
+    float vel2delay { Default::delayEG };
+    float vel2hold { Default::hold };
+    float vel2release { Default::vel2release };
+    float vel2sustain { Default::vel2sustain };
+    int vel2depth { Default::depth };
 
-	absl::optional<CCValuePair<float>> ccAttack;
-	absl::optional<CCValuePair<float>> ccDecay;
-	absl::optional<CCValuePair<float>> ccDelay;
-	absl::optional<CCValuePair<float>> ccHold;
-	absl::optional<CCValuePair<float>> ccRelease;
-	absl::optional<CCValuePair<float>> ccStart;
-	absl::optional<CCValuePair<float>> ccSustain;
+    absl::optional<CCValuePair<float>> ccAttack;
+    absl::optional<CCValuePair<float>> ccDecay;
+    absl::optional<CCValuePair<float>> ccDelay;
+    absl::optional<CCValuePair<float>> ccHold;
+    absl::optional<CCValuePair<float>> ccRelease;
+    absl::optional<CCValuePair<float>> ccStart;
+    absl::optional<CCValuePair<float>> ccSustain;
 
     /**
      * @brief Get the attack with possibly a CC modifier and a velocity modifier
@@ -98,9 +95,10 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getAttack(const MidiState &state, uint8_t velocity) const noexcept
+    float getAttack(const MidiState& state, float velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccAttack, attack) + normalizeVelocity(velocity)*vel2attack);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccAttack, attack) + velocity * vel2attack);
     }
     /**
      * @brief Get the decay with possibly a CC modifier and a velocity modifier
@@ -109,9 +107,10 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getDecay(const MidiState &state, uint8_t velocity) const noexcept
+    float getDecay(const MidiState& state, float velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDecay, decay) + normalizeVelocity(velocity)*vel2decay);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDecay, decay) + velocity * vel2decay);
     }
     /**
      * @brief Get the delay with possibly a CC modifier and a velocity modifier
@@ -120,9 +119,10 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getDelay(const MidiState &state, uint8_t velocity) const noexcept
+    float getDelay(const MidiState& state, float velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDelay, delay) + normalizeVelocity(velocity)*vel2delay);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDelay, delay) + velocity * vel2delay);
     }
     /**
      * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
@@ -131,9 +131,10 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getHold(const MidiState &state, uint8_t velocity) const noexcept
+    float getHold(const MidiState& state, float velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccHold, hold) + normalizeVelocity(velocity)*vel2hold);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccHold, hold) + velocity * vel2hold);
     }
     /**
      * @brief Get the release duration with possibly a CC modifier and a velocity modifier
@@ -142,9 +143,10 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getRelease(const MidiState &state, uint8_t velocity) const noexcept
+    float getRelease(const MidiState& state, float velocity) const noexcept
     {
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccRelease, release) + normalizeVelocity(velocity)*vel2release);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccRelease, release) + velocity * vel2release);
     }
     /**
      * @brief Get the starting level with possibly a CC modifier and a velocity modifier
@@ -153,7 +155,7 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getStart(const MidiState &state, uint8_t velocity) const noexcept
+    float getStart(const MidiState& state, float velocity) const noexcept
     {
         UNUSED(velocity);
         return Default::egPercentRange.clamp(ccSwitchedValue(state, ccStart, start));
@@ -165,9 +167,10 @@ struct EGDescription
      * @param velocity
      * @return float
      */
-    float getSustain(const MidiState &state, uint8_t velocity) const noexcept
+    float getSustain(const MidiState& state, float velocity) const noexcept
     {
-        return Default::egPercentRange.clamp(ccSwitchedValue(state, ccSustain, sustain) + normalizeVelocity(velocity)*vel2sustain);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+        return Default::egPercentRange.clamp(ccSwitchedValue(state, ccSustain, sustain) + velocity * vel2sustain);
     }
     LEAK_DETECTOR(EGDescription);
 };

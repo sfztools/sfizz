@@ -140,7 +140,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
     bendStepFactor = centsFactor(region->bendStep);
-    egEnvelope.reset(*region, resources.midiState, delay, denormalize7Bits<uint8_t>(value), sampleRate);
+    egEnvelope.reset(*region, resources.midiState, delay, value, sampleRate);
 }
 
 bool sfz::Voice::isFree() const noexcept

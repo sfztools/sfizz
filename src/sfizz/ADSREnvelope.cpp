@@ -12,7 +12,7 @@
 namespace sfz {
 
 template <class Type>
-void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int delay, uint8_t velocity, float sampleRate) noexcept
+void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
 {
     auto secondsToSamples = [sampleRate](Type timeInSeconds) {
         return static_cast<int>(timeInSeconds * sampleRate);

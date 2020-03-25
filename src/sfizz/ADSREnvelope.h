@@ -29,7 +29,7 @@ public:
      * @param delay
      * @param velocity
      */
-    void reset(const Region& region, const MidiState& state, int delay, uint8_t velocity, float sampleRate) noexcept;
+    void reset(const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
     /**
      * @brief Get the next value for the envelope
      *
