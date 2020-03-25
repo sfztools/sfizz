@@ -523,7 +523,7 @@ void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const flo
 template <class T, bool SIMD = SIMDConfig::multiplyAdd>
 void multiplyAdd(const T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(input.size() <= output.size());
+    // ASSERT(input.size() <= output.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + std::min(output.size(), input.size());

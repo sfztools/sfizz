@@ -600,15 +600,15 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-
+    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOnEvent(delay, noteNumber, velocity);
+    resources.midiState.noteOnEventNormalized(delay, noteNumber, normalizedVelocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
 
-    noteOnDispatch(delay, noteNumber, velocity);
+    noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
 
 void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -627,7 +627,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    const auto replacedVelocity = resources.midiState.getNoteVelocity(noteNumber);
+    const auto replacedVelocity = resources.midiState.getNoteVelocityNormalized(noteNumber);
 
     for (auto& voice : voices)
         voice->registerNoteOff(delay, noteNumber, replacedVelocity);
@@ -635,11 +635,11 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
-void sfz::Synth::noteOffDispatch(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOff(noteNumber, velocity, randValue)) {
+        if (region->registerNoteOffNormalized(noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
@@ -649,11 +649,11 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, uint8_t velocity) no
     }
 }
 
-void sfz::Synth::noteOnDispatch(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOn(noteNumber, velocity, randValue)) {
+        if (region->registerNoteOnNormalized(noteNumber, velocity, randValue)) {
             for (auto& voice : voices) {
                 if (voice->checkOffGroup(delay, region->group))
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
@@ -672,9 +672,10 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
+    const auto normalizedCC = normalizeCC(ccValue);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.ccEvent(delay, ccNumber, ccValue);
+    resources.midiState.ccEventNormalized(delay, ccNumber, normalizedCC);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -686,7 +687,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     for (auto& voice : voices)
-        voice->registerCC(delay, ccNumber, ccValue);
+        voice->registerCC(delay, ccNumber, normalizedCC);
 
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(ccNumber, ccValue)) {
@@ -694,7 +695,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, ccNumber, ccValue, Voice::TriggerType::CC);
+            voice->startVoice(region, delay, ccNumber, normalizedCC, Voice::TriggerType::CC);
         }
     }
 }
@@ -952,12 +953,12 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
     for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
         for (unsigned cc = 0; cc < config::numCCs; ++cc)
-            voice->registerCC(delay, cc, 0);
+            voice->registerCC(delay, cc, 0.0f);
     }
 
     for (auto& region : regions) {
         for (unsigned cc = 0; cc < config::numCCs; ++cc)
-            region->registerCC(cc, 0);
+            region->registerCCNormalized(cc, 0.0f);
     }
 }
 

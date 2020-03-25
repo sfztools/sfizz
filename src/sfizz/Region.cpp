@@ -902,6 +902,7 @@ bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
 
 bool sfz::Region::registerCCNormalized(int ccNumber, float ccValue) noexcept
 {
+    ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else

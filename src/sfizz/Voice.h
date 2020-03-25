@@ -81,7 +81,7 @@ public:
      * @param value
      * @param triggerType
      */
-    void startVoice(Region* region, int delay, int number, uint8_t value, TriggerType triggerType) noexcept;
+    void startVoice(Region* region, int delay, int number, float value, TriggerType triggerType) noexcept;
 
     /**
      * @brief Register a note-off event; this may trigger a release.
@@ -90,7 +90,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-    void registerNoteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void registerNoteOff(int delay, int noteNumber, float velocity) noexcept;
     /**
      * @brief Register a CC event; this may trigger a release. If the voice is playing and its
      * region has CC modifiers, it will use this value to compute the CC envelope to apply to the
@@ -100,7 +100,7 @@ public:
      * @param ccNumber
      * @param ccValue
      */
-    void registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void registerCC(int delay, int ccNumber, float ccValue) noexcept;
     /**
      * @brief Register a pitch wheel event; for now this does nothing
      *
@@ -163,9 +163,9 @@ public:
     /**
      * @brief Get the value that triggered the voice (note velocity or cc value)
      *
-     * @return uint8_t
+     * @return float
      */
-    uint8_t getTriggerValue() const noexcept;
+    float getTriggerValue() const noexcept;
     /**
      * @brief Get the type of trigger
      *
@@ -261,7 +261,7 @@ private:
 
     TriggerType triggerType;
     int triggerNumber;
-    uint8_t triggerValue;
+    float triggerValue;
     absl::optional<int> triggerDelay;
 
     float speedRatio { 1.0 };

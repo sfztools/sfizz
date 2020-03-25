@@ -43,7 +43,7 @@ namespace config {
     constexpr int allNotesOffCC { 123 };
     constexpr int omniOffCC { 124 };
     constexpr int omniOnCC { 125 };
-    constexpr int halfCCThreshold { 64 };
+    constexpr float halfCCThreshold { 0.5f };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };
     constexpr float fastReleaseDuration { 0.01f };
