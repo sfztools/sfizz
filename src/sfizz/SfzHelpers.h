@@ -150,6 +150,18 @@ constexpr float normalizeBend(float bendValue)
     return min(max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
 }
 
+namespace literals
+{
+inline float operator ""_norm(unsigned long long int value)
+{
+    if (value > 127)
+        value = 127;
+
+    return normalize7Bits(value);
+}
+}
+
+
 /**
  * @brief Convert a note in string to its equivalent midi note number
  *
