@@ -240,16 +240,16 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("locc, hicc")
     {
-        REQUIRE(region.ccConditions.getWithDefault(0) == sfz::Range<uint8_t>(0, 127));
-        REQUIRE(region.ccConditions[127] == sfz::Range<uint8_t>(0, 127));
+        REQUIRE(region.ccConditions.getWithDefault(0) == sfz::Range<float>(0_norm, 127_norm));
+        REQUIRE(region.ccConditions[127] == sfz::Range<float>(0_norm, 127_norm));
         region.parseOpcode({ "locc6", "4" });
-        REQUIRE(region.ccConditions[6] == sfz::Range<uint8_t>(4, 127));
+        REQUIRE(region.ccConditions[6] == sfz::Range<float>(4_norm, 127_norm));
         region.parseOpcode({ "locc12", "-128" });
-        REQUIRE(region.ccConditions[12] == sfz::Range<uint8_t>(0, 127));
+        REQUIRE(region.ccConditions[12] == sfz::Range<float>(0_norm, 127_norm));
         region.parseOpcode({ "hicc65", "39" });
-        REQUIRE(region.ccConditions[65] == sfz::Range<uint8_t>(0, 39));
+        REQUIRE(region.ccConditions[65] == sfz::Range<float>(0_norm, 39_norm));
         region.parseOpcode({ "hicc127", "135" });
-        REQUIRE(region.ccConditions[127] == sfz::Range<uint8_t>(0, 127));
+        REQUIRE(region.ccConditions[127] == sfz::Range<float>(0_norm, 127_norm));
     }
 
     SECTION("sw_lokey, sw_hikey")
@@ -427,10 +427,10 @@ TEST_CASE("[Region] Parsing opcodes")
         }
         region.parseOpcode({ "on_locc45", "15" });
         REQUIRE(region.ccTriggers.contains(45));
-        REQUIRE(region.ccTriggers[45] == sfz::Range<uint8_t>(15, 127));
+        REQUIRE(region.ccTriggers[45] == sfz::Range<float>(15_norm, 127_norm));
         region.parseOpcode({ "on_hicc4", "47" });
         REQUIRE(region.ccTriggers.contains(45));
-        REQUIRE(region.ccTriggers[4] == sfz::Range<uint8_t>(0, 47));
+        REQUIRE(region.ccTriggers[4] == sfz::Range<float>(0_norm, 47_norm));
     }
 
     SECTION("volume")
@@ -650,38 +650,38 @@ TEST_CASE("[Region] Parsing opcodes")
     {
         REQUIRE(!region.crossfadeCCInRange.contains(4));
         region.parseOpcode({ "xfin_locc4", "4" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(4, 4));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(4_norm, 4_norm));
         region.parseOpcode({ "xfin_locc4", "128" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(127, 127));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(127_norm, 127_norm));
         region.parseOpcode({ "xfin_locc4", "59" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfin_hicc4", "59" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(59, 59));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(59_norm, 59_norm));
         region.parseOpcode({ "xfin_hicc4", "128" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfin_hicc4", "0" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(0_norm, 0_norm));
         region.parseOpcode({ "xfin_hicc4", "-1" });
-        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeCCInRange[4] == sfz::Range<float>(0_norm, 0_norm));
     }
 
     SECTION("xfout_locc, xfout_hicc")
     {
         REQUIRE(!region.crossfadeCCOutRange.contains(4));
         region.parseOpcode({ "xfout_locc4", "4" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(4, 127));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(4_norm, 127_norm));
         region.parseOpcode({ "xfout_locc4", "128" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(127, 127));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(127_norm, 127_norm));
         region.parseOpcode({ "xfout_locc4", "59" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfout_hicc4", "59" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(59, 59));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(59_norm, 59_norm));
         region.parseOpcode({ "xfout_hicc4", "128" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfout_hicc4", "0" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(0_norm, 0_norm));
         region.parseOpcode({ "xfout_hicc4", "-1" });
-        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeCCOutRange[4] == sfz::Range<float>(0_norm, 0_norm));
     }
 
     SECTION("xf_keycurve")

@@ -133,6 +133,16 @@ struct Region {
      */
     bool registerCC(int ccNumber, uint8_t ccValue) noexcept;
     /**
+     * @brief Register a new CC event. The region may be switched on or off using CCs so
+     * this function checks if it indeeds need to activate or not.
+     *
+     * @param ccNumber
+     * @param ccValue
+     * @return true if the region should trigger on this event
+     * @return false
+     */
+    bool registerCCNormalized(int ccNumber, float ccValue) noexcept;
+    /**
      * @brief Register a new pitch wheel event.
      *
      * @param pitch
@@ -295,7 +305,7 @@ struct Region {
 
     // Region logic: MIDI conditions
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
-    CCMap<Range<uint8_t>> ccConditions { Default::ccValueRange };
+    CCMap<Range<float>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
     absl::optional<uint8_t> keyswitchUp {}; // sw_up
@@ -314,7 +324,7 @@ struct Region {
 
     // Region logic: triggers
     SfzTrigger trigger { Default::trigger }; // trigger
-    CCMap<Range<uint8_t>> ccTriggers { Default::ccTriggerValueRange }; // on_loccN on_hiccN
+    CCMap<Range<float>> ccTriggers { Default::ccTriggerValueRange }; // on_loccN on_hiccN
 
     // Performance parameters: amplifier
     float volume { Default::volume }; // volume
@@ -339,8 +349,8 @@ struct Region {
     SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeKeyCurve };
     SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
     SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCCCurve };
-    CCMap<Range<uint8_t>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
-    CCMap<Range<uint8_t>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
+    CCMap<Range<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
+    CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
 
     // Filters and EQs

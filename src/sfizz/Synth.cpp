@@ -181,7 +181,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
-                const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
+                const auto ccValue = readOpcode(member.value, Default::midi7Range).value_or(0);
                 resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
             }
             break;

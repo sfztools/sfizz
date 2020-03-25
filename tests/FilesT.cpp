@@ -236,7 +236,7 @@ TEST_CASE("[Files] Pizz basic")
         REQUIRE(synth.getRegionView(i)->keyRange == sfz::Range<uint8_t>(12, 22));
         REQUIRE(synth.getRegionView(i)->velocityRange == sfz::Range<float>(97_norm, 127_norm));
         REQUIRE(synth.getRegionView(i)->pitchKeycenter == 21);
-        REQUIRE(synth.getRegionView(i)->ccConditions.getWithDefault(107) == sfz::Range<uint8_t>(0, 13));
+        REQUIRE(synth.getRegionView(i)->ccConditions.getWithDefault(107) == sfz::Range<float>(0_norm, 13_norm));
     }
     REQUIRE(synth.getRegionView(0)->randRange == sfz::Range<float>(0, 0.25));
     REQUIRE(synth.getRegionView(1)->randRange == sfz::Range<float>(0.25, 0.5));

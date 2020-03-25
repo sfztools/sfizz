@@ -155,10 +155,16 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
         break;
     case hash("locc&"):
-        setRangeStartFromOpcode(opcode, ccConditions[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccConditions[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("hicc&"):
-        setRangeEndFromOpcode(opcode, ccConditions[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccConditions[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("sw_lokey"):
         setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
@@ -250,11 +256,17 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("on_locc&"): // fallthrough
     case hash("start_locc&"):
-        setRangeStartFromOpcode(opcode, ccTriggers[opcode.parameters.back()], Default::ccTriggerValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccTriggers[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("on_hicc&"): // fallthrough
     case hash("start_hicc&"):
-        setRangeEndFromOpcode(opcode, ccTriggers[opcode.parameters.back()], Default::ccTriggerValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccTriggers[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
 
     // Performance parameters: amplifier
@@ -366,16 +378,28 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         }
         break;
     case hash("xfin_locc&"):
-        setRangeStartFromOpcode(opcode, crossfadeCCInRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCInRange[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("xfin_hicc&"):
-        setRangeEndFromOpcode(opcode, crossfadeCCInRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCInRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("xfout_locc&"):
-        setRangeStartFromOpcode(opcode, crossfadeCCOutRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCOutRange[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("xfout_hicc&"):
-        setRangeEndFromOpcode(opcode, crossfadeCCOutRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCOutRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("xf_cccurve"):
         switch (hash(opcode.value)) {
@@ -873,6 +897,11 @@ bool sfz::Region::registerNoteOffNormalized(int noteNumber, float velocity, floa
 
 bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
 {
+    return registerCCNormalized(ccNumber, normalizeCC(ccValue));
+}
+
+bool sfz::Region::registerCCNormalized(int ccNumber, float ccValue) noexcept
+{
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else
@@ -1063,13 +1092,13 @@ float sfz::Region::getCrossfadeGain() const noexcept
 
     // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
-        const auto ccValue = midiState.getCCValue(valuePair.cc);
+        const auto ccValue = midiState.getCCValueNormalized(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     for (const auto& valuePair : crossfadeCCOutRange) {
-        const auto ccValue = midiState.getCCValue(valuePair.cc);
+        const auto ccValue = midiState.getCCValueNormalized(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
     }

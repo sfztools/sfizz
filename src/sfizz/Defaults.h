@@ -68,14 +68,13 @@ namespace Default
 
     // Region logic: key mapping
 	constexpr Range<uint8_t> keyRange { 0, 127 };
-	constexpr Range<float> velocityRange { 0.0f, 1.0f };
+	constexpr auto velocityRange = normalizedRange;
 
     // Region logic: MIDI conditions
 	constexpr Range<uint8_t> channelRange { 1, 16 };
 	constexpr Range<uint8_t> midiChannelRange { 0, 15 };
 	constexpr Range<uint16_t> ccNumberRange { 0, config::numCCs };
-	constexpr Range<uint8_t> ccValueRange { 0, 127 };
-	constexpr uint8_t cc { 0 };
+	constexpr auto ccValueRange = normalizedRange;
 	constexpr Range<int> bendRange { -8192, 8192 };
 	constexpr int bend { 0 };
 	constexpr SfzVelocityOverride velocityOverride { SfzVelocityOverride::current };
@@ -92,7 +91,7 @@ namespace Default
 
     // Region logic: Triggers
 	constexpr SfzTrigger trigger { SfzTrigger::attack };
-	constexpr Range<uint8_t> ccTriggerValueRange{ 0, 127 };
+	constexpr Range<float> ccTriggerValueRange = normalizedRange;
 
     // Performance parameters: amplifier
 	constexpr float globalVolume { -7.35f };
@@ -123,8 +122,8 @@ namespace Default
 	constexpr Range<uint8_t> crossfadeKeyOutRange { 127, 127 };
 	constexpr Range<float> crossfadeVelInRange { 0.0f, 0.0f };
 	constexpr Range<float> crossfadeVelOutRange { 1.0f, 1.0f };
-	constexpr Range<uint8_t> crossfadeCCInRange { 0, 0 };
-	constexpr Range<uint8_t> crossfadeCCOutRange { 127, 127 };
+	constexpr Range<float> crossfadeCCInRange { 0.0f, 0.0f };
+	constexpr Range<float> crossfadeCCOutRange { 1.0f, 1.0f };
 	constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
 	constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
 	constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
