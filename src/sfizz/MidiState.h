@@ -29,7 +29,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEventNormalized(int delay, int noteNumber, float velocity) noexcept;
+	void noteOnEvent(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Update the state after a note off event
@@ -37,7 +37,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOffEventNormalized(int delay, int noteNumber, float velocity) noexcept;
+	void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
 
     int getActiveNotes() const noexcept { return activeNotes; }
 
@@ -55,7 +55,7 @@ public:
      * @param noteNumber
      * @return float
      */
-	float getNoteVelocityNormalized(int noteNumber) const noexcept;
+	float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
      * @brief Register a pitch bend event
@@ -77,7 +77,7 @@ public:
      * @param ccNumber
      * @param ccValue
      */
-    void ccEventNormalized(int delay, int ccNumber, float ccValue) noexcept;
+    void ccEvent(int delay, int ccNumber, float ccValue) noexcept;
 
     /**
      * @brief Get the CC value for CC number
@@ -85,7 +85,7 @@ public:
      * @param ccNumber
      * @return float
      */
-    float getCCValueNormalized(int ccNumber) const noexcept;
+    float getCCValue(int ccNumber) const noexcept;
 
     /**
      * @brief Reset the midi state (does not impact the last note on time)
@@ -113,7 +113,7 @@ public:
     T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
     {
         for (auto& mod: modifiers) {
-            lambda(value, getCCValueNormalized(mod.cc) * mod.value);
+            lambda(value, getCCValue(mod.cc) * mod.value);
         }
         return validRange.clamp(value);
     }

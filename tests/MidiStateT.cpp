@@ -21,17 +21,17 @@ TEST_CASE("[MidiState] Initial values")
 {
     sfz::MidiState state;
     for (unsigned cc = 0; cc < sfz::config::numCCs; cc++)
-        REQUIRE( state.getCCValueNormalized(cc) == 0_norm );
+        REQUIRE( state.getCCValue(cc) == 0_norm );
     REQUIRE( state.getPitchBend() == 0 );
 }
 
 TEST_CASE("[MidiState] Set and get CCs")
 {
     sfz::MidiState state;
-    state.ccEventNormalized(0, 24, 23_norm);
-    state.ccEventNormalized(0, 123, 124_norm);
-    REQUIRE(state.getCCValueNormalized(24) == 23_norm);
-    REQUIRE(state.getCCValueNormalized(123) == 124_norm);
+    state.ccEvent(0, 24, 23_norm);
+    state.ccEvent(0, 123, 124_norm);
+    REQUIRE(state.getCCValue(24) == 23_norm);
+    REQUIRE(state.getCCValue(123) == 124_norm);
 }
 
 TEST_CASE("[MidiState] Set and get pitch bends")
@@ -47,25 +47,25 @@ TEST_CASE("[MidiState] Reset")
 {
     sfz::MidiState state;
     state.pitchBendEvent(0, 894);
-    state.noteOnEventNormalized(0, 64, 24_norm);
-    state.ccEventNormalized(0, 123, 124_norm);
+    state.noteOnEvent(0, 64, 24_norm);
+    state.ccEvent(0, 123, 124_norm);
     state.reset(0);
     REQUIRE(state.getPitchBend() == 0);
-    REQUIRE(state.getNoteVelocityNormalized(64) == 0_norm);
-    REQUIRE(state.getCCValueNormalized(123) == 0_norm);
+    REQUIRE(state.getNoteVelocity(64) == 0_norm);
+    REQUIRE(state.getCCValue(123) == 0_norm);
 }
 
 TEST_CASE("[MidiState] Set and get note velocities")
 {
     sfz::MidiState state;
-    state.noteOnEventNormalized(0, 64, 24_norm);
-    REQUIRE(+state.getNoteVelocityNormalized(64) == 24_norm);
-    state.noteOnEventNormalized(0, 64, 123_norm);
-    REQUIRE(+state.getNoteVelocityNormalized(64) == 123_norm);
+    state.noteOnEvent(0, 64, 24_norm);
+    REQUIRE(+state.getNoteVelocity(64) == 24_norm);
+    state.noteOnEvent(0, 64, 123_norm);
+    REQUIRE(+state.getNoteVelocity(64) == 123_norm);
 }
 
 TEST_CASE("[MidiState] Extended CCs")
 {
     sfz::MidiState state;
-    state.ccEventNormalized(0, 142, 64_norm); // should not trap
+    state.ccEvent(0, 142, 64_norm); // should not trap
 }

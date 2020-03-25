@@ -183,7 +183,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::midi7Range);
                 if (ccValue)
-                    resources.midiState.ccEventNormalized(0, member.parameters.back(), normalizeCC(*ccValue));
+                    resources.midiState.ccEvent(0, member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
         case hash("Label_cc&"): // fallthrough
@@ -387,7 +387,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
         // Defaults
         for (unsigned cc = 0; cc < config::numCCs; cc++) {
-            region->registerCC(cc, resources.midiState.getCCValueNormalized(cc));
+            region->registerCC(cc, resources.midiState.getCCValue(cc));
         }
 
         if (defaultSwitch) {
@@ -603,7 +603,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber >= 0);
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOnEventNormalized(delay, noteNumber, normalizedVelocity);
+    resources.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -619,7 +619,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     UNUSED(velocity);
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOffEventNormalized(delay, noteNumber, normalizedVelocity);
+    resources.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -628,7 +628,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    const auto replacedVelocity = resources.midiState.getNoteVelocityNormalized(noteNumber);
+    const auto replacedVelocity = resources.midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : voices)
         voice->registerNoteOff(delay, noteNumber, replacedVelocity);
@@ -676,7 +676,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     const auto normalizedCC = normalizeCC(ccValue);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.ccEventNormalized(delay, ccNumber, normalizedCC);
+    resources.midiState.ccEvent(delay, ccNumber, normalizedCC);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)

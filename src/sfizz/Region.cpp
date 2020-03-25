@@ -1068,13 +1068,13 @@ float sfz::Region::getCrossfadeGain() const noexcept
 
     // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
-        const auto ccValue = midiState.getCCValueNormalized(valuePair.cc);
+        const auto ccValue = midiState.getCCValue(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     for (const auto& valuePair : crossfadeCCOutRange) {
-        const auto ccValue = midiState.getCCValueNormalized(valuePair.cc);
+        const auto ccValue = midiState.getCCValue(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
     }

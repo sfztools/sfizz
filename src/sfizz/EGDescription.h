@@ -55,7 +55,7 @@ namespace sfz
 inline float ccSwitchedValue(const MidiState& state, const absl::optional<CCValuePair<float>>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)
-        return value + ccSwitch->value * state.getCCValueNormalized(ccSwitch->cc);
+        return value + ccSwitch->value * state.getCCValue(ccSwitch->cc);
     else
         return value;
 }

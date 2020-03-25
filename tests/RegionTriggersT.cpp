@@ -137,15 +137,15 @@ TEST_CASE("Legato triggers", "Region triggers")
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "50" });
         region.parseOpcode({ "trigger", "first" });
-        midiState.noteOnEventNormalized(0, 40, 64_norm);
+        midiState.noteOnEvent(0, 40, 64_norm);
         REQUIRE(region.registerNoteOn(40, 64_norm, 0.5f));
-        midiState.noteOnEventNormalized(0, 41, 64_norm);
+        midiState.noteOnEvent(0, 41, 64_norm);
         REQUIRE(!region.registerNoteOn(41, 64_norm, 0.5f));
-        midiState.noteOffEventNormalized(0, 40, 0_norm);
+        midiState.noteOffEvent(0, 40, 0_norm);
         region.registerNoteOff(40, 0_norm, 0.5f);
-        midiState.noteOffEventNormalized(0, 41, 0_norm);
+        midiState.noteOffEvent(0, 41, 0_norm);
         region.registerNoteOff(41, 0_norm, 0.5f);
-        midiState.noteOnEventNormalized(0, 42, 64_norm);
+        midiState.noteOnEvent(0, 42, 64_norm);
         REQUIRE(region.registerNoteOn(42, 64_norm, 0.5f));
     }
 
@@ -154,15 +154,15 @@ TEST_CASE("Legato triggers", "Region triggers")
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "50" });
         region.parseOpcode({ "trigger", "legato" });
-        midiState.noteOnEventNormalized(0, 40, 64_norm);
+        midiState.noteOnEvent(0, 40, 64_norm);
         REQUIRE(!region.registerNoteOn(40, 64_norm, 0.5f));
-        midiState.noteOnEventNormalized(0, 41, 64_norm);
+        midiState.noteOnEvent(0, 41, 64_norm);
         REQUIRE(region.registerNoteOn(41, 64_norm, 0.5f));
-        midiState.noteOffEventNormalized(0, 40, 64_norm);
+        midiState.noteOffEvent(0, 40, 64_norm);
         region.registerNoteOff(40, 0_norm, 0.5f);
-        midiState.noteOffEventNormalized(0, 41, 64_norm);
+        midiState.noteOffEvent(0, 41, 64_norm);
         region.registerNoteOff(41, 0_norm, 0.5f);
-        midiState.noteOnEventNormalized(0, 42, 64_norm);
+        midiState.noteOnEvent(0, 42, 64_norm);
         REQUIRE(!region.registerNoteOn(42, 64_norm, 0.5f));
     }
 }

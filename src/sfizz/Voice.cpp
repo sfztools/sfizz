@@ -78,7 +78,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     baseVolumedB = region->getBaseVolumedB(number);
     auto volumedB = baseVolumedB;
     if (region->volumeCC)
-        volumedB += resources.midiState.getCCValueNormalized(region->volumeCC->cc) * region->volumeCC->value;
+        volumedB += resources.midiState.getCCValue(region->volumeCC->cc) * region->volumeCC->value;
     volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
 
     baseGain = region->getBaseGain();
@@ -87,7 +87,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     float gain { baseGain };
     if (region->amplitudeCC)
-        gain += resources.midiState.getCCValueNormalized(region->amplitudeCC->cc) * normalizePercents(region->amplitudeCC->value);
+        gain += resources.midiState.getCCValue(region->amplitudeCC->cc) * normalizePercents(region->amplitudeCC->value);
     amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
 
     float crossfadeGain { region->getCrossfadeGain() };
@@ -96,19 +96,19 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     basePan = normalizePercents(region->pan);
     auto pan = basePan;
     if (region->panCC)
-        pan += resources.midiState.getCCValueNormalized(region->panCC->cc) * normalizePercents(region->panCC->value);
+        pan += resources.midiState.getCCValue(region->panCC->cc) * normalizePercents(region->panCC->value);
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
     basePosition = normalizePercents(region->position);
     auto position = basePosition;
     if (region->positionCC)
-        position += resources.midiState.getCCValueNormalized(region->positionCC->cc) * normalizePercents(region->positionCC->value);
+        position += resources.midiState.getCCValue(region->positionCC->cc) * normalizePercents(region->positionCC->value);
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
     baseWidth = normalizePercents(region->width);
     auto width = baseWidth;
     if (region->widthCC)
-        width += resources.midiState.getCCValueNormalized(region->widthCC->cc) * normalizePercents(region->widthCC->value);
+        width += resources.midiState.getCCValue(region->widthCC->cc) * normalizePercents(region->widthCC->value);
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
@@ -177,7 +177,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noex
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (!region->checkSustain || resources.midiState.getCCValueNormalized(config::sustainCC) < config::halfCCThreshold)
+        if (!region->checkSustain || resources.midiState.getCCValue(config::sustainCC) < config::halfCCThreshold)
             release(delay);
     }
 }
