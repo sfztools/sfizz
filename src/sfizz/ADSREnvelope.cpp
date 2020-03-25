@@ -100,8 +100,83 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 template <class Type>
 void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 {
-    for (size_t i = 0, n = output.size(); i < n; ++i)
-        output[i] = getNextValue();
+    State currentState = this->currentState;
+    Type currentValue = this->currentValue;
+
+    while (!output.empty()) {
+        size_t count = 0;
+        size_t size = output.size();
+
+        switch (currentState) {
+        case State::Delay:
+            while (count < size && delay-- > 0) {
+                currentValue = start;
+                output[count++] = currentValue;
+            }
+            if (delay <= 0)
+                currentState = State::Attack;
+            break;
+        case State::Attack:
+            while (count < size && (currentValue += peak * attackStep) < peak)
+                output[count++] = currentValue;
+            if (currentValue >= peak) {
+                currentValue = peak;
+                currentState = State::Hold;
+            }
+            break;
+        case State::Hold:
+            while (count < size && hold-- > 0)
+                output[count++] = currentValue;
+            if (hold <= 0)
+                currentState = State::Decay;
+            break;
+        case State::Decay:
+            while (count < size && (currentValue *= decayRate) > sustain)
+                output[count++] = currentValue;
+            if (currentValue <= sustain) {
+                currentValue = sustain;
+                currentState = State::Sustain;
+            }
+            break;
+        case State::Sustain:
+            if (freeRunning)
+                shouldRelease = true;
+            if (!shouldRelease) {
+                count = size;
+                currentValue = sustain;
+                sfz::fill(output.first(count), currentValue);
+            }
+            else {
+                if (releaseDelay > 0) {
+                    count = clamp<size_t>(releaseDelay, 0, size);
+                    currentValue = sustain;
+                    sfz::fill(output.first(count), currentValue);
+                    releaseDelay -= count;
+                }
+                if (releaseDelay <= 0)
+                    currentState = State::Release;
+            }
+            break;
+        case State::Release:
+            while (count < size && (currentValue *= releaseRate) > config::virtuallyZero)
+                output[count++] = currentValue;
+            if (currentValue <= config::virtuallyZero) {
+                currentValue = 0;
+                currentState = State::Done;
+            }
+            break;
+        default:
+            count = size;
+            currentValue = 0.0;
+            sfz::fill(output, currentValue);
+            break;
+        }
+
+        output.remove_prefix(count);
+    }
+
+    this->currentState = currentState;
+    this->currentValue = currentValue;
 }
 
 template <class Type>
