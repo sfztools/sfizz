@@ -26,7 +26,7 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
     auto secondsToExpRate = [sampleRate](Type timeInSeconds) {
         if (timeInSeconds < config::virtuallyZero)
             return 0.0;
-        return std::exp(-10.0 / (timeInSeconds * sampleRate));
+        return std::exp(-8.0 / (timeInSeconds * sampleRate));
     };
 
     this->delay = delay + secondsToSamples(desc.getDelay(state, velocity));
