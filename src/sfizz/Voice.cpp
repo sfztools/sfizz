@@ -124,13 +124,13 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     const unsigned numChannels = region->isStereo ? 2 : 1;
     for (auto& filter: region->filters) {
-        auto newFilter = resources.filterPool.getFilter(filter, numChannels, number, denormalize7Bits<uint8_t>(value));
+        auto newFilter = resources.filterPool.getFilter(filter, numChannels, number, value);
         if (newFilter)
             filters.push_back(newFilter);
     }
 
     for (auto& eq: region->equalizers) {
-        auto newEQ = resources.eqPool.getEQ(eq, numChannels, denormalize7Bits<uint8_t>(value));
+        auto newEQ = resources.eqPool.getEQ(eq, numChannels, value);
         if (newEQ)
             equalizers.push_back(newEQ);
     }
