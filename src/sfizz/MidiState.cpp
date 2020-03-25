@@ -13,16 +13,6 @@ sfz::MidiState::MidiState()
     reset(0);
 }
 
-void sfz::MidiState::noteOnEvent(int delay, int noteNumber, uint8_t velocity) noexcept
-{
-    noteOnEventNormalized(delay, noteNumber, normalizeVelocity(velocity));
-}
-
-void sfz::MidiState::noteOffEvent(int delay, int noteNumber, uint8_t velocity) noexcept
-{
-    noteOffEventNormalized(delay, noteNumber, normalizeVelocity(velocity));
-}
-
 void sfz::MidiState::noteOnEventNormalized(int delay, int noteNumber, float velocity) noexcept
 {
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
@@ -61,11 +51,6 @@ float sfz::MidiState::getNoteDuration(int noteNumber) const
     return 0.0f;
 }
 
-uint8_t sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
-{
-    return denormalizeVelocity(getNoteVelocityNormalized(noteNumber));
-}
-
 float sfz::MidiState::getNoteVelocityNormalized(int noteNumber) const noexcept
 {
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
@@ -84,16 +69,6 @@ void sfz::MidiState::pitchBendEvent(int delay, int pitchBendValue) noexcept
 int sfz::MidiState::getPitchBend() const noexcept
 {
     return pitchBend;
-}
-
-void sfz::MidiState::ccEvent(int delay, int ccNumber, uint8_t ccValue) noexcept
-{
-    ccEventNormalized(delay, ccNumber, normalizeCC(ccValue));
-}
-
-uint8_t sfz::MidiState::getCCValue(int ccNumber) const noexcept
-{
-    return denormalizeCC(getCCValueNormalized(ccNumber));
 }
 
 void sfz::MidiState::ccEventNormalized(int delay, int ccNumber, float ccValue) noexcept

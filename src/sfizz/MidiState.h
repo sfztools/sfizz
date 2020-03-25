@@ -22,13 +22,6 @@ class MidiState
 {
 public:
     MidiState();
-    /**
-     * @brief Update the state after a note on event
-     *
-     * @param noteNumber
-     * @param velocity
-     */
-	void noteOnEvent(int delay, int noteNumber, uint8_t velocity) noexcept;
 
     /**
      * @brief Update the state after a note on event
@@ -37,14 +30,6 @@ public:
      * @param velocity
      */
 	void noteOnEventNormalized(int delay, int noteNumber, float velocity) noexcept;
-
-    /**
-     * @brief Update the state after a note off event
-     *
-     * @param noteNumber
-     * @param velocity
-     */
-	void noteOffEvent(int delay, int noteNumber, uint8_t velocity) noexcept;
 
     /**
      * @brief Update the state after a note off event
@@ -63,14 +48,6 @@ public:
      * @return float
      */
 	float getNoteDuration(int noteNumber) const;
-
-    /**
-     * @brief Get the note on velocity for a given note
-     *
-     * @param noteNumber
-     * @return uint8_t
-     */
-	uint8_t getNoteVelocity(int noteNumber) const noexcept;
 
     /**
      * @brief Get the note on velocity for a given note
@@ -100,23 +77,7 @@ public:
      * @param ccNumber
      * @param ccValue
      */
-    void ccEvent(int delay, int ccNumber, uint8_t ccValue) noexcept;
-
-    /**
-     * @brief Register a CC event
-     *
-     * @param ccNumber
-     * @param ccValue
-     */
     void ccEventNormalized(int delay, int ccNumber, float ccValue) noexcept;
-
-    /**
-     * @brief Get the CC value for CC number
-     *
-     * @param ccNumber
-     * @return uint8_t
-     */
-    uint8_t getCCValue(int ccNumber) const noexcept;
 
     /**
      * @brief Get the CC value for CC number
