@@ -11,25 +11,27 @@
  */
 
 #include "sfizz/MidiState.h"
+#include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"
 using namespace Catch::literals;
+using namespace sfz::literals;
 
 TEST_CASE("[MidiState] Initial values")
 {
     sfz::MidiState state;
     for (unsigned cc = 0; cc < sfz::config::numCCs; cc++)
-        REQUIRE( state.getCCValue(cc) == 0 );
+        REQUIRE( state.getCCValueNormalized(cc) == 0_norm );
     REQUIRE( state.getPitchBend() == 0 );
 }
 
 TEST_CASE("[MidiState] Set and get CCs")
 {
     sfz::MidiState state;
-    state.ccEvent(0, 24, 23);
-    state.ccEvent(0, 123, 124);
-    REQUIRE(state.getCCValue(24) == 23);
-    REQUIRE(state.getCCValue(123) == 124);
+    state.ccEventNormalized(0, 24, 23_norm);
+    state.ccEventNormalized(0, 123, 124_norm);
+    REQUIRE(state.getCCValueNormalized(24) == 23_norm);
+    REQUIRE(state.getCCValueNormalized(123) == 124_norm);
 }
 
 TEST_CASE("[MidiState] Set and get pitch bends")
@@ -45,25 +47,25 @@ TEST_CASE("[MidiState] Reset")
 {
     sfz::MidiState state;
     state.pitchBendEvent(0, 894);
-    state.noteOnEvent(0, 64, 24);
-    state.ccEvent(0, 123, 124);
+    state.noteOnEventNormalized(0, 64, 24_norm);
+    state.ccEventNormalized(0, 123, 124_norm);
     state.reset(0);
     REQUIRE(state.getPitchBend() == 0);
-    REQUIRE(state.getNoteVelocity(64) == 0);
-    REQUIRE(state.getCCValue(123) == 0);
+    REQUIRE(state.getNoteVelocityNormalized(64) == 0_norm);
+    REQUIRE(state.getCCValueNormalized(123) == 0_norm);
 }
 
 TEST_CASE("[MidiState] Set and get note velocities")
 {
     sfz::MidiState state;
-    state.noteOnEvent(0, 64, 24);
-    REQUIRE(+state.getNoteVelocity(64) == 24);
-    state.noteOnEvent(0, 64, 123);
-    REQUIRE(+state.getNoteVelocity(64) == 123);
+    state.noteOnEventNormalized(0, 64, 24_norm);
+    REQUIRE(+state.getNoteVelocityNormalized(64) == 24_norm);
+    state.noteOnEventNormalized(0, 64, 123_norm);
+    REQUIRE(+state.getNoteVelocityNormalized(64) == 123_norm);
 }
 
 TEST_CASE("[MidiState] Extended CCs")
 {
     sfz::MidiState state;
-    state.ccEvent(0, 142, 64); // should not trap
+    state.ccEventNormalized(0, 142, 64_norm); // should not trap
 }

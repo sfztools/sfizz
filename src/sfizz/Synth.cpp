@@ -181,8 +181,9 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
-                const auto ccValue = readOpcode(member.value, Default::midi7Range).value_or(0);
-                resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
+                const auto ccValue = readOpcode(member.value, Default::midi7Range);
+                if (ccValue)
+                    resources.midiState.ccEventNormalized(0, member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
         case hash("Label_cc&"): // fallthrough
@@ -386,12 +387,12 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
         // Defaults
         for (unsigned cc = 0; cc < config::numCCs; cc++) {
-            region->registerCC(cc, resources.midiState.getCCValue(cc));
+            region->registerCCNormalized(cc, resources.midiState.getCCValueNormalized(cc));
         }
 
         if (defaultSwitch) {
-            region->registerNoteOn(*defaultSwitch, 127, 1.0);
-            region->registerNoteOff(*defaultSwitch, 0, 1.0);
+            region->registerNoteOnNormalized(*defaultSwitch, 1.0f, 1.0f);
+            region->registerNoteOffNormalized(*defaultSwitch, 0.0f, 1.0f);
         }
 
         // Set the default frequencies on equalizers if needed
@@ -616,9 +617,9 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     UNUSED(velocity);
-
+    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOffEvent(delay, noteNumber, velocity);
+    resources.midiState.noteOffEventNormalized(delay, noteNumber, normalizedVelocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -690,7 +691,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
         voice->registerCC(delay, ccNumber, normalizedCC);
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCC(ccNumber, ccValue)) {
+        if (region->registerCCNormalized(ccNumber, normalizedCC)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
