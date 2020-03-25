@@ -805,7 +805,7 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
-bool sfz::Region::registerNoteOnNormalized(int noteNumber, float velocity, float randValue) noexcept
+bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
@@ -859,7 +859,7 @@ bool sfz::Region::registerNoteOnNormalized(int noteNumber, float velocity, float
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOffNormalized(int noteNumber, float velocity, float randValue) noexcept
+bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
@@ -885,7 +885,7 @@ bool sfz::Region::registerNoteOffNormalized(int noteNumber, float velocity, floa
     return keyOk && velOk && randOk && releaseTrigger;
 }
 
-bool sfz::Region::registerCCNormalized(int ccNumber, float ccValue) noexcept
+bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
@@ -930,7 +930,7 @@ void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
         bpmSwitched = false;
 }
 
-float sfz::Region::getBasePitchVariationNormalized(int noteNumber, float velocity) const noexcept
+float sfz::Region::getBasePitchVariation(int noteNumber, float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
@@ -1039,7 +1039,7 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     return 1.0f;
 }
 
-float sfz::Region::getNoteGainNormalized(int noteNumber, float velocity) const noexcept
+float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
@@ -1053,7 +1053,7 @@ float sfz::Region::getNoteGainNormalized(int noteNumber, float velocity) const n
     baseGain *= crossfadeOut(crossfadeKeyOutRange, noteNumber, crossfadeKeyCurve);
 
     // Amplitude velocity tracking
-    baseGain *= velocityCurveNormalized(velocity);
+    baseGain *= velocityCurve(velocity);
 
     // Crossfades related to velocity
     baseGain *= crossfadeIn(crossfadeVelInRange, velocity, crossfadeVelCurve);
@@ -1082,7 +1082,7 @@ float sfz::Region::getCrossfadeGain() const noexcept
     return gain;
 }
 
-float sfz::Region::velocityCurveNormalized(float velocity) const noexcept
+float sfz::Region::velocityCurve(float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 

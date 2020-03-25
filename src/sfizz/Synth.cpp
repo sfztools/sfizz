@@ -387,12 +387,12 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
         // Defaults
         for (unsigned cc = 0; cc < config::numCCs; cc++) {
-            region->registerCCNormalized(cc, resources.midiState.getCCValueNormalized(cc));
+            region->registerCC(cc, resources.midiState.getCCValueNormalized(cc));
         }
 
         if (defaultSwitch) {
-            region->registerNoteOnNormalized(*defaultSwitch, 1.0f, 1.0f);
-            region->registerNoteOffNormalized(*defaultSwitch, 0.0f, 1.0f);
+            region->registerNoteOn(*defaultSwitch, 1.0f, 1.0f);
+            region->registerNoteOff(*defaultSwitch, 0.0f, 1.0f);
         }
 
         // Set the default frequencies on equalizers if needed
@@ -640,7 +640,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOffNormalized(noteNumber, velocity, randValue)) {
+        if (region->registerNoteOff(noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
@@ -654,7 +654,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (region->registerNoteOnNormalized(noteNumber, velocity, randValue)) {
+        if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             for (auto& voice : voices) {
                 if (voice->checkOffGroup(delay, region->group))
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
@@ -691,7 +691,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
         voice->registerCC(delay, ccNumber, normalizedCC);
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCCNormalized(ccNumber, normalizedCC)) {
+        if (region->registerCC(ccNumber, normalizedCC)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
@@ -959,7 +959,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 
     for (auto& region : regions) {
         for (unsigned cc = 0; cc < config::numCCs; ++cc)
-            region->registerCCNormalized(cc, 0.0f);
+            region->registerCC(cc, 0.0f);
     }
 }
 

@@ -85,7 +85,7 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOnNormalized(int noteNumber, float velocity, float randValue) noexcept;
+    bool registerNoteOn(int noteNumber, float velocity, float randValue) noexcept;
     /**
      * @brief Register a new note off event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
@@ -97,7 +97,7 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOffNormalized(int noteNumber, float velocity, float randValue) noexcept;
+    bool registerNoteOff(int noteNumber, float velocity, float randValue) noexcept;
     /**
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
@@ -107,7 +107,7 @@ struct Region {
      * @return true if the region should trigger on this event
      * @return false
      */
-    bool registerCCNormalized(int ccNumber, float ccValue) noexcept;
+    bool registerCC(int ccNumber, float ccValue) noexcept;
     /**
      * @brief Register a new pitch wheel event.
      *
@@ -135,7 +135,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getBasePitchVariationNormalized(int noteNumber, float velocity) const noexcept;
+    float getBasePitchVariation(int noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
@@ -144,7 +144,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getNoteGainNormalized(int noteNumber, float velocity) const noexcept;
+    float getNoteGain(int noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the additional crossfade gain of the region depending on the
      * CC values
@@ -178,7 +178,7 @@ struct Region {
      *
      * @return float
      */
-    float velocityCurveNormalized(float velocity) const noexcept;
+    float velocityCurve(float velocity) const noexcept;
     /**
      * @brief Get the region offset in samples
      *

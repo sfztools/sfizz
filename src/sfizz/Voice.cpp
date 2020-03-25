@@ -73,7 +73,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
-    pitchRatio = region->getBasePitchVariationNormalized(number, value);
+    pitchRatio = region->getBasePitchVariation(number, value);
 
     baseVolumedB = region->getBaseVolumedB(number);
     auto volumedB = baseVolumedB;
@@ -83,7 +83,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
-        baseGain *= region->getNoteGainNormalized(number, value);
+        baseGain *= region->getNoteGain(number, value);
 
     float gain { baseGain };
     if (region->amplitudeCC)
