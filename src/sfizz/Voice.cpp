@@ -162,7 +162,9 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
 
 void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
 {
+    ASSERT(velocity >= 0.0 && velocity <= 1.0);
     UNUSED(velocity);
+
     if (region == nullptr)
         return;
 
@@ -182,6 +184,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noex
 
 void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 {
+    ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
     if (region == nullptr)
         return;
 
