@@ -5,9 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Synth.h"
+#include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 #include "ghc/fs_std.hpp"
 using namespace Catch::literals;
+using namespace sfz::literals;
 
 TEST_CASE("[Files] Single region (regions_one.sfz)")
 {
@@ -137,11 +139,11 @@ TEST_CASE("[Files] Group from AVL")
         REQUIRE(synth.getRegionView(i)->volume == 6.0f);
         REQUIRE(synth.getRegionView(i)->keyRange == sfz::Range<uint8_t>(36, 36));
     }
-    REQUIRE(synth.getRegionView(0)->velocityRange == sfz::Range<uint8_t>(1, 26));
-    REQUIRE(synth.getRegionView(1)->velocityRange == sfz::Range<uint8_t>(27, 52));
-    REQUIRE(synth.getRegionView(2)->velocityRange == sfz::Range<uint8_t>(53, 77));
-    REQUIRE(synth.getRegionView(3)->velocityRange == sfz::Range<uint8_t>(78, 102));
-    REQUIRE(synth.getRegionView(4)->velocityRange == sfz::Range<uint8_t>(103, 127));
+    REQUIRE(synth.getRegionView(0)->velocityRange == sfz::Range<float>(1_norm, 26_norm));
+    REQUIRE(synth.getRegionView(1)->velocityRange == sfz::Range<float>(27_norm, 52_norm));
+    REQUIRE(synth.getRegionView(2)->velocityRange == sfz::Range<float>(53_norm, 77_norm));
+    REQUIRE(synth.getRegionView(3)->velocityRange == sfz::Range<float>(78_norm, 102_norm));
+    REQUIRE(synth.getRegionView(4)->velocityRange == sfz::Range<float>(103_norm, 127_norm));
 }
 
 TEST_CASE("[Files] Full hierarchy")
@@ -232,7 +234,7 @@ TEST_CASE("[Files] Pizz basic")
     REQUIRE(synth.getNumRegions() == 4);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
         REQUIRE(synth.getRegionView(i)->keyRange == sfz::Range<uint8_t>(12, 22));
-        REQUIRE(synth.getRegionView(i)->velocityRange == sfz::Range<uint8_t>(97, 127));
+        REQUIRE(synth.getRegionView(i)->velocityRange == sfz::Range<float>(97_norm, 127_norm));
         REQUIRE(synth.getRegionView(i)->pitchKeycenter == 21);
         REQUIRE(synth.getRegionView(i)->ccConditions.getWithDefault(107) == sfz::Range<uint8_t>(0, 13));
     }

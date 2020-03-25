@@ -68,7 +68,7 @@ namespace Default
 
     // Region logic: key mapping
 	constexpr Range<uint8_t> keyRange { 0, 127 };
-	constexpr Range<uint8_t> velocityRange { 0, 127 };
+	constexpr Range<float> velocityRange { 0.0f, 1.0f };
 
     // Region logic: MIDI conditions
 	constexpr Range<uint8_t> channelRange { 1, 16 };
@@ -121,8 +121,8 @@ namespace Default
 	constexpr Range<float> ampRandomRange { 0.0, 24.0 };
 	constexpr Range<uint8_t> crossfadeKeyInRange { 0, 0 };
 	constexpr Range<uint8_t> crossfadeKeyOutRange { 127, 127 };
-	constexpr Range<uint8_t> crossfadeVelInRange { 0, 0 };
-	constexpr Range<uint8_t> crossfadeVelOutRange { 127, 127 };
+	constexpr Range<float> crossfadeVelInRange { 0.0f, 0.0f };
+	constexpr Range<float> crossfadeVelOutRange { 1.0f, 1.0f };
 	constexpr Range<uint8_t> crossfadeCCInRange { 0, 0 };
 	constexpr Range<uint8_t> crossfadeCCOutRange { 127, 127 };
 	constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };

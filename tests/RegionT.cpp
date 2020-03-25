@@ -6,8 +6,10 @@
 
 #include "sfizz/MidiState.h"
 #include "sfizz/Region.h"
+#include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
+using namespace sfz::literals;
 
 TEST_CASE("[Region] Parsing opcodes")
 {
@@ -204,19 +206,19 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("lovel, hivel")
     {
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 127));
+        REQUIRE(region.velocityRange == sfz::Range<float>(0_norm, 127_norm));
         region.parseOpcode({ "lovel", "37" });
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(37, 127));
+        REQUIRE(region.velocityRange == sfz::Range<float>(37_norm, 127_norm));
         region.parseOpcode({ "lovel", "128" });
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(127, 127));
+        REQUIRE(region.velocityRange == sfz::Range<float>(127_norm, 127_norm));
         region.parseOpcode({ "lovel", "-3" });
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 127));
+        REQUIRE(region.velocityRange == sfz::Range<float>(0_norm, 127_norm));
         region.parseOpcode({ "hivel", "65" });
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 65));
+        REQUIRE(region.velocityRange == sfz::Range<float>(0_norm, 65_norm));
         region.parseOpcode({ "hivel", "-1" });
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.velocityRange == sfz::Range<float>(0_norm, 0_norm));
         region.parseOpcode({ "hivel", "128" });
-        REQUIRE(region.velocityRange == sfz::Range<uint8_t>(0, 127));
+        REQUIRE(region.velocityRange == sfz::Range<float>(0_norm, 127_norm));
     }
 
     SECTION("lobend, hibend")
@@ -563,9 +565,9 @@ TEST_CASE("[Region] Parsing opcodes")
     SECTION("amp_velcurve")
     {
         region.parseOpcode({ "amp_velcurve_6", "0.4" });
-        REQUIRE(region.velocityPoints.back() == std::make_pair<int, float>(6, 0.4f));
+        REQUIRE(region.velocityPoints.back() == std::make_pair<float, float>(6_norm, 0.4f));
         region.parseOpcode({ "amp_velcurve_127", "-1.0" });
-        REQUIRE(region.velocityPoints.back() == std::make_pair<int, float>(127, 0.0f));
+        REQUIRE(region.velocityPoints.back() == std::make_pair<float, float>(127_norm, 0.0f));
     }
 
     SECTION("xfin_lokey, xfin_hikey")
@@ -589,21 +591,21 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("xfin_lovel, xfin_hivel")
     {
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(0_norm, 0_norm));
         region.parseOpcode({ "xfin_lovel", "4" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(4, 4));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(4_norm, 4_norm));
         region.parseOpcode({ "xfin_lovel", "128" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(127, 127));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(127_norm, 127_norm));
         region.parseOpcode({ "xfin_lovel", "59" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfin_hivel", "59" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(59, 59));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(59_norm, 59_norm));
         region.parseOpcode({ "xfin_hivel", "128" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfin_hivel", "0" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(0_norm, 0_norm));
         region.parseOpcode({ "xfin_hivel", "-1" });
-        REQUIRE(region.crossfadeVelInRange == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeVelInRange == sfz::Range<float>(0_norm, 0_norm));
     }
 
     SECTION("xfout_lokey, xfout_hikey")
@@ -627,21 +629,21 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("xfout_lovel, xfout_hivel")
     {
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(127, 127));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(127_norm, 127_norm));
         region.parseOpcode({ "xfout_lovel", "4" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(4, 127));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(4_norm, 127_norm));
         region.parseOpcode({ "xfout_lovel", "128" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(127, 127));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(127_norm, 127_norm));
         region.parseOpcode({ "xfout_lovel", "59" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfout_hivel", "59" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(59, 59));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(59_norm, 59_norm));
         region.parseOpcode({ "xfout_hivel", "128" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(59, 127));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(59_norm, 127_norm));
         region.parseOpcode({ "xfout_hivel", "0" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(0_norm, 0_norm));
         region.parseOpcode({ "xfout_hivel", "-1" });
-        REQUIRE(region.crossfadeVelOutRange == sfz::Range<uint8_t>(0, 0));
+        REQUIRE(region.crossfadeVelOutRange == sfz::Range<float>(0_norm, 0_norm));
     }
 
     SECTION("xfin_locc, xfin_hicc")

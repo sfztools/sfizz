@@ -99,6 +99,30 @@ struct Region {
      */
     bool registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept;
     /**
+     * @brief Register a new note on event. The region may be switched on or off using keys so
+     * this function updates the keyswitches state.
+     *
+     * @param noteNumber
+     * @param velocity
+     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
+     *                  and vary the samples
+     * @return true if the region should trigger on this event.
+     * @return false
+     */
+    bool registerNoteOnNormalized(int noteNumber, float velocity, float randValue) noexcept;
+    /**
+     * @brief Register a new note off event. The region may be switched on or off using keys so
+     * this function updates the keyswitches state.
+     *
+     * @param noteNumber
+     * @param velocity
+     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
+     *                  and vary the samples
+     * @return true if the region should trigger on this event.
+     * @return false
+     */
+    bool registerNoteOffNormalized(int noteNumber, float velocity, float randValue) noexcept;
+    /**
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
      *
@@ -137,6 +161,15 @@ struct Region {
      */
     float getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept;
     /**
+     * @brief Get the base pitch of the region depending on which note has been
+     * pressed and at which velocity.
+     *
+     * @param noteNumber
+     * @param velocity
+     * @return float
+     */
+    float getBasePitchVariationNormalized(int noteNumber, float velocity) const noexcept;
+    /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
      *
@@ -145,6 +178,15 @@ struct Region {
      * @return float
      */
     float getNoteGain(int noteNumber, uint8_t velocity) const noexcept;
+    /**
+     * @brief Get the note-related gain of the region depending on which note has been
+     * pressed and at which velocity.
+     *
+     * @param noteNumber
+     * @param velocity
+     * @return float
+     */
+    float getNoteGainNormalized(int noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the additional crossfade gain of the region depending on the
      * CC values
@@ -179,6 +221,12 @@ struct Region {
      * @return float
      */
     float velocityCurve(uint8_t velocity) const noexcept;
+    /**
+     * @brief Computes the gain value related to the velocity of the note
+     *
+     * @return float
+     */
+    float velocityCurveNormalized(float velocity) const noexcept;
     /**
      * @brief Get the region offset in samples
      *
@@ -243,7 +291,7 @@ struct Region {
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
-    Range<uint8_t> velocityRange { Default::velocityRange }; // hivel and lovel
+    Range<float> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
@@ -282,12 +330,12 @@ struct Region {
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
-    std::vector<std::pair<int, float>> velocityPoints; // amp_velcurve_N
+    std::vector<std::pair<float, float>> velocityPoints; // amp_velcurve_N
     float ampRandom { Default::ampRandom }; // amp_random
     Range<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
-    Range<uint8_t> crossfadeVelInRange { Default::crossfadeVelInRange };
-    Range<uint8_t> crossfadeVelOutRange { Default::crossfadeVelOutRange };
+    Range<float> crossfadeVelInRange { Default::crossfadeVelInRange };
+    Range<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
     SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeKeyCurve };
     SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
     SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCCCurve };
