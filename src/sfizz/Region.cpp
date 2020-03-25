@@ -805,11 +805,6 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
-bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randValue) noexcept
-{
-    return registerNoteOnNormalized(noteNumber, normalizeVelocity(velocity), randValue);
-}
-
 bool sfz::Region::registerNoteOnNormalized(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
@@ -864,11 +859,6 @@ bool sfz::Region::registerNoteOnNormalized(int noteNumber, float velocity, float
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept
-{
-    return registerNoteOffNormalized(noteNumber, normalizeVelocity(velocity), randValue);
-}
-
 bool sfz::Region::registerNoteOffNormalized(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
@@ -893,11 +883,6 @@ bool sfz::Region::registerNoteOffNormalized(int noteNumber, float velocity, floa
     const bool randOk = randRange.contains(randValue);
     const bool releaseTrigger = (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key);
     return keyOk && velOk && randOk && releaseTrigger;
-}
-
-bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
-{
-    return registerCCNormalized(ccNumber, normalizeCC(ccValue));
 }
 
 bool sfz::Region::registerCCNormalized(int ccNumber, float ccValue) noexcept
@@ -943,11 +928,6 @@ void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
         bpmSwitched = true;
     else
         bpmSwitched = false;
-}
-
-float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept
-{
-    return getBasePitchVariationNormalized(noteNumber, normalizeVelocity(velocity));
 }
 
 float sfz::Region::getBasePitchVariationNormalized(int noteNumber, float velocity) const noexcept
@@ -1059,11 +1039,6 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     return 1.0f;
 }
 
-float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) const noexcept
-{
-    return getNoteGainNormalized(noteNumber, normalizeVelocity(velocity));
-}
-
 float sfz::Region::getNoteGainNormalized(int noteNumber, float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
@@ -1105,11 +1080,6 @@ float sfz::Region::getCrossfadeGain() const noexcept
     }
 
     return gain;
-}
-
-float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
-{
-    return velocityCurveNormalized(normalizeVelocity(velocity));
 }
 
 float sfz::Region::velocityCurveNormalized(float velocity) const noexcept

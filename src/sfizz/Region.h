@@ -85,30 +85,6 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOn(int noteNumber, uint8_t velocity, float randValue) noexcept;
-    /**
-     * @brief Register a new note off event. The region may be switched on or off using keys so
-     * this function updates the keyswitches state.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
-     *                  and vary the samples
-     * @return true if the region should trigger on this event.
-     * @return false
-     */
-    bool registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept;
-    /**
-     * @brief Register a new note on event. The region may be switched on or off using keys so
-     * this function updates the keyswitches state.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
-     *                  and vary the samples
-     * @return true if the region should trigger on this event.
-     * @return false
-     */
     bool registerNoteOnNormalized(int noteNumber, float velocity, float randValue) noexcept;
     /**
      * @brief Register a new note off event. The region may be switched on or off using keys so
@@ -122,16 +98,6 @@ struct Region {
      * @return false
      */
     bool registerNoteOffNormalized(int noteNumber, float velocity, float randValue) noexcept;
-    /**
-     * @brief Register a new CC event. The region may be switched on or off using CCs so
-     * this function checks if it indeeds need to activate or not.
-     *
-     * @param ccNumber
-     * @param ccValue
-     * @return true if the region should trigger on this event
-     * @return false
-     */
-    bool registerCC(int ccNumber, uint8_t ccValue) noexcept;
     /**
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
@@ -169,25 +135,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept;
-    /**
-     * @brief Get the base pitch of the region depending on which note has been
-     * pressed and at which velocity.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @return float
-     */
     float getBasePitchVariationNormalized(int noteNumber, float velocity) const noexcept;
-    /**
-     * @brief Get the note-related gain of the region depending on which note has been
-     * pressed and at which velocity.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @return float
-     */
-    float getNoteGain(int noteNumber, uint8_t velocity) const noexcept;
     /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
@@ -225,12 +173,6 @@ struct Region {
      * @return float
      */
     float getPhase() const noexcept;
-    /**
-     * @brief Computes the gain value related to the velocity of the note
-     *
-     * @return float
-     */
-    float velocityCurve(uint8_t velocity) const noexcept;
     /**
      * @brief Computes the gain value related to the velocity of the note
      *
