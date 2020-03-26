@@ -291,7 +291,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         return false;
 
     resources.filePool.setRootDirectory(this->originalDirectory);
-    resources.logger.setPrefix(file.filename().string());
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();
@@ -953,9 +952,14 @@ bool sfz::Synth::shouldReloadFile()
     return (checkModificationTime() > modificationTime);
 }
 
-void sfz::Synth::enableLogging() noexcept
+void sfz::Synth::enableLogging(absl::string_view prefix) noexcept
 {
-    resources.logger.enableLogging();
+    resources.logger.enableLogging(prefix);
+}
+
+void sfz::Synth::setLoggingPrefix(absl::string_view prefix) noexcept
+{
+    resources.logger.setPrefix(prefix);
 }
 
 void sfz::Synth::disableLogging() noexcept

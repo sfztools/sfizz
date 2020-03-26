@@ -191,6 +191,16 @@ void sfz::Sfizz::enableLogging() noexcept
     synth->enableLogging();
 }
 
+void sfz::Sfizz::enableLogging(const std::string& prefix) noexcept
+{
+    synth->enableLogging(prefix);
+}
+
+void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
+{
+    synth->setLoggingPrefix(prefix);
+}
+
 void sfz::Sfizz::disableLogging() noexcept
 {
     synth->disableLogging();

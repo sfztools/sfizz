@@ -380,6 +380,14 @@ SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth);
 SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
 
 /**
+ * @brief Enable logging of timings to sidecar CSV files. This can produce
+ * many outputs so use with caution.
+ *
+ * @param synth
+ */
+SFIZZ_EXPORTED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
+
+/**
  * @brief Shuts down the current processing, clear buffers and reset the voices.
  *
  * @param synth

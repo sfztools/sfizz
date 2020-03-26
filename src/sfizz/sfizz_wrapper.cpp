@@ -238,6 +238,12 @@ void sfizz_enable_logging(sfizz_synth_t* synth)
     return self->enableLogging();
 }
 
+void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->setLoggingPrefix(prefix);
+}
+
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);

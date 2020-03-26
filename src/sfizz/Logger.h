@@ -99,7 +99,7 @@ public:
      *
      * @param prefix
      */
-    void setPrefix(const std::string& prefix);
+    void setPrefix(absl::string_view prefix);
 
     /**
      * @brief Removes all logged data
@@ -111,7 +111,7 @@ public:
      * @brief Enables logging and writing to log files on destruction
      *
      */
-    void enableLogging();
+    void enableLogging(absl::string_view prefix);
 
     /**
      * @brief Disables logging and writing to log files on destruction

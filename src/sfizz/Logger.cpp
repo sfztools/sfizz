@@ -112,15 +112,14 @@ void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::c
     fileTimeQueue.try_push<FileTime>({ waitDuration, loadDuration, fileSize, filename });
 }
 
-void sfz::Logger::setPrefix(const std::string& prefix)
+void sfz::Logger::setPrefix(absl::string_view prefix)
 {
-    this->prefix = prefix;
+    this->prefix = std::string(prefix);
 }
 
 void sfz::Logger::clear()
 {
     clearFlag.clear();
-    prefix.clear();
 }
 
 void sfz::Logger::moveEvents() noexcept
@@ -143,8 +142,9 @@ void sfz::Logger::moveEvents() noexcept
     }
 }
 
-void sfz::Logger::enableLogging()
+void sfz::Logger::enableLogging(absl::string_view prefix)
 {
+    setPrefix(prefix);
     loggingEnabled = true;
 }
 

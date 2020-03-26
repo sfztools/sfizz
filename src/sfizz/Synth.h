@@ -355,7 +355,13 @@ public:
      * many outputs so use with caution.
      *
      */
-    void enableLogging() noexcept;
+    void enableLogging(absl::string_view prefix = "") noexcept;
+    /**
+     * @brief Enable logging of timings to sidecar CSV files. This can produce
+     * many outputs so use with caution.
+     *
+     */
+    void setLoggingPrefix(absl::string_view prefix) noexcept;
     /**
      * @brief Disable logging;
      *
