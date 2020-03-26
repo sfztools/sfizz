@@ -71,9 +71,9 @@ def extract_file_name_and_prefix(file_name):
     """
     file_prefix = file_name[:file_prefix_length]
 
-    if file.endswith(file_log_suffix):
+    if file_name.endswith(file_log_suffix):
         suffix_length = len(file_log_suffix)
-    elif file.endswith(callback_log_suffix):
+    elif file_name.endswith(callback_log_suffix):
         suffix_length = len(callback_log_suffix)
     else:
         suffix_length = 0
