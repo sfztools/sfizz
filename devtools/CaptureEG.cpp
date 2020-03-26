@@ -225,11 +225,43 @@ void Application::saveCapture()
         return;
 
     QString filePath = QFileDialog::getSaveFileName(
-        _window, tr("Save data"), QString(), tr("Data files (*.dat)"));
+        _window, tr("Save data"), QString(), tr("Sound files (*.wav *.flac);;Data files (*.dat)"));
     if (filePath.isEmpty())
         return;
 
-    QFile file(filePath);
+    QString fileSuffix = QFileInfo(filePath).suffix();
+    if (fileSuffix.compare("wav", Qt::CaseInsensitive) == 0)
+        saveSoundFile(filePath, SF_FORMAT_WAV);
+    else if (fileSuffix.compare("flac", Qt::CaseInsensitive) == 0)
+        saveSoundFile(filePath, SF_FORMAT_FLAC);
+    else
+        savePlotData(filePath);
+}
+
+void Application::saveSoundFile(const QString& path, int format)
+{
+    const float *data = _captureBuffer.get();
+    size_t size = _captureFill;
+    double sampleRate = jack_get_sample_rate(_client.get());
+    double scaleFactor = 1.0 / _ui->internalGainVal->value();
+
+    SndfileHandle snd(path.toUtf8().data(), SFM_WRITE, format|SF_FORMAT_PCM_16, 1, sampleRate);
+
+    for (size_t i = 0; i < size; ++i) {
+        float sample = scaleFactor * data[i];
+        sample = std::max(-1.0f, std::min(+1.0f, sample));
+        snd.write(&sample, 1);
+    }
+
+    snd.writeSync();
+
+    if (snd.error())
+        QFile::remove(path);
+}
+
+void Application::savePlotData(const QString& path)
+{
+    QFile file(path);
     file.open(QFile::WriteOnly|QFile::Truncate);
     QTextStream stream(&file);
 

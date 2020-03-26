@@ -39,6 +39,9 @@ private:
     void engageCapture();
     void saveCapture();
 
+    void saveSoundFile(const QString& path, int format);
+    void savePlotData(const QString& path);
+
     void performSfzUpdate();
     void performIdleChecks();
 
