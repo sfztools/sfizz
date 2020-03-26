@@ -244,10 +244,11 @@ void Application::saveSoundFile(const QString& path, int format)
     size_t size = _captureFill;
     double sampleRate = jack_get_sample_rate(_client.get());
     double scaleFactor = 1.0 / _ui->internalGainVal->value();
+    size_t captureLatency = jack_get_buffer_size(_client.get());
 
     SndfileHandle snd(path.toUtf8().data(), SFM_WRITE, format|SF_FORMAT_PCM_16, 1, sampleRate);
 
-    for (size_t i = 0; i < size; ++i) {
+    for (size_t i = captureLatency; i < size; ++i) {
         float sample = scaleFactor * data[i];
         sample = std::max(-1.0f, std::min(+1.0f, sample));
         snd.write(&sample, 1);
@@ -269,9 +270,11 @@ void Application::savePlotData(const QString& path)
     size_t size = _captureFill;
     double sampleRate = jack_get_sample_rate(_client.get());
     double scaleFactor = 1.0 / _ui->internalGainVal->value();
+    size_t captureLatency = jack_get_buffer_size(_client.get());
 
-    for (size_t i = 0; i < size; ++i)
-        stream << (i / sampleRate) << ' ' << (scaleFactor * data[i]) << '\n';
+    for (size_t i = captureLatency; i < size; ++i)
+        stream << ((i - captureLatency) / sampleRate)
+               << ' ' << (scaleFactor * data[i]) << '\n';
 }
 
 void Application::performSfzUpdate()
