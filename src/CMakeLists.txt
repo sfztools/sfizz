@@ -80,7 +80,7 @@ if (SFIZZ_SHARED)
         target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
     endif()
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_property (TARGET sfizz_shared PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+    set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz)
     sfizz_enable_lto_if_needed(sfizz_shared)
 
     if (NOT MSVC)
