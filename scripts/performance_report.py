@@ -186,7 +186,7 @@ for file_name in callback_log_list:
 
     # Breakdown histogram figure
     fig_histogram = figure(plot_width=600, plot_height=400, title=f"{sfz_file_name} - Callback breakdown histogram")
-    histogram_bins = np.linspace(0, csv_data['Residual'].max(), 300)
+    histogram_bins = np.linspace(0, 10, 300)
     for idx, (column_name, legend_label) in enumerate(zip(stacked_column_names, stacked_column_legends)):
         bins, edges = np.histogram(csv_data[column_name], bins=histogram_bins, density=True)
         fig_histogram.quad(bottom=0, top=bins, left=edges[:-1], right=edges[1:], legend_label=legend_label, alpha=0.5, color=palette[idx])
