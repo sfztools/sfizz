@@ -24,8 +24,7 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
     };
 
     auto secondsToExpRate = [sampleRate](Type timeInSeconds) {
-        if (timeInSeconds < config::virtuallyZero)
-            return 0.0;
+        timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
         return std::exp(-8.0 / (timeInSeconds * sampleRate));
     };
 
