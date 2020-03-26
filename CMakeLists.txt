@@ -30,6 +30,7 @@ option (SFIZZ_LV2               "Enable LV2 plug-in build [default: ON]" ON)
 option (SFIZZ_VST               "Enable VST plug-in build [default: OFF]" OFF)
 option (SFIZZ_BENCHMARKS        "Enable benchmarks build [default: OFF]" OFF)
 option (SFIZZ_TESTS             "Enable tests build [default: OFF]" OFF)
+option (SFIZZ_DEVTOOLS          "Enable developer tools build [default: OFF]" OFF)
 option (SFIZZ_SHARED            "Enable shared library build [default: ON]" ON)
 option (SFIZZ_USE_VCPKG         "Assume that sfizz is build using vcpkg [default: OFF]" OFF)
 option (SFIZZ_STATIC_LIBSNDFILE "Link libsndfile statically [default: OFF]" OFF)
@@ -62,6 +63,10 @@ endif()
 
 if (SFIZZ_TESTS)
     add_subdirectory (tests)
+endif()
+
+if (SFIZZ_DEVTOOLS)
+    add_subdirectory (devtools)
 endif()
 
 # Put it at the end so that the vst/lv2 directories are registered
