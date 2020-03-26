@@ -938,7 +938,7 @@ float sfz::Region::getBasePitchVariation(int noteNumber, float velocity) const n
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += velocity * pitchVeltrack; // track velocity
+    pitchVariationInCents += static_cast<int>(velocity * pitchVeltrack); // track velocity
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
     return centsFactor(pitchVariationInCents);
 }
