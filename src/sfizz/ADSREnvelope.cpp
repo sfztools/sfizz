@@ -102,10 +102,22 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 {
     State currentState = this->currentState;
     Type currentValue = this->currentValue;
+    bool shouldRelease = this->shouldRelease;
+    int releaseDelay = this->releaseDelay;
 
     while (!output.empty()) {
         size_t count = 0;
         size_t size = output.size();
+
+        if (shouldRelease && releaseDelay == 0) {
+            // release takes effect this frame
+            currentState = State::Release;
+            releaseDelay = -1;
+        }
+        else if (shouldRelease && releaseDelay > 0) {
+            // prevent computing the segment further than release point
+            size = std::min<size_t>(size, releaseDelay);
+        }
 
         switch (currentState) {
         case State::Delay:
@@ -139,23 +151,13 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
             }
             break;
         case State::Sustain:
-            if (freeRunning)
+            if (!shouldRelease && freeRunning) {
                 shouldRelease = true;
-            if (!shouldRelease) {
-                count = size;
-                currentValue = sustain;
-                sfz::fill(output.first(count), currentValue);
+                break;
             }
-            else {
-                if (releaseDelay > 0) {
-                    count = clamp<size_t>(releaseDelay, 0, size);
-                    currentValue = sustain;
-                    sfz::fill(output.first(count), currentValue);
-                    releaseDelay -= count;
-                }
-                if (releaseDelay <= 0)
-                    currentState = State::Release;
-            }
+            count = size;
+            currentValue = sustain;
+            sfz::fill(output.first(count), currentValue);
             break;
         case State::Release:
             while (count < size && (currentValue *= releaseRate) > config::virtuallyZero)
@@ -172,11 +174,16 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
             break;
         }
 
+        if (shouldRelease)
+            releaseDelay = std::max(-1, releaseDelay - static_cast<int>(count));
+
         output.remove_prefix(count);
     }
 
     this->currentState = currentState;
     this->currentValue = currentValue;
+    this->shouldRelease = shouldRelease;
+    this->releaseDelay = releaseDelay;
 }
 
 template <class Type>
@@ -202,9 +209,6 @@ void ADSREnvelope<Type>::startRelease(int releaseDelay, bool fastRelease) noexce
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
-
-    if (releaseDelay == 0)
-        currentState = State::Release;
 
     if (fastRelease)
         this->releaseRate = 0;
