@@ -57,7 +57,6 @@ namespace config {
     constexpr float voiceStealingThreshold { 0.00001f };
     constexpr uint16_t numCCs { 512 };
     constexpr int chunkSize { 1024 };
-    constexpr float defaultAmpEGRelease { 0.02f };
     constexpr int filtersInPool { maxVoices * 2 };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
