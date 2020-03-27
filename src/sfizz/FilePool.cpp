@@ -90,6 +90,10 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
 sfz::FilePool::FilePool(sfz::Logger& logger)
 : logger(logger)
 {
+    FilePromise promise;
+    if (!promise.dataStatus.is_lock_free())
+        DBG("atomic<DataStatus> is not lock-free; could cause issues with locking");
+
     for (int i = 0; i < config::numBackgroundThreads; ++i)
         threadPool.emplace_back( &FilePool::loadingThread, this );
 
