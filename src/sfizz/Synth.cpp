@@ -143,6 +143,7 @@ void sfz::Synth::clear()
     effectBuses[0]->setSampleRate(sampleRate);
     curves = CurveSet::createPredefined();
     resources.filePool.clear();
+    resources.wavePool.clearFileWaves();
     resources.logger.clear();
     numGroups = 0;
     numMasters = 0;
@@ -306,7 +307,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         return false;
 
     resources.filePool.setRootDirectory(parser.originalDirectory());
-    resources.wavePool.clearFileWaves();
 
     auto currentRegion = regions.begin();
     auto lastRegion = regions.rbegin();
