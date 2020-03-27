@@ -119,6 +119,21 @@ private:
     fs::ifstream _fileStream;
 };
 
+/**
+ * @brief String-view-based version of Reader.
+ */
+class StringViewReader : public Reader {
+public:
+    explicit StringViewReader(absl::string_view sfzView);
+
+protected:
+    int getNextStreamByte() override;
+
+private:
+    absl::string_view _sfzView;
+    size_t position { 0 };
+};
+
 }  // namespace sfz
 
 #include "ParserPrivate.hpp"

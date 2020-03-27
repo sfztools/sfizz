@@ -29,6 +29,7 @@ public:
 
     void addDefinition(absl::string_view id, absl::string_view value);
     void parseFile(const fs::path& path);
+    void parseString(absl::string_view sfzView);
 
     void setRecursiveIncludeGuardEnabled(bool en) { _recursiveIncludeGuardEnabled = en; }
     void setMaximumIncludeDepth(size_t depth) { _maxIncludeDepth = depth; }
@@ -66,6 +67,7 @@ private:
     void processDirective();
     void processHeader();
     void processOpcode();
+    void reset();
 
     // errors and warnings
     void emitError(const SourceRange& range, const std::string& message);

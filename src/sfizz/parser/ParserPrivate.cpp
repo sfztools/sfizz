@@ -139,4 +139,18 @@ int FileReader::getNextStreamByte()
     return _fileStream.get();
 }
 
+StringViewReader::StringViewReader(absl::string_view sfzView)
+    : Reader({}), _sfzView(sfzView)
+{
+
+}
+
+int StringViewReader::getNextStreamByte()
+{
+    if (position < _sfzView.length())
+        return _sfzView[position++];
+
+    return kEof;
+}
+
 }  // namespace sfz

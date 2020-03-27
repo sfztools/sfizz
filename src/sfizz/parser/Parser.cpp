@@ -23,18 +23,38 @@ void Parser::addDefinition(absl::string_view id, absl::string_view value)
     _definitions[id] = std::string(value);
 }
 
-void Parser::parseFile(const fs::path& path)
+void Parser::reset()
 {
     _pathsIncluded.clear();
     _currentHeader.reset();
     _currentOpcodes.clear();
     _errorCount = 0;
     _warningCount = 0;
+}
+
+void Parser::parseFile(const fs::path& path)
+{
+    reset();
 
     if (_listener)
         _listener->onParseBegin();
 
     includeNewFile(path);
+    processTopLevel();
+    flushCurrentHeader();
+
+    if (_listener)
+        _listener->onParseEnd();
+}
+
+void Parser::parseString(absl::string_view sfzView)
+{
+    reset();
+
+    if (_listener)
+        _listener->onParseBegin();
+
+    _included.push_back(absl::make_unique<StringViewReader>(sfzView));
     processTopLevel();
     flushCurrentHeader();
 
