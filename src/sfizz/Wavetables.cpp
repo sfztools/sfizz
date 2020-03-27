@@ -32,6 +32,7 @@ void WavetableOscillator::setWavetable(const WavetableMulti* wave)
 
 void WavetableOscillator::setPhase(float phase)
 {
+    ASSERT(phase >= 0.0f && phase <= 1.0f);
     _phase = phase;
 }
 
