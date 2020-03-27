@@ -85,12 +85,14 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
 
 void sfz::Synth::onParseError(const SourceRange& range, const std::string& message)
 {
-    std::cerr << "Parse error L" << range.start.lineNumber << ": " << message << '\n';
+    const auto relativePath = range.start.filePath->lexically_relative(parser.originalDirectory());
+    std::cerr << "Parse error in " << relativePath << " at line " << range.start.lineNumber + 1 << ": " << message << '\n';
 }
 
 void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& message)
 {
-    std::cerr << "Parse warning L" << range.start.lineNumber << ": " << message << '\n';
+    const auto relativePath = range.start.filePath->lexically_relative(parser.originalDirectory());
+    std::cerr << "Parse warning in " << relativePath << " at line " << range.start.lineNumber + 1 << ": " << message << '\n';
 }
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
