@@ -60,7 +60,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         waveOscillator.setWavetable(wave);
 
         float phase;
-        float phaseParam = region->oscillatorPhase;
+        const float phaseParam = region->oscillatorPhase;
         if (phaseParam >= 0) {
             phase = phaseParam * (1.0f / 360.0f);
             phase -= static_cast<int>(phase);
