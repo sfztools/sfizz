@@ -256,20 +256,25 @@ void Parser::processOpcode()
     std::string valueRaw;
     extractToEol(reader, &valueRaw);
 
-    // if another "=" character was hit, it means we read too far
-    size_t position = valueRaw.find('=');
+    // if a "=" or "<" character was hit, it means we read too far
+    size_t position = valueRaw.find_first_of("=<");
     if (position != valueRaw.npos) {
-        while (position > 0 && isRawOpcodeNameChar(valueRaw[position - 1]))
-            --position;
-        while (position > 0 && isSpaceChar(valueRaw[position - 1]))
-            --position;
+        char hitChar = valueRaw[position];
+
+        // if it was "=", rewind before the opcode name and spaces preceding
+        if (hitChar == '=') {
+            while (position > 0 && isRawOpcodeNameChar(valueRaw[position - 1]))
+                --position;
+            while (position > 0 && isSpaceChar(valueRaw[position - 1]))
+                --position;
+        }
 
         absl::string_view excess(&valueRaw[position], valueRaw.size() - position);
         reader.putBackChars(excess);
         valueRaw.resize(position);
 
         // ensure that we are landing back next to a space char
-        if (!reader.hasOneOfChars(" \t\r\n")) {
+        if (hitChar == '=' && !reader.hasOneOfChars(" \t\r\n")) {
             SourceLocation end = reader.location();
             emitError({ valueStart, end }, "Unexpected `=` in opcode value.");
             recover();
