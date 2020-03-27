@@ -1392,6 +1392,19 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "effect3", "-50.65" });
         REQUIRE(region.gainToEffect[3] == 0.0f);
     }
+
+    SECTION("Wavetable phase")
+    {
+        REQUIRE(region.oscillatorPhase == 0.0f);
+        region.parseOpcode({ "oscillator_phase", "45" });
+        REQUIRE(region.oscillatorPhase == 45.0f);
+        region.parseOpcode({ "oscillator_phase", "45.32" });
+        REQUIRE(region.oscillatorPhase == 45.32_a);
+        region.parseOpcode({ "oscillator_phase", "-1" });
+        REQUIRE(region.oscillatorPhase == -1.0f);
+        region.parseOpcode({ "oscillator_phase", "361" });
+        REQUIRE(region.oscillatorPhase == 360.0f);
+    }
 }
 
 // Specific region bugs
