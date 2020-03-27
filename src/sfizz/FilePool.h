@@ -38,7 +38,6 @@
 #include "Logger.h"
 #include <chrono>
 #include <thread>
-#include <sndfile.hh>
 
 namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
