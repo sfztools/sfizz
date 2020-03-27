@@ -66,7 +66,7 @@ namespace fx {
             auto &down2x = _downsampler2x[c];
 
             for (unsigned i = 0; i < nframes; ++i) {
-                float amount = amounts[i] * 0.01f;
+                const float amount = normalizePercents(amounts[i]);
                 float in = input[i];
 
                 float in2x[2];

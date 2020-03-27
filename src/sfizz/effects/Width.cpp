@@ -49,12 +49,12 @@ namespace fx {
         absl::Span<float> output2 { outputs[1], nframes };
 
         for (unsigned i = 0; i < nframes; ++i) {
-            float l = input1[i];
-            float r = input2[i];
+            const float l = input1[i];
+            const float r = input2[i];
 
-            float w = clamp((widths[i] + 100.0f) * 0.005f, 0.0f, 1.0f);
-            float coeff1 = _internals::panLookup(w);
-            float coeff2 = _internals::panLookup(1.0f - w);
+            const float w = clamp((widths[i] + 100.0f) * 0.005f, 0.0f, 1.0f);
+            const float coeff1 = _internals::panLookup(w);
+            const float coeff2 = _internals::panLookup(1.0f - w);
 
             output1[i] = l * coeff2 + r * coeff1;
             output2[i] = l * coeff1 + r * coeff2;
