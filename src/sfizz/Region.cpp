@@ -95,6 +95,11 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeStartFromOpcode(opcode, loopRange, Default::loopRange);
         break;
 
+    // Wavetable oscillator
+    case hash("oscillator_phase"):
+        setValueFromOpcode(opcode, oscillatorPhase, Default::oscillatorPhaseRange);
+        break;
+
     // Instrument settings: voice lifecycle
     case hash("group"): // fallthrough
     case hash("polyphony_group"):

@@ -38,6 +38,11 @@ public:
     void setWavetable(const WavetableMulti* wave);
 
     /**
+       Set the current phase of this oscillator, between 0 and 1 excluded.
+     */
+    void setPhase(float phase);
+
+    /**
        Compute a cycle of the oscillator, with constant frequency.
      */
     void process(float frequency, float* output, unsigned nframes);

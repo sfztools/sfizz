@@ -53,6 +53,10 @@ namespace Default
 	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };
 	constexpr Range<uint32_t> loopRange { 0, std::numeric_limits<uint32_t>::max() };
 
+    // Wavetable oscillator
+    constexpr float oscillatorPhase { 0.0 };
+    constexpr Range<float> oscillatorPhaseRange { -1.0, 360.0 };
+
     // Instrument setting: voice lifecycle
 	constexpr uint32_t group { 0 };
 	constexpr Range<uint32_t> groupRange { 0, std::numeric_limits<uint32_t>::max() };

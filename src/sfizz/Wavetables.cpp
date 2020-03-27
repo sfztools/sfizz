@@ -30,6 +30,12 @@ void WavetableOscillator::setWavetable(const WavetableMulti* wave)
     _multi = wave ? wave : &silenceMulti;
 }
 
+void WavetableOscillator::setPhase(float phase)
+{
+    ASSERT(phase >= 0.0f && phase <= 1.0f);
+    _phase = phase;
+}
+
 void WavetableOscillator::process(float frequency, float* output, unsigned nframes)
 {
     float phase = _phase;
