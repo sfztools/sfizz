@@ -35,6 +35,7 @@ public:
     void setMaximumIncludeDepth(size_t depth) { _maxIncludeDepth = depth; }
 
     const fs::path& originalDirectory() const noexcept { return _originalDirectory; }
+    void setOriginalDirectory(const fs::path& originalDirectory) noexcept;
 
     typedef absl::flat_hash_set<std::string> IncludeFileSet;
     typedef absl::flat_hash_map<std::string, std::string> DefinitionSet;

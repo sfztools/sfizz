@@ -39,6 +39,14 @@ void Parser::parseFile(const fs::path& path)
     if (_listener)
         _listener->onParseBegin();
 
+    if (path.empty())
+        return;
+
+    if (path.is_relative())
+        setOriginalDirectory(originalDirectory() / path);
+    else
+        setOriginalDirectory(path.parent_path());
+
     includeNewFile(path);
     processTopLevel();
     flushCurrentHeader();
@@ -62,14 +70,17 @@ void Parser::parseString(absl::string_view sfzView)
         _listener->onParseEnd();
 }
 
+void Parser::setOriginalDirectory(const fs::path& originalDirectory) noexcept
+{
+    _originalDirectory = originalDirectory;
+}
+
 void Parser::includeNewFile(const fs::path& path)
 {
     fs::path fullPath =
         (path.empty() || path.is_absolute()) ? path : _originalDirectory / path;
 
-    if (_pathsIncluded.empty())
-        _originalDirectory = fullPath.parent_path();
-    else if (_pathsIncluded.find(fullPath.string()) != _pathsIncluded.end()) {
+    if (_pathsIncluded.find(fullPath.string()) != _pathsIncluded.end()) {
         if (_recursiveIncludeGuardEnabled)
             return;
     }
