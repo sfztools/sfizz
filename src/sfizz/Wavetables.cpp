@@ -250,7 +250,7 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
     return wm;
 }
 
-WavetableMulti* WavetableMulti::getSilenceWavetable()
+const WavetableMulti* WavetableMulti::getSilenceWavetable()
 {
     static WavetableMulti wm;
     wm.allocateStorage(1);
