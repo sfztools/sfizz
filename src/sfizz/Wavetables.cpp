@@ -361,7 +361,6 @@ const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const st
     if (!fileHandle)
         return nullptr;
 
-
     if (fileHandle->information.numChannels > 1)
         DBG("[sfizz] Only the first channel of " << filename << " will be used to create the wavetable");
 
@@ -389,7 +388,7 @@ const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const st
     };
 
     auto wave = std::make_shared<WavetableMulti>(
-        WavetableMulti::createForHarmonicProfile(hp, 1.0, config::tableSize, fileHandle->information.sampleRate));
+        WavetableMulti::createForHarmonicProfile(hp, 1.0));
 
     _fileWaves[filename] = wave;
     return wave.get();
