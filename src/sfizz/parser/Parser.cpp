@@ -34,20 +34,22 @@ void Parser::reset()
 
 void Parser::parseFile(const fs::path& path)
 {
+    parseVirtualFile(path, nullptr);
+}
+
+void Parser::parseString(const fs::path& path, absl::string_view sfzView)
+{
+    parseVirtualFile(path, absl::make_unique<StringViewReader>(path, sfzView));
+}
+
+void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader)
+{
     reset();
 
     if (_listener)
         _listener->onParseBegin();
 
-    if (path.empty())
-        return;
-
-    if (path.is_relative())
-        setOriginalDirectory(originalDirectory() / path);
-    else
-        setOriginalDirectory(path.parent_path());
-
-    includeNewFile(path);
+    includeNewFile(path, std::move(reader));
     processTopLevel();
     flushCurrentHeader();
 
@@ -55,32 +57,14 @@ void Parser::parseFile(const fs::path& path)
         _listener->onParseEnd();
 }
 
-void Parser::parseString(absl::string_view sfzView)
-{
-    reset();
-
-    if (_listener)
-        _listener->onParseBegin();
-
-    _included.push_back(absl::make_unique<StringViewReader>(sfzView));
-    processTopLevel();
-    flushCurrentHeader();
-
-    if (_listener)
-        _listener->onParseEnd();
-}
-
-void Parser::setOriginalDirectory(const fs::path& originalDirectory) noexcept
-{
-    _originalDirectory = originalDirectory;
-}
-
-void Parser::includeNewFile(const fs::path& path)
+void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader)
 {
     fs::path fullPath =
         (path.empty() || path.is_absolute()) ? path : _originalDirectory / path;
 
-    if (_pathsIncluded.find(fullPath.string()) != _pathsIncluded.end()) {
+    if (_pathsIncluded.empty())
+        _originalDirectory = fullPath.parent_path();
+    else if (_pathsIncluded.find(fullPath.string()) != _pathsIncluded.end()) {
         if (_recursiveIncludeGuardEnabled)
             return;
     }
@@ -92,15 +76,18 @@ void Parser::includeNewFile(const fs::path& path)
         return;
     }
 
-    auto fileReader = absl::make_unique<FileReader>(fullPath);
-    if (fileReader->hasError()) {
-        SourceLocation loc = fileReader->location();
-        emitError({ loc, loc }, "Cannot open file for reading: " + fullPath.string());
-        return;
+    if (!reader) {
+        auto fileReader = absl::make_unique<FileReader>(fullPath);
+        if (fileReader->hasError()) {
+            SourceLocation loc = fileReader->location();
+            emitError({ loc, loc }, "Cannot open file for reading: " + fullPath.string());
+            return;
+        }
+        reader = std::move(fileReader);
     }
 
     _pathsIncluded.insert(fullPath.string());
-    _included.push_back(std::move(fileReader));
+    _included.push_back(std::move(reader));
 }
 
 void Parser::processTopLevel()

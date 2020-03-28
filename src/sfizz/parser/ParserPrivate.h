@@ -124,7 +124,7 @@ private:
  */
 class StringViewReader : public Reader {
 public:
-    explicit StringViewReader(absl::string_view sfzView);
+    explicit StringViewReader(const fs::path& filePath, absl::string_view sfzView);
 
 protected:
     int getNextStreamByte() override;

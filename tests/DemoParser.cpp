@@ -2,7 +2,6 @@
 #include "parser/Parser.h"
 #include <QApplication>
 #include <QTimer>
-#include <QTemporaryFile>
 #include <QFileInfo>
 #include <QDir>
 #include <QTextBlock>
@@ -114,14 +113,8 @@ void Application::requestParseCheck()
 void Application::runParseCheck()
 {
     QByteArray code = _ui.sfzEdit->toPlainText().toLatin1();
-
-    QTemporaryFile temp(QDir::tempPath() + "/parseXXXXXX.sfz");
-    temp.open();
-    temp.write(code);
-    temp.flush();
-
     _blockTextChanged = true;
-    _parser.parseFile(temp.fileName().toStdString());
+    _parser.parseString("/virtual.sfz", absl::string_view(code.data(), code.size()));
     _blockTextChanged = false;
 }
 

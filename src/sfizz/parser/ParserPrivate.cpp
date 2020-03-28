@@ -139,10 +139,9 @@ int FileReader::getNextStreamByte()
     return _fileStream.get();
 }
 
-StringViewReader::StringViewReader(absl::string_view sfzView)
-    : Reader({}), _sfzView(sfzView)
+StringViewReader::StringViewReader(const fs::path& filePath, absl::string_view sfzView)
+    : Reader(filePath), _sfzView(sfzView)
 {
-
 }
 
 int StringViewReader::getNextStreamByte()

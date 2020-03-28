@@ -29,13 +29,13 @@ public:
 
     void addDefinition(absl::string_view id, absl::string_view value);
     void parseFile(const fs::path& path);
-    void parseString(absl::string_view sfzView);
+    void parseString(const fs::path& path, absl::string_view sfzView);
+    void parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader);
 
     void setRecursiveIncludeGuardEnabled(bool en) { _recursiveIncludeGuardEnabled = en; }
     void setMaximumIncludeDepth(size_t depth) { _maxIncludeDepth = depth; }
 
     const fs::path& originalDirectory() const noexcept { return _originalDirectory; }
-    void setOriginalDirectory(const fs::path& originalDirectory) noexcept;
 
     typedef absl::flat_hash_set<std::string> IncludeFileSet;
     typedef absl::flat_hash_map<std::string, std::string> DefinitionSet;
@@ -63,7 +63,7 @@ public:
     void setListener(Listener* listener) noexcept { _listener = listener; }
 
 private:
-    void includeNewFile(const fs::path& path);
+    void includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader = nullptr);
     void processTopLevel();
     void processDirective();
     void processHeader();

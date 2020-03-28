@@ -179,7 +179,7 @@ TEST_CASE("[Parsing] Empty")
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString("");
+    parser.parseString("/empty.sfz", "");
     REQUIRE(mock.beginnings == 1);
     REQUIRE(mock.endings == 1);
     REQUIRE(mock.errors.empty());
@@ -201,7 +201,7 @@ TEST_CASE("[Parsing] Empty2")
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString(emptySfz);
+    parser.parseString("/empty2.sfz", emptySfz);
     REQUIRE(mock.beginnings == 1);
     REQUIRE(mock.endings == 1);
     REQUIRE(mock.errors.empty());
@@ -224,7 +224,7 @@ TEST_CASE("[Parsing] Jpcima good region")
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString(R"(
+    parser.parseString("/goodRegion.sfz", R"(
 <region> sample=*silence key=69
 sample=My Directory/My Wave.wav // path with spaces and a comment
 sample=My Directory/My Wave.wav key=69 // path with spaces, and other opcode following
@@ -256,7 +256,7 @@ void memberTestNew(absl::string_view member, absl::string_view opcode, absl::str
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString(absl::StrCat("<region> ", member));
+    parser.parseString("/memberTestNew.sfz", absl::StrCat("<region> ", member));
     REQUIRE(mock.opcodes.size() == 1);
     REQUIRE(mock.headers.size() == 1);
     REQUIRE(mock.fullBlockHeaders.size() == 1);
@@ -296,7 +296,7 @@ TEST_CASE("[Parsing] bad headers")
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString(
+    parser.parseString("/badHeaders.sfz",
 R"(<>
 <ab@cd> dummy_member=no
 )"
@@ -317,7 +317,7 @@ void defineTestNew(const std::string& directive, const std::string& variable, co
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString(directive);
+    parser.parseString("/defineTestNew.sfz", directive);
     const auto defines = parser.getDefines();
     REQUIRE(defines.contains(variable));
     REQUIRE(defines.at(variable) == value);
@@ -342,7 +342,8 @@ TEST_CASE("[Parsing] Malformed includes")
     sfz::Parser parser;
     ParsingMocker mock;
     parser.setListener(&mock);
-    parser.parseString(R"(#include "MyFileWhichDoesNotExist1.sfz
+    parser.parseString("/malformedIncludes.sfz",
+R"(#include "MyFileWhichDoesNotExist1.sfz
 #include MyFileWhichDoesNotExist1.sfz)");
     REQUIRE(mock.errors.size() == 2);
     REQUIRE(mock.errors[0].start.lineNumber == 0);
@@ -362,7 +363,7 @@ TEST_CASE("[Parsing] Headers (new parser)")
         sfz::Parser parser;
         ParsingMocker mock;
         parser.setListener(&mock);
-        parser.parseString("<header>param1=value1 param2=value2 <next>");
+        parser.parseString("/headers.sfz", "<header>param1=value1 param2=value2 <next>");
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
             {{"param1", "value1"}, {"param2", "value2"}},
             {}
@@ -391,7 +392,7 @@ TEST_CASE("[Parsing] Headers (new parser)")
         sfz::Parser parser;
         ParsingMocker mock;
         parser.setListener(&mock);
-        parser.parseString("<header>param1=value1 param2=value2");
+        parser.parseString("/eolHeaderMatch.sfz", "<header>param1=value1 param2=value2");
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
             {{"param1", "value1"}, {"param2", "value2"}}
         };
