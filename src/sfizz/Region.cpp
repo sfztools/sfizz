@@ -52,14 +52,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("delay_random"):
         setValueFromOpcode(opcode, delayRandom, Default::delayRange);
-        delayDistribution.param(std::uniform_real_distribution<float>::param_type(0, delayRandom));
         break;
     case hash("offset"):
         setValueFromOpcode(opcode, offset, Default::offsetRange);
         break;
     case hash("offset_random"):
         setValueFromOpcode(opcode, offsetRandom, Default::offsetRange);
-        offsetDistribution.param(std::uniform_int_distribution<uint32_t>::param_type(0, offsetRandom));
         break;
     case hash("end"):
         setValueFromOpcode(opcode, sampleEnd, Default::sampleEndRange);
@@ -301,7 +299,6 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("amp_random"):
         setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
-        volumeDistribution.param(std::uniform_real_distribution<float>::param_type(0, ampRandom));
         break;
     case hash("amp_velcurve_&"):
         {
@@ -643,7 +640,6 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("pitch_random"):
         setValueFromOpcode(opcode, pitchRandom, Default::pitchRandomRange);
-        pitchDistribution.param(std::uniform_int_distribution<int>::param_type(-pitchRandom, pitchRandom));
         break;
     case hash("transpose"):
         setValueFromOpcode(opcode, transpose, Default::transposeRange);
@@ -895,8 +891,9 @@ void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
         bpmSwitched = false;
 }
 
-float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept
+float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept
 {
+    std::uniform_int_distribution<int> pitchDistribution { -pitchRandom, pitchRandom };
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
@@ -905,20 +902,21 @@ float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) noexc
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseVolumedB(int noteNumber) noexcept
+float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 {
+    std::uniform_real_distribution<float> volumeDistribution { -ampRandom, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
         baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
 }
 
-float sfz::Region::getBaseGain() noexcept
+float sfz::Region::getBaseGain() const noexcept
 {
     return normalizePercents(amplitude);
 }
 
-float sfz::Region::getPhase() noexcept
+float sfz::Region::getPhase() const noexcept
 {
     float phase;
     if (oscillatorPhase >= 0) {
@@ -931,13 +929,15 @@ float sfz::Region::getPhase() noexcept
     return phase;
 }
 
-uint32_t sfz::Region::getOffset(Oversampling factor) noexcept
+uint32_t sfz::Region::getOffset(Oversampling factor) const noexcept
 {
+    std::uniform_int_distribution<uint32_t> offsetDistribution { 0, offsetRandom };
     return (offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint32_t>(factor);
 }
 
-float sfz::Region::getDelay() noexcept
+float sfz::Region::getDelay() const noexcept
 {
+    std::uniform_real_distribution<float> delayDistribution { 0, delayRandom };
     return delay + delayDistribution(Random::randomGenerator);
 }
 
@@ -988,7 +988,7 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     return 1.0f;
 }
 
-float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
+float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) const noexcept
 {
     float baseGain { 1.0f };
 
@@ -1009,7 +1009,7 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) noexcept
     return baseGain;
 }
 
-float sfz::Region::getCrossfadeGain(const sfz::SfzCCArray& ccState) noexcept
+float sfz::Region::getCrossfadeGain(const sfz::SfzCCArray& ccState) const noexcept
 {
     float gain { 1.0f };
 
