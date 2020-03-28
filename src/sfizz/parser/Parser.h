@@ -27,7 +27,9 @@ public:
     Parser();
     ~Parser();
 
-    void addDefinition(absl::string_view id, absl::string_view value);
+    void addExternalDefinition(absl::string_view id, absl::string_view value);
+    void clearExternalDefinitions();
+
     void parseFile(const fs::path& path);
     void parseString(const fs::path& path, absl::string_view sfzView);
     void parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader);
@@ -41,7 +43,7 @@ public:
     typedef absl::flat_hash_map<std::string, std::string> DefinitionSet;
 
     const IncludeFileSet& getIncludedFiles() const noexcept { return _pathsIncluded; }
-    const DefinitionSet& getDefines() const noexcept { return _definitions; }
+    const DefinitionSet& getDefines() const noexcept { return _currentDefinitions; }
 
     size_t getErrorCount() const noexcept { return _errorCount; }
     size_t getWarningCount() const noexcept { return _warningCount; }
@@ -64,6 +66,7 @@ public:
 
 private:
     void includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange);
+    void addDefinition(absl::string_view id, absl::string_view value);
     void processTopLevel();
     void processDirective();
     void processHeader();
@@ -96,7 +99,7 @@ private:
     Listener* _listener = nullptr;
 
     fs::path _originalDirectory { fs::current_path() };
-    DefinitionSet _definitions;
+    DefinitionSet _externalDefinitions;
 
     // a current list of files included, last one at the back
     std::vector<std::unique_ptr<Reader>> _included;
@@ -105,6 +108,7 @@ private:
     size_t _maxIncludeDepth = 32;
     bool _recursiveIncludeGuardEnabled = false;
     IncludeFileSet _pathsIncluded;
+    DefinitionSet _currentDefinitions;
 
     // parsing state
     absl::optional<std::string> _currentHeader;

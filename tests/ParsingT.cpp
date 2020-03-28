@@ -415,3 +415,36 @@ TEST_CASE("[Parsing] Headers (new parser)")
         REQUIRE(mock.fullBlockMembers == expectedMembers);
     }
 }
+
+TEST_CASE("[Parsing] External definitions")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.addExternalDefinition("foo", "abc");
+        parser.addExternalDefinition("bar", "123");
+        parser.parseString("/externalDefinitions.sfz",
+R"(<header>
+param1=$foo
+param2=$bar)");
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"param1", "abc"}, {"param2", "123"}}
+        };
+        std::vector<std::string> expectedHeaders = {
+            "header"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}

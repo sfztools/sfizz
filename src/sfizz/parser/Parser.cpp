@@ -18,18 +18,24 @@ Parser::~Parser()
 {
 }
 
-void Parser::addDefinition(absl::string_view id, absl::string_view value)
-{
-    _definitions[id] = std::string(value);
-}
-
 void Parser::reset()
 {
     _pathsIncluded.clear();
+    _currentDefinitions = _externalDefinitions;
     _currentHeader.reset();
     _currentOpcodes.clear();
     _errorCount = 0;
     _warningCount = 0;
+}
+
+void Parser::addExternalDefinition(absl::string_view id, absl::string_view value)
+{
+    _externalDefinitions[id] = std::string(value);
+}
+
+void Parser::clearExternalDefinitions()
+{
+    _externalDefinitions.clear();
 }
 
 void Parser::parseFile(const fs::path& path)
@@ -95,6 +101,11 @@ void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader
 
     _pathsIncluded.insert(fullPath.string());
     _included.push_back(std::move(reader));
+}
+
+void Parser::addDefinition(absl::string_view id, absl::string_view value)
+{
+    _currentDefinitions[id] = std::string(value);
 }
 
 void Parser::processTopLevel()
@@ -404,8 +415,8 @@ std::string Parser::expandDollarVars(const SourceRange& range, absl::string_view
                 continue;
             }
 
-            auto it = _definitions.find(name);
-            if (it == _definitions.end()) {
+            auto it = _currentDefinitions.find(name);
+            if (it == _currentDefinitions.end()) {
                 emitWarning(range, "The variable `" + name + "` is not defined.");
                 continue;
             }
