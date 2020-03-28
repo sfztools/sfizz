@@ -99,6 +99,9 @@ void Application::init()
     _ui.messageTable->setHorizontalHeaderLabels(QStringList() << tr("Type") << tr("Line") << tr("Message"));
     _ui.messageTable->horizontalHeader()->setStretchLastSection(true);
 
+    _ui.splitter->setStretchFactor(0, 3);
+    _ui.splitter->setStretchFactor(1, 1);
+
     window->show();
 
     _parser.setListener(this);
