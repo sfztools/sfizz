@@ -43,11 +43,19 @@ namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
 
 
+struct FileInformation {
+    uint32_t end { Default::sampleEndRange.getEnd() };
+    uint32_t loopBegin { Default::loopRange.getStart() };
+    uint32_t loopEnd { Default::loopRange.getEnd() };
+    double sampleRate { config::defaultSampleRate };
+    int numChannels { 0 };
+};
+
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
-struct PreloadedFileHandle
+struct FileDataHandle
 {
     std::shared_ptr<AudioBuffer<float>> preloadedData;
-    float sampleRate;
+    FileInformation information;
 };
 
 struct FilePromise
@@ -142,14 +150,6 @@ public:
      */
     size_t getNumPreloadedSamples() const noexcept { return preloadedFiles.size(); }
 
-    struct FileInformation {
-        uint32_t end { Default::sampleEndRange.getEnd() };
-        uint32_t loopBegin { Default::loopRange.getStart() };
-        uint32_t loopEnd { Default::loopRange.getEnd() };
-        double sampleRate { config::defaultSampleRate };
-        int numChannels { 0 };
-    };
-
     /**
      * @brief Get metadata information about a file.
      *
@@ -159,7 +159,7 @@ public:
     absl::optional<FileInformation> getFileInformation(const std::string& filename) noexcept;
 
     /**
-     * @brief Check that a file is preloaded with the proper offset bounds
+     * @brief Preload a file with the proper offset bounds
      *
      * @param filename
      * @param offset the maximum offset to consider for preloading. The total preloaded
@@ -168,6 +168,15 @@ public:
      * @return false if something went wrong ()
      */
     bool preloadFile(const std::string& filename, uint32_t maxOffset) noexcept;
+
+    /**
+     * @brief Load a file and return its information. The file pool will store this
+     * data for future requests so use this function responsibly.
+     *
+     * @param filename
+     * @return A handle on the file data
+     */
+    absl::optional<sfz::FileDataHandle> loadFile(const std::string& filename) noexcept;
 
     /**
      * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
@@ -258,7 +267,9 @@ private:
     std::atomic<bool> addingPromisesToClear { false };
     std::atomic<bool> canAddPromisesToClear { true };
 
-    absl::flat_hash_map<absl::string_view, PreloadedFileHandle> preloadedFiles;
+    // Preloaded data
+    absl::flat_hash_map<absl::string_view, FileDataHandle> preloadedFiles;
+    absl::flat_hash_map<absl::string_view, FileDataHandle> loadedFiles;
     std::vector<std::thread> threadPool { };
     LEAK_DETECTOR(FilePool);
 };

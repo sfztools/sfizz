@@ -170,13 +170,16 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
 #endif
 }
 
-absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename) noexcept
+absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const std::string& filename) noexcept
 {
     fs::path file { rootDirectory / filename };
 
+    if (!fs::exists(file))
+        return {};
+
     SndfileHandle sndFile(file.string().c_str());
     if (sndFile.channels() != 1 && sndFile.channels() != 2) {
-        DBG("Missing logic for " << sndFile.channels() << " channels, discarding sample " << filename);
+        DBG("[sfizz] Missing logic for " << sndFile.channels() << " channels, discarding sample " << filename);
         return {};
     }
 
@@ -198,13 +201,11 @@ absl::optional<sfz::FilePool::FileInformation> sfz::FilePool::getFileInformation
 bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset) noexcept
 {
     fs::path file { rootDirectory / filename };
-
-    if (!fs::exists(file))
+    auto fileInformation = getFileInformation(filename);
+    if (!fileInformation)
         return false;
 
     SndfileHandle sndFile(file.string().c_str());
-    if (sndFile.channels() != 1 && sndFile.channels() != 2)
-        return false;
 
     // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
     const auto frames = static_cast<uint32_t>(sndFile.frames());
@@ -215,17 +216,45 @@ bool sfz::FilePool::preloadFile(const std::string& filename, uint32_t maxOffset)
             return min(frames, maxOffset + preloadSize);
     }();
 
-    if (preloadedFiles.contains(filename)) {
-        if (framesToLoad > preloadedFiles[filename].preloadedData->getNumFrames()) {
+    const auto existingFile = preloadedFiles.find(filename);
+    if (existingFile != preloadedFiles.end()) {
+        if (framesToLoad > existingFile->second.preloadedData->getNumFrames()) {
             preloadedFiles[filename].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor);
         }
     } else {
-        const float sourceSampleRate { static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate()) };
-        PreloadedFileHandle handle { readFromFile<float>(sndFile, framesToLoad, oversamplingFactor), sourceSampleRate };
+        fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate());
+        FileDataHandle handle {
+            readFromFile<float>(sndFile, framesToLoad, oversamplingFactor),
+            *fileInformation
+        };
         preloadedFiles.insert_or_assign(filename, handle);
     }
-
     return true;
+}
+
+absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const std::string& filename) noexcept
+{
+    fs::path file { rootDirectory / filename };
+    auto fileInformation = getFileInformation(filename);
+    if (!fileInformation)
+        return {};
+
+    SndfileHandle sndFile(file.string().c_str());
+
+    // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
+    const auto frames = static_cast<uint32_t>(sndFile.frames());
+    const auto existingFile = loadedFiles.find(filename);
+    if (existingFile != loadedFiles.end()) {
+        return existingFile->second;
+    } else {
+        fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate());
+        FileDataHandle handle {
+            readFromFile<float>(sndFile, frames, oversamplingFactor),
+            *fileInformation
+        };
+        loadedFiles.insert_or_assign(filename, handle);
+        return handle;
+    }
 }
 
 sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) noexcept
@@ -244,7 +273,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
     auto promise = emptyPromises.back();
     promise->filename = preloaded->first;
     promise->preloadedData = preloaded->second.preloadedData;
-    promise->sampleRate = preloaded->second.sampleRate;
+    promise->sampleRate = preloaded->second.information.sampleRate;
     promise->oversamplingFactor = oversamplingFactor;
     promise->creationTime = std::chrono::high_resolution_clock::now();
 
@@ -396,7 +425,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
         fs::path file { rootDirectory / std::string(preloadedFile.first) };
         SndfileHandle sndFile(file.string().c_str());
         preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor);
-        preloadedFile.second.sampleRate *= samplerateChange;
+        preloadedFile.second.information.sampleRate *= samplerateChange;
     }
 
     this->oversamplingFactor = factor;
