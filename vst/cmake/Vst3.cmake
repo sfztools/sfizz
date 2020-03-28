@@ -52,12 +52,12 @@ function(plugin_add_vst3sdk NAME)
             "_NATIVE_WCHAR_T_DEFINED=1" "__wchar_t=wchar_t")
     endif()
 
-    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        target_compile_definitions("${NAME}" PRIVATE "DEVELOPMENT")
-    endif()
+    set(_vst_release_build_types MinSizeRel Release RelWithDebInfo)
 
-    if(${CMAKE_BUILD_TYPE} MATCHES "Release")
+    if(CMAKE_BUILD_TYPE IN_LIST _vst_release_build_types)
         target_compile_definitions("${NAME}" PRIVATE "RELEASE")
+    else()
+        target_compile_definitions("${NAME}" PRIVATE "DEVELOPMENT")
     endif()
 endfunction()
 
