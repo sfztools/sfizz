@@ -159,8 +159,8 @@ public:
     static WavetableMulti createForHarmonicProfile(
         const HarmonicProfile& hp, double amplitude, unsigned tableSize = config::tableSize, double refSampleRate = 44100.0);
 
-    // create the tiniest wavetable with null content for use with oscillators
-    static WavetableMulti createSilence();
+    // get a tiny silent wavetable with null content for use with oscillators
+    static WavetableMulti* getSilenceWavetable();
 
 private:
     // get a pointer to the beginning of the N-th table

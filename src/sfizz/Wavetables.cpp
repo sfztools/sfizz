@@ -11,12 +11,10 @@
 
 namespace sfz {
 
-static WavetableMulti silenceMulti = WavetableMulti::createSilence();
-
 void WavetableOscillator::init(double sampleRate)
 {
     _sampleInterval = 1.0 / sampleRate;
-    _multi = &silenceMulti;
+    _multi = WavetableMulti::getSilenceWavetable();
     clear();
 }
 
@@ -27,7 +25,7 @@ void WavetableOscillator::clear()
 
 void WavetableOscillator::setWavetable(const WavetableMulti* wave)
 {
-    _multi = wave ? wave : &silenceMulti;
+    _multi = wave ? wave : WavetableMulti::getSilenceWavetable();
 }
 
 void WavetableOscillator::setPhase(float phase)
@@ -252,12 +250,12 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
     return wm;
 }
 
-WavetableMulti WavetableMulti::createSilence()
+WavetableMulti* WavetableMulti::getSilenceWavetable()
 {
-    WavetableMulti wm;
+    static WavetableMulti wm;
     wm.allocateStorage(1);
     wm.fillExtra();
-    return wm;
+    return &wm;
 }
 
 void WavetableMulti::allocateStorage(unsigned tableSize)
