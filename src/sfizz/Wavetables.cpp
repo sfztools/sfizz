@@ -352,14 +352,14 @@ void WavetablePool::clearFileWaves()
     _fileWaves.clear();
 }
 
-const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const std::string& filename)
+bool WavetablePool::createFileWave(FilePool& filePool, const std::string& filename)
 {
-    if (const WavetableMulti* wave = getFileWave(filename))
-        return wave;
+    if (_fileWaves.contains(filename))
+        return true;
 
     auto fileHandle = filePool.loadFile(filename);
     if (!fileHandle)
-        return nullptr;
+        return false;
 
     if (fileHandle->information.numChannels > 1)
         DBG("[sfizz] Only the first channel of " << filename << " will be used to create the wavetable");
@@ -391,7 +391,7 @@ const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const st
         WavetableMulti::createForHarmonicProfile(hp, 1.0));
 
     _fileWaves[filename] = wave;
-    return wave.get();
+    return true;
 }
 
 } // namespace sfz

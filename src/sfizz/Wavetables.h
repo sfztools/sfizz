@@ -208,9 +208,9 @@ struct WavetablePool {
      *
      * @param filePool the file pool to use to load the file
      * @param filename the file name to load
-     * @return the wavetable
+     * @return true if the wavetable was correctly created (or existed already)
      */
-    const WavetableMulti* createFileWave(FilePool& filePool, const std::string& filename);
+    bool createFileWave(FilePool& filePool, const std::string& filename);
     /**
      * @brief Removes all the stored file waves from the wavetable pool.
      */

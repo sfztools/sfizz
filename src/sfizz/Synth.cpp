@@ -367,8 +367,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 continue;
             }
 
-            const auto fileWave = resources.wavePool.createFileWave(resources.filePool, region->sample);
-            if (!fileWave) {
+            if (!resources.wavePool.createFileWave(resources.filePool, region->sample)) {
                 removeCurrentRegion();
                 continue;
             }
