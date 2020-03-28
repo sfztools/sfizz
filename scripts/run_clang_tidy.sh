@@ -30,4 +30,4 @@ clang-tidy \
   vst/SfizzVstState.cpp \
   -- -Iexternal/abseil-cpp -Isrc/external -Isrc/external/pugixml/src \
       -Isrc/sfizz -Isrc -Isrc/external/spline \
-      -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -DNDEBUG
+      -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -Ivst/external/ring_buffer -DNDEBUG
