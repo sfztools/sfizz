@@ -240,6 +240,8 @@ struct Region {
     uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
     SfzOffMode offMode { Default::offMode }; // off_mode
+    absl::optional<uint32_t> notePolyphony {};
+    SfzSelfMask selfMask { Default::selfMask };
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key

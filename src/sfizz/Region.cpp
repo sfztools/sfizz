@@ -124,6 +124,22 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             DBG("Unkown off mode:" << std::string(opcode.value));
         }
         break;
+    case hash("note_polyphony"):
+        if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
+            notePolyphony = *value;
+        break;
+    case hash("note_selfmask"):
+        switch (hash(opcode.value)) {
+        case hash("on"):
+            selfMask = SfzSelfMask::mask;
+            break;
+        case hash("off"):
+            selfMask = SfzSelfMask::dontMask;
+            break;
+        default:
+            DBG("Unkown self mask value:" << std::string(opcode.value));
+        }
+        break;
     // Region logic: key mapping
     case hash("lokey"):
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);

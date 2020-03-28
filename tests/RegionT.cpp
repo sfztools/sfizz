@@ -1407,6 +1407,29 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "oscillator_phase", "361" });
         REQUIRE(region.oscillatorPhase == 360.0f);
     }
+
+    SECTION("Note polyphony")
+    {
+        REQUIRE(!region.notePolyphony);
+        region.parseOpcode({ "note_polyphony", "45" });
+        REQUIRE(region.notePolyphony);
+        REQUIRE(*region.notePolyphony == 45);
+        region.parseOpcode({ "note_polyphony", "-1" });
+        REQUIRE(region.notePolyphony);
+        REQUIRE(*region.notePolyphony == 0);
+    }
+
+    SECTION("Note selfmask")
+    {
+        REQUIRE(region.selfMask == SfzSelfMask::mask);
+        region.parseOpcode({ "note_selfmask", "off" });
+        REQUIRE(region.selfMask == SfzSelfMask::dontMask);
+        region.parseOpcode({ "note_selfmask", "on" });
+        REQUIRE(region.selfMask == SfzSelfMask::mask);
+        region.parseOpcode({ "note_selfmask", "off" });
+        region.parseOpcode({ "note_selfmask", "garbage" });
+        REQUIRE(region.selfMask == SfzSelfMask::dontMask);
+    }
 }
 
 // Specific region bugs
