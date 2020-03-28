@@ -19,7 +19,7 @@ void removeCommentOnLine(absl::string_view& line)
         line.remove_suffix(line.size() - position);
 }
 
-bool sfz::Parser::loadSfzFile(const fs::path& file)
+bool sfz::OldParser::loadSfzFile(const fs::path& file)
 {
     includedFiles.clear();
 
@@ -56,7 +56,7 @@ bool sfz::Parser::loadSfzFile(const fs::path& file)
     return true;
 }
 
-void sfz::Parser::readSfzFile(const fs::path& fileName, std::vector<std::string>& lines) noexcept
+void sfz::OldParser::readSfzFile(const fs::path& fileName, std::vector<std::string>& lines) noexcept
 {
     std::ifstream fileStream(fileName.c_str());
     if (!fileStream)

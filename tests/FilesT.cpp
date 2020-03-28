@@ -98,7 +98,8 @@ TEST_CASE("[Files] Subdir include Win")
 TEST_CASE("[Files] Recursive include (with include guard)")
 {
     sfz::Synth synth;
-    synth.enableRecursiveIncludeGuard();
+    sfz::Parser& parser = synth.getParser();
+    parser.setRecursiveIncludeGuardEnabled(true);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_recursive.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "dummy_recursive2.wav");
@@ -108,7 +109,8 @@ TEST_CASE("[Files] Recursive include (with include guard)")
 TEST_CASE("[Files] Include loops (with include guard)")
 {
     sfz::Synth synth;
-    synth.enableRecursiveIncludeGuard();
+    sfz::Parser& parser = synth.getParser();
+    parser.setRecursiveIncludeGuardEnabled(true);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_loop.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "dummy_loop2.wav");
@@ -502,8 +504,9 @@ TEST_CASE("[Files] Case sentitiveness")
 TEST_CASE("[Files] Empty file")
 {
     sfz::Synth synth;
+    sfz::Parser& parser = synth.getParser();
     REQUIRE(!synth.loadSfzFile(""));
-    REQUIRE(synth.getIncludedFiles().empty());
+    REQUIRE(parser.getIncludedFiles().empty());
     REQUIRE(!synth.loadSfzFile({}));
-    REQUIRE(synth.getIncludedFiles().empty());
+    REQUIRE(parser.getIncludedFiles().empty());
 }

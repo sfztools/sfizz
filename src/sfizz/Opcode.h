@@ -28,8 +28,8 @@ namespace sfz {
 struct Opcode {
     Opcode() = delete;
     Opcode(absl::string_view inputOpcode, absl::string_view inputValue);
-    absl::string_view opcode {};
-    absl::string_view value {};
+    std::string opcode {};
+    std::string value {};
     uint64_t lettersOnlyHash { Fnv1aBasis };
     // This is to handle the integer parameters of some opcodes
     std::vector<uint16_t> parameters;
