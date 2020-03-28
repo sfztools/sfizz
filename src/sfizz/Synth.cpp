@@ -398,6 +398,10 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             }
         }
 
+        // Some regions had group number but no "group-level" opcodes handled the polyphony
+        while (groupMaxPolyphony.size() <= region->group)
+            groupMaxPolyphony.push_back(config::maxVoices);
+
         for (auto note = 0; note < 128; note++) {
             if (region->keyRange.containsWithEnd(note) || (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
                 noteActivationLists[note].push_back(region);
@@ -682,10 +686,14 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            auto activeNotesInGroup = 0;
+            unsigned activeNotesInGroup { 0 };
 
             for (auto& voice : voices) {
-                if (voice->getRegion()->group == region->group)
+                const auto voiceRegion = voice->getRegion();
+                if (voiceRegion == nullptr)
+                    continue;
+
+                if (voiceRegion->group == region->group)
                     activeNotesInGroup += 1;
 
                 if (voice->checkOffGroup(delay, region->group))
@@ -1044,8 +1052,8 @@ void sfz::Synth::allSoundOff() noexcept
 
 void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
 {
-    if (groupIdx >= groupMaxPolyphony.size())
-        groupMaxPolyphony.resize(groupIdx + 1);
+    while (groupMaxPolyphony.size() <= groupIdx)
+        groupMaxPolyphony.push_back(config::maxVoices);
 
     groupMaxPolyphony[groupIdx] = polyphony;
 }
