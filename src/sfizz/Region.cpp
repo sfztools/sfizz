@@ -98,6 +98,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     // Wavetable oscillator
     case hash("oscillator_phase"):
         setValueFromOpcode(opcode, oscillatorPhase, Default::oscillatorPhaseRange);
+        break;
     case hash("oscillator"):
         if (auto value = readBooleanFromOpcode(opcode))
             oscillator = *value;
