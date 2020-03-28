@@ -157,8 +157,8 @@ void sfz::Synth::clear()
     masterOpcodes.clear();
     groupOpcodes.clear();
     unknownOpcodes.clear();
-    groupPolyphony.clear();
     groupMaxPolyphony.clear();
+    groupMaxPolyphony.push_back(config::maxVoices);
     modificationTime = fs::file_time_type::min();
 }
 
@@ -682,10 +682,18 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
+            auto activeNotesInGroup = 0;
+
             for (auto& voice : voices) {
+                if (voice->getRegion()->group == region->group)
+                    activeNotesInGroup += 1;
+
                 if (voice->checkOffGroup(delay, region->group))
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
+
+            if (activeNotesInGroup >= groupMaxPolyphony[region->group])
+                continue;
 
             auto voice = findFreeVoice();
             if (voice == nullptr)
@@ -1038,9 +1046,6 @@ void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexce
 {
     if (groupIdx >= groupMaxPolyphony.size())
         groupMaxPolyphony.resize(groupIdx + 1);
-
-    if (groupIdx >= groupPolyphony.size())
-        groupPolyphony.resize(groupIdx + 1);
 
     groupMaxPolyphony[groupIdx] = polyphony;
 }

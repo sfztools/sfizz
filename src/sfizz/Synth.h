@@ -417,8 +417,7 @@ private:
      * @param polyphone the max polyphony
      */
     void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
-    std::vector<unsigned> groupPolyphony;
-    std::vector<unsigned> groupMaxPolyphony;
+    std::vector<unsigned> groupMaxPolyphony { config::maxVoices };
 
     /**
      * @brief Reset all CCs; to be used on CC 121
