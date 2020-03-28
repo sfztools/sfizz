@@ -389,7 +389,7 @@ const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const st
     };
 
     auto wave = std::make_shared<WavetableMulti>(
-        WavetableMulti::createForHarmonicProfile(hp, 1.0));
+        WavetableMulti::createForHarmonicProfile(hp, 1.0, config::tableSize, fileHandle->information.sampleRate));
 
     _fileWaves[filename] = wave;
     return wave.get();
