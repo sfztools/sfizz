@@ -362,7 +362,16 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 removeCurrentRegion();
         }
         else if (region->oscillator && !region->isGenerator()) {
-            resources.wavePool.createFileWave(resources.filePool, region->sample);
+            if (!resources.filePool.checkSample(region->sample)) {
+                removeCurrentRegion();
+                continue;
+            }
+
+            const auto fileWave = resources.wavePool.createFileWave(resources.filePool, region->sample);
+            if (!fileWave) {
+                removeCurrentRegion();
+                continue;
+            }
         }
 
         for (auto note = 0; note < 128; note++) {
