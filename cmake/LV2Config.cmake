@@ -21,3 +21,18 @@ else()
     set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
     "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/lv2}]")
 endif()
+
+# Check for LV2 system headers
+find_package(PkgConfig)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(LV2 "lv2")
+else()
+    set(LV2_FOUND FALSE)
+endif()
+
+if(LV2_FOUND)
+    message(STATUS "LV2 found, using system headers")
+else()
+    message(STATUS "LV2 not found, using vendor headers")
+    set(LV2_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/lv2/external/lv2")
+endif()
