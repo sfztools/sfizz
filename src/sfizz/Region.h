@@ -168,6 +168,12 @@ struct Region {
      */
     float getBaseGain() noexcept;
     /**
+     * @brief Get the base gain of the region.
+     *
+     * @return float
+     */
+    float getPhase() noexcept;
+    /**
      * @brief Computes the gain value related to the velocity of the note
      *
      * @return float

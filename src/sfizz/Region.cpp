@@ -917,6 +917,19 @@ float sfz::Region::getBaseGain() noexcept
     return normalizePercents(amplitude);
 }
 
+float sfz::Region::getPhase() noexcept
+{
+    float phase;
+    if (oscillatorPhase >= 0) {
+        phase = oscillatorPhase * (1.0f / 360.0f);
+        phase -= static_cast<int>(phase);
+    } else {
+        std::uniform_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
+        phase = phaseDist(Random::randomGenerator);
+    }
+    return phase;
+}
+
 uint32_t sfz::Region::getOffset(Oversampling factor) noexcept
 {
     return (offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint32_t>(factor);
