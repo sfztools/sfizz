@@ -24,8 +24,10 @@ sfz::Voice::Voice(sfz::Resources& resources)
     waveOscillator.init(sampleRate);
 }
 
-void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value, sfz::Voice::TriggerType triggerType) noexcept
+void sfz::Voice::startVoice(Region* region, int delay, int number, float value, sfz::Voice::TriggerType triggerType) noexcept
 {
+    ASSERT(value >= 0.0f && value <= 1.0f);
+
     this->triggerType = triggerType;
     triggerNumber = number;
     triggerValue = value;
@@ -71,13 +73,12 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
-
     pitchRatio = region->getBasePitchVariation(number, value);
 
     baseVolumedB = region->getBaseVolumedB(number);
     auto volumedB = baseVolumedB;
     if (region->volumeCC)
-        volumedB += normalizeCC(resources.midiState.getCCValue(region->volumeCC->cc)) * region->volumeCC->value;
+        volumedB += resources.midiState.getCCValue(region->volumeCC->cc) * region->volumeCC->value;
     volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
 
     baseGain = region->getBaseGain();
@@ -86,28 +87,28 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
 
     float gain { baseGain };
     if (region->amplitudeCC)
-        gain += normalizeCC(resources.midiState.getCCValue(region->amplitudeCC->cc)) * normalizePercents(region->amplitudeCC->value);
+        gain += resources.midiState.getCCValue(region->amplitudeCC->cc) * normalizePercents(region->amplitudeCC->value);
     amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
 
-    float crossfadeGain { region->getCrossfadeGain(resources.midiState.getCCArray()) };
+    float crossfadeGain { region->getCrossfadeGain() };
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
     basePan = normalizePercents(region->pan);
     auto pan = basePan;
     if (region->panCC)
-        pan += normalizeCC(resources.midiState.getCCValue(region->panCC->cc)) * normalizePercents(region->panCC->value);
+        pan += resources.midiState.getCCValue(region->panCC->cc) * normalizePercents(region->panCC->value);
     panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
 
     basePosition = normalizePercents(region->position);
     auto position = basePosition;
     if (region->positionCC)
-        position += normalizeCC(resources.midiState.getCCValue(region->positionCC->cc)) * normalizePercents(region->positionCC->value);
+        position += resources.midiState.getCCValue(region->positionCC->cc) * normalizePercents(region->positionCC->value);
     positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
 
     baseWidth = normalizePercents(region->width);
     auto width = baseWidth;
     if (region->widthCC)
-        width += normalizeCC(resources.midiState.getCCValue(region->widthCC->cc)) * normalizePercents(region->widthCC->value);
+        width += resources.midiState.getCCValue(region->widthCC->cc) * normalizePercents(region->widthCC->value);
     widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
 
     pitchBendEnvelope.setFunction([region](float pitchValue){
@@ -159,9 +160,11 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     }
 }
 
-void sfz::Voice::registerNoteOff(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
 {
+    ASSERT(velocity >= 0.0 && velocity <= 1.0);
     UNUSED(velocity);
+
     if (region == nullptr)
         return;
 
@@ -179,8 +182,9 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, uint8_t velocity) no
     }
 }
 
-void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
+void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 {
+    ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
     if (region == nullptr)
         return;
 
@@ -200,32 +204,32 @@ void sfz::Voice::registerCC(int delay, int ccNumber, uint8_t ccValue) noexcept
     delay = max(delay, minEnvelopeDelay);
 
     if (region->amplitudeCC && ccNumber == region->amplitudeCC->cc) {
-        const float newGain { baseGain + normalizeCC(ccValue) * normalizePercents(region->amplitudeCC->value) };
+        const float newGain { baseGain + ccValue * normalizePercents(region->amplitudeCC->value) };
         amplitudeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(newGain));
     }
 
     if (region->volumeCC && ccNumber == region->volumeCC->cc) {
-        const float newVolumedB { baseVolumedB + normalizeCC(ccValue) * region->volumeCC->value };
+        const float newVolumedB { baseVolumedB + ccValue * region->volumeCC->value };
         volumeEnvelope.registerEvent(delay, db2mag(Default::volumeRange.clamp(newVolumedB)));
     }
 
     if (region->panCC && ccNumber == region->panCC->cc) {
-        const float newPan { basePan + normalizeCC(ccValue) * normalizePercents(region->panCC->value) };
+        const float newPan { basePan + ccValue * normalizePercents(region->panCC->value) };
         panEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPan));
     }
 
     if (region->positionCC && ccNumber == region->positionCC->cc) {
-        const float newPosition { basePosition + normalizeCC(ccValue) * normalizePercents(region->positionCC->value) };
+        const float newPosition { basePosition + ccValue * normalizePercents(region->positionCC->value) };
         positionEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPosition));
     }
 
     if (region->widthCC && ccNumber == region->widthCC->cc) {
-        const float newWidth { baseWidth + normalizeCC(ccValue) * normalizePercents(region->widthCC->value) };
+        const float newWidth { baseWidth + ccValue * normalizePercents(region->widthCC->value) };
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 
     if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
-        const float crossfadeGain = region->getCrossfadeGain(resources.midiState.getCCArray());
+        const float crossfadeGain = region->getCrossfadeGain();
         crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
     }
 }
@@ -552,7 +556,7 @@ int sfz::Voice::getTriggerNumber() const noexcept
     return triggerNumber;
 }
 
-uint8_t sfz::Voice::getTriggerValue() const noexcept
+float sfz::Voice::getTriggerValue() const noexcept
 {
     return triggerValue;
 }

@@ -21,7 +21,7 @@ public:
      * @param noteNumber the triggering note number
      * @param velocity the triggering note velocity/value
      */
-    void setup(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), uint8_t velocity = 0);
+    void setup(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), float velocity = 0);
     /**
      * @brief Process a block of stereo inputs
      *
@@ -94,7 +94,7 @@ public:
      * @param velocity the triggering note velocity
      * @return FilterHolderPtr release this when done with the filter; no deallocation will be done
      */
-    FilterHolderPtr getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), uint8_t velocity = 0);
+    FilterHolderPtr getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), float velocity = 0);
     /**
      * @brief Get the number of active filters
      *

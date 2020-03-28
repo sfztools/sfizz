@@ -16,8 +16,10 @@ void sfz::FilterHolder::reset()
     filter.clear();
 }
 
-void sfz::FilterHolder::setup(const FilterDescription& description, unsigned numChannels, int noteNumber, uint8_t velocity)
+void sfz::FilterHolder::setup(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
 {
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+
     this->description = &description;
     filter.setType(description.type);
     filter.setChannels(numChannels);
@@ -30,7 +32,7 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
     }
     const auto keytrack = description.keytrack * (noteNumber - description.keycenter);
     baseCutoff *= centsFactor(keytrack);
-    const auto veltrack = static_cast<float>(description.veltrack) * normalizeVelocity(velocity);
+    const auto veltrack = static_cast<float>(description.veltrack) * velocity;
     baseCutoff *= centsFactor(veltrack);
     baseCutoff = Default::filterCutoffRange.clamp(baseCutoff);
 
@@ -83,7 +85,7 @@ sfz::FilterPool::FilterPool(const MidiState& state, int numFilters)
     setNumFilters(numFilters);
 }
 
-sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber, uint8_t velocity)
+sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
 {
     AtomicGuard guard { givingOutFilters };
     if (!canGiveOutFilters)

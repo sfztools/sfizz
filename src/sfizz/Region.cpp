@@ -14,6 +14,7 @@
 #include "MidiState.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_cat.h"
+#include "absl/algorithm/container.h"
 #include <random>
 
 template<class T>
@@ -138,10 +139,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
         break;
     case hash("lovel"):
-        setRangeStartFromOpcode(opcode, velocityRange, Default::velocityRange);
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            velocityRange.setStart(normalizeVelocity(*value));
         break;
     case hash("hivel"):
-        setRangeEndFromOpcode(opcode, velocityRange, Default::velocityRange);
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            velocityRange.setEnd(normalizeVelocity(*value));
         break;
 
     // Region logic: MIDI conditions
@@ -152,10 +155,16 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
         break;
     case hash("locc&"):
-        setRangeStartFromOpcode(opcode, ccConditions[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccConditions[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("hicc&"):
-        setRangeEndFromOpcode(opcode, ccConditions[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccConditions[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("sw_lokey"):
         setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
@@ -247,11 +256,17 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("on_locc&"): // fallthrough
     case hash("start_locc&"):
-        setRangeStartFromOpcode(opcode, ccTriggers[opcode.parameters.back()], Default::ccTriggerValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccTriggers[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("on_hicc&"): // fallthrough
     case hash("start_hicc&"):
-        setRangeEndFromOpcode(opcode, ccTriggers[opcode.parameters.back()], Default::ccTriggerValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            ccTriggers[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
 
     // Performance parameters: amplifier
@@ -303,8 +318,11 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("amp_velcurve_&"):
         {
             auto value = readOpcode(opcode.value, Default::ampVelcurveRange);
+            if (opcode.parameters.back() > 127)
+                return false;
+
             if (value)
-                velocityPoints.emplace_back(opcode.parameters.back(), *value);
+                velocityPoints.emplace_back(normalizeVelocity(opcode.parameters.back()), *value);
         }
         break;
     case hash("xfin_lokey"):
@@ -320,16 +338,20 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setRangeEndFromOpcode(opcode, crossfadeKeyOutRange, Default::keyRange);
         break;
     case hash("xfin_lovel"):
-        setRangeStartFromOpcode(opcode, crossfadeVelInRange, Default::velocityRange);
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeVelInRange.setStart(normalizeVelocity(*value));
         break;
     case hash("xfin_hivel"):
-        setRangeEndFromOpcode(opcode, crossfadeVelInRange, Default::velocityRange);
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeVelInRange.setEnd(normalizeVelocity(*value));
         break;
     case hash("xfout_lovel"):
-        setRangeStartFromOpcode(opcode, crossfadeVelOutRange, Default::velocityRange);
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeVelOutRange.setStart(normalizeVelocity(*value));
         break;
     case hash("xfout_hivel"):
-        setRangeEndFromOpcode(opcode, crossfadeVelOutRange, Default::velocityRange);
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeVelOutRange.setEnd(normalizeVelocity(*value));
         break;
     case hash("xf_keycurve"):
         switch (hash(opcode.value)) {
@@ -356,16 +378,28 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         }
         break;
     case hash("xfin_locc&"):
-        setRangeStartFromOpcode(opcode, crossfadeCCInRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCInRange[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("xfin_hicc&"):
-        setRangeEndFromOpcode(opcode, crossfadeCCInRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCInRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("xfout_locc&"):
-        setRangeStartFromOpcode(opcode, crossfadeCCOutRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCOutRange[opcode.parameters.back()].setStart(normalizeCC(*value));
         break;
     case hash("xfout_hicc&"):
-        setRangeEndFromOpcode(opcode, crossfadeCCOutRange[opcode.parameters.back()], Default::ccValueRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+            crossfadeCCOutRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("xf_cccurve"):
         switch (hash(opcode.value)) {
@@ -771,8 +805,10 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
-bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randValue) noexcept
+bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
 {
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+
     if (keyswitchRange.containsWithEnd(noteNumber)) {
         if (keyswitch) {
             if (*keyswitch == noteNumber)
@@ -823,8 +859,10 @@ bool sfz::Region::registerNoteOn(int noteNumber, uint8_t velocity, float randVal
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
 
-bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept
+bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValue) noexcept
 {
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+
     if (keyswitchRange.containsWithEnd(noteNumber)) {
         if (keyswitchDown && *keyswitchDown == noteNumber)
             keySwitched = false;
@@ -847,8 +885,9 @@ bool sfz::Region::registerNoteOff(int noteNumber, uint8_t velocity, float randVa
     return keyOk && velOk && randOk && releaseTrigger;
 }
 
-bool sfz::Region::registerCC(int ccNumber, uint8_t ccValue) noexcept
+bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 {
+    ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else
@@ -891,13 +930,15 @@ void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
         bpmSwitched = false;
 }
 
-float sfz::Region::getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept
+float sfz::Region::getBasePitchVariation(int noteNumber, float velocity) const noexcept
 {
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+
     std::uniform_int_distribution<int> pitchDistribution { -pitchRandom, pitchRandom };
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += velocity / 127 * pitchVeltrack; // track velocity
+    pitchVariationInCents += static_cast<int>(velocity * pitchVeltrack); // track velocity
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
     return centsFactor(pitchVariationInCents);
 }
@@ -961,8 +1002,13 @@ float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurv
 {
     if (value < crossfadeRange.getStart())
         return 0.0f;
+
+    const auto length = static_cast<float>(crossfadeRange.length());
+    if (length == 0.0f)
+        return 1.0f;
+
     else if (value < crossfadeRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / std::max(static_cast<float>(crossfadeRange.length()), 1.0f);
+        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
         if (curve == SfzCrossfadeCurve::power)
             return sqrt(crossfadePosition);
         if (curve == SfzCrossfadeCurve::gain)
@@ -977,8 +1023,13 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
 {
     if (value > crossfadeRange.getEnd())
         return 0.0f;
+
+    const auto length = static_cast<float>(crossfadeRange.length());
+    if (length == 0.0f)
+        return 1.0f;
+
     else if (value > crossfadeRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / std::max(static_cast<float>(crossfadeRange.length()), 1.0f);
+        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
         if (curve == SfzCrossfadeCurve::power)
             return std::sqrt(1 - crossfadePosition);
         if (curve == SfzCrossfadeCurve::gain)
@@ -988,8 +1039,10 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     return 1.0f;
 }
 
-float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) const noexcept
+float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
 {
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+
     float baseGain { 1.0f };
 
     // Amplitude key tracking
@@ -1009,19 +1062,19 @@ float sfz::Region::getNoteGain(int noteNumber, uint8_t velocity) const noexcept
     return baseGain;
 }
 
-float sfz::Region::getCrossfadeGain(const sfz::SfzCCArray& ccState) const noexcept
+float sfz::Region::getCrossfadeGain() const noexcept
 {
     float gain { 1.0f };
 
     // Crossfades due to CC states
     for (const auto& valuePair : crossfadeCCInRange) {
-        const auto ccValue = ccState[valuePair.cc];
+        const auto ccValue = midiState.getCCValue(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
     }
 
     for (const auto& valuePair : crossfadeCCOutRange) {
-        const auto ccValue = ccState[valuePair.cc];
+        const auto ccValue = midiState.getCCValue(valuePair.cc);
         const auto crossfadeRange = valuePair.value;
         gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
     }
@@ -1029,27 +1082,27 @@ float sfz::Region::getCrossfadeGain(const sfz::SfzCCArray& ccState) const noexce
     return gain;
 }
 
-float sfz::Region::velocityCurve(uint8_t velocity) const noexcept
+float sfz::Region::velocityCurve(float velocity) const noexcept
 {
-    float gain { 1.0f };
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
+    float gain { 1.0f };
     if (velocityPoints.size() > 0) { // Custom velocity curve
-        auto after = std::find_if(velocityPoints.begin(), velocityPoints.end(), [velocity](const std::pair<int, float>& val) { return val.first >= velocity; });
+        auto after = absl::c_find_if(velocityPoints, [velocity](const std::pair<float, float>& val) { return val.first >= velocity; });
         auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
         // Linear interpolation
         float relativePositionInSegment {
-            static_cast<float>(velocity - before->first) / static_cast<float>(after->first - before->first)
+            (velocity - before->first) / (after->first - before->first)
         };
         float segmentEndpoints { after->second - before->second };
         gain *= relativePositionInSegment * segmentEndpoints;
     } else { // Standard velocity curve
-        const float floatVelocity { static_cast<float>(velocity) / 127.0f };
         // FIXME: Maybe there's a prettier way to check the boundaries?
         const float gaindB = [&]() {
             if (ampVeltrack >= 0)
-                return floatVelocity == 0.0f ? -90.0f : 40 * std::log(floatVelocity) / std::log(10.0f);
+                return velocity == 0.0f ? -90.0f : 40 * std::log(velocity) / std::log(10.0f);
             else
-                return floatVelocity == 1.0f ? -90.0f : 40 * std::log(1 - floatVelocity) / std::log(10.0f);
+                return velocity == 1.0f ? -90.0f : 40 * std::log(1 - velocity) / std::log(10.0f);
         }();
         gain *= db2mag( gaindB * std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd());
     }

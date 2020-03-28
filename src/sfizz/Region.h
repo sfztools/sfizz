@@ -85,7 +85,7 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOn(int noteNumber, uint8_t velocity, float randValue) noexcept;
+    bool registerNoteOn(int noteNumber, float velocity, float randValue) noexcept;
     /**
      * @brief Register a new note off event. The region may be switched on or off using keys so
      * this function updates the keyswitches state.
@@ -97,7 +97,7 @@ struct Region {
      * @return true if the region should trigger on this event.
      * @return false
      */
-    bool registerNoteOff(int noteNumber, uint8_t velocity, float randValue) noexcept;
+    bool registerNoteOff(int noteNumber, float velocity, float randValue) noexcept;
     /**
      * @brief Register a new CC event. The region may be switched on or off using CCs so
      * this function checks if it indeeds need to activate or not.
@@ -107,7 +107,7 @@ struct Region {
      * @return true if the region should trigger on this event
      * @return false
      */
-    bool registerCC(int ccNumber, uint8_t ccValue) noexcept;
+    bool registerCC(int ccNumber, float ccValue) noexcept;
     /**
      * @brief Register a new pitch wheel event.
      *
@@ -135,7 +135,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept;
+    float getBasePitchVariation(int noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
@@ -144,7 +144,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getNoteGain(int noteNumber, uint8_t velocity) const noexcept;
+    float getNoteGain(int noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the additional crossfade gain of the region depending on the
      * CC values
@@ -152,7 +152,7 @@ struct Region {
      * @param ccState
      * @return float
      */
-    float getCrossfadeGain(const SfzCCArray& ccState) const noexcept;
+    float getCrossfadeGain() const noexcept;
     /**
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.
@@ -178,7 +178,7 @@ struct Region {
      *
      * @return float
      */
-    float velocityCurve(uint8_t velocity) const noexcept;
+    float velocityCurve(float velocity) const noexcept;
     /**
      * @brief Get the region offset in samples
      *
@@ -243,11 +243,11 @@ struct Region {
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
-    Range<uint8_t> velocityRange { Default::velocityRange }; // hivel and lovel
+    Range<float> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
     Range<int> bendRange { Default::bendRange }; // hibend and lobend
-    CCMap<Range<uint8_t>> ccConditions { Default::ccValueRange };
+    CCMap<Range<float>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
     absl::optional<uint8_t> keyswitchUp {}; // sw_up
@@ -266,7 +266,7 @@ struct Region {
 
     // Region logic: triggers
     SfzTrigger trigger { Default::trigger }; // trigger
-    CCMap<Range<uint8_t>> ccTriggers { Default::ccTriggerValueRange }; // on_loccN on_hiccN
+    CCMap<Range<float>> ccTriggers { Default::ccTriggerValueRange }; // on_loccN on_hiccN
 
     // Performance parameters: amplifier
     float volume { Default::volume }; // volume
@@ -282,17 +282,17 @@ struct Region {
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
-    std::vector<std::pair<int, float>> velocityPoints; // amp_velcurve_N
+    std::vector<std::pair<float, float>> velocityPoints; // amp_velcurve_N
     float ampRandom { Default::ampRandom }; // amp_random
     Range<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
-    Range<uint8_t> crossfadeVelInRange { Default::crossfadeVelInRange };
-    Range<uint8_t> crossfadeVelOutRange { Default::crossfadeVelOutRange };
+    Range<float> crossfadeVelInRange { Default::crossfadeVelInRange };
+    Range<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
     SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeKeyCurve };
     SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
     SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCCCurve };
-    CCMap<Range<uint8_t>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
-    CCMap<Range<uint8_t>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
+    CCMap<Range<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
+    CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
 
     // Filters and EQs

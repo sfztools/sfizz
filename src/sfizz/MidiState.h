@@ -7,7 +7,6 @@
 #pragma once
 #include <chrono>
 #include <array>
-#include "SfzHelpers.h"
 #include "CCMap.h"
 #include "Range.h"
 
@@ -23,13 +22,14 @@ class MidiState
 {
 public:
     MidiState();
+
     /**
      * @brief Update the state after a note on event
      *
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEvent(int delay, int noteNumber, uint8_t velocity) noexcept;
+	void noteOnEvent(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Update the state after a note off event
@@ -37,7 +37,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOffEvent(int delay, int noteNumber, uint8_t velocity) noexcept;
+	void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
 
     int getActiveNotes() const noexcept { return activeNotes; }
 
@@ -53,9 +53,9 @@ public:
      * @brief Get the note on velocity for a given note
      *
      * @param noteNumber
-     * @return uint8_t
+     * @return float
      */
-	uint8_t getNoteVelocity(int noteNumber) const noexcept;
+	float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
      * @brief Register a pitch bend event
@@ -77,22 +77,15 @@ public:
      * @param ccNumber
      * @param ccValue
      */
-    void ccEvent(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void ccEvent(int delay, int ccNumber, float ccValue) noexcept;
 
     /**
      * @brief Get the CC value for CC number
      *
      * @param ccNumber
-     * @return uint8_t
+     * @return float
      */
-    uint8_t getCCValue(int ccNumber) const noexcept;
-
-    /**
-     * @brief Get the full CC status
-     *
-     * @return const SfzCCArray&
-     */
-    const SfzCCArray& getCCArray() const noexcept;
+    float getCCValue(int ccNumber) const noexcept;
 
     /**
      * @brief Reset the midi state (does not impact the last note on time)
@@ -120,7 +113,7 @@ public:
     T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
     {
         for (auto& mod: modifiers) {
-            lambda(value, normalizeCC(getCCValue(mod.cc)) * mod.value);
+            lambda(value, getCCValue(mod.cc) * mod.value);
         }
         return validRange.clamp(value);
     }
@@ -140,12 +133,12 @@ private:
      * depressed notes.
      *
      */
-	MidiNoteArray<uint8_t> lastNoteVelocities;
+	MidiNoteArray<float> lastNoteVelocities;
     /**
      * @brief Current known values for the CCs.
      *
      */
-	SfzCCArray cc;
+	std::array<float, config::numCCs> cc;
     /**
      * Pitch bend status
      */

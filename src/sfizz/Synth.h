@@ -463,8 +463,8 @@ private:
 
     fs::file_time_type checkModificationTime();
 
-    void noteOnDispatch(int delay, int noteNumber, uint8_t velocity) noexcept;
-    void noteOffDispatch(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
+    void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
 
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block

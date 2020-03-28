@@ -20,7 +20,7 @@ public:
      * @param numChannels the number of channels for the EQ
      * @param description the triggering velocity/value
      */
-    void setup(const EQDescription& description, unsigned numChannels, uint8_t velocity);
+    void setup(const EQDescription& description, unsigned numChannels, float velocity);
     /**
      * @brief Process a block of stereo inputs
      *
@@ -90,7 +90,7 @@ public:
      * @param velocity the triggering note velocity/value
      * @return EQHolderPtr release this when done with the filter; no deallocation will be done
      */
-    EQHolderPtr getEQ(const EQDescription& description, unsigned numChannels, uint8_t velocity);
+    EQHolderPtr getEQ(const EQDescription& description, unsigned numChannels, float velocity);
     /**
      * @brief Get the number of active EQs
      *

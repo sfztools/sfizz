@@ -43,7 +43,7 @@ namespace config {
     constexpr int allNotesOffCC { 123 };
     constexpr int omniOffCC { 124 };
     constexpr int omniOnCC { 125 };
-    constexpr int halfCCThreshold { 64 };
+    constexpr float halfCCThreshold { 0.5f };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.00005f };
     constexpr float fastReleaseDuration { 0.01f };
@@ -52,7 +52,7 @@ namespace config {
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001f };
-    constexpr uint8_t numCCs { 143 };
+    constexpr uint16_t numCCs { 512 };
     constexpr int chunkSize { 1024 };
     constexpr float defaultAmpEGRelease { 0.02f };
     constexpr int filtersInPool { maxVoices * 2 };

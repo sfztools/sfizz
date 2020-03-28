@@ -44,7 +44,7 @@ sfz::Synth::~Synth()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    for (auto& voice: voices)
+    for (auto& voice : voices)
         voice->reset();
 
     resources.filePool.emptyFileLoadingQueues();
@@ -129,11 +129,11 @@ void sfz::Synth::clear()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    for (auto &voice: voices)
+    for (auto& voice : voices)
         voice->reset();
-    for (auto& list: noteActivationLists)
+    for (auto& list : noteActivationLists)
         list.clear();
-    for (auto& list: ccActivationLists)
+    for (auto& list : ccActivationLists)
         list.clear();
     regions.clear();
     effectBuses.clear();
@@ -181,8 +181,9 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
-                const auto ccValue = readOpcode(member.value, Default::ccValueRange).value_or(0);
-                resources.midiState.ccEvent(0, member.parameters.back(), ccValue);
+                const auto ccValue = readOpcode(member.value, Default::midi7Range);
+                if (ccValue)
+                    resources.midiState.ccEvent(0, member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
         case hash("Label_cc&"): // fallthrough
@@ -275,17 +276,19 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
 void addEndpointsToVelocityCurve(sfz::Region& region)
 {
     if (region.velocityPoints.size() > 0) {
-        absl::c_sort(region.velocityPoints, [](const std::pair<int, float>& lhs, const std::pair<int, float>& rhs) { return lhs.first < rhs.first; });
+        const auto velocityStart = sfz::Default::velocityRange.getStart();
+        const auto velocityEnd = sfz::Default::velocityRange.getEnd();
+        absl::c_sort(region.velocityPoints, [](const std::pair<float, float>& lhs, const std::pair<float, float>& rhs) { return lhs.first < rhs.first; });
         if (region.ampVeltrack > 0) {
-            if (region.velocityPoints.back().first != sfz::Default::velocityRange.getEnd())
-                region.velocityPoints.push_back(std::make_pair<int, float>(127, 1.0f));
-            if (region.velocityPoints.front().first != sfz::Default::velocityRange.getStart())
-                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair<int, float>(0, 0.0f));
+            if (region.velocityPoints.front().first != velocityStart)
+                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair(velocityStart, velocityStart));
+            if (region.velocityPoints.back().first != velocityEnd)
+                region.velocityPoints.push_back(std::make_pair(velocityEnd, velocityEnd));
         } else {
-            if (region.velocityPoints.front().first != sfz::Default::velocityRange.getEnd())
-                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair<int, float>(127, 0.0f));
-            if (region.velocityPoints.back().first != sfz::Default::velocityRange.getStart())
-                region.velocityPoints.push_back(std::make_pair<int, float>(0, 1.0f));
+            if (region.velocityPoints.front().first != velocityEnd)
+                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair(velocityEnd, velocityStart));
+            if (region.velocityPoints.back().first != velocityStart)
+                region.velocityPoints.push_back(std::make_pair(velocityStart, velocityEnd));
         }
     }
 }
@@ -341,8 +344,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             if (region->loopRange.getEnd() == Default::loopRange.getEnd())
                 region->loopRange.setEnd(region->sampleEnd);
 
-            if (fileInformation->loopBegin != Default::loopRange.getStart() &&
-                fileInformation->loopEnd != Default::loopRange.getEnd()) {
+            if (fileInformation->loopBegin != Default::loopRange.getStart() && fileInformation->loopEnd != Default::loopRange.getEnd()) {
                 if (region->loopRange.getStart() == Default::loopRange.getStart())
                     region->loopRange.setStart(fileInformation->loopBegin);
 
@@ -374,38 +376,34 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         }
 
         for (auto note = 0; note < 128; note++) {
-            if (region->keyRange.containsWithEnd(note) ||
-                (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
+            if (region->keyRange.containsWithEnd(note) || (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
                 noteActivationLists[note].push_back(region);
         }
 
-        for (auto cc = 0; cc < config::numCCs; cc++) {
+        for (unsigned cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc) || region->ccConditions.contains(cc))
                 ccActivationLists[cc].push_back(region);
         }
 
         // Defaults
-        for (int ccIndex = 0; ccIndex < config::numCCs; ccIndex++) {
-            region->registerCC(ccIndex, resources.midiState.getCCValue(ccIndex));
+        for (unsigned cc = 0; cc < config::numCCs; cc++) {
+            region->registerCC(cc, resources.midiState.getCCValue(cc));
         }
 
         if (defaultSwitch) {
-            region->registerNoteOn(*defaultSwitch, 127, 1.0);
-            region->registerNoteOff(*defaultSwitch, 0, 1.0);
+            region->registerNoteOn(*defaultSwitch, 1.0f, 1.0f);
+            region->registerNoteOff(*defaultSwitch, 0.0f, 1.0f);
         }
 
         // Set the default frequencies on equalizers if needed
         if (region->equalizers.size() > 0
-            && region->equalizers[0].frequency == Default::eqFrequencyUnset)
-        {
+            && region->equalizers[0].frequency == Default::eqFrequencyUnset) {
             region->equalizers[0].frequency = Default::eqFrequency1;
             if (region->equalizers.size() > 1
-                && region->equalizers[1].frequency == Default::eqFrequencyUnset)
-            {
+                && region->equalizers[1].frequency == Default::eqFrequencyUnset) {
                 region->equalizers[1].frequency = Default::eqFrequency2;
                 if (region->equalizers.size() > 2
-                    && region->equalizers[2].frequency == Default::eqFrequencyUnset)
-                {
+                    && region->equalizers[2].frequency == Default::eqFrequencyUnset) {
                     region->equalizers[2].frequency = Default::eqFrequency3;
                 }
             }
@@ -425,7 +423,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     regions.resize(remainingRegions);
     modificationTime = checkModificationTime();
 
-    for (auto& voice: voices) {
+    for (auto& voice : voices) {
         voice->setMaxFiltersPerVoice(maxFilters);
         voice->setMaxEQsPerVoice(maxEQs);
     }
@@ -468,7 +466,6 @@ int sfz::Synth::getNumActiveVoices() const noexcept
 
 void sfz::Synth::garbageCollect() noexcept
 {
-
 }
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -487,7 +484,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
 
-    for (auto& bus: effectBuses) {
+    for (auto& bus : effectBuses) {
         if (bus)
             bus->setSamplesPerBlock(samplesPerBlock);
     }
@@ -507,7 +504,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     resources.filterPool.setSampleRate(sampleRate);
     resources.eqPool.setSampleRate(sampleRate);
 
-    for (auto& bus: effectBuses) {
+    for (auto& bus : effectBuses) {
         if (bus)
             bus->setSampleRate(sampleRate);
     }
@@ -532,7 +529,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Prepare the effect inputs. They are mixes of per-region outputs.
         ScopedTiming logger { callbackBreakdown.effects };
-        for (auto& bus: effectBuses) {
+        for (auto& bus : effectBuses) {
             if (bus)
                 bus->clearInputs(numFrames);
         }
@@ -576,7 +573,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         //    without any <effect>, the signal is just going to flow through it.
         ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
 
-        for (auto& bus: effectBuses) {
+        for (auto& bus : effectBuses) {
             if (bus) {
                 bus->process(numFrames);
                 bus->mixOutputsTo(buffer, tempMixNode, numFrames);
@@ -604,15 +601,15 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-
+    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOnEvent(delay, noteNumber, velocity);
+    resources.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
 
-    noteOnDispatch(delay, noteNumber, velocity);
+    noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
 
 void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -620,9 +617,9 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     UNUSED(velocity);
-
+    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOffEvent(delay, noteNumber, velocity);
+    resources.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -639,7 +636,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
-void sfz::Synth::noteOffDispatch(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
@@ -653,7 +650,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, uint8_t velocity) no
     }
 }
 
-void sfz::Synth::noteOnDispatch(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
@@ -676,9 +673,10 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
+    const auto normalizedCC = normalizeCC(ccValue);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.ccEvent(delay, ccNumber, ccValue);
+    resources.midiState.ccEvent(delay, ccNumber, normalizedCC);
 
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
@@ -690,15 +688,15 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     for (auto& voice : voices)
-        voice->registerCC(delay, ccNumber, ccValue);
+        voice->registerCC(delay, ccNumber, normalizedCC);
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCC(ccNumber, ccValue)) {
+        if (region->registerCC(ccNumber, normalizedCC)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, ccNumber, ccValue, Voice::TriggerType::CC);
+            voice->startVoice(region, delay, ccNumber, normalizedCC, Voice::TriggerType::CC);
         }
     }
 }
@@ -711,11 +709,11 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.pitchBendEvent(delay, pitch);
 
-    for (auto& region: regions) {
+    for (auto& region : regions) {
         region->registerPitchWheel(pitch);
     }
 
-    for (auto& voice: voices) {
+    for (auto& voice : voices) {
         voice->registerPitchWheel(delay, pitch);
     }
 }
@@ -753,10 +751,9 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     if (model.empty())
         model = config::midnamModel;
 
-    doc.append_child(pugi::node_doctype).set_value(
-        "MIDINameDocument PUBLIC"
-        " \"-//MIDI Manufacturers Association//DTD MIDINameDocument 1.0//EN\""
-        " \"http://www.midi.org/dtds/MIDINameDocument10.dtd\"");
+    doc.append_child(pugi::node_doctype).set_value("MIDINameDocument PUBLIC"
+                                                   " \"-//MIDI Manufacturers Association//DTD MIDINameDocument 1.0//EN\""
+                                                   " \"http://www.midi.org/dtds/MIDINameDocument10.dtd\"");
 
     pugi::xml_node root = doc.append_child("MIDINameDocument");
 
@@ -767,9 +764,11 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
 
     pugi::xml_node device = root.append_child("MasterDeviceNames");
     device.append_child("Manufacturer")
-        .append_child(pugi::node_pcdata).set_value(std::string(manufacturer).c_str());
+        .append_child(pugi::node_pcdata)
+        .set_value(std::string(manufacturer).c_str());
     device.append_child("Model")
-        .append_child(pugi::node_pcdata).set_value(std::string(model).c_str());
+        .append_child(pugi::node_pcdata)
+        .set_value(std::string(model).c_str());
 
     {
         pugi::xml_node devmode = device.append_child("CustomDeviceMode");
@@ -795,7 +794,8 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         }
 
         chns.append_child("UsesControlNameList")
-            .append_attribute("Name").set_value("Controls");
+            .append_attribute("Name")
+            .set_value("Controls");
     }
 
     {
@@ -876,7 +876,7 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
 
 void sfz::Synth::resetVoices(int numVoices)
 {
-    AtomicDisabler callbackDisabler{ canEnterCallback };
+    AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -885,7 +885,7 @@ void sfz::Synth::resetVoices(int numVoices)
     for (int i = 0; i < numVoices; ++i)
         voices.push_back(absl::make_unique<Voice>(resources));
 
-    for (auto& voice: voices) {
+    for (auto& voice : voices) {
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
     }
@@ -896,12 +896,12 @@ void sfz::Synth::resetVoices(int numVoices)
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
-    AtomicDisabler callbackDisabler{ canEnterCallback };
+    AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    for (auto& voice: voices)
+    for (auto& voice : voices)
         voice->reset();
 
     resources.filePool.emptyFileLoadingQueues();
@@ -916,7 +916,7 @@ sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
 
 void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
-    AtomicDisabler callbackDisabler{ canEnterCallback };
+    AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -951,15 +951,15 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
         return;
 
     resources.midiState.resetAllControllers(delay);
-    for (auto& voice: voices) {
+    for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
-        for (int cc = 0; cc < config::numCCs; ++cc)
-            voice->registerCC(delay, cc, 0);
+        for (unsigned cc = 0; cc < config::numCCs; ++cc)
+            voice->registerCC(delay, cc, 0.0f);
     }
 
-    for (auto& region: regions) {
-        for (int cc = 0; cc < config::numCCs; ++cc)
-            region->registerCC(cc, 0);
+    for (auto& region : regions) {
+        for (unsigned cc = 0; cc < config::numCCs; ++cc)
+            region->registerCC(cc, 0.0f);
     }
 }
 
@@ -996,13 +996,13 @@ void sfz::Synth::disableLogging() noexcept
 
 void sfz::Synth::allSoundOff() noexcept
 {
-    AtomicDisabler callbackDisabler{ canEnterCallback };
+    AtomicDisabler callbackDisabler { canEnterCallback };
     while (inCallback) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    for (auto &voice: voices)
+    for (auto& voice : voices)
         voice->reset();
-    for (auto& effectBus: effectBuses)
+    for (auto& effectBus : effectBuses)
         effectBus->clear();
 }
