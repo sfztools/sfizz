@@ -180,7 +180,7 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members)
 {
     absl::optional<unsigned> groupIdx;
-    absl::optional<unsigned> maxPolyphony;
+    unsigned maxPolyphony { config::maxVoices };
 
     for (auto& member : members) {
         switch (member.lettersOnlyHash) {
@@ -193,8 +193,8 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members)
         }
     }
 
-    if (groupIdx && maxPolyphony)
-        setGroupPolyphony(*groupIdx, *maxPolyphony);
+    if (groupIdx)
+        setGroupPolyphony(*groupIdx, maxPolyphony);
 }
 
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
