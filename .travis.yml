@@ -121,6 +121,7 @@ jobs:
         - libxkbcommon-dev
         - libxkbcommon-x11-dev
         - libxcb-keysyms1-dev
+        - lv2-dev
     install:
     - .travis/download_cmake.sh
     - .travis/download_static_libs.sh
