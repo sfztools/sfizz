@@ -49,7 +49,7 @@ void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> read
     if (_listener)
         _listener->onParseBegin();
 
-    includeNewFile(path, std::move(reader));
+    includeNewFile(path, std::move(reader), {});
     processTopLevel();
     flushCurrentHeader();
 
@@ -57,7 +57,7 @@ void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> read
         _listener->onParseEnd();
 }
 
-void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader)
+void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange)
 {
     fs::path fullPath =
         (path.empty() || path.is_absolute()) ? path : _originalDirectory / path;
@@ -69,10 +69,17 @@ void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader
             return;
     }
 
+    auto makeErrorRange = [&]() -> SourceRange {
+        if (!includeStmtRange) {
+            SourceLocation loc;
+            loc.filePath = std::make_shared<fs::path>(fullPath);
+            return {loc, loc};
+        }
+        return includeStmtRange;
+    };
+
     if (_included.size() == _maxIncludeDepth) {
-        SourceLocation loc;
-        loc.filePath = std::make_shared<fs::path>(fullPath);
-        emitError({ loc, loc }, "Exceeded maximum include depth (" + std::to_string(_maxIncludeDepth) + ")");
+        emitError(makeErrorRange(), "Exceeded maximum include depth (" + std::to_string(_maxIncludeDepth) + ")");
         return;
     }
 
@@ -80,7 +87,7 @@ void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader
         auto fileReader = absl::make_unique<FileReader>(fullPath);
         if (fileReader->hasError()) {
             SourceLocation loc = fileReader->location();
-            emitError({ loc, loc }, "Cannot open file for reading: " + fullPath.string());
+            emitError(makeErrorRange(), "Cannot open file for reading: " + fullPath.string());
             return;
         }
         reader = std::move(fileReader);
@@ -159,15 +166,16 @@ void Parser::processDirective()
             valid = reader.extractExactChar('"');
         }
 
+        SourceLocation end = reader.location();
+
         if (!valid) {
-            SourceLocation end = reader.location();
             emitError({ start, end }, "Expected \"file.sfz\" after #include.");
             recover();
             return;
         }
 
         std::replace(path.begin(), path.end(), '\\', '/');
-        includeNewFile(path);
+        includeNewFile(path, nullptr, { start, end });
     }
     else {
         SourceLocation end = reader.location();

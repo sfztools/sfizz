@@ -63,7 +63,7 @@ public:
     void setListener(Listener* listener) noexcept { _listener = listener; }
 
 private:
-    void includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader = nullptr);
+    void includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange);
     void processTopLevel();
     void processDirective();
     void processHeader();
@@ -122,6 +122,7 @@ struct SourceLocation {
     std::shared_ptr<fs::path> filePath;
     size_t lineNumber = 0;
     size_t columnNumber = 0;
+    explicit operator bool() const noexcept { return filePath != nullptr; }
 };
 
 /**
@@ -130,6 +131,7 @@ struct SourceLocation {
 struct SourceRange {
     SourceLocation start;
     SourceLocation end;
+    explicit operator bool() const noexcept { return bool(start) && bool(end); }
 };
 
 } // namespace sfz
