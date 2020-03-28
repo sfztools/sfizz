@@ -117,6 +117,16 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
 
+        _fileChangePeriod = static_cast<uint32>(processSetup.sampleRate);
+
+        if (!_msgCheckShouldReload) {
+            auto msg = IPtr<Vst::IMessage>::adopt(allocateMessage());
+            if (!msg)
+                return kResultFalse;
+            msg->setMessageID("CheckShouldReload");
+            _msgCheckShouldReload = msg;
+        }
+
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
     } else {
@@ -169,6 +179,17 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     synth.setVolume(_state.volume);
 
     synth.renderBlock(outputs, numFrames, numChannels);
+
+    _fileChangeCounter += numFrames;
+    if (_fileChangeCounter > _fileChangePeriod) {
+        _fileChangeCounter %= _fileChangePeriod;
+        Vst::IMessage* msg = _msgCheckShouldReload.get();
+        if (_fifoToWorker.push(msg)) {
+            msg->addRef();
+            _semaToWorker.post();
+        }
+    }
+
     return kResultTrue;
 }
 
@@ -378,6 +399,13 @@ void SfizzVstProcessor::doBackgroundWork()
             if (attr->getInt("PreloadSize", value) == kResultTrue) {
                 _state.preloadSize = value;
                 _synth->setPreloadSize(value);
+            }
+        }
+        else if (!std::strcmp(id, "CheckShouldReload")) {
+            if (_synth->shouldReloadFile()) {
+                fprintf(stderr, "[Sfizz] file has changed, reloading\n");
+                std::lock_guard<std::mutex> lock(_processMutex);
+                _synth->loadSfzFile(_state.sfzFile);
             }
         }
 

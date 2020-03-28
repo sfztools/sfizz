@@ -55,6 +55,11 @@ private:
     RTSemaphore _semaToWorker;
     std::mutex _processMutex;
 
+    // file modification periodic checker
+    uint32 _fileChangeCounter = 0;
+    uint32 _fileChangePeriod = 0;
+    IPtr<Vst::IMessage> _msgCheckShouldReload;
+
     // worker
     void doBackgroundWork();
     void stopBackgroundWork();
