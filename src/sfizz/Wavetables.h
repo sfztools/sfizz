@@ -193,8 +193,27 @@ private:
 struct WavetablePool {
     WavetablePool();
 
+    /**
+     * @brief Get a file wave. Return a silent table if the wave does not exist yet.
+     * Use createFileWave to preload file waves before calling this function.
+     * This function is real-time safe.
+     *
+     * @param filename the name of the file wave
+     * @return the wavetable, or a silent table
+     */
     const WavetableMulti* getFileWave(const std::string& filename);
+    /**
+     * @brief Load a file wave from the filepool and use it to create a wavetable.
+     * This function is not real-time safe.
+     *
+     * @param filePool the file pool to use to load the file
+     * @param filename the file name to load
+     * @return the wavetable
+     */
     const WavetableMulti* createFileWave(FilePool& filePool, const std::string& filename);
+    /**
+     * @brief Removes all the stored file waves from the wavetable pool.
+     */
     void clearFileWaves();
 
     static const WavetableMulti* getWaveSin();

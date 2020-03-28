@@ -357,19 +357,15 @@ const WavetableMulti* WavetablePool::createFileWave(FilePool& filePool, const st
     if (const WavetableMulti* wave = getFileWave(filename))
         return wave;
 
-    if (!filePool.preloadFile(filename, 0))
+    auto fileHandle = filePool.loadFile(filename);
+    if (!fileHandle)
         return nullptr;
 
-    FilePromisePtr fp = filePool.getFilePromise(filename);
-    if (!fp)
-        return nullptr;
 
-    fp->waitCompletion();
-    if (fp->dataStatus == FilePromise::DataStatus::Error)
-        return nullptr;
+    if (fileHandle->information.numChannels > 1)
+        DBG("[sfizz] Only the first channel of " << filename << " will be used to create the wavetable");
 
-    // use 1 channel only, maybe warn if file has more channels
-    auto audioData = fp->fileData.getSpan(0);
+    auto audioData = fileHandle->preloadedData->getConstSpan(0);
     size_t fftSize = audioData.size();
     size_t specSize = fftSize / 2 + 1;
 
