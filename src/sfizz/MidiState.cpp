@@ -20,7 +20,7 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
 
     if (noteNumber >= 0 && noteNumber < 128) {
         lastNoteVelocities[noteNumber] = velocity;
-        noteOnTimes[noteNumber] = std::chrono::steady_clock::now();
+        noteOnTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
         activeNotes++;
     }
 
@@ -28,6 +28,7 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
 
 void sfz::MidiState::noteOffEvent(int delay, int noteNumber, float velocity) noexcept
 {
+    ASSERT(delay >= 0);
     ASSERT(noteNumber >= 0 && noteNumber <= 127);
     ASSERT(velocity >= 0.0 && velocity <= 1.0);
     UNUSED(velocity);
@@ -38,14 +39,30 @@ void sfz::MidiState::noteOffEvent(int delay, int noteNumber, float velocity) noe
 
 }
 
-float sfz::MidiState::getNoteDuration(int noteNumber) const
+void sfz::MidiState::setSampleRate(float sampleRate) noexcept
 {
-    ASSERT(noteNumber >= 0 && noteNumber <= 127);
+    this->sampleRate = sampleRate;
+    internalClock = 0;
+    absl::c_fill(noteOnTimes, 0);
+}
+
+void sfz::MidiState::advanceTime(int numSamples) noexcept
+{
+    internalClock += numSamples;
+}
+
+void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
+{
+    this->samplesPerBlock = samplesPerBlock;
+}
+
+float sfz::MidiState::getNoteDuration(int noteNumber, int delay) const
+{
+    ASSERT(noteNumber >= 0 && noteNumber < 128);
 
     if (noteNumber >= 0 && noteNumber < 128) {
-        const auto noteOffTime = std::chrono::steady_clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::duration<float>>(noteOffTime - noteOnTimes[noteNumber]);
-        return duration.count();
+        const unsigned timeInSamples = internalClock + static_cast<unsigned>(delay) - noteOnTimes[noteNumber];
+        return static_cast<float>(timeInSamples) / sampleRate;
     }
 
     return 0.0f;
@@ -95,6 +112,8 @@ void sfz::MidiState::reset(int delay) noexcept
 
     pitchBend = 0;
     activeNotes = 0;
+    internalClock = 0;
+    absl::c_fill(noteOnTimes, 0);
 }
 
 void sfz::MidiState::resetAllControllers(int delay) noexcept

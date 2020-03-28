@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include <chrono>
 #include <array>
 #include "CCMap.h"
 #include "Range.h"
@@ -42,13 +41,29 @@ public:
     int getActiveNotes() const noexcept { return activeNotes; }
 
     /**
-     * @brief Register a note off and get the note duration
+     * @brief Get the note duration since note on
      *
      * @param noteNumber
+     * @param delay
      * @return float
      */
-	float getNoteDuration(int noteNumber) const;
+	float getNoteDuration(int noteNumber, int delay = 0) const;
 
+    /**
+     * @brief Set the maximum size of the blocks for the callback. The actual
+     * size can be lower in each callback but should not be larger
+     * than this value.
+     *
+     * @param samplesPerBlock
+     */
+    void setSamplesPerBlock(int samplesPerBlock) noexcept;
+    /**
+     * @brief Set the sample rate. If you do not call it it is initialized
+     * to sfz::config::defaultSampleRate.
+     *
+     * @param sampleRate
+     */
+    void setSampleRate(float sampleRate) noexcept;
     /**
      * @brief Get the note on velocity for a given note
      *
@@ -79,6 +94,13 @@ public:
      */
     void ccEvent(int delay, int ccNumber, float ccValue) noexcept;
 
+    /**
+     * @brief Advances the internal clock of a given amount of samples.
+     * You should call this at each callback.
+     *
+     * @param numSamples the number of samples of clock advance
+     */
+    void advanceTime(int numSamples) noexcept;
     /**
      * @brief Get the CC value for CC number
      *
@@ -121,13 +143,13 @@ public:
 private:
     template<class T>
     using MidiNoteArray = std::array<T, 128>;
-    using NoteOnTime = std::chrono::steady_clock::time_point;
 	int activeNotes { 0 };
+
     /**
      * @brief Stores the note on times.
      *
      */
-	MidiNoteArray<NoteOnTime> noteOnTimes;
+	MidiNoteArray<unsigned> noteOnTimes {};
     /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
@@ -143,5 +165,8 @@ private:
      * Pitch bend status
      */
     int pitchBend { 0 };
+    double sampleRate { config::defaultSampleRate };
+    int samplesPerBlock { config::defaultSamplesPerBlock };
+    unsigned internalClock { 0 };
 };
 }

@@ -262,20 +262,21 @@ TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
 TEST_CASE("[Region] rt_decay")
 {
     sfz::MidiState midiState;
+    midiState.setSampleRate(1000);
     sfz::Region region { midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "trigger", "release" });
     region.parseOpcode({ "rt_decay", "10" });
     midiState.noteOnEvent(0, 64, 64_norm);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    midiState.advanceTime(100);
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 1.0f).margin(0.1) );
     region.parseOpcode({ "rt_decay", "20" });
     midiState.noteOnEvent(0, 64, 64_norm);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    midiState.advanceTime(100);
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 2.0f).margin(0.1) );
     region.parseOpcode({ "trigger", "attack" });
     midiState.noteOnEvent(0, 64, 64_norm);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    midiState.advanceTime(100);
     REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume).margin(0.1) );
 }
 

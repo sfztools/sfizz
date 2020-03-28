@@ -483,6 +483,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
+    resources.midiState.setSamplesPerBlock(samplesPerBlock);
 
     for (auto& bus : effectBuses) {
         if (bus)
@@ -503,6 +504,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 
     resources.filterPool.setSampleRate(sampleRate);
     resources.eqPool.setSampleRate(sampleRate);
+    resources.midiState.setSampleRate(sampleRate);
 
     for (auto& bus : effectBuses) {
         if (bus)
@@ -524,6 +526,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     size_t numFrames = buffer.getNumFrames();
     auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
     auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
+
+    resources.midiState.advanceTime(buffer.getNumFrames());
 
     CallbackBreakdown callbackBreakdown;
 
