@@ -58,17 +58,11 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
             break;
         }
         waveOscillator.setWavetable(wave);
-
-        float phase;
-        const float phaseParam = region->oscillatorPhase;
-        if (phaseParam >= 0) {
-            phase = phaseParam * (1.0f / 360.0f);
-            phase -= static_cast<int>(phase);
-        } else {
-            std::uniform_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
-            phase = phaseDist(Random::randomGenerator);
-        }
-        waveOscillator.setPhase(phase);
+        waveOscillator.setPhase(region->getPhase());
+    } else if (region->oscillator) {
+        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sample);
+        waveOscillator.setWavetable(wave);
+        waveOscillator.setPhase(region->getPhase());
     } else {
         currentPromise = resources.filePool.getFilePromise(region->sample);
         if (currentPromise == nullptr) {
@@ -77,6 +71,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, uint8_t value
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
+
     pitchRatio = region->getBasePitchVariation(number, value);
 
     baseVolumedB = region->getBaseVolumedB(number);
@@ -294,7 +289,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Fill buffer with raw data
         ScopedTiming logger { dataDuration };
-        if (region->isGenerator())
+        if (region->isGenerator() || region->oscillator)
             fillWithGenerator(delayed_buffer);
         else
             fillWithData(delayed_buffer);

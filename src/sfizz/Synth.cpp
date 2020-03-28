@@ -143,6 +143,7 @@ void sfz::Synth::clear()
     effectBuses[0]->setSampleRate(sampleRate);
     curves = CurveSet::createPredefined();
     resources.filePool.clear();
+    resources.wavePool.clearFileWaves();
     resources.logger.clear();
     numGroups = 0;
     numMasters = 0;
@@ -324,7 +325,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     while (currentRegion < lastRegion.base()) {
         auto region = currentRegion->get();
 
-        if (!region->isGenerator()) {
+        if (!region->oscillator && !region->isGenerator()) {
             if (!resources.filePool.checkSample(region->sample)) {
                 removeCurrentRegion();
                 continue;
@@ -359,6 +360,17 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             const auto maxOffset = region->offset + region->offsetRandom;
             if (!resources.filePool.preloadFile(region->sample, maxOffset))
                 removeCurrentRegion();
+        }
+        else if (region->oscillator && !region->isGenerator()) {
+            if (!resources.filePool.checkSample(region->sample)) {
+                removeCurrentRegion();
+                continue;
+            }
+
+            if (!resources.wavePool.createFileWave(resources.filePool, region->sample)) {
+                removeCurrentRegion();
+                continue;
+            }
         }
 
         for (auto note = 0; note < 128; note++) {

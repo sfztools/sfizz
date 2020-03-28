@@ -135,7 +135,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getBasePitchVariation(int noteNumber, uint8_t velocity) noexcept;
+    float getBasePitchVariation(int noteNumber, uint8_t velocity) const noexcept;
     /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
@@ -144,7 +144,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getNoteGain(int noteNumber, uint8_t velocity) noexcept;
+    float getNoteGain(int noteNumber, uint8_t velocity) const noexcept;
     /**
      * @brief Get the additional crossfade gain of the region depending on the
      * CC values
@@ -152,7 +152,7 @@ struct Region {
      * @param ccState
      * @return float
      */
-    float getCrossfadeGain(const SfzCCArray& ccState) noexcept;
+    float getCrossfadeGain(const SfzCCArray& ccState) const noexcept;
     /**
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.
@@ -160,13 +160,19 @@ struct Region {
      * @param noteNumber
      * @return float
      */
-    float getBaseVolumedB(int noteNumber) noexcept;
+    float getBaseVolumedB(int noteNumber) const noexcept;
     /**
      * @brief Get the base gain of the region.
      *
      * @return float
      */
-    float getBaseGain() noexcept;
+    float getBaseGain() const noexcept;
+    /**
+     * @brief Get the base gain of the region.
+     *
+     * @return float
+     */
+    float getPhase() const noexcept;
     /**
      * @brief Computes the gain value related to the velocity of the note
      *
@@ -178,13 +184,13 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t getOffset(Oversampling factor = Oversampling::x1) noexcept;
+    uint32_t getOffset(Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Get the region delay in seconds
      *
      * @return float
      */
-    float getDelay() noexcept;
+    float getDelay() const noexcept;
     /**
      * @brief Get the index of the sample end, either natural end or forced
      * loop.
@@ -228,6 +234,7 @@ struct Region {
 
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase };
+    bool oscillator = false;
 
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group
@@ -326,11 +333,6 @@ private:
     absl::string_view defaultPath { "" };
 
     int sequenceCounter { 0 };
-
-    std::uniform_real_distribution<float> volumeDistribution { -sfz::Default::ampRandom, sfz::Default::ampRandom };
-    std::uniform_real_distribution<float> delayDistribution { 0, sfz::Default::delayRandom };
-    std::uniform_int_distribution<uint32_t> offsetDistribution { 0, sfz::Default::offsetRandom };
-    std::uniform_int_distribution<int> pitchDistribution { -sfz::Default::pitchRandom, sfz::Default::pitchRandom };
     LEAK_DETECTOR(Region);
 };
 

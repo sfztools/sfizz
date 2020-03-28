@@ -9,10 +9,12 @@
 #include "LeakDetector.h"
 #include "Buffer.h"
 #include <absl/types/span.h>
+#include <absl/container/flat_hash_map.h>
 #include <memory>
 #include <complex>
 
 namespace sfz {
+class FilePool;
 
 class WavetableMulti;
 
@@ -157,8 +159,8 @@ public:
     static WavetableMulti createForHarmonicProfile(
         const HarmonicProfile& hp, double amplitude, unsigned tableSize = config::tableSize, double refSampleRate = 44100.0);
 
-    // create the tiniest wavetable with null content for use with oscillators
-    static WavetableMulti createSilence();
+    // get a tiny silent wavetable with null content for use with oscillators
+    static const WavetableMulti* getSilenceWavetable();
 
 private:
     // get a pointer to the beginning of the N-th table
@@ -185,15 +187,42 @@ private:
 };
 
 /**
- * @brief Holds predefined wavetables.
+ * @brief Holds predefined and loaded wavetables.
  *
  */
 struct WavetablePool {
     WavetablePool();
+
+    /**
+     * @brief Get a file wave. Return a silent table if the wave does not exist yet.
+     * Use createFileWave to preload file waves before calling this function.
+     * This function is real-time safe.
+     *
+     * @param filename the name of the file wave
+     * @return the wavetable, or a silent table
+     */
+    const WavetableMulti* getFileWave(const std::string& filename);
+    /**
+     * @brief Load a file wave from the filepool and use it to create a wavetable.
+     * This function is not real-time safe.
+     *
+     * @param filePool the file pool to use to load the file
+     * @param filename the file name to load
+     * @return true if the wavetable was correctly created (or existed already)
+     */
+    bool createFileWave(FilePool& filePool, const std::string& filename);
+    /**
+     * @brief Removes all the stored file waves from the wavetable pool.
+     */
+    void clearFileWaves();
+
     static const WavetableMulti* getWaveSin();
     static const WavetableMulti* getWaveTriangle();
     static const WavetableMulti* getWaveSaw();
     static const WavetableMulti* getWaveSquare();
+
+private:
+    absl::flat_hash_map<std::string, std::shared_ptr<WavetableMulti>> _fileWaves;
 };
 
 } // namespace sfz
