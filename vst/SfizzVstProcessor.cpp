@@ -21,7 +21,7 @@ constexpr int fastRound(T x)
 }
 
 SfizzVstProcessor::SfizzVstProcessor()
-    : _fifoToWorker(1024)
+    : _fifoToWorker(64 * 1024)
 {
     setControllerClass(SfizzVstController::cid);
 }
@@ -119,14 +119,6 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
 
         _fileChangePeriod = static_cast<uint32>(processSetup.sampleRate);
 
-        if (!_msgCheckShouldReload) {
-            auto msg = IPtr<Vst::IMessage>::adopt(allocateMessage());
-            if (!msg)
-                return kResultFalse;
-            msg->setMessageID("CheckShouldReload");
-            _msgCheckShouldReload = msg;
-        }
-
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
     } else {
@@ -183,11 +175,8 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     _fileChangeCounter += numFrames;
     if (_fileChangeCounter > _fileChangePeriod) {
         _fileChangeCounter %= _fileChangePeriod;
-        Vst::IMessage* msg = _msgCheckShouldReload.get();
-        if (_fifoToWorker.push(msg)) {
-            msg->addRef();
+        if (writeWorkerMessage("CheckShouldReload", nullptr, 0))
             _semaToWorker.post();
-        }
     }
 
     return kResultTrue;
@@ -214,47 +203,26 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             break;
         case kPidNumVoices:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                Vst::IMessage* msg = allocateMessage();
-                if (!msg)
-                    break;
-                msg->setMessageID("SetNumVoices");
-                Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("NumVoices", static_cast<Steinberg::int64>(kParamNumVoicesRange.denormalize(value)));
-                if (!_fifoToWorker.push(msg)) {
-                    msg->release();
-                    break;
-                }
-                _semaToWorker.post();
+                int32 data = static_cast<int32>(kParamNumVoicesRange.denormalize(value));
+                _state.numVoices = data;
+                if (writeWorkerMessage("SetNumVoices", &data, sizeof(data)))
+                    _semaToWorker.post();
             }
             break;
         case kPidOversampling:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                Vst::IMessage* msg = allocateMessage();
-                if (!msg)
-                    break;
-                msg->setMessageID("SetOversampling");
-                Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("Oversampling", static_cast<Steinberg::int64>(kParamOversamplingRange.denormalize(value)));
-                if (!_fifoToWorker.push(msg)) {
-                    msg->release();
-                    break;
-                }
-                _semaToWorker.post();
+                int32 data = static_cast<int32>(kParamOversamplingRange.denormalize(value));
+                _state.oversamplingLog2 = data;
+                if (writeWorkerMessage("SetOversampling", &data, sizeof(data)))
+                    _semaToWorker.post();
             }
             break;
         case kPidPreloadSize:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                Vst::IMessage* msg = allocateMessage();
-                if (!msg)
-                    break;
-                msg->setMessageID("SetPreloadSize");
-                Vst::IAttributeList* attr = msg->getAttributes();
-                attr->setInt("PreloadSize", static_cast<Steinberg::int64>(kParamPreloadSizeRange.denormalize(value)));
-                if (!_fifoToWorker.push(msg)) {
-                    msg->release();
-                    break;
-                }
-                _semaToWorker.post();
+                int32 data = static_cast<int32>(kParamPreloadSizeRange.denormalize(value));
+                _state.preloadSize = data;
+                if (writeWorkerMessage("SetPreloadSize", &data, sizeof(data)))
+                    _semaToWorker.post();
             }
             break;
         }
@@ -335,17 +303,29 @@ int SfizzVstProcessor::convertVelocityFromFloat(float x)
 
 tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 {
+    // Note(jpc) this notification is not necessarily handled by the RT thread
+
     tresult result = AudioEffect::notify(message);
     if (result != kResultFalse)
         return result;
 
-    if (!_fifoToWorker.push(message))
-        return kOutOfMemory;
+    const char* id = message->getMessageID();
+    Vst::IAttributeList* attr = message->getAttributes();
 
-    message->addRef();
-    _semaToWorker.post();
+    if (!std::strcmp(id, "LoadSfz")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("File", data, size);
 
-    return kResultTrue;
+        if (result != kResultTrue)
+            return result;
+
+        std::lock_guard<std::mutex> lock(_processMutex);
+        _state.sfzFile.assign(static_cast<const char *>(data), size);
+        _synth->loadSfzFile(_state.sfzFile);
+    }
+
+    return result;
 }
 
 FUnknown* SfizzVstProcessor::createInstance(void*)
@@ -355,61 +335,38 @@ FUnknown* SfizzVstProcessor::createInstance(void*)
 
 void SfizzVstProcessor::doBackgroundWork()
 {
-    constexpr uint32 maxPathLen = 32768;
-
     for (;;) {
         _semaToWorker.wait();
 
         if (!_workRunning)
             break;
 
-        Vst::IMessage* msg;
-        if (!_fifoToWorker.pop(msg)) {
+        RTMessagePtr msg = readWorkerMessage();
+        if (!msg) {
             fprintf(stderr, "[Sfizz] message synchronization error in worker\n");
             std::abort();
         }
 
-        const char* id = msg->getMessageID();
-        Vst::IAttributeList* attr = msg->getAttributes();
+        const char* id = msg->type;
 
-        if (!std::strcmp(id, "LoadSfz")) {
-            std::vector<Vst::TChar> path(maxPathLen + 1);
-            if (attr->getString("File", path.data(), maxPathLen) == kResultTrue) {
-                std::lock_guard<std::mutex> lock(_processMutex);
-                _state.sfzFile = Steinberg::String(path.data()).text8();
-                _synth->loadSfzFile(_state.sfzFile);
-            }
-        }
-        else if (!std::strcmp(id, "SetNumVoices")) {
-            int64 value;
-            if (attr->getInt("NumVoices", value) == kResultTrue) {
-                _state.numVoices = value;
-                _synth->setNumVoices(value);
-            }
+        if (!std::strcmp(id, "SetNumVoices")) {
+            int32 value = *msg->payload<int32>();
+            _synth->setNumVoices(value);
         }
         else if (!std::strcmp(id, "SetOversampling")) {
-            int64 value;
-            if (attr->getInt("Oversampling", value) == kResultTrue) {
-                _state.oversamplingLog2 = value;
-                _synth->setOversamplingFactor(1 << value);
-            }
+            int32 value = *msg->payload<int32>();
+            _synth->setOversamplingFactor(1 << value);
         }
         else if (!std::strcmp(id, "SetPreloadSize")) {
-            int64 value;
-            if (attr->getInt("PreloadSize", value) == kResultTrue) {
-                _state.preloadSize = value;
-                _synth->setPreloadSize(value);
-            }
+            int32 value = *msg->payload<int32>();
+            _synth->setPreloadSize(value);
         }
         else if (!std::strcmp(id, "CheckShouldReload")) {
             if (_synth->shouldReloadFile()) {
                 fprintf(stderr, "[Sfizz] file has changed, reloading\n");
-                std::lock_guard<std::mutex> lock(_processMutex);
                 _synth->loadSfzFile(_state.sfzFile);
             }
         }
-
-        msg->release();
     }
 }
 
@@ -423,13 +380,59 @@ void SfizzVstProcessor::stopBackgroundWork()
     _worker.join();
 
     while (_semaToWorker.try_wait()) {
-        Vst::IMessage* msg;
-        if (!_fifoToWorker.pop(msg)) {
+        if (!discardWorkerMessage()) {
             fprintf(stderr, "[Sfizz] message synchronization error in processor\n");
             std::abort();
         }
-        msg->release();
     }
+}
+
+bool SfizzVstProcessor::writeWorkerMessage(const char* type, const void* data, uintptr_t size)
+{
+    RTMessage header;
+    header.type = type;
+    header.size = size;
+
+    if (_fifoToWorker.size_free() < sizeof(header) + size)
+        return false;
+
+    _fifoToWorker.put(header);
+    _fifoToWorker.put(static_cast<const uint8*>(data), size);
+    return true;
+}
+
+SfizzVstProcessor::RTMessagePtr SfizzVstProcessor::readWorkerMessage()
+{
+    RTMessage header;
+
+    if (!_fifoToWorker.peek(header))
+        return nullptr;
+    if (_fifoToWorker.size_used() < sizeof(header) + header.size)
+        return nullptr;
+
+    RTMessagePtr msg { reinterpret_cast<RTMessage*>(std::malloc(sizeof(header) + header.size)) };
+    if (!msg)
+        throw std::bad_alloc();
+
+    msg->type = header.type;
+    msg->size = header.size;
+    _fifoToWorker.discard(sizeof(header));
+    _fifoToWorker.get(const_cast<char*>(msg->payload<char>()), header.size);
+
+    return msg;
+}
+
+bool SfizzVstProcessor::discardWorkerMessage()
+{
+    RTMessage header;
+
+    if (!_fifoToWorker.peek(header))
+        return false;
+    if (_fifoToWorker.size_used() < sizeof(header) + header.size)
+        return false;
+
+    _fifoToWorker.discard(sizeof(header) + header.size);
+    return true;
 }
 
 /*
