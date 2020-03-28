@@ -67,6 +67,7 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("group"):
         groupOpcodes = members;
+        handleGroupOpcodes(members);
         numGroups++;
         break;
     case hash("region"):
@@ -156,6 +157,8 @@ void sfz::Synth::clear()
     masterOpcodes.clear();
     groupOpcodes.clear();
     unknownOpcodes.clear();
+    groupPolyphony.clear();
+    groupMaxPolyphony.clear();
     modificationTime = fs::file_time_type::min();
 }
 
@@ -172,6 +175,26 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
             break;
         }
     }
+}
+
+void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members)
+{
+    absl::optional<unsigned> groupIdx;
+    absl::optional<unsigned> maxPolyphony;
+
+    for (auto& member : members) {
+        switch (member.lettersOnlyHash) {
+        case hash("group"):
+            setValueFromOpcode(member, groupIdx, Default::groupRange);
+            break;
+        case hash("polyphony"):
+            setValueFromOpcode(member, maxPolyphony, Range<unsigned>(0, config::maxVoices));
+            break;
+        }
+    }
+
+    if (groupIdx && maxPolyphony)
+        setGroupPolyphony(*groupIdx, *maxPolyphony);
 }
 
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
@@ -1009,4 +1032,15 @@ void sfz::Synth::allSoundOff() noexcept
         voice->reset();
     for (auto& effectBus : effectBuses)
         effectBus->clear();
+}
+
+void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
+{
+    if (groupIdx >= groupMaxPolyphony.size())
+        groupMaxPolyphony.resize(groupIdx + 1);
+
+    if (groupIdx >= groupPolyphony.size())
+        groupPolyphony.resize(groupIdx + 1);
+
+    groupMaxPolyphony[groupIdx] = polyphony;
 }

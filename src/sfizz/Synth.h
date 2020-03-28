@@ -411,6 +411,16 @@ protected:
 
 private:
     /**
+     * @brief change the group maximum polyphony
+     *
+     * @param groupIdx the group index
+     * @param polyphone the max polyphony
+     */
+    void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
+    std::vector<unsigned> groupPolyphony;
+    std::vector<unsigned> groupMaxPolyphony;
+
+    /**
      * @brief Reset all CCs; to be used on CC 121
      *
      * @param delay the delay for the controller reset
@@ -440,6 +450,12 @@ private:
      * @param members the opcodes of the <global> block
      */
     void handleGlobalOpcodes(const std::vector<Opcode>& members);
+    /**
+     * @brief Helper function to dispatch <group> opcodes
+     *
+     * @param members the opcodes of the <group> block
+     */
+    void handleGroupOpcodes(const std::vector<Opcode>& members);
     /**
      * @brief Helper function to dispatch <control> opcodes
      *
