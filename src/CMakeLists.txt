@@ -24,6 +24,10 @@ set (SFIZZ_SOURCES
     sfizz/effects/Eq.cpp
     sfizz/effects/Apan.cpp
     sfizz/effects/Lofi.cpp
+    sfizz/effects/Limiter.cpp
+    sfizz/effects/Rectify.cpp
+    sfizz/effects/Gain.cpp
+    sfizz/effects/Width.cpp
 )
 include (SfizzSIMDSourceFiles)
 

@@ -14,6 +14,10 @@
 #include "effects/Eq.h"
 #include "effects/Apan.h"
 #include "effects/Lofi.h"
+#include "effects/Limiter.h"
+#include "effects/Rectify.h"
+#include "effects/Gain.h"
+#include "effects/Width.h"
 #include <algorithm>
 
 namespace sfz {
@@ -25,6 +29,12 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("eq", fx::Eq::makeInstance);
     registerEffectType("apan", fx::Apan::makeInstance);
     registerEffectType("lofi", fx::Lofi::makeInstance);
+    registerEffectType("limiter", fx::Limiter::makeInstance);
+
+    // extensions (book)
+    registerEffectType("rectify", fx::Rectify::makeInstance);
+    registerEffectType("gain", fx::Gain::makeInstance);
+    registerEffectType("width", fx::Width::makeInstance);
 }
 
 void EffectFactory::registerEffectType(absl::string_view name, Effect::MakeInstance& make)
