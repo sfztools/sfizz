@@ -152,37 +152,37 @@ TEST_CASE("[Files] Full hierarchy")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
     REQUIRE(synth.getNumRegions() == 8);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
-        REQUIRE(synth.getRegionView(i)->width == 40.0f);
+        REQUIRE(synth.getRegionView(i)->width == 0.4_a);
     }
-    REQUIRE(synth.getRegionView(0)->pan == 30.0f);
+    REQUIRE(synth.getRegionView(0)->pan == 0.3_a);
     REQUIRE(synth.getRegionView(0)->delay == 67);
     REQUIRE(synth.getRegionView(0)->keyRange == sfz::Range<uint8_t>(60, 60));
 
-    REQUIRE(synth.getRegionView(1)->pan == 30.0f);
+    REQUIRE(synth.getRegionView(1)->pan == 0.3_a);
     REQUIRE(synth.getRegionView(1)->delay == 67);
     REQUIRE(synth.getRegionView(1)->keyRange == sfz::Range<uint8_t>(61, 61));
 
-    REQUIRE(synth.getRegionView(2)->pan == 30.0f);
+    REQUIRE(synth.getRegionView(2)->pan == 0.3_a);
     REQUIRE(synth.getRegionView(2)->delay == 56);
     REQUIRE(synth.getRegionView(2)->keyRange == sfz::Range<uint8_t>(50, 50));
 
-    REQUIRE(synth.getRegionView(3)->pan == 30.0f);
+    REQUIRE(synth.getRegionView(3)->pan == 0.3_a);
     REQUIRE(synth.getRegionView(3)->delay == 56);
     REQUIRE(synth.getRegionView(3)->keyRange == sfz::Range<uint8_t>(51, 51));
 
-    REQUIRE(synth.getRegionView(4)->pan == -10.0f);
+    REQUIRE(synth.getRegionView(4)->pan == -0.1_a);
     REQUIRE(synth.getRegionView(4)->delay == 47);
     REQUIRE(synth.getRegionView(4)->keyRange == sfz::Range<uint8_t>(40, 40));
 
-    REQUIRE(synth.getRegionView(5)->pan == -10.0f);
+    REQUIRE(synth.getRegionView(5)->pan == -0.1_a);
     REQUIRE(synth.getRegionView(5)->delay == 47);
     REQUIRE(synth.getRegionView(5)->keyRange == sfz::Range<uint8_t>(41, 41));
 
-    REQUIRE(synth.getRegionView(6)->pan == -10.0f);
+    REQUIRE(synth.getRegionView(6)->pan == -0.1_a);
     REQUIRE(synth.getRegionView(6)->delay == 36);
     REQUIRE(synth.getRegionView(6)->keyRange == sfz::Range<uint8_t>(30, 30));
 
-    REQUIRE(synth.getRegionView(7)->pan == -10.0f);
+    REQUIRE(synth.getRegionView(7)->pan == -0.1_a);
     REQUIRE(synth.getRegionView(7)->delay == 36);
     REQUIRE(synth.getRegionView(7)->keyRange == sfz::Range<uint8_t>(31, 31));
 }
