@@ -49,10 +49,23 @@ TEST_CASE("[MidiState] Reset")
     state.pitchBendEvent(0, 894);
     state.noteOnEvent(0, 64, 24_norm);
     state.ccEvent(0, 123, 124_norm);
-    state.reset(0);
+    state.reset();
     REQUIRE(state.getPitchBend() == 0);
     REQUIRE(state.getNoteVelocity(64) == 0_norm);
     REQUIRE(state.getCCValue(123) == 0_norm);
+}
+
+TEST_CASE("[MidiState] Reset all controllers")
+{
+    sfz::MidiState state;
+    state.pitchBendEvent(20, 894);
+    state.ccEvent(10, 122, 124_norm);
+    REQUIRE(state.getPitchBend() == 894);
+    REQUIRE(state.getCCValue(122) == 124_norm);
+    state.resetAllControllers(30);
+    REQUIRE(state.getPitchBend() == 0);
+    REQUIRE(state.getCCValue(122) == 0_norm);
+    REQUIRE(state.getCCValue(4) == 0_norm);
 }
 
 TEST_CASE("[MidiState] Set and get note velocities")
