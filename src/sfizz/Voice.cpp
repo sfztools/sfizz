@@ -305,7 +305,6 @@ template<class T>
 void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> output, absl::Span<float> temp)
 {
     ASSERT(output.size() <= temp.size());
-    sfz::fill<T>(output, T{0.0});
     for (auto& mod : ccMods) {
         const auto eventList = state.getEvents(mod.cc);
         const auto modifier = static_cast<float>(mod.value);
@@ -339,6 +338,7 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
+        fill<float>(modulationSpan, baseGain);
         getLinearEnvelope(region->amplitudeCC, resources.midiState, modulationSpan, tempSpan);
         applyGain<float>(modulationSpan, leftBuffer);
 
@@ -393,6 +393,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
+        fill<float>(modulationSpan, baseGain);
         getLinearEnvelope(region->amplitudeCC, resources.midiState, modulationSpan, tempSpan);
         buffer.applyGain(modulationSpan);
 
