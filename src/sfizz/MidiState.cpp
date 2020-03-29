@@ -104,7 +104,7 @@ int sfz::MidiState::getPitchBend() const noexcept
 void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
-    const auto insertionPoint = absl::c_upper_bound(cc[ccNumber], delay, MidiEventComparator{});
+    const auto insertionPoint = absl::c_upper_bound(cc[ccNumber], delay, MidiEventDelayComparator{});
     cc[ccNumber].insert(insertionPoint, { delay, ccValue });
 }
 

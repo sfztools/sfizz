@@ -67,8 +67,7 @@ struct MidiEvent {
     float value;
 };
 
-template<bool CompareValue = false>
-struct MidiEventComparator {
+struct MidiEventDelayComparator {
     bool operator()(const MidiEvent& event, const int& delay)
     {
         return (event.delay < delay);
@@ -85,8 +84,7 @@ struct MidiEventComparator {
     }
 };
 
-template<>
-struct MidiEventComparator<true> {
+struct MidiEventValueComparator {
     bool operator()(const MidiEvent& event, const float& value)
     {
         return (event.value < value);
