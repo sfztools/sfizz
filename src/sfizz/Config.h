@@ -30,6 +30,7 @@ namespace config {
     constexpr int maxBlockSize { 8192 };
     constexpr int bufferPoolSize { 16 };
     constexpr int stereoBufferPoolSize { 4 };
+    constexpr int indexBufferPoolSize { 2 };
     constexpr int preloadSize { 8192 };
     constexpr int loggerQueueSize { 256 };
     constexpr int voiceLoggerQueueSize { 256 };
