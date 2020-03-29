@@ -252,221 +252,6 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     this->triggerDelay = absl::nullopt;
 }
 
-template<class T>
-void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> output, absl::Span<float> temp, std::function<float(const T&, float)> function)
-{
-    for (auto& mod : ccMods) {
-        const auto eventList = state.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = function(mod.value, eventList[0].value);
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (function(mod.value, event.value) - lastValue)/ length;
-            lastValue = sfz::linearRamp<float>(temp.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        sfz::fill<float>(temp.subspan(lastDelay), lastValue);
-        sfz::applyGain<float>(temp, output);
-    }
-}
-
-void sfz::Voice::amplitudeModulation(absl::Span<float> modulationSpan) noexcept
-{
-    fill<float>(modulationSpan, 1.0f);
-    if (!region)
-        return;
-
-    const auto numSamples = modulationSpan.size();
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!tempBuffer)
-        return;
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
-
-    for (auto& mod : region->amplitudeCC) {
-        const auto eventList = resources.midiState.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = mod.value * eventList[0].value;
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (Default::amplitudeRange.clamp(mod.value * event.value) - lastValue)/ length;
-            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(tempSpan.subspan(lastDelay), lastValue);
-        applyGain<float>(tempSpan, modulationSpan);
-    }
-    applyGain<float>(baseGain, modulationSpan);
-}
-
-void sfz::Voice::crossfadeModulation(absl::Span<float> modulationSpan) noexcept
-{
-    fill<float>(modulationSpan, 1.0f);
-    if (!region)
-        return;
-
-    const auto numSamples = modulationSpan.size();
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!tempBuffer)
-        return;
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
-
-    for (auto& mod : region->crossfadeCCInRange) {
-        const auto eventList = resources.midiState.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = crossfadeIn(mod.value, eventList[0].value, region->crossfadeCCCurve);
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (crossfadeIn(mod.value, event.value, region->crossfadeCCCurve) - lastValue)/ length;
-            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(tempSpan.subspan(lastDelay), lastValue);
-        applyGain<float>(tempSpan, modulationSpan);
-    }
-
-    for (auto& mod : region->crossfadeCCOutRange) {
-        const auto eventList = resources.midiState.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = crossfadeOut(mod.value, eventList[0].value, region->crossfadeCCCurve);
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (crossfadeOut(mod.value, event.value, region->crossfadeCCCurve) - lastValue)/ length;
-            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(tempSpan.subspan(lastDelay), lastValue);
-        applyGain<float>(tempSpan, modulationSpan);
-    }
-}
-
-void sfz::Voice::panningModulation(absl::Span<float> modulationSpan) noexcept
-{
-    if (!region)
-        return;
-
-    if (region->panCC.empty()) {
-        fill<float>(modulationSpan, region->pan);
-        return;
-    }
-
-    fill<float>(modulationSpan, 1.0f);
-    const auto numSamples = modulationSpan.size();
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!tempBuffer)
-        return;
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
-
-    for (auto& mod : region->panCC) {
-        const auto eventList = resources.midiState.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = mod.value * eventList[0].value;
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (Default::panRange.clamp(mod.value * event.value) - lastValue)/ length;
-            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(tempSpan.subspan(lastDelay), lastValue);
-        applyGain<float>(tempSpan, modulationSpan);
-    }
-
-    add<float>(region->pan, modulationSpan);
-}
-
-void sfz::Voice::widthModulation(absl::Span<float> modulationSpan) noexcept
-{
-    if (!region)
-        return;
-
-    if (region->widthCC.empty()) {
-        fill<float>(modulationSpan, region->width);
-        return;
-    }
-
-    fill<float>(modulationSpan, 1.0f);
-    const auto numSamples = modulationSpan.size();
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!tempBuffer)
-        return;
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
-
-    for (auto& mod : region->widthCC) {
-        const auto eventList = resources.midiState.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = mod.value * eventList[0].value;
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (Default::widthRange.clamp(mod.value * event.value) - lastValue)/ length;
-            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(tempSpan.subspan(lastDelay), lastValue);
-        applyGain<float>(tempSpan, modulationSpan);
-    }
-    add<float>(region->width, modulationSpan);
-}
-
-void sfz::Voice::positionModulation(absl::Span<float> modulationSpan) noexcept
-{
-    if (!region)
-        return;
-
-    if (region->positionCC.empty()) {
-        fill<float>(modulationSpan, region->position);
-        return;
-    }
-
-    fill<float>(modulationSpan, 1.0f);
-    const auto numSamples = modulationSpan.size();
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!tempBuffer)
-        return;
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
-
-    for (auto& mod : region->positionCC) {
-        const auto eventList = resources.midiState.getEvents(mod.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = mod.value * eventList[0].value;
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (Default::positionRange.clamp(mod.value * event.value) - lastValue)/ length;
-            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(tempSpan.subspan(lastDelay), lastValue);
-        applyGain<float>(tempSpan, modulationSpan);
-    }
-    add<float>(region->position, modulationSpan);
-}
-
 void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
@@ -474,21 +259,29 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationBuffer)
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationBuffer || !tempBuffer)
         return;
     auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+    using namespace std::placeholders;
+    const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
+    const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        amplitudeModulation(modulationSpan);
+        fill<float>(modulationSpan, baseGain);
+        resources.midiState.multiplicativeModifiers(region->amplitudeCC, modulationSpan, tempSpan);
         DBG("Final gain: " << modulationSpan.back());
         applyGain<float>(modulationSpan, leftBuffer);
 
         // Crossfade envelopes
         // crossfadeEnvelope.getBlock(modulationSpan);
-        crossfadeModulation(modulationSpan);
+        fill<float>(modulationSpan, 1.0f);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, modulationSpan, tempSpan, xfinBind);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, modulationSpan, tempSpan, xfoutBind);
         DBG("XF: " << modulationSpan.back());
         applyGain<float>(modulationSpan, leftBuffer);
 
@@ -522,7 +315,8 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         copy<float>(leftBuffer, rightBuffer);
 
         // Apply panning
-        panningModulation(modulationSpan);
+        fill<float>(modulationSpan, region->pan);
+        resources.midiState.additiveModifiers(region->panCC, modulationSpan, tempSpan);
         DBG("Pan: " << modulationSpan.back());
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
     }
@@ -535,19 +329,29 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationBuffer)
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationBuffer || !tempBuffer)
         return;
     auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
+    using namespace std::placeholders;
+    const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
+    const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        amplitudeModulation(modulationSpan);
+        fill<float>(modulationSpan, baseGain);
+        resources.midiState.multiplicativeModifiers(region->amplitudeCC, modulationSpan, tempSpan);
+        DBG("Final gain: " << modulationSpan.back());
         buffer.applyGain(modulationSpan);
 
         // Crossfade envelopes
-        crossfadeModulation(modulationSpan);
+        fill<float>(modulationSpan, 1.0f);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, modulationSpan, tempSpan, xfinBind);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, modulationSpan, tempSpan, xfoutBind);
         buffer.applyGain(modulationSpan);
 
         // Volume envelope
@@ -563,14 +367,20 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { panningDuration };
 
         // Apply panning
-        panningModulation(modulationSpan);
+        // panningModulation(modulationSpan);
+        fill<float>(modulationSpan, region->pan);
+        resources.midiState.additiveModifiers(region->panCC, modulationSpan, tempSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
 
         // Apply the width/position process
-        widthModulation(modulationSpan);
+        // widthModulation(modulationSpan);
+        fill<float>(modulationSpan, region->width);
+        resources.midiState.additiveModifiers(region->widthCC, modulationSpan, tempSpan);
         width<float>(modulationSpan, leftBuffer, rightBuffer);
 
-        positionModulation(modulationSpan);
+        // positionModulation(modulationSpan);
+        fill<float>(modulationSpan, region->position);
+        resources.midiState.additiveModifiers(region->positionCC, modulationSpan, tempSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
     }
 

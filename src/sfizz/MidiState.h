@@ -8,6 +8,8 @@
 #include <array>
 #include "CCMap.h"
 #include "Range.h"
+#include "absl/types/span.h"
+#include "SIMDHelpers.h"
 
 namespace sfz
 {
@@ -132,18 +134,68 @@ public:
      * @param lambda the function to apply for each modifier
      * @return T
      */
-    template<class T, class U>
-    T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
+    template<class T, class F = decltype(gainModifier<T>)>
+    float fastAdditiveModifiers(const CCMap<T>& modifiers, F&& lambda = gainModifier<T>) const noexcept
     {
+        float returnedValue { 0.0f };
         for (auto& mod: modifiers) {
-            lambda(value, getCCValue(mod.cc) * mod.value);
+            returnedValue += lambda(getCCValue(mod.cc), mod.value);
         }
-        return validRange.clamp(value);
+        return returnedValue;
     }
+
+    template<class T, class F = decltype(gainModifier<T>)>
+    float fastMultiplicativeModifiers(const CCMap<T>& modifiers, F&& lambda = gainModifier<T>) const noexcept
+    {
+        float returnedValue { 1.0f };
+        for (auto& mod: modifiers) {
+            returnedValue *= lambda(getCCValue(mod.cc), mod.value);
+        }
+        return returnedValue;
+    }
+
+    template<class T, class F = decltype(gainModifier<T>)>
+    void additiveModifiers(const CCMap<T>& modifiers, absl::Span<float> output, absl::Span<float> temp, F&& lambda = gainModifier<T>)
+    {
+        fill<float>(output, 0.0f);
+        for (auto& mod : modifiers) {
+            linearEnvelope(mod, temp, lambda);
+            add<float>(temp, output);
+        }
+    }
+
+    template<class T, class F = decltype(gainModifier<T>)>
+    void multiplicativeModifiers(const CCMap<T>& modifiers, absl::Span<float> output, absl::Span<float> temp, F&& lambda = gainModifier<T>)
+    {
+        for (auto& mod : modifiers) {
+            linearEnvelope(mod, temp, lambda);
+            applyGain<float>(temp, output);
+        }
+    }
+
 
     const EventVector& getEvents(int ccIdx) const noexcept;
 
 private:
+
+    template<class T, class F>
+    void linearEnvelope(T&& modifier, absl::Span<float> envelope, F&& lambda) const
+    {
+        const auto eventList = getEvents(modifier.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = lambda(modifier.value, eventList[0].value);
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (lambda(modifier.value, event.value) - lastValue)/ length;
+            lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(envelope.subspan(lastDelay), lastValue);
+    }
 	int activeNotes { 0 };
 
     /**

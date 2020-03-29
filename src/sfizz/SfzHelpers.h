@@ -274,26 +274,6 @@ bool findDefine(absl::string_view line, absl::string_view& variable, absl::strin
  */
 bool findInclude(absl::string_view line, std::string& path);
 
-/**
- * @brief Defines a function that modulates a base value with another one
- *
- * @tparam T
- */
-template<class T, class U>
-using modFunction = std::function<void(T&, U)>;
-
-/**
- * @brief Modulation helper that adds the modifier to the base value
- *
- * @tparam T
- * @param base the base value
- * @param modifier the modifier value
- */
-template<class T>
-inline CXX14_CONSTEXPR void addToBase(T& base, T modifier)
-{
-    base += modifier;
-}
 
 /**
  * @brief multiply a value by a factor, in cents. To be used for pitch variations.
@@ -301,9 +281,15 @@ inline CXX14_CONSTEXPR void addToBase(T& base, T modifier)
  * @param base
  * @param modifier
  */
-inline CXX14_CONSTEXPR void multiplyByCents(float& base, int modifier)
+inline CXX14_CONSTEXPR float multiplyByCentsModifier(int modifier, float base)
 {
-    base *= centsFactor(modifier);
+   return base * centsFactor(modifier);
+}
+
+template<class T>
+inline CXX14_CONSTEXPR float gainModifier(T modifier, float value)
+{
+    return value * modifier;
 }
 
 
