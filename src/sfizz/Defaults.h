@@ -54,9 +54,10 @@ namespace Default
 	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };
 	constexpr Range<uint32_t> loopRange { 0, std::numeric_limits<uint32_t>::max() };
 
-    // Global ranges
+    // common defaults
     constexpr Range<uint8_t> midi7Range { 0, 127 };
     constexpr Range<float> normalizedRange { 0.0f, 1.0f };
+    constexpr float zeroModifier { 0.0f };
 
     // Wavetable oscillator
     constexpr float oscillatorPhase { 0.0 };

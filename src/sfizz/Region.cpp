@@ -305,22 +305,34 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             amplitudeCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("pan"):
-        setValueFromOpcode(opcode, pan, Default::panRange);
+        if (auto value = readOpcode(opcode.value, Default::panRange))
+            pan = normalizePercents(*value);
         break;
     case hash("pan_oncc&"):
-        setCCPairFromOpcode(opcode, panCC, Default::panCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::panCCRange))
+            panCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("position"):
-        setValueFromOpcode(opcode, position, Default::positionRange);
+        if (auto value = readOpcode(opcode.value, Default::positionRange))
+            position = normalizePercents(*value);
         break;
     case hash("position_oncc&"):
-        setCCPairFromOpcode(opcode, positionCC, Default::positionCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::positionCCRange))
+            positionCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("width"):
-        setValueFromOpcode(opcode, width, Default::widthRange);
+        if (auto value = readOpcode(opcode.value, Default::widthRange))
+            width = normalizePercents(*value);
         break;
     case hash("width_oncc&"):
-        setCCPairFromOpcode(opcode, widthCC, Default::widthCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::widthCCRange))
+            widthCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);

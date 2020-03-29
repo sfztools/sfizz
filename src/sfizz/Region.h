@@ -277,10 +277,10 @@ struct Region {
     float width { Default::width }; // width
     float position { Default::position }; // position
     absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
-    CCMap<float> amplitudeCC { Default::amplitude }; // amplitude_oncc
-    absl::optional<CCValuePair<float>> panCC; // pan_oncc
-    absl::optional<CCValuePair<float>> widthCC; // width_oncc
-    absl::optional<CCValuePair<float>> positionCC; // position_oncc
+    CCMap<float> amplitudeCC { Default::zeroModifier }; // amplitude_oncc
+    CCMap<float> panCC { Default::zeroModifier }; // pan_oncc
+    CCMap<float> widthCC { Default::zeroModifier }; // width_oncc
+    CCMap<float> positionCC { Default::zeroModifier }; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack

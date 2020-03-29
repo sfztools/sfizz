@@ -268,9 +268,6 @@ private:
     float pitchRatio { 1.0 };
     float baseVolumedB{ 0.0 };
     float baseGain { 1.0 };
-    float basePan { 0.0 };
-    float basePosition { 0.0 };
-    float baseWidth { 0.0 };
     float baseFrequency { 440.0 };
     float phase { 0.0f };
 

@@ -85,24 +85,6 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
 
-    basePan = normalizePercents(region->pan);
-    auto pan = basePan;
-    if (region->panCC)
-        pan += resources.midiState.getCCValue(region->panCC->cc) * normalizePercents(region->panCC->value);
-    panEnvelope.reset(Default::symmetricNormalizedRange.clamp(pan));
-
-    basePosition = normalizePercents(region->position);
-    auto position = basePosition;
-    if (region->positionCC)
-        position += resources.midiState.getCCValue(region->positionCC->cc) * normalizePercents(region->positionCC->value);
-    positionEnvelope.reset(Default::symmetricNormalizedRange.clamp(position));
-
-    baseWidth = normalizePercents(region->width);
-    auto width = baseWidth;
-    if (region->widthCC)
-        width += resources.midiState.getCCValue(region->widthCC->cc) * normalizePercents(region->widthCC->value);
-    widthEnvelope.reset(Default::symmetricNormalizedRange.clamp(width));
-
     pitchBendEnvelope.setFunction([region](float pitchValue){
         const auto normalizedBend = normalizeBend(pitchValue);
         const auto bendInCents = normalizedBend > 0.0f ? normalizedBend * static_cast<float>(region->bendUp) : -normalizedBend * static_cast<float>(region->bendDown);
@@ -198,21 +180,6 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (region->volumeCC && ccNumber == region->volumeCC->cc) {
         const float newVolumedB { baseVolumedB + ccValue * region->volumeCC->value };
         volumeEnvelope.registerEvent(delay, db2mag(Default::volumeRange.clamp(newVolumedB)));
-    }
-
-    if (region->panCC && ccNumber == region->panCC->cc) {
-        const float newPan { basePan + ccValue * normalizePercents(region->panCC->value) };
-        panEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPan));
-    }
-
-    if (region->positionCC && ccNumber == region->positionCC->cc) {
-        const float newPosition { basePosition + ccValue * normalizePercents(region->positionCC->value) };
-        positionEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newPosition));
-    }
-
-    if (region->widthCC && ccNumber == region->widthCC->cc) {
-        const float newWidth { baseWidth + ccValue * normalizePercents(region->widthCC->value) };
-        widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
 }
 
@@ -378,7 +345,9 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         copy<float>(leftBuffer, rightBuffer);
 
         // Apply panning
-        panEnvelope.getBlock(modulationSpan);
+        fill<float>(modulationSpan, 0.0f);
+        getLinearEnvelope<float>(region->panCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
+        add<float>(region->pan, modulationSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
     }
 }
@@ -431,13 +400,20 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { panningDuration };
 
         // Apply panning
-        panEnvelope.getBlock(modulationSpan);
+        fill<float>(modulationSpan, 0.0f);
+        getLinearEnvelope<float>(region->panCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
+        add<float>(region->pan, modulationSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
 
         // Apply the width/position process
-        widthEnvelope.getBlock(modulationSpan);
+        fill<float>(modulationSpan, 0.0f);
+        getLinearEnvelope<float>(region->widthCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
+        add<float>(region->width, modulationSpan);
         width<float>(modulationSpan, leftBuffer, rightBuffer);
-        positionEnvelope.getBlock(modulationSpan);
+
+        fill<float>(modulationSpan, 0.0f);
+        getLinearEnvelope<float>(region->positionCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
+        add<float>(region->position, modulationSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
     }
 
