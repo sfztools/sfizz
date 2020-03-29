@@ -272,10 +272,10 @@ struct Region {
 
     // Performance parameters: amplifier
     float volume { Default::volume }; // volume
-    float amplitude { Default::amplitude }; // amplitude
-    float pan { Default::pan }; // pan
-    float width { Default::width }; // width
-    float position { Default::position }; // position
+    float amplitude { normalizePercents(Default::amplitude) }; // amplitude
+    float pan { normalizePercents(Default::pan) }; // pan
+    float width { normalizePercents(Default::width) }; // width
+    float position { normalizePercents(Default::position) }; // position
     absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
     CCMap<float> amplitudeCC { Default::zeroModifier }; // amplitude_oncc
     CCMap<float> panCC { Default::zeroModifier }; // pan_oncc

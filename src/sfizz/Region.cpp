@@ -295,7 +295,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setCCPairFromOpcode(opcode, volumeCC, Default::volumeCCRange);
         break;
     case hash("amplitude"):
-        setValueFromOpcode(opcode, amplitude, Default::amplitudeRange);
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            amplitude = normalizePercents(*value);
         break;
     case hash("amplitude_cc&"): // fallthrough
     case hash("amplitude_oncc&"):
@@ -985,7 +986,7 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 
 float sfz::Region::getBaseGain() const noexcept
 {
-    return normalizePercents(amplitude);
+    return amplitude;
 }
 
 float sfz::Region::getPhase() const noexcept
