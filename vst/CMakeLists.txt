@@ -60,6 +60,10 @@ set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
 plugin_add_vst3sdk(${VSTPLUGIN_PRJ_NAME})
 plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
 
+# Add the ring buffer
+target_include_directories(${VSTPLUGIN_PRJ_NAME} PRIVATE "external/ring_buffer")
+target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE "external/ring_buffer/ring_buffer/ring_buffer.cpp")
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/vst3.version")

@@ -31,6 +31,8 @@ enum {
 
 class SfizzVstState {
 public:
+    SfizzVstState() { sfzFile.reserve(8192); }
+
     std::string sfzFile;
     float volume = 0;
     int32 numVoices = 64;

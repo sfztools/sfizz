@@ -199,7 +199,7 @@ void SfizzVstEditor::loadSfzFile(const std::string& filePath)
 
     msg->setMessageID("LoadSfz");
     Vst::IAttributeList* attr = msg->getAttributes();
-    attr->setString("File", Steinberg::String(filePath.c_str()).text());
+    attr->setBinary("File", filePath.data(), filePath.size());
     ctl->sendMessage(msg);
     msg->release();
 

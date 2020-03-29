@@ -7,12 +7,13 @@
 #pragma once
 #include "SfizzVstState.h"
 #include "RTSemaphore.h"
+#include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
-#include "public.sdk/source/vst/utility/ringbuffer.h"
 #include <sfizz.hpp>
 #include <thread>
 #include <mutex>
 #include <memory>
+#include <cstdlib>
 
 using namespace Steinberg;
 
@@ -51,16 +52,40 @@ private:
     // worker and thread sync
     std::thread _worker;
     volatile bool _workRunning = false;
-    Steinberg::OneReaderOneWriter::RingBuffer<Vst::IMessage*> _fifoToWorker;
+    Ring_Buffer _fifoToWorker;
     RTSemaphore _semaToWorker;
     std::mutex _processMutex;
 
     // file modification periodic checker
     uint32 _fileChangeCounter = 0;
     uint32 _fileChangePeriod = 0;
-    IPtr<Vst::IMessage> _msgCheckShouldReload;
+
+    // messaging
+    struct RTMessage {
+        const char* type;
+        uintptr_t size;
+        // 32-bit aligned data after header
+        template <class T> const T* payload() const;
+    };
+    struct RTMessageDelete {
+        void operator()(RTMessage* x) const noexcept { std::free(x); }
+    };
+    typedef std::unique_ptr<RTMessage, RTMessageDelete> RTMessagePtr;
 
     // worker
     void doBackgroundWork();
     void stopBackgroundWork();
+    // writer
+    bool writeWorkerMessage(const char* type, const void* data, uintptr_t size);
+    // reader
+    RTMessagePtr readWorkerMessage();
+    bool discardWorkerMessage();
 };
+
+//------------------------------------------------------------------------------
+
+template <class T> const T* SfizzVstProcessor::RTMessage::payload() const
+{
+    return reinterpret_cast<const T*>(
+        reinterpret_cast<const uint8*>(this) + sizeof(*this));
+}
