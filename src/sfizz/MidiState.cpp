@@ -33,6 +33,7 @@ void sfz::MidiState::noteOffEvent(int delay, int noteNumber, float velocity) noe
     ASSERT(velocity >= 0.0 && velocity <= 1.0);
     UNUSED(velocity);
     if (noteNumber >= 0 && noteNumber < 128) {
+        noteOffTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
         if (activeNotes > 0)
             activeNotes--;
     }
@@ -44,6 +45,7 @@ void sfz::MidiState::setSampleRate(float sampleRate) noexcept
     this->sampleRate = sampleRate;
     internalClock = 0;
     absl::c_fill(noteOnTimes, 0);
+    absl::c_fill(noteOffTimes, 0);
 }
 
 void sfz::MidiState::advanceTime(int numSamples) noexcept
@@ -59,13 +61,14 @@ void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
 float sfz::MidiState::getNoteDuration(int noteNumber, int delay) const
 {
     ASSERT(noteNumber >= 0 && noteNumber < 128);
+    if (noteNumber < 0 || noteNumber >= 128)
+        return 0.0f;
 
-    if (noteNumber >= 0 && noteNumber < 128) {
-        const unsigned timeInSamples = internalClock + static_cast<unsigned>(delay) - noteOnTimes[noteNumber];
-        return static_cast<float>(timeInSamples) / sampleRate;
-    }
+    if (noteOnTimes[noteNumber] != 0 && noteOffTimes[noteNumber] != 0 && noteOnTimes[noteNumber] > noteOffTimes[noteNumber])
+        return 0.0f;
 
-    return 0.0f;
+    const unsigned timeInSamples = internalClock + static_cast<unsigned>(delay) - noteOnTimes[noteNumber];
+    return static_cast<float>(timeInSamples) / sampleRate;
 }
 
 float sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
@@ -114,6 +117,7 @@ void sfz::MidiState::reset(int delay) noexcept
     activeNotes = 0;
     internalClock = 0;
     absl::c_fill(noteOnTimes, 0);
+    absl::c_fill(noteOffTimes, 0);
 }
 
 void sfz::MidiState::resetAllControllers(int delay) noexcept

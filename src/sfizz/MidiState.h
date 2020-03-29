@@ -151,6 +151,11 @@ private:
      */
 	MidiNoteArray<unsigned> noteOnTimes {};
     /**
+     * @brief Stores the note off times.
+     *
+     */
+	MidiNoteArray<unsigned> noteOffTimes {};
+    /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
      *
