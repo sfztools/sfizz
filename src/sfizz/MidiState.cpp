@@ -51,6 +51,12 @@ void sfz::MidiState::setSampleRate(float sampleRate) noexcept
 void sfz::MidiState::advanceTime(int numSamples) noexcept
 {
     internalClock += numSamples;
+    for (auto& ccEvents: cc) {
+        ASSERT(!ccEvents.empty()); // CC event vectors should never be empty
+        ccEvents.front().second = ccEvents.back().second;
+        ccEvents.front().first = 0;
+        ccEvents.resize(1);
+    }
 }
 
 void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept

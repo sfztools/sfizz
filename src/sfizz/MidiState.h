@@ -96,7 +96,8 @@ public:
 
     /**
      * @brief Advances the internal clock of a given amount of samples.
-     * You should call this at each callback.
+     * You should call this at each callback. This will flush the events
+     * in the midistate memory.
      *
      * @param numSamples the number of samples of clock advance
      */
