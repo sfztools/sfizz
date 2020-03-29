@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "MathHelpers.h"
 #include "absl/meta/type_traits.h"
+#include "Defaults.h"
 
 namespace sfz
 {
@@ -303,6 +304,56 @@ inline CXX14_CONSTEXPR void addToBase(T& base, T modifier)
 inline CXX14_CONSTEXPR void multiplyByCents(float& base, int modifier)
 {
     base *= centsFactor(modifier);
+}
+
+
+/**
+ * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
+ */
+template<class T, class U>
+float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+{
+    if (value < crossfadeRange.getStart())
+        return 0.0f;
+
+    const auto length = static_cast<float>(crossfadeRange.length());
+    if (length == 0.0f)
+        return 1.0f;
+
+    else if (value < crossfadeRange.getEnd()) {
+        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
+        if (curve == SfzCrossfadeCurve::power)
+            return sqrt(crossfadePosition);
+        if (curve == SfzCrossfadeCurve::gain)
+            return crossfadePosition;
+    }
+
+    return 1.0f;
+}
+
+
+/**
+ * @brief Compute a crossfade out value with respect to a crossfade range (note, velocity, cc, ...)
+ */
+template<class T, class U>
+float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+{
+    if (value > crossfadeRange.getEnd())
+        return 0.0f;
+
+    const auto length = static_cast<float>(crossfadeRange.length());
+    if (length == 0.0f)
+        return 1.0f;
+
+    else if (value > crossfadeRange.getStart()) {
+        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
+        if (curve == SfzCrossfadeCurve::power)
+            return std::sqrt(1 - crossfadePosition);
+        if (curve == SfzCrossfadeCurve::gain)
+            return 1 - crossfadePosition;
+    }
+
+    return 1.0f;
 }
 
 } // namespace sfz

@@ -1016,48 +1016,6 @@ uint32_t sfz::Region::loopEnd(Oversampling factor) const noexcept
     return loopRange.getEnd() * static_cast<uint32_t>(factor);
 }
 
-template<class T, class U>
-float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
-{
-    if (value < crossfadeRange.getStart())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
-        return 1.0f;
-
-    else if (value < crossfadeRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
-            return sqrt(crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
-            return crossfadePosition;
-    }
-
-    return 1.0f;
-}
-
-template<class T, class U>
-float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
-{
-    if (value > crossfadeRange.getEnd())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
-        return 1.0f;
-
-    else if (value > crossfadeRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
-            return std::sqrt(1 - crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
-            return 1 - crossfadePosition;
-    }
-
-    return 1.0f;
-}
-
 float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
