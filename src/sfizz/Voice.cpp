@@ -280,11 +280,9 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationBuffer || !tempBuffer)
+    if (!modulationBuffer)
         return;
     auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
@@ -294,9 +292,9 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         getLinearEnvelope<float>(region->amplitudeCC, resources.midiState, modulationSpan, [](const float& modifier, float value){
             return value * modifier;
         });
-        DBG("Amplitude curve back: " << modulationSpan.back());
+        // DBG("Amplitude curve back: " << modulationSpan.back());
         add<float>(baseGain, modulationSpan);
-        DBG("FInal gain: " << modulationSpan.back());
+        // DBG("Final gain: " << modulationSpan.back());
         applyGain<float>(modulationSpan, leftBuffer);
 
         // Crossfade envelopes
@@ -306,14 +304,14 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
             return crossfadeIn(range, value, region->crossfadeCCCurve);
         });
         applyGain<float>(modulationSpan, leftBuffer);
-        DBG("XFin: " << modulationSpan.back());
+        // DBG("XFin: " << modulationSpan.back());
 
         fill<float>(modulationSpan, 1.0f);
         getLinearEnvelope<Range<float>>(region->crossfadeCCOutRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
             return crossfadeOut(range, value, region->crossfadeCCCurve);
         });
         applyGain<float>(modulationSpan, leftBuffer);
-        DBG("XFout: " << modulationSpan.back());
+        // DBG("XFout: " << modulationSpan.back());
 
         // Volume envelope
         volumeEnvelope.getBlock(modulationSpan);
@@ -359,11 +357,9 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationBuffer || !tempBuffer)
+    if (!modulationBuffer)
         return;
     auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
