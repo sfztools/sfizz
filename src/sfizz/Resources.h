@@ -25,5 +25,18 @@ struct Resources
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
     WavetablePool wavePool;
+
+    void setSampleRate(float samplerate)
+    {
+        midiState.setSampleRate(samplerate);
+        filterPool.setSampleRate(samplerate);
+        eqPool.setSampleRate(samplerate);
+    }
+
+    void setSamplesPerBlock(int samplesPerBlock)
+    {
+        bufferPool.setBufferSize(samplesPerBlock);
+        midiState.setSamplesPerBlock(samplesPerBlock);
+    }
 };
 }
