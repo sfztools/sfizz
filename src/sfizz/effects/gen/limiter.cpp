@@ -51,7 +51,7 @@ public:
     void instanceConstants(int sample_rate)
     {
         fSampleRate = sample_rate;
-        fConst0 = std::min<float>(192000.0f, std::max<float>(1.0f, float(fSampleRate)));
+        fConst0 = (std::min<float>(192000.0f, std::max<float>(1.0f, float(fSampleRate))) * float(_oversampling));
         fConst1 = std::exp((0.0f - (2500.0f / fConst0)));
         fConst2 = (1.0f - fConst1);
         fConst3 = std::exp((0.0f - (1250.0f / fConst0)));

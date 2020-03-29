@@ -6,6 +6,8 @@
 
 #pragma once
 #include "Effects.h"
+#include "hiir/Downsampler2xFpu.h"
+#include "hiir/Upsampler2xFpu.h"
 class faustLimiter;
 
 namespace sfz {
@@ -47,6 +49,9 @@ namespace fx {
 
     private:
         std::unique_ptr<faustLimiter> _limiter;
+        AudioBuffer<float, 2> _tempBuffer2x { 2, 2 * config::defaultSamplesPerBlock };
+        hiir::Downsampler2xFpu<12> _downsampler2x[EffectChannels];
+        hiir::Upsampler2xFpu<12> _upsampler2x[EffectChannels];
     };
 
 } // namespace fx
