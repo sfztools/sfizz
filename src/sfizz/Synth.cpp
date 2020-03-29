@@ -687,6 +687,8 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned activeNotesInGroup { 0 };
+            unsigned activeNotes { 0 };
+            Voice* selfMaskCandidate { nullptr };
 
             for (auto& voice : voices) {
                 const auto voiceRegion = voice->getRegion();
@@ -696,12 +698,37 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 if (voiceRegion->group == region->group)
                     activeNotesInGroup += 1;
 
+                if (region->notePolyphony) {
+                    if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
+                        activeNotes += 1;
+                        switch (region->selfMask) {
+                            case SfzSelfMask::mask:
+                                if (voice->getTriggerValue() < velocity) {
+                                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
+                                        selfMaskCandidate = voice.get();
+                                }
+                                break;
+                            case SfzSelfMask::dontMask:
+                                if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
+                                    selfMaskCandidate = voice.get();
+                                break;
+                        }
+                    }
+                }
+
                 if (voice->checkOffGroup(delay, region->group))
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
 
             if (activeNotesInGroup >= groupMaxPolyphony[region->group])
                 continue;
+
+            if (region->notePolyphony && activeNotes >= *region->notePolyphony) {
+                if (selfMaskCandidate != nullptr)
+                    selfMaskCandidate->release(delay);
+                else // We're the lowest velocity guy here
+                    continue;
+            }
 
             auto voice = findFreeVoice();
             if (voice == nullptr)
