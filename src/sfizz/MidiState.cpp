@@ -95,14 +95,14 @@ void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
 
-    cc[ccNumber] = ccValue;
+    cc[ccNumber].emplace_back(delay, ccValue);
 }
 
 float sfz::MidiState::getCCValue(int ccNumber) const noexcept
 {
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
 
-    return cc[ccNumber];
+    return cc[ccNumber].back().second;
 }
 
 void sfz::MidiState::reset(int delay) noexcept
@@ -110,8 +110,10 @@ void sfz::MidiState::reset(int delay) noexcept
     for (auto& velocity: lastNoteVelocities)
         velocity = 0;
 
-    for (auto& ccValue: cc)
-        ccValue = 0;
+    for (auto& ccEvents: cc) {
+        ccEvents.clear();
+        ccEvents.emplace_back(0, 0.0f);
+    }
 
     pitchBend = 0;
     activeNotes = 0;
@@ -122,8 +124,10 @@ void sfz::MidiState::reset(int delay) noexcept
 
 void sfz::MidiState::resetAllControllers(int delay) noexcept
 {
-    for (unsigned idx = 0; idx < config::numCCs; idx++)
-        cc[idx] = 0;
+    for (auto& ccEvents: cc) {
+        ccEvents.clear();
+        ccEvents.emplace_back(0, 0.0f);
+    }
 
     pitchBend = 0;
 }

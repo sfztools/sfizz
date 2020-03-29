@@ -143,6 +143,8 @@ public:
 private:
     template<class T>
     using MidiNoteArray = std::array<T, 128>;
+    using MidiEvent = std::pair<int, float>;
+    using EventVector = std::vector<MidiEvent>;
 	int activeNotes { 0 };
 
     /**
@@ -165,7 +167,7 @@ private:
      * @brief Current known values for the CCs.
      *
      */
-	std::array<float, config::numCCs> cc;
+	std::array<EventVector, config::numCCs> cc;
     /**
      * Pitch bend status
      */
