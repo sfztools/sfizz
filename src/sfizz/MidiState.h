@@ -113,7 +113,7 @@ public:
      * @brief Reset the midi state (does not impact the last note on time)
      *
      */
-    void reset(int delay) noexcept;
+    void reset() noexcept;
 
     /**
      * @brief Reset all the controllers

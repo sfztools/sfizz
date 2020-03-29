@@ -10,7 +10,7 @@
 
 sfz::MidiState::MidiState()
 {
-    reset(0);
+    reset();
 }
 
 void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noexcept
@@ -105,7 +105,7 @@ float sfz::MidiState::getCCValue(int ccNumber) const noexcept
     return cc[ccNumber].back().second;
 }
 
-void sfz::MidiState::reset(int delay) noexcept
+void sfz::MidiState::reset() noexcept
 {
     for (auto& velocity: lastNoteVelocities)
         velocity = 0;
@@ -124,10 +124,8 @@ void sfz::MidiState::reset(int delay) noexcept
 
 void sfz::MidiState::resetAllControllers(int delay) noexcept
 {
-    for (auto& ccEvents: cc) {
-        ccEvents.clear();
-        ccEvents.emplace_back(0, 0.0f);
-    }
+    for (unsigned ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
+        ccEvent(delay, ccIdx, 0.0f);
 
     pitchBend = 0;
 }

@@ -151,7 +151,7 @@ void sfz::Synth::clear()
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    resources.midiState.reset(0);
+    resources.midiState.reset();
     ccNames.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
