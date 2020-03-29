@@ -6,6 +6,7 @@
 
 #pragma once
 #include "FilePool.h"
+#include "BufferPool.h"
 #include "FilterPool.h"
 #include "EQPool.h"
 #include "Logger.h"
@@ -17,6 +18,7 @@ class WavetableMulti;
 
 struct Resources
 {
+    BufferPool bufferPool;
     MidiState midiState;
     Logger logger;
     FilePool filePool { logger };
