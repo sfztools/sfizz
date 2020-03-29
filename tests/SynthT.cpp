@@ -332,3 +332,45 @@ TEST_CASE("[Synth] Gain to mix")
     REQUIRE( bus->gainToMain() == 0 );
     REQUIRE( bus->gainToMix() == 0.5 );
 }
+
+TEST_CASE("[Synth] group polyphony limits")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/polyphony.sfz");
+    synth.noteOn(0, 65, 64);
+    synth.noteOn(0, 65, 64);
+    synth.noteOn(0, 65, 64);
+    REQUIRE(synth.getNumActiveVoices() == 2); // group polyphony should block the last note
+}
+
+TEST_CASE("[Synth] Self-masking")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/polyphony.sfz");
+    synth.noteOn(0, 64, 63);
+    synth.noteOn(0, 64, 62);
+    synth.noteOn(0, 64, 64);
+    REQUIRE(synth.getNumActiveVoices() == 3); // One of these is releasing
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(0)->canBeStolen());
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE(synth.getVoiceView(1)->canBeStolen()); // The lowest velocity voice is the masking candidate
+    REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
+    REQUIRE(!synth.getVoiceView(2)->canBeStolen());
+}
+
+TEST_CASE("[Synth] Not self-masking")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/polyphony.sfz");
+    synth.noteOn(0, 66, 63);
+    synth.noteOn(0, 66, 62);
+    synth.noteOn(0, 66, 64);
+    REQUIRE(synth.getNumActiveVoices() == 3); // One of these is releasing
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE(synth.getVoiceView(0)->canBeStolen()); // The first encountered voice is the masking candidate
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE(!synth.getVoiceView(1)->canBeStolen());
+    REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
+    REQUIRE(!synth.getVoiceView(2)->canBeStolen());
+}
