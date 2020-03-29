@@ -38,7 +38,7 @@ namespace config {
     constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
-    constexpr int maxVoices { 256 };
+    constexpr unsigned maxVoices { 256 };
     constexpr int maxFilePromises { maxVoices * 2 };
     constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };
