@@ -250,6 +250,13 @@ private:
      * @param buffer
      */
     void processStereo(AudioSpan<float> buffer) noexcept;
+
+    void amplitudeModulation(absl::Span<float> modulationSpan) noexcept;
+    void crossfadeModulation(absl::Span<float> modulationSpan) noexcept;
+    void panningModulation(absl::Span<float> modulationSpan) noexcept;
+    void widthModulation(absl::Span<float> modulationSpan) noexcept;
+    void positionModulation(absl::Span<float> modulationSpan) noexcept;
+
     Region* region { nullptr };
 
     enum class State {

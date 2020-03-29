@@ -253,7 +253,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 }
 
 template<class T>
-void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> temp, std::function<float(const T&, float)> function)
+void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> output, absl::Span<float> temp, std::function<float(const T&, float)> function)
 {
     for (auto& mod : ccMods) {
         const auto eventList = state.getEvents(mod.cc);
@@ -270,7 +270,201 @@ void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state,
             lastDelay += length;
         }
         sfz::fill<float>(temp.subspan(lastDelay), lastValue);
+        sfz::applyGain<float>(temp, output);
     }
+}
+
+void sfz::Voice::amplitudeModulation(absl::Span<float> modulationSpan) noexcept
+{
+    fill<float>(modulationSpan, 1.0f);
+    if (!region)
+        return;
+
+    const auto numSamples = modulationSpan.size();
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!tempBuffer)
+        return;
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
+    for (auto& mod : region->amplitudeCC) {
+        const auto eventList = resources.midiState.getEvents(mod.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = mod.value * eventList[0].value;
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (Default::amplitudeRange.clamp(mod.value * event.value) - lastValue)/ length;
+            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(tempSpan.subspan(lastDelay), lastValue);
+        applyGain<float>(tempSpan, modulationSpan);
+    }
+    applyGain<float>(baseGain, modulationSpan);
+}
+
+void sfz::Voice::crossfadeModulation(absl::Span<float> modulationSpan) noexcept
+{
+    fill<float>(modulationSpan, 1.0f);
+    if (!region)
+        return;
+
+    const auto numSamples = modulationSpan.size();
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!tempBuffer)
+        return;
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
+    for (auto& mod : region->crossfadeCCInRange) {
+        const auto eventList = resources.midiState.getEvents(mod.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = crossfadeIn(mod.value, eventList[0].value, region->crossfadeCCCurve);
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (crossfadeIn(mod.value, event.value, region->crossfadeCCCurve) - lastValue)/ length;
+            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(tempSpan.subspan(lastDelay), lastValue);
+        applyGain<float>(tempSpan, modulationSpan);
+    }
+
+    for (auto& mod : region->crossfadeCCOutRange) {
+        const auto eventList = resources.midiState.getEvents(mod.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = crossfadeOut(mod.value, eventList[0].value, region->crossfadeCCCurve);
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (crossfadeOut(mod.value, event.value, region->crossfadeCCCurve) - lastValue)/ length;
+            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(tempSpan.subspan(lastDelay), lastValue);
+        applyGain<float>(tempSpan, modulationSpan);
+    }
+}
+
+void sfz::Voice::panningModulation(absl::Span<float> modulationSpan) noexcept
+{
+    if (!region)
+        return;
+
+    if (region->panCC.empty()) {
+        fill<float>(modulationSpan, region->pan);
+        return;
+    }
+
+    fill<float>(modulationSpan, 1.0f);
+    const auto numSamples = modulationSpan.size();
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!tempBuffer)
+        return;
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
+    for (auto& mod : region->panCC) {
+        const auto eventList = resources.midiState.getEvents(mod.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = mod.value * eventList[0].value;
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (Default::panRange.clamp(mod.value * event.value) - lastValue)/ length;
+            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(tempSpan.subspan(lastDelay), lastValue);
+        applyGain<float>(tempSpan, modulationSpan);
+    }
+
+    add<float>(region->pan, modulationSpan);
+}
+
+void sfz::Voice::widthModulation(absl::Span<float> modulationSpan) noexcept
+{
+    if (!region)
+        return;
+
+    if (region->widthCC.empty()) {
+        fill<float>(modulationSpan, region->width);
+        return;
+    }
+
+    fill<float>(modulationSpan, 1.0f);
+    const auto numSamples = modulationSpan.size();
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!tempBuffer)
+        return;
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
+    for (auto& mod : region->widthCC) {
+        const auto eventList = resources.midiState.getEvents(mod.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = mod.value * eventList[0].value;
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (Default::widthRange.clamp(mod.value * event.value) - lastValue)/ length;
+            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(tempSpan.subspan(lastDelay), lastValue);
+        applyGain<float>(tempSpan, modulationSpan);
+    }
+    add<float>(region->width, modulationSpan);
+}
+
+void sfz::Voice::positionModulation(absl::Span<float> modulationSpan) noexcept
+{
+    if (!region)
+        return;
+
+    if (region->positionCC.empty()) {
+        fill<float>(modulationSpan, region->position);
+        return;
+    }
+
+    fill<float>(modulationSpan, 1.0f);
+    const auto numSamples = modulationSpan.size();
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!tempBuffer)
+        return;
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
+    for (auto& mod : region->positionCC) {
+        const auto eventList = resources.midiState.getEvents(mod.cc);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = mod.value * eventList[0].value;
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (Default::positionRange.clamp(mod.value * event.value) - lastValue)/ length;
+            lastValue = linearRamp<float>(tempSpan.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        fill<float>(tempSpan.subspan(lastDelay), lastValue);
+        applyGain<float>(tempSpan, modulationSpan);
+    }
+    add<float>(region->position, modulationSpan);
 }
 
 void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
@@ -288,30 +482,15 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        fill<float>(modulationSpan, 0.0f);
-        getLinearEnvelope<float>(region->amplitudeCC, resources.midiState, modulationSpan, [](const float& modifier, float value){
-            return value * modifier;
-        });
-        // DBG("Amplitude curve back: " << modulationSpan.back());
-        add<float>(baseGain, modulationSpan);
-        // DBG("Final gain: " << modulationSpan.back());
+        amplitudeModulation(modulationSpan);
+        DBG("Final gain: " << modulationSpan.back());
         applyGain<float>(modulationSpan, leftBuffer);
 
         // Crossfade envelopes
         // crossfadeEnvelope.getBlock(modulationSpan);
-        fill<float>(modulationSpan, 1.0f);
-        getLinearEnvelope<Range<float>>(region->crossfadeCCInRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
-            return crossfadeIn(range, value, region->crossfadeCCCurve);
-        });
+        crossfadeModulation(modulationSpan);
+        DBG("XF: " << modulationSpan.back());
         applyGain<float>(modulationSpan, leftBuffer);
-        // DBG("XFin: " << modulationSpan.back());
-
-        fill<float>(modulationSpan, 1.0f);
-        getLinearEnvelope<Range<float>>(region->crossfadeCCOutRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
-            return crossfadeOut(range, value, region->crossfadeCCCurve);
-        });
-        applyGain<float>(modulationSpan, leftBuffer);
-        // DBG("XFout: " << modulationSpan.back());
 
         // Volume envelope
         volumeEnvelope.getBlock(modulationSpan);
@@ -343,9 +522,8 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         copy<float>(leftBuffer, rightBuffer);
 
         // Apply panning
-        fill<float>(modulationSpan, 0.0f);
-        getLinearEnvelope<float>(region->panCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
-        add<float>(region->pan, modulationSpan);
+        panningModulation(modulationSpan);
+        DBG("Pan: " << modulationSpan.back());
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
     }
 }
@@ -365,22 +543,11 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        fill<float>(modulationSpan, 0.0f);
-        getLinearEnvelope<float>(region->amplitudeCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
-        add<float>(baseGain, modulationSpan);
+        amplitudeModulation(modulationSpan);
         buffer.applyGain(modulationSpan);
 
         // Crossfade envelopes
-        fill<float>(modulationSpan, 1.0f);
-        getLinearEnvelope<Range<float>>(region->crossfadeCCInRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
-            return crossfadeIn(range, value, region->crossfadeCCCurve);
-        });
-        buffer.applyGain(modulationSpan);
-
-        fill<float>(modulationSpan, 1.0f);
-        getLinearEnvelope<Range<float>>(region->crossfadeCCOutRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
-            return crossfadeOut(range, value, region->crossfadeCCCurve);
-        });
+        crossfadeModulation(modulationSpan);
         buffer.applyGain(modulationSpan);
 
         // Volume envelope
@@ -396,20 +563,14 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { panningDuration };
 
         // Apply panning
-        fill<float>(modulationSpan, 0.0f);
-        getLinearEnvelope<float>(region->panCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
-        add<float>(region->pan, modulationSpan);
+        panningModulation(modulationSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
 
         // Apply the width/position process
-        fill<float>(modulationSpan, 0.0f);
-        getLinearEnvelope<float>(region->widthCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
-        add<float>(region->width, modulationSpan);
+        widthModulation(modulationSpan);
         width<float>(modulationSpan, leftBuffer, rightBuffer);
 
-        fill<float>(modulationSpan, 0.0f);
-        getLinearEnvelope<float>(region->positionCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
-        add<float>(region->position, modulationSpan);
+        positionModulation(modulationSpan);
         pan<float>(modulationSpan, leftBuffer, rightBuffer);
     }
 
