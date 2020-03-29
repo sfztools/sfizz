@@ -202,12 +202,12 @@ private:
      * @brief Stores the note on times.
      *
      */
-	MidiNoteArray<unsigned> noteOnTimes {};
+	MidiNoteArray<unsigned> noteOnTimes {{}};
     /**
      * @brief Stores the note off times.
      *
      */
-	MidiNoteArray<unsigned> noteOffTimes {};
+	MidiNoteArray<unsigned> noteOffTimes {{}};
     /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
