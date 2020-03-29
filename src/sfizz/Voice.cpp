@@ -257,14 +257,6 @@ void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
     this->minEnvelopeDelay = samplesPerBlock / 2;
-    tempBuffer1.resize(samplesPerBlock);
-    tempBuffer2.resize(samplesPerBlock);
-    tempBuffer3.resize(samplesPerBlock);
-    indexBuffer.resize(samplesPerBlock);
-    tempSpan1 = absl::MakeSpan(tempBuffer1);
-    tempSpan2 = absl::MakeSpan(tempBuffer2);
-    tempSpan3 = absl::MakeSpan(tempBuffer3);
-    indexSpan = absl::MakeSpan(indexBuffer);
 }
 
 void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
@@ -331,8 +323,12 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationSpan = tempSpan1.first(numSamples);
-    auto tempSpan = tempSpan2.first(numSamples);
+    auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationBuffer || !tempBuffer)
+        return;
+    auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
@@ -384,10 +380,15 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
-    auto modulationSpan = tempSpan1.first(numSamples);
-    auto tempSpan = tempSpan2.first(numSamples);
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
+
+    auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
+    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationBuffer || !tempBuffer)
+        return;
+    auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
+    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
@@ -442,7 +443,8 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 
 void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 {
-    if (buffer.getNumFrames() == 0)
+    const auto numSamples = buffer.getNumFrames();
+    if (numSamples == 0)
         return;
 
     if (currentPromise == nullptr) {
@@ -451,11 +453,18 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     auto source = currentPromise->getData();
-    auto indices = indexSpan.first(buffer.getNumFrames());
-    auto jumps = tempSpan1.first(buffer.getNumFrames());
-    auto bends = tempSpan2.first(buffer.getNumFrames());
-    auto leftCoeffs = tempSpan1.first(buffer.getNumFrames());
-    auto rightCoeffs = tempSpan2.first(buffer.getNumFrames());
+    auto jumpBuffer = resources.bufferPool.getBuffer(numSamples);
+    auto bendBuffer = resources.bufferPool.getBuffer(numSamples);
+    auto leftCoeffBuffer = resources.bufferPool.getBuffer(numSamples);
+    auto rightCoeffBuffer = resources.bufferPool.getBuffer(numSamples);
+    auto indexBuffer = resources.bufferPool.getIndexBuffer(numSamples);
+    if (!jumpBuffer || !bendBuffer || !indexBuffer || !rightCoeffBuffer || !leftCoeffBuffer)
+        return;
+    auto jumps = absl::MakeSpan(*jumpBuffer).first(numSamples);
+    auto bends = absl::MakeSpan(*bendBuffer).first(numSamples);
+    auto indices = absl::MakeSpan(*indexBuffer).first(numSamples);
+    auto leftCoeffs = absl::MakeSpan(*leftCoeffBuffer).first(numSamples);
+    auto rightCoeffs = absl::MakeSpan(*rightCoeffBuffer).first(numSamples);
 
     fill<float>(jumps, pitchRatio * speedRatio);
     if (region->bendStep > 1)
@@ -530,13 +539,18 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
+
     if (region->sample == "*noise") {
         absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
     } else {
-        // wavetables for sine and other generators
-        auto frequencies = tempSpan1.first(buffer.getNumFrames());
-        auto bends = tempSpan2.first(buffer.getNumFrames());
+        const auto numSamples = buffer.getNumFrames();
+        auto frequencyBuffer = resources.bufferPool.getBuffer(numSamples);
+        auto bendBuffer = resources.bufferPool.getBuffer(numSamples);
+        if (!frequencyBuffer || !bendBuffer)
+            return;
+        auto frequencies = absl::MakeSpan(*frequencyBuffer).first(numSamples);
+        auto bends = absl::MakeSpan(*bendBuffer).first(numSamples);
 
         float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
         fill<float>(frequencies, pitchRatio * keycenterFrequency);

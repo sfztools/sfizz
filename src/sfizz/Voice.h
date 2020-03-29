@@ -280,15 +280,6 @@ private:
 
     FilePromisePtr currentPromise { nullptr };
 
-    Buffer<float> tempBuffer1;
-    Buffer<float> tempBuffer2;
-    Buffer<float> tempBuffer3;
-    Buffer<int> indexBuffer;
-    absl::Span<float> tempSpan1 { absl::MakeSpan(tempBuffer1) };
-    absl::Span<float> tempSpan2 { absl::MakeSpan(tempBuffer2) };
-    absl::Span<float> tempSpan3 { absl::MakeSpan(tempBuffer3) };
-    absl::Span<int> indexSpan { absl::MakeSpan(indexBuffer) };
-
     int samplesPerBlock { config::defaultSamplesPerBlock };
     int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
     float sampleRate { config::defaultSampleRate };
