@@ -1430,6 +1430,17 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "note_selfmask", "garbage" });
         REQUIRE(region.selfMask == SfzSelfMask::dontMask);
     }
+
+    SECTION("amplitude_cc")
+    {
+        REQUIRE(region.amplitudeCC.empty());
+        region.parseOpcode({ "amplitude_cc1", "40" });
+        REQUIRE(region.amplitudeCC.contains(1));
+        REQUIRE(region.amplitudeCC[1] == 0.40_a);
+        region.parseOpcode({ "amplitude_oncc2", "30" });
+        REQUIRE(region.amplitudeCC.contains(2));
+        REQUIRE(region.amplitudeCC[2] == 0.30_a);
+    }
 }
 
 // Specific region bugs
