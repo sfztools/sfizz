@@ -506,10 +506,9 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     }
 
     this->samplesPerBlock = samplesPerBlock;
-    this->tempBuffer.resize(samplesPerBlock);
-    this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
+
     resources.setSamplesPerBlock(samplesPerBlock);
 
     for (auto& bus : effectBuses) {
@@ -549,8 +548,15 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
 
     size_t numFrames = buffer.getNumFrames();
-    auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
-    auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
+    auto tempBuffer = resources.bufferPool.getStereoBuffer(numFrames);
+    auto tempMixNodeBuffer = resources.bufferPool.getStereoBuffer(numFrames);
+    if (!tempBuffer || !tempMixNodeBuffer) {
+        DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
+        return;
+    }
+
+    auto temp = AudioSpan<float>(*tempBuffer).first(numFrames);
+    auto tempMixNode = AudioSpan<float>(*tempMixNodeBuffer).first(numFrames);
 
     CallbackBreakdown callbackBreakdown;
 

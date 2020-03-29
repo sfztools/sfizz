@@ -516,10 +516,6 @@ private:
     // Curves
     CurveSet curves;
 
-    // Intermediate buffers
-    AudioBuffer<float> tempBuffer { 2, config::defaultSamplesPerBlock };
-    AudioBuffer<float> tempMixNodeBuffer { 2, config::defaultSamplesPerBlock };
-
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
