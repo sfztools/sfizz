@@ -53,8 +53,8 @@ void sfz::MidiState::advanceTime(int numSamples) noexcept
     internalClock += numSamples;
     for (auto& ccEvents: cc) {
         ASSERT(!ccEvents.empty()); // CC event vectors should never be empty
-        ccEvents.front().second = ccEvents.back().second;
-        ccEvents.front().first = 0;
+        ccEvents.front().value = ccEvents.back().value;
+        ccEvents.front().delay = 0;
         ccEvents.resize(1);
     }
 }
@@ -104,15 +104,15 @@ int sfz::MidiState::getPitchBend() const noexcept
 void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
-
-    cc[ccNumber].emplace_back(delay, ccValue);
+    const auto insertionPoint = absl::c_upper_bound(cc[ccNumber], delay, MidiEventComparator{});
+    cc[ccNumber].insert(insertionPoint, { delay, ccValue });
 }
 
 float sfz::MidiState::getCCValue(int ccNumber) const noexcept
 {
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
 
-    return cc[ccNumber].back().second;
+    return cc[ccNumber].back().value;
 }
 
 void sfz::MidiState::reset() noexcept
@@ -122,7 +122,7 @@ void sfz::MidiState::reset() noexcept
 
     for (auto& ccEvents: cc) {
         ccEvents.clear();
-        ccEvents.emplace_back(0, 0.0f);
+        ccEvents.push_back({ 0, 0.0f });
     }
 
     pitchBend = 0;

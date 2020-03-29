@@ -62,6 +62,47 @@ struct CCValuePairComparator<ValueType, true> {
     }
 };
 
+struct MidiEvent {
+    int delay;
+    float value;
+};
+
+template<bool CompareValue = false>
+struct MidiEventComparator {
+    bool operator()(const MidiEvent& event, const int& delay)
+    {
+        return (event.delay < delay);
+    }
+
+    bool operator()(const int& delay, const MidiEvent& event)
+    {
+        return (delay < event.delay);
+    }
+
+    bool operator()(const MidiEvent& lhs, const MidiEvent& rhs)
+    {
+        return (lhs.delay < rhs.delay);
+    }
+};
+
+template<>
+struct MidiEventComparator<true> {
+    bool operator()(const MidiEvent& event, const float& value)
+    {
+        return (event.value < value);
+    }
+
+    bool operator()(const float& value, const MidiEvent& event)
+    {
+        return (value < event.value);
+    }
+
+    bool operator()(const MidiEvent& lhs, const MidiEvent& rhs)
+    {
+        return (lhs.value < rhs.value);
+    }
+};
+
 /**
  * @brief Converts cents to a pitch ratio
  *

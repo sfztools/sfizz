@@ -144,7 +144,6 @@ public:
 private:
     template<class T>
     using MidiNoteArray = std::array<T, 128>;
-    using MidiEvent = std::pair<int, float>;
     using EventVector = std::vector<MidiEvent>;
 	int activeNotes { 0 };
 
