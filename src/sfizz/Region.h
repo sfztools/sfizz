@@ -277,7 +277,7 @@ struct Region {
     float width { Default::width }; // width
     float position { Default::position }; // position
     absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
-    absl::optional<CCValuePair<float>> amplitudeCC; // amplitude_oncc
+    CCMap<float> amplitudeCC { Default::amplitude }; // amplitude_oncc
     absl::optional<CCValuePair<float>> panCC; // pan_oncc
     absl::optional<CCValuePair<float>> widthCC; // width_oncc
     absl::optional<CCValuePair<float>> positionCC; // position_oncc

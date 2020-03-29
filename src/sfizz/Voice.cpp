@@ -85,11 +85,6 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
 
-    float gain { baseGain };
-    if (region->amplitudeCC)
-        gain += resources.midiState.getCCValue(region->amplitudeCC->cc) * normalizePercents(region->amplitudeCC->value);
-    amplitudeEnvelope.reset(Default::normalizedRange.clamp(gain));
-
     float crossfadeGain { region->getCrossfadeGain() };
     crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
 
@@ -203,11 +198,6 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     // TODO: this feels like a hack, revisit this along with the smoothed envelopes...
     delay = max(delay, minEnvelopeDelay);
 
-    if (region->amplitudeCC && ccNumber == region->amplitudeCC->cc) {
-        const float newGain { baseGain + ccValue * normalizePercents(region->amplitudeCC->value) };
-        amplitudeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(newGain));
-    }
-
     if (region->volumeCC && ccNumber == region->volumeCC->cc) {
         const float newVolumedB { baseVolumedB + ccValue * region->volumeCC->value };
         volumeEnvelope.registerEvent(delay, db2mag(Default::volumeRange.clamp(newVolumedB)));
@@ -311,6 +301,31 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     this->triggerDelay = absl::nullopt;
 }
 
+template<class T>
+void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> output, absl::Span<float> temp)
+{
+    ASSERT(output.size() <= temp.size());
+    sfz::fill<T>(output, T{0.0});
+    for (auto& mod : ccMods) {
+        const auto eventList = state.getEvents(mod.cc);
+        const auto modifier = static_cast<float>(mod.value);
+        ASSERT(eventList.size() > 0);
+        ASSERT(eventList[0].delay == 0);
+
+        auto lastValue = eventList[0].value;
+        auto lastDelay = eventList[0].delay;
+        for (unsigned i = 1; i < eventList.size(); ++ i) {
+            const auto event = eventList[i];
+            const auto length = event.delay - lastDelay;
+            const auto step = (event.value - lastValue) * modifier / length;
+            lastValue = sfz::linearRamp<T>(temp.subspan(lastDelay, length), lastValue, step);
+            lastDelay += length;
+        }
+        sfz::fill<T>(temp.subspan(lastDelay), lastValue * modifier);
+        sfz::add<T>(temp, output);
+    }
+}
+
 void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
@@ -318,12 +333,13 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto rightBuffer = buffer.getSpan(1);
 
     auto modulationSpan = tempSpan1.first(numSamples);
+    auto tempSpan = tempSpan2.first(numSamples);
 
     { // Amplitude processing
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        amplitudeEnvelope.getBlock(modulationSpan);
+        getLinearEnvelope(region->amplitudeCC, resources.midiState, modulationSpan, tempSpan);
         applyGain<float>(modulationSpan, leftBuffer);
 
         // Crossfade envelope
@@ -369,6 +385,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
 {
     const auto numSamples = buffer.getNumFrames();
     auto modulationSpan = tempSpan1.first(numSamples);
+    auto tempSpan = tempSpan2.first(numSamples);
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
@@ -376,7 +393,7 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        amplitudeEnvelope.getBlock(modulationSpan);
+        getLinearEnvelope(region->amplitudeCC, resources.midiState, modulationSpan, tempSpan);
         buffer.applyGain(modulationSpan);
 
         // Crossfade envelope

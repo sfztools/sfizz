@@ -299,7 +299,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         break;
     case hash("amplitude_cc&"): // fallthrough
     case hash("amplitude_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeCC, Default::amplitudeRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            amplitudeCC[opcode.parameters.back()] = *value;
         break;
     case hash("pan"):
         setValueFromOpcode(opcode, pan, Default::panRange);
