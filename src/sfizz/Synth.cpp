@@ -554,8 +554,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
     auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
 
-    resources.midiState.advanceTime(buffer.getNumFrames());
-
     CallbackBreakdown callbackBreakdown;
 
     { // Prepare the effect inputs. They are mixes of per-region outputs.
@@ -620,6 +618,11 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Apply the master volume
     buffer.applyGain(db2mag(volume));
+
+    { // Clear events and advance midi time
+        ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+        resources.midiState.advanceTime(buffer.getNumFrames());
+    }
 
     callbackBreakdown.dispatch = dispatchDuration;
     resources.logger.logCallbackTime(callbackBreakdown, numActiveVoices, numFrames);
