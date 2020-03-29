@@ -85,9 +85,6 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
 
-    float crossfadeGain { region->getCrossfadeGain() };
-    crossfadeEnvelope.reset(Default::normalizedRange.clamp(crossfadeGain));
-
     basePan = normalizePercents(region->pan);
     auto pan = basePan;
     if (region->panCC)
@@ -217,11 +214,6 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
         const float newWidth { baseWidth + ccValue * normalizePercents(region->widthCC->value) };
         widthEnvelope.registerEvent(delay, Default::symmetricNormalizedRange.clamp(newWidth));
     }
-
-    if (region->crossfadeCCInRange.contains(ccNumber) || region->crossfadeCCOutRange.contains(ccNumber)) {
-        const float crossfadeGain = region->getCrossfadeGain();
-        crossfadeEnvelope.registerEvent(delay, Default::normalizedRange.clamp(crossfadeGain));
-    }
 }
 
 void sfz::Voice::registerPitchWheel(int delay, int pitch) noexcept
@@ -294,26 +286,23 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 }
 
 template<class T>
-void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> output, absl::Span<float> temp)
+void getLinearEnvelope(const sfz::CCMap<T>& ccMods, const sfz::MidiState& state, absl::Span<float> temp, std::function<float(const T&, float)> function)
 {
-    ASSERT(output.size() <= temp.size());
     for (auto& mod : ccMods) {
         const auto eventList = state.getEvents(mod.cc);
-        const auto modifier = static_cast<float>(mod.value);
         ASSERT(eventList.size() > 0);
         ASSERT(eventList[0].delay == 0);
 
-        auto lastValue = eventList[0].value;
+        auto lastValue = function(mod.value, eventList[0].value);
         auto lastDelay = eventList[0].delay;
         for (unsigned i = 1; i < eventList.size(); ++ i) {
             const auto event = eventList[i];
             const auto length = event.delay - lastDelay;
-            const auto step = (event.value - lastValue) * modifier / length;
-            lastValue = sfz::linearRamp<T>(temp.subspan(lastDelay, length), lastValue, step);
+            const auto step = (function(mod.value, event.value) - lastValue)/ length;
+            lastValue = sfz::linearRamp<float>(temp.subspan(lastDelay, length), lastValue, step);
             lastDelay += length;
         }
-        sfz::fill<T>(temp.subspan(lastDelay), lastValue * modifier);
-        sfz::add<T>(temp, output);
+        sfz::fill<float>(temp.subspan(lastDelay), lastValue);
     }
 }
 
@@ -334,13 +323,30 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        fill<float>(modulationSpan, baseGain);
-        getLinearEnvelope(region->amplitudeCC, resources.midiState, modulationSpan, tempSpan);
+        fill<float>(modulationSpan, 0.0f);
+        getLinearEnvelope<float>(region->amplitudeCC, resources.midiState, modulationSpan, [](const float& modifier, float value){
+            return value * modifier;
+        });
+        DBG("Amplitude curve back: " << modulationSpan.back());
+        add<float>(baseGain, modulationSpan);
+        DBG("FInal gain: " << modulationSpan.back());
         applyGain<float>(modulationSpan, leftBuffer);
 
-        // Crossfade envelope
-        crossfadeEnvelope.getBlock(modulationSpan);
+        // Crossfade envelopes
+        // crossfadeEnvelope.getBlock(modulationSpan);
+        fill<float>(modulationSpan, 1.0f);
+        getLinearEnvelope<Range<float>>(region->crossfadeCCInRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
+            return crossfadeIn(range, value, region->crossfadeCCCurve);
+        });
         applyGain<float>(modulationSpan, leftBuffer);
+        DBG("XFin: " << modulationSpan.back());
+
+        fill<float>(modulationSpan, 1.0f);
+        getLinearEnvelope<Range<float>>(region->crossfadeCCOutRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
+            return crossfadeOut(range, value, region->crossfadeCCCurve);
+        });
+        applyGain<float>(modulationSpan, leftBuffer);
+        DBG("XFout: " << modulationSpan.back());
 
         // Volume envelope
         volumeEnvelope.getBlock(modulationSpan);
@@ -394,12 +400,22 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        fill<float>(modulationSpan, baseGain);
-        getLinearEnvelope(region->amplitudeCC, resources.midiState, modulationSpan, tempSpan);
+        fill<float>(modulationSpan, 0.0f);
+        getLinearEnvelope<float>(region->amplitudeCC, resources.midiState, modulationSpan, [](float modifier, float value) { return value * modifier; });
+        add<float>(baseGain, modulationSpan);
         buffer.applyGain(modulationSpan);
 
-        // Crossfade envelope
-        crossfadeEnvelope.getBlock(modulationSpan);
+        // Crossfade envelopes
+        fill<float>(modulationSpan, 1.0f);
+        getLinearEnvelope<Range<float>>(region->crossfadeCCInRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
+            return crossfadeIn(range, value, region->crossfadeCCCurve);
+        });
+        buffer.applyGain(modulationSpan);
+
+        fill<float>(modulationSpan, 1.0f);
+        getLinearEnvelope<Range<float>>(region->crossfadeCCOutRange, resources.midiState, modulationSpan, [this](const Range<float>& range, float value){
+            return crossfadeOut(range, value, region->crossfadeCCCurve);
+        });
         buffer.applyGain(modulationSpan);
 
         // Volume envelope
