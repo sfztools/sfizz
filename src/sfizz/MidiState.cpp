@@ -62,6 +62,10 @@ void sfz::MidiState::advanceTime(int numSamples) noexcept
 void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
+    for (auto& ccEvents: cc) {
+        ccEvents.shrink_to_fit();
+        ccEvents.reserve(samplesPerBlock);
+    }
 }
 
 float sfz::MidiState::getNoteDuration(int noteNumber, int delay) const
