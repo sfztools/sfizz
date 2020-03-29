@@ -139,3 +139,11 @@ void sfz::MidiState::resetAllControllers(int delay) noexcept
 
     pitchBend = 0;
 }
+
+const sfz::EventVector& sfz::MidiState::getEvents(int ccIdx) const noexcept
+{
+    if (ccIdx < 0 || ccIdx > config::numCCs)
+        return nullEvent;
+
+    return cc[ccIdx];
+}

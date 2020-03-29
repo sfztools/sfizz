@@ -19,7 +19,8 @@ namespace sfz
 {
 
 using CCNamePair = std::pair<uint16_t, std::string>;
-
+template<class T>
+using MidiNoteArray = std::array<T, 128>;
 template<class ValueType>
 struct CCValuePair {
     int cc;
@@ -66,6 +67,7 @@ struct MidiEvent {
     int delay;
     float value;
 };
+using EventVector = std::vector<MidiEvent>;
 
 struct MidiEventDelayComparator {
     bool operator()(const MidiEvent& event, const int& delay)

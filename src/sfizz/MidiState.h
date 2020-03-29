@@ -141,10 +141,9 @@ public:
         return validRange.clamp(value);
     }
 
+    const EventVector& getEvents(int ccIdx) const noexcept;
+
 private:
-    template<class T>
-    using MidiNoteArray = std::array<T, 128>;
-    using EventVector = std::vector<MidiEvent>;
 	int activeNotes { 0 };
 
     /**
@@ -168,6 +167,8 @@ private:
      *
      */
 	std::array<EventVector, config::numCCs> cc;
+
+    const EventVector nullEvent {{0, 0.0f}};
     /**
      * Pitch bend status
      */
