@@ -302,7 +302,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         if (opcode.parameters.back() > config::numCCs)
             return false;
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            amplitudeCC[opcode.parameters.back()] = *value;
+            amplitudeCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("pan"):
         setValueFromOpcode(opcode, pan, Default::panRange);
