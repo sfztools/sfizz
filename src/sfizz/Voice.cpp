@@ -603,6 +603,6 @@ void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
 void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
 {
     // There are filters in there, this call is unexpected
-    ASSERT(filters.size() == 0);
-    filters.reserve(numFilters);
+    ASSERT(equalizers.size() == 0);
+    equalizers.reserve(numFilters);
 }
