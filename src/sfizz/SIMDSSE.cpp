@@ -461,7 +461,7 @@ float sfz::linearRamp<float, true>(absl::Span<float> output, float value, float 
     while (unaligned(out) && out < lastAligned)
         _internals::snippetRampLinear<float>(out, value, step);
 
-    auto mmValue = _mm_set1_ps(value);
+    auto mmValue = _mm_set1_ps(value - step);
     auto mmStep = _mm_set_ps(step + step + step + step, step + step + step, step + step, step);
 
     while (out < lastAligned) {
@@ -471,7 +471,8 @@ float sfz::linearRamp<float, true>(absl::Span<float> output, float value, float 
         out += TypeAlignment;
     }
 
-    value = _mm_cvtss_f32(mmValue);
+    value = _mm_cvtss_f32(mmValue) + step;
+
     while (out < output.end())
         _internals::snippetRampLinear<float>(out, value, step);
     return value;
