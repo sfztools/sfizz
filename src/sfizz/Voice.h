@@ -7,7 +7,6 @@
 #pragma once
 #include "Config.h"
 #include "ADSREnvelope.h"
-#include "EventEnvelopes.h"
 #include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"
@@ -282,13 +281,6 @@ private:
     std::vector<EQHolderPtr> equalizers;
 
     ADSREnvelope<float> egEnvelope;
-    LinearEnvelope<float> amplitudeEnvelope; // linear events
-    LinearEnvelope<float> crossfadeEnvelope;
-    LinearEnvelope<float> panEnvelope;
-    LinearEnvelope<float> positionEnvelope;
-    LinearEnvelope<float> widthEnvelope;
-    MultiplicativeEnvelope<float> pitchBendEnvelope;
-    MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
 
     WavetableOscillator waveOscillator;
