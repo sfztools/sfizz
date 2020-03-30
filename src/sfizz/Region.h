@@ -276,7 +276,7 @@ struct Region {
     float pan { normalizePercents(Default::pan) }; // pan
     float width { normalizePercents(Default::width) }; // width
     float position { normalizePercents(Default::position) }; // position
-    absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
+    CCMap<float> volumeCC { Default::zeroModifier }; // volume_oncc
     CCMap<float> amplitudeCC { Default::zeroModifier }; // amplitude_oncc
     CCMap<float> panCC { Default::zeroModifier }; // pan_oncc
     CCMap<float> widthCC { Default::zeroModifier }; // width_oncc

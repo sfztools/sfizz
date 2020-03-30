@@ -74,22 +74,10 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
     pitchRatio = region->getBasePitchVariation(number, value);
-
     baseVolumedB = region->getBaseVolumedB(number);
-    auto volumedB = baseVolumedB;
-    if (region->volumeCC)
-        volumedB += resources.midiState.getCCValue(region->volumeCC->cc) * region->volumeCC->value;
-    volumeEnvelope.reset(db2mag(Default::volumeRange.clamp(volumedB)));
-
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
-
-    pitchBendEnvelope.setFunction([region](float bend){
-        const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
-        return centsFactor(bendInCents);
-    });
-    pitchBendEnvelope.reset(resources.midiState.getPitchBend());
 
     // Check that we can handle the number of filters; filters should be cleared here
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
@@ -171,23 +159,14 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 
     if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
-
-    // Add a minimum delay for smoothing the envelopes
-    // TODO: this feels like a hack, revisit this along with the smoothed envelopes...
-    delay = max(delay, minEnvelopeDelay);
-
-    if (region->volumeCC && ccNumber == region->volumeCC->cc) {
-        const float newVolumedB { baseVolumedB + ccValue * region->volumeCC->value };
-        volumeEnvelope.registerEvent(delay, db2mag(Default::volumeRange.clamp(newVolumedB)));
-    }
 }
 
 void sfz::Voice::registerPitchWheel(int delay, float pitch) noexcept
 {
     if (state == State::idle)
         return;
-
-    pitchBendEnvelope.registerEvent(delay, pitch);
+    UNUSED(delay);
+    UNUSED(pitch);
 }
 
 void sfz::Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
@@ -293,7 +272,12 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
     applyGain<float>(*modulationSpan, leftBuffer);
 
     // Volume envelope
-    volumeEnvelope.getBlock(*modulationSpan);
+    fill<float>(*modulationSpan, db2mag(baseVolumedB));
+    for (auto& mod : region->volumeCC) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
     applyGain<float>(*modulationSpan, leftBuffer);
 
     // AmpEG envelope
@@ -330,17 +314,20 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-
     for (auto& mod : region->crossfadeCCOutRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-
     buffer.applyGain(*modulationSpan);
 
     // Volume envelope
-    volumeEnvelope.getBlock(*modulationSpan);
+    fill<float>(*modulationSpan, db2mag(baseVolumedB));
+    for (auto& mod : region->volumeCC) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
     buffer.applyGain(*modulationSpan);
 
     // AmpEG envelope

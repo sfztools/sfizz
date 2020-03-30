@@ -294,7 +294,10 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("gain_cc&"):
     case hash("gain_oncc&"): // fallthrough
     case hash("volume_oncc&"):
-        setCCPairFromOpcode(opcode, volumeCC, Default::volumeCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::volumeCCRange))
+            volumeCC[opcode.parameters.back()] = *value;
         break;
     case hash("amplitude"):
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
