@@ -19,7 +19,7 @@ set(SFIZZ_TEST_SOURCES
     OnePoleFilterT.cpp
     RegionActivationT.cpp
     RegionValueComputationsT.cpp
-    ADSREnvelopeT.cpp
+    # ADSREnvelopeT.cpp
     EventEnvelopesT.cpp
     MainT.cpp
     SynthT.cpp
