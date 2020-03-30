@@ -484,7 +484,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
     else
         multiplicativeEnvelope(events, *bends, bendLambda);
-    DBG("Bend: " << bends->back());
 
     applyGain<float>(*bends, *jumps);
     jumps->front() += floatPositionOffset;
@@ -577,7 +576,6 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         else
             multiplicativeEnvelope(events, *bends, bendLambda);
 
-        DBG("Bend: " << bends->back());
         applyGain<float>(*bends, *frequencies);
 
         waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
