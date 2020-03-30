@@ -238,18 +238,12 @@ private:
      * @param buffer
      */
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
-    /**
-     * @brief The function processing a mono sample source
-     *
-     * @param buffer
-     */
-    void processMono(AudioSpan<float> buffer) noexcept;
-    /**
-     * @brief The function processing a stereo sample source
-     *
-     * @param buffer
-     */
-    void processStereo(AudioSpan<float> buffer) noexcept;
+    void ampStageMono(AudioSpan<float> buffer) noexcept;
+    void ampStageStereo(AudioSpan<float> buffer) noexcept;
+    void panStageMono(AudioSpan<float> buffer) noexcept;
+    void panStageStereo(AudioSpan<float> buffer) noexcept;
+    void filterStageMono(AudioSpan<float> buffer) noexcept;
+    void filterStageStereo(AudioSpan<float> buffer) noexcept;
 
     Region* region { nullptr };
 

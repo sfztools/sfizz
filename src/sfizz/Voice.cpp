@@ -240,10 +240,15 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
             fillWithData(delayed_buffer);
     }
 
-    if (region->isStereo)
-        processStereo(buffer);
-    else
-        processMono(buffer);
+    if (region->isStereo) {
+        ampStageStereo(buffer);
+        panStageStereo(buffer);
+        filterStageStereo(buffer);
+    } else {
+        ampStageMono(buffer);
+        filterStageMono(buffer);
+        panStageMono(buffer);
+    }
 
     if (!egEnvelope.isSmoothing())
         reset();
@@ -252,11 +257,50 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     this->triggerDelay = absl::nullopt;
 }
 
-void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
+void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 {
+    ScopedTiming logger { amplitudeDuration };
+
     const auto numSamples = buffer.getNumFrames();
-    auto leftBuffer = buffer.getSpan(0);
-    auto rightBuffer = buffer.getSpan(1);
+    const auto leftBuffer = buffer.getSpan(0);
+
+    using namespace std::placeholders;
+    const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
+    const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
+
+    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationSpan || !tempSpan)
+        return;
+
+    // Amplitude envelope
+    fill<float>(*modulationSpan, baseGain);
+    resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
+    DBG("Final gain: " << modulationSpan->back());
+    applyGain<float>(*modulationSpan, leftBuffer);
+
+    // Crossfade envelopes
+    // crossfadeEnvelope.getBlock(modulationSpan);
+    fill<float>(*modulationSpan, 1.0f);
+    resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
+    resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
+    DBG("XF: " << modulationSpan->back());
+    applyGain<float>(*modulationSpan, leftBuffer);
+
+    // Volume envelope
+    volumeEnvelope.getBlock(*modulationSpan);
+    applyGain<float>(*modulationSpan, leftBuffer);
+
+    // AmpEG envelope
+    egEnvelope.getBlock(*modulationSpan);
+    applyGain<float>(*modulationSpan, leftBuffer);
+}
+
+void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
+{
+    ScopedTiming logger { amplitudeDuration };
+
+    const auto numSamples = buffer.getNumFrames();
 
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
     auto tempSpan = resources.bufferPool.getBuffer(numSamples);
@@ -267,132 +311,111 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
     const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
 
-    { // Amplitude processing
-        ScopedTiming logger { amplitudeDuration };
+    // Amplitude envelope
+    fill<float>(*modulationSpan, baseGain);
+    resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
+    buffer.applyGain(*modulationSpan);
 
-        // Amplitude envelope
-        fill<float>(*modulationSpan, baseGain);
-        resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
-        DBG("Final gain: " << modulationSpan->back());
-        applyGain<float>(modulationSpan, leftBuffer);
+    // Crossfade envelopes
+    fill<float>(*modulationSpan, 1.0f);
+    resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
+    resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
+    buffer.applyGain(*modulationSpan);
 
-        // Crossfade envelopes
-        // crossfadeEnvelope.getBlock(modulationSpan);
-        fill<float>(*modulationSpan, 1.0f);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
-        DBG("XF: " << modulationSpan->back());
-        applyGain<float>(modulationSpan, leftBuffer);
+    // Volume envelope
+    volumeEnvelope.getBlock(*modulationSpan);
+    buffer.applyGain(*modulationSpan);
 
-        // Volume envelope
-        volumeEnvelope.getBlock(*modulationSpan);
-        applyGain<float>(*modulationSpan, leftBuffer);
+    // AmpEG envelope
+    egEnvelope.getBlock(*modulationSpan);
+    buffer.applyGain(*modulationSpan);
+}
 
-        // AmpEG envelope
-        egEnvelope.getBlock(*modulationSpan);
-        applyGain<float>(*modulationSpan, leftBuffer);
+void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
+{
+    ScopedTiming logger { panningDuration };
+
+    const auto numSamples = buffer.getNumFrames();
+    const auto leftBuffer = buffer.getSpan(0);
+    const auto rightBuffer = buffer.getSpan(1);
+
+    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationSpan || !tempSpan)
+        return;
+
+    // Prepare for stereo output
+    copy<float>(leftBuffer, rightBuffer);
+
+    // Apply panning
+    fill<float>(*modulationSpan, region->pan);
+    resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
+    DBG("Pan: " << modulationSpan->back());
+    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+}
+
+void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
+{
+    ScopedTiming logger { panningDuration };
+    const auto numSamples = buffer.getNumFrames();
+    const auto leftBuffer = buffer.getSpan(0);
+    const auto rightBuffer = buffer.getSpan(1);
+
+    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationSpan || !tempSpan)
+        return;
+
+    // Apply panning
+    // panningModulation(*modulationSpan);
+    fill<float>(*modulationSpan, region->pan);
+    resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
+    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+
+    // Apply the width/position process
+    // widthModulation(*modulationSpan);
+    fill<float>(*modulationSpan, region->width);
+    resources.midiState.additiveModifiers(region->widthCC, *modulationSpan, *tempSpan);
+    width<float>(*modulationSpan, leftBuffer, rightBuffer);
+
+    // positionModulation(*modulationSpan);
+    fill<float>(*modulationSpan, region->position);
+    resources.midiState.additiveModifiers(region->positionCC, *modulationSpan, *tempSpan);
+    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+}
+
+void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept
+{
+    ScopedTiming logger { filterDuration };
+    const auto numSamples = buffer.getNumFrames();
+    const auto leftBuffer = buffer.getSpan(0);
+    const float* inputChannel[1] { leftBuffer.data() };
+    float* outputChannel[1] { leftBuffer.data() };
+    for (auto& filter: filters) {
+        filter->process(inputChannel, outputChannel, numSamples);
     }
 
-    { // Filtering and EQ
-        ScopedTiming logger { filterDuration };
-
-        const float* inputChannel[1] { leftBuffer.data() };
-        float* outputChannel[1] { leftBuffer.data() };
-        for (auto& filter: filters) {
-            filter->process(inputChannel, outputChannel, numSamples);
-        }
-
-        for (auto& eq: equalizers) {
-            eq->process(inputChannel, outputChannel, numSamples);
-        }
-    }
-
-    { // Panning and stereo processing
-        ScopedTiming logger { panningDuration };
-
-        // Prepare for stereo output
-        copy<float>(leftBuffer, rightBuffer);
-
-        // Apply panning
-        fill<float>(*modulationSpan, region->pan);
-        resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
-        DBG("Pan: " << modulationSpan->back());
-        pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    for (auto& eq: equalizers) {
+        eq->process(inputChannel, outputChannel, numSamples);
     }
 }
 
-void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
+void sfz::Voice::filterStageStereo(AudioSpan<float> buffer) noexcept
 {
+    ScopedTiming logger { filterDuration };
     const auto numSamples = buffer.getNumFrames();
-    auto leftBuffer = buffer.getSpan(0);
-    auto rightBuffer = buffer.getSpan(1);
+    const auto leftBuffer = buffer.getSpan(0);
+    const auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationSpan || !tempSpan)
-        return;
+    const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
+    float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
 
-    using namespace std::placeholders;
-    const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
-    const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
-
-    { // Amplitude processing
-        ScopedTiming logger { amplitudeDuration };
-
-        // Amplitude envelope
-        fill<float>(*modulationSpan, baseGain);
-        resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
-        buffer.applyGain(*modulationSpan);
-
-        // Crossfade envelopes
-        fill<float>(*modulationSpan, 1.0f);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
-        buffer.applyGain(*modulationSpan);
-
-        // Volume envelope
-        volumeEnvelope.getBlock(*modulationSpan);
-        buffer.applyGain(*modulationSpan);
-
-        // AmpEG envelope
-        egEnvelope.getBlock(*modulationSpan);
-        buffer.applyGain(*modulationSpan);
+    for (auto& filter: filters) {
+        filter->process(inputChannels, outputChannels, numSamples);
     }
 
-    { // Panning and stereo processing
-        ScopedTiming logger { panningDuration };
-
-        // Apply panning
-        // panningModulation(*modulationSpan);
-        fill<float>(*modulationSpan, region->pan);
-        resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
-        pan<float>(*modulationSpan, leftBuffer, rightBuffer);
-
-        // Apply the width/position process
-        // widthModulation(*modulationSpan);
-        fill<float>(*modulationSpan, region->width);
-        resources.midiState.additiveModifiers(region->widthCC, *modulationSpan, *tempSpan);
-        width<float>(*modulationSpan, leftBuffer, rightBuffer);
-
-        // positionModulation(*modulationSpan);
-        fill<float>(*modulationSpan, region->position);
-        resources.midiState.additiveModifiers(region->positionCC, *modulationSpan, *tempSpan);
-        pan<float>(*modulationSpan, leftBuffer, rightBuffer);
-    }
-
-    { // Filtering and EQ
-        ScopedTiming logger { filterDuration };
-
-        const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
-        float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
-
-        for (auto& filter: filters) {
-            filter->process(inputChannels, outputChannels, numSamples);
-        }
-
-        for (auto& eq: equalizers) {
-            eq->process(inputChannels, outputChannels, numSamples);
-        }
+    for (auto& eq: equalizers) {
+        eq->process(inputChannels, outputChannels, numSamples);
     }
 }
 
