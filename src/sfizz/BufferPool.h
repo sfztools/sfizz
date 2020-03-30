@@ -29,8 +29,8 @@ public:
     SpanHolder<T>& operator=(const SpanHolder<T>&) = delete;
     SpanHolder(SpanHolder<T>&&) = delete;
     SpanHolder<T>& operator=(SpanHolder<T>&&) = delete;
-    SpanHolder(T value, int* available)
-    : value(std::move(value)), available(available) {}
+    SpanHolder(T&& value, int* available)
+    : value(std::forward<T>(value)), available(available) {}
     T& operator*() { return value; }
     T* operator->() { return &value; }
     explicit operator bool() const { return available != nullptr; }
