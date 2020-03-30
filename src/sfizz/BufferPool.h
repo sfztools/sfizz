@@ -11,141 +11,122 @@
 #include "AudioBuffer.h"
 #include <array>
 #include <memory>
+#include <functional>
+#include "absl/algorithm/container.h"
 #ifndef NDEBUG
-    #include "absl/algorithm/container.h"
     #include "MathHelpers.h"
 #endif
 
 namespace sfz
 {
 
+template<class T>
+class SpanHolder
+{
+public:
+    SpanHolder() {}
+    SpanHolder(const SpanHolder<T>&) = delete;
+    SpanHolder<T>& operator=(const SpanHolder<T>&) = delete;
+    SpanHolder(SpanHolder<T>&&) = delete;
+    SpanHolder<T>& operator=(SpanHolder<T>&&) = delete;
+    SpanHolder(T value, int* available)
+    : value(std::move(value)), available(available) {}
+    T& operator*() { return value; }
+    T* operator->() { return &value; }
+    operator bool() const { return available != nullptr; }
+    ~SpanHolder()
+    {
+        if (available)
+            *available += 1;
+    }
+private:
+    T value {};
+    int* available { nullptr };
+};
+
 class BufferPool
 {
 public:
     BufferPool()
     {
-        for (auto& buffer : buffers) {
-            buffer = std::make_shared<sfz::Buffer<float>>(config::defaultSamplesPerBlock);
-        }
-
-        for (auto& buffer : indexBuffers) {
-            buffer = std::make_shared<sfz::Buffer<int>>(config::defaultSamplesPerBlock);
-        }
-
         for (auto& buffer : stereoBuffers) {
-            buffer = std::make_shared<sfz::AudioBuffer<float>>(2, config::defaultSamplesPerBlock);
+            buffer.addChannels(2);
         }
+        monoAvailable.resize(config::bufferPoolSize);
+        stereoAvailable.resize(config::stereoBufferPoolSize);
+        indexAvailable.resize(config::indexBufferPoolSize);
+        _setBufferSize(config::defaultSamplesPerBlock);
     }
 
     void setBufferSize(unsigned bufferSize)
     {
-        for (auto& buffer: buffers) {
-            // Trying to resize a buffer in use
-            ASSERT(buffer.use_count() == 1);
-            buffer->resize(bufferSize);
-        }
-
-        for (auto& buffer: indexBuffers) {
-            // Trying to resize a buffer in use
-            ASSERT(buffer.use_count() == 1);
-            buffer->resize(bufferSize);
-        }
-
-        for (auto& buffer: stereoBuffers) {
-            // Trying to resize a buffer in use
-            ASSERT(buffer.use_count() == 1);
-            buffer->resize(bufferSize);
-        }
+        ASSERT(absl::c_all_of(monoAvailable, [](int value) { return value == 1; }));
+        ASSERT(absl::c_all_of(indexAvailable, [](int value) { return value == 1; }));
+        ASSERT(absl::c_all_of(stereoAvailable, [](int value) { return value == 1; }));
+        _setBufferSize(bufferSize);
     }
 
-    std::shared_ptr<sfz::Buffer<float>> getBuffer(size_t numFrames) const
+    SpanHolder<absl::Span<float>> getBuffer(size_t numFrames)
     {
-        auto bufferIt = buffers.begin();
-
-        if (buffers.empty()) {
-            DBG("[sfizz] No available buffers in the pool");
+        const auto availableIt = absl::c_find(monoAvailable, 1);
+        if (availableIt == monoAvailable.end()) {
+            DBG("[sfizz] No free buffers available...");
             return {};
         }
+        const auto freeIndex = std::distance(monoAvailable.begin(), availableIt);
 
-        if (buffers[0]->size() < numFrames) {
-            DBG("[sfizz] Someone asked for a buffer of size " << numFrames << "; only " << buffers[0]->size() << " available...");
+        if (monoBuffers[freeIndex].size() < numFrames) {
+            DBG("[sfizz] Someone asked for a buffer of size " << numFrames << "; only " << monoBuffers[freeIndex].size() << " available...");
             return {};
         }
 
 #ifndef NDEBUG
-        maxBuffersUsed = max<int>(1 + absl::c_count_if(buffers, [&](const std::shared_ptr<sfz::Buffer<float>>& buffer) {
-            return (buffer.use_count() > 1);
-        }), maxBuffersUsed);
+        maxBuffersUsed = 1 + absl::c_count_if(monoAvailable, [](int value) { return value == 0; });
 #endif
-
-        while (bufferIt < buffers.end()) {
-            if (bufferIt->use_count() == 1)
-                return *bufferIt;
-            ++bufferIt;
-        }
-
-        // No buffer found; debug message
-        DBG("[sfizz] No free buffer available!");
-        return {};
+        *availableIt -= 1;
+        return { absl::MakeSpan(monoBuffers[freeIndex]).first(numFrames), &*availableIt };
     }
 
-    std::shared_ptr<sfz::Buffer<int>> getIndexBuffer(size_t numFrames) const
+    SpanHolder<absl::Span<int>> getIndexBuffer(size_t numFrames)
     {
-        auto bufferIt = indexBuffers.begin();
-
-        if (indexBuffers.empty()) {
+        const auto availableIt = absl::c_find(indexAvailable, 1);
+        if (availableIt == indexAvailable.end()) {
             DBG("[sfizz] No available index buffers in the pool");
             return {};
         }
+        const auto freeIndex = std::distance(indexAvailable.begin(), availableIt);
 
-        if (indexBuffers[0]->size() < numFrames) {
-            DBG("[sfizz] Someone asked for a index buffer of size " << numFrames << "; only " << indexBuffers[0]->size() << " available...");
+        if (indexBuffers[freeIndex].size() < numFrames) {
+            DBG("[sfizz] Someone asked for a index buffer of size " << numFrames << "; only " << indexBuffers[freeIndex].size() << " available...");
             return {};
         }
 
 #ifndef NDEBUG
-        maxIndexBuffersUsed = max<int>(1 + absl::c_count_if(indexBuffers, [&](const std::shared_ptr<sfz::Buffer<int>>& buffer) {
-            return (buffer.use_count() > 1);
-        }), maxIndexBuffersUsed);
+        maxIndexBuffersUsed = 1 + absl::c_count_if(indexAvailable, [](int value) { return value == 0; });
 #endif
-
-        while (bufferIt < indexBuffers.end()) {
-            if (bufferIt->use_count() == 1)
-                return *bufferIt;
-            ++bufferIt;
-        }
-
-        // No buffer found; debug message
-        DBG("[sfizz] No free index buffer available!");
-        return {};
+        *availableIt -= 1;
+        return { absl::MakeSpan(indexBuffers[freeIndex]).first(numFrames), &*availableIt };
     }
 
-    std::shared_ptr<sfz::AudioBuffer<float>> getStereoBuffer(size_t numFrames) const
+    SpanHolder<AudioSpan<float>> getStereoBuffer(size_t numFrames)
     {
-        if (stereoBuffers.empty()) {
+        const auto availableIt = absl::c_find(stereoAvailable, 1);
+        if (availableIt == stereoAvailable.end()) {
             DBG("[sfizz] No available stereo buffers in the pool");
             return {};
         }
+        const auto freeIndex = std::distance(stereoAvailable.begin(), availableIt);
 
-        if (stereoBuffers[0]->getNumFrames() < numFrames) {
-            DBG("[sfizz] Someone asked for a stereo buffer of size " << numFrames << "; only " << stereoBuffers[0]->getNumFrames() << " available...");
+        if (stereoBuffers[freeIndex].getNumFrames() < numFrames) {
+            DBG("[sfizz] Someone asked for a stereo buffer of size " << numFrames << "; only " << stereoBuffers[freeIndex].getNumFrames() << " available...");
             return {};
         }
-#ifndef NDEBUG
-        maxStereoBuffersUsed = max<int>(1 + absl::c_count_if(stereoBuffers, [&](const std::shared_ptr<sfz::AudioBuffer<float>>& buffer) {
-            return (buffer.use_count() > 1);
-        }), maxStereoBuffersUsed);
-#endif
-        auto bufferIt = stereoBuffers.begin();
-        while (bufferIt < stereoBuffers.end()) {
-            if (bufferIt->use_count() == 1)
-                return *bufferIt;
-            ++bufferIt;
-        }
 
-        // No buffer found; debug message
-        DBG("[sfizz] No free stereo buffer available!");
-        return {};
+#ifndef NDEBUG
+        maxStereoBuffersUsed = 1 + absl::c_count_if(stereoAvailable, [](int value) { return value == 0; });
+#endif
+        *availableIt -= 1;
+        return { sfz::AudioSpan<float>(stereoBuffers[freeIndex]).first(numFrames), &*availableIt };
     }
 
 #ifndef NDEBUG
@@ -156,10 +137,34 @@ public:
         DBG("Max stereo buffers used: " << maxStereoBuffersUsed);
     }
 #endif
+
+
 private:
-    std::array<std::shared_ptr<sfz::Buffer<float>>, config::bufferPoolSize> buffers;
-    std::array<std::shared_ptr<sfz::Buffer<int>>, config::bufferPoolSize> indexBuffers;
-    std::array<std::shared_ptr<sfz::AudioBuffer<float>>, config::stereoBufferPoolSize> stereoBuffers;
+    void _setBufferSize(unsigned bufferSize)
+    {
+        for (auto& buffer : monoBuffers) {
+            buffer.resize(bufferSize);
+        }
+
+        for (auto& buffer : indexBuffers) {
+            buffer.resize(bufferSize);
+        }
+
+        for (auto& buffer : stereoBuffers) {
+            buffer.resize(bufferSize);
+        }
+
+        absl::c_fill(monoAvailable, 1);
+        absl::c_fill(stereoAvailable, 1);
+        absl::c_fill(indexAvailable, 1);
+    }
+
+    std::array<sfz::Buffer<float>, config::bufferPoolSize> monoBuffers;
+    std::vector<int> monoAvailable;
+    std::array<sfz::Buffer<int>, config::bufferPoolSize> indexBuffers;
+    std::vector<int> indexAvailable;
+    std::array<sfz::AudioBuffer<float>, config::stereoBufferPoolSize> stereoBuffers;
+    std::vector<int> stereoAvailable;
 #ifndef NDEBUG
     mutable int maxBuffersUsed { 0 };
     mutable int maxIndexBuffersUsed { 0 };

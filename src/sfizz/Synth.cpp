@@ -548,16 +548,12 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
 
     size_t numFrames = buffer.getNumFrames();
-    auto tempBuffer = resources.bufferPool.getStereoBuffer(numFrames);
-    auto tempMixNodeBuffer = resources.bufferPool.getStereoBuffer(numFrames);
-    if (!tempBuffer || !tempMixNodeBuffer) {
+    auto tempSpan = resources.bufferPool.getStereoBuffer(numFrames);
+    auto tempMixSpan = resources.bufferPool.getStereoBuffer(numFrames);
+    if (!tempSpan || !tempMixSpan) {
         DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
         return;
     }
-
-    auto temp = AudioSpan<float>(*tempBuffer).first(numFrames);
-    auto tempMixNode = AudioSpan<float>(*tempMixNodeBuffer).first(numFrames);
-
     CallbackBreakdown callbackBreakdown;
 
     { // Prepare the effect inputs. They are mixes of per-region outputs.
@@ -572,7 +568,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod };
         buffer.fill(0.0f);
-        tempMixNode.fill(0.0f);
+        tempSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
 
         for (auto& voice : voices) {
@@ -582,14 +578,14 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             const Region* region = voice->getRegion();
 
             numActiveVoices++;
-            voice->renderBlock(temp);
+            voice->renderBlock(*tempSpan);
 
             { // Add the output into the effects linked to this region
                 ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
                 for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
                     if (auto& bus = effectBuses[i]) {
                         float addGain = region->getGainToEffectBus(i);
-                        bus->addToInputs(temp, addGain, numFrames);
+                        bus->addToInputs(*tempSpan, addGain, numFrames);
                     }
                 }
             }
@@ -609,7 +605,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         for (auto& bus : effectBuses) {
             if (bus) {
                 bus->process(numFrames);
-                bus->mixOutputsTo(buffer, tempMixNode, numFrames);
+                bus->mixOutputsTo(buffer, *tempMixSpan, numFrames);
             }
         }
     }
@@ -618,7 +614,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // -- note(jpc) the purpose of the Mix output is not known.
     //    perhaps it's designed as extension point for custom processing?
     //    as default behavior, it adds itself to the Main signal.
-    buffer.add(tempMixNode);
+    buffer.add(*tempMixSpan);
 
     // Apply the master volume
     buffer.applyGain(db2mag(volume));

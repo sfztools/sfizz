@@ -28,7 +28,7 @@ namespace config {
     constexpr float defaultSampleRate { 48000 };
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
-    constexpr int bufferPoolSize { 8 };
+    constexpr int bufferPoolSize { 4 };
     constexpr int stereoBufferPoolSize { 4 };
     constexpr int indexBufferPoolSize { 2 };
     constexpr int preloadSize { 8192 };

@@ -176,8 +176,6 @@ public:
 
     const EventVector& getEvents(int ccIdx) const noexcept;
 
-private:
-
     template<class T, class F>
     void linearEnvelope(T&& modifier, absl::Span<float> envelope, F&& lambda) const
     {
@@ -196,6 +194,10 @@ private:
         }
         fill<float>(envelope.subspan(lastDelay), lastValue);
     }
+
+private:
+
+
 	int activeNotes { 0 };
 
     /**

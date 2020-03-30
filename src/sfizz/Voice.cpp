@@ -258,12 +258,11 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationBuffer || !tempBuffer)
+    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationSpan || !tempSpan)
         return;
-    auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
+
     using namespace std::placeholders;
     const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
     const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
@@ -272,26 +271,26 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        fill<float>(modulationSpan, baseGain);
-        resources.midiState.multiplicativeModifiers(region->amplitudeCC, modulationSpan, tempSpan);
-        DBG("Final gain: " << modulationSpan.back());
+        fill<float>(*modulationSpan, baseGain);
+        resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
+        DBG("Final gain: " << modulationSpan->back());
         applyGain<float>(modulationSpan, leftBuffer);
 
         // Crossfade envelopes
         // crossfadeEnvelope.getBlock(modulationSpan);
-        fill<float>(modulationSpan, 1.0f);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, modulationSpan, tempSpan, xfinBind);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, modulationSpan, tempSpan, xfoutBind);
-        DBG("XF: " << modulationSpan.back());
+        fill<float>(*modulationSpan, 1.0f);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
+        DBG("XF: " << modulationSpan->back());
         applyGain<float>(modulationSpan, leftBuffer);
 
         // Volume envelope
-        volumeEnvelope.getBlock(modulationSpan);
-        applyGain<float>(modulationSpan, leftBuffer);
+        volumeEnvelope.getBlock(*modulationSpan);
+        applyGain<float>(*modulationSpan, leftBuffer);
 
         // AmpEG envelope
-        egEnvelope.getBlock(modulationSpan);
-        applyGain<float>(modulationSpan, leftBuffer);
+        egEnvelope.getBlock(*modulationSpan);
+        applyGain<float>(*modulationSpan, leftBuffer);
     }
 
     { // Filtering and EQ
@@ -315,10 +314,10 @@ void sfz::Voice::processMono(AudioSpan<float> buffer) noexcept
         copy<float>(leftBuffer, rightBuffer);
 
         // Apply panning
-        fill<float>(modulationSpan, region->pan);
-        resources.midiState.additiveModifiers(region->panCC, modulationSpan, tempSpan);
-        DBG("Pan: " << modulationSpan.back());
-        pan<float>(modulationSpan, leftBuffer, rightBuffer);
+        fill<float>(*modulationSpan, region->pan);
+        resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
+        DBG("Pan: " << modulationSpan->back());
+        pan<float>(*modulationSpan, leftBuffer, rightBuffer);
     }
 }
 
@@ -328,12 +327,10 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
     auto leftBuffer = buffer.getSpan(0);
     auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto tempBuffer = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationBuffer || !tempBuffer)
+    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    if (!modulationSpan || !tempSpan)
         return;
-    auto modulationSpan = absl::MakeSpan(*modulationBuffer).first(numSamples);
-    auto tempSpan = absl::MakeSpan(*tempBuffer).first(numSamples);
 
     using namespace std::placeholders;
     const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
@@ -343,45 +340,44 @@ void sfz::Voice::processStereo(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { amplitudeDuration };
 
         // Amplitude envelope
-        fill<float>(modulationSpan, baseGain);
-        resources.midiState.multiplicativeModifiers(region->amplitudeCC, modulationSpan, tempSpan);
-        DBG("Final gain: " << modulationSpan.back());
-        buffer.applyGain(modulationSpan);
+        fill<float>(*modulationSpan, baseGain);
+        resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
+        buffer.applyGain(*modulationSpan);
 
         // Crossfade envelopes
-        fill<float>(modulationSpan, 1.0f);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, modulationSpan, tempSpan, xfinBind);
-        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, modulationSpan, tempSpan, xfoutBind);
-        buffer.applyGain(modulationSpan);
+        fill<float>(*modulationSpan, 1.0f);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
+        resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
+        buffer.applyGain(*modulationSpan);
 
         // Volume envelope
-        volumeEnvelope.getBlock(modulationSpan);
-        buffer.applyGain(modulationSpan);
+        volumeEnvelope.getBlock(*modulationSpan);
+        buffer.applyGain(*modulationSpan);
 
         // AmpEG envelope
-        egEnvelope.getBlock(modulationSpan);
-        buffer.applyGain(modulationSpan);
+        egEnvelope.getBlock(*modulationSpan);
+        buffer.applyGain(*modulationSpan);
     }
 
     { // Panning and stereo processing
         ScopedTiming logger { panningDuration };
 
         // Apply panning
-        // panningModulation(modulationSpan);
-        fill<float>(modulationSpan, region->pan);
-        resources.midiState.additiveModifiers(region->panCC, modulationSpan, tempSpan);
-        pan<float>(modulationSpan, leftBuffer, rightBuffer);
+        // panningModulation(*modulationSpan);
+        fill<float>(*modulationSpan, region->pan);
+        resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
+        pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 
         // Apply the width/position process
-        // widthModulation(modulationSpan);
-        fill<float>(modulationSpan, region->width);
-        resources.midiState.additiveModifiers(region->widthCC, modulationSpan, tempSpan);
-        width<float>(modulationSpan, leftBuffer, rightBuffer);
+        // widthModulation(*modulationSpan);
+        fill<float>(*modulationSpan, region->width);
+        resources.midiState.additiveModifiers(region->widthCC, *modulationSpan, *tempSpan);
+        width<float>(*modulationSpan, leftBuffer, rightBuffer);
 
-        // positionModulation(modulationSpan);
-        fill<float>(modulationSpan, region->position);
-        resources.midiState.additiveModifiers(region->positionCC, modulationSpan, tempSpan);
-        pan<float>(modulationSpan, leftBuffer, rightBuffer);
+        // positionModulation(*modulationSpan);
+        fill<float>(*modulationSpan, region->position);
+        resources.midiState.additiveModifiers(region->positionCC, *modulationSpan, *tempSpan);
+        pan<float>(*modulationSpan, leftBuffer, rightBuffer);
     }
 
     { // Filtering and EQ
@@ -412,37 +408,33 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     auto source = currentPromise->getData();
-    auto jumpBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto bendBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto leftCoeffBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto rightCoeffBuffer = resources.bufferPool.getBuffer(numSamples);
-    auto indexBuffer = resources.bufferPool.getIndexBuffer(numSamples);
-    if (!jumpBuffer || !bendBuffer || !indexBuffer || !rightCoeffBuffer || !leftCoeffBuffer)
+
+    auto jumps = resources.bufferPool.getBuffer(numSamples);
+    auto bends = resources.bufferPool.getBuffer(numSamples);
+    auto leftCoeffs = resources.bufferPool.getBuffer(numSamples);
+    auto rightCoeffs = resources.bufferPool.getBuffer(numSamples);
+    auto indices = resources.bufferPool.getIndexBuffer(numSamples);
+    if (!jumps || !bends || !indices || !rightCoeffs || !leftCoeffs)
         return;
-    auto jumps = absl::MakeSpan(*jumpBuffer).first(numSamples);
-    auto bends = absl::MakeSpan(*bendBuffer).first(numSamples);
-    auto indices = absl::MakeSpan(*indexBuffer).first(numSamples);
-    auto leftCoeffs = absl::MakeSpan(*leftCoeffBuffer).first(numSamples);
-    auto rightCoeffs = absl::MakeSpan(*rightCoeffBuffer).first(numSamples);
 
-    fill<float>(jumps, pitchRatio * speedRatio);
+    fill<float>(*jumps, pitchRatio * speedRatio);
     if (region->bendStep > 1)
-        pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
+        pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
     else
-        pitchBendEnvelope.getBlock(bends);
+        pitchBendEnvelope.getBlock(*bends);
 
-    applyGain<float>(bends, jumps);
-    jumps[0] += floatPositionOffset;
-    cumsum<float>(jumps, jumps);
-    sfzInterpolationCast<float>(jumps, indices, leftCoeffs, rightCoeffs);
-    add<int>(sourcePosition, indices);
+    applyGain<float>(*bends, *jumps);
+    jumps->front() += floatPositionOffset;
+    cumsum<float>(*jumps, *jumps);
+    sfzInterpolationCast<float>(*jumps, *indices, *leftCoeffs, *rightCoeffs);
+    add<int>(sourcePosition, *indices);
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
         const auto offset = loopEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor)) + 1;
-        for (auto* index = indices.begin(); index < indices.end(); ++index) {
+        for (auto* index = indices->begin(); index < indices->end(); ++index) {
             if (*index > loopEnd) {
-                const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
+                const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
                 subtract<int>(offset, { index, remainingElements });
             }
         }
@@ -451,46 +443,46 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
             static_cast<int>(source.getNumFrames())
         ) - 2;
-        for (auto* index = indices.begin(); index < indices.end(); ++index) {
+        for (auto* index = indices->begin(); index < indices->end(); ++index) {
             if (*index >= sampleEnd) {
-                release(static_cast<int>(std::distance(indices.begin(), index)));
-                const auto remainingElements = static_cast<size_t>(std::distance(index, indices.end()));
+                release(static_cast<int>(std::distance(indices->begin(), index)));
+                const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
                 if (source.getNumFrames() - 1 < region->trueSampleEnd(currentPromise->oversamplingFactor)) {
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
                         << region->trueSampleEnd(currentPromise->oversamplingFactor)
                         << " for sample " << region->sample);
                 }
-                fill<int>(indices.last(remainingElements), sampleEnd);
-                fill<float>(leftCoeffs.last(remainingElements), 0.0f);
-                fill<float>(rightCoeffs.last(remainingElements), 1.0f);
+                fill<int>(indices->last(remainingElements), sampleEnd);
+                fill<float>(leftCoeffs->last(remainingElements), 0.0f);
+                fill<float>(rightCoeffs->last(remainingElements), 1.0f);
                 break;
             }
         }
     }
 
-    auto ind = indices.data();
-    auto leftCoeff = leftCoeffs.data();
-    auto rightCoeff = rightCoeffs.data();
+    auto ind = indices->data();
+    auto leftCoeff = leftCoeffs->data();
+    auto rightCoeff = rightCoeffs->data();
     auto leftSource = source.getConstSpan(0);
     auto left = buffer.getChannel(0);
     if (source.getNumChannels() == 1) {
-        while (ind < indices.end()) {
+        while (ind < indices->end()) {
             *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
             incrementAll(ind, left, leftCoeff, rightCoeff);
         }
     } else {
         auto right = buffer.getChannel(1);
         auto rightSource = source.getConstSpan(1);
-        while (ind < indices.end()) {
+        while (ind < indices->end()) {
             *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
             *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *leftCoeff, *rightCoeff);
             incrementAll(ind, left, right, leftCoeff, rightCoeff);
         }
     }
 
-    sourcePosition = indices.back();
-    floatPositionOffset = rightCoeffs.back();
+    sourcePosition = indices->back();
+    floatPositionOffset = rightCoeffs->back();
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
@@ -504,24 +496,22 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
     } else {
         const auto numSamples = buffer.getNumFrames();
-        auto frequencyBuffer = resources.bufferPool.getBuffer(numSamples);
-        auto bendBuffer = resources.bufferPool.getBuffer(numSamples);
-        if (!frequencyBuffer || !bendBuffer)
+        auto frequencies = resources.bufferPool.getBuffer(numSamples);
+        auto bends = resources.bufferPool.getBuffer(numSamples);
+        if (!frequencies || !bends)
             return;
-        auto frequencies = absl::MakeSpan(*frequencyBuffer).first(numSamples);
-        auto bends = absl::MakeSpan(*bendBuffer).first(numSamples);
 
         float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
-        fill<float>(frequencies, pitchRatio * keycenterFrequency);
+        fill<float>(*frequencies, pitchRatio * keycenterFrequency);
 
         if (region->bendStep > 1)
-            pitchBendEnvelope.getQuantizedBlock(bends, bendStepFactor);
+            pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
         else
-            pitchBendEnvelope.getBlock(bends);
+            pitchBendEnvelope.getBlock(*bends);
 
-        applyGain<float>(bends, frequencies);
+        applyGain<float>(*bends, *frequencies);
 
-        waveOscillator.processModulated(frequencies.data(), leftSpan.data(), buffer.getNumFrames());
+        waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
         copy<float>(leftSpan, rightSpan);
     }
 }
