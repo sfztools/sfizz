@@ -407,13 +407,13 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 noteActivationLists[note].push_back(region);
         }
 
-        for (unsigned cc = 0; cc < config::numCCs; cc++) {
+        for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc) || region->ccConditions.contains(cc))
                 ccActivationLists[cc].push_back(region);
         }
 
         // Defaults
-        for (unsigned cc = 0; cc < config::numCCs; cc++) {
+        for (int cc = 0; cc < config::numCCs; cc++) {
             region->registerCC(cc, resources.midiState.getCCValue(cc));
         }
 
@@ -1026,12 +1026,12 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
     resources.midiState.resetAllControllers(delay);
     for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
-        for (unsigned cc = 0; cc < config::numCCs; ++cc)
+        for (int cc = 0; cc < config::numCCs; ++cc)
             voice->registerCC(delay, cc, 0.0f);
     }
 
     for (auto& region : regions) {
-        for (unsigned cc = 0; cc < config::numCCs; ++cc)
+        for (int cc = 0; cc < config::numCCs; ++cc)
             region->registerCC(cc, 0.0f);
     }
 }

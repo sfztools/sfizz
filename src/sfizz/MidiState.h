@@ -176,7 +176,7 @@ private:
      * Pitch bend status
      */
     int pitchBend { 0 };
-    double sampleRate { config::defaultSampleRate };
+    float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     unsigned internalClock { 0 };
 };

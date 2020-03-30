@@ -273,7 +273,7 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
     auto promise = emptyPromises.back();
     promise->filename = preloaded->first;
     promise->preloadedData = preloaded->second.preloadedData;
-    promise->sampleRate = preloaded->second.information.sampleRate;
+    promise->sampleRate = static_cast<float>(preloaded->second.information.sampleRate);
     promise->oversamplingFactor = oversamplingFactor;
     promise->creationTime = std::chrono::high_resolution_clock::now();
 

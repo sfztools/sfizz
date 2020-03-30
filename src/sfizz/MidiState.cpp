@@ -137,7 +137,7 @@ void sfz::MidiState::reset() noexcept
 
 void sfz::MidiState::resetAllControllers(int delay) noexcept
 {
-    for (unsigned ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
+    for (int ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
         ccEvent(delay, ccIdx, 0.0f);
 
     pitchBend = 0;

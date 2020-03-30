@@ -970,7 +970,7 @@ float sfz::Region::getBasePitchVariation(int noteNumber, float velocity) const n
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += static_cast<int>(velocity * pitchVeltrack); // track velocity
+    pitchVariationInCents += static_cast<int>(velocity) * pitchVeltrack; // track velocity
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
     return centsFactor(pitchVariationInCents);
 }
@@ -994,7 +994,7 @@ float sfz::Region::getPhase() const noexcept
     float phase;
     if (oscillatorPhase >= 0) {
         phase = oscillatorPhase * (1.0f / 360.0f);
-        phase -= static_cast<int>(phase);
+        phase -= static_cast<float>(static_cast<int>(phase));
     } else {
         std::uniform_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
         phase = phaseDist(Random::randomGenerator);
