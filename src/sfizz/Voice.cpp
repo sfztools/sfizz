@@ -473,16 +473,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         return;
 
     fill<float>(*jumps, pitchRatio * speedRatio);
-    // if (region->bendStep > 1)
-    //     pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
-    // else
-    //     pitchBendEnvelope.getBlock(*bends);
+
     const auto events = resources.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend){
         const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
         return centsFactor(bendInCents);
     };
-    multiplicativeEnvelope(events, *bends, bendLambda);
+
+    if (region->bendStep > 1)
+        multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
+    else
+        multiplicativeEnvelope(events, *bends, bendLambda);
     DBG("Bend: " << bends->back());
 
     applyGain<float>(*bends, *jumps);
@@ -571,12 +572,11 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
             return centsFactor(bendInCents);
         };
-        // if (region->bendStep > 1)
-        //     pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
-        // else
-        //     pitchBendEnvelope.getBlock(*bends);
+        if (region->bendStep > 1)
+            multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
+        else
+            multiplicativeEnvelope(events, *bends, bendLambda);
 
-        multiplicativeEnvelope(events, *bends, bendLambda);
         DBG("Bend: " << bends->back());
         applyGain<float>(*bends, *frequencies);
 
