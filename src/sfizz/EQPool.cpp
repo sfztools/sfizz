@@ -28,12 +28,20 @@ void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels
     baseGain = description.gain + velocity * description.vel2gain;
 
     // Setup the modulated values
-    lastFrequency = baseFrequency + midiState.fastAdditiveModifiers(description.frequencyCC);
+    lastFrequency = baseFrequency;
+    for (auto& mod : description.frequencyCC)
+        lastFrequency += midiState.getCCValue(mod.cc) * mod.value;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
-    lastBandwidth = baseBandwidth + midiState.fastAdditiveModifiers(description.bandwidthCC);
+
+    lastBandwidth = baseBandwidth;
+    for (auto& mod : description.bandwidthCC)
+        lastBandwidth += midiState.getCCValue(mod.cc) * mod.value;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
-    lastGain = baseGain + midiState.fastAdditiveModifiers(description.gainCC);
-    lastGain = Default::eqGainRange.clamp(lastGain);
+
+    lastGain = baseGain;
+    for (auto& mod : description.gainCC)
+        lastGain += midiState.getCCValue(mod.cc) * mod.value;
+    lastGain = Default::filterGainRange.clamp(lastGain);
 
     // Initialize the EQ
     eq.prepare(lastFrequency, lastBandwidth, lastGain);
@@ -53,12 +61,20 @@ void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numF
 
     // TODO: Once the midistate envelopes are done, add modulation in there!
     // For now we take the last value
-    lastFrequency = baseFrequency + midiState.fastAdditiveModifiers(description->frequencyCC);
+    lastFrequency = baseFrequency;
+    for (auto& mod : description->frequencyCC)
+        lastFrequency += midiState.getCCValue(mod.cc) * mod.value;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
-    lastBandwidth = baseBandwidth + midiState.fastAdditiveModifiers(description->bandwidthCC);
+
+    lastBandwidth = baseBandwidth;
+    for (auto& mod : description->bandwidthCC)
+        lastBandwidth += midiState.getCCValue(mod.cc) * mod.value;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
-    lastGain = baseGain + midiState.fastAdditiveModifiers(description->gainCC);
-    lastGain = Default::eqGainRange.clamp(lastGain);
+
+    lastGain = baseGain;
+    for (auto& mod : description->gainCC)
+        lastGain += midiState.getCCValue(mod.cc) * mod.value;
+    lastGain = Default::filterGainRange.clamp(lastGain);
 
     if (lastGain == 0.0f) {
         justCopy();

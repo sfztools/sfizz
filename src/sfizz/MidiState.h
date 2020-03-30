@@ -123,37 +123,6 @@ public:
      */
     void resetAllControllers(int delay) noexcept;
 
-    /**
-     * @brief Modulate a value using the last entered CCs in the midiState
-     *
-     * @tparam T
-     * @tparam U
-     * @param value the base value
-     * @param modifiers the list of CC modifiers
-     * @param validRange a range to clamp the output
-     * @param lambda the function to apply for each modifier
-     * @return T
-     */
-    template<class T, class F = decltype(gainModifier<T>)>
-    float fastAdditiveModifiers(const CCMap<T>& modifiers, F&& lambda = gainModifier<T>) const noexcept
-    {
-        float returnedValue { 0.0f };
-        for (auto& mod: modifiers) {
-            returnedValue += lambda(getCCValue(mod.cc), mod.value);
-        }
-        return returnedValue;
-    }
-
-    template<class T, class F = decltype(gainModifier<T>)>
-    float fastMultiplicativeModifiers(const CCMap<T>& modifiers, F&& lambda = gainModifier<T>) const noexcept
-    {
-        float returnedValue { 1.0f };
-        for (auto& mod: modifiers) {
-            returnedValue *= lambda(getCCValue(mod.cc), mod.value);
-        }
-        return returnedValue;
-    }
-
     const EventVector& getEvents(int ccIdx) const noexcept;
 
     template<class T, class F>
