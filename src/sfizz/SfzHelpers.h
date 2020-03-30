@@ -348,11 +348,15 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 {
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
+    if (envelope.size() == 0)
+        return;
+
+    const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
     auto lastValue = lambda(events[0].value);
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size(); ++ i) {
-        const auto length = events[i].delay - lastDelay;
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+        const auto length = min(events[i].delay, maxDelay) - lastDelay;
         const auto step = (lambda(events[i].value) - lastValue)/ length;
         lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
         lastDelay += length;
@@ -366,16 +370,21 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
     ASSERT(step != 0.0);
+
+    if (envelope.size() == 0)
+        return;
+
     auto quantize = [step](float value) -> float {
         return std::round(value / step) * step;
     };
+    const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
     auto lastValue = quantize(lambda(events[0].value));
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size(); ++ i) {
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
         const auto nextValue = quantize(lambda(events[i].value));
         const auto difference = std::abs(nextValue - lastValue);
-        const auto length = events[i].delay - lastDelay;
+        const auto length = min(events[i].delay, maxDelay) - lastDelay;
 
         if (difference < step) {
             fill<float>(envelope.subspan(lastDelay, length), lastValue);
@@ -401,10 +410,14 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
 
+    if (envelope.size() == 0)
+        return;
+    const auto maxDelay = static_cast<int>(envelope.size() - 1);
+
     auto lastValue = lambda(events[0].value);
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size(); ++ i) {
-        const auto length = events[i].delay - lastDelay;
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+        const auto length = min(events[i].delay, maxDelay) - lastDelay;
         const auto nextValue = lambda(events[i].value);
         const auto step = std::exp((std::log(nextValue) - std::log(lastValue)) / length);
         multiplicativeRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
@@ -420,7 +433,10 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
     ASSERT(step != 0.0f);
-    DBG("Called the quantized version with step " << step);
+
+    if (envelope.size() == 0)
+        return;
+    const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
     const auto logStep = std::log(step);
     // If we assume that a = b.q^r for b in (1, q) then
@@ -434,8 +450,8 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
 
     auto lastValue = quantize(lambda(events[0].value));
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size(); ++ i) {
-        const auto length = events[i].delay - lastDelay;
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+        const auto length = min(events[i].delay, maxDelay) - lastDelay;
         const auto nextValue = quantize(lambda(events[i].value));
         const auto difference = nextValue > lastValue ? nextValue / lastValue : lastValue / nextValue;
 
