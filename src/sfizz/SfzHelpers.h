@@ -352,11 +352,45 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
     auto lastValue = lambda(events[0].value);
     auto lastDelay = events[0].delay;
     for (unsigned i = 1; i < events.size(); ++ i) {
-        const auto event = events[i];
-        const auto length = event.delay - lastDelay;
-        const auto step = (lambda(event.value) - lastValue)/ length;
+        const auto length = events[i].delay - lastDelay;
+        const auto step = (lambda(events[i].value) - lastValue)/ length;
         lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
         lastDelay += length;
+    }
+    fill<float>(envelope.subspan(lastDelay), lastValue);
+}
+
+template<class F>
+void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
+{
+    ASSERT(events.size() > 0);
+    ASSERT(events[0].delay == 0);
+    ASSERT(step != 0.0);
+    auto quantize = [step](float value) -> float {
+        return std::round(value / step) * step;
+    };
+
+    auto lastValue = quantize(lambda(events[0].value));
+    auto lastDelay = events[0].delay;
+    for (unsigned i = 1; i < events.size(); ++ i) {
+        const auto nextValue = quantize(lambda(events[i].value));
+        const auto difference = std::abs(nextValue - lastValue);
+        const auto length = events[i].delay - lastDelay;
+
+        if (difference < step) {
+            fill<float>(envelope.subspan(lastDelay, length), lastValue);
+            lastValue = nextValue;
+            lastDelay += length;
+            continue;
+        }
+
+        const auto numSteps = static_cast<int>(difference / step);
+        const auto stepLength = static_cast<int>(length / numSteps);
+        for (int i = 0; i < numSteps; ++i) {
+            fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
+            lastValue += lastValue <= nextValue ? step : -step;
+            lastDelay += stepLength;
+        }
     }
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
@@ -370,13 +404,55 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     auto lastValue = lambda(events[0].value);
     auto lastDelay = events[0].delay;
     for (unsigned i = 1; i < events.size(); ++ i) {
-        const auto event = events[i];
-        const auto length = event.delay - lastDelay;
-        const auto nextValue = lambda(event.value);
+        const auto length = events[i].delay - lastDelay;
+        const auto nextValue = lambda(events[i].value);
         const auto step = std::exp((std::log(nextValue) - std::log(lastValue)) / length);
         multiplicativeRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
         lastValue = nextValue;
         lastDelay += length;
+    }
+    fill<float>(envelope.subspan(lastDelay), lastValue);
+}
+
+template<class F>
+void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
+{
+    ASSERT(events.size() > 0);
+    ASSERT(events[0].delay == 0);
+    ASSERT(step != 0.0f);
+    DBG("Called the quantized version with step " << step);
+
+    const auto logStep = std::log(step);
+    // If we assume that a = b.q^r for b in (1, q) then
+    // log a     log b
+    // -----  =  -----  +  r
+    // log q     log q
+    // and log(b)\log(q) is between 0 and 1.
+    auto quantize = [logStep](float value) -> float {
+        return std::exp(logStep * std::round(std::log(value)/logStep));
+    };
+
+    auto lastValue = quantize(lambda(events[0].value));
+    auto lastDelay = events[0].delay;
+    for (unsigned i = 1; i < events.size(); ++ i) {
+        const auto length = events[i].delay - lastDelay;
+        const auto nextValue = quantize(lambda(events[i].value));
+        const auto difference = nextValue > lastValue ? nextValue / lastValue : lastValue / nextValue;
+
+        if (difference < step) {
+            fill<float>(envelope.subspan(lastDelay, length), lastValue);
+            lastValue = nextValue;
+            lastDelay += length;
+            continue;
+        }
+
+        const auto numSteps = static_cast<int>(std::log(difference) / logStep);
+        const auto stepLength = static_cast<int>(length / numSteps);
+        for (int i = 0; i < numSteps; ++i) {
+            fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
+            lastValue = nextValue > lastValue ? lastValue * step : lastValue / step;
+            lastDelay += stepLength;
+        }
     }
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
