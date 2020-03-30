@@ -121,7 +121,8 @@ public:
      */
     void resetAllControllers(int delay) noexcept;
 
-    const EventVector& getEvents(int ccIdx) const noexcept;
+    const EventVector& getCCEvents(int ccIdx) const noexcept;
+    const EventVector& getPitchEvents() const noexcept;
 
 private:
 

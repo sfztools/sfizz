@@ -373,7 +373,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
         const auto event = events[i];
         const auto length = event.delay - lastDelay;
         const auto nextValue = lambda(event.value);
-        const auto step = std::exp((std::log(nextValue) - std::log(currentValue)) / length);
+        const auto step = std::exp((std::log(nextValue) - std::log(lastValue)) / length);
         multiplicativeRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
         lastValue = nextValue;
         lastDelay += length;

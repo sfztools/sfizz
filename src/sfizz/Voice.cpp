@@ -187,7 +187,7 @@ void sfz::Voice::registerPitchWheel(int delay, float pitch) noexcept
     if (state == State::idle)
         return;
 
-    pitchBendEnvelope.registerEvent(delay, pitch * 8191.0f);
+    pitchBendEnvelope.registerEvent(delay, pitch);
 }
 
 void sfz::Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
@@ -272,7 +272,7 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
     for (auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
@@ -281,12 +281,12 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
     for (auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     for (auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
@@ -317,25 +317,26 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
     for (auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     buffer.applyGain(*modulationSpan);
 
-
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
     for (auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
+
     for (auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
+
     buffer.applyGain(*modulationSpan);
 
     // Volume envelope
@@ -366,7 +367,7 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
     for (auto& mod : region->panCC) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
@@ -389,7 +390,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // panningModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->pan);
     for (auto& mod : region->panCC) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
@@ -399,7 +400,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // widthModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->width);
     for (auto& mod : region->widthCC) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
@@ -408,7 +409,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // positionModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->position);
     for (auto& mod : region->positionCC) {
-        const auto events = resources.midiState.getEvents(mod.cc);
+        const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
@@ -472,10 +473,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         return;
 
     fill<float>(*jumps, pitchRatio * speedRatio);
-    if (region->bendStep > 1)
-        pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
-    else
-        pitchBendEnvelope.getBlock(*bends);
+    // if (region->bendStep > 1)
+    //     pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
+    // else
+    //     pitchBendEnvelope.getBlock(*bends);
+    const auto events = resources.midiState.getPitchEvents();
+    const auto bendLambda = [this](float bend){
+        const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
+        return centsFactor(bendInCents);
+    };
+    multiplicativeEnvelope(events, *bends, bendLambda);
+    DBG("Bend: " << bends->back());
 
     applyGain<float>(*bends, *jumps);
     jumps->front() += floatPositionOffset;
@@ -558,11 +566,18 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
         fill<float>(*frequencies, pitchRatio * keycenterFrequency);
 
-        if (region->bendStep > 1)
-            pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
-        else
-            pitchBendEnvelope.getBlock(*bends);
+        const auto events = resources.midiState.getPitchEvents();
+        const auto bendLambda = [this](float bend){
+            const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
+            return centsFactor(bendInCents);
+        };
+        // if (region->bendStep > 1)
+        //     pitchBendEnvelope.getQuantizedBlock(*bends, bendStepFactor);
+        // else
+        //     pitchBendEnvelope.getBlock(*bends);
 
+        multiplicativeEnvelope(events, *bends, bendLambda);
+        DBG("Bend: " << bends->back());
         applyGain<float>(*bends, *frequencies);
 
         waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
