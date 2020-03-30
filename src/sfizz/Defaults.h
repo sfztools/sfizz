@@ -57,6 +57,7 @@ namespace Default
     // common defaults
     constexpr Range<uint8_t> midi7Range { 0, 127 };
     constexpr Range<float> normalizedRange { 0.0f, 1.0f };
+	constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
     constexpr float zeroModifier { 0.0f };
 
     // Wavetable oscillator
@@ -79,7 +80,8 @@ namespace Default
 	constexpr Range<uint8_t> midiChannelRange { 0, 15 };
 	constexpr Range<uint16_t> ccNumberRange { 0, config::numCCs };
 	constexpr auto ccValueRange = normalizedRange;
-	constexpr Range<int> bendRange { -8192, 8192 };
+	constexpr Range<int> bendRange = { -8192, 8192 };
+	constexpr Range<float> bendValueRange = symmetricNormalizedRange;
 	constexpr int bend { 0 };
 	constexpr SfzVelocityOverride velocityOverride { SfzVelocityOverride::current };
 
@@ -107,7 +109,6 @@ namespace Default
 	constexpr float pan { 0.0 };
 	constexpr Range<float> panRange { -100.0, 100.0 };
 	constexpr Range<float> panCCRange { -200.0, 200.0 };
-	constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
 	constexpr float position { 0.0 };
 	constexpr Range<float> positionRange { -100.0, 100.0 };
 	constexpr Range<float> positionCCRange { -200.0, 200.0 };

@@ -189,7 +189,7 @@ constexpr float normalizePercents(T percentValue)
  */
 constexpr float normalizeBend(float bendValue)
 {
-    return min(max(bendValue, -8191.0f), 8191.0f) / 8191.0f;
+    return clamp(bendValue, -8191.0f, 8191.0f) / 8191.0f;
 }
 
 namespace literals

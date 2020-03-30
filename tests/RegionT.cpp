@@ -223,19 +223,23 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("lobend, hibend")
     {
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 8192));
-        region.parseOpcode({ "lobend", "4" });
-        REQUIRE(region.bendRange == sfz::Range<int>(4, 8192));
+        REQUIRE(region.bendRange == sfz::Range<float>(-1.0f, 1.0f));
+        region.parseOpcode({ "lobend", "400" });
+        REQUIRE(region.bendRange.getStart() == Approx(sfz::normalizeBend(400)));
+        REQUIRE(region.bendRange.getEnd() == 1.0_a);
         region.parseOpcode({ "lobend", "-128" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-128, 8192));
+        REQUIRE(region.bendRange.getStart() == Approx(sfz::normalizeBend(-128)));
+        REQUIRE(region.bendRange.getEnd() == 1.0_a);
         region.parseOpcode({ "lobend", "-10000" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 8192));
+        REQUIRE(region.bendRange == sfz::Range<float>(-1.0f, 1.0f));
         region.parseOpcode({ "hibend", "13" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 13));
+        REQUIRE(region.bendRange.getStart() == -1.0_a);
+        REQUIRE(region.bendRange.getEnd() == Approx(sfz::normalizeBend(13)));
         region.parseOpcode({ "hibend", "-1" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, -1));
+        REQUIRE(region.bendRange.getStart() == -1.0_a);
+        REQUIRE(region.bendRange.getEnd() == Approx(sfz::normalizeBend(-1)));
         region.parseOpcode({ "hibend", "10000" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 8192));
+        REQUIRE(region.bendRange == sfz::Range<float>(-1.0f, 1.0f));
     }
 
     SECTION("locc, hicc")

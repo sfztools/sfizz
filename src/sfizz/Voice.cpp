@@ -85,12 +85,11 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
 
-    pitchBendEnvelope.setFunction([region](float pitchValue){
-        const auto normalizedBend = normalizeBend(pitchValue);
-        const auto bendInCents = normalizedBend > 0.0f ? normalizedBend * static_cast<float>(region->bendUp) : -normalizedBend * static_cast<float>(region->bendDown);
+    pitchBendEnvelope.setFunction([region](float bend){
+        const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
         return centsFactor(bendInCents);
     });
-    pitchBendEnvelope.reset(static_cast<float>(resources.midiState.getPitchBend()));
+    pitchBendEnvelope.reset(resources.midiState.getPitchBend());
 
     // Check that we can handle the number of filters; filters should be cleared here
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
@@ -183,12 +182,12 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     }
 }
 
-void sfz::Voice::registerPitchWheel(int delay, int pitch) noexcept
+void sfz::Voice::registerPitchWheel(int delay, float pitch) noexcept
 {
     if (state == State::idle)
         return;
 
-    pitchBendEnvelope.registerEvent(delay, static_cast<float>(pitch));
+    pitchBendEnvelope.registerEvent(delay, pitch * 8191.0f);
 }
 
 void sfz::Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
@@ -279,7 +278,6 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
         resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-    DBG("Final gain: " << modulationSpan->back());
     applyGain<float>(*modulationSpan, leftBuffer);
 
     // Crossfade envelopes
@@ -292,7 +290,6 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
         resources.midiState.linearEnvelope(mod, *tempSpan, xfoutBind);
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-    DBG("XF: " << modulationSpan->back());
     applyGain<float>(*modulationSpan, leftBuffer);
 
     // Volume envelope
@@ -326,7 +323,6 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
         resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-    DBG("Final gain: " << modulationSpan->back());
     buffer.applyGain(*modulationSpan);
 
 
@@ -340,7 +336,6 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
         resources.midiState.linearEnvelope(mod, *tempSpan, xfoutBind);
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-    DBG("XF: " << modulationSpan->back());
     buffer.applyGain(*modulationSpan);
 
     // Volume envelope
@@ -374,7 +369,6 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
         resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    DBG("Pan: " << modulationSpan->back());
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 }
 

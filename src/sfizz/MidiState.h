@@ -79,14 +79,14 @@ public:
      *
      * @param pitchBendValue
      */
-    void pitchBendEvent(int delay, int pitchBendValue) noexcept;
+    void pitchBendEvent(int delay, float pitchBendValue) noexcept;
 
     /**
      * @brief Get the pitch bend status
 
      * @return int
      */
-    int getPitchBend() const noexcept;
+    float getPitchBend() const noexcept;
 
     /**
      * @brief Register a CC event
@@ -176,6 +176,7 @@ private:
      * Pitch bend status
      */
     int pitchBend { 0 };
+    EventVector pitchEvents;
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     unsigned internalClock { 0 };

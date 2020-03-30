@@ -113,7 +113,7 @@ struct Region {
      *
      * @param pitch
      */
-    void registerPitchWheel(int pitch) noexcept;
+    void registerPitchWheel(float pitch) noexcept;
     /**
      * @brief Register a new aftertouch event.
      *
@@ -248,7 +248,7 @@ struct Region {
     Range<float> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<int> bendRange { Default::bendRange }; // hibend and lobend
+    Range<float> bendRange { Default::bendValueRange }; // hibend and lobend
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last

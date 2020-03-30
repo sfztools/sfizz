@@ -778,16 +778,17 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 {
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
+    const auto normalizedPitch = normalizeBend(pitch);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.pitchBendEvent(delay, pitch);
+    resources.midiState.pitchBendEvent(delay, normalizedPitch);
 
     for (auto& region : regions) {
-        region->registerPitchWheel(pitch);
+        region->registerPitchWheel(normalizedPitch);
     }
 
     for (auto& voice : voices) {
-        voice->registerPitchWheel(delay, pitch);
+        voice->registerPitchWheel(delay, normalizedPitch);
     }
 }
 void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept

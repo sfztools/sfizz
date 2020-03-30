@@ -165,10 +165,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     // Region logic: MIDI conditions
     case hash("lobend"):
-        setRangeStartFromOpcode(opcode, bendRange, Default::bendRange);
+        if (auto value = readOpcode(opcode.value, Default::bendRange))
+            bendRange.setStart(normalizeBend(*value));
         break;
     case hash("hibend"):
-        setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
+        if (auto value = readOpcode(opcode.value, Default::bendRange))
+            bendRange.setEnd(normalizeBend(*value));
         break;
     case hash("locc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -937,7 +939,7 @@ bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
         return false;
 }
 
-void sfz::Region::registerPitchWheel(int pitch) noexcept
+void sfz::Region::registerPitchWheel(float pitch) noexcept
 {
     if (bendRange.containsWithEnd(pitch))
         pitchSwitched = true;

@@ -107,7 +107,7 @@ public:
      * @param delay
      * @param pitch
      */
-    void registerPitchWheel(int delay, int pitch) noexcept;
+    void registerPitchWheel(int delay, float pitch) noexcept;
     /**
      * @brief Register an aftertouch event; for now this does nothing
      *
