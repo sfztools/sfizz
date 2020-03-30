@@ -5,7 +5,6 @@ clang-tidy \
   src/sfizz/Curve.cpp \
   src/sfizz/Effects.cpp \
   src/sfizz/EQPool.cpp \
-  src/sfizz/EventEnvelopes.cpp \
   src/sfizz/FilePool.cpp \
   src/sfizz/FilterPool.cpp \
   src/sfizz/FloatEnvelopes.cpp \
