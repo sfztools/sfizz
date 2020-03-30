@@ -361,5 +361,25 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
+template<class F>
+void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
+{
+    ASSERT(events.size() > 0);
+    ASSERT(events[0].delay == 0);
+
+    auto lastValue = lambda(events[0].value);
+    auto lastDelay = events[0].delay;
+    for (unsigned i = 1; i < events.size(); ++ i) {
+        const auto event = events[i];
+        const auto length = event.delay - lastDelay;
+        const auto nextValue = lambda(event.value);
+        const auto step = std::exp((std::log(nextValue) - std::log(currentValue)) / length);
+        multiplicativeRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
+        lastValue = nextValue;
+        lastDelay += length;
+    }
+    fill<float>(envelope.subspan(lastDelay), lastValue);
+}
+
 } // namespace sfz
 
