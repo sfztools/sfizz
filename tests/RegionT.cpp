@@ -1453,6 +1453,20 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeCC.contains(2));
         REQUIRE(region.amplitudeCC[2] == 0.30_a);
     }
+
+    SECTION("volume_oncc/gain_cc")
+    {
+        REQUIRE(region.volumeCC.empty());
+        region.parseOpcode({ "gain_cc1", "40" });
+        REQUIRE(region.volumeCC.contains(1));
+        REQUIRE(region.volumeCC[1] == 40_a);
+        region.parseOpcode({ "volume_oncc2", "-76" });
+        REQUIRE(region.volumeCC.contains(2));
+        REQUIRE(region.volumeCC[2] == -76.0_a);
+        region.parseOpcode({ "gain_oncc4", "-1" });
+        REQUIRE(region.volumeCC.contains(4));
+        REQUIRE(region.volumeCC[4] == -1.0_a);
+    }
 }
 
 // Specific region bugs
