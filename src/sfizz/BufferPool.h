@@ -33,7 +33,7 @@ public:
     : value(std::move(value)), available(available) {}
     T& operator*() { return value; }
     T* operator->() { return &value; }
-    operator bool() const { return available != nullptr; }
+    explicit operator bool() const { return available != nullptr; }
     ~SpanHolder()
     {
         if (available)
