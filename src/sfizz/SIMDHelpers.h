@@ -566,8 +566,8 @@ namespace _internals {
     template <class T>
     inline void snippetRampMultiplicative(T*& output, T& value, T step)
     {
-        value *= step;
         *output++ = value;
+        value *= step;
     }
 }
 
