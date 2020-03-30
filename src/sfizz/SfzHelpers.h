@@ -13,6 +13,7 @@
 #include "Macros.h"
 #include "Config.h"
 #include "MathHelpers.h"
+#include "SIMDHelpers.h"
 #include "absl/meta/type_traits.h"
 #include "Defaults.h"
 
@@ -340,6 +341,24 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     }
 
     return 1.0f;
+}
+
+template<class F>
+void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
+{
+    ASSERT(events.size() > 0);
+    ASSERT(events[0].delay == 0);
+
+    auto lastValue = lambda(events[0].value);
+    auto lastDelay = events[0].delay;
+    for (unsigned i = 1; i < events.size(); ++ i) {
+        const auto event = events[i];
+        const auto length = event.delay - lastDelay;
+        const auto step = (lambda(event.value) - lastValue)/ length;
+        lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
+        lastDelay += length;
+    }
+    fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
 } // namespace sfz

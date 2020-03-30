@@ -262,10 +262,7 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
-
-    using namespace std::placeholders;
-    const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
-    const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
+    const auto xfCurve = region->crossfadeCCCurve;
 
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
     auto tempSpan = resources.bufferPool.getBuffer(numSamples);
@@ -275,7 +272,8 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
     for (auto& mod : region->amplitudeCC) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     applyGain<float>(*modulationSpan, leftBuffer);
@@ -283,11 +281,13 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
     for (auto& mod : region->crossfadeCCInRange) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, xfinBind);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     for (auto& mod : region->crossfadeCCOutRange) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, xfoutBind);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     applyGain<float>(*modulationSpan, leftBuffer);
@@ -307,20 +307,18 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
 
     const auto numSamples = buffer.getNumFrames();
 
+    const auto xfCurve = region->crossfadeCCCurve;
+
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
     auto tempSpan = resources.bufferPool.getBuffer(numSamples);
     if (!modulationSpan || !tempSpan)
         return;
 
-    using namespace std::placeholders;
-    const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
-    const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
-
-
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
     for (auto& mod : region->amplitudeCC) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     buffer.applyGain(*modulationSpan);
@@ -329,11 +327,13 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
     for (auto& mod : region->crossfadeCCInRange) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, xfinBind);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     for (auto& mod : region->crossfadeCCOutRange) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, xfoutBind);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
     buffer.applyGain(*modulationSpan);
@@ -366,7 +366,8 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
     for (auto& mod : region->panCC) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -388,7 +389,8 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // panningModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->pan);
     for (auto& mod : region->panCC) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -397,7 +399,8 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // widthModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->width);
     for (auto& mod : region->widthCC) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
     width<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -405,7 +408,8 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // positionModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->position);
     for (auto& mod : region->positionCC) {
-        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        const auto events = resources.midiState.getEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);

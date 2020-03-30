@@ -8,8 +8,6 @@
 #include <array>
 #include "CCMap.h"
 #include "Range.h"
-#include "absl/types/span.h"
-#include "SIMDHelpers.h"
 
 namespace sfz
 {
@@ -124,25 +122,6 @@ public:
     void resetAllControllers(int delay) noexcept;
 
     const EventVector& getEvents(int ccIdx) const noexcept;
-
-    template<class T, class F>
-    void linearEnvelope(T&& modifier, absl::Span<float> envelope, F&& lambda) const
-    {
-        const auto eventList = getEvents(modifier.cc);
-        ASSERT(eventList.size() > 0);
-        ASSERT(eventList[0].delay == 0);
-
-        auto lastValue = lambda(modifier.value, eventList[0].value);
-        auto lastDelay = eventList[0].delay;
-        for (unsigned i = 1; i < eventList.size(); ++ i) {
-            const auto event = eventList[i];
-            const auto length = event.delay - lastDelay;
-            const auto step = (lambda(modifier.value, event.value) - lastValue)/ length;
-            lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
-            lastDelay += length;
-        }
-        fill<float>(envelope.subspan(lastDelay), lastValue);
-    }
 
 private:
 
