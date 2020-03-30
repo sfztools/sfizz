@@ -154,26 +154,6 @@ public:
         return returnedValue;
     }
 
-    template<class T, class F = decltype(gainModifier<T>)>
-    void additiveModifiers(const CCMap<T>& modifiers, absl::Span<float> output, absl::Span<float> temp, F&& lambda = gainModifier<T>)
-    {
-        fill<float>(output, 0.0f);
-        for (auto& mod : modifiers) {
-            linearEnvelope(mod, temp, lambda);
-            add<float>(temp, output);
-        }
-    }
-
-    template<class T, class F = decltype(gainModifier<T>)>
-    void multiplicativeModifiers(const CCMap<T>& modifiers, absl::Span<float> output, absl::Span<float> temp, F&& lambda = gainModifier<T>)
-    {
-        for (auto& mod : modifiers) {
-            linearEnvelope(mod, temp, lambda);
-            applyGain<float>(temp, output);
-        }
-    }
-
-
     const EventVector& getEvents(int ccIdx) const noexcept;
 
     template<class T, class F>

@@ -275,15 +275,23 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
-    resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
+    for (auto& mod : region->amplitudeCC) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
     DBG("Final gain: " << modulationSpan->back());
     applyGain<float>(*modulationSpan, leftBuffer);
 
     // Crossfade envelopes
-    // crossfadeEnvelope.getBlock(modulationSpan);
     fill<float>(*modulationSpan, 1.0f);
-    resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
-    resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
+    for (auto& mod : region->crossfadeCCInRange) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, xfinBind);
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
+    for (auto& mod : region->crossfadeCCOutRange) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, xfoutBind);
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
     DBG("XF: " << modulationSpan->back());
     applyGain<float>(*modulationSpan, leftBuffer);
 
@@ -311,15 +319,28 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
     const auto xfinBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
     const auto xfoutBind = std::bind(crossfadeIn<float, float>, _1, _2, region->crossfadeCCCurve);
 
+
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
-    resources.midiState.multiplicativeModifiers(region->amplitudeCC, *modulationSpan, *tempSpan);
+    for (auto& mod : region->amplitudeCC) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
+    DBG("Final gain: " << modulationSpan->back());
     buffer.applyGain(*modulationSpan);
+
 
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
-    resources.midiState.multiplicativeModifiers(region->crossfadeCCInRange, *modulationSpan, *tempSpan, xfinBind);
-    resources.midiState.multiplicativeModifiers(region->crossfadeCCOutRange, *modulationSpan, *tempSpan, xfoutBind);
+    for (auto& mod : region->crossfadeCCInRange) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, xfinBind);
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
+    for (auto& mod : region->crossfadeCCOutRange) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, xfoutBind);
+        applyGain<float>(*tempSpan, *modulationSpan);
+    }
+    DBG("XF: " << modulationSpan->back());
     buffer.applyGain(*modulationSpan);
 
     // Volume envelope
@@ -349,7 +370,10 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
 
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
-    resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
+    for (auto& mod : region->panCC) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        add<float>(*tempSpan, *modulationSpan);
+    }
     DBG("Pan: " << modulationSpan->back());
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 }
@@ -369,18 +393,27 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // Apply panning
     // panningModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->pan);
-    resources.midiState.additiveModifiers(region->panCC, *modulationSpan, *tempSpan);
+    for (auto& mod : region->panCC) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        add<float>(*tempSpan, *modulationSpan);
+    }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
     // widthModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->width);
-    resources.midiState.additiveModifiers(region->widthCC, *modulationSpan, *tempSpan);
+    for (auto& mod : region->widthCC) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        add<float>(*tempSpan, *modulationSpan);
+    }
     width<float>(*modulationSpan, leftBuffer, rightBuffer);
 
     // positionModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->position);
-    resources.midiState.additiveModifiers(region->positionCC, *modulationSpan, *tempSpan);
+    for (auto& mod : region->positionCC) {
+        resources.midiState.linearEnvelope(mod, *tempSpan, gainModifier<float>);
+        add<float>(*tempSpan, *modulationSpan);
+    }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 }
 
