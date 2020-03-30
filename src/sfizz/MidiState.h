@@ -155,7 +155,6 @@ private:
     /**
      * Pitch bend status
      */
-    int pitchBend { 0 };
     EventVector pitchEvents;
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };

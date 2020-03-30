@@ -97,7 +97,6 @@ void sfz::MidiState::pitchBendEvent(int delay, float pitchBendValue) noexcept
 {
     ASSERT(pitchBendValue >= -1.0f && pitchBendValue <= 1.0f);
 
-    pitchBend = pitchBendValue;
     const auto insertionPoint = absl::c_upper_bound(pitchEvents, delay, MidiEventDelayComparator{});
     if (insertionPoint == pitchEvents.end() || insertionPoint->delay != delay)
         pitchEvents.insert(insertionPoint, { delay, pitchBendValue });
@@ -141,7 +140,6 @@ void sfz::MidiState::reset() noexcept
     pitchEvents.clear();
     pitchEvents.push_back({ 0, 0.0f });
 
-    pitchBend = 0;
     activeNotes = 0;
     internalClock = 0;
     absl::c_fill(noteOnTimes, 0);
@@ -153,7 +151,6 @@ void sfz::MidiState::resetAllControllers(int delay) noexcept
     for (int ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
         ccEvent(delay, ccIdx, 0.0f);
 
-    pitchBend = 0;
     pitchBendEvent(delay, 0.0f);
 }
 
