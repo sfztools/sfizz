@@ -46,9 +46,8 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Linear)(benchmark::State& state) {
     }
 }
 
-BENCHMARK_DEFINE_F(EnvelopeFixture, LinearNoEvent)(benchmark::State& state) {
-    for (auto _ : state)
-    {
+BENCHMARK_DEFINE_F(EnvelopeFixture, LinearNoEvent) (benchmark::State& state) {
+    for (auto _ : state) {
         sfz::EventVector events {
             { 0, dist(gen) }
         };
@@ -79,9 +78,8 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Multiplicative)(benchmark::State& state) {
     }
 }
 
-BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeNoEvent)(benchmark::State& state) {
-    for (auto _ : state)
-    {
+BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeNoEvent) (benchmark::State& state) {
+    for (auto _ : state) {
         sfz::EventVector events {
             { 0, dist(gen) }
         };

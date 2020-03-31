@@ -11,6 +11,7 @@
 #include "Region.h"
 #include "AudioBuffer.h"
 #include "Resources.h"
+#include "Smoothers.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include "OnePoleFilter.h"
@@ -301,6 +302,8 @@ public:
     Duration getLastFilterDuration() const noexcept { return filterDuration; }
     Duration getLastPanningDuration() const noexcept { return panningDuration; }
 
+    void prepareSmoothers(const ModifierArray<size_t>& numModifiers);
+
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
@@ -337,12 +340,25 @@ private:
     void panStageStereo(AudioSpan<float> buffer) noexcept;
     void filterStageMono(AudioSpan<float> buffer) noexcept;
     void filterStageStereo(AudioSpan<float> buffer) noexcept;
+    void pitchEnvelope(absl::Span<float> pitchSpan) noexcept;
 
     /**
      * @brief Remove the voice from the sister ring
      *
      */
     void removeVoiceFromRing() noexcept;
+
+    template <class F>
+    void forEachWithSmoother(sfz::Mod modId, F&& lambda)
+    {
+        auto mod = region->modifiers[modId].begin();
+        auto smoother = modifierSmoothers[modId].begin();
+        while (mod < region->modifiers[modId].end()) {
+            lambda(*mod, *smoother);
+            incrementAll(mod, smoother);
+        }
+    }
+
     /**
      * @brief Initialize frequency and gain coefficients for the oscillators.
      */
@@ -410,8 +426,15 @@ private:
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
+    ModifierArray<std::vector<Smoother>> modifierSmoothers;
+    Smoother gainSmoother;
+    Smoother bendSmoother;
+    void resetSmoothers() noexcept;
+
     std::array<OnePoleFilter<float>, 2> channelEnvelopeFilters;
     std::array<float, 2> smoothedChannelEnvelopes;
+
+    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
     LEAK_DETECTOR(Voice);
 };
 

@@ -17,6 +17,7 @@
 #include "MidiState.h"
 #include "FileId.h"
 #include "NumericId.h"
+#include "Modifiers.h"
 #include "absl/types/optional.h"
 #include <bitset>
 #include <string>
@@ -196,6 +197,14 @@ struct Region {
      */
     float velocityCurve(float velocity) const noexcept;
     /**
+     * @brief Get the cents factor for a given bend value between -1 and 1
+     *
+     * @param bend
+     * @return float
+     */
+    float getBendInCents(float bend) const noexcept;
+
+    /**
      * @brief Get the region offset in samples
      *
      * @return uint32_t
@@ -309,11 +318,6 @@ struct Region {
     float pan { normalizePercents(Default::pan) }; // pan
     float width { normalizePercents(Default::width) }; // width
     float position { normalizePercents(Default::position) }; // position
-    CCMap<Modifier> volumeCC { {} }; // volume_oncc
-    CCMap<Modifier> amplitudeCC { {} }; // amplitude_oncc
-    CCMap<Modifier> panCC { {} }; // pan_oncc
-    CCMap<Modifier> widthCC { {} }; // width_oncc
-    CCMap<Modifier> positionCC { {} }; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
@@ -342,10 +346,10 @@ struct Region {
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune
-    CCMap<Modifier> tuneCC { {} };
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };
+    uint8_t bendSmooth { Default::bendSmooth };
 
     // Envelopes
     EGDescription amplitudeEG;
@@ -356,6 +360,9 @@ struct Region {
 
     // Effects
     std::vector<float> gainToEffect;
+
+    // Modifiers
+    ModifierArray<CCMap<Modifier>> modifiers;
 
 private:
     const MidiState& midiState;

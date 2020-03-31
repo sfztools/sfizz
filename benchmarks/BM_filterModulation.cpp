@@ -7,6 +7,7 @@
 #include "SIMDHelpers.h"
 #include "OnePoleFilter.h"
 #include "SfzFilter.h"
+#include "SfzHelpers.h"
 #include "ScopedFTZ.h"
 #include "SfzHelpers.h"
 #include <benchmark/benchmark.h>

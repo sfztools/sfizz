@@ -2,12 +2,11 @@
 
 #include "Range.h"
 #include "Defaults.h"
-#include "SfzHelpers.h"
+#include "Modifiers.h"
 #include "Resources.h"
 #include "absl/types/span.h"
 
 namespace sfz {
-
 /**
  * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
  */
