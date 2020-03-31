@@ -40,6 +40,18 @@ constexpr T min(T op1, Args... rest)
 }
 
 /**
+ * @brief Compute the square of the value
+ *
+ * @param op
+ * @return T
+ */
+template<class T>
+constexpr T power2(T in)
+{
+    return in * in;
+}
+
+/**
  * @brief Converts db values into power (applies 10**(in/10))
  *
  * @tparam Type
