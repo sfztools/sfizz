@@ -42,7 +42,17 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Linear)(benchmark::State& state) {
             { 0, 0.0f },
             { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
-        linearEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
+        sfz::linearEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
+    }
+}
+
+BENCHMARK_DEFINE_F(EnvelopeFixture, LinearNoEvent)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        sfz::EventVector events {
+            { 0, dist(gen) }
+        };
+        sfz::linearEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
     }
 }
 
@@ -53,7 +63,7 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, LinearQuantized)(benchmark::State& state) {
             { 0, 0.0f },
             { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
-        linearEnvelope(
+        sfz::linearEnvelope(
             events, absl::MakeSpan(output), [](float x) { return x; }, 0.5);
     }
 }
@@ -65,7 +75,17 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Multiplicative)(benchmark::State& state) {
             { 0, 1.0f },
             { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
-        multiplicativeEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
+        sfz::multiplicativeEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
+    }
+}
+
+BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeNoEvent)(benchmark::State& state) {
+    for (auto _ : state)
+    {
+        sfz::EventVector events {
+            { 0, dist(gen) }
+        };
+        sfz::multiplicativeEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
     }
 }
 
@@ -76,14 +96,16 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeQuantized)(benchmark::State& s
             { 0, 1.0f },
             { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
-        multiplicativeEnvelope(
+        sfz::multiplicativeEnvelope(
             events, absl::MakeSpan(output), [](float x) { return x; }, 2.0f);
     }
 }
 
 
 BENCHMARK_REGISTER_F(EnvelopeFixture, Linear)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(EnvelopeFixture, LinearNoEvent)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(EnvelopeFixture, LinearQuantized)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(EnvelopeFixture, Multiplicative)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(EnvelopeFixture, MultiplicativeNoEvent)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(EnvelopeFixture, MultiplicativeQuantized)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_MAIN();
