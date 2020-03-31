@@ -34,7 +34,8 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
     this->releaseRate = secondsToExpRate(desc.getRelease(state, velocity));
     this->hold = secondsToSamples(desc.getHold(state, velocity));
     this->peak = 1.0;
-    this->sustain =  normalizePercents(desc.getSustain(state, velocity));
+    this->sustain = normalizePercents(desc.getSustain(state, velocity));
+    this->sustain = max(this->sustain, config::virtuallyZero);
     this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
