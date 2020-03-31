@@ -47,13 +47,6 @@ static void configureLFOwithRegion(
     const absl::Span<const sfz::Opcode> opcodes)
 {
     for (const sfz::Opcode& opc : opcodes) {
-        auto firstParam = opc.firstParameter();
-        auto backParam = opc.backParameter();
-        if (!firstParam)
-            continue;
-
-        uint8_t lfoIndex = *firstParam - 1;
-        uint8_t subwaveIndex = backParam ? (*backParam - 1) : 0;
 
         auto getLfo = [&ctls](uint8_t iLfo) -> sfz::LFO::Control* {
             if (iLfo >= ctls.size())
@@ -77,7 +70,7 @@ static void configureLFOwithRegion(
             return seq;
         };
         auto getStep = [&getStepSeq](uint8_t iLfo, uint8_t iStep) -> float* {
-            if (iStep >= sfz::LFO::Control::StepSequence::maximumSteps)
+            if (iStep >= sfz::config::maxLFOSteps)
                 return nullptr;
             sfz::LFO::Control::StepSequence* seq = getStepSeq(iLfo);
             if (!seq)
@@ -86,37 +79,44 @@ static void configureLFOwithRegion(
         };
 
         switch (opc.lettersOnlyHash) {
-        case hash("lfo_freq"): {
+        case hash("lfo&_freq"): {
+            const auto lfoIndex = opc.parameters.front();
             sfz::LFO::Control* ctl = getLfo(lfoIndex);
             if (!absl::SimpleAtof(opc.value, &ctl->freq))
                 break;
             break;
         }
-        case hash("lfo_phase"): {
+        case hash("lfo&_phase"): {
+            const auto lfoIndex = opc.parameters.front();
             sfz::LFO::Control* ctl = getLfo(lfoIndex);
             if (!absl::SimpleAtof(opc.value, &ctl->phase0))
                 break;
             break;
         }
-        case hash("lfo_delay"): {
+        case hash("lfo&_delay"): {
+            const auto lfoIndex = opc.parameters.front();
             sfz::LFO::Control* ctl = getLfo(lfoIndex);
             if (!absl::SimpleAtof(opc.value, &ctl->delay))
                 break;
             break;
         }
-        case hash("lfo_fade"): {
+        case hash("lfo&_fade"): {
+            const auto lfoIndex = opc.parameters.front();
             sfz::LFO::Control* ctl = getLfo(lfoIndex);
             if (!absl::SimpleAtof(opc.value, &ctl->fade))
                 break;
             break;
         }
-        case hash("lfo_count"): {
+        case hash("lfo&_count"): {
+            const auto lfoIndex = opc.parameters.front();
             sfz::LFO::Control* ctl = getLfo(lfoIndex);
             if (!absl::SimpleAtoi(opc.value, &ctl->countRepeats))
                 break;
             break;
         }
-        case hash("lfo_wave"): {
+        case hash("lfo&_wave&"): {
+            const auto lfoIndex = opc.parameters.front();
+            const auto subwaveIndex = opc.parameters.back();
             sfz::LFO::Control::Sub* sub = getSub(lfoIndex, subwaveIndex);
             int wave;
             if (!sub || !absl::SimpleAtoi(opc.value, &wave))
@@ -124,32 +124,41 @@ static void configureLFOwithRegion(
             sub->wave = (sfz::LFO::Wave)wave;
             break;
         }
-        case hash("lfo_offset"): {
+        case hash("lfo&_offset&"): {
+            const auto lfoIndex = opc.parameters.front();
+            const auto subwaveIndex = opc.parameters.back();
             sfz::LFO::Control::Sub* sub = getSub(lfoIndex, subwaveIndex);
             if (!sub || !absl::SimpleAtof(opc.value, &sub->offset))
                 break;
             break;
         }
-        case hash("lfo_ratio"): {
+        case hash("lfo&_ratio&"): {
+            const auto lfoIndex = opc.parameters.front();
+            const auto subwaveIndex = opc.parameters.back();
             sfz::LFO::Control::Sub* sub = getSub(lfoIndex, subwaveIndex);
             if (!sub || !absl::SimpleAtof(opc.value, &sub->ratio))
                 break;
             break;
         }
-        case hash("lfo_scale"): {
+        case hash("lfo&_scale&"): {
+            const auto lfoIndex = opc.parameters.front();
+            const auto subwaveIndex = opc.parameters.back();
             sfz::LFO::Control::Sub* sub = getSub(lfoIndex, subwaveIndex);
             if (!sub || !absl::SimpleAtof(opc.value, &sub->scale))
                 break;
             break;
         }
-        case hash("lfo_steps"): {
+        case hash("lfo&_steps"): {
+            const auto lfoIndex = opc.parameters.front();
             sfz::LFO::Control::StepSequence* seq = getStepSeq(lfoIndex);
             if (!seq || !absl::SimpleAtoi(opc.value, &seq->numSteps))
                 break;
             break;
         }
-        case hash("lfo_step"): {
-            float* step = getStep(lfoIndex, subwaveIndex);
+        case hash("lfo&_step&"): {
+            const auto lfoIndex = opc.parameters.front();
+            const auto stepIndex = opc.parameters.back();
+            float* step = getStep(lfoIndex, stepIndex);
             float value;
             if (!step || !absl::SimpleAtof(opc.value, &value))
                 break;
@@ -163,7 +172,7 @@ static void configureLFOwithRegion(
 /**
    Parser which gets the first region and extracts the configuration of LFO
  */
-class LFOSetupParser : public sfz::Parser {
+class LFOSetupParser : public sfz::OldParser {
 public:
     explicit LFOSetupParser(std::vector<sfz::LFO::Control>& ctl)
         : control(ctl)
