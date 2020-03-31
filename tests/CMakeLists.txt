@@ -19,6 +19,8 @@ set(SFIZZ_TEST_SOURCES
     OnePoleFilterT.cpp
     RegionActivationT.cpp
     RegionValueComputationsT.cpp
+    # If we're tweaking the curves this kind of tests does not make sense
+    # Use integration tests with comparison curves
     # ADSREnvelopeT.cpp
     EventEnvelopesT.cpp
     MainT.cpp
