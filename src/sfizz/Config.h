@@ -48,7 +48,7 @@ namespace config {
     constexpr int omniOnCC { 125 };
     constexpr float halfCCThreshold { 0.5f };
     constexpr int centPerSemitone { 100 };
-    constexpr float virtuallyZero { 0.00005f };
+    constexpr float virtuallyZero { 0.001f };
     constexpr float fastReleaseDuration { 0.01f };
     constexpr char defineCharacter { '$' };
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
