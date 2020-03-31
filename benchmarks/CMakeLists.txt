@@ -69,11 +69,11 @@ sfizz_add_benchmark(bm_logger BM_logger.cpp)
 target_link_libraries(bm_logger PRIVATE sfizz::sfizz)
 
 if (TARGET sfizz-samplerate)
-	sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-	target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile)
+sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
+target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile)
 endif()
 
-sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp ../src/sfizz/MidiState.cpp ../src/sfizz/FloatEnvelopes.cpp)
+sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
 
 sfizz_add_benchmark(bm_wavfile BM_wavfile.cpp)
 target_link_libraries(bm_wavfile PRIVATE sfizz-sndfile)
