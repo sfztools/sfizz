@@ -471,8 +471,14 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
     else
         multiplicativeEnvelope(events, *bends, bendLambda);
-
     applyGain<float>(*bends, *jumps);
+
+    for (const auto& mod : region->tuneCC) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.value); });
+        applyGain<float>(*bends, *jumps);
+    }
+
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
     sfzInterpolationCast<float>(*jumps, *indices, *leftCoeffs, *rightCoeffs);
@@ -562,8 +568,13 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
         else
             multiplicativeEnvelope(events, *bends, bendLambda);
-
         applyGain<float>(*bends, *frequencies);
+
+        for (const auto& mod : region->tuneCC) {
+            const auto events = resources.midiState.getCCEvents(mod.cc);
+            multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.value); });
+            applyGain<float>(*bends, *frequencies);
+        }
 
         waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
         copy<float>(leftSpan, rightSpan);
