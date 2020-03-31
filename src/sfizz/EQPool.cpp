@@ -29,17 +29,17 @@ void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels
 
     // Setup the modulated values
     lastFrequency = baseFrequency;
-    for (auto& mod : description.frequencyCC)
+    for (const auto& mod : description.frequencyCC)
         lastFrequency += midiState.getCCValue(mod.cc) * mod.value;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
 
     lastBandwidth = baseBandwidth;
-    for (auto& mod : description.bandwidthCC)
+    for (const auto& mod : description.bandwidthCC)
         lastBandwidth += midiState.getCCValue(mod.cc) * mod.value;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
 
     lastGain = baseGain;
-    for (auto& mod : description.gainCC)
+    for (const auto& mod : description.gainCC)
         lastGain += midiState.getCCValue(mod.cc) * mod.value;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
@@ -62,17 +62,17 @@ void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numF
     // TODO: Once the midistate envelopes are done, add modulation in there!
     // For now we take the last value
     lastFrequency = baseFrequency;
-    for (auto& mod : description->frequencyCC)
+    for (const auto& mod : description->frequencyCC)
         lastFrequency += midiState.getCCValue(mod.cc) * mod.value;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
 
     lastBandwidth = baseBandwidth;
-    for (auto& mod : description->bandwidthCC)
+    for (const auto& mod : description->bandwidthCC)
         lastBandwidth += midiState.getCCValue(mod.cc) * mod.value;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
 
     lastGain = baseGain;
-    for (auto& mod : description->gainCC)
+    for (const auto& mod : description->gainCC)
         lastGain += midiState.getCCValue(mod.cc) * mod.value;
     lastGain = Default::filterGainRange.clamp(lastGain);
 

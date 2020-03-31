@@ -250,7 +250,7 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
-    for (auto& mod : region->amplitudeCC) {
+    for (const auto& mod : region->amplitudeCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         applyGain<float>(*tempSpan, *modulationSpan);
@@ -259,12 +259,12 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
-    for (auto& mod : region->crossfadeCCInRange) {
+    for (const auto& mod : region->crossfadeCCInRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-    for (auto& mod : region->crossfadeCCOutRange) {
+    for (const auto& mod : region->crossfadeCCOutRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
@@ -273,7 +273,7 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 
     // Volume envelope
     fill<float>(*modulationSpan, db2mag(baseVolumedB));
-    for (auto& mod : region->volumeCC) {
+    for (const auto& mod : region->volumeCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
         applyGain<float>(*tempSpan, *modulationSpan);
@@ -300,7 +300,7 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
 
     // Amplitude envelope
     fill<float>(*modulationSpan, baseGain);
-    for (auto& mod : region->amplitudeCC) {
+    for (const auto& mod : region->amplitudeCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         applyGain<float>(*tempSpan, *modulationSpan);
@@ -309,12 +309,12 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
 
     // Crossfade envelopes
     fill<float>(*modulationSpan, 1.0f);
-    for (auto& mod : region->crossfadeCCInRange) {
+    for (const auto& mod : region->crossfadeCCInRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
     }
-    for (auto& mod : region->crossfadeCCOutRange) {
+    for (const auto& mod : region->crossfadeCCOutRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
         applyGain<float>(*tempSpan, *modulationSpan);
@@ -323,7 +323,7 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
 
     // Volume envelope
     fill<float>(*modulationSpan, db2mag(baseVolumedB));
-    for (auto& mod : region->volumeCC) {
+    for (const auto& mod : region->volumeCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
         applyGain<float>(*tempSpan, *modulationSpan);
@@ -353,7 +353,7 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
 
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
-    for (auto& mod : region->panCC) {
+    for (const auto& mod : region->panCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
@@ -376,7 +376,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // Apply panning
     // panningModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->pan);
-    for (auto& mod : region->panCC) {
+    for (const auto& mod : region->panCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
@@ -386,7 +386,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // Apply the width/position process
     // widthModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->width);
-    for (auto& mod : region->widthCC) {
+    for (const auto& mod : region->widthCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);
@@ -395,7 +395,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
 
     // positionModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->position);
-    for (auto& mod : region->positionCC) {
+    for (const auto& mod : region->positionCC) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
         linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
         add<float>(*tempSpan, *modulationSpan);

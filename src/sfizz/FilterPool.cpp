@@ -41,17 +41,17 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
 
     // Setup the modulated values
     lastCutoff = baseCutoff;
-    for (auto& mod : description.cutoffCC)
+    for (const auto& mod : description.cutoffCC)
         lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.value);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
     lastResonance = baseResonance;
-    for (auto& mod : description.resonanceCC)
+    for (const auto& mod : description.resonanceCC)
         lastResonance += midiState.getCCValue(mod.cc) * mod.value;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
     lastGain = baseGain;
-    for (auto& mod : description.gainCC)
+    for (const auto& mod : description.gainCC)
         lastGain += midiState.getCCValue(mod.cc) * mod.value;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
@@ -71,17 +71,17 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
     // For now we take the last value
     // TODO: the template deduction could be automatic here?
     lastCutoff = baseCutoff;
-    for (auto& mod : description->cutoffCC)
+    for (const auto& mod : description->cutoffCC)
         lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.value);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
     lastResonance = baseResonance;
-    for (auto& mod : description->resonanceCC)
+    for (const auto& mod : description->resonanceCC)
         lastResonance += midiState.getCCValue(mod.cc) * mod.value;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
     lastGain = baseGain;
-    for (auto& mod : description->gainCC)
+    for (const auto& mod : description->gainCC)
         lastGain += midiState.getCCValue(mod.cc) * mod.value;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
