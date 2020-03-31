@@ -1467,6 +1467,20 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.volumeCC.contains(4));
         REQUIRE(region.volumeCC[4] == -1.0_a);
     }
+
+    SECTION("tune_cc/pitch_cc")
+    {
+        REQUIRE(region.tuneCC.empty());
+        region.parseOpcode({ "pitch_cc1", "40" });
+        REQUIRE(region.tuneCC.contains(1));
+        REQUIRE(region.tuneCC[1] == 40);
+        region.parseOpcode({ "tune_oncc2", "-76" });
+        REQUIRE(region.tuneCC.contains(2));
+        REQUIRE(region.tuneCC[2] == -76.0);
+        region.parseOpcode({ "pitch_oncc4", "-1" });
+        REQUIRE(region.tuneCC.contains(4));
+        REQUIRE(region.tuneCC[4] == -1.0);
+    }
 }
 
 // Specific region bugs

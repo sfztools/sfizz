@@ -719,6 +719,15 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("pitch"):
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
+    case hash("tune_cc&"):
+    case hash("tune_oncc&"):
+    case hash("pitch_cc&"):
+    case hash("pitch_oncc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::tuneCCRange))
+            tuneCC[opcode.parameters.back()] = *value;
+        break;
     case hash("bend_up"):
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
         break;

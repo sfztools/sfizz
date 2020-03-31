@@ -308,6 +308,7 @@ struct Region {
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune
+    CCMap<int> tuneCC { Default::tune };
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };
