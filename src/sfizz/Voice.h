@@ -7,7 +7,6 @@
 #pragma once
 #include "Config.h"
 #include "ADSREnvelope.h"
-#include "EventEnvelopes.h"
 #include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"
@@ -107,7 +106,7 @@ public:
      * @param delay
      * @param pitch
      */
-    void registerPitchWheel(int delay, int pitch) noexcept;
+    void registerPitchWheel(int delay, float pitch) noexcept;
     /**
      * @brief Register an aftertouch event; for now this does nothing
      *
@@ -210,6 +209,13 @@ public:
      * @param numFilters
      */
     void setMaxEQsPerVoice(size_t numEQs);
+    /**
+     * @brief Release the voice after a given delay
+     *
+     * @param delay
+     * @param fastRelease whether to do a normal release or cut the voice abruptly
+     */
+    void release(int delay, bool fastRelease = false) noexcept;
 
     Duration getLastDataDuration() const noexcept { return dataDuration; }
     Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
@@ -231,25 +237,13 @@ private:
      * @param buffer
      */
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
-    /**
-     * @brief The function processing a mono sample source
-     *
-     * @param buffer
-     */
-    void processMono(AudioSpan<float> buffer) noexcept;
-    /**
-     * @brief The function processing a stereo sample source
-     *
-     * @param buffer
-     */
-    void processStereo(AudioSpan<float> buffer) noexcept;
-    /**
-     * @brief Release the voice after a given delay
-     *
-     * @param delay
-     * @param fastRelease whether to do a normal release or cut the voice abruptly
-     */
-    void release(int delay, bool fastRelease = false) noexcept;
+    void ampStageMono(AudioSpan<float> buffer) noexcept;
+    void ampStageStereo(AudioSpan<float> buffer) noexcept;
+    void panStageMono(AudioSpan<float> buffer) noexcept;
+    void panStageStereo(AudioSpan<float> buffer) noexcept;
+    void filterStageMono(AudioSpan<float> buffer) noexcept;
+    void filterStageStereo(AudioSpan<float> buffer) noexcept;
+
     Region* region { nullptr };
 
     enum class State {
@@ -268,9 +262,6 @@ private:
     float pitchRatio { 1.0 };
     float baseVolumedB{ 0.0 };
     float baseGain { 1.0 };
-    float basePan { 0.0 };
-    float basePosition { 0.0 };
-    float baseWidth { 0.0 };
     float baseFrequency { 440.0 };
     float phase { 0.0f };
 
@@ -279,15 +270,6 @@ private:
     int initialDelay { 0 };
 
     FilePromisePtr currentPromise { nullptr };
-
-    Buffer<float> tempBuffer1;
-    Buffer<float> tempBuffer2;
-    Buffer<float> tempBuffer3;
-    Buffer<int> indexBuffer;
-    absl::Span<float> tempSpan1 { absl::MakeSpan(tempBuffer1) };
-    absl::Span<float> tempSpan2 { absl::MakeSpan(tempBuffer2) };
-    absl::Span<float> tempSpan3 { absl::MakeSpan(tempBuffer3) };
-    absl::Span<int> indexSpan { absl::MakeSpan(indexBuffer) };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
@@ -299,13 +281,6 @@ private:
     std::vector<EQHolderPtr> equalizers;
 
     ADSREnvelope<float> egEnvelope;
-    LinearEnvelope<float> amplitudeEnvelope; // linear events
-    LinearEnvelope<float> crossfadeEnvelope;
-    LinearEnvelope<float> panEnvelope;
-    LinearEnvelope<float> positionEnvelope;
-    LinearEnvelope<float> widthEnvelope;
-    MultiplicativeEnvelope<float> pitchBendEnvelope;
-    MultiplicativeEnvelope<float> volumeEnvelope;
     float bendStepFactor { centsFactor(1) };
 
     WavetableOscillator waveOscillator;

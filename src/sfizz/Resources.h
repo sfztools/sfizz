@@ -6,6 +6,7 @@
 
 #pragma once
 #include "FilePool.h"
+#include "BufferPool.h"
 #include "FilterPool.h"
 #include "EQPool.h"
 #include "Logger.h"
@@ -17,11 +18,25 @@ class WavetableMulti;
 
 struct Resources
 {
+    BufferPool bufferPool;
     MidiState midiState;
     Logger logger;
     FilePool filePool { logger };
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
     WavetablePool wavePool;
+
+    void setSampleRate(float samplerate)
+    {
+        midiState.setSampleRate(samplerate);
+        filterPool.setSampleRate(samplerate);
+        eqPool.setSampleRate(samplerate);
+    }
+
+    void setSamplesPerBlock(int samplesPerBlock)
+    {
+        bufferPool.setBufferSize(samplesPerBlock);
+        midiState.setSamplesPerBlock(samplesPerBlock);
+    }
 };
 }

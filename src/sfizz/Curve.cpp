@@ -144,7 +144,7 @@ void Curve::lerpFill(const bool fillStatus[NumValues])
         const auto length = right - left;
         if (length > 1) {
             const float mu = (_points[right] - _points[left]) / length;
-            linearRamp<float>(pointSpan.subspan(left + 1, length - 1), _points[left], mu);
+            linearRamp<float>(pointSpan.subspan(left, length), _points[left], mu);
         }
         left = right++;
     }

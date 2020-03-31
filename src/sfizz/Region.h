@@ -113,7 +113,7 @@ struct Region {
      *
      * @param pitch
      */
-    void registerPitchWheel(int pitch) noexcept;
+    void registerPitchWheel(float pitch) noexcept;
     /**
      * @brief Register a new aftertouch event.
      *
@@ -240,13 +240,15 @@ struct Region {
     uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
     SfzOffMode offMode { Default::offMode }; // off_mode
+    absl::optional<uint32_t> notePolyphony {};
+    SfzSelfMask selfMask { Default::selfMask };
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
     Range<float> velocityRange { Default::velocityRange }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<int> bendRange { Default::bendRange }; // hibend and lobend
+    Range<float> bendRange { Default::bendValueRange }; // hibend and lobend
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
@@ -270,15 +272,15 @@ struct Region {
 
     // Performance parameters: amplifier
     float volume { Default::volume }; // volume
-    float amplitude { Default::amplitude }; // amplitude
-    float pan { Default::pan }; // pan
-    float width { Default::width }; // width
-    float position { Default::position }; // position
-    absl::optional<CCValuePair<float>> volumeCC; // volume_oncc
-    absl::optional<CCValuePair<float>> amplitudeCC; // amplitude_oncc
-    absl::optional<CCValuePair<float>> panCC; // pan_oncc
-    absl::optional<CCValuePair<float>> widthCC; // width_oncc
-    absl::optional<CCValuePair<float>> positionCC; // position_oncc
+    float amplitude { normalizePercents(Default::amplitude) }; // amplitude
+    float pan { normalizePercents(Default::pan) }; // pan
+    float width { normalizePercents(Default::width) }; // width
+    float position { normalizePercents(Default::position) }; // position
+    CCMap<float> volumeCC { Default::zeroModifier }; // volume_oncc
+    CCMap<float> amplitudeCC { Default::zeroModifier }; // amplitude_oncc
+    CCMap<float> panCC { Default::zeroModifier }; // pan_oncc
+    CCMap<float> widthCC { Default::zeroModifier }; // width_oncc
+    CCMap<float> positionCC { Default::zeroModifier }; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
@@ -306,6 +308,7 @@ struct Region {
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune
+    CCMap<int> tuneCC { Default::tune };
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };

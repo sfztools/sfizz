@@ -24,7 +24,7 @@ void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int
     this->release = secondsToSamples(region.amplitudeEG.getRelease(state, velocity));
     this->hold = secondsToSamples(region.amplitudeEG.getHold(state, velocity));
     this->peak = 1.0;
-    this->sustain =  normalizePercents(region.amplitudeEG.getSustain(state, velocity));
+    this->sustain = normalizePercents(region.amplitudeEG.getSustain(state, velocity));
     this->start = this->peak * normalizePercents(region.amplitudeEG.getStart(state, velocity));
 
     releaseDelay = 0;

@@ -499,7 +499,7 @@ TEST_CASE("[Helpers] Linear Ramp")
     const float start { 0.0f };
     const float v { fillValue };
     std::array<float, 6> output;
-    std::array<float, 6> expected { v, v + v, v + v + v, v + v + v + v, v + v + v + v + v, v + v + v + v + v + v };
+    std::array<float, 6> expected { start, start + v, start + v + v, start + v + v + v, start + v + v + v + v, start + v + v + v + v + v };
     sfz::linearRamp<float, false>(absl::MakeSpan(output), start, v);
     REQUIRE(output == expected);
 }
@@ -509,7 +509,7 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD)")
     const float start { 0.0f };
     const float v { fillValue };
     std::array<float, 6> output;
-    std::array<float, 6> expected { v, v + v, v + v + v, v + v + v + v, v + v + v + v + v, v + v + v + v + v + v };
+    std::array<float, 6> expected { start, start + v, start + v + v, start + v + v + v, start + v + v + v + v, start + v + v + v + v + v };
     sfz::linearRamp<float, true>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }
@@ -539,7 +539,7 @@ TEST_CASE("[Helpers] Multiplicative Ramp")
     const float start { 1.0f };
     const float v { fillValue };
     std::array<float, 6> output;
-    std::array<float, 6> expected { v, v * v, v * v * v, v * v * v * v, v * v * v * v * v, v * v * v * v * v * v };
+    std::array<float, 6> expected { start, start * v, start * v * v, start * v * v * v, start * v * v * v * v, start * v * v * v * v * v };
     sfz::multiplicativeRamp<float, false>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }
@@ -549,7 +549,7 @@ TEST_CASE("[Helpers] Multiplicative Ramp (SIMD)")
     const float start { 1.0f };
     const float v { fillValue };
     std::array<float, 6> output;
-    std::array<float, 6> expected { v, v * v, v * v * v, v * v * v * v, v * v * v * v * v, v * v * v * v * v * v };
+    std::array<float, 6> expected { start, start * v, start * v * v, start * v * v * v, start * v * v * v * v, start * v * v * v * v * v };
     sfz::multiplicativeRamp<float, true>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }

@@ -67,6 +67,7 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("group"):
         groupOpcodes = members;
+        handleGroupOpcodes(members);
         numGroups++;
         break;
     case hash("region"):
@@ -150,12 +151,14 @@ void sfz::Synth::clear()
     fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    resources.midiState.reset(0);
+    resources.midiState.reset();
     ccNames.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
     unknownOpcodes.clear();
+    groupMaxPolyphony.clear();
+    groupMaxPolyphony.push_back(config::maxVoices);
     modificationTime = fs::file_time_type::min();
 }
 
@@ -172,6 +175,26 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
             break;
         }
     }
+}
+
+void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members)
+{
+    absl::optional<unsigned> groupIdx;
+    unsigned maxPolyphony { config::maxVoices };
+
+    for (auto& member : members) {
+        switch (member.lettersOnlyHash) {
+        case hash("group"):
+            setValueFromOpcode(member, groupIdx, Default::groupRange);
+            break;
+        case hash("polyphony"):
+            setValueFromOpcode(member, maxPolyphony, Range<unsigned>(0, config::maxVoices));
+            break;
+        }
+    }
+
+    if (groupIdx)
+        setGroupPolyphony(*groupIdx, maxPolyphony);
 }
 
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
@@ -375,18 +398,22 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             }
         }
 
+        // Some regions had group number but no "group-level" opcodes handled the polyphony
+        while (groupMaxPolyphony.size() <= region->group)
+            groupMaxPolyphony.push_back(config::maxVoices);
+
         for (auto note = 0; note < 128; note++) {
             if (region->keyRange.containsWithEnd(note) || (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
                 noteActivationLists[note].push_back(region);
         }
 
-        for (unsigned cc = 0; cc < config::numCCs; cc++) {
+        for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc) || region->ccConditions.contains(cc))
                 ccActivationLists[cc].push_back(region);
         }
 
         // Defaults
-        for (unsigned cc = 0; cc < config::numCCs; cc++) {
+        for (int cc = 0; cc < config::numCCs; cc++) {
             region->registerCC(cc, resources.midiState.getCCValue(cc));
         }
 
@@ -479,10 +506,10 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     }
 
     this->samplesPerBlock = samplesPerBlock;
-    this->tempBuffer.resize(samplesPerBlock);
-    this->tempMixNodeBuffer.resize(samplesPerBlock);
     for (auto& voice : voices)
         voice->setSamplesPerBlock(samplesPerBlock);
+
+    resources.setSamplesPerBlock(samplesPerBlock);
 
     for (auto& bus : effectBuses) {
         if (bus)
@@ -501,8 +528,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     for (auto& voice : voices)
         voice->setSampleRate(sampleRate);
 
-    resources.filterPool.setSampleRate(sampleRate);
-    resources.eqPool.setSampleRate(sampleRate);
+    resources.setSampleRate(sampleRate);
 
     for (auto& bus : effectBuses) {
         if (bus)
@@ -522,9 +548,12 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
 
     size_t numFrames = buffer.getNumFrames();
-    auto temp = AudioSpan<float>(tempBuffer).first(numFrames);
-    auto tempMixNode = AudioSpan<float>(tempMixNodeBuffer).first(numFrames);
-
+    auto tempSpan = resources.bufferPool.getStereoBuffer(numFrames);
+    auto tempMixSpan = resources.bufferPool.getStereoBuffer(numFrames);
+    if (!tempSpan || !tempMixSpan) {
+        DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
+        return;
+    }
     CallbackBreakdown callbackBreakdown;
 
     { // Prepare the effect inputs. They are mixes of per-region outputs.
@@ -539,7 +568,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod };
         buffer.fill(0.0f);
-        tempMixNode.fill(0.0f);
+        tempSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
 
         for (auto& voice : voices) {
@@ -549,14 +578,14 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             const Region* region = voice->getRegion();
 
             numActiveVoices++;
-            voice->renderBlock(temp);
+            voice->renderBlock(*tempSpan);
 
             { // Add the output into the effects linked to this region
                 ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
                 for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
                     if (auto& bus = effectBuses[i]) {
                         float addGain = region->getGainToEffectBus(i);
-                        bus->addToInputs(temp, addGain, numFrames);
+                        bus->addToInputs(*tempSpan, addGain, numFrames);
                     }
                 }
             }
@@ -576,7 +605,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         for (auto& bus : effectBuses) {
             if (bus) {
                 bus->process(numFrames);
-                bus->mixOutputsTo(buffer, tempMixNode, numFrames);
+                bus->mixOutputsTo(buffer, *tempMixSpan, numFrames);
             }
         }
     }
@@ -585,10 +614,15 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // -- note(jpc) the purpose of the Mix output is not known.
     //    perhaps it's designed as extension point for custom processing?
     //    as default behavior, it adds itself to the Main signal.
-    buffer.add(tempMixNode);
+    buffer.add(*tempMixSpan);
 
     // Apply the master volume
     buffer.applyGain(db2mag(volume));
+
+    { // Clear events and advance midi time
+        ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+        resources.midiState.advanceTime(buffer.getNumFrames());
+    }
 
     callbackBreakdown.dispatch = dispatchDuration;
     resources.logger.logCallbackTime(callbackBreakdown, numActiveVoices, numFrames);
@@ -655,9 +689,48 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
+            unsigned activeNotesInGroup { 0 };
+            unsigned activeNotes { 0 };
+            Voice* selfMaskCandidate { nullptr };
+
             for (auto& voice : voices) {
+                const auto voiceRegion = voice->getRegion();
+                if (voiceRegion == nullptr)
+                    continue;
+
+                if (voiceRegion->group == region->group)
+                    activeNotesInGroup += 1;
+
+                if (region->notePolyphony) {
+                    if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
+                        activeNotes += 1;
+                        switch (region->selfMask) {
+                        case SfzSelfMask::mask:
+                            if (voice->getTriggerValue() < velocity) {
+                                if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
+                                    selfMaskCandidate = voice.get();
+                            }
+                            break;
+                        case SfzSelfMask::dontMask:
+                            if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
+                                selfMaskCandidate = voice.get();
+                            break;
+                        }
+                    }
+                }
+
                 if (voice->checkOffGroup(delay, region->group))
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
+            }
+
+            if (activeNotesInGroup >= groupMaxPolyphony[region->group])
+                continue;
+
+            if (region->notePolyphony && activeNotes >= *region->notePolyphony) {
+                if (selfMaskCandidate != nullptr)
+                    selfMaskCandidate->release(delay);
+                else // We're the lowest velocity guy here
+                    continue;
             }
 
             auto voice = findFreeVoice();
@@ -705,16 +778,17 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 {
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
+    const auto normalizedPitch = normalizeBend(pitch);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.pitchBendEvent(delay, pitch);
+    resources.midiState.pitchBendEvent(delay, normalizedPitch);
 
     for (auto& region : regions) {
-        region->registerPitchWheel(pitch);
+        region->registerPitchWheel(normalizedPitch);
     }
 
     for (auto& voice : voices) {
-        voice->registerPitchWheel(delay, pitch);
+        voice->registerPitchWheel(delay, normalizedPitch);
     }
 }
 void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
@@ -953,12 +1027,12 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
     resources.midiState.resetAllControllers(delay);
     for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
-        for (unsigned cc = 0; cc < config::numCCs; ++cc)
+        for (int cc = 0; cc < config::numCCs; ++cc)
             voice->registerCC(delay, cc, 0.0f);
     }
 
     for (auto& region : regions) {
-        for (unsigned cc = 0; cc < config::numCCs; ++cc)
+        for (int cc = 0; cc < config::numCCs; ++cc)
             region->registerCC(cc, 0.0f);
     }
 }
@@ -1005,4 +1079,12 @@ void sfz::Synth::allSoundOff() noexcept
         voice->reset();
     for (auto& effectBus : effectBuses)
         effectBus->clear();
+}
+
+void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
+{
+    while (groupMaxPolyphony.size() <= groupIdx)
+        groupMaxPolyphony.push_back(config::maxVoices);
+
+    groupMaxPolyphony[groupIdx] = polyphony;
 }

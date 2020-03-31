@@ -34,6 +34,7 @@ enum class SfzLoopMode { no_loop, one_shot, loop_continuous, loop_sustain };
 enum class SfzOffMode { fast, normal };
 enum class SfzVelocityOverride { current, previous };
 enum class SfzCrossfadeCurve { gain, power };
+enum class SfzSelfMask { mask, dontMask };
 
 namespace sfz
 {
@@ -53,9 +54,11 @@ namespace Default
 	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };
 	constexpr Range<uint32_t> loopRange { 0, std::numeric_limits<uint32_t>::max() };
 
-    // Global ranges
+    // common defaults
     constexpr Range<uint8_t> midi7Range { 0, 127 };
     constexpr Range<float> normalizedRange { 0.0f, 1.0f };
+    constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
+    constexpr float zeroModifier { 0.0f };
 
     // Wavetable oscillator
     constexpr float oscillatorPhase { 0.0 };
@@ -65,18 +68,21 @@ namespace Default
 	constexpr uint32_t group { 0 };
 	constexpr Range<uint32_t> groupRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr SfzOffMode offMode { SfzOffMode::fast };
+    constexpr Range<uint32_t> polyphonyRange { 0, config::maxVoices };
+    constexpr SfzSelfMask selfMask { SfzSelfMask::mask };
 
-    // Region logic: key mapping
+        // Region logic: key mapping
 	constexpr Range<uint8_t> keyRange { 0, 127 };
-	constexpr auto velocityRange = normalizedRange;
+    constexpr auto velocityRange = normalizedRange;
 
-    // Region logic: MIDI conditions
+        // Region logic: MIDI conditions
 	constexpr Range<uint8_t> channelRange { 1, 16 };
 	constexpr Range<uint8_t> midiChannelRange { 0, 15 };
-	constexpr Range<uint16_t> ccNumberRange { 0, config::numCCs };
-	constexpr auto ccValueRange = normalizedRange;
-	constexpr Range<int> bendRange { -8192, 8192 };
-	constexpr int bend { 0 };
+    constexpr Range<uint16_t> ccNumberRange { 0, config::numCCs };
+    constexpr auto ccValueRange = normalizedRange;
+    constexpr Range<int> bendRange = { -8192, 8192 };
+    constexpr Range<float> bendValueRange = symmetricNormalizedRange;
+    constexpr int bend { 0 };
 	constexpr SfzVelocityOverride velocityOverride { SfzVelocityOverride::current };
 
     // Region logic: internal conditions
@@ -91,9 +97,9 @@ namespace Default
 
     // Region logic: Triggers
 	constexpr SfzTrigger trigger { SfzTrigger::attack };
-	constexpr Range<float> ccTriggerValueRange = normalizedRange;
+        constexpr Range<float> ccTriggerValueRange = normalizedRange;
 
-    // Performance parameters: amplifier
+        // Performance parameters: amplifier
 	constexpr float globalVolume { -7.35f };
 	constexpr float volume { 0.0f };
 	constexpr Range<float> volumeRange { -144.0, 6.0 };
@@ -103,7 +109,6 @@ namespace Default
 	constexpr float pan { 0.0 };
 	constexpr Range<float> panRange { -100.0, 100.0 };
 	constexpr Range<float> panCCRange { -200.0, 200.0 };
-	constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
 	constexpr float position { 0.0 };
 	constexpr Range<float> positionRange { -100.0, 100.0 };
 	constexpr Range<float> positionCCRange { -200.0, 200.0 };
@@ -120,11 +125,11 @@ namespace Default
 	constexpr Range<float> ampRandomRange { 0.0, 24.0 };
 	constexpr Range<uint8_t> crossfadeKeyInRange { 0, 0 };
 	constexpr Range<uint8_t> crossfadeKeyOutRange { 127, 127 };
-	constexpr Range<float> crossfadeVelInRange { 0.0f, 0.0f };
-	constexpr Range<float> crossfadeVelOutRange { 1.0f, 1.0f };
-	constexpr Range<float> crossfadeCCInRange { 0.0f, 0.0f };
-	constexpr Range<float> crossfadeCCOutRange { 1.0f, 1.0f };
-	constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
+    constexpr Range<float> crossfadeVelInRange { 0.0f, 0.0f };
+    constexpr Range<float> crossfadeVelOutRange { 1.0f, 1.0f };
+    constexpr Range<float> crossfadeCCInRange { 0.0f, 0.0f };
+    constexpr Range<float> crossfadeCCOutRange { 1.0f, 1.0f };
+    constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
 	constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
 	constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
 	constexpr float rtDecay { 0.0f };
@@ -184,6 +189,7 @@ namespace Default
 	constexpr Range<int> transposeRange { -127, 127 };
 	constexpr int tune { 0 };
 	constexpr Range<int> tuneRange { -9600, 9600 }; // ±100 in SFZv1, more in ARIA
+    constexpr Range<int> tuneCCRange { -9600, 9600 };
     constexpr Range<int> bendBoundRange { -9600, 9600 };
     constexpr Range<int> bendStepRange { 1, 1200 };
     constexpr int bendUp { 200 }; // No range here because the bounds can be inverted

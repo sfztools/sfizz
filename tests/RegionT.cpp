@@ -223,19 +223,23 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("lobend, hibend")
     {
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 8192));
-        region.parseOpcode({ "lobend", "4" });
-        REQUIRE(region.bendRange == sfz::Range<int>(4, 8192));
+        REQUIRE(region.bendRange == sfz::Range<float>(-1.0f, 1.0f));
+        region.parseOpcode({ "lobend", "400" });
+        REQUIRE(region.bendRange.getStart() == Approx(sfz::normalizeBend(400)));
+        REQUIRE(region.bendRange.getEnd() == 1.0_a);
         region.parseOpcode({ "lobend", "-128" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-128, 8192));
+        REQUIRE(region.bendRange.getStart() == Approx(sfz::normalizeBend(-128)));
+        REQUIRE(region.bendRange.getEnd() == 1.0_a);
         region.parseOpcode({ "lobend", "-10000" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 8192));
+        REQUIRE(region.bendRange == sfz::Range<float>(-1.0f, 1.0f));
         region.parseOpcode({ "hibend", "13" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 13));
+        REQUIRE(region.bendRange.getStart() == -1.0_a);
+        REQUIRE(region.bendRange.getEnd() == Approx(sfz::normalizeBend(13)));
         region.parseOpcode({ "hibend", "-1" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, -1));
+        REQUIRE(region.bendRange.getStart() == -1.0_a);
+        REQUIRE(region.bendRange.getEnd() == Approx(sfz::normalizeBend(-1)));
         region.parseOpcode({ "hibend", "10000" });
-        REQUIRE(region.bendRange == sfz::Range<int>(-8192, 8192));
+        REQUIRE(region.bendRange == sfz::Range<float>(-1.0f, 1.0f));
     }
 
     SECTION("locc, hicc")
@@ -452,66 +456,63 @@ TEST_CASE("[Region] Parsing opcodes")
     {
         REQUIRE(region.pan == 0.0f);
         region.parseOpcode({ "pan", "4.2" });
-        REQUIRE(region.pan == 4.2f);
+        REQUIRE(region.pan == 0.042_a);
         region.parseOpcode({ "pan", "-4.2" });
-        REQUIRE(region.pan == -4.2f);
+        REQUIRE(region.pan == -0.042_a);
         region.parseOpcode({ "pan", "-123" });
-        REQUIRE(region.pan == -100.0f);
+        REQUIRE(region.pan == -1.0_a);
         region.parseOpcode({ "pan", "132" });
-        REQUIRE(region.pan == 100.0f);
+        REQUIRE(region.pan == 1.0_a);
     }
 
     SECTION("pan_oncc")
     {
-        REQUIRE(!region.panCC);
+        REQUIRE(region.panCC.empty());
         region.parseOpcode({ "pan_oncc45", "4.2" });
-        REQUIRE(region.panCC);
-        REQUIRE(region.panCC->cc == 45);
-        REQUIRE(region.panCC->value == 4.2f);
+        REQUIRE(region.panCC.contains(45));
+        REQUIRE(region.panCC[45] == 0.042_a);
     }
 
     SECTION("width")
     {
-        REQUIRE(region.width == 100.0f);
+        REQUIRE(region.width == 1.0_a);
         region.parseOpcode({ "width", "4.2" });
-        REQUIRE(region.width == 4.2f);
+        REQUIRE(region.width == 0.042_a);
         region.parseOpcode({ "width", "-4.2" });
-        REQUIRE(region.width == -4.2f);
+        REQUIRE(region.width == -0.042_a);
         region.parseOpcode({ "width", "-123" });
-        REQUIRE(region.width == -100.0f);
+        REQUIRE(region.width == -1.0_a);
         region.parseOpcode({ "width", "132" });
-        REQUIRE(region.width == 100.0f);
+        REQUIRE(region.width == 1.0_a);
     }
 
     SECTION("width_oncc")
     {
-        REQUIRE(!region.widthCC);
+        REQUIRE(region.widthCC.empty());
         region.parseOpcode({ "width_oncc45", "4.2" });
-        REQUIRE(region.widthCC);
-        REQUIRE(region.widthCC->cc == 45);
-        REQUIRE(region.widthCC->value == 4.2f);
+        REQUIRE(region.widthCC.contains(45));
+        REQUIRE(region.widthCC[45] == 0.042_a);
     }
 
     SECTION("position")
     {
         REQUIRE(region.position == 0.0f);
         region.parseOpcode({ "position", "4.2" });
-        REQUIRE(region.position == 4.2f);
+        REQUIRE(region.position == 0.042_a);
         region.parseOpcode({ "position", "-4.2" });
-        REQUIRE(region.position == -4.2f);
+        REQUIRE(region.position == -0.042_a);
         region.parseOpcode({ "position", "-123" });
-        REQUIRE(region.position == -100.0f);
+        REQUIRE(region.position == -1.0_a);
         region.parseOpcode({ "position", "132" });
-        REQUIRE(region.position == 100.0f);
+        REQUIRE(region.position == 1.0_a);
     }
 
     SECTION("position_oncc")
     {
-        REQUIRE(!region.positionCC);
+        REQUIRE(region.positionCC.empty());
         region.parseOpcode({ "position_oncc45", "4.2" });
-        REQUIRE(region.positionCC);
-        REQUIRE(region.positionCC->cc == 45);
-        REQUIRE(region.positionCC->value == 4.2f);
+        REQUIRE(region.positionCC.contains(45));
+        REQUIRE(region.positionCC[45] == 0.042_a);
     }
 
     SECTION("amp_keycenter")
@@ -1406,6 +1407,79 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.oscillatorPhase == -1.0f);
         region.parseOpcode({ "oscillator_phase", "361" });
         REQUIRE(region.oscillatorPhase == 360.0f);
+    }
+
+    SECTION("Note polyphony")
+    {
+        REQUIRE(!region.notePolyphony);
+        region.parseOpcode({ "note_polyphony", "45" });
+        REQUIRE(region.notePolyphony);
+        REQUIRE(*region.notePolyphony == 45);
+        region.parseOpcode({ "note_polyphony", "-1" });
+        REQUIRE(region.notePolyphony);
+        REQUIRE(*region.notePolyphony == 0);
+    }
+
+    SECTION("Note selfmask")
+    {
+        REQUIRE(region.selfMask == SfzSelfMask::mask);
+        region.parseOpcode({ "note_selfmask", "off" });
+        REQUIRE(region.selfMask == SfzSelfMask::dontMask);
+        region.parseOpcode({ "note_selfmask", "on" });
+        REQUIRE(region.selfMask == SfzSelfMask::mask);
+        region.parseOpcode({ "note_selfmask", "off" });
+        region.parseOpcode({ "note_selfmask", "garbage" });
+        REQUIRE(region.selfMask == SfzSelfMask::dontMask);
+    }
+
+    SECTION("amplitude")
+    {
+        REQUIRE(region.amplitude == 1.0_a);
+        region.parseOpcode({ "amplitude", "40" });
+        REQUIRE(region.amplitude == 0.4_a);
+        region.parseOpcode({ "amplitude", "-40" });
+        REQUIRE(region.amplitude == 0_a);
+        region.parseOpcode({ "amplitude", "140" });
+        REQUIRE(region.amplitude == 1.0_a);
+    }
+
+    SECTION("amplitude_cc")
+    {
+        REQUIRE(region.amplitudeCC.empty());
+        region.parseOpcode({ "amplitude_cc1", "40" });
+        REQUIRE(region.amplitudeCC.contains(1));
+        REQUIRE(region.amplitudeCC[1] == 0.40_a);
+        region.parseOpcode({ "amplitude_oncc2", "30" });
+        REQUIRE(region.amplitudeCC.contains(2));
+        REQUIRE(region.amplitudeCC[2] == 0.30_a);
+    }
+
+    SECTION("volume_oncc/gain_cc")
+    {
+        REQUIRE(region.volumeCC.empty());
+        region.parseOpcode({ "gain_cc1", "40" });
+        REQUIRE(region.volumeCC.contains(1));
+        REQUIRE(region.volumeCC[1] == 40_a);
+        region.parseOpcode({ "volume_oncc2", "-76" });
+        REQUIRE(region.volumeCC.contains(2));
+        REQUIRE(region.volumeCC[2] == -76.0_a);
+        region.parseOpcode({ "gain_oncc4", "-1" });
+        REQUIRE(region.volumeCC.contains(4));
+        REQUIRE(region.volumeCC[4] == -1.0_a);
+    }
+
+    SECTION("tune_cc/pitch_cc")
+    {
+        REQUIRE(region.tuneCC.empty());
+        region.parseOpcode({ "pitch_cc1", "40" });
+        REQUIRE(region.tuneCC.contains(1));
+        REQUIRE(region.tuneCC[1] == 40);
+        region.parseOpcode({ "tune_oncc2", "-76" });
+        REQUIRE(region.tuneCC.contains(2));
+        REQUIRE(region.tuneCC[2] == -76.0);
+        region.parseOpcode({ "pitch_oncc4", "-1" });
+        REQUIRE(region.tuneCC.contains(4));
+        REQUIRE(region.tuneCC[4] == -1.0);
     }
 }
 

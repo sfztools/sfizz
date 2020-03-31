@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include <chrono>
 #include <array>
 #include "CCMap.h"
 #include "Range.h"
@@ -29,7 +28,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEvent(int delay, int noteNumber, float velocity) noexcept;
+    void noteOnEvent(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Update the state after a note off event
@@ -37,39 +36,55 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
+    void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
 
     int getActiveNotes() const noexcept { return activeNotes; }
 
     /**
-     * @brief Register a note off and get the note duration
+     * @brief Get the note duration since note on
      *
      * @param noteNumber
+     * @param delay
      * @return float
      */
-	float getNoteDuration(int noteNumber) const;
+    float getNoteDuration(int noteNumber, int delay = 0) const;
 
+    /**
+     * @brief Set the maximum size of the blocks for the callback. The actual
+     * size can be lower in each callback but should not be larger
+     * than this value.
+     *
+     * @param samplesPerBlock
+     */
+    void setSamplesPerBlock(int samplesPerBlock) noexcept;
+    /**
+     * @brief Set the sample rate. If you do not call it it is initialized
+     * to sfz::config::defaultSampleRate.
+     *
+     * @param sampleRate
+     */
+    void setSampleRate(float sampleRate) noexcept;
     /**
      * @brief Get the note on velocity for a given note
      *
      * @param noteNumber
      * @return float
      */
-	float getNoteVelocity(int noteNumber) const noexcept;
+    float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
      * @brief Register a pitch bend event
      *
      * @param pitchBendValue
      */
-    void pitchBendEvent(int delay, int pitchBendValue) noexcept;
+    void pitchBendEvent(int delay, float pitchBendValue) noexcept;
 
     /**
      * @brief Get the pitch bend status
 
      * @return int
      */
-    int getPitchBend() const noexcept;
+    float getPitchBend() const noexcept;
 
     /**
      * @brief Register a CC event
@@ -79,6 +94,14 @@ public:
      */
     void ccEvent(int delay, int ccNumber, float ccValue) noexcept;
 
+    /**
+     * @brief Advances the internal clock of a given amount of samples.
+     * You should call this at each callback. This will flush the events
+     * in the midistate memory.
+     *
+     * @param numSamples the number of samples of clock advance
+     */
+    void advanceTime(int numSamples) noexcept;
     /**
      * @brief Get the CC value for CC number
      *
@@ -91,57 +114,57 @@ public:
      * @brief Reset the midi state (does not impact the last note on time)
      *
      */
-    void reset(int delay) noexcept;
+    void reset() noexcept;
 
     /**
      * @brief Reset all the controllers
      */
     void resetAllControllers(int delay) noexcept;
 
-    /**
-     * @brief Modulate a value using the last entered CCs in the midiState
-     *
-     * @tparam T
-     * @tparam U
-     * @param value the base value
-     * @param modifiers the list of CC modifiers
-     * @param validRange a range to clamp the output
-     * @param lambda the function to apply for each modifier
-     * @return T
-     */
-    template<class T, class U>
-    T modulate(T value, const CCMap<U>& modifiers, const Range<T>& validRange, const modFunction<T, U>& lambda = addToBase<T>) const noexcept
-    {
-        for (auto& mod: modifiers) {
-            lambda(value, getCCValue(mod.cc) * mod.value);
-        }
-        return validRange.clamp(value);
-    }
+    const EventVector& getCCEvents(int ccIdx) const noexcept;
+    const EventVector& getPitchEvents() const noexcept;
 
 private:
-    template<class T>
-    using MidiNoteArray = std::array<T, 128>;
-    using NoteOnTime = std::chrono::steady_clock::time_point;
-	int activeNotes { 0 };
+    int activeNotes { 0 };
+
     /**
      * @brief Stores the note on times.
      *
      */
-	MidiNoteArray<NoteOnTime> noteOnTimes;
+    MidiNoteArray<unsigned> noteOnTimes { {} };
+
+    /**
+     * @brief Stores the note off times.
+     *
+     */
+
+    MidiNoteArray<unsigned> noteOffTimes { {} };
+
     /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
      *
      */
-	MidiNoteArray<float> lastNoteVelocities;
+    MidiNoteArray<float> lastNoteVelocities;
+
     /**
      * @brief Current known values for the CCs.
      *
      */
-	std::array<float, config::numCCs> cc;
+    std::array<EventVector, config::numCCs> cc;
+
     /**
-     * Pitch bend status
+     * @brief Null event
+     *
      */
-    int pitchBend { 0 };
+    const EventVector nullEvent { { 0, 0.0f } };
+
+    /**
+     * @brief Pitch bend status
+     */
+    EventVector pitchEvents;
+    float sampleRate { config::defaultSampleRate };
+    int samplesPerBlock { config::defaultSamplesPerBlock };
+    unsigned internalClock { 0 };
 };
 }

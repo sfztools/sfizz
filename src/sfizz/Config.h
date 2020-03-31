@@ -28,6 +28,9 @@ namespace config {
     constexpr float defaultSampleRate { 48000 };
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
+    constexpr int bufferPoolSize { 4 };
+    constexpr int stereoBufferPoolSize { 4 };
+    constexpr int indexBufferPoolSize { 2 };
     constexpr int preloadSize { 8192 };
     constexpr int loggerQueueSize { 256 };
     constexpr int voiceLoggerQueueSize { 256 };
@@ -35,7 +38,7 @@ namespace config {
     constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
-    constexpr int maxVoices { 256 };
+    constexpr unsigned maxVoices { 256 };
     constexpr int maxFilePromises { maxVoices * 2 };
     constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };

@@ -21,7 +21,7 @@ TEST_CASE("[MidiState] Initial values")
 {
     sfz::MidiState state;
     for (unsigned cc = 0; cc < sfz::config::numCCs; cc++)
-        REQUIRE( state.getCCValue(cc) == 0_norm );
+        REQUIRE(state.getCCValue(cc) == 0_norm);
     REQUIRE( state.getPitchBend() == 0 );
 }
 
@@ -37,22 +37,35 @@ TEST_CASE("[MidiState] Set and get CCs")
 TEST_CASE("[MidiState] Set and get pitch bends")
 {
     sfz::MidiState state;
-    state.pitchBendEvent(0, 894);
-    REQUIRE(state.getPitchBend() == 894);
-    state.pitchBendEvent(0, 0);
-    REQUIRE(state.getPitchBend() == 0);
+    state.pitchBendEvent(0, 0.5f);
+    REQUIRE(state.getPitchBend() == 0.5f);
+    state.pitchBendEvent(0, 0.0f);
+    REQUIRE(state.getPitchBend() == 0.0f);
 }
 
 TEST_CASE("[MidiState] Reset")
 {
     sfz::MidiState state;
-    state.pitchBendEvent(0, 894);
+    state.pitchBendEvent(0, 0.7f);
     state.noteOnEvent(0, 64, 24_norm);
     state.ccEvent(0, 123, 124_norm);
-    state.reset(0);
-    REQUIRE(state.getPitchBend() == 0);
+    state.reset();
+    REQUIRE(state.getPitchBend() == 0.0f);
     REQUIRE(state.getNoteVelocity(64) == 0_norm);
     REQUIRE(state.getCCValue(123) == 0_norm);
+}
+
+TEST_CASE("[MidiState] Reset all controllers")
+{
+    sfz::MidiState state;
+    state.pitchBendEvent(20, 0.7f);
+    state.ccEvent(10, 122, 124_norm);
+    REQUIRE(state.getPitchBend() == 0.7f);
+    REQUIRE(state.getCCValue(122) == 124_norm);
+    state.resetAllControllers(30);
+    REQUIRE(state.getPitchBend() == 0.0f);
+    REQUIRE(state.getCCValue(122) == 0_norm);
+    REQUIRE(state.getCCValue(4) == 0_norm);
 }
 
 TEST_CASE("[MidiState] Set and get note velocities")

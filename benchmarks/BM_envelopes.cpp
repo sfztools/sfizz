@@ -10,7 +10,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "EventEnvelopes.h"
+#include "SfzHelpers.h"
 #include "absl/types/span.h"
 
 class EnvelopeFixture : public benchmark::Fixture {
@@ -29,45 +29,55 @@ public:
     }
     std::random_device rd { };
     std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 1, 30 };
+    std::uniform_real_distribution<float> dist { 2, 30 };
     std::vector<float> input;
     std::vector<float> output;
 };
 
 
 BENCHMARK_DEFINE_F(EnvelopeFixture, Linear)(benchmark::State& state) {
-    sfz::LinearEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
-        envelope.getBlock(absl::MakeSpan(output));
+        sfz::EventVector events {
+            { 0, 0.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
+        };
+        linearEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
     }
 }
 
 BENCHMARK_DEFINE_F(EnvelopeFixture, LinearQuantized)(benchmark::State& state) {
-    sfz::LinearEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
-        envelope.getQuantizedBlock(absl::MakeSpan(output), 0.5);
+        sfz::EventVector events {
+            { 0, 0.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
+        };
+        linearEnvelope(
+            events, absl::MakeSpan(output), [](float x) { return x; }, 0.5);
     }
 }
 
 BENCHMARK_DEFINE_F(EnvelopeFixture, Multiplicative)(benchmark::State& state) {
-    sfz::MultiplicativeEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
-        envelope.getBlock(absl::MakeSpan(output));
+        sfz::EventVector events {
+            { 0, 1.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
+        };
+        multiplicativeEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
     }
 }
 
 BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeQuantized)(benchmark::State& state) {
-    sfz::MultiplicativeEnvelope<float> envelope;
     for (auto _ : state)
     {
-        envelope.registerEvent(static_cast<int>(state.range(0) - 1), dist(gen));
-        envelope.getQuantizedBlock(absl::MakeSpan(output), 1.5);
+        sfz::EventVector events {
+            { 0, 1.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
+        };
+        multiplicativeEnvelope(
+            events, absl::MakeSpan(output), [](float x) { return x; }, 2.0f);
     }
 }
 

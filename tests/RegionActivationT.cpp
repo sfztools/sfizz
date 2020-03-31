@@ -77,11 +77,11 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "hibend", "243" });
         region.registerPitchWheel(0);
         REQUIRE(!region.isSwitchedOn());
-        region.registerPitchWheel(56);
+        region.registerPitchWheel(sfz::normalizeBend(56));
         REQUIRE(region.isSwitchedOn());
-        region.registerPitchWheel(243);
+        region.registerPitchWheel(sfz::normalizeBend(243));
         REQUIRE(region.isSwitchedOn());
-        region.registerPitchWheel(245);
+        region.registerPitchWheel(sfz::normalizeBend(245));
         REQUIRE(!region.isSwitchedOn());
     }
 

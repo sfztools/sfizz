@@ -124,6 +124,22 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
             DBG("Unkown off mode:" << std::string(opcode.value));
         }
         break;
+    case hash("note_polyphony"):
+        if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
+            notePolyphony = *value;
+        break;
+    case hash("note_selfmask"):
+        switch (hash(opcode.value)) {
+        case hash("on"):
+            selfMask = SfzSelfMask::mask;
+            break;
+        case hash("off"):
+            selfMask = SfzSelfMask::dontMask;
+            break;
+        default:
+            DBG("Unkown self mask value:" << std::string(opcode.value));
+        }
+        break;
     // Region logic: key mapping
     case hash("lokey"):
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
@@ -149,10 +165,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     // Region logic: MIDI conditions
     case hash("lobend"):
-        setRangeStartFromOpcode(opcode, bendRange, Default::bendRange);
+        if (auto value = readOpcode(opcode.value, Default::bendRange))
+            bendRange.setStart(normalizeBend(*value));
         break;
     case hash("hibend"):
-        setRangeEndFromOpcode(opcode, bendRange, Default::bendRange);
+        if (auto value = readOpcode(opcode.value, Default::bendRange))
+            bendRange.setEnd(normalizeBend(*value));
         break;
     case hash("locc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -276,32 +294,51 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("gain_cc&"):
     case hash("gain_oncc&"): // fallthrough
     case hash("volume_oncc&"):
-        setCCPairFromOpcode(opcode, volumeCC, Default::volumeCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::volumeCCRange))
+            volumeCC[opcode.parameters.back()] = *value;
         break;
     case hash("amplitude"):
-        setValueFromOpcode(opcode, amplitude, Default::amplitudeRange);
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            amplitude = normalizePercents(*value);
         break;
     case hash("amplitude_cc&"): // fallthrough
     case hash("amplitude_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeCC, Default::amplitudeRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            amplitudeCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("pan"):
-        setValueFromOpcode(opcode, pan, Default::panRange);
+        if (auto value = readOpcode(opcode.value, Default::panRange))
+            pan = normalizePercents(*value);
         break;
     case hash("pan_oncc&"):
-        setCCPairFromOpcode(opcode, panCC, Default::panCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::panCCRange))
+            panCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("position"):
-        setValueFromOpcode(opcode, position, Default::positionRange);
+        if (auto value = readOpcode(opcode.value, Default::positionRange))
+            position = normalizePercents(*value);
         break;
     case hash("position_oncc&"):
-        setCCPairFromOpcode(opcode, positionCC, Default::positionCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::positionCCRange))
+            positionCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("width"):
-        setValueFromOpcode(opcode, width, Default::widthRange);
+        if (auto value = readOpcode(opcode.value, Default::widthRange))
+            width = normalizePercents(*value);
         break;
     case hash("width_oncc&"):
-        setCCPairFromOpcode(opcode, widthCC, Default::widthCCRange);
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::widthCCRange))
+            widthCC[opcode.parameters.back()] = normalizePercents(*value);
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
@@ -682,6 +719,15 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("pitch"):
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
+    case hash("tune_cc&"):
+    case hash("tune_oncc&"):
+    case hash("pitch_cc&"):
+    case hash("pitch_oncc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::tuneCCRange))
+            tuneCC[opcode.parameters.back()] = *value;
+        break;
     case hash("bend_up"):
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
         break;
@@ -905,7 +951,7 @@ bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
         return false;
 }
 
-void sfz::Region::registerPitchWheel(int pitch) noexcept
+void sfz::Region::registerPitchWheel(float pitch) noexcept
 {
     if (bendRange.containsWithEnd(pitch))
         pitchSwitched = true;
@@ -938,7 +984,7 @@ float sfz::Region::getBasePitchVariation(int noteNumber, float velocity) const n
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += static_cast<int>(velocity * pitchVeltrack); // track velocity
+    pitchVariationInCents += static_cast<int>(velocity) * pitchVeltrack; // track velocity
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
     return centsFactor(pitchVariationInCents);
 }
@@ -954,7 +1000,7 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 
 float sfz::Region::getBaseGain() const noexcept
 {
-    return normalizePercents(amplitude);
+    return amplitude;
 }
 
 float sfz::Region::getPhase() const noexcept
@@ -962,7 +1008,7 @@ float sfz::Region::getPhase() const noexcept
     float phase;
     if (oscillatorPhase >= 0) {
         phase = oscillatorPhase * (1.0f / 360.0f);
-        phase -= static_cast<int>(phase);
+        phase -= static_cast<float>(static_cast<int>(phase));
     } else {
         std::uniform_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
         phase = phaseDist(Random::randomGenerator);
@@ -995,48 +1041,6 @@ uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
 uint32_t sfz::Region::loopEnd(Oversampling factor) const noexcept
 {
     return loopRange.getEnd() * static_cast<uint32_t>(factor);
-}
-
-template<class T, class U>
-float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
-{
-    if (value < crossfadeRange.getStart())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
-        return 1.0f;
-
-    else if (value < crossfadeRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
-            return sqrt(crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
-            return crossfadePosition;
-    }
-
-    return 1.0f;
-}
-
-template<class T, class U>
-float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
-{
-    if (value > crossfadeRange.getEnd())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
-        return 1.0f;
-
-    else if (value > crossfadeRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
-            return std::sqrt(1 - crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
-            return 1 - crossfadePosition;
-    }
-
-    return 1.0f;
 }
 
 float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
