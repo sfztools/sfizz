@@ -141,9 +141,9 @@ TEST_CASE("[Synth] Reset all controllers")
 {
     sfz::Synth synth;
     synth.cc(0, 12, 64);
-    REQUIRE( synth.getMidiState().getCCValue(12) == 64_norm );
+    REQUIRE(synth.getMidiState().getCCValue(12) == 64_norm);
     synth.cc(0, 121, 64);
-    REQUIRE( synth.getMidiState().getCCValue(12) == 0_norm );
+    REQUIRE(synth.getMidiState().getCCValue(12) == 0_norm);
 }
 
 TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kills the voice")

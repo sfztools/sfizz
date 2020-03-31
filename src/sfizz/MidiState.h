@@ -28,7 +28,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOnEvent(int delay, int noteNumber, float velocity) noexcept;
+    void noteOnEvent(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Update the state after a note off event
@@ -36,7 +36,7 @@ public:
      * @param noteNumber
      * @param velocity
      */
-	void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
+    void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
 
     int getActiveNotes() const noexcept { return activeNotes; }
 
@@ -47,7 +47,7 @@ public:
      * @param delay
      * @return float
      */
-	float getNoteDuration(int noteNumber, int delay = 0) const;
+    float getNoteDuration(int noteNumber, int delay = 0) const;
 
     /**
      * @brief Set the maximum size of the blocks for the callback. The actual
@@ -70,7 +70,7 @@ public:
      * @param noteNumber
      * @return float
      */
-	float getNoteVelocity(int noteNumber) const noexcept;
+    float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
      * @brief Register a pitch bend event
@@ -125,35 +125,42 @@ public:
     const EventVector& getPitchEvents() const noexcept;
 
 private:
-
-
-	int activeNotes { 0 };
+    int activeNotes { 0 };
 
     /**
      * @brief Stores the note on times.
      *
      */
-	MidiNoteArray<unsigned> noteOnTimes {{}};
+    MidiNoteArray<unsigned> noteOnTimes { {} };
+
     /**
      * @brief Stores the note off times.
      *
      */
-	MidiNoteArray<unsigned> noteOffTimes {{}};
+
+    MidiNoteArray<unsigned> noteOffTimes { {} };
+
     /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
      *
      */
-	MidiNoteArray<float> lastNoteVelocities;
+    MidiNoteArray<float> lastNoteVelocities;
+
     /**
      * @brief Current known values for the CCs.
      *
      */
-	std::array<EventVector, config::numCCs> cc;
+    std::array<EventVector, config::numCCs> cc;
 
-    const EventVector nullEvent {{0, 0.0f}};
     /**
-     * Pitch bend status
+     * @brief Null event
+     *
+     */
+    const EventVector nullEvent { { 0, 0.0f } };
+
+    /**
+     * @brief Pitch bend status
      */
     EventVector pitchEvents;
     float sampleRate { config::defaultSampleRate };

@@ -51,7 +51,7 @@ void sfz::MidiState::setSampleRate(float sampleRate) noexcept
 void sfz::MidiState::advanceTime(int numSamples) noexcept
 {
     internalClock += numSamples;
-    for (auto& ccEvents: cc) {
+    for (auto& ccEvents : cc) {
         ASSERT(!ccEvents.empty()); // CC event vectors should never be empty
         ccEvents.front().value = ccEvents.back().value;
         ccEvents.front().delay = 0;
@@ -66,7 +66,7 @@ void sfz::MidiState::advanceTime(int numSamples) noexcept
 void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
-    for (auto& ccEvents: cc) {
+    for (auto& ccEvents : cc) {
         ccEvents.shrink_to_fit();
         ccEvents.reserve(samplesPerBlock);
     }
@@ -92,12 +92,11 @@ float sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
     return lastNoteVelocities[noteNumber];
 }
 
-
 void sfz::MidiState::pitchBendEvent(int delay, float pitchBendValue) noexcept
 {
     ASSERT(pitchBendValue >= -1.0f && pitchBendValue <= 1.0f);
 
-    const auto insertionPoint = absl::c_upper_bound(pitchEvents, delay, MidiEventDelayComparator{});
+    const auto insertionPoint = absl::c_upper_bound(pitchEvents, delay, MidiEventDelayComparator {});
     if (insertionPoint == pitchEvents.end() || insertionPoint->delay != delay)
         pitchEvents.insert(insertionPoint, { delay, pitchBendValue });
     else
@@ -113,7 +112,7 @@ float sfz::MidiState::getPitchBend() const noexcept
 void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
-    const auto insertionPoint = absl::c_upper_bound(cc[ccNumber], delay, MidiEventDelayComparator{});
+    const auto insertionPoint = absl::c_upper_bound(cc[ccNumber], delay, MidiEventDelayComparator {});
     if (insertionPoint == cc[ccNumber].end() || insertionPoint->delay != delay)
         cc[ccNumber].insert(insertionPoint, { delay, ccValue });
     else
@@ -132,7 +131,7 @@ void sfz::MidiState::reset() noexcept
     for (auto& velocity: lastNoteVelocities)
         velocity = 0;
 
-    for (auto& ccEvents: cc) {
+    for (auto& ccEvents : cc) {
         ccEvents.clear();
         ccEvents.push_back({ 0, 0.0f });
     }

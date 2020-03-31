@@ -21,7 +21,7 @@ TEST_CASE("[MidiState] Initial values")
 {
     sfz::MidiState state;
     for (unsigned cc = 0; cc < sfz::config::numCCs; cc++)
-        REQUIRE( state.getCCValue(cc) == 0_norm );
+        REQUIRE(state.getCCValue(cc) == 0_norm);
     REQUIRE( state.getPitchBend() == 0 );
 }
 

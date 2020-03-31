@@ -410,11 +410,11 @@ void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept
     const auto leftBuffer = buffer.getSpan(0);
     const float* inputChannel[1] { leftBuffer.data() };
     float* outputChannel[1] { leftBuffer.data() };
-    for (auto& filter: filters) {
+    for (auto& filter : filters) {
         filter->process(inputChannel, outputChannel, numSamples);
     }
 
-    for (auto& eq: equalizers) {
+    for (auto& eq : equalizers) {
         eq->process(inputChannel, outputChannel, numSamples);
     }
 }
@@ -429,11 +429,11 @@ void sfz::Voice::filterStageStereo(AudioSpan<float> buffer) noexcept
     const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
     float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
 
-    for (auto& filter: filters) {
+    for (auto& filter : filters) {
         filter->process(inputChannels, outputChannels, numSamples);
     }
 
-    for (auto& eq: equalizers) {
+    for (auto& eq : equalizers) {
         eq->process(inputChannels, outputChannels, numSamples);
     }
 }
@@ -462,7 +462,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     fill<float>(*jumps, pitchRatio * speedRatio);
 
     const auto events = resources.midiState.getPitchEvents();
-    const auto bendLambda = [this](float bend){
+    const auto bendLambda = [this](float bend) {
         const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
         return centsFactor(bendInCents);
     };
@@ -545,7 +545,6 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
-
     if (region->sample == "*noise") {
         absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
@@ -560,7 +559,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         fill<float>(*frequencies, pitchRatio * keycenterFrequency);
 
         const auto events = resources.midiState.getPitchEvents();
-        const auto bendLambda = [this](float bend){
+        const auto bendLambda = [this](float bend) {
             const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
             return centsFactor(bendInCents);
         };

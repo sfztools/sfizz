@@ -1434,13 +1434,13 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("amplitude")
     {
-        REQUIRE(region.amplitude == 1.0_a );
+        REQUIRE(region.amplitude == 1.0_a);
         region.parseOpcode({ "amplitude", "40" });
-        REQUIRE(region.amplitude == 0.4_a );
+        REQUIRE(region.amplitude == 0.4_a);
         region.parseOpcode({ "amplitude", "-40" });
-        REQUIRE(region.amplitude == 0_a );
+        REQUIRE(region.amplitude == 0_a);
         region.parseOpcode({ "amplitude", "140" });
-        REQUIRE(region.amplitude == 1.0_a );
+        REQUIRE(region.amplitude == 1.0_a);
     }
 
     SECTION("amplitude_cc")

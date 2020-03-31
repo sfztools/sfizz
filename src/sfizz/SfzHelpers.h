@@ -21,7 +21,7 @@ namespace sfz
 {
 
 using CCNamePair = std::pair<uint16_t, std::string>;
-template<class T>
+template <class T>
 using MidiNoteArray = std::array<T, 128>;
 template<class ValueType>
 struct CCValuePair {
@@ -193,17 +193,15 @@ constexpr float normalizeBend(float bendValue)
     return clamp(bendValue, -8191.0f, 8191.0f) / 8191.0f;
 }
 
-namespace literals
-{
-inline float operator ""_norm(unsigned long long int value)
-{
-    if (value > 127)
-        value = 127;
+namespace literals {
+    inline float operator""_norm(unsigned long long int value)
+    {
+        if (value > 127)
+            value = 127;
 
-    return normalize7Bits(value);
+        return normalize7Bits(value);
+    }
 }
-}
-
 
 /**
  * @brief Convert a note in string to its equivalent midi note number
@@ -275,7 +273,6 @@ bool findDefine(absl::string_view line, absl::string_view& variable, absl::strin
  */
 bool findInclude(absl::string_view line, std::string& path);
 
-
 /**
  * @brief multiply a value by a factor, in cents. To be used for pitch variations.
  *
@@ -284,20 +281,19 @@ bool findInclude(absl::string_view line, std::string& path);
  */
 inline CXX14_CONSTEXPR float multiplyByCentsModifier(int modifier, float base)
 {
-   return base * centsFactor(modifier);
+    return base * centsFactor(modifier);
 }
 
-template<class T>
+template <class T>
 inline CXX14_CONSTEXPR float gainModifier(T modifier, float value)
 {
     return value * modifier;
 }
 
-
 /**
  * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
  */
-template<class T, class U>
+template <class T, class U>
 float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
 {
     if (value < crossfadeRange.getStart())
@@ -318,11 +314,10 @@ float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurv
     return 1.0f;
 }
 
-
 /**
  * @brief Compute a crossfade out value with respect to a crossfade range (note, velocity, cc, ...)
  */
-template<class T, class U>
+template <class T, class U>
 float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
 {
     if (value > crossfadeRange.getEnd())
@@ -343,7 +338,7 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     return 1.0f;
 }
 
-template<class F>
+template <class F>
 void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
 {
     ASSERT(events.size() > 0);
@@ -355,16 +350,16 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 
     auto lastValue = lambda(events[0].value);
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
         const auto length = min(events[i].delay, maxDelay) - lastDelay;
-        const auto step = (lambda(events[i].value) - lastValue)/ length;
+        const auto step = (lambda(events[i].value) - lastValue) / length;
         lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
         lastDelay += length;
     }
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
-template<class F>
+template <class F>
 void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
 {
     ASSERT(events.size() > 0);
@@ -381,7 +376,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 
     auto lastValue = quantize(lambda(events[0].value));
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
         const auto nextValue = quantize(lambda(events[i].value));
         const auto difference = std::abs(nextValue - lastValue);
         const auto length = min(events[i].delay, maxDelay) - lastDelay;
@@ -404,7 +399,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
-template<class F>
+template <class F>
 void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
 {
     ASSERT(events.size() > 0);
@@ -416,7 +411,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
 
     auto lastValue = lambda(events[0].value);
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
         const auto length = min(events[i].delay, maxDelay) - lastDelay;
         const auto nextValue = lambda(events[i].value);
         const auto step = std::exp((std::log(nextValue) - std::log(lastValue)) / length);
@@ -427,7 +422,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
-template<class F>
+template <class F>
 void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
 {
     ASSERT(events.size() > 0);
@@ -445,12 +440,12 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](float value) -> float {
-        return std::exp(logStep * std::round(std::log(value)/logStep));
+        return std::exp(logStep * std::round(std::log(value) / logStep));
     };
 
     auto lastValue = quantize(lambda(events[0].value));
     auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++ i) {
+    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
         const auto length = min(events[i].delay, maxDelay) - lastDelay;
         const auto nextValue = quantize(lambda(events[i].value));
         const auto difference = nextValue > lastValue ? nextValue / lastValue : lastValue / nextValue;

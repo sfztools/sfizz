@@ -705,16 +705,16 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
                         activeNotes += 1;
                         switch (region->selfMask) {
-                            case SfzSelfMask::mask:
-                                if (voice->getTriggerValue() < velocity) {
-                                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
-                                        selfMaskCandidate = voice.get();
-                                }
-                                break;
-                            case SfzSelfMask::dontMask:
-                                if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
+                        case SfzSelfMask::mask:
+                            if (voice->getTriggerValue() < velocity) {
+                                if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
                                     selfMaskCandidate = voice.get();
-                                break;
+                            }
+                            break;
+                        case SfzSelfMask::dontMask:
+                            if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
+                                selfMaskCandidate = voice.get();
+                            break;
                         }
                     }
                 }

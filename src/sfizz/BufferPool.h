@@ -14,15 +14,13 @@
 #include <functional>
 #include "absl/algorithm/container.h"
 #ifndef NDEBUG
-    #include "MathHelpers.h"
+#include "MathHelpers.h"
 #endif
 
-namespace sfz
-{
+namespace sfz {
 
-template<class T>
-class SpanHolder
-{
+template <class T>
+class SpanHolder {
 public:
     SpanHolder() {}
     SpanHolder(const SpanHolder<T>&) = delete;
@@ -40,7 +38,10 @@ public:
         other.available = nullptr;
     }
     SpanHolder(T&& value, int* available)
-    : value(std::forward<T>(value)), available(available) {}
+        : value(std::forward<T>(value))
+        , available(available)
+    {
+    }
     T& operator*() { return value; }
     T* operator->() { return &value; }
     explicit operator bool() const { return available != nullptr; }
@@ -49,13 +50,13 @@ public:
         if (available)
             *available += 1;
     }
+
 private:
     T value {};
     int* available { nullptr };
 };
 
-class BufferPool
-{
+class BufferPool {
 public:
     BufferPool()
     {
@@ -147,7 +148,6 @@ public:
         DBG("Max stereo buffers used: " << maxStereoBuffersUsed);
     }
 #endif
-
 
 private:
     void _setBufferSize(unsigned bufferSize)

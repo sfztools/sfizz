@@ -39,8 +39,8 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Linear)(benchmark::State& state) {
     for (auto _ : state)
     {
         sfz::EventVector events {
-            {0, 0.0f},
-            {static_cast<int>(state.range(0) - 1), dist(gen)}
+            { 0, 0.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
         linearEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
     }
@@ -50,10 +50,11 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, LinearQuantized)(benchmark::State& state) {
     for (auto _ : state)
     {
         sfz::EventVector events {
-            {0, 0.0f},
-            {static_cast<int>(state.range(0) - 1), dist(gen)}
+            { 0, 0.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
-        linearEnvelope(events, absl::MakeSpan(output), [](float x) { return x; }, 0.5);
+        linearEnvelope(
+            events, absl::MakeSpan(output), [](float x) { return x; }, 0.5);
     }
 }
 
@@ -61,8 +62,8 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Multiplicative)(benchmark::State& state) {
     for (auto _ : state)
     {
         sfz::EventVector events {
-            {0, 1.0f},
-            {static_cast<int>(state.range(0) - 1), dist(gen)}
+            { 0, 1.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
         multiplicativeEnvelope(events, absl::MakeSpan(output), [](float x) { return x; });
     }
@@ -72,10 +73,11 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, MultiplicativeQuantized)(benchmark::State& s
     for (auto _ : state)
     {
         sfz::EventVector events {
-            {0, 1.0f},
-            {static_cast<int>(state.range(0) - 1), dist(gen)}
+            { 0, 1.0f },
+            { static_cast<int>(state.range(0) - 1), dist(gen) }
         };
-        multiplicativeEnvelope(events, absl::MakeSpan(output), [](float x) { return x; }, 2.0f);
+        multiplicativeEnvelope(
+            events, absl::MakeSpan(output), [](float x) { return x; }, 2.0f);
     }
 }
 
