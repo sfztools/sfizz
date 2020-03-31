@@ -37,6 +37,8 @@ namespace config {
     constexpr int numVoices { 64 };
     constexpr int maxVoices { 256 };
     constexpr int maxFilePromises { maxVoices * 2 };
+    constexpr int maxSubLFOs { 8 };
+    constexpr int maxLFOSteps { 128 };
     constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };
     constexpr int resetCC { 121 };

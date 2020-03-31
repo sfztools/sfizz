@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Config.h"
 #include <array>
 #include <memory>
 
@@ -72,13 +73,11 @@ public:
         };
         struct StepSequence {
             unsigned numSteps = 1;
-            enum { maximumSteps = 128 };
-            std::array<float, maximumSteps> steps {}; // lfoN_stepX - normalized to unity
+            std::array<float, config::maxLFOSteps> steps {}; // lfoN_stepX - normalized to unity
         };
         std::unique_ptr<StepSequence> stepSequence;
         unsigned countSubs = 1;
-        enum { maximumSubs = 8 };
-        std::array<Sub, maximumSubs> sub;
+        std::array<Sub, config::maxSubLFOs> sub;
     };
 
     /**
