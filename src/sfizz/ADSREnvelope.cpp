@@ -195,7 +195,7 @@ bool ADSREnvelope<Type>::isSmoothing() const noexcept
 template <class Type>
 bool ADSREnvelope<Type>::isReleased() const noexcept
 {
-    return (currentState == State::Release);
+    return (currentState == State::Release) || shouldRelease;
 }
 
 template <class Type>
