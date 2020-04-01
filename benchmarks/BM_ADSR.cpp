@@ -43,7 +43,7 @@ public:
 BENCHMARK_DEFINE_F(EnvelopeFixture, Scalar)(benchmark::State& state)
 {
     for (auto _ : state) {
-        envelope.reset(region, midiState, 0, 0, sampleRate);
+        envelope.reset(region.amplitudeEG, region, midiState, 0, 0, sampleRate);
         envelope.startRelease(releaseTime);
         for (int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
             for (auto& out: output)
@@ -56,7 +56,7 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Scalar)(benchmark::State& state)
 BENCHMARK_DEFINE_F(EnvelopeFixture, Block)(benchmark::State& state)
 {
     for (auto _ : state) {
-        envelope.reset(region, midiState, 0, 0, sampleRate);
+        envelope.reset(region.amplitudeEG, region, midiState, 0, 0, sampleRate);
         envelope.startRelease(releaseTime);
         for (int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
             envelope.getBlock(absl::MakeSpan(output));

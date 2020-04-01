@@ -33,8 +33,7 @@ TEST_CASE("[ADSREnvelope] Basic state")
     sfz::ADSREnvelope<float> envelope;
     std::array<float, 5> output;
     std::array<float, 5> expected { 0.0, 0.0, 0.0, 0.0, 0.0 };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
     absl::c_fill(output, -1.0f);
@@ -49,14 +48,13 @@ TEST_CASE("[ADSREnvelope] Attack")
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     std::array<float, 5> output;
-    std::array<float, 5> expected { 0.0f, 0.5f, 1.0f, 1.0f, 1.0f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 5> expected { 0.5f, 1.0f, 1.0f, 1.0f, 1.0f };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -69,14 +67,13 @@ TEST_CASE("[ADSREnvelope] Attack again")
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.03f;
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     std::array<float, 5> output;
-    std::array<float, 5> expected { 0.0f, 0.33333f, 0.66667f, 1.0f, 1.0f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 5> expected { 0.33333f, 0.66667f, 1.0f, 1.0f, 1.0f };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -90,15 +87,14 @@ TEST_CASE("[ADSREnvelope] Release")
     region.amplitudeEG.attack = 0.02f;
     region.amplitudeEG.release = 0.04f;
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(2);
-    std::array<float, 9> output;
-    std::array<float, 9> expected { 0.0f, 0.5f, 1.0f, 0.08409f, 0.00707f, 0.000594604f, 0.00005f, 0.0f, 0.0f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 8> output;
+    std::array<float, 8> expected { 0.5f, 1.0f, 0.13534f, 0.018f, 0.0024f, 0.0f, 0.0f, 0.0f };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(2);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
@@ -113,15 +109,14 @@ TEST_CASE("[ADSREnvelope] Delay")
     region.amplitudeEG.attack = 0.02f;
     region.amplitudeEG.release = 0.04f;
     region.amplitudeEG.delay = 0.02f;
-    std::array<float, 11> output;
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    std::array<float, 10> output;
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(4);
-    std::array<float, 11> expected { 0.0f, 0.0f, 0.0f, 0.5f, 1.0f, 0.08409f, 0.00707f, 0.000594604f, 0.00005f, 0.0f, 0.0f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 10> expected { 0.0f, 0.0f, 0.5f, 1.0f, 0.13534f, 0.018f, 0.0024f, 0.0f, 0.0f, 0.0f };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(4);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
@@ -137,14 +132,13 @@ TEST_CASE("[ADSREnvelope] Lower sustain")
     region.amplitudeEG.release = 0.04f;
     region.amplitudeEG.delay = 0.02f;
     region.amplitudeEG.sustain = 50.0f;
-    std::array<float, 11> output;
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
-    std::array<float, 11> expected { 0.0f, 0.0f, 0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 10> output;
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
+    std::array<float, 10> expected { 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -160,14 +154,13 @@ TEST_CASE("[ADSREnvelope] Decay")
     region.amplitudeEG.delay = 0.02f;
     region.amplitudeEG.sustain = 50.0f;
     region.amplitudeEG.decay = 0.02f;
-    std::array<float, 11> output;
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
-    std::array<float, 11> expected { 0.0f, 0.0f, 0.0f, 0.5f, 1.0f, 0.707107f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5 };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 10> output;
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
+    std::array<float, 10> expected { 0.0f, 0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5 };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -184,14 +177,13 @@ TEST_CASE("[ADSREnvelope] Hold")
     region.amplitudeEG.sustain = 50.0f;
     region.amplitudeEG.decay = 0.02f;
     region.amplitudeEG.hold = 0.02f;
-    std::array<float, 13> output;
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
-    std::array<float, 13> expected { 0.0f, 0.0f, 0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 0.707107f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 12> output;
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
+    std::array<float, 12> expected { 0.0f, 0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 0.707107f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
@@ -208,15 +200,14 @@ TEST_CASE("[ADSREnvelope] Hold with release")
     region.amplitudeEG.sustain = 50.0f;
     region.amplitudeEG.decay = 0.02f;
     region.amplitudeEG.hold = 0.02f;
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(8);
     std::array<float, 15> output;
     std::array<float, 15> expected { 0.0f, 0.0f, 0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 0.707107f, 0.5f, 0.05f, 0.005f, 0.0005f, 0.00005f, 0.0f, 0.0f };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    envelope.getBlock(absl::MakeSpan(output));
 
     REQUIRE(approxEqual<float>(output, expected));
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(8);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));
@@ -234,14 +225,13 @@ TEST_CASE("[ADSREnvelope] Hold with release 2")
     region.amplitudeEG.sustain = 50.0f;
     region.amplitudeEG.decay = 0.02f;
     region.amplitudeEG.hold = 0.02f;
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(4);
     std::array<float, 15> output;
-    std::array<float, 15> expected { 0.0f, 0.0f, 0.0f, 0.5f, 1.0f, 0.08409f, 0.00707f, 0.000594604f, 0.00005f, 0.0f, 0.0f, 0.0f, 0.0 };
-    for (auto& out : output)
-        out = envelope.getNextValue();
+    std::array<float, 15> expected { 0.0f, 0.0f, 0.5f, 1.0f, 0.08409f, 0.00707f, 0.000594604f, 0.00005f, 0.0f, 0.0f, 0.0f, 0.0 };
+    envelope.getBlock(absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
-    envelope.reset(region, state, 0, 0.0f, 100.0f);
+    envelope.reset(region.amplitudeEG, region, state, 0, 0.0f, 100.0f);
     envelope.startRelease(4);
     absl::c_fill(output, -1.0f);
     envelope.getBlock(absl::MakeSpan(output));

@@ -12,25 +12,39 @@
 namespace sfz {
 
 template <class Type>
-void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
+void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
 {
     auto secondsToSamples = [sampleRate](Type timeInSeconds) {
         return static_cast<int>(timeInSeconds * sampleRate);
     };
 
-    this->delay = delay + secondsToSamples(region.amplitudeEG.getDelay(state, velocity));
-    this->attack = secondsToSamples(region.amplitudeEG.getAttack(state, velocity));
-    this->decay = secondsToSamples(region.amplitudeEG.getDecay(state, velocity));
-    this->release = secondsToSamples(region.amplitudeEG.getRelease(state, velocity));
-    this->hold = secondsToSamples(region.amplitudeEG.getHold(state, velocity));
+    auto secondsToLinRate = [sampleRate](Type timeInSeconds) {
+        timeInSeconds = std::max<Type>(timeInSeconds, config::virtuallyZero);
+        return 1 / (sampleRate * timeInSeconds);
+    };
+
+    auto secondsToExpRate = [sampleRate](Type timeInSeconds) {
+        timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
+        return std::exp(-8.0 / (timeInSeconds * sampleRate));
+    };
+
+    this->delay = delay + secondsToSamples(desc.getDelay(state, velocity));
+    this->attackStep = secondsToLinRate(desc.getAttack(state, velocity));
+    this->decayRate = secondsToExpRate(desc.getDecay(state, velocity));
+    this->releaseRate = secondsToExpRate(desc.getRelease(state, velocity));
+    this->hold = secondsToSamples(desc.getHold(state, velocity));
     this->peak = 1.0;
-    this->sustain = normalizePercents(region.amplitudeEG.getSustain(state, velocity));
-    this->start = this->peak * normalizePercents(region.amplitudeEG.getStart(state, velocity));
+    this->sustain = normalizePercents(desc.getSustain(state, velocity));
+    this->sustain = max(this->sustain, config::virtuallyZero);
+    this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
     shouldRelease = false;
-    freeRunning = ((region.trigger == SfzTrigger::release) || (region.trigger == SfzTrigger::release_key));
-    step = 0.0;
+    freeRunning = (
+        (region.trigger == SfzTrigger::release)
+        || (region.trigger == SfzTrigger::release_key)
+        || region.loopMode == SfzLoopMode::one_shot
+    );
     currentValue = this->start;
     currentState = State::Delay;
 }
@@ -38,13 +52,8 @@ void ADSREnvelope<Type>::reset(const Region& region, const MidiState& state, int
 template <class Type>
 Type ADSREnvelope<Type>::getNextValue() noexcept
 {
-    if (shouldRelease && releaseDelay-- == 0) {
+    if (shouldRelease && releaseDelay-- == 0)
         currentState = State::Release;
-        if (currentValue > config::virtuallyZero)
-            step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue + config::virtuallyZero)) / (release > 0 ? release : 1));
-        else
-            step = 1;
-    }
 
     switch (currentState) {
     case State::Delay:
@@ -52,13 +61,11 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
             return start;
 
         currentState = State::Attack;
-        step = (peak - currentValue) / (attack > 0 ? attack : 1);
         // fallthrough
     case State::Attack:
-        if (attack-- > 0) {
-            currentValue += step;
+        currentValue += peak * attackStep;
+        if (currentValue < peak)
             return currentValue;
-        }
 
         currentState = State::Hold;
         currentValue = peak;
@@ -67,14 +74,12 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         if (hold-- > 0)
             return currentValue;
 
-        step = std::exp(std::log(sustain + config::virtuallyZero) / (decay > 0 ? decay : 1));
         currentState = State::Decay;
         // fallthrough
     case State::Decay:
-        if (decay-- > 0) {
-            currentValue *= step;
+        currentValue *= decayRate;
+        if (currentValue > sustain)
             return currentValue;
-        }
 
         currentState = State::Sustain;
         currentValue = sustain;
@@ -84,10 +89,9 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
             shouldRelease = true;
         return currentValue;
     case State::Release:
-        if (release-- > 0) {
-            currentValue *= step;
+        currentValue *= releaseRate;
+        if (currentValue > config::virtuallyZero)
             return currentValue;
-        }
 
         currentState = State::Done;
         currentValue = 0.0;
@@ -100,110 +104,92 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
 template <class Type>
 void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
 {
-    auto originalSpan = output;
-    auto remainingSamples = static_cast<int>(output.size());
-    int length;
-    switch (currentState) {
-    case State::Delay:
-        length = min(remainingSamples, delay);
-        fill<Type>(output, currentValue);
-        output.remove_prefix(length);
-        remainingSamples -= length;
-        delay -= length;
-        if (remainingSamples == 0)
-            break;
+    State currentState = this->currentState;
+    Type currentValue = this->currentValue;
+    bool shouldRelease = this->shouldRelease;
+    int releaseDelay = this->releaseDelay;
 
-        currentState = State::Attack;
-        step = (peak - start) / (attack > 0 ? attack : 1);
-        // fallthrough
-    case State::Attack:
-        length = min(remainingSamples, attack);
-        currentValue = linearRamp<Type>(output, currentValue, step);
-        output.remove_prefix(length);
-        remainingSamples -= length;
-        attack -= length;
-        if (remainingSamples == 0)
-            break;
+    while (!output.empty()) {
+        size_t count = 0;
+        size_t size = output.size();
 
-        currentValue = peak;
-        currentState = State::Hold;
-        // fallthrough
-    case State::Hold:
-        length = min(remainingSamples, hold);
-        fill<Type>(output, currentValue);
-        output.remove_prefix(length);
-        remainingSamples -= length;
-        hold -= length;
-        if (remainingSamples == 0)
-            break;
-
-        step = std::exp(std::log(sustain + config::virtuallyZero) / (decay > 0 ? decay : 1));
-        currentState = State::Decay;
-        // fallthrough
-    case State::Decay:
-        length = min(remainingSamples, decay);
-        currentValue = multiplicativeRamp<Type>(output, currentValue, step);
-        output.remove_prefix(length);
-        remainingSamples -= length;
-        decay -= length;
-        if (remainingSamples == 0)
-            break;
-
-        currentValue = sustain;
-        currentState = State::Sustain;
-        // fallthrough
-    case State::Sustain:
-        if (freeRunning)
-            shouldRelease = true;
-        break;
-    case State::Release:
-        length = min(remainingSamples, release);
-        currentValue = multiplicativeRamp<Type>(output, currentValue, step);
-        output.remove_prefix(length);
-        remainingSamples -= length;
-        release -= length;
-        if (remainingSamples == 0)
-            break;
-
-        currentValue = 0.0;
-        currentState = State::Done;
-        // fallthrough
-    case State::Done:
-        // fallthrough
-    default:
-        break;
-    }
-    fill<Type>(output, currentValue);
-
-    if (shouldRelease) {
-        remainingSamples = static_cast<int>(originalSpan.size());
-        if (releaseDelay > remainingSamples)
-        {
-            releaseDelay -= remainingSamples;
-            return;
+        if (shouldRelease && releaseDelay == 0) {
+            // release takes effect this frame
+            currentState = State::Release;
+            releaseDelay = -1;
+        }
+        else if (shouldRelease && releaseDelay > 0) {
+            // prevent computing the segment further than release point
+            size = std::min<size_t>(size, releaseDelay);
         }
 
-        originalSpan.remove_prefix(releaseDelay);
-        if (originalSpan.size() > 0)
-            currentValue = originalSpan.front();
-        if (currentValue > config::virtuallyZero)
-            step = std::exp((std::log(config::virtuallyZero) - std::log(currentValue)) / (release > 0 ? release : 1));
-        else
-            step = 1;
-        remainingSamples -= releaseDelay;
-        length = min(remainingSamples, release);
-        currentState = State::Release;
-        currentValue = multiplicativeRamp<Type>(originalSpan, currentValue, step);
-        originalSpan.remove_prefix(length);
-        release -= length;
-
-        if (release == 0) {
+        switch (currentState) {
+        case State::Delay:
+            while (count < size && delay-- > 0) {
+                currentValue = start;
+                output[count++] = currentValue;
+            }
+            if (delay <= 0)
+                currentState = State::Attack;
+            break;
+        case State::Attack:
+            while (count < size && (currentValue += peak * attackStep) < peak)
+                output[count++] = currentValue;
+            if (currentValue >= peak) {
+                currentValue = peak;
+                currentState = State::Hold;
+            }
+            break;
+        case State::Hold:
+            while (count < size && hold-- > 0)
+                output[count++] = currentValue;
+            if (hold <= 0)
+                currentState = State::Decay;
+            break;
+        case State::Decay:
+            while (count < size && (currentValue *= decayRate) > sustain)
+                output[count++] = currentValue;
+            if (currentValue <= sustain) {
+                currentValue = sustain;
+                currentState = State::Sustain;
+            }
+            break;
+        case State::Sustain:
+            if (!shouldRelease && freeRunning) {
+                shouldRelease = true;
+                break;
+            }
+            count = size;
+            currentValue = sustain;
+            sfz::fill(output.first(count), currentValue);
+            break;
+        case State::Release:
+            while (count < size && (currentValue *= releaseRate) > config::virtuallyZero)
+                output[count++] = currentValue;
+            if (currentValue <= config::virtuallyZero) {
+                currentValue = 0;
+                currentState = State::Done;
+            }
+            break;
+        default:
+            count = size;
             currentValue = 0.0;
-            currentState = State::Done;
-            fill<Type>(originalSpan, 0.0);
+            sfz::fill(output, currentValue);
+            break;
         }
+
+        if (shouldRelease)
+            releaseDelay = std::max(-1, releaseDelay - static_cast<int>(count));
+
+        output.remove_prefix(count);
     }
+
+    this->currentState = currentState;
+    this->currentValue = currentValue;
+    this->shouldRelease = shouldRelease;
+    this->releaseDelay = releaseDelay;
 }
+
 template <class Type>
 bool ADSREnvelope<Type>::isSmoothing() const noexcept
 {
@@ -213,7 +199,7 @@ bool ADSREnvelope<Type>::isSmoothing() const noexcept
 template <class Type>
 bool ADSREnvelope<Type>::isReleased() const noexcept
 {
-    return (currentState == State::Release);
+    return (currentState == State::Release) || shouldRelease;
 }
 
 template <class Type>
@@ -228,11 +214,8 @@ void ADSREnvelope<Type>::startRelease(int releaseDelay, bool fastRelease) noexce
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
 
-    if (releaseDelay == 0)
-        currentState = State::Release;
-
     if (fastRelease)
-        this->release = 0;
+        this->releaseRate = 0;
 }
 
 }
