@@ -22,6 +22,7 @@ Extensions
 #include "Opcode.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
+#include "cpuid/cpuinfo.hpp"
 #include "absl/memory/memory.h"
 #include <cmath>
 
@@ -31,6 +32,19 @@ namespace fx {
     Strings::Strings()
         : _stringsArray(new ResonantArrayScalar)
     {
+        ResonantArray* array = nullptr;
+
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        cpuid::cpuinfo cpuInfo;
+        if (cpuInfo.has_avx())
+            array = new ResonantArrayAVX;
+        else if (cpuInfo.has_sse())
+            array = new ResonantArraySSE;
+#endif
+        if (!array)
+            array = new ResonantArrayScalar;
+
+        _stringsArray.reset(array);
     }
 
     Strings::~Strings()
