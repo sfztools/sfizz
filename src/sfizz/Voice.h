@@ -237,6 +237,7 @@ private:
      * @param buffer
      */
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
+    void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
     void ampStageMono(AudioSpan<float> buffer) noexcept;
     void ampStageStereo(AudioSpan<float> buffer) noexcept;
     void panStageMono(AudioSpan<float> buffer) noexcept;
