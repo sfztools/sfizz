@@ -224,6 +224,29 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     REQUIRE( synth.getVoiceView(0)->isFree() );
 }
 
+TEST_CASE("[Synth] loopmode=one_shot and an envelope properly kills the voice at the end of the envelope")
+{
+    sfz::Synth synth;
+    synth.setSampleRate(48000);
+    synth.setSamplesPerBlock(480);
+    sfz::AudioBuffer<float> buffer(2, 480);
+    synth.setNumVoices(1);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/envelope_one_shot.sfz");
+    synth.noteOn(0, 60, 63);
+    synth.noteOff(0, 60, 63);
+    REQUIRE( !synth.getVoiceView(0)->isFree() );
+    synth.renderBlock(buffer); // Attack (0.02)
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer); // Decay (0.02)
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer); // Release (0.1)
+    REQUIRE( synth.getVoiceView(0)->canBeStolen() );
+    // Release is 0.1s
+    for (int i = 0; i < 10; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getVoiceView(0)->isFree() );
+}
+
 TEST_CASE("[Synth] Number of effect buses and resetting behavior")
 {
     sfz::Synth synth;

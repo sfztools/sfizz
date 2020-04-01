@@ -40,7 +40,11 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
 
     releaseDelay = 0;
     shouldRelease = false;
-    freeRunning = ((region.trigger == SfzTrigger::release) || (region.trigger == SfzTrigger::release_key));
+    freeRunning = (
+        (region.trigger == SfzTrigger::release)
+        || (region.trigger == SfzTrigger::release_key)
+        || region.loopMode == SfzLoopMode::one_shot
+    );
     currentValue = this->start;
     currentState = State::Delay;
 }
