@@ -16,7 +16,9 @@ Extensions
  */
 
 #include "Strings.h"
-#include "StringsPrivate.h"
+#include "impl/ResonantArray.h"
+#include "impl/ResonantArraySSE.h"
+#include "impl/ResonantArrayAVX.h"
 #include "Opcode.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
@@ -26,13 +28,8 @@ Extensions
 namespace sfz {
 namespace fx {
 
-    struct Strings::ResonantString {
-        Bw2BPF bpf;
-        WgResonator res;
-    };
-
     Strings::Strings()
-        : _strings(new ResonantString[MaximumNumStrings])
+        : _stringsArray(new ResonantArrayScalar)
     {
     }
 
@@ -42,42 +39,48 @@ namespace fx {
 
     void Strings::setSampleRate(double sampleRate)
     {
-        for (unsigned i = 0, n = _numStrings; i < n; ++i) {
-            ResonantString& rs = _strings[i];
-            rs.bpf.init(sampleRate);
-            rs.res.init(sampleRate);
+        const unsigned numStrings = _numStrings;
 
+        AudioBuffer<float, 4> parameterBuffers { 4, numStrings };
+
+        auto pitches = parameterBuffers.getSpan(0);
+        auto bandwidths = parameterBuffers.getSpan(1);
+        auto feedbacks = parameterBuffers.getSpan(2);
+        auto gains = parameterBuffers.getSpan(3);
+
+        for (unsigned i = 0; i < numStrings; ++i) {
             int midiNote = i + 24;
-            double midiFrequency = 440.0 * std::exp2((midiNote - 69) * (1.0 / 12.0));
-
-            // 1 Hz works decently as compromise of selectivity/speed
-            double bpfBandwidth = 1.0;
-            rs.bpf.setCutoff(
-                midiFrequency - 0.5 * bpfBandwidth,
-                midiFrequency + 0.5 * bpfBandwidth);
-
-            rs.res.setFrequency(midiFrequency);
-
-            // TODO(jpc) find how to adjust the string feedbacks
-            //     for now set a fixed release time for all strings
-            double releaseTime = 50e-3;
-            double releaseFeedback = std::exp(-6.91 / (releaseTime * sampleRate));
-            rs.res.setFeedback(releaseFeedback);
+            pitches[i] = 440.0 * std::exp2((midiNote - 69) * (1.0 / 12.0));
         }
+
+        // 1 Hz works decently as compromise of selectivity/speed
+        sfz::fill(bandwidths, 1.0f);
+
+        // TODO(jpc) find how to adjust the string feedbacks
+        //     for now set a fixed release time for all strings
+        const double releaseTime = 50e-3;
+        const double releaseFeedback = std::exp(-6.91 / (releaseTime * sampleRate));
+        sfz::fill<float>(feedbacks, releaseFeedback);
+
+        // TODO(jpc) damping of the high frequencies
+        //     fixed gains for now
+        sfz::fill(gains, 1e-3f);
+
+        _stringsArray->setup(
+            sampleRate, numStrings,
+            pitches.data(), bandwidths.data(), feedbacks.data(), gains.data());
     }
 
     void Strings::setSamplesPerBlock(int samplesPerBlock)
     {
         _tempBuffer.resize(samplesPerBlock);
+
+        _stringsArray->setSamplesPerBlock(samplesPerBlock);
     }
 
     void Strings::clear()
     {
-        for (unsigned i = 0, n = _numStrings; i < n; ++i) {
-            ResonantString& rs = _strings[i];
-            rs.bpf.clear();
-            rs.res.clear();
-        }
+        _stringsArray->clear();
     }
 
     void Strings::process(const float* const inputs[], float* const outputs[], unsigned nframes)
@@ -92,30 +95,15 @@ namespace fx {
 
         // generate the strings summed into a common buffer
         absl::Span<float> resOutput = _tempBuffer.getSpan(1).first(nframes);
-        sfz::fill(resOutput, 0.0f);
 
-        for (unsigned is = 0, ns = _numStrings; is < ns; ++is) {
-            ResonantString& rs = _strings[is];
-            for (unsigned i = 0; i < nframes; ++i) {
-                float sample = resInput[i];
-                sample = rs.bpf.process(sample);
-                sample = rs.res.process(sample);
-                resOutput[i] += sample;
-            }
-        }
-
-        // TODO(jpc) damping of the high frequencies
-        //     it's easiest apply individual gains to resonating strings
-        //     or pass resonator output through LPF
+        _stringsArray->process(resInput.data(), resOutput.data(), nframes);
 
         // mix the resonator into the output
         auto outputL = absl::MakeSpan(outputs[0], nframes);
         auto outputR = absl::MakeSpan(outputs[1], nframes);
 
-        constexpr float resAttenuate = 1e-3; // need significant attenuation, here -60dB
-
         absl::Span<float> wet = _tempBuffer.getSpan(2).first(nframes);
-        sfz::fill(wet, 0.01f * resAttenuate *_wet); // TOD strings_wet_oncc modulation...
+        sfz::fill(wet, 0.01f *_wet); // TOD strings_wet_oncc modulation...
 
         sfz::copy(inputL, outputL);
         sfz::copy(inputR, outputR);

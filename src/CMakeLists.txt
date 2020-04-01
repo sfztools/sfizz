@@ -29,8 +29,15 @@ set (SFIZZ_SOURCES
     sfizz/effects/Rectify.cpp
     sfizz/effects/Gain.cpp
     sfizz/effects/Width.cpp
-)
+    sfizz/effects/impl/ResonantString.cpp
+    sfizz/effects/impl/ResonantStringSSE.cpp
+    sfizz/effects/impl/ResonantStringAVX.cpp
+    sfizz/effects/impl/ResonantArray.cpp
+    sfizz/effects/impl/ResonantArraySSE.cpp
+    sfizz/effects/impl/ResonantArrayAVX.cpp)
+
 include (SfizzSIMDSourceFiles)
+sfizz_add_simd_sources (SFIZZ_SOURCES ".")
 
 # Parser core library
 add_library (sfizz_parser STATIC)

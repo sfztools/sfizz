@@ -2,8 +2,8 @@ project(sfizz)
 
 # Check SIMD
 include (SfizzSIMDSourceFiles)
-set(BENCHMARK_SIMD_SOURCES ${SFIZZ_SIMD_SOURCES})
-list(TRANSFORM BENCHMARK_SIMD_SOURCES PREPEND "../src/")
+set(BENCHMARK_SIMD_SOURCES)
+sfizz_add_simd_sources(BENCHMARK_SIMD_SOURCES "../src")
 find_package(benchmark CONFIG REQUIRED)
 
 # Check libsamplerate
