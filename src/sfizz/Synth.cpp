@@ -539,13 +539,21 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
+    CallbackBreakdown callbackBreakdown;
+
+    { // Silence buffer
+        ScopedTiming logger { callbackBreakdown.renderMethod };
+        buffer.fill(0.0f);
+    }
 
     if (freeWheeling)
         resources.filePool.waitForBackgroundLoading();
 
+
     AtomicGuard callbackGuard { inCallback };
     if (!canEnterCallback)
         return;
+
 
     size_t numFrames = buffer.getNumFrames();
     auto tempSpan = resources.bufferPool.getStereoBuffer(numFrames);
@@ -554,7 +562,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
         return;
     }
-    CallbackBreakdown callbackBreakdown;
 
     { // Prepare the effect inputs. They are mixes of per-region outputs.
         ScopedTiming logger { callbackBreakdown.effects };
@@ -566,9 +573,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     int numActiveVoices { 0 };
     { // Main render block
-        ScopedTiming logger { callbackBreakdown.renderMethod };
-        buffer.fill(0.0f);
+        ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempSpan->fill(0.0f);
+        tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
 
         for (auto& voice : voices) {
