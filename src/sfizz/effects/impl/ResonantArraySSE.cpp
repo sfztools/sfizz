@@ -86,7 +86,8 @@ void ResonantArraySSE::process(const float *inPtr, float *outPtr, unsigned numFr
     for (unsigned p = 0; p < numStringPacks; ++p) {
         ResonantStringSSE& rs = stringPacks[p];
         for (unsigned i = 0; i < numFrames; ++i)
-            outputs4[i] += rs.process(_mm_load1_ps(&inPtr[i]));
+            outputs4[i] = _mm_add_ps(
+                outputs4[i], rs.process(_mm_load1_ps(&inPtr[i])));
     }
 
     // sum resonator outputs 4 to 1

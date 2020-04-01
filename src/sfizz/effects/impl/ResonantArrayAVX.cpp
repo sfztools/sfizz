@@ -86,7 +86,8 @@ void ResonantArrayAVX::process(const float *inPtr, float *outPtr, unsigned numFr
     for (unsigned p = 0; p < numStringPacks; ++p) {
         ResonantStringAVX& rs = stringPacks[p];
         for (unsigned i = 0; i < numFrames; ++i)
-            outputs8[i] += rs.process(_mm256_broadcast_ss(&inPtr[i]));
+            outputs8[i] = _mm256_add_ps(
+                outputs8[i], rs.process(_mm256_broadcast_ss(&inPtr[i])));
     }
 
     // sum resonator outputs 8 to 1
