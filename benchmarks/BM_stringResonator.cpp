@@ -15,7 +15,7 @@
 #include <random>
 #include <vector>
 
-class AddArray : public benchmark::Fixture {
+class StringResonator : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State& state) {
         std::random_device rd { };
@@ -60,7 +60,7 @@ public:
     std::vector<float> gains;
 };
 
-BENCHMARK_DEFINE_F(AddArray, StringResonator_Scalar)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(StringResonator, StringResonator_Scalar)(benchmark::State& state) {
     ScopedFTZ ftz;
     sfz::fx::ResonantArrayScalar resonator;
     resonator.setup(sampleRate, numStrings, pitches.data(), bandwidths.data(), feedbacks.data(), gains.data());
@@ -72,7 +72,7 @@ BENCHMARK_DEFINE_F(AddArray, StringResonator_Scalar)(benchmark::State& state) {
 }
 
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
-BENCHMARK_DEFINE_F(AddArray, StringResonator_SSE)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(StringResonator, StringResonator_SSE)(benchmark::State& state) {
     ScopedFTZ ftz;
     sfz::fx::ResonantArraySSE resonator;
     resonator.setup(sampleRate, numStrings, pitches.data(), bandwidths.data(), feedbacks.data(), gains.data());
@@ -83,7 +83,7 @@ BENCHMARK_DEFINE_F(AddArray, StringResonator_SSE)(benchmark::State& state) {
     }
 }
 
-BENCHMARK_DEFINE_F(AddArray, StringResonator_AVX)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(StringResonator, StringResonator_AVX)(benchmark::State& state) {
     ScopedFTZ ftz;
     sfz::fx::ResonantArrayAVX resonator;
     resonator.setup(sampleRate, numStrings, pitches.data(), bandwidths.data(), feedbacks.data(), gains.data());
@@ -95,9 +95,9 @@ BENCHMARK_DEFINE_F(AddArray, StringResonator_AVX)(benchmark::State& state) {
 }
 #endif
 
-BENCHMARK_REGISTER_F(AddArray, StringResonator_Scalar)->RangeMultiplier(4)->Range(1, 128);
+BENCHMARK_REGISTER_F(StringResonator, StringResonator_Scalar)->RangeMultiplier(4)->Range(1, 128);
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
-BENCHMARK_REGISTER_F(AddArray, StringResonator_SSE)->RangeMultiplier(4)->Range(1, 128);
-BENCHMARK_REGISTER_F(AddArray, StringResonator_AVX)->RangeMultiplier(4)->Range(1, 128);
+BENCHMARK_REGISTER_F(StringResonator, StringResonator_SSE)->RangeMultiplier(4)->Range(1, 128);
+BENCHMARK_REGISTER_F(StringResonator, StringResonator_AVX)->RangeMultiplier(4)->Range(1, 128);
 #endif
 BENCHMARK_MAIN();
