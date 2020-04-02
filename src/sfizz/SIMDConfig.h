@@ -67,3 +67,30 @@
 #       define SFIZZ_HAVE_NEON 0
 #   endif
 #endif
+
+/**
+   Detect one of the following the processor families.
+
+   - SFIZZ_CPU_FAMILY_X86_64
+   - SFIZZ_CPU_FAMILY_I386
+   - SFIZZ_CPU_FAMILY_AARCH64
+   - SFIZZ_CPU_FAMILY_ARM
+ */
+
+#if defined(_MSC_VER) && defined(_M_AMD64)
+#   define SFIZZ_CPU_FAMILY_X86_64 1
+#elif defined(_MSC_VER) && defined(_M_IX86)
+#   define SFIZZ_CPU_FAMILY_I386 1
+#elif defined(_MSC_VER) && defined(_M_ARM64)
+#   define SFIZZ_CPU_FAMILY_AARCH64 1
+#elif defined(_MSC_VER) && defined(_M_ARM)
+#   define SFIZZ_CPU_FAMILY_ARM 1
+#elif defined(__x86_64__) || defined(__x86_64) || defined(__amd64__) || defined(__amd64)
+#   define SFIZZ_CPU_FAMILY_X86_64 1
+#elif defined(__i386__) || defined(__i386)
+#   define SFIZZ_CPU_FAMILY_I386 1
+#elif defined(__aarch64__)
+#   define SFIZZ_CPU_FAMILY_AARCH64 1
+#elif defined(__arm__) || defined(__arm)
+#   define SFIZZ_CPU_FAMILY_ARM 1
+#endif

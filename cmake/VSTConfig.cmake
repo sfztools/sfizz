@@ -11,13 +11,8 @@ else()
     "Install destination for VST bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/vst3}]")
 endif()
 
-# The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
-# see https://gitlab.kitware.com/cmake/cmake/issues/15170
-
-if(MSVC)
-    set(VST3_SYSTEM_PROCESSOR "${MSVC_CXX_ARCHITECTURE_ID}")
-else()
-    set(VST3_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+if (NOT VST3_SYSTEM_PROCESSOR)
+    set(VST3_SYSTEM_PROCESSOR "${SFIZZ_SYSTEM_PROCESSOR}")
 endif()
 
 message(STATUS "The system architecture is: ${VST3_SYSTEM_PROCESSOR}")

@@ -15,21 +15,30 @@ if (WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
+# The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
+# see https://gitlab.kitware.com/cmake/cmake/issues/15170
+
+if (NOT SFIZZ_SYSTEM_PROCESSOR)
+    if(MSVC)
+        set(SFIZZ_SYSTEM_PROCESSOR "${MSVC_CXX_ARCHITECTURE_ID}")
+    else()
+        set(SFIZZ_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+    endif()
+endif()
+
 # Add required flags for the builds
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
+    if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^i.86$")
+        add_compile_options(-msse2)
+    endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_STANDARD 17)
     add_compile_options(/Zc:__cplusplus)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        add_compile_options(-msse2)
-    endif()
 endif()
 
 add_library(sfizz-sndfile INTERFACE)
@@ -79,6 +88,7 @@ function (show_build_info_if_needed)
         message (STATUS "
 Project name:                  ${PROJECT_NAME}
 Build type:                    ${CMAKE_BUILD_TYPE}
+Build processor:               ${SFIZZ_SYSTEM_PROCESSOR}
 Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}

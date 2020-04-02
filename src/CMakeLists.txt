@@ -1,6 +1,7 @@
 include (GNUInstallDirs)
 
 add_subdirectory(external/kiss_fft)
+add_subdirectory(external/cpuid)
 
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
@@ -29,8 +30,15 @@ set (SFIZZ_SOURCES
     sfizz/effects/Rectify.cpp
     sfizz/effects/Gain.cpp
     sfizz/effects/Width.cpp
-)
+    sfizz/effects/impl/ResonantString.cpp
+    sfizz/effects/impl/ResonantStringSSE.cpp
+    sfizz/effects/impl/ResonantStringAVX.cpp
+    sfizz/effects/impl/ResonantArray.cpp
+    sfizz/effects/impl/ResonantArraySSE.cpp
+    sfizz/effects/impl/ResonantArrayAVX.cpp)
+
 include (SfizzSIMDSourceFiles)
+sfizz_add_simd_sources (SFIZZ_SOURCES ".")
 
 # Parser core library
 add_library (sfizz_parser STATIC)
@@ -47,7 +55,7 @@ target_sources(sfizz_static PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfi
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
-target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft)
+target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft sfizz-cpuid)
 set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
 if (WIN32)
     target_compile_definitions (sfizz_static PRIVATE _USE_MATH_DEFINES)
@@ -82,7 +90,7 @@ if (SFIZZ_SHARED)
     target_sources(sfizz_shared PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
     target_include_directories (sfizz_shared PRIVATE external)
-    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft)
+    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft sfizz-cpuid)
     if (WIN32)
         target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
     endif()

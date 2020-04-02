@@ -12,8 +12,7 @@
 namespace sfz {
 namespace fx {
 
-    class Bw2BPF;
-    class WgResonator;
+    class ResonantArray;
 
     /**
      * @brief String resonance effect
@@ -55,8 +54,7 @@ namespace fx {
         unsigned _numStrings = MaximumNumStrings;
         float _wet = 0;
 
-        struct ResonantString;
-        std::unique_ptr<ResonantString[]> _strings;
+        std::unique_ptr<ResonantArray> _stringsArray;
 
         AudioBuffer<float, 3> _tempBuffer { 3, config::defaultSamplesPerBlock };
     };
