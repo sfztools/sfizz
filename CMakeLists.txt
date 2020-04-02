@@ -8,7 +8,7 @@ else()
     endif()
 endif()
 
-project (sfizz VERSION 0.3.1 LANGUAGES CXX C)
+project (sfizz VERSION 0.3.2 LANGUAGES CXX C)
 set (PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 
 # External configuration CMake scripts
