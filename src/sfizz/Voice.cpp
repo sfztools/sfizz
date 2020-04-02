@@ -235,53 +235,59 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     this->triggerDelay = absl::nullopt;
 }
 
+void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
+{
+    const auto numSamples = modulationSpan.size();
+    const auto xfCurve = region->crossfadeCCCurve;
+
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    if (!tempSpan)
+        return;
+
+    // AmpEG envelope
+    egEnvelope.getBlock(modulationSpan);
+
+    // Amplitude envelope
+    applyGain<float>(baseGain, modulationSpan);
+    for (const auto& mod : region->amplitudeCC) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+        applyGain<float>(*tempSpan, modulationSpan);
+    }
+
+    // Crossfade envelopes
+    for (const auto& mod : region->crossfadeCCInRange) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
+        applyGain<float>(*tempSpan, modulationSpan);
+    }
+    for (const auto& mod : region->crossfadeCCOutRange) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
+        applyGain<float>(*tempSpan, modulationSpan);
+    }
+
+    // Volume envelope
+    applyGain<float>(db2mag(baseVolumedB), modulationSpan);
+    for (const auto& mod : region->volumeCC) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
+        applyGain<float>(*tempSpan, modulationSpan);
+    }
+}
+
 void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
 {
     ScopedTiming logger { amplitudeDuration };
 
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
-    const auto xfCurve = region->crossfadeCCCurve;
 
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationSpan || !tempSpan)
+    if (!modulationSpan)
         return;
 
-    // Amplitude envelope
-    fill<float>(*modulationSpan, baseGain);
-    for (const auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    applyGain<float>(*modulationSpan, leftBuffer);
-
-    // Crossfade envelopes
-    fill<float>(*modulationSpan, 1.0f);
-    for (const auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    applyGain<float>(*modulationSpan, leftBuffer);
-
-    // Volume envelope
-    fill<float>(*modulationSpan, db2mag(baseVolumedB));
-    for (const auto& mod : region->volumeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    applyGain<float>(*modulationSpan, leftBuffer);
-
-    // AmpEG envelope
-    egEnvelope.getBlock(*modulationSpan);
+    amplitudeEnvelope(*modulationSpan);
     applyGain<float>(*modulationSpan, leftBuffer);
 }
 
@@ -290,48 +296,11 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
     ScopedTiming logger { amplitudeDuration };
 
     const auto numSamples = buffer.getNumFrames();
-
-    const auto xfCurve = region->crossfadeCCCurve;
-
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationSpan || !tempSpan)
+    if (!modulationSpan)
         return;
 
-    // Amplitude envelope
-    fill<float>(*modulationSpan, baseGain);
-    for (const auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    buffer.applyGain(*modulationSpan);
-
-    // Crossfade envelopes
-    fill<float>(*modulationSpan, 1.0f);
-    for (const auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    buffer.applyGain(*modulationSpan);
-
-    // Volume envelope
-    fill<float>(*modulationSpan, db2mag(baseVolumedB));
-    for (const auto& mod : region->volumeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
-        applyGain<float>(*tempSpan, *modulationSpan);
-    }
-    buffer.applyGain(*modulationSpan);
-
-    // AmpEG envelope
-    egEnvelope.getBlock(*modulationSpan);
+    amplitudeEnvelope(*modulationSpan);
     buffer.applyGain(*modulationSpan);
 }
 
