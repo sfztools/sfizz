@@ -6,7 +6,6 @@ platform:
 - x64
 cache:
   - c:\tools\vcpkg\installed\ -> appveyor.yml
-  - vst\download
 
 install:
 - cmd: choco install -y innosetup
