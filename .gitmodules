@@ -16,5 +16,5 @@
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/vstgui4"]
 	path = vst/external/VST_SDK/VST3_SDK/vstgui4
-	url = https://github.com/steinbergmedia/vstgui.git
+	url = https://github.com/sfztools/vstgui.git
 	shallow = true
