@@ -19,7 +19,8 @@ Compilation options: -lang cpp -inpl -os -scal -ftz 0
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
 #include <algorithm>
 #include <cmath>
-#include <math.h>
+#include <stdexcept>
+#include <cstdint>
 
 namespace sfz {
 namespace fx {
@@ -46,6 +47,9 @@ static void store_nth_v(__m256 &x, unsigned i, float v)
 
 void ResonantStringAVX::init(float sample_rate)
 {
+    if (reinterpret_cast<uintptr_t>(this) & 31)
+        throw std::runtime_error("The resonant string is misaligned for AVX");
+
     fConst0 = _mm256_set1_ps(sample_rate);
     fConst1 = _mm256_div_ps(_mm256_set1_ps(6.28318548f), fConst0);
     fConst2 = _mm256_div_ps(_mm256_set1_ps(2.0f), fConst0);
