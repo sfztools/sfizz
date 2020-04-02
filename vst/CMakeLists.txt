@@ -2,31 +2,6 @@ set (VSTPLUGIN_PRJ_NAME "${PROJECT_NAME}_vst3")
 set (VSTPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.vst3")
 
 set (VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
-set (VST3SDK_ARCHIVE "vst-sdk_3.6.14_build-24_2019-11-29.zip")
-
-file (MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external")
-
-if (NOT EXISTS "${VST3SDK_BASEDIR}")
-    message (STATUS "VST3 SDK is not found, downloading")
-
-    execute_process (
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/download")
-
-    if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/download/${VST3SDK_ARCHIVE}")
-        file (DOWNLOAD
-            "https://download.steinberg.net/sdk_downloads/${VST3SDK_ARCHIVE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/download/${VST3SDK_ARCHIVE}"
-            SHOW_PROGRESS)
-    endif()
-
-    execute_process (
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/external"
-        COMMAND "${CMAKE_COMMAND}" -E tar xf "../download/${VST3SDK_ARCHIVE}"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external")
-endif()
-
-# stop trying to include this atrocity.. build it ourselves
-#add_subdirectory("${VST3SDK_BASEDIR}" EXCLUDE_FROM_ALL)
 
 # VST plugin specific settings
 include (VSTConfig)
