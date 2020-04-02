@@ -281,9 +281,10 @@ private:
     static constexpr int AlignmentMask { Alignment - 1 };
     static constexpr int TypeAlignment { Alignment / sizeof(value_type) };
     static constexpr int TypeAlignmentMask { TypeAlignment - 1 };
-    static_assert(std::is_arithmetic<value_type>::value, "Type should be arithmetic");
+    static_assert(std::is_trivial<value_type>::value, "Type should be trivial");
     static_assert(Alignment == 0 || Alignment == 4 || Alignment == 8 || Alignment == 16 || Alignment == 32, "Bad alignment value");
-    static_assert(TypeAlignment * sizeof(value_type) == Alignment, "The alignment does not appear to be divided by the size of the Type");
+    static_assert(TypeAlignment * sizeof(value_type) == Alignment || !std::is_arithmetic<value_type>::value,
+                  "The alignment does not appear to be divided by the size of the arithmetic Type");
     void* align(std::size_t alignment, std::size_t size, void *&ptr, std::size_t &space )
     {
         std::uintptr_t pn = reinterpret_cast< std::uintptr_t>( ptr );
