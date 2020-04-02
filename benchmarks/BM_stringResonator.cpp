@@ -50,7 +50,7 @@ public:
     }
 
     static constexpr float sampleRate = 44100;
-    static constexpr unsigned numFrames = sampleRate * 5.0;
+    static constexpr unsigned numFrames = sampleRate * 1.0;
     std::vector<float> input;
     std::vector<float> output;
     unsigned numStrings = 0;
