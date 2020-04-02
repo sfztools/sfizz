@@ -93,6 +93,15 @@ target_link_libraries(bm_filterModulation PRIVATE sfizz-sndfile)
 sfizz_add_benchmark(bm_filterStereoMono BM_filterStereoMono.cpp ../src/sfizz/SfzFilter.cpp)
 target_link_libraries(bm_filterStereoMono PRIVATE sfizz-sndfile)
 
+sfizz_add_benchmark(bm_stringResonator BM_stringResonator.cpp
+    ../src/sfizz/effects/impl/ResonantArray.cpp
+    ../src/sfizz/effects/impl/ResonantArraySSE.cpp
+    ../src/sfizz/effects/impl/ResonantArrayAVX.cpp
+    ../src/sfizz/effects/impl/ResonantString.cpp
+    ../src/sfizz/effects/impl/ResonantStringSSE.cpp
+    ../src/sfizz/effects/impl/ResonantStringAVX.cpp)
+target_link_libraries(bm_stringResonator PRIVATE sfizz-sndfile)
+
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
 	bm_opf_high_vs_low
@@ -126,6 +135,7 @@ add_dependencies(sfizz_benchmarks
 	bm_flacfile
 	bm_filterModulation
 	bm_filterStereoMono
+	bm_stringResonator
 )
 
 if (TARGET bm_resample)
