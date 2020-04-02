@@ -33,19 +33,19 @@ public:
     __m128 process(__m128 input);
 
 private:
-    __m128 fConst0 {};
-    __m128 fConst1 {};
-    __m128 fRec0[2] {};
-    __m128 fConst2 {};
-    __m128 fConst3 {};
-    __m128 fConst4 {};
-    __m128 fConst5 {};
-    __m128 fConst6 {};
-    __m128 fConst7 {};
-    __m128 fConst8 {};
-    __m128 fRec2[3] {};
-    __m128 fRec1[2] {};
-    __m128 fControl[18] {};
+    __m128 fConst0;
+    __m128 fConst1;
+    __m128 fRec0[2];
+    __m128 fConst2;
+    __m128 fConst3;
+    __m128 fConst4;
+    __m128 fConst5;
+    __m128 fConst6;
+    __m128 fConst7;
+    __m128 fConst8;
+    __m128 fRec2[3];
+    __m128 fRec1[2];
+    __m128 fControl[18];
 };
 
 } // namespace sfz

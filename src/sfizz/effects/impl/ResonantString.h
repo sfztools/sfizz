@@ -29,19 +29,19 @@ public:
     float process(float input);
 
 private:
-    float fConst0 {};
-    float fConst1 {};
-    float fRec0[2] {};
-    float fConst2 {};
-    float fConst3 {};
-    float fConst4 {};
-    float fConst5 {};
-    float fConst6 {};
-    float fConst7 {};
-    float fConst8 {};
-    float fRec2[3] {};
-    float fRec1[2] {};
-    float fControl[18] {};
+    float fConst0;
+    float fConst1;
+    float fRec0[2];
+    float fConst2;
+    float fConst3;
+    float fConst4;
+    float fConst5;
+    float fConst6;
+    float fConst7;
+    float fConst8;
+    float fRec2[3];
+    float fRec1[2];
+    float fControl[18];
 };
 
 } // namespace sfz

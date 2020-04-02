@@ -33,19 +33,19 @@ public:
     __m256 process(__m256 input);
 
 private:
-    __m256 fConst0 {};
-    __m256 fConst1 {};
-    __m256 fRec0[2] {};
-    __m256 fConst2 {};
-    __m256 fConst3 {};
-    __m256 fConst4 {};
-    __m256 fConst5 {};
-    __m256 fConst6 {};
-    __m256 fConst7 {};
-    __m256 fConst8 {};
-    __m256 fRec2[3] {};
-    __m256 fRec1[2] {};
-    __m256 fControl[18] {};
+    __m256 fConst0;
+    __m256 fConst1;
+    __m256 fRec0[2];
+    __m256 fConst2;
+    __m256 fConst3;
+    __m256 fConst4;
+    __m256 fConst5;
+    __m256 fConst6;
+    __m256 fConst7;
+    __m256 fConst8;
+    __m256 fRec2[3];
+    __m256 fRec1[2];
+    __m256 fControl[18];
 };
 
 } // namespace sfz
