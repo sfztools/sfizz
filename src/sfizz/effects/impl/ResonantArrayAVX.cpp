@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ResonantArrayAVX.h"
-#include "ResonantStringAVX.h"
 #include "Config.h"
 #include <cstring>
 
@@ -30,9 +29,9 @@ void ResonantArrayAVX::setup(
     const float feedbacks[], const float gains[])
 {
     const unsigned numStringPacks = (numStrings + avxVectorSize - 1) / avxVectorSize;
-    ResonantStringAVX* stringPacks = new ResonantStringAVX[numStringPacks];
+    _stringPacks.resize(numStringPacks);
+    ResonantStringAVX* stringPacks = _stringPacks.data();
 
-    _stringPacks.reset(stringPacks);
     _numStrings = numStrings;
 
     for (unsigned p = 0; p < numStringPacks; ++p) {
@@ -65,18 +64,18 @@ void ResonantArrayAVX::setSamplesPerBlock(unsigned samplesPerBlock)
 
 void ResonantArrayAVX::clear()
 {
-    ResonantStringAVX* stringPacks = _stringPacks.get();
+    ResonantStringAVX* stringPacks = _stringPacks.data();
     const unsigned numStringPacks = (_numStrings + avxVectorSize - 1) / avxVectorSize;
 
     for (unsigned p = 0; p < numStringPacks; ++p) {
-        ResonantStringAVX& rs = stringPacks[p];
+        ResonantStringAVX& rs = reinterpret_cast<ResonantStringAVX&>(stringPacks[p]);
         rs.clear();
     }
 }
 
 void ResonantArrayAVX::process(const float *inPtr, float *outPtr, unsigned numFrames)
 {
-    ResonantStringAVX* stringPacks = _stringPacks.get();
+    ResonantStringAVX* stringPacks = _stringPacks.data();
     const unsigned numStringPacks = (_numStrings + avxVectorSize - 1) / avxVectorSize;
 
     // receive 8 resonator outputs per pack
@@ -84,7 +83,7 @@ void ResonantArrayAVX::process(const float *inPtr, float *outPtr, unsigned numFr
     std::memset(outputs8, 0, numFrames * sizeof(__m256));
 
     for (unsigned p = 0; p < numStringPacks; ++p) {
-        ResonantStringAVX& rs = stringPacks[p];
+        ResonantStringAVX& rs = reinterpret_cast<ResonantStringAVX&>(stringPacks[p]);
         for (unsigned i = 0; i < numFrames; ++i)
             outputs8[i] = _mm256_add_ps(
                 outputs8[i], rs.process(_mm256_broadcast_ss(&inPtr[i])));

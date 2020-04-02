@@ -6,14 +6,13 @@
 
 #pragma once
 #include "ResonantArray.h"
+#include "ResonantStringSSE.h"
 #include "Buffer.h"
 #include "SIMDConfig.h"
 
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
 namespace sfz {
 namespace fx {
-
-class ResonantStringSSE;
 
 class ResonantArraySSE final : public ResonantArray {
 public:
@@ -32,7 +31,7 @@ public:
     void process(const float *inPtr, float *outPtr, unsigned numFrames) override;
 
 private:
-    std::unique_ptr<ResonantStringSSE[]> _stringPacks;
+    Buffer<ResonantStringSSE, 16> _stringPacks;
     unsigned _numStrings = 0;
     Buffer<float, 16> _workBuffer;
 };

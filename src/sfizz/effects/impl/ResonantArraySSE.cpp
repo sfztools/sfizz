@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ResonantArraySSE.h"
-#include "ResonantStringSSE.h"
 #include "Config.h"
 #include <cstring>
 
@@ -30,9 +29,9 @@ void ResonantArraySSE::setup(
     const float feedbacks[], const float gains[])
 {
     const unsigned numStringPacks = (numStrings + sseVectorSize - 1) / sseVectorSize;
-    ResonantStringSSE* stringPacks = new ResonantStringSSE[numStringPacks];
+    _stringPacks.resize(numStringPacks);
+    ResonantStringSSE* stringPacks = _stringPacks.data();
 
-    _stringPacks.reset(stringPacks);
     _numStrings = numStrings;
 
     for (unsigned p = 0; p < numStringPacks; ++p) {
@@ -65,7 +64,7 @@ void ResonantArraySSE::setSamplesPerBlock(unsigned samplesPerBlock)
 
 void ResonantArraySSE::clear()
 {
-    ResonantStringSSE* stringPacks = _stringPacks.get();
+    ResonantStringSSE* stringPacks = _stringPacks.data();
     const unsigned numStringPacks = (_numStrings + sseVectorSize - 1) / sseVectorSize;
 
     for (unsigned p = 0; p < numStringPacks; ++p) {
@@ -76,7 +75,7 @@ void ResonantArraySSE::clear()
 
 void ResonantArraySSE::process(const float *inPtr, float *outPtr, unsigned numFrames)
 {
-    ResonantStringSSE* stringPacks = _stringPacks.get();
+    ResonantStringSSE* stringPacks = _stringPacks.data();
     const unsigned numStringPacks = (_numStrings + sseVectorSize - 1) / sseVectorSize;
 
     // receive 4 resonator outputs per pack
