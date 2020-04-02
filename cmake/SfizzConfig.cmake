@@ -86,6 +86,7 @@ function (show_build_info_if_needed)
         message (STATUS "
 Project name:                  ${PROJECT_NAME}
 Build type:                    ${CMAKE_BUILD_TYPE}
+Build processor:               ${SFIZZ_SYSTEM_PROCESSOR}
 Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
