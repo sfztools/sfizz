@@ -79,7 +79,7 @@ void ResonantArrayAVX::process(const float *inPtr, float *outPtr, unsigned numFr
     ResonantStringAVX* stringPacks = _stringPacks.get();
     const unsigned numStringPacks = (_numStrings + avxVectorSize - 1) / avxVectorSize;
 
-    // receive 4 resonator outputs per pack
+    // receive 8 resonator outputs per pack
     __m256* outputs8 = reinterpret_cast<__m256*>(_workBuffer.data());
     std::memset(outputs8, 0, numFrames * sizeof(__m256));
 
