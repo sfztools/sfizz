@@ -30,7 +30,6 @@ namespace sfz {
 namespace fx {
 
     Strings::Strings()
-        : _stringsArray(new ResonantArrayScalar)
     {
         ResonantArray* array = nullptr;
 
