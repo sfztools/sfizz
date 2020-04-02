@@ -314,6 +314,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         if (auto value = readOpcode(opcode.value, Default::panRange))
             pan = normalizePercents(*value);
         break;
+    case hash("pan_cc&"):
     case hash("pan_oncc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
