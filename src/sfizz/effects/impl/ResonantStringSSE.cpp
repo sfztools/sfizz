@@ -47,7 +47,7 @@ static void store_nth_v(__m128 &x, unsigned i, float v)
 
 void ResonantStringSSE::init(float sample_rate)
 {
-    if (reinterpret_cast<uintptr_t>(this) & 31)
+    if (reinterpret_cast<uintptr_t>(this) & 15)
         throw std::runtime_error("The resonant string is misaligned for SSE");
 
     fConst0 = _mm_set1_ps(sample_rate);
