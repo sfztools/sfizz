@@ -670,8 +670,10 @@ void sfz::Voice::setupOscillatorUnison()
     detunes[0] = 0.0;
     detunes[1] = -d;
     detunes[2] = +d;
-    for (int i = 3; i < m; ++i)
-        detunes[i] = d * ((i & 1) ? -0.25f : +0.25f) * ((i - 1) / 2);
+    for (int i = 3; i < m; ++i) {
+        int n = (i - 1) / 2;
+        detunes[i] = d * ((i & 1) ? -0.25f : +0.25f) * float(n);
+    }
 
     // detune (ratio)
     for (int i = 0; i < m; ++i)
@@ -681,7 +683,7 @@ void sfz::Voice::setupOscillatorUnison()
     waveLeftGain[0] = 0.0;
     waveRightGain[m - 1] = 0.0;
     for (int i = 0; i < m - 1; ++i) {
-        float g = 1 - i / float(m - 1);
+        float g = 1.0f - float(i) / float(m - 1);
         waveLeftGain[m - 1 - i] = g;
         waveRightGain[i] = g;
     }

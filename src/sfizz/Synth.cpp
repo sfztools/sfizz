@@ -785,7 +785,7 @@ void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
 {
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
-    const auto normalizedPitch = normalizeBend(pitch);
+    const auto normalizedPitch = normalizeBend(float(pitch));
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.pitchBendEvent(delay, normalizedPitch);
