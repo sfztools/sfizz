@@ -63,6 +63,10 @@ namespace Default
     // Wavetable oscillator
     constexpr float oscillatorPhase { 0.0 };
     constexpr Range<float> oscillatorPhaseRange { -1.0, 360.0 };
+    constexpr int oscillatorMulti { 1 };
+    constexpr Range<int> oscillatorMultiRange { 1, 9 };
+    constexpr float oscillatorDetune { 0 };
+    constexpr Range<float> oscillatorDetuneRange { -9600, 9600 };
 
     // Instrument setting: voice lifecycle
 	constexpr uint32_t group { 0 };

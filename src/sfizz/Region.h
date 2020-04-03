@@ -61,6 +61,13 @@ struct Region {
      */
     bool isGenerator() const noexcept { return sample.size() > 0 ? sample[0] == '*' : false; }
     /**
+     * @brief Is stereo (has stereo sample or is unison oscillator)?
+     *
+     * @return true
+     * @return false
+     */
+    bool isStereo() const noexcept { return hasStereoSample || ((oscillator || isGenerator()) && oscillatorMulti >= 3); }
+    /**
      * @brief Is a looping region (at least potentially)?
      *
      * @return true
@@ -235,6 +242,8 @@ struct Region {
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase };
     bool oscillator = false;
+    int oscillatorMulti = Default::oscillatorMulti;
+    float oscillatorDetune = Default::oscillatorDetune;
 
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group
@@ -318,7 +327,7 @@ struct Region {
     EGDescription pitchEG;
     EGDescription filterEG;
 
-    bool isStereo { false };
+    bool hasStereoSample { false };
 
     // Effects
     std::vector<float> gainToEffect;

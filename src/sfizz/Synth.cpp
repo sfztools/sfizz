@@ -379,7 +379,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             }
 
             if (fileInformation->numChannels == 2)
-                region->isStereo = true;
+                region->hasStereoSample = true;
 
             // TODO: adjust with LFO targets
             const auto maxOffset = region->offset + region->offsetRandom;

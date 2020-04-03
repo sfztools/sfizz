@@ -34,10 +34,10 @@ void WavetableOscillator::setPhase(float phase)
     _phase = phase;
 }
 
-void WavetableOscillator::process(float frequency, float* output, unsigned nframes)
+void WavetableOscillator::process(float frequency, float detuneRatio, float* output, unsigned nframes)
 {
     float phase = _phase;
-    float phaseInc = frequency * _sampleInterval;
+    float phaseInc = frequency * (detuneRatio * _sampleInterval);
 
     const WavetableMulti& multi = *_multi;
     unsigned tableSize = multi.tableSize();
@@ -56,7 +56,7 @@ void WavetableOscillator::process(float frequency, float* output, unsigned nfram
     _phase = phase;
 }
 
-void WavetableOscillator::processModulated(const float* frequencies, float* output, unsigned nframes)
+void WavetableOscillator::processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
 {
     float phase = _phase;
     float sampleInterval = _sampleInterval;
@@ -66,7 +66,7 @@ void WavetableOscillator::processModulated(const float* frequencies, float* outp
 
     for (unsigned i = 0; i < nframes; ++i) {
         float frequency = frequencies[i];
-        float phaseInc = frequency * sampleInterval;
+        float phaseInc = frequency * (detuneRatio * sampleInterval);
         absl::Span<const float> table = multi.getTableForFrequency(frequency);
 
         float position = phase * tableSize;

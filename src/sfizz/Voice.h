@@ -244,6 +244,10 @@ private:
     void panStageStereo(AudioSpan<float> buffer) noexcept;
     void filterStageMono(AudioSpan<float> buffer) noexcept;
     void filterStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Initialize frequency and gain coefficients for the oscillators.
+     */
+    void setupOscillatorUnison();
 
     Region* region { nullptr };
 
@@ -284,7 +288,15 @@ private:
     ADSREnvelope<float> egEnvelope;
     float bendStepFactor { centsFactor(1) };
 
-    WavetableOscillator waveOscillator;
+    static constexpr unsigned maxWaveOscillators = Default::oscillatorMultiRange.getEnd();
+
+    WavetableOscillator waveOscillators[maxWaveOscillators];
+
+    // unison of oscillators
+    unsigned waveUnisonSize { 0 };
+    float waveDetuneRatio[maxWaveOscillators] { };
+    float waveLeftGain[maxWaveOscillators] { };
+    float waveRightGain[maxWaveOscillators] { };
 
     Duration dataDuration;
     Duration amplitudeDuration;
