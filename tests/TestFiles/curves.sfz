@@ -1,0 +1,10 @@
+<region> sample=*sine
+<curve>curve_index=18
+v000=0
+v095=0.5
+v127=1
+
+<curve>curve_index=17
+v000=0
+v095=0.5
+v100=1

@@ -420,3 +420,17 @@ TEST_CASE("[Synth] Polyphony in master")
     synth.noteOn(0, 61, 64);
     REQUIRE(synth.getNumActiveVoices() == 3);
 }
+
+TEST_CASE("[Synth] Basic curves")
+{
+    sfz::Synth synth;
+    const auto& curves = synth.getResources().curves;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/curves.sfz");
+    REQUIRE( synth.getNumCurves() == 19 );
+    REQUIRE( curves.getCurve(18).evalCC7(127) == 1.0f );
+    REQUIRE( curves.getCurve(18).evalCC7(95) == 0.5f );
+    REQUIRE( curves.getCurve(17).evalCC7(100) == 1.0f );
+    REQUIRE( curves.getCurve(17).evalCC7(95) == 0.5f );
+    // Default linear
+    REQUIRE( curves.getCurve(16).evalCC7(63) == Approx(63_norm) );
+}
