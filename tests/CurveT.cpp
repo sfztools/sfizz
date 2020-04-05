@@ -199,6 +199,17 @@ TEST_CASE("[Curve] Add curves to CurveSet")
     REQUIRE( curveSet.getCurve(4).evalCC7(0) == 1.0f );
 }
 
+TEST_CASE("[Curve] Add bad indices")
+{
+    sfz::CurveSet curveSet;
+    curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), -2);
+    REQUIRE( curveSet.getNumCurves() == 0 );
+    curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), 256);
+    REQUIRE( curveSet.getNumCurves() == 0 );
+    curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), 512);
+    REQUIRE( curveSet.getNumCurves() == 0 );
+}
+
 TEST_CASE("[Curve] Default CurveSet")
 {
     auto curveSet = sfz::CurveSet::createPredefined();

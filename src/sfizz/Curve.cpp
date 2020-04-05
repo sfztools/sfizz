@@ -196,6 +196,12 @@ void CurveSet::addCurve(const Curve& curve, int explicitIndex)
 {
     std::unique_ptr<Curve>* slot;
 
+    if (explicitIndex < -1)
+        return;
+
+    if (explicitIndex >= config::maxCurves)
+        return;
+
     if (explicitIndex == -1) {
         if (_useExplicitIndexing)
             return; // reject implicit indices if any were explicit before
