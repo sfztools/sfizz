@@ -81,6 +81,9 @@ namespace Default
         // Region logic: MIDI conditions
 	constexpr Range<uint8_t> channelRange { 1, 16 };
 	constexpr Range<uint8_t> midiChannelRange { 0, 15 };
+    constexpr Range<uint8_t> stepCCRange { 0, 127 };
+    constexpr Range<uint8_t> smoothCCRange { 0, 127 };
+    constexpr Range<uint8_t> curveCCRange { 0, 255 };
     constexpr Range<uint16_t> ccNumberRange { 0, config::numCCs };
     constexpr auto ccValueRange = normalizedRange;
     constexpr Range<int> bendRange = { -8192, 8192 };
