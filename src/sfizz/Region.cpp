@@ -741,84 +741,93 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
 
     // Amplitude Envelope
     case hash("ampeg_attack"):
-        setValueFromOpcode(opcode, amplitudeEG.attack, Default::egTimeRange);
-        break;
     case hash("ampeg_decay"):
-        setValueFromOpcode(opcode, amplitudeEG.decay, Default::egTimeRange);
-        break;
     case hash("ampeg_delay"):
-        setValueFromOpcode(opcode, amplitudeEG.delay, Default::egTimeRange);
-        break;
     case hash("ampeg_hold"):
-        setValueFromOpcode(opcode, amplitudeEG.hold, Default::egTimeRange);
-        break;
     case hash("ampeg_release"):
-        setValueFromOpcode(opcode, amplitudeEG.release, Default::egTimeRange);
-        break;
     case hash("ampeg_start"):
-        setValueFromOpcode(opcode, amplitudeEG.start, Default::egPercentRange);
-        break;
     case hash("ampeg_sustain"):
-        setValueFromOpcode(opcode, amplitudeEG.sustain, Default::egPercentRange);
-        break;
     case hash("ampeg_vel&attack"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2attack, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&decay"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2decay, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&delay"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2delay, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&hold"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2hold, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&release"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2release, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&sustain"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2sustain, Default::egOnCCPercentRange);
-        break;
-    case hash("ampeg_attackcc&"): // fallthrough
+    case hash("ampeg_attackcc&"):
     case hash("ampeg_attack_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccAttack, Default::egOnCCTimeRange);
-        break;
-    case hash("ampeg_decaycc&"): // fallthrough
+    case hash("ampeg_decaycc&"):
     case hash("ampeg_decay_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccDecay, Default::egOnCCTimeRange);
-        break;
-    case hash("ampeg_delaycc&"): // fallthrough
+    case hash("ampeg_delaycc&"):
     case hash("ampeg_delay_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccDelay, Default::egOnCCTimeRange);
-        break;
-    case hash("ampeg_holdcc&"): // fallthrough
+    case hash("ampeg_holdcc&"):
     case hash("ampeg_hold_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccHold, Default::egOnCCTimeRange);
-        break;
-    case hash("ampeg_releasecc&"): // fallthrough
+    case hash("ampeg_releasecc&"):
     case hash("ampeg_release_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccRelease, Default::egOnCCTimeRange);
-        break;
-    case hash("ampeg_startcc&"): // fallthrough
+    case hash("ampeg_startcc&"):
     case hash("ampeg_start_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccStart, Default::egOnCCPercentRange);
-        break;
-    case hash("ampeg_sustaincc&"): // fallthrough
+    case hash("ampeg_sustaincc&"):
     case hash("ampeg_sustain_oncc&"):
-        setCCPairFromOpcode(opcode, amplitudeEG.ccSustain, Default::egOnCCPercentRange);
-        break;
+        return parseEGopcode(opcode, amplitudeEG);
+
+    // Pitch envelope
+    case hash("pitcheg_attack"):
+    case hash("pitcheg_decay"):
+    case hash("pitcheg_delay"):
+    case hash("pitcheg_hold"):
+    case hash("pitcheg_release"):
+    case hash("pitcheg_start"):
+    case hash("pitcheg_sustain"):
+    case hash("pitcheg_vel&attack"):
+    case hash("pitcheg_vel&decay"):
+    case hash("pitcheg_vel&delay"):
+    case hash("pitcheg_vel&hold"):
+    case hash("pitcheg_vel&release"):
+    case hash("pitcheg_vel&sustain"):
+    case hash("pitcheg_attackcc&"):
+    case hash("pitcheg_attack_oncc&"):
+    case hash("pitcheg_decaycc&"):
+    case hash("pitcheg_decay_oncc&"):
+    case hash("pitcheg_delaycc&"):
+    case hash("pitcheg_delay_oncc&"):
+    case hash("pitcheg_holdcc&"):
+    case hash("pitcheg_hold_oncc&"):
+    case hash("pitcheg_releasecc&"):
+    case hash("pitcheg_release_oncc&"):
+    case hash("pitcheg_startcc&"):
+    case hash("pitcheg_start_oncc&"):
+    case hash("pitcheg_sustaincc&"):
+    case hash("pitcheg_sustain_oncc&"):
+        return parseEGopcode(opcode, pitchEG);
+
+    // Filter envelope
+    case hash("fileg_attack"):
+    case hash("fileg_decay"):
+    case hash("fileg_delay"):
+    case hash("fileg_hold"):
+    case hash("fileg_release"):
+    case hash("fileg_start"):
+    case hash("fileg_sustain"):
+    case hash("fileg_vel&attack"):
+    case hash("fileg_vel&decay"):
+    case hash("fileg_vel&delay"):
+    case hash("fileg_vel&hold"):
+    case hash("fileg_vel&release"):
+    case hash("fileg_vel&sustain"):
+    case hash("fileg_attackcc&"):
+    case hash("fileg_attack_oncc&"):
+    case hash("fileg_decaycc&"):
+    case hash("fileg_decay_oncc&"):
+    case hash("fileg_delaycc&"):
+    case hash("fileg_delay_oncc&"):
+    case hash("fileg_holdcc&"):
+    case hash("fileg_hold_oncc&"):
+    case hash("fileg_releasecc&"):
+    case hash("fileg_release_oncc&"):
+    case hash("fileg_startcc&"):
+    case hash("fileg_start_oncc&"):
+    case hash("fileg_sustaincc&"):
+    case hash("fileg_sustain_oncc&"):
+        return parseEGopcode(opcode, filterEG);
 
     case hash("effect&"):
     {
@@ -839,6 +848,149 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("lochan"):
     case hash("ampeg_depth"):
     case hash("ampeg_vel&depth"):
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+bool sfz::Region::parseEGopcode(const Opcode& opcode, EGDescription& target)
+{
+    switch (opcode.lettersOnlyHash) {
+    case hash("ampeg_attack"):
+    case hash("pitcheg_attack"):
+    case hash("fileg_attack"):
+        setValueFromOpcode(opcode, target.attack, Default::egTimeRange);
+        break;
+    case hash("ampeg_decay"):
+    case hash("pitcheg_decay"):
+    case hash("fileg_decay"):
+        setValueFromOpcode(opcode, target.decay, Default::egTimeRange);
+        break;
+    case hash("ampeg_delay"):
+    case hash("pitcheg_delay"):
+    case hash("fileg_delay"):
+        setValueFromOpcode(opcode, target.delay, Default::egTimeRange);
+        break;
+    case hash("ampeg_hold"):
+    case hash("pitcheg_hold"):
+    case hash("fileg_hold"):
+        setValueFromOpcode(opcode, target.hold, Default::egTimeRange);
+        break;
+    case hash("ampeg_release"):
+    case hash("pitcheg_release"):
+    case hash("fileg_release"):
+        setValueFromOpcode(opcode, target.release, Default::egTimeRange);
+        break;
+    case hash("ampeg_start"):
+    case hash("pitcheg_start"):
+    case hash("fileg_start"):
+        setValueFromOpcode(opcode, target.start, Default::egPercentRange);
+        break;
+    case hash("ampeg_sustain"):
+    case hash("pitcheg_sustain"):
+    case hash("fileg_sustain"):
+        setValueFromOpcode(opcode, target.sustain, Default::egPercentRange);
+        break;
+    case hash("ampeg_vel&attack"):
+    case hash("pitcheg_vel&attack"):
+    case hash("fileg_vel&attack"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, target.vel2attack, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_vel&decay"):
+    case hash("pitcheg_vel&decay"):
+    case hash("fileg_vel&decay"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, target.vel2decay, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_vel&delay"):
+    case hash("pitcheg_vel&delay"):
+    case hash("fileg_vel&delay"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, target.vel2delay, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_vel&hold"):
+    case hash("pitcheg_vel&hold"):
+    case hash("fileg_vel&hold"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, target.vel2hold, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_vel&release"):
+    case hash("pitcheg_vel&release"):
+    case hash("fileg_vel&release"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, target.vel2release, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_vel&sustain"):
+    case hash("pitcheg_vel&sustain"):
+    case hash("fileg_vel&sustain"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, target.vel2sustain, Default::egOnCCPercentRange);
+        break;
+    case hash("ampeg_attackcc&"):
+    case hash("pitcheg_attackcc&"):
+    case hash("fileg_attackcc&"): // fallthrough
+    case hash("ampeg_attack_oncc&"):
+    case hash("pitcheg_attack_oncc&"):
+    case hash("fileg_attack_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccAttack, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_decaycc&"):
+    case hash("pitcheg_decaycc&"):
+    case hash("fileg_decaycc&"): // fallthrough
+    case hash("ampeg_decay_oncc&"):
+    case hash("pitcheg_decay_oncc&"):
+    case hash("fileg_decay_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccDecay, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_delaycc&"):
+    case hash("pitcheg_delaycc&"):
+    case hash("fileg_delaycc&"): // fallthrough
+    case hash("ampeg_delay_oncc&"):
+    case hash("pitcheg_delay_oncc&"):
+    case hash("fileg_delay_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccDelay, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_holdcc&"):
+    case hash("pitcheg_holdcc&"):
+    case hash("fileg_holdcc&"): // fallthrough
+    case hash("ampeg_hold_oncc&"):
+    case hash("pitcheg_hold_oncc&"):
+    case hash("fileg_hold_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccHold, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_releasecc&"):
+    case hash("pitcheg_releasecc&"):
+    case hash("fileg_releasecc&"): // fallthrough
+    case hash("ampeg_release_oncc&"):
+    case hash("pitcheg_release_oncc&"):
+    case hash("fileg_release_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccRelease, Default::egOnCCTimeRange);
+        break;
+    case hash("ampeg_startcc&"):
+    case hash("pitcheg_startcc&"):
+    case hash("fileg_startcc&"): // fallthrough
+    case hash("ampeg_start_oncc&"):
+    case hash("pitcheg_start_oncc&"):
+    case hash("fileg_start_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccStart, Default::egOnCCPercentRange);
+        break;
+    case hash("ampeg_sustaincc&"):
+    case hash("pitcheg_sustaincc&"):
+    case hash("fileg_sustaincc&"): // fallthrough
+    case hash("ampeg_sustain_oncc&"):
+    case hash("pitcheg_sustain_oncc&"):
+    case hash("fileg_sustain_oncc&"):
+        setCCPairFromOpcode(opcode, target.ccSustain, Default::egOnCCPercentRange);
         break;
     default:
         return false;

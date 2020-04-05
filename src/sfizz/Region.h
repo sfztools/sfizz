@@ -207,6 +207,16 @@ struct Region {
      * @return false
      */
     bool parseOpcode(const Opcode& opcode);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 EG:
+     * ampeg, pitcheg, fileg.
+     *
+     * @param opcode
+     * @param target
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseEGopcode(const Opcode& opcode, EGDescription& target);
 
     void offsetAllKeys(int offset) noexcept;
 
