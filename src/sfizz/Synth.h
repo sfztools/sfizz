@@ -10,7 +10,6 @@
 #include "Voice.h"
 #include "Region.h"
 #include "Effects.h"
-#include "Curve.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
@@ -514,9 +513,6 @@ private:
     EffectFactory effectFactory;
     typedef std::unique_ptr<EffectBus> EffectBusPtr;
     std::vector<EffectBusPtr> effectBuses; // 0 is "main", 1-N are "fx1"-"fxN"
-
-    // Curves
-    CurveSet curves;
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };

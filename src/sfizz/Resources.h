@@ -11,6 +11,7 @@
 #include "EQPool.h"
 #include "Logger.h"
 #include "Wavetables.h"
+#include "Curve.h"
 
 namespace sfz
 {
@@ -21,6 +22,7 @@ struct Resources
     BufferPool bufferPool;
     MidiState midiState;
     Logger logger;
+    CurveSet curves;
     FilePool filePool { logger };
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
