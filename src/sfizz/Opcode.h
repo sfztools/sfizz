@@ -185,7 +185,7 @@ inline void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& targ
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCValuePair<ValueType>>& target, const Range<ValueType>& validRange)
+inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
     if (value && Default::ccNumberRange.containsWithEnd(opcode.parameters.back()))

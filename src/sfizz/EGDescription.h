@@ -50,10 +50,10 @@ namespace sfz {
  * @param value
  * @return float
  */
-inline float ccSwitchedValue(const MidiState& state, const absl::optional<CCValuePair<float>>& ccSwitch, float value) noexcept
+inline float ccSwitchedValue(const MidiState& state, const absl::optional<CCData<float>>& ccSwitch, float value) noexcept
 {
     if (ccSwitch)
-        return value + ccSwitch->value * state.getCCValue(ccSwitch->cc);
+        return value + ccSwitch->data * state.getCCValue(ccSwitch->cc);
     else
         return value;
 }
@@ -80,13 +80,13 @@ struct EGDescription {
     float vel2sustain { Default::vel2sustain };
     int vel2depth { Default::depth };
 
-    absl::optional<CCValuePair<float>> ccAttack;
-    absl::optional<CCValuePair<float>> ccDecay;
-    absl::optional<CCValuePair<float>> ccDelay;
-    absl::optional<CCValuePair<float>> ccHold;
-    absl::optional<CCValuePair<float>> ccRelease;
-    absl::optional<CCValuePair<float>> ccStart;
-    absl::optional<CCValuePair<float>> ccSustain;
+    absl::optional<CCData<float>> ccAttack;
+    absl::optional<CCData<float>> ccDecay;
+    absl::optional<CCData<float>> ccDelay;
+    absl::optional<CCData<float>> ccHold;
+    absl::optional<CCData<float>> ccRelease;
+    absl::optional<CCData<float>> ccStart;
+    absl::optional<CCData<float>> ccSustain;
 
     /**
      * @brief Get the attack with possibly a CC modifier and a velocity modifier

@@ -24,44 +24,35 @@ using CCNamePair = std::pair<uint16_t, std::string>;
 template <class T>
 using MidiNoteArray = std::array<T, 128>;
 template<class ValueType>
-struct CCValuePair {
+struct CCData {
     int cc;
-    ValueType value;
+    ValueType data;
+    static_assert(config::numCCs - 1 < std::numeric_limits<decltype(cc)>::max());
 };
 
-template<class ValueType, bool CompareValue = false>
-struct CCValuePairComparator {
-    bool operator()(const CCValuePair<ValueType>& valuePair, const int& cc)
-    {
-        return (valuePair.cc < cc);
-    }
-
-    bool operator()(const int& cc, const CCValuePair<ValueType>& valuePair)
-    {
-        return (cc < valuePair.cc);
-    }
-
-    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
-    {
-        return (lhs.cc < rhs.cc);
-    }
+struct Modifier {
+    float value { 0.0f };
+    uint8_t curve { 0 };
+    uint8_t steps { 0 };
+    uint8_t smooth { 0 };
+    static_assert(config::maxCurves - 1 <= std::numeric_limits<decltype(curve)>::max());
 };
 
 template<class ValueType>
-struct CCValuePairComparator<ValueType, true> {
-    bool operator()(const CCValuePair<ValueType>& valuePair, const ValueType& value)
+struct CCDataComparator {
+    bool operator()(const CCData<ValueType>& ccData, const int& cc)
     {
-        return (valuePair.value < value);
+        return (ccData.cc < cc);
     }
 
-    bool operator()(const ValueType& value, const CCValuePair<ValueType>& valuePair)
+    bool operator()(const int& cc, const CCData<ValueType>& ccData)
     {
-        return (value < valuePair.value);
+        return (cc < ccData.cc);
     }
 
-    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
+    bool operator()(const CCData<ValueType>& lhs, const CCData<ValueType>& rhs)
     {
-        return (lhs.value < rhs.value);
+        return (lhs.cc < rhs.cc);
     }
 };
 

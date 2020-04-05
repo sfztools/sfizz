@@ -351,7 +351,7 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
     REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
     REQUIRE(!synth.getRegionView(2)->amplitudeCC.empty());
     REQUIRE(synth.getRegionView(2)->amplitudeCC.contains(10));
-    REQUIRE(synth.getRegionView(2)->amplitudeCC.getWithDefault(10) == 0.34f);
+    REQUIRE(synth.getRegionView(2)->amplitudeCC.getWithDefault(10).value == 0.34f);
 }
 
 TEST_CASE("[Files] Specific bug: relative path with backslashes")

@@ -285,11 +285,11 @@ struct Region {
     float pan { normalizePercents(Default::pan) }; // pan
     float width { normalizePercents(Default::width) }; // width
     float position { normalizePercents(Default::position) }; // position
-    CCMap<float> volumeCC { Default::zeroModifier }; // volume_oncc
-    CCMap<float> amplitudeCC { Default::zeroModifier }; // amplitude_oncc
-    CCMap<float> panCC { Default::zeroModifier }; // pan_oncc
-    CCMap<float> widthCC { Default::zeroModifier }; // width_oncc
-    CCMap<float> positionCC { Default::zeroModifier }; // position_oncc
+    CCMap<Modifier> volumeCC { {} }; // volume_oncc
+    CCMap<Modifier> amplitudeCC { {} }; // amplitude_oncc
+    CCMap<Modifier> panCC { {} }; // pan_oncc
+    CCMap<Modifier> widthCC { {} }; // width_oncc
+    CCMap<Modifier> positionCC { {} }; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
@@ -317,7 +317,7 @@ struct Region {
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune
-    CCMap<int> tuneCC { Default::tune };
+    CCMap<Modifier> tuneCC { {} };
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };

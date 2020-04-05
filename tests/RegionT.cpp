@@ -470,7 +470,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.panCC.empty());
         region.parseOpcode({ "pan_oncc45", "4.2" });
         REQUIRE(region.panCC.contains(45));
-        REQUIRE(region.panCC[45] == 0.042_a);
+        REQUIRE(region.panCC[45].value == 0.042_a);
     }
 
     SECTION("width")
@@ -491,7 +491,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.widthCC.empty());
         region.parseOpcode({ "width_oncc45", "4.2" });
         REQUIRE(region.widthCC.contains(45));
-        REQUIRE(region.widthCC[45] == 0.042_a);
+        REQUIRE(region.widthCC[45].value == 0.042_a);
     }
 
     SECTION("position")
@@ -512,7 +512,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.positionCC.empty());
         region.parseOpcode({ "position_oncc45", "4.2" });
         REQUIRE(region.positionCC.contains(45));
-        REQUIRE(region.positionCC[45] == 0.042_a);
+        REQUIRE(region.positionCC[45].value == 0.042_a);
     }
 
     SECTION("amp_keycenter")
@@ -974,13 +974,13 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeEG.ccRelease->cc == 5);
         REQUIRE(region.amplitudeEG.ccStart->cc == 6);
         REQUIRE(region.amplitudeEG.ccSustain->cc == 7);
-        REQUIRE(region.amplitudeEG.ccAttack->value == 1.0f);
-        REQUIRE(region.amplitudeEG.ccDecay->value == 2.0f);
-        REQUIRE(region.amplitudeEG.ccDelay->value == 3.0f);
-        REQUIRE(region.amplitudeEG.ccHold->value == 4.0f);
-        REQUIRE(region.amplitudeEG.ccRelease->value == 5.0f);
-        REQUIRE(region.amplitudeEG.ccStart->value == 6.0f);
-        REQUIRE(region.amplitudeEG.ccSustain->value == 7.0f);
+        REQUIRE(region.amplitudeEG.ccAttack->data == 1.0f);
+        REQUIRE(region.amplitudeEG.ccDecay->data == 2.0f);
+        REQUIRE(region.amplitudeEG.ccDelay->data == 3.0f);
+        REQUIRE(region.amplitudeEG.ccHold->data == 4.0f);
+        REQUIRE(region.amplitudeEG.ccRelease->data == 5.0f);
+        REQUIRE(region.amplitudeEG.ccStart->data == 6.0f);
+        REQUIRE(region.amplitudeEG.ccSustain->data == 7.0f);
         //
         region.parseOpcode({ "ampeg_attack_oncc1", "101" });
         region.parseOpcode({ "ampeg_decay_oncc2", "101" });
@@ -989,13 +989,13 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "ampeg_release_oncc5", "101" });
         region.parseOpcode({ "ampeg_start_oncc6", "101" });
         region.parseOpcode({ "ampeg_sustain_oncc7", "101" });
-        REQUIRE(region.amplitudeEG.ccAttack->value == 100.0f);
-        REQUIRE(region.amplitudeEG.ccDecay->value == 100.0f);
-        REQUIRE(region.amplitudeEG.ccDelay->value == 100.0f);
-        REQUIRE(region.amplitudeEG.ccHold->value == 100.0f);
-        REQUIRE(region.amplitudeEG.ccRelease->value == 100.0f);
-        REQUIRE(region.amplitudeEG.ccStart->value == 100.0f);
-        REQUIRE(region.amplitudeEG.ccSustain->value == 100.0f);
+        REQUIRE(region.amplitudeEG.ccAttack->data == 100.0f);
+        REQUIRE(region.amplitudeEG.ccDecay->data == 100.0f);
+        REQUIRE(region.amplitudeEG.ccDelay->data == 100.0f);
+        REQUIRE(region.amplitudeEG.ccHold->data == 100.0f);
+        REQUIRE(region.amplitudeEG.ccRelease->data == 100.0f);
+        REQUIRE(region.amplitudeEG.ccStart->data == 100.0f);
+        REQUIRE(region.amplitudeEG.ccSustain->data == 100.0f);
         //
         region.parseOpcode({ "ampeg_attack_oncc1", "-101" });
         region.parseOpcode({ "ampeg_decay_oncc2", "-101" });
@@ -1004,13 +1004,13 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "ampeg_release_oncc5", "-101" });
         region.parseOpcode({ "ampeg_start_oncc6", "-101" });
         region.parseOpcode({ "ampeg_sustain_oncc7", "-101" });
-        REQUIRE(region.amplitudeEG.ccAttack->value == -100.0f);
-        REQUIRE(region.amplitudeEG.ccDecay->value == -100.0f);
-        REQUIRE(region.amplitudeEG.ccDelay->value == -100.0f);
-        REQUIRE(region.amplitudeEG.ccHold->value == -100.0f);
-        REQUIRE(region.amplitudeEG.ccRelease->value == -100.0f);
-        REQUIRE(region.amplitudeEG.ccStart->value == -100.0f);
-        REQUIRE(region.amplitudeEG.ccSustain->value == -100.0f);
+        REQUIRE(region.amplitudeEG.ccAttack->data == -100.0f);
+        REQUIRE(region.amplitudeEG.ccDecay->data == -100.0f);
+        REQUIRE(region.amplitudeEG.ccDelay->data == -100.0f);
+        REQUIRE(region.amplitudeEG.ccHold->data == -100.0f);
+        REQUIRE(region.amplitudeEG.ccRelease->data == -100.0f);
+        REQUIRE(region.amplitudeEG.ccStart->data == -100.0f);
+        REQUIRE(region.amplitudeEG.ccSustain->data == -100.0f);
     }
 
     SECTION("sustain_sw and sostenuto_sw")
@@ -1448,10 +1448,10 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeCC.empty());
         region.parseOpcode({ "amplitude_cc1", "40" });
         REQUIRE(region.amplitudeCC.contains(1));
-        REQUIRE(region.amplitudeCC[1] == 0.40_a);
+        REQUIRE(region.amplitudeCC[1].value == 0.40_a);
         region.parseOpcode({ "amplitude_oncc2", "30" });
         REQUIRE(region.amplitudeCC.contains(2));
-        REQUIRE(region.amplitudeCC[2] == 0.30_a);
+        REQUIRE(region.amplitudeCC[2].value == 0.30_a);
     }
 
     SECTION("volume_oncc/gain_cc")
@@ -1459,13 +1459,13 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.volumeCC.empty());
         region.parseOpcode({ "gain_cc1", "40" });
         REQUIRE(region.volumeCC.contains(1));
-        REQUIRE(region.volumeCC[1] == 40_a);
+        REQUIRE(region.volumeCC[1].value == 40_a);
         region.parseOpcode({ "volume_oncc2", "-76" });
         REQUIRE(region.volumeCC.contains(2));
-        REQUIRE(region.volumeCC[2] == -76.0_a);
+        REQUIRE(region.volumeCC[2].value == -76.0_a);
         region.parseOpcode({ "gain_oncc4", "-1" });
         REQUIRE(region.volumeCC.contains(4));
-        REQUIRE(region.volumeCC[4] == -1.0_a);
+        REQUIRE(region.volumeCC[4].value == -1.0_a);
     }
 
     SECTION("tune_cc/pitch_cc")
@@ -1473,13 +1473,13 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.tuneCC.empty());
         region.parseOpcode({ "pitch_cc1", "40" });
         REQUIRE(region.tuneCC.contains(1));
-        REQUIRE(region.tuneCC[1] == 40);
+        REQUIRE(region.tuneCC[1].value == 40.0);
         region.parseOpcode({ "tune_oncc2", "-76" });
         REQUIRE(region.tuneCC.contains(2));
-        REQUIRE(region.tuneCC[2] == -76.0);
+        REQUIRE(region.tuneCC[2].value == -76.0);
         region.parseOpcode({ "pitch_oncc4", "-1" });
         REQUIRE(region.tuneCC.contains(4));
-        REQUIRE(region.tuneCC[4] == -1.0);
+        REQUIRE(region.tuneCC[4].value == -1.0);
     }
 }
 

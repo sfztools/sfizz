@@ -58,7 +58,6 @@ namespace Default
     constexpr Range<uint8_t> midi7Range { 0, 127 };
     constexpr Range<float> normalizedRange { 0.0f, 1.0f };
     constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
-    constexpr float zeroModifier { 0.0f };
 
     // Wavetable oscillator
     constexpr float oscillatorPhase { 0.0 };
