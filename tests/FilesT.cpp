@@ -394,9 +394,10 @@ TEST_CASE("[Files] Default path is ignored for generators")
 TEST_CASE("[Files] Set CC applies properly")
 {
     sfz::Synth synth;
+    const auto& midiState = synth.getResources().midiState;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_cc.sfz");
-    REQUIRE(synth.getMidiState().getCCValue(142) == 63_norm);
-    REQUIRE(synth.getMidiState().getCCValue(61) == 122_norm);
+    REQUIRE(midiState.getCCValue(142) == 63_norm);
+    REQUIRE(midiState.getCCValue(61) == 122_norm);
 }
 
 TEST_CASE("[Files] Note and octave offsets")
