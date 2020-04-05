@@ -327,6 +327,10 @@ struct Region {
     EGDescription amplitudeEG;
     EGDescription pitchEG;
     EGDescription filterEG;
+    float pitchEgDepth = Default::pitchEgDepth;
+    float pitchEgVel2depth = Default::pitchEgVel2depth;
+    float filterEgDepth = Default::filterEgDepth;
+    float filterEgVel2depth = Default::filterEgVel2depth;
 
     bool isStereo { false };
 

@@ -281,7 +281,9 @@ private:
     std::vector<FilterHolderPtr> filters;
     std::vector<EQHolderPtr> equalizers;
 
-    ADSREnvelope<float> egEnvelope;
+    ADSREnvelope<float> egAmplitude;
+    ADSREnvelope<float> egPitch;
+    ADSREnvelope<float> egFilter;
     float bendStepFactor { centsFactor(1) };
 
     WavetableOscillator waveOscillator;

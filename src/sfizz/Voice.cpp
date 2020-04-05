@@ -101,7 +101,9 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
     baseFrequency = midiNoteFrequency(number);
     bendStepFactor = centsFactor(region->bendStep);
-    egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
+    egAmplitude.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
+    egPitch.reset(region->pitchEG, *region, resources.midiState, delay, value, sampleRate);
+    egFilter.reset(region->filterEG, *region, resources.midiState, delay, value, sampleRate);
 }
 
 bool sfz::Voice::isFree() const noexcept
@@ -114,10 +116,11 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     if (state != State::playing)
         return;
 
-    if (egEnvelope.getRemainingDelay() > std::max(0, delay - initialDelay)) {
+    if (egAmplitude.getRemainingDelay() > std::max(0, delay - initialDelay))
         reset();
-    } else {
-        egEnvelope.startRelease(delay, fastRelease);
+    else {
+        for (ADSREnvelope<float>* eg : { &egAmplitude, &egPitch, &egFilter })
+            eg->startRelease(delay, fastRelease);
     }
 }
 
@@ -228,7 +231,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         panStageMono(buffer);
     }
 
-    if (!egEnvelope.isSmoothing())
+    if (!egAmplitude.isSmoothing())
         reset();
 
     powerHistory.push(buffer.meanSquared());
@@ -245,7 +248,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
         return;
 
     // AmpEG envelope
-    egEnvelope.getBlock(modulationSpan);
+    egAmplitude.getBlock(modulationSpan);
 
     // Amplitude envelope
     applyGain<float>(baseGain, modulationSpan);
@@ -448,6 +451,18 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         applyGain<float>(*bends, *jumps);
     }
 
+    const float pitchEgDepth = region->pitchEgDepth + triggerValue * region->pitchEgVel2depth;
+    if (pitchEgDepth != 0) {
+        auto pitchEnvelope = resources.bufferPool.getBuffer(numSamples);
+        if (pitchEnvelope) {
+            egPitch.getBlock(*pitchEnvelope);
+            applyGain<float>(pitchEgDepth, *pitchEnvelope);
+            for (float& x : *pitchEnvelope)
+                x = centsFactor(x);
+            applyGain<float>(*pitchEnvelope, *jumps);
+        }
+    }
+
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
     sfzInterpolationCast<float>(*jumps, *indices, *leftCoeffs, *rightCoeffs);
@@ -544,6 +559,18 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             applyGain<float>(*bends, *frequencies);
         }
 
+        const float pitchEgDepth = region->pitchEgDepth + triggerValue * region->pitchEgVel2depth;
+        if (pitchEgDepth != 0) {
+            auto pitchEnvelope = resources.bufferPool.getBuffer(numSamples);
+            if (pitchEnvelope) {
+                egPitch.getBlock(*pitchEnvelope);
+                applyGain<float>(pitchEgDepth, *pitchEnvelope);
+                for (float& x : *pitchEnvelope)
+                    x = centsFactor(x);
+                applyGain<float>(*pitchEnvelope, *frequencies);
+            }
+        }
+
         waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
         copy<float>(leftSpan, rightSpan);
     }
@@ -599,7 +626,7 @@ float sfz::Voice::getMeanSquaredAverage() const noexcept
 
 bool sfz::Voice::canBeStolen() const noexcept
 {
-    return state == State::idle || egEnvelope.isReleased();
+    return state == State::idle || egAmplitude.isReleased();
 }
 
 uint32_t sfz::Voice::getSourcePosition() const noexcept

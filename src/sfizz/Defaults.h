@@ -206,12 +206,18 @@ namespace Default
 	constexpr float start { 0.0 };
 	constexpr float sustain { 100.0 };
 	constexpr float vel2sustain { 0.0 };
+	constexpr float pitchEgDepth { 0.0 };
+	constexpr float pitchEgVel2depth { 0.0 };
+	constexpr float filterEgDepth { 0.0 };
+	constexpr float filterEgVel2depth { 0.0 };
 	constexpr int depth { 0 };
 	constexpr Range<float> egTimeRange { 0.0, 100.0 };
 	constexpr Range<float> egPercentRange { 0.0, 100.0 };
 	constexpr Range<int> egDepthRange { -12000, 12000 };
 	constexpr Range<float> egOnCCTimeRange { -100.0, 100.0 };
 	constexpr Range<float> egOnCCPercentRange { -100.0, 100.0 };
+	constexpr Range<float> pitchEgDepthRange { -12000.0, 12000.0 };
+	constexpr Range<float> filterEgDepthRange { -12000.0, 12000.0 };
 
     // ***** SFZ v2 ********
 	constexpr bool checkSustain { true }; // sustain_sw

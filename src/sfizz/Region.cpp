@@ -829,6 +829,31 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("fileg_sustain_oncc&"):
         return parseEGopcode(opcode, filterEG);
 
+    case hash("pitcheg_depth"):
+        setValueFromOpcode(opcode, pitchEgDepth, Default::pitchEgDepthRange);
+        break;
+    case hash("pitcheg_vel&depth"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, pitchEgVel2depth, Default::pitchEgDepthRange);
+        break;
+    case hash("fileg_depth"):
+        setValueFromOpcode(opcode, filterEgDepth, Default::filterEgDepthRange);
+        break;
+    case hash("fileg_vel&depth"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, filterEgVel2depth, Default::filterEgDepthRange);
+        break;
+
+    // TODO ARIA extensions
+    /*
+    case hash("pitcheg_depth_oncc&"):
+        break;
+    case hash("fileg_depth_oncc&"):
+        break;
+    */
+
     case hash("effect&"):
     {
         const auto effectNumber = opcode.parameters.back();
