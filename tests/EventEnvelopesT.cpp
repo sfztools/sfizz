@@ -273,3 +273,104 @@ TEST_CASE("[MultiplicativeEnvelope] Get quantized with unclean events")
     multiplicativeEnvelope(events, absl::MakeSpan(output), idModifier, 2.0f);
     REQUIRE(output == expected);
 }
+
+TEST_CASE("[linearModifiers] Compare with envelopes")
+{
+    sfz::Resources resources;
+    resources.curves = sfz::CurveSet::createPredefined();
+
+    sfz::CCData<sfz::Modifier> ccData;
+    ccData.cc = 20;
+    ccData.data.value = 100.0f;
+
+    resources.midiState.ccEvent(5, 20, 0.1);
+    resources.midiState.ccEvent(10, 20, 0.2);
+
+    std::array<float, 16> output;
+    std::array<float, 16> envelope;
+
+    linearEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return ccData.data.value * x;
+    });
+    linearModifier(resources, absl::MakeSpan(output), ccData);
+    REQUIRE(approxEqual<float>(output, envelope));
+
+    ccData.data.curve = 1;
+    linearEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return ccData.data.value * (2 * x - 1);
+    });
+    linearModifier(resources, absl::MakeSpan(output), ccData);
+    REQUIRE(approxEqual<float>(output, envelope));
+
+    ccData.data.curve = 3;
+    ccData.data.value = 10.0f;
+    linearEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return ccData.data.value * (1 - 2 * x);
+    });
+    linearModifier(resources, absl::MakeSpan(output), ccData);
+    REQUIRE(approxEqual<float>(output, envelope));
+
+    ccData.data.curve = 2;
+    ccData.data.value = 20.0f;
+    ccData.data.steps = 10;
+    linearEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return ccData.data.value * (1 - x);
+    }, ccData.data.value / ccData.data.steps);
+    linearModifier(resources, absl::MakeSpan(output), ccData);
+    REQUIRE(approxEqual<float>(output, envelope));
+}
+
+TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
+{
+    sfz::Resources resources;
+    resources.curves = sfz::CurveSet::createPredefined();
+
+    sfz::CCData<sfz::Modifier> ccData;
+    ccData.cc = 20;
+    ccData.data.value = 100.0f;
+
+    resources.midiState.ccEvent(5, 20, 0.1);
+    resources.midiState.ccEvent(10, 20, 0.2);
+
+    std::array<float, 16> output;
+    std::array<float, 16> envelope;
+
+    multiplicativeEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return db2mag(ccData.data.value * x);
+    });
+    multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
+        return db2mag(x);
+    });
+    REQUIRE(approxEqual<float>(output, envelope));
+
+    ccData.data.curve = 1;
+    multiplicativeEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return db2mag(ccData.data.value * (2 * x - 1));
+    });
+    multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
+        return db2mag(x);
+    });
+    REQUIRE(approxEqual<float>(output, envelope));
+
+    ccData.data.curve = 3;
+    ccData.data.value = 10.0f;
+    multiplicativeEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return db2mag(ccData.data.value * (1 - 2 * x));
+    });
+    multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
+        return db2mag(x);
+    });
+    REQUIRE(approxEqual<float>(output, envelope));
+
+    ccData.data.curve = 2;
+    ccData.data.value = 20.0f;
+    ccData.data.steps = 10;
+    multiplicativeEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
+        return db2mag(ccData.data.value * (1 - x));
+    }, db2mag(ccData.data.value / ccData.data.steps) );
+    multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
+        return db2mag(x);
+    });
+    REQUIRE(approxEqual<float>(output, envelope));
+}
+

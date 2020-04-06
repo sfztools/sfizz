@@ -33,7 +33,7 @@ TEST_CASE("[Curve] Bipolar -1 to 1")
     REQUIRE( curve.evalCC7(85) == Approx(0.3386).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == -1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(-0.402).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(-0.4).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] Bipolar 1 to 0")
@@ -59,7 +59,7 @@ TEST_CASE("[Curve] Bipolar 1 to -1")
     REQUIRE( curve.evalCC7(85) == Approx(-0.3386).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == 1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == -1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.402).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.4).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] x**2")
@@ -220,7 +220,7 @@ TEST_CASE("[Curve] Default CurveSet")
 
     REQUIRE( curveSet.getCurve(1).evalNormalized(0.0f) == -1.0f );
     REQUIRE( curveSet.getCurve(1).evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curveSet.getCurve(1).evalNormalized(0.3f) == Approx(-0.402).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(1).evalNormalized(0.3f) == Approx(-0.4).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(2).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(2).evalNormalized(1.0f) == 0.0f );
@@ -228,7 +228,7 @@ TEST_CASE("[Curve] Default CurveSet")
 
     REQUIRE( curveSet.getCurve(3).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(3).evalNormalized(1.0f) == -1.0f );
-    REQUIRE( curveSet.getCurve(3).evalNormalized(0.3f) == Approx(0.402).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(3).evalNormalized(0.3f) == Approx(0.4).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(4).evalNormalized(0.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(4).evalNormalized(1.0f) == 1.0f );

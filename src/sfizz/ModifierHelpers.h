@@ -214,7 +214,7 @@ void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> s
         });
     } else {
         // FIXME: not sure about this step size for multiplicative envelopes
-        const float stepSize { ccData.data.value / ccData.data.steps };
+        const float stepSize { lambda(ccData.data.value / ccData.data.steps) };
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         }, stepSize);
@@ -225,10 +225,4 @@ inline void linearModifier(const sfz::Resources& resources, absl::Span<float> sp
 {
     linearModifier(resources, span, ccData, [](float x) { return x; });
 }
-
-inline void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
-{
-    multiplicativeModifier(resources, span, ccData, [](float x) { return x; });
-}
-
 }
