@@ -137,7 +137,7 @@ TEST_CASE("[LinearEnvelope] Get quantized with unquantized targets")
         { 6, 1.9f }
     };
     std::array<float, 8> output;
-    std::array<float, 8> expected { 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 2.0f };
+    std::array<float, 8> expected { 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     linearEnvelope(events, absl::MakeSpan(output), idModifier, 1.0f);
     REQUIRE(output == expected);
 }
@@ -315,7 +315,7 @@ TEST_CASE("[linearModifiers] Compare with envelopes")
     ccData.data.steps = 10;
     linearEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
         return ccData.data.value * (1 - x);
-    }, ccData.data.value / ccData.data.steps);
+    }, ccData.data.value / (ccData.data.steps - 1));
     linearModifier(resources, absl::MakeSpan(output), ccData);
     REQUIRE(approxEqual<float>(output, envelope));
 }
@@ -367,7 +367,7 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     ccData.data.steps = 10;
     multiplicativeEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
         return db2mag(ccData.data.value * (1 - x));
-    }, db2mag(ccData.data.value / ccData.data.steps) );
+    }, db2mag(ccData.data.value / (ccData.data.steps - 1)) );
     multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
         return db2mag(x);
     });

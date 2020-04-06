@@ -88,7 +88,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
         return;
 
     auto quantize = [step](float value) -> float {
-        return std::round(value / step) * step;
+        return std::floor(value / step) * step;
     };
     const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
@@ -158,7 +158,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](float value) -> float {
-        return std::exp(logStep * std::round(std::log(value) / logStep));
+        return std::exp(logStep * std::floor(std::log(value) / logStep));
     };
 
     auto lastValue = quantize(lambda(events[0].value));
@@ -191,12 +191,12 @@ void linearModifier(const sfz::Resources& resources, absl::Span<float> span, con
 {
     const auto events = resources.midiState.getCCEvents(ccData.cc);
     const auto curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.steps == 0) {
+    if (ccData.data.steps < 2) {
         linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         });
     } else {
-        const float stepSize { ccData.data.value / ccData.data.steps };
+        const float stepSize { ccData.data.value / (ccData.data.steps - 1) };
         linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         }, stepSize);
@@ -208,13 +208,13 @@ void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> s
 {
     const auto events = resources.midiState.getCCEvents(ccData.cc);
     const auto curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.steps == 0) {
+    if (ccData.data.steps < 2) {
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         });
     } else {
         // FIXME: not sure about this step size for multiplicative envelopes
-        const float stepSize { lambda(ccData.data.value / ccData.data.steps) };
+        const float stepSize { lambda(ccData.data.value / (ccData.data.steps - 1)) };
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         }, stepSize);
