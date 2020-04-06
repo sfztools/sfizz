@@ -130,17 +130,14 @@ void sfz::Synth::clear()
         list.clear();
     for (auto& list : ccActivationLists)
         list.clear();
+
     regions.clear();
     effectBuses.clear();
     effectBuses.emplace_back(new EffectBus);
     effectBuses[0]->setGainToMain(1.0);
     effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
     effectBuses[0]->setSampleRate(sampleRate);
-    resources.curves = CurveSet::createPredefined();
-    resources.filePool.clear();
-    resources.wavePool.clearFileWaves();
-    resources.logger.clear();
-    resources.midiState.reset();
+    resources.clear();
     numGroups = 0;
     numMasters = 0;
     fileTicket = -1;

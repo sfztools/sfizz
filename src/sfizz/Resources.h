@@ -40,5 +40,14 @@ struct Resources
         bufferPool.setBufferSize(samplesPerBlock);
         midiState.setSamplesPerBlock(samplesPerBlock);
     }
+
+    void clear()
+    {
+        curves = CurveSet::createPredefined();
+        filePool.clear();
+        wavePool.clearFileWaves();
+        logger.clear();
+        midiState.reset();
+    }
 };
 }
