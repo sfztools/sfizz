@@ -5,7 +5,6 @@
 #include "SfzHelpers.h"
 #include "Resources.h"
 #include "absl/types/span.h"
-
 namespace sfz {
 
 /**
@@ -150,7 +149,6 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     if (envelope.size() == 0)
         return;
     const auto maxDelay = static_cast<int>(envelope.size() - 1);
-
     const auto logStep = std::log(step);
     // If we assume that a = b.q^r for b in (1, q) then
     // log a     log b
@@ -178,7 +176,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
             continue;
         }
 
-        const auto numSteps = static_cast<int>(std::log(difference) / logStep);
+        const auto numSteps = std::round(std::log(difference) / logStep);
         const auto stepLength = static_cast<int>(length / numSteps);
         for (int i = 0; i < numSteps; ++i) {
             fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
@@ -216,7 +214,6 @@ void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> s
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         });
     } else {
-        // FIXME: not sure about this step size for multiplicative envelopes
         const float stepSize { lambda(ccData.data.value / (ccData.data.steps - 1)) };
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);

@@ -330,7 +330,7 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     ccData.data.value = 100.0f;
 
     resources.midiState.ccEvent(5, 20, 0.1);
-    resources.midiState.ccEvent(10, 20, 0.2);
+    resources.midiState.ccEvent(10, 20, 0.8);
 
     std::array<float, 16> output;
     std::array<float, 16> envelope;
