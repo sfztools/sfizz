@@ -522,7 +522,6 @@ private:
 
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
-    unsigned fileTicket { 1 };
 
     std::mutex callbackGuard;
     bool freeWheeling { false };

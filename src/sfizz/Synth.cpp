@@ -140,7 +140,6 @@ void sfz::Synth::clear()
     resources.clear();
     numGroups = 0;
     numMasters = 0;
-    fileTicket = -1;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
     ccNames.clear();
