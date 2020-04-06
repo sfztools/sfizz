@@ -210,3 +210,13 @@ void sfz::Sfizz::allSoundOff() noexcept
 {
     synth->allSoundOff();
 }
+
+void sfz::Sfizz::addExternalDefinition(const std::string& id, const std::string& value)
+{
+    synth->getParser().addExternalDefinition(id, value);
+}
+
+void sfz::Sfizz::clearExternalDefinitions()
+{
+    synth->getParser().clearExternalDefinitions();
+}

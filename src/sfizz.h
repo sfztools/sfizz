@@ -394,6 +394,25 @@ SFIZZ_EXPORTED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const cha
  */
 SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
 
+/**
+ * @brief Add external definitions prior to loading;
+ * Note that these do not get reset by loading or resetting the synth.
+ * You need to call sfizz_clear_external_definitions() to erase them.
+ *
+ * @param synth
+ * @param id
+ * @param value
+ */
+SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, const char* id, const char* value);
+
+/**
+ * @brief Clears external definitions for the next file loading.
+ *
+ * @param synth
+ */
+SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
+
+
 #ifdef __cplusplus
 }
 #endif
