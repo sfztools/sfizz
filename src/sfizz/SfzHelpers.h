@@ -27,7 +27,7 @@ template<class ValueType>
 struct CCData {
     int cc;
     ValueType data;
-    static_assert(config::numCCs - 1 < std::numeric_limits<decltype(cc)>::max());
+    static_assert(config::numCCs - 1 < std::numeric_limits<decltype(cc)>::max(), "The cc type in the CCData struct cannot support the required number of CCs");
 };
 
 struct Modifier {
@@ -35,7 +35,7 @@ struct Modifier {
     uint8_t curve { 0 };
     uint8_t steps { 0 };
     uint8_t smooth { 0 };
-    static_assert(config::maxCurves - 1 <= std::numeric_limits<decltype(curve)>::max());
+    static_assert(config::maxCurves - 1 <= std::numeric_limits<decltype(curve)>::max(), "The curve type in the Modifier struct cannot support the required number of curves");
 };
 
 template<class ValueType>
