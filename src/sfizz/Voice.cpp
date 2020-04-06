@@ -249,6 +249,51 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #endif
 }
 
+template<class F>
+void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
+{
+    const auto events = resources.midiState.getCCEvents(ccData.cc);
+    const auto curve = resources.curves.getCurve(ccData.data.curve);
+    if (ccData.data.steps == 0) {
+        linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
+            return lambda(curve.evalNormalized(x) * ccData.data.value);
+        });
+    } else {
+        const float stepSize { ccData.data.value / ccData.data.steps };
+        linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
+            return lambda(curve.evalNormalized(x) * ccData.data.value);
+        }, stepSize);
+    }
+}
+
+template<class F>
+void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
+{
+    const auto events = resources.midiState.getCCEvents(ccData.cc);
+    const auto curve = resources.curves.getCurve(ccData.data.curve);
+    if (ccData.data.steps == 0) {
+        multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
+            return lambda(curve.evalNormalized(x) * ccData.data.value);
+        });
+    } else {
+        // FIXME: not sure about this step size for multiplicative envelopes
+        const float stepSize { ccData.data.value / ccData.data.steps };
+        multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
+            return lambda(curve.evalNormalized(x) * ccData.data.value);
+        }, stepSize);
+    }
+}
+
+void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
+{
+    linearModifier(resources, span, ccData, [](float x) { return x; });
+}
+
+void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
+{
+    multiplicativeModifier(resources, span, ccData, [](float x) { return x; });
+}
+
 void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
@@ -264,28 +309,32 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     // Amplitude envelope
     applyGain<float>(baseGain, modulationSpan);
     for (const auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.data.value; });
+        linearModifier(resources, *tempSpan, mod);
         applyGain<float>(*tempSpan, modulationSpan);
     }
 
     // Crossfade envelopes
     for (const auto& mod : region->crossfadeCCInRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.data, x, xfCurve); });
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeIn(mod.data, x, xfCurve);
+        });
         applyGain<float>(*tempSpan, modulationSpan);
     }
     for (const auto& mod : region->crossfadeCCOutRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.data, x, xfCurve); });
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeOut(mod.data, x, xfCurve);
+        });
         applyGain<float>(*tempSpan, modulationSpan);
     }
 
     // Volume envelope
     applyGain<float>(db2mag(baseVolumedB), modulationSpan);
     for (const auto& mod : region->volumeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.data.value); });
+        multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
+            return db2mag(x);
+        });
         applyGain<float>(*tempSpan, modulationSpan);
     }
 }
@@ -337,8 +386,7 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.data.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -357,30 +405,24 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     // Apply panning
-    // panningModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.data.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
-    // widthModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->width);
     for (const auto& mod : region->widthCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.data.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     width<float>(*modulationSpan, leftBuffer, rightBuffer);
 
-    // positionModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->position);
     for (const auto& mod : region->positionCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.data.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -457,8 +499,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     applyGain<float>(*bends, *jumps);
 
     for (const auto& mod : region->tuneCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.data.value); });
+        multiplicativeModifier(resources, *bends, mod, [](float x) { return centsFactor(x); });
         applyGain<float>(*bends, *jumps);
     }
 
@@ -561,8 +602,9 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         applyGain<float>(*bends, *frequencies);
 
         for (const auto& mod : region->tuneCC) {
-            const auto events = resources.midiState.getCCEvents(mod.cc);
-            multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.data.value); });
+            multiplicativeModifier(resources, *bends, mod, [](float x) {
+                return centsFactor(x);
+            });
             applyGain<float>(*bends, *frequencies);
         }
 
