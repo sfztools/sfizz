@@ -4,16 +4,14 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Macros.h"
 #include "Voice.h"
-#include "AudioSpan.h"
-#include "Config.h"
+#include "Macros.h"
 #include "Defaults.h"
+#include "ModifierHelpers.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
 #include "absl/algorithm/container.h"
-#include <memory>
 
 sfz::Voice::Voice(sfz::Resources& resources)
 : resources(resources)
@@ -247,51 +245,6 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(isValidAudio(buffer.getConstSpan(0)));
     ASSERT(isValidAudio(buffer.getConstSpan(1)));
 #endif
-}
-
-template<class F>
-void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
-{
-    const auto events = resources.midiState.getCCEvents(ccData.cc);
-    const auto curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.steps == 0) {
-        linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        });
-    } else {
-        const float stepSize { ccData.data.value / ccData.data.steps };
-        linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        }, stepSize);
-    }
-}
-
-template<class F>
-void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
-{
-    const auto events = resources.midiState.getCCEvents(ccData.cc);
-    const auto curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.steps == 0) {
-        multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        });
-    } else {
-        // FIXME: not sure about this step size for multiplicative envelopes
-        const float stepSize { ccData.data.value / ccData.data.steps };
-        multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        }, stepSize);
-    }
-}
-
-void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
-{
-    linearModifier(resources, span, ccData, [](float x) { return x; });
-}
-
-void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
-{
-    multiplicativeModifier(resources, span, ccData, [](float x) { return x; });
 }
 
 void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept

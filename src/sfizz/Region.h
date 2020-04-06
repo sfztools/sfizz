@@ -14,10 +14,8 @@
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
-#include "absl/strings/str_cat.h"
+#include "absl/types/optional.h"
 #include <bitset>
-#include <absl/types/optional.h>
-#include <random>
 #include <string>
 #include <vector>
 

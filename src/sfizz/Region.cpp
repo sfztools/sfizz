@@ -5,13 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Region.h"
-#include "Defaults.h"
 #include "MathHelpers.h"
 #include "Macros.h"
 #include "Debug.h"
 #include "Opcode.h"
 #include "StringViewHelpers.h"
-#include "MidiState.h"
+#include "ModifierHelpers.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_cat.h"
 #include "absl/algorithm/container.h"
