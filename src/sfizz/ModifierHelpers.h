@@ -158,7 +158,10 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](float value) -> float {
-        return std::exp(logStep * std::floor(std::log(value) / logStep));
+        if (value > 1)
+            return std::exp(logStep * std::floor(std::log(value) / logStep));
+        else
+            return std::exp(logStep * std::ceil(std::log(value) / logStep));
     };
 
     auto lastValue = quantize(lambda(events[0].value));
