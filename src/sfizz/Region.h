@@ -189,7 +189,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t getOffset(Oversampling factor = Oversampling::x1) const noexcept;
+    uint64_t getOffset(Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Get the region delay in seconds
      *
@@ -230,9 +230,9 @@ struct Region {
     std::string sample {}; // Sample
     float delay { Default::delay }; // delay
     float delayRandom { Default::delayRandom }; // delay_random
-    uint32_t offset { Default::offset }; // offset
-    uint32_t offsetRandom { Default::offsetRandom }; // offset_random
-    CCMap<uint32_t> offsetCC { Default::offset };
+    int64_t offset { Default::offset }; // offset
+    int64_t offsetRandom { Default::offsetRandom }; // offset_random
+    CCMap<int64_t> offsetCC { Default::offset };
     uint32_t sampleEnd { Default::sampleEndRange.getEnd() }; // end
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<SfzLoopMode> loopMode {}; // loopmode

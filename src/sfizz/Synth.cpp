@@ -378,10 +378,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 uint64_t sumOffsetCC = region->offset + region->offsetRandom;
                 for (const auto& offsets: region->offsetCC)
                     sumOffsetCC += offsets.value;
-                if (static_cast<uint64_t>(Default::offsetCCRange.getEnd()) < sumOffsetCC)
-                    return Default::offsetCCRange.getEnd();
-
-                return static_cast<uint32_t>(sumOffsetCC);
+                return Default::offsetCCRange.clamp(sumOffsetCC);
             }();
 
             if (!resources.filePool.preloadFile(region->sample, maxOffset))

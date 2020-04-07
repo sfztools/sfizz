@@ -46,10 +46,10 @@ namespace Default
 	constexpr float delay { 0.0 };
 	constexpr float delayRandom { 0.0 };
 	constexpr Range<float> delayRange { 0.0, 100.0 };
-	constexpr uint32_t offset { 0 };
-	constexpr uint32_t offsetRandom { 0 };
-	constexpr Range<uint32_t> offsetRange { 0, std::numeric_limits<uint32_t>::max() };
-	constexpr Range<uint32_t> offsetCCRange  = offsetRange;
+	constexpr int64_t offset { 0 };
+	constexpr int64_t offsetRandom { 0 };
+	constexpr Range<int64_t> offsetRange { 0, std::numeric_limits<uint32_t>::max() };
+	constexpr Range<int64_t> offsetCCRange  = offsetRange;
 	constexpr Range<uint32_t> sampleEndRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr Range<uint32_t> sampleCountRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };

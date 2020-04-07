@@ -1140,10 +1140,13 @@ float sfz::Region::getPhase() const noexcept
     return phase;
 }
 
-uint32_t sfz::Region::getOffset(Oversampling factor) const noexcept
+uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
 {
-    std::uniform_int_distribution<uint32_t> offsetDistribution { 0, offsetRandom };
-    return (offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint32_t>(factor);
+    std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
+    uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
+    for (const auto& mod: offsetCC)
+        finalOffset += static_cast<uint64_t>(mod.value * midiState.getCCValue(mod.cc));
+    return Default::offsetCCRange.clamp(offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint64_t>(factor);
 }
 
 float sfz::Region::getDelay() const noexcept
