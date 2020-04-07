@@ -108,7 +108,11 @@ sfz::FilePool::~FilePool()
     quitThread = true;
 
     for (unsigned i = 0; i < threadPool.size(); ++i)
-        workerBarrier.post();
+        try {
+            workerBarrier.post();
+        } catch (std::exception e) {
+            continue;
+        }
 
     for (auto& thread: threadPool)
         thread.join();
@@ -261,7 +265,7 @@ absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const std::string& f
     }
 }
 
-sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) noexcept
+sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename)
 {
     if (emptyPromises.empty()) {
         DBG("[sfizz] No empty promises left to honor the one for " << filename);
@@ -322,7 +326,7 @@ void sfz::FilePool::clearingThread()
     }
 }
 
-void sfz::FilePool::loadingThread() noexcept
+void sfz::FilePool::loadingThread()
 {
     FilePromisePtr promise;
     while (!quitThread) {
@@ -443,7 +447,7 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
     return preloadSize;
 }
 
-void sfz::FilePool::emptyFileLoadingQueues() noexcept
+void sfz::FilePool::emptyFileLoadingQueues()
 {
     emptyQueue = true;
     workerBarrier.post();

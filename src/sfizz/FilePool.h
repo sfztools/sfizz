@@ -207,7 +207,7 @@ public:
      * @param filename the file to preload
      * @return FilePromisePtr a file promise
      */
-    FilePromisePtr getFilePromise(const std::string& filename) noexcept;
+    FilePromisePtr getFilePromise(const std::string& filename);
     /**
      * @brief Change the preloading size. This will trigger a full
      * reload of all samples, so don't call it on the audio thread.
@@ -240,7 +240,7 @@ public:
      * method on the audio thread as it will spinlock.
      *
      */
-    void emptyFileLoadingQueues() noexcept;
+    void emptyFileLoadingQueues();
     /**
      * @brief Wait for the background loading to finish for all promises
      * in the queue.
@@ -249,7 +249,7 @@ public:
 private:
     Logger& logger;
     fs::path rootDirectory;
-    void loadingThread() noexcept;
+    void loadingThread();
     void clearingThread();
     void tryToClearPromises();
 
