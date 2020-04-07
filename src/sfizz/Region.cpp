@@ -59,6 +59,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("offset_random"):
         setValueFromOpcode(opcode, offsetRandom, Default::offsetRange);
         break;
+    case hash("offset_cc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::offsetCCRange))
+            offsetCC[opcode.parameters.back()] = *value;
+        break;
     case hash("end"):
         setValueFromOpcode(opcode, sampleEnd, Default::sampleEndRange);
         break;

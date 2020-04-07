@@ -53,6 +53,19 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "offset", "-1" });
         REQUIRE(region.offset == 0);
     }
+    SECTION("offset_cc")
+    {
+        REQUIRE(region.offsetCC.empty());
+        region.parseOpcode({ "offset_cc1", "1" });
+        REQUIRE(region.offsetCC.contains(1));
+        REQUIRE(region.offsetCC[1] == 1);
+        region.parseOpcode({ "offset_cc2", "15420" });
+        REQUIRE(region.offsetCC.contains(2));
+        REQUIRE(region.offsetCC[2] == 15420);
+        region.parseOpcode({ "offset_cc2", "-1" });
+        REQUIRE(region.offsetCC[2] == 0);
+    }
+
 
     SECTION("offset_random")
     {

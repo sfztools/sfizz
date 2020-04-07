@@ -49,6 +49,7 @@ namespace Default
 	constexpr uint32_t offset { 0 };
 	constexpr uint32_t offsetRandom { 0 };
 	constexpr Range<uint32_t> offsetRange { 0, std::numeric_limits<uint32_t>::max() };
+	constexpr Range<uint32_t> offsetCCRange  = offsetRange;
 	constexpr Range<uint32_t> sampleEndRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr Range<uint32_t> sampleCountRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };

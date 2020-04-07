@@ -232,6 +232,7 @@ struct Region {
     float delayRandom { Default::delayRandom }; // delay_random
     uint32_t offset { Default::offset }; // offset
     uint32_t offsetRandom { Default::offsetRandom }; // offset_random
+    CCMap<uint32_t> offsetCC { Default::offset };
     uint32_t sampleEnd { Default::sampleEndRange.getEnd() }; // end
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<SfzLoopMode> loopMode {}; // loopmode
