@@ -377,7 +377,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             const auto maxOffset = [region]() {
                 uint64_t sumOffsetCC = region->offset + region->offsetRandom;
                 for (const auto& offsets: region->offsetCC)
-                    sumOffsetCC += offsets.value;
+                    sumOffsetCC += offsets.data;
                 return Default::offsetCCRange.clamp(sumOffsetCC);
             }();
 

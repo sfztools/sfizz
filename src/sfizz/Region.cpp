@@ -1145,7 +1145,7 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
-        finalOffset += static_cast<uint64_t>(mod.value * midiState.getCCValue(mod.cc));
+        finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
     return Default::offsetCCRange.clamp(offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint64_t>(factor);
 }
 
