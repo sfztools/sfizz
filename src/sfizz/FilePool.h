@@ -27,6 +27,7 @@
 #include "Config.h"
 #include "Defaults.h"
 #include "LeakDetector.h"
+#include "RTSemaphore.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
 #include "SIMDHelpers.h"
@@ -260,6 +261,7 @@ private:
     bool quitThread { false };
     bool emptyQueue { false };
     std::atomic<int> threadsLoading { 0 };
+    RTSemaphore workerBarrier;
 
     // File promises data structures along with their guards.
     std::vector<FilePromisePtr> emptyPromises;

@@ -106,6 +106,10 @@ sfz::FilePool::FilePool(sfz::Logger& logger)
 sfz::FilePool::~FilePool()
 {
     quitThread = true;
+
+    for (unsigned i = 0; i < threadPool.size(); ++i)
+        workerBarrier.post();
+
     for (auto& thread: threadPool)
         thread.join();
 }
@@ -281,8 +285,9 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
         DBG("[sfizz] Could not enqueue the promise for " << filename << " (queue capacity " << promiseQueue.capacity() << ")");
         return {};
     }
-
+    workerBarrier.post();
     emptyPromises.pop_back();
+
     return promise;
 }
 
@@ -330,8 +335,9 @@ void sfz::FilePool::loadingThread() noexcept
             continue;
         }
 
+        workerBarrier.wait();
+
         if (!promiseQueue.try_pop(promise)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
 
@@ -440,6 +446,8 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
 void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
+    workerBarrier.post();
+
     while (emptyQueue)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
