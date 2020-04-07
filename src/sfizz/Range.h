@@ -28,8 +28,8 @@ public:
     {
 
     }
-    Type getStart() const noexcept { return _start; }
-    Type getEnd() const noexcept { return _end; }
+    constexpr Type getStart() const noexcept { return _start; }
+    constexpr Type getEnd() const noexcept { return _end; }
     /**
      * @brief Get the range as an std::pair of the endpoints
      *

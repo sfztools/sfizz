@@ -21,7 +21,8 @@ sfz::Voice::Voice(sfz::Resources& resources)
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);
 
-    waveOscillator.init(sampleRate);
+    for (WavetableOscillator& osc : waveOscillators)
+        osc.init(sampleRate);
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, float value, sfz::Voice::TriggerType triggerType) noexcept
@@ -59,12 +60,18 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
             wave = resources.wavePool.getWaveSaw();
             break;
         }
-        waveOscillator.setWavetable(wave);
-        waveOscillator.setPhase(region->getPhase());
+        for (WavetableOscillator& osc : waveOscillators) {
+            osc.setWavetable(wave);
+            osc.setPhase(region->getPhase());
+        }
+        setupOscillatorUnison();
     } else if (region->oscillator) {
         const WavetableMulti* wave = resources.wavePool.getFileWave(region->sample);
-        waveOscillator.setWavetable(wave);
-        waveOscillator.setPhase(region->getPhase());
+        for (WavetableOscillator& osc : waveOscillators) {
+            osc.setWavetable(wave);
+            osc.setPhase(region->getPhase());
+        }
+        setupOscillatorUnison();
     } else {
         currentPromise = resources.filePool.getFilePromise(region->sample);
         if (currentPromise == nullptr) {
@@ -83,7 +90,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
     ASSERT((equalizers.capacity() - equalizers.size()) >= region->equalizers.size());
 
-    const unsigned numChannels = region->isStereo ? 2 : 1;
+    const unsigned numChannels = region->isStereo() ? 2 : 1;
     for (auto& filter: region->filters) {
         auto newFilter = resources.filterPool.getFilter(filter, numChannels, number, value);
         if (newFilter)
@@ -187,7 +194,8 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
 
-    waveOscillator.init(sampleRate);
+    for (WavetableOscillator& osc : waveOscillators)
+        osc.init(sampleRate);
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -218,7 +226,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
             fillWithData(delayed_buffer);
     }
 
-    if (region->isStereo) {
+    if (region->isStereo()) {
         ampStageStereo(buffer);
         panStageStereo(buffer);
         filterStageStereo(buffer);
@@ -518,9 +526,10 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
     } else {
-        const auto numSamples = buffer.getNumFrames();
-        auto frequencies = resources.bufferPool.getBuffer(numSamples);
-        auto bends = resources.bufferPool.getBuffer(numSamples);
+        const auto numFrames = buffer.getNumFrames();
+
+        auto frequencies = resources.bufferPool.getBuffer(numFrames);
+        auto bends = resources.bufferPool.getBuffer(numFrames);
         if (!frequencies || !bends)
             return;
 
@@ -544,8 +553,25 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             applyGain<float>(*bends, *frequencies);
         }
 
-        waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
-        copy<float>(leftSpan, rightSpan);
+        if (waveUnisonSize == 1) {
+            WavetableOscillator& osc = waveOscillators[0];
+            osc.processModulated(frequencies->data(), 1.0, leftSpan.data(), buffer.getNumFrames());
+            copy<float>(leftSpan, rightSpan);
+        }
+        else {
+            buffer.fill(0.0f);
+
+            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
+            if (!tempSpan)
+                return;
+
+            for (unsigned i = 0, n = waveUnisonSize; i < n; ++i) {
+                WavetableOscillator& osc = waveOscillators[i];
+                osc.processModulated(frequencies->data(), waveDetuneRatio[i], tempSpan->data(), numFrames);
+                sfz::multiplyAdd<float>(waveLeftGain[i], *tempSpan, leftSpan);
+                sfz::multiplyAdd<float>(waveRightGain[i], *tempSpan, rightSpan);
+            }
+        }
     }
 }
 
@@ -619,4 +645,61 @@ void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
     // There are filters in there, this call is unexpected
     ASSERT(equalizers.size() == 0);
     equalizers.reserve(numFilters);
+}
+
+void sfz::Voice::setupOscillatorUnison()
+{
+    int m = region->oscillatorMulti;
+    float d = region->oscillatorDetune;
+
+    // 3-9: unison mode, 1: normal/RM, 2: PM/FM
+    // TODO(jpc) RM/FM/PM synthesis
+    if (m < 3) {
+        waveUnisonSize = 1;
+        waveDetuneRatio[0] = 1.0;
+        waveLeftGain[0] = 1.0;
+        waveRightGain[0] = 1.0;
+        return;
+    }
+
+    // oscillator count, aka. unison size
+    waveUnisonSize = m;
+
+    // detune (cents)
+    float detunes[config::oscillatorsPerVoice];
+    detunes[0] = 0.0;
+    detunes[1] = -d;
+    detunes[2] = +d;
+    for (int i = 3; i < m; ++i) {
+        int n = (i - 1) / 2;
+        detunes[i] = d * ((i & 1) ? -0.25f : +0.25f) * float(n);
+    }
+
+    // detune (ratio)
+    for (int i = 0; i < m; ++i)
+        waveDetuneRatio[i] = std::exp2(detunes[i] * (0.01f / 12.0f));
+
+    // gains
+    waveLeftGain[0] = 0.0;
+    waveRightGain[m - 1] = 0.0;
+    for (int i = 0; i < m - 1; ++i) {
+        float g = 1.0f - float(i) / float(m - 1);
+        waveLeftGain[m - 1 - i] = g;
+        waveRightGain[i] = g;
+    }
+
+#if 0
+    fprintf(stderr, "\n");
+    fprintf(stderr, "# Left:\n");
+    for (int i = m - 1; i >= 0; --i) {
+        if (waveLeftGain[i] != 0)
+            fprintf(stderr, "[%d] %10g cents, %10g dB\n", i, detunes[i], 20.0f * std::log10(waveLeftGain[i]));
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "# Right:\n");
+    for (int i = 0; i < m; ++i) {
+        if (waveRightGain[i] != 0)
+            fprintf(stderr, "[%d] %10g cents, %10g dB\n", i, detunes[i], 20.0f * std::log10(waveRightGain[i]));
+    }
+#endif
 }

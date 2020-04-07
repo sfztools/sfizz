@@ -60,6 +60,7 @@ namespace config {
     constexpr int filtersInPool { maxVoices * 2 };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
+    constexpr int oscillatorsPerVoice { 9 };
     constexpr float noiseVariance { 0.25f };
     /**
        Minimum interval in frames between recomputations of coefficients of the
