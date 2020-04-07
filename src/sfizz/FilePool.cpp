@@ -110,7 +110,7 @@ sfz::FilePool::~FilePool()
     for (unsigned i = 0; i < threadPool.size(); ++i)
         try {
             workerBarrier.post();
-        } catch (std::exception e) {
+        } catch (std::exception& e) {
             continue;
         }
 
