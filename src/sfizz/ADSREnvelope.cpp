@@ -188,6 +188,8 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
     this->currentValue = currentValue;
     this->shouldRelease = shouldRelease;
     this->releaseDelay = releaseDelay;
+
+    ASSERT(!hasNanInf(output));
 }
 
 template <class Type>
