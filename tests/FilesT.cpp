@@ -254,9 +254,46 @@ TEST_CASE("[Files] Channels (channels.sfz)")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels.sfz");
     REQUIRE(synth.getNumRegions() == 2);
     REQUIRE(synth.getRegionView(0)->sample == "mono_sample.wav");
-    REQUIRE(!synth.getRegionView(0)->isStereo);
+    REQUIRE(!synth.getRegionView(0)->isStereo());
     REQUIRE(synth.getRegionView(1)->sample == "stereo_sample.wav");
-    REQUIRE(synth.getRegionView(1)->isStereo);
+    REQUIRE(synth.getRegionView(1)->isStereo());
+}
+
+TEST_CASE("[Files] Channels (channels_multi.sfz)")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels_multi.sfz");
+    REQUIRE(synth.getNumRegions() == 6);
+
+    REQUIRE(synth.getRegionView(0)->sample == "*sine");
+    REQUIRE(!synth.getRegionView(0)->isStereo());
+    REQUIRE(synth.getRegionView(0)->isGenerator());
+    REQUIRE(!synth.getRegionView(0)->oscillator);
+
+    REQUIRE(synth.getRegionView(1)->sample == "*sine");
+    REQUIRE(synth.getRegionView(1)->isStereo());
+    REQUIRE(synth.getRegionView(1)->isGenerator());
+    REQUIRE(!synth.getRegionView(1)->oscillator);
+
+    REQUIRE(synth.getRegionView(2)->sample == "ramp_wave.wav");
+    REQUIRE(!synth.getRegionView(2)->isStereo());
+    REQUIRE(!synth.getRegionView(2)->isGenerator());
+    REQUIRE(synth.getRegionView(2)->oscillator);
+
+    REQUIRE(synth.getRegionView(3)->sample == "ramp_wave.wav");
+    REQUIRE(synth.getRegionView(3)->isStereo());
+    REQUIRE(!synth.getRegionView(3)->isGenerator());
+    REQUIRE(synth.getRegionView(3)->oscillator);
+
+    REQUIRE(synth.getRegionView(4)->sample == "*sine");
+    REQUIRE(!synth.getRegionView(4)->isStereo());
+    REQUIRE(synth.getRegionView(4)->isGenerator());
+    REQUIRE(!synth.getRegionView(4)->oscillator);
+
+    REQUIRE(synth.getRegionView(5)->sample == "*sine");
+    REQUIRE(!synth.getRegionView(5)->isStereo());
+    REQUIRE(synth.getRegionView(5)->isGenerator());
+    REQUIRE(!synth.getRegionView(5)->oscillator);
 }
 
 TEST_CASE("[Files] sw_default")

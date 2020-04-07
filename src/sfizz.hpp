@@ -296,6 +296,22 @@ public:
      */
     void allSoundOff() noexcept;
 
+    /**
+     * @brief Add external definitions prior to loading;
+     * Note that these do not get reset by loading or resetting the synth.
+     * You need to call clearExternalDefintions() to erase them.
+     *
+     * @param id
+     * @param value
+     */
+    void addExternalDefinition(const std::string& id, const std::string& value);
+
+    /**
+     * @brief Clears external definitions for the next file loading.
+     *
+     */
+    void clearExternalDefinitions();
+
 private:
     std::unique_ptr<sfz::Synth> synth;
 };

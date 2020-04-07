@@ -102,6 +102,12 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         if (auto value = readBooleanFromOpcode(opcode))
             oscillator = *value;
         break;
+    case hash("oscillator_multi"):
+        setValueFromOpcode(opcode, oscillatorMulti, Default::oscillatorMultiRange);
+        break;
+    case hash("oscillator_detune"):
+        setValueFromOpcode(opcode, oscillatorDetune, Default::oscillatorDetuneRange);
+        break;
 
     // Instrument settings: voice lifecycle
     case hash("group"): // fallthrough

@@ -172,7 +172,7 @@ int DemoApp::processAudio(jack_nframes_t nframes, void* cbdata)
     self->fSweepCurrent = sweepCurrent;
 
     // compute oscillator
-    osc.processModulated(frequency, left, nframes);
+    osc.processModulated(frequency, 1.0, left, nframes);
     std::memcpy(right, left, nframes * sizeof(float));
 
     return 0;

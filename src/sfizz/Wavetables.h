@@ -47,12 +47,12 @@ public:
     /**
        Compute a cycle of the oscillator, with constant frequency.
      */
-    void process(float frequency, float* output, unsigned nframes);
+    void process(float frequency, float detuneRatio, float* output, unsigned nframes);
 
     /**
        Compute a cycle of the oscillator, with varying frequency.
      */
-    void processModulated(const float* frequencies, float* output, unsigned nframes);
+    void processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
 
 private:
     /**
