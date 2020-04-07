@@ -397,3 +397,25 @@ TEST_CASE("[Synth] Not self-masking")
     REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
     REQUIRE(!synth.getVoiceView(2)->canBeStolen());
 }
+
+TEST_CASE("[Synth] Polyphony in master")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/master_polyphony.sfz");
+    synth.noteOn(0, 65, 64);
+    synth.noteOn(0, 65, 64);
+    synth.noteOn(0, 65, 64);
+    REQUIRE(synth.getNumActiveVoices() == 2); // group polyphony should block the last note
+    synth.allSoundOff();
+    REQUIRE(synth.getNumActiveVoices() == 0);
+    synth.noteOn(0, 63, 64);
+    synth.noteOn(0, 63, 64);
+    synth.noteOn(0, 63, 64);
+    REQUIRE(synth.getNumActiveVoices() == 2); // group polyphony should block the last note
+    synth.allSoundOff();
+    REQUIRE(synth.getNumActiveVoices() == 0);
+    synth.noteOn(0, 61, 64);
+    synth.noteOn(0, 61, 64);
+    synth.noteOn(0, 61, 64);
+    REQUIRE(synth.getNumActiveVoices() == 3);
+}
