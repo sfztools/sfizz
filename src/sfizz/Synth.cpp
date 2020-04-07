@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Synth.h"
-#include "AtomicGuard.h"
+#include "Defer.h"
 #include "Config.h"
 #include "Debug.h"
 #include "Macros.h"
@@ -28,21 +28,16 @@ sfz::Synth::Synth()
 
 sfz::Synth::Synth(int numVoices)
 {
+    const std::lock_guard disableCallback { callbackGuard };
     parser.setListener(this);
-
     effectFactory.registerStandardEffectTypes();
-
     effectBuses.reserve(5); // sufficient room for main and fx1-4
-
     resetVoices(numVoices);
 }
 
 sfz::Synth::~Synth()
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -128,10 +123,7 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -327,13 +319,9 @@ void addEndpointsToVelocityCurve(sfz::Region& region)
 
 bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
     clear();
 
+    const std::lock_guard disableCallback { callbackGuard };
     parser.parseFile(file);
     if (parser.getErrorCount() > 0)
         return false;
@@ -508,11 +496,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     ASSERT(samplesPerBlock < config::maxBlockSize);
 
-    AtomicDisabler callbackDisabler { canEnterCallback };
-
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     this->samplesPerBlock = samplesPerBlock;
     for (auto& voice : voices)
@@ -528,10 +512,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
@@ -558,10 +539,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (freeWheeling)
         resources.filePool.waitForBackgroundLoading();
 
-
-    AtomicGuard callbackGuard { inCallback };
-    if (!canEnterCallback)
+    if (!callbackGuard.try_lock())
         return;
+    DEFER { callbackGuard.unlock(); };
 
 
     size_t numFrames = buffer.getNumFrames();
@@ -655,9 +635,9 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 
-    AtomicGuard callbackGuard { inCallback };
-    if (!canEnterCallback)
+    if (!callbackGuard.try_lock())
         return;
+    DEFER { callbackGuard.unlock(); };
 
     noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
@@ -671,9 +651,9 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
-    AtomicGuard callbackGuard { inCallback };
-    if (!canEnterCallback)
+    if (!callbackGuard.try_lock())
         return;
+    DEFER { callbackGuard.unlock(); };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -767,9 +747,9 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.ccEvent(delay, ccNumber, normalizedCC);
 
-    AtomicGuard callbackGuard { inCallback };
-    if (!canEnterCallback)
+    if (!callbackGuard.try_lock())
         return;
+    DEFER { callbackGuard.unlock(); };
 
     if (ccNumber == config::resetCC) {
         resetAllControllers(delay);
@@ -961,16 +941,12 @@ int sfz::Synth::getNumVoices() const noexcept
 void sfz::Synth::setNumVoices(int numVoices) noexcept
 {
     ASSERT(numVoices > 0);
+    const std::lock_guard disableCallback { callbackGuard };
     resetVoices(numVoices);
 }
 
 void sfz::Synth::resetVoices(int numVoices)
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
     voices.clear();
     for (int i = 0; i < numVoices; ++i)
         voices.push_back(absl::make_unique<Voice>(resources));
@@ -986,10 +962,7 @@ void sfz::Synth::resetVoices(int numVoices)
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -1006,10 +979,7 @@ sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
 
 void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     resources.filePool.setPreloadSize(preloadSize);
 }
@@ -1036,11 +1006,12 @@ void sfz::Synth::disableFreeWheeling() noexcept
 
 void sfz::Synth::resetAllControllers(int delay) noexcept
 {
-    AtomicGuard callbackGuard { inCallback };
-    if (!canEnterCallback)
-        return;
-
     resources.midiState.resetAllControllers(delay);
+
+    if (!callbackGuard.try_lock())
+        return;
+    DEFER { callbackGuard.unlock(); };
+
     for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)
@@ -1086,10 +1057,7 @@ void sfz::Synth::disableLogging() noexcept
 
 void sfz::Synth::allSoundOff() noexcept
 {
-    AtomicDisabler callbackDisabler { canEnterCallback };
-    while (inCallback) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    const std::lock_guard disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();

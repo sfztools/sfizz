@@ -29,7 +29,7 @@
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
-#include "AtomicGuard.h"
+#include "Defer.h"
 #include "absl/types/span.h"
 #include "absl/strings/match.h"
 #include "absl/memory/memory.h"
@@ -301,10 +301,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 
 void sfz::FilePool::tryToClearPromises()
 {
-    AtomicDisabler disabler { canAddPromisesToClear };
-
-    while (addingPromisesToClear)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    const std::lock_guard promiseLock { promiseGuard };
 
     for (auto& promise: promisesToClear) {
         if (promise->dataStatus != FilePromise::DataStatus::Wait)
@@ -376,10 +373,9 @@ void sfz::FilePool::clear()
 
 void sfz::FilePool::cleanupPromises() noexcept
 {
-    AtomicGuard guard { addingPromisesToClear };
-
-    if (!canAddPromisesToClear)
+    if (!promiseGuard.try_lock())
         return;
+    DEFER { promiseGuard.unlock(); };
 
     // The garbage collection cleared the data from these so we can move them
     // back to the empty queue

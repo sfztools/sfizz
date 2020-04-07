@@ -4,6 +4,7 @@
 #include "MidiState.h"
 #include <vector>
 #include <memory>
+#include <mutex>
 
 namespace sfz
 {
@@ -118,8 +119,7 @@ public:
      */
     void setSampleRate(float sampleRate);
 private:
-    std::atomic<bool> givingOutFilters { false };
-    std::atomic<bool> canGiveOutFilters { true };
+    std::mutex filterGuard;
     float sampleRate { config::defaultSampleRate };
     const MidiState& midiState;
     std::vector<FilterHolderPtr> filters;

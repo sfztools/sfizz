@@ -38,6 +38,7 @@
 #include "Logger.h"
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
@@ -264,8 +265,7 @@ private:
     std::vector<FilePromisePtr> emptyPromises;
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
-    std::atomic<bool> addingPromisesToClear { false };
-    std::atomic<bool> canAddPromisesToClear { true };
+    std::mutex promiseGuard;
 
     // Preloaded data
     absl::flat_hash_map<absl::string_view, FileDataHandle> preloadedFiles;

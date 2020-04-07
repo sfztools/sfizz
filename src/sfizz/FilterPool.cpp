@@ -1,7 +1,7 @@
 #include "FilterPool.h"
 #include "SIMDHelpers.h"
 #include "absl/algorithm/container.h"
-#include "AtomicGuard.h"
+#include "Defer.h"
 #include <thread>
 #include <chrono>
 
@@ -109,9 +109,9 @@ sfz::FilterPool::FilterPool(const MidiState& state, int numFilters)
 
 sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
 {
-    AtomicGuard guard { givingOutFilters };
-    if (!canGiveOutFilters)
+    if (!filterGuard.try_lock())
         return {};
+    DEFER { filterGuard.unlock(); };
 
     auto filter = absl::c_find_if(filters, [](const FilterHolderPtr& holder) {
         return holder.use_count() == 1;
@@ -133,10 +133,7 @@ size_t sfz::FilterPool::getActiveFilters() const
 
 size_t sfz::FilterPool::setNumFilters(size_t numFilters)
 {
-    AtomicDisabler disabler { canGiveOutFilters };
-
-    while(givingOutFilters)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    const std::lock_guard filterLock { filterGuard };
 
     auto filterIterator = filters.begin();
     auto filterSentinel = filters.rbegin();

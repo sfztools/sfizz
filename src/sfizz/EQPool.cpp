@@ -1,5 +1,5 @@
 #include "EQPool.h"
-#include "AtomicGuard.h"
+#include "Defer.h"
 #include <thread>
 #include "absl/algorithm/container.h"
 #include "SIMDHelpers.h"
@@ -108,9 +108,9 @@ sfz::EQPool::EQPool(const MidiState& state, int numEQs)
 
 sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned numChannels, float velocity)
 {
-    AtomicGuard guard { givingOutEQs };
-    if (!canGiveOutEQs)
+    if (!eqGuard.try_lock())
         return {};
+    DEFER { eqGuard.unlock(); };
 
     auto eq = absl::c_find_if(eqs, [](const EQHolderPtr& holder) {
         return holder.use_count() == 1;
@@ -132,10 +132,7 @@ size_t sfz::EQPool::getActiveEQs() const
 
 size_t sfz::EQPool::setnumEQs(size_t numEQs)
 {
-    AtomicDisabler disabler { canGiveOutEQs };
-
-    while(givingOutEQs)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    const std::lock_guard eqLock { eqGuard };
 
     auto eqIterator = eqs.begin();
     auto eqSentinel = eqs.rbegin();
