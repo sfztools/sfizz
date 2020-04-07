@@ -288,15 +288,13 @@ private:
     ADSREnvelope<float> egEnvelope;
     float bendStepFactor { centsFactor(1) };
 
-    static constexpr unsigned maxWaveOscillators = Default::oscillatorMultiRange.getEnd();
-
-    WavetableOscillator waveOscillators[maxWaveOscillators];
+    WavetableOscillator waveOscillators[config::oscillatorsPerVoice];
 
     // unison of oscillators
     unsigned waveUnisonSize { 0 };
-    float waveDetuneRatio[maxWaveOscillators] { };
-    float waveLeftGain[maxWaveOscillators] { };
-    float waveRightGain[maxWaveOscillators] { };
+    float waveDetuneRatio[config::oscillatorsPerVoice] { };
+    float waveLeftGain[config::oscillatorsPerVoice] { };
+    float waveRightGain[config::oscillatorsPerVoice] { };
 
     Duration dataDuration;
     Duration amplitudeDuration;

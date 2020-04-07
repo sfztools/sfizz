@@ -666,7 +666,7 @@ void sfz::Voice::setupOscillatorUnison()
     waveUnisonSize = m;
 
     // detune (cents)
-    float detunes[maxWaveOscillators];
+    float detunes[config::oscillatorsPerVoice];
     detunes[0] = 0.0;
     detunes[1] = -d;
     detunes[2] = +d;
@@ -703,5 +703,3 @@ void sfz::Voice::setupOscillatorUnison()
     }
 #endif
 }
-
-constexpr unsigned sfz::Voice::maxWaveOscillators;

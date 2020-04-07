@@ -64,7 +64,7 @@ namespace Default
     constexpr float oscillatorPhase { 0.0 };
     constexpr Range<float> oscillatorPhaseRange { -1.0, 360.0 };
     constexpr int oscillatorMulti { 1 };
-    constexpr Range<int> oscillatorMultiRange { 1, 9 };
+    constexpr Range<int> oscillatorMultiRange { 1, config::oscillatorsPerVoice };
     constexpr float oscillatorDetune { 0 };
     constexpr Range<float> oscillatorDetuneRange { -9600, 9600 };
 
