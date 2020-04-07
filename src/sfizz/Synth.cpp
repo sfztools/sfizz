@@ -28,7 +28,7 @@ sfz::Synth::Synth()
 
 sfz::Synth::Synth(int numVoices)
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
     parser.setListener(this);
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
@@ -37,7 +37,7 @@ sfz::Synth::Synth(int numVoices)
 
 sfz::Synth::~Synth()
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -123,7 +123,7 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -321,7 +321,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
     clear();
 
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
     parser.parseFile(file);
     if (parser.getErrorCount() > 0)
         return false;
@@ -496,7 +496,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     ASSERT(samplesPerBlock < config::maxBlockSize);
 
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     this->samplesPerBlock = samplesPerBlock;
     for (auto& voice : voices)
@@ -512,7 +512,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
@@ -541,7 +541,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     if (!callbackGuard.try_lock())
         return;
-    DEFER { callbackGuard.unlock(); };
+    DEFER(callbackGuard.unlock());
 
 
     size_t numFrames = buffer.getNumFrames();
@@ -637,7 +637,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 
     if (!callbackGuard.try_lock())
         return;
-    DEFER { callbackGuard.unlock(); };
+    DEFER(callbackGuard.unlock());
 
     noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
@@ -653,7 +653,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 
     if (!callbackGuard.try_lock())
         return;
-    DEFER { callbackGuard.unlock(); };
+    DEFER(callbackGuard.unlock());
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -749,7 +749,7 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 
     if (!callbackGuard.try_lock())
         return;
-    DEFER { callbackGuard.unlock(); };
+    DEFER(callbackGuard.unlock());
 
     if (ccNumber == config::resetCC) {
         resetAllControllers(delay);
@@ -941,7 +941,7 @@ int sfz::Synth::getNumVoices() const noexcept
 void sfz::Synth::setNumVoices(int numVoices) noexcept
 {
     ASSERT(numVoices > 0);
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
     resetVoices(numVoices);
 }
 
@@ -962,7 +962,7 @@ void sfz::Synth::resetVoices(int numVoices)
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -979,7 +979,7 @@ sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
 
 void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     resources.filePool.setPreloadSize(preloadSize);
 }
@@ -1010,7 +1010,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 
     if (!callbackGuard.try_lock())
         return;
-    DEFER { callbackGuard.unlock(); };
+    DEFER(callbackGuard.unlock());
 
     for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
@@ -1057,7 +1057,7 @@ void sfz::Synth::disableLogging() noexcept
 
 void sfz::Synth::allSoundOff() noexcept
 {
-    const std::lock_guard disableCallback { callbackGuard };
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();

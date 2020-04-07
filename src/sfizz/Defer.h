@@ -7,16 +7,18 @@
 template<typename F>
 struct deferred
 {
-    std::decay_t<F> f;
-    template<typename G>
-    deferred(G&& g) : f{std::forward<G>(g)} {}
+    F f;
+    deferred(F f) : f(f) {}
     ~deferred() { f(); }
 };
 
-template<typename G>
-deferred(G&&) -> deferred<G>;
+
+template <typename F>
+deferred<F> deferred_func(F f) {
+	return deferred<F>(f);
+}
 
 #define CAT_(x, y) x##y
 #define CAT(x, y) CAT_(x, y)
 #define ANONYMOUS_VAR(x) CAT(x, __LINE__)
-#define DEFER deferred ANONYMOUS_VAR(defer_variable) = [&]
+#define DEFER(code) auto ANONYMOUS_VAR(defer_variable) = deferred_func([&] { code ; })

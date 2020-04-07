@@ -306,7 +306,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 
 void sfz::FilePool::tryToClearPromises()
 {
-    const std::lock_guard promiseLock { promiseGuard };
+    const std::lock_guard<std::mutex> promiseLock { promiseGuard };
 
     for (auto& promise: promisesToClear) {
         if (promise->dataStatus != FilePromise::DataStatus::Wait)
@@ -381,7 +381,7 @@ void sfz::FilePool::cleanupPromises() noexcept
 {
     if (!promiseGuard.try_lock())
         return;
-    DEFER { promiseGuard.unlock(); };
+    DEFER(promiseGuard.unlock());
 
     // The garbage collection cleared the data from these so we can move them
     // back to the empty queue

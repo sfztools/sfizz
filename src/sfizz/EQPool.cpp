@@ -110,7 +110,7 @@ sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned n
 {
     if (!eqGuard.try_lock())
         return {};
-    DEFER { eqGuard.unlock(); };
+    DEFER(eqGuard.unlock());
 
     auto eq = absl::c_find_if(eqs, [](const EQHolderPtr& holder) {
         return holder.use_count() == 1;
@@ -132,7 +132,7 @@ size_t sfz::EQPool::getActiveEQs() const
 
 size_t sfz::EQPool::setnumEQs(size_t numEQs)
 {
-    const std::lock_guard eqLock { eqGuard };
+    const std::lock_guard<std::mutex> eqLock { eqGuard };
 
     auto eqIterator = eqs.begin();
     auto eqSentinel = eqs.rbegin();

@@ -111,7 +111,7 @@ sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& descrip
 {
     if (!filterGuard.try_lock())
         return {};
-    DEFER { filterGuard.unlock(); };
+    DEFER(filterGuard.unlock());
 
     auto filter = absl::c_find_if(filters, [](const FilterHolderPtr& holder) {
         return holder.use_count() == 1;
@@ -133,7 +133,7 @@ size_t sfz::FilterPool::getActiveFilters() const
 
 size_t sfz::FilterPool::setNumFilters(size_t numFilters)
 {
-    const std::lock_guard filterLock { filterGuard };
+    const std::lock_guard<std::mutex> filterLock { filterGuard };
 
     auto filterIterator = filters.begin();
     auto filterSentinel = filters.rbegin();
