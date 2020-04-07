@@ -55,6 +55,8 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
     switch (hash(header)) {
     case hash("global"):
         globalOpcodes = members;
+        groupOpcodes.clear();
+        masterOpcodes.clear();
         handleGlobalOpcodes(members);
         break;
     case hash("control"):
@@ -63,6 +65,7 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("master"):
         masterOpcodes = members;
+        groupOpcodes.clear();
         numMasters++;
         break;
     case hash("group"):
