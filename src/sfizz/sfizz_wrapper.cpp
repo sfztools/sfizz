@@ -256,6 +256,18 @@ void sfizz_all_sound_off(sfizz_synth_t* synth)
     return self->allSoundOff();
 }
 
+void sfizz_add_external_definitions(sfizz_synth_t* synth, const char* id, const char* value)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->getParser().addExternalDefinition(id, value);
+}
+
+void sfizz_clear_external_definitions(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->getParser().clearExternalDefinitions();
+}
+
 #ifdef __cplusplus
 }
 #endif
