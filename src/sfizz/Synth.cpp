@@ -877,7 +877,7 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     {
         pugi::xml_node cns = device.append_child("ControlNameList");
         cns.append_attribute("Name").set_value("Controls");
-        for (const CCNamePair& pair : ccLabels) {
+        for (const auto& pair : ccLabels) {
             pugi::xml_node cn = cns.append_child("Control");
             cn.append_attribute("Type").set_value("7bit");
             cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
@@ -888,7 +888,7 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     {
         pugi::xml_node nnl = device.append_child("NoteNameList");
         nnl.append_attribute("Name").set_value("Notes");
-        for (const CCNamePair& pair : noteLabels) {
+        for (const auto& pair : noteLabels) {
             pugi::xml_node nn = nnl.append_child("Note");
             nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             nn.append_attribute("Name").set_value(pair.second.c_str());
