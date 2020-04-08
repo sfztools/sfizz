@@ -302,6 +302,7 @@ public:
      * @brief Add external definitions prior to loading;
      * Note that these do not get reset by loading or resetting the synth.
      * You need to call clearExternalDefintions() to erase them.
+     * @since 0.4.0-dev
      *
      * @param id
      * @param value
@@ -310,6 +311,7 @@ public:
 
     /**
      * @brief Clears external definitions for the next file loading.
+     * @since 0.4.0-dev
      *
      */
     void clearExternalDefinitions();
