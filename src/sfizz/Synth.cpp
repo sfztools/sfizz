@@ -142,7 +142,9 @@ void sfz::Synth::clear()
     numMasters = 0;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    ccNames.clear();
+    resources.midiState.reset();
+    ccLabels.clear();
+    noteLabels.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
@@ -208,7 +210,11 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Label_cc&"): // fallthrough
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                ccNames.emplace_back(member.parameters.back(), std::string(member.value));
+                ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
+            break;
+        case hash("label_note&"):
+            if (Default::keyRange.containsWithEnd(member.parameters.back()))
+                noteLabels.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
             // fallthrough
@@ -871,7 +877,7 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     {
         pugi::xml_node cns = device.append_child("ControlNameList");
         cns.append_attribute("Name").set_value("Controls");
-        for (const CCNamePair& pair : ccNames) {
+        for (const CCNamePair& pair : ccLabels) {
             pugi::xml_node cn = cns.append_child("Control");
             cn.append_attribute("Type").set_value("7bit");
             cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
