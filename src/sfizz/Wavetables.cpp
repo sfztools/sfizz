@@ -263,6 +263,7 @@ const WavetableMulti* WavetableMulti::getSilenceWavetable()
             *ptr = 0;
         }
         wm.fillExtra();
+        initialized = true;
     }
     return &wm;
 }
