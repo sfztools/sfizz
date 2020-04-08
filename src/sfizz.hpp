@@ -10,6 +10,7 @@
 */
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
 
@@ -287,7 +288,8 @@ public:
     void setLoggingPrefix(const std::string& prefix) noexcept;
 
     /**
-     * @brief Disable logging.
+     * @brief
+     *
      */
     void disableLogging() noexcept;
 
@@ -312,6 +314,18 @@ public:
      */
     void clearExternalDefinitions();
 
+    /**
+     * @brief Get the note labels, if any
+     * @version 0.4.0-dev
+     *
+     */
+    const std::vector<std::pair<uint8_t, std::string>>& getNoteLabels() const noexcept;
+    /**
+     * @brief Get the CC labels, if any
+     * @version 0.4.0-dev
+     *
+     */
+    const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
 private:
     std::unique_ptr<sfz::Synth> synth;
 };

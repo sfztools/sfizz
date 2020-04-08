@@ -394,6 +394,57 @@ SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, con
  */
 SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
 
+#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX -1
+
+/**
+ * @brief Get the number of note labels registered in the current sfz file
+ * @version 0.4.0-dev
+ */
+SFIZZ_EXPORTED_API unsigned int sfizz_get_num_note_labels(sfizz_synth_t* synth);
+
+/**
+ * @brief Get the note number for the label registered at index label_index.
+ * @version 0.4.0-dev
+ *
+ * @returns SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX if the index is out of bounds.
+ * @returns the number
+ */
+SFIZZ_EXPORTED_API int sfizz_get_note_label_number(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @brief Get the note text for the label registered at index label_index.
+ * @version 0.4.0-dev
+ *
+ * @returns NULL if the index is out of bounds.
+ * @returns the label
+ */
+SFIZZ_EXPORTED_API const char * sfizz_get_note_label_text(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @brief Get the number of note labels registered in the current sfz file
+ * @version 0.4.0-dev
+ *
+ */
+SFIZZ_EXPORTED_API unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth);
+
+/**
+ * @brief Get the CC number for the label registered at index label_index.
+ * @version 0.4.0-dev
+ *
+ * @returns SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX if the index is out of bounds.
+ * @returns the number
+ */
+
+SFIZZ_EXPORTED_API int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label_index);
+/**
+ * @brief Get the CC text for the label registered at index label_index.
+ * @version 0.4.0-dev
+ *
+ * @returns NULL if the index is out of bounds.
+ * @returns the label
+ */
+SFIZZ_EXPORTED_API const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index);
+
 #ifdef __cplusplus
 }
 #endif

@@ -8,6 +8,7 @@
 #include "Macros.h"
 #include "Synth.h"
 #include "sfizz.h"
+#include <limits>
 
 #ifdef __cplusplus
 extern "C" {
@@ -266,6 +267,80 @@ void sfizz_clear_external_definitions(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     self->getParser().clearExternalDefinitions();
+}
+
+unsigned int sfizz_get_num_note_labels(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getNoteLabels().size();
+}
+
+int sfizz_get_note_label_number(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto noteLabels = self->getNoteLabels();
+    if (label_index < 0)
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    if (static_cast<unsigned int>(label_index) >= noteLabels.size())
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    // Sanity checks for the future or platforms
+    static_assert(
+        std::numeric_limits<sfz::NoteNamePair::first_type>::max() < std::numeric_limits<int>::max(),
+        "The C API sends back an int but the note index in NoteNamePair can overflow it on this platform"
+    );
+    return static_cast<int>(noteLabels[label_index].first);
+}
+
+const char * sfizz_get_note_label_text(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto noteLabels = self->getNoteLabels();
+    if (label_index < 0)
+        return NULL;
+
+    if (static_cast<unsigned int>(label_index) >= noteLabels.size())
+        return NULL;
+
+    return noteLabels[label_index].second.c_str();
+}
+
+unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getCCLabels().size();
+}
+
+int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto ccLabels = self->getCCLabels();
+    if (label_index < 0)
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    if (static_cast<unsigned int>(label_index) >= ccLabels.size())
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    // Sanity checks for the future or platforms
+    static_assert(
+        std::numeric_limits<sfz::CCNamePair::first_type>::max() < std::numeric_limits<int>::max(),
+        "The C API sends back an int but the cc index in CCNamePair can overflow it on this platform"
+    );
+    return static_cast<int>(ccLabels[label_index].first);
+}
+
+const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto ccLabels = self->getCCLabels();
+    if (label_index < 0)
+        return NULL;
+
+    if (static_cast<unsigned int>(label_index) >= ccLabels.size())
+        return NULL;
+
+    return ccLabels[label_index].second.c_str();
 }
 
 #ifdef __cplusplus

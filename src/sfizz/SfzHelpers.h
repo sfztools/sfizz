@@ -20,7 +20,7 @@
 namespace sfz
 {
 
-using CCNamePair = std::pair<decltype(config::numCCs), std::string>;
+using CCNamePair = std::pair<uint16_t, std::string>;
 using NoteNamePair = std::pair<uint8_t, std::string>;
 
 template <class T>
