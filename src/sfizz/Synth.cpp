@@ -885,6 +885,16 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         }
     }
 
+    {
+        pugi::xml_node nnl = device.append_child("NoteNameList");
+        nnl.append_attribute("Name").set_value("Notes");
+        for (const CCNamePair& pair : noteLabels) {
+            pugi::xml_node nn = nnl.append_child("Note");
+            nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
+            nn.append_attribute("Name").set_value(pair.second.c_str());
+        }
+    }
+
     ///
     struct string_writer : pugi::xml_writer {
         std::string result;
