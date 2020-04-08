@@ -316,13 +316,13 @@ public:
 
     /**
      * @brief Get the note labels, if any
-     * @version 0.4.0-dev
+     * @since 0.4.0-dev
      *
      */
     const std::vector<std::pair<uint8_t, std::string>>& getNoteLabels() const noexcept;
     /**
      * @brief Get the CC labels, if any
-     * @version 0.4.0-dev
+     * @since 0.4.0-dev
      *
      */
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
