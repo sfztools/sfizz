@@ -380,6 +380,7 @@ SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
  * @brief Add external definitions prior to loading;
  * Note that these do not get reset by loading or resetting the synth.
  * You need to call sfizz_clear_external_definitions() to erase them.
+ * @since 0.4.0-dev
  *
  * @param synth
  * @param id
@@ -389,6 +390,7 @@ SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, con
 
 /**
  * @brief Clears external definitions for the next file loading.
+ * @since 0.4.0-dev
  *
  * @param synth
  */
