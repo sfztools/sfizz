@@ -454,7 +454,7 @@ private:
      *
      * @param members the opcodes of the <group> block
      */
-    void handleGroupOpcodes(const std::vector<Opcode>& members);
+    void handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers);
     /**
      * @brief Helper function to dispatch <control> opcodes
      *

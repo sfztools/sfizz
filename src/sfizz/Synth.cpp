@@ -55,6 +55,8 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
     switch (hash(header)) {
     case hash("global"):
         globalOpcodes = members;
+        groupOpcodes.clear();
+        masterOpcodes.clear();
         handleGlobalOpcodes(members);
         break;
     case hash("control"):
@@ -63,11 +65,12 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("master"):
         masterOpcodes = members;
+        groupOpcodes.clear();
         numMasters++;
         break;
     case hash("group"):
         groupOpcodes = members;
-        handleGroupOpcodes(members);
+        handleGroupOpcodes(members, masterOpcodes);
         numGroups++;
         break;
     case hash("region"):
@@ -177,12 +180,12 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
     }
 }
 
-void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members)
+void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
 {
     absl::optional<unsigned> groupIdx;
     unsigned maxPolyphony { config::maxVoices };
 
-    for (auto& member : members) {
+    const auto parseOpcode = [&](const Opcode& member) {
         switch (member.lettersOnlyHash) {
         case hash("group"):
             setValueFromOpcode(member, groupIdx, Default::groupRange);
@@ -191,7 +194,13 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members)
             setValueFromOpcode(member, maxPolyphony, Range<unsigned>(0, config::maxVoices));
             break;
         }
-    }
+    };
+
+    for (auto& member : masterMembers)
+        parseOpcode(member);
+
+    for (auto& member : members)
+        parseOpcode(member);
 
     if (groupIdx)
         setGroupPolyphony(*groupIdx, maxPolyphony);
