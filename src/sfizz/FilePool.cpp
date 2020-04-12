@@ -29,7 +29,6 @@
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
-#include "Defer.h"
 #include "absl/types/span.h"
 #include "absl/strings/match.h"
 #include "absl/memory/memory.h"
@@ -383,9 +382,9 @@ void sfz::FilePool::clear()
 
 void sfz::FilePool::cleanupPromises() noexcept
 {
-    if (!promiseGuard.try_lock())
+    const std::unique_lock<std::mutex> lock { promiseGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
-    DEFER(promiseGuard.unlock());
 
     // The garbage collection cleared the data from these so we can move them
     // back to the empty queue

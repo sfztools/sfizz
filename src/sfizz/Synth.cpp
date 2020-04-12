@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Synth.h"
-#include "Defer.h"
 #include "Config.h"
 #include "Debug.h"
 #include "Macros.h"
@@ -539,9 +538,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (freeWheeling)
         resources.filePool.waitForBackgroundLoading();
 
-    if (!callbackGuard.try_lock())
+    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
-    DEFER(callbackGuard.unlock());
 
 
     size_t numFrames = buffer.getNumFrames();
@@ -635,9 +634,9 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 
-    if (!callbackGuard.try_lock())
+    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
-    DEFER(callbackGuard.unlock());
 
     noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
@@ -651,9 +650,9 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
-    if (!callbackGuard.try_lock())
+    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
-    DEFER(callbackGuard.unlock());
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -747,9 +746,9 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.ccEvent(delay, ccNumber, normalizedCC);
 
-    if (!callbackGuard.try_lock())
+    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
-    DEFER(callbackGuard.unlock());
 
     if (ccNumber == config::resetCC) {
         resetAllControllers(delay);
@@ -1008,9 +1007,9 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 {
     resources.midiState.resetAllControllers(delay);
 
-    if (!callbackGuard.try_lock())
+    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
-    DEFER(callbackGuard.unlock());
 
     for (auto& voice : voices) {
         voice->registerPitchWheel(delay, 0);
