@@ -40,11 +40,9 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
 
     releaseDelay = 0;
     shouldRelease = false;
-    freeRunning = (
-        (region.trigger == SfzTrigger::release)
+    freeRunning = ((region.trigger == SfzTrigger::release)
         || (region.trigger == SfzTrigger::release_key)
-        || region.loopMode == SfzLoopMode::one_shot
-    );
+        || (region.loopMode == SfzLoopMode::one_shot && (region.isGenerator() || region.oscillator)));
     currentValue = this->start;
     currentState = State::Delay;
 }
@@ -117,8 +115,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
             // release takes effect this frame
             currentState = State::Release;
             releaseDelay = -1;
-        }
-        else if (shouldRelease && releaseDelay > 0) {
+        } else if (shouldRelease && releaseDelay > 0) {
             // prevent computing the segment further than release point
             size = std::min<size_t>(size, releaseDelay);
         }

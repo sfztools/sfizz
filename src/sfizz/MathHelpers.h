@@ -294,33 +294,35 @@ inline F fp_from_parts(bool sgn, int ex, uint64_t mant)
     return u.real;
 }
 
-
-template<class F>
+template <class F>
 inline bool fp_naninf(F x)
 {
     typedef FP_traits<F> T;
     typedef typename T::same_size_int I;
-    union { F real; I integer; } u;
+    union {
+        F real;
+        I integer;
+    } u;
     u.real = x;
     const auto all_ones = ((1u << T::e_bits) - 1);
     const auto ex = (u.integer >> T::m_bits) & all_ones;
     return ex == all_ones;
 }
 
-template<class Type>
+template <class Type>
 bool hasNanInf(absl::Span<Type> span)
 {
-    for (const auto& x: span)
+    for (const auto& x : span)
         if (fp_naninf(x))
             return true;
 
     return false;
 }
 
-template<class Type>
+template <class Type>
 bool isValidAudio(absl::Span<Type> span)
 {
-    for (const auto& x: span)
+    for (const auto& x : span)
         if (x < -1.0f || x > 1.0f)
             return false;
 
