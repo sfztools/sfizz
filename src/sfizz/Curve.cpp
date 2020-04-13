@@ -84,13 +84,17 @@ Curve Curve::buildPredefinedCurve(int index)
         }
         break;
     case 5:
-        for (unsigned i = 0; i < NumValues; ++i) {
+        curve._points[0] = 0.0;
+        curve._points[NumValues - 1] = 1.0;
+        for (unsigned i = 1; i < NumValues - 1; ++i) {
             double x = i / static_cast<double>(NumValues - 1);
             curve._points[i] = std::sqrt(x);
         }
         break;
     case 6:
-        for (unsigned i = 0; i < NumValues; ++i) {
+        curve._points[0] = 1.0;
+        curve._points[NumValues - 1] = 0.0;
+        for (unsigned i = 1; i < NumValues - 1; ++i) {
             double x = i / static_cast<double>(NumValues - 1);
             curve._points[i] = std::sqrt(1.0 - x);
         }
