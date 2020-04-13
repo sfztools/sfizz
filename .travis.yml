@@ -27,7 +27,7 @@ jobs:
     script: .travis/script_test.sh
 
   - name: "Linux arm64 tests"
-    arch: amd64
+    arch: arm64
     addons:
       apt:
         packages:
