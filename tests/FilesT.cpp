@@ -8,6 +8,9 @@
 #include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 #include "ghc/fs_std.hpp"
+#if defined(__APPLE__)
+#include <unistd.h> // pathconf
+#endif
 using namespace Catch::literals;
 using namespace sfz::literals;
 
@@ -529,15 +532,26 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
 
 TEST_CASE("[Files] Case sentitiveness")
 {
-#ifndef WIN32
-    sfz::Synth synth;
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/case_insensitive.sfz");
-    REQUIRE(synth.getNumRegions() == 4);
-    REQUIRE(synth.getRegionView(0)->sample == "dummy1.wav");
-    REQUIRE(synth.getRegionView(1)->sample == "Regions/dummy.wav");
-    REQUIRE(synth.getRegionView(2)->sample == "Regions/dummy.wav");
-    REQUIRE(synth.getRegionView(3)->sample == "Regions/dummy.wav");
+    const fs::path sfzFilePath = fs::current_path() /
+        "tests/TestFiles/case_insensitive.sfz";
+
+#if defined(_WIN32)
+    const bool caseSensitiveFs = false;
+#elif defined(__APPLE__)
+    const bool caseSensitiveFs = pathconf(sfzFilePath.string().c_str(), _PC_CASE_SENSITIVE) != 0;
+#else
+    const bool caseSensitiveFs = true;
 #endif
+
+    if (caseSensitiveFs) {
+        sfz::Synth synth;
+        synth.loadSfzFile(sfzFilePath);
+        REQUIRE(synth.getNumRegions() == 4);
+        REQUIRE(synth.getRegionView(0)->sample == "dummy1.wav");
+        REQUIRE(synth.getRegionView(1)->sample == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(2)->sample == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(3)->sample == "Regions/dummy.wav");
+    }
 }
 
 TEST_CASE("[Files] Empty file")
