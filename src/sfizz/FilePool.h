@@ -258,8 +258,8 @@ private:
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals
-    bool quitThread { false };
-    bool emptyQueue { false };
+    volatile bool quitThread { false };
+    volatile bool emptyQueue { false };
     std::atomic<int> threadsLoading { 0 };
     RTSemaphore workerBarrier;
 
