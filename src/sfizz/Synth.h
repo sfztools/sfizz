@@ -207,7 +207,6 @@ public:
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-
     void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
     /**
      * @brief Send a CC event to the synth
