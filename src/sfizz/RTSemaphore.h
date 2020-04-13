@@ -17,11 +17,11 @@
 class RTSemaphore {
 public:
     explicit RTSemaphore(unsigned value = 0);
-    explicit RTSemaphore(std::error_code &ec, unsigned value = 0) noexcept;
+    explicit RTSemaphore(std::error_code& ec, unsigned value = 0) noexcept;
     ~RTSemaphore() noexcept;
 
-    RTSemaphore(const RTSemaphore &) = delete;
-    RTSemaphore &operator=(const RTSemaphore &) = delete;
+    RTSemaphore(const RTSemaphore&) = delete;
+    RTSemaphore& operator=(const RTSemaphore&) = delete;
 
     explicit operator bool() const noexcept { return good_; }
 
@@ -29,18 +29,18 @@ public:
     void wait();
     bool try_wait();
 
-    void post(std::error_code &ec) noexcept;
-    void wait(std::error_code &ec) noexcept;
-    bool try_wait(std::error_code &ec) noexcept;
+    void post(std::error_code& ec) noexcept;
+    void wait(std::error_code& ec) noexcept;
+    bool try_wait(std::error_code& ec) noexcept;
 
 private:
-    void init(std::error_code &ec, unsigned value);
-    void destroy(std::error_code &ec);
+    void init(std::error_code& ec, unsigned value);
+    void destroy(std::error_code& ec);
 
 private:
 #if defined(__APPLE__)
     semaphore_t sem_ {};
-    static const std::error_category &mach_category();
+    static const std::error_category& mach_category();
 #elif defined(_WIN32)
     HANDLE sem_ {};
 #else

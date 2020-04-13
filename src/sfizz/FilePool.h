@@ -27,6 +27,7 @@
 #include "Config.h"
 #include "Defaults.h"
 #include "LeakDetector.h"
+#include "RTSemaphore.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
 #include "SIMDHelpers.h"
@@ -38,6 +39,7 @@
 #include "Logger.h"
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
@@ -256,16 +258,16 @@ private:
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals
-    bool quitThread { false };
-    bool emptyQueue { false };
+    volatile bool quitThread { false };
+    volatile bool emptyQueue { false };
     std::atomic<int> threadsLoading { 0 };
+    RTSemaphore workerBarrier;
 
     // File promises data structures along with their guards.
     std::vector<FilePromisePtr> emptyPromises;
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
-    std::atomic<bool> addingPromisesToClear { false };
-    std::atomic<bool> canAddPromisesToClear { true };
+    std::mutex promiseGuard;
 
     // Preloaded data
     absl::flat_hash_map<absl::string_view, FileDataHandle> preloadedFiles;

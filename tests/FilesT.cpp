@@ -532,8 +532,7 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
 
 TEST_CASE("[Files] Case sentitiveness")
 {
-    const fs::path sfzFilePath = fs::current_path() /
-        "tests/TestFiles/case_insensitive.sfz";
+    const fs::path sfzFilePath = fs::current_path() / "tests/TestFiles/case_insensitive.sfz";
 
 #if defined(_WIN32)
     const bool caseSensitiveFs = false;

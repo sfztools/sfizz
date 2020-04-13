@@ -29,7 +29,6 @@
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
-#include "AtomicGuard.h"
 #include "absl/types/span.h"
 #include "absl/strings/match.h"
 #include "absl/memory/memory.h"
@@ -106,6 +105,12 @@ sfz::FilePool::FilePool(sfz::Logger& logger)
 sfz::FilePool::~FilePool()
 {
     quitThread = true;
+
+    for (unsigned i = 0; i < threadPool.size(); ++i) {
+        std::error_code ec;
+        workerBarrier.post(ec);
+    }
+
     for (auto& thread: threadPool)
         thread.join();
 }
@@ -282,7 +287,12 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) n
         return {};
     }
 
+    std::error_code ec;
+    workerBarrier.post(ec);
+    ASSERT(!ec);
+
     emptyPromises.pop_back();
+
     return promise;
 }
 
@@ -301,10 +311,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 
 void sfz::FilePool::tryToClearPromises()
 {
-    AtomicDisabler disabler { canAddPromisesToClear };
-
-    while (addingPromisesToClear)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    const std::lock_guard<std::mutex> promiseLock { promiseGuard };
 
     for (auto& promise: promisesToClear) {
         if (promise->dataStatus != FilePromise::DataStatus::Wait)
@@ -333,8 +340,11 @@ void sfz::FilePool::loadingThread() noexcept
             continue;
         }
 
+        std::error_code ec;
+        workerBarrier.wait(ec);
+        ASSERT(!ec);
+
         if (!promiseQueue.try_pop(promise)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
 
@@ -376,9 +386,8 @@ void sfz::FilePool::clear()
 
 void sfz::FilePool::cleanupPromises() noexcept
 {
-    AtomicGuard guard { addingPromisesToClear };
-
-    if (!canAddPromisesToClear)
+    const std::unique_lock<std::mutex> lock { promiseGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return;
 
     // The garbage collection cleared the data from these so we can move them
@@ -444,6 +453,10 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
 void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
+    std::error_code ec;
+    workerBarrier.post(ec);
+    ASSERT(!ec);
+
     while (emptyQueue)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }

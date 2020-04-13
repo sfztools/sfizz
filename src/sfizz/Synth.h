@@ -18,6 +18,7 @@
 #include "absl/types/span.h"
 #include <absl/types/optional.h>
 #include <random>
+#include <mutex>
 #include <set>
 #include <string_view>
 #include <vector>
@@ -436,13 +437,7 @@ private:
      *
      */
     void clear();
-    /**
-     * @brief Resets and possibly changes the number of voices (polyphony) in
-     * the synth.
-     *
-     * @param numVoices
-     */
-    void resetVoices(int numVoices);
+
     /**
      * @brief Helper function to dispatch <global> opcodes
      *
@@ -475,6 +470,13 @@ private:
      * @param regionOpcodes the opcodes that are specific to the region
      */
     void buildRegion(const std::vector<Opcode>& regionOpcodes);
+    /**
+     * @brief Resets and possibly changes the number of voices (polyphony) in
+     * the synth.
+     *
+     * @param numVoices
+     */
+    void resetVoices(int numVoices);
 
     fs::file_time_type checkModificationTime();
 
@@ -526,9 +528,7 @@ private:
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
     unsigned fileTicket { 1 };
 
-    // Atomic guards; must be used with AtomicGuard and AtomicDisabler
-    std::atomic<bool> canEnterCallback { true };
-    std::atomic<bool> inCallback { false };
+    std::mutex callbackGuard;
     bool freeWheeling { false };
 
     // Singletons passed as references to the voices
