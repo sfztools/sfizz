@@ -262,7 +262,7 @@ absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const std::string& f
     }
 }
 
-sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename)
+sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename) noexcept
 {
     if (emptyPromises.empty()) {
         DBG("[sfizz] No empty promises left to honor the one for " << filename);
@@ -286,7 +286,11 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const std::string& filename)
         DBG("[sfizz] Could not enqueue the promise for " << filename << " (queue capacity " << promiseQueue.capacity() << ")");
         return {};
     }
-    workerBarrier.post();
+
+    std::error_code ec;
+    workerBarrier.post(ec);
+    ASSERT(!ec);
+
     emptyPromises.pop_back();
 
     return promise;
@@ -323,7 +327,7 @@ void sfz::FilePool::clearingThread()
     }
 }
 
-void sfz::FilePool::loadingThread()
+void sfz::FilePool::loadingThread() noexcept
 {
     FilePromisePtr promise;
     while (!quitThread) {
@@ -336,7 +340,9 @@ void sfz::FilePool::loadingThread()
             continue;
         }
 
-        workerBarrier.wait();
+        std::error_code ec;
+        workerBarrier.wait(ec);
+        ASSERT(!ec);
 
         if (!promiseQueue.try_pop(promise)) {
             continue;
@@ -444,10 +450,12 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
     return preloadSize;
 }
 
-void sfz::FilePool::emptyFileLoadingQueues()
+void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
-    workerBarrier.post();
+    std::error_code ec;
+    workerBarrier.post(ec);
+    ASSERT(!ec);
 
     while (emptyQueue)
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
