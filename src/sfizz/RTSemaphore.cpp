@@ -18,7 +18,7 @@ RTSemaphore::RTSemaphore(unsigned value)
     good_ = true;
 }
 
-RTSemaphore::RTSemaphore(std::error_code &ec, unsigned value) noexcept
+RTSemaphore::RTSemaphore(std::error_code& ec, unsigned value) noexcept
 {
     init(ec, value);
     good_ = ec ? false : true;
@@ -58,7 +58,7 @@ bool RTSemaphore::try_wait()
 }
 
 #if defined(__APPLE__)
-void RTSemaphore::init(std::error_code &ec, unsigned value)
+void RTSemaphore::init(std::error_code& ec, unsigned value)
 {
     ec.clear();
     kern_return_t ret = semaphore_create(mach_task_self(), &sem_, SYNC_POLICY_FIFO, value);
@@ -66,7 +66,7 @@ void RTSemaphore::init(std::error_code &ec, unsigned value)
         ec = std::error_code(ret, mach_category());
 }
 
-void RTSemaphore::destroy(std::error_code &ec)
+void RTSemaphore::destroy(std::error_code& ec)
 {
     ec.clear();
     kern_return_t ret = semaphore_destroy(mach_task_self(), sem_);
@@ -74,7 +74,7 @@ void RTSemaphore::destroy(std::error_code &ec)
         ec = std::error_code(ret, mach_category());
 }
 
-void RTSemaphore::post(std::error_code &ec) noexcept
+void RTSemaphore::post(std::error_code& ec) noexcept
 {
     ec.clear();
     kern_return_t ret = semaphore_signal(sem_);
@@ -82,7 +82,7 @@ void RTSemaphore::post(std::error_code &ec) noexcept
         ec = std::error_code(ret, mach_category());
 }
 
-void RTSemaphore::wait(std::error_code &ec) noexcept
+void RTSemaphore::wait(std::error_code& ec) noexcept
 {
     ec.clear();
     do {
@@ -99,11 +99,11 @@ void RTSemaphore::wait(std::error_code &ec) noexcept
     } while (1);
 }
 
-bool RTSemaphore::try_wait(std::error_code &ec) noexcept
+bool RTSemaphore::try_wait(std::error_code& ec) noexcept
 {
     ec.clear();
     do {
-        const mach_timespec_t timeout = {0, 0};
+        const mach_timespec_t timeout = { 0, 0 };
         kern_return_t ret = semaphore_timedwait(sem_, timeout);
         switch (ret) {
         case KERN_SUCCESS:
@@ -119,18 +119,18 @@ bool RTSemaphore::try_wait(std::error_code &ec) noexcept
     } while (1);
 }
 
-const std::error_category &RTSemaphore::mach_category()
+const std::error_category& RTSemaphore::mach_category()
 {
     class mach_category : public std::error_category {
     public:
-        const char *name() const noexcept override
+        const char* name() const noexcept override
         {
             return "kern_return_t";
         }
 
         std::string message(int condition) const override
         {
-            const char *str = mach_error_string(condition);
+            const char* str = mach_error_string(condition);
             return str ? str : "";
         }
     };
@@ -139,7 +139,7 @@ const std::error_category &RTSemaphore::mach_category()
     return cat;
 }
 #elif defined(_WIN32)
-void RTSemaphore::init(std::error_code &ec, unsigned value)
+void RTSemaphore::init(std::error_code& ec, unsigned value)
 {
     ec.clear();
     sem_ = CreateSemaphore(nullptr, value, LONG_MAX, nullptr);
@@ -147,21 +147,21 @@ void RTSemaphore::init(std::error_code &ec, unsigned value)
         ec = std::error_code(GetLastError(), std::system_category());
 }
 
-void RTSemaphore::destroy(std::error_code &ec)
+void RTSemaphore::destroy(std::error_code& ec)
 {
     ec.clear();
     if (CloseHandle(sem_) == 0)
         ec = std::error_code(GetLastError(), std::system_category());
 }
 
-void RTSemaphore::post(std::error_code &ec) noexcept
+void RTSemaphore::post(std::error_code& ec) noexcept
 {
     ec.clear();
     if (ReleaseSemaphore(sem_, 1, nullptr) == 0)
         ec = std::error_code(GetLastError(), std::system_category());
 }
 
-void RTSemaphore::wait(std::error_code &ec) noexcept
+void RTSemaphore::wait(std::error_code& ec) noexcept
 {
     ec.clear();
     DWORD ret = WaitForSingleObject(sem_, INFINITE);
@@ -177,7 +177,7 @@ void RTSemaphore::wait(std::error_code &ec) noexcept
     }
 }
 
-bool RTSemaphore::try_wait(std::error_code &ec) noexcept
+bool RTSemaphore::try_wait(std::error_code& ec) noexcept
 {
     ec.clear();
     DWORD ret = WaitForSingleObject(sem_, 0);
@@ -195,21 +195,21 @@ bool RTSemaphore::try_wait(std::error_code &ec) noexcept
     }
 }
 #else
-void RTSemaphore::init(std::error_code &ec, unsigned value)
+void RTSemaphore::init(std::error_code& ec, unsigned value)
 {
     ec.clear();
     if (sem_init(&sem_, 0, value) != 0)
         ec = std::error_code(errno, std::generic_category());
 }
 
-void RTSemaphore::destroy(std::error_code &ec)
+void RTSemaphore::destroy(std::error_code& ec)
 {
     ec.clear();
     if (sem_destroy(&sem_) != 0)
         ec = std::error_code(errno, std::generic_category());
 }
 
-void RTSemaphore::post(std::error_code &ec) noexcept
+void RTSemaphore::post(std::error_code& ec) noexcept
 {
     ec.clear();
     while (sem_post(&sem_) != 0) {
@@ -221,7 +221,7 @@ void RTSemaphore::post(std::error_code &ec) noexcept
     }
 }
 
-void RTSemaphore::wait(std::error_code &ec) noexcept
+void RTSemaphore::wait(std::error_code& ec) noexcept
 {
     ec.clear();
     while (sem_wait(&sem_) != 0) {
@@ -233,7 +233,7 @@ void RTSemaphore::wait(std::error_code &ec) noexcept
     }
 }
 
-bool RTSemaphore::try_wait(std::error_code &ec) noexcept
+bool RTSemaphore::try_wait(std::error_code& ec) noexcept
 {
     ec.clear();
     do {

@@ -111,7 +111,6 @@ sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned n
     if (!lock.owns_lock())
         return {};
 
-
     auto eq = absl::c_find_if(eqs, [](const EQHolderPtr& holder) {
         return holder.use_count() == 1;
     });
