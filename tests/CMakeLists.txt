@@ -29,6 +29,7 @@ set(SFIZZ_TEST_SOURCES
     RegionTriggersT.cpp
     FloatHelpersT.cpp
     WavetablesT.cpp
+    SemaphoreT.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})

@@ -6,7 +6,7 @@
 
 #pragma once
 #include "SfizzVstState.h"
-#include "RTSemaphore.h"
+#include "sfizz/RTSemaphore.h"
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <sfizz.hpp>
