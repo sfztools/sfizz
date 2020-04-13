@@ -87,7 +87,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
         return;
 
     auto quantize = [step](float value) -> float {
-        return std::floor(value / step) * step;
+        return std::trunc(value / step) * step;
     };
     const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
@@ -156,10 +156,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](float value) -> float {
-        if (value > 1)
-            return std::exp(logStep * std::floor(std::log(value) / logStep));
-        else
-            return std::exp(logStep * std::ceil(std::log(value) / logStep));
+        return std::exp(logStep * std::trunc(std::log(value) / logStep));
     };
 
     auto lastValue = quantize(lambda(events[0].value));
