@@ -106,12 +106,10 @@ sfz::FilePool::~FilePool()
 {
     quitThread = true;
 
-    for (unsigned i = 0; i < threadPool.size(); ++i)
-        try {
-            workerBarrier.post();
-        } catch (std::exception& e) {
-            continue;
-        }
+    for (unsigned i = 0; i < threadPool.size(); ++i) {
+        std::error_code ec;
+        workerBarrier.post(ec);
+    }
 
     for (auto& thread: threadPool)
         thread.join();
