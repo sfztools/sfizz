@@ -55,7 +55,7 @@ target_sources(sfizz_static PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfi
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
-target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft sfizz-cpuid)
+target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft sfizz-cpuid sfizz-atomic)
 set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
 if (WIN32)
     target_compile_definitions (sfizz_static PRIVATE _USE_MATH_DEFINES)
@@ -80,9 +80,6 @@ configure_file (${PROJECT_SOURCE_DIR}/doxygen/scripts/Doxyfile.in ${PROJECT_SOUR
 
 add_library (sfizz::parser ALIAS sfizz_parser)
 add_library (sfizz::sfizz ALIAS sfizz_static)
-if (LIBATOMIC_FOUND)
-    target_link_libraries (sfizz_static PRIVATE atomic)
-endif()
 
 # Shared library and installation target
 if (SFIZZ_SHARED)
@@ -90,7 +87,7 @@ if (SFIZZ_SHARED)
     target_sources(sfizz_shared PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
     target_include_directories (sfizz_shared PRIVATE external)
-    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft sfizz-cpuid)
+    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-kissfft sfizz-cpuid sfizz-atomic)
     if (WIN32)
         target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
     endif()
@@ -103,11 +100,5 @@ if (SFIZZ_SHARED)
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    endif()
-
-    if (UNIX AND NOT APPLE)
-        if (LIBATOMIC_FOUND)
-            target_link_libraries (sfizz_shared PRIVATE atomic)
-        endif()
     endif()
 endif()
