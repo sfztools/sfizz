@@ -79,20 +79,20 @@ Curve Curve::buildPredefinedCurve(int index)
         break;
     case 4:
         for (unsigned i = 0; i < NumValues; ++i) {
-            double x = i * (1.0 / (NumValues - 1));
+            double x = i / static_cast<double>(NumValues - 1);
             curve._points[i] = x * x;
         }
         break;
     case 5:
         for (unsigned i = 0; i < NumValues; ++i) {
-            double x = i * (1.0 / (NumValues - 1));
-            curve._points[i] = std::pow(x, 0.5);
+            double x = i / static_cast<double>(NumValues - 1);
+            curve._points[i] = std::sqrt(x);
         }
         break;
     case 6:
         for (unsigned i = 0; i < NumValues; ++i) {
-            double x = i * (1.0 / (NumValues - 1));
-            curve._points[i] = std::pow(1.0 - x, 0.5);
+            double x = i / static_cast<double>(NumValues - 1);
+            curve._points[i] = std::sqrt(1.0 - x);
         }
         break;
     }
