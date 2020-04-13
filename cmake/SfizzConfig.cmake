@@ -78,8 +78,18 @@ add_library(sfizz-spline STATIC "src/external/spline/spline/spline.cpp")
 target_include_directories(sfizz-spline PUBLIC "src/external/spline")
 
 include (CheckLibraryExists)
+add_library (sfizz-atomic INTERFACE)
 if (UNIX AND NOT APPLE)
-    check_library_exists(atomic __atomic_load "" LIBATOMIC_FOUND)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic/check_libatomic.c" "int main() { return 0; }")
+    try_compile(SFIZZ_LINK_LIBATOMIC "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic"
+        SOURCES "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic/check_libatomic.c"
+        LINK_LIBRARIES "atomic")
+    if (SFIZZ_LINK_LIBATOMIC)
+        target_link_libraries (sfizz-atomic INTERFACE "atomic")
+    endif()
+else()
+    set(SFIZZ_LINK_LIBATOMIC FALSE)
 endif()
 
 # Don't show build information when building a different project
@@ -98,6 +108,7 @@ Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
+Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
