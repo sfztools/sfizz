@@ -32,8 +32,8 @@ struct CCData {
 
 struct Modifier {
     float value { 0.0f };
+    float step { 0.0f };
     uint8_t curve { 0 };
-    uint8_t steps { 0 };
     uint8_t smooth { 0 };
     static_assert(config::maxCurves - 1 <= std::numeric_limits<decltype(curve)>::max(), "The curve type in the Modifier struct cannot support the required number of curves");
 };

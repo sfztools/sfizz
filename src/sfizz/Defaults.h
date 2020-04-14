@@ -110,17 +110,21 @@ namespace Default
 	constexpr float volume { 0.0f };
 	constexpr Range<float> volumeRange { -144.0, 6.0 };
 	constexpr Range<float> volumeCCRange { -144.0, 48.0 };
+	constexpr Range<float> volumeStepRange { 0, 48.0 };
 	constexpr float amplitude { 100.0 };
 	constexpr Range<float> amplitudeRange { 0.0, 100.0 };
 	constexpr float pan { 0.0 };
 	constexpr Range<float> panRange { -100.0, 100.0 };
 	constexpr Range<float> panCCRange { -200.0, 200.0 };
+	constexpr Range<float> panStepRange { 0.0, 200.0 };
 	constexpr float position { 0.0 };
 	constexpr Range<float> positionRange { -100.0, 100.0 };
 	constexpr Range<float> positionCCRange { -200.0, 200.0 };
+	constexpr Range<float> positionStepRange { 0.0, 200.0 };
 	constexpr float width { 100.0 };
 	constexpr Range<float> widthRange { -100.0, 100.0 };
 	constexpr Range<float> widthCCRange { -200.0, 200.0 };
+	constexpr Range<float> widthStepRange { 0.0, 200.0 };
 	constexpr uint8_t ampKeycenter { 60 };
 	constexpr float ampKeytrack { 0.0 };
 	constexpr Range<float> ampKeytrackRange { -96, 12 };
@@ -196,6 +200,7 @@ namespace Default
 	constexpr int tune { 0 };
 	constexpr Range<int> tuneRange { -9600, 9600 }; // ±100 in SFZv1, more in ARIA
     constexpr Range<int> tuneCCRange { -9600, 9600 };
+    constexpr Range<int> tuneStepRange { 0, 9600 };
     constexpr Range<int> bendBoundRange { -9600, 9600 };
     constexpr Range<int> bendStepRange { 1, 1200 };
     constexpr int bendUp { 200 }; // No range here because the bounds can be inverted

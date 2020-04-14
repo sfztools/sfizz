@@ -305,8 +305,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("volume_stepcc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::stepCCRange))
-            volumeCC[opcode.parameters.back()].steps = *value;
+        if (auto value = readOpcode(opcode.value, Default::volumeStepRange))
+            volumeCC[opcode.parameters.back()].step = *value;
         break;
     case hash("volume_smoothcc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -335,8 +335,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("amplitude_stepcc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::stepCCRange))
-            amplitudeCC[opcode.parameters.back()].steps = *value;
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            amplitudeCC[opcode.parameters.back()].step = normalizePercents(*value);
         break;
     case hash("amplitude_smoothcc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -364,8 +364,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("pan_stepcc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::stepCCRange))
-            panCC[opcode.parameters.back()].steps = *value;
+        if (auto value = readOpcode(opcode.value, Default::panStepRange))
+            panCC[opcode.parameters.back()].step = normalizePercents(*value);
         break;
     case hash("pan_smoothcc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -393,8 +393,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("position_stepcc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::stepCCRange))
-            positionCC[opcode.parameters.back()].steps = *value;
+        if (auto value = readOpcode(opcode.value, Default::positionStepRange))
+            positionCC[opcode.parameters.back()].step = normalizePercents(*value);
         break;
     case hash("position_smoothcc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -422,8 +422,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("width_stepcc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::stepCCRange))
-            widthCC[opcode.parameters.back()].steps = *value;
+        if (auto value = readOpcode(opcode.value, Default::widthStepRange))
+            widthCC[opcode.parameters.back()].step = normalizePercents(*value);
         break;
     case hash("width_smoothcc&"):
         if (opcode.parameters.back() > config::numCCs)
@@ -827,8 +827,8 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
     case hash("tune_stepcc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::stepCCRange))
-            tuneCC[opcode.parameters.back()].steps = *value;
+        if (auto value = readOpcode(opcode.value, Default::tuneStepRange))
+            tuneCC[opcode.parameters.back()].step = *value;
         break;
     case hash("pitch_smoothcc&"): // fallthrough
     case hash("tune_smoothcc&"):

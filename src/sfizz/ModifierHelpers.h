@@ -189,12 +189,12 @@ void linearModifier(const sfz::Resources& resources, absl::Span<float> span, con
 {
     const auto events = resources.midiState.getCCEvents(ccData.cc);
     const auto curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.steps < 2) {
+    if (ccData.data.step == 0.0f) {
         linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         });
     } else {
-        const float stepSize { ccData.data.value / (ccData.data.steps - 1) };
+        const float stepSize { lambda(ccData.data.step) };
         linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         }, stepSize);
@@ -206,12 +206,12 @@ void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> s
 {
     const auto events = resources.midiState.getCCEvents(ccData.cc);
     const auto curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.steps < 2) {
+    if (ccData.data.step == 0.0f) {
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         });
     } else {
-        const float stepSize { lambda(ccData.data.value / (ccData.data.steps - 1)) };
+        const float stepSize { lambda(ccData.data.step) };
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
         }, stepSize);
