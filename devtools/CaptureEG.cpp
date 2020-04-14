@@ -284,6 +284,7 @@ void Application::performSfzUpdate()
 
     QString code;
     code += "<region>\n";
+    code += "key=69\n";
     code += "sample="; code += QFileInfo(samplePath).fileName(); code += "\n";
     code += _ui->envelopeEdit->toPlainText();
 
