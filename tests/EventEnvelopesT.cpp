@@ -224,9 +224,9 @@ TEST_CASE("[MultiplicativeEnvelope] 2 events, far")
 TEST_CASE("[MultiplicativeEnvelope] Get quantized with 2 steps")
 {
     sfz::EventVector events {
-        { 0, 1.0f },
-        { 2, 2.0f },
-        { 6, 4.0f }
+        { 0, 1.3f },
+        { 2, 2.1f },
+        { 6, 4.2f }
     };
     std::array<float, 8> output;
     std::array<float, 8> expected { 1.0f, 1.0f, 2.0f, 2.0f, 2.0f, 2.0f, 4.0f, 4.0f };
@@ -237,9 +237,9 @@ TEST_CASE("[MultiplicativeEnvelope] Get quantized with 2 steps")
 TEST_CASE("[MultiplicativeEnvelope] Get quantized with an unquantized out of range step")
 {
     sfz::EventVector events {
-        { 0, 1.0f },
-        { 2, 2.0f },
-        { 6, 4.0f },
+        { 0, 1.3f },
+        { 2, 2.1f },
+        { 6, 4.1f },
         { 10, 8.2f }
     };
     std::array<float, 8> output;
@@ -251,25 +251,12 @@ TEST_CASE("[MultiplicativeEnvelope] Get quantized with an unquantized out of ran
 TEST_CASE("[MultiplicativeEnvelope] Going down quantized with 2 steps")
 {
     sfz::EventVector events {
-        { 0, 4.0f },
-        { 2, 2.0f },
-        { 6, 0.5f }
+        { 0, 4.1f },
+        { 2, 2.2f },
+        { 6, 0.4f }
     };
     std::array<float, 8> output;
     std::array<float, 8> expected { 4.0f, 4.0f, 2.0f, 2.0f, 1.0f, 1.0f, 0.5f, 0.5f };
-    multiplicativeEnvelope(events, absl::MakeSpan(output), idModifier, 2.0f);
-    REQUIRE(approxEqual<float>(output, expected));
-}
-
-TEST_CASE("[MultiplicativeEnvelope] Get quantized with unclean events")
-{
-    sfz::EventVector events {
-        { 0, 1.0f },
-        { 2, 1.2f },
-        { 6, 2.5f }
-    };
-    std::array<float, 8> output;
-    std::array<float, 8> expected { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 2.0f };
     multiplicativeEnvelope(events, absl::MakeSpan(output), idModifier, 2.0f);
     REQUIRE(approxEqual<float>(output, expected));
 }
