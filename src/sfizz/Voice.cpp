@@ -446,9 +446,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     };
 
     if (region->bendStep > 1)
-        multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
+        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
     else
-        multiplicativeEnvelope(events, *bends, bendLambda);
+        pitchBendEnvelope(events, *bends, bendLambda);
     applyGain<float>(*bends, *jumps);
 
     for (const auto& mod : region->tuneCC) {
@@ -549,9 +549,9 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             return centsFactor(bendInCents);
         };
         if (region->bendStep > 1)
-            multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
+            pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
         else
-            multiplicativeEnvelope(events, *bends, bendLambda);
+            pitchBendEnvelope(events, *bends, bendLambda);
         applyGain<float>(*bends, *frequencies);
 
         for (const auto& mod : region->tuneCC) {

@@ -139,7 +139,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
-template <class F>
+template <class F, bool Round = false>
 void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
 {
     ASSERT(events.size() > 0);
@@ -156,7 +156,14 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](float value) -> float {
-        return std::exp(logStep * std::trunc(std::log(value) / logStep));
+        IF_CONSTEXPR(Round)
+        {
+            return std::exp(logStep * std::round(std::log(value) / logStep));
+        }
+        else
+        {
+            return std::exp(logStep * std::trunc(std::log(value) / logStep));
+        }
     };
 
     auto lastValue = quantize(lambda(events[0].value));
@@ -184,7 +191,19 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     fill<float>(envelope.subspan(lastDelay), lastValue);
 }
 
-template<class F>
+template <class F>
+void pitchBendEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
+{
+    multiplicativeEnvelope<F, true>(events, envelope, std::forward<F>(lambda), step);
+}
+
+template <class F>
+void pitchBendEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
+{
+    multiplicativeEnvelope<F>(events, envelope, std::forward<F>(lambda));
+}
+
+template <class F>
 void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
 {
     const auto events = resources.midiState.getCCEvents(ccData.cc);
@@ -195,13 +214,15 @@ void linearModifier(const sfz::Resources& resources, absl::Span<float> span, con
         });
     } else {
         const float stepSize { lambda(ccData.data.step) };
-        linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        }, stepSize);
+        linearEnvelope(
+            events, span, [&ccData, &curve, &lambda](float x) {
+                return lambda(curve.evalNormalized(x) * ccData.data.value);
+            },
+            stepSize);
     }
 }
 
-template<class F>
+template <class F>
 void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
 {
     const auto events = resources.midiState.getCCEvents(ccData.cc);
@@ -212,9 +233,11 @@ void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> s
         });
     } else {
         const float stepSize { lambda(ccData.data.step) };
-        multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        }, stepSize);
+        multiplicativeEnvelope(
+            events, span, [&ccData, &curve, &lambda](float x) {
+                return lambda(curve.evalNormalized(x) * ccData.data.value);
+            },
+            stepSize);
     }
 }
 
