@@ -872,6 +872,9 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         chns.append_child("UsesControlNameList")
             .append_attribute("Name")
             .set_value("Controls");
+        chns.append_child("UsesNoteNameList")
+            .append_attribute("Name")
+            .set_value("Notes");
     }
 
     {
