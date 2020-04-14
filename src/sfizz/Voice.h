@@ -10,13 +10,10 @@
 #include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"
-#include "MidiState.h"
-#include "Wavetables.h"
 #include "Resources.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
-#include <absl/types/span.h>
-#include <atomic>
+#include "absl/types/span.h"
 #include <memory>
 #include <random>
 

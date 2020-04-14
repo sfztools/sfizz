@@ -10,7 +10,6 @@
 #include "Voice.h"
 #include "Region.h"
 #include "Effects.h"
-#include "Curve.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
@@ -340,7 +339,7 @@ public:
      */
     void disableFreeWheeling() noexcept;
 
-    const MidiState& getMidiState() const noexcept { return resources.midiState; }
+    const Resources& getResources() const noexcept { return resources; }
 
     /**
      * @brief Check if the SFZ should be reloaded.
@@ -515,9 +514,6 @@ private:
     typedef std::unique_ptr<EffectBus> EffectBusPtr;
     std::vector<EffectBusPtr> effectBuses; // 0 is "main", 1-N are "fx1"-"fxN"
 
-    // Curves
-    CurveSet curves;
-
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
@@ -526,7 +522,6 @@ private:
 
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
-    unsigned fileTicket { 1 };
 
     std::mutex callbackGuard;
     bool freeWheeling { false };

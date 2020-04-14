@@ -4,16 +4,14 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Macros.h"
 #include "Voice.h"
-#include "AudioSpan.h"
-#include "Config.h"
+#include "Macros.h"
 #include "Defaults.h"
+#include "ModifierHelpers.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
 #include "absl/algorithm/container.h"
-#include <memory>
 
 sfz::Voice::Voice(sfz::Resources& resources)
 : resources(resources)
@@ -264,28 +262,32 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     // Amplitude envelope
     applyGain<float>(baseGain, modulationSpan);
     for (const auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+        linearModifier(resources, *tempSpan, mod);
         applyGain<float>(*tempSpan, modulationSpan);
     }
 
     // Crossfade envelopes
     for (const auto& mod : region->crossfadeCCInRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeIn(mod.data, x, xfCurve);
+        });
         applyGain<float>(*tempSpan, modulationSpan);
     }
     for (const auto& mod : region->crossfadeCCOutRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeOut(mod.data, x, xfCurve);
+        });
         applyGain<float>(*tempSpan, modulationSpan);
     }
 
     // Volume envelope
     applyGain<float>(db2mag(baseVolumedB), modulationSpan);
     for (const auto& mod : region->volumeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
+        multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
+            return db2mag(x);
+        });
         applyGain<float>(*tempSpan, modulationSpan);
     }
 }
@@ -337,8 +339,7 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -357,30 +358,24 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     // Apply panning
-    // panningModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
-    // widthModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->width);
     for (const auto& mod : region->widthCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     width<float>(*modulationSpan, leftBuffer, rightBuffer);
 
-    // positionModulation(*modulationSpan);
     fill<float>(*modulationSpan, region->position);
     for (const auto& mod : region->positionCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+        linearModifier(resources, *tempSpan, mod);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -451,14 +446,13 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     };
 
     if (region->bendStep > 1)
-        multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
+        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
     else
-        multiplicativeEnvelope(events, *bends, bendLambda);
+        pitchBendEnvelope(events, *bends, bendLambda);
     applyGain<float>(*bends, *jumps);
 
     for (const auto& mod : region->tuneCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.value); });
+        multiplicativeModifier(resources, *bends, mod, [](float x) { return centsFactor(x); });
         applyGain<float>(*bends, *jumps);
     }
 
@@ -555,14 +549,15 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             return centsFactor(bendInCents);
         };
         if (region->bendStep > 1)
-            multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
+            pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
         else
-            multiplicativeEnvelope(events, *bends, bendLambda);
+            pitchBendEnvelope(events, *bends, bendLambda);
         applyGain<float>(*bends, *frequencies);
 
         for (const auto& mod : region->tuneCC) {
-            const auto events = resources.midiState.getCCEvents(mod.cc);
-            multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.value); });
+            multiplicativeModifier(resources, *bends, mod, [](float x) {
+                return centsFactor(x);
+            });
             applyGain<float>(*bends, *frequencies);
         }
 

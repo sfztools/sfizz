@@ -45,7 +45,7 @@ public:
      */
     float evalNormalized(float value) const
     {
-        return evalCC7(denormalize7Bits<int>(value));
+        return evalCC7(value * 127.0f);
     }
 
     /**

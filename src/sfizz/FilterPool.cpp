@@ -41,17 +41,17 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
     // Setup the modulated values
     lastCutoff = baseCutoff;
     for (const auto& mod : description.cutoffCC)
-        lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.value);
+        lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.data);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
     lastResonance = baseResonance;
     for (const auto& mod : description.resonanceCC)
-        lastResonance += midiState.getCCValue(mod.cc) * mod.value;
+        lastResonance += midiState.getCCValue(mod.cc) * mod.data;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
     lastGain = baseGain;
     for (const auto& mod : description.gainCC)
-        lastGain += midiState.getCCValue(mod.cc) * mod.value;
+        lastGain += midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
     // Initialize the filter
@@ -71,17 +71,17 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
     // TODO: the template deduction could be automatic here?
     lastCutoff = baseCutoff;
     for (const auto& mod : description->cutoffCC)
-        lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.value);
+        lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.data);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
     lastResonance = baseResonance;
     for (const auto& mod : description->resonanceCC)
-        lastResonance += midiState.getCCValue(mod.cc) * mod.value;
+        lastResonance += midiState.getCCValue(mod.cc) * mod.data;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
     lastGain = baseGain;
     for (const auto& mod : description->gainCC)
-        lastGain += midiState.getCCValue(mod.cc) * mod.value;
+        lastGain += midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
     filter.process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);

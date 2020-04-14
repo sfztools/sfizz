@@ -140,10 +140,11 @@ TEST_CASE("[Synth] All notes offs/all sounds off")
 TEST_CASE("[Synth] Reset all controllers")
 {
     sfz::Synth synth;
+    const auto& midiState = synth.getResources().midiState;
     synth.cc(0, 12, 64);
-    REQUIRE(synth.getMidiState().getCCValue(12) == 64_norm);
+    REQUIRE(midiState.getCCValue(12) == 64_norm);
     synth.cc(0, 121, 64);
-    REQUIRE(synth.getMidiState().getCCValue(12) == 0_norm);
+    REQUIRE(midiState.getCCValue(12) == 0_norm);
 }
 
 TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kills the voice")
@@ -418,4 +419,18 @@ TEST_CASE("[Synth] Polyphony in master")
     synth.noteOn(0, 61, 64);
     synth.noteOn(0, 61, 64);
     REQUIRE(synth.getNumActiveVoices() == 3);
+}
+
+TEST_CASE("[Synth] Basic curves")
+{
+    sfz::Synth synth;
+    const auto& curves = synth.getResources().curves;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/curves.sfz");
+    REQUIRE( synth.getNumCurves() == 19 );
+    REQUIRE( curves.getCurve(18).evalCC7(127) == 1.0f );
+    REQUIRE( curves.getCurve(18).evalCC7(95) == 0.5f );
+    REQUIRE( curves.getCurve(17).evalCC7(100) == 1.0f );
+    REQUIRE( curves.getCurve(17).evalCC7(95) == 0.5f );
+    // Default linear
+    REQUIRE( curves.getCurve(16).evalCC7(63) == Approx(63_norm) );
 }

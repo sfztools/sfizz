@@ -351,7 +351,7 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
     REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
     REQUIRE(!synth.getRegionView(2)->amplitudeCC.empty());
     REQUIRE(synth.getRegionView(2)->amplitudeCC.contains(10));
-    REQUIRE(synth.getRegionView(2)->amplitudeCC.getWithDefault(10) == 0.34f);
+    REQUIRE(synth.getRegionView(2)->amplitudeCC.getWithDefault(10).value == 0.34f);
 }
 
 TEST_CASE("[Files] Specific bug: relative path with backslashes")
@@ -394,9 +394,10 @@ TEST_CASE("[Files] Default path is ignored for generators")
 TEST_CASE("[Files] Set CC applies properly")
 {
     sfz::Synth synth;
+    const auto& midiState = synth.getResources().midiState;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_cc.sfz");
-    REQUIRE(synth.getMidiState().getCCValue(142) == 63_norm);
-    REQUIRE(synth.getMidiState().getCCValue(61) == 122_norm);
+    REQUIRE(midiState.getCCValue(142) == 63_norm);
+    REQUIRE(midiState.getCCValue(61) == 122_norm);
 }
 
 TEST_CASE("[Files] Note and octave offsets")

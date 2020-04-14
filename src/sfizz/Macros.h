@@ -16,3 +16,10 @@
 #define CXX11_MOVE(x) std::move(x)
 #endif
 
+#if __cplusplus >= 201703L
+#define IF_CONSTEXPR if constexpr
+#else
+#define IF_CONSTEXPR if
+#endif
+
+

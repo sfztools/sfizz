@@ -56,6 +56,7 @@ namespace config {
     constexpr size_t powerHistoryLength { 16 };
     constexpr float voiceStealingThreshold { 0.00001f };
     constexpr uint16_t numCCs { 512 };
+    constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
     constexpr int filtersInPool { maxVoices * 2 };
     constexpr int filtersPerVoice { 2 };

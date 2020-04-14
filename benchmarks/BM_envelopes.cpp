@@ -10,7 +10,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "SfzHelpers.h"
+#include "ModifierHelpers.h"
 #include "absl/types/span.h"
 
 class EnvelopeFixture : public benchmark::Fixture {
