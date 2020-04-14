@@ -5,6 +5,7 @@
 #include "SfzHelpers.h"
 #include "Resources.h"
 #include "absl/types/span.h"
+
 namespace sfz {
 
 /**
@@ -146,6 +147,8 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     ASSERT(events[0].delay == 0);
     ASSERT(step != 0.0f);
 
+    ScopedRoundingMode roundingMode { Round ? FE_TONEAREST : FE_TOWARDZERO };
+
     if (envelope.size() == 0)
         return;
     const auto maxDelay = static_cast<int>(envelope.size() - 1);
@@ -156,14 +159,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     // log q     log q
     // and log(b)\log(q) is between 0 and 1.
     auto quantize = [logStep](float value) -> float {
-        IF_CONSTEXPR(Round)
-        {
-            return std::exp(logStep * std::round(std::log(value) / logStep));
-        }
-        else
-        {
-            return std::exp(logStep * std::trunc(std::log(value) / logStep));
-        }
+        return std::exp(logStep * std::rint(std::log(value) / logStep));
     };
 
     auto lastValue = quantize(lambda(events[0].value));
@@ -182,7 +178,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
 
         const auto numSteps = std::round(std::log(difference) / logStep);
         const auto stepLength = static_cast<int>(length / numSteps);
-        for (int i = 0; i < numSteps; ++i) {
+        for (int i = 0; i < static_cast<int>(numSteps); ++i) {
             fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
             lastValue = nextValue > lastValue ? lastValue * step : lastValue / step;
             lastDelay += stepLength;

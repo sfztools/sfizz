@@ -15,26 +15,27 @@
 #include <algorithm>
 #include <cmath>
 #include <random>
+#include <cfenv>
 
-template<class T>
+template <class T>
 constexpr T max(T op1, T op2)
 {
     return op1 > op2 ? op1 : op2;
 }
 
-template<class T, class... Args>
+template <class T, class... Args>
 constexpr T max(T op1, Args... rest)
 {
     return max(op1, max(rest...));
 }
 
-template<class T>
+template <class T>
 constexpr T min(T op1, T op2)
 {
     return op1 > op2 ? op2 : op1;
 }
 
-template<class T, class... Args>
+template <class T, class... Args>
 constexpr T min(T op1, Args... rest)
 {
     return min(op1, min(rest...));
@@ -46,7 +47,7 @@ constexpr T min(T op1, Args... rest)
  * @param op
  * @return T
  */
-template<class T>
+template <class T>
 constexpr T power2(T in)
 {
     return in * in;
@@ -111,8 +112,8 @@ constexpr Type mag2db(Type in)
  *
  */
 namespace Random {
-	static std::random_device randomDevice;
-	static std::minstd_rand randomGenerator { randomDevice() };
+static std::random_device randomDevice;
+static std::minstd_rand randomGenerator { randomDevice() };
 } // namespace Random
 
 /**
@@ -135,42 +136,42 @@ inline float midiNoteFrequency(const int noteNumber)
  * @param hi
  * @return T
  */
-template<class T>
-constexpr T clamp( T v, T lo, T hi )
+template <class T>
+constexpr T clamp(T v, T lo, T hi)
 {
     return max(min(v, hi), lo);
 }
 
-template<int Increment = 1, class T>
+template <int Increment = 1, class T>
 inline CXX14_CONSTEXPR void incrementAll(T& only)
 {
     only += Increment;
 }
 
-template<int Increment = 1, class T, class... Args>
+template <int Increment = 1, class T, class... Args>
 inline CXX14_CONSTEXPR void incrementAll(T& first, Args&... rest)
 {
     first += Increment;
     incrementAll<Increment>(rest...);
 }
 
-template<class ValueType>
+template <class ValueType>
 constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueType leftCoeff, ValueType rightCoeff)
 {
     return left * leftCoeff + right * rightCoeff;
 }
 
-template<class Type>
+template <class Type>
 constexpr Type pi() { return static_cast<Type>(3.141592653589793238462643383279502884); };
-template<class Type>
+template <class Type>
 constexpr Type twoPi() { return pi<Type>() * 2; };
-template<class Type>
+template <class Type>
 constexpr Type piTwo() { return pi<Type>() / 2; };
-template<class Type>
+template <class Type>
 constexpr Type piFour() { return pi<Type>() / 4; };
-template<class Type>
+template <class Type>
 constexpr Type sqrtTwo() { return static_cast<Type>(1.414213562373095048801688724209698078569671875376948073176); };
-template<class Type>
+template <class Type>
 constexpr Type sqrtTwoInv() { return static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588); };
 
 /**
@@ -205,23 +206,23 @@ inline Fraction<I>::operator float() const noexcept
 template <class F>
 struct FP_traits;
 
-template <> struct FP_traits<double>
-{
+template <>
+struct FP_traits<double> {
     typedef double type;
     typedef uint64_t same_size_int;
     static_assert(sizeof(type) == sizeof(same_size_int),
-                  "Unexpected size of floating point type");
+        "Unexpected size of floating point type");
     static constexpr int e_bits = 11;
     static constexpr int m_bits = 52;
     static constexpr int e_offset = -1023;
 };
 
-template <> struct FP_traits<float>
-{
+template <>
+struct FP_traits<float> {
     typedef float type;
     typedef uint32_t same_size_int;
     static_assert(sizeof(type) == sizeof(same_size_int),
-                  "Unexpected size of floating point type");
+        "Unexpected size of floating point type");
     static constexpr int e_bits = 8;
     static constexpr int m_bits = 23;
     static constexpr int e_offset = -127;
@@ -237,7 +238,10 @@ template <class F>
 inline bool fp_sign(F x)
 {
     typedef FP_traits<F> T;
-    union { F real; typename T::same_size_int integer; } u;
+    union {
+        F real;
+        typename T::same_size_int integer;
+    } u;
     u.real = x;
     return ((u.integer >> (T::e_bits + T::m_bits)) & 1) != 0;
 }
@@ -254,7 +258,10 @@ template <class F>
 inline int fp_exponent(F x)
 {
     typedef FP_traits<F> T;
-    union { F real; typename T::same_size_int integer; } u;
+    union {
+        F real;
+        typename T::same_size_int integer;
+    } u;
     u.real = x;
     int ex = (u.integer >> T::m_bits) & ((1u << T::e_bits) - 1);
     return ex + T::e_offset;
@@ -269,10 +276,13 @@ template <class F>
 inline Fraction<uint64_t> fp_mantissa(F x)
 {
     typedef FP_traits<F> T;
-    union { F real; typename T::same_size_int integer; } u;
+    union {
+        F real;
+        typename T::same_size_int integer;
+    } u;
     u.real = x;
     Fraction<uint64_t> f;
-    f.den = uint64_t{1} << T::m_bits;
+    f.den = uint64_t { 1 } << T::m_bits;
     f.num = u.integer & (f.den - 1);
     return f;
 }
@@ -287,10 +297,11 @@ inline F fp_from_parts(bool sgn, int ex, uint64_t mant)
 {
     typedef FP_traits<F> T;
     typedef typename T::same_size_int I;
-    union { F real; I integer; } u;
-    u.integer = mant |
-        (static_cast<I>(ex - T::e_offset) << T::m_bits) |
-        (static_cast<I>(sgn) << (T::e_bits + T::m_bits));
+    union {
+        F real;
+        I integer;
+    } u;
+    u.integer = mant | (static_cast<I>(ex - T::e_offset) << T::m_bits) | (static_cast<I>(sgn) << (T::e_bits + T::m_bits));
     return u.real;
 }
 
@@ -328,3 +339,20 @@ bool isValidAudio(absl::Span<Type> span)
 
     return true;
 }
+
+class ScopedRoundingMode {
+public:
+    ScopedRoundingMode() = delete;
+    ScopedRoundingMode(int newRoundingMode)
+        : savedFloatMode(std::fegetround())
+    {
+        std::fesetround(newRoundingMode);
+    }
+    ~ScopedRoundingMode()
+    {
+        std::fesetround(savedFloatMode);
+    }
+
+private:
+    const int savedFloatMode;
+};
