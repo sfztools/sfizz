@@ -253,8 +253,18 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
 const WavetableMulti* WavetableMulti::getSilenceWavetable()
 {
     static WavetableMulti wm;
-    wm.allocateStorage(1);
-    wm.fillExtra();
+    static bool initialized { false };
+
+    if (!initialized) {
+        constexpr unsigned numTables = WavetableMulti::numTables();
+        wm.allocateStorage(1);
+        for (unsigned m = 0; m < numTables; ++m) {
+            float* ptr = const_cast<float*>(wm.getTablePointer(m));
+            *ptr = 0;
+        }
+        wm.fillExtra();
+        initialized = true;
+    }
     return &wm;
 }
 

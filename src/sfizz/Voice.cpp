@@ -241,6 +241,12 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     powerHistory.push(buffer.meanSquared());
     this->triggerDelay = absl::nullopt;
+#if 0
+    ASSERT(!hasNanInf(buffer.getConstSpan(0)));
+    ASSERT(!hasNanInf(buffer.getConstSpan(1)));
+    ASSERT(isValidAudio(buffer.getConstSpan(0)));
+    ASSERT(isValidAudio(buffer.getConstSpan(1)));
+#endif
 }
 
 void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
@@ -515,6 +521,13 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     sourcePosition = indices->back();
     floatPositionOffset = rightCoeffs->back();
+
+#if 0
+    ASSERT(!hasNanInf(buffer.getConstSpan(0)));
+    ASSERT(!hasNanInf(buffer.getConstSpan(1)));
+    ASSERT(isValidAudio(buffer.getConstSpan(0)));
+    ASSERT(isValidAudio(buffer.getConstSpan(1)));
+#endif
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
@@ -573,6 +586,13 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             }
         }
     }
+
+#if 0
+    ASSERT(!hasNanInf(buffer.getConstSpan(0)));
+    ASSERT(!hasNanInf(buffer.getConstSpan(1)));
+    ASSERT(isValidAudio(buffer.getConstSpan(0)));
+    ASSERT(isValidAudio(buffer.getConstSpan(1)));
+#endif
 }
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept

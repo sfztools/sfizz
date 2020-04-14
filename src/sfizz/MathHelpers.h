@@ -11,6 +11,7 @@
 #pragma once
 #include "Config.h"
 #include "Macros.h"
+#include "absl/types/span.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -291,4 +292,39 @@ inline F fp_from_parts(bool sgn, int ex, uint64_t mant)
         (static_cast<I>(ex - T::e_offset) << T::m_bits) |
         (static_cast<I>(sgn) << (T::e_bits + T::m_bits));
     return u.real;
+}
+
+template <class F>
+inline bool fp_naninf(F x)
+{
+    typedef FP_traits<F> T;
+    typedef typename T::same_size_int I;
+    union {
+        F real;
+        I integer;
+    } u;
+    u.real = x;
+    const auto all_ones = ((1u << T::e_bits) - 1);
+    const auto ex = (u.integer >> T::m_bits) & all_ones;
+    return ex == all_ones;
+}
+
+template <class Type>
+bool hasNanInf(absl::Span<Type> span)
+{
+    for (const auto& x : span)
+        if (fp_naninf(x))
+            return true;
+
+    return false;
+}
+
+template <class Type>
+bool isValidAudio(absl::Span<Type> span)
+{
+    for (const auto& x : span)
+        if (x < -1.0f || x > 1.0f)
+            return false;
+
+    return true;
 }
