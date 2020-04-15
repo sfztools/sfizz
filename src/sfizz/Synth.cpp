@@ -1028,8 +1028,9 @@ fs::file_time_type sfz::Synth::checkModificationTime()
 {
     auto returnedTime = modificationTime;
     for (const auto& file: parser.getIncludedFiles()) {
-        const auto fileTime = fs::last_write_time(file);
-        if (returnedTime < fileTime)
+        std::error_code ec;
+        const auto fileTime = fs::last_write_time(file, ec);
+        if (!ec && returnedTime < fileTime)
             returnedTime = fileTime;
     }
     return returnedTime;
