@@ -317,11 +317,11 @@ public:
     void clearExternalDefinitions();
 
     /**
-     * @brief Get the note labels, if any
+     * @brief Get the key labels, if any
      * @since 0.4.0-dev
      *
      */
-    const std::vector<std::pair<uint8_t, std::string>>& getNoteLabels() const noexcept;
+    const std::vector<std::pair<uint8_t, std::string>>& getKeyLabels() const noexcept;
     /**
      * @brief Get the CC labels, if any
      * @since 0.4.0-dev

@@ -221,9 +221,9 @@ void sfz::Sfizz::clearExternalDefinitions()
     synth->getParser().clearExternalDefinitions();
 }
 
-const std::vector<std::pair<uint8_t, std::string>>& sfz::Sfizz::getNoteLabels() const noexcept
+const std::vector<std::pair<uint8_t, std::string>>& sfz::Sfizz::getKeyLabels() const noexcept
 {
-    return synth->getNoteLabels();
+    return synth->getKeyLabels();
 }
 
 const std::vector<std::pair<uint16_t, std::string>>& sfz::Sfizz::getCCLabels() const noexcept

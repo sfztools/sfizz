@@ -144,7 +144,7 @@ void sfz::Synth::clear()
     defaultPath = "";
     resources.midiState.reset();
     ccLabels.clear();
-    noteLabels.clear();
+    keyLabels.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
@@ -212,9 +212,9 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
                 ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
             break;
-        case hash("label_note&"):
+        case hash("label_key&"):
             if (Default::keyRange.containsWithEnd(member.parameters.back()))
-                noteLabels.emplace_back(member.parameters.back(), std::string(member.value));
+                keyLabels.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
             // fallthrough
@@ -891,7 +891,7 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     {
         pugi::xml_node nnl = device.append_child("NoteNameList");
         nnl.append_attribute("Name").set_value("Notes");
-        for (const auto& pair : noteLabels) {
+        for (const auto& pair : keyLabels) {
             pugi::xml_node nn = nnl.append_child("Note");
             nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             nn.append_attribute("Name").set_value(pair.second.c_str());

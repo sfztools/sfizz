@@ -568,13 +568,13 @@ TEST_CASE("[Files] Labels")
 {
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/labels.sfz");
-    auto noteLabels = synth.getNoteLabels();
+    auto keyLabels = synth.getKeyLabels();
     auto ccLabels = synth.getCCLabels();
-    REQUIRE( noteLabels.size() == 2);
-    REQUIRE( noteLabels[0].first == 12 );
-    REQUIRE( noteLabels[0].second == "Cymbals" );
-    REQUIRE( noteLabels[1].first == 65 );
-    REQUIRE( noteLabels[1].second == "Crash" );
+    REQUIRE( keyLabels.size() == 2);
+    REQUIRE( keyLabels[0].first == 12 );
+    REQUIRE( keyLabels[0].second == "Cymbals" );
+    REQUIRE( keyLabels[1].first == 65 );
+    REQUIRE( keyLabels[1].second == "Crash" );
     REQUIRE( ccLabels.size() == 2);
     REQUIRE( ccLabels[0].first == 54 );
     REQUIRE( ccLabels[0].second == "Gain" );

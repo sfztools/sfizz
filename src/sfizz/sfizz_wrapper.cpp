@@ -269,20 +269,20 @@ void sfizz_clear_external_definitions(sfizz_synth_t* synth)
     self->getParser().clearExternalDefinitions();
 }
 
-unsigned int sfizz_get_num_note_labels(sfizz_synth_t* synth)
+unsigned int sfizz_get_num_key_labels(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    return self->getNoteLabels().size();
+    return self->getKeyLabels().size();
 }
 
-int sfizz_get_note_label_number(sfizz_synth_t* synth, int label_index)
+int sfizz_get_key_label_number(sfizz_synth_t* synth, int label_index)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    const auto noteLabels = self->getNoteLabels();
+    const auto keyLabels = self->getKeyLabels();
     if (label_index < 0)
         return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
 
-    if (static_cast<unsigned int>(label_index) >= noteLabels.size())
+    if (static_cast<unsigned int>(label_index) >= keyLabels.size())
         return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
 
     // Sanity checks for the future or platforms
@@ -290,20 +290,20 @@ int sfizz_get_note_label_number(sfizz_synth_t* synth, int label_index)
         std::numeric_limits<sfz::NoteNamePair::first_type>::max() < std::numeric_limits<int>::max(),
         "The C API sends back an int but the note index in NoteNamePair can overflow it on this platform"
     );
-    return static_cast<int>(noteLabels[label_index].first);
+    return static_cast<int>(keyLabels[label_index].first);
 }
 
-const char * sfizz_get_note_label_text(sfizz_synth_t* synth, int label_index)
+const char * sfizz_get_key_label_text(sfizz_synth_t* synth, int label_index)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
-    const auto noteLabels = self->getNoteLabels();
+    const auto keyLabels = self->getKeyLabels();
     if (label_index < 0)
         return NULL;
 
-    if (static_cast<unsigned int>(label_index) >= noteLabels.size())
+    if (static_cast<unsigned int>(label_index) >= keyLabels.size())
         return NULL;
 
-    return noteLabels[label_index].second.c_str();
+    return keyLabels[label_index].second.c_str();
 }
 
 unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth)

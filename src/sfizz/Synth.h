@@ -389,11 +389,11 @@ public:
     const Parser& getParser() const noexcept { return parser; }
 
     /**
-     * @brief Get the note labels, if any
+     * @brief Get the key labels, if any
      *
      * @return const std::vector<NoteNamePair>&
      */
-    const std::vector<NoteNamePair>& getNoteLabels() const noexcept { return noteLabels; }
+    const std::vector<NoteNamePair>& getKeyLabels() const noexcept { return keyLabels; }
     /**
      * @brief Get the CC labels, if any
      *
@@ -508,9 +508,9 @@ private:
      */
     Voice* findFreeVoice() noexcept;
 
-    // Names for the CC and notes as set by label_cc and label_note
+    // Names for the CC and notes as set by label_cc and label_key
     std::vector<CCNamePair> ccLabels;
-    std::vector<NoteNamePair> noteLabels;
+    std::vector<NoteNamePair> keyLabels;
 
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;
