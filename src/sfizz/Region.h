@@ -14,6 +14,7 @@
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
+#include "FileId.h"
 #include "absl/types/optional.h"
 #include <bitset>
 #include <string>
@@ -57,7 +58,7 @@ struct Region {
      * @return true
      * @return false
      */
-    bool isGenerator() const noexcept { return sample.size() > 0 ? sample[0] == '*' : false; }
+    bool isGenerator() const noexcept { return sampleId.filename.size() > 0 ? sampleId.filename[0] == '*' : false; }
     /**
      * @brief Is stereo (has stereo sample or is unison oscillator)?
      *
@@ -227,7 +228,7 @@ struct Region {
     float getGainToEffectBus(unsigned number) const noexcept;
 
     // Sound source: sample playback
-    std::string sample {}; // Sample
+    FileId sampleId {}; // Sample
     float delay { Default::delay }; // delay
     float delayRandom { Default::delayRandom }; // delay_random
     int64_t offset { Default::offset }; // offset

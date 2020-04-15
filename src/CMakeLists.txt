@@ -5,6 +5,7 @@ add_subdirectory(external/cpuid)
 
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
+    sfizz/FileId.cpp
     sfizz/FilePool.cpp
     sfizz/FilterPool.cpp
     sfizz/EQPool.cpp

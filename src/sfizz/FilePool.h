@@ -30,6 +30,7 @@
 #include "RTSemaphore.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
+#include "FileId.h"
 #include "SIMDHelpers.h"
 #include "ghc/fs_std.hpp"
 #include <absl/container/flat_hash_map.h>
@@ -43,7 +44,6 @@
 
 namespace sfz {
 using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
-
 
 struct FileInformation {
     uint32_t end { Default::sampleEndRange.getEnd() };
@@ -76,7 +76,7 @@ struct FilePromise
     {
         fileData.reset();
         preloadedData.reset();
-        filename = "";
+        fileId = FileId {};
         availableFrames = 0;
         dataStatus = DataStatus::Wait;
         oversamplingFactor = config::defaultOversamplingFactor;
@@ -95,7 +95,7 @@ struct FilePromise
         Error,
     };
 
-    absl::string_view filename {};
+    FileId fileId {};
     AudioBufferPtr preloadedData {};
     AudioBuffer<float> fileData {};
     float sampleRate { config::defaultSampleRate };
@@ -155,30 +155,30 @@ public:
     /**
      * @brief Get metadata information about a file.
      *
-     * @param filename
+     * @param fileId
      * @return absl::optional<FileInformation>
      */
-    absl::optional<FileInformation> getFileInformation(const std::string& filename) noexcept;
+    absl::optional<FileInformation> getFileInformation(const FileId& fileId) noexcept;
 
     /**
      * @brief Preload a file with the proper offset bounds
      *
-     * @param filename
-     * @param offset the maximum offset to consider for preloading. The total preloaded
+     * @param fileId
+     * @param maxOffset the maximum offset to consider for preloading. The total preloaded
      *                  size will be preloadSize + offset
      * @return true if the preloading went fine
      * @return false if something went wrong ()
      */
-    bool preloadFile(const std::string& filename, uint32_t maxOffset) noexcept;
+    bool preloadFile(const FileId& fileId, uint32_t maxOffset) noexcept;
 
     /**
      * @brief Load a file and return its information. The file pool will store this
      * data for future requests so use this function responsibly.
      *
-     * @param filename
+     * @param fileId
      * @return A handle on the file data
      */
-    absl::optional<sfz::FileDataHandle> loadFile(const std::string& filename) noexcept;
+    absl::optional<sfz::FileDataHandle> loadFile(const FileId& fileId) noexcept;
 
     /**
      * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
@@ -204,10 +204,10 @@ public:
     /**
      * @brief Get a file promise
      *
-     * @param filename the file to preload
+     * @param fileId the file to preload
      * @return FilePromisePtr a file promise
      */
-    FilePromisePtr getFilePromise(const std::string& filename) noexcept;
+    FilePromisePtr getFilePromise(const FileId& fileId) noexcept;
     /**
      * @brief Change the preloading size. This will trigger a full
      * reload of all samples, so don't call it on the audio thread.
@@ -270,8 +270,8 @@ private:
     std::mutex promiseGuard;
 
     // Preloaded data
-    absl::flat_hash_map<absl::string_view, FileDataHandle> preloadedFiles;
-    absl::flat_hash_map<absl::string_view, FileDataHandle> loadedFiles;
+    absl::flat_hash_map<FileId, FileDataHandle> preloadedFiles;
+    absl::flat_hash_map<FileId, FileDataHandle> loadedFiles;
     std::vector<std::thread> threadPool { };
     LEAK_DETECTOR(FilePool);
 };

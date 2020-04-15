@@ -40,7 +40,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     if (region->isGenerator()) {
         const WavetableMulti* wave = nullptr;
-        switch (hash(region->sample)) {
+        switch (hash(region->sampleId.filename)) {
         default:
         case hash("*silence"):
             break;
@@ -64,14 +64,14 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
         }
         setupOscillatorUnison();
     } else if (region->oscillator) {
-        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sample);
+        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sampleId.filename);
         for (WavetableOscillator& osc : waveOscillators) {
             osc.setWavetable(wave);
             osc.setPhase(region->getPhase());
         }
         setupOscillatorUnison();
     } else {
-        currentPromise = resources.filePool.getFilePromise(region->sample);
+        currentPromise = resources.filePool.getFilePromise(region->sampleId);
         if (currentPromise == nullptr) {
             reset();
             return;
@@ -483,7 +483,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
                         << region->trueSampleEnd(currentPromise->oversamplingFactor)
-                        << " for sample " << region->sample);
+                        << " for sample " << region->sampleId);
                 }
                 fill<int>(indices->last(remainingElements), sampleEnd);
                 fill<float>(leftCoeffs->last(remainingElements), 0.0f);
@@ -529,7 +529,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
-    if (region->sample == "*noise") {
+    if (region->sampleId.filename == "*noise") {
         absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
     } else {

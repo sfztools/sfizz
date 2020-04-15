@@ -42,10 +42,13 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
                 break;
 
             if (trimmedSample[0] == '*')
-                sample = std::string(trimmedSample);
+                sampleId.filename = std::string(trimmedSample);
             else
-                sample = absl::StrCat(defaultPath, absl::StrReplaceAll(trimmedSample, { { "\\", "/" } }));
+                sampleId.filename = absl::StrCat(defaultPath, absl::StrReplaceAll(trimmedSample, { { "\\", "/" } }));
         }
+        break;
+    case hash("direction"):
+        sampleId.reverse = opcode.value == "reverse";
         break;
     case hash("delay"):
         setValueFromOpcode(opcode, delay, Default::delayRange);
