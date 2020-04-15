@@ -259,6 +259,7 @@ struct Region {
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
+    absl::optional<std::string> keyswitchLabel {};
     absl::optional<uint8_t> keyswitchUp {}; // sw_up
     absl::optional<uint8_t> keyswitchDown {}; // sw_down
     absl::optional<uint8_t> previousNote {}; // sw_previous
