@@ -511,6 +511,7 @@ private:
     // Names for the CC and notes as set by label_cc and label_key
     std::vector<CCNamePair> ccLabels;
     std::vector<NoteNamePair> keyLabels;
+    std::vector<NoteNamePair> keyswitchLabels;
 
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;

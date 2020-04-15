@@ -396,6 +396,10 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             }
         }
 
+        if (region->keyswitchLabel && region->keyswitch)
+            keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
+
+
         // Some regions had group number but no "group-level" opcodes handled the polyphony
         while (groupMaxPolyphony.size() <= region->group)
             groupMaxPolyphony.push_back(config::maxVoices);
@@ -891,6 +895,11 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     {
         pugi::xml_node nnl = device.append_child("NoteNameList");
         nnl.append_attribute("Name").set_value("Notes");
+        for (const auto& pair : keyswitchLabels) {
+            pugi::xml_node nn = nnl.append_child("Note");
+            nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
+            nn.append_attribute("Name").set_value(pair.second.c_str());
+        }
         for (const auto& pair : keyLabels) {
             pugi::xml_node nn = nnl.append_child("Note");
             nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
