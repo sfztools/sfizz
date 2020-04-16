@@ -23,6 +23,15 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.sample == "dummy.wav");
     }
 
+    SECTION("direction")
+    {
+        REQUIRE(!region.sampleId.reverse);
+        region.parseOpcode({ "direction", "reverse" });
+        REQUIRE(region.sampleId.reverse);
+        region.parseOpcode({ "direction", "forward" });
+        REQUIRE(!region.sampleId.reverse);
+    }
+
     SECTION("delay")
     {
         REQUIRE(region.delay == 0.0);
