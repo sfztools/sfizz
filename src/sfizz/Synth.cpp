@@ -374,7 +374,13 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 region->hasStereoSample = true;
 
             // TODO: adjust with LFO targets
-            const auto maxOffset = region->offset + region->offsetRandom;
+            const auto maxOffset = [region]() {
+                uint64_t sumOffsetCC = region->offset + region->offsetRandom;
+                for (const auto& offsets: region->offsetCC)
+                    sumOffsetCC += offsets.data;
+                return Default::offsetCCRange.clamp(sumOffsetCC);
+            }();
+
             if (!resources.filePool.preloadFile(region->sample, maxOffset))
                 removeCurrentRegion();
         }
