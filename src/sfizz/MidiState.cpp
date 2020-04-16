@@ -155,7 +155,7 @@ void sfz::MidiState::resetAllControllers(int delay) noexcept
 
 const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept
 {
-    if (ccIdx < 0 || ccIdx > config::numCCs)
+    if (ccIdx < 0 || ccIdx >= config::numCCs)
         return nullEvent;
 
     return cc[ccIdx];
