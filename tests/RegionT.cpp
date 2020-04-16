@@ -18,9 +18,9 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("sample")
     {
-        REQUIRE(region.sample == "");
+        REQUIRE(region.sampleId.filename == "");
         region.parseOpcode({ "sample", "dummy.wav" });
-        REQUIRE(region.sample == "dummy.wav");
+        REQUIRE(region.sampleId.filename == "dummy.wav");
     }
 
     SECTION("direction")
