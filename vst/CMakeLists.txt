@@ -106,5 +106,6 @@ endif()
 # Installation
 if (NOT MSVC)
     install (DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
-        DESTINATION "${VSTPLUGIN_INSTALL_DIR}")
+        DESTINATION "${VSTPLUGIN_INSTALL_DIR}"
+        COMPONENT "vst")
 endif()
