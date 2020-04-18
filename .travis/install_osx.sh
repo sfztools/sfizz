@@ -6,3 +6,4 @@ sudo ln -s /usr/local /opt/local
 brew update
 brew upgrade cmake
 brew install jack
+brew install dylibbundler

@@ -8,13 +8,13 @@ else
   . .travis/no_container.sh
 fi
 
-# Do not prepare a tarball without a tag
-if [[ ${TRAVIS_TAG} == "" ]]; then
-  exit 0
-fi
-
 cd build
 buildenv make DESTDIR=${PWD}/${INSTALL_DIR} install
 tar -zcvf "${INSTALL_DIR}.tar.gz" ${INSTALL_DIR}
-mv "${INSTALL_DIR}.tar.gz" ${TRAVIS_BUILD_DIR}
+
+# Only release a tarball if there is a tag
+if [[ ${TRAVIS_TAG} != "" ]]; then
+  mv "${INSTALL_DIR}.tar.gz" ${TRAVIS_BUILD_DIR}
+fi
+
 cd ..
