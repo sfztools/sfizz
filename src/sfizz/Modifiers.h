@@ -31,10 +31,25 @@ public:
 };
 
 template <class T>
-class ModifierArray : public std::array<T, (size_t)Mod::sentinel> {
+class ModifierArray {
 public:
-    T& operator[](sfz::Mod idx) { return this->std::array<T, (size_t)Mod::sentinel>::operator[](static_cast<size_t>(idx)); }
-    const T& operator[](sfz::Mod idx) const { return this->std::array<T, (size_t)Mod::sentinel>::operator[](static_cast<size_t>(idx)); }
+    using ContainerType = typename std::array<T, (size_t)Mod::sentinel>;
+    using iterator = typename ContainerType::iterator;
+    using const_iterator = typename ContainerType::const_iterator;
+    ModifierArray() = default;
+    ModifierArray(T val)
+    {
+        std::fill(underlying.begin(), underlying.end(), val);
+    }
+    ModifierArray(std::array<T, (size_t)Mod::sentinel>&& array) : underlying(array) {}
+    T& operator[](sfz::Mod idx) { return underlying.operator[](static_cast<size_t>(idx)); }
+    const T& operator[](sfz::Mod idx) const { return underlying.operator[](static_cast<size_t>(idx)); }
+    iterator begin() { return underlying.begin(); }
+    iterator end() { return underlying.end(); }
+    const_iterator begin() const { return underlying.begin(); }
+    const_iterator end() const { return underlying.end(); }
+private:
+    ContainerType underlying {};
 };
 
 /**
@@ -42,7 +57,7 @@ public:
  * Should fail at compile time if you update the modifiers but not this.
  *
  */
-static const ModifierArray<Mod> allModifiers = {{
+static const ModifierArray<Mod> allModifiers {{
     Mod::amplitude,
     Mod::pan,
     Mod::width,

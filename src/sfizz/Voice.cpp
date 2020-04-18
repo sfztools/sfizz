@@ -845,8 +845,7 @@ void sfz::Voice::resetSmoothers() noexcept
     for (auto& mod : allModifiers) {
         const auto resetValue = [mod] {
             switch (mod) {
-            case Mod::volume:
-                return 1.0f;
+            case Mod::volume: // fallthrough
             case Mod::pitch:
                 return 1.0f;
             default:
