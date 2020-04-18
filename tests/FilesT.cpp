@@ -580,4 +580,9 @@ TEST_CASE("[Files] Labels")
     REQUIRE( ccLabels[0].second == "Gain" );
     REQUIRE( ccLabels[1].first == 2 );
     REQUIRE( ccLabels[1].second == "Other" );
+    const std::string xmlMidnam = synth.exportMidnam();
+    REQUIRE(xmlMidnam.find("<Note Number=\"12\" Name=\"Cymbals\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Note Number=\"65\" Name=\"Crash\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"54\" Name=\"Gain\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"2\" Name=\"Other\" />") != xmlMidnam.npos);
 }
