@@ -350,7 +350,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         auto region = currentRegion->get();
 
         if (!region->oscillator && !region->isGenerator()) {
-            if (!resources.filePool.checkSample(region->sampleId.filename)) {
+            if (!resources.filePool.checkSampleId(region->sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
@@ -391,12 +391,12 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 removeCurrentRegion();
         }
         else if (region->oscillator && !region->isGenerator()) {
-            if (!resources.filePool.checkSample(region->sampleId.filename)) {
+            if (!resources.filePool.checkSampleId(region->sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            if (!resources.wavePool.createFileWave(resources.filePool, region->sampleId.filename)) {
+            if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId.filename()))) {
                 removeCurrentRegion();
                 continue;
             }

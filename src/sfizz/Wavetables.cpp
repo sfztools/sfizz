@@ -365,7 +365,7 @@ bool WavetablePool::createFileWave(FilePool& filePool, const std::string& filena
     if (_fileWaves.contains(filename))
         return true;
 
-    auto fileHandle = filePool.loadFile(filename);
+    auto fileHandle = filePool.loadFile(FileId(filename));
     if (!fileHandle)
         return false;
 

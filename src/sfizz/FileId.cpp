@@ -10,15 +10,17 @@
 
 size_t std::hash<sfz::FileId>::operator()(const sfz::FileId &id) const
 {
-    uint64_t h = ::hash(id.filename);
-    h = ::hash(id.reverse ? "!" : "", h);
+    uint64_t h = ::hash(id.filename());
+    h = ::hash(id.isReverse() ? "!" : "", h);
     return h;
 }
 
 std::ostream &operator<<(std::ostream &os, const sfz::FileId &fileId)
 {
-    os << fileId.filename;
-    if (fileId.reverse)
+    os << fileId.filename();
+    if (fileId.isReverse())
         os << " (reverse)";
     return os;
 }
+
+const std::string sfz::FileId::emptyFilename;
