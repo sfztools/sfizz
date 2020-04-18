@@ -104,6 +104,14 @@ private:
 };
 
 /**
+ * @brief Convert a note in string to its equivalent midi note number
+ *
+ * @param value
+ * @return absl::optional<uint8_t>
+ */
+absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
+
+/**
  * @brief Read a value from the sfz file and cast it to the destination parameter along
  * with a proper clamping into range if needed. This particular template version acts on
  * integral target types, but can accept floats as an input.
