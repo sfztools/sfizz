@@ -563,3 +563,36 @@ TEST_CASE("[Files] Empty file")
     REQUIRE(!synth.loadSfzFile({}));
     REQUIRE(parser.getIncludedFiles().empty());
 }
+
+TEST_CASE("[Files] Labels")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/labels.sfz");
+    auto keyLabels = synth.getKeyLabels();
+    auto ccLabels = synth.getCCLabels();
+    REQUIRE( keyLabels.size() == 2);
+    REQUIRE( keyLabels[0].first == 12 );
+    REQUIRE( keyLabels[0].second == "Cymbals" );
+    REQUIRE( keyLabels[1].first == 65 );
+    REQUIRE( keyLabels[1].second == "Crash" );
+    REQUIRE( ccLabels.size() == 2);
+    REQUIRE( ccLabels[0].first == 54 );
+    REQUIRE( ccLabels[0].second == "Gain" );
+    REQUIRE( ccLabels[1].first == 2 );
+    REQUIRE( ccLabels[1].second == "Other" );
+    const std::string xmlMidnam = synth.exportMidnam();
+    REQUIRE(xmlMidnam.find("<Note Number=\"12\" Name=\"Cymbals\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Note Number=\"65\" Name=\"Crash\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"54\" Name=\"Gain\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"2\" Name=\"Other\" />") != xmlMidnam.npos);
+}
+
+TEST_CASE("[Files] Switch labels")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/labels_sw.sfz");
+    const std::string xmlMidnam = synth.exportMidnam();
+    REQUIRE(xmlMidnam.find("<Note Number=\"36\" Name=\"Sine\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Note Number=\"38\" Name=\"Triangle\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Note Number=\"40\" Name=\"Saw\" />") != xmlMidnam.npos);
+}

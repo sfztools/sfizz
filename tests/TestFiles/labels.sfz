@@ -1,0 +1,7 @@
+<control>
+label_cc54=Gain
+label_cc2=Other
+label_key12=Cymbals
+label_key65=Crash
+label_key128=Ignored
+<region> sample=*sine

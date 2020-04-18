@@ -380,6 +380,7 @@ SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
  * @brief Add external definitions prior to loading;
  * Note that these do not get reset by loading or resetting the synth.
  * You need to call sfizz_clear_external_definitions() to erase them.
+ * @since 0.4.0-dev
  *
  * @param synth
  * @param id
@@ -389,10 +390,58 @@ SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, con
 
 /**
  * @brief Clears external definitions for the next file loading.
+ * @since 0.4.0-dev
  *
  * @param synth
  */
 SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
+
+#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX -1
+
+/**
+ * @brief Get the number of key labels registered in the current sfz file
+ * @since 0.4.0-dev
+ */
+SFIZZ_EXPORTED_API unsigned int sfizz_get_num_key_labels(sfizz_synth_t* synth);
+
+/**
+ * @brief Get the key number for the label registered at index label_index.
+ * @since 0.4.0-dev
+ *
+ * @returns the number or SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX if the index is out of bounds.
+ */
+SFIZZ_EXPORTED_API int sfizz_get_key_label_number(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @brief Get the key text for the label registered at index label_index.
+ * @since 0.4.0-dev
+ *
+ * @returns the label or NULL if the index is out of bounds.
+ */
+SFIZZ_EXPORTED_API const char * sfizz_get_key_label_text(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @brief Get the number of CC labels registered in the current sfz file
+ * @since 0.4.0-dev
+ *
+ */
+SFIZZ_EXPORTED_API unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth);
+
+/**
+ * @brief Get the CC number for the label registered at index label_index.
+ * @since 0.4.0-dev
+ *
+ * @returns the number or SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX if the index is out of bounds.
+ */
+
+SFIZZ_EXPORTED_API int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label_index);
+/**
+ * @brief Get the CC text for the label registered at index label_index.
+ * @since 0.4.0-dev
+ *
+ * @returns the label or NULL if the index is out of bounds.
+ */
+SFIZZ_EXPORTED_API const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index);
 
 #ifdef __cplusplus
 }

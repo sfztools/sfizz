@@ -21,6 +21,8 @@ namespace sfz
 {
 
 using CCNamePair = std::pair<uint16_t, std::string>;
+using NoteNamePair = std::pair<uint8_t, std::string>;
+
 template <class T>
 using MidiNoteArray = std::array<T, 128>;
 template<class ValueType>

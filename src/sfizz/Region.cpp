@@ -208,6 +208,9 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setValueFromOpcode(opcode, keyswitch, Default::keyRange);
         keySwitched = false;
         break;
+    case hash("sw_label"):
+        keyswitchLabel = opcode.value;
+        break;
     case hash("sw_down"):
         setValueFromOpcode(opcode, keyswitchDown, Default::keyRange);
         keySwitched = false;

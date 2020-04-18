@@ -295,6 +295,15 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.keyswitchRange == sfz::Range<uint8_t>(0, 0));
     }
 
+    SECTION("sw_label")
+    {
+        REQUIRE(!region.keyswitchLabel);
+        region.parseOpcode({ "sw_label", "note" });
+        REQUIRE(region.keyswitchLabel == "note");
+        region.parseOpcode({ "sw_label", "ring" });
+        REQUIRE(region.keyswitchLabel == "ring");
+    }
+
     SECTION("sw_last")
     {
         REQUIRE(!region.keyswitch);

@@ -388,6 +388,19 @@ public:
      */
     const Parser& getParser() const noexcept { return parser; }
 
+    /**
+     * @brief Get the key labels, if any
+     *
+     * @return const std::vector<NoteNamePair>&
+     */
+    const std::vector<NoteNamePair>& getKeyLabels() const noexcept { return keyLabels; }
+    /**
+     * @brief Get the CC labels, if any
+     *
+     * @return const std::vector<NoteNamePair>&
+     */
+    const std::vector<CCNamePair>& getCCLabels() const noexcept { return ccLabels; }
+
 protected:
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -494,8 +507,12 @@ private:
      * @return Voice*
      */
     Voice* findFreeVoice() noexcept;
-    // Names for the cc as set by the label_cc opcode
-    std::vector<CCNamePair> ccNames;
+
+    // Names for the CC and notes as set by label_cc and label_key
+    std::vector<CCNamePair> ccLabels;
+    std::vector<NoteNamePair> keyLabels;
+    std::vector<NoteNamePair> keyswitchLabels;
+
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;
     std::vector<std::string> unknownOpcodes;

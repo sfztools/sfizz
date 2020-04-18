@@ -142,7 +142,9 @@ void sfz::Synth::clear()
     numMasters = 0;
     defaultSwitch = absl::nullopt;
     defaultPath = "";
-    ccNames.clear();
+    resources.midiState.reset();
+    ccLabels.clear();
+    keyLabels.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
@@ -208,7 +210,11 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("Label_cc&"): // fallthrough
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                ccNames.emplace_back(member.parameters.back(), std::string(member.value));
+                ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
+            break;
+        case hash("label_key&"):
+            if (Default::keyRange.containsWithEnd(member.parameters.back()))
+                keyLabels.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("Default_path"):
             // fallthrough
@@ -395,6 +401,10 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 continue;
             }
         }
+
+        if (region->keyswitchLabel && region->keyswitch)
+            keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
+
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
         while (groupMaxPolyphony.size() <= region->group)
@@ -872,16 +882,34 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         chns.append_child("UsesControlNameList")
             .append_attribute("Name")
             .set_value("Controls");
+        chns.append_child("UsesNoteNameList")
+            .append_attribute("Name")
+            .set_value("Notes");
     }
 
     {
         pugi::xml_node cns = device.append_child("ControlNameList");
         cns.append_attribute("Name").set_value("Controls");
-        for (const CCNamePair& pair : ccNames) {
+        for (const auto& pair : ccLabels) {
             pugi::xml_node cn = cns.append_child("Control");
             cn.append_attribute("Type").set_value("7bit");
             cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             cn.append_attribute("Name").set_value(pair.second.c_str());
+        }
+    }
+
+    {
+        pugi::xml_node nnl = device.append_child("NoteNameList");
+        nnl.append_attribute("Name").set_value("Notes");
+        for (const auto& pair : keyswitchLabels) {
+            pugi::xml_node nn = nnl.append_child("Note");
+            nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
+            nn.append_attribute("Name").set_value(pair.second.c_str());
+        }
+        for (const auto& pair : keyLabels) {
+            pugi::xml_node nn = nnl.append_child("Note");
+            nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
+            nn.append_attribute("Name").set_value(pair.second.c_str());
         }
     }
 

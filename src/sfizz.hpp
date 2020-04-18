@@ -10,6 +10,7 @@
 */
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
 
@@ -287,7 +288,8 @@ public:
     void setLoggingPrefix(const std::string& prefix) noexcept;
 
     /**
-     * @brief Disable logging.
+     * @brief
+     *
      */
     void disableLogging() noexcept;
 
@@ -300,6 +302,7 @@ public:
      * @brief Add external definitions prior to loading;
      * Note that these do not get reset by loading or resetting the synth.
      * You need to call clearExternalDefintions() to erase them.
+     * @since 0.4.0-dev
      *
      * @param id
      * @param value
@@ -308,10 +311,23 @@ public:
 
     /**
      * @brief Clears external definitions for the next file loading.
+     * @since 0.4.0-dev
      *
      */
     void clearExternalDefinitions();
 
+    /**
+     * @brief Get the key labels, if any
+     * @since 0.4.0-dev
+     *
+     */
+    const std::vector<std::pair<uint8_t, std::string>>& getKeyLabels() const noexcept;
+    /**
+     * @brief Get the CC labels, if any
+     * @since 0.4.0-dev
+     *
+     */
+    const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
 private:
     std::unique_ptr<sfz::Synth> synth;
 };
