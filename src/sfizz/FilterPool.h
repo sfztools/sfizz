@@ -2,6 +2,7 @@
 #include "SfzFilter.h"
 #include "FilterDescription.h"
 #include "MidiState.h"
+#include "Defaults.h"
 #include <vector>
 #include <memory>
 #include <mutex>
