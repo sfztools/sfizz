@@ -333,13 +333,46 @@ private:
         const AudioSpan<const float>& source, AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs);
 
+    /**
+     * @brief Compute the amplitude envelope, applied as a gain to a mono
+     * or stereo buffer
+     *
+     * @param modulationSpan
+     */
     void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void ampStageMono(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a stereo source
+     *
+     * @param buffer
+     */
     void ampStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void panStageMono(AudioSpan<float> buffer) noexcept;
     void panStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void filterStageMono(AudioSpan<float> buffer) noexcept;
     void filterStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Compute the pitch envelope. This envelope is meant to multiply
+     * the frequency parameter for each sample (which translates to floating
+     * point intervals for sample-based voices, or phases for generators)
+     *
+     * @param pitchSpan
+     */
     void pitchEnvelope(absl::Span<float> pitchSpan) noexcept;
 
     /**
@@ -348,6 +381,14 @@ private:
      */
     void removeVoiceFromRing() noexcept;
 
+    /**
+     * @brief Helper function to iterate jointly on modifiers and smoothers
+     * for a given modulation target of type sfz::Mod
+     *
+     * @tparam F
+     * @param modId
+     * @param lambda
+     */
     template <class F>
     void forEachWithSmoother(sfz::Mod modId, F&& lambda)
     {

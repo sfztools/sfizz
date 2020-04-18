@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: BSD-2-Clause
+
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
+
 #pragma once
 #include <numeric>
 #include <array>
@@ -5,6 +11,10 @@
 
 namespace sfz {
 
+/**
+ * @brief Base modifier class
+ *
+ */
 struct Modifier {
     float value { 0.0f };
     float step { 0.0f };
@@ -23,6 +33,11 @@ enum class Mod : size_t {
     sentinel
 };
 
+/**
+ * @brief Vectors of elements indexed on modifiers with casting and iterators
+ *
+ * @tparam T
+ */
 template <class T>
 class ModifierVector : public std::vector<T> {
 public:
@@ -30,6 +45,11 @@ public:
     const T& operator[](sfz::Mod idx) const { return this->std::vector<T>::operator[](static_cast<size_t>(idx)); }
 };
 
+/**
+ * @brief Array of elements indexed on modifiers with casting and iterators
+ *
+ * @tparam T
+ */
 template <class T>
 class ModifierArray {
 public:
