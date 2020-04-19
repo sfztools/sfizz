@@ -45,6 +45,16 @@ namespace sfz
 class BufferCounter
 {
 public:
+    /**
+     * @brief      Return the buffer counter object.
+     */
+    static BufferCounter& counter() noexcept
+    {
+        static BufferCounter counter;
+        return counter;
+    }
+
+protected:
     BufferCounter() noexcept = default;
     ~BufferCounter() noexcept
     {
@@ -54,6 +64,7 @@ public:
 #endif
     }
 
+public:
     void newBuffer(int size) noexcept
     {
         numBuffers++;
@@ -164,9 +175,9 @@ public:
         }
 
         if (largerSize > 0)
-            _counter.bufferResized(largerSize * sizeof(value_type), tempSize * sizeof(value_type));
+            counter().bufferResized(largerSize * sizeof(value_type), tempSize * sizeof(value_type));
         else
-            _counter.newBuffer(tempSize * sizeof(value_type));
+            counter().newBuffer(tempSize * sizeof(value_type));
 
         largerSize = tempSize;
         alignedSize = newSize;
@@ -202,13 +213,13 @@ public:
     void clear() noexcept
     {
         if (largerSize > 0)
-            _counter.bufferDeleted(largerSize * sizeof(value_type));
+            counter().bufferDeleted(largerSize * sizeof(value_type));
         _clear();
     }
     ~Buffer() noexcept
     {
         if (largerSize > 0)
-            _counter.bufferDeleted(largerSize * sizeof(value_type));
+            counter().bufferDeleted(largerSize * sizeof(value_type));
     }
 
     /**
@@ -259,7 +270,7 @@ public:
     {
         if (this != &other) {
             if (largerSize > 0)
-                _counter.bufferDeleted(largerSize * sizeof(value_type));
+                counter().bufferDeleted(largerSize * sizeof(value_type));
             largerSize = other.largerSize;
             alignedSize = other.alignedSize;
             normalData = other.normalData;
@@ -286,7 +297,7 @@ public:
      */
     static BufferCounter& counter() noexcept
     {
-        return _counter;
+        return BufferCounter::counter();
     }
 
 private:
@@ -328,12 +339,7 @@ private:
     std::unique_ptr<value_type[], deleter> paddedData;
     pointer normalEnd { nullptr };
     pointer _alignedEnd { nullptr };
-    static BufferCounter _counter;
-
     LEAK_DETECTOR(Buffer);
 };
-
-template <class Type, unsigned int Alignment>
-BufferCounter Buffer<Type, Alignment>::_counter;
 
 }
