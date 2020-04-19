@@ -63,11 +63,12 @@ public:
     /**
      * @brief Generate a cycle of the modulator
      *
+     * @param sourceKey source key
      * @param voiceNum voice number if the generator is per-voice, otherwise undefined
      * @param buffer output buffer
      * @param numFrames number of frames to generate
      */
-    virtual void process(int32_t voiceNum, float *buffer, unsigned numFrames) = 0;
+    virtual void generateModulation(ModKey sourceKey, int32_t voiceNum, float *buffer, unsigned numFrames) = 0;
 };
 
 /**
@@ -155,6 +156,7 @@ private:
     uint32_t _voiceNum {};
 
     struct Source {
+        ModKey key;
         ModGenerator* gen {};
         std::unique_ptr<ModGenerator> genOwnerPtr;
         int32_t flags {};
@@ -163,6 +165,7 @@ private:
     };
 
     struct Target {
+        ModKey key;
         int32_t flags {};
         std::vector<uint32_t> sources;
         bool bufferReady {};

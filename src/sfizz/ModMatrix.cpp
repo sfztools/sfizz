@@ -84,6 +84,7 @@ ModMatrix::SourceId ModMatrix::registerSource(ModKey key, ModGenerator* gen, boo
     _sources.emplace_back();
 
     Source &source = _sources.back();
+    source.key = key;
     source.gen = gen;
     source.genOwnerPtr = std::move(genOwnerPtr);
     source.flags = flags;
@@ -108,6 +109,7 @@ ModMatrix::TargetId ModMatrix::registerTarget(ModKey key, int32_t flags)
     _targets.emplace_back();
 
     Target &target = _targets.back();
+    target.key = key;
     target.flags = flags;
     target.bufferReady = false;
     target.buffer.resize(_samplesPerBlock);
@@ -186,7 +188,7 @@ float* ModMatrix::getModulation(ModKey targetKey)
     // generate the first source in buffer
     if (numSources > 0) {
         Source &source = _sources[sourceIndices[0]];
-        source.gen->process(_voiceNum, buffer.data(), numFrames);
+        source.gen->generateModulation(source.key, _voiceNum, buffer.data(), numFrames);
     }
 
     // generate next sources in temporary buffer
@@ -194,7 +196,7 @@ float* ModMatrix::getModulation(ModKey targetKey)
     absl::Span<float> temp = absl::MakeSpan(_temp);
     for (uint32_t s = 1; s < numSources; ++s) {
         Source &source = _sources[sourceIndices[s]];
-        source.gen->process(_voiceNum, temp.data(), numFrames);
+        source.gen->generateModulation(source.key, _voiceNum, temp.data(), numFrames);
         if (target.flags & kModIsMultiplicative) {
             for (uint32_t i = 0; i < numFrames; ++i)
                 buffer[i] *= temp[i];
