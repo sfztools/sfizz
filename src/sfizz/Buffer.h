@@ -250,6 +250,8 @@ public:
     Buffer<Type>& operator=(Buffer<Type>&& other) noexcept
     {
         if (this != &other) {
+            if (largerSize > 0)
+                _counter.bufferDeleted(largerSize * sizeof(value_type));
             largerSize = other.largerSize;
             alignedSize = other.alignedSize;
             normalData = other.normalData;
