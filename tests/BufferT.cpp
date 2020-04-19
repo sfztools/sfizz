@@ -70,12 +70,12 @@ TEST_CASE("[Buffer] Resize 10 floats ")
 
     std::fill(buffer.begin(), buffer.end(), 1.0f);
 
-    REQUIRE(buffer.resize(smallSize));
+    REQUIRE(buffer.resize(smallSize, std::nothrow));
     checkBoundaries(buffer, smallSize);
 
     REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](float value) { return value == 1.0f; }));
 
-    REQUIRE(buffer.resize(bigSize));
+    REQUIRE(buffer.resize(bigSize, std::nothrow));
     checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
@@ -92,12 +92,12 @@ TEST_CASE("[Buffer] Resize 4096 floats ")
 
     std::fill(buffer.begin(), buffer.end(), 1.0f);
 
-    REQUIRE(buffer.resize(smallSize));
+    REQUIRE(buffer.resize(smallSize, std::nothrow));
     checkBoundaries(buffer, smallSize);
 
     REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](float value) { return value == 1.0f; }));
 
-    REQUIRE(buffer.resize(bigSize));
+    REQUIRE(buffer.resize(bigSize, std::nothrow));
     checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
@@ -114,12 +114,12 @@ TEST_CASE("[Buffer] Resize 65536 floats ")
 
     std::fill(buffer.begin(), buffer.end(), 1.0f);
 
-    REQUIRE(buffer.resize(smallSize));
+    REQUIRE(buffer.resize(smallSize, std::nothrow));
     checkBoundaries(buffer, smallSize);
 
     REQUIRE(std::all_of(buffer.begin(), buffer.end(), [](float value) { return value == 1.0f; }));
 
-    REQUIRE(buffer.resize(bigSize));
+    REQUIRE(buffer.resize(bigSize, std::nothrow));
     checkBoundaries(buffer, bigSize);
     for (auto i = 0; i < smallSize; ++i)
         REQUIRE(buffer[i] == 1.0f);
@@ -140,8 +140,8 @@ TEST_CASE("[Buffer] Copy and move")
     checkBoundaries(copyConstructed, baseSize);
     REQUIRE(std::all_of(copyConstructed.begin(), copyConstructed.end(), [](float value) { return value == 1.0f; }));
 
-    // sfz::Buffer<float> moveConstructed { std::move(buffer) };
-    // REQUIRE(buffer.empty());
-    // checkBoundaries(moveConstructed, baseSize);
-    // REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](auto value) { return value == 1.0f; }));
+    sfz::Buffer<float> moveConstructed { std::move(buffer) };
+    REQUIRE(buffer.empty());
+    checkBoundaries(moveConstructed, baseSize);
+    REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](float value) { return value == 1.0f; }));
 }

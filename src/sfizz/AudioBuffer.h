@@ -64,17 +64,30 @@ public:
      * @return true if the resize worked
      * @return false otherwise
      */
-    bool resize(size_t newSize)
+    bool resize(size_t newSize, std::nothrow_t) noexcept
     {
         bool returnedOK = true;
 
         for (size_t i = 0; i < numChannels; ++i)
-            returnedOK &= buffers[i]->resize(newSize);
+            returnedOK &= buffers[i]->resize(newSize, std::nothrow);
 
         if (returnedOK)
             numFrames = newSize;
 
         return returnedOK;
+    }
+
+    /**
+     * @brief Resizes all the underlying buffers to a new size.
+     *
+     * @param newSize
+     */
+    void resize(size_t newSize)
+    {
+        for (size_t i = 0; i < numChannels; ++i)
+            buffers[i]->resize(newSize);
+
+        numFrames = newSize;
     }
 
     /**
