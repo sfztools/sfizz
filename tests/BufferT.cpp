@@ -150,47 +150,54 @@ TEST_CASE("[Buffer] Buffer counter")
 {
     sfz::BufferCounter& counter = sfz::Buffer<float>::counter();
 
-    REQUIRE(counter.getNumBuffers() == 0);
-    REQUIRE(counter.getTotalBytes() == 0);
+    // handle the eventuality that the buffer counter does not start at zero
+    const int initialNumBuffers = counter.getNumBuffers();
+    const int initialTotalBytes = counter.getTotalBytes();
+    auto haveNumBuffers = [&](int n) -> bool {
+        return n == counter.getNumBuffers() - initialNumBuffers;
+    };
+    auto haveTotalAllocation = [&](int n) -> bool {
+        return n * static_cast<int>(sizeof(float)) == counter.getTotalBytes() - initialTotalBytes;
+    };
 
     // create an empty buffer
     sfz::Buffer<float> b1;
-    REQUIRE(counter.getNumBuffers() == 0);
-    REQUIRE(counter.getTotalBytes() == 0);
+    REQUIRE(haveNumBuffers(0));
+    REQUIRE(haveTotalAllocation(0));
 
     // clear an empty buffer
     b1.clear();
-    REQUIRE(counter.getNumBuffers() == 0);
-    REQUIRE(counter.getTotalBytes() == 0);
+    REQUIRE(haveNumBuffers(0));
+    REQUIRE(haveTotalAllocation(0));
 
     // create a sized buffer
     sfz::Buffer<float> b2(5);
-    REQUIRE(counter.getNumBuffers() == 1);
-    REQUIRE(counter.getTotalBytes() == (b2.allocationSize()) * sizeof(float));
+    REQUIRE(haveNumBuffers(1));
+    REQUIRE(haveTotalAllocation(b2.allocationSize()));
 
     // resize an empty buffer
     b1.resize(3);
-    REQUIRE(counter.getNumBuffers() == 2);
-    REQUIRE(counter.getTotalBytes() == (b1.allocationSize() + b2.allocationSize()) * sizeof(float));
+    REQUIRE(haveNumBuffers(2));
+    REQUIRE(haveTotalAllocation(b1.allocationSize() + b2.allocationSize()));
 
     // resize a non-empty buffer
     b1.resize(7);
-    REQUIRE(counter.getNumBuffers() == 2);
-    REQUIRE(counter.getTotalBytes() == (b1.allocationSize() + b2.allocationSize()) * sizeof(float));
+    REQUIRE(haveNumBuffers(2));
+    REQUIRE(haveTotalAllocation(b1.allocationSize() + b2.allocationSize()));
 
     // clear a non-empty buffer
     b2.clear();
-    REQUIRE(counter.getNumBuffers() == 1);
-    REQUIRE(counter.getTotalBytes() == (b1.allocationSize()) * sizeof(float));
+    REQUIRE(haveNumBuffers(1));
+    REQUIRE(haveTotalAllocation(b1.allocationSize()));
 
     // move an empty buffer into a non-empty one
     b1 = std::move(b2);
-    REQUIRE(counter.getNumBuffers() == 0);
-    REQUIRE(counter.getTotalBytes() == 0);
+    REQUIRE(haveNumBuffers(0));
+    REQUIRE(haveTotalAllocation(0));
 
     // move a non-empty buffer into an empty one
     b1.resize(3);
     b2 = std::move(b1);
-    REQUIRE(counter.getNumBuffers() == 1);
-    REQUIRE(counter.getTotalBytes() == (b2.allocationSize()) * sizeof(float));
+    REQUIRE(haveNumBuffers(1));
+    REQUIRE(haveTotalAllocation(b2.allocationSize()));
 }
