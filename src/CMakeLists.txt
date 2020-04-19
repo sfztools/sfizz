@@ -20,6 +20,7 @@ set (SFIZZ_SOURCES
     sfizz/SfzFilter.cpp
     sfizz/Curve.cpp
     sfizz/Wavetables.cpp
+    sfizz/ModMatrix.cpp
     sfizz/RTSemaphore.cpp
     sfizz/Effects.cpp
     sfizz/effects/Nothing.cpp
