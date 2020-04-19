@@ -145,6 +145,7 @@ void sfz::Synth::clear()
     resources.midiState.reset();
     ccLabels.clear();
     keyLabels.clear();
+    keyswitchLabels.clear();
     globalOpcodes.clear();
     masterOpcodes.clear();
     groupOpcodes.clear();
