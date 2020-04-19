@@ -212,6 +212,14 @@ public:
     }
 
     /**
+     * @brief Get the size of the larger block which is actually allocated
+     */
+    size_t allocationSize() const noexcept
+    {
+        return largerSize;
+    }
+
+    /**
      * @brief Construct a new Buffer object from an existing one
      *
      * @param other

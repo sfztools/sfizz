@@ -145,3 +145,52 @@ TEST_CASE("[Buffer] Copy and move")
     checkBoundaries(moveConstructed, baseSize);
     REQUIRE(std::all_of(moveConstructed.begin(), moveConstructed.end(), [](float value) { return value == 1.0f; }));
 }
+
+TEST_CASE("[Buffer] Buffer counter")
+{
+    sfz::BufferCounter& counter = sfz::Buffer<float>::counter();
+
+    REQUIRE(counter.getNumBuffers() == 0);
+    REQUIRE(counter.getTotalBytes() == 0);
+
+    // create an empty buffer
+    sfz::Buffer<float> b1;
+    REQUIRE(counter.getNumBuffers() == 0);
+    REQUIRE(counter.getTotalBytes() == 0);
+
+    // clear an empty buffer
+    b1.clear();
+    REQUIRE(counter.getNumBuffers() == 0);
+    REQUIRE(counter.getTotalBytes() == 0);
+
+    // create a sized buffer
+    sfz::Buffer<float> b2(5);
+    REQUIRE(counter.getNumBuffers() == 1);
+    REQUIRE(counter.getTotalBytes() == (b2.allocationSize()) * sizeof(float));
+
+    // resize an empty buffer
+    b1.resize(3);
+    REQUIRE(counter.getNumBuffers() == 2);
+    REQUIRE(counter.getTotalBytes() == (b1.allocationSize() + b2.allocationSize()) * sizeof(float));
+
+    // resize a non-empty buffer
+    b1.resize(7);
+    REQUIRE(counter.getNumBuffers() == 2);
+    REQUIRE(counter.getTotalBytes() == (b1.allocationSize() + b2.allocationSize()) * sizeof(float));
+
+    // clear a non-empty buffer
+    b2.clear();
+    REQUIRE(counter.getNumBuffers() == 1);
+    REQUIRE(counter.getTotalBytes() == (b1.allocationSize()) * sizeof(float));
+
+    // move an empty buffer into a non-empty one
+    b1 = std::move(b2);
+    REQUIRE(counter.getNumBuffers() == 0);
+    REQUIRE(counter.getTotalBytes() == 0);
+
+    // move a non-empty buffer into an empty one
+    b1.resize(3);
+    b2 = std::move(b1);
+    REQUIRE(counter.getNumBuffers() == 1);
+    REQUIRE(counter.getTotalBytes() == (b2.allocationSize()) * sizeof(float));
+}
