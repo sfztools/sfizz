@@ -661,6 +661,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         tempSpan->fill(0.0f);
         tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
+        resources.modMatrix.beginCycle(numFrames);
 
         // Ramp out whatever is in the buffer at this point; should only be killed voice data
         linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));
@@ -670,9 +671,12 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             }
         }
 
-        for (auto& voice : voices) {
+        for (int voiceNum = 0, numVoices = voices.size(); voiceNum < numVoices; ++voiceNum) {
+            Voice* voice = voices[voiceNum].get();
             if (voice->isFree())
                 continue;
+
+            resources.modMatrix.beginVoice(voiceNum);
 
             numActiveVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);

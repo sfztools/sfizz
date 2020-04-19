@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "Wavetables.h"
 #include "Curve.h"
+#include "ModMatrix.h"
 
 namespace sfz
 {
@@ -27,6 +28,7 @@ struct Resources
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
     WavetablePool wavePool;
+    ModMatrix modMatrix;
 
     void setSampleRate(float samplerate)
     {
@@ -39,6 +41,7 @@ struct Resources
     {
         bufferPool.setBufferSize(samplesPerBlock);
         midiState.setSamplesPerBlock(samplesPerBlock);
+        modMatrix.setSamplesPerBlock(samplesPerBlock);
     }
 
     void clear()
@@ -48,6 +51,7 @@ struct Resources
         wavePool.clearFileWaves();
         logger.clear();
         midiState.reset();
+        modMatrix.clear();
     }
 };
 }

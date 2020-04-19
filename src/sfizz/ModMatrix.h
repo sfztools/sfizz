@@ -117,6 +117,20 @@ public:
     TargetId registerTarget(ModKey key, int32_t flags);
 
     /**
+     * @brief Look up a source by key.
+     *
+     * @param key source key
+     */
+    SourceId findSource(ModKey key);
+
+    /**
+     * @brief Look up a target by key.
+     *
+     * @param key target key
+     */
+    TargetId findTarget(ModKey key);
+
+    /**
      * @brief Connect a source and a destination inside the matrix.
      *
      * @param sourceId
@@ -145,9 +159,29 @@ public:
      * @brief Get the modulation buffer for the given target.
      * If the target does not exist, the result is null.
      *
-     * @param targetKey key of the modulation target
+     * @param targetId identifier of the modulation target
      */
-    float* getModulation(ModKey targetKey);
+    float* getModulation(TargetId targetId);
+
+    /**
+     * @brief Return whether the target identifier is valid.
+     *
+     * @param id
+     */
+    bool validTarget(TargetId id) const
+    {
+        return static_cast<uint32_t>(id.index) < _targets.size();
+    }
+
+    /**
+     * @brief Return whether the source identifier is valid.
+     *
+     * @param id
+     */
+    bool validSource(SourceId id) const
+    {
+        return static_cast<uint32_t>(id.index) < _sources.size();
+    }
 
 private:
     uint32_t _samplesPerBlock {};

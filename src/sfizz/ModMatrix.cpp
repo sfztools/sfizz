@@ -118,6 +118,32 @@ ModMatrix::TargetId ModMatrix::registerTarget(ModKey key, int32_t flags)
     return id;
 }
 
+ModMatrix::SourceId ModMatrix::findSource(ModKey key)
+{
+    SourceId id;
+
+    auto it = _sourceIndex.find(key);
+    if (it != _sourceIndex.end())
+        id.index = it->second;
+    else
+        id.index = -1;
+
+    return id;
+}
+
+ModMatrix::TargetId ModMatrix::findTarget(ModKey key)
+{
+    TargetId id;
+
+    auto it = _targetIndex.find(key);
+    if (it != _targetIndex.end())
+        id.index = it->second;
+    else
+        id.index = -1;
+
+    return id;
+}
+
 bool ModMatrix::connect(SourceId sourceId, TargetId targetId)
 {
     uint32_t sourceIndex = sourceId.index;
@@ -160,13 +186,12 @@ void ModMatrix::beginVoice(unsigned voiceNum)
     }
 }
 
-float* ModMatrix::getModulation(ModKey targetKey)
+float* ModMatrix::getModulation(TargetId targetId)
 {
-    auto it = _targetIndex.find(targetKey);
-    if (it == _targetIndex.end())
+    if (!validTarget(targetId))
         return nullptr;
 
-    uint32_t targetIndex = it->second;
+    const uint32_t targetIndex = targetId.index;
     Target &target = _targets[targetIndex];
 
     absl::Span<float> buffer = absl::MakeSpan(target.buffer);
@@ -183,7 +208,7 @@ float* ModMatrix::getModulation(ModKey targetKey)
     sfz::fill(buffer, 0.0f);
 
     const std::vector<uint32_t> &sourceIndices = target.sources;
-    size_t numSources = sourceIndices.size();
+    const size_t numSources = sourceIndices.size();
 
     // generate the first source in buffer
     if (numSources > 0) {

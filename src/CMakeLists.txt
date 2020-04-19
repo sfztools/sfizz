@@ -21,6 +21,7 @@ set (SFIZZ_SOURCES
     sfizz/Curve.cpp
     sfizz/Wavetables.cpp
     sfizz/ModMatrix.cpp
+    sfizz/ModMatrixHelpers.cpp
     sfizz/RTSemaphore.cpp
     sfizz/Effects.cpp
     sfizz/effects/Nothing.cpp
