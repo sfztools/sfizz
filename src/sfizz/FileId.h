@@ -6,6 +6,7 @@
 
 #pragma once
 #include <string>
+#include <memory>
 #include <iosfwd>
 
 namespace sfz {
@@ -14,9 +15,6 @@ namespace sfz {
  * @brief Sample file identifier within a file pool.
  */
 struct FileId {
-    std::string filename;
-    bool reverse = false;
-
     /**
      * @brief Construct a null identifier.
      */
@@ -30,9 +28,44 @@ struct FileId {
      * @param filename
      * @param reverse
      */
-    FileId(std::string filename, bool reverse = false)
-        : filename(std::move(filename)), reverse(reverse)
+    explicit FileId(std::string filename, bool reverse = false)
+        : filenameBuffer(new std::string(std::move(filename))),
+          reverse(reverse)
     {
+    }
+
+    /**
+     * @brief Make an identifier which is a clone of the callee, except with the
+     * reverse flag passed as parameter.
+     *
+     * @param reverse
+     */
+    FileId reversed(bool reverse = true)
+    {
+        FileId id;
+        id.filenameBuffer = filenameBuffer;
+        id.reverse = reverse;
+        return id;
+    }
+
+    /**
+     * @brief Get the file name of this identifier.
+     *
+     * @return file name
+     */
+    const std::string &filename() const noexcept
+    {
+        return filenameBuffer ? *filenameBuffer : emptyFilename;
+    }
+
+    /**
+     * @brief Get whether the identified file is reversed.
+     *
+     * @return bool
+     */
+    bool isReverse() const noexcept
+    {
+        return reverse;
     }
 
     /**
@@ -42,7 +75,7 @@ struct FileId {
      */
     bool operator==(const FileId &other) const
     {
-        return reverse == other.reverse && filename == other.filename;
+        return reverse == other.reverse && filename() == other.filename();
     }
 
     /**
@@ -54,6 +87,11 @@ struct FileId {
     {
         return !operator==(other);
     }
+
+private:
+    std::shared_ptr<std::string> filenameBuffer;
+    bool reverse = false;
+    static const std::string emptyFilename;
 };
 
 }

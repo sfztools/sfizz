@@ -190,9 +190,18 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
 #endif
 }
 
+bool sfz::FilePool::checkSampleId(FileId& fileId) const noexcept
+{
+    std::string filename = fileId.filename();
+    bool result = checkSample(filename);
+    if (result)
+        fileId = FileId(std::move(filename), fileId.isReverse());
+    return result;
+}
+
 absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const FileId& fileId) noexcept
 {
-    const fs::path file { rootDirectory / fileId.filename };
+    const fs::path file { rootDirectory / fileId.filename() };
 
     if (!fs::exists(file))
         return {};
@@ -208,7 +217,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
     returnedValue.numChannels = sndFile.channels();
 
-    if (!fileId.reverse) {
+    if (!fileId.isReverse()) {
         SF_INSTRUMENT instrumentInfo;
         sndFile.command(SFC_GET_INSTRUMENT, &instrumentInfo, sizeof(instrumentInfo));
         if (instrumentInfo.loop_count > 0) {
@@ -229,7 +238,7 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     if (!fileInformation)
         return false;
 
-    const fs::path file { rootDirectory / fileId.filename };
+    const fs::path file { rootDirectory / fileId.filename() };
     SndfileHandle sndFile(file.string().c_str());
 
     // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
@@ -244,12 +253,12 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     const auto existingFile = preloadedFiles.find(fileId);
     if (existingFile != preloadedFiles.end()) {
         if (framesToLoad > existingFile->second.preloadedData->getNumFrames()) {
-            preloadedFiles[fileId].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor, fileId.reverse);
+            preloadedFiles[fileId].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor, fileId.isReverse());
         }
     } else {
         fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate());
         FileDataHandle handle {
-            readFromFile<float>(sndFile, framesToLoad, oversamplingFactor, fileId.reverse),
+            readFromFile<float>(sndFile, framesToLoad, oversamplingFactor, fileId.isReverse()),
             *fileInformation
         };
         preloadedFiles.insert_or_assign(fileId, handle);
@@ -263,7 +272,7 @@ absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const FileId& fileId
     if (!fileInformation)
         return {};
 
-    const fs::path file { rootDirectory / fileId.filename };
+    const fs::path file { rootDirectory / fileId.filename() };
     SndfileHandle sndFile(file.string().c_str());
 
     // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
@@ -274,7 +283,7 @@ absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const FileId& fileId
     } else {
         fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate());
         FileDataHandle handle {
-            readFromFile<float>(sndFile, frames, oversamplingFactor, fileId.reverse),
+            readFromFile<float>(sndFile, frames, oversamplingFactor, fileId.isReverse()),
             *fileInformation
         };
         loadedFiles.insert_or_assign(fileId, handle);
@@ -322,9 +331,9 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     for (auto& preloadedFile : preloadedFiles) {
         const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / static_cast<int>(oversamplingFactor);
         const auto maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
-        fs::path file { rootDirectory / preloadedFile.first.filename };
+        fs::path file { rootDirectory / preloadedFile.first.filename() };
         SndfileHandle sndFile(file.string().c_str());
-        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, oversamplingFactor, preloadedFile.first.reverse);
+        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, oversamplingFactor, preloadedFile.first.isReverse());
     }
     this->preloadSize = preloadSize;
 }
@@ -372,7 +381,7 @@ void sfz::FilePool::loadingThread() noexcept
         const auto loadStartTime = std::chrono::high_resolution_clock::now();
         const auto waitDuration = loadStartTime - promise->creationTime;
 
-        const fs::path file { rootDirectory / promise->fileId.filename };
+        const fs::path file { rootDirectory / promise->fileId.filename() };
         SndfileHandle sndFile(file.string().c_str());
         if (sndFile.error() != 0) {
             DBG("[sfizz] libsndfile errored for " << promise->fileId << " with message " << sndFile.strError());
@@ -380,10 +389,10 @@ void sfz::FilePool::loadingThread() noexcept
             continue;
         }
         const auto frames = static_cast<uint32_t>(sndFile.frames());
-        streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileId.reverse, promise->fileData, &promise->availableFrames);
+        streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileId.isReverse(), promise->fileData, &promise->availableFrames);
         promise->dataStatus = FilePromise::DataStatus::Ready;
         const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
-        logger.logFileTime(waitDuration, loadDuration, frames, promise->fileId.filename);
+        logger.logFileTime(waitDuration, loadDuration, frames, promise->fileId.filename());
 
         threadsLoading--;
 
@@ -451,9 +460,9 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
     for (auto& preloadedFile : preloadedFiles) {
         const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / static_cast<int>(this->oversamplingFactor);
         const uint32_t maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
-        fs::path file { rootDirectory / preloadedFile.first.filename };
+        fs::path file { rootDirectory / preloadedFile.first.filename() };
         SndfileHandle sndFile(file.string().c_str());
-        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor, preloadedFile.first.reverse);
+        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor, preloadedFile.first.isReverse());
         preloadedFile.second.information.sampleRate *= samplerateChange;
     }
 

@@ -58,7 +58,7 @@ struct Region {
      * @return true
      * @return false
      */
-    bool isGenerator() const noexcept { return sampleId.filename.size() > 0 ? sampleId.filename[0] == '*' : false; }
+    bool isGenerator() const noexcept { return sampleId.filename().size() > 0 ? sampleId.filename()[0] == '*' : false; }
     /**
      * @brief Is stereo (has stereo sample or is unison oscillator)?
      *

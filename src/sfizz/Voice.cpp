@@ -40,7 +40,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     if (region->isGenerator()) {
         const WavetableMulti* wave = nullptr;
-        switch (hash(region->sampleId.filename)) {
+        switch (hash(region->sampleId.filename())) {
         default:
         case hash("*silence"):
             break;
@@ -64,7 +64,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
         }
         setupOscillatorUnison();
     } else if (region->oscillator) {
-        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sampleId.filename);
+        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sampleId.filename());
         for (WavetableOscillator& osc : waveOscillators) {
             osc.setWavetable(wave);
             osc.setPhase(region->getPhase());
@@ -529,7 +529,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
-    if (region->sampleId.filename == "*noise") {
+    if (region->sampleId.filename() == "*noise") {
         absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
         absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
     } else {
