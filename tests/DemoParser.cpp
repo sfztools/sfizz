@@ -38,6 +38,11 @@ static const char defaultSfzText[] = R"SFZ(
 // This is a SFZ test file with many problems.                                //
 //----------------------------------------------------------------------------//
 
+/*
+ * This is a block comment. Not all the SFZ players accept it.
+ * It can span over multiple lines.
+*/
+
 // opcode without header
 not_in_header=on    // warning
 
@@ -75,6 +80,12 @@ abcdef=$tata
 
 // opcode name which expands to invalid identifier
 $titi=1
+
+volume=10 /*
+block comments at the end of line
+*/
+
+/* unterminated block comment
 )SFZ";
 
 void Application::init()

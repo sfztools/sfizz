@@ -84,8 +84,8 @@ private:
     void flushCurrentHeader();
 
     // helpers
-    static bool hasComment(Reader& reader);
-    static size_t skipComment(Reader& reader);
+    static int hasComment(Reader& reader); // 0=None 1=Line 2=Block
+    size_t skipComment();
     static void trimRight(std::string& text);
     static size_t extractToEol(Reader& reader, std::string* dst); // ignores comment
     std::string expandDollarVars(const SourceRange& range, absl::string_view src);
