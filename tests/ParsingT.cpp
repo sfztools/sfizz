@@ -448,3 +448,78 @@ param2=$bar)");
         REQUIRE(mock.fullBlockHeaders == expectedHeaders);
         REQUIRE(mock.fullBlockMembers == expectedMembers);
 }
+
+TEST_CASE("[Parsing] Block comments")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/blockComments.sfz",
+R"(/* A block comment (1) */
+/*
+A block comment (2) */
+/* A block comment (3)
+*/
+/* A block comment
+  (4) */
+/* A block comment /* // ** (5) */
+)");
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes.empty());
+        REQUIRE(mock.headers.empty());
+        REQUIRE(mock.fullBlockHeaders.empty());
+        REQUIRE(mock.fullBlockMembers.empty());
+}
+
+TEST_CASE("[Parsing] Unterminated block comments")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/unterminatedBlockComment.sfz",
+R"(/* Unterminated block comment
+)");
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.size() == 1);
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes.empty());
+        REQUIRE(mock.headers.empty());
+        REQUIRE(mock.fullBlockHeaders.empty());
+        REQUIRE(mock.fullBlockMembers.empty());
+}
+
+TEST_CASE("[Parsing] Comments after values")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/commentsAfterValues.sfz",
+R"(<header>
+param1=foo param2=bar // line comment
+param3=baz param4=quux /* block comment */)");
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"param1", "foo"}, {"param2", "bar"},
+             {"param3", "baz"}, {"param4", "quux"}}
+        };
+        std::vector<std::string> expectedHeaders = {
+            "header"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
