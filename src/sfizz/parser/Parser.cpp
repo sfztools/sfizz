@@ -7,6 +7,7 @@
 #include "Parser.h"
 #include "ParserPrivate.h"
 #include "absl/memory/memory.h"
+#include <cassert>
 
 namespace sfz {
 
@@ -348,21 +349,21 @@ void Parser::flushCurrentHeader()
     _currentOpcodes.clear();
 }
 
-int Parser::hasComment(Reader& reader)
+Parser::CommentType Parser::getCommentType(Reader& reader)
 {
     if (reader.peekChar() != '/')
-        return false;
+        return CommentType::None;
 
     reader.getChar();
 
-    int ret = 0;
+    CommentType ret = CommentType::None;
 
     switch (reader.peekChar()) {
     case '/':
-        ret = 1;
+        ret = CommentType::Line;
         break;
     case '*':
-        ret = 2;
+        ret = CommentType::Block;
         break;
     }
 
@@ -374,8 +375,8 @@ size_t Parser::skipComment()
 {
     Reader& reader = *_included.back();
 
-    int commentType = hasComment(reader);
-    if (!commentType)
+    const CommentType commentType = getCommentType(reader);
+    if (commentType == CommentType::None)
         return 0;
 
     SourceLocation start = reader.location();
@@ -387,7 +388,7 @@ size_t Parser::skipComment()
     bool terminated = false;
 
     switch (commentType) {
-    case 1: // line comment
+    case CommentType::Line:
         {
             int c;
             while ((c = reader.getChar()) != Reader::kEof && c != '\r' && c != '\n')
@@ -395,7 +396,7 @@ size_t Parser::skipComment()
             terminated = true;
         }
         break;
-    case 2: // block comment
+    case CommentType::Block:
         {
             int c1 = 0;
             int c2 = reader.getChar();
@@ -405,6 +406,9 @@ size_t Parser::skipComment()
                 terminated = c1 == '*' && c2 == '/';
             }
         }
+        break;
+    default:
+        assert(false);
         break;
     }
 

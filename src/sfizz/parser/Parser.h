@@ -84,7 +84,13 @@ private:
     void flushCurrentHeader();
 
     // helpers
-    static int hasComment(Reader& reader); // 0=None 1=Line 2=Block
+    enum class CommentType {
+        None,
+        Line,
+        Block,
+    };
+
+    static CommentType getCommentType(Reader& reader);
     size_t skipComment();
     static void trimRight(std::string& text);
     static size_t extractToEol(Reader& reader, std::string* dst); // ignores comment
