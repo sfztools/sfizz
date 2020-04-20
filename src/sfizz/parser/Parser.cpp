@@ -7,6 +7,7 @@
 #include "Parser.h"
 #include "ParserPrivate.h"
 #include "absl/memory/memory.h"
+#include <cassert>
 
 namespace sfz {
 
@@ -113,7 +114,7 @@ void Parser::processTopLevel()
     while (!_included.empty()) {
         Reader& reader = *_included.back();
 
-        while (reader.skipChars(" \t\r\n") || skipComment(reader));
+        while (reader.skipChars(" \t\r\n") || skipComment());
 
         switch (reader.peekChar()) {
         case Reader::kEof:
@@ -348,32 +349,74 @@ void Parser::flushCurrentHeader()
     _currentOpcodes.clear();
 }
 
-bool Parser::hasComment(Reader& reader)
+Parser::CommentType Parser::getCommentType(Reader& reader)
 {
     if (reader.peekChar() != '/')
-        return false;
+        return CommentType::None;
 
     reader.getChar();
-    if (reader.peekChar() != '/') {
-        reader.putBackChar('/');
-        return false;
+
+    CommentType ret = CommentType::None;
+
+    switch (reader.peekChar()) {
+    case '/':
+        ret = CommentType::Line;
+        break;
+    case '*':
+        ret = CommentType::Block;
+        break;
     }
 
-    return true;
+    reader.putBackChar('/');
+    return ret;
 }
 
-size_t Parser::skipComment(Reader& reader)
+size_t Parser::skipComment()
 {
-    if (!hasComment(reader))
+    Reader& reader = *_included.back();
+
+    const CommentType commentType = getCommentType(reader);
+    if (commentType == CommentType::None)
         return 0;
+
+    SourceLocation start = reader.location();
 
     size_t count = 2;
     reader.getChar();
     reader.getChar();
 
-    int c;
-    while ((c = reader.getChar()) != Reader::kEof && c != '\r' && c != '\n')
-        ++count;
+    bool terminated = false;
+
+    switch (commentType) {
+    case CommentType::Line:
+        while (!terminated) {
+            int c = reader.getChar();
+            count += (c != Reader::kEof);
+            terminated = c == Reader::kEof || c == '\r' || c == '\n';
+        }
+        break;
+    case CommentType::Block:
+        {
+            int c1 = 0;
+            int c2 = reader.getChar();
+            count += (c2 != Reader::kEof);
+            while (!terminated && c2 != Reader::kEof) {
+                c1 = c2;
+                c2 = reader.getChar();
+                count += (c2 != Reader::kEof);
+                terminated = c1 == '*' && c2 == '/';
+            }
+        }
+        break;
+    default:
+        assert(false);
+        break;
+    }
+
+    if (!terminated) {
+        SourceLocation end = reader.location();
+        emitError({ start, end }, "Unterminated block comment.");
+    }
 
     return count;
 }
@@ -387,7 +430,14 @@ void Parser::trimRight(std::string& text)
 size_t Parser::extractToEol(Reader& reader, std::string* dst)
 {
     return reader.extractWhile(dst, [&reader](char c) {
-        return c != '\r' && c != '\n' && !(c == '/' && reader.peekChar() == '/');
+        if (c == '\r' || c == '\n')
+            return false;
+        if (c == '/') {
+            int c2 = reader.peekChar();
+            if (c2 == '/' || c2 == '*') // stop at comment
+                return false;
+        }
+        return true;
     });
 }
 
