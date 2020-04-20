@@ -389,20 +389,21 @@ size_t Parser::skipComment()
 
     switch (commentType) {
     case CommentType::Line:
-        {
-            int c;
-            while ((c = reader.getChar()) != Reader::kEof && c != '\r' && c != '\n')
-                ++count;
-            terminated = true;
+        while (!terminated) {
+            int c = reader.getChar();
+            count += (c != Reader::kEof);
+            terminated = c == Reader::kEof || c == '\r' || c == '\n';
         }
         break;
     case CommentType::Block:
         {
             int c1 = 0;
             int c2 = reader.getChar();
+            count += (c2 != Reader::kEof);
             while (!terminated && c2 != Reader::kEof) {
                 c1 = c2;
                 c2 = reader.getChar();
+                count += (c2 != Reader::kEof);
                 terminated = c1 == '*' && c2 == '/';
             }
         }
