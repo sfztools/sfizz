@@ -42,7 +42,6 @@ class faustBpf2pSv : public sfzFilterDsp {
 	double fRec5[2];
 	double fRec1[2];
 	double fRec2[2];
-	double fRec6[2];
 
  public:
 
@@ -115,9 +114,6 @@ class faustBpf2pSv : public sfzFilterDsp {
 		for (int l4 = 0; (l4 < 2); l4 = (l4 + 1)) {
 			fRec2[l4] = 0.0;
 		}
-		for (int l5 = 0; (l5 < 2); l5 = (l5 + 1)) {
-			fRec6[l5] = 0.0;
-		}
 	}
 
 	virtual void init(int sample_rate) {
@@ -148,7 +144,6 @@ class faustBpf2pSv : public sfzFilterDsp {
 		double fSlow1 = (1.0 - fSlow0);
 		double fSlow2 = (std::tan((fConst2 * double(fCutoff))) * fSlow1);
 		double fSlow3 = (1.0 / std::pow(10.0, (0.050000000000000003 * double(fQ))));
-		double fSlow4 = (fSlow3 * fSlow1);
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			fRec3[0] = ((fSlow0 * fRec3[1]) + fSlow2);
@@ -162,14 +157,12 @@ class faustBpf2pSv : public sfzFilterDsp {
 			fRec1[0] = (fRec1[1] + (2.0 * (fRec3[0] * fTemp4)));
 			double fTemp5 = (fRec2[1] + (2.0 * fTemp3));
 			fRec2[0] = fTemp5;
-			fRec6[0] = ((fSlow0 * fRec6[1]) + fSlow4);
-			output0[i] = FAUSTFLOAT((fRec0 * fRec6[0]));
+			output0[i] = FAUSTFLOAT(fRec0);
 			fRec3[1] = fRec3[0];
 			fRec4[1] = fRec4[0];
 			fRec5[1] = fRec5[0];
 			fRec1[1] = fRec1[0];
 			fRec2[1] = fRec2[0];
-			fRec6[1] = fRec6[0];
 		}
 	}
 
