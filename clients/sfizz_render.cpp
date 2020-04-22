@@ -15,9 +15,7 @@
 
 struct CallbackData {
     sfz::Synth& synth;
-    int trackIdx;
-    double lastCallTime;
-    double blockSizeInSeconds;
+    unsigned delay;
     bool finished;
 };
 
@@ -30,22 +28,22 @@ void midiCallback(const fmidi_event_t * event, void * cbdata)
 
     switch (midi::status(event->data[0])) {
         case midi::noteOff:
-            data->synth.noteOff(event->delta, event->data[1], event->data[2]);
+            data->synth.noteOff(data->delay, event->data[1], event->data[2]);
             break;
         case midi::noteOn:
-            data->synth.noteOn(event->delta, event->data[1], event->data[2]);
+            data->synth.noteOn(data->delay, event->data[1], event->data[2]);
             break;
         case midi::polyphonicPressure:
             break;
         case midi::controlChange:
-            data->synth.cc(event->delta, event->data[1], event->data[2]);
+            data->synth.cc(data->delay, event->data[1], event->data[2]);
             break;
         case midi::programChange:
             break;
         case midi::channelPressure:
             break;
         case midi::pitchBend:
-            data->synth.pitchWheel(event->delta, midi::buildAndCenterPitch(event->data[1], event->data[2]));
+            data->synth.pitchWheel(data->delay, midi::buildAndCenterPitch(event->data[1], event->data[2]));
             break;
         case midi::systemMessage:
             break;
@@ -64,7 +62,6 @@ int main(int argc, char** argv)
 
     unsigned blockSize { 1024 };
     int sampleRate { 48000 };
-    int trackNumber { -1 };
     bool verbose { false };
     bool help { false };
     bool useEOT { false };
@@ -76,7 +73,6 @@ int main(int argc, char** argv)
         ("wav", "Output wav file", cxxopts::value<std::string>())
         ("b,blocksize", "Block size for the sfizz callbacks", cxxopts::value(blockSize))
         ("s,samplerate", "Output sample rate", cxxopts::value(sampleRate))
-        ("t,track", "Track number to use", cxxopts::value(trackNumber))
         ("oversampling", "Internal oversampling factor", cxxopts::value(oversampling))
         ("v,verbose", "Verbose output", cxxopts::value(verbose))
         ("log", "Produce logs", cxxopts::value<std::string>())
@@ -154,36 +150,30 @@ int main(int argc, char** argv)
     ERROR_IF(!midiInfo, "Can't get info on the midi file");
 
     LOG_INFO( midiInfo->track_count << " tracks in the SMF.");
-    ERROR_IF (trackNumber > midiInfo->track_count, "The track number " <<  trackNumber << " requested does not exist in the SMF file.");
-
-    if (trackNumber >= 0) {
-        LOG_INFO("-- Rendering only track number " <<  trackNumber);
-    }
 
     if (useEOT) {
         LOG_INFO("-- Cutting the rendering at the last MIDI End of Track message");
     }
 
-    const auto trackIdx = trackNumber < 1 ? 0 : trackNumber - 1;
 
     SndfileHandle outputFile (outputPath, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 2, sampleRate);
     ERROR_IF(outputFile.error() != 0, "Error writing out the wav file: " << outputFile.strError());
 
     auto sampleRateDouble = static_cast<double>(sampleRate);
-    double blockSizeInSeconds { blockSize / sampleRateDouble };
+    const double increment { 1.0 / sampleRateDouble };
     int numFramesWritten { 0 };
     sfz::AudioBuffer<float> audioBuffer { 2, blockSize };
     sfz::Buffer<float> interleavedBuffer { 2 * blockSize };
 
     fmidi_player_u midiPlayer { fmidi_player_new(midiFile.get()) };
-    CallbackData callbackData { synth, trackIdx, 0.0, blockSizeInSeconds, false };
+    CallbackData callbackData { synth, 0, false };
     fmidi_player_event_callback(midiPlayer.get(), &midiCallback, &callbackData);
     fmidi_player_finish_callback(midiPlayer.get(), &finishedCallback, &callbackData);
 
     fmidi_player_start(midiPlayer.get());
     while (!callbackData.finished) {
-        fmidi_player_tick(midiPlayer.get(), blockSizeInSeconds);
-        callbackData.lastCallTime += blockSizeInSeconds;
+        for (callbackData.delay = 0; callbackData.delay < blockSize && !callbackData.finished; callbackData.delay++)
+            fmidi_player_tick(midiPlayer.get(), increment);
         synth.renderBlock(audioBuffer);
         sfz::writeInterleaved(audioBuffer.getConstSpan(0), audioBuffer.getConstSpan(1), absl::MakeSpan(interleavedBuffer));
         numFramesWritten += outputFile.writef(interleavedBuffer.data(), blockSize);
@@ -192,7 +182,6 @@ int main(int argc, char** argv)
     if (!useEOT) {
         auto averagePower = sfz::meanSquared<float>(interleavedBuffer);
         while (averagePower > 1e-12f) {
-            callbackData.lastCallTime += blockSizeInSeconds;
             synth.renderBlock(audioBuffer);
             sfz::writeInterleaved(audioBuffer.getConstSpan(0), audioBuffer.getConstSpan(1), absl::MakeSpan(interleavedBuffer));
             numFramesWritten += outputFile.writef(interleavedBuffer.data(), blockSize);
@@ -201,8 +190,7 @@ int main(int argc, char** argv)
     }
 
     outputFile.writeSync();
-    LOG_INFO("Wrote " << callbackData.lastCallTime << " seconds of sound data in"
-              << outputPath.string() << " (" << numFramesWritten << " frames)");
+    LOG_INFO("Wrote " << numFramesWritten << " frames of sound data in" << outputPath.string());
 
     return 0;
 }
