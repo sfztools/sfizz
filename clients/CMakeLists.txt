@@ -12,6 +12,6 @@ COMPONENT "jack" OPTIONAL)
 
 add_subdirectory(external/fmidi EXCLUDE_FROM_ALL)
 add_executable(sfizz_render sfizz_render.cpp)
-target_link_libraries(sfizz_render sfizz::sfizz fmidi-player fmidi)
+target_link_libraries(sfizz_render sfizz::sfizz fmidi)
 sfizz_enable_lto_if_needed (sfizz_render)
 install (TARGETS sfizz_render DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
