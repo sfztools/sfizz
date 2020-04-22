@@ -1,7 +1,8 @@
 [submodule "external/abseil-cpp"]
 	path = external/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp
-    branch = lts_2020_02_25
+	branch = lts_2020_02_25
+	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/base"]
 	path = vst/external/VST_SDK/VST3_SDK/base
 	url = https://github.com/steinbergmedia/vst3_base.git
@@ -21,6 +22,8 @@
 [submodule "clients/external/fmidi"]
 	path = clients/external/fmidi
 	url = https://github.com/jpcima/fmidi.git
+	shallow = true
 [submodule "clients/external/fmt"]
 	path = clients/external/fmt
 	url = https://github.com/fmtlib/fmt.git
+	shallow = true
