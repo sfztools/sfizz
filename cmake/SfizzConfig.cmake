@@ -1,3 +1,5 @@
+include(CMakeDependentOption)
+
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard to be used")
 set(CMAKE_C_STANDARD 99 CACHE STRING "C standard to be used")
 
@@ -60,15 +62,14 @@ else()
 endif()
 
 
-# If we build with Clang use libc++
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
-set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
+# If we build with Clang, optionally use libc++. Enabled by default on Apple OS.
+cmake_dependent_option(USE_LIBCPP "Use libc++ with clang" "${APPLE}"
+    "CMAKE_CXX_COMPILER_ID MATCHES Clang" OFF)
 if (USE_LIBCPP)
-add_compile_options(-stdlib=libc++)
-# Presumably need the above for linking too, maybe other options missing as well
-add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
-endif()
+    add_compile_options(-stdlib=libc++)
+    # Presumably need the above for linking too, maybe other options missing as well
+    add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
+    add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
 
 add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
@@ -109,6 +110,7 @@ Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
 Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
+Use clang libc++:              ${USE_LIBCPP}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
