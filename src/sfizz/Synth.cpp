@@ -363,8 +363,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             }
 
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
-            if (region->loopRange.getEnd() == Default::loopRange.getEnd())
-                region->loopRange.setEnd(region->sampleEnd);
 
             if (fileInformation->loopBegin != Default::loopRange.getStart() && fileInformation->loopEnd != Default::loopRange.getEnd()) {
                 if (region->loopRange.getStart() == Default::loopRange.getStart())
@@ -376,6 +374,9 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
                 if (!region->loopMode)
                     region->loopMode = SfzLoopMode::loop_continuous;
             }
+
+            if (region->loopRange.getEnd() == Default::loopRange.getEnd())
+                region->loopRange.setEnd(region->sampleEnd);
 
             if (fileInformation->numChannels == 2)
                 region->hasStereoSample = true;
