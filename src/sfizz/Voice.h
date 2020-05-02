@@ -265,7 +265,6 @@ private:
     float baseVolumedB{ 0.0 };
     float baseGain { 1.0 };
     float baseFrequency { 440.0 };
-    float phase { 0.0f };
 
     float floatPositionOffset { 0.0f };
     int sourcePosition { 0 };
