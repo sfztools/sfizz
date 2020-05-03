@@ -10,7 +10,7 @@
 #include "Range.h"
 #include "SfzHelpers.h"
 #include "StringViewHelpers.h"
-#include <absl/types/optional.h>
+#include "absl/types/optional.h"
 #include "absl/meta/type_traits.h"
 #include <string_view>
 #include <vector>
@@ -50,6 +50,16 @@ struct Opcode {
     // This is to handle the integer parameters of some opcodes
     std::vector<uint16_t> parameters;
     OpcodeCategory category;
+
+    /*
+     * @brief Get the derived opcode name to convert it to another category.
+     *
+     * @param newCategory category to convert to
+     * @param number optional CC number, needed if destination is CC and source is not
+     * @return derived opcode name
+     */
+    std::string getDerivedName(OpcodeCategory newCategory, unsigned number = ~0u) const;
+
 private:
     static OpcodeCategory identifyCategory(absl::string_view name);
     LEAK_DETECTOR(Opcode);

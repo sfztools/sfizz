@@ -8,7 +8,9 @@
 #include "StringViewHelpers.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include <cctype>
+#include <cassert>
 
 sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     : opcode(trim(inputOpcode))
@@ -44,6 +46,52 @@ static absl::string_view extractBackInteger(absl::string_view opcodeName)
     size_t i = n;
     while (i > 0 && absl::ascii_isdigit(opcodeName[i - 1])) --i;
     return opcodeName.substr(i);
+}
+
+std::string sfz::Opcode::getDerivedName(sfz::OpcodeCategory newCategory, unsigned number) const
+{
+    std::string derivedName(opcode);
+
+    switch (category) {
+    case kOpcodeNormal:
+        break;
+    case kOpcodeOnCcN:
+    case kOpcodeCurveCcN:
+    case kOpcodeStepCcN:
+    case kOpcodeSmoothCcN:
+        {
+            // when the input is cc, first delete the suffix `_*cc`
+            size_t pos = opcode.rfind('_');
+            assert(pos != opcode.npos);
+            derivedName.resize(pos);
+        }
+        break;
+    }
+
+    // helper to extract the cc number optionally if the next part needs it
+    auto ccNumberSuffix = [this, number]() -> std::string {
+        return (number != ~0u) ? std::to_string(number) :
+            std::string(extractBackInteger(opcode));
+    };
+
+    switch (newCategory) {
+    case kOpcodeNormal:
+        break;
+    case kOpcodeOnCcN:
+        absl::StrAppend(&derivedName, "_oncc", ccNumberSuffix());
+        break;
+    case kOpcodeCurveCcN:
+        absl::StrAppend(&derivedName, "_curvecc", ccNumberSuffix());
+        break;
+    case kOpcodeStepCcN:
+        absl::StrAppend(&derivedName, "_stepcc", ccNumberSuffix());
+        break;
+    case kOpcodeSmoothCcN:
+        absl::StrAppend(&derivedName, "_smoothcc", ccNumberSuffix());
+        break;
+    }
+
+    return derivedName;
 }
 
 sfz::OpcodeCategory sfz::Opcode::identifyCategory(absl::string_view name)
