@@ -138,3 +138,13 @@ TEST_CASE("[Opcode] Note values")
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 61);
 }
+
+TEST_CASE("[Opcode] Categories")
+{
+    REQUIRE(sfz::Opcode("sample", "").category == sfz::kOpcodeNormal);
+    REQUIRE(sfz::Opcode("amplitude_oncc11", "").category == sfz::kOpcodeOnCcN);
+    REQUIRE(sfz::Opcode("cutoff_cc22", "").category == sfz::kOpcodeOnCcN);
+    REQUIRE(sfz::Opcode("lfo01_pitch_curvecc33", "").category == sfz::kOpcodeCurveCcN);
+    REQUIRE(sfz::Opcode("pan_stepcc44", "").category == sfz::kOpcodeStepCcN);
+    REQUIRE(sfz::Opcode("noise_level_smoothcc55", "").category == sfz::kOpcodeSmoothCcN);
+}

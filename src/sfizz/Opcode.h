@@ -21,6 +21,22 @@
 
 namespace sfz {
 /**
+ * @brief A category which an opcode may belong to.
+ */
+enum OpcodeCategory {
+    //! An ordinary opcode
+    kOpcodeNormal,
+    //! A region opcode which matches *_onccN or *_ccN
+    kOpcodeOnCcN,
+    //! A region opcode which matches *_curveccN
+    kOpcodeCurveCcN,
+    //! A region opcode which matches *_stepccN
+    kOpcodeStepCcN,
+    //! A region opcode which matches *_smoothccN
+    kOpcodeSmoothCcN,
+};
+
+/**
  * @brief Opcode description class. The class parses the parameters
  * of the opcode on construction.
  *
@@ -33,6 +49,9 @@ struct Opcode {
     uint64_t lettersOnlyHash { Fnv1aBasis };
     // This is to handle the integer parameters of some opcodes
     std::vector<uint16_t> parameters;
+    OpcodeCategory category;
+private:
+    static OpcodeCategory identifyCategory(absl::string_view name);
     LEAK_DETECTOR(Opcode);
 };
 
