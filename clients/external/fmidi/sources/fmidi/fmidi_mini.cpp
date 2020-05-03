@@ -1,7 +1,7 @@
 // =============================================================================
 //
 // The Fmidi library - a free software toolkit for MIDI file processing
-// Single-file implementation, based on software revision: f6ac26d
+// Single-file implementation, based on software revision: c513b4f
 //
 // =============================================================================
 //          Copyright Jean Pierre Cimalando 2018-2020.
@@ -1262,6 +1262,64 @@ bool fmidi_seq_next_event(fmidi_seq_t *seq, fmidi_seq_event_t *sqevt)
 }
 
 
+#include <memory>
+#include <stdio.h>
+
+////////////////////////
+// FILE PATH ENCODING //
+////////////////////////
+
+FILE *fmidi_fopen(const char *path, const char *mode);
+
+///////////////
+// FILE RAII //
+///////////////
+
+struct FILE_deleter;
+typedef std::unique_ptr<FILE, FILE_deleter> unique_FILE;
+
+struct FILE_deleter {
+    void operator()(FILE *stream) const
+        { fclose(stream); }
+};
+#if defined(_WIN32)
+# include <windows.h>
+# include <memory>
+# include <errno.h>
+#endif
+
+FILE *fmidi_fopen(const char *path, const char *mode)
+{
+#if !defined(_WIN32)
+    return fopen(path, mode);
+#else
+    auto toWideString = [](const char *utf8) -> wchar_t * {
+        unsigned wsize = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
+        if (wsize == 0)
+            return nullptr;
+        wchar_t *wide = new wchar_t[wsize];
+        wsize = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wide, wsize);
+        if (wsize == 0) {
+            delete[] wide;
+            return nullptr;
+        }
+        return wide;
+    };
+    std::unique_ptr<wchar_t[]> wpath(toWideString(path));
+    if (!wpath) {
+        errno = EINVAL;
+        return nullptr;
+    }
+    std::unique_ptr<wchar_t[]> wmode(toWideString(mode));
+    if (!wmode) {
+        errno = EINVAL;
+        return nullptr;
+    }
+    return _wfopen(wpath.get(), wmode.get());
+#endif
+}
+
+
 memstream_status memstream::setpos(size_t off)
 {
     if (off > length_)
@@ -1390,21 +1448,6 @@ memstream::vlq_result memstream::doreadvlq()
 }
 
 #include "fmidi/fmidi.h"
-
-#include <memory>
-#include <stdio.h>
-
-///////////////
-// FILE RAII //
-///////////////
-
-struct FILE_deleter;
-typedef std::unique_ptr<FILE, FILE_deleter> unique_FILE;
-
-struct FILE_deleter {
-    void operator()(FILE *stream) const
-        { fclose(stream); }
-};
 #include <algorithm>
 #include <string.h>
 #include <sys/stat.h>
@@ -1833,7 +1876,7 @@ fmidi_smf_t *fmidi_xmi_mem_read(const uint8_t *data, size_t length)
 
 fmidi_smf_t *fmidi_xmi_file_read(const char *filename)
 {
-    unique_FILE fh(fopen(filename, "rb"));
+    unique_FILE fh(fmidi_fopen(filename, "rb"));
     if (!fh)
         RET_FAIL(nullptr, fmidi_err_input);
 
@@ -2279,7 +2322,7 @@ void fmidi_smf_free(fmidi_smf_t *smf)
 
 fmidi_smf_t *fmidi_smf_file_read(const char *filename)
 {
-    unique_FILE fh(fopen(filename, "rb"));
+    unique_FILE fh(fmidi_fopen(filename, "rb"));
     if (!fh)
         RET_FAIL(nullptr, fmidi_err_input);
 
@@ -2359,7 +2402,7 @@ fmidi_smf_t *fmidi_auto_mem_read(const uint8_t *data, size_t length)
 
 fmidi_smf_t *fmidi_auto_file_read(const char *filename)
 {
-    unique_FILE fh(fopen(filename, "rb"));
+    unique_FILE fh(fmidi_fopen(filename, "rb"));
     if (!fh)
         RET_FAIL(nullptr, fmidi_err_input);
 
@@ -2501,7 +2544,7 @@ bool fmidi_smf_mem_write(const fmidi_smf_t *smf, uint8_t **data, size_t *length)
 
 bool fmidi_smf_file_write(const fmidi_smf_t *smf, const char *filename)
 {
-    unique_FILE fh(fopen(filename, "wb"));
+    unique_FILE fh(fmidi_fopen(filename, "wb"));
     if (!fh)
         RET_FAIL(false, fmidi_err_output);
 
