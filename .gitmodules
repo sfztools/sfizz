@@ -19,11 +19,3 @@
 	path = vst/external/VST_SDK/VST3_SDK/vstgui4
 	url = https://github.com/sfztools/vstgui.git
 	shallow = true
-[submodule "clients/external/fmidi"]
-	path = clients/external/fmidi
-	url = https://github.com/jpcima/fmidi.git
-	shallow = true
-[submodule "clients/external/fmt"]
-	path = clients/external/fmt
-	url = https://github.com/fmtlib/fmt.git
-	shallow = true

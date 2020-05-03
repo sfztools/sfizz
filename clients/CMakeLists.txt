@@ -10,12 +10,11 @@ sfizz_enable_lto_if_needed (sfizz_jack)
 install (TARGETS sfizz_jack DESTINATION ${CMAKE_INSTALL_BINDIR}
 COMPONENT "jack" OPTIONAL)
 
-add_library(fmidi-fmt INTERFACE)
-target_include_directories(fmidi-fmt INTERFACE "external/fmt/include")
-target_compile_definitions(fmidi-fmt INTERFACE "FMT_HEADER_ONLY=1")
-add_subdirectory(external/fmidi EXCLUDE_FROM_ALL)
+add_library(sfizz-fmidi STATIC "external/fmidi/sources/fmidi/fmidi_mini.cpp")
+target_include_directories(sfizz-fmidi PUBLIC "external/fmidi/sources")
+target_compile_definitions(sfizz-fmidi PUBLIC "FMIDI_STATIC=1" "FMIDI_DISABLE_DESCRIBE_API=1")
 
 add_executable(sfizz_render sfizz_render.cpp)
-target_link_libraries(sfizz_render sfizz::sfizz fmidi)
+target_link_libraries(sfizz_render sfizz::sfizz sfizz-fmidi)
 sfizz_enable_lto_if_needed (sfizz_render)
 install (TARGETS sfizz_render DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "render" OPTIONAL)
