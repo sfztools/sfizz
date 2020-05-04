@@ -28,7 +28,7 @@ smoothBiquadTf2(s,b0,b1,b2,a1,a2) = biquadTf2(b0:s,b1:s,b2:s,a1:s,a2:s);
 //     g : gain in decibel, for peaking and shelving types only
 //     q : height of the resonant peak in linear units
 //-------------------------------------------------------------------------
-rbjLpfSmooth(s,f,g,q,x) = (rbj.filtercoeff(f,g,q).LPF,x) : smoothBiquad(s);
+rbjLpfSmooth(s,f,g,q,x) = (rbj.filtercoeff(f,g,q).LPF,x) : smoothBiquadTf2(s);
 rbjHpfSmooth(s,f,g,q,x) = (rbj.filtercoeff(f,g,q).HPF,x) : smoothBiquadTf2(s);
 rbjBpfSmooth(s,f,g,q,x) = (rbj.filtercoeff(f,g,q).BPF,x) : smoothBiquadTf2(s);
 rbjNotchSmooth(s,f,g,q,x) = (rbj.filtercoeff(f,g,q).notch,x) : smoothBiquadTf2(s);
