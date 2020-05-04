@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     ERROR_IF(!synth.loadSfzFile(sfzPath), "There was an error loading the SFZ file.");
     LOG_INFO(synth.getNumRegions() << " regions in the SFZ.");
 
-    fmidi_smf_u midiFile { fmidi_smf_file_read(midiPath.c_str()) };
+    fmidi_smf_u midiFile { fmidi_smf_file_read(midiPath.u8string().c_str()) };
     ERROR_IF(!midiFile, "Can't read " << midiPath);
 
     const auto* midiInfo = fmidi_smf_get_info(midiFile.get());
@@ -155,8 +155,7 @@ int main(int argc, char** argv)
         LOG_INFO("-- Cutting the rendering at the last MIDI End of Track message");
     }
 
-
-    SndfileHandle outputFile (outputPath, SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 2, sampleRate);
+    SndfileHandle outputFile (outputPath.u8string(), SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 2, sampleRate);
     ERROR_IF(outputFile.error() != 0, "Error writing out the wav file: " << outputFile.strError());
 
     auto sampleRateDouble = static_cast<double>(sampleRate);

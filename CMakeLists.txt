@@ -26,6 +26,7 @@ endif()
 
 option (ENABLE_LTO              "Enable Link Time Optimization [default: ON]" ON)
 option (SFIZZ_JACK              "Enable JACK stand-alone build [default: ON]" ON)
+option (SFIZZ_RENDER            "Enable renderer of SMF files [default: ON]" ON)
 option (SFIZZ_LV2               "Enable LV2 plug-in build [default: ON]" ON)
 option (SFIZZ_VST               "Enable VST plug-in build [default: OFF]" OFF)
 option (SFIZZ_BENCHMARKS        "Enable benchmarks build [default: OFF]" OFF)
@@ -45,9 +46,7 @@ add_subdirectory (external/abseil-cpp EXCLUDE_FROM_ALL)
 add_subdirectory (src)
 
 # Optional targets
-if (SFIZZ_JACK)
-    add_subdirectory (clients)
-endif()
+add_subdirectory (clients)
 
 if (SFIZZ_LV2)
     add_subdirectory (lv2)
