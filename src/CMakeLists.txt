@@ -45,7 +45,7 @@ sfizz_add_simd_sources (SFIZZ_SOURCES ".")
 # Parser core library
 add_library (sfizz_parser STATIC)
 target_sources (sfizz_parser PRIVATE
-    sfizz/Parser.cpp sfizz/Opcode.cpp sfizz/SfzHelpers.cpp
+    sfizz/Parser.cpp sfizz/Opcode.cpp sfizz/OpcodeCleanup.cpp sfizz/SfzHelpers.cpp
     sfizz/parser/Parser.cpp sfizz/parser/ParserPrivate.cpp)
 target_include_directories (sfizz_parser PUBLIC sfizz)
 target_include_directories (sfizz_parser PUBLIC external)
