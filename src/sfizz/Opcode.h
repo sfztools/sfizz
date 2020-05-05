@@ -37,6 +37,18 @@ enum OpcodeCategory {
 };
 
 /**
+ * @brief A scope where an opcode may appear.
+ */
+enum OpcodeScope {
+    //! unknown scope or other
+    kOpcodeScopeGeneric,
+    //! region scope
+    kOpcodeScopeRegion,
+    //! effect scope
+    kOpcodeScopeEffect,
+};
+
+/**
  * @brief Opcode description class. The class parses the parameters
  * of the opcode on construction.
  *
@@ -50,6 +62,15 @@ struct Opcode {
     // This is to handle the integer parameters of some opcodes
     std::vector<uint16_t> parameters;
     OpcodeCategory category;
+
+    /*
+     * @brief Normalize in order to make the ampersand-name unique, and
+     * facilitate subsequent processing.
+     *
+     * @param scope scope where this opcode appears
+     * @return normalized opcode
+     */
+    Opcode cleanUp(OpcodeScope scope) const;
 
     /*
      * @brief Get the derived opcode name to convert it to another category.
