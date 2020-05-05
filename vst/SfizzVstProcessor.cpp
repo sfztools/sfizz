@@ -284,7 +284,10 @@ void SfizzVstProcessor::processEvents(Vst::IEventList& events)
 
         switch (e.type) {
         case Vst::Event::kNoteOnEvent:
-            synth.noteOn(e.sampleOffset, e.noteOn.pitch, convertVelocityFromFloat(e.noteOn.velocity));
+            if (e.noteOn.velocity == 0.0f)
+                synth.noteOff(e.sampleOffset, e.noteOn.pitch, 0);
+            else
+                synth.noteOn(e.sampleOffset, e.noteOn.pitch, convertVelocityFromFloat(e.noteOn.velocity));
             break;
         case Vst::Event::kNoteOffEvent:
             synth.noteOff(e.sampleOffset, e.noteOff.pitch, convertVelocityFromFloat(e.noteOff.velocity));
