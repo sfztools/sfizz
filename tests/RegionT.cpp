@@ -1199,7 +1199,7 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "resonance3_cc24", "10" });
         REQUIRE(region.filters[2].resonanceCC.contains(24));
         REQUIRE(region.filters[2].resonanceCC[24] == 10);
-        region.parseOpcode({ "fil2_gaincc12", "-50" });
+        region.parseOpcode({ "fil2_gain_oncc12", "-50" });
         REQUIRE(region.filters[1].gainCC.contains(12));
         REQUIRE(region.filters[1].gainCC[12] == -50.0f);
 
