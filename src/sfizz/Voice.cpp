@@ -262,7 +262,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     // Amplitude envelope
     applyGain<float>(baseGain, modulationSpan);
     for (const auto& mod : region->amplitudeCC) {
-        linearModifier(resources, *tempSpan, mod);
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         applyGain<float>(*tempSpan, modulationSpan);
     }
 
@@ -339,7 +339,7 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
-        linearModifier(resources, *tempSpan, mod);
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -360,7 +360,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // Apply panning
     fill<float>(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
-        linearModifier(resources, *tempSpan, mod);
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);
@@ -368,14 +368,14 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     // Apply the width/position process
     fill<float>(*modulationSpan, region->width);
     for (const auto& mod : region->widthCC) {
-        linearModifier(resources, *tempSpan, mod);
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
     width<float>(*modulationSpan, leftBuffer, rightBuffer);
 
     fill<float>(*modulationSpan, region->position);
     for (const auto& mod : region->positionCC) {
-        linearModifier(resources, *tempSpan, mod);
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
     pan<float>(*modulationSpan, leftBuffer, rightBuffer);

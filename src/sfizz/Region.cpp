@@ -15,6 +15,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/algorithm/container.h"
 #include <random>
+#include <cassert>
 
 template<class T>
 bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapacity)
@@ -36,6 +37,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     const Opcode opcode = rawOpcode.cleanUp(kOpcodeScopeRegion);
 
     switch (opcode.lettersOnlyHash) {
+    // Helper for ccN processing
+    #define case_any_ccN(x)        \
+        case hash(x "_oncc&"):     \
+        case hash(x "_curvecc&"):  \
+        case hash(x "_stepcc&"):   \
+        case hash(x "_smoothcc&")
+
     // Sound source: sample playback
     case hash("sample"):
         {
@@ -306,141 +314,36 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("volume"): // also gain
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
-    case hash("volume_curvecc&"): // also gain_curvecc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::curveCCRange))
-            volumeCC[opcode.parameters.back()].curve = *value;
-        break;
-    case hash("volume_stepcc&"): // also gain_stepcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::volumeStepRange))
-            volumeCC[opcode.parameters.back()].step = *value;
-        break;
-    case hash("volume_smoothcc&"): // also gain_smoothcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::smoothCCRange))
-            volumeCC[opcode.parameters.back()].smooth = *value;
-        break;
-    case hash("volume_oncc&"): // also gain_oncc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::volumeCCRange))
-            volumeCC[opcode.parameters.back()].value = *value;
+    case_any_ccN("volume"): // also gain
+        processGenericCc(opcode, Default::volumeCCRange, &volumeCC);
         break;
     case hash("amplitude"):
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
             amplitude = normalizePercents(*value);
         break;
-    case hash("amplitude_curvecc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::curveCCRange))
-            amplitudeCC[opcode.parameters.back()].curve = *value;
-        break;
-    case hash("amplitude_stepcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            amplitudeCC[opcode.parameters.back()].step = normalizePercents(*value);
-        break;
-    case hash("amplitude_smoothcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::smoothCCRange))
-            amplitudeCC[opcode.parameters.back()].smooth = *value;
-        break;
-    case hash("amplitude_oncc&"): // also amplitude_cc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            amplitudeCC[opcode.parameters.back()].value = normalizePercents(*value);
+    case_any_ccN("amplitude"):
+        processGenericCc(opcode, Default::amplitudeRange, &amplitudeCC);
         break;
     case hash("pan"):
         if (auto value = readOpcode(opcode.value, Default::panRange))
             pan = normalizePercents(*value);
         break;
-    case hash("pan_curvecc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::curveCCRange))
-            panCC[opcode.parameters.back()].curve = *value;
-        break;
-    case hash("pan_stepcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::panStepRange))
-            panCC[opcode.parameters.back()].step = normalizePercents(*value);
-        break;
-    case hash("pan_smoothcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::smoothCCRange))
-            panCC[opcode.parameters.back()].smooth = *value;
-        break;
-    case hash("pan_oncc&"): // also pan_cc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::panCCRange))
-            panCC[opcode.parameters.back()].value = normalizePercents(*value);
+    case_any_ccN("pan"):
+        processGenericCc(opcode, Default::panCCRange, &panCC);
         break;
     case hash("position"):
         if (auto value = readOpcode(opcode.value, Default::positionRange))
             position = normalizePercents(*value);
         break;
-    case hash("position_curvecc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::curveCCRange))
-            positionCC[opcode.parameters.back()].curve = *value;
-        break;
-    case hash("position_stepcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::positionStepRange))
-            positionCC[opcode.parameters.back()].step = normalizePercents(*value);
-        break;
-    case hash("position_smoothcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::smoothCCRange))
-            positionCC[opcode.parameters.back()].smooth = *value;
-        break;
-    case hash("position_oncc&"): // also position_cc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::positionCCRange))
-            positionCC[opcode.parameters.back()].value = normalizePercents(*value);
+    case_any_ccN("position"):
+        processGenericCc(opcode, Default::positionCCRange, &positionCC);
         break;
     case hash("width"):
         if (auto value = readOpcode(opcode.value, Default::widthRange))
             width = normalizePercents(*value);
         break;
-    case hash("width_curvecc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::curveCCRange))
-            widthCC[opcode.parameters.back()].curve = *value;
-        break;
-    case hash("width_stepcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::widthStepRange))
-            widthCC[opcode.parameters.back()].step = normalizePercents(*value);
-        break;
-    case hash("width_smoothcc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::smoothCCRange))
-            widthCC[opcode.parameters.back()].smooth = *value;
-        break;
-    case hash("width_oncc&"):
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::widthCCRange))
-            widthCC[opcode.parameters.back()].value = normalizePercents(*value);
+    case_any_ccN("width"):
+        processGenericCc(opcode, Default::widthCCRange, &widthCC);
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
@@ -802,29 +705,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("pitch"): // also tune
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
-    case hash("pitch_curvecc&"): // also tune_curvecc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::curveCCRange))
-            tuneCC[opcode.parameters.back()].curve = *value;
-        break;
-    case hash("pitch_stepcc&"): // also tune_stepcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::tuneStepRange))
-            tuneCC[opcode.parameters.back()].step = *value;
-        break;
-    case hash("pitch_smoothcc&"): // also tune_smoothcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::smoothCCRange))
-            tuneCC[opcode.parameters.back()].smooth = *value;
-        break;
-    case hash("pitch_oncc&"): // also pitch_cc&, tune_cc&, tune_oncc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-        if (auto value = readOpcode(opcode.value, Default::tuneCCRange))
-            tuneCC[opcode.parameters.back()].value = *value;
+    case_any_ccN("pitch"): // also tune
+        processGenericCc(opcode, Default::tuneCCRange, &tuneCC);
         break;
     case hash("bend_up"): // also bendup
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
@@ -932,7 +814,45 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     default:
         return false;
+
+    #undef case_any_ccN
     }
+
+    return true;
+}
+
+bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap)
+{
+    if (!opcode.isAnyCcN())
+        return false;
+
+    const auto ccNumber = opcode.parameters.back();
+    if (ccNumber >= config::numCCs)
+        return false;
+
+    if (ccMap) {
+        Modifier& modifier = (*ccMap)[ccNumber];
+        switch (opcode.category) {
+        case kOpcodeOnCcN:
+            setValueFromOpcode(opcode, modifier.value, range);
+            break;
+        case kOpcodeCurveCcN:
+            setValueFromOpcode(opcode, modifier.curve, Default::curveCCRange);
+            break;
+        case kOpcodeStepCcN:
+            {
+                const Range<float> stepCCRange { 0.0f, std::max(std::abs(range.getStart()), std::abs(range.getEnd())) };
+                setValueFromOpcode(opcode, modifier.step, stepCCRange);
+            }
+            break;
+        case kOpcodeSmoothCcN:
+            setValueFromOpcode(opcode, modifier.smooth, Default::smoothCCRange);
+            break;
+        default:
+            assert(false);
+            break;
+        }
+     }
 
     return true;
 }

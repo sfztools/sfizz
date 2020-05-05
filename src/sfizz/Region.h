@@ -213,6 +213,16 @@ struct Region {
      * @return false
      */
     bool parseOpcode(const Opcode& opcode);
+    /**
+     * @brief Process a generic CC opcode, and fill the modulation parameters.
+     *
+     * @param opcode
+     * @param range
+     * @param ccMap
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap);
 
     void offsetAllKeys(int offset) noexcept;
 
