@@ -236,7 +236,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
     }
 }
 
-void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
+void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
 {
     absl::string_view busName = "main";
 
@@ -251,6 +251,11 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& members)
         }
         return *bus;
     };
+
+    std::vector<Opcode> members;
+    members.reserve(rawMembers.size());
+    for (const Opcode& opcode : rawMembers)
+        members.push_back(opcode.cleanUp(kOpcodeScopeEffect));
 
     for (const Opcode& opcode : members) {
         switch (opcode.lettersOnlyHash) {

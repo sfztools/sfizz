@@ -31,8 +31,10 @@ bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapac
     return true;
 }
 
-bool sfz::Region::parseOpcode(const Opcode& opcode)
+bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
 {
+    const Opcode opcode = rawOpcode.cleanUp(kOpcodeScopeRegion);
+
     switch (opcode.lettersOnlyHash) {
     // Sound source: sample playback
     case hash("sample"):
@@ -66,6 +68,7 @@ bool sfz::Region::parseOpcode(const Opcode& opcode)
         setValueFromOpcode(opcode, offsetRandom, Default::offsetRange);
         break;
     case hash("offset_cc&"):
+    case hash("offset_oncc&"):
         if (opcode.parameters.back() > config::numCCs)
             return false;
         if (auto value = readOpcode(opcode.value, Default::offsetCCRange))
