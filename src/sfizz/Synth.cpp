@@ -480,20 +480,12 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         return freeVoice->get();
 
     // Find voices that can be stolen
-    voiceViewArray.clear();
-    for (auto& voice : voices)
-        if (voice->canBeStolen())
-            voiceViewArray.push_back(voice.get());
-    absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) { return lhs->getSourcePosition() > rhs->getSourcePosition(); });
+    absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) {
+        return lhs->getMeanSquaredAverage() < rhs->getMeanSquaredAverage();
+    });
 
-    for (auto* voice : voiceViewArray) {
-        if (voice->getMeanSquaredAverage() < config::voiceStealingThreshold) {
-            voice->reset();
-            return voice;
-        }
-    }
-
-    return {};
+    voiceViewArray.front()->reset();
+    return voiceViewArray.front();
 }
 
 int sfz::Synth::getNumActiveVoices() const noexcept
@@ -992,12 +984,13 @@ void sfz::Synth::resetVoices(int numVoices)
     for (int i = 0; i < numVoices; ++i)
         voices.push_back(absl::make_unique<Voice>(resources));
 
+    voiceViewArray.clear();
     for (auto& voice : voices) {
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
+        voiceViewArray.push_back(voice.get());
     }
 
-    voiceViewArray.reserve(numVoices);
     this->numVoices = numVoices;
 }
 
