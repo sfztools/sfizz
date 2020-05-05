@@ -64,11 +64,13 @@ int process(jack_nframes_t numFrames, void* arg)
             continue;
 
         switch (midi::status(event.buffer[0])) {
-        case midi::noteOff:
+        case midi::noteOff: noteoff:
             // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
             synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
+            if (event.buffer[2] == 0)
+                goto noteoff;
             // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
             synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
