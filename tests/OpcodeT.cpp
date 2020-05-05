@@ -205,6 +205,12 @@ TEST_CASE("[Opcode] Normalization")
         // SFZv2 aliases
         {"on_hicc22", "start_hicc22"},
         {"on_locc23", "start_locc23"},
+        // Filter SFZv1
+        {"fil_foobar", "fil1_foobar"},
+        {"cutoff", "cutoff1"},
+        {"cutoff_foobar", "cutoff1_foobar"},
+        {"resonance", "resonance1"},
+        {"resonance_foobar", "resonance1_foobar"},
     };
 
     for (auto pair : regionSpecific) {
