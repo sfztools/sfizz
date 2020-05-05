@@ -117,34 +117,34 @@ end_generic:
     "polyphony_group" END {
         opcode = "group";
         goto end_region;
-     }
+    }
 
-     "gain" ("_" any)? END {
-         opcode = absl::StrCat("volume", group(1));
-         goto end_region;
-     }
-     "tune" ("_" any)? END {
-         opcode = absl::StrCat("pitch", group(1));
-         goto end_region;
-     }
+    "gain" ("_" any)? END {
+        opcode = absl::StrCat("volume", group(1));
+        goto end_region;
+    }
+    "tune" ("_" any)? END {
+        opcode = absl::StrCat("pitch", group(1));
+        goto end_region;
+    }
 
     "on_" ("hi"|"lo") "cc" (number) END {
         opcode = absl::StrCat("start_", group(1), "cc", group(2));
         goto end_region;
     }
 
-     "fil_" (any) END {
-         opcode = absl::StrCat("fil1_", group(1));
-         goto end_region;
-     }
-     "cutoff" ("_" any)? END {
-         opcode = absl::StrCat("cutoff1", group(1));
-         goto end_region;
-     }
-     "resonance" ("_" any)? END {
-         opcode = absl::StrCat("resonance1", group(1));
-         goto end_region;
-     }
+    "fil_" (any) END {
+        opcode = absl::StrCat("fil1_", group(1));
+        goto end_region;
+    }
+    "cutoff" ("_" any)? END {
+        opcode = absl::StrCat("cutoff1", group(1));
+        goto end_region;
+    }
+    "resonance" ("_" any)? END {
+        opcode = absl::StrCat("resonance1", group(1));
+        goto end_region;
+    }
 
     * {
         goto end_region;
