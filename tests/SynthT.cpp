@@ -195,7 +195,7 @@ TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at t
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE( synth.getVoiceView(0)->canBeStolen() );
+    REQUIRE( synth.getVoiceView(0)->releasedOrFree() );
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -218,7 +218,7 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE( synth.getVoiceView(0)->canBeStolen() );
+    REQUIRE( synth.getVoiceView(0)->releasedOrFree() );
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -241,7 +241,7 @@ TEST_CASE("[Synth] loopmode=one_shot and an envelope properly kills the voice at
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE( synth.getVoiceView(0)->canBeStolen() );
+    REQUIRE( synth.getVoiceView(0)->releasedOrFree() );
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -376,11 +376,11 @@ TEST_CASE("[Synth] Self-masking")
     synth.noteOn(0, 64, 64);
     REQUIRE(synth.getNumActiveVoices() == 3); // One of these is releasing
     REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
-    REQUIRE(!synth.getVoiceView(0)->canBeStolen());
+    REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
     REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
-    REQUIRE(synth.getVoiceView(1)->canBeStolen()); // The lowest velocity voice is the masking candidate
+    REQUIRE(synth.getVoiceView(1)->releasedOrFree()); // The lowest velocity voice is the masking candidate
     REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
-    REQUIRE(!synth.getVoiceView(2)->canBeStolen());
+    REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
 }
 
 TEST_CASE("[Synth] Not self-masking")
@@ -392,11 +392,11 @@ TEST_CASE("[Synth] Not self-masking")
     synth.noteOn(0, 66, 64);
     REQUIRE(synth.getNumActiveVoices() == 3); // One of these is releasing
     REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
-    REQUIRE(synth.getVoiceView(0)->canBeStolen()); // The first encountered voice is the masking candidate
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree()); // The first encountered voice is the masking candidate
     REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
-    REQUIRE(!synth.getVoiceView(1)->canBeStolen());
+    REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
     REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
-    REQUIRE(!synth.getVoiceView(2)->canBeStolen());
+    REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
 }
 
 TEST_CASE("[Synth] Polyphony in master")

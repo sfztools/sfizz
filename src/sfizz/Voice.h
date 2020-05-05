@@ -144,12 +144,12 @@ public:
      */
     bool isFree() const noexcept;
     /**
-     * @brief Can the voice be "stolen" and reused (i.e. is it releasing)
+     * @brief Can the voice be reused (i.e. is it releasing or free)
      *
      * @return true
      * @return false
      */
-    bool canBeStolen() const noexcept;
+    bool releasedOrFree() const noexcept;
     /**
      * @brief Get the number that triggered the voice (note number or cc number)
      *

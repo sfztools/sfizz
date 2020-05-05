@@ -638,7 +638,7 @@ float sfz::Voice::getMeanSquaredAverage() const noexcept
     return powerHistory.getAverage();
 }
 
-bool sfz::Voice::canBeStolen() const noexcept
+bool sfz::Voice::releasedOrFree() const noexcept
 {
     return state == State::idle || egEnvelope.isReleased();
 }
