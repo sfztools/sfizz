@@ -121,6 +121,12 @@ SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/sysinfo.cc \
 	external/abseil-cpp/absl/base/internal/thread_identity.cc \
 	external/abseil-cpp/absl/base/internal/unscaledcycleclock.cc
+# absl::exponential_biased
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/base/internal/exponential_biased.cc
+# absl::dynamic_annotations
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/base/dynamic_annotations.cc
 # absl::malloc_internal
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/low_level_alloc.cc
@@ -152,6 +158,9 @@ SFIZZ_SOURCES += \
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/container/internal/hashtablez_sampler.cc \
 	external/abseil-cpp/absl/container/internal/hashtablez_sampler_force_weak_definition.cc
+# absl::raw_hash_set
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/container/internal/raw_hash_set.cc
 # absl::synchronization
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/synchronization/barrier.cc \
@@ -161,6 +170,9 @@ SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/synchronization/internal/waiter.cc \
 	external/abseil-cpp/absl/synchronization/notification.cc \
 	external/abseil-cpp/absl/synchronization/mutex.cc
+# absl::graphcycles_internal
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/synchronization/internal/graphcycles.cc
 # absl::time
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/time/civil_time.cc \
@@ -168,9 +180,40 @@ SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/time/duration.cc \
 	external/abseil-cpp/absl/time/format.cc \
 	external/abseil-cpp/absl/time/time.cc
+# absl::time_zone
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_fixed.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_format.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_if.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_impl.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_info.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_libc.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_lookup.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_posix.cc \
+	external/abseil-cpp/absl/time/internal/cctz/src/zone_info_source.cc
 # absl::stacktrace
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/debugging/stacktrace.cc
+# absl::symbolize
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/debugging/symbolize.cc
+# absl::demangle_internal
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/debugging/internal/demangle.cc
+# absl::debugging_internal
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/debugging/internal/address_is_readable.cc \
+	external/abseil-cpp/absl/debugging/internal/elf_mem_image.cc \
+	external/abseil-cpp/absl/debugging/internal/vdso_support.cc
+# absl::hash
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/hash/internal/hash.cc
+# absl::city
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/hash/internal/city.cc
+# absl::int128
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/numeric/int128.cc
 
 ### Spline dependency
 
