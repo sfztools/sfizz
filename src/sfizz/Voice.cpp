@@ -119,7 +119,7 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     if (state != State::playing)
         return;
 
-    if (egEnvelope.getRemainingDelay() > std::max(0, delay - initialDelay)) {
+    if (egEnvelope.getRemainingDelay() > delay) {
         reset();
     } else {
         egEnvelope.startRelease(delay, fastRelease);
@@ -475,19 +475,21 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
             static_cast<int>(source.getNumFrames())
         ) - 2;
-        for (auto* index = indices->begin(); index < indices->end(); ++index) {
-            if (*index >= sampleEnd) {
-                release(static_cast<int>(std::distance(indices->begin(), index)));
-                const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
+        for (unsigned i = 0; i < indices->size(); ++i) {
+            if ((*indices)[i] >= sampleEnd) {
+#ifndef NDEBUG
+                // Check for underflow
                 if (source.getNumFrames() - 1 < region->trueSampleEnd(currentPromise->oversamplingFactor)) {
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
                         << region->trueSampleEnd(currentPromise->oversamplingFactor)
                         << " for sample " << region->sampleId);
                 }
-                fill<int>(indices->last(remainingElements), sampleEnd);
-                fill<float>(leftCoeffs->last(remainingElements), 0.0f);
-                fill<float>(rightCoeffs->last(remainingElements), 1.0f);
+#endif
+                egEnvelope.startRelease(i, true);
+                fill<int>(indices->subspan(i), sampleEnd);
+                fill<float>(leftCoeffs->subspan(i), 0.0f);
+                fill<float>(rightCoeffs->subspan(i), 1.0f);
                 break;
             }
         }
