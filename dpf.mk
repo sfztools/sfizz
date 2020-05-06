@@ -34,8 +34,8 @@
 # 4. Build using `make` from the top folder.
 #
 
-SFIZZ_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-SFIZZ_BUILD_DIR = $(SFIZZ_DIR)/dpf-build
+SFIZZ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SFIZZ_BUILD_DIR := $(SFIZZ_DIR)/dpf-build
 
 SFIZZ_C_FLAGS = -I$(SFIZZ_DIR)/src
 SFIZZ_CXX_FLAGS = $(SFIZZ_C_FLAGS)
@@ -241,3 +241,5 @@ $(SFIZZ_BUILD_DIR)/%.c.o: $(SFIZZ_DIR)/%.c
 	-@mkdir -p $(dir $@)
 	@echo "Compiling $<"
 	$(SILENT)$(CC) $(BUILD_C_FLAGS) $(SFIZZ_C_FLAGS) -c -o $@ $<
+
+-include $(SFIZZ_OBJECTS:%.o=%.d)
