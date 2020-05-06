@@ -95,9 +95,9 @@ ModMatrix::SourceId ModMatrix::registerSource(ModKey key, ModGenerator* gen, boo
     return id;
 }
 
-ModMatrix::TargetId ModMatrix::registerTarget(ModKey key, int32_t flags)
+ModMatrix::TargetId ModMatrix::registerTarget(ModKey key, uint32_t region, int32_t flags)
 {
-    auto it = _targetIndex.find(key);
+    auto it = _targetIndex.find(std::make_pair(key, region));
     if (it != _targetIndex.end()) {
         TargetId id;
         id.index = it->second;
@@ -114,7 +114,7 @@ ModMatrix::TargetId ModMatrix::registerTarget(ModKey key, int32_t flags)
     target.bufferReady = false;
     target.buffer.resize(_samplesPerBlock);
 
-    _targetIndex[key] = id.index;
+    _targetIndex[std::make_pair(key, region)] = id.index;
     return id;
 }
 
@@ -131,11 +131,11 @@ ModMatrix::SourceId ModMatrix::findSource(ModKey key)
     return id;
 }
 
-ModMatrix::TargetId ModMatrix::findTarget(ModKey key)
+ModMatrix::TargetId ModMatrix::findTarget(ModKey key, uint32_t region)
 {
     TargetId id;
 
-    auto it = _targetIndex.find(key);
+    auto it = _targetIndex.find(std::make_pair(key, region));
     if (it != _targetIndex.end())
         id.index = it->second;
     else

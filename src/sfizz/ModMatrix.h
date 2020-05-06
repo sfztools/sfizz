@@ -112,9 +112,10 @@ public:
      * @brief Register a modulation target inside the matrix.
      *
      * @param key target key
+     * @param region target region
      * @param flags target flags
      */
-    TargetId registerTarget(ModKey key, int32_t flags);
+    TargetId registerTarget(ModKey key, uint32_t region, int32_t flags);
 
     /**
      * @brief Look up a source by key.
@@ -127,8 +128,9 @@ public:
      * @brief Look up a target by key.
      *
      * @param key target key
+     * @param index of target region
      */
-    TargetId findTarget(ModKey key);
+    TargetId findTarget(ModKey key, uint32_t region);
 
     /**
      * @brief Connect a source and a destination inside the matrix.
@@ -200,14 +202,17 @@ private:
 
     struct Target {
         ModKey key;
+        uint32_t region {};
         int32_t flags {};
         std::vector<uint32_t> sources;
         bool bufferReady {};
         Buffer<float> buffer;
     };
 
+    typedef std::pair<ModKey, uint32_t> TargetKey;
+
     absl::flat_hash_map<ModKey, uint32_t> _sourceIndex;
-    absl::flat_hash_map<ModKey, uint32_t> _targetIndex;
+    absl::flat_hash_map<TargetKey, uint32_t> _targetIndex;
 
     std::vector<Source> _sources;
     std::vector<Target> _targets;
