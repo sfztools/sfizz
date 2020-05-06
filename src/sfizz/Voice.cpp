@@ -21,6 +21,9 @@ sfz::Voice::Voice(sfz::Resources& resources)
 
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
+
+    for (auto & filter : channelPowerFilters)
+        filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, float value, sfz::Voice::TriggerType triggerType) noexcept
@@ -192,6 +195,9 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
 
+    for (auto & filter : channelPowerFilters)
+        filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
+
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
 }
@@ -206,11 +212,6 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
     buffer.fill(0.0f);
-
-    if (state == State::idle || region == nullptr) {
-        powerHistory.push(0.0f);
-        return;
-    }
 
     const auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
@@ -237,7 +238,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     if (!egEnvelope.isSmoothing())
         reset();
 
-    powerHistory.push(buffer.meanSquared());
+    updateChannelPowers(buffer);
+
     this->triggerDelay = absl::nullopt;
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
@@ -629,13 +631,20 @@ void sfz::Voice::reset() noexcept
     sourcePosition = 0;
     floatPositionOffset = 0.0f;
     noteIsOff = false;
+
+    for (auto& f : channelPowerFilters)
+        f.reset();
+
+    for (auto& p : channelPowers)
+        p = 0.0f;
+
     filters.clear();
     equalizers.clear();
 }
 
 float sfz::Voice::getMeanSquaredAverage() const noexcept
 {
-    return powerHistory.getAverage();
+    return max(channelPowers[0], channelPowers[1]);
 }
 
 bool sfz::Voice::releasedOrFree() const noexcept
@@ -717,4 +726,25 @@ void sfz::Voice::setupOscillatorUnison()
             fprintf(stderr, "[%d] %10g cents, %10g dB\n", i, detunes[i], 20.0f * std::log10(waveRightGain[i]));
     }
 #endif
+}
+
+
+void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
+{
+    assert(channelPowers.size() == channelPowerFilters.size());
+    assert(buffer.getNumFrames() <= channelPowerFilters.size());
+    if (buffer.getNumFrames() == 0)
+        return;
+
+    auto tempSpan = resources.bufferPool.getBuffer(buffer.getNumFrames());
+    if (!tempSpan)
+        return;
+
+    for (unsigned i = 0; i < channelPowers.size(); ++i) {
+        for (unsigned s = 0; s < buffer.getNumFrames(); ++s)
+            (*tempSpan)[s] = std::abs(buffer.getConstSpan(i)[s]);
+
+        channelPowerFilters[i].processLowpass(*tempSpan, *tempSpan);
+        channelPowers[i] = tempSpan->back();
+    }
 }

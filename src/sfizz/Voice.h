@@ -13,6 +13,7 @@
 #include "Resources.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
+#include "OnePoleFilter.h"
 #include "absl/types/span.h"
 #include <memory>
 #include <random>
@@ -245,6 +246,7 @@ private:
      * @brief Initialize frequency and gain coefficients for the oscillators.
      */
     void setupOscillatorUnison();
+    void updateChannelPowers(AudioSpan<float> buffer);
 
     Region* region { nullptr };
 
@@ -299,7 +301,8 @@ private:
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
-    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
+    std::array<OnePoleFilter<float>, 2> channelPowerFilters;
+    std::array<float, 2> channelPowers;
     LEAK_DETECTOR(Voice);
 };
 

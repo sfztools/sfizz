@@ -54,6 +54,7 @@ namespace config {
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
+    constexpr float filteredEnvelopeCutoff { 5 };
     constexpr uint16_t numCCs { 512 };
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
