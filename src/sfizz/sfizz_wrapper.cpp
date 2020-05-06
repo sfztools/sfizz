@@ -25,6 +25,12 @@ bool sfizz_load_file(sfizz_synth_t* synth, const char* path)
     return self->loadSfzFile(path);
 }
 
+bool sfizz_load_string(sfizz_synth_t* synth, const char* path, const char* text)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->loadSfzString(path, text);
+}
+
 void sfizz_free(sfizz_synth_t* synth)
 {
     delete reinterpret_cast<sfz::Synth*>(synth);

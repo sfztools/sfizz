@@ -71,6 +71,21 @@ SFIZZ_EXPORTED_API void sfizz_free(sfizz_synth_t* synth);
 SFIZZ_EXPORTED_API bool sfizz_load_file(sfizz_synth_t* synth, const char* path);
 
 /**
+ * @brief      Loads an SFZ file from textual data. This accepts a virtual
+ *             path name for the imaginary sfz file, which is not required to
+ *             exist on disk. The purpose of the virtual path is to locate
+ *             samples with relative paths.
+ *
+ * @param      synth  The sfizz synth.
+ * @param      path   The virtual path of the SFZ file.
+ * @param      text   The contents of the virtual SFZ file.
+ *
+ * @return     @true when file loading went OK,
+ *             @false if some error occured while loading.
+ */
+SFIZZ_EXPORTED_API bool sfizz_load_string(sfizz_synth_t* synth, const char* path, const char* text);
+
+/**
  * @brief      Return the number of regions in the currently loaded SFZ file.
  *
  * @param      synth  The synth.

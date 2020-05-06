@@ -57,6 +57,22 @@ public:
     bool loadSfzFile(const std::string& path);
 
     /**
+     * @brief Empties the current regions and load a new SFZ document from memory.
+     *
+     * This is similar to loadSfzFile() in functionality.
+     * This accepts a virtual path name for the imaginary sfz file, which is not
+     * required to exist on disk. The purpose of the virtual path is to locate
+     * samples with relative paths.
+     *
+     * @param path The virtual path of the SFZ file, as string.
+     * @param text The contents of the virtual SFZ file.
+     *
+     * @return @false if no regions were loaded,
+     *         @true otherwise.
+     */
+    bool loadSfzString(const std::string& path, const std::string& text);
+
+    /**
      * @brief Return the current number of regions loaded.
      */
     int getNumRegions() const noexcept;

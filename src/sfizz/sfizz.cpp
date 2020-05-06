@@ -23,6 +23,11 @@ bool sfz::Sfizz::loadSfzFile(const std::string& path)
     return synth->loadSfzFile(path);
 }
 
+bool sfz::Sfizz::loadSfzString(const std::string& path, const std::string& text)
+{
+    return synth->loadSfzString(path, text);
+}
+
 int sfz::Sfizz::getNumRegions() const noexcept
 {
     return synth->getNumRegions();
