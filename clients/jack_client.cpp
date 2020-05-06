@@ -141,6 +141,7 @@ static void done(int sig)
 ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
 ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
 int main(int argc, char** argv)
 {
@@ -155,6 +156,7 @@ int main(int argc, char** argv)
     const std::string clientName = absl::GetFlag(FLAGS_client_name);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+    const bool verboseState = absl::GetFlag(FLAGS_state);
 
     std::cout << "Flags" << '\n';
     std::cout << "- Client name: " << clientName << '\n';
@@ -261,11 +263,14 @@ int main(int argc, char** argv)
     signal(SIGQUIT, done);
 
     while (!shouldClose){
+        if (verboseState) {
+            std::cout << "Active voices: " << synth.getNumActiveVoices() << '\n';
 #ifndef NDEBUG
         std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
         std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
 #endif
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     std::cout << "Closing..." << '\n';
