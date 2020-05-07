@@ -584,7 +584,7 @@ sfizz_lv2_check_num_voices(sfizz_plugin_t* self)
         num_voices_atom.body = num_voices;
         if (self->worker->schedule_work(self->worker->handle,
                                         lv2_atom_total_size((LV2_Atom *)&num_voices_atom),
-                                        &num_voices_atom) == LV2_WORKER_SUCCESS)
+                                        &num_voices_atom) != LV2_WORKER_SUCCESS)
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue changing the number of voices\n");
         }
