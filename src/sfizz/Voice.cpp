@@ -22,7 +22,7 @@ sfz::Voice::Voice(sfz::Resources& resources)
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
 
-    for (auto & filter : channelPowerFilters)
+    for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
 }
 
@@ -195,7 +195,7 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
 
-    for (auto & filter : channelPowerFilters)
+    for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
 
     for (WavetableOscillator& osc : waveOscillators)
@@ -624,10 +624,10 @@ void sfz::Voice::reset() noexcept
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
-    for (auto& f : channelPowerFilters)
+    for (auto& f : channelEnvelopeFilters)
         f.reset();
 
-    for (auto& p : channelPowers)
+    for (auto& p : smoothedChannelEnvelopes)
         p = 0.0f;
 
     filters.clear();
@@ -636,7 +636,7 @@ void sfz::Voice::reset() noexcept
 
 float sfz::Voice::getAverageEnvelope() const noexcept
 {
-    return max(channelPowers[0], channelPowers[1]);
+    return max(smoothedChannelEnvelopes[0], smoothedChannelEnvelopes[1]);
 }
 
 bool sfz::Voice::releasedOrFree() const noexcept
@@ -723,14 +723,15 @@ void sfz::Voice::setupOscillatorUnison()
 
 void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
 {
-    assert(channelPowers.size() == channelPowerFilters.size());
-    assert(buffer.getNumFrames() <= channelPowerFilters.size());
+    assert(smoothedChannelEnvelopes.size() == channelEnvelopeFilters.size());
+    assert(buffer.getNumFrames() <= channelEnvelopeFilters.size());
     if (buffer.getNumFrames() == 0)
         return;
 
-    for (unsigned i = 0; i < channelPowers.size(); ++i) {
+    for (unsigned i = 0; i < smoothedChannelEnvelopes.size(); ++i) {
         const auto input = buffer.getConstSpan(i);
         for (unsigned s = 0; s < buffer.getNumFrames(); ++s)
-            channelPowers[i] = channelPowerFilters[i].tickLowpass(std::abs(input[s]));
+            smoothedChannelEnvelopes[i] =
+                channelEnvelopeFilters[i].tickLowpass(std::abs(input[s]));
     }
 }

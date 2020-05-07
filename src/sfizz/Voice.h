@@ -309,8 +309,8 @@ private:
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
-    std::array<OnePoleFilter<float>, 2> channelPowerFilters;
-    std::array<float, 2> channelPowers;
+    std::array<OnePoleFilter<float>, 2> channelEnvelopeFilters;
+    std::array<float, 2> smoothedChannelEnvelopes;
     LEAK_DETECTOR(Voice);
 };
 
