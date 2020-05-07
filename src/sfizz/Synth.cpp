@@ -528,13 +528,13 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
             break;
         }
 
-        float sumEnvelope = ref->getAverageEnvelope();
+        float maxEnvelope = ref->getAverageEnvelope();
         while (idx < voiceViewArray.size() && sisterVoices(ref, voiceViewArray[idx])) {
-            sumEnvelope += voiceViewArray[idx]->getAverageEnvelope();
+            maxEnvelope = max(maxEnvelope, voiceViewArray[idx]->getAverageEnvelope());
             idx++;
         }
 
-        if (sumEnvelope < envThreshold) {
+        if (maxEnvelope < envThreshold) {
             returnedVoice = ref;
             // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
             for (unsigned j = refIdx; j < idx; j++)
