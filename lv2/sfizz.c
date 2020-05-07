@@ -906,8 +906,7 @@ work(LV2_Handle instance,
      const void *data)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    if (!data)
-    {
+    if (!data) {
         lv2_log_error(&self->logger, "[sfizz] Ignoring empty data in the worker thread\n");
         return LV2_WORKER_ERR_UNKNOWN;
     }
@@ -922,12 +921,9 @@ work(LV2_Handle instance,
 
         const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
         self->changing_state = true;
-        if (sfizz_load_file(self->synth, sfz_file_path))
-        {
+        if (sfizz_load_file(self->synth, sfz_file_path)) {
             sfizz_lv2_update_file_info(self, sfz_file_path);
-        }
-        else
-        {
+        } else {
             lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
         self->changing_state = false;
@@ -939,12 +935,18 @@ work(LV2_Handle instance,
             return LV2_WORKER_SUCCESS;
         }
 
-        self->changing_state = true;
         const int num_voices = *(const int *)LV2_ATOM_BODY_CONST(atom);
+        if (sfizz_get_num_voices(self->synth) == num_voices) {
+            return LV2_WORKER_SUCCESS; // Nothing to do
+        }
+
+        self->changing_state = true;
         sfizz_set_num_voices(self->synth, num_voices);
         if (sfizz_get_num_voices(self->synth) == num_voices) {
             self->num_voices = num_voices;
             lv2_log_note(&self->logger, "[sfizz] Number of voices changed to: %d\n", num_voices);
+        } else {
+            lv2_log_error(&self->logger, "[sfizz] Error changing the number of voices\n");
         }
         self->changing_state = false;
     }
@@ -955,12 +957,18 @@ work(LV2_Handle instance,
             return LV2_WORKER_SUCCESS;
         }
 
-        self->changing_state = true;
         const unsigned int preload_size = *(const unsigned int *)LV2_ATOM_BODY_CONST(atom);
+        if (sfizz_get_preload_size(self->synth) == preload_size) {
+            return LV2_WORKER_SUCCESS; // Nothing to do
+        }
+
+        self->changing_state = true;
         sfizz_set_preload_size(self->synth, preload_size);
         if (sfizz_get_preload_size(self->synth) == preload_size) {
             self->preload_size = preload_size;
             lv2_log_note(&self->logger, "[sfizz] Preload size changed to: %d\n", preload_size);
+        } else {
+            lv2_log_error(&self->logger, "[sfizz] Error changing the preload size\n");
         }
         self->changing_state = false;
     }
@@ -970,13 +978,20 @@ work(LV2_Handle instance,
             respond(handle, size, data); // send back so that we reschedule the check
             return LV2_WORKER_SUCCESS;
         }
-        self->changing_state = true;
+
         const sfizz_oversampling_factor_t oversampling =
             *(const sfizz_oversampling_factor_t *)LV2_ATOM_BODY_CONST(atom);
+        if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
+            return LV2_WORKER_SUCCESS; // Nothing to do
+        }
+
+        self->changing_state = true;
         sfizz_set_oversampling_factor(self->synth, oversampling);
         if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
             self->oversampling = oversampling;
             lv2_log_note(&self->logger, "[sfizz] Oversampling changed to: %d\n", oversampling);
+        } else {
+            lv2_log_error(&self->logger, "[sfizz] Error changing the oversampling\n");
         }
         self->changing_state = false;
     }
@@ -992,13 +1007,12 @@ work(LV2_Handle instance,
             if (self->changing_state)
                 return LV2_WORKER_SUCCESS;
 
-            lv2_log_note(&self->logger, "[sfizz] File %s seems to have been updated, reloading\n", self->sfz_file_path);
-            if (sfizz_load_file(self->synth, self->sfz_file_path))
-            {
+            lv2_log_note(&self->logger,
+                        "[sfizz] File %s seems to have been updated, reloading\n",
+                        self->sfz_file_path);
+            if (sfizz_load_file(self->synth, self->sfz_file_path)) {
                 sfizz_lv2_update_file_info(self, self->sfz_file_path);
-            }
-            else
-            {
+            } else {
                 lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
         }
@@ -1012,7 +1026,6 @@ work(LV2_Handle instance,
                           self->unmap->unmap(self->unmap->handle, atom->type));
         return LV2_WORKER_ERR_UNKNOWN;
     }
-
     return LV2_WORKER_SUCCESS;
 }
 
