@@ -614,21 +614,6 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
     return false;
 }
 
-int sfz::Voice::getTriggerNumber() const noexcept
-{
-    return triggerNumber;
-}
-
-float sfz::Voice::getTriggerValue() const noexcept
-{
-    return triggerValue;
-}
-
-sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
-{
-    return triggerType;
-}
-
 void sfz::Voice::reset() noexcept
 {
     state = State::idle;
@@ -743,15 +728,9 @@ void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
     if (buffer.getNumFrames() == 0)
         return;
 
-    auto tempSpan = resources.bufferPool.getBuffer(buffer.getNumFrames());
-    if (!tempSpan)
-        return;
-
     for (unsigned i = 0; i < channelPowers.size(); ++i) {
+        const auto input = buffer.getConstSpan(i);
         for (unsigned s = 0; s < buffer.getNumFrames(); ++s)
-            (*tempSpan)[s] = std::abs(buffer.getConstSpan(i)[s]);
-
-        channelPowerFilters[i].processLowpass(*tempSpan, *tempSpan);
-        channelPowers[i] = tempSpan->back();
+            channelPowers[i] = channelPowerFilters[i].tickLowpass(std::abs(input[s]));
     }
 }

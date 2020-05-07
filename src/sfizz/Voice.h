@@ -156,19 +156,19 @@ public:
      *
      * @return int
      */
-    int getTriggerNumber() const noexcept;
+    constexpr int getTriggerNumber() const noexcept { return triggerNumber; }
     /**
      * @brief Get the value that triggered the voice (note velocity or cc value)
      *
      * @return float
      */
-    float getTriggerValue() const noexcept;
+    constexpr float getTriggerValue() const noexcept  { return triggerValue; }
     /**
      * @brief Get the type of trigger
      *
      * @return TriggerType
      */
-    TriggerType getTriggerType() const noexcept;
+    constexpr TriggerType getTriggerType() const noexcept  { return triggerType; }
 
     /**
      * @brief Reset the voice to its initial values
@@ -220,7 +220,7 @@ public:
      *
      * @return
      */
-    int getAge() const noexcept { return age; }
+    constexpr int getAge() const noexcept { return age; }
 
     Duration getLastDataDuration() const noexcept { return dataDuration; }
     Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
@@ -313,5 +313,13 @@ private:
     std::array<float, 2> channelPowers;
     LEAK_DETECTOR(Voice);
 };
+
+constexpr bool sisterVoices(const Voice* lhs, const Voice* rhs)
+{
+    return lhs->getAge() == rhs->getAge()
+        && lhs->getTriggerNumber() == rhs->getTriggerNumber()
+        && lhs->getTriggerValue() == rhs->getTriggerValue()
+        && lhs->getTriggerType() == rhs->getTriggerType();
+}
 
 } // namespace sfz

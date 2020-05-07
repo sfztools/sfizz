@@ -57,18 +57,14 @@ public:
     void processLowpass(const Type* input, Type* output, unsigned size)
     {
         for (unsigned i = 0; i < size; ++i) {
-            const Type intermediate = G * (input[i] - state);
-            output[i] = intermediate + state;
-            state = output[i] + intermediate;
+            output[i] = tickLowpass(input[i]);
         }
     }
 
     void processHighpass(const Type* input, Type* output, unsigned size)
     {
         for (unsigned i = 0; i < size; ++i) {
-            const Type intermediate = G * (input[i] - state);
-            output[i] = input[i] - intermediate - state;
-            state += 2 * intermediate;
+            output[i] = tickHighpass(input[i]);
         }
     }
 
@@ -76,9 +72,7 @@ public:
     {
         for (unsigned i = 0; i < size; ++i) {
             setGain(gain[i]);
-            const Type intermediate = G * (input[i] - state);
-            output[i] = intermediate + state;
-            state = output[i] + intermediate;
+            output[i] = tickLowpass(input[i]);
         }
     }
 
@@ -86,10 +80,24 @@ public:
     {
         for (unsigned i = 0; i < size; ++i) {
             setGain(gain[i]);
-            const Type intermediate = G * (input[i] - state);
-            output[i] = input[i] - intermediate - state;
-            state += 2 * intermediate;
+            output[i] = tickHighpass(input[i]);
         }
+    }
+
+    Type tickHighpass(const Type& input)
+    {
+        const Type intermediate = G * (input - state);
+        const Type output = input - intermediate - state;
+        state += 2 * intermediate;
+        return output;
+    }
+
+    Type tickLowpass(const Type& input)
+    {
+        const Type intermediate = G * (input - state);
+        const Type output = intermediate + state;
+        state = output + intermediate;
+        return output;
     }
 
     void reset(Type value = 0.0)
