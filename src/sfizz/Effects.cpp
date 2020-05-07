@@ -109,6 +109,17 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
     }
 }
 
+void EffectBus::applyGain(const float* gain, unsigned nframes)
+{
+    if (!gain)
+        return;
+
+    absl::Span<const float> gainSpan { gain, nframes };
+    for (unsigned c = 0; c < EffectChannels; ++c) {
+        sfz::applyGain<float>(gainSpan, _inputs.getSpan(c));
+    }
+}
+
 void EffectBus::setSampleRate(double sampleRate)
 {
     for (const auto& effectPtr : _effects)
