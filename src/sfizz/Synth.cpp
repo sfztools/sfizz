@@ -503,26 +503,33 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 
     // Find voices that can be stolen
     absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) {
-        return lhs->getAge() < rhs->getAge();
+        return lhs->getAge() > rhs->getAge();
     });
 
     const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [] (float sum, const Voice* v) {
         return sum + v->getAverageEnvelope();
     });
-    const auto threshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) / 2;
+    const auto envThreshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) * 0.25f;
+    const auto ageThreshold = voiceViewArray.front()->getAge() * 0.5f;
 
     Voice* returnedVoice = voiceViewArray.front();
     for (auto & voice : voiceViewArray) {
-        if (voice->getAverageEnvelope() < threshold) {
+        if (voice->getAge() < ageThreshold) {
+            // std::cout << "Went too far, picking the oldest note..." << '\n';
+            break;
+        }
+        if (voice->getAverageEnvelope() < envThreshold) {
+            // std::cout << "Found a better candidate!" << '\n';
             returnedVoice = voice;
             break;
         }
     }
+
     const auto killedVoices = killSisterVoices(returnedVoice);
     UNUSED(killedVoices); // only in debug
     assert(killedVoices > 0);
     assert(returnedVoice->isFree());
-    std::cout << "Killed " << killedVoices << " voices";
+    // std::cout << "Killed " << killedVoices << " voices" << '\n';
 
     return returnedVoice;
 }
