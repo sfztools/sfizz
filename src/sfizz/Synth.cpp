@@ -389,15 +389,14 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
             // TODO: adjust with LFO targets
             const auto maxOffset = [region]() {
                 uint64_t sumOffsetCC = region->offset + region->offsetRandom;
-                for (const auto& offsets: region->offsetCC)
+                for (const auto& offsets : region->offsetCC)
                     sumOffsetCC += offsets.data;
                 return Default::offsetCCRange.clamp(sumOffsetCC);
             }();
 
             if (!resources.filePool.preloadFile(region->sampleId, maxOffset))
                 removeCurrentRegion();
-        }
-        else if (region->oscillator && !region->isGenerator()) {
+        } else if (region->oscillator && !region->isGenerator()) {
             if (!resources.filePool.checkSampleId(region->sampleId)) {
                 removeCurrentRegion();
                 continue;
@@ -411,7 +410,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
         if (region->keyswitchLabel && region->keyswitch)
             keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
-
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
         while (groupMaxPolyphony.size() <= region->group)
@@ -473,26 +471,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     return true;
 }
 
-unsigned sfz::Synth::killSisterVoices(const Voice* voiceToKill) noexcept
-{
-    const auto age = voiceToKill->getAge();
-    const auto type = voiceToKill->getTriggerType();
-    const auto number = voiceToKill->getTriggerNumber();
-    const auto value = voiceToKill->getTriggerValue();
-
-    unsigned killedVoices = 0;
-    for (auto & voice : voiceViewArray) {
-        if (voice->getAge() == age
-            && voice->getTriggerType() == type
-            && voice->getTriggerNumber() == number
-            && voice->getTriggerValue() == value) {
-                killedVoices++;
-                voice->reset();
-        }
-    }
-    return killedVoices;
-}
-
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
     auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) {
@@ -503,34 +481,69 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 
     // Find voices that can be stolen
     absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) {
-        return lhs->getAge() > rhs->getAge();
+        if (lhs->getAge() > rhs->getAge())
+            return true;
+        if (lhs->getAge() < rhs->getAge())
+            return false;
+
+        if (lhs->getTriggerNumber() > rhs->getTriggerNumber())
+            return true;
+        if (lhs->getTriggerNumber() < rhs->getTriggerNumber())
+            return false;
+
+        if (lhs->getTriggerValue() > rhs->getTriggerValue())
+            return true;
+        if (lhs->getTriggerValue() < rhs->getTriggerValue())
+            return false;
+
+        if (lhs->getTriggerType() > rhs->getTriggerType())
+            return true;
+
+        return false;
     });
 
-    const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [] (float sum, const Voice* v) {
+    const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [](float sum, const Voice* v) {
         return sum + v->getAverageEnvelope();
     });
-    const auto envThreshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) * 0.25f;
+    const auto envThreshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) * 0.5f;
     const auto ageThreshold = voiceViewArray.front()->getAge() * 0.5f;
 
     Voice* returnedVoice = voiceViewArray.front();
-    for (auto & voice : voiceViewArray) {
-        if (voice->getAge() < ageThreshold) {
-            // std::cout << "Went too far, picking the oldest note..." << '\n';
+    unsigned idx = 0;
+    while (idx < voiceViewArray.size()) {
+        const auto refIdx = idx;
+        const auto ref = voiceViewArray[idx];
+        idx++;
+
+        if (ref->getAge() < ageThreshold) {
+            unsigned killIdx = 1;
+            while (killIdx < voiceViewArray.size()
+                && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
+                voiceViewArray[killIdx]->reset();
+                killIdx++;
+            }
+            // std::cout << "Went too far, picking the oldest voice and killing "
+            //           << killIdx << " voices" << '\n';
+            returnedVoice->reset();
             break;
         }
-        if (voice->getAverageEnvelope() < envThreshold) {
-            // std::cout << "Found a better candidate!" << '\n';
-            returnedVoice = voice;
+
+        float sumEnvelope = ref->getAverageEnvelope();
+        while (idx < voiceViewArray.size() && sisterVoices(ref, voiceViewArray[idx])) {
+            sumEnvelope += voiceViewArray[idx]->getAverageEnvelope();
+            idx++;
+        }
+
+        if (sumEnvelope < envThreshold) {
+            returnedVoice = ref;
+            // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
+            for (unsigned j = refIdx; j < idx; j++)
+                voiceViewArray[j]->reset();
             break;
         }
     }
 
-    const auto killedVoices = killSisterVoices(returnedVoice);
-    UNUSED(killedVoices); // only in debug
-    assert(killedVoices > 0);
     assert(returnedVoice->isFree());
-    // std::cout << "Killed " << killedVoices << " voices" << '\n';
-
     return returnedVoice;
 }
 
@@ -598,7 +611,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
-
 
     size_t numFrames = buffer.getNumFrames();
     auto tempSpan = resources.bufferPool.getStereoBuffer(numFrames);
@@ -1107,7 +1119,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 fs::file_time_type sfz::Synth::checkModificationTime()
 {
     auto returnedTime = modificationTime;
-    for (const auto& file: parser.getIncludedFiles()) {
+    for (const auto& file : parser.getIncludedFiles()) {
         std::error_code ec;
         const auto fileTime = fs::last_write_time(file, ec);
         if (!ec && returnedTime < fileTime)
