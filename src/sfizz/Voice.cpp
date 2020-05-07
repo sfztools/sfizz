@@ -240,7 +240,13 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     updateChannelPowers(buffer);
 
-    this->triggerDelay = absl::nullopt;
+    age += buffer.getNumFrames();
+    if (triggerDelay) {
+        // Should be OK but just in case;
+        age = min(age - *triggerDelay, 0);
+        triggerDelay = absl::nullopt;
+    }
+
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
@@ -629,6 +635,7 @@ void sfz::Voice::reset() noexcept
     region = nullptr;
     currentPromise.reset();
     sourcePosition = 0;
+    age = 0;
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
@@ -642,7 +649,7 @@ void sfz::Voice::reset() noexcept
     equalizers.clear();
 }
 
-float sfz::Voice::getMeanSquaredAverage() const noexcept
+float sfz::Voice::getAverageEnvelope() const noexcept
 {
     return max(channelPowers[0], channelPowers[1]);
 }

@@ -481,7 +481,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 
     // Find voices that can be stolen
     absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) {
-        return lhs->getMeanSquaredAverage() < rhs->getMeanSquaredAverage();
+        return lhs->getAverageEnvelope() < rhs->getAverageEnvelope();
     });
 
     voiceViewArray.front()->reset();

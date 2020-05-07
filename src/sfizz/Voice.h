@@ -182,7 +182,7 @@ public:
      *
      * @return float
      */
-    float getMeanSquaredAverage() const noexcept;
+    float getAverageEnvelope() const noexcept;
     /**
      * @brief Get the position of the voice in the source, in samples
      *
@@ -214,6 +214,13 @@ public:
      * @param fastRelease whether to do a normal release or cut the voice abruptly
      */
     void release(int delay, bool fastRelease = false) noexcept;
+
+    /**
+     * @brief gets the age of the Voice
+     *
+     * @return
+     */
+    int getAge() const noexcept { return age; }
 
     Duration getLastDataDuration() const noexcept { return dataDuration; }
     Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
@@ -271,6 +278,7 @@ private:
     float floatPositionOffset { 0.0f };
     int sourcePosition { 0 };
     int initialDelay { 0 };
+    int age { 0 };
 
     FilePromisePtr currentPromise { nullptr };
 
