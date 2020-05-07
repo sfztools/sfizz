@@ -162,13 +162,13 @@ public:
      *
      * @return float
      */
-    float getTriggerValue() const noexcept  { return triggerValue; }
+    float getTriggerValue() const noexcept { return triggerValue; }
     /**
      * @brief Get the type of trigger
      *
      * @return TriggerType
      */
-    TriggerType getTriggerType() const noexcept  { return triggerType; }
+    TriggerType getTriggerType() const noexcept { return triggerType; }
 
     /**
      * @brief Reset the voice to its initial values
@@ -271,7 +271,7 @@ private:
 
     float speedRatio { 1.0 };
     float pitchRatio { 1.0 };
-    float baseVolumedB{ 0.0 };
+    float baseVolumedB { 0.0 };
     float baseGain { 1.0 };
     float baseFrequency { 440.0 };
 
@@ -298,9 +298,9 @@ private:
 
     // unison of oscillators
     unsigned waveUnisonSize { 0 };
-    float waveDetuneRatio[config::oscillatorsPerVoice] { };
-    float waveLeftGain[config::oscillatorsPerVoice] { };
-    float waveRightGain[config::oscillatorsPerVoice] { };
+    float waveDetuneRatio[config::oscillatorsPerVoice] {};
+    float waveLeftGain[config::oscillatorsPerVoice] {};
+    float waveRightGain[config::oscillatorsPerVoice] {};
 
     Duration dataDuration;
     Duration amplitudeDuration;
@@ -320,6 +320,29 @@ inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
         && lhs->getTriggerNumber() == rhs->getTriggerNumber()
         && lhs->getTriggerValue() == rhs->getTriggerValue()
         && lhs->getTriggerType() == rhs->getTriggerType();
+}
+
+inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
+{
+    if (lhs->getAge() > rhs->getAge())
+        return true;
+    if (lhs->getAge() < rhs->getAge())
+        return false;
+
+    if (lhs->getTriggerNumber() > rhs->getTriggerNumber())
+        return true;
+    if (lhs->getTriggerNumber() < rhs->getTriggerNumber())
+        return false;
+
+    if (lhs->getTriggerValue() > rhs->getTriggerValue())
+        return true;
+    if (lhs->getTriggerValue() < rhs->getTriggerValue())
+        return false;
+
+    if (lhs->getTriggerType() > rhs->getTriggerType())
+        return true;
+
+    return false;
 }
 
 } // namespace sfz

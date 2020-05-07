@@ -482,27 +482,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         return freeVoice->get();
 
     // Find voices that can be stolen
-    absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) {
-        if (lhs->getAge() > rhs->getAge())
-            return true;
-        if (lhs->getAge() < rhs->getAge())
-            return false;
-
-        if (lhs->getTriggerNumber() > rhs->getTriggerNumber())
-            return true;
-        if (lhs->getTriggerNumber() < rhs->getTriggerNumber())
-            return false;
-
-        if (lhs->getTriggerValue() > rhs->getTriggerValue())
-            return true;
-        if (lhs->getTriggerValue() < rhs->getTriggerValue())
-            return false;
-
-        if (lhs->getTriggerType() > rhs->getTriggerType())
-            return true;
-
-        return false;
-    });
+    absl::c_sort(voiceViewArray, voiceOrdering);
 
     const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [](float sum, const Voice* v) {
         return sum + v->getAverageEnvelope();
