@@ -28,10 +28,11 @@ class ModKey {
 public:
     //! Identifier, a letter-only hash
     uint64_t id = 0;
-    //! First index of the key or -1 (eg. `N` in `lfoN`)
-    int32_t index1 = -1;
-    //! Second index of the key or -1 (eg. `X` in `lfoN_eqX`)
-    int32_t index2 = -1;
+    //! List of values which identify the key uniquely, along with the hash
+    std::vector<float> params;
+
+    // eg. `N` in `lfoN`, `N, X` in `lfoN_eqX`
+    //     `nsteps, curve, smooth` for controllers
 
 public:
     bool operator==(const ModKey &other) const noexcept;
@@ -135,11 +136,12 @@ public:
     /**
      * @brief Connect a source and a destination inside the matrix.
      *
-     * @param sourceId
-     * @param targetId
+     * @param sourceId source of the connection
+     * @param targetId target of the connection
+     * @param depth factor by which the source signal affects the target
      * @return true if the connection was successfully made, otherwise false
      */
-    bool connect(SourceId sourceId, TargetId targetId);
+    bool connect(SourceId sourceId, TargetId targetId, float depth);
 
     /**
      * @brief Start modulation processing for the entire cycle.
@@ -200,11 +202,15 @@ private:
         Buffer<float> buffer;
     };
 
+    struct ConnectionData {
+        float depthToTarget {};
+    };
+
     struct Target {
         ModKey key;
         uint32_t region {};
         int32_t flags {};
-        std::vector<uint32_t> sources;
+        absl::flat_hash_map<uint32_t, ConnectionData> connectedSources;
         bool bufferReady {};
         Buffer<float> buffer;
     };

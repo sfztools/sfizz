@@ -95,7 +95,8 @@ void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& mes
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = absl::make_unique<Region>(resources.midiState, defaultPath);
+    auto* lastRegion = new Region(resources.midiState, defaultPath);
+    regions.emplace_back(lastRegion);
 
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
@@ -117,7 +118,8 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (octaveOffset != 0 || noteOffset != 0)
         lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
 
-    regions.push_back(std::move(lastRegion));
+    size_t regionIndex = regions.size();
+    lastRegion->populateModMatrix(resources.modMatrix, static_cast<uint32_t>(regionIndex), *this);
 }
 
 void sfz::Synth::clear()

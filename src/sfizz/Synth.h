@@ -10,6 +10,7 @@
 #include "Voice.h"
 #include "Region.h"
 #include "Effects.h"
+#include "ModMatrixHelpers.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
 #include "AudioSpan.h"
@@ -60,7 +61,7 @@ namespace sfz {
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.
  */
-class Synth final : public Parser::Listener {
+class Synth final : public Parser::Listener, public ModGeneratorFactory {
 public:
     /**
      * @brief Construct a new Synth object with no voices. If you want sound

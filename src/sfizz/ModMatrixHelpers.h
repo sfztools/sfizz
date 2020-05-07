@@ -15,6 +15,7 @@ class ModGenerator;
  */
 class ModGeneratorFactory {
 public:
+    virtual ~ModGeneratorFactory() {}
 };
 
 } // namespace sfz

@@ -11,6 +11,7 @@
 #include "Opcode.h"
 #include "StringViewHelpers.h"
 #include "ModifierHelpers.h"
+#include "ModMatrix.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_cat.h"
 #include "absl/algorithm/container.h"
@@ -339,35 +340,35 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
     case_any_ccN("volume"): // also gain
-        processGenericCc(opcode, Default::volumeCCRange, &volumeCC);
+        processGenericCc(opcode, Default::volumeCCRange, &volumeCC, kModIsPerVoice|kModIsAdditive);
         break;
     case hash("amplitude"):
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
             amplitude = normalizePercents(*value);
         break;
     case_any_ccN("amplitude"):
-        processGenericCc(opcode, Default::amplitudeRange, &amplitudeCC);
+        processGenericCc(opcode, Default::amplitudeRange, &amplitudeCC, kModIsPerVoice|kModIsMultiplicative);
         break;
     case hash("pan"):
         if (auto value = readOpcode(opcode.value, Default::panRange))
             pan = normalizePercents(*value);
         break;
     case_any_ccN("pan"):
-        processGenericCc(opcode, Default::panCCRange, &panCC);
+        processGenericCc(opcode, Default::panCCRange, &panCC, kModIsPerVoice|kModIsAdditive);
         break;
     case hash("position"):
         if (auto value = readOpcode(opcode.value, Default::positionRange))
             position = normalizePercents(*value);
         break;
     case_any_ccN("position"):
-        processGenericCc(opcode, Default::positionCCRange, &positionCC);
+        processGenericCc(opcode, Default::positionCCRange, &positionCC, kModIsPerVoice|kModIsAdditive);
         break;
     case hash("width"):
         if (auto value = readOpcode(opcode.value, Default::widthRange))
             width = normalizePercents(*value);
         break;
     case_any_ccN("width"):
-        processGenericCc(opcode, Default::widthCCRange, &widthCC);
+        processGenericCc(opcode, Default::widthCCRange, &widthCC, kModIsPerVoice|kModIsAdditive);
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
@@ -730,7 +731,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
     case_any_ccN("pitch"): // also tune
-        processGenericCc(opcode, Default::tuneCCRange, &tuneCC);
+        processGenericCc(opcode, Default::tuneCCRange, &tuneCC, kModIsPerVoice|kModIsAdditive);
         break;
     case hash("bend_up"): // also bendup
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
@@ -845,7 +846,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     return true;
 }
 
-bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap)
+bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap, int32_t flags)
 {
     if (!opcode.isAnyCcN())
         return false;
@@ -854,8 +855,8 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCM
     if (ccNumber >= config::numCCs)
         return false;
 
-    if (ccMap) {
-        Modifier& modifier = (*ccMap)[ccNumber];
+    // helper to fill opcode info in the appropriate modifier field
+    auto fillModifier = [&opcode, range](Modifier& modifier) {
         switch (opcode.category) {
         case kOpcodeOnCcN:
             setValueFromOpcode(opcode, modifier.value, range);
@@ -876,9 +877,69 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCM
             assert(false);
             break;
         }
-     }
+    };
+
+    // store legacy CC, before modulation matrix
+    if (ccMap)
+        fillModifier((*ccMap)[ccNumber]);
+
+    // store the new entry to be inserted in the modulation matrix,
+    // or modify the existing entry with same CC number and target.
+    {
+        // target name deduced from the opcode
+        std::string target = opcode.getDerivedName(kOpcodeNormal);
+
+        auto entry = absl::c_find_if(
+            modulationsCC,
+            [&target, ccNumber](const CCModEntry& e)
+                { return e.target == target && e.ccNumber == ccNumber; });
+
+        if (entry == modulationsCC.end()) {
+            modulationsCC.emplace_back();
+            entry = modulationsCC.end() - 1;
+            entry->target = target;
+            entry->ccNumber = ccNumber;
+            entry->flags = flags;
+        }
+        else {
+            if (entry->flags != flags)
+                DBG("Target flags of \"" << target <<  "\" not matching the existing entry");
+        }
+
+        fillModifier(entry->modifier);
+    }
 
     return true;
+}
+
+void sfz::Region::populateModMatrix(ModMatrix& mm, uint32_t index, ModGeneratorFactory& gf)
+{
+    for (const CCModEntry& ent : modulationsCC) {
+        const Modifier modifier = ent.modifier;
+        const float nsteps = (modifier.step == 0) ? 127.0f :
+            clamp(modifier.value / modifier.step, 0.0f, 127.0f);
+
+        ModKey sourceKey;
+        sourceKey.id = hash("cc");
+        sourceKey.params.resize(3);
+        sourceKey.params[0] = nsteps;
+        sourceKey.params[1] = modifier.curve;
+        sourceKey.params[2] = modifier.smooth;
+
+        const Opcode targetOpcode(ent.target, "");
+
+        ModKey targetKey;
+        targetKey.id = targetOpcode.lettersOnlyHash;
+        targetKey.params.assign(targetOpcode.parameters.begin(), targetOpcode.parameters.end());
+
+        // TODO(jpc) insert the CC
+        auto sourceId = mm.registerSource(sourceKey, , false, kModIsPerCycle);
+        auto targetId = mm.registerTarget(targetKey, index, ent.flags);
+
+        mm.connect(sourceId, targetId, modifier.value);
+    }
+
+    // TODO(jpc) the LFO, EG, and others...
 }
 
 bool sfz::Region::isSwitchedOn() const noexcept

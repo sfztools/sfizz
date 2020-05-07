@@ -21,6 +21,9 @@
 #include <vector>
 
 namespace sfz {
+class ModMatrix;
+class ModGeneratorFactory;
+
 /**
  * @brief Regions are the basic building blocks for the SFZ parsing and handling code.
  * All SFZ files are made of regions that are activated when a key is pressed or a CC
@@ -219,10 +222,21 @@ struct Region {
      * @param opcode
      * @param range
      * @param ccMap
+     * @param flags combination of ModFlags to describe the modulation target
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap);
+    bool processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap, int32_t flags);
+
+    /**
+     * @brief Fill the sources and targets which are used by this region into
+     *        the modulation matrix.
+     *
+     * @param mm the modulation matrix
+     * @param index the index which identifies this region in the matrix
+     * @param gf the factory which serves to instantiate source generators
+     */
+    void populateModMatrix(ModMatrix& mm, uint32_t index, ModGeneratorFactory& gf);
 
     void offsetAllKeys(int offset) noexcept;
 
@@ -342,6 +356,15 @@ struct Region {
 
     // Effects
     std::vector<float> gainToEffect;
+
+    // Modulation matrix mappings
+    struct CCModEntry {
+        std::string target;
+        unsigned ccNumber {};
+        int32_t flags {};
+        Modifier modifier;
+    };
+    std::vector<CCModEntry> modulationsCC;
 
 private:
     const MidiState& midiState;

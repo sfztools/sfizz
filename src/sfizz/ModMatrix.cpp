@@ -8,23 +8,21 @@
 #include "Config.h"
 #include "StringViewHelpers.h"
 #include "SIMDHelpers.h"
+#include "Debug.h"
 #include <algorithm>
 #include <cassert>
 
 size_t std::hash<sfz::ModKey>::operator()(const sfz::ModKey &key) const
 {
-    auto hashableInt32 = [](const int32_t *p) -> absl::string_view {
-        return absl::string_view(reinterpret_cast<const char *>(p), sizeof(*p));
-    };
     uint64_t k = key.id;
-    k = ::hash(hashableInt32(&key.index1), k);
-    k = ::hash(hashableInt32(&key.index2), k);
+    for (float x : key.params)
+        hashNumber(x, k);
     return k;
 }
 
 bool sfz::ModKey::operator==(const ModKey &other) const noexcept
 {
-    return id == other.id && index1 == other.index1 && index2 == other.index2;
+    return id == other.id && params == other.params;
 }
 
 bool sfz::ModKey::operator!=(const ModKey &other) const noexcept
@@ -76,6 +74,8 @@ ModMatrix::SourceId ModMatrix::registerSource(ModKey key, ModGenerator* gen, boo
     if (it != _sourceIndex.end()) {
         SourceId id;
         id.index = it->second;
+        if (_sources[id.index].flags != flags)
+            DBG("Source flags do not match the existing entry");
         return id;
     }
 
@@ -101,6 +101,8 @@ ModMatrix::TargetId ModMatrix::registerTarget(ModKey key, uint32_t region, int32
     if (it != _targetIndex.end()) {
         TargetId id;
         id.index = it->second;
+        if (_targets[id.index].flags != flags)
+            DBG("Target flags do not match the existing entry");
         return id;
     }
 
@@ -144,7 +146,7 @@ ModMatrix::TargetId ModMatrix::findTarget(ModKey key, uint32_t region)
     return id;
 }
 
-bool ModMatrix::connect(SourceId sourceId, TargetId targetId)
+bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float depth)
 {
     uint32_t sourceIndex = sourceId.index;
     uint32_t targetIndex = targetId.index;
@@ -153,11 +155,8 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId)
         return false;
 
     Target& target = _targets[targetIndex];
-    std::vector<uint32_t> &list = target.sources;
-
-    // add the source if not already present
-    if (std::find(list.begin(), list.end(), sourceIndex) == list.end())
-        list.push_back(sourceIndex);
+    ConnectionData& conn = target.connectedSources[sourceIndex];
+    conn.depthToTarget = depth;
 
     return true;
 }
@@ -205,31 +204,39 @@ float* ModMatrix::getModulation(TargetId targetId)
     // set the ready flag to prevent a cycle
     // in case there is, be sure to initialize the buffer
     target.bufferReady = true;
-    sfz::fill(buffer, 0.0f);
+    const float neutralElement = (target.flags & kModIsMultiplicative) ? 1.0f : 0.0f;
+    sfz::fill(buffer, neutralElement);
 
-    const std::vector<uint32_t> &sourceIndices = target.sources;
-    const size_t numSources = sourceIndices.size();
+    // const std::vector<uint32_t> &sourceIndices = target.sources;
+    auto sourcesPos = target.connectedSources.begin();
+    auto sourcesEnd = target.connectedSources.end();
 
     // generate the first source in buffer
-    if (numSources > 0) {
-        Source &source = _sources[sourceIndices[0]];
+    if (sourcesPos != sourcesEnd) {
+        Source &source = _sources[sourcesPos->first];
+        const float depth = sourcesPos->second.depthToTarget;
         source.gen->generateModulation(source.key, _voiceNum, buffer.data(), numFrames);
+        for (uint32_t i = 0; i < numFrames; ++i)
+            buffer[i] *= depth;
+        ++sourcesPos;
     }
 
     // generate next sources in temporary buffer
     // then add or multiply, depending on target flags
     absl::Span<float> temp = absl::MakeSpan(_temp);
-    for (uint32_t s = 1; s < numSources; ++s) {
-        Source &source = _sources[sourceIndices[s]];
+    while (sourcesPos != sourcesEnd) {
+        Source &source = _sources[sourcesPos->first];
+        const float depth = sourcesPos->second.depthToTarget;
         source.gen->generateModulation(source.key, _voiceNum, temp.data(), numFrames);
         if (target.flags & kModIsMultiplicative) {
             for (uint32_t i = 0; i < numFrames; ++i)
-                buffer[i] *= temp[i];
+                buffer[i] *= depth * temp[i];
         }
         else {
             for (uint32_t i = 0; i < numFrames; ++i)
-                buffer[i] += temp[i];
+                buffer[i] += depth * temp[i];
         }
+        ++sourcesPos;
     }
 
     return buffer.data();
