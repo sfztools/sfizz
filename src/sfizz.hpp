@@ -9,6 +9,7 @@
   @brief sfizz public C++ API
 */
 
+#pragma once
 #include <string>
 #include <utility>
 #include <vector>
