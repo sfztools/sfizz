@@ -137,6 +137,7 @@ void sfz::Synth::clear()
     effectBuses[0]->setGainToMain(1.0);
     effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
     effectBuses[0]->setSampleRate(sampleRate);
+    effectBuses[0]->clearInputs(samplesPerBlock);
     resources.clear();
     numGroups = 0;
     numMasters = 0;
@@ -248,6 +249,7 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
             bus.reset(new EffectBus);
             bus->setSampleRate(sampleRate);
             bus->setSamplesPerBlock(samplesPerBlock);
+            bus->clearInputs(samplesPerBlock);
         }
         return *bus;
     };
@@ -508,6 +510,19 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     const auto envThreshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) * 0.5f;
     const auto ageThreshold = voiceViewArray.front()->getAge() * 0.5f;
 
+    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
+    const auto killVoice = [&] (Voice* v) {
+        const auto region = v->getRegion(); // voice can die after rendering, so save this
+        v->renderBlock(*tempSpan);
+        for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+            if (auto& bus = effectBuses[i]) {
+                float addGain = region->getGainToEffectBus(i);
+                bus->addToInputs(*tempSpan, addGain, samplesPerBlock);
+            }
+        }
+        v->reset();
+    };
+
     Voice* returnedVoice = voiceViewArray.front();
     unsigned idx = 0;
     while (idx < voiceViewArray.size()) {
@@ -519,12 +534,12 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
             unsigned killIdx = 1;
             while (killIdx < voiceViewArray.size()
                 && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
-                voiceViewArray[killIdx]->reset();
+                killVoice(voiceViewArray[killIdx]);
                 killIdx++;
             }
             // std::cout << "Went too far, picking the oldest voice and killing "
             //           << killIdx << " voices" << '\n';
-            returnedVoice->reset();
+            killVoice(returnedVoice);
             break;
         }
 
@@ -537,12 +552,12 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         if (maxEnvelope < envThreshold) {
             returnedVoice = ref;
             // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
-            for (unsigned j = refIdx; j < idx; j++)
-                voiceViewArray[j]->reset();
+            for (unsigned j = refIdx; j < idx; j++) {
+                killVoice(voiceViewArray[j]);
+            }
             break;
         }
     }
-
     assert(returnedVoice->isFree());
     return returnedVoice;
 }
@@ -615,17 +630,10 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     size_t numFrames = buffer.getNumFrames();
     auto tempSpan = resources.bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = resources.bufferPool.getStereoBuffer(numFrames);
-    if (!tempSpan || !tempMixSpan) {
+    auto rampSpan = resources.bufferPool.getBuffer(numFrames);
+    if (!tempSpan || !tempMixSpan || !rampSpan) {
         DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
         return;
-    }
-
-    { // Prepare the effect inputs. They are mixes of per-region outputs.
-        ScopedTiming logger { callbackBreakdown.effects };
-        for (auto& bus : effectBuses) {
-            if (bus)
-                bus->clearInputs(numFrames);
-        }
     }
 
     int numActiveVoices { 0 };
@@ -634,6 +642,14 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         tempSpan->fill(0.0f);
         tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
+
+        // Ramp out whatever is in the buffer at this point; should only be killed voice data
+        linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));
+        for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+            if (auto& bus = effectBuses[i]) {
+                bus->applyGain(rampSpan->data(), numFrames);
+            }
+        }
 
         for (auto& voice : voices) {
             if (voice->isFree())
@@ -693,6 +709,14 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);
+
+    { // Clear for the next run
+        ScopedTiming logger { callbackBreakdown.effects };
+        for (auto& bus : effectBuses) {
+            if (bus)
+                bus->clearInputs(numFrames);
+        }
+    }
 
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
