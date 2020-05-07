@@ -490,6 +490,14 @@ private:
      */
     void resetVoices(int numVoices);
 
+    /**
+     * @brief Render the voice to its designated outputs and effect busses.
+     *
+     * @param voice
+     * @param tempSpan a temporary span used for rendering
+     */
+    void renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept;
+
     fs::file_time_type checkModificationTime();
 
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;

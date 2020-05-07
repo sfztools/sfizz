@@ -512,14 +512,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 
     auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
     const auto killVoice = [&] (Voice* v) {
-        const auto region = v->getRegion(); // voice can die after rendering, so save this
-        v->renderBlock(*tempSpan);
-        for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-            if (auto& bus = effectBuses[i]) {
-                float addGain = region->getGainToEffectBus(i);
-                bus->addToInputs(*tempSpan, addGain, samplesPerBlock);
-            }
-        }
+        renderVoiceToOutputs(*v, *tempSpan);
         v->reset();
     };
 
@@ -610,6 +603,19 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     }
 }
 
+void sfz::Synth::renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept
+{
+    const Region* region = voice.getRegion();
+    voice.renderBlock(tempSpan);
+    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+        if (auto& bus = effectBuses[i]) {
+            float addGain = region->getGainToEffectBus(i);
+            bus->addToInputs(tempSpan, addGain, tempSpan.getNumFrames());
+        }
+    }
+
+}
+
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
@@ -655,21 +661,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             if (voice->isFree())
                 continue;
 
-            const Region* region = voice->getRegion();
-
             numActiveVoices++;
-            voice->renderBlock(*tempSpan);
-
-            { // Add the output into the effects linked to this region
-                ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
-                for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-                    if (auto& bus = effectBuses[i]) {
-                        float addGain = region->getGainToEffectBus(i);
-                        bus->addToInputs(*tempSpan, addGain, numFrames);
-                    }
-                }
-            }
-
+            renderVoiceToOutputs(*voice, *tempSpan);
             callbackBreakdown.data += voice->getLastDataDuration();
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
             callbackBreakdown.filters += voice->getLastFilterDuration();
