@@ -336,6 +336,30 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     if (regions.empty())
         return false;
 
+    finalizeSfzLoad();
+
+    return true;
+}
+
+bool sfz::Synth::loadSfzString(const fs::path& path, absl::string_view text)
+{
+    clear();
+
+    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    parser.parseString(path, text);
+    if (parser.getErrorCount() > 0)
+        return false;
+
+    if (regions.empty())
+        return false;
+
+    finalizeSfzLoad();
+
+    return true;
+}
+
+void sfz::Synth::finalizeSfzLoad()
+{
     resources.filePool.setRootDirectory(parser.originalDirectory());
 
     auto currentRegion = regions.begin();
@@ -469,8 +493,6 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
         voice->setMaxFiltersPerVoice(maxFilters);
         voice->setMaxEQsPerVoice(maxEQs);
     }
-
-    return true;
 }
 
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
