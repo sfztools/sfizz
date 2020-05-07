@@ -80,7 +80,7 @@ public:
     /**
      * @brief Build a linear curve from v1 to v2
      */
-    static Curve buildBipolar(float v1, float v2);
+    static Curve buildBipolar(float v1, float v2, bool midpointCenter);
 
     /**
      * @brief Get a linear curve from 0 to 1

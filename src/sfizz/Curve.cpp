@@ -14,7 +14,7 @@
 namespace sfz
 {
 
-static const Curve defaultCurve = Curve::buildBipolar(0.0, 1.0);
+static const Curve defaultCurve = Curve::buildBipolar(0.0, 1.0, true);
 
 Curve Curve::buildCurveFromHeader(
     absl::Span<const Opcode> members, Interpolator itp, bool limit)
@@ -66,16 +66,16 @@ Curve Curve::buildPredefinedCurve(int index)
         ASSERTFALSE;
         // fallthrough
     case 0:
-        curve = buildBipolar(0, 1);
+        curve = buildBipolar(0, 1, true);
         break;
     case 1:
-        curve = buildBipolar(-1, +1);
+        curve = buildBipolar(-1, +1, true);
         break;
     case 2:
-        curve = buildBipolar(1, 0);
+        curve = buildBipolar(1, 0, true);
         break;
     case 3:
-        curve = buildBipolar(+1, -1);
+        curve = buildBipolar(+1, -1, true);
         break;
     case 4:
         for (unsigned i = 0; i < NumValues; ++i) {
@@ -84,19 +84,35 @@ Curve Curve::buildPredefinedCurve(int index)
         }
         break;
     case 5:
-        curve._points[0] = 0.0;
-        curve._points[NumValues - 1] = 1.0;
-        for (unsigned i = 1; i < NumValues - 1; ++i) {
-            double x = i / static_cast<double>(NumValues - 1);
-            curve._points[i] = std::sqrt(x);
+        {
+            curve._points[0] = 0.0;
+            curve._points[NumValues - 1] = 1.0;
+
+            // adjust slightly, such that curve[64]~=0.707
+            const double k = 0.50572240744659254852; //-log(2)/(2*log(64/127))
+
+            for (unsigned i = 1; i < NumValues - 1; ++i) {
+                double x = i / static_cast<double>(NumValues - 1);
+                curve._points[i] = std::pow(x, k);
+            }
+
+            curve._points[NumValues / 2] = M_SQRT1_2;
         }
         break;
     case 6:
-        curve._points[0] = 1.0;
-        curve._points[NumValues - 1] = 0.0;
-        for (unsigned i = 1; i < NumValues - 1; ++i) {
-            double x = i / static_cast<double>(NumValues - 1);
-            curve._points[i] = std::sqrt(1.0 - x);
+        {
+            curve._points[0] = 1.0;
+            curve._points[NumValues - 1] = 0.0;
+
+            // adjust slightly, such that curve[64]~=0.707
+            const double k = 0.50572240744659254852; // -log(2)/(2*log(64/127))
+
+            for (unsigned i = 1; i < NumValues - 1; ++i) {
+                double x = i / static_cast<double>(NumValues - 1);
+                curve._points[i] = std::pow(1.0 - x, k);
+            }
+
+            curve._points[NumValues / 2] = M_SQRT1_2;
         }
         break;
     }
@@ -104,7 +120,7 @@ Curve Curve::buildPredefinedCurve(int index)
     return curve;
 }
 
-Curve Curve::buildBipolar(float v1, float v2)
+Curve Curve::buildBipolar(float v1, float v2, bool midpointCenter)
 {
     Curve curve;
     bool fillStatus[NumValues] = {};
@@ -114,6 +130,11 @@ Curve Curve::buildBipolar(float v1, float v2)
 
     fillStatus[0] = true;
     fillStatus[NumValues - 1] = true;
+
+    if (midpointCenter) {
+        curve._points[NumValues / 2] = (v2 + v1) / 2;
+        fillStatus[NumValues / 2] = true;
+    }
 
     curve.lerpFill(fillStatus);
     return curve;
