@@ -473,19 +473,58 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     return true;
 }
 
+unsigned sfz::Synth::killSisterVoices(const Voice* voiceToKill) noexcept
+{
+    const auto age = voiceToKill->getAge();
+    const auto type = voiceToKill->getTriggerType();
+    const auto number = voiceToKill->getTriggerNumber();
+    const auto value = voiceToKill->getTriggerValue();
+
+    unsigned killedVoices = 0;
+    for (auto & voice : voiceViewArray) {
+        if (voice->getAge() == age
+            && voice->getTriggerType() == type
+            && voice->getTriggerNumber() == number
+            && voice->getTriggerValue() == value) {
+                killedVoices++;
+                voice->reset();
+        }
+    }
+    return killedVoices;
+}
+
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
-    auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) { return voice->isFree(); });
+    auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) {
+        return voice->isFree();
+    });
     if (freeVoice != voices.end())
         return freeVoice->get();
 
     // Find voices that can be stolen
     absl::c_sort(voiceViewArray, [](Voice* lhs, Voice* rhs) {
-        return lhs->getAverageEnvelope() < rhs->getAverageEnvelope();
+        return lhs->getAge() < rhs->getAge();
     });
 
-    voiceViewArray.front()->reset();
-    return voiceViewArray.front();
+    const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [] (float sum, const Voice* v) {
+        return sum + v->getAverageEnvelope();
+    });
+    const auto threshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) / 2;
+
+    Voice* returnedVoice = voiceViewArray.front();
+    for (auto & voice : voiceViewArray) {
+        if (voice->getAverageEnvelope() < threshold) {
+            returnedVoice = voice;
+            break;
+        }
+    }
+    const auto killedVoices = killSisterVoices(returnedVoice);
+    UNUSED(killedVoices); // only in debug
+    assert(killedVoices > 0);
+    assert(returnedVoice->isFree());
+    std::cout << "Killed " << killedVoices << " voices";
+
+    return returnedVoice;
 }
 
 int sfz::Synth::getNumActiveVoices() const noexcept

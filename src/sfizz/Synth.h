@@ -495,6 +495,8 @@ private:
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
 
+    unsigned killSisterVoices(const Voice* voiceToKill) noexcept;
+
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block
     std::vector<Opcode> globalOpcodes;
