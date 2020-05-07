@@ -59,6 +59,16 @@ namespace config {
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
     constexpr int filtersInPool { maxVoices * 2 };
+    /**
+     * @brief The threshold for age stealing.
+     *        In percentage of the voice's max age.
+     */
+    constexpr float stealingAgeCoeff { 0.5f };
+    /**
+     * @brief The threshold for envelope stealing.
+     *        In percentage of the sum of all envelopes.
+     */
+    constexpr float stealingEnvelopeCoeff { 0.5f };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
     constexpr int oscillatorsPerVoice { 9 };

@@ -481,14 +481,15 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     if (freeVoice != voices.end())
         return freeVoice->get();
 
-    // Find voices that can be stolen
+    // Start of the voice stealing algorithm
     absl::c_sort(voiceViewArray, voiceOrdering);
 
     const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [](float sum, const Voice* v) {
         return sum + v->getAverageEnvelope();
     });
-    const auto envThreshold = sumEnvelope / static_cast<float>(voiceViewArray.size()) * 0.5f;
-    const auto ageThreshold = voiceViewArray.front()->getAge() * 0.5f;
+    const auto envThreshold = sumEnvelope
+        / static_cast<float>(voiceViewArray.size()) * config::stealingEnvelopeCoeff;
+    const auto ageThreshold = voiceViewArray.front()->getAge() * config::stealingAgeCoeff;
 
     auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
     const auto killVoice = [&] (Voice* v) {
@@ -506,7 +507,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         if (ref->getAge() < ageThreshold) {
             unsigned killIdx = 1;
             while (killIdx < voiceViewArray.size()
-                && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
+                    && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
                 killVoice(voiceViewArray[killIdx]);
                 killIdx++;
             }
@@ -517,7 +518,8 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         }
 
         float maxEnvelope = ref->getAverageEnvelope();
-        while (idx < voiceViewArray.size() && sisterVoices(ref, voiceViewArray[idx])) {
+        while (idx < voiceViewArray.size()
+                && sisterVoices(ref, voiceViewArray[idx])) {
             maxEnvelope = max(maxEnvelope, voiceViewArray[idx]->getAverageEnvelope());
             idx++;
         }
