@@ -175,22 +175,11 @@ after_failure:
 
 deploy:
   edge: true
-  provider:     releases
-  file:         "${INSTALL_DIR}.tar.gz"
+  provider: releases
+  file: "${INSTALL_DIR}.tar.gz"
   token:
     secure: jBIMWMPva8OazC8Wnqc2vqATa3exjvGDGvejEu6fgwt/BMDkgJCsJ7gS3ITpYFuO0HoHtLGfTVrFcZIE+agGVRdRGRni5xZRp5Vuf9hvLf8hCTaxkS/HYoliYYPp9FLY6J4yq9mp/R/QyGrwgssQEjhYlI2GL4+lJzt750AcmYibnQo2AMe5SSOp3q8KdLBG1vca1o1BZWBhW/S7l2hA1aJ7y1ytwm0ETIdrTZHxgfz7bqdqQcw/Ytqjm1rgzty6iQKX3B/InaZNB6CqXy6FoGLf771lery8nWJbjTjKYD4QK2NelExldyp1vrdHGvknWguFk+8vlQ16Dt0+R7Byr/LOPRLTCf/T+IehMQGtVA9/gjrkH8LqHy9oVFB+33p11gGu3h6hvg7yB6z3sSck0u4FHjrlpNd5XmmCsKQVQ9vI1cPPkVkbMHIewc7uOu+bD6cmotFj1vJ9UYesvN6n4siyCiPOIhgV9++bjcyiLqX3DWP5UWyZ9/VT8bz5VcxUdJnEYtdNPx4x5pRW4081VUjIf2EmHhQTrjb1iz6FAGwNU/fpefA8x+bBxXP9MkFFgU0tbCDKw2y6o0GOXX82mZr/IB0/DIBg7UllTzCBKTuiJQV1prFPlZLc6V22H5ozAXHgu3E+qNjvHoMsoYjGssX3+AYHwu8isBINo/gGo6Y=
   on:
     repo: "sfztools/sfizz"
     tags: true
     condition: ${TRAVIS_TAG} =~ ^v?[0-9]
-
-notifications:
-  irc:
-    channels:
-    - "ircs://chat.freenode.net:7070/#sfztools"
-
-    template:
-    - "[%{repository_name}:%{branch}] Build #%{build_number}: %{message}"
-    - "%{author} : %{commit_subject}"
-    - "Commit URL    : <https://github.com/%{repository_slug}/commit/%{commit}>"
-    - "Build Details : <%{build_url}>"
