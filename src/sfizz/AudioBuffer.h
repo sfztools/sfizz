@@ -9,6 +9,7 @@
 #include "Config.h"
 #include "Debug.h"
 #include "LeakDetector.h"
+#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 #include "absl/memory/memory.h"
 #include <array>
@@ -260,6 +261,15 @@ public:
     }
 
     /**
+     * Writes zeros in the buffer
+     */
+    void clear()
+    {
+        for (size_t i = 0; i < numChannels; ++i)
+            fill<Type>(getSpan(i), Type{ 0.0 });
+    }
+
+    /**
      * @brief Add a positive number of channels to the buffer
      *
      * @param numChannels
@@ -269,6 +279,22 @@ public:
         ASSERT(this->numChannels + numChannels <= MaxChannels);
         for (size_t i = 0; i < numChannels; ++i)
             addChannel();
+    }
+
+    /**
+     * @brief Convert implicitly to a pointer of channels
+     */
+    operator const float* const*() const noexcept
+    {
+        return buffers.data();
+    }
+
+    /**
+     * @brief Convert implicitly to a pointer of channels
+     */
+    operator float* const*() noexcept
+    {
+        return buffers.data();
     }
 
 private:

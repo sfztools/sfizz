@@ -510,10 +510,20 @@ private:
      */
     void resetVoices(int numVoices);
 
+    /**
+     * @brief Render the voice to its designated outputs and effect busses.
+     *
+     * @param voice
+     * @param tempSpan a temporary span used for rendering
+     */
+    void renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept;
+
     fs::file_time_type checkModificationTime();
 
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    unsigned killSisterVoices(const Voice* voiceToKill) noexcept;
 
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block

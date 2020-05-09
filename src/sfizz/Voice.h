@@ -13,6 +13,7 @@
 #include "Resources.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
+#include "OnePoleFilter.h"
 #include "absl/types/span.h"
 #include <memory>
 #include <random>
@@ -144,30 +145,30 @@ public:
      */
     bool isFree() const noexcept;
     /**
-     * @brief Can the voice be "stolen" and reused (i.e. is it releasing)
+     * @brief Can the voice be reused (i.e. is it releasing or free)
      *
      * @return true
      * @return false
      */
-    bool canBeStolen() const noexcept;
+    bool releasedOrFree() const noexcept;
     /**
      * @brief Get the number that triggered the voice (note number or cc number)
      *
      * @return int
      */
-    int getTriggerNumber() const noexcept;
+    int getTriggerNumber() const noexcept { return triggerNumber; }
     /**
      * @brief Get the value that triggered the voice (note velocity or cc value)
      *
      * @return float
      */
-    float getTriggerValue() const noexcept;
+    float getTriggerValue() const noexcept { return triggerValue; }
     /**
      * @brief Get the type of trigger
      *
      * @return TriggerType
      */
-    TriggerType getTriggerType() const noexcept;
+    TriggerType getTriggerType() const noexcept { return triggerType; }
 
     /**
      * @brief Reset the voice to its initial values
@@ -181,7 +182,7 @@ public:
      *
      * @return float
      */
-    float getMeanSquaredAverage() const noexcept;
+    float getAverageEnvelope() const noexcept;
     /**
      * @brief Get the position of the voice in the source, in samples
      *
@@ -214,6 +215,13 @@ public:
      */
     void release(int delay, bool fastRelease = false) noexcept;
 
+    /**
+     * @brief gets the age of the Voice
+     *
+     * @return
+     */
+    int getAge() const noexcept { return age; }
+
     Duration getLastDataDuration() const noexcept { return dataDuration; }
     Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
     Duration getLastFilterDuration() const noexcept { return filterDuration; }
@@ -245,6 +253,7 @@ private:
      * @brief Initialize frequency and gain coefficients for the oscillators.
      */
     void setupOscillatorUnison();
+    void updateChannelPowers(AudioSpan<float> buffer);
 
     Region* region { nullptr };
 
@@ -262,13 +271,14 @@ private:
 
     float speedRatio { 1.0 };
     float pitchRatio { 1.0 };
-    float baseVolumedB{ 0.0 };
+    float baseVolumedB { 0.0 };
     float baseGain { 1.0 };
     float baseFrequency { 440.0 };
 
     float floatPositionOffset { 0.0f };
     int sourcePosition { 0 };
     int initialDelay { 0 };
+    int age { 0 };
 
     FilePromisePtr currentPromise { nullptr };
 
@@ -288,9 +298,9 @@ private:
 
     // unison of oscillators
     unsigned waveUnisonSize { 0 };
-    float waveDetuneRatio[config::oscillatorsPerVoice] { };
-    float waveLeftGain[config::oscillatorsPerVoice] { };
-    float waveRightGain[config::oscillatorsPerVoice] { };
+    float waveDetuneRatio[config::oscillatorsPerVoice] {};
+    float waveLeftGain[config::oscillatorsPerVoice] {};
+    float waveRightGain[config::oscillatorsPerVoice] {};
 
     Duration dataDuration;
     Duration amplitudeDuration;
@@ -299,8 +309,40 @@ private:
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
-    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
+    std::array<OnePoleFilter<float>, 2> channelEnvelopeFilters;
+    std::array<float, 2> smoothedChannelEnvelopes;
     LEAK_DETECTOR(Voice);
 };
+
+inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
+{
+    return lhs->getAge() == rhs->getAge()
+        && lhs->getTriggerNumber() == rhs->getTriggerNumber()
+        && lhs->getTriggerValue() == rhs->getTriggerValue()
+        && lhs->getTriggerType() == rhs->getTriggerType();
+}
+
+inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
+{
+    if (lhs->getAge() > rhs->getAge())
+        return true;
+    if (lhs->getAge() < rhs->getAge())
+        return false;
+
+    if (lhs->getTriggerNumber() > rhs->getTriggerNumber())
+        return true;
+    if (lhs->getTriggerNumber() < rhs->getTriggerNumber())
+        return false;
+
+    if (lhs->getTriggerValue() > rhs->getTriggerValue())
+        return true;
+    if (lhs->getTriggerValue() < rhs->getTriggerValue())
+        return false;
+
+    if (lhs->getTriggerType() > rhs->getTriggerType())
+        return true;
+
+    return false;
+}
 
 } // namespace sfz

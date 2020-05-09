@@ -28,7 +28,7 @@ namespace config {
     constexpr float defaultSampleRate { 48000 };
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
-    constexpr int bufferPoolSize { 4 };
+    constexpr int bufferPoolSize { 6 };
     constexpr int stereoBufferPoolSize { 4 };
     constexpr int indexBufferPoolSize { 2 };
     constexpr int preloadSize { 8192 };
@@ -37,9 +37,9 @@ namespace config {
     constexpr bool loggingEnabled { false };
     constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
-    constexpr int numVoices { 64 };
-    constexpr unsigned maxVoices { 256 };
-    constexpr int maxFilePromises { maxVoices * 2 };
+    constexpr int numVoices { 256 };
+    constexpr unsigned maxVoices { 512 };
+    constexpr int maxFilePromises { maxVoices };
     constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };
     constexpr int resetCC { 121 };
@@ -54,11 +54,21 @@ namespace config {
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
-    constexpr float voiceStealingThreshold { 0.00001f };
+    constexpr float filteredEnvelopeCutoff { 5 };
     constexpr uint16_t numCCs { 512 };
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
     constexpr int filtersInPool { maxVoices * 2 };
+    /**
+     * @brief The threshold for age stealing.
+     *        In percentage of the voice's max age.
+     */
+    constexpr float stealingAgeCoeff { 0.5f };
+    /**
+     * @brief The threshold for envelope stealing.
+     *        In percentage of the sum of all envelopes.
+     */
+    constexpr float stealingEnvelopeCoeff { 0.5f };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
     constexpr int oscillatorsPerVoice { 9 };

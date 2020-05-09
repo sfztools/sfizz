@@ -80,6 +80,6 @@ struct SfizzParameterRange {
 };
 
 static constexpr SfizzParameterRange kParamVolumeRange(0.0, -60.0, +6.0);
-static constexpr SfizzParameterRange kParamNumVoicesRange(64.0, 1.0, 256.0);
+static constexpr SfizzParameterRange kParamNumVoicesRange(256.0, 1.0, 512.0);
 static constexpr SfizzParameterRange kParamOversamplingRange(0.0, 0.0, 3.0);
 static constexpr SfizzParameterRange kParamPreloadSizeRange(8192.0, 1024.0, 65536.0);

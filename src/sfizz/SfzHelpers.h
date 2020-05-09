@@ -204,6 +204,12 @@ namespace literals {
  */
 absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
 
+template <class Type>
+inline CXX14_CONSTEXPR Type vaGain(Type cutoff, Type sampleRate)
+{
+    return std::tan(cutoff / sampleRate * pi<Type>());
+}
+
 /**
  * @brief From a source view, find the next sfz header and its members and
  *          return them, while updating the source by removing this header

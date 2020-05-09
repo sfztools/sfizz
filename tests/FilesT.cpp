@@ -455,7 +455,7 @@ TEST_CASE("[Files] Off by with different delays")
     REQUIRE( group1Voice->getRegion()->offBy == 2ul );
     synth.noteOn(100, 64, 63);
     synth.renderBlock(buffer);
-    REQUIRE( group1Voice->canBeStolen() );
+    REQUIRE(group1Voice->releasedOrFree());
 }
 
 TEST_CASE("[Files] Off by with the same delays")
@@ -470,7 +470,7 @@ TEST_CASE("[Files] Off by with the same delays")
     REQUIRE( group1Voice->getRegion()->group == 1ul );
     REQUIRE( group1Voice->getRegion()->offBy == 2ul );
     synth.noteOn(0, 64, 63);
-    REQUIRE( !group1Voice->canBeStolen() );
+    REQUIRE(!group1Voice->releasedOrFree());
 }
 
 TEST_CASE("[Files] Off by with the same notes at the same time")

@@ -40,12 +40,13 @@ void testFilter(const std::array<Type, N>& input, const std::array<Type, N>& exp
     std::array<Type, N> gains;
     std::fill(gains.begin(), gains.end(), gain);
 
-    sfz::OnePoleFilter<Type> filter { gain };
+    sfz::OnePoleFilter<Type> filter;
+    filter.setGain(gain);
     filter.processLowpass(input, outputSpan);
     REQUIRE(approxEqual(output, expectedLow));
 
     filter.reset();
-    filter.processLowpassVariableGain(input, outputSpan, gains);
+    filter.processLowpass(input, outputSpan, gains);
     REQUIRE(approxEqual(output, expectedLow));
 
     filter.reset();
@@ -53,7 +54,7 @@ void testFilter(const std::array<Type, N>& input, const std::array<Type, N>& exp
     REQUIRE(approxEqual(output, expectedHigh));
 
     filter.reset();
-    filter.processHighpassVariableGain(input, outputSpan, gains);
+    filter.processHighpass(input, outputSpan, gains);
     REQUIRE(approxEqual(output, expectedHigh));
 }
 
