@@ -163,6 +163,15 @@ void Parser::processDirective()
 
         std::string value;
         extractToEol(reader, &value);
+
+        // ARIA: do not extract after #, in case of another directive following
+        //       `#define $A 1 #define $B 2` is valid in ARIA
+        size_t posHashSign = value.find('#');
+        if (posHashSign != value.npos) {
+            reader.putBackChars(absl::string_view(value).substr(posHashSign));
+            value.resize(posHashSign);
+        }
+
         trimRight(value);
 
         addDefinition(id, value);
