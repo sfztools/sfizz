@@ -23,7 +23,7 @@ void Parser::reset()
 {
     _pathsIncluded.clear();
     _currentDefinitions = _externalDefinitions;
-    _currentHeader.reset();
+    _currentHeader.clear();
     _currentOpcodes.clear();
     _errorCount = 0;
     _warningCount = 0;
@@ -58,7 +58,6 @@ void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> read
 
     includeNewFile(path, std::move(reader), {});
     processTopLevel();
-    flushCurrentHeader();
 
     if (_listener)
         _listener->onParseEnd();
@@ -100,8 +99,12 @@ void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader
         reader = std::move(fileReader);
     }
 
+    if (_listener)
+        _listener->onParseFileStart(path.string());
+
     _pathsIncluded.insert(fullPath.string());
     _included.push_back(std::move(reader));
+    _currentHeader.emplace_back();
 }
 
 void Parser::addDefinition(absl::string_view id, absl::string_view value)
@@ -118,7 +121,13 @@ void Parser::processTopLevel()
 
         switch (reader.peekChar()) {
         case Reader::kEof:
+            flushCurrentHeader();
             _included.pop_back();
+            _currentHeader.pop_back();
+
+            if (_listener)
+                _listener->onParseFileEnd();
+
             break;
         case '#':
             processDirective();
@@ -239,7 +248,7 @@ void Parser::processHeader()
 
     flushCurrentHeader();
 
-    _currentHeader = name;
+    _currentHeader.back() = name;
     if (_listener)
         _listener->onParseHeader({ start, end }, name);
 }
@@ -315,7 +324,7 @@ void Parser::processOpcode()
     }
     SourceLocation valueEnd = reader.location();
 
-    if (!_currentHeader)
+    if (!_currentHeader.back())
         emitWarning({ opcodeStart, valueEnd }, "The opcode is not under any header.");
 
     std::string valueExpanded = expandDollarVars({ valueStart, valueEnd }, valueRaw);
@@ -349,10 +358,14 @@ void Parser::recover()
 
 void Parser::flushCurrentHeader()
 {
-    if (_currentHeader) {
+    absl::optional<std::string>& currentHeader = _currentHeader.back();
+    static const std::string defaultHeader = "global";
+
+    if (currentHeader || !_currentOpcodes.empty()) {
+        const std::string& header = currentHeader ? *currentHeader : defaultHeader;
         if (_listener)
-            _listener->onParseFullBlock(*_currentHeader, _currentOpcodes);
-        _currentHeader.reset();
+            _listener->onParseFullBlock(header, _currentOpcodes);
+        currentHeader.reset();
     }
 
     _currentOpcodes.clear();

@@ -53,6 +53,8 @@ public:
         // low-level parsing
         virtual void onParseBegin() {}
         virtual void onParseEnd() {}
+        virtual void onParseFileStart(const std::string& /*path*/) {}
+        virtual void onParseFileEnd() {}
         virtual void onParseHeader(const SourceRange& /*range*/, const std::string& /*header*/) {}
         virtual void onParseOpcode(const SourceRange& /*rangeOpcode*/, const SourceRange& /*rangeValue*/, const std::string& /*name*/, const std::string& /*value*/) {}
         virtual void onParseError(const SourceRange& /*range*/, const std::string& /*message*/) {}
@@ -117,7 +119,7 @@ private:
     DefinitionSet _currentDefinitions;
 
     // parsing state
-    absl::optional<std::string> _currentHeader;
+    std::vector<absl::optional<std::string>> _currentHeader; // separate header state per include
     std::vector<Opcode> _currentOpcodes;
 
     // errors and warnings
