@@ -726,7 +726,7 @@ void sfz::Voice::setupOscillatorUnison()
 void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
 {
     assert(smoothedChannelEnvelopes.size() == channelEnvelopeFilters.size());
-    assert(buffer.getNumFrames() <= channelEnvelopeFilters.size());
+    assert(buffer.getNumChannels() <= channelEnvelopeFilters.size());
     if (buffer.getNumFrames() == 0)
         return;
 
