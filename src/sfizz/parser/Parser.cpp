@@ -457,21 +457,25 @@ std::string Parser::expandDollarVars(const SourceRange& range, absl::string_view
             std::string name;
             name.reserve(64);
 
-            while (i < n && isIdentifierChar(src[i]))
+            // ARIA: we will accumulate any chars after $, until this is the
+            //       name of a known variable
+            auto def = _currentDefinitions.end();
+            while (i < n && isIdentifierChar(src[i]) && def == _currentDefinitions.end()) {
                 name.push_back(src[i++]);
+                def = _currentDefinitions.find(name);
+            }
 
             if (name.empty()) {
                 emitWarning(range, "Expected variable name after $.");
                 continue;
             }
 
-            auto it = _currentDefinitions.find(name);
-            if (it == _currentDefinitions.end()) {
+            if (def == _currentDefinitions.end()) {
                 emitWarning(range, "The variable `" + name + "` is not defined.");
                 continue;
             }
 
-            dst.append(it->second);
+            dst.append(def->second);
         }
     }
 
