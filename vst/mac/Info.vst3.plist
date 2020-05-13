@@ -9,7 +9,9 @@
     <key>CFBundleIconFile</key>
     <string>Plugin.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>tools.sfz.sfizz</string>
+    <string>tools.sfz.sfizz.vst</string>
+    <key>CFBundleName</key>
+    <string>sfizz</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundlePackageType</key>

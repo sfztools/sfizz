@@ -29,6 +29,7 @@ option (SFIZZ_JACK              "Enable JACK stand-alone build [default: ON]" ON
 option (SFIZZ_RENDER            "Enable renderer of SMF files [default: ON]" ON)
 option (SFIZZ_LV2               "Enable LV2 plug-in build [default: ON]" ON)
 option (SFIZZ_VST               "Enable VST plug-in build [default: OFF]" OFF)
+option (SFIZZ_AU                "Enable AU plug-in build [default: OFF]" OFF)
 option (SFIZZ_BENCHMARKS        "Enable benchmarks build [default: OFF]" OFF)
 option (SFIZZ_TESTS             "Enable tests build [default: OFF]" OFF)
 option (SFIZZ_DEVTOOLS          "Enable developer tools build [default: OFF]" OFF)

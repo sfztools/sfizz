@@ -105,6 +105,7 @@ Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
 Build LV2 plug-in:             ${SFIZZ_LV2}
 Build VST plug-in:             ${SFIZZ_VST}
+Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
