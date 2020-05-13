@@ -534,23 +534,39 @@ sfizz_lv2_status_log(sfizz_plugin_t *self)
     // lv2_log_note(&self->logger, "[sfizz] Active voices: %d\n", sfizz_get_num_active_voices(self->synth));
 }
 
+static uint32_t next_pow_2(uint32_t v)
+{
+    // Bit twiddling hack
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
+
 static void
 sfizz_lv2_check_oversampling(sfizz_plugin_t* self)
 {
-    sfizz_oversampling_factor_t oversampling = (sfizz_oversampling_factor_t)*self->oversampling_port;
-    if (oversampling != self->oversampling)
+    if (*self->oversampling_port < 0)
+        return;
+
+    uint32_t port_value = (uint32_t)*self->oversampling_port;
+    if (port_value == (uint32_t)self->oversampling)
+        return;
+    self->oversampling = (sfizz_oversampling_factor_t)next_pow_2(port_value);
+
+    LV2_Atom_Int atom;
+    atom.atom.type = self->sfizz_oversampling_uri;
+    atom.atom.size = sizeof(int);
+    atom.body = self->oversampling;
+    if (self->worker->schedule_work(self->worker->handle,
+                                    lv2_atom_total_size((LV2_Atom *)&atom),
+                                    &atom) != LV2_WORKER_SUCCESS)
     {
-        LV2_Atom_Int atom;
-        atom.atom.type = self->sfizz_oversampling_uri;
-        atom.atom.size = sizeof(int);
-        atom.body = oversampling;
-        if (self->worker->schedule_work(self->worker->handle,
-                                        lv2_atom_total_size((LV2_Atom *)&atom),
-                                        &atom) != LV2_WORKER_SUCCESS)
-        {
-            lv2_log_error(&self->logger, "[sfizz] There was an issue changing the oversampling factor\n");
-        }
-        self->oversampling = oversampling;
+        lv2_log_error(&self->logger, "[sfizz] There was an issue changing the oversampling factor\n");
     }
 }
 
