@@ -950,10 +950,6 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_num_voices_uri)
     {
         const int num_voices = *(const int *)LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_get_num_voices(self->synth) == num_voices) {
-            return LV2_WORKER_SUCCESS; // Nothing to do
-        }
-
         sfizz_set_num_voices(self->synth, num_voices);
         if (sfizz_get_num_voices(self->synth) == num_voices) {
             lv2_log_note(&self->logger, "[sfizz] Number of voices changed to: %d\n", num_voices);
@@ -964,9 +960,6 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_preload_size_uri)
     {
         const unsigned int preload_size = *(const unsigned int *)LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_get_preload_size(self->synth) == preload_size)
-            return LV2_WORKER_SUCCESS; // Nothing to do
-
         sfizz_set_preload_size(self->synth, preload_size);
         if (sfizz_get_preload_size(self->synth) == preload_size) {
             lv2_log_note(&self->logger, "[sfizz] Preload size changed to: %d\n", preload_size);
@@ -978,10 +971,6 @@ work(LV2_Handle instance,
     {
         const sfizz_oversampling_factor_t oversampling =
             *(const sfizz_oversampling_factor_t *)LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
-            return LV2_WORKER_SUCCESS; // Nothing to do
-        }
-
         sfizz_set_oversampling_factor(self->synth, oversampling);
         if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
             lv2_log_note(&self->logger, "[sfizz] Oversampling changed to: %d\n", oversampling);
