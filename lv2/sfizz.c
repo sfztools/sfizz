@@ -558,10 +558,11 @@ sfizz_lv2_check_oversampling(sfizz_plugin_t* self)
         return;
     self->oversampling = (sfizz_oversampling_factor_t)next_pow_2(port_value);
 
-    LV2_Atom_Int atom;
-    atom.atom.type = self->sfizz_oversampling_uri;
-    atom.atom.size = sizeof(int);
-    atom.body = self->oversampling;
+    LV2_Atom_Int atom = {
+        .atom.type = self->sfizz_oversampling_uri,
+        .atom.size = sizeof(int),
+        .body = self->oversampling
+    };
     if (self->worker->schedule_work(self->worker->handle,
                                     lv2_atom_total_size((LV2_Atom *)&atom),
                                     &atom) != LV2_WORKER_SUCCESS)
@@ -576,10 +577,11 @@ sfizz_lv2_check_preload_size(sfizz_plugin_t* self)
     unsigned int preload_size = (int)*self->preload_port;
     if (preload_size != self->preload_size)
     {
-        LV2_Atom_Int atom;
-        atom.atom.type = self->sfizz_preload_size_uri;
-        atom.atom.size = sizeof(int);
-        atom.body = preload_size;
+        LV2_Atom_Int atom = {
+            .atom.type = self->sfizz_preload_size_uri,
+            .atom.size = sizeof(int),
+            .body = preload_size
+        };
         if (self->worker->schedule_work(self->worker->handle,
                                         lv2_atom_total_size((LV2_Atom *)&atom),
                                         &atom) != LV2_WORKER_SUCCESS)
@@ -596,13 +598,14 @@ sfizz_lv2_check_num_voices(sfizz_plugin_t* self)
     int num_voices = (int)*self->polyphony_port;
     if (num_voices != self->num_voices)
     {
-        LV2_Atom_Int num_voices_atom;
-        num_voices_atom.atom.type = self->sfizz_num_voices_uri;
-        num_voices_atom.atom.size = sizeof(int);
-        num_voices_atom.body = num_voices;
+        LV2_Atom_Int atom = {
+            .atom.type = self->sfizz_num_voices_uri,
+            .atom.size = sizeof(int),
+            .body = num_voices
+        };
         if (self->worker->schedule_work(self->worker->handle,
-                                        lv2_atom_total_size((LV2_Atom *)&num_voices_atom),
-                                        &num_voices_atom) != LV2_WORKER_SUCCESS)
+                                        lv2_atom_total_size((LV2_Atom *)&atom),
+                                        &atom) != LV2_WORKER_SUCCESS)
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue changing the number of voices\n");
         }
@@ -942,9 +945,10 @@ work(LV2_Handle instance,
         }
 
         // Reactivate checking for file changes
-        LV2_Atom check_modification_atom;
-        check_modification_atom.size = 0;
-        check_modification_atom.type = self->sfizz_check_modification_uri;
+        LV2_Atom check_modification_atom = {
+            .size = 0,
+            .type = self->sfizz_check_modification_uri
+        };
         respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
     }
     else if (atom->type == self->sfizz_num_voices_uri)
