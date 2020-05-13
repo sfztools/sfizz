@@ -23,6 +23,11 @@ cd "${INSTALL_DIR}"/Library/Audio/Plug-Ins/VST3
 dylibbundler -od -b -x sfizz.vst3/Contents/MacOS/sfizz -d sfizz.vst3/Contents/libs/ -p @loader_path/../libs/
 cd "${TRAVIS_BUILD_DIR}/build"
 
+# Bundle AU dependencies
+cd "${INSTALL_DIR}"/Library/Audio/Plug-Ins/Components
+dylibbundler -od -b -x sfizz.component/Contents/Resources/plugin.vst3/Contents/MacOS/sfizz -d sfizz.component/Contents/Resources/plugin.vst3/Contents/libs/ -p @loader_path/../libs/
+cd "${TRAVIS_BUILD_DIR}/build"
+
 #
 tar -zcvf "${INSTALL_DIR}.tar.gz" ${INSTALL_DIR}
 

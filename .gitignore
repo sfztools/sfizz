@@ -19,6 +19,8 @@ compile_commands.json
 clients/sfizz_jack
 clients/sfzprint
 
+/vst/download/
+
 # gh-pages unstaged files:
 _api/
 _site/
