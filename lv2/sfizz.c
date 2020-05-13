@@ -553,13 +553,11 @@ static int next_pow_2(int v)
 static void
 sfizz_lv2_check_oversampling(sfizz_plugin_t* self)
 {
-    if (*self->oversampling_port < 0)
-        return;
-
-    int port_value = (int)*self->oversampling_port;
+    int port_value = next_pow_2((int)*self->oversampling_port);
     if (port_value == (int)self->oversampling)
         return;
-    self->oversampling = (sfizz_oversampling_factor_t)next_pow_2(port_value);
+
+    self->oversampling = (sfizz_oversampling_factor_t)port_value;
 
     LV2_Atom_Int atom = {
         .atom.type = self->sfizz_oversampling_uri,
