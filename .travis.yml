@@ -2,6 +2,10 @@ language: cpp
 os: linux
 dist: bionic
 
+cache:
+  directories:
+  - vst/download/
+
 jobs:
   include:
   - name: "clang-tidy checks"

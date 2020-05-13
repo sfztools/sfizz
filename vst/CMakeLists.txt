@@ -146,9 +146,24 @@ elseif(SFIZZ_AU)
         OUTPUT_NAME "${PROJECT_NAME}"
         PREFIX "")
 
-    # Add Core Audio utility classes
+    # Get Core Audio utility classes if missing
     set(CA_UTILITY_BASEDIR
         "${CMAKE_CURRENT_SOURCE_DIR}/external/CoreAudioUtilityClasses")
+    if(NOT EXISTS "${CA_UTILITY_BASEDIR}")
+        set(CA_UTILITY_VERSION "1.1")
+        set(CA_UTILITY_ARCHIVE "CoreAudioUtilityClasses-${CA_UTILITY_VERSION}.tar.gz")
+        set(CA_UTILITY_DOWNLOAD_URL "https://github.com/sfztools/CoreAudioUtilityClasses/releases/download/v${CA_UTILITY_VERSION}/${CA_UTILITY_ARCHIVE}")
+        if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}")
+            file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/download")
+            file(DOWNLOAD "${CA_UTILITY_DOWNLOAD_URL}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}")
+        endif()
+        execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "tar" "xvf"
+            "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}"
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external")
+    endif()
+
+    # Add Core Audio utility classes
     target_include_directories(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${CA_UTILITY_BASEDIR}/CoreAudio"
         "${CA_UTILITY_BASEDIR}/CoreAudio/AudioUnits"
@@ -221,26 +236,28 @@ elseif(SFIZZ_AU)
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}")
 
     # Add the resource fork
-    execute_process(COMMAND "xcrun" "--find" "Rez"
-        OUTPUT_VARIABLE OSX_REZ_COMMAND OUTPUT_STRIP_TRAILING_WHITESPACE)
-    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/mac/audiounitconfig.h.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/include/audiounitconfig.h" @ONLY)
-    add_custom_command(TARGET ${AUPLUGIN_PRJ_NAME} POST_BUILD COMMAND
-        "${OSX_REZ_COMMAND}"
-        "-d" "SystemSevenOrLater=1"
-        "-script" "Roman"
-        "-d" "i386_YES"
-        "-d" "x86_64_YES"
-        "-is" "${CMAKE_OSX_SYSROOT}"
-        "-I" "${CMAKE_OSX_SYSROOT}/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers"
-        "-I" "/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers"
-        "-I" "/System/Library/Frameworks/AudioUnit.framework/Versions/A/Headers/"
-        "-I" "${CA_UTILITY_BASEDIR}/CoreAudio/AudioUnits/AUPublic/AUBase"
-        "-I" "${CMAKE_CURRENT_BINARY_DIR}/include" # generated audiounitconfig.h
-        "-o" "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/${PROJECT_NAME}.rsrc"
-        "-useDF"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/auresource.r")
+    if (FALSE) # optional, disabled because broken on CI
+        execute_process(COMMAND "xcrun" "--find" "Rez"
+            OUTPUT_VARIABLE OSX_REZ_COMMAND OUTPUT_STRIP_TRAILING_WHITESPACE)
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
+        configure_file("${CMAKE_CURRENT_SOURCE_DIR}/mac/audiounitconfig.h.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/include/audiounitconfig.h" @ONLY)
+        add_custom_command(TARGET ${AUPLUGIN_PRJ_NAME} POST_BUILD COMMAND
+            "${OSX_REZ_COMMAND}"
+            "-d" "SystemSevenOrLater=1"
+            "-script" "Roman"
+            "-d" "i386_YES"
+            "-d" "x86_64_YES"
+            "-is" "${CMAKE_OSX_SYSROOT}"
+            "-I" "${CMAKE_OSX_SYSROOT}/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers"
+            "-I" "/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Versions/A/Headers"
+            "-I" "/System/Library/Frameworks/AudioUnit.framework/Versions/A/Headers/"
+            "-I" "${CA_UTILITY_BASEDIR}/CoreAudio/AudioUnits/AUPublic/AUBase"
+            "-I" "${CMAKE_CURRENT_BINARY_DIR}/include" # generated audiounitconfig.h
+            "-o" "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/${PROJECT_NAME}.rsrc"
+            "-useDF"
+            "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/auresource.r")
+    endif()
 
     # Copy VST3 in the bundle
     add_custom_command(TARGET ${VSTPLUGIN_PRJ_NAME} POST_BUILD COMMAND
@@ -260,5 +277,12 @@ elseif(SFIZZ_AU)
             "-Wno-unused-function"
             "-Wno-unused-parameter"
             "-Wno-unused-variable")
+    endif()
+
+    # Installation
+    if(AUPLUGIN_INSTALL_DIR)
+        install(DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}"
+            DESTINATION "${AUPLUGIN_INSTALL_DIR}"
+            COMPONENT "au")
     endif()
 endif()
