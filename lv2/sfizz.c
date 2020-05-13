@@ -145,8 +145,7 @@ typedef struct
     int num_voices;
     unsigned int preload_size;
     sfizz_oversampling_factor_t oversampling;
-    // TODO: use atomic flags
-    volatile bool changing_state;
+    volatile bool check_modification;
     int max_block_size;
     int sample_counter;
     float sample_rate;
@@ -288,7 +287,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->num_voices = DEFAULT_VOICES;
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
-    self->changing_state = false;
+    self->check_modification = true;
     self->sample_counter = 0;
 
     // Get the features from the host and populate the structure
@@ -476,6 +475,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         LV2_Atom *sfz_file_path = (LV2_Atom *)&atom_buffer;
         sfz_file_path->type = self->sfizz_sfz_file_uri;
         self->worker->schedule_work(self->worker->handle, null_terminated_atom_size, sfz_file_path);
+        self->check_modification = false;
     }
     else
     {
@@ -550,6 +550,7 @@ sfizz_lv2_check_oversampling(sfizz_plugin_t* self)
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue changing the oversampling factor\n");
         }
+        self->oversampling = oversampling;
     }
 }
 
@@ -569,6 +570,7 @@ sfizz_lv2_check_preload_size(sfizz_plugin_t* self)
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue changing the preload size\n");
         }
+        self->preload_size = preload_size;
     }
 }
 
@@ -588,6 +590,7 @@ sfizz_lv2_check_num_voices(sfizz_plugin_t* self)
         {
             lv2_log_error(&self->logger, "[sfizz] There was an issue changing the number of voices\n");
         }
+        self->num_voices = num_voices;
     }
 }
 
@@ -668,7 +671,7 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     // Log the buffer usage
     self->sample_counter += (int)sample_count;
-    if (self->sample_counter > LOG_SAMPLE_COUNT)
+    if (self->sample_counter > LOG_SAMPLE_COUNT && self->check_modification)
     {
         LV2_Atom atom;
         atom.size = 0;
@@ -682,13 +685,14 @@ run(LV2_Handle instance, uint32_t sample_count)
         }
 #endif
         atom.type = self->sfizz_check_modification_uri;
-        if (!(self->worker->schedule_work(self->worker->handle,
+        if ((self->worker->schedule_work(self->worker->handle,
                                         lv2_atom_total_size((LV2_Atom *)&atom),
-                                        &atom) == LV2_WORKER_SUCCESS))
-        {
+                                        &atom) == LV2_WORKER_SUCCESS)) {
+            self->check_modification = false;
+        } else {
             lv2_log_error(&self->logger, "[sfizz] There was an issue sending a notice to check the modification of the SFZ file to the background worker\n");
         }
-        self->sample_counter -= LOG_SAMPLE_COUNT;
+        self->sample_counter = 0;
     }
 
     // Render the block
@@ -914,86 +918,60 @@ work(LV2_Handle instance,
     const LV2_Atom *atom = (const LV2_Atom *)data;
     if (atom->type == self->sfizz_sfz_file_uri)
     {
-        if (self->changing_state) {
-            respond(handle, size, data); // send back so that we reschedule the check
-            return LV2_WORKER_SUCCESS;
-        }
-
         const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
-        self->changing_state = true;
         if (sfizz_load_file(self->synth, sfz_file_path)) {
             sfizz_lv2_update_file_info(self, sfz_file_path);
         } else {
             lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
-        self->changing_state = false;
+
+        // Reactivate checking for file changes
+        LV2_Atom check_modification_atom;
+        check_modification_atom.size = 0;
+        check_modification_atom.type = self->sfizz_check_modification_uri;
+        respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
     }
     else if (atom->type == self->sfizz_num_voices_uri)
     {
-        if (self->changing_state) {
-            respond(handle, size, data); // send back so that we reschedule the check
-            return LV2_WORKER_SUCCESS;
-        }
-
         const int num_voices = *(const int *)LV2_ATOM_BODY_CONST(atom);
         if (sfizz_get_num_voices(self->synth) == num_voices) {
             return LV2_WORKER_SUCCESS; // Nothing to do
         }
 
-        self->changing_state = true;
         sfizz_set_num_voices(self->synth, num_voices);
         if (sfizz_get_num_voices(self->synth) == num_voices) {
-            self->num_voices = num_voices;
             lv2_log_note(&self->logger, "[sfizz] Number of voices changed to: %d\n", num_voices);
         } else {
             lv2_log_error(&self->logger, "[sfizz] Error changing the number of voices\n");
         }
-        self->changing_state = false;
     }
     else if (atom->type == self->sfizz_preload_size_uri)
     {
-        if (self->changing_state) {
-            respond(handle, size, data); // send back so that we reschedule the check
-            return LV2_WORKER_SUCCESS;
-        }
-
         const unsigned int preload_size = *(const unsigned int *)LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_get_preload_size(self->synth) == preload_size) {
+        if (sfizz_get_preload_size(self->synth) == preload_size)
             return LV2_WORKER_SUCCESS; // Nothing to do
-        }
 
-        self->changing_state = true;
         sfizz_set_preload_size(self->synth, preload_size);
         if (sfizz_get_preload_size(self->synth) == preload_size) {
-            self->preload_size = preload_size;
             lv2_log_note(&self->logger, "[sfizz] Preload size changed to: %d\n", preload_size);
         } else {
             lv2_log_error(&self->logger, "[sfizz] Error changing the preload size\n");
         }
-        self->changing_state = false;
     }
     else if (atom->type == self->sfizz_oversampling_uri)
     {
-        if (self->changing_state) {
-            respond(handle, size, data); // send back so that we reschedule the check
-            return LV2_WORKER_SUCCESS;
-        }
-
         const sfizz_oversampling_factor_t oversampling =
             *(const sfizz_oversampling_factor_t *)LV2_ATOM_BODY_CONST(atom);
         if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
             return LV2_WORKER_SUCCESS; // Nothing to do
         }
 
-        self->changing_state = true;
         sfizz_set_oversampling_factor(self->synth, oversampling);
         if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
-            self->oversampling = oversampling;
             lv2_log_note(&self->logger, "[sfizz] Oversampling changed to: %d\n", oversampling);
         } else {
             lv2_log_error(&self->logger, "[sfizz] Error changing the oversampling\n");
         }
-        self->changing_state = false;
     }
     else if (atom->type == self->sfizz_log_status_uri)
     {
@@ -1003,10 +981,6 @@ work(LV2_Handle instance,
     {
         if (sfizz_should_reload_file(self->synth))
         {
-            // We'll check later
-            if (self->changing_state)
-                return LV2_WORKER_SUCCESS;
-
             lv2_log_note(&self->logger,
                         "[sfizz] File %s seems to have been updated, reloading\n",
                         self->sfz_file_path);
@@ -1016,6 +990,7 @@ work(LV2_Handle instance,
                 lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
         }
+        respond(handle, size, data); // reactivate file checking
     }
     else
     {
@@ -1042,49 +1017,10 @@ work_response(LV2_Handle instance,
         return LV2_WORKER_ERR_UNKNOWN;
 
     const LV2_Atom *atom = (const LV2_Atom *)data;
-    if (atom->type == self->sfizz_sfz_file_uri)
-    {
-        // If we're here we need to reschedule
-        lv2_log_note(&self->logger, "[sfizz] Got a pingback from the worker on a file\n");
-        self->worker->schedule_work(self->worker->handle,
-                lv2_atom_total_size((const LV2_Atom *)data),
-                (const LV2_Atom *)data);
-    }
-    else if (atom->type == self->sfizz_num_voices_uri)
-    {
-        // If we're here we need to reschedule
-        lv2_log_note(&self->logger, "[sfizz] Got a pingback from the worker on the number of voices\n");
-        self->worker->schedule_work(self->worker->handle,
-                lv2_atom_total_size((const LV2_Atom *)data),
-                (const LV2_Atom *)data);
-    }
-    else if (atom->type == self->sfizz_preload_size_uri)
-    {
-        // If we're here we need to reschedule
-        lv2_log_note(&self->logger, "[sfizz] Got a pingback from the worker on the preload size\n");
-        self->worker->schedule_work(self->worker->handle,
-                lv2_atom_total_size((const LV2_Atom *)data),
-                (const LV2_Atom *)data);
-    }
-    else if (atom->type == self->sfizz_oversampling_uri)
-    {
-        // If we're here we need to reschedule
-        lv2_log_note(&self->logger, "[sfizz] Got a pingback from the worker on the oversampling factor\n");
-        self->worker->schedule_work(self->worker->handle,
-                lv2_atom_total_size((const LV2_Atom *)data),
-                (const LV2_Atom *)data);
-    }
-    else if (atom->type == self->sfizz_log_status_uri)
-    {
-        // Nothing to do
-    }
-    else if (atom->type == self->sfizz_check_modification_uri)
-    {
-        // Nothing to do, it'll get rechecked soon enough
-    }
-    else
-    {
-        lv2_log_error(&self->logger, "[sfizz] Got an unknown atom in work response\n");
+    if (atom->type == self->sfizz_check_modification_uri) {
+        self->check_modification = true; // check changes
+    } else {
+        lv2_log_error(&self->logger, "[sfizz] Got an unexpected atom in work response\n");
         if (self->unmap)
             lv2_log_error(&self->logger,
                           "URI: %s\n",
