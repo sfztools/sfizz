@@ -30,7 +30,7 @@
             <key>factoryFunction</key>
             <string>AUWrapperFactory</string>
             <key>manufacturer</key>
-            <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@</string> <!-- TODO: register me -->
+            <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@</string>
             <key>name</key>
             <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@: @PROJECT_NAME@</string>
             <key>sandboxSafe</key>
