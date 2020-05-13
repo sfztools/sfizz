@@ -81,6 +81,16 @@ struct Opcode {
      */
     std::string getDerivedName(OpcodeCategory newCategory, unsigned number = ~0u) const;
 
+    /**
+     * @brief Get whether the opcode categorizes as `ccN` of any kind.
+     * @return true if `ccN`, otherwise false
+     */
+    bool isAnyCcN() const
+    {
+        return category == kOpcodeOnCcN || category == kOpcodeCurveCcN ||
+            category == kOpcodeStepCcN || category == kOpcodeSmoothCcN;
+    }
+
 private:
     static OpcodeCategory identifyCategory(absl::string_view name);
     LEAK_DETECTOR(Opcode);
