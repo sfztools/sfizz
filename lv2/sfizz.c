@@ -534,8 +534,11 @@ sfizz_lv2_status_log(sfizz_plugin_t *self)
     // lv2_log_note(&self->logger, "[sfizz] Active voices: %d\n", sfizz_get_num_active_voices(self->synth));
 }
 
-static uint32_t next_pow_2(uint32_t v)
+static int next_pow_2(int v)
 {
+    if (v < 1)
+        return 1;
+
     // Bit twiddling hack
     v--;
     v |= v >> 1;
@@ -553,8 +556,8 @@ sfizz_lv2_check_oversampling(sfizz_plugin_t* self)
     if (*self->oversampling_port < 0)
         return;
 
-    uint32_t port_value = (uint32_t)*self->oversampling_port;
-    if (port_value == (uint32_t)self->oversampling)
+    int port_value = (int)*self->oversampling_port;
+    if (port_value == (int)self->oversampling)
         return;
     self->oversampling = (sfizz_oversampling_factor_t)next_pow_2(port_value);
 
