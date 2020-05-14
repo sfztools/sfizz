@@ -214,15 +214,34 @@ public:
 
     /**
      * @brief Change the number of voices (the polyphony).
+     * This function takes a lock and disables the callback; prefer calling
+     * it out of the RT thread. It can also take a long time to return.
+     * If the new number of voices is the same as the current one, it will
+     * release the lock immediately and exit.
      *
      * @param numVoices The number of voices.
      */
     void setNumVoices(int numVoices) noexcept;
 
     /**
-     * @brief Set the oversampling factor to a new value. This will disable all callbacks
-     * kill all the voices, and trigger a reloading of every file in the FilePool under
-     * the new oversampling.
+     * @brief Set the oversampling factor to a new value.
+     * It will kill all the voices, and trigger a reloading of every file in
+     * the FilePool under the new oversampling.
+     *
+     * Increasing this value (up to x8 oversampling) improves the
+     * quality of the output at the expense of memory consumption and
+     * background loading speed. The main render path still uses the
+     * same linear interpolation algorithm and should not see its
+     * performance decrease, but the files are oversampled upon loading
+     * which increases the stress on the background loader and reduce
+     * the loading speed. You can tweak the size of the preloaded data
+     * to compensate for the memory increase, but the full loading will
+     * need to take place anyway.
+     *
+     * This function takes a lock and disables the callback; prefer calling
+     * it out of the RT thread. It can also take a long time to return.
+     * If the new oversampling factor is the same as the current one, it will
+     * release the lock immediately and exit.
      *
      * @param factor The oversampling factor.
      *
@@ -236,7 +255,11 @@ public:
     int getOversamplingFactor() const noexcept;
 
     /**
-     * @brief Set the preloaded file size. This will disable the callback.
+     * @brief Set the preloaded file size.
+     * This function takes a lock and disables the callback; prefer calling
+     * it out of the RT thread. It can also take a long time to return.
+     * If the new preload size is the same as the current one, it will
+     * release the lock immediately and exit.
      *
      * @param preloadSize  The preload size.
      */

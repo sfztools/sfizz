@@ -286,7 +286,11 @@ public:
      */
     int getNumVoices() const noexcept;
     /**
-     * @brief Change the number of voices (the polyphony)
+     * @brief Change the number of voices (the polyphony).
+     * This function takes a lock and disables the callback; prefer calling
+     * it out of the RT thread. It can also take a long time to return.
+     * If the new number of voices is the same as the current one, it will
+     * release the lock immediately and exit.
      *
      * @param numVoices
      */
@@ -302,9 +306,13 @@ public:
     void garbageCollect() noexcept;
 
     /**
-     * @brief Set the oversampling factor to a new value. This will disable all callbacks
-     * kill all the voices, and trigger a reloading of every file in the FilePool under
-     * the new oversampling.
+     * @brief Set the oversampling factor to a new value.
+     * It will kill all the voices, and trigger a reloading of every file in
+     * the FilePool under the new oversampling.
+     * This function takes a lock and disables the callback; prefer calling
+     * it out of the RT thread. It can also take a long time to return.
+     * If the new oversampling factor is the same as the current one, it will
+     * release the lock immediately and exit.
      *
      * @param factor
      */
@@ -318,7 +326,11 @@ public:
     Oversampling getOversamplingFactor() const noexcept;
 
     /**
-     * @brief Set the preloaded file size. This will disable the callback.
+     * @brief Set the preloaded file size.
+     * This function takes a lock and disables the callback; prefer calling
+     * it out of the RT thread. It can also take a long time to return.
+     * If the new preload size is the same as the current one, it will
+     * release the lock immediately and exit.
      *
      * @param factor
      */

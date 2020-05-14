@@ -34,3 +34,5 @@ node_modules/
 *.lock
 *.sublime-*
 *.code-*
+.kak.tags.namecache
+.clangd

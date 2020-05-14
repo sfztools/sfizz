@@ -247,7 +247,10 @@ SFIZZ_EXPORTED_API unsigned int sfizz_get_preload_size(sfizz_synth_t* synth);
 /**
  * @brief      Set the size of the preloaded data in number of floats (not
  *             bytes). This will disable the callbacks for the duration of the
- *             load.
+ *             load. This function takes a lock ; prefer calling
+ *             it out of the RT thread. It can also take a long time to return.
+ *             If the new preload size is the same as the current one, it will
+ *             release the lock immediately and exit.
  *
  * @param      synth         The synth.
  * @param[in]  preload_size  The preload size.
@@ -277,6 +280,11 @@ SFIZZ_EXPORTED_API sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfi
  *             to compensate for the memory increase, but the full loading will
  *             need to take place anyway.
  *
+ *             This function takes a lock and disables the callback; prefer calling
+ *             it out of the RT thread. It can also take a long time to return.
+ *             If the new oversampling factor is the same as the current one, it will
+ *             release the lock immediately and exit.
+ *
  * @param      synth         The synth.
  * @param[in]  oversampling  The oversampling factor.
  *
@@ -301,6 +309,10 @@ SFIZZ_EXPORTED_API float sfizz_get_volume(sfizz_synth_t* synth);
 
 /**
  * @brief      Set the number of voices used by the synth.
+ *             This function takes a lock and disables the callback; prefer calling
+ *             it out of the RT thread. It can also take a long time to return.
+ *             If the new number of voices is the same as the current one, it will
+ *             release the lock immediately and exit.
  *
  * @param      synth       The synth.
  * @param      num_voices  The number of voices.

@@ -1054,6 +1054,11 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
 {
     ASSERT(numVoices > 0);
     const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+
+    // fast path
+    if (numVoices == this->numVoices)
+        return;
+
     resetVoices(numVoices);
 }
 
@@ -1077,6 +1082,10 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
     const std::lock_guard<std::mutex> disableCallback { callbackGuard };
 
+    // fast path
+    if (factor == oversamplingFactor)
+        return;
+
     for (auto& voice : voices)
         voice->reset();
 
@@ -1093,6 +1102,10 @@ sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
 void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+
+    // fast path
+    if (preloadSize == resources.filePool.getPreloadSize())
+        return;
 
     resources.filePool.setPreloadSize(preloadSize);
 }
