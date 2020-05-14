@@ -278,6 +278,34 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.ccConditions[127] == sfz::Range<float>(0_norm, 127_norm));
     }
 
+    SECTION("lohdcc, hihdcc")
+    {
+        region.parseOpcode({ "lohdcc7", "0.12" });
+        REQUIRE(region.ccConditions[7].getStart() == Approx(0.12f));
+        REQUIRE(region.ccConditions[7].getEnd() == 1.0f);
+        region.parseOpcode({ "lohdcc13", "-1.0" });
+        REQUIRE(region.ccConditions[13] == sfz::Range<float>(0.0f, 1.0f));
+        region.parseOpcode({ "hihdcc64", "0.45" });
+        REQUIRE(region.ccConditions[64].getStart() == 0.0f);
+        REQUIRE(region.ccConditions[64].getEnd() == Approx(0.45f));
+        region.parseOpcode({ "hihdcc126", "1.2" });
+        REQUIRE(region.ccConditions[126] == sfz::Range<float>(0.0f, 1.0f));
+    }
+
+    SECTION("lorealcc, hirealcc")
+    {
+        region.parseOpcode({ "lorealcc8", "0.12" });
+        REQUIRE(region.ccConditions[8].getStart() == Approx(0.12f));
+        REQUIRE(region.ccConditions[8].getEnd() == 1.0f);
+        region.parseOpcode({ "lorealcc14", "-1.0" });
+        REQUIRE(region.ccConditions[14] == sfz::Range<float>(0.0f, 1.0f));
+        region.parseOpcode({ "hirealcc63", "0.45" });
+        REQUIRE(region.ccConditions[63].getStart() == 0.0f);
+        REQUIRE(region.ccConditions[63].getEnd() == Approx(0.45f));
+        region.parseOpcode({ "hirealcc125", "1.2" });
+        REQUIRE(region.ccConditions[125] == sfz::Range<float>(0.0f, 1.0f));
+    }
+
     SECTION("sw_lokey, sw_hikey")
     {
         REQUIRE(region.keyswitchRange == sfz::Range<uint8_t>(0, 127));

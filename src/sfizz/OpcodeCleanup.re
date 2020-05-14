@@ -146,6 +146,11 @@ end_generic:
         goto end_region;
     }
 
+    ("hi"|"lo") "realcc" (number) END {
+        opcode = absl::StrCat(group(1), "hdcc", group(2));
+        goto end_region;
+    }
+
     * {
         goto end_region;
     }

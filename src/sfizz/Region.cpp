@@ -206,6 +206,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         if (auto value = readOpcode(opcode.value, Default::midi7Range))
             ccConditions[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
+    case hash("lohdcc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+            ccConditions[opcode.parameters.back()].setStart(*value);
+        break;
+    case hash("hihdcc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+            ccConditions[opcode.parameters.back()].setEnd(*value);
+        break;
     case hash("sw_lokey"):
         setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
         break;
