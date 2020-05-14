@@ -149,15 +149,25 @@ elseif(SFIZZ_AU)
     # Get Core Audio utility classes if missing
     set(CA_UTILITY_BASEDIR
         "${CMAKE_CURRENT_SOURCE_DIR}/external/CoreAudioUtilityClasses")
-    if(NOT EXISTS "${CA_UTILITY_BASEDIR}")
+    if(EXISTS "${CA_UTILITY_BASEDIR}")
+        message(STATUS "The CoreAudioUtilityClasses are available locally")
+    else()
+        message(STATUS "The CoreAudioUtilityClasses are not available locally")
+
         set(CA_UTILITY_VERSION "1.1")
         set(CA_UTILITY_ARCHIVE "CoreAudioUtilityClasses-${CA_UTILITY_VERSION}.tar.gz")
         set(CA_UTILITY_DOWNLOAD_URL "https://github.com/sfztools/CoreAudioUtilityClasses/releases/download/v${CA_UTILITY_VERSION}/${CA_UTILITY_ARCHIVE}")
-        if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}")
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}")
+            message(STATUS "The CoreAudioUtilityClasses archive is available")
+        else()
+            message(STATUS "The CoreAudioUtilityClasses archive is missing")
+            message(STATUS "Downloading: ${CA_UTILITY_DOWNLOAD_URL}")
+
             file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/download")
             file(DOWNLOAD "${CA_UTILITY_DOWNLOAD_URL}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}")
         endif()
+        message(STATUS "Extracting: ${CA_UTILITY_ARCHIVE}")
         execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "tar" "xvf"
             "${CMAKE_CURRENT_SOURCE_DIR}/download/${CA_UTILITY_ARCHIVE}"
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external")
