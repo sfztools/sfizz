@@ -209,6 +209,16 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
                     resources.midiState.ccEvent(0, member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
+        case hash("Set_hdcc&"): // fallthrough
+        case hash("set_hdcc&"):
+        case hash("Set_realcc&"):
+        case hash("set_realcc&"):
+            if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
+                const auto ccValue = readOpcode(member.value, Default::normalizedRange);
+                if (ccValue)
+                    resources.midiState.ccEvent(0, member.parameters.back(), *ccValue);
+            }
+            break;
         case hash("Label_cc&"): // fallthrough
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
