@@ -55,6 +55,10 @@ endif()
 
 if (SFIZZ_VST)
     add_subdirectory (vst)
+else()
+    if (SFIZZ_AU)
+        message(WARNING "Audio Unit requires VST to be enabled")
+    endif()
 endif()
 
 if (SFIZZ_BENCHMARKS)
