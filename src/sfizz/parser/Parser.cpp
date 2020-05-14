@@ -455,38 +455,53 @@ size_t Parser::extractToEol(Reader& reader, std::string* dst)
 std::string Parser::expandDollarVars(const SourceRange& range, absl::string_view src)
 {
     std::string dst;
+    std::string srcbuf; // temporary for retries when recursive
+    std::string name; // temporary for variable name
+    bool keepExpanding = true;
+
     dst.reserve(2 * src.size());
+    name.reserve(64);
 
-    size_t i = 0;
-    size_t n = src.size();
-    while (i < n) {
-        char c = src[i++];
+    while (keepExpanding) {
+        size_t i = 0;
+        size_t n = src.size();
+        size_t numExpansions = 0;
+        while (i < n) {
+            char c = src[i++];
 
-        if (c != '$')
-            dst.push_back(c);
-        else {
-            std::string name;
-            name.reserve(64);
+            if (c != '$')
+                dst.push_back(c);
+            else {
+                ++numExpansions;
+                name.clear();
 
-            // ARIA: we will accumulate any chars after $, until this is the
-            //       name of a known variable
-            auto def = _currentDefinitions.end();
-            while (i < n && isIdentifierChar(src[i]) && def == _currentDefinitions.end()) {
-                name.push_back(src[i++]);
-                def = _currentDefinitions.find(name);
+                // ARIA: we will accumulate any chars after $, until this is the
+                //       name of a known variable
+                auto def = _currentDefinitions.end();
+                while (i < n && isIdentifierChar(src[i]) && def == _currentDefinitions.end()) {
+                    name.push_back(src[i++]);
+                    def = _currentDefinitions.find(name);
+                }
+
+                if (name.empty()) {
+                    emitWarning(range, "Expected variable name after $.");
+                    continue;
+                }
+
+                if (def == _currentDefinitions.end()) {
+                    emitWarning(range, "The variable `" + name + "` is not defined.");
+                    continue;
+                }
+
+                dst.append(def->second);
             }
+        }
 
-            if (name.empty()) {
-                emitWarning(range, "Expected variable name after $.");
-                continue;
-            }
-
-            if (def == _currentDefinitions.end()) {
-                emitWarning(range, "The variable `" + name + "` is not defined.");
-                continue;
-            }
-
-            dst.append(def->second);
+        keepExpanding = numExpansions > 0;
+        if (keepExpanding) {
+            srcbuf = dst;
+            src = srcbuf;
+            dst.clear();
         }
     }
 
