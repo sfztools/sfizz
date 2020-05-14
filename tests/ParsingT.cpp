@@ -523,3 +523,69 @@ param3=baz param4=quux /* block comment */)");
         REQUIRE(mock.fullBlockHeaders == expectedHeaders);
         REQUIRE(mock.fullBlockMembers == expectedMembers);
 }
+
+TEST_CASE("[Parsing] Overlapping definition identifiers")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/overlappingDefinitionIdentifiers.sfz",
+R"(#define $abc foo
+#define $abcdef bar
+<region> sample=$abc.wav
+<region> sample=$abcdef.wav)");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"sample", "foo.wav"}},
+            {{"sample", "foodef.wav"}},
+        };
+        std::vector<std::string> expectedHeaders = {
+            "region", "region"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
+
+TEST_CASE("[Parsing] Interpretation of the value of #define")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/defineValues.sfz",
+R"(#define $a foo #define $b bar <region> sample=$a-$b.wav
+<region>#define $c toto sample=$c.wav)");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"sample", "foo-bar.wav"}},
+            {{"sample", "toto.wav"}},
+        };
+        std::vector<std::string> expectedHeaders = {
+            "region", "region"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
