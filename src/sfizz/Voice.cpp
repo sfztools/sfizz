@@ -443,10 +443,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     auto jumps = resources.bufferPool.getBuffer(numSamples);
     auto bends = resources.bufferPool.getBuffer(numSamples);
-    auto leftCoeffs = resources.bufferPool.getBuffer(numSamples);
-    auto rightCoeffs = resources.bufferPool.getBuffer(numSamples);
+    auto coeffs = resources.bufferPool.getBuffer(numSamples);
     auto indices = resources.bufferPool.getIndexBuffer(numSamples);
-    if (!jumps || !bends || !indices || !rightCoeffs || !leftCoeffs)
+    if (!jumps || !bends || !indices || !coeffs)
         return;
 
     fill<float>(*jumps, pitchRatio * speedRatio);
@@ -470,7 +469,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
-    sfzInterpolationCast<float>(*jumps, *indices, *leftCoeffs, *rightCoeffs);
+    sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
     add<int>(sourcePosition, *indices);
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
@@ -500,35 +499,33 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #endif
                 egEnvelope.startRelease(i, true);
                 fill<int>(indices->subspan(i), sampleEnd);
-                fill<float>(leftCoeffs->subspan(i), 0.0f);
-                fill<float>(rightCoeffs->subspan(i), 1.0f);
+                fill<float>(coeffs->subspan(i), 1.0f);
                 break;
             }
         }
     }
 
     auto ind = indices->data();
-    auto leftCoeff = leftCoeffs->data();
-    auto rightCoeff = rightCoeffs->data();
+    auto coeff = coeffs->data();
     auto leftSource = source.getConstSpan(0);
     auto left = buffer.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
-            incrementAll(ind, left, leftCoeff, rightCoeff);
+            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *coeff);
+            incrementAll(ind, left, coeff);
         }
     } else {
         auto right = buffer.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
-            *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *leftCoeff, *rightCoeff);
-            incrementAll(ind, left, right, leftCoeff, rightCoeff);
+            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *coeff);
+            *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *coeff);
+            incrementAll(ind, left, right, coeff);
         }
     }
 
     sourcePosition = indices->back();
-    floatPositionOffset = rightCoeffs->back();
+    floatPositionOffset = coeffs->back();
 
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));

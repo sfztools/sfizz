@@ -163,9 +163,9 @@ void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> o
 }
 
 template<>
-void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
+void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> coeffs) noexcept
 {
-    sfzInterpolationCast<float, false>(floatJumps, jumps, leftCoeffs, rightCoeffs);
+    sfzInterpolationCast<float, false>(floatJumps, jumps, coeffs);
 }
 
 template <>

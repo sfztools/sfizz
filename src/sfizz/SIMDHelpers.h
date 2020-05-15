@@ -939,12 +939,11 @@ void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output
 
 namespace _internals {
     template <class T>
-    void snippetSFZInterpolationCast(const T*& floatJump, int*& jump, T*& leftCoeff, T*& rightCoeff)
+    void snippetSFZInterpolationCast(const T*& floatJump, int*& jump, T*& coeff)
     {
         *jump = static_cast<int>(*floatJump);
-        *rightCoeff = *floatJump - static_cast<float>(*jump);
-        *leftCoeff = static_cast<T>(1.0) - *rightCoeff;
-        incrementAll(floatJump, leftCoeff, rightCoeff, jump);
+        *coeff = *floatJump - static_cast<float>(*jump);
+        incrementAll(floatJump, coeff, jump);
     }
 }
 
@@ -960,24 +959,22 @@ namespace _internals {
  * @param rightCoeffs the right interpolation coefficients
  */
 template <class T, bool SIMD = SIMDConfig::sfzInterpolationCast>
-void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs) noexcept
+void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> coeffs) noexcept
 {
     CHECK(jumps.size() >= floatJumps.size());
-    CHECK(jumps.size() == leftCoeffs.size());
-    CHECK(jumps.size() == rightCoeffs.size());
+    CHECK(jumps.size() == coeffs.size());
 
     auto floatJump = floatJumps.data();
     auto jump = jumps.data();
-    auto leftCoeff = leftCoeffs.data();
-    auto rightCoeff = rightCoeffs.data();
-    const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), leftCoeffs.size(), rightCoeffs.size());
+    auto coeff = coeffs.data();
+    const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), coeffs.size());
 
     while (floatJump < sentinel)
-        _internals::snippetSFZInterpolationCast(floatJump, jump, leftCoeff, rightCoeff);
+        _internals::snippetSFZInterpolationCast(floatJump, jump, coeff);
 }
 
 template <>
-void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept;
+void sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> coeffs) noexcept;
 
 namespace _internals {
     template <class T>

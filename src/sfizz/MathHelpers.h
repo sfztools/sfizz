@@ -156,9 +156,9 @@ inline CXX14_CONSTEXPR void incrementAll(T& first, Args&... rest)
 }
 
 template <class ValueType>
-constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueType leftCoeff, ValueType rightCoeff)
+constexpr ValueType linearInterpolation(ValueType left, ValueType right, ValueType coeff)
 {
-    return left * leftCoeff + right * rightCoeff;
+    return left * (static_cast<ValueType>(1.0) - coeff) + right * coeff;
 }
 
 template <class Type>
