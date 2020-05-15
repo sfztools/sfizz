@@ -206,13 +206,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         if (auto value = readOpcode(opcode.value, Default::midi7Range))
             ccConditions[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
-    case hash("lohdcc&"):
+    case hash("lohdcc&"): // also lorealcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         if (auto value = readOpcode(opcode.value, Default::normalizedRange))
             ccConditions[opcode.parameters.back()].setStart(*value);
         break;
-    case hash("hihdcc&"):
+    case hash("hihdcc&"): // also hirealcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         if (auto value = readOpcode(opcode.value, Default::normalizedRange))
