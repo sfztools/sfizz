@@ -132,6 +132,10 @@ end_generic:
         opcode = absl::StrCat("start_", group(1), "cc", group(2));
         goto end_region;
     }
+    "on_" ("hi"|"lo") "hdcc" (number) END {
+        opcode = absl::StrCat("start_", group(1), "hdcc", group(2));
+        goto end_region;
+    }
 
     "fil_" (any) END {
         opcode = absl::StrCat("fil1_", group(1));

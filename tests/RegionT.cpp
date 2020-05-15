@@ -496,6 +496,21 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.ccTriggers[4] == sfz::Range<float>(0_norm, 47_norm));
     }
 
+    SECTION("on_lohdcc, on_hihdcc")
+    {
+        for (int ccIdx = 1; ccIdx < 128; ++ccIdx) {
+            REQUIRE(!region.ccTriggers.contains(ccIdx));
+        }
+        region.parseOpcode({ "on_lohdcc46", "0.15" });
+        REQUIRE(region.ccTriggers.contains(46));
+        REQUIRE(region.ccTriggers[46].getStart() == Approx(0.15f));
+        REQUIRE(region.ccTriggers[46].getEnd() == 1.0f);
+        region.parseOpcode({ "on_hihdcc5", "0.47" });
+        REQUIRE(region.ccTriggers.contains(5));
+        REQUIRE(region.ccTriggers[5].getStart() == 0.0f);
+        REQUIRE(region.ccTriggers[5].getEnd() == Approx(0.47f));
+    }
+
     SECTION("volume")
     {
         REQUIRE(region.volume == 0.0f);

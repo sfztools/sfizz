@@ -202,6 +202,10 @@ TEST_CASE("[Opcode] Normalization")
         {"gain_foobar", "volume_foobar"},
         {"tune", "pitch"},
         {"tune_foobar", "pitch_foobar"},
+        {"lorealcc24", "lohdcc24"},
+        {"hirealcc25", "hihdcc25"},
+        {"on_lohdcc26", "start_lohdcc26"},
+        {"on_hihdcc27", "start_hihdcc27"},
         // SFZv2 aliases
         {"on_hicc22", "start_hicc22"},
         {"on_locc23", "start_locc23"},
