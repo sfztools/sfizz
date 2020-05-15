@@ -207,7 +207,6 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
 
         switch (member.lettersOnlyHash) {
-        case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::midi7Range);
@@ -215,7 +214,6 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
                     resources.midiState.ccEvent(0, member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
-        case hash("Set_hdcc&"): // fallthrough
         case hash("set_hdcc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::normalizedRange);
@@ -223,7 +221,6 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
                     resources.midiState.ccEvent(0, member.parameters.back(), *ccValue);
             }
             break;
-        case hash("Label_cc&"): // fallthrough
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
                 ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
@@ -232,8 +229,6 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             if (Default::keyRange.containsWithEnd(member.parameters.back()))
                 keyLabels.emplace_back(member.parameters.back(), std::string(member.value));
             break;
-        case hash("Default_path"):
-            // fallthrough
         case hash("default_path"):
             defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             DBG("Changing default sample path to " << defaultPath);

@@ -161,8 +161,12 @@ TEST_CASE("[Opcode] Derived names")
 
 TEST_CASE("[Opcode] Normalization")
 {
+    // *_ccN
+
     REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "foo_oncc7");
     REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeControl).opcode == "foo_cc7");
+
+    // <region>
 
     static const std::pair<absl::string_view, absl::string_view> regionSpecific[] = {
         // LFO SFZv1
@@ -224,7 +228,7 @@ TEST_CASE("[Opcode] Normalization")
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
     }
 
-    ///
+    // <control>
 
     static const std::pair<absl::string_view, absl::string_view> controlSpecific[] = {
         // ARIA aliases
@@ -237,4 +241,8 @@ TEST_CASE("[Opcode] Normalization")
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeControl).opcode == expected);
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
     }
+
+    // case
+
+    REQUIRE(sfz::Opcode("SaMpLe", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "sample");
 }

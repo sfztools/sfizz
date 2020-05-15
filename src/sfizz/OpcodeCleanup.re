@@ -8,6 +8,7 @@
 #include "Opcode.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/ascii.h"
 #include <string>
 
 namespace sfz {
@@ -15,6 +16,9 @@ namespace sfz {
 static std::string cleanUpOpcodeName(absl::string_view rawOpcode, OpcodeScope scope)
 {
     std::string opcode { rawOpcode };
+
+    // always convert it to lower case
+    absl::AsciiStrToLower(&opcode);
 
     /*!re2c
     re2c:flags:posix-captures = 1;
