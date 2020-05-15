@@ -89,7 +89,7 @@ void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBu
         break;
     case Oversampling::x1:
         for (size_t i = 0; i < numChannels; ++i)
-            copy<float>(input.getConstSpan(i), output.getSpan(i));
+            copy<float>(input.getConstSpan(i), output.getSpan(i).first(numFrames));
         return;
     }
 

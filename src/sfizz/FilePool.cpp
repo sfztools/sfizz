@@ -42,7 +42,8 @@ template <class T>
 void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t numFrames, bool reverse)
 {
     output.reset();
-    output.resize(numFrames);
+    output.resize(numFrames + sfz::config::excessFileFrames);
+    output.clear();
 
     if (reverse)
         sndFile.seek(-static_cast<sf_count_t>(numFrames), SEEK_END);
@@ -57,13 +58,13 @@ void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t 
         output.addChannel();
         sfz::Buffer<T> tempReadBuffer { 2 * numFrames };
         sndFile.readf(tempReadBuffer.data(), numFrames);
-        sfz::readInterleaved<T>(tempReadBuffer, output.getSpan(0), output.getSpan(1));
+        sfz::readInterleaved<T>(tempReadBuffer, output.getSpan(0).first(numFrames), output.getSpan(1).first(numFrames));
     }
 
     if (reverse) {
         for (unsigned c = 0; c < channels; ++c) {
             // TODO: consider optimizing with SIMD
-            absl::Span<float> channel = output.getSpan(c);
+            absl::Span<float> channel = output.getSpan(c).first(numFrames);
             std::reverse(channel.begin(), channel.end());
         }
     }
@@ -97,7 +98,8 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
     auto baseBuffer = readFromFile<T>(sndFile, numFrames, sfz::Oversampling::x1, reverse);
     output.reset();
     output.addChannels(baseBuffer->getNumChannels());
-    output.resize(numFrames * static_cast<int>(factor));
+    output.resize(numFrames * static_cast<int>(factor) + sfz::config::excessFileFrames);
+    output.clear();
     sfz::Oversampler oversampler { factor };
     oversampler.stream(*baseBuffer, output, filledFrames);
 }

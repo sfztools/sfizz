@@ -65,7 +65,8 @@ struct FilePromise
     AudioSpan<const float> getData()
     {
         if (dataStatus == DataStatus::Ready)
-            return AudioSpan<const float>(fileData);
+            return AudioSpan<const float>(fileData)
+                .first(fileData.getNumFrames() - sfz::config::excessFileFrames);
         else if (availableFrames > preloadedData->getNumFrames())
             return AudioSpan<const float>(fileData).first(availableFrames);
         else

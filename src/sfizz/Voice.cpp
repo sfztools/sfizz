@@ -485,7 +485,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         const auto sampleEnd = min(
             static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
             static_cast<int>(source.getNumFrames())
-        ) - 2;
+        ) - 1;
         for (unsigned i = 0; i < indices->size(); ++i) {
             if ((*indices)[i] >= sampleEnd) {
 #ifndef NDEBUG
@@ -511,15 +511,15 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto left = buffer.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *coeff);
+            *left = bspline3Interpolation(&leftSource[*ind], *coeff);
             incrementAll(ind, left, coeff);
         }
     } else {
         auto right = buffer.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *coeff);
-            *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *coeff);
+            *left = bspline3Interpolation(&leftSource[*ind], *coeff);
+            *right = bspline3Interpolation(&rightSource[*ind], *coeff);
             incrementAll(ind, left, right, coeff);
         }
     }
