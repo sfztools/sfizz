@@ -223,4 +223,18 @@ TEST_CASE("[Opcode] Normalization")
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeRegion).opcode == expected);
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
     }
+
+    ///
+
+    static const std::pair<absl::string_view, absl::string_view> controlSpecific[] = {
+        // ARIA aliases
+        {"set_realcc1", "set_hdcc1"},
+    };
+
+    for (auto pair : controlSpecific) {
+        absl::string_view input = pair.first;
+        absl::string_view expected = pair.second;
+        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeControl).opcode == expected);
+        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
+    }
 }
