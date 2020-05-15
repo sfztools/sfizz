@@ -629,10 +629,43 @@ TEST_CASE("[Parsing] Opcode value special character")
         parser.setListener(&mock);
         parser.parseString("/opcodeValueSpecialCharacter.sfz",
 R"(<region>
-sample=Alto-Flute-sus-C#4-PB-loop.wav)");
+sample=Alto-Flute-sus-C#4-PB-loop.wav
+<region>
+sample=foo=bar<quux.wav)");
 
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
             {{"sample", "Alto-Flute-sus-C#4-PB-loop.wav"}},
+            {{"sample", "foo=bar<quux.wav"}},
+        };
+        std::vector<std::string> expectedHeaders = {
+            "region", "region"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
+
+TEST_CASE("[Parsing] Opcode value with inline directives")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/opcodeValueWithInlineDirective.sfz",
+R"(<region>#define $VEL v1 sample=$VEL.wav #define $FOO bar)");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"sample", "v1.wav"}},
         };
         std::vector<std::string> expectedHeaders = {
             "region"
