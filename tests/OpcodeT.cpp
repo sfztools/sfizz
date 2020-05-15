@@ -161,8 +161,8 @@ TEST_CASE("[Opcode] Derived names")
 
 TEST_CASE("[Opcode] Normalization")
 {
-    REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == "foo_oncc7");
     REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "foo_oncc7");
+    REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeControl).opcode == "foo_cc7");
 
     static const std::pair<absl::string_view, absl::string_view> regionSpecific[] = {
         // LFO SFZv1

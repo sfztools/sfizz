@@ -199,7 +199,9 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
 
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
 {
-    for (auto& member : members) {
+    for (auto& rawMember : members) {
+        const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
+
         switch (member.lettersOnlyHash) {
         case hash("Set_cc&"): // fallthrough
         case hash("set_cc&"):
@@ -211,8 +213,6 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("Set_hdcc&"): // fallthrough
         case hash("set_hdcc&"):
-        case hash("Set_realcc&"):
-        case hash("set_realcc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::normalizedRange);
                 if (ccValue)

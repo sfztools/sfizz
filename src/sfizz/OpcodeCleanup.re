@@ -45,23 +45,27 @@ static std::string cleanUpOpcodeName(absl::string_view rawOpcode, OpcodeScope sc
 
     //--------------------------------------------------------------------------
 
+    if (scope == kOpcodeScopeRegion) {
+
     YYCURSOR = opcode.c_str();
 
     /*!re2c
 
     (any) "_cc" (number) END {
         opcode = absl::StrCat(group(1), "_oncc", group(2));
-        goto end_generic;
+        goto end_region_oncc;
     }
 
     * {
-        goto end_generic;
+        goto end_region_oncc;
     }
 
     */
 
-end_generic:
+end_region_oncc:
     /* end */;
+
+    } // scope == kOpcodeScopeRegion
 
     //--------------------------------------------------------------------------
 
@@ -167,6 +171,31 @@ end_region:
     } // scope == kOpcodeScopeRegion
 
     //--------------------------------------------------------------------------
+
+    if (scope == kOpcodeScopeControl) {
+
+    YYCURSOR = opcode.c_str();
+
+    /*!re2c
+
+    "set_realcc" (number) END {
+        opcode = absl::StrCat("set_hdcc", group(1));
+        goto end_control;
+    }
+
+    * {
+        goto end_control;
+    }
+
+    */
+
+end_control:
+    /* end */;
+
+    } // scope == kOpcodeScopeControl
+
+    //--------------------------------------------------------------------------
+
 
     #undef YYMAXNMATCH
 
