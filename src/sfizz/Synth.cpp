@@ -158,7 +158,9 @@ void sfz::Synth::clear()
 
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 {
-    for (auto& member : members) {
+    for (auto& rawMember : members) {
+        const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
+
         switch (member.lettersOnlyHash) {
         case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
@@ -176,7 +178,9 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
     absl::optional<unsigned> groupIdx;
     unsigned maxPolyphony { config::maxVoices };
 
-    const auto parseOpcode = [&](const Opcode& member) {
+    const auto parseOpcode = [&](const Opcode& rawMember) {
+        const Opcode member = rawMember.cleanUp(kOpcodeScopeGroup);
+
         switch (member.lettersOnlyHash) {
         case hash("group"):
             setValueFromOpcode(member, groupIdx, Default::groupRange);
