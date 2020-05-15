@@ -132,7 +132,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, group, Default::groupRange);
         break;
     case hash("off_by"): // also offby
-        setValueFromOpcode(opcode, offBy, Default::groupRange);
+        if (opcode.value == "-1")
+            offBy.reset();
+        else
+            setValueFromOpcode(opcode, offBy, Default::groupRange);
         break;
     case hash("off_mode"): // also offmode
         switch (hash(opcode.value)) {
