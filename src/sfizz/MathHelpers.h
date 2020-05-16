@@ -239,7 +239,7 @@ inline __m128 bspline3x4(__m128 x)
     __m128 x2 = _mm_mul_ps(x, x);
     __m128 x3 = _mm_mul_ps(x2, x);
     __m128 y = _mm_set1_ps(0.0f);
-    __m128 p1 = _mm_set1_ps(2./3.) - x2 + _mm_mul_ps(_mm_set1_ps(1./2.), x3);
+    __m128 p1 = _mm_add_ps(_mm_sub_ps(_mm_set1_ps(2./3.), x2), _mm_mul_ps(_mm_set1_ps(1./2.), x3));
     __m128 p2 = _mm_sub_ps(_mm_add_ps(_mm_sub_ps(_mm_set1_ps(4./3.), _mm_mul_ps(_mm_set1_ps(2), x)), x2), _mm_mul_ps(_mm_set1_ps(1./6.), x3));
     __m128 m2 = _mm_cmple_ps(x, _mm_set1_ps(2));
     y = _mm_or_ps(_mm_and_ps(m2, p2), _mm_andnot_ps(m2, y));
