@@ -295,7 +295,7 @@ void Parser::processOpcode()
             bool stop = false;
 
             // consume space characters following
-            while (i < valueSize && isSpaceChar(valueRaw[endPosition + 1]))
+            while (i < valueSize && isSpaceChar(valueRaw[i]))
                 ++i;
 
             // if there aren't non-space characters following, do not extract
