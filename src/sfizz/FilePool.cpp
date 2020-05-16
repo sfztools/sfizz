@@ -43,7 +43,6 @@ void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t 
 {
     output.reset();
     output.resize(numFrames + sfz::config::excessFileFrames);
-    output.clear();
 
     if (reverse)
         sndFile.seek(-static_cast<sf_count_t>(numFrames), SEEK_END);
@@ -52,10 +51,12 @@ void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t 
 
     if (channels == 1) {
         output.addChannel();
+        output.clear();
         sndFile.readf(output.channelWriter(0), numFrames);
     } else if (channels == 2) {
         output.addChannel();
         output.addChannel();
+        output.clear();
         sfz::Buffer<T> tempReadBuffer { 2 * numFrames };
         sndFile.readf(tempReadBuffer.data(), numFrames);
         sfz::readInterleaved<T>(tempReadBuffer, output.getSpan(0).first(numFrames), output.getSpan(1).first(numFrames));
