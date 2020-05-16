@@ -163,7 +163,18 @@ void Parser::processDirective()
 
         std::string value;
         extractToEol(reader, &value);
+
+#if 1
+        // ARIA/not Cakewalk: cut the value after the first word
+        size_t position = value.find_first_of(" \t");
+        if (position != value.npos) {
+            absl::string_view excess(&value[position], value.size() - position);
+            reader.putBackChars(excess);
+            value.resize(position);
+        }
+#else
         trimRight(value);
+#endif
 
         addDefinition(id, value);
     }
@@ -274,36 +285,47 @@ void Parser::processOpcode()
     std::string valueRaw;
     extractToEol(reader, &valueRaw);
 
-    // if a "=" or "<" character was hit, it means we read too far
-    size_t position = valueRaw.find_first_of("=<");
-    if (position != valueRaw.npos) {
-        char hitChar = valueRaw[position];
+    size_t endPosition = 0;
 
-        // if it was "=", rewind before the opcode name and spaces preceding
-        if (hitChar == '=') {
-            while (position > 0 && isRawOpcodeNameChar(valueRaw[position - 1]))
-                --position;
-            while (position > 0 && isSpaceChar(valueRaw[position - 1]))
-                --position;
+    for (size_t valueSize = valueRaw.size(); endPosition < valueSize;) {
+        size_t i = endPosition + 1;
+
+        if (isSpaceChar(valueRaw[endPosition])) {
+            // check if the rest of the string is to consume or not
+            bool stop = false;
+
+            // consume space characters following
+            while (i < valueSize && isSpaceChar(valueRaw[i]))
+                ++i;
+
+            // if there aren't non-space characters following, do not extract
+            if (i == valueSize)
+                stop = true;
+            // if a "=" or "<" character is next, a header or a directive follows
+            else if (valueRaw[i] == '<' || valueRaw[i] == '#')
+                stop = true;
+            // if sequence of identifier chars and then "=", an opcode follows
+            else if (isIdentifierChar(valueRaw[i])) {
+                ++i;
+                while (i < valueSize && isIdentifierChar(valueRaw[i]))
+                    ++i;
+                if (i < valueSize && valueRaw[i] == '=')
+                    stop = true;
+            }
+
+            if (stop)
+                break;
         }
 
-        absl::string_view excess(&valueRaw[position], valueRaw.size() - position);
+        endPosition = i;
+    }
+
+    if (endPosition != valueRaw.size()) {
+        absl::string_view excess(&valueRaw[endPosition], valueRaw.size() - endPosition);
         reader.putBackChars(excess);
-        valueRaw.resize(position);
-
-        // ensure that we are landing back next to a space char
-        if (hitChar == '=' && !reader.hasOneOfChars(" \t\r\n")) {
-            SourceLocation end = reader.location();
-            emitError({ valueStart, end }, "Unexpected `=` in opcode value.");
-            recover();
-            return;
-        }
+        valueRaw.resize(endPosition);
     }
 
-    while (!valueRaw.empty() && isSpaceChar(valueRaw.back())) {
-        reader.putBackChar(valueRaw.back());
-        valueRaw.pop_back();
-    }
     SourceLocation valueEnd = reader.location();
 
     if (!_currentHeader)
@@ -444,34 +466,53 @@ size_t Parser::extractToEol(Reader& reader, std::string* dst)
 std::string Parser::expandDollarVars(const SourceRange& range, absl::string_view src)
 {
     std::string dst;
+    std::string srcbuf; // temporary for retries when recursive
+    std::string name; // temporary for variable name
+    bool keepExpanding = true;
+
     dst.reserve(2 * src.size());
+    name.reserve(64);
 
-    size_t i = 0;
-    size_t n = src.size();
-    while (i < n) {
-        char c = src[i++];
+    while (keepExpanding) {
+        size_t i = 0;
+        size_t n = src.size();
+        size_t numExpansions = 0;
+        while (i < n) {
+            char c = src[i++];
 
-        if (c != '$')
-            dst.push_back(c);
-        else {
-            std::string name;
-            name.reserve(64);
+            if (c != '$')
+                dst.push_back(c);
+            else {
+                ++numExpansions;
+                name.clear();
 
-            while (i < n && isIdentifierChar(src[i]))
-                name.push_back(src[i++]);
+                // ARIA: we will accumulate any chars after $, until this is the
+                //       name of a known variable
+                auto def = _currentDefinitions.end();
+                while (i < n && isIdentifierChar(src[i]) && def == _currentDefinitions.end()) {
+                    name.push_back(src[i++]);
+                    def = _currentDefinitions.find(name);
+                }
 
-            if (name.empty()) {
-                emitWarning(range, "Expected variable name after $.");
-                continue;
+                if (name.empty()) {
+                    emitWarning(range, "Expected variable name after $.");
+                    continue;
+                }
+
+                if (def == _currentDefinitions.end()) {
+                    emitWarning(range, "The variable `" + name + "` is not defined.");
+                    continue;
+                }
+
+                dst.append(def->second);
             }
+        }
 
-            auto it = _currentDefinitions.find(name);
-            if (it == _currentDefinitions.end()) {
-                emitWarning(range, "The variable `" + name + "` is not defined.");
-                continue;
-            }
-
-            dst.append(it->second);
+        keepExpanding = numExpansions > 0;
+        if (keepExpanding) {
+            srcbuf = dst;
+            src = srcbuf;
+            dst.clear();
         }
     }
 

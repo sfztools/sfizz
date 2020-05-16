@@ -339,14 +339,22 @@ TEST_CASE("[Files] sw_default and playing with switches")
     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
 }
 
-
 TEST_CASE("[Files] wrong (overlapping) replacement for defines")
 {
     sfz::Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/wrong-replacements.sfz");
+
     REQUIRE( synth.getNumRegions() == 3 );
+
+#if 0
+    // Note: test checked to be wrong under Sforzando 1.961
+    //       It is the shorter matching $-variable which matches among both.
+    //       The rest of the variable name creates some trailing junk text
+    //       which Sforzando accepts without warning. (eg. `key=52Edge`)
     REQUIRE( synth.getRegionView(0)->keyRange.getStart() == 52 );
     REQUIRE( synth.getRegionView(0)->keyRange.getEnd() == 52 );
+#endif
+
     REQUIRE( synth.getRegionView(1)->keyRange.getStart() == 57 );
     REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
     REQUIRE(!synth.getRegionView(2)->amplitudeCC.empty());
