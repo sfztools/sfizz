@@ -79,7 +79,8 @@ std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32
     if (factor == sfz::Oversampling::x1)
         return baseBuffer;
 
-    auto outputBuffer = absl::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor));
+    auto outputBuffer = absl::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor) + sfz::config::excessFileFrames);
+    outputBuffer->clear();
     sfz::Oversampler oversampler { factor };
     oversampler.stream(*baseBuffer, *outputBuffer);
     return outputBuffer;
