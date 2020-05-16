@@ -11,6 +11,7 @@
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
+#include "Interpolators.h"
 #include "absl/algorithm/container.h"
 
 sfz::Voice::Voice(sfz::Resources& resources)
@@ -511,15 +512,15 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto left = buffer.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices->end()) {
-            *left = bspline3Interpolation(&leftSource[*ind], *coeff);
+            *left = interpolate<kInterpolatorBspline3>(&leftSource[*ind], *coeff);
             incrementAll(ind, left, coeff);
         }
     } else {
         auto right = buffer.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices->end()) {
-            *left = bspline3Interpolation(&leftSource[*ind], *coeff);
-            *right = bspline3Interpolation(&rightSource[*ind], *coeff);
+            *left = interpolate<kInterpolatorBspline3>(&leftSource[*ind], *coeff);
+            *right = interpolate<kInterpolatorBspline3>(&rightSource[*ind], *coeff);
             incrementAll(ind, left, right, coeff);
         }
     }

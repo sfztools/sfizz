@@ -159,12 +159,6 @@ inline CXX14_CONSTEXPR void incrementAll(T& first, Args&... rest)
     incrementAll<Increment>(rest...);
 }
 
-template <class ValueType>
-constexpr ValueType linearInterpolation(const ValueType values[2], ValueType coeff)
-{
-    return values[0] * (static_cast<ValueType>(1.0) - coeff) + values[1] * coeff;
-}
-
 /**
  * @brief Compute the 3rd-order Hermite interpolation polynomial.
  *
@@ -211,39 +205,6 @@ inline __m128 hermite3x4(__m128 x)
 }
 #endif
 
-template <class ValueType>
-ValueType hermite3Interpolation(const ValueType values[4], ValueType coeff);
-
-#if SFIZZ_HAVE_SSE
-template <>
-inline float hermite3Interpolation<float>(const float values[4], float coeff)
-{
-    __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
-    __m128 h = hermite3x4(x);
-    __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values));
-    // sum 4 to 1
-    __m128 xmm0 = y;
-    __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
-    __m128 xmm2 = _mm_movehl_ps(xmm0, xmm0);
-    xmm1 = _mm_add_ss(xmm1, xmm0);
-    xmm0 = _mm_shuffle_ps(xmm0, xmm0, 0xe7);
-    xmm2 = _mm_add_ss(xmm2, xmm1);
-    xmm0 = _mm_add_ss(xmm0, xmm2);
-    return _mm_cvtss_f32(xmm0);
-}
-#endif
-
-template <class ValueType>
-ValueType hermite3Interpolation(const ValueType values[4], ValueType coeff)
-{
-    ValueType y = 0;
-    for (int i = 0; i < 4; ++i) {
-        ValueType h = hermite3<ValueType>(i - 1 - coeff);
-        y += h * values[i];
-    }
-    return y;
-}
-
 /**
  * @brief Compute the 3rd-order B-spline interpolation polynomial.
  *
@@ -287,39 +248,6 @@ inline __m128 bspline3x4(__m128 x)
     return y;
 }
 #endif
-
-template <class ValueType>
-ValueType bspline3Interpolation(const ValueType values[4], ValueType coeff);
-
-#if SFIZZ_HAVE_SSE
-template <>
-inline float bspline3Interpolation<float>(const float values[4], float coeff)
-{
-    __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
-    __m128 h = bspline3x4(x);
-    __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values));
-    // sum 4 to 1
-    __m128 xmm0 = y;
-    __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
-    __m128 xmm2 = _mm_movehl_ps(xmm0, xmm0);
-    xmm1 = _mm_add_ss(xmm1, xmm0);
-    xmm0 = _mm_shuffle_ps(xmm0, xmm0, 0xe7);
-    xmm2 = _mm_add_ss(xmm2, xmm1);
-    xmm0 = _mm_add_ss(xmm0, xmm2);
-    return _mm_cvtss_f32(xmm0);
-}
-#endif
-
-template <class ValueType>
-ValueType bspline3Interpolation(const ValueType values[4], ValueType coeff)
-{
-    ValueType y = 0;
-    for (int i = 0; i < 4; ++i) {
-        ValueType h = bspline3<ValueType>(i - 1 - coeff);
-        y += h * values[i];
-    }
-    return y;
-}
 
 template <class Type>
 constexpr Type pi() { return static_cast<Type>(3.141592653589793238462643383279502884); };
