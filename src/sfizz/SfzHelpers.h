@@ -194,6 +194,16 @@ namespace literals {
 
         return normalize7Bits(value);
     }
+
+    inline float operator""_norm(long double value)
+    {
+        if (value < 0)
+            value = 0;
+        if (value > 127)
+            value = 127;
+
+        return normalize7Bits(value);
+    }
 }
 
 /**

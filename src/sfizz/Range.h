@@ -102,6 +102,20 @@ public:
             _start = value;
     }
 
+    /**
+     * @brief Convert the range to a different value type
+     *
+     * @return Range<Other>
+     */
+    template <class Other>
+    Range<Other> to() const noexcept
+    {
+        return Range<Other> {
+            static_cast<Other>(_start),
+            static_cast<Other>(_end),
+        };
+    }
+
 private:
     Type _start { static_cast<Type>(0.0) };
     Type _end { static_cast<Type>(0.0) };
