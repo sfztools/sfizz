@@ -324,14 +324,14 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("start_lohdcc&"): // also on_lohdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range.to<float>()))
-            ccTriggers[opcode.parameters.back()].setStart(normalizeCC(*value));
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+            ccTriggers[opcode.parameters.back()].setStart(*value);
         break;
     case hash("start_hihdcc&"): // also on_hihdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range.to<float>()))
-            ccTriggers[opcode.parameters.back()].setEnd(normalizeCC(*value));
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+            ccTriggers[opcode.parameters.back()].setEnd(*value);
         break;
 
     // Performance parameters: amplifier

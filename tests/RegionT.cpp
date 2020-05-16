@@ -501,14 +501,14 @@ TEST_CASE("[Region] Parsing opcodes")
         for (int ccIdx = 1; ccIdx < 128; ++ccIdx) {
             REQUIRE(!region.ccTriggers.contains(ccIdx));
         }
-        region.parseOpcode({ "on_lohdcc46", "15.9" });
+        region.parseOpcode({ "on_lohdcc46", "0.15" });
         REQUIRE(region.ccTriggers.contains(46));
-        REQUIRE(region.ccTriggers[46].getStart() == Approx(15.9_norm));
+        REQUIRE(region.ccTriggers[46].getStart() == Approx(0.15f));
         REQUIRE(region.ccTriggers[46].getEnd() == 1.0f);
-        region.parseOpcode({ "on_hihdcc5", "47.3" });
+        region.parseOpcode({ "on_hihdcc5", "0.47" });
         REQUIRE(region.ccTriggers.contains(5));
         REQUIRE(region.ccTriggers[5].getStart() == 0.0f);
-        REQUIRE(region.ccTriggers[5].getEnd() == Approx(47.3_norm));
+        REQUIRE(region.ccTriggers[5].getEnd() == Approx(0.47f));
     }
 
     SECTION("volume")
