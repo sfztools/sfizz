@@ -506,23 +506,25 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     }
 
-    auto ind = indices->data();
-    auto coeff = coeffs->data();
-    auto leftSource = source.getConstSpan(0);
-    auto left = buffer.getChannel(0);
-    if (source.getNumChannels() == 1) {
-        while (ind < indices->end()) {
-            *left = interpolate<kInterpolatorBspline3>(&leftSource[*ind], *coeff);
-            incrementAll(ind, left, coeff);
-        }
-    } else {
-        auto right = buffer.getChannel(1);
-        auto rightSource = source.getConstSpan(1);
-        while (ind < indices->end()) {
-            *left = interpolate<kInterpolatorBspline3>(&leftSource[*ind], *coeff);
-            *right = interpolate<kInterpolatorBspline3>(&rightSource[*ind], *coeff);
-            incrementAll(ind, left, right, coeff);
-        }
+    const int quality = region->sampleQuality;
+
+    switch (quality) {
+    default:
+        if (quality > 2)
+            goto high; // TODO sinc, not implemented
+        // fall through
+    case 1:
+        fillInterpolated<kInterpolatorLinear>(source, buffer, *indices, *coeffs);
+        break;
+    case 2: high:
+#if 1
+        // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
+        fillInterpolated<kInterpolatorBspline3>(source, buffer, *indices, *coeffs);
+#else
+        // Hermite polynomial
+        fillInterpolated<kInterpolatorHermite3>(source, buffer, *indices, *coeffs);
+#endif
+        break;
     }
 
     sourcePosition = indices->back();
@@ -534,6 +536,31 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     CHECK(isReasonableAudio(buffer.getConstSpan(0)));
     CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
+}
+
+template <sfz::InterpolatorModel M>
+void sfz::Voice::fillInterpolated(
+    const sfz::AudioSpan<const float>& source, sfz::AudioSpan<float>& dest,
+    absl::Span<const int> indices, absl::Span<const float> coeffs)
+{
+    auto ind = indices.data();
+    auto coeff = coeffs.data();
+    auto leftSource = source.getConstSpan(0);
+    auto left = dest.getChannel(0);
+    if (source.getNumChannels() == 1) {
+        while (ind < indices.end()) {
+            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            incrementAll(ind, left, coeff);
+        }
+    } else {
+        auto right = dest.getChannel(1);
+        auto rightSource = source.getConstSpan(1);
+        while (ind < indices.end()) {
+            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            *right = sfz::interpolate<M>(&rightSource[*ind], *coeff);
+            incrementAll(ind, left, right, coeff);
+        }
+    }
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept

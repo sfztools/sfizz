@@ -221,6 +221,9 @@ namespace Default
 	constexpr Range<float> egOnCCPercentRange { -100.0, 100.0 };
 
     // ***** SFZ v2 ********
+    constexpr int sampleQuality { 2 };
+    constexpr Range<int> sampleQualityRange { 1, 10 }; // sample_quality
+
 	constexpr bool checkSustain { true }; // sustain_sw
 	constexpr bool checkSostenuto { true }; // sostenuto_sw
     constexpr Range<int> octaveOffsetRange { -10, 10 }; // octave_offset

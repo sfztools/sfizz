@@ -246,7 +246,7 @@ public:
      * @param channelIndex the channel
      * @return absl::Span<const Type>
      */
-    absl::Span<const Type> getConstSpan(size_t channelIndex)
+    absl::Span<const Type> getConstSpan(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -382,7 +382,7 @@ public:
      *
      * @returns size_type the number of frames in the AudioSpan
      */
-    size_type getNumFrames()
+    size_type getNumFrames() const
     {
         return numFrames;
     }
@@ -392,7 +392,7 @@ public:
      *
      * @returns size_type the number of channels in the AudioSpan
      */
-    size_t getNumChannels()
+    size_t getNumChannels() const
     {
         return numChannels;
     }

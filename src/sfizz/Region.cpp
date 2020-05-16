@@ -60,6 +60,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             sampleId = FileId(std::move(filename), sampleId.isReverse());
         }
         break;
+    case hash("sample_quality"):
+        {
+            setValueFromOpcode(opcode, sampleQuality, Default::sampleQualityRange);
+            break;
+        }
+        break;
     case hash("direction"):
         sampleId = sampleId.reversed(opcode.value == "reverse");
         break;
