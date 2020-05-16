@@ -25,15 +25,15 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     parameters.addParameter(
         kParamNumVoicesRange.createParameter(
             Steinberg::String("Polyphony"), pid++, nullptr,
-            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
         kParamOversamplingRange.createParameter(
             Steinberg::String("Oversampling"), pid++, nullptr,
-            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
         kParamPreloadSizeRange.createParameter(
             Steinberg::String("Preload size"), pid++, nullptr,
-            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
 
     // MIDI special controllers
     parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
@@ -47,7 +47,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         shortTitle.printf("CC%u", i);
 
         parameters.addParameter(
-            title, nullptr, 0, 0, Vst::ParameterInfo::kCanAutomate,
+            title, nullptr, 0, 0, Vst::ParameterInfo::kNoFlags,
             pid++, Vst::kRootUnitId, shortTitle);
     }
 
