@@ -8,6 +8,7 @@
 #include "Opcode.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/ascii.h"
 #include <string>
 
 namespace sfz {
@@ -15,6 +16,9 @@ namespace sfz {
 static std::string cleanUpOpcodeName(absl::string_view rawOpcode, OpcodeScope scope)
 {
     std::string opcode { rawOpcode };
+
+    // always convert it to lower case
+    absl::AsciiStrToLower(&opcode);
 
     /*!re2c
     re2c:flags:posix-captures = 1;
@@ -45,23 +49,27 @@ static std::string cleanUpOpcodeName(absl::string_view rawOpcode, OpcodeScope sc
 
     //--------------------------------------------------------------------------
 
+    if (scope == kOpcodeScopeRegion) {
+
     YYCURSOR = opcode.c_str();
 
     /*!re2c
 
     (any) "_cc" (number) END {
         opcode = absl::StrCat(group(1), "_oncc", group(2));
-        goto end_generic;
+        goto end_region_oncc;
     }
 
     * {
-        goto end_generic;
+        goto end_region_oncc;
     }
 
     */
 
-end_generic:
+end_region_oncc:
     /* end */;
+
+    } // scope == kOpcodeScopeRegion
 
     //--------------------------------------------------------------------------
 
@@ -132,6 +140,10 @@ end_generic:
         opcode = absl::StrCat("start_", group(1), "cc", group(2));
         goto end_region;
     }
+    "on_" ("hi"|"lo") "hdcc" (number) END {
+        opcode = absl::StrCat("start_", group(1), "hdcc", group(2));
+        goto end_region;
+    }
 
     "fil_" (any) END {
         opcode = absl::StrCat("fil1_", group(1));
@@ -143,6 +155,11 @@ end_generic:
     }
     "resonance" ("_" any)? END {
         opcode = absl::StrCat("resonance1", group(1));
+        goto end_region;
+    }
+
+    ("hi"|"lo") "realcc" (number) END {
+        opcode = absl::StrCat(group(1), "hdcc", group(2));
         goto end_region;
     }
 
@@ -158,6 +175,31 @@ end_region:
     } // scope == kOpcodeScopeRegion
 
     //--------------------------------------------------------------------------
+
+    if (scope == kOpcodeScopeControl) {
+
+    YYCURSOR = opcode.c_str();
+
+    /*!re2c
+
+    "set_realcc" (number) END {
+        opcode = absl::StrCat("set_hdcc", group(1));
+        goto end_control;
+    }
+
+    * {
+        goto end_control;
+    }
+
+    */
+
+end_control:
+    /* end */;
+
+    } // scope == kOpcodeScopeControl
+
+    //--------------------------------------------------------------------------
+
 
     #undef YYMAXNMATCH
 

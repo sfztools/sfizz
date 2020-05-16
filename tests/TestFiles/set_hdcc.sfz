@@ -1,0 +1,3 @@
+<control> set_hdcc61=0.1234
+<control> set_hdcc142=0.5678
+<region> sample=snare.wav

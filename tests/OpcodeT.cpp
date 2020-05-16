@@ -161,8 +161,12 @@ TEST_CASE("[Opcode] Derived names")
 
 TEST_CASE("[Opcode] Normalization")
 {
-    REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == "foo_oncc7");
+    // *_ccN
+
     REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "foo_oncc7");
+    REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeControl).opcode == "foo_cc7");
+
+    // <region>
 
     static const std::pair<absl::string_view, absl::string_view> regionSpecific[] = {
         // LFO SFZv1
@@ -202,6 +206,10 @@ TEST_CASE("[Opcode] Normalization")
         {"gain_foobar", "volume_foobar"},
         {"tune", "pitch"},
         {"tune_foobar", "pitch_foobar"},
+        {"lorealcc24", "lohdcc24"},
+        {"hirealcc25", "hihdcc25"},
+        {"on_lohdcc26", "start_lohdcc26"},
+        {"on_hihdcc27", "start_hihdcc27"},
         // SFZv2 aliases
         {"on_hicc22", "start_hicc22"},
         {"on_locc23", "start_locc23"},
@@ -219,4 +227,22 @@ TEST_CASE("[Opcode] Normalization")
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeRegion).opcode == expected);
         REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
     }
+
+    // <control>
+
+    static const std::pair<absl::string_view, absl::string_view> controlSpecific[] = {
+        // ARIA aliases
+        {"set_realcc1", "set_hdcc1"},
+    };
+
+    for (auto pair : controlSpecific) {
+        absl::string_view input = pair.first;
+        absl::string_view expected = pair.second;
+        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeControl).opcode == expected);
+        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
+    }
+
+    // case
+
+    REQUIRE(sfz::Opcode("SaMpLe", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "sample");
 }

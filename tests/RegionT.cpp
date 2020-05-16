@@ -278,6 +278,34 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.ccConditions[127] == sfz::Range<float>(0_norm, 127_norm));
     }
 
+    SECTION("lohdcc, hihdcc")
+    {
+        region.parseOpcode({ "lohdcc7", "0.12" });
+        REQUIRE(region.ccConditions[7].getStart() == Approx(0.12f));
+        REQUIRE(region.ccConditions[7].getEnd() == 1.0f);
+        region.parseOpcode({ "lohdcc13", "-1.0" });
+        REQUIRE(region.ccConditions[13] == sfz::Range<float>(0.0f, 1.0f));
+        region.parseOpcode({ "hihdcc64", "0.45" });
+        REQUIRE(region.ccConditions[64].getStart() == 0.0f);
+        REQUIRE(region.ccConditions[64].getEnd() == Approx(0.45f));
+        region.parseOpcode({ "hihdcc126", "1.2" });
+        REQUIRE(region.ccConditions[126] == sfz::Range<float>(0.0f, 1.0f));
+    }
+
+    SECTION("lorealcc, hirealcc")
+    {
+        region.parseOpcode({ "lorealcc8", "0.12" });
+        REQUIRE(region.ccConditions[8].getStart() == Approx(0.12f));
+        REQUIRE(region.ccConditions[8].getEnd() == 1.0f);
+        region.parseOpcode({ "lorealcc14", "-1.0" });
+        REQUIRE(region.ccConditions[14] == sfz::Range<float>(0.0f, 1.0f));
+        region.parseOpcode({ "hirealcc63", "0.45" });
+        REQUIRE(region.ccConditions[63].getStart() == 0.0f);
+        REQUIRE(region.ccConditions[63].getEnd() == Approx(0.45f));
+        region.parseOpcode({ "hirealcc125", "1.2" });
+        REQUIRE(region.ccConditions[125] == sfz::Range<float>(0.0f, 1.0f));
+    }
+
     SECTION("sw_lokey, sw_hikey")
     {
         REQUIRE(region.keyswitchRange == sfz::Range<uint8_t>(0, 127));
@@ -466,6 +494,21 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "on_hicc4", "47" });
         REQUIRE(region.ccTriggers.contains(45));
         REQUIRE(region.ccTriggers[4] == sfz::Range<float>(0_norm, 47_norm));
+    }
+
+    SECTION("on_lohdcc, on_hihdcc")
+    {
+        for (int ccIdx = 1; ccIdx < 128; ++ccIdx) {
+            REQUIRE(!region.ccTriggers.contains(ccIdx));
+        }
+        region.parseOpcode({ "on_lohdcc46", "15.9" });
+        REQUIRE(region.ccTriggers.contains(46));
+        REQUIRE(region.ccTriggers[46].getStart() == Approx(15.9_norm));
+        REQUIRE(region.ccTriggers[46].getEnd() == 1.0f);
+        region.parseOpcode({ "on_hihdcc5", "47.3" });
+        REQUIRE(region.ccTriggers.contains(5));
+        REQUIRE(region.ccTriggers[5].getStart() == 0.0f);
+        REQUIRE(region.ccTriggers[5].getEnd() == Approx(47.3_norm));
     }
 
     SECTION("volume")

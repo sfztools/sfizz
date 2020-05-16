@@ -408,6 +408,24 @@ TEST_CASE("[Files] Set CC applies properly")
     REQUIRE(midiState.getCCValue(61) == 122_norm);
 }
 
+TEST_CASE("[Files] Set HDCC applies properly")
+{
+    sfz::Synth synth;
+    const auto& midiState = synth.getResources().midiState;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_hdcc.sfz");
+    REQUIRE(midiState.getCCValue(142) == Approx(0.5678));
+    REQUIRE(midiState.getCCValue(61) == Approx(0.1234));
+}
+
+TEST_CASE("[Files] Set RealCC applies properly")
+{
+    sfz::Synth synth;
+    const auto& midiState = synth.getResources().midiState;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_realcc.sfz");
+    REQUIRE(midiState.getCCValue(142) == Approx(0.5678));
+    REQUIRE(midiState.getCCValue(61) == Approx(0.1234));
+}
+
 TEST_CASE("[Files] Note and octave offsets")
 {
     sfz::Synth synth;

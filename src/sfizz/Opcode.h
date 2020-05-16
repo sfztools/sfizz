@@ -42,6 +42,12 @@ enum OpcodeCategory {
 enum OpcodeScope {
     //! unknown scope or other
     kOpcodeScopeGeneric,
+    //! global scope
+    kOpcodeScopeGlobal,
+    //! control scope
+    kOpcodeScopeControl,
+    //! group scope
+    kOpcodeScopeGroup,
     //! region scope
     kOpcodeScopeRegion,
     //! effect scope
