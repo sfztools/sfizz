@@ -14,8 +14,8 @@
 #include "Interpolators.h"
 #include "absl/algorithm/container.h"
 
-sfz::Voice::Voice(sfz::Resources& resources)
-: resources(resources)
+sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
+: voiceNumber(voiceNumber), resources(resources)
 {
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);

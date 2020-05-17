@@ -13,7 +13,7 @@ using namespace sfz::literals;
 TEST_CASE("Basic triggers", "Region triggers")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
 
     region.parseOpcode({ "sample", "*sine" });
     SECTION("key")
@@ -130,7 +130,7 @@ TEST_CASE("Basic triggers", "Region triggers")
 TEST_CASE("Legato triggers", "Region triggers")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     SECTION("First note playing")
     {
