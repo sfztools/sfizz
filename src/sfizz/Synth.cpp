@@ -1076,10 +1076,14 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
 void sfz::Synth::resetVoices(int numVoices)
 {
     voices.clear();
+    voices.reserve(numVoices);
+
     for (int i = 0; i < numVoices; ++i)
         voices.push_back(absl::make_unique<Voice>(resources));
 
     voiceViewArray.clear();
+    voiceViewArray.reserve(numVoices);
+
     for (auto& voice : voices) {
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
