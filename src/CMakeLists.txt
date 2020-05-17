@@ -7,6 +7,7 @@ set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FileId.cpp
     sfizz/FilePool.cpp
+    sfizz/FileInstrument.cpp
     sfizz/FilterPool.cpp
     sfizz/EQPool.cpp
     sfizz/Region.cpp

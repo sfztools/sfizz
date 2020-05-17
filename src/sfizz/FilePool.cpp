@@ -24,6 +24,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FilePool.h"
+#include "FileInstrument.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "Config.h"
@@ -217,9 +218,15 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     returnedValue.sampleRate = static_cast<double>(sndFile.samplerate());
     returnedValue.numChannels = sndFile.channels();
 
-    if (!fileId.isReverse()) {
-        SF_INSTRUMENT instrumentInfo;
+    SF_INSTRUMENT instrumentInfo {};
+
+    const int sndFormat = sndFile.format();
+    if ((sndFormat & SF_FORMAT_TYPEMASK) == SF_FORMAT_FLAC)
+        sfz::FileInstruments::extractFromFlac(file, instrumentInfo);
+    else
         sndFile.command(SFC_GET_INSTRUMENT, &instrumentInfo, sizeof(instrumentInfo));
+
+    if (!fileId.isReverse()) {
         if (instrumentInfo.loop_count > 0) {
             returnedValue.loopBegin = instrumentInfo.loops[0].start;
             returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
