@@ -237,6 +237,15 @@ public:
      */
     void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
     /**
+     * @brief Send a high precision CC event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock().
+     * @param ccNumber the cc number
+     * @param normValue the normalized cc value, in domain 0 to 1
+     */
+    void hdcc(int delay, int ccNumber, float normValue) noexcept;
+    /**
      * @brief Send a pitch bend event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower

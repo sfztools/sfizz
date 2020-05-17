@@ -192,6 +192,19 @@ SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int
 SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value);
 
 /**
+ * @brief      Send a high precision CC event to the synth. As with all MIDI
+ *             events, this needs to happen before the call to
+ *             sfizz_render_block in each block and should appear in order of
+ *             the delays.
+ *
+ * @param      synth      The synth.
+ * @param      delay      The delay of the event in the block, in samples.
+ * @param      cc_number  The MIDI CC number.
+ * @param      norm_value  The normalized CC value, in domain 0 to 1.
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value);
+
+/**
  * @brief      Send a pitch wheel event. As with all MIDI events, this needs
  *             to happen before the call to sfizz_render_block in each block and
  *             should appear in order of the delays.

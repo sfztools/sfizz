@@ -845,12 +845,17 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
 void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
+    const auto normalizedCC = normalizeCC(ccValue);
+    hdcc(delay, ccNumber, normalizedCC);
+}
+
+void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
+{
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
-    const auto normalizedCC = normalizeCC(ccValue);
 
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.ccEvent(delay, ccNumber, normalizedCC);
+    resources.midiState.ccEvent(delay, ccNumber, normValue);
 
     const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
@@ -862,15 +867,15 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     }
 
     for (auto& voice : voices)
-        voice->registerCC(delay, ccNumber, normalizedCC);
+        voice->registerCC(delay, ccNumber, normValue);
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCC(ccNumber, normalizedCC)) {
+        if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, ccNumber, normalizedCC, Voice::TriggerType::CC);
+            voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
         }
     }
 }
