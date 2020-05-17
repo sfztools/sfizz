@@ -14,7 +14,7 @@ using namespace sfz::literals;
 TEST_CASE("[Region] Parsing opcodes")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
 
     SECTION("sample")
     {
@@ -1669,7 +1669,7 @@ TEST_CASE("[Region] Parsing opcodes")
 TEST_CASE("[Region] Non-conforming floating point values in integer opcodes")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
     region.parseOpcode({ "offset", "2014.5" });
     REQUIRE(region.offset == 2014);
     region.parseOpcode({ "pitch_keytrack", "-2.1" });

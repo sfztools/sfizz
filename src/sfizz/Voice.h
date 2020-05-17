@@ -31,14 +31,22 @@ public:
     /**
      * @brief Construct a new voice with the midistate singleton
      *
+     * @param voiceNumber
      * @param midiState
      */
-    Voice(Resources& resources);
+    Voice(int voiceNumber, Resources& resources);
     enum class TriggerType {
         NoteOn,
         NoteOff,
         CC
     };
+    /**
+     * @brief Get the number which identifies this voice, its index
+     */
+    int getIdNumber() const noexcept
+    {
+        return voiceNumber;
+    }
     /**
      * @brief Change the sample rate of the voice. This is used to compute all
      * pitch related transformations so it needs to be propagated from the synth
@@ -254,6 +262,8 @@ private:
      */
     void setupOscillatorUnison();
     void updateChannelPowers(AudioSpan<float> buffer);
+
+    const int voiceNumber {};
 
     Region* region { nullptr };
 

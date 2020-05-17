@@ -95,7 +95,8 @@ void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& mes
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = absl::make_unique<Region>(resources.midiState, defaultPath);
+    int regionNumber = static_cast<int>(regions.size());
+    auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
 
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
@@ -1079,7 +1080,7 @@ void sfz::Synth::resetVoices(int numVoices)
     voices.reserve(numVoices);
 
     for (int i = 0; i < numVoices; ++i)
-        voices.push_back(absl::make_unique<Voice>(resources));
+        voices.push_back(absl::make_unique<Voice>(i, resources));
 
     voiceViewArray.clear();
     voiceViewArray.reserve(numVoices);
