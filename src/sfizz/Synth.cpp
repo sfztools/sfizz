@@ -44,6 +44,13 @@ sfz::Synth::~Synth()
     resources.filePool.emptyFileLoadingQueues();
 }
 
+void sfz::Synth::onVoiceStateChanged(int idNumber, Voice::State state)
+{
+    (void)idNumber;
+    (void)state;
+    DBG("Voice " << idNumber << ": state " << static_cast<int>(state));
+}
+
 void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
     switch (hash(header)) {
@@ -1094,8 +1101,11 @@ void sfz::Synth::resetVoices(int numVoices)
     voices.clear();
     voices.reserve(numVoices);
 
-    for (int i = 0; i < numVoices; ++i)
-        voices.push_back(absl::make_unique<Voice>(i, resources));
+    for (int i = 0; i < numVoices; ++i) {
+        auto voice = absl::make_unique<Voice>(i, resources);
+        voice->setStateListener(this);
+        voices.emplace_back(std::move(voice));
+    }
 
     voiceViewArray.clear();
     voiceViewArray.reserve(numVoices);

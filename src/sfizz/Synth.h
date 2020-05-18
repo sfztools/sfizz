@@ -60,7 +60,7 @@ namespace sfz {
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.
  */
-class Synth final : public Parser::Listener {
+class Synth final : public Voice::StateListener, public Parser::Listener {
 public:
     /**
      * @brief Construct a new Synth object with no voices. If you want sound
@@ -492,6 +492,12 @@ public:
      * @return const std::vector<NoteNamePair>&
      */
     const std::vector<CCNamePair>& getCCLabels() const noexcept { return ccLabels; }
+
+protected:
+    /**
+     * @brief The voice callback which is called during a change of state.
+     */
+    void onVoiceStateChanged(int idNumber, Voice::State state) override;
 
 protected:
     /**

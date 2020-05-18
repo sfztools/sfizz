@@ -48,6 +48,22 @@ public:
     {
         return voiceNumber;
     }
+
+    enum class State {
+        idle,
+        playing
+    };
+
+    class StateListener {
+    public:
+        virtual void onVoiceStateChanged(int /*idNumber*/, State /*state*/) {}
+    };
+
+    /**
+     * @brief Sets the listener which is called when the voice state changes.
+     */
+    void setStateListener(StateListener *l) noexcept { stateListener = l; }
+
     /**
      * @brief Change the sample rate of the voice. This is used to compute all
      * pitch related transformations so it needs to be propagated from the synth
@@ -278,14 +294,16 @@ private:
     void setupOscillatorUnison();
     void updateChannelPowers(AudioSpan<float> buffer);
 
+    /**
+     * @brief Modify the voice state and notify any listeners.
+     */
+    void switchState(State s);
+
     const int voiceNumber {};
+    StateListener* stateListener = nullptr;
 
     Region* region { nullptr };
 
-    enum class State {
-        idle,
-        playing
-    };
     State state { State::idle };
     bool noteIsOff { false };
 
