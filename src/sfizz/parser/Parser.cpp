@@ -184,8 +184,13 @@ void Parser::processDirective()
         std::string path;
         bool valid = false;
 
+        SourceLocation valueStart;
+        SourceLocation valueEnd;
+
         if (reader.extractExactChar('"')) {
+            valueStart = reader.location();
             reader.extractWhile(&path, [](char c) { return c != '"' && c != '\r' && c != '\n'; });
+            valueEnd = reader.location();
             valid = reader.extractExactChar('"');
         }
 
@@ -196,6 +201,8 @@ void Parser::processDirective()
             recover();
             return;
         }
+
+        path = expandDollarVars({ valueStart, valueEnd }, path);
 
         std::replace(path.begin(), path.end(), '\\', '/');
         includeNewFile(path, nullptr, { start, end });
