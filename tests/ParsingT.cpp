@@ -716,3 +716,32 @@ R"(<region>  sample=foo  bar  baz  .wav   key=69  )");
         REQUIRE(mock.fullBlockHeaders == expectedHeaders);
         REQUIRE(mock.fullBlockMembers == expectedMembers);
 }
+
+TEST_CASE("[Parsing] Expanded value of #include")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseFile(fs::current_path() / "tests/TestFiles/dollar_include_main.sfz");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"sample", "*sine"}},
+        };
+        std::vector<std::string> expectedHeaders = {
+            "region"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
