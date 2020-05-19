@@ -13,6 +13,7 @@ set (PROJECT_DESCRIPTION "A library to load SFZ description files and use them t
 
 # External configuration CMake scripts
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include (BuildType)
 include (SfizzConfig)
 
 # Build Options
