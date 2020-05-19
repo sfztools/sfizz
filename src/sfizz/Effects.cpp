@@ -105,7 +105,7 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         absl::Span<const float> addIn { addInput[c], nframes };
-        sfz::multiplyAdd(addGain, addIn, _inputs.getSpan(c));
+        sfz::multiplyAdd(addGain, addIn, _inputs.getSpan(c).first(nframes));
     }
 }
 
@@ -116,7 +116,7 @@ void EffectBus::applyGain(const float* gain, unsigned nframes)
 
     absl::Span<const float> gainSpan { gain, nframes };
     for (unsigned c = 0; c < EffectChannels; ++c) {
-        sfz::applyGain<float>(gainSpan, _inputs.getSpan(c));
+        sfz::applyGain<float>(gainSpan, _inputs.getSpan(c).first(nframes));
     }
 }
 
@@ -153,7 +153,7 @@ void EffectBus::mixOutputsTo(float* const mainOutput[], float* const mixOutput[]
     const float gainToMix = _gainToMix;
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
-        auto fxOut = _outputs.getConstSpan(c);
+        auto fxOut = _outputs.getConstSpan(c).first(nframes);
         sfz::multiplyAdd(gainToMain, fxOut, absl::Span<float>(mainOutput[c], nframes));
         sfz::multiplyAdd(gainToMix, fxOut, absl::Span<float>(mixOutput[c], nframes));
     }
