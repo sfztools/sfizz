@@ -13,7 +13,7 @@
 
 using namespace VSTGUI;
 
-static ViewRect sfizzUiViewRect {0, 0, 684, 684};
+static ViewRect sfizzUiViewRect {0, 0, 482, 225};
 
 SfizzVstEditor::SfizzVstEditor(void *controller)
     : VSTGUIEditor(controller, &sfizzUiViewRect),
@@ -203,8 +203,7 @@ void SfizzVstEditor::loadSfzFile(const std::string& filePath)
     ctl->sendMessage(msg);
     msg->release();
 
-    if (_fileLabel)
-        _fileLabel->setText(("File: " + filePath).c_str());
+    updateFileLabel(filePath);
 }
 
 void SfizzVstEditor::createFrameContents()
@@ -259,8 +258,8 @@ void SfizzVstEditor::createFrameContents()
         panel->addView(topLeftLabel);
 
         CRect row = topRow;
-        row.top += 200.0;
-        row.bottom += 200.0;
+        row.top += 45.0;
+        row.bottom += 45.0;
         row.left += 100.0;
         row.right -= 100.0;
 
@@ -363,13 +362,13 @@ void SfizzVstEditor::createFrameContents()
 
         for (unsigned i = 0; i < kNumPanels; ++i) {
             CRect btnRect = topRow;
-            btnRect.left = topRow.right - (kNumPanels - i) * 20;
-            btnRect.right = btnRect.left + 20;
+            btnRect.left = topRow.right - (kNumPanels - i) * 50;
+            btnRect.right = btnRect.left + 50;
 
             const char *text;
             switch (i) {
-            case kPanelGeneral: text = "G"; break;
-            case kPanelSettings: text = "S"; break;
+            case kPanelGeneral: text = "File"; break;
+            case kPanelSettings: text = "Setup"; break;
             default: text = "?"; break;
             }
 
@@ -392,8 +391,7 @@ void SfizzVstEditor::updateStateDisplay()
     const SfizzVstState& state = controller->getSfizzState();
     const SfizzUiState& uiState = controller->getSfizzUiState();
 
-    if (_fileLabel)
-        _fileLabel->setText(("File: " + state.sfzFile).c_str());
+    updateFileLabel(state.sfzFile);
     if (_volumeSlider)
         _volumeSlider->setValue(state.volume);
     if (_numVoicesSlider)
@@ -404,6 +402,25 @@ void SfizzVstEditor::updateStateDisplay()
         _preloadSizeSlider->setValue(state.preloadSize);
 
     setActivePanel(uiState.activePanel);
+}
+
+void SfizzVstEditor::updateFileLabel(const std::string& filePath)
+{
+    if (_fileLabel) {
+        std::string fileName;
+        if (filePath.empty())
+            fileName = "<No file>";
+        else {
+#if defined (_WIN32)
+            size_t pos = filePath.find_last_of("/\\");
+#else
+            size_t pos = filePath.rfind('/');
+#endif
+            fileName = (pos != filePath.npos) ?
+                filePath.substr(pos + 1) : filePath;
+        }
+        _fileLabel->setText(fileName.c_str());
+    }
 }
 
 void SfizzVstEditor::setActivePanel(unsigned panelId)

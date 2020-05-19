@@ -45,6 +45,7 @@ private:
 
     void createFrameContents();
     void updateStateDisplay();
+    void updateFileLabel(const std::string& filePath);
     void setActivePanel(unsigned panelId);
 
     template <class Control>
