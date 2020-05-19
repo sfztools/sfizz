@@ -99,6 +99,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/SIMDNEON.cpp \
 	src/sfizz/SIMDSSE.cpp \
 	src/sfizz/Synth.cpp \
+	src/sfizz/Tuning.cpp \
 	src/sfizz/Voice.cpp \
 	src/sfizz/Wavetables.cpp
 

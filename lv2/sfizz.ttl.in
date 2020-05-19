@@ -27,11 +27,25 @@ midnam:update a lv2:Feature .
     "Configuration"@fr ,
     "Impostazioni"@it .
 
+<@LV2PLUGIN_URI@#tuning>
+  a pg:Group ;
+  lv2:symbol "tuning" ;
+  lv2:name "Tuning",
+    "Accordage"@fr .
+
 <@LV2PLUGIN_URI@:sfzfile>
   a lv2:Parameter ;
   rdfs:label "SFZ file",
     "Fichier SFZ"@fr ,
     "File SFZ"@it ;
+  rdfs:range atom:Path .
+
+<@LV2PLUGIN_URI@:scalafile>
+  a lv2:Parameter ;
+  pg:group <@LV2PLUGIN_URI@#tuning> ;
+  rdfs:label "Scala file",
+    "Fichier Scala"@fr ,
+    "File Scala"@it ;
   rdfs:range atom:Path .
 
 <@LV2PLUGIN_URI@>
@@ -62,6 +76,7 @@ midnam:update a lv2:Feature .
   opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ;
+  patch:writable <@LV2PLUGIN_URI@:scalafile> ;
 
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
@@ -242,4 +257,27 @@ midnam:update a lv2:Feature .
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 1 ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 9 ;
+    lv2:symbol "scala_root_key" ;
+    lv2:name "Scala root key",
+      "Tonalité de base Scala"@fr ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 60 ;
+    lv2:minimum 0 ;
+    lv2:maximum 127 ;
+    units:unit units:midiNote
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 10 ;
+    lv2:symbol "tuning_frequency" ;
+    lv2:name "Tuning frequency",
+      "Fréquence d'accordage"@fr ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 440.0 ;
+    lv2:minimum 300.0 ;
+    lv2:maximum 500.0 ;
+    units:unit units:hz
   ] .

@@ -141,7 +141,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getBasePitchVariation(int noteNumber, float velocity) const noexcept;
+    float getBasePitchVariation(float noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
