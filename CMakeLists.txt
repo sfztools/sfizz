@@ -37,6 +37,7 @@ option (SFIZZ_DEVTOOLS          "Enable developer tools build [default: OFF]" OF
 option (SFIZZ_SHARED            "Enable shared library build [default: ON]" ON)
 option (SFIZZ_USE_VCPKG         "Assume that sfizz is build using vcpkg [default: OFF]" OFF)
 option (SFIZZ_STATIC_LIBSNDFILE "Link libsndfile statically [default: OFF]" OFF)
+option (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds [default: OFF]" OFF)
 
 # Don't use IPO in non Release builds
 include (CheckIPO)
