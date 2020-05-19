@@ -6,54 +6,50 @@
 
 #pragma once
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_ASSERT)
 #include <iostream>
 
-#if (__linux__ || __unix__)
-
 // Break in source code
-#if (__x86_64__ || __i386__)
-#define ASSERTFALSE                                                              \
-    do {                                                                         \
-        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
-        __asm__("int3");                                                         \
-    } while (0)
-#elif (__arm__ || __aarch64__)
-#define ASSERTFALSE                                                              \
-    do {                                                                         \
-        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
-        __builtin_trap();                                                        \
-    } while (0)
-#endif
-
-#elif (_WIN32 || _WIN64)
-#ifdef _MSC_VER
+#if defined(_WIN32) && defined(_MSC_VER)
 #pragma intrinsic(__debugbreak)
-#endif
-#define ASSERTFALSE                                                              \
-    do {                                                                         \
-        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
-        __debugbreak();                                                          \
-    } while (0)
+#define debugBreak() __debugbreak()
+#elif defined(_WIN32)
+#define debugBreak() __debugbreak()
+#elif defined(__x86_64__) || defined(__i386__)
+#define debugBreak() asm volatile("int3")
+#elif defined(__clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 2))
+#define debugBreak() __builtin_debugtrap()
+#elif defined(__GNUC__)
+#define debugBreak() __builtin_trap()
 #else
-#define ASSERTFALSE do {} while (0)
+#include <csignal>
+#define debugBreak() ::raise(SIGTRAP)
 #endif
 
 // Assert stuff
+#define ASSERTFALSE                                                              \
+    do {                                                                         \
+        std::cerr << "Assert failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
+        debugBreak();                                                            \
+    } while (0)
+
 #define ASSERT(expression) \
     do {                   \
         if (!(expression)) \
-            ASSERTFALSE;    \
-    } \
-    while (0)
-
-// Debug message
-#define DBG(ostream) do { std::cerr << ostream << '\n'; } while (0)
+            ASSERTFALSE;   \
+    } while (0)
 
 #else // NDEBUG
 
 #define ASSERTFALSE do {} while (0)
 #define ASSERT(expression) do {} while (0)
-#define DBG(ostream) do {} while (0)
 
+#endif
+
+// Debug message
+#if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_DBG)
+#include <iostream>
+#define DBG(ostream) do { std::cerr << ostream << '\n'; } while (0)
+#else
+#define DBG(ostream) do {} while (0)
 #endif

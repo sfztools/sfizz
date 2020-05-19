@@ -112,6 +112,7 @@ Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
 Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
 Use clang libc++:              ${USE_LIBCPP}
+Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
