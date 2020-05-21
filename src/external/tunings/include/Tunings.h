@@ -38,7 +38,7 @@
 
 namespace Tunings
 {
-    const double MIDI_0_FREQ=8.17579891564371; // or 440.0 * pow( 2.0, - (69.0/12.0 ) )
+    static constexpr double MIDI_0_FREQ = 8.17579891564371; // or 440.0 * pow( 2.0, - (69.0/12.0 ) )
 
     /**
      * A Tone is a single entry in an SCL file. It is expressed either in cents or in
