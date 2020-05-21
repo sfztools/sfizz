@@ -57,7 +57,6 @@ namespace Tunings
         Type type = kToneRatio;
         double cents = 0;
         int ratio_d = 1, ratio_n = 1;
-        std::string stringRep = "1/1";
         double floatValue = 1.0; // cents / 1200 + 1.
     };
 

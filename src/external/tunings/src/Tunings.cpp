@@ -33,7 +33,6 @@ namespace Tunings
     Tone toneFromString(const std::string &line, int lineno)
     {
         Tone t;
-        t.stringRep = line;
         if (line.find(".") != std::string::npos)
         {
             t.type = Tone::kToneCents;
@@ -145,25 +144,16 @@ namespace Tunings
 
     Scale evenTemperament12NoteScale()
     {
-        std::string data = R"SCL(! even.scl
-!
-12 note even temperament
- 12
-!
- 100.0
- 200.0
- 300.0
- 400.0
- 500.0
- 600.0
- 700.0
- 800.0
- 900.0
- 1000.0
- 1100.0
- 2/1
-)SCL";
-        return parseSCLData(data);
+        Scale res;
+        res.count = 12;
+        res.tones.resize(12);
+        for (int i = 0; i < 12; ++i) {
+            Tone &t = res.tones[i];
+            t.type = Tone::kToneCents;
+            t.cents = 100 * (i + 1);
+            t.floatValue = t.cents / 1200.0 + 1.0;
+        }
+        return res;
     }
 
     Scale evenDivisionOfSpanByM( int Span, int M )
