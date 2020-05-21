@@ -45,6 +45,7 @@ private:
     };
 
     static constexpr int numKeys = Tunings::Tuning::N;
+    static constexpr int keyOffset = 256; // Surge tuning has key range ±256
     std::array<float, numKeys> keysFractional12TET_;
 };
 
@@ -55,7 +56,7 @@ constexpr int Tuning::Impl::numKeys;
 
 float Tuning::Impl::getKeyFractional12TET(int midiKey) const
 {
-    return keysFractional12TET_[std::max(0, std::min(numKeys - 1, midiKey))];
+    return keysFractional12TET_[std::max(0, std::min(numKeys - 1, midiKey + keyOffset))];
 }
 
 void Tuning::Impl::updateScale(const Tunings::Scale& scale)
@@ -94,7 +95,7 @@ void Tuning::Impl::updateKeysFractional12TET()
 {
     // mapping of MIDI key to equal temperament key
     for (int key = 0; key < numKeys; ++key) {
-        double freq = tuning_.frequencyForMidiNote(key);
+        double freq = tuning_.frequencyForMidiNote(key - keyOffset);
         keysFractional12TET_[key] = 12.0 * std::log2(freq / 440.0) + 69.0;
     }
 }
