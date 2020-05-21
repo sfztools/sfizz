@@ -32,13 +32,14 @@
 
 #pragma once
 #include <string>
-#include <vector>
 #include <memory>
 #include <array>
 
 namespace Tunings
 {
     static constexpr double MIDI_0_FREQ = 8.17579891564371; // or 440.0 * pow( 2.0, - (69.0/12.0 ) )
+
+    static constexpr int MAX_CAPACITY = 64; // fixed capacity of note/key lists
 
     /**
      * A Tone is a single entry in an SCL file. It is expressed either in cents or in
@@ -77,7 +78,7 @@ namespace Tunings
     {
         std::string description; // The description in the SCL file. Informational only
         int count = 0; // The number of tones.
-        std::vector<Tone> tones; // The tones
+        Tone tones[MAX_CAPACITY]; // The tones
     };
 
     /**
@@ -96,7 +97,7 @@ namespace Tunings
         int tuningConstantNote = 60;
         double tuningFrequency = MIDI_0_FREQ * 32.0, tuningPitch = 32.0; // pitch = frequency / MIDI_0_FREQ
         int octaveDegrees = 12;
-        std::vector<int> keys; // rather than an 'x' we use a '-1' for skipped keys
+        int keys[MAX_CAPACITY]; // rather than an 'x' we use a '-1' for skipped keys
     };
 
     /**

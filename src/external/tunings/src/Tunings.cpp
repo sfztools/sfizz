@@ -75,6 +75,7 @@ namespace Tunings
         std::string line;
         const int read_header = 0, read_count = 1, read_note = 2, trailing = 3;
         int state = read_header;
+        int tone_index = 0;
 
         Scale res;
         int lineno = 0;
@@ -94,12 +95,15 @@ namespace Tunings
                 break;
             case read_count:
                 res.count = atoi(line.c_str());
-                state = read_note;
+                if(res.count < 0 || res.count > MAX_CAPACITY)
+                {
+                    throw TuningError( "Tone count invalid or too large in SCL file." );
+                }
+                state = ( res.count > 0 ) ? read_note : trailing;
                 break;
             case read_note:
-                auto t = toneFromString(line, lineno);
-                res.tones.push_back(t);
-                if( (int)res.tones.size() == res.count )
+                res.tones[tone_index++] = toneFromString(line, lineno);
+                if( tone_index == res.count )
                     state = trailing;
 
                 break;
@@ -111,10 +115,10 @@ namespace Tunings
             throw TuningError( "Incomplete SCL file. Found no notes section in the file" );
         }
 
-        if( (int)res.tones.size() != res.count )
+        if( tone_index != res.count )
         {
             std::string s = "Read fewer notes than count in file. Count=" + std::to_string( res.count )
-                + " notes array size=" + std::to_string( res.tones.size() );
+                + " notes array size=" + std::to_string( tone_index );
             throw TuningError(s);
 
         }
@@ -146,7 +150,6 @@ namespace Tunings
     {
         Scale res;
         res.count = 12;
-        res.tones.resize(12);
         for (int i = 0; i < 12; ++i) {
             Tone &t = res.tones[i];
             t.type = Tone::kToneCents;
@@ -185,7 +188,6 @@ namespace Tunings
         std::string line;
 
         KeyboardMapping res;
-        res.keys.clear();
 
         enum parsePosition {
             map_size = 0,
@@ -199,6 +201,7 @@ namespace Tunings
             trailing
         };
         parsePosition state = map_size;
+        int key_index = 0;
 
         int lineno  = 0;
         while (std::getline(inf, line))
@@ -238,6 +241,10 @@ namespace Tunings
             {
             case map_size:
                 res.count = i;
+                if(res.count < 0 || res.count > MAX_CAPACITY)
+                {
+                    throw TuningError( "Key count invalid or too large in KBM file." );
+                }
                 break;
             case first_midi:
                 res.firstMidi = i;
@@ -259,8 +266,8 @@ namespace Tunings
                 res.octaveDegrees = i;
                 break;
             case keys:
-                res.keys.push_back(i);
-                if( (int)res.keys.size() == res.count ) state = trailing;
+                res.keys[key_index++] = i;
+                if( key_index == res.count ) state = trailing;
                 break;
             case trailing:
                 break;
@@ -275,10 +282,10 @@ namespace Tunings
             throw TuningError( "Incomplete KBM file. Ubable to get to keys section of file" );
         }
 
-        if( (int)res.keys.size() != res.count )
+        if( key_index != res.count )
         {
             throw TuningError( "Different number of keys than mapping file indicates. Count is "
-                               + std::to_string( res.count ) + " and we parsed " + std::to_string( res.keys.size() ) + " keys." );
+                               + std::to_string( res.count ) + " and we parsed " + std::to_string( key_index ) + " keys." );
         }
 
         return res;
