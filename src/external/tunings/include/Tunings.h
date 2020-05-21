@@ -72,14 +72,11 @@ namespace Tunings
      *
      * In most normal use, you will simply pass around instances of this class
      * to a Tunings::Tuning instance, but in some cases you may want to create
-     * or inspect this class yourself. Especially if you are displaying this
-     * class to your end users, you may want to use the rawText or count methods.
+     * or inspect this class yourself.
      */
     struct Scale
     {
-        //std::string name = "empty scale"; // The name in the SCL file. Informational only
         std::string description; // The description in the SCL file. Informational only
-        std::string rawText; // The raw text of the SCL file used to create this Scale
         int count = 0; // The number of tones.
         std::vector<Tone> tones; // The tones
     };
@@ -90,8 +87,6 @@ namespace Tunings
      * pick a fixed note in the midi keyboard when retuning. The KBM file can also
      * remap individual keys to individual points in a scale, which kere is done with the
      * keys vector.
-     *
-     * Just as with Scale, the rawText member contains the text of the KBM file used.
      */
 
     struct KeyboardMapping
@@ -103,9 +98,6 @@ namespace Tunings
         double tuningFrequency = MIDI_0_FREQ * 32.0, tuningPitch = 32.0; // pitch = frequency / MIDI_0_FREQ
         int octaveDegrees = 12;
         std::vector<int> keys; // rather than an 'x' we use a '-1' for skipped keys
-
-        std::string rawText;
-        //std::string name;
     };
 
     /**

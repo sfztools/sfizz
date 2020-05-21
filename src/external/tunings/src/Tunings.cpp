@@ -78,11 +78,9 @@ namespace Tunings
         int state = read_header;
 
         Scale res;
-        std::ostringstream rawOSS;
         int lineno = 0;
         while (std::getline(inf, line))
         {
-            rawOSS << line << "\n";
             lineno ++;
 
             if (line.empty() || line[0] == '!')
@@ -121,7 +119,6 @@ namespace Tunings
             throw TuningError(s);
 
         }
-        res.rawText = rawOSS.str();
         return res;
     }
 
@@ -136,7 +133,6 @@ namespace Tunings
         }
 
         auto res = readSCLStream(inf);
-        //res.name = std::move(fname);
         return res;
     }
 
@@ -144,7 +140,6 @@ namespace Tunings
     {
         std::istringstream iss(d);
         auto res = readSCLStream(iss);
-        //res.name = "Scale from Patch";
         return res;
     }
 
@@ -200,7 +195,6 @@ namespace Tunings
         std::string line;
 
         KeyboardMapping res;
-        std::ostringstream rawOSS;
         res.keys.clear();
 
         enum parsePosition {
@@ -219,7 +213,6 @@ namespace Tunings
         int lineno  = 0;
         while (std::getline(inf, line))
         {
-            rawOSS << line << "\n";
             lineno ++;
             if (line.empty() || line[0] == '!')
             {
@@ -298,7 +291,6 @@ namespace Tunings
                                + std::to_string( res.count ) + " and we parsed " + std::to_string( res.keys.size() ) + " keys." );
         }
 
-        res.rawText = rawOSS.str();
         return res;
     }
 
