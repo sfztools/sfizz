@@ -11,6 +11,7 @@
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <cstring>
+#include <cassert>
 
 #pragma message("TODO: send tempo") // NOLINT
 

@@ -51,6 +51,10 @@ add_subdirectory (src)
 # Optional targets
 add_subdirectory (clients)
 
+if (SFIZZ_LV2 OR SFIZZ_VST)
+    add_subdirectory (editor)
+endif()
+
 if (SFIZZ_LV2)
     add_subdirectory (lv2)
 endif()

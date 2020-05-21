@@ -17,9 +17,7 @@ set(VSTPLUGIN_SOURCES
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
-    GUIComponents.cpp
-    VstPluginFactory.cpp
-    X11RunLoop.cpp)
+    VstPluginFactory.cpp)
 
 set(VSTPLUGIN_HEADERS
     SfizzVstProcessor.h
@@ -40,7 +38,7 @@ if(WIN32)
     target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
-    PRIVATE ${PROJECT_NAME}::${PROJECT_NAME})
+    PRIVATE ${PROJECT_NAME}::${PROJECT_NAME} sfizz_editor)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
@@ -48,7 +46,7 @@ set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
     PREFIX "")
 
 plugin_add_vst3sdk(${VSTPLUGIN_PRJ_NAME})
-plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
+#plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
 
 # Add the ring buffer
 set (RINGBUFFER_HEADERS

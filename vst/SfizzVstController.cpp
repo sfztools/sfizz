@@ -8,6 +8,7 @@
 #include "SfizzVstEditor.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
+#include <algorithm>
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {

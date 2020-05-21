@@ -8,11 +8,9 @@
 #include "SfizzVstState.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
-#include "vstgui/plugin-bindings/vst3editor.h"
 class SfizzVstState;
 
 using namespace Steinberg;
-using namespace VSTGUI;
 
 class SfizzVstControllerNoUi : public Vst::EditController,
                                public Vst::IMidiMapping {
@@ -36,7 +34,7 @@ public:
     REFCOUNT_METHODS(Vst::EditController)
 };
 
-class SfizzVstController : public SfizzVstControllerNoUi, public VSTGUI::VST3EditorDelegate {
+class SfizzVstController : public SfizzVstControllerNoUi {
 public:
     IPlugView* PLUGIN_API createView(FIDString name) override;
 
