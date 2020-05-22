@@ -9,67 +9,73 @@
 #include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;
+using namespace sfz::literals;
 
 TEST_CASE("[Curve] Bipolar 0 to 1")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(0);
     REQUIRE( curve.evalCC7(0) == 0.0f );
+    REQUIRE( curve.evalCC7(64) == 0.5f );
     REQUIRE( curve.evalCC7(127) == 1.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(0.0157).margin(1e-3) );
-    REQUIRE( curve.evalCC7(63) == Approx(0.496).margin(1e-3) );
-    REQUIRE( curve.evalCC7(85) == Approx(0.669).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(2_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == Approx(63_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(85) == Approx(85_norm).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == 0.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.299).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.297).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] Bipolar -1 to 1")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(1);
     REQUIRE( curve.evalCC7(0) == -1.0f );
+    REQUIRE( curve.evalCC7(64) == 0.0f );
     REQUIRE( curve.evalCC7(127) == 1.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(-0.9685).margin(1e-3) );
-    REQUIRE( curve.evalCC7(63) == Approx(-0.00787).margin(1e-5) );
-    REQUIRE( curve.evalCC7(85) == Approx(0.3386).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(-1.0f + 2 * 2_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == Approx(-1.0f + 2 * 63_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(85) == Approx(-1.0f + 2 * 85_norm).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == -1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(-0.4).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(-0.405).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] Bipolar 1 to 0")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(2);
     REQUIRE( curve.evalCC7(0) == 1.0f );
+    REQUIRE( curve.evalCC7(64) == 0.5f );
     REQUIRE( curve.evalCC7(127) == 0.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(0.984).margin(1e-3) );
-    REQUIRE( curve.evalCC7(63) == Approx(0.504).margin(1e-3) );
-    REQUIRE( curve.evalCC7(85) == Approx(0.331).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(1.0f - 2_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == Approx(1.0f - 63_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(85) == Approx(1.0f - 85_norm).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == 1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 0.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.701).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.703).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] Bipolar 1 to -1")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(3);
     REQUIRE( curve.evalCC7(0) == 1.0f );
+    REQUIRE( curve.evalCC7(64) == 0.0f );
     REQUIRE( curve.evalCC7(127) == -1.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(0.9685).margin(1e-3) );
-    REQUIRE( curve.evalCC7(63) == Approx(0.00787).margin(1e-5) );
-    REQUIRE( curve.evalCC7(85) == Approx(-0.3386).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(1.0f - 2 * 2_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(63) == Approx(1.0f - 2 * 63_norm).margin(1e-3) );
+    REQUIRE( curve.evalCC7(85) == Approx(1.0f - 2 * 85_norm).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == 1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == -1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.4).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.405).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] x**2")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(4);
     REQUIRE( curve.evalCC7(0) == 0.0f );
+    REQUIRE( curve.evalCC7(64) == Approx(0.25).margin(1e-2) );
     REQUIRE( curve.evalCC7(127) == 1.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(0.000248).margin(1e-5) );
-    REQUIRE( curve.evalCC7(63) == Approx(0.246).margin(1e-3) );
-    REQUIRE( curve.evalCC7(85) == Approx(0.448).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(2_norm * 2_norm).margin(1e-2) );
+    REQUIRE( curve.evalCC7(63) == Approx(63_norm * 63_norm).margin(1e-2) );
+    REQUIRE( curve.evalCC7(85) == Approx(85_norm * 85_norm).margin(1e-2) );
     REQUIRE( curve.evalNormalized(0.0f) == 0.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 1.0f );
     REQUIRE( curve.evalNormalized(0.3f) == Approx(0.09).margin(1e-3) );
@@ -80,26 +86,28 @@ TEST_CASE("[Curve] sqrt(x)")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(5);
     REQUIRE( curve.evalCC7(0) == 0.0f );
+    REQUIRE( curve.evalCC7(64) == Approx(sqrtf(2.0f) / 2.0f) );
     REQUIRE( curve.evalCC7(127) == 1.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(0.125).margin(1e-3) );
-    REQUIRE( curve.evalCC7(63) == Approx(0.704).margin(1e-3) );
-    REQUIRE( curve.evalCC7(85) == Approx(0.818).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(sqrtf(2_norm)).margin(1e-2) );
+    REQUIRE( curve.evalCC7(63) == Approx(sqrtf(63_norm)).margin(1e-2) );
+    REQUIRE( curve.evalCC7(85) == Approx(sqrtf(85_norm)).margin(1e-2) );
     REQUIRE( curve.evalNormalized(0.0f) == 0.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.5477).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.54).margin(1e-2) );
 }
 
 TEST_CASE("[Curve] sqrt(1-x)")
 {
     auto curve = sfz::Curve::buildPredefinedCurve(6);
     REQUIRE( curve.evalCC7(0) == 1.0f );
+    REQUIRE( curve.evalCC7(64) == Approx(sqrtf(2.0f) / 2.0f) );
     REQUIRE( curve.evalCC7(127) == 0.0f );
-    REQUIRE( curve.evalCC7(2) == Approx(0.992).margin(1e-3) );
-    REQUIRE( curve.evalCC7(63) == Approx(0.710).margin(1e-3) );
-    REQUIRE( curve.evalCC7(85) == Approx(0.575).margin(1e-3) );
+    REQUIRE( curve.evalCC7(2) == Approx(sqrtf(1.0f - 2_norm)).margin(1e-2) );
+    REQUIRE( curve.evalCC7(63) == Approx(sqrtf(1.0f - 63_norm)).margin(1e-2) );
+    REQUIRE( curve.evalCC7(85) == Approx(sqrtf(1.0f - 85_norm)).margin(1e-2) );
     REQUIRE( curve.evalNormalized(0.0f) == 1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 0.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.837).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.84).margin(1e-2) );
 }
 
 TEST_CASE("[Curve] Custom")
@@ -216,19 +224,19 @@ TEST_CASE("[Curve] Default CurveSet")
     REQUIRE(curveSet.getNumCurves() == 7);
     REQUIRE( curveSet.getCurve(0).evalNormalized(0.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(0).evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curveSet.getCurve(0).evalNormalized(0.3f) == Approx(0.299).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(0).evalNormalized(0.3f) == Approx(0.297).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(1).evalNormalized(0.0f) == -1.0f );
     REQUIRE( curveSet.getCurve(1).evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curveSet.getCurve(1).evalNormalized(0.3f) == Approx(-0.4).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(1).evalNormalized(0.3f) == Approx(-0.405).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(2).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(2).evalNormalized(1.0f) == 0.0f );
-    REQUIRE( curveSet.getCurve(2).evalNormalized(0.3f) == Approx(0.701).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(2).evalNormalized(0.3f) == Approx(0.703).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(3).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(3).evalNormalized(1.0f) == -1.0f );
-    REQUIRE( curveSet.getCurve(3).evalNormalized(0.3f) == Approx(0.4).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(3).evalNormalized(0.3f) == Approx(0.405).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(4).evalNormalized(0.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(4).evalNormalized(1.0f) == 1.0f );
@@ -236,9 +244,9 @@ TEST_CASE("[Curve] Default CurveSet")
 
     REQUIRE( curveSet.getCurve(5).evalNormalized(0.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(5).evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curveSet.getCurve(5).evalNormalized(0.3f) == Approx(0.5477).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(5).evalNormalized(0.3f) == Approx(0.54).margin(1e-2) );
 
     REQUIRE( curveSet.getCurve(6).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(6).evalNormalized(1.0f) == 0.0f );
-    REQUIRE( curveSet.getCurve(6).evalNormalized(0.3f) == Approx(0.837).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(6).evalNormalized(0.3f) == Approx(0.83).margin(1e-2) );
 }
