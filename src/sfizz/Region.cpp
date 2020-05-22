@@ -833,6 +833,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     // Ignored opcodes
     case hash("hichan"):
     case hash("lochan"):
+    case hash("sw_default"):
     case hash("ampeg_depth"):
     case hash("ampeg_vel&depth"):
         break;
