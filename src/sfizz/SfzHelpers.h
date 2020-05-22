@@ -131,7 +131,16 @@ constexpr uint8_t denormalizeVelocity(float value)
 template<class T>
 constexpr float normalize7Bits(T value)
 {
-    return static_cast<float>(min(max(value, T{ 0 }), T{ 127 })) / 127.0f;
+    if (value < 0)
+        return 0.0f;
+
+    if (value > 127)
+        return 1.0f;
+
+    if (value <= 64)
+        return static_cast<float>(value) * 0.0078125f;
+
+    return 0.5f + static_cast<float>(value - 64) * 0.007936508f;
 }
 
 /**
@@ -189,9 +198,6 @@ constexpr float normalizeBend(float bendValue)
 namespace literals {
     inline float operator""_norm(unsigned long long int value)
     {
-        if (value > 127)
-            value = 127;
-
         return normalize7Bits(value);
     }
 }
