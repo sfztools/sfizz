@@ -280,14 +280,14 @@ TEST_CASE("[linearModifiers] Compare with envelopes")
         return ccData.data.value * x;
     });
     linearModifier(resources, absl::MakeSpan(output), ccData);
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 
     ccData.data.curve = 1;
     linearEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
         return ccData.data.value * (2 * x - 1);
     });
     linearModifier(resources, absl::MakeSpan(output), ccData);
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 
     ccData.data.curve = 3;
     ccData.data.value = 10.0f;
@@ -295,7 +295,7 @@ TEST_CASE("[linearModifiers] Compare with envelopes")
         return ccData.data.value * (1 - 2 * x);
     });
     linearModifier(resources, absl::MakeSpan(output), ccData);
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 
     ccData.data.curve = 2;
     ccData.data.value = 20.0f;
@@ -304,7 +304,7 @@ TEST_CASE("[linearModifiers] Compare with envelopes")
         return ccData.data.value * (1 - x);
     }, ccData.data.step);
     linearModifier(resources, absl::MakeSpan(output), ccData);
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 }
 
 TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
@@ -328,7 +328,7 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
         return db2mag(x);
     });
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 
     ccData.data.curve = 1;
     multiplicativeEnvelope(resources.midiState.getCCEvents(20), absl::MakeSpan(envelope), [&ccData](float x) {
@@ -337,7 +337,7 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
         return db2mag(x);
     });
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 
     ccData.data.curve = 3;
     ccData.data.value = 10.0f;
@@ -347,7 +347,7 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
         return db2mag(x);
     });
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 
     ccData.data.curve = 2;
     ccData.data.value = 20.0f;
@@ -358,6 +358,6 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     multiplicativeModifier(resources, absl::MakeSpan(output), ccData, [](float x) {
         return db2mag(x);
     });
-    REQUIRE(approxEqual<float>(output, envelope));
+    REQUIRE(approxEqual<float>(output, envelope, 1e-1));
 }
 
