@@ -98,7 +98,7 @@ bool FileInstruments::extractFromFlac(const fs::path& path, SF_INSTRUMENT& ins)
     memset(&ins, 0, sizeof(SF_INSTRUMENT));
 
 #if !defined(_WIN32)
-    FILE_u stream(fopen(path.native().c_str(), "rb"));
+    FILE_u stream(fopen(path.c_str(), "rb"));
 #else
     FILE_u stream(_wfopen(path.wstring().c_str(), L"rb"));
 #endif
@@ -129,7 +129,7 @@ bool FileInstruments::extractFromFlac(const fs::path& path, SF_INSTRUMENT& ins)
                 std::unique_ptr<uint8_t[]> chunk { new uint8_t[riffChunkSize] };
                 if (fread(chunk.get(), riffChunkSize, 1, stream.get()) == 1)
                     return extractSamplerChunkInstrument(
-                        absl::MakeConstSpan(chunk.get(), riffChunkSize), ins);
+                        { chunk.get(), riffChunkSize }, ins);
             }
         }
 
