@@ -129,7 +129,7 @@ constexpr uint8_t denormalizeVelocity(float value)
 }
 
 template<class T>
-constexpr float normalize7Bits(T value)
+inline CXX14_CONSTEXPR float normalize7Bits(T value)
 {
     if (value < 0)
         return 0.0f;
