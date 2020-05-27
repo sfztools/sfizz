@@ -335,6 +335,10 @@ void base_view::refresh()
 
 void base_view::refresh(rect area)
 {
+#if 1
+    // unidentified trouble with Pugl on macOS, refresh the whole for now
+    refresh();
+#else
     PuglHostView* host = reinterpret_cast<PuglHostView*>(this->host());
     if (!host || !host->view)
         return;
@@ -342,9 +346,10 @@ void base_view::refresh(rect area)
     PuglRect rect;
     rect.x = area.left;
     rect.y = area.top;
-    rect.width = area.right - area.left;
-    rect.height = area.bottom - area.top;
+    rect.width = area.width();
+    rect.height = area.height();
     puglPostRedisplayRect(host->view.get(), rect);
+#endif
 }
 
 std::string clipboard()
