@@ -9,5 +9,5 @@
 
 <@LV2PLUGIN_URI@#ui>
     a ui:@LV2_UI_TYPE@ ;
-    ui:binary <@PROJECT_NAME@_ui@CMAKE_SHARED_LIBRARY_SUFFIX@> ;
+    ui:binary <@PROJECT_NAME@_ui@CMAKE_SHARED_MODULE_SUFFIX@> ;
     rdfs:seeAlso <@PROJECT_NAME@_ui.ttl> .
