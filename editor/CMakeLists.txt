@@ -101,7 +101,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
 if(WIN32)
     target_sources(sfizz_editor PRIVATE
         src/host/NativeWindowHelpers_win.cpp)
-elif(APPLE)
+elseif(APPLE)
     target_sources(sfizz_editor PRIVATE
         src/host/NativeWindowHelpers_mac.mm)
 else()
