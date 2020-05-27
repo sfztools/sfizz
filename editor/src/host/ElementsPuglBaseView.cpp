@@ -15,7 +15,6 @@ namespace elements {
 struct PuglHostView {
     SingletonPuglWorld_s world;
     PuglView_u view;
-    bool ready = false;
     point cursorPosition {};
     int buttonState = 0;
     mouse_button::what dragButton = static_cast<mouse_button::what>(-1);
@@ -52,7 +51,7 @@ static PuglStatus onEvent(PuglView *view, const PuglEvent *event)
     base_view* self = reinterpret_cast<base_view*>(puglGetHandle(view));
     PuglHostView* host = reinterpret_cast<PuglHostView*>(self->host());
 
-    if (!host || !host->ready)
+    if (!host)
         return PUGL_SUCCESS;
 
     switch (event->type) {
@@ -221,7 +220,7 @@ static PuglStatus onEvent(PuglView *view, const PuglEvent *event)
     return PUGL_SUCCESS;
 }
 
-static PuglHostView* makeWindow(base_view* self, void* parentWindowId, PuglRect frame)
+static PuglHostView* makeWindow(base_view* self, void **pView, void* parentWindowId, PuglRect frame)
 {
     std::unique_ptr<PuglHostView> host { new PuglHostView };
 
@@ -234,6 +233,7 @@ static PuglHostView* makeWindow(base_view* self, void* parentWindowId, PuglRect 
     if (!view)
         return nullptr;
     host->view.reset(view);
+    *pView = host.get();
     puglSetHandle(view, self);
 
     if (puglSetEventFunc(view, &onEvent) != PUGL_SUCCESS)
@@ -268,9 +268,8 @@ base_view::base_view(extent size_)
     frame.y = 0;
     frame.width = size_.x;
     frame.height = size_.y;
-    _view = nullptr;
-    _view = makeWindow(this, nullptr, frame);
-    static_cast<PuglHostView*>(_view)->ready = true;
+    if (!makeWindow(this, &_view, nullptr, frame))
+        _view = nullptr;
 }
 
 base_view::base_view(host_window_handle h)
@@ -278,9 +277,8 @@ base_view::base_view(host_window_handle h)
     PuglRect frame = NativeWindows::getFrame(h);
     frame.x = 0;
     frame.y = 0;
-    _view = nullptr;
-    _view = makeWindow(this, h, frame);
-    static_cast<PuglHostView*>(_view)->ready = true;
+    if (!makeWindow(this, &_view, h, frame))
+        _view = nullptr;
 }
 
 base_view::~base_view()
