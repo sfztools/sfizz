@@ -289,6 +289,7 @@ base_view::~base_view()
         gCurrentBaseView = nullptr;
 
     PuglHostView* host = reinterpret_cast<PuglHostView*>(this->host());
+    _view = nullptr;
     delete host;
 }
 
