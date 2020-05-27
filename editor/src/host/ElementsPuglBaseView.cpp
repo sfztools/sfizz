@@ -18,6 +18,7 @@ struct PuglHostView {
     point cursorPosition {};
     int buttonState = 0;
     mouse_button::what dragButton = static_cast<mouse_button::what>(-1);
+    bool wasEverDrawn = false;
 };
 
 static int convertModifiers(PuglMods mods)
@@ -213,6 +214,8 @@ static PuglStatus onEvent(PuglView *view, const PuglEvent *event)
             self->draw(cr, dirty);
 
             cairo_restore(cr);
+
+            host->wasEverDrawn = true;
         }
         break;
     }
@@ -412,6 +415,15 @@ void hide_window(base_view& view)
 
 void process_events(base_view& view)
 {
+    PuglHostView* host = reinterpret_cast<PuglHostView*>(view.host());
+    if (!host || !host->view)
+        return;
+
+    // Note(jpc): workaround for Pugl macOS not receiving expose events,
+    //            when the view is created before the parent window is shown.
+    if (!host->wasEverDrawn)
+        puglPostRedisplay(host->view.get());
+
     SingletonPuglWorld_s world = SingletonPuglWorld::instance();
 
     gCurrentBaseView = &view;
