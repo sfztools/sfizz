@@ -147,6 +147,13 @@ elseif(SFIZZ_AU)
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/NSDataIBStream.mm")
     target_include_directories(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${VST3SDK_BASEDIR}")
+
+    find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
+    find_library(APPLE_COCOA_LIBRARY "Cocoa")
+    find_library(APPLE_CARBON_LIBRARY "Carbon")
+    find_library(APPLE_AUDIOTOOLBOX_LIBRARY "AudioToolbox")
+    find_library(APPLE_COREAUDIO_LIBRARY "CoreAudio")
+    find_library(APPLE_COREMIDI_LIBRARY "CoreMIDI")
     target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${APPLE_FOUNDATION_LIBRARY}"
         "${APPLE_COCOA_LIBRARY}"

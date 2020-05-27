@@ -7,3 +7,4 @@ brew update
 brew upgrade cmake
 brew install jack
 brew install dylibbundler
+brew install cairo
