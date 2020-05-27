@@ -76,6 +76,7 @@ add_library(sfizz-elements STATIC EXCLUDE_FROM_ALL
     external/elements/lib/src/support/draw_utils.cpp
     external/elements/lib/src/support/font.cpp
     external/elements/lib/src/support/glyphs.cpp
+    external/elements/lib/src/support/io_context.cpp
     external/elements/lib/src/support/pixmap.cpp
     external/elements/lib/src/support/rect.cpp
     external/elements/lib/src/support/resource_paths.cpp

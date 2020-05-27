@@ -7,6 +7,7 @@
 #include "PuglHelpers.h"
 #include <elements.hpp>
 #include <pugl/pugl_cairo.h>
+#include <map>
 //#include <mutex>
 
 namespace cycfi {
