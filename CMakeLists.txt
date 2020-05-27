@@ -19,12 +19,6 @@ include (SfizzConfig)
 # Build Options
 set (BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests [default: OFF]")
 
-# On macOS add the needed directories for both library and jack client
-if (APPLE)
-    include_directories (SYSTEM /usr/local/opt/libsndfile/include)
-    link_directories (/usr/local/opt/libsndfile/lib)
-endif()
-
 option (ENABLE_LTO              "Enable Link Time Optimization [default: ON]" ON)
 option (SFIZZ_JACK              "Enable JACK stand-alone build [default: ON]" ON)
 option (SFIZZ_RENDER            "Enable renderer of SMF files [default: ON]" ON)

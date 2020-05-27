@@ -1,18 +1,9 @@
-# cairo library
-if(NOT WIN32 OR MINGW)
-    find_package(PkgConfig REQUIRED)
-    if(WIN32)
-        pkg_check_modules(CAIRO "cairo-win32")
-    elseif(APPLE)
-        pkg_check_modules(CAIRO "cairo-quartz")
-    else()
-        pkg_check_modules(CAIRO "cairo-xlib")
-    endif()
-    add_library(sfizz-cairo INTERFACE)
-    target_include_directories(sfizz-cairo INTERFACE ${CAIRO_INCLUDE_DIRS})
-    target_link_libraries(sfizz-cairo INTERFACE ${CAIRO_LIBRARIES})
-else()
-    # TODO...
+if(NOT TARGET sfizz-cairo)
+    message(FATAL_ERROR "Could not find cairo, required by editor")
+endif()
+
+if(NOT TARGET sfizz-fontconfig)
+    message(FATAL_ERROR "Could not find fontconfig, required by editor")
 endif()
 
 # pugl library
@@ -87,7 +78,7 @@ target_include_directories(sfizz-elements PUBLIC
     external/elements/lib/infra/include
     ../src/external # use our ghc::filesystem
     )
-target_link_libraries(sfizz-elements PUBLIC sfizz-cairo)
+target_link_libraries(sfizz-elements PUBLIC sfizz-cairo sfizz-fontconfig)
 target_compile_definitions(sfizz-elements PUBLIC
     "ELEMENTS_HOST_UI_LIBRARY_CUSTOM=1")
 
@@ -103,7 +94,8 @@ if(WIN32)
         src/host/NativeWindowHelpers_win.cpp)
 elseif(APPLE)
     target_sources(sfizz_editor PRIVATE
-        src/host/NativeWindowHelpers_mac.mm)
+        src/host/NativeWindowHelpers_mac.mm
+        src/host/MacBundleHelpers.mm)
 else()
     target_sources(sfizz_editor PRIVATE
         src/host/NativeWindowHelpers_x11.cpp)

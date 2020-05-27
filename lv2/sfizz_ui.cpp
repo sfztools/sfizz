@@ -34,6 +34,7 @@
 
 #include "editor/Editor.h"
 #include <lv2/ui/ui.h>
+#include <lv2/urid/urid.h>
 #include <memory>
 #include <cstring>
 #include <cstdio>
@@ -47,7 +48,7 @@ struct sfizz_ui_t {
 };
 
 static LV2UI_Handle
-instantiate(const struct LV2UI_Descriptor *descriptor,
+instantiate(const LV2UI_Descriptor *descriptor,
             const char *plugin_uri,
             const char *bundle_path,
             LV2UI_Write_Function write_function,

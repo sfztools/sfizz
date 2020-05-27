@@ -43,6 +43,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
+# The sndfile library
 add_library(sfizz-sndfile INTERFACE)
 
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -59,7 +60,43 @@ else()
     else()
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
     endif()
+    link_directories(${SNDFILE_LIBRARY_DIRS})
 endif()
+
+# The cairo library
+if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    # TODO...
+else()
+    find_package(PkgConfig REQUIRED)
+    if(WIN32)
+        pkg_check_modules(CAIRO "cairo-win32")
+    elseif(APPLE)
+        pkg_check_modules(CAIRO "cairo-quartz")
+    else()
+        pkg_check_modules(CAIRO "cairo-xlib")
+    endif()
+    if(CAIRO_FOUND)
+        add_library(sfizz-cairo INTERFACE)
+        target_include_directories(sfizz-cairo INTERFACE ${CAIRO_INCLUDE_DIRS})
+        target_link_libraries(sfizz-cairo INTERFACE ${CAIRO_LIBRARIES})
+        link_directories(${CAIRO_LIBRARY_DIRS})
+    endif()
+endif()
+
+# The fontconfig library
+if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    # TODO...
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(FONTCONFIG "fontconfig")
+    if(FONTCONFIG_FOUND)
+        add_library(sfizz-fontconfig INTERFACE)
+        target_include_directories(sfizz-fontconfig INTERFACE ${FONTCONFIG_INCLUDE_DIRS})
+        target_link_libraries(sfizz-fontconfig INTERFACE ${FONTCONFIG_LIBRARIES})
+        link_directories(${FONTCONFIG_LIBRARY_DIRS})
+    endif()
+endif()
+
 
 
 # If we build with Clang, optionally use libc++. Enabled by default on Apple OS.
