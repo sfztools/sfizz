@@ -9,6 +9,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include <memory>
 class Editor;
+class NativeIdleRunner;
 
 using namespace Steinberg;
 
@@ -31,5 +32,7 @@ private:
     class IdleTimerHandler;
     friend class IdleTimerHandler;
     std::unique_ptr<IdleTimerHandler> idleTimerHandler_;
+#else
+    std::unique_ptr<NativeIdleRunner> idleRunner_;
 #endif
 };

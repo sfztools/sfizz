@@ -8,12 +8,15 @@
 #include "SfizzVstState.h"
 #include "editor/Editor.h"
 #include <cstring>
+#if !defined(__APPLE__) && !defined(_WIN32)
+/**/
+#else
+#include "NativeIdleRunner.h"
+#endif
 
 static /*const*/ ViewRect kEditorViewRect { 0, 0, Editor::fixedWidth, Editor::fixedHeight };
 
-#if !defined(__APPLE__) && !defined(_WIN32)
 static constexpr unsigned kIdleTimerInterval = 25;
-#endif
 
 ///
 #if !defined(__APPLE__) && !defined(_WIN32)
@@ -45,6 +48,8 @@ SfizzVstEditor::SfizzVstEditor(Vst::EditController* controller)
     : EditorView(controller, &kEditorViewRect)
 #if !defined(__APPLE__) && !defined(_WIN32)
     , idleTimerHandler_(new IdleTimerHandler(*this))
+#else
+    , idleRunner_(new NativeIdleRunner)
 #endif
 {
 }
@@ -95,6 +100,11 @@ tresult PLUGIN_API SfizzVstEditor::attached(void* parent, FIDString type)
     Linux::IRunLoop* runLoop = nullptr;
     if (plugFrame->queryInterface(Linux::IRunLoop_iid, reinterpret_cast<void**>(&runLoop)) == kResultOk)
         runLoop->registerTimer(idleTimerHandler_.get(), kIdleTimerInterval);
+#else
+    auto editorIdleCallback = [](void* cbdata) {
+        return reinterpret_cast<Editor*>(cbdata)->processEvents();
+    };
+    idleRunner_->start(kIdleTimerInterval * 1e-3, editorIdleCallback, editor);
 #endif
 
     EditorView::attached(parent, type);
@@ -110,6 +120,8 @@ tresult PLUGIN_API SfizzVstEditor::removed()
     Linux::IRunLoop* runLoop = nullptr;
     if (plugFrame->queryInterface(Linux::IRunLoop_iid, reinterpret_cast<void**>(&runLoop)) == kResultOk)
         runLoop->unregisterTimer(idleTimerHandler_.get());
+#else
+    idleRunner_->stop();
 #endif
 
     editor_->close();
