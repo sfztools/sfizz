@@ -268,6 +268,7 @@ base_view::base_view(extent size_)
     frame.y = 0;
     frame.width = size_.x;
     frame.height = size_.y;
+    _view = nullptr;
     _view = makeWindow(this, nullptr, frame);
     static_cast<PuglHostView*>(_view)->ready = true;
 }
@@ -277,6 +278,7 @@ base_view::base_view(host_window_handle h)
     PuglRect frame = NativeWindows::getFrame(h);
     frame.x = 0;
     frame.y = 0;
+    _view = nullptr;
     _view = makeWindow(this, h, frame);
     static_cast<PuglHostView*>(_view)->ready = true;
 }
