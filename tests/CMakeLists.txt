@@ -17,6 +17,7 @@ set(SFIZZ_TEST_SOURCES
     FilesT.cpp
     MidiStateT.cpp
     OnePoleFilterT.cpp
+    InterpolatorsT.cpp
     RegionActivationT.cpp
     RegionValueComputationsT.cpp
     # If we're tweaking the curves this kind of tests does not make sense
