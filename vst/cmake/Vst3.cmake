@@ -34,7 +34,6 @@ function(plugin_add_vst3sdk NAME)
     if(WIN32)
         target_sources("${NAME}" PRIVATE
             "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp"
-            "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp"
             "${VST3SDK_BASEDIR}/public.sdk/source/main/dllmain.cpp")
         set_property(TARGET "${NAME}" PROPERTY CXX_STANDARD 14)
     elseif(APPLE)
@@ -138,7 +137,8 @@ function(plugin_add_vstgui NAME)
             "${VST3SDK_BASEDIR}/vstgui4/vstgui/lib/platform/win32/win32textedit.cpp"
             "${VST3SDK_BASEDIR}/vstgui4/vstgui/lib/platform/win32/winfileselector.cpp"
             "${VST3SDK_BASEDIR}/vstgui4/vstgui/lib/platform/win32/winstring.cpp"
-            "${VST3SDK_BASEDIR}/vstgui4/vstgui/lib/platform/win32/wintimer.cpp")
+            "${VST3SDK_BASEDIR}/vstgui4/vstgui/lib/platform/win32/wintimer.cpp"
+            "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp")
     elseif(APPLE)
         target_sources("${NAME}" PRIVATE
             "${VST3SDK_BASEDIR}/vstgui4/vstgui/lib/platform/common/fileresourceinputstream.cpp"
