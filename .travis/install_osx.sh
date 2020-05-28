@@ -4,5 +4,7 @@ set -ex
 
 sudo ln -s /usr/local /opt/local
 brew update
-brew upgrade cmake
-brew install jack cairo fontconfig dylibbundler
+
+for brew_package in cmake jack cairo fontconfig dylibbundler; do
+  brew install "$brew_package" || brew upgrade "$brew_package"
+done
