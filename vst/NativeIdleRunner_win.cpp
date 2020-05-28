@@ -23,7 +23,7 @@ struct TimerData {
 static std::map<UINT_PTR, std::unique_ptr<TimerData>> gTimerData;
 static std::mutex gTimerDataMutex;
 
-static void timerProc(HWND, UINT, UINT_PTR timerId, DWORD)
+static void CALLBACK timerProc(HWND, UINT, UINT_PTR timerId, DWORD)
 {
     TimerData* data;
 
