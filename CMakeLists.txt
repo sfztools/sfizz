@@ -23,6 +23,7 @@ option (ENABLE_LTO              "Enable Link Time Optimization [default: ON]" ON
 option (SFIZZ_JACK              "Enable JACK stand-alone build [default: ON]" ON)
 option (SFIZZ_RENDER            "Enable renderer of SMF files [default: ON]" ON)
 option (SFIZZ_LV2               "Enable LV2 plug-in build [default: ON]" ON)
+option (SFIZZ_LV2_UI            "Enable LV2 plug-in user interface [default: ON]" ON)
 option (SFIZZ_VST               "Enable VST plug-in build [default: OFF]" OFF)
 option (SFIZZ_AU                "Enable AU plug-in build [default: OFF]" OFF)
 option (SFIZZ_BENCHMARKS        "Enable benchmarks build [default: OFF]" OFF)
@@ -45,7 +46,7 @@ add_subdirectory (src)
 # Optional targets
 add_subdirectory (clients)
 
-if (SFIZZ_LV2 OR SFIZZ_VST)
+if ((SFIZZ_LV2 AND SFIZZ_LV2_UI) OR SFIZZ_VST)
     add_subdirectory (editor)
 endif()
 

@@ -78,7 +78,7 @@ midnam:update a lv2:Feature .
   opts:supportedOption param:sampleRate ;
   opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
 
-  ui:ui <@LV2PLUGIN_URI@#ui> ;
+  @LV2PLUGIN_IF_ENABLE_UI@ui:ui <@LV2PLUGIN_URI@#ui> ;
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ;
   patch:writable <@LV2PLUGIN_URI@:tuningfile> ;
