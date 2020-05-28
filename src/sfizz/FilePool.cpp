@@ -27,6 +27,7 @@
 #include "FileInstrument.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
+#include "AudioSpan.h"
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
@@ -42,7 +43,7 @@ template <class T>
 void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t numFrames, bool reverse)
 {
     output.reset();
-    output.resize(numFrames + sfz::config::excessFileFrames);
+    output.resize(numFrames + 2 * sfz::config::excessFileFrames);
 
     if (reverse)
         sndFile.seek(-static_cast<sf_count_t>(numFrames), SEEK_END);
@@ -52,20 +53,23 @@ void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t 
     if (channels == 1) {
         output.addChannel();
         output.clear();
-        sndFile.readf(output.channelWriter(0), numFrames);
+        sndFile.readf(output.channelWriter(0) + sfz::config::excessFileFrames, numFrames);
     } else if (channels == 2) {
         output.addChannel();
         output.addChannel();
         output.clear();
         sfz::Buffer<T> tempReadBuffer { 2 * numFrames };
         sndFile.readf(tempReadBuffer.data(), numFrames);
-        sfz::readInterleaved<T>(tempReadBuffer, output.getSpan(0).first(numFrames), output.getSpan(1).first(numFrames));
+        sfz::readInterleaved<T>(tempReadBuffer,
+            output.getSpan(0).subspan(sfz::config::excessFileFrames, numFrames),
+            output.getSpan(1).subspan(sfz::config::excessFileFrames, numFrames)
+        );
     }
 
     if (reverse) {
         for (unsigned c = 0; c < channels; ++c) {
             // TODO: consider optimizing with SIMD
-            absl::Span<float> channel = output.getSpan(c).first(numFrames);
+            absl::Span<float> channel = output.getSpan(c).subspan(sfz::config::excessFileFrames, numFrames);
             std::reverse(channel.begin(), channel.end());
         }
     }
@@ -80,10 +84,12 @@ std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32
     if (factor == sfz::Oversampling::x1)
         return baseBuffer;
 
-    auto outputBuffer = absl::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor) + sfz::config::excessFileFrames);
+    auto outputBuffer = absl::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor) + 2 * sfz::config::excessFileFrames);
     outputBuffer->clear();
+    auto baseSpan = sfz::AudioSpan<T>(*baseBuffer).subspan(sfz::config::excessFileFrames, numFrames);
+    auto outputSpan = sfz::AudioSpan<T>(*outputBuffer).subspan(sfz::config::excessFileFrames, numFrames * static_cast<int>(factor));
     sfz::Oversampler oversampler { factor };
-    oversampler.stream(*baseBuffer, *outputBuffer);
+    oversampler.stream(baseSpan, outputSpan);
     return outputBuffer;
 }
 
@@ -100,10 +106,12 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
     auto baseBuffer = readFromFile<T>(sndFile, numFrames, sfz::Oversampling::x1, reverse);
     output.reset();
     output.addChannels(baseBuffer->getNumChannels());
-    output.resize(numFrames * static_cast<int>(factor) + sfz::config::excessFileFrames);
+    output.resize(numFrames * static_cast<int>(factor) + 2 * sfz::config::excessFileFrames);
     output.clear();
     sfz::Oversampler oversampler { factor };
-    oversampler.stream(*baseBuffer, output, filledFrames);
+    auto baseSpan = sfz::AudioSpan<T>(*baseBuffer).subspan(sfz::config::excessFileFrames, numFrames);
+    auto outputSpan = sfz::AudioSpan<T>(output).subspan(sfz::config::excessFileFrames, numFrames * static_cast<int>(factor));
+    oversampler.stream(baseSpan, outputSpan, filledFrames);
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)

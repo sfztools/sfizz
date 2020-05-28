@@ -44,7 +44,7 @@ public:
     {
         __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
         __m128 h = hermite3x4(x);
-        __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values));
+        __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values - 1));
         // sum 4 to 1
         __m128 xmm0 = y;
         __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
@@ -68,8 +68,8 @@ public:
     static inline R process(const R* values, R coeff)
     {
         R y = 0;
-        for (int i = 0; i < 4; ++i) {
-            R h = hermite3<R>(i - 1 - coeff);
+        for (int i = -1; i < 3; ++i) {
+            R h = hermite3<R>(i - coeff);
             y += h * values[i];
         }
         return y;
@@ -88,7 +88,7 @@ public:
     {
         __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
         __m128 h = bspline3x4(x);
-        __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values));
+        __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values - 1));
         // sum 4 to 1
         __m128 xmm0 = y;
         __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
@@ -112,8 +112,8 @@ public:
     static inline R process(const R* values, R coeff)
     {
         R y = 0;
-        for (int i = 0; i < 4; ++i) {
-            R h = bspline3<R>(i - 1 - coeff);
+        for (int i = -1; i < 3; ++i) {
+            R h = bspline3<R>(i - coeff);
             y += h * values[i];
         }
         return y;

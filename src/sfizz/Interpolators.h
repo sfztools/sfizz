@@ -17,6 +17,19 @@ enum InterpolatorModel : int {
     kInterpolatorBspline3,
 };
 
+/**
+ * @brief Interpolate from a vector of values
+ *
+ * @tparam M the interpolator model
+ * @tparam R the sample type
+ * @param values Pointer to a value in a larger vector of values.
+ *               Depending on the interpolator the algorithm may
+ *               read samples before and after. Usually you need
+ *               to ensure that you have order - 1 samples available
+ *               before and after the pointer, padding if necessary.
+ * @param coeff the interpolation coefficient
+ * @return R
+ */
 template <InterpolatorModel M, class R>
 R interpolate(const R* values, R coeff);
 

@@ -61,7 +61,7 @@ sfz::Oversampler::Oversampler(sfz::Oversampling factor, size_t chunkSize)
 
 }
 
-void sfz::Oversampler::stream(const sfz::AudioBuffer<float>& input, sfz::AudioBuffer<float>& output, std::atomic<size_t>* framesReady)
+void sfz::Oversampler::stream(AudioSpan<float> input, AudioSpan<float> output, std::atomic<size_t>* framesReady)
 {
     ASSERT(output.getNumFrames() >= input.getNumFrames() * static_cast<int>(factor));
     ASSERT(output.getNumChannels() == input.getNumChannels());
