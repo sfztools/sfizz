@@ -92,6 +92,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=OFF
+    - ENABLE_LV2_UI=OFF
     addons:
       apt:
         packages:
@@ -107,6 +108,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=ON
+    - ENABLE_LV2_UI=ON
     addons:
       apt:
         packages:
@@ -114,13 +116,7 @@ jobs:
         - libsndfile1-dev
         - libcairo2-dev
         - libfontconfig1-dev
-        - libx11-xcb-dev
-        - libxcb-util-dev
-        - libxcb-cursor-dev
-        - libxcb-xkb-dev
-        - libxkbcommon-dev
-        - libxkbcommon-x11-dev
-        - libxcb-keysyms1-dev
+        - libx11-dev
     install:
     - .travis/download_cmake.sh
     - .travis/download_static_libs.sh
