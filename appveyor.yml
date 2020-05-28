@@ -13,6 +13,8 @@ install:
 - cmd: if %platform%==Win32 set VCPKG_TRIPLET=x86-windows-static
 - cmd: if %platform%==x64   set VCPKG_TRIPLET=x64-windows-static
 - cmd: vcpkg install libsndfile:%VCPKG_TRIPLET%
+- cmd: vcpkg install cairo:%VCPKG_TRIPLET%
+- cmd: vcpkg install fontconfig:%VCPKG_TRIPLET%
 
 before_build:
 - cmd: git submodule update --init

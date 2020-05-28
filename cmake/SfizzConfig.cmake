@@ -47,7 +47,7 @@ endif()
 add_library(sfizz-sndfile INTERFACE)
 
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    find_package(LibSndFile REQUIRED)
+    find_package(LibSndFile CONFIG REQUIRED)
     find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
     target_include_directories(sfizz-sndfile INTERFACE "${SNDFILE_INCLUDE_DIR}")
     target_link_libraries(sfizz-sndfile INTERFACE sndfile-static)
@@ -65,7 +65,13 @@ endif()
 
 # The cairo library
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # TODO...
+    find_package(unofficial-cairo CONFIG)
+    if (unofficial-cairo_FOUND)
+        add_library(sfizz-cairo INTERFACE)
+        find_path(CAIRO_INCLUDE_DIR cairo.h PATH_SUFFIXES cairo)
+        target_include_directories(sfizz-cairo INTERFACE "${CAIRO_INCLUDE_DIR}")
+        target_link_libraries(sfizz-cairo INTERFACE unofficial::cairo::cairo)
+    endif()
 else()
     find_package(PkgConfig REQUIRED)
     if(WIN32)
@@ -89,7 +95,13 @@ endif()
 
 # The fontconfig library
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # TODO...
+    find_package(unofficial-fontconfig CONFIG)
+    if (unofficial-fontconfig_FOUND)
+        add_library(sfizz-fontconfig INTERFACE)
+        find_path(FONTCONFIG_INCLUDE_DIR fontconfig/fontconfig.h)
+        target_include_directories(sfizz-fontconfig INTERFACE "${FONTCONFIG_INCLUDE_DIR}")
+        target_link_libraries(sfizz-fontconfig INTERFACE unofficial::fontconfig::fontconfig)
+    endif()
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(FONTCONFIG "fontconfig")
