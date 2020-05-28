@@ -113,9 +113,18 @@ constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 }
 
 template<class T, absl::enable_if_t<std::is_integral<T>::value, int> = 0>
-constexpr T denormalize7Bits(float value)
+inline CXX14_CONSTEXPR T denormalize7Bits(float value)
 {
-    return static_cast<T>(value * 127.0f);
+    if (value < 0.0f)
+        return T { 0 };
+
+    if (value > 1.0f)
+        return T{ 127 };
+
+    if (value <= 0.5f)
+        return static_cast<T>(value * 128.0f);
+
+    return T{ 64 } + static_cast<T>((value - 0.5f) * 126.0f);
 }
 
 constexpr uint8_t denormalizeCC(float value)
