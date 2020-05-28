@@ -55,7 +55,7 @@ else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(SNDFILE "sndfile" REQUIRED)
     target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
-    if (SFIZZ_STATIC_LIBSNDFILE)
+    if (SFIZZ_STATIC_DEPENDENCIES)
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
     else()
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
@@ -78,7 +78,11 @@ else()
     if(CAIRO_FOUND)
         add_library(sfizz-cairo INTERFACE)
         target_include_directories(sfizz-cairo INTERFACE ${CAIRO_INCLUDE_DIRS})
-        target_link_libraries(sfizz-cairo INTERFACE ${CAIRO_LIBRARIES})
+        if(SFIZZ_STATIC_DEPENDENCIES)
+            target_link_libraries(sfizz-cairo INTERFACE ${CAIRO_STATIC_LIBRARIES})
+        else()
+            target_link_libraries(sfizz-cairo INTERFACE ${CAIRO_LIBRARIES})
+        endif()
         link_directories(${CAIRO_LIBRARY_DIRS})
     endif()
 endif()
@@ -92,7 +96,11 @@ else()
     if(FONTCONFIG_FOUND)
         add_library(sfizz-fontconfig INTERFACE)
         target_include_directories(sfizz-fontconfig INTERFACE ${FONTCONFIG_INCLUDE_DIRS})
-        target_link_libraries(sfizz-fontconfig INTERFACE ${FONTCONFIG_LIBRARIES})
+        if(SFIZZ_STATIC_DEPENDENCIES)
+            target_link_libraries(sfizz-fontconfig INTERFACE ${FONTCONFIG_STATIC_LIBRARIES})
+        else()
+            target_link_libraries(sfizz-fontconfig INTERFACE ${FONTCONFIG_LIBRARIES})
+        endif()
         link_directories(${FONTCONFIG_LIBRARY_DIRS})
     endif()
 endif()
@@ -149,7 +157,7 @@ Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
-Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
+Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
 Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}

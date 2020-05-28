@@ -7,7 +7,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DSFIZZ_VST="$ENABLE_VST_PLUGIN" \
       -DSFIZZ_TESTS=OFF \
       -DSFIZZ_SHARED=OFF \
-      -DSFIZZ_STATIC_LIBSNDFILE=ON \
+      -DSFIZZ_STATIC_DEPENDENCIES=ON \
       -DCMAKE_CXX_STANDARD=17 \
       ..
 make -j$(nproc)
