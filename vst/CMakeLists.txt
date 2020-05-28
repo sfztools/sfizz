@@ -27,10 +27,11 @@ set(VSTPLUGIN_HEADERS
     GUIComponents.h
     X11RunLoop.h)
 
-if(APPLE)
+if(WIN32)
+    list(APPEND VSTPLUGIN_SOURCES NativeIdleRunner_win.cpp)
+elseif(APPLE)
     list(APPEND VSTPLUGIN_SOURCES NativeIdleRunner_mac.mm)
 endif()
-# TODO windows
 
 set(VSTPLUGIN_RESOURCES
     logo.png)
