@@ -77,10 +77,11 @@ void Tuning::Impl::updateScale(const Tunings::Scale& scale, absl::optional<fs::p
     tuning_ = Tunings::Tuning(scale, tuning_.keyboardMapping);
     updateKeysFractional12TET();
 
+    scalaFile_ = sourceFile;
+
     if (sourceFile) {
         std::error_code ec;
         modificationTime_ = fs::last_write_time(*sourceFile, ec);
-        scalaFile_ = sourceFile;
     }
 }
 
