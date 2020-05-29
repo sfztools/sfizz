@@ -252,9 +252,9 @@ private:
      * @param indices the integral parts of the source positions
      * @param coeffs the fractional parts of the source positions
      */
-    template <sfz::InterpolatorModel M>
+    template <InterpolatorModel M>
     static void fillInterpolated(
-        const sfz::AudioSpan<const float>& source, sfz::AudioSpan<float>& dest,
+        const AudioSpan<const float>& source, AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs);
 
     void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
