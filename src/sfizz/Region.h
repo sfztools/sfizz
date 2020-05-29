@@ -6,6 +6,7 @@
 
 #pragma once
 #include "CCMap.h"
+#include "Curve.h"
 #include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
@@ -304,7 +305,8 @@ struct Region {
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
-    std::vector<std::pair<float, float>> velocityPoints; // amp_velcurve_N
+    std::vector<std::pair<uint8_t, float>> velocityPoints; // amp_velcurve_N
+    absl::optional<Curve> velCurve {};
     float ampRandom { Default::ampRandom }; // amp_random
     Range<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };

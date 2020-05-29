@@ -388,7 +388,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             if (value)
-                velocityPoints.emplace_back(normalizeVelocity(opcode.parameters.back()), *value);
+                velocityPoints.emplace_back(opcode.parameters.back(), *value);
         }
         break;
     case hash("xfin_lokey"):
@@ -1130,15 +1130,8 @@ float sfz::Region::velocityCurve(float velocity) const noexcept
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     float gain { 1.0f };
-    if (velocityPoints.size() > 0) { // Custom velocity curve
-        auto after = absl::c_find_if(velocityPoints, [velocity](const std::pair<float, float>& val) { return val.first >= velocity; });
-        auto before = after == velocityPoints.begin() ? velocityPoints.begin() : after - 1;
-        // Linear interpolation
-        float relativePositionInSegment {
-            (velocity - before->first) / (after->first - before->first)
-        };
-        float segmentEndpoints { after->second - before->second };
-        gain *= relativePositionInSegment * segmentEndpoints;
+    if (velCurve) { // Custom velocity curve
+        return velCurve->evalNormalized(velocity);
     } else { // Standard velocity curve
         // FIXME: Maybe there's a prettier way to check the boundaries?
         const float gaindB = [&]() {
