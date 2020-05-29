@@ -161,8 +161,6 @@ Tuning::~Tuning()
 
 bool Tuning::loadScalaFile(const fs::path& path)
 {
-    const Tunings::KeyboardMapping kbm = impl_->tuning().keyboardMapping;
-
     fs::ifstream stream(path);
     if (stream.bad()) {
         DBG("Cannot open scale file: " << path);
@@ -184,8 +182,6 @@ bool Tuning::loadScalaFile(const fs::path& path)
 
 bool Tuning::loadScalaString(const std::string& text)
 {
-    const Tunings::KeyboardMapping kbm = impl_->tuning().keyboardMapping;
-
     std::istringstream stream(text);
 
     Tunings::Scale scl;
