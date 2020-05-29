@@ -13,6 +13,8 @@
  */
 
 #include "parser/Parser.h"
+#include "../tests/cxxopts.hpp"
+#include "absl/strings/string_view.h"
 #include <iostream>
 
 class MyParserListener : public sfz::Parser::Listener {
@@ -49,18 +51,57 @@ private:
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    cxxopts::Options options("sfizz_preprocess", "Preprocess SFZ files");
+
+    options.positional_help("<sfz-file>");
+
+    options.add_options()
+        ("D,define", "Add external definition", cxxopts::value<std::vector<std::string>>())
+        ("i,input", "Input SFZ file", cxxopts::value<std::string>())
+        ("h,help", "Print usage");
+
+    options.parse_positional({"input"});
+
+    std::unique_ptr<cxxopts::ParseResult> resultPtr;
+    try {
+        resultPtr = absl::make_unique<cxxopts::ParseResult>(options.parse(argc, argv));
+    } catch (cxxopts::OptionException& ex) {
+        std::cerr << ex.what() << "\n";
+        return 1;
+    }
+    cxxopts::ParseResult& result = *resultPtr;
+
+    if (result.count("help")) {
+        std::cerr << options.help() << "\n";
+        return 0;
+    }
+
+    if (!result.count("input")) {
         std::cerr << "Please indicate the SFZ file path.\n";
         return 1;
     }
 
-    const fs::path sfzFilePath { argv[1] };
+    const fs::path sfzFilePath { result["input"].as<std::string>() };
 
     sfz::Parser parser;
     MyParserListener listener(parser);
-
     parser.setListener(&listener);
-    parser.parseFile(argv[1]);
+
+    if (result.count("define")) {
+        auto& definitions = result["define"].as<std::vector<std::string>>();
+        for (absl::string_view definition : definitions) {
+            size_t pos = definition.find('=');
+            if (pos == definition.npos) {
+                std::cerr << "The definition is malformed, should be key=value.\n";
+                return 1;
+            }
+            absl::string_view key = definition.substr(0, pos);
+            absl::string_view val = definition.substr(pos + 1);
+            parser.addExternalDefinition(key, val);
+        }
+    }
+
+    parser.parseFile(sfzFilePath);
 
     if (parser.getErrorCount() > 0)
         return 1;
