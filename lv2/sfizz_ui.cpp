@@ -33,8 +33,10 @@
 */
 
 #include "editor/Editor.h"
+#include "editor/Res.h"
 #include <lv2/ui/ui.h>
 #include <lv2/urid/urid.h>
+#include <string>
 #include <memory>
 #include <cstring>
 #include <cstdio>
@@ -73,6 +75,8 @@ instantiate(const LV2UI_Descriptor *descriptor,
     // The map feature is required
     if (!self->map)
         return nullptr;
+
+    Res::initializeRootPath((std::string(bundle_path) + "/Resources").c_str());
 
     Editor *editor = new Editor;
     self->editor.reset(editor);
