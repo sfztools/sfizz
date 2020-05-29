@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
       ("h,help", "Print help")
       ("s,scale", "Path of scala tuning file", cxxopts::value<std::string>())
       ("f,frequency", "Tuning frequency", cxxopts::value<float>()->default_value("440.0"))
-      ("r,root-key", "Root key", cxxopts::value<std::string>()->default_value("C5"));
+      ("r,root-key", "Root key", cxxopts::value<std::string>()->default_value("C4"));
 
     auto result = options.parse(argc, argv);
 
