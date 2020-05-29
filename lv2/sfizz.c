@@ -875,8 +875,17 @@ restore(LV2_Handle instance,
     value = retrieve(handle, self->sfizz_scala_file_uri, &size, &type, &val_flags);
     if (value)
     {
-        lv2_log_note(&self->logger, "[sfizz] Restoring the scale %s\n", (const char *)value);
-        sfizz_load_scala_file(self->synth, (const char *)value);
+        if (sfizz_load_scala_file(self->synth, (const char *)value))
+        {
+            lv2_log_note(&self->logger,
+                "[sfizz] Restoring the scale %s\n", (const char *)value);
+            strcpy(self->scala_file_path, (const char *)value);
+        }
+        else
+        {
+            lv2_log_error(&self->logger,
+                "[sfizz] Error while restoring the scale %s\n", (const char *)value);
+        }
     }
 
     value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
@@ -970,6 +979,19 @@ save(LV2_Handle instance,
     return LV2_STATE_SUCCESS;
 }
 
+static void
+sfizz_lv2_activate_file_checking(
+    sfizz_plugin_t *self,
+    LV2_Worker_Respond_Function respond,
+    LV2_Worker_Respond_Handle handle)
+{
+    LV2_Atom check_modification_atom = {
+        .size = 0,
+        .type = self->sfizz_check_modification_uri
+    };
+    respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
+}
+
 // This runs in a lower priority thread
 static LV2_Worker_Status
 work(LV2_Handle instance,
@@ -991,24 +1013,26 @@ work(LV2_Handle instance,
         if (sfizz_load_file(self->synth, sfz_file_path)) {
             sfizz_lv2_update_file_info(self, sfz_file_path);
         } else {
-            lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
+            lv2_log_error(&self->logger,
+                "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
 
         // Reactivate checking for file changes
-        LV2_Atom check_modification_atom = {
-            .size = 0,
-            .type = self->sfizz_check_modification_uri
-        };
-        respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
+        sfizz_lv2_activate_file_checking(self, respond, handle);
     }
     else if (atom->type == self->sfizz_scala_file_uri)
     {
         const char *scala_file_path = LV2_ATOM_BODY_CONST(atom);
         if (sfizz_load_scala_file(self->synth, scala_file_path)) {
+            strcpy(self->scala_file_path, scala_file_path);
             lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", scala_file_path);
         } else {
-            lv2_log_error(&self->logger, "[sfizz] Error with %s; no scala file should be loaded\n", scala_file_path);
+            lv2_log_error(&self->logger,
+                "[sfizz] Error with %s; no new scala file should be loaded\n", scala_file_path);
         }
+
+        // Reactivate checking for file changes
+        sfizz_lv2_activate_file_checking(self, respond, handle);
     }
     else if (atom->type == self->sfizz_num_voices_uri)
     {
@@ -1055,10 +1079,26 @@ work(LV2_Handle instance,
             if (sfizz_load_file(self->synth, self->sfz_file_path)) {
                 sfizz_lv2_update_file_info(self, self->sfz_file_path);
             } else {
-                lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
+                lv2_log_error(&self->logger,
+                    "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
         }
-        respond(handle, size, data); // reactivate file checking
+
+        if (sfizz_should_reload_scala(self->synth))
+        {
+            lv2_log_note(&self->logger,
+                        "[sfizz] Scala file %s seems to have been updated, reloading\n",
+                        self->scala_file_path);
+            if (sfizz_load_scala_file(self->synth, self->scala_file_path)) {
+                lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", self->scala_file_path);
+            } else {
+                lv2_log_error(&self->logger,
+                    "[sfizz] Error with %s; no new scala file should be loaded\n", self->scala_file_path);
+            }
+        }
+
+        // Reactivate checking for file changes
+        sfizz_lv2_activate_file_checking(self, respond, handle);
     }
     else
     {
