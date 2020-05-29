@@ -127,12 +127,12 @@ inline CXX14_CONSTEXPR T denormalize7Bits(float value)
     return T{ 64 } + static_cast<T>((value - 0.5f) * 126.0f);
 }
 
-constexpr uint8_t denormalizeCC(float value)
+inline CXX14_CONSTEXPR uint8_t denormalizeCC(float value)
 {
     return denormalize7Bits<uint8_t>(value);
 }
 
-constexpr uint8_t denormalizeVelocity(float value)
+inline CXX14_CONSTEXPR uint8_t denormalizeVelocity(float value)
 {
     return denormalize7Bits<uint8_t>(value);
 }
@@ -160,7 +160,7 @@ inline CXX14_CONSTEXPR float normalize7Bits(T value)
  * @return constexpr float
  */
 template<class T>
-constexpr float normalizeCC(T ccValue)
+inline CXX14_CONSTEXPR float normalizeCC(T ccValue)
 {
     return normalize7Bits(ccValue);
 }
@@ -173,7 +173,7 @@ constexpr float normalizeCC(T ccValue)
  * @return constexpr float
  */
 template<class T>
-constexpr float normalizeVelocity(T velocity)
+inline CXX14_CONSTEXPR float normalizeVelocity(T velocity)
 {
     return normalize7Bits(velocity);
 }
