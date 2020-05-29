@@ -60,6 +60,12 @@ public:
      */
     float getKeyFractional12TET(int midiKey);
 
+    /**
+     * @brief Check whether the underlying scala file has changed.
+     *
+     */
+    bool shouldReloadScala();
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

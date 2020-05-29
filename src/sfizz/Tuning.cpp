@@ -6,6 +6,7 @@
 
 #include "Tuning.h"
 #include "Debug.h"
+#include "absl/types/optional.h"
 #include "Tunings.h" // Surge tuning library
 #include <fstream>
 #include <sstream>
@@ -25,10 +26,11 @@ public:
     int rootKey() const { return rootKey_; }
     float tuningFrequency() const { return tuningFrequency_; }
 
-    void updateScale(const Tunings::Scale& scale);
+    void updateScale(const Tunings::Scale& scale, absl::optional<fs::path> sourceFile = {});
+    bool shouldReloadScala();
     void updateRootKey(int rootKey);
     void updateTuningFrequency(float tuningFrequency);
-
+    void reset();
 private:
     void updateKeysFractional12TET();
     static Tunings::KeyboardMapping mappingFromParameters(int rootKey, float tuningFrequency);
@@ -44,25 +46,59 @@ private:
         mappingFromParameters(defaultRootKey, defaultTuningFrequency)
     };
 
+    absl::optional<fs::path> scalaFile_;
+    fs::file_time_type modificationTime_ {};
+
     static constexpr int numKeys = Tunings::Tuning::N;
     static constexpr int keyOffset = 256; // Surge tuning has key range ±256
     std::array<float, numKeys> keysFractional12TET_;
 };
 
-///
-constexpr int Tuning::Impl::defaultRootKey;
-constexpr float Tuning::Impl::defaultTuningFrequency;
-constexpr int Tuning::Impl::numKeys;
+void Tuning::Impl::reset()
+{
+    rootKey_ = defaultRootKey;
+    tuningFrequency_ = defaultTuningFrequency;
+    tuning_ = Tunings::Tuning(
+        Tunings::evenTemperament12NoteScale(),
+        mappingFromParameters(defaultRootKey, defaultTuningFrequency)
+    );
+    scalaFile_.reset();
+    modificationTime_ = fs::file_time_type::min();
+    updateKeysFractional12TET();
+}
 
 float Tuning::Impl::getKeyFractional12TET(int midiKey) const
 {
     return keysFractional12TET_[std::max(0, std::min(numKeys - 1, midiKey + keyOffset))];
 }
 
-void Tuning::Impl::updateScale(const Tunings::Scale& scale)
+void Tuning::Impl::updateScale(const Tunings::Scale& scale, absl::optional<fs::path> sourceFile)
 {
     tuning_ = Tunings::Tuning(scale, tuning_.keyboardMapping);
     updateKeysFractional12TET();
+
+    if (sourceFile) {
+        std::error_code ec;
+        modificationTime_ = fs::last_write_time(*sourceFile, ec);
+        scalaFile_ = sourceFile;
+    }
+}
+
+bool Tuning::Impl::shouldReloadScala()
+{
+    DBG("Should reload scala called");
+    if (!scalaFile_)
+        return false;
+
+    std::error_code ec;
+    const auto newTime = fs::last_write_time(*scalaFile_, ec);
+    if (newTime > modificationTime_) {
+        DBG("File changed!");
+        modificationTime_ = newTime;
+        return true;
+    }
+
+    return false;
 }
 
 void Tuning::Impl::updateRootKey(int rootKey)
@@ -142,7 +178,7 @@ bool Tuning::loadScalaFile(const fs::path& path)
         return false;
     }
 
-    impl_->updateScale(scl);
+    impl_->updateScale(scl, path);
     return true;
 }
 
@@ -199,5 +235,11 @@ float Tuning::getKeyFractional12TET(int midiKey)
 {
     return impl_->getKeyFractional12TET(midiKey);
 }
+
+bool Tuning::shouldReloadScala()
+{
+    return impl_->shouldReloadScala();
+}
+
 
 } // namespace sfz
