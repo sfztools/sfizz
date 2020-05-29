@@ -1212,6 +1212,11 @@ bool sfz::Synth::shouldReloadFile()
     return (checkModificationTime() > modificationTime);
 }
 
+bool sfz::Synth::shouldReloadScala()
+{
+    return resources.tuning.shouldReloadScala();
+}
+
 void sfz::Synth::enableLogging(absl::string_view prefix) noexcept
 {
     resources.logger.enableLogging(prefix);

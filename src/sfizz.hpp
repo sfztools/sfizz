@@ -351,6 +351,16 @@ public:
     bool shouldReloadFile();
 
     /**
+     * @brief Check if the tuning (scala) file should be reloaded.
+     *
+     * Depending on the platform this can create file descriptors.
+     *
+     * @return true if a scala file has been loaded and has changed
+     * @return false
+     */
+    bool shouldReloadScala();
+
+    /**
      * @brief Enable logging of timings to sidecar CSV files. This can produce
      * many outputs so use with caution.
      *

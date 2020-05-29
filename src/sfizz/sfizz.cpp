@@ -221,6 +221,11 @@ bool sfz::Sfizz::shouldReloadFile()
     return synth->shouldReloadFile();
 }
 
+bool sfz::Sfizz::shouldReloadScala()
+{
+    return synth->shouldReloadScala();
+}
+
 void sfz::Sfizz::enableLogging() noexcept
 {
     synth->enableLogging();

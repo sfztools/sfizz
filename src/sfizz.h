@@ -425,6 +425,16 @@ SFIZZ_EXPORTED_API char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth);
 SFIZZ_EXPORTED_API bool sfizz_should_reload_file(sfizz_synth_t* synth);
 
 /**
+ * @brief      Check if the scala file should be reloaded.
+ *             Depending on the platform this can create file descriptors.
+ *
+ * @param      synth  The synth.
+ *
+ * @return     @true if the scala file has been modified since loading.
+ */
+SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
+
+/**
  * @brief      Enable logging of timings to sidecar CSV files. This can produce
  *             many outputs so use with caution.
  *
