@@ -33,10 +33,12 @@
         debugBreak();                                                            \
     } while (0)
 
-#define ASSERT(expression) \
-    do {                   \
-        if (!(expression)) \
-            ASSERTFALSE;   \
+#define ASSERT(expression)                                          \
+    do {                                                            \
+        if (!(expression)) {                                        \
+            std::cerr << "Assert failed: " << #expression << '\n';  \
+            ASSERTFALSE;                                            \
+        }                                                           \
     } while (0)
 
 #define CHECKFALSE                                                              \
@@ -44,10 +46,12 @@
         std::cerr << "Check failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
     } while (0)
 
-#define CHECK(expression)  \
-    do {                   \
-        if (!(expression)) \
-            CHECKFALSE;    \
+#define CHECK(expression)                                         \
+    do {                                                          \
+        if (!(expression)) {                                      \
+            std::cerr << "Check failed: " << #expression << '\n'; \
+            CHECKFALSE;                                           \
+        }                                                         \
     } while (0)
 
 #else // NDEBUG
