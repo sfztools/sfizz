@@ -13,3 +13,6 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     target_link_libraries(sfizz_capture_eg PRIVATE sfizz-sndfile Qt5::Widgets ${JACK_LIBRARIES})
     set_target_properties(sfizz_capture_eg PROPERTIES AUTOUIC ON)
 endif()
+
+add_executable(sfizz_preprocessor Preprocessor.cpp)
+target_link_libraries(sfizz_preprocessor sfizz_parser)
