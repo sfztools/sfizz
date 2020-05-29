@@ -20,13 +20,13 @@ public:
         std::uniform_real_distribution<float> dist { -1.0f, 1.0f };
 
         const size_t numFramesIn = state.range(0);
-        inputBuffer = std::vector<float>(numFramesIn + excessFrames);
+        inputBuffer = std::vector<float>(numFramesIn + 2 * sfz::config::excessFileFrames);
 
         // any ratio will do, compute time will be proportional
         static constexpr float ratio = 1.234;
 
         const size_t numFramesOut = static_cast<size_t>(std::ceil(numFramesIn * ratio));
-        input = absl::MakeSpan(inputBuffer.data(), numFramesIn);
+        input = absl::MakeSpan(inputBuffer).subspan(sfz::config::excessFileFrames, numFramesIn);
         output = std::vector<float>(numFramesOut);
         std::generate(input.begin(), input.end(), [&]() { return dist(gen); });
     }
@@ -47,8 +47,7 @@ static void doInterpolation(absl::Span<const float> input, absl::Span<float> out
 {
     const float kOutToIn = static_cast<float>(input.size()) / output.size();
 
-    for (size_t iOut = sfz::config::excessFileFrames;
-            iOut < output.size() - sfz::config::excessFileFrames; ++iOut) {
+    for (size_t iOut = 0; iOut < output.size(); ++iOut) {
         float posIn = iOut * kOutToIn;
         unsigned dec = static_cast<int>(posIn);
         float frac = posIn - dec;
