@@ -33,6 +33,13 @@ std::string getPath(const char* relativePath)
     return rootPath + relativePath;
 }
 
+std::string getRootPath()
+{
+    std::shared_lock<RwLock> readLock { gRootPathMutex };
+
+    return gRootPath;
+}
+
 void initializeRootPath(const char* rootPath)
 {
     std::lock_guard<RwLock> writeLock { gRootPathMutex };

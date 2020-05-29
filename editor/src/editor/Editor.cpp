@@ -5,8 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Editor.h"
+#include "Res.h"
 #include "Demo.h"
 #include <elements.hpp>
+#include <elements/support/resource_paths.hpp>
+#include <algorithm>
 namespace el = cycfi::elements;
 
 namespace cycfi {
@@ -51,6 +54,14 @@ bool Editor::open(void* parentWindowId)
     }
 
     view->size({fixedWidth, fixedHeight});
+
+    // make the resource path known to Elements
+    cycfi::fs::path resourcePath = Res::getRootPath();
+    if (!resourcePath.empty()) {
+        auto it = std::find(el::resource_paths.begin(), el::resource_paths.end(), resourcePath);
+        if (it == el::resource_paths.end())
+            el::resource_paths.push_back(resourcePath);
+    }
 
     ///
     DemoKnobsAndSliders* demo = new DemoKnobsAndSliders(*view);

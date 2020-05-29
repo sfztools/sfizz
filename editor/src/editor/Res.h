@@ -10,6 +10,7 @@
 namespace Res {
 
 std::string getPath(const char* relativePath);
+std::string getRootPath();
 
 void initializeRootPath(const char* rootPath);
 void initializeRootPathFromCurrentModule(const char* pathSuffix);
