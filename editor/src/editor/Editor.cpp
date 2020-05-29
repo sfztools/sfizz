@@ -7,7 +7,7 @@
 #include "Editor.h"
 #include "EditorController.h"
 #include "Res.h"
-#include "Demo.h"
+#include "UI.h"
 #include <elements.hpp>
 #include <elements/support/font.hpp>
 #include <elements/support/resource_paths.hpp>
@@ -32,8 +32,7 @@ struct Editor::Impl : EditorController::Receiver {
     std::unique_ptr<el::view> view_;
     EditorController* ctrl_ = nullptr;
 
-    //--- TODO UI: from sliders and knobs example
-    std::unique_ptr<DemoKnobsAndSliders> demo_;
+    std::unique_ptr<UI> ui_;
 
     static void initializeResourcePaths();
 
@@ -72,8 +71,8 @@ bool Editor::open(void* parentWindowId)
     view->size(el::extent(fixedWidth, fixedHeight));
 
     ///
-    DemoKnobsAndSliders* demo = new DemoKnobsAndSliders(*view);
-    impl_->demo_.reset(demo);
+    UI* ui = new UI(*view);
+    impl_->ui_.reset(ui);
 
     ///
     return true;

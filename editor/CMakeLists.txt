@@ -1,6 +1,8 @@
 # resource files
 set(EDITOR_RESOURCES
+    knob.png
     logo.png
+    elements_basic.ttf
     PARENT_SCOPE)
 
 # dependency checks
@@ -108,9 +110,14 @@ endif()
 
 # editor
 add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
+    src/editor/Editor.h
     src/editor/Editor.cpp
+    src/editor/Res.h
     src/editor/Res.cpp
-    src/editor/Demo.cpp
+    src/editor/Dial.h
+    src/editor/Dial.cpp
+    src/editor/UI.h
+    src/editor/UI.cpp
     src/host/ElementsPuglWindow.cpp
     src/host/ElementsPuglBaseView.cpp
     src/host/PuglHelpers.cpp)
