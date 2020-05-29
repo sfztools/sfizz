@@ -8,6 +8,7 @@
 
 #if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_ASSERT)
 #include <iostream>
+#include <iomanip>
 
 // Break in source code
 #if defined(_WIN32) && defined(_MSC_VER)
@@ -49,7 +50,7 @@
 // Debug message
 #if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_DBG)
 #include <iostream>
-#define DBG(ostream) do { std::cerr << ostream << '\n'; } while (0)
+#define DBG(ostream) do { std::cerr << std::fixed << std::setprecision(2) << ostream << '\n'; } while (0)
 #else
 #define DBG(ostream) do {} while (0)
 #endif
