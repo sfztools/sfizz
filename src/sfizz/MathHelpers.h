@@ -331,10 +331,10 @@ bool hasNanInf(absl::Span<Type> span)
 }
 
 template <class Type>
-bool isValidAudio(absl::Span<Type> span)
+bool isReasonableAudio(absl::Span<Type> span)
 {
     for (const auto& x : span)
-        if (x < -1.0f || x > 1.0f)
+        if (x < -10.0f || x > 10.0f)
             return false;
 
     return true;
