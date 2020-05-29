@@ -50,10 +50,10 @@ template <>
 void sfz::readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     // The size of the outputs is not big enough for the input...
-    ASSERT(outputLeft.size() >= input.size() / 2);
-    ASSERT(outputRight.size() >= input.size() / 2);
+    CHECK(outputLeft.size() >= input.size() / 2);
+    CHECK(outputRight.size() >= input.size() / 2);
     // Input is too small
-    ASSERT(input.size() > 1);
+    CHECK(input.size() > 1);
 
     auto* in = input.begin();
     auto* lOut = outputLeft.begin();
@@ -90,8 +90,8 @@ template <>
 void sfz::writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     // The size of the output is not big enough for the inputs...
-    ASSERT(inputLeft.size() <= output.size() / 2);
-    ASSERT(inputRight.size() <= output.size() / 2);
+    CHECK(inputLeft.size() <= output.size() / 2);
+    CHECK(inputRight.size() <= output.size() / 2);
 
     auto* lIn = inputLeft.begin();
     auto* rIn = inputRight.begin();
@@ -146,7 +146,7 @@ void sfz::fill<float, true>(absl::Span<float> output, float value) noexcept
 template <>
 void sfz::exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
@@ -167,7 +167,7 @@ void sfz::exp<float, true>(absl::Span<const float> input, absl::Span<float> outp
 template <>
 void sfz::cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
@@ -188,7 +188,7 @@ void sfz::cos<float, true>(absl::Span<const float> input, absl::Span<float> outp
 template <>
 void sfz::log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
@@ -209,7 +209,7 @@ void sfz::log<float, true>(absl::Span<const float> input, absl::Span<float> outp
 template <>
 void sfz::sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = in + std::min(input.size(), output.size());
@@ -347,9 +347,9 @@ float sfz::loopingSFZIndex<float, true>(absl::Span<const float> jumps,
     float loopEnd,
     float loopStart) noexcept
 {
-    ASSERT(indices.size() >= jumps.size());
-    ASSERT(indices.size() == leftCoeffs.size());
-    ASSERT(indices.size() == rightCoeffs.size());
+    CHECK(indices.size() >= jumps.size());
+    CHECK(indices.size() == leftCoeffs.size());
+    CHECK(indices.size() == rightCoeffs.size());
 
     auto index = indices.data();
     auto leftCoeff = leftCoeffs.data();
@@ -405,9 +405,9 @@ float sfz::saturatingSFZIndex<float, true>(absl::Span<const float> jumps,
     float floatIndex,
     float loopEnd) noexcept
 {
-    ASSERT(indices.size() >= jumps.size());
-    ASSERT(indices.size() == leftCoeffs.size());
-    ASSERT(indices.size() == rightCoeffs.size());
+    CHECK(indices.size() >= jumps.size());
+    CHECK(indices.size() == leftCoeffs.size());
+    CHECK(indices.size() == rightCoeffs.size());
 
     auto index = indices.data();
     auto leftCoeff = leftCoeffs.data();
@@ -506,7 +506,7 @@ float sfz::multiplicativeRamp<float, true>(absl::Span<float> output, float value
 template <>
 void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
@@ -547,7 +547,7 @@ void sfz::add<float, true>(float value, absl::Span<float> output) noexcept
 template <>
 void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
@@ -588,7 +588,7 @@ void sfz::subtract<float, true>(const float value, absl::Span<float> output) noe
 template <>
 void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
@@ -609,8 +609,8 @@ void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> out
 template <>
 void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
 {
-    ASSERT(leftBuffer.size() >= panEnvelope.size());
-    ASSERT(rightBuffer.size() >= panEnvelope.size());
+    CHECK(leftBuffer.size() >= panEnvelope.size());
+    CHECK(rightBuffer.size() >= panEnvelope.size());
     auto* pan = panEnvelope.begin();
     auto* left = leftBuffer.begin();
     auto* right = rightBuffer.begin();
@@ -647,8 +647,8 @@ void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float
 template <>
 void sfz::width<float, true>(absl::Span<const float> widthEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
 {
-    ASSERT(leftBuffer.size() >= widthEnvelope.size());
-    ASSERT(rightBuffer.size() >= widthEnvelope.size());
+    CHECK(leftBuffer.size() >= widthEnvelope.size());
+    CHECK(rightBuffer.size() >= widthEnvelope.size());
     auto* width = widthEnvelope.begin();
     auto* left = leftBuffer.begin();
     auto* right = rightBuffer.begin();
@@ -757,7 +757,7 @@ float sfz::meanSquared<float, true>(absl::Span<const float> vector) noexcept
 template <>
 void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     if (input.size() == 0)
         return;
 
@@ -789,9 +789,9 @@ template <>
 void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> leftCoeffs, absl::Span<float> rightCoeffs) noexcept
 {
     sfz::sfzInterpolationCast<float, false>(floatJumps, jumps, leftCoeffs, rightCoeffs);
-    // ASSERT(jumps.size() >= floatJumps.size());
-    // ASSERT(jumps.size() == leftCoeffs.size());
-    // ASSERT(jumps.size() == rightCoeffs.size());
+    // CHECK(jumps.size() >= floatJumps.size());
+    // CHECK(jumps.size() == leftCoeffs.size());
+    // CHECK(jumps.size() == rightCoeffs.size());
 
     // auto floatJump = floatJumps.data();
     // auto jump = jumps.data();
@@ -822,7 +822,7 @@ void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, 
 template <>
 void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     if (input.size() == 0)
         return;
 

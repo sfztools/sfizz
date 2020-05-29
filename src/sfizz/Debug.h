@@ -33,23 +33,41 @@
         debugBreak();                                                            \
     } while (0)
 
-#define ASSERT(expression) \
-    do {                   \
-        if (!(expression)) \
-            ASSERTFALSE;   \
+#define ASSERT(expression)                                          \
+    do {                                                            \
+        if (!(expression)) {                                        \
+            std::cerr << "Assert failed: " << #expression << '\n';  \
+            ASSERTFALSE;                                            \
+        }                                                           \
+    } while (0)
+
+#define CHECKFALSE                                                              \
+    do {                                                                        \
+        std::cerr << "Check failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
+    } while (0)
+
+#define CHECK(expression)                                         \
+    do {                                                          \
+        if (!(expression)) {                                      \
+            std::cerr << "Check failed: " << #expression << '\n'; \
+            CHECKFALSE;                                           \
+        }                                                         \
     } while (0)
 
 #else // NDEBUG
 
 #define ASSERTFALSE do {} while (0)
 #define ASSERT(expression) do {} while (0)
+#define CHECKFALSE do {} while (0)
+#define CHECK(expression) do {} while (0)
 
 #endif
 
 // Debug message
 #if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_DBG)
 #include <iostream>
-#define DBG(ostream) do { std::cerr << ostream << '\n'; } while (0)
+#include <iomanip>
+#define DBG(ostream) do { std::cerr << std::fixed << std::setprecision(2) << ostream << '\n'; } while (0)
 #else
 #define DBG(ostream) do {} while (0)
 #endif

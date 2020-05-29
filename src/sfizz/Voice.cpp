@@ -250,8 +250,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    ASSERT(isValidAudio(buffer.getConstSpan(0)));
-    ASSERT(isValidAudio(buffer.getConstSpan(1)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 
@@ -529,8 +529,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    ASSERT(isValidAudio(buffer.getConstSpan(0)));
-    ASSERT(isValidAudio(buffer.getConstSpan(1)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 
@@ -595,8 +595,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    ASSERT(isValidAudio(buffer.getConstSpan(0)));
-    ASSERT(isValidAudio(buffer.getConstSpan(1)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 

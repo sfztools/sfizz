@@ -331,10 +331,10 @@ bool hasNanInf(absl::Span<Type> span)
 }
 
 template <class Type>
-bool isValidAudio(absl::Span<Type> span)
+bool isReasonableAudio(absl::Span<Type> span)
 {
     for (const auto& x : span)
-        if (x < -1.0f || x > 1.0f)
+        if (x < -10.0f || x > 10.0f)
             return false;
 
     return true;
@@ -397,7 +397,7 @@ constexpr bool checkSpanSizes(const absl::Span<T>& span1, Others... others)
     return _checkSpanSizes(span1.size(), others...);
 }
 
-#define CHECK_SPAN_SIZES(...) ASSERT(checkSpanSizes(__VA_ARGS__))
+#define CHECK_SPAN_SIZES(...) CHECK(checkSpanSizes(__VA_ARGS__))
 
 
 class ScopedRoundingMode {

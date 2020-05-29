@@ -65,8 +65,8 @@ template <class T, bool SIMD = SIMDConfig::readInterleaved>
 void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::Span<T> outputRight) noexcept
 {
     // The size of the output is not big enough for the input...
-    ASSERT(outputLeft.size() >= input.size() / 2);
-    ASSERT(outputRight.size() >= input.size() / 2);
+    CHECK(outputLeft.size() >= input.size() / 2);
+    CHECK(outputRight.size() >= input.size() / 2);
 
     auto* in = input.begin();
     auto* lOut = outputLeft.begin();
@@ -98,8 +98,8 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::writeInterleaved>
 void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRight, absl::Span<T> output) noexcept
 {
-    ASSERT(inputLeft.size() <= output.size() / 2);
-    ASSERT(inputRight.size() <= output.size() / 2);
+    CHECK(inputLeft.size() <= output.size() / 2);
+    CHECK(inputRight.size() <= output.size() / 2);
 
     auto* lIn = inputLeft.begin();
     auto* rIn = inputRight.begin();
@@ -142,7 +142,7 @@ void fill<float, true>(absl::Span<float> output, float value) noexcept;
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto sentinel = std::min(input.size(), output.size());
     for (decltype(sentinel) i = 0; i < sentinel; ++i)
         output[i] = std::exp(input[i]);
@@ -164,7 +164,7 @@ void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto sentinel = std::min(input.size(), output.size());
     for (decltype(sentinel) i = 0; i < sentinel; ++i)
         output[i] = std::log(input[i]);
@@ -186,7 +186,7 @@ void log<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto sentinel = std::min(input.size(), output.size());
     for (decltype(sentinel) i = 0; i < sentinel; ++i)
         output[i] = std::sin(input[i]);
@@ -208,7 +208,7 @@ void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) n
 template <class Type, bool SIMD = SIMDConfig::mathfuns>
 void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto sentinel = std::min(input.size(), output.size());
     for (decltype(sentinel) i = 0; i < sentinel; ++i)
         output[i] = std::cos(input[i]);
@@ -259,9 +259,9 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::saturatingSFZIndex>
 float saturatingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd) noexcept
 {
-    ASSERT(indices.size() >= jumps.size());
-    ASSERT(indices.size() == leftCoeffs.size());
-    ASSERT(indices.size() == rightCoeffs.size());
+    CHECK(indices.size() >= jumps.size());
+    CHECK(indices.size() == leftCoeffs.size());
+    CHECK(indices.size() == rightCoeffs.size());
 
     auto* index = indices.begin();
     auto* leftCoeff = leftCoeffs.begin();
@@ -312,9 +312,9 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::loopingSFZIndex>
 float loopingSFZIndex(absl::Span<const T> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs, absl::Span<int> indices, T floatIndex, T loopEnd, T loopStart) noexcept
 {
-    ASSERT(indices.size() >= jumps.size());
-    ASSERT(indices.size() == leftCoeffs.size());
-    ASSERT(indices.size() == rightCoeffs.size());
+    CHECK(indices.size() >= jumps.size());
+    CHECK(indices.size() == leftCoeffs.size());
+    CHECK(indices.size() == rightCoeffs.size());
 
     auto* index = indices.begin();
     auto* leftCoeff = leftCoeffs.begin();
@@ -353,7 +353,7 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(input.size() <= output.size());
+    CHECK(input.size() <= output.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + std::min(output.size(), input.size());
@@ -383,8 +383,8 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::gain>
 void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(gain.size() == input.size());
-    ASSERT(input.size() <= output.size());
+    CHECK(gain.size() == input.size());
+    CHECK(input.size() <= output.size());
     auto* in = input.begin();
     auto* g = gain.begin();
     auto* out = output.begin();
@@ -451,8 +451,8 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::divide>
 void divide(absl::Span<const T> input, absl::Span<const T> divisor, absl::Span<T> output) noexcept
 {
-    ASSERT(divisor.size() == input.size());
-    ASSERT(input.size() <= output.size());
+    CHECK(divisor.size() == input.size());
+    CHECK(input.size() <= output.size());
     auto* in = input.begin();
     auto* d = divisor.begin();
     auto* out = output.begin();
@@ -507,8 +507,8 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::multiplyAdd>
 void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(gain.size() == input.size());
-    ASSERT(input.size() <= output.size());
+    CHECK(gain.size() == input.size());
+    CHECK(input.size() <= output.size());
     auto* in = input.begin();
     auto* g = gain.begin();
     auto* out = output.begin();
@@ -523,7 +523,7 @@ void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const flo
 template <class T, bool SIMD = SIMDConfig::multiplyAdd>
 void multiplyAdd(const T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    // ASSERT(input.size() <= output.size());
+    // CHECK(input.size() <= output.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + std::min(output.size(), input.size());
@@ -622,7 +622,7 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::add>
 void add(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
@@ -689,7 +689,7 @@ void subtract(const T value, absl::Span<T> output) noexcept
 template <class T, bool SIMD = SIMDConfig::subtract>
 void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     auto* in = input.begin();
     auto* out = output.begin();
     auto* sentinel = out + min(input.size(), output.size());
@@ -724,7 +724,7 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::copy>
 void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     if (output.data() == input.data() && output.size() == input.size())
         return;
     auto* in = input.begin();
@@ -801,8 +801,8 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::pan>
 void pan(absl::Span<const T> panEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
 {
-    ASSERT(leftBuffer.size() >= panEnvelope.size());
-    ASSERT(rightBuffer.size() >= panEnvelope.size());
+    CHECK(leftBuffer.size() >= panEnvelope.size());
+    CHECK(rightBuffer.size() >= panEnvelope.size());
     auto* pan = panEnvelope.begin();
     auto* left = leftBuffer.begin();
     auto* right = rightBuffer.begin();
@@ -831,8 +831,8 @@ void pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> lef
 template <class T, bool SIMD = SIMDConfig::pan>
 void width(absl::Span<const T> widthEnvelope, absl::Span<T> leftBuffer, absl::Span<T> rightBuffer) noexcept
 {
-    ASSERT(leftBuffer.size() >= widthEnvelope.size());
-    ASSERT(rightBuffer.size() >= widthEnvelope.size());
+    CHECK(leftBuffer.size() >= widthEnvelope.size());
+    CHECK(rightBuffer.size() >= widthEnvelope.size());
     auto* width = widthEnvelope.begin();
     auto* left = leftBuffer.begin();
     auto* right = rightBuffer.begin();
@@ -921,7 +921,7 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::cumsum>
 void cumsum(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     if (input.size() == 0)
         return;
 
@@ -962,9 +962,9 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::sfzInterpolationCast>
 void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> leftCoeffs, absl::Span<T> rightCoeffs) noexcept
 {
-    ASSERT(jumps.size() >= floatJumps.size());
-    ASSERT(jumps.size() == leftCoeffs.size());
-    ASSERT(jumps.size() == rightCoeffs.size());
+    CHECK(jumps.size() >= floatJumps.size());
+    CHECK(jumps.size() == leftCoeffs.size());
+    CHECK(jumps.size() == rightCoeffs.size());
 
     auto floatJump = floatJumps.data();
     auto jump = jumps.data();
@@ -1003,7 +1003,7 @@ namespace _internals {
 template <class T, bool SIMD = SIMDConfig::diff>
 void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    ASSERT(output.size() >= input.size());
+    CHECK(output.size() >= input.size());
     if (input.size() == 0)
         return;
 

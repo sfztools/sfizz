@@ -724,12 +724,10 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         }
     }
 
-#if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    ASSERT(isValidAudio(buffer.getConstSpan(0)));
-    ASSERT(isValidAudio(buffer.getConstSpan(1)));
-#endif
+    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
