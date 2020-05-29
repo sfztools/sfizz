@@ -1,3 +1,9 @@
+# resource files
+set(EDITOR_RESOURCES
+    logo.png
+    PARENT_SCOPE)
+
+# dependency checks
 if(NOT TARGET sfizz-cairo)
     message(FATAL_ERROR "Could not find cairo, required by editor")
 endif()

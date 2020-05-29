@@ -93,6 +93,16 @@ foreach(res ${LV2_RESOURCES})
         DESTINATION "${PROJECT_BINARY_DIR}/Resources")
 endforeach()
 
+# Copy editor resources
+if (SFIZZ_LV2_UI)
+    execute_process (
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/Resources")
+    foreach(res ${EDITOR_RESOURCES})
+        file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources/${res}"
+            DESTINATION "${PROJECT_BINARY_DIR}/Resources")
+    endforeach()
+endif()
+
 # Installation
 if (NOT MSVC)
     install (DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR}
