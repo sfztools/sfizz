@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "Config.h"
 #include "Interpolators.h"
 #include "ScopedFTZ.h"
 #include "absl/types/span.h"
@@ -46,7 +47,8 @@ static void doInterpolation(absl::Span<const float> input, absl::Span<float> out
 {
     const float kOutToIn = static_cast<float>(input.size()) / output.size();
 
-    for (size_t iOut = 0; iOut < output.size(); ++iOut) {
+    for (size_t iOut = sfz::config::excessFileFrames;
+            iOut < output.size() - sfz::config::excessFileFrames; ++iOut) {
         float posIn = iOut * kOutToIn;
         unsigned dec = static_cast<int>(posIn);
         float frac = posIn - dec;
@@ -81,6 +83,6 @@ BENCHMARK_DEFINE_F(Interpolators, Bspline3)(benchmark::State& state)
     }
 }
 
-BENCHMARK_REGISTER_F(Interpolators, Linear)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
-BENCHMARK_REGISTER_F(Interpolators, Hermite3)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
-BENCHMARK_REGISTER_F(Interpolators, Bspline3)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(Interpolators, Linear)->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
+BENCHMARK_REGISTER_F(Interpolators, Hermite3)->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
+BENCHMARK_REGISTER_F(Interpolators, Bspline3)->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
