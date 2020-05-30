@@ -346,14 +346,12 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
 
     REQUIRE( synth.getNumRegions() == 3 );
 
-#if 0
     // Note: test checked to be wrong under Sforzando 1.961
     //       It is the shorter matching $-variable which matches among both.
     //       The rest of the variable name creates some trailing junk text
-    //       which Sforzando accepts without warning. (eg. `key=52Edge`)
-    REQUIRE( synth.getRegionView(0)->keyRange.getStart() == 52 );
-    REQUIRE( synth.getRegionView(0)->keyRange.getEnd() == 52 );
-#endif
+    //       which Sforzando accepts without warning. (eg. `key=57Edge`)
+    REQUIRE( synth.getRegionView(0)->keyRange.getStart() == 57 );
+    REQUIRE( synth.getRegionView(0)->keyRange.getEnd() == 57 );
 
     REQUIRE( synth.getRegionView(1)->keyRange.getStart() == 57 );
     REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
