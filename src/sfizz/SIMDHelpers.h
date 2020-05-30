@@ -41,6 +41,39 @@
 #include <cmath>
 
 namespace sfz {
+
+// NOTE: The goal is to collapse all checks on release, and compute the sentinels for the span versions
+// https://godbolt.org/z/43dveW shows this should work
+
+enum class SIMDOps {
+    writeInterleaved,
+    readInterleaved,
+    fill,
+    gain,
+    divide,
+    mathfuns,
+    loopingSFZIndex,
+    saturatingSFZIndex,
+    linearRamp,
+    multiplicativeRamp,
+    add,
+    subtract,
+    multiplyAdd,
+    copy,
+    pan,
+    cumsum,
+    diff,
+    sfzInterpolationCast,
+    mean,
+    meanSquared,
+    upsampling,
+    _sentinel //
+};
+// Enable or disable SIMD accelerators at runtime
+static void setSIMDOpStatus(SIMDOps op, bool status);
+static bool getSIMDOpStatus(SIMDOps op);
+
+
 namespace _internals {
     template <class T>
     inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
