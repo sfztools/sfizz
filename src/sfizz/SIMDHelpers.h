@@ -285,60 +285,59 @@ void divide(absl::Span<T> output,  absl::Span<const T> divisor) noexcept
     divide<T>(output.data(), divisor.data(), output.data(), minSpanSize(divisor, output));
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetMultiplyAdd(const T*& gain, const T*& input, T*& output)
-    {
+/**
+ * @brief Applies a gain to the input and add it on the output
+ *
+ * @tparam T the underlying type
+ * @param gain
+ * @param input
+ * @param output
+ * @param size
+ */
+template <class T>
+void multiplyAdd(const T* gain, const T* input, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
         *output++ += (*gain++) * (*input++);
-    }
+}
 
-    template <class T>
-    inline void snippetMultiplyAdd(const T gain, const T*& input, T*& output)
-    {
-        *output++ += gain * (*input++);
-    }
+template <>
+void multiplyAdd<float>(const float* gain, const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(gain, input, output);
+    multiplyAdd<T>(gain.data(), input.data(), output.data(), minSpanSize(gain, input, output));
 }
 
 /**
  * @brief Applies a gain to the input and add it on the output
  *
- * The output size will be the minimum of the gain span, input span and output span sizes.
- *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param gain
  * @param input
  * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::multiplyAdd>
-void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+template <class T>
+void multiplyAdd(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(gain.size() == input.size());
-    CHECK(input.size() <= output.size());
-    auto* in = input.begin();
-    auto* g = gain.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + std::min(gain.size(), std::min(output.size(), input.size()));
-    while (out < sentinel)
-        _internals::snippetMultiplyAdd<T>(g, in, out);
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ += gain * (*input++);
 }
 
 template <>
-void multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
+void multiplyAdd<float>(float gain, const float* input, float* output, unsigned size) noexcept;
 
-template <class T, bool SIMD = SIMDConfig::multiplyAdd>
-void multiplyAdd(const T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+template <class T>
+void multiplyAdd(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    // CHECK(input.size() <= output.size());
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + std::min(output.size(), input.size());
-    while (out < sentinel)
-        _internals::snippetMultiplyAdd<T>(gain, in, out);
+    CHECK_SPAN_SIZES(input, output);
+    multiplyAdd<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
-
-template <>
-void multiplyAdd<float, true>(const float gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 namespace _internals {
     template <class T>

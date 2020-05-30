@@ -17,52 +17,6 @@
 constexpr uintptr_t TypeAlignment = 4;
 
 template <>
-void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
-{
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* g = gain.begin();
-    const auto size = std::min(output.size(), std::min(input.size(), gain.size()));
-    const auto* lastAligned = prevAligned(output.begin() + size);
-
-    while (unaligned(out, in, g) && out < lastAligned)
-        _internals::snippetMultiplyAdd<float>(g, in, out);
-
-    while (out < lastAligned) {
-        auto mmOut = _mm_load_ps(out);
-        mmOut = _mm_add_ps(_mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)), mmOut);
-        _mm_store_ps(out, mmOut);
-        incrementAll<TypeAlignment>(g, in, out);
-    }
-
-    while (out < output.end())
-        _internals::snippetMultiplyAdd<float>(g, in, out);
-}
-
-template <>
-void sfz::multiplyAdd<float, true>(const float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
-{
-    auto* in = input.begin();
-    auto* out = output.begin();
-    const auto size = std::min(output.size(), input.size());
-    const auto* lastAligned = prevAligned(output.begin() + size);
-
-    while (unaligned(out, in) && out < lastAligned)
-        _internals::snippetMultiplyAdd<float>(gain, in, out);
-
-    auto mmGain = _mm_set1_ps(gain);
-    while (out < lastAligned) {
-        auto mmOut = _mm_load_ps(out);
-        mmOut = _mm_add_ps(_mm_mul_ps(mmGain, _mm_load_ps(in)), mmOut);
-        _mm_store_ps(out, mmOut);
-        incrementAll<TypeAlignment>(in, out);
-    }
-
-    while (out < output.end())
-        _internals::snippetMultiplyAdd<float>(gain, in, out);
-}
-
-template <>
 float sfz::linearRamp<float, true>(absl::Span<float> output, float value, float step) noexcept
 {
     auto* out = output.begin();
