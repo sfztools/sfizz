@@ -19,7 +19,8 @@ static void Interleaved_Write(benchmark::State& state) {
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
 
   for (auto _ : state) {
-    sfz::writeInterleaved<float, false>(inputLeft, inputRight, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(inputLeft, inputRight, absl::MakeSpan(output));
   }
 }
 
@@ -30,8 +31,8 @@ static void Interleaved_Write_SSE(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    sfz::writeInterleaved<float, true>(inputLeft, inputRight, absl::MakeSpan(output));
-    benchmark::DoNotOptimize(output);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, true);
+    sfz::writeInterleaved(inputLeft, inputRight, absl::MakeSpan(output));
   }
 }
 
@@ -42,8 +43,12 @@ static void Unaligned_Interleaved_Write(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    sfz::writeInterleaved<float, false>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
-    benchmark::DoNotOptimize(output);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(
+        absl::MakeSpan(inputLeft).subspan(1),
+        absl::MakeSpan(inputRight).subspan(1),
+        absl::MakeSpan(output).subspan(2)
+    );
   }
 }
 
@@ -54,8 +59,12 @@ static void Unaligned_Interleaved_Write_SSE(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    sfz::writeInterleaved<float, true>(absl::MakeSpan(inputLeft).subspan(1) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
-    benchmark::DoNotOptimize(output);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, true);
+    sfz::writeInterleaved(
+        absl::MakeSpan(inputLeft).subspan(1),
+        absl::MakeSpan(inputRight).subspan(1),
+        absl::MakeSpan(output).subspan(2)
+    );
   }
 }
 
@@ -66,8 +75,12 @@ static void Unaligned_Interleaved_Write_2(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    sfz::writeInterleaved<float, false>(absl::MakeSpan(inputLeft) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
-    benchmark::DoNotOptimize(output);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(
+        absl::MakeSpan(inputLeft),
+        absl::MakeSpan(inputRight).subspan(1),
+        absl::MakeSpan(output).subspan(2)
+    );
   }
 }
 
@@ -78,8 +91,12 @@ static void Unaligned_Interleaved_Write_SSE_2(benchmark::State& state) {
   std::iota(inputLeft.begin(), inputLeft.end(), 1.0f);
   std::iota(inputRight.begin(), inputRight.end(), 1.0f);
   for (auto _ : state) {
-    sfz::writeInterleaved<float, true>(absl::MakeSpan(inputLeft) , absl::MakeSpan(inputRight).subspan(1), absl::MakeSpan(output).subspan(2));
-    benchmark::DoNotOptimize(output);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, true);
+    sfz::writeInterleaved(
+        absl::MakeSpan(inputLeft),
+        absl::MakeSpan(inputRight).subspan(1),
+        absl::MakeSpan(output).subspan(2)
+    );
   }
 }
 

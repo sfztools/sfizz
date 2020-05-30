@@ -18,7 +18,7 @@ if(SAMPLERATE_LIBRARY AND SAMPLERATE_INCLUDE_DIR)
 endif()
 
 add_library(bm_simd STATIC ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_simd PRIVATE absl::span)
+target_link_libraries(bm_simd PRIVATE absl::span sfizz-cpuid)
 target_include_directories(bm_simd PRIVATE ../src/external)
 add_library(bm_ftz STATIC ../src/sfizz/ScopedFTZ.cpp)
 

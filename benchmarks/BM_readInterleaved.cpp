@@ -18,7 +18,8 @@ static void Scalar(benchmark::State& state) {
   std::iota(input.begin(), input.end(), 1.0f);
 
   for (auto _ : state) {
-    sfz::readInterleaved<float, false>(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
   }
 }
 
@@ -29,7 +30,8 @@ static void SSE(benchmark::State& state) {
   std::iota(input.begin(), input.end(), 1.0f);
 
   for (auto _ : state) {
-    sfz::readInterleaved<float, true>(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(input, absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
   }
 }
 
@@ -39,7 +41,12 @@ static void Scalar_Unaligned(benchmark::State& state) {
   sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    sfz::readInterleaved<float, false>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(
+        absl::MakeSpan(input).subspan(2),
+        absl::MakeSpan(outputLeft),
+        absl::MakeSpan(outputRight)
+    );
   }
 }
 
@@ -49,7 +56,12 @@ static void SSE_Unaligned(benchmark::State& state) {
   sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    sfz::readInterleaved<float, true>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft), absl::MakeSpan(outputRight));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(
+        absl::MakeSpan(input).subspan(2),
+        absl::MakeSpan(outputLeft),
+        absl::MakeSpan(outputRight)
+    );
   }
 }
 
@@ -59,7 +71,12 @@ static void Scalar_Unaligned_2(benchmark::State& state) {
   sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    sfz::readInterleaved<float, false>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft).subspan(1), absl::MakeSpan(outputRight).subspan(3));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(
+        absl::MakeSpan(input).subspan(2),
+        absl::MakeSpan(outputLeft).subspan(1),
+        absl::MakeSpan(outputRight).subspan(3)
+    );
   }
 }
 
@@ -69,7 +86,12 @@ static void SSE_Unaligned_2(benchmark::State& state) {
   sfz::Buffer<float> outputRight (state.range(0));
   std::iota(input.begin(), input.end(), 1.0f);
   for (auto _ : state) {
-    sfz::readInterleaved<float, true>(absl::MakeSpan(input).subspan(2), absl::MakeSpan(outputLeft).subspan(1), absl::MakeSpan(outputRight).subspan(3));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(
+        absl::MakeSpan(input).subspan(2),
+        absl::MakeSpan(outputLeft).subspan(1),
+        absl::MakeSpan(outputRight).subspan(3)
+    );
   }
 }
 
