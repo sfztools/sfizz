@@ -70,7 +70,7 @@ target_link_libraries(bm_logger PRIVATE sfizz::sfizz)
 
 if (TARGET sfizz-samplerate)
 sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile)
+target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile sfizz-cpuid)
 endif()
 
 sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)

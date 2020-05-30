@@ -105,7 +105,7 @@ BENCHMARK_DEFINE_F(FileFixture, NoResampling)(benchmark::State& state) {
     {
         sfz::Buffer<float> buffer { numFrames * sndfile.channels() };
         sndfile.readf(buffer.data(), sndfile.frames());
-        sfz::readInterleaved<float>(buffer, output->getSpan(0), output->getSpan(1));
+        sfz::readInterleaved(buffer, output->getSpan(0), output->getSpan(1));
     }
 }
 
@@ -121,7 +121,7 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleAtOnce)(benchmark::State& state) {
         upsampler4x.set_coefs(coeffsStage4x.data());
 
         sndfile.readf(buffer.data(), numFrames);
-        sfz::readInterleaved<float>(buffer, output->getSpan(0), output->getSpan(1));
+        sfz::readInterleaved(buffer, output->getSpan(0), output->getSpan(1));
 
         upsampler2x.process_block(temp.data(), output->channelReader(0), static_cast<long>(numFrames));
         upsampler4x.process_block(output->channelWriter(0), temp.data(), static_cast<long>(numFrames * 2));
@@ -171,7 +171,7 @@ BENCHMARK_DEFINE_F(FileFixture, ResampleInChunks)(benchmark::State& state) {
                 thisChunkSize * sndfile.channels()
             );
 
-            sfz::readInterleaved<float>(bufferChunk, leftSpan, rightSpan);
+            sfz::readInterleaved(bufferChunk, leftSpan, rightSpan);
 
             upsampler2xLeft.process_block(chunkSpan.data(), leftSpan.data(), static_cast<long>(thisChunkSize));
             upsampler4xLeft.process_block(output->channelWriter(0) + outputFrameCounter, chunkSpan.data(), static_cast<long>(thisChunkSize * 2));

@@ -116,63 +116,6 @@ static void MulSIMDUnaligned(benchmark::State& state) {
     }
 }
 
-static void LogDomainScalar(benchmark::State& state) {
-    sfz::Buffer<float> output(state.range(0));
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 1, 2 };
-    for (auto _ : state)
-    {
-        auto value = dist(gen);
-        sfz::linearRamp<float, false>(absl::MakeSpan(output), 1.0f, value);
-        sfz::applyGain<float, false>(std::log(2.0f), absl::MakeSpan(output));
-        sfz::exp<float, false>(output, absl::MakeSpan(output));
-    }
-}
-
-static void LogDomainSIMD(benchmark::State& state) {
-    sfz::Buffer<float> output(state.range(0));
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 1, 2 };
-    for (auto _ : state)
-    {
-        auto value = dist(gen);
-        sfz::linearRamp<float, true>(absl::MakeSpan(output), 1.0f, value);
-        sfz::applyGain<float, true>(std::log(2.0f), absl::MakeSpan(output));
-        sfz::exp<float, true>(output, absl::MakeSpan(output));
-    }
-}
-static void LogDomainScalarUnaligned(benchmark::State& state) {
-    sfz::Buffer<float> output(state.range(0));
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 1, 2 };
-    for (auto _ : state)
-    {
-        auto value = dist(gen);
-        auto outputSpan = absl::MakeSpan(output).subspan(1);
-        sfz::linearRamp<float, false>(outputSpan, 1.0f, value);
-        sfz::applyGain<float, false>(std::log(2.0f), outputSpan);
-        sfz::exp<float, false>(outputSpan, outputSpan);
-    }
-}
-
-static void LogDomainSIMDUnaligned(benchmark::State& state) {
-    sfz::Buffer<float> output(state.range(0));
-    std::random_device rd { };
-    std::mt19937 gen { rd() };
-    std::uniform_real_distribution<float> dist { 1, 2 };
-    for (auto _ : state)
-    {
-        auto value = dist(gen);
-        auto outputSpan = absl::MakeSpan(output).subspan(1);
-        sfz::linearRamp<float, true>(outputSpan, 1.0f, value);
-        sfz::applyGain<float, true>(std::log(2.0f), outputSpan);
-        sfz::exp<float, true>(outputSpan, outputSpan);
-    }
-}
-
 // Register the function as a benchmark
 BENCHMARK(Dummy)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(LinearScalar)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
@@ -183,8 +126,4 @@ BENCHMARK(MulScalar)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(MulSIMD)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(MulScalarUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK(MulSIMDUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
-BENCHMARK(LogDomainScalar)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
-BENCHMARK(LogDomainSIMD)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
-BENCHMARK(LogDomainScalarUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
-BENCHMARK(LogDomainSIMDUnaligned)->RangeMultiplier(4)->Range((1 << 2), (1 << 12));
 BENCHMARK_MAIN();

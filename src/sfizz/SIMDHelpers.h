@@ -103,12 +103,10 @@ bool unaligned(const T* ptr1, Args... rest)
 /**
  * @brief Read interleaved stereo data from a buffer and separate it in a left/right pair of buffers.
  *
- * The output size will be the minimum of the input span and output spans size.
- *
- * @tparam T the underlying type
  * @param input
  * @param outputLeft
  * @param outputRight
+ * @param inputSize
  */
 void readInterleaved(const float* input, float* outputLeft, float* outputRight, unsigned inputSize) noexcept;
 
@@ -125,12 +123,10 @@ inline void readInterleaved(absl::Span<const float> input, absl::Span<float> out
 /**
  * @brief Write a pair of left and right stereo input into a single buffer interleaved.
  *
- * The output size will be the minimum of the input spans and output span size.
- *
- * @tparam T the underlying type
  * @param inputLeft
  * @param inputRight
  * @param output
+ * @param outputSize
  */
 void writeInterleaved(const float* inputLeft, const float* inputRight, float* output, unsigned outputSize) noexcept;
 
@@ -144,10 +140,9 @@ inline void writeInterleaved(absl::Span<const float> inputLeft, absl::Span<const
 }
 
 /**
- * @brief Fill a buffer with a value; comparable to std::fill in essence.
+ * @brief Fill a buffer with a value
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param output
  * @param value
  */
@@ -156,92 +151,6 @@ void fill(absl::Span<T> output, T value) noexcept
 {
     absl::c_fill(output, value);
 }
-
-/**
- * @brief Exp math function
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param input
- * @param output
- */
-template <class Type, bool SIMD = SIMDConfig::mathfuns>
-void exp(absl::Span<const Type> input, absl::Span<Type> output) noexcept
-{
-    CHECK(output.size() >= input.size());
-    auto sentinel = std::min(input.size(), output.size());
-    for (decltype(sentinel) i = 0; i < sentinel; ++i)
-        output[i] = std::exp(input[i]);
-}
-
-template <>
-void exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
-
-/**
- * @brief Log math function
- *
- * The output size will be the minimum of the input span and output span size.
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param input
- * @param output
- */
-template <class Type, bool SIMD = SIMDConfig::mathfuns>
-void log(absl::Span<const Type> input, absl::Span<Type> output) noexcept
-{
-    CHECK(output.size() >= input.size());
-    auto sentinel = std::min(input.size(), output.size());
-    for (decltype(sentinel) i = 0; i < sentinel; ++i)
-        output[i] = std::log(input[i]);
-}
-
-template <>
-void log<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
-
-/**
- * @brief sin math function
- *
- * The output size will be the minimum of the input span and output span size.
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param input
- * @param output
- */
-template <class Type, bool SIMD = SIMDConfig::mathfuns>
-void sin(absl::Span<const Type> input, absl::Span<Type> output) noexcept
-{
-    CHECK(output.size() >= input.size());
-    auto sentinel = std::min(input.size(), output.size());
-    for (decltype(sentinel) i = 0; i < sentinel; ++i)
-        output[i] = std::sin(input[i]);
-}
-
-template <>
-void sin<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
-
-/**
- * @brief cos math function
- *
- * The output size will be the minimum of the input span and output span size.
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param input
- * @param output
- */
-template <class Type, bool SIMD = SIMDConfig::mathfuns>
-void cos(absl::Span<const Type> input, absl::Span<Type> output) noexcept
-{
-    CHECK(output.size() >= input.size());
-    auto sentinel = std::min(input.size(), output.size());
-    for (decltype(sentinel) i = 0; i < sentinel; ++i)
-        output[i] = std::cos(input[i]);
-}
-
-template <>
-void cos<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
 
 namespace _internals {
     template <class T>

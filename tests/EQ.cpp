@@ -68,7 +68,7 @@ int main(int argc, char** argv)
         sfz::Buffer<float> buffer { numFrames * 2 };
         sfz::Buffer<float> right { numFrames };
         sndfile.readf(buffer.data(), numFrames * 2 );
-        sfz::readInterleaved<float>(buffer, absl::MakeSpan(left), absl::MakeSpan(right));
+        sfz::readInterleaved(buffer, absl::MakeSpan(left), absl::MakeSpan(right));
     } else if (sndfile.channels() == 1) {
         sndfile.readf(left.data(), numFrames);
     } else {
