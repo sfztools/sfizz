@@ -75,7 +75,7 @@ public:
      * @param invert whether to invert the curve
      */
     static Curve buildFromVelcurvePoints(
-        const std::vector<std::pair<uint8_t, float>>& points,
+        absl::Span<const std::pair<uint8_t, float>> points,
         Interpolator itp = Interpolator::Linear, bool invert = false);
 
     /**

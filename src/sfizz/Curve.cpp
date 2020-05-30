@@ -58,7 +58,7 @@ Curve Curve::buildCurveFromHeader(
 }
 
 Curve Curve::buildFromVelcurvePoints(
-    const std::vector<std::pair<uint8_t, float>>& points,
+    absl::Span<const std::pair<uint8_t, float>> points,
     Interpolator itp, bool invert)
 {
     Curve curve;
