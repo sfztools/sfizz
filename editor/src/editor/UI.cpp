@@ -5,17 +5,23 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "UI.h"
+#include "Editor.h"
 
 constexpr el::color UI::bkd_color;
 
 UI::UI(el::view& group)
 {
     group.content(
-        el::hold(make_toolbar(group)),
+        el::hmin_size(Editor::fixedWidth,
+            el::vmin_size(Editor::fixedHeight,
+                el::vtile(
+                    el::hold(make_toolbar(group))
 
 #if HAVE_ELEMENTS_NOTEBOOK
-        el::top_margin(95, make_tabs(group)),
+                        ,
+                    el::top_margin(95, make_tabs(group)),
 #endif
+                    ))),
         background);
 }
 el::basic_menu UI::make_pbrange_menu(const char* title, el::menu_position pos)
