@@ -122,7 +122,8 @@ TEST_CASE("[Helpers] Interleaved read")
     std::array<float, 16> expected { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 8> leftOutput;
     std::array<float, 8> rightOutput;
-    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 16> real;
 
     auto realIdx = 0;
@@ -139,7 +140,8 @@ TEST_CASE("[Helpers] Interleaved read unaligned end")
     std::array<float, 20> expected { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 10> leftOutput;
     std::array<float, 10> rightOutput;
-    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 20> real;
 
     auto realIdx = 0;
@@ -156,7 +158,8 @@ TEST_CASE("[Helpers] Small interleaved read unaligned end")
     std::array<float, 6> expected { 0.0f, 1.0f, 2.0f, 10.0f, 11.0f, 12.0f };
     std::array<float, 3> leftOutput;
     std::array<float, 3> rightOutput;
-    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 6> real;
 
     auto realIdx = 0;
@@ -173,7 +176,8 @@ TEST_CASE("[Helpers] Interleaved read -- SIMD")
     std::array<float, 16> expected = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 8> leftOutput;
     std::array<float, 8> rightOutput;
-    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 16> real;
 
     auto realIdx = 0;
@@ -190,7 +194,8 @@ TEST_CASE("[Helpers] Interleaved read unaligned end -- SIMD")
     std::array<float, 20> expected = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 10> leftOutput;
     std::array<float, 10> rightOutput;
-    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 20> real;
 
     auto realIdx = 0;
@@ -207,7 +212,8 @@ TEST_CASE("[Helpers] Small interleaved read unaligned end -- SIMD")
     std::array<float, 6> expected { 0.0f, 1.0f, 2.0f, 10.0f, 11.0f, 12.0f };
     std::array<float, 3> leftOutput;
     std::array<float, 3> rightOutput;
-    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutput), absl::MakeSpan(rightOutput));
     std::array<float, 6> real;
 
     auto realIdx = 0;
@@ -226,8 +232,10 @@ TEST_CASE("[Helpers] Interleaved read SIMD vs Scalar")
     std::array<float, medBufferSize> leftOutputSIMD;
     std::array<float, medBufferSize> rightOutputSIMD;
     std::iota(input.begin(), input.end(), 0.0f);
-    sfz::readInterleaved<float, false>(input, absl::MakeSpan(leftOutputScalar), absl::MakeSpan(rightOutputScalar));
-    sfz::readInterleaved<float, true>(input, absl::MakeSpan(leftOutputSIMD), absl::MakeSpan(rightOutputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, false);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutputScalar), absl::MakeSpan(rightOutputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::readInterleaved, true);
+    sfz::readInterleaved(input, absl::MakeSpan(leftOutputSIMD), absl::MakeSpan(rightOutputSIMD));
     REQUIRE(leftOutputScalar == leftOutputSIMD);
     REQUIRE(rightOutputScalar == rightOutputSIMD);
 }
@@ -247,7 +255,8 @@ TEST_CASE("[Helpers] Interleaved write")
     std::array<float, 8> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 16> output;
     std::array<float, 16> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f };
-    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -257,7 +266,8 @@ TEST_CASE("[Helpers] Interleaved write unaligned end")
     std::array<float, 10> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 20> output;
     std::array<float, 20> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f };
-    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -267,7 +277,8 @@ TEST_CASE("[Helpers] Small interleaved write unaligned end")
     std::array<float, 3> rightInput { 10.0f, 11.0f, 12.0f };
     std::array<float, 6> output;
     std::array<float, 6> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f };
-    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -286,7 +297,8 @@ TEST_CASE("[Helpers] Interleaved write -- SIMD")
     std::array<float, 8> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f };
     std::array<float, 16> output;
     std::array<float, 16> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f };
-    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, true);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -296,7 +308,7 @@ TEST_CASE("[Helpers] Interleaved write unaligned end -- SIMD")
     std::array<float, 10> rightInput { 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
     std::array<float, 20> output;
     std::array<float, 20> expected = { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f, 3.0f, 13.0f, 4.0f, 14.0f, 5.0f, 15.0f, 6.0f, 16.0f, 7.0f, 17.0f, 8.0f, 18.0f, 9.0f, 19.0f };
-    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -306,7 +318,8 @@ TEST_CASE("[Helpers] Small interleaved write unaligned end -- SIMD")
     std::array<float, 3> rightInput { 10.0f, 11.0f, 12.0f };
     std::array<float, 6> output;
     std::array<float, 6> expected { 0.0f, 10.0f, 1.0f, 11.0f, 2.0f, 12.0f };
-    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, true);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -318,8 +331,10 @@ TEST_CASE("[Helpers] Interleaved write SIMD vs Scalar")
     std::array<float, medBufferSize * 2> outputSIMD;
     std::iota(leftInput.begin(), leftInput.end(), 0.0f);
     std::iota(rightInput.begin(), rightInput.end(), static_cast<float>(medBufferSize));
-    sfz::writeInterleaved<float, false>(leftInput, rightInput, absl::MakeSpan(outputScalar));
-    sfz::writeInterleaved<float, true>(leftInput, rightInput, absl::MakeSpan(outputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, false);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::writeInterleaved, true);
+    sfz::writeInterleaved(leftInput, rightInput, absl::MakeSpan(outputSIMD));
     REQUIRE(outputScalar == outputSIMD);
 }
 

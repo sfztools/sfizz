@@ -69,18 +69,35 @@ enum class SIMDOps {
     upsampling,
     _sentinel //
 };
+
 // Enable or disable SIMD accelerators at runtime
-static void setSIMDOpStatus(SIMDOps op, bool status);
-static bool getSIMDOpStatus(SIMDOps op);
+void setSIMDOpStatus(SIMDOps op, bool status);
+bool getSIMDOpStatus(SIMDOps op);
 
+constexpr uintptr_t ByteAlignmentMask { config::defaultAlignment - 1 };
 
-namespace _internals {
-    template <class T>
-    inline void snippetRead(const T*& input, T*& outputLeft, T*& outputRight)
-    {
-        *outputLeft++ = *input++;
-        *outputRight++ = *input++;
-    }
+template<class T>
+T* nextAligned(const T* ptr)
+{
+    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask & (~ByteAlignmentMask));
+}
+
+template<class T>
+T* prevAligned(const T* ptr)
+{
+    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask));
+}
+
+template<class T>
+bool unaligned(const T* ptr)
+{
+    return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask )!= 0;
+}
+
+template<class T, class... Args>
+bool unaligned(const T* ptr1, Args... rest)
+{
+    return unaligned(ptr1) || unaligned(rest...);
 }
 
 /**
@@ -89,33 +106,21 @@ namespace _internals {
  * The output size will be the minimum of the input span and output spans size.
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param input
  * @param outputLeft
  * @param outputRight
  */
-template <class T, bool SIMD = SIMDConfig::readInterleaved>
-void readInterleaved(absl::Span<const T> input, absl::Span<T> outputLeft, absl::Span<T> outputRight) noexcept
+void readInterleaved(const float* input, float* outputLeft, float* outputRight, unsigned inputSize) noexcept;
+
+inline void readInterleaved(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     // The size of the output is not big enough for the input...
     CHECK(outputLeft.size() >= input.size() / 2);
     CHECK(outputRight.size() >= input.size() / 2);
-
-    auto* in = input.begin();
-    auto* lOut = outputLeft.begin();
-    auto* rOut = outputRight.begin();
-    while (in < (input.end() - 1) && lOut < outputLeft.end() && rOut < outputRight.end())
-        _internals::snippetRead<T>(in, lOut, rOut);
+    const auto size = min(input.size(), 2 * outputLeft.size(), 2 * outputRight.size());
+    readInterleaved(input.data(), outputLeft.data(), outputRight.data(), size);
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetWrite(T*& output, const T*& inputLeft, const T*& inputRight)
-    {
-        *output++ = *inputLeft++;
-        *output++ = *inputRight++;
-    }
-}
 
 /**
  * @brief Write a pair of left and right stereo input into a single buffer interleaved.
@@ -123,29 +128,20 @@ namespace _internals {
  * The output size will be the minimum of the input spans and output span size.
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param inputLeft
  * @param inputRight
  * @param output
  */
-template <class T, bool SIMD = SIMDConfig::writeInterleaved>
-void writeInterleaved(absl::Span<const T> inputLeft, absl::Span<const T> inputRight, absl::Span<T> output) noexcept
+void writeInterleaved(const float* inputLeft, const float* inputRight, float* output, unsigned outputSize) noexcept;
+
+inline void writeInterleaved(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
-    CHECK(inputLeft.size() <= output.size() / 2);
-    CHECK(inputRight.size() <= output.size() / 2);
-
-    auto* lIn = inputLeft.begin();
-    auto* rIn = inputRight.begin();
-    auto* out = output.begin();
-    while (lIn < inputLeft.end() && rIn < inputRight.end() && out < (output.end() - 1))
-        _internals::snippetWrite<T>(out, lIn, rIn);
+    // Not enough data in the inputs
+    CHECK(inputLeft.size() >= output.size() / 2);
+    CHECK(inputRight.size() >= output.size() / 2);
+    const auto size = min(output.size(), 2 * inputLeft.size(), 2 * inputRight.size());
+    writeInterleaved(inputLeft.data(), inputRight.data(), output.data(), size);
 }
-
-// Specializations
-template <>
-void writeInterleaved<float, true>(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept;
-template <>
-void readInterleaved<float, true>(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept;
 
 /**
  * @brief Fill a buffer with a value; comparable to std::fill in essence.
