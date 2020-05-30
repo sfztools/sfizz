@@ -112,13 +112,12 @@ void readInterleaved(const float* input, float* outputLeft, float* outputRight, 
 
 inline void readInterleaved(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
-    // The size of the output is not big enough for the input...
-    CHECK(outputLeft.size() >= input.size() / 2);
-    CHECK(outputRight.size() >= input.size() / 2);
+    // Something is fishy with the sizes
+    CHECK(outputLeft.size() == input.size() / 2);
+    CHECK(outputRight.size() == input.size() / 2);
     const auto size = min(input.size(), 2 * outputLeft.size(), 2 * outputRight.size());
     readInterleaved(input.data(), outputLeft.data(), outputRight.data(), size);
 }
-
 
 /**
  * @brief Write a pair of left and right stereo input into a single buffer interleaved.
@@ -132,9 +131,9 @@ void writeInterleaved(const float* inputLeft, const float* inputRight, float* ou
 
 inline void writeInterleaved(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
-    // Not enough data in the inputs
-    CHECK(inputLeft.size() >= output.size() / 2);
-    CHECK(inputRight.size() >= output.size() / 2);
+    // Something is fishy with the sizes
+    CHECK(inputLeft.size() == output.size() / 2);
+    CHECK(inputRight.size() == output.size() / 2);
     const auto size = min(output.size(), 2 * inputLeft.size(), 2 * inputRight.size());
     writeInterleaved(inputLeft.data(), inputRight.data(), output.data(), size);
 }
@@ -152,103 +151,96 @@ void fill(absl::Span<T> output, T value) noexcept
     absl::c_fill(output, value);
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetGain(T gain, const T*& input, T*& output)
-    {
-        *output++ = gain * (*input++);
-    }
-}
-
 /**
  * @brief Applies a scalar gain to the input
  *
- * The output size will be the minimum of the input span and output span size.
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param gain the gain to apply
  * @param input
  * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::gain>
-void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+template<class T>
+void applyGain(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(input.size() <= output.size());
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + std::min(output.size(), input.size());
-    while (out < sentinel)
-        _internals::snippetGain<T>(gain, in, out);
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ = gain * (*input++);
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetGainSpan(const T*& gain, const T*& input, T*& output)
-    {
-        *output++ = (*gain++) * (*input++);
-    }
+template<>
+void applyGain<float>(float gain, const float* input, float* output, unsigned size) noexcept;
+
+template<class T>
+inline void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    applyGain<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
 
 /**
- * @brief Applies a vector gain to an input stap
+ * @brief Applies a scalar gain inplace
  *
- * The output size will be the minimum of the gain, input span and output span size.
+ * @param gain the gain to apply
+ * @param array
+ * @param size
+ */
+template<class T>
+inline void applyGain(float gain, float* array, unsigned size) noexcept
+{
+    applyGain<T>(gain, array, array, size);
+}
+
+template<class T>
+inline void applyGain(float gain, absl::Span<float> array) noexcept
+{
+    applyGain<T>(gain, array.data(), array.data(), array.size());
+}
+
+/**
+ * @brief Applies a vector gain to an input span
  *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param gain
  * @param input
  * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::gain>
-void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+template<class T>
+void applyGain(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(gain.size() == input.size());
-    CHECK(input.size() <= output.size());
-    auto* in = input.begin();
-    auto* g = gain.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + std::min(gain.size(), std::min(output.size(), input.size()));
-    while (out < sentinel)
-        _internals::snippetGainSpan<T>(g, in, out);
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ = (*gain++) * (*input++);
 }
 
-/**
- * @brief Applies a scalar gain in-place on a span
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param gain
- * @param output
- */
-template <class T, bool SIMD = SIMDConfig::gain>
-void applyGain(T gain, absl::Span<T> output) noexcept
+template<>
+void applyGain<float>(const float* gain, const float* input, float* output, unsigned size) noexcept;
+
+template<class T>
+inline void applyGain(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    applyGain<T, SIMD>(gain, output, output);
+    CHECK_SPAN_SIZES(gain, input, output);
+    applyGain<T>(gain.data(), input.data(), output.data(), minSpanSize(gain, input, output));
 }
 
 /**
  * @brief Applies a vector gain in-place on a span
  *
- * The output size will be the minimum of the gain span and output span size.
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param gain
- * @param output
+ * @param array
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::gain>
-void applyGain(absl::Span<const T> gain, absl::Span<T> output) noexcept
+template<class T>
+inline void applyGain(const T* gain, T* array, unsigned size) noexcept
 {
-    applyGain<T, SIMD>(gain, output, output);
+    applyGain<T>(gain, array, array, size);
 }
 
-template <>
-void applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
-
-template <>
-void applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept;
+template<class T>
+inline void applyGain(absl::Span<const T> gain, absl::Span<T> array) noexcept
+{
+    CHECK_SPAN_SIZES(gain, array);
+    applyGain<T>(gain.data(), array.data(), array.data(), minSpanSize(gain, array));
+}
 
 namespace _internals {
     template <class T>

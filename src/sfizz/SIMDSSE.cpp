@@ -16,47 +16,6 @@
 
 constexpr uintptr_t TypeAlignment = 4;
 
-template <>
-void sfz::applyGain<float, true>(float gain, absl::Span<const float> input, absl::Span<float> output) noexcept
-{
-    auto* in = input.begin();
-    auto* out = output.begin();
-    const auto size = std::min(output.size(), input.size());
-    const auto* lastAligned = prevAligned(output.begin() + size);
-    const auto mmGain = _mm_set_ps1(gain);
-
-    while (unaligned(out, in) && out < lastAligned)
-        *out++ = gain * (*in++);
-
-    while (out < lastAligned) {
-        _mm_store_ps(out, _mm_mul_ps(mmGain, _mm_load_ps(in)));
-        incrementAll<TypeAlignment>(out, in);
-    }
-
-    while (out < output.end())
-        *out++ = gain * (*in++);
-}
-
-template <>
-void sfz::applyGain<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
-{
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* g = gain.begin();
-    const auto size = std::min(output.size(), std::min(input.size(), gain.size()));
-    const auto* lastAligned = prevAligned(output.begin() + size);
-
-    while (unaligned(out, in, g) && out < lastAligned)
-        _internals::snippetGainSpan<float>(g, in, out);
-
-    while (out < lastAligned) {
-        _mm_store_ps(out, _mm_mul_ps(_mm_load_ps(g), _mm_load_ps(in)));
-        incrementAll<TypeAlignment>(g, in, out);
-    }
-
-    while (out < output.end())
-        _internals::snippetGainSpan<float>(g, in, out);
-}
 
 
 template <>

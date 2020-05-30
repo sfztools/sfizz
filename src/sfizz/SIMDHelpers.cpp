@@ -13,6 +13,7 @@ namespace sfz {
 
 static std::array<bool, static_cast<unsigned>(SIMDOps::_sentinel)> simdStatus;
 static bool simdStatusInitialized = false;
+static cpuid::cpuinfo cpuInfo;
 
 void resetSIMDStatus()
 {
@@ -58,7 +59,7 @@ bool getSIMDOpStatus(SIMDOps op)
 
 constexpr uintptr_t TypeAlignment = 4;
 
-template<class T>
+template <class T>
 inline void tickRead(const T*& input, T*& outputLeft, T*& outputRight)
 {
     *outputLeft++ = *input++;
@@ -75,7 +76,7 @@ inline void tickWrite(T*& output, const T*& inputLeft, const T*& inputRight)
 void readInterleaved(const float* input, float* outputLeft, float* outputRight, unsigned inputSize) noexcept
 {
     const auto sentinel = input + inputSize - 1;
-    cpuid::cpuinfo cpuInfo;
+
     if (getSIMDOpStatus(SIMDOps::readInterleaved)) {
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
         if (cpuInfo.has_sse()) {
@@ -109,8 +110,7 @@ void writeInterleaved(const float* inputLeft, const float* inputRight, float* ou
 {
     const auto sentinel = output + outputSize - 1;
 
-    cpuid::cpuinfo cpuInfo;
-    if (getSIMDOpStatus(SIMDOps::readInterleaved)) {
+    if (getSIMDOpStatus(SIMDOps::writeInterleaved)) {
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
         if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(output + outputSize - 4);
@@ -136,5 +136,56 @@ void writeInterleaved(const float* inputLeft, const float* inputRight, float* ou
         tickWrite(output, inputLeft, inputRight);
 }
 
+template<>
+void applyGain<float>(float gain, const float* input, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::gain)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+            const auto mmGain = _mm_set_ps1(gain);
+            while (unaligned(input, output) && output < lastAligned)
+                *output++ = gain * (*input++);
+
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_mul_ps(mmGain, _mm_load_ps(input)));
+                incrementAll<4>(input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ = gain * (*input++);
 }
 
+template<>
+void applyGain<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::gain)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && output < lastAligned)
+                *output++ = (*gain++) * (*input++);
+
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_mul_ps(_mm_load_ps(gain), _mm_load_ps(input)));
+                incrementAll<4>(gain, input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ = (*gain++) * (*input++);
+}
+
+}
