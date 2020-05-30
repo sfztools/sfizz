@@ -122,7 +122,7 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
     if (!absl::SimpleAtoi(value, &returnedValue)) {
         float floatValue;
         if (!absl::SimpleAtof(value, &floatValue))
-            return {};
+            return absl::nullopt;
         returnedValue = static_cast<int64_t>(floatValue);
     }
 
@@ -151,7 +151,7 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
     value = value.substr(0, numberEnd);
 
     float returnedValue;
-    if (!absl::SimpleAtof(value.substr(0, numberEnd), &returnedValue))
+    if (!absl::SimpleAtof(value, &returnedValue))
 		return absl::nullopt;
 
     return validRange.clamp(returnedValue);
