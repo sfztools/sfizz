@@ -339,32 +339,34 @@ void multiplyAdd(T gain, absl::Span<const T> input, absl::Span<T> output) noexce
     multiplyAdd<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetRampLinear(T*& output, T& value, T step)
-    {
-        *output++ = value;
-        value += step;
-    }
-}
-
 /**
  * @brief Compute a linear ramp blockwise between 2 values
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param output The destination span
  * @param start
  * @param step
+ * @param size
  * @return T
  */
-template <class T, bool SIMD = SIMDConfig::linearRamp>
+template <class T>
+T linearRamp(T* output, T start, T step, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel) {
+        *output++ = start;
+        start += step;
+    }
+    return start;
+}
+
+template <>
+float linearRamp<float>(float* output, float start, float step, unsigned size) noexcept;
+
+template <class T>
 T linearRamp(absl::Span<T> output, T start, T step) noexcept
 {
-    auto* out = output.begin();
-    while (out < output.end())
-        _internals::snippetRampLinear<T>(out, start, step);
-    return start;
+    return linearRamp(output.data(), start, step, output.size());
 }
 
 namespace _internals {
@@ -380,26 +382,31 @@ namespace _internals {
  * @brief Compute a multiplicative ramp blockwise between 2 values
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param output The destination span
  * @param start
  * @param step
  * @return T
  */
-template <class T, bool SIMD = SIMDConfig::multiplicativeRamp>
-T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
+template <class T>
+T multiplicativeRamp(T* output, T start, T step, unsigned size) noexcept
 {
-    auto* out = output.begin();
-    while (out < output.end())
-        _internals::snippetRampMultiplicative<T>(out, start, step);
+    const auto sentinel = output + size;
+    while (output < sentinel) {
+        *output++ = start;
+        start *= step;
+    }
     return start;
 }
 
 template <>
-float linearRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
+float multiplicativeRamp<float>(float* output, float start, float step, unsigned size) noexcept;
 
-template <>
-float multiplicativeRamp<float, true>(absl::Span<float> output, float start, float step) noexcept;
+template <class T>
+T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
+{
+    return multiplicativeRamp(output.data(), start, step, output.size());
+
+}
 
 namespace _internals {
     template <class T>

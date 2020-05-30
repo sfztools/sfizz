@@ -269,4 +269,74 @@ void multiplyAdd<float>(float gain, const float* input, float* output, unsigned 
         *output++ += gain * (*input++);
 }
 
+template <>
+float linearRamp<float>(float* output, float start, float step, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::linearRamp)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+            while (unaligned(output) && output < lastAligned){
+                *output++ = start;
+                start += step;
+            }
+
+            auto mmStart = _mm_set1_ps(start - step);
+            auto mmStep = _mm_set_ps(step + step + step + step, step + step + step, step + step, step);
+            while (output < lastAligned) {
+                mmStart = _mm_add_ps(mmStart, mmStep);
+                _mm_store_ps(output, mmStart);
+                mmStart = _mm_shuffle_ps(mmStart, mmStart, _MM_SHUFFLE(3, 3, 3, 3));
+                incrementAll<4>( output);
+            }
+            start = _mm_cvtss_f32(mmStart) + step;
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel) {
+        *output++ = start;
+        start += step;
+    }
+    return start;
+}
+
+template <>
+float multiplicativeRamp<float>(float* output, float start, float step, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::linearRamp)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+            while (unaligned(output) && output < lastAligned){
+                *output++ = start;
+                start *= step;
+            }
+
+            auto mmStart = _mm_set1_ps(start / step);
+            auto mmStep = _mm_set_ps(step * step * step * step, step * step * step, step * step, step);
+            while (output < lastAligned) {
+                mmStart = _mm_mul_ps(mmStart, mmStep);
+                _mm_store_ps(output, mmStart);
+                mmStart = _mm_shuffle_ps(mmStart, mmStart, _MM_SHUFFLE(3, 3, 3, 3));
+                incrementAll<4>( output);
+            }
+            start = _mm_cvtss_f32(mmStart) * step;
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel) {
+        *output++ = start;
+        start *= step;
+    }
+    return start;
+}
+
 }

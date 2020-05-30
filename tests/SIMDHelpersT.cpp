@@ -356,7 +356,8 @@ TEST_CASE("[Helpers] Linear Ramp")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { start, start + v, start + v + v, start + v + v + v, start + v + v + v + v, start + v + v + v + v + v };
-    sfz::linearRamp<float, false>(absl::MakeSpan(output), start, v);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, false);
+    sfz::linearRamp<float>(absl::MakeSpan(output), start, v);
     REQUIRE(output == expected);
 }
 
@@ -366,7 +367,8 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD)")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { start, start + v, start + v + v, start + v + v + v, start + v + v + v + v, start + v + v + v + v + v };
-    sfz::linearRamp<float, true>(absl::MakeSpan(output), start, v);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
+    sfz::linearRamp<float>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -375,8 +377,10 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD vs scalar)")
     const float start { 0.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    sfz::linearRamp<float, false>(absl::MakeSpan(outputScalar), start, fillValue);
-    sfz::linearRamp<float, true>(absl::MakeSpan(outputSIMD), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, false);
+    sfz::linearRamp<float>(absl::MakeSpan(outputScalar), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
+    sfz::linearRamp<float>(absl::MakeSpan(outputSIMD), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -385,8 +389,10 @@ TEST_CASE("[Helpers] Linear Ramp unaligned (SIMD vs scalar)")
     const float start { 0.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    sfz::linearRamp<float, false>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
-    sfz::linearRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, false);
+    sfz::linearRamp<float>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
+    sfz::linearRamp<float>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -396,7 +402,8 @@ TEST_CASE("[Helpers] Multiplicative Ramp")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { start, start * v, start * v * v, start * v * v * v, start * v * v * v * v, start * v * v * v * v * v };
-    sfz::multiplicativeRamp<float, false>(absl::MakeSpan(output), start, v);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, false);
+    sfz::multiplicativeRamp<float>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -406,7 +413,8 @@ TEST_CASE("[Helpers] Multiplicative Ramp (SIMD)")
     const float v { fillValue };
     std::array<float, 6> output;
     std::array<float, 6> expected { start, start * v, start * v * v, start * v * v * v, start * v * v * v * v, start * v * v * v * v * v };
-    sfz::multiplicativeRamp<float, true>(absl::MakeSpan(output), start, v);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, true);
+    sfz::multiplicativeRamp<float>(absl::MakeSpan(output), start, v);
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -415,8 +423,10 @@ TEST_CASE("[Helpers] Multiplicative Ramp (SIMD vs scalar)")
     const float start { 1.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    sfz::multiplicativeRamp<float, false>(absl::MakeSpan(outputScalar), start, fillValue);
-    sfz::multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, false);
+    sfz::multiplicativeRamp<float>(absl::MakeSpan(outputScalar), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, true);
+    sfz::multiplicativeRamp<float>(absl::MakeSpan(outputSIMD), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -425,8 +435,10 @@ TEST_CASE("[Helpers] Multiplicative Ramp unaligned (SIMD vs scalar)")
     const float start { 1.0f };
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
-    sfz::multiplicativeRamp<float, false>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
-    sfz::multiplicativeRamp<float, true>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, false);
+    sfz::multiplicativeRamp<float>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, true);
+    sfz::multiplicativeRamp<float>(absl::MakeSpan(outputSIMD).subspan(1), start, fillValue);
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -666,6 +678,7 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
     sfz::linearRamp<float>(absl::MakeSpan(input), 0.0f, 0.1f);
     sfz::cumsum<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
@@ -686,6 +699,7 @@ TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
     std::vector<float> input(bigBufferSize);
     std::vector<float> outputScalar(bigBufferSize);
     std::vector<float> outputSIMD(bigBufferSize);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
     sfz::linearRamp<float>(absl::MakeSpan(input), 0.0f, 0.1f);
     sfz::diff<float, false>(input, absl::MakeSpan(outputScalar));
     sfz::diff<float, true>(input, absl::MakeSpan(outputSIMD));
