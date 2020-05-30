@@ -67,7 +67,7 @@ BENCHMARK_DEFINE_F(PanArray, BlockOps)(benchmark::State& state) {
     ScopedFTZ ftz;
     for (auto _ : state)
     {
-        sfz::fill<float>(span2, 1.0f);
+        sfz::fill(span2, 1.0f);
         sfz::add<float>(span1, span2);
         sfz::applyGain<float>(piFour<float>(), span2);
         sfz::cos<float>(span2, span1);

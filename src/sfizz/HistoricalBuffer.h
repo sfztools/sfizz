@@ -35,7 +35,7 @@ public:
 	void resize(size_t size)
 	{
 		buffer.resize(size);
-		fill<ValueType>(absl::MakeSpan(buffer), 0.0);
+		fill(absl::MakeSpan(buffer), ValueType { 0 });
 		index = 0;
         validMean = false;
 	}

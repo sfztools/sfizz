@@ -17,26 +17,6 @@
 constexpr uintptr_t TypeAlignment = 4;
 
 template <>
-void sfz::fill<float, true>(absl::Span<float> output, float value) noexcept
-{
-    const auto mmValue = _mm_set_ps1(value);
-    auto* out = output.begin();
-    const auto* lastAligned = prevAligned(output.end());
-
-    while (unaligned(out) && out < lastAligned)
-        *out++ = value;
-
-    while (out < lastAligned) // we should only need to test a single channel
-    {
-        _mm_store_ps(out, mmValue);
-        out += TypeAlignment;
-    }
-
-    while (out < output.end())
-        *out++ = value;
-}
-
-template <>
 void sfz::exp<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     CHECK(output.size() >= input.size());

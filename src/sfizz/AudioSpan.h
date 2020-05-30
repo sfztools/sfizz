@@ -279,7 +279,7 @@ public:
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         for (size_t i = 0; i < numChannels; ++i)
-            sfz::fill<Type>(getSpan(i), value);
+            sfz::fill(getSpan(i), value);
     }
 
     /**

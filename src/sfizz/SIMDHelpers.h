@@ -151,14 +151,11 @@ inline void writeInterleaved(absl::Span<const float> inputLeft, absl::Span<const
  * @param output
  * @param value
  */
-template <class T, bool SIMD = SIMDConfig::fill>
+template <class T>
 void fill(absl::Span<T> output, T value) noexcept
 {
     absl::c_fill(output, value);
 }
-
-template <>
-void fill<float, true>(absl::Span<float> output, float value) noexcept;
 
 /**
  * @brief Exp math function
