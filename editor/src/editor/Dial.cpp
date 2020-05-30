@@ -57,18 +57,17 @@ void Dial::setValue_(double val)
     char sVal[16];
 
     if (type_ == Type::Cents) {
-        short i = val * 100;
+        int8_t i = val * 100;
         std::sprintf(sVal, "%i%%", i);
 
     } else if (type_ == Type::Pan) {
         int8_t i = (val * 2 - 1) * 100;
-
-        if (val < 0.5f)
+        if (i < 0)
             std::sprintf(sVal, "%i%% L", i);
-        else if (val > 0.5f)
+        else if (i > 0)
             std::sprintf(sVal, "%i%% R", i);
         else
-            std::sprintf(sVal, "0");
+            std::sprintf(sVal, "Center");
 
     } else if (type_ == Type::Transpose) {
         int8_t i = (val * 2 - 1) * 12;
