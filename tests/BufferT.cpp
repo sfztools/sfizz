@@ -41,8 +41,8 @@ template <class Type>
 void checkBoundaries(sfz::Buffer<Type>& buffer, int expectedSize)
 {
     REQUIRE((int)buffer.size() == expectedSize);
-    REQUIRE(((size_t)buffer.data() & (sfz::SIMDConfig::defaultAlignment - 1)) == 0);
-    REQUIRE(((size_t)buffer.alignedEnd() & (sfz::SIMDConfig::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.data() & (sfz::config::defaultAlignment - 1)) == 0);
+    REQUIRE(((size_t)buffer.alignedEnd() & (sfz::config::defaultAlignment - 1)) == 0);
     REQUIRE(std::distance(buffer.begin(), buffer.end()) == expectedSize);
     REQUIRE(std::distance(buffer.begin(), buffer.alignedEnd()) >= expectedSize);
 }

@@ -43,7 +43,7 @@
 #include <mutex>
 
 namespace sfz {
-using FileAudioBuffer = AudioBuffer<float, 2, SIMDConfig::defaultAlignment,
+using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
                                     sfz::config::excessFileFrames, sfz::config::excessFileFrames>;
 using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
