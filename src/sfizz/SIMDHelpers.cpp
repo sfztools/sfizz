@@ -189,7 +189,7 @@ void applyGain<float>(const float* gain, const float* input, float* output, unsi
 }
 
 template <>
-void sfz::divide<float>(const float* input, const float* divisor, float* output, unsigned size) noexcept
+void divide<float>(const float* input, const float* divisor, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -215,7 +215,7 @@ void sfz::divide<float>(const float* input, const float* divisor, float* output,
 }
 
 template <>
-void sfz::multiplyAdd<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
+void multiplyAdd<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -242,7 +242,7 @@ void sfz::multiplyAdd<float>(const float* gain, const float* input, float* outpu
 }
 
 template <>
-void sfz::multiplyAdd<float>(float gain, const float* input, float* output, unsigned size) noexcept
+void multiplyAdd<float>(float gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
