@@ -47,7 +47,7 @@ struct Region {
     ~Region() = default;
 
     /**
-     * @brief Get the number which identifies this region, also its index
+     * @brief Get the number which identifies this region
      */
     int getIdNumber() const noexcept
     {
@@ -246,7 +246,7 @@ struct Region {
      */
     float getGainToEffectBus(unsigned number) const noexcept;
 
-    const int regionNumber {};
+    const int regionNumber { -1 };
 
     // Sound source: sample playback
     FileId sampleId {}; // Sample

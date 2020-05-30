@@ -42,7 +42,7 @@ public:
         CC
     };
     /**
-     * @brief Get the number which identifies this voice, its index
+     * @brief Get the number which identifies this voice
      */
     int getIdNumber() const noexcept
     {
@@ -299,7 +299,7 @@ private:
      */
     void switchState(State s);
 
-    const int voiceNumber {};
+    const int voiceNumber { -1 };
     StateListener* stateListener = nullptr;
 
     Region* region { nullptr };
