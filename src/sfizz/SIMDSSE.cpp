@@ -16,30 +16,6 @@
 
 constexpr uintptr_t TypeAlignment = 4;
 
-
-
-template <>
-void sfz::divide<float, true>(absl::Span<const float> input, absl::Span<const float> divisor, absl::Span<float> output) noexcept
-{
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* div = divisor.begin();
-    const auto size = std::min(output.size(), std::min(input.size(), divisor.size()));
-    const auto* lastAligned = prevAligned(output.begin() + size);
-
-    while (unaligned(out, in, div) && out < lastAligned)
-        _internals::snippetDivSpan<float>(in, div, out);
-
-    while (out < lastAligned) {
-        _mm_store_ps(out, _mm_div_ps(_mm_load_ps(in), _mm_load_ps(div)));
-        incrementAll<TypeAlignment>(in, div, out);
-    }
-
-    while (out < output.end())
-        _internals::snippetDivSpan<float>(in, div, out);
-}
-
-
 template <>
 void sfz::multiplyAdd<float, true>(absl::Span<const float> gain, absl::Span<const float> input, absl::Span<float> output) noexcept
 {

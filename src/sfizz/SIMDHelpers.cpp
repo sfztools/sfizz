@@ -188,4 +188,30 @@ void applyGain<float>(const float* gain, const float* input, float* output, unsi
         *output++ = (*gain++) * (*input++);
 }
 
+template <>
+void sfz::divide<float>(const float* input, const float* divisor, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::divide)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && output < lastAligned)
+                *output++ = (*input++) / (*divisor++);
+
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_div_ps(_mm_load_ps(input), _mm_load_ps(divisor)));
+                incrementAll<4>(divisor, input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ = (*input++) / (*divisor++);
+}
+
 }
