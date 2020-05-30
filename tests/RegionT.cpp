@@ -694,9 +694,13 @@ TEST_CASE("[Region] Parsing opcodes")
     SECTION("amp_velcurve")
     {
         region.parseOpcode({ "amp_velcurve_6", "0.4" });
-        REQUIRE(region.velocityPoints.back() == std::make_pair<float, float>(6_norm, 0.4f));
+        REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(6, 0.4f));
         region.parseOpcode({ "amp_velcurve_127", "-1.0" });
-        REQUIRE(region.velocityPoints.back() == std::make_pair<float, float>(127_norm, 0.0f));
+        REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(127, 0.0f));
+        region.parseOpcode({ "amp_velcurve_008", "0.3" });
+        REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(8, 0.3f));
+        region.parseOpcode({ "amp_velcurve_064", "0.9" });
+        REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(64, 0.9f));
     }
 
     SECTION("xfin_lokey, xfin_hikey")

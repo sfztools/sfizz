@@ -115,20 +115,23 @@ private:
 template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
-        int64_t returnedValue;
-        if (!absl::SimpleAtoi(value, &returnedValue)) {
-            float floatValue;
-            if (!absl::SimpleAtof(value, &floatValue))
-                return {};
-            returnedValue = static_cast<int64_t>(floatValue);
-        }
+    const auto numberEnd = value.find_first_not_of("-1234567890.");
+    value = value.substr(0, numberEnd);
 
-        if (returnedValue > std::numeric_limits<ValueType>::max())
-            returnedValue = std::numeric_limits<ValueType>::max();
-        if (returnedValue < std::numeric_limits<ValueType>::min())
-            returnedValue = std::numeric_limits<ValueType>::min();
+    int64_t returnedValue;
+    if (!absl::SimpleAtoi(value, &returnedValue)) {
+        float floatValue;
+        if (!absl::SimpleAtof(value, &floatValue))
+            return absl::nullopt;
+        returnedValue = static_cast<int64_t>(floatValue);
+    }
 
-        return validRange.clamp(static_cast<ValueType>(returnedValue));
+    if (returnedValue > std::numeric_limits<ValueType>::max())
+        returnedValue = std::numeric_limits<ValueType>::max();
+    if (returnedValue < std::numeric_limits<ValueType>::min())
+        returnedValue = std::numeric_limits<ValueType>::min();
+
+    return validRange.clamp(static_cast<ValueType>(returnedValue));
 }
 
 /**
@@ -144,6 +147,9 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
 template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
+    const auto numberEnd = value.find_first_not_of("-1234567890.");
+    value = value.substr(0, numberEnd);
+
     float returnedValue;
     if (!absl::SimpleAtof(value, &returnedValue))
 		return absl::nullopt;

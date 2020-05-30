@@ -315,26 +315,6 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
     bus.addEffect(std::move(fx));
 }
 
-void addEndpointsToVelocityCurve(sfz::Region& region)
-{
-    if (region.velocityPoints.size() > 0) {
-        const auto velocityStart = sfz::Default::velocityRange.getStart();
-        const auto velocityEnd = sfz::Default::velocityRange.getEnd();
-        absl::c_sort(region.velocityPoints, [](const std::pair<float, float>& lhs, const std::pair<float, float>& rhs) { return lhs.first < rhs.first; });
-        if (region.ampVeltrack > 0) {
-            if (region.velocityPoints.front().first != velocityStart)
-                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair(velocityStart, velocityStart));
-            if (region.velocityPoints.back().first != velocityEnd)
-                region.velocityPoints.push_back(std::make_pair(velocityEnd, velocityEnd));
-        } else {
-            if (region.velocityPoints.front().first != velocityEnd)
-                region.velocityPoints.insert(region.velocityPoints.begin(), std::make_pair(velocityEnd, velocityStart));
-            if (region.velocityPoints.back().first != velocityStart)
-                region.velocityPoints.push_back(std::make_pair(velocityStart, velocityEnd));
-        }
-    }
-}
-
 bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
     clear();
@@ -484,7 +464,9 @@ void sfz::Synth::finalizeSfzLoad()
             }
         }
 
-        addEndpointsToVelocityCurve(*region);
+        if (!region->velocityPoints.empty())
+            region->velCurve = Curve::buildFromVelcurvePoints(
+                region->velocityPoints, Curve::Interpolator::Linear, region->ampVeltrack < 0.0f);
         region->registerPitchWheel(0);
         region->registerAftertouch(0);
         region->registerTempo(2.0f);

@@ -434,3 +434,31 @@ TEST_CASE("[Synth] Basic curves")
     // Default linear
     REQUIRE( curves.getCurve(16).evalCC7(63) == Approx(63_norm) );
 }
+
+TEST_CASE("[Synth] Velocity points")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/velocity_endpoints.sfz");
+    REQUIRE( !synth.getRegionView(0)->velocityPoints.empty());
+    REQUIRE( synth.getRegionView(0)->velocityPoints[0].first == 64 );
+    REQUIRE( synth.getRegionView(0)->velocityPoints[0].second == 1.0_a );
+    REQUIRE( !synth.getRegionView(1)->velocityPoints.empty());
+    REQUIRE( synth.getRegionView(1)->velocityPoints[0].first == 64 );
+    REQUIRE( synth.getRegionView(1)->velocityPoints[0].second == 1.0_a );
+}
+
+TEST_CASE("[Synth] velcurve")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/velocity_endpoints.sfz");
+    REQUIRE( synth.getRegionView(0)->velocityCurve(0_norm) == 0.0_a );
+    REQUIRE( synth.getRegionView(0)->velocityCurve(32_norm) == Approx(0.5f).margin(1e-2) );
+    REQUIRE( synth.getRegionView(0)->velocityCurve(64_norm) == 1.0_a );
+    REQUIRE( synth.getRegionView(0)->velocityCurve(96_norm) == 1.0_a );
+    REQUIRE( synth.getRegionView(0)->velocityCurve(127_norm) == 1.0_a );
+    REQUIRE( synth.getRegionView(1)->velocityCurve(0_norm) == 1.0_a );
+    REQUIRE( synth.getRegionView(1)->velocityCurve(32_norm) == 1.0_a );
+    REQUIRE( synth.getRegionView(1)->velocityCurve(64_norm) == 1.0_a );
+    REQUIRE( synth.getRegionView(1)->velocityCurve(96_norm) == Approx(0.5f).margin(1e-2) );
+    REQUIRE( synth.getRegionView(1)->velocityCurve(127_norm) == 0.0_a );
+}

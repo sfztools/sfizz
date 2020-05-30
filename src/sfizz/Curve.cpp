@@ -57,6 +57,35 @@ Curve Curve::buildCurveFromHeader(
     return curve;
 }
 
+Curve Curve::buildFromVelcurvePoints(
+    absl::Span<const std::pair<uint8_t, float>> points,
+    Interpolator itp, bool invert)
+{
+    Curve curve;
+    bool fillStatus[NumValues] = {};
+    const Range<float> fullRange { -HUGE_VALF, +HUGE_VALF };
+
+    auto setPoint = [&curve, &fillStatus](int i, float x) {
+        curve._points[i] = x;
+        fillStatus[i] = true;
+    };
+
+    if (invert) {
+        setPoint(0, 1.0);
+        setPoint(NumValues - 1, 0.0);
+    } else {
+        setPoint(0, 0.0);
+        setPoint(NumValues - 1, 1.0);
+    }
+
+    for (const auto& point: points) {
+        setPoint(point.first, point.second);
+    }
+
+    curve.fill(itp, fillStatus);
+    return curve;
+}
+
 Curve Curve::buildPredefinedCurve(int index)
 {
     Curve curve;
