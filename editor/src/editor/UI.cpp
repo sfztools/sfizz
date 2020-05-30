@@ -16,12 +16,11 @@ UI::UI(el::view& group)
             el::vmin_size(Editor::fixedHeight,
                 el::vtile(
                     el::hold(make_toolbar(group))
-
 #if HAVE_ELEMENTS_NOTEBOOK
                         ,
-                    el::top_margin(95, make_tabs(group)),
+                    el::hold(make_notebook(group))
 #endif
-                    ))),
+                        ))),
         background);
 }
 el::basic_menu UI::make_pbrange_menu(const char* title, el::menu_position pos)
@@ -63,11 +62,11 @@ el::basic_menu UI::make_polyphony_menu(const char* title, el::menu_position pos)
 }
 el::element_ptr UI::make_toolbar(el::view& view_)
 {
-    dialVolume = std::make_shared<Dial>(view_, "Volume", 0.75f);
-    dialPan = std::make_shared<Dial>(view_, "Pan", 0.5f, Dial::Pan);
-    dialSend = std::make_shared<Dial>(view_, "Send");
-    dialTune = std::make_shared<Dial>(view_, "Tune", 0.5f, Dial::Tune);
-    dialTranspose = std::make_shared<Dial>(view_, "Transpose", 0.5f, Dial::Transpose);
+    dialVolume = std::make_shared<Knob>(view_, "Volume", 0.75f);
+    dialPan = std::make_shared<Knob>(view_, "Pan", 0.5f, Knob::Pan);
+    dialSend = std::make_shared<Knob>(view_, "Send");
+    dialTune = std::make_shared<Knob>(view_, "Tune", 0.5f, Knob::Tune);
+    dialTranspose = std::make_shared<Knob>(view_, "Transpose", 0.5f, Knob::Transpose);
 
     return el::share(el::layer(
         el::top_margin(4,

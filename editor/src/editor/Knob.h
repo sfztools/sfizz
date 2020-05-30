@@ -10,7 +10,7 @@
 
 namespace el = cycfi::elements;
 
-class Dial {
+class Knob {
 
 public:
     enum Type {
@@ -19,10 +19,10 @@ public:
         Transpose,
         Tune
     };
-    Dial() = delete;
+    Knob() = delete;
 
-    explicit Dial(el::view& view_, const std::string& lbl,
-        double value = 1.0f, Type type = Dial::Cents);
+    explicit Knob(el::view& view_, const std::string& lbl,
+        double value = 1.0f, Type type = Knob::Cents);
 
     el::element_ptr contents() const;
 

@@ -114,8 +114,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/Editor.cpp
     src/editor/Res.h
     src/editor/Res.cpp
-    src/editor/Dial.h
-    src/editor/Dial.cpp
+    src/editor/Knob.h
+    src/editor/Knob.cpp
     src/editor/UI.h
     src/editor/UI.cpp
     src/host/ElementsPuglWindow.cpp

@@ -4,12 +4,12 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Dial.h"
+#include "Knob.h"
 #include "Res.h"
 
 #define USE_ELEMENTS_RESOURCES 1
 
-Dial::Dial(el::view& view_, const std::string& lbl, double value, Type type)
+Knob::Knob(el::view& view_, const std::string& lbl, double value, Type type)
     : parentView_(view_)
     , label_(el::share(el::label(lbl)))
     , labelValue_(el::share(el::label("")))
@@ -25,21 +25,13 @@ Dial::Dial(el::view& view_, const std::string& lbl, double value, Type type)
     dial_ = el::share(el::dial(
         el::radial_marks<15>(el::basic_knob<40>()), value_));
 #endif
-#if HAVE_ELEMENTS_RADIAL_LABELS_AS_VECTOR_STRING
-    auto markers = el::radial_labels<15>(
-        el::hold(dial_),
-        0.7, // Label font size (relative size)
-        "0", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100");
-#endif
     contents_ = el::share(
-        el::vtile(
-            el::align_center(el::hold(label_)),
-#if HAVE_ELEMENTS_RADIAL_LABELS_AS_VECTOR_STRING
-            el::top_margin(4, el::align_center(markers)),
-#else
-            el::top_margin(4, el::align_center(el::hold(dial_))),
-#endif
-            el::align_center(el::hold(labelValue_))));
+        el::fixed_size({ 60, 60 },
+            el::vtile(
+                el::align_center(el::hold(label_)),
+                el::align_center(el::hold(dial_)),
+                el::align_center(el::hold(labelValue_)))));
+
     setValue_(value_);
     parentView_.refresh(*labelValue_);
 
@@ -47,12 +39,11 @@ Dial::Dial(el::view& view_, const std::string& lbl, double value, Type type)
         setValue_(val);
     };
 }
-
-el::element_ptr Dial::contents() const
+el::element_ptr Knob::contents() const
 {
     return contents_;
 }
-void Dial::setValue_(double val)
+void Knob::setValue_(double val)
 {
     char sVal[16];
 

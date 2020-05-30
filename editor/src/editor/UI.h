@@ -25,16 +25,15 @@ private:
 #if HAVE_ELEMENTS_NOTEBOOK
     el::element_ptr make_tabs(el::view& view_);
 #endif
-    using slider_ptr = std::shared_ptr<el::basic_slider_base>;
-    using dial_ptr = std::shared_ptr<Dial>;
+    using knobPtr = std::shared_ptr<Knob>;
 
     // Main window background color
     static constexpr el::color bkd_color = el::rgba(35, 35, 37, 255);
     el::box_element background = el::box(bkd_color);
 
-    dial_ptr dialVolume;
-    dial_ptr dialPan;
-    dial_ptr dialSend;
-    dial_ptr dialTune;
-    dial_ptr dialTranspose;
+    knobPtr dialVolume;
+    knobPtr dialPan;
+    knobPtr dialSend;
+    knobPtr dialTune;
+    knobPtr dialTranspose;
 };
