@@ -8,6 +8,7 @@
 #include "Res.h"
 #include "Demo.h"
 #include <elements.hpp>
+#include <elements/support/font.hpp>
 #include <elements/support/resource_paths.hpp>
 #include <algorithm>
 namespace el = cycfi::elements;
@@ -30,6 +31,8 @@ struct Editor::Impl {
 
     //--- TODO UI: from sliders and knobs example
     std::unique_ptr<DemoKnobsAndSliders> demo_;
+
+    static void initializeResourcePaths();
 };
 
 ///
@@ -45,6 +48,9 @@ Editor::~Editor()
 
 bool Editor::open(void* parentWindowId)
 {
+    // make the resource path known to Elements
+    impl_->initializeResourcePaths();
+
     el::view* view = new el::view(parentWindowId);
     impl_->view_.reset(view);
 
@@ -54,14 +60,6 @@ bool Editor::open(void* parentWindowId)
     }
 
     view->size({fixedWidth, fixedHeight});
-
-    // make the resource path known to Elements
-    cycfi::fs::path resourcePath = Res::getRootPath();
-    if (!resourcePath.empty()) {
-        auto it = std::find(el::resource_paths.begin(), el::resource_paths.end(), resourcePath);
-        if (it == el::resource_paths.end())
-            el::resource_paths.push_back(resourcePath);
-    }
 
     ///
     DemoKnobsAndSliders* demo = new DemoKnobsAndSliders(*view);
@@ -97,4 +95,25 @@ void Editor::processEvents()
 {
     if (impl_->view_)
         el::process_events(*impl_->view_);
+}
+
+void Editor::Impl::initializeResourcePaths()
+{
+    const cycfi::fs::path resourcePath = Res::getRootPath();
+    if (resourcePath.empty())
+        return;
+
+    auto addIfNotExisting = [](
+        std::vector<cycfi::fs::path>& list, const cycfi::fs::path& value)
+    {
+        auto it = std::find(list.begin(), list.end(), value);
+        if (it == list.end())
+            list.push_back(value);
+    };
+
+    auto& resPaths = el::resource_paths;
+    auto& fontPaths = el::font_paths();
+
+    addIfNotExisting(resPaths, resourcePath);
+    addIfNotExisting(fontPaths, resourcePath);
 }
