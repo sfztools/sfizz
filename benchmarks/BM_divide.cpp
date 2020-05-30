@@ -46,6 +46,7 @@ BENCHMARK_DEFINE_F(Divide, Straight)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(Divide, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::divide, false);
         sfz::divide<float>(input, divisor, absl::MakeSpan(output));
     }
 }
@@ -53,6 +54,7 @@ BENCHMARK_DEFINE_F(Divide, Scalar)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(Divide, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::divide, true);
         sfz::divide<float>(input, divisor, absl::MakeSpan(output));
     }
 }
@@ -60,6 +62,7 @@ BENCHMARK_DEFINE_F(Divide, SIMD)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(Divide, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::divide, false);
         sfz::divide<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(divisor).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
@@ -67,6 +70,7 @@ BENCHMARK_DEFINE_F(Divide, Scalar_Unaligned)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(Divide, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::divide, true);
         sfz::divide<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(divisor).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }

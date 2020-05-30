@@ -66,6 +66,7 @@ BENCHMARK_DEFINE_F(GainSingle, Straight)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainSingle, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
         sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
     }
 }
@@ -73,6 +74,7 @@ BENCHMARK_DEFINE_F(GainSingle, Scalar)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainSingle, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
         sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
     }
 }
@@ -88,6 +90,7 @@ BENCHMARK_DEFINE_F(GainArray, Straight)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
         sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
     }
 }
@@ -95,6 +98,7 @@ BENCHMARK_DEFINE_F(GainArray, Scalar)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainArray, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
         sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
     }
 }
@@ -102,6 +106,7 @@ BENCHMARK_DEFINE_F(GainArray, SIMD)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainArray, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
         sfz::applyGain<float>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
@@ -109,6 +114,7 @@ BENCHMARK_DEFINE_F(GainArray, Scalar_Unaligned)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(GainArray, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
         sfz::applyGain<float>(absl::MakeSpan(gain).subspan(1), absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
