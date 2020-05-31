@@ -569,8 +569,8 @@ void cumsum<float>(const float* input, float* output, unsigned size) noexcept
             const auto* lastAligned = prevAligned(sentinel);
 
             while (unaligned(input, output) && output < lastAligned) {
-                *output = *(output - 1) + *input++;
-                output++;
+                *output = *(output - 1) + *input;
+                incrementAll(input, output);
             }
 
             auto mmOutput = _mm_set_ps1(*(output - 1));
@@ -589,8 +589,48 @@ void cumsum<float>(const float* input, float* output, unsigned size) noexcept
     }
 
     while (output < sentinel) {
-        *output = *(output - 1) + *input++;
-        output++;
+        *output = *(output - 1) + *input;
+        incrementAll(input, output);
+    }
+}
+
+template <>
+void diff<float>(const float* input, float* output, unsigned size) noexcept
+{
+    if (size == 0)
+        return;
+
+    const auto sentinel = output + size;
+    *output++ = *input++;
+
+    if (getSIMDOpStatus(SIMDOps::diff)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && output < lastAligned) {
+                *output = *input - *(input - 1);
+                incrementAll(input, output);
+            }
+
+            auto mmBase = _mm_set_ps1(*(input - 1));
+            while (output < lastAligned) {
+                auto mmOutput = _mm_load_ps(input);
+                auto mmNextBase = _mm_shuffle_ps(mmOutput, mmOutput, _MM_SHUFFLE(3, 3, 3, 3));
+                mmOutput = _mm_sub_ps(mmOutput, mmBase);
+                mmBase = mmNextBase;
+                mmOutput = _mm_sub_ps(mmOutput, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOutput), 4)));
+                _mm_store_ps(output, mmOutput);
+                incrementAll<4>(input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel) {
+        *output = *input - *(input - 1);
+        incrementAll(input, output);
     }
 }
 

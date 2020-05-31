@@ -590,20 +590,9 @@ T meanSquared(absl::Span<const T> vector) noexcept
     return meanSquared(vector.data(), vector.size());
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetCumsum(const T*& input, T*& output)
-    {
-        *output = *(output - 1) + *input++;
-        output++;
-    }
-}
-
 /**
  * @brief Computes the cumulative sum of a span.
  * The first output is the same as the first input.
- *
- * The output size will be the minimum of the input span and output span sizes.
  *
  * @tparam T the underlying type
  * @param input
@@ -620,8 +609,8 @@ void cumsum(const T* input, T* output, unsigned size) noexcept
 
     *output++ = *input++;
     while (output < sentinel) {
-        *output = *(output - 1) + *input++;
-        output++;
+        *output = *(output - 1) + *input;
+        incrementAll(input, output);
     }
 }
 
@@ -672,44 +661,38 @@ void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps,
         _internals::snippetSFZInterpolationCast(floatJump, jump, coeff);
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetDiff(const T*& input, T*& output)
-    {
-        *output = *input - *(input - 1);
-        output++;
-        input++;
-    }
-}
-
 /**
  * @brief Computes the differential of a span (successive differences).
  * The first output is the same as the first input.
  *
- * The output size will be the minimum of the input span and output span sizes.
- *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param vector
- * @return T
+ * @param input
+ * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::diff>
-void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
+template <class T>
+void diff(const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(output.size() >= input.size());
-    if (input.size() == 0)
+    if (size == 0)
         return;
 
-    auto out = output.data();
-    auto in = input.data();
-    const auto sentinel = in + std::min(input.size(), output.size());
+    const auto sentinel = output + size;
 
-    *out++ = *in++;
-    while (in < sentinel)
-        _internals::snippetDiff(in, out);
+    *output++ = *input++;
+    while (output < sentinel) {
+        *output = *input - *(input - 1);
+        incrementAll(input, output);
+    }
 }
 
 template <>
-void diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+void diff<float>(const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    diff<T>(input.data(), output.data(), minSpanSize(input, output));
+}
 
 } // namespace sfz

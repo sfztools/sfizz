@@ -720,7 +720,8 @@ TEST_CASE("[Helpers] Diff")
     std::array<float, 6> input { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
     std::array<float, 6> output;
     std::array<float, 6> expected { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f };
-    sfz::diff<float, false>(input, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::diff, false);
+    sfz::diff<float>(input, absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -731,8 +732,10 @@ TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
     std::vector<float> outputSIMD(bigBufferSize);
     sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
     sfz::linearRamp<float>(absl::MakeSpan(input), 0.0f, 0.1f);
-    sfz::diff<float, false>(input, absl::MakeSpan(outputScalar));
-    sfz::diff<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::diff, false);
+    sfz::diff<float>(input, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::diff, true);
+    sfz::diff<float>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
