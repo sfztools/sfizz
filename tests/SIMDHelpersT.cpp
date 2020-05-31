@@ -273,82 +273,98 @@ TEST_CASE("[Helpers] Interleaved write SIMD vs Scalar")
 
 TEST_CASE("[Helpers] Gain, single")
 {
-    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
-    sfz::applyGain<float>(fillValue, input, absl::MakeSpan(output));
-    REQUIRE(output == expected);
+    std::array<float, 65> input;
+    std::array<float, 65> expected;
+    absl::c_fill(input, 1.0f);
+    absl::c_fill(expected, fillValue);
+
+    SECTION("Scalar")
+    {
+        std::array<float, 65> output;
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
+        sfz::applyGain<float>(fillValue, input, absl::MakeSpan(output));
+        REQUIRE(output == expected);
+    }
+
+    SECTION("SIMD")
+    {
+        std::array<float, 65> output;
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
+        sfz::applyGain<float>(fillValue, input, absl::MakeSpan(output));
+        REQUIRE(output == expected);
+    }
 }
 
 TEST_CASE("[Helpers] Gain, single and inplace")
 {
-    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
-    sfz::applyGain<float>(fillValue, buffer, absl::MakeSpan(buffer));
-    REQUIRE(buffer == expected);
+    std::array<float, 65> expected;
+    std::array<float, 65> buffer;
+    absl::c_fill(expected, fillValue);
+    SECTION("Scalar")
+    {
+        absl::c_fill(buffer, 1.0f);
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
+        sfz::applyGain<float>(fillValue, buffer, absl::MakeSpan(buffer));
+        REQUIRE(buffer == expected);
+    }
+    SECTION("SIMD")
+    {
+        absl::c_fill(buffer, 1.0f);
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
+        sfz::applyGain<float>(fillValue, buffer, absl::MakeSpan(buffer));
+        REQUIRE(buffer == expected);
+    }
 }
 
 TEST_CASE("[Helpers] Gain, spans")
 {
-    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
-    sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
-    REQUIRE(output == expected);
+    std::array<float, 65> input;
+    std::array<float, 65> gain;
+    std::array<float, 65> expected;
+    absl::c_fill(input, 1.0f);
+    absl::c_iota(gain, 1.0f);
+    absl::c_iota(expected, 1.0f);
+
+    SECTION("Scalar")
+    {
+        std::array<float, 65> output;
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
+        sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
+        REQUIRE(output == expected);
+    }
+
+    SECTION("SIMD")
+    {
+        std::array<float, 65> output;
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
+        sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
+        REQUIRE(output == expected);
+    }
 }
 
 TEST_CASE("[Helpers] Gain, spans and inplace")
 {
-    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
-    sfz::applyGain<float>(gain, buffer, absl::MakeSpan(buffer));
-    REQUIRE(buffer == expected);
-}
+    std::array<float, 65> buffer;
+    std::array<float, 65> gain;
+    std::array<float, 65> expected;
+    absl::c_iota(gain, 1.0f);
+    absl::c_iota(expected, 1.0f);
 
-TEST_CASE("[Helpers] Gain, single (SIMD)")
-{
-    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
-    sfz::applyGain<float>(fillValue, input, absl::MakeSpan(output));
-    REQUIRE(output == expected);
-}
+    SECTION("Scalar")
+    {
+        absl::c_fill(buffer, 1.0f);
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
+        sfz::applyGain<float>(gain, buffer, absl::MakeSpan(buffer));
+        REQUIRE(buffer == expected);
+    }
 
-TEST_CASE("[Helpers] Gain, single and inplace (SIMD)")
-{
-    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> expected { fillValue, fillValue, fillValue, fillValue, fillValue };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
-    sfz::applyGain<float>(fillValue, buffer, absl::MakeSpan(buffer));
-    REQUIRE(buffer == expected);
-}
-
-TEST_CASE("[Helpers] Gain, spans (SIMD)")
-{
-    std::array<float, 5> input { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::array<float, 5> output { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
-    sfz::applyGain<float>(gain, input, absl::MakeSpan(output));
-    REQUIRE(output == expected);
-}
-
-TEST_CASE("[Helpers] Gain, spans and inplace (SIMD)")
-{
-    std::array<float, 5> buffer { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 5> gain { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    std::array<float, 5> expected { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
-    sfz::setSIMDOpStatus(sfz::SIMDOps::gain, true);
-    sfz::applyGain<float>(gain, buffer, absl::MakeSpan(buffer));
-    REQUIRE(buffer == expected);
+    SECTION("SIMD")
+    {
+        absl::c_fill(buffer, 1.0f);
+        sfz::setSIMDOpStatus(sfz::SIMDOps::gain, false);
+        sfz::applyGain<float>(gain, buffer, absl::MakeSpan(buffer));
+        REQUIRE(buffer == expected);
+    }
 }
 
 TEST_CASE("[Helpers] Linear Ramp")

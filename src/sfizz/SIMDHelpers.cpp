@@ -5,7 +5,7 @@
 #include "SIMDConfig.h"
 
 #if SFIZZ_HAVE_SSE2
-#include <xmmintrin.h>
+#include <immintrin.h>
 #include <emmintrin.h>
 #endif
 
@@ -149,7 +149,17 @@ void applyGain<float>(float gain, const float* input, float* output, unsigned si
 
     if (getSIMDOpStatus(SIMDOps::gain)) {
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
-        if (cpuInfo.has_sse()) {
+        if (cpuInfo.has_avx()) {
+            const auto* lastAligned = prevAligned<32>(sentinel);
+            const auto mmGain = _mm256_set1_ps(gain);
+            while (unaligned<32>(input, output) && output < lastAligned)
+                *output++ = gain * (*input++);
+
+            while (output < lastAligned) {
+                _mm256_store_ps(output, _mm256_mul_ps(mmGain, _mm256_load_ps(input)));
+                incrementAll<8>(input, output);
+            }
+        } else if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(sentinel);
             const auto mmGain = _mm_set1_ps(gain);
             while (unaligned(input, output) && output < lastAligned)
@@ -175,7 +185,16 @@ void applyGain<float>(const float* gain, const float* input, float* output, unsi
 
     if (getSIMDOpStatus(SIMDOps::gain)) {
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
-        if (cpuInfo.has_sse()) {
+        if (cpuInfo.has_avx()) {
+            const auto* lastAligned = prevAligned<32>(sentinel);
+            while (unaligned<32>(input, output) && output < lastAligned)
+                *output++ = (*gain++) * (*input++);
+
+            while (output < lastAligned) {
+                _mm256_store_ps(output, _mm256_mul_ps(_mm256_load_ps(gain), _mm256_load_ps(input)));
+                incrementAll<8>(input, output);
+            }
+        } else if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(sentinel);
 
             while (unaligned(input, output) && output < lastAligned)

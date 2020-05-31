@@ -13,6 +13,7 @@ macro(sfizz_add_simd_sources SOURCES_VAR PREFIX)
             set_source_files_properties(
                 ${PREFIX}/sfizz/effects/impl/ResonantStringAVX.cpp
                 ${PREFIX}/sfizz/effects/impl/ResonantArrayAVX.cpp
+                ${PREFIX}/sfizz/SIMDHelpers.cpp
                 PROPERTIES COMPILE_FLAGS "-mavx")
         endif()
     endif()
