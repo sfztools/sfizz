@@ -110,27 +110,21 @@ add_dependencies(sfizz_benchmarks
 	bm_read
 	bm_mean
 	bm_meanSquared
-	bm_fill
 	bm_cumsum
 	bm_diff
-	bm_interpolationCast
 	bm_mathfuns
 	bm_gain
 	bm_divide
-	bm_looping
-	bm_saturating
 	bm_ramp
 	bm_ADSR
 	bm_add
 	bm_logger
-	bm_pan
 	bm_subtract
 	bm_multiplyAdd
 	bm_readChunk
 	bm_resampleChunk
 	bm_envelopes
 	bm_wavfile
-	bm_widthPos
 	bm_flacfile
 	bm_filterModulation
 	bm_filterStereoMono
