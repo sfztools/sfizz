@@ -1,5 +1,6 @@
 #include "Panning.h"
 #include <array>
+#include <cmath>
 
 namespace sfz
 {
@@ -24,7 +25,7 @@ static const auto panData = []()
 float panLookup(float pan)
 {
     // reduce range, round to nearest
-    int index = static_cast<int>(0.5f + pan * (panSize - 1));
+    int index = lroundPositive(pan * (panSize - 1));
     return panData[index];
 }
 

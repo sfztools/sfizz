@@ -255,6 +255,20 @@ template <class Type>
 constexpr Type sqrtTwoInv() { return static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588); };
 
 /**
+ * @brief lround for positive values
+ * This optimizes a bit better by ignoring the negative code path
+ *
+ * @tparam T
+ * @param value
+ * @return constexpr long int
+ */
+template<class T, absl::enable_if_t<std::is_floating_point<T>::value, int> = 0 >
+constexpr long int lroundPositive(T value)
+{
+    return static_cast<int>(0.5f + value); // NOLINT
+}
+
+/**
    @brief A fraction which is parameterized by integer type
  */
 template <class I>
