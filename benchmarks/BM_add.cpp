@@ -36,56 +36,64 @@ public:
 BENCHMARK_DEFINE_F(AddArray, Value_Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, false>(1.1f, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, false);
+        sfz::add<float>(1.1f, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, Value_SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, true>(1.1f, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, true);
+        sfz::add<float>(1.1f, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, Value_Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, false>(1.1f, absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, false);
+        sfz::add<float>(1.1f, absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, Value_SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, true>(1.1f, absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, true);
+        sfz::add<float>(1.1f, absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, false>(input, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, false);
+        sfz::add<float>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, true>(input, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, true);
+        sfz::add<float>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, false);
+        sfz::add<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(AddArray, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::add<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::add, true);
+        sfz::add<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 

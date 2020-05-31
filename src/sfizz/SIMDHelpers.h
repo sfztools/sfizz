@@ -369,15 +369,6 @@ T linearRamp(absl::Span<T> output, T start, T step) noexcept
     return linearRamp(output.data(), start, step, output.size());
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetRampMultiplicative(T*& output, T& value, T step)
-    {
-        *output++ = value;
-        value *= step;
-    }
-}
-
 /**
  * @brief Compute a multiplicative ramp blockwise between 2 values
  *
@@ -408,54 +399,56 @@ T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetAdd(const T*& input, T*& output)
-    {
-        *output++ += *input++;
-    }
-    template <class T>
-    inline void snippetAdd(const T value, T*& output)
-    {
-        *output++ += value;
-    }
-}
-
 /**
  * @brief Add an input span to the output span
  *
- * The output size will be the minimum of the gain span, input span and output span sizes.
- *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param input
  * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::add>
+template <class T>
+void add(const T* input, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ += *input++;
+}
+
+template <>
+void add<float>(const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
 void add(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
-    CHECK(output.size() >= input.size());
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + min(input.size(), output.size());
-    while (out < sentinel)
-        _internals::snippetAdd(in, out);
+    CHECK_SPAN_SIZES(input, output);
+    add<T>(input.data(), output.data(), minSpanSize(input, output));
+}
+
+/**
+ * @brief Add a value inplace
+ *
+ * @tparam T the underlying type
+ * @param value
+ * @param output
+ * @param size
+ */
+template <class T>
+void add(T value, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ += value;
 }
 
 template <>
-void add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+void add<float>(float value, float* output, unsigned size) noexcept;
 
-template <class T, bool SIMD = SIMDConfig::add>
+template <class T>
 void add(T value, absl::Span<T> output) noexcept
 {
-    auto* out = output.begin();
-    auto* sentinel = output.end();
-    while (out < sentinel)
-        _internals::snippetAdd(value, out);
+    add<T>(value, output.data(), output.size());
 }
-
-template <>
-void add<float, true>(float value, absl::Span<float> output) noexcept;
 
 namespace _internals {
     template <class T>

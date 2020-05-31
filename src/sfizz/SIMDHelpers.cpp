@@ -145,7 +145,7 @@ void applyGain<float>(float gain, const float* input, float* output, unsigned si
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
         if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(sentinel);
-            const auto mmGain = _mm_set_ps1(gain);
+            const auto mmGain = _mm_set1_ps(gain);
             while (unaligned(input, output) && output < lastAligned)
                 *output++ = gain * (*input++);
 
@@ -278,7 +278,7 @@ float linearRamp<float>(float* output, float start, float step, unsigned size) n
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
         if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(sentinel);
-            while (unaligned(output) && output < lastAligned){
+            while (unaligned(output) && output < lastAligned) {
                 *output++ = start;
                 start += step;
             }
@@ -289,7 +289,7 @@ float linearRamp<float>(float* output, float start, float step, unsigned size) n
                 mmStart = _mm_add_ps(mmStart, mmStep);
                 _mm_store_ps(output, mmStart);
                 mmStart = _mm_shuffle_ps(mmStart, mmStart, _MM_SHUFFLE(3, 3, 3, 3));
-                incrementAll<4>( output);
+                incrementAll<4>(output);
             }
             start = _mm_cvtss_f32(mmStart) + step;
             // fallthrough from lastAligned to sentinel
@@ -313,7 +313,7 @@ float multiplicativeRamp<float>(float* output, float start, float step, unsigned
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
         if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(sentinel);
-            while (unaligned(output) && output < lastAligned){
+            while (unaligned(output) && output < lastAligned) {
                 *output++ = start;
                 start *= step;
             }
@@ -324,7 +324,7 @@ float multiplicativeRamp<float>(float* output, float start, float step, unsigned
                 mmStart = _mm_mul_ps(mmStart, mmStep);
                 _mm_store_ps(output, mmStart);
                 mmStart = _mm_shuffle_ps(mmStart, mmStart, _MM_SHUFFLE(3, 3, 3, 3));
-                incrementAll<4>( output);
+                incrementAll<4>(output);
             }
             start = _mm_cvtss_f32(mmStart) * step;
             // fallthrough from lastAligned to sentinel
@@ -337,6 +337,59 @@ float multiplicativeRamp<float>(float* output, float start, float step, unsigned
         start *= step;
     }
     return start;
+}
+
+template <>
+void add<float>(const float* input, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::add)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && output < lastAligned)
+                *output++ += *input++;
+
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_add_ps(_mm_load_ps(output), _mm_load_ps(input)));
+                incrementAll<4>(input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ += *input++;
+}
+
+template <>
+void add<float>(float value, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::add)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(output) && output < lastAligned)
+                *output++ += value;
+
+            const auto mmValue = _mm_set1_ps(value);
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_add_ps(_mm_load_ps(output), mmValue));
+                incrementAll<4>(output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ += value;
 }
 
 }

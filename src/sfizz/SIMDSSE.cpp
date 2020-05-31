@@ -16,49 +16,6 @@
 
 constexpr uintptr_t TypeAlignment = 4;
 
-
-
-template <>
-void sfz::add<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
-{
-    CHECK(output.size() >= input.size());
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + min(input.size(), output.size());
-    const auto* lastAligned = prevAligned(sentinel);
-
-    while (unaligned(in, out) && out < lastAligned)
-        _internals::snippetAdd<float>(in, out);
-
-    while (out < lastAligned) {
-        _mm_store_ps(out, _mm_add_ps(_mm_load_ps(in), _mm_load_ps(out)));
-        incrementAll<TypeAlignment>(in, out);
-    }
-
-    while (out < sentinel)
-        _internals::snippetAdd<float>(in, out);
-}
-
-template <>
-void sfz::add<float, true>(float value, absl::Span<float> output) noexcept
-{
-    auto* out = output.begin();
-    auto* sentinel = output.end();
-    const auto* lastAligned = prevAligned(sentinel);
-
-    while (unaligned(out) && out < lastAligned)
-        _internals::snippetAdd<float>(value, out);
-
-    auto mmValue = _mm_set_ps1(value);
-    while (out < lastAligned) {
-        _mm_store_ps(out, _mm_add_ps(mmValue, _mm_load_ps(out)));
-        out += TypeAlignment;
-    }
-
-    while (out < sentinel)
-        _internals::snippetAdd<float>(value, out);
-}
-
 template <>
 void sfz::subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
