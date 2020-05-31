@@ -26,9 +26,6 @@ void resetSIMDStatus()
     simdStatus[static_cast<unsigned>(SIMDOps::fill)] = true;
     simdStatus[static_cast<unsigned>(SIMDOps::gain)] = true;
     simdStatus[static_cast<unsigned>(SIMDOps::divide)] = false;
-    simdStatus[static_cast<unsigned>(SIMDOps::mathfuns)] = false;
-    simdStatus[static_cast<unsigned>(SIMDOps::loopingSFZIndex)] = true;
-    simdStatus[static_cast<unsigned>(SIMDOps::saturatingSFZIndex)] = true;
     simdStatus[static_cast<unsigned>(SIMDOps::linearRamp)] = false;
     simdStatus[static_cast<unsigned>(SIMDOps::multiplicativeRamp)] = true;
     simdStatus[static_cast<unsigned>(SIMDOps::add)] = false;
