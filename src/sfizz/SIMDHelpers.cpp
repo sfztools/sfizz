@@ -32,7 +32,6 @@ void resetSIMDStatus()
     simdStatus[static_cast<unsigned>(SIMDOps::subtract)] = false;
     simdStatus[static_cast<unsigned>(SIMDOps::multiplyAdd)] = false;
     simdStatus[static_cast<unsigned>(SIMDOps::copy)] = false;
-    simdStatus[static_cast<unsigned>(SIMDOps::pan)] = false;
     simdStatus[static_cast<unsigned>(SIMDOps::cumsum)] = true;
     simdStatus[static_cast<unsigned>(SIMDOps::diff)] = false;
     simdStatus[static_cast<unsigned>(SIMDOps::sfzInterpolationCast)] = true;
@@ -316,7 +315,7 @@ float multiplicativeRamp<float>(float* output, float start, float step, unsigned
 {
     const auto sentinel = output + size;
 
-    if (getSIMDOpStatus(SIMDOps::linearRamp)) {
+    if (getSIMDOpStatus(SIMDOps::multiplicativeRamp)) {
 #if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
         if (cpuInfo.has_sse()) {
             const auto* lastAligned = prevAligned(sentinel);

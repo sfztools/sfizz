@@ -49,7 +49,6 @@ enum class SIMDOps {
     subtract,
     multiplyAdd,
     copy,
-    pan,
     cumsum,
     diff,
     sfzInterpolationCast,
