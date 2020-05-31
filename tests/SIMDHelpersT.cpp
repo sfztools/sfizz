@@ -654,29 +654,41 @@ TEST_CASE("[Helpers] copy (SIMD vs scalar)")
 TEST_CASE("[Helpers] Mean")
 {
     std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
-    REQUIRE(sfz::mean<float, false>(input) == 5.5f);
-    REQUIRE(sfz::mean<float, true>(input) == 5.5f);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::mean, false);
+    REQUIRE(sfz::mean<float>(input) == 5.5f);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::mean, true);
+    REQUIRE(sfz::mean<float>(input) == 5.5f);
 }
 
 TEST_CASE("[Helpers] Mean (SIMD vs scalar)")
 {
     std::vector<float> input(bigBufferSize);
     absl::c_iota(input, 0.0f);
-    REQUIRE(sfz::mean<float, false>(input) == Approx(sfz::mean<float, true>(input)).margin(0.001));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::mean, false);
+    auto scalarResult = sfz::mean<float>(input);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::mean, true);
+    auto simdResult = sfz::mean<float>(input);
+    REQUIRE( scalarResult == Approx(simdResult).margin(1e-3) );
 }
 
 TEST_CASE("[Helpers] Mean Squared")
 {
     std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
-    REQUIRE(sfz::meanSquared<float, false>(input) == 38.5f);
-    REQUIRE(sfz::meanSquared<float, true>(input) == 38.5f);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::meanSquared, false);
+    REQUIRE(sfz::meanSquared<float>(input) == 38.5f);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::meanSquared, true);
+    REQUIRE(sfz::meanSquared<float>(input) == 38.5f);
 }
 
 TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
 {
     std::vector<float> input(medBufferSize);
     absl::c_iota(input, 0.0f);
-    REQUIRE(sfz::meanSquared<float, false>(input) == sfz::meanSquared<float, true>(input));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::meanSquared, false);
+    auto scalarResult = sfz::meanSquared<float>(input);
+    sfz::setSIMDOpStatus(sfz::SIMDOps::meanSquared, true);
+    auto simdResult = sfz::meanSquared<float>(input);
+    REQUIRE( scalarResult == Approx(simdResult).margin(1e-3) );
 }
 
 TEST_CASE("[Helpers] Cumulative sum")

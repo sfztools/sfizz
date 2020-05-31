@@ -471,4 +471,87 @@ void copy<float>(const float* input, float* output, unsigned size) noexcept
     std::copy(input, sentinel, output);
 }
 
+template <>
+float mean<float>(const float* vector, unsigned size) noexcept
+{
+    const auto sentinel = vector + size;
+
+    float result { 0.0f };
+    if (size == 0)
+        return result;
+
+    if (getSIMDOpStatus(SIMDOps::mean)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+            while (unaligned(vector) && vector < lastAligned)
+                result += *vector++;
+
+            auto mmSums = _mm_setzero_ps();
+            while (vector < lastAligned) {
+                mmSums = _mm_add_ps(mmSums, _mm_load_ps(vector));
+                incrementAll<4>(vector);
+            }
+
+            std::array<float, 4> sseResult;
+            _mm_store_ps(sseResult.data(), mmSums);
+
+            for (auto sseValue : sseResult)
+                result += sseValue;
+
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (vector < sentinel)
+        result += *vector++;
+
+    return result / static_cast<float>(size);
+}
+
+template <>
+float meanSquared<float>(const float* vector, unsigned size) noexcept
+{
+    const auto sentinel = vector + size;
+
+    float result { 0.0f };
+    if (size == 0)
+        return result;
+
+    if (getSIMDOpStatus(SIMDOps::meanSquared)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+            while (unaligned(vector) && vector < lastAligned){
+        result += (*vector) * (*vector);
+        vector++;
+    }
+
+            auto mmSums = _mm_setzero_ps();
+            while (vector < lastAligned) {
+                const auto mmValues = _mm_load_ps(vector);
+                mmSums = _mm_add_ps(mmSums, _mm_mul_ps(mmValues, mmValues));
+                incrementAll<4>(vector);
+            }
+
+            std::array<float, 4> sseResult;
+            _mm_store_ps(sseResult.data(), mmSums);
+
+            for (auto sseValue : sseResult)
+                result += sseValue;
+
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (vector < sentinel){
+        result += (*vector) * (*vector);
+        vector++;
+    }
+
+    return result / static_cast<float>(size);
+}
+
 }

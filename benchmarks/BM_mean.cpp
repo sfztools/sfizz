@@ -34,7 +34,8 @@ BENCHMARK_DEFINE_F(MeanArray, Scalar)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = sfz::mean<float, false>(input);
+        sfz::setSIMDOpStatus(sfz::SIMDOps::mean, false);
+        auto result = sfz::mean<float>(input);
         benchmark::DoNotOptimize(result);
     }
 }
@@ -43,7 +44,8 @@ BENCHMARK_DEFINE_F(MeanArray, SIMD)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = sfz::mean<float, true>(input);
+        sfz::setSIMDOpStatus(sfz::SIMDOps::mean, true);
+        auto result = sfz::mean<float>(input);
         benchmark::DoNotOptimize(result);
     }
 }
@@ -52,7 +54,8 @@ BENCHMARK_DEFINE_F(MeanArray, Scalar_Unaligned)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = sfz::mean<float, false>(absl::MakeSpan(input).subspan(1));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::mean, false);
+        auto result = sfz::mean<float>(absl::MakeSpan(input).subspan(1));
         benchmark::DoNotOptimize(result);
     }
 }
@@ -61,7 +64,8 @@ BENCHMARK_DEFINE_F(MeanArray, SIMD_Unaligned)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        auto result = sfz::mean<float, true>(absl::MakeSpan(input).subspan(1));
+        sfz::setSIMDOpStatus(sfz::SIMDOps::mean, true);
+        auto result = sfz::mean<float>(absl::MakeSpan(input).subspan(1));
         benchmark::DoNotOptimize(result);
     }
 }

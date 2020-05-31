@@ -525,30 +525,37 @@ void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
     copy<T>(input.data(), output.data(), minSpanSize(input, output));
 }
 
+
 /**
  * @brief Computes the mean of a span
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param vector
+ * @param size
  * @return T
  */
-template <class T, bool SIMD = SIMDConfig::mean>
-T mean(absl::Span<const T> vector) noexcept
+template <class T>
+T mean(const T* vector, unsigned size) noexcept
 {
     T result{ 0.0 };
-    if (vector.size() == 0)
+    if (size == 0)
         return result;
 
-    auto* value = vector.begin();
-    while (value < vector.end())
-        result += *value++;
+    const auto sentinel = vector + size;
+    while (vector < sentinel)
+        result += *vector++;
 
-    return result / static_cast<T>(vector.size());
+    return result / static_cast<T>(size);
 }
 
 template <>
-float mean<float, true>(absl::Span<const float> vector) noexcept;
+float mean<float>(const float* vector, unsigned size) noexcept;
+
+template <class T>
+T mean(absl::Span<const T> vector) noexcept
+{
+    return mean(vector.data(), vector.size());
+}
 
 /**
  * @brief Computes the mean squared of a span
@@ -558,24 +565,30 @@ float mean<float, true>(absl::Span<const float> vector) noexcept;
  * @param vector
  * @return T
  */
-template <class T, bool SIMD = SIMDConfig::meanSquared>
-T meanSquared(absl::Span<const T> vector) noexcept
+template <class T>
+T meanSquared(const T* vector, unsigned size) noexcept
 {
     T result{ 0.0 };
-    if (vector.size() == 0)
+    if (size == 0)
         return result;
 
-    auto* value = vector.begin();
-    while (value < vector.end()) {
-        result += (*value) * (*value);
-        value++;
+    const auto sentinel = vector + size;
+    while (vector < sentinel) {
+        result += (*vector) * (*vector);
+        vector++;
     }
 
-    return result / static_cast<T>(vector.size());
+    return result / static_cast<T>(size);
 }
 
 template <>
-float meanSquared<float, true>(absl::Span<const float> vector) noexcept;
+float meanSquared<float>(const float* vector, unsigned size) noexcept;
+
+template <class T>
+T meanSquared(absl::Span<const T> vector) noexcept
+{
+    return meanSquared(vector.data(), vector.size());
+}
 
 namespace _internals {
     template <class T>
