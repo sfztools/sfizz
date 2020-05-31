@@ -17,7 +17,7 @@ clang-tidy \
   src/sfizz/sfizz.cpp \
   src/sfizz/Region.cpp \
   src/sfizz/SfzHelpers.cpp \
-  src/sfizz/SIMDSSE.cpp \
+  src/sfizz/SIMDHelpers.cpp \
   src/sfizz/Synth.cpp \
   src/sfizz/Voice.cpp \
   src/sfizz/effects/Eq.cpp \

@@ -96,9 +96,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/sfizz_wrapper.cpp \
 	src/sfizz/SfzFilter.cpp \
 	src/sfizz/SfzHelpers.cpp \
-	src/sfizz/SIMDDummy.cpp \
-	src/sfizz/SIMDNEON.cpp \
-	src/sfizz/SIMDSSE.cpp \
+	src/sfizz/SIMDHelpers.cpp \
 	src/sfizz/Synth.cpp \
 	src/sfizz/Tuning.cpp \
 	src/sfizz/Voice.cpp \

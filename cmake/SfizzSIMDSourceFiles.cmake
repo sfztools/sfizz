@@ -2,10 +2,7 @@ macro(sfizz_add_simd_sources SOURCES_VAR PREFIX)
     # It needs a macro, otherwise the source properties cannot take effect.
 
     list (APPEND ${SOURCES_VAR}
-        ${PREFIX}/sfizz/SIMDSSE.cpp
-        ${PREFIX}/sfizz/SIMDHelpers.cpp
-        ${PREFIX}/sfizz/SIMDNEON.cpp
-        ${PREFIX}/sfizz/SIMDDummy.cpp)
+        ${PREFIX}/sfizz/SIMDHelpers.cpp)
 
     # For CPU-dispatched X86 sources
     # Always build them for all X86 targets.

@@ -9,6 +9,10 @@
 #include <emmintrin.h>
 #endif
 
+#if SFIZZ_HAVE_NEON
+#include <arm_neon.h>
+#endif
+
 namespace sfz {
 
 static std::array<bool, static_cast<unsigned>(SIMDOps::_sentinel)> simdStatus;
@@ -99,6 +103,12 @@ void readInterleaved(const float* input, float* outputLeft, float* outputRight, 
             }
             // Fallthrough from lastAligned to sentinel
         }
+#endif
+
+#if 0 // NEON wip
+        auto reg = vld2q_f32(in);
+        vst1q_f32(lOut, reg.val[0]);
+        vst1q_f32(rOut, reg.val[1]);
 #endif
     }
 

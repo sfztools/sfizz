@@ -12,16 +12,8 @@
  * These functions are templated to apply on
  * various underlying buffer types, and this file contains the generic version of the
  * function. Some templates specializations exists for different architecture that try
- * to make use of SIMD intrinsics; you can find such a file in SIMDSSE.cpp and possibly
- * someday SIMDNEON.cpp for ARM platforms.
- *
- * If you want to write specializations for float buffers the idea is to start from the SIMDDummy
- * file that just calls back the generic implementation, and implement the specializations you
- * wish from this list. You can then either activate or deactivate a SIMD version by default
- * using the variables in Config.h, or call e.g. writeInterleaved<float, true>(...) to use the
- * SIMD version of writeInterleaved. To implement e.g. double template specializations you
- * will need to amend this file to pre-declare the specializations, and create a file similar to
- * SIMDxxx.cpp.
+ * to make use of SIMD intrinsics in SIMDHelpers.cpp. A runtime dispatch can help if you
+ * write implementation for larger/newer SIMD operations.
  *
  * All the SIMD functions are benchmarked. If you run the benchmark for a given function you can check
  * if it is interesting to run the SIMD version by default. The interest is that you can activate
