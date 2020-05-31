@@ -450,63 +450,56 @@ void add(T value, absl::Span<T> output) noexcept
     add<T>(value, output.data(), output.size());
 }
 
-namespace _internals {
-    template <class T>
-    inline void snippetSubtract(const T*& input, T*& output)
-    {
-        *output++ -= *input++;
-    }
-
-    template <class T>
-    inline void snippetSubtract(const T value, T*& output)
-    {
-        *output++ -= value;
-    }
-}
-
 /**
- * @brief Subtract a value from a span
+ * @brief Subtract an input span from the output span
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param value
- * @param output
- */
-template <class T, bool SIMD = SIMDConfig::subtract>
-void subtract(const T value, absl::Span<T> output) noexcept
-{
-    auto* out = output.begin();
-    auto* sentinel = output.end();
-    while (out < sentinel)
-        _internals::snippetSubtract(value, out);
-}
-
-/**
- * @brief Subtract a span from another span
- *
- * The output size will be the minimum of the input span and output span sizes.
- *
- * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param input
  * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::subtract>
-void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
+template <class T>
+void subtract(const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(output.size() >= input.size());
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + min(input.size(), output.size());
-    while (out < sentinel)
-        _internals::snippetSubtract(in, out);
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ -= *input++;
 }
 
 template <>
-void subtract<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+void subtract<float>(const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    subtract<T>(input.data(), output.data(), minSpanSize(input, output));
+}
+
+/**
+ * @brief Subtract a value inplace
+ *
+ * @tparam T the underlying type
+ * @param value
+ * @param output
+ * @param size
+ */
+template <class T>
+void subtract(T value, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ -= value;
+}
 
 template <>
-void subtract<float, true>(const float value, absl::Span<float> output) noexcept;
+void subtract<float>(float value, float* output, unsigned size) noexcept;
+
+template <class T>
+void subtract(T value, absl::Span<T> output) noexcept
+{
+    subtract<T>(value, output.data(), output.size());
+}
 
 namespace _internals {
     template <class T>

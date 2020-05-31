@@ -392,4 +392,57 @@ void add<float>(float value, float* output, unsigned size) noexcept
         *output++ += value;
 }
 
+template <>
+void subtract<float>(const float* input, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::subtract)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && output < lastAligned)
+                *output++ -= *input++;
+
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_sub_ps(_mm_load_ps(output), _mm_load_ps(input)));
+                incrementAll<4>(input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ -= *input++;
+}
+
+template <>
+void subtract<float>(float value, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+    if (getSIMDOpStatus(SIMDOps::subtract)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(output) && output < lastAligned)
+                *output++ -= value;
+
+            const auto mmValue = _mm_set1_ps(value);
+            while (output < lastAligned) {
+                _mm_store_ps(output, _mm_sub_ps(_mm_load_ps(output), mmValue));
+                incrementAll<4>(output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel)
+        *output++ -= value;
+}
+
 }

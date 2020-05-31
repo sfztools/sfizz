@@ -562,7 +562,7 @@ TEST_CASE("[Helpers] Subtract")
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { 0.0f, -1.0f, -2.0f, -3.0f, -4.0f };
-    sfz::subtract<float, false>(input, absl::MakeSpan(output));
+    sfz::subtract<float>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -570,7 +570,8 @@ TEST_CASE("[Helpers] Subtract 2")
 {
     std::array<float, 5> output { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> expected { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f };
-    sfz::subtract<float, false>(1.0f, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::subtract, false);
+    sfz::subtract<float>(1.0f, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -580,7 +581,8 @@ TEST_CASE("[Helpers] Subtract (SIMD)")
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
     std::array<float, 5> expected { 0.0f, -1.0f, -2.0f, -3.0f, -4.0f };
-    sfz::subtract<float, true>(input, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::subtract, true);
+    sfz::subtract<float>(input, absl::MakeSpan(output));
     REQUIRE(output == expected);
 }
 
@@ -593,8 +595,10 @@ TEST_CASE("[Helpers] Subtract (SIMD vs scalar)")
     absl::c_fill(outputScalar, 0.0f);
     absl::c_fill(outputSIMD, 0.0f);
 
-    sfz::subtract<float, false>(input, absl::MakeSpan(outputScalar));
-    sfz::subtract<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::subtract, false);
+    sfz::subtract<float>(input, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::subtract, true);
+    sfz::subtract<float>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
@@ -605,8 +609,10 @@ TEST_CASE("[Helpers] Subtract 2 (SIMD vs scalar)")
     absl::c_iota(outputScalar, 0.0f);
     absl::c_iota(outputSIMD, 0.0f);
 
-    sfz::subtract<float, false>(1.2f, absl::MakeSpan(outputScalar));
-    sfz::subtract<float, true>(1.2f, absl::MakeSpan(outputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::subtract, false);
+    sfz::subtract<float>(1.2f, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::subtract, true);
+    sfz::subtract<float>(1.2f, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
