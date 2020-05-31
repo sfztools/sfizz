@@ -97,28 +97,4 @@ namespace config {
     static constexpr double amplitudeSquare = 0.515;
 } // namespace config
 
-// Enable or disable SIMD accelerators by default
-namespace SIMDConfig {
-    constexpr bool writeInterleaved { true };
-    constexpr bool readInterleaved { true };
-    constexpr bool fill { true };
-    constexpr bool gain { false };
-    constexpr bool divide { false };
-    constexpr bool mathfuns { false };
-    constexpr bool loopingSFZIndex { true };
-    constexpr bool saturatingSFZIndex { true };
-    constexpr bool linearRamp { false };
-    constexpr bool multiplicativeRamp { true };
-    constexpr bool add { false };
-    constexpr bool subtract { false };
-    constexpr bool multiplyAdd { false };
-    constexpr bool copy { false };
-    constexpr bool pan { false };
-    constexpr bool cumsum { true };
-    constexpr bool diff { false };
-    constexpr bool sfzInterpolationCast { true };
-    constexpr bool mean { false };
-    constexpr bool meanSquared { false };
-    constexpr bool upsampling { true };
-}
 } // namespace sfz
