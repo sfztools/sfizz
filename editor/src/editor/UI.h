@@ -8,7 +8,7 @@
 
 #include <elements.hpp>
 #include <memory>
-#include "Dial.h"
+#include "Knob.h"
 
 namespace el = cycfi::elements;
 
