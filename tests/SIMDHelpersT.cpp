@@ -620,7 +620,8 @@ TEST_CASE("[Helpers] copy")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    sfz::copy<float, false>(input, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::copy, false);
+    sfz::copy<float>(input, absl::MakeSpan(output));
     REQUIRE(output == input);
 }
 
@@ -628,7 +629,8 @@ TEST_CASE("[Helpers] copy (SIMD)")
 {
     std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
     std::array<float, 5> output { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-    sfz::copy<float, true>(input, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::copy, true);
+    sfz::copy<float>(input, absl::MakeSpan(output));
     REQUIRE(output == input);
 }
 
@@ -641,8 +643,10 @@ TEST_CASE("[Helpers] copy (SIMD vs scalar)")
     absl::c_fill(outputScalar, 0.0f);
     absl::c_fill(outputSIMD, 0.0f);
 
-    sfz::copy<float, false>(input, absl::MakeSpan(outputScalar));
-    sfz::copy<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::copy, false);
+    sfz::copy<float>(input, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::copy, true);
+    sfz::copy<float>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 

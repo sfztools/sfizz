@@ -17,27 +17,6 @@
 constexpr uintptr_t TypeAlignment = 4;
 
 template <>
-void sfz::copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
-{
-    CHECK(output.size() >= input.size());
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + min(input.size(), output.size());
-    const auto* lastAligned = prevAligned(sentinel);
-
-    while (unaligned(in, out) && out < lastAligned)
-        _internals::snippetCopy<float>(in, out);
-
-    while (out < lastAligned) {
-        _mm_store_ps(out, _mm_load_ps(in));
-        incrementAll<TypeAlignment>(in, out);
-    }
-
-    while (out < sentinel)
-        _internals::snippetCopy<float>(in, out);
-}
-
-template <>
 void sfz::pan<float, true>(absl::Span<const float> panEnvelope, absl::Span<float> leftBuffer, absl::Span<float> rightBuffer) noexcept
 {
     CHECK(leftBuffer.size() >= panEnvelope.size());

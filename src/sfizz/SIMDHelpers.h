@@ -501,39 +501,29 @@ void subtract(T value, absl::Span<T> output) noexcept
     subtract<T>(value, output.data(), output.size());
 }
 
-namespace _internals {
-    template <class T>
-    void snippetCopy(const T*& input, T*& output)
-    {
-        *output++ = *input++;
-    }
-}
-
 /**
  * @brief Copy a span in another
  *
- * The output size will be the minimum of the input span and output span sizes.
- *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
  * @param input
  * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::copy>
-void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
+template <class T>
+void copy(const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(output.size() >= input.size());
-    if (output.data() == input.data() && output.size() == input.size())
-        return;
-    auto* in = input.begin();
-    auto* out = output.begin();
-    auto* sentinel = out + min(input.size(), output.size());
-    while (out < sentinel)
-        _internals::snippetCopy(in, out);
+    std::copy(input, input + size, output);
 }
 
 template <>
-void copy<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+void copy<float>(const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    copy<T>(input.data(), output.data(), minSpanSize(input, output));
+}
 
 namespace _internals {
     // Number of elements in the table, odd for equal volume at center

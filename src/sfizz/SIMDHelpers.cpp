@@ -445,4 +445,30 @@ void subtract<float>(float value, float* output, unsigned size) noexcept
         *output++ -= value;
 }
 
+template <>
+void copy<float>(const float* input, float* output, unsigned size) noexcept
+{
+    // The sentinel is the input here
+    const auto sentinel = input + size;
+
+    if (getSIMDOpStatus(SIMDOps::copy)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && input < lastAligned)
+                *output++ = *input++;
+
+            while (input < lastAligned) {
+                _mm_store_ps(output, _mm_load_ps(input));
+                incrementAll<4>(input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    std::copy(input, sentinel, output);
+}
+
 }
