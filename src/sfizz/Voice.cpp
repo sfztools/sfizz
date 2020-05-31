@@ -10,6 +10,7 @@
 #include "ModifierHelpers.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
+#include "Panning.h"
 #include "SfzHelpers.h"
 #include "Interpolators.h"
 #include "absl/algorithm/container.h"
@@ -363,7 +364,7 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
@@ -384,7 +385,7 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
     fill(*modulationSpan, region->width);
@@ -392,14 +393,14 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    width<float>(*modulationSpan, leftBuffer, rightBuffer);
+    width(*modulationSpan, leftBuffer, rightBuffer);
 
     fill(*modulationSpan, region->position);
     for (const auto& mod : region->positionCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept

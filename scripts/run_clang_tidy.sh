@@ -13,6 +13,7 @@ clang-tidy \
   src/sfizz/Opcode.cpp \
   src/sfizz/Oversampler.cpp \
   src/sfizz/Parser.cpp \
+  src/sfizz/Panning.cpp \
   src/sfizz/sfizz.cpp \
   src/sfizz/Region.cpp \
   src/sfizz/SfzHelpers.cpp \

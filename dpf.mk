@@ -85,6 +85,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/OpcodeCleanup.cpp \
 	src/sfizz/Opcode.cpp \
 	src/sfizz/Oversampler.cpp \
+	src/sfizz/Panning.cpp \
 	src/sfizz/Parser.cpp \
 	src/sfizz/parser/Parser.cpp \
 	src/sfizz/parser/ParserPrivate.cpp \

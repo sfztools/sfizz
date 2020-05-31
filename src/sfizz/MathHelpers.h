@@ -9,6 +9,7 @@
  * @brief Contains math helper functions and math constants
  */
 #pragma once
+#include "Debug.h"
 #include "Config.h"
 #include "Macros.h"
 #include "SIMDConfig.h"
