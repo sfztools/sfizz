@@ -117,36 +117,6 @@ void sfz::cumsum<float, true>(absl::Span<const float> input, absl::Span<float> o
 }
 
 template <>
-void sfz::sfzInterpolationCast<float, true>(absl::Span<const float> floatJumps, absl::Span<int> jumps, absl::Span<float> coeffs) noexcept
-{
-    sfz::sfzInterpolationCast<float, false>(floatJumps, jumps, coeffs);
-    // CHECK(jumps.size() >= floatJumps.size());
-    // CHECK(jumps.size() == coeffs.size());
-
-    // auto floatJump = floatJumps.data();
-    // auto jump = jumps.data();
-    // auto coeff = coeffs.data();
-    // const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), coeffs.size());
-    // const auto lastAligned = prevAligned(sentinel);
-
-    // while (unaligned(floatJump, reinterpret_cast<float*>(jump), coeff) && floatJump < lastAligned)
-    //     _internals::snippetSFZInterpolationCast(floatJump, jump, coeff);
-
-    // while (floatJump < lastAligned) {
-    //     auto mmFloatJumps = _mm_load_ps(floatJump);
-    //     auto mmIndices = _mm_cvtps_epi32(_mm_sub_ps(mmFloatJumps, _mm_set_ps1(0.4999999552965164184570312f)));
-    //     _mm_store_si128(reinterpret_cast<__m128i*>(jump), mmIndices);
-
-    //     auto mmCoeff = _mm_sub_ps(mmFloatJumps, _mm_cvtepi32_ps(mmIndices));
-    //     _mm_store_ps(coeff, mmCoeff);
-    //     incrementAll<TypeAlignment>(floatJump, jump, coeff);
-    // }
-
-    // while(floatJump < sentinel)
-    //     _internals::snippetSFZInterpolationCast(floatJump, jump, coeff);
-}
-
-template <>
 void sfz::diff<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept
 {
     CHECK(output.size() >= input.size());
