@@ -606,28 +606,34 @@ namespace _internals {
  * The output size will be the minimum of the input span and output span sizes.
  *
  * @tparam T the underlying type
- * @tparam SIMD use the SIMD version or the scalar version
- * @param vector
- * @return T
+ * @param input
+ * @param output
+ * @param size
  */
-template <class T, bool SIMD = SIMDConfig::cumsum>
-void cumsum(absl::Span<const T> input, absl::Span<T> output) noexcept
+template <class T>
+void cumsum(const T* input, T* output, unsigned size) noexcept
 {
-    CHECK(output.size() >= input.size());
-    if (input.size() == 0)
+    if (size == 0)
         return;
 
-    auto out = output.data();
-    auto in = input.data();
-    const auto sentinel = in + std::min(input.size(), output.size());
+    const auto sentinel = output + size;
 
-    *out++ = *in++;
-    while (in < sentinel)
-        _internals::snippetCumsum(in, out);
+    *output++ = *input++;
+    while (output < sentinel) {
+        *output = *(output - 1) + *input++;
+        output++;
+    }
 }
 
 template <>
-void cumsum<float, true>(absl::Span<const float> input, absl::Span<float> output) noexcept;
+void cumsum<float>(const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void cumsum(absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    cumsum<T>(input.data(), output.data(), minSpanSize(input, output));
+}
 
 // FIXME: This should go away once the changes from the resampler are in
 

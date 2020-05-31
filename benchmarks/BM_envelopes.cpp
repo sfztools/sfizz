@@ -20,7 +20,7 @@ public:
         input = std::vector<float>(state.range(0));
         output = std::vector<float>(state.range(0));
         std::generate(input.begin(), input.end(), [&]() { return dist(gen); });
-        sfz::cumsum<float, false>(input, absl::MakeSpan(input));
+        sfz::cumsum<float>(input, absl::MakeSpan(input));
     }
 
     void TearDown(const ::benchmark::State& /* state */)

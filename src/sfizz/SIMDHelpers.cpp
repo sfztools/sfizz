@@ -546,12 +546,52 @@ float meanSquared<float>(const float* vector, unsigned size) noexcept
 #endif
     }
 
-    while (vector < sentinel){
+    while (vector < sentinel) {
         result += (*vector) * (*vector);
         vector++;
     }
 
     return result / static_cast<float>(size);
+}
+
+template <>
+void cumsum<float>(const float* input, float* output, unsigned size) noexcept
+{
+    if (size == 0)
+        return;
+
+    const auto sentinel = output + size;
+    *output++ = *input++;
+
+    if (getSIMDOpStatus(SIMDOps::cumsum)) {
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+        if (cpuInfo.has_sse()) {
+            const auto* lastAligned = prevAligned(sentinel);
+
+            while (unaligned(input, output) && output < lastAligned) {
+                *output = *(output - 1) + *input++;
+                output++;
+            }
+
+            auto mmOutput = _mm_set_ps1(*(output - 1));
+            while (output < lastAligned) {
+                auto mmOffset = _mm_load_ps(input);
+                mmOffset = _mm_add_ps(mmOffset, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(mmOffset), 4)));
+                mmOffset = _mm_add_ps(mmOffset, _mm_shuffle_ps(_mm_setzero_ps(), mmOffset, _MM_SHUFFLE(1, 0, 0, 0)));
+                mmOutput = _mm_add_ps(mmOutput, mmOffset);
+                _mm_store_ps(output, mmOutput);
+                mmOutput = _mm_shuffle_ps(mmOutput, mmOutput, _MM_SHUFFLE(3, 3, 3, 3));
+                incrementAll<4>(input, output);
+            }
+            // fallthrough from lastAligned to sentinel
+        }
+#endif
+    }
+
+    while (output < sentinel) {
+        *output = *(output - 1) + *input++;
+        output++;
+    }
 }
 
 }

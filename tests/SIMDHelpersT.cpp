@@ -696,7 +696,8 @@ TEST_CASE("[Helpers] Cumulative sum")
     std::array<float, 6> input { 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f }; // 1.1 2.3 3.6 5.0f 6.5 8.1
     std::array<float, 6> output;
     std::array<float, 6> expected { 1.1f, 2.3f, 3.6f, 5.0f, 6.5f, 8.1f };
-    sfz::cumsum<float, false>(input, absl::MakeSpan(output));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, false);
+    sfz::cumsum<float>(input, absl::MakeSpan(output));
     REQUIRE(approxEqual<float>(output, expected));
 }
 
@@ -707,8 +708,10 @@ TEST_CASE("[Helpers] Cumulative sum (SIMD vs Scalar)")
     std::vector<float> outputSIMD(bigBufferSize);
     sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
     sfz::linearRamp<float>(absl::MakeSpan(input), 0.0f, 0.1f);
-    sfz::cumsum<float, false>(input, absl::MakeSpan(outputScalar));
-    sfz::cumsum<float, true>(input, absl::MakeSpan(outputSIMD));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, false);
+    sfz::cumsum<float>(input, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, true);
+    sfz::cumsum<float>(input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
