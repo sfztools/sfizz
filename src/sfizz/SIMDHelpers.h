@@ -27,7 +27,7 @@
 #include "Config.h"
 #include "Debug.h"
 #include "MathHelpers.h"
-#include <absl/algorithm/container.h>
+#include "simd/HelpersScalar.h"
 #include <absl/types/span.h>
 #include <array>
 #include <cmath>
@@ -61,32 +61,6 @@ enum class SIMDOps {
 // Enable or disable SIMD accelerators at runtime
 void setSIMDOpStatus(SIMDOps op, bool status);
 bool getSIMDOpStatus(SIMDOps op);
-
-constexpr uintptr_t ByteAlignmentMask(unsigned N) { return N - 1; }
-
-template<unsigned N = config::defaultAlignment, class T>
-T* nextAligned(const T* ptr)
-{
-    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(ptr) + ByteAlignmentMask(N) & (~ByteAlignmentMask(N)));
-}
-
-template<unsigned N = config::defaultAlignment, class T>
-T* prevAligned(const T* ptr)
-{
-    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(ptr) & (~ByteAlignmentMask(N)));
-}
-
-template<unsigned N = config::defaultAlignment, class T>
-bool unaligned(const T* ptr)
-{
-    return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask(N) )!= 0;
-}
-
-template<unsigned N = config::defaultAlignment, class T, class... Args>
-bool unaligned(const T* ptr1, Args... rest)
-{
-    return unaligned<N>(ptr1) || unaligned<N>(rest...);
-}
 
 /**
  * @brief Read interleaved stereo data from a buffer and separate it in a left/right pair of buffers.
@@ -134,9 +108,15 @@ inline void writeInterleaved(absl::Span<const float> inputLeft, absl::Span<const
  * @param value
  */
 template <class T>
+void fill(T* output, T value, unsigned size) noexcept
+{
+    std::fill(output, output + size, value);
+}
+
+template <class T>
 void fill(absl::Span<T> output, T value) noexcept
 {
-    absl::c_fill(output, value);
+    fill<T>(output.data(), value, output.size());
 }
 
 /**
@@ -150,9 +130,7 @@ void fill(absl::Span<T> output, T value) noexcept
 template<class T>
 void applyGain(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ = gain * (*input++);
+    applyGainScalar(gain, input, output, size);
 }
 
 template<>
@@ -195,9 +173,7 @@ inline void applyGain(float gain, absl::Span<float> array) noexcept
 template<class T>
 void applyGain(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ = (*gain++) * (*input++);
+    applyGainScalar(gain, input, output, size);
 }
 
 template<>
@@ -244,9 +220,7 @@ inline void applyGain(absl::Span<const T> gain, absl::Span<T> array) noexcept
 template <class T>
 void divide(const T* input, const T* divisor, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ = (*input++) / (*divisor++);
+    divideScalar(input, divisor, output, size);
 }
 
 template <>
@@ -285,9 +259,7 @@ void divide(absl::Span<T> output,  absl::Span<const T> divisor) noexcept
 template <class T>
 void multiplyAdd(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ += (*gain++) * (*input++);
+    multiplyAddScalar(gain, input, output, size);
 }
 
 template <>
@@ -312,9 +284,7 @@ void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span
 template <class T>
 void multiplyAdd(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ += gain * (*input++);
+    multiplyAddScalar(gain, input, output, size);
 }
 
 template <>
@@ -340,12 +310,7 @@ void multiplyAdd(T gain, absl::Span<const T> input, absl::Span<T> output) noexce
 template <class T>
 T linearRamp(T* output, T start, T step, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel) {
-        *output++ = start;
-        start += step;
-    }
-    return start;
+    linearRampScalar(output, start, step, size);
 }
 
 template <>
@@ -369,12 +334,7 @@ T linearRamp(absl::Span<T> output, T start, T step) noexcept
 template <class T>
 T multiplicativeRamp(T* output, T start, T step, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel) {
-        *output++ = start;
-        start *= step;
-    }
-    return start;
+    multiplicativeRampScalar(output, start, step, size);
 }
 
 template <>
@@ -398,9 +358,7 @@ T multiplicativeRamp(absl::Span<T> output, T start, T step) noexcept
 template <class T>
 void add(const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ += *input++;
+    addScalar(input, output, size);
 }
 
 template <>
@@ -424,9 +382,7 @@ void add(absl::Span<const T> input, absl::Span<T> output) noexcept
 template <class T>
 void add(T value, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ += value;
+    addScalar(value, output, size);
 }
 
 template <>
@@ -449,9 +405,7 @@ void add(T value, absl::Span<T> output) noexcept
 template <class T>
 void subtract(const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ -= *input++;
+    subtractScalar(input, output, size);
 }
 
 template <>
@@ -475,9 +429,7 @@ void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
 template <class T>
 void subtract(T value, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
-    while (output < sentinel)
-        *output++ -= value;
+    subtractScalar(value, output, size);
 }
 
 template <>
@@ -525,15 +477,7 @@ void copy(absl::Span<const T> input, absl::Span<T> output) noexcept
 template <class T>
 T mean(const T* vector, unsigned size) noexcept
 {
-    T result{ 0.0 };
-    if (size == 0)
-        return result;
-
-    const auto sentinel = vector + size;
-    while (vector < sentinel)
-        result += *vector++;
-
-    return result / static_cast<T>(size);
+    meanScalar(vector, size);
 }
 
 template <>
@@ -556,17 +500,7 @@ T mean(absl::Span<const T> vector) noexcept
 template <class T>
 T meanSquared(const T* vector, unsigned size) noexcept
 {
-    T result{ 0.0 };
-    if (size == 0)
-        return result;
-
-    const auto sentinel = vector + size;
-    while (vector < sentinel) {
-        result += (*vector) * (*vector);
-        vector++;
-    }
-
-    return result / static_cast<T>(size);
+    meanSquaredScalar(vector, size);
 }
 
 template <>
@@ -590,16 +524,7 @@ T meanSquared(absl::Span<const T> vector) noexcept
 template <class T>
 void cumsum(const T* input, T* output, unsigned size) noexcept
 {
-    if (size == 0)
-        return;
-
-    const auto sentinel = output + size;
-
-    *output++ = *input++;
-    while (output < sentinel) {
-        *output = *(output - 1) + *input;
-        incrementAll(input, output);
-    }
+    cumsumScalar(input, output, size);
 }
 
 template <>
@@ -661,16 +586,7 @@ void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps,
 template <class T>
 void diff(const T* input, T* output, unsigned size) noexcept
 {
-    if (size == 0)
-        return;
-
-    const auto sentinel = output + size;
-
-    *output++ = *input++;
-    while (output < sentinel) {
-        *output = *input - *(input - 1);
-        incrementAll(input, output);
-    }
+    diffScalar(input, output, size);
 }
 
 template <>

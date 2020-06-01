@@ -18,6 +18,8 @@ clang-tidy \
   src/sfizz/Region.cpp \
   src/sfizz/SfzHelpers.cpp \
   src/sfizz/SIMDHelpers.cpp \
+  src/sfizz/simd/HelpersSSE.cpp \
+  src/sfizz/simd/HelpersAVX.cpp \
   src/sfizz/Synth.cpp \
   src/sfizz/Voice.cpp \
   src/sfizz/effects/Eq.cpp \

@@ -2,7 +2,9 @@ macro(sfizz_add_simd_sources SOURCES_VAR PREFIX)
     # It needs a macro, otherwise the source properties cannot take effect.
 
     list (APPEND ${SOURCES_VAR}
-        ${PREFIX}/sfizz/SIMDHelpers.cpp)
+        ${PREFIX}/sfizz/SIMDHelpers.cpp
+        ${PREFIX}/sfizz/simd/HelpersSSE.cpp
+        ${PREFIX}/sfizz/simd/HelpersAVX.cpp)
 
     # For CPU-dispatched X86 sources
     # Always build them for all X86 targets.
@@ -13,7 +15,7 @@ macro(sfizz_add_simd_sources SOURCES_VAR PREFIX)
             set_source_files_properties(
                 ${PREFIX}/sfizz/effects/impl/ResonantStringAVX.cpp
                 ${PREFIX}/sfizz/effects/impl/ResonantArrayAVX.cpp
-                ${PREFIX}/sfizz/SIMDHelpers.cpp
+                ${PREFIX}/sfizz/simd/HelpersAVX.cpp
                 PROPERTIES COMPILE_FLAGS "-mavx")
         endif()
     endif()
