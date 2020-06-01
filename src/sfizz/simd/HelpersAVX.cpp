@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "HelpersAVX.h"
-#include "SIMDConfig.h"
+#include "../SIMDConfig.h"
 #include "../MathHelpers.h"
 #include "Common.h"
 
