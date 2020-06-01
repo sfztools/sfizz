@@ -30,6 +30,8 @@ else()
     target_sources(sfizz-pugl PRIVATE
         external/pugl/pugl/detail/x11.c
         external/pugl/pugl/detail/x11_cairo.c)
+    target_compile_definitions(sfizz-pugl PRIVATE
+        "HAVE_XSYNC=1")
 endif()
 target_link_libraries(sfizz-pugl PUBLIC sfizz-cairo)
 
