@@ -9,6 +9,8 @@
 #include "Parser.h"
 #include "Voice.h"
 #include "Region.h"
+#include "Group.h"
+#include "PolyphonyGroup.h"
 #include "Effects.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
@@ -659,11 +661,17 @@ private:
     using RegionViewVector = std::vector<Region*>;
     using VoiceViewVector = std::vector<Voice*>;
     using VoicePtr = std::unique_ptr<Voice>;
-    std::vector<std::unique_ptr<Region>> regions;
-    std::vector<std::unique_ptr<Voice>> voices;
-    std::vector<std::unique_ptr<Voice>> overflowVoices;
-    // Views to speed up iteration over the regions and voices when events
-    // occur in the audio callback
+    using RegionPtr = std::unique_ptr<Region>;
+    using GroupPtr = std::unique_ptr<Group>;
+    using PolyphonyGroupPtr = std::unique_ptr<PolyphonyGroup>;
+    std::vector<RegionPtr> regions;
+    std::vector<VoicePtr> voices;
+    std::vector<VoicePtr> overflowVoices;
+    // These are more general "groups" than sfz and encapsulates the full hierarchy
+    std::vector<GroupPtr> groups;
+    // These are the `group=` groups where you can off voices
+    std::vector<PolyphonyGroupPtr> polyphonyGroups;
+    // Views to speed up iteration over the regions and voices
     VoiceViewVector voiceViewVector;
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
