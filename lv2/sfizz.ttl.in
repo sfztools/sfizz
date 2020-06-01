@@ -129,7 +129,7 @@ midnam:update a lv2:Feature .
     lv2:portProperty pprop:expensive ;
     lv2:portProperty lv2:integer ;
     lv2:portProperty lv2:enumeration ;
-    lv2:default 256 ;
+    lv2:default 64 ;
     lv2:minimum 8 ;
     lv2:maximum 256 ;
     lv2:scalePoint [ rdfs:label "8 voices",
@@ -161,11 +161,6 @@ midnam:update a lv2:Feature .
       "256 voix"@fr ,
       "256 Voci"@it;
       rdf:value 256
-    ] ;
-    lv2:scalePoint [ rdfs:label "512 voices",
-      "512 voix"@fr ,
-      "512 Voci"@it;
-      rdf:value 512
     ] ;
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
