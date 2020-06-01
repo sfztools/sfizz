@@ -9,8 +9,8 @@
 #include "../MathHelpers.h"
 #include "Common.h"
 
-#ifdef SFIZZ_HAVE_AVX
-#include "immintrin.h"
+#if SFIZZ_HAVE_AVX
+#include <immintrin.h>
 using Type = float;
 constexpr unsigned TypeAlignment = 8;
 constexpr unsigned ByteAlignment = TypeAlignment * sizeof(Type);
@@ -20,7 +20,7 @@ void applyGainAVX(float gain, const float* input, float* output, unsigned size) 
 {
     const auto sentinel = output + size;
 
-#ifdef SFIZZ_HAVE_AVX
+#if SFIZZ_HAVE_AVX
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
     const auto mmGain = _mm256_set1_ps(gain);
     while (unaligned<ByteAlignment>(input, output) && output < lastAligned)
@@ -40,7 +40,7 @@ void applyGainAVX(const float* gain, const float* input, float* output, unsigned
 {
     const auto sentinel = output + size;
 
-#ifdef SFIZZ_HAVE_AVX
+#if SFIZZ_HAVE_AVX
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
     while (unaligned<ByteAlignment>(input, output) && output < lastAligned)
         *output++ = (*gain++) * (*input++);
