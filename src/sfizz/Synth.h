@@ -623,6 +623,18 @@ private:
 
     unsigned killSisterVoices(const Voice* voiceToKill) noexcept;
 
+    /**
+     * @brief Applies some lambda function to both voices and overflow voices
+     *
+     * @tparam F a lambda type decaying to void(std::unique_ptr<Voice>&)
+     * @param lambda the function to apply
+     */
+    template<class F>
+    void applyToAllVoices(F&& lambda) {
+        absl::c_for_each(voices, lambda);
+        absl::c_for_each(overflowVoices, lambda);
+    }
+
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block
     std::vector<Opcode> globalOpcodes;
@@ -646,8 +658,10 @@ private:
     std::vector<std::string> unknownOpcodes;
     using RegionPtrVector = std::vector<Region*>;
     using VoicePtrVector = std::vector<Voice*>;
+    using VoicePtr = std::unique_ptr<Voice>;
     std::vector<std::unique_ptr<Region>> regions;
     std::vector<std::unique_ptr<Voice>> voices;
+    std::vector<std::unique_ptr<Voice>> overflowVoices;
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
     VoicePtrVector voiceViewArray;
