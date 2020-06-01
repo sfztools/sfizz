@@ -802,6 +802,9 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
+    Voice* firstStartedVoice { nullptr };
+    Voice* lastStartedVoice { nullptr };
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
@@ -809,13 +812,31 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
                 continue;
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            if (firstStartedVoice == nullptr)
+                firstStartedVoice = voice;
+
+            if (lastStartedVoice != nullptr) {
+                voice->setPreviousSisterVoice(lastStartedVoice);
+                lastStartedVoice->setNextSisterVoice(voice);
+            }
+
+            lastStartedVoice = voice;
         }
+    }
+
+    if (lastStartedVoice != nullptr) {
+        ASSERT(firstStartedVoice);
+        lastStartedVoice->setNextSisterVoice(firstStartedVoice);
+        firstStartedVoice->setPreviousSisterVoice(lastStartedVoice);
     }
 }
 
 void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
+    Voice* firstStartedVoice { nullptr };
+    Voice* lastStartedVoice { nullptr };
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned activeNotesInGroup { 0 };
@@ -867,7 +888,22 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 continue;
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            if (firstStartedVoice == nullptr)
+                firstStartedVoice = voice;
+
+            if (lastStartedVoice != nullptr) {
+                voice->setPreviousSisterVoice(lastStartedVoice);
+                lastStartedVoice->setNextSisterVoice(voice);
+            }
+
+            lastStartedVoice = voice;
         }
+    }
+
+    if (lastStartedVoice != nullptr) {
+        ASSERT(firstStartedVoice);
+        lastStartedVoice->setNextSisterVoice(firstStartedVoice);
+        firstStartedVoice->setPreviousSisterVoice(lastStartedVoice);
     }
 }
 
@@ -897,6 +933,9 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, normValue);
 
+    Voice* firstStartedVoice { nullptr };
+    Voice* lastStartedVoice { nullptr };
+
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
@@ -904,7 +943,22 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
                 continue;
 
             voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
+            if (firstStartedVoice == nullptr)
+                firstStartedVoice = voice;
+
+            if (lastStartedVoice != nullptr) {
+                voice->setPreviousSisterVoice(lastStartedVoice);
+                lastStartedVoice->setNextSisterVoice(voice);
+            }
+
+            lastStartedVoice = voice;
         }
+    }
+
+    if (lastStartedVoice != nullptr) {
+        ASSERT(firstStartedVoice);
+        lastStartedVoice->setNextSisterVoice(firstStartedVoice);
+        firstStartedVoice->setPreviousSisterVoice(lastStartedVoice);
     }
 }
 

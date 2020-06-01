@@ -204,6 +204,26 @@ public:
     void reset() noexcept;
 
     /**
+     * @brief Set the next voice in the "sister voice" ring
+     * The sister voices are voices that started on the same event.
+     * This has to be set by the synth. A voice will remove itself from
+     * the ring upon reset.
+     *
+     * @param voice
+     */
+    void setNextSisterVoice(Voice* voice) noexcept;
+
+    /**
+     * @brief Set the previous voice in the "sister voice" ring
+     * The sister voices are voices that started on the same event.
+     * This has to be set by the synth. A voice will remove itself from
+     * the ring upon reset.
+     *
+     * @param voice
+     */
+    void setPreviousSisterVoice(Voice* voice) noexcept;
+
+    /**
      * @brief Get the mean squared power of the last rendered block. This is used
      * to determine which voice to steal if there are too many notes flying around.
      *
@@ -351,6 +371,9 @@ private:
     Duration amplitudeDuration;
     Duration panningDuration;
     Duration filterDuration;
+
+    Voice* nextSisterVoice;
+    Voice* previousSisterVoice;
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 

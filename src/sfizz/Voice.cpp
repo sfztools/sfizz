@@ -15,7 +15,7 @@
 #include "absl/algorithm/container.h"
 
 sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
-: id{voiceNumber}, stateListener(nullptr), resources(resources)
+: id{voiceNumber}, stateListener(nullptr), resources(resources), nextSisterVoice(this), previousSisterVoice(this)
 {
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);
@@ -668,6 +668,25 @@ void sfz::Voice::reset() noexcept
 
     filters.clear();
     equalizers.clear();
+
+    // Remove the voice from the sister ring
+    previousSisterVoice->setNextSisterVoice(nextSisterVoice);
+    nextSisterVoice->setPreviousSisterVoice(previousSisterVoice);
+    previousSisterVoice = this;
+    nextSisterVoice = this;
+}
+
+void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept
+{
+    // Should never be null
+    ASSERT(voice);
+    nextSisterVoice = voice;
+}
+void sfz::Voice::setPreviousSisterVoice(Voice* voice) noexcept
+{
+    // Should never be null
+    ASSERT(voice);
+    previousSisterVoice = voice;
 }
 
 float sfz::Voice::getAverageEnvelope() const noexcept
