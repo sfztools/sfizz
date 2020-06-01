@@ -11,7 +11,7 @@
 #include <array>
 
 #if SFIZZ_HAVE_SSE2
-#include <emmintrin.h>
+#include <immintrin.h>
 using Type = float;
 constexpr unsigned TypeAlignment = 4;
 constexpr unsigned ByteAlignment = TypeAlignment * sizeof(Type);
@@ -125,8 +125,8 @@ void divideSSE(const float* input, const float* divisor, float* output, unsigned
 {
     const auto sentinel = output + size;
 
+#if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
-
     while (unaligned<ByteAlignment>(input, output) && output < lastAligned)
         *output++ = (*input++) / (*divisor++);
 
@@ -134,6 +134,7 @@ void divideSSE(const float* input, const float* divisor, float* output, unsigned
         _mm_store_ps(output, _mm_div_ps(_mm_load_ps(input), _mm_load_ps(divisor)));
         incrementAll<TypeAlignment>(divisor, input, output);
     }
+#endif
 
     while (output < sentinel)
         *output++ = (*input++) / (*divisor++);
