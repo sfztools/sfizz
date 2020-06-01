@@ -97,8 +97,8 @@ SFIZZ_SOURCES = \
 	src/sfizz/SfzFilter.cpp \
 	src/sfizz/SfzHelpers.cpp \
 	src/sfizz/SIMDHelpers.cpp \
-	src/sfizz/simd/SSEHelpers.cpp \
-	src/sfizz/simd/AVXHelpers.cpp \
+	src/sfizz/simd/HelpersSSE.cpp \
+	src/sfizz/simd/HelpersAVX.cpp \
 	src/sfizz/Synth.cpp \
 	src/sfizz/Tuning.cpp \
 	src/sfizz/Voice.cpp \

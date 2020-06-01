@@ -8,6 +8,7 @@
 #include "../MathHelpers.h"
 #include "../SIMDConfig.h"
 #include "Common.h"
+#include <array>
 
 #ifdef SFIZZ_HAVE_SSE
 #include "emmintrin.h"
@@ -46,6 +47,7 @@ void readInterleavedSSE(const float* input, float* outputLeft, float* outputRigh
     // vst1q_f32(lOut, reg.val[0]);
     // vst1q_f32(rOut, reg.val[1]);
 #endif
+
     while (input < sentinel) {
         *outputLeft++ = *input++;
         *outputRight++ = *input++;

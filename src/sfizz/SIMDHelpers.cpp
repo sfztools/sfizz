@@ -7,9 +7,9 @@
 #include "SIMDHelpers.h"
 #include <array>
 #include "cpuid/cpuinfo.hpp"
+#include "SIMDConfig.h"
 #include "simd/HelpersSSE.h"
 #include "simd/HelpersAVX.h"
-#include "SIMDConfig.h"
 
 namespace sfz {
 
