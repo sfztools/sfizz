@@ -542,14 +542,14 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         return freeVoice->get();
 
     // Start of the voice stealing algorithm
-    absl::c_sort(voiceViewArray, voiceOrdering);
+    absl::c_sort(voiceViewVector, voiceOrdering);
 
-    const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [](float sum, const Voice* v) {
+    const auto sumEnvelope = absl::c_accumulate(voiceViewVector, 0.0f, [](float sum, const Voice* v) {
         return sum + v->getAverageEnvelope();
     });
     const auto envThreshold = sumEnvelope
-        / static_cast<float>(voiceViewArray.size()) * config::stealingEnvelopeCoeff;
-    const auto ageThreshold = voiceViewArray.front()->getAge() * config::stealingAgeCoeff;
+        / static_cast<float>(voiceViewVector.size()) * config::stealingEnvelopeCoeff;
+    const auto ageThreshold = voiceViewVector.front()->getAge() * config::stealingAgeCoeff;
 
     auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
     const auto killVoice = [&] (Voice* v) {
@@ -557,18 +557,18 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         v->reset();
     };
 
-    Voice* returnedVoice = voiceViewArray.front();
+    Voice* returnedVoice = voiceViewVector.front();
     unsigned idx = 0;
-    while (idx < voiceViewArray.size()) {
+    while (idx < voiceViewVector.size()) {
         const auto refIdx = idx;
-        const auto ref = voiceViewArray[idx];
+        const auto ref = voiceViewVector[idx];
         idx++;
 
         if (ref->getAge() < ageThreshold) {
             unsigned killIdx = 1;
-            while (killIdx < voiceViewArray.size()
-                    && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
-                killVoice(voiceViewArray[killIdx]);
+            while (killIdx < voiceViewVector.size()
+                    && sisterVoices(returnedVoice, voiceViewVector[killIdx])) {
+                killVoice(voiceViewVector[killIdx]);
                 killIdx++;
             }
             // std::cout << "Went too far, picking the oldest voice and killing "
@@ -578,9 +578,9 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         }
 
         float maxEnvelope = ref->getAverageEnvelope();
-        while (idx < voiceViewArray.size()
-                && sisterVoices(ref, voiceViewArray[idx])) {
-            maxEnvelope = max(maxEnvelope, voiceViewArray[idx]->getAverageEnvelope());
+        while (idx < voiceViewVector.size()
+                && sisterVoices(ref, voiceViewVector[idx])) {
+            maxEnvelope = max(maxEnvelope, voiceViewVector[idx]->getAverageEnvelope());
             idx++;
         }
 
@@ -588,7 +588,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
             returnedVoice = ref;
             // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
             for (unsigned j = refIdx; j < idx; j++) {
-                killVoice(voiceViewArray[j]);
+                killVoice(voiceViewVector[j]);
             }
             break;
         }
@@ -1151,13 +1151,13 @@ void sfz::Synth::resetVoices(int numVoices)
         voices.emplace_back(std::move(voice));
     }
 
-    voiceViewArray.clear();
-    voiceViewArray.reserve(numVoices);
+    voiceViewVector.clear();
+    voiceViewVector.reserve(numVoices);
 
     for (auto& voice : voices) {
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
-        voiceViewArray.push_back(voice.get());
+        voiceViewVector.push_back(voice.get());
     }
 
     overflowVoices.clear();

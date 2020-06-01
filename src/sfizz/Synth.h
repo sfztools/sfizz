@@ -656,17 +656,17 @@ private:
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;
     std::vector<std::string> unknownOpcodes;
-    using RegionPtrVector = std::vector<Region*>;
-    using VoicePtrVector = std::vector<Voice*>;
+    using RegionViewVector = std::vector<Region*>;
+    using VoiceViewVector = std::vector<Voice*>;
     using VoicePtr = std::unique_ptr<Voice>;
     std::vector<std::unique_ptr<Region>> regions;
     std::vector<std::unique_ptr<Voice>> voices;
     std::vector<std::unique_ptr<Voice>> overflowVoices;
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
-    VoicePtrVector voiceViewArray;
-    std::array<RegionPtrVector, 128> noteActivationLists;
-    std::array<RegionPtrVector, config::numCCs> ccActivationLists;
+    VoiceViewVector voiceViewVector;
+    std::array<RegionViewVector, 128> noteActivationLists;
+    std::array<RegionViewVector, config::numCCs> ccActivationLists;
 
     // Effect factory and buses
     EffectFactory effectFactory;
