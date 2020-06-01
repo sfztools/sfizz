@@ -682,12 +682,31 @@ void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept
     ASSERT(voice);
     nextSisterVoice = voice;
 }
+
 void sfz::Voice::setPreviousSisterVoice(Voice* voice) noexcept
 {
     // Should never be null
     ASSERT(voice);
     previousSisterVoice = voice;
 }
+
+unsigned sfz::Voice::countSisterVoices(const Voice* start)
+{
+    if (!start)
+        return 0;
+
+    unsigned count = 0;
+    auto next = start;
+    do
+    {
+        count++;
+        next = next->getNextSisterVoice();
+    } while (next != start && count < config::maxVoices);
+
+    ASSERT(count < config::maxVoices);
+    return count;
+}
+
 
 float sfz::Voice::getAverageEnvelope() const noexcept
 {

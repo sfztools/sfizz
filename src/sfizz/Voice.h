@@ -224,6 +224,29 @@ public:
     void setPreviousSisterVoice(Voice* voice) noexcept;
 
     /**
+     * @brief Get the next sister voice in the ring
+     *
+     * @return Voice*
+     */
+    Voice* getNextSisterVoice() const noexcept { return nextSisterVoice; };
+
+    /**
+     * @brief Count the number of sister voices
+     *
+     * @param start
+     * @return unsigned
+     */
+    static unsigned countSisterVoices(const Voice* start);
+
+    /**
+     * @brief Count the number of sister voices
+     *
+     * @param start
+     * @return unsigned
+     */
+    unsigned countSisterVoices() const { return countSisterVoices(this); }
+
+    /**
      * @brief Get the mean squared power of the last rendered block. This is used
      * to determine which voice to steal if there are too many notes flying around.
      *
