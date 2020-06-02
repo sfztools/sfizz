@@ -522,6 +522,23 @@ R"(<region> key=61 sample=*sine
     REQUIRE( synth.getVoiceView(5)->getPreviousSisterVoice() == synth.getVoiceView(4) );
 }
 
+TEST_CASE("[Synth] Apply function on sisters")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.loadSfzString(fs::current_path(),
+R"(<region> key=63 sample=*saw
+<region> key=63 sample=*saw
+<region> key=63 sample=*saw)");
+    synth.noteOn(0, 63, 85);
+    REQUIRE( synth.getVoiceView(0)->countSisterVoices() == 3 );
+    float start = 1.0f;
+    synth.getVoiceView(0)->applyToSisterRing([&](const sfz::Voice* v) {
+        start += static_cast<float>(v->getTriggerNumber());
+    });
+    REQUIRE( start == 1.0f + 3.0f * 63.0f );
+}
+
 
 TEST_CASE("[Synth] Sisters and off-by")
 {
