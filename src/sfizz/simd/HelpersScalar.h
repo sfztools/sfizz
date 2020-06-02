@@ -5,9 +5,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include <algorithm>
 
 template<class T>
-inline void readInterleavedScalar(const T* input, T* outputLeft, T* outputRight, unsigned inputSize)
+inline void readInterleavedScalar(const T* input, T* outputLeft, T* outputRight, unsigned inputSize) noexcept
 {
     const auto sentinel = input + inputSize - 1;
     while (input < sentinel) {
@@ -17,7 +18,7 @@ inline void readInterleavedScalar(const T* input, T* outputLeft, T* outputRight,
 }
 
 template<class T>
-inline void writeInterleavedScalar(const T* inputLeft, const T* inputRight, T* output, unsigned outputSize)
+inline void writeInterleavedScalar(const T* inputLeft, const T* inputRight, T* output, unsigned outputSize) noexcept
 {
     const auto sentinel = output + outputSize - 1;
     while (output < sentinel) {
@@ -118,6 +119,12 @@ inline void subtractScalar(T value, T* output, unsigned size) noexcept
     const auto sentinel = output + size;
     while (output < sentinel)
         *output++ -= value;
+}
+
+template <class T>
+void copyScalar(const T* input, T* output, unsigned size) noexcept
+{
+    std::copy(input, input + size, output);
 }
 
 template <class T>

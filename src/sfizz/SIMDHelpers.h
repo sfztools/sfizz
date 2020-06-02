@@ -59,8 +59,14 @@ enum class SIMDOps {
 };
 
 // Enable or disable SIMD accelerators at runtime
+void resetSIMDOpStatus();
 void setSIMDOpStatus(SIMDOps op, bool status);
 bool getSIMDOpStatus(SIMDOps op);
+
+// Initializer object which ensures to prepare SIMD dispatch
+struct SIMDInitializer {
+    SIMDInitializer();
+};
 
 /**
  * @brief Read interleaved stereo data from a buffer and separate it in a left/right pair of buffers.
