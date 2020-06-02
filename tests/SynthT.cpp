@@ -500,24 +500,30 @@ R"(<region> key=61 sample=*sine
     synth.noteOn(0, 61, 85);
     REQUIRE( synth.getVoiceView(0)->countSisterVoices() == 1 );
     REQUIRE( synth.getVoiceView(0)->getNextSisterVoice() == synth.getVoiceView(0) );
+    REQUIRE( synth.getVoiceView(0)->getPreviousSisterVoice() == synth.getVoiceView(0) );
     synth.noteOn(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( synth.getVoiceView(1)->countSisterVoices() == 2 );
     REQUIRE( synth.getVoiceView(1)->getNextSisterVoice() == synth.getVoiceView(2) );
+    REQUIRE( synth.getVoiceView(1)->getPreviousSisterVoice() == synth.getVoiceView(2) );
     REQUIRE( synth.getVoiceView(2)->countSisterVoices() == 2 );
     REQUIRE( synth.getVoiceView(2)->getNextSisterVoice() == synth.getVoiceView(1) );
+    REQUIRE( synth.getVoiceView(2)->getPreviousSisterVoice() == synth.getVoiceView(1) );
     synth.noteOn(0, 63, 85);
     REQUIRE( synth.getNumActiveVoices() == 6 );
     REQUIRE( synth.getVoiceView(3)->countSisterVoices() == 3 );
     REQUIRE( synth.getVoiceView(3)->getNextSisterVoice() == synth.getVoiceView(4) );
+    REQUIRE( synth.getVoiceView(3)->getPreviousSisterVoice() == synth.getVoiceView(5) );
     REQUIRE( synth.getVoiceView(4)->countSisterVoices() == 3 );
     REQUIRE( synth.getVoiceView(4)->getNextSisterVoice() == synth.getVoiceView(5) );
+    REQUIRE( synth.getVoiceView(4)->getPreviousSisterVoice() == synth.getVoiceView(3) );
     REQUIRE( synth.getVoiceView(5)->countSisterVoices() == 3 );
     REQUIRE( synth.getVoiceView(5)->getNextSisterVoice() == synth.getVoiceView(3) );
+    REQUIRE( synth.getVoiceView(5)->getPreviousSisterVoice() == synth.getVoiceView(4) );
 }
 
 
-TEST_CASE("[Synth] Sister and off-by")
+TEST_CASE("[Synth] Sisters and off-by")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, 256 };
@@ -528,8 +534,6 @@ R"(<region> <region> key=62 sample=*sine
     synth.noteOn(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( synth.getVoiceView(0)->countSisterVoices() == 2 );
-    REQUIRE( synth.getVoiceView(0)->getNextSisterVoice() == synth.getVoiceView(1) );
-    REQUIRE( synth.getVoiceView(1)->getNextSisterVoice() == synth.getVoiceView(0) );
     synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.noteOn(0, 63, 85);

@@ -231,12 +231,52 @@ public:
     Voice* getNextSisterVoice() const noexcept { return nextSisterVoice; };
 
     /**
+     * @brief Get the previous sister voice in the ring
+     *
+     * @return Voice*
+     */
+    Voice* getPreviousSisterVoice() const noexcept { return previousSisterVoice; };
+
+    /**
      * @brief Count the number of sister voices
      *
      * @param start
      * @return unsigned
      */
     static unsigned countSisterVoices(const Voice* start);
+
+    /**
+     * @brief Apply a function to the sister ring, including the current voice.
+     * This function should be safe enough to even reset the sister voices, but
+     * if you mutate the ring significantly you should probably roll your own
+     * iterator.
+     *
+     * @tparam F
+     * @param lambda the function to apply.
+     */
+    template<class F>
+    void applyToSisterRing(F&& lambda)
+    {
+        auto v = getNextSisterVoice();
+        while (v != this) {
+            const auto next = v->getNextSisterVoice();
+            lambda(v);
+            v = next;
+        }
+        lambda(this);
+    }
+
+    template<class F>
+    void applyToSisterRing(F&& lambda) const
+    {
+        auto v = getNextSisterVoice();
+        while (v != this) {
+            const auto next = v->getNextSisterVoice();
+            lambda(v);
+            v = next;
+        }
+        lambda(this);
+    }
 
     /**
      * @brief Count the number of sister voices

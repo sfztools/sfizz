@@ -707,7 +707,6 @@ unsigned sfz::Voice::countSisterVoices(const Voice* start)
     return count;
 }
 
-
 float sfz::Voice::getAverageEnvelope() const noexcept
 {
     return max(smoothedChannelEnvelopes[0], smoothedChannelEnvelopes[1]);
