@@ -213,7 +213,7 @@ public:
      * for testing.
      *
      * @param idx
-     * @return const Region*
+     * @return const Voice*
      */
     const Voice* getVoiceView(int idx) const noexcept;
     /**

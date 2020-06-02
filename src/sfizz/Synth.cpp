@@ -551,49 +551,39 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         / static_cast<float>(voiceViewVector.size()) * config::stealingEnvelopeCoeff;
     const auto ageThreshold = voiceViewVector.front()->getAge() * config::stealingAgeCoeff;
 
-    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-    const auto killVoice = [&] (Voice* v) {
-        renderVoiceToOutputs(*v, *tempSpan);
-        v->reset();
-    };
 
     Voice* returnedVoice = voiceViewVector.front();
     unsigned idx = 0;
     while (idx < voiceViewVector.size()) {
-        const auto refIdx = idx;
         const auto ref = voiceViewVector[idx];
-        idx++;
 
         if (ref->getAge() < ageThreshold) {
-            unsigned killIdx = 1;
-            while (killIdx < voiceViewVector.size()
-                    && sisterVoices(returnedVoice, voiceViewVector[killIdx])) {
-                killVoice(voiceViewVector[killIdx]);
-                killIdx++;
-            }
-            // std::cout << "Went too far, picking the oldest voice and killing "
-            //           << killIdx << " voices" << '\n';
-            killVoice(returnedVoice);
+            // Went too far, we'll kill the oldest note.
             break;
         }
 
         float maxEnvelope = ref->getAverageEnvelope();
-        while (idx < voiceViewVector.size()
-                && sisterVoices(ref, voiceViewVector[idx])) {
-            maxEnvelope = max(maxEnvelope, voiceViewVector[idx]->getAverageEnvelope());
-            idx++;
-        }
+        returnedVoice->applyToSisterRing([&](Voice* v) {
+            maxEnvelope = max(maxEnvelope, v->getAverageEnvelope());
+        });
 
         if (maxEnvelope < envThreshold) {
             returnedVoice = ref;
-            // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
-            for (unsigned j = refIdx; j < idx; j++) {
-                killVoice(voiceViewVector[j]);
-            }
             break;
         }
+
+        // Jump over the sister voices in the set
+        do { idx++; }
+        while (idx < voiceViewVector.size() && sisterVoices(ref, voiceViewVector[idx]));
     }
-    assert(returnedVoice->isFree());
+
+    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
+    returnedVoice->applyToSisterRing([&] (Voice* v) {
+        std::cout << "Killing a voice" << '\n';
+        renderVoiceToOutputs(*v, *tempSpan);
+        v->reset();
+    });
+    ASSERT(returnedVoice->isFree());
     return returnedVoice;
 }
 
