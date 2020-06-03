@@ -6,7 +6,7 @@
 namespace sfz
 {
 
-class Group {
+class RegionSet {
 public:
     void setPolyphonyLimit(unsigned limit);
     unsigned getPolyphonyLimit() { return polyphonyLimit; }
@@ -15,7 +15,7 @@ public:
         if (absl::c_find(regions, region) == regions.end())
             regions.push_back(region);
     }
-    void addSubgroup(Group* group)
+    void addSubgroup(RegionSet* group)
     {
         if (absl::c_find(subgroups, group) == subgroups.end())
             subgroups.push_back(group);
@@ -35,11 +35,11 @@ public:
     }
     const std::vector<Voice*>& getActiveVoices() { return voices; }
     const std::vector<Region*>& getRegions() { return regions; }
-    const std::vector<Group*>& getSubgroups() { return subgroups; }
+    const std::vector<RegionSet*>& getSubgroups() { return subgroups; }
 private:
-    Group* parent { nullptr };
+    RegionSet* parent { nullptr };
     std::vector<Region*> regions;
-    std::vector<Group*> subgroups;
+    std::vector<RegionSet*> subgroups;
     std::vector<Voice*> voices;
     unsigned polyphonyLimit;
 };
