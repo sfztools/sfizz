@@ -23,6 +23,9 @@
 #include <vector>
 
 namespace sfz {
+
+class RegionSet;
+
 /**
  * @brief Regions are the basic building blocks for the SFZ parsing and handling code.
  * All SFZ files are made of regions that are activated when a key is pressed or a CC
@@ -357,6 +360,8 @@ struct Region {
     // Effects
     std::vector<float> gainToEffect;
 
+    // Parent
+    RegionSet* parent { nullptr };
 private:
     const MidiState& midiState;
     bool keySwitched { true };

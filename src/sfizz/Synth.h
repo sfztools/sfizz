@@ -9,7 +9,7 @@
 #include "Parser.h"
 #include "Voice.h"
 #include "Region.h"
-#include "Group.h"
+#include "RegionSet.h"
 #include "PolyphonyGroup.h"
 #include "Effects.h"
 #include "LeakDetector.h"
@@ -662,13 +662,14 @@ private:
     using VoiceViewVector = std::vector<Voice*>;
     using VoicePtr = std::unique_ptr<Voice>;
     using RegionPtr = std::unique_ptr<Region>;
-    using GroupPtr = std::unique_ptr<Group>;
+    using RegionSetPtr = std::unique_ptr<RegionSet>;
     using PolyphonyGroupPtr = std::unique_ptr<PolyphonyGroup>;
     std::vector<RegionPtr> regions;
     std::vector<VoicePtr> voices;
     std::vector<VoicePtr> overflowVoices;
     // These are more general "groups" than sfz and encapsulates the full hierarchy
-    std::vector<GroupPtr> groups;
+    RegionSet* currentSet;
+    std::vector<RegionSetPtr> sets;
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroupPtr> polyphonyGroups;
     // Views to speed up iteration over the regions and voices

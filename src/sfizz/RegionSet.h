@@ -15,10 +15,10 @@ public:
         if (absl::c_find(regions, region) == regions.end())
             regions.push_back(region);
     }
-    void addSubgroup(RegionSet* group)
+    void addSubset(RegionSet* group)
     {
-        if (absl::c_find(subgroups, group) == subgroups.end())
-            subgroups.push_back(group);
+        if (absl::c_find(subsets, group) == subsets.end())
+            subsets.push_back(group);
     }
     void registerVoice(Voice* voice)
     {
@@ -33,13 +33,14 @@ public:
             voices.pop_back();
         }
     }
+    RegionSet* getParent() { return parent; }
     const std::vector<Voice*>& getActiveVoices() { return voices; }
     const std::vector<Region*>& getRegions() { return regions; }
-    const std::vector<RegionSet*>& getSubgroups() { return subgroups; }
+    const std::vector<RegionSet*>& getSubsets() { return subsets; }
 private:
     RegionSet* parent { nullptr };
     std::vector<Region*> regions;
-    std::vector<RegionSet*> subgroups;
+    std::vector<RegionSet*> subsets;
     std::vector<Voice*> voices;
     unsigned polyphonyLimit;
 };
