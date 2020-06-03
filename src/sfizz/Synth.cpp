@@ -1125,6 +1125,11 @@ const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
     return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
 }
 
+const sfz::RegionSet* sfz::Synth::getRegionSetView(int idx) const noexcept
+{
+    return (size_t)idx < sets.size() ? sets[idx].get() : nullptr;
+}
+
 const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
 {
     return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
