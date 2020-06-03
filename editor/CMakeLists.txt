@@ -105,17 +105,20 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/host/PuglHelpers.cpp)
 if(WIN32)
     target_sources(sfizz_editor PRIVATE
+        src/editor/native/FileDialog_win.cpp
         src/host/NativeWindowHelpers_win.cpp)
 elseif(APPLE)
     target_sources(sfizz_editor PRIVATE
+        src/editor/native/FileDialog_mac.mm
         src/host/NativeWindowHelpers_mac.mm
         src/host/MacBundleHelpers.mm)
 else()
     target_sources(sfizz_editor PRIVATE
+        src/editor/native/FileDialog_zenity.cpp
         src/host/NativeWindowHelpers_x11.cpp)
 endif()
 target_include_directories(sfizz_editor PUBLIC src)
-target_link_libraries(sfizz_editor PUBLIC sfizz-pugl sfizz-elements sfizz-whereami)
+target_link_libraries(sfizz_editor PUBLIC sfizz-pugl sfizz-elements sfizz-whereami absl::strings)
 # need the cyclic dependency editor <-> elements
 target_link_libraries(sfizz-elements PUBLIC sfizz_editor)
 
