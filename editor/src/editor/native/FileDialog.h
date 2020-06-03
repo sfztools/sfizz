@@ -9,9 +9,15 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 
 class FileDialog {
 public:
+#if defined(__APPLE__)
+    FileDialog();
+    ~FileDialog();
+#endif
+
     enum class Mode { Open, Save };
 
     struct Filter {
@@ -33,4 +39,12 @@ private:
     std::string title_;
     std::string path_;
     std::vector<Filter> filters_;
+
+#if defined(__APPLE__)
+public:
+    struct CocoaImpl;
+
+private:
+    std::unique_ptr<CocoaImpl> impl_;
+#endif
 };
