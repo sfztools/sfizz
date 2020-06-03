@@ -197,9 +197,8 @@ void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
             ASSERT(currentSet != nullptr);
-            currentSet->setPolyphonyLimit(
-                readOpcode(member.value, Range<unsigned>(0, config::maxVoices)).value_or(config::maxVoices)
-            );
+            if (auto value = readOpcode(member.value, Default::polyphonyRange))
+                currentSet->setPolyphonyLimit(*value);
             break;
         }
     }
@@ -213,9 +212,8 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
             ASSERT(currentSet != nullptr);
-            currentSet->setPolyphonyLimit(
-                readOpcode(member.value, Range<unsigned>(0, config::maxVoices)).value_or(config::maxVoices)
-            );
+            if (auto value = readOpcode(member.value, Default::polyphonyRange))
+                currentSet->setPolyphonyLimit(*value);
             break;
         case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
@@ -242,12 +240,12 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             break;
         case hash("polyphony"):
             ASSERT(currentSet != nullptr);
-            if (!groupIdx) {
-                const auto newPolyphony =
-                    readOpcode(member.value, Range<unsigned>(0, config::maxVoices)).value_or(config::maxVoices);
-                currentSet->setPolyphonyLimit(newPolyphony);
+            if (auto value = readOpcode(member.value, Default::polyphonyRange)) {
+                if (!groupIdx)
+                    currentSet->setPolyphonyLimit(*value);
+                else
+                    maxPolyphony = *value;
             }
-            setValueFromOpcode(member, maxPolyphony, Range<unsigned>(0, config::maxVoices));
             break;
         }
     };
@@ -883,6 +881,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned activeNotesInGroup { 0 };
+            unsigned sameNotes { 0 };
             unsigned activeNotes { 0 };
             Voice* selfMaskCandidate { nullptr };
 
@@ -891,12 +890,15 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 if (voiceRegion == nullptr)
                     continue;
 
+                if (voiceRegion == region)
+                    activeNotes += 1;
+
                 if (voiceRegion->group == region->group)
                     activeNotesInGroup += 1;
 
                 if (region->notePolyphony) {
                     if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
-                        activeNotes += 1;
+                        sameNotes += 1;
                         switch (region->selfMask) {
                         case SfzSelfMask::mask:
                             if (voice->getTriggerValue() < velocity) {
@@ -916,10 +918,26 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
 
+            // FIXME: After killing something (possibly) we should decrease the number of active notes
+            // to avoid calling another voice stealing say at a group level or master level
+            // FIXME: Do something for the polyphony limit
             if (activeNotesInGroup >= groupMaxPolyphony[region->group])
                 continue;
 
-            if (region->notePolyphony && activeNotes >= *region->notePolyphony) {
+            // FIXME: Do something for the polyphony limit
+            if (activeNotes >= region->polyphony)
+                continue;
+
+            auto parent = region->parent;
+            while (parent != nullptr) {
+                // FIXME: Do something for the polyphony limit
+                if (parent->getActiveVoices().size() >= parent->getPolyphonyLimit())
+                    continue;
+
+                parent = parent->getParent();
+            }
+
+            if (region->notePolyphony && sameNotes >= *region->notePolyphony) {
                 if (selfMaskCandidate != nullptr)
                     selfMaskCandidate->release(delay);
                 else // We're the lowest velocity guy here

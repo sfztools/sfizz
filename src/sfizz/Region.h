@@ -275,7 +275,8 @@ struct Region {
     uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
     SfzOffMode offMode { Default::offMode }; // off_mode
-    absl::optional<uint32_t> notePolyphony {};
+    absl::optional<uint32_t> notePolyphony {}; // note_polyphony
+    unsigned polyphony { config::maxVoices };
     SfzSelfMask selfMask { Default::selfMask };
 
     // Region logic: key mapping

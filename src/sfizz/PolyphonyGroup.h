@@ -15,7 +15,7 @@ public:
         polyphonyLimit = limit;
         voices.reserve(limit);
     }
-    unsigned getPolyphonyLimit() { return polyphonyLimit; }
+    unsigned getPolyphonyLimit() const { return polyphonyLimit; }
     unsigned getID() const { return id; }
     void addRegion(Region* region)
     {
@@ -27,6 +27,7 @@ public:
         if (absl::c_find(voices, voice) == voices.end())
             voices.push_back(voice);
     }
+    const std::vector<Voice*>& getActiveVoices() const { return voices; }
 private:
     unsigned id;
     unsigned polyphonyLimit;

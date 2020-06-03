@@ -8,8 +8,12 @@ namespace sfz
 
 class RegionSet {
 public:
-    void setPolyphonyLimit(unsigned limit) { polyphonyLimit = limit; }
-    unsigned getPolyphonyLimit() { return polyphonyLimit; }
+    void setPolyphonyLimit(unsigned limit)
+    {
+        polyphonyLimit = limit;
+        voices.reserve(limit);
+    }
+    unsigned getPolyphonyLimit() const { return polyphonyLimit; }
     void addRegion(Region* region)
     {
         if (absl::c_find(regions, region) == regions.end())
@@ -43,7 +47,7 @@ private:
     std::vector<Region*> regions;
     std::vector<RegionSet*> subsets;
     std::vector<Voice*> voices;
-    unsigned polyphonyLimit;
+    unsigned polyphonyLimit { config::maxVoices };
 };
 
 }

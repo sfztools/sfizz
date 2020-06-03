@@ -640,3 +640,31 @@ R"(
     REQUIRE( rootSet->getSubsets()[1]->getSubsets()[0]->getRegions().size() == 4 );
     REQUIRE( rootSet->getSubsets()[1]->getSubsets()[0]->getSubsets().size() == 0 );
 }
+
+TEST_CASE("[Synth] Polyphony in hierarchy")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(),
+R"(
+<region> key=61 sample=*sine polyphony=2
+<group> polyphony=2
+<region> key=62 sample=*sine
+<master> polyphony=3
+<region> key=63 sample=*sine
+<region> key=63 sample=*sine
+<region> key=63 sample=*sine
+<group> polyphony=4
+<region> key=64 sample=*sine polyphony=5
+<region> key=64 sample=*sine
+<region> key=64 sample=*sine
+<region> key=64 sample=*sine
+)");
+    REQUIRE( synth.getRegionView(0)->polyphony == 2 );
+    REQUIRE( synth.getRegionSetView(1)->getPolyphonyLimit() == 2 );
+    REQUIRE( synth.getRegionView(1)->polyphony == 2 );
+    REQUIRE( synth.getRegionSetView(2)->getPolyphonyLimit() == 3 );
+    REQUIRE( synth.getRegionSetView(2)->getRegions()[0]->polyphony == 3 );
+    REQUIRE( synth.getRegionSetView(3)->getPolyphonyLimit() == 4 );
+    REQUIRE( synth.getRegionSetView(3)->getRegions()[0]->polyphony == 5 );
+    REQUIRE( synth.getRegionSetView(3)->getRegions()[1]->polyphony == 4 );
+}

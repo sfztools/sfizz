@@ -155,6 +155,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             DBG("Unkown off mode:" << std::string(opcode.value));
         }
         break;
+    case hash("polyphony"):
+        if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
+            polyphony = *value;
+        break;
     case hash("note_polyphony"):
         if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
             notePolyphony = *value;
