@@ -99,9 +99,15 @@ bool FileDialog::chooseFile()
         impl_->delegate = delegate;
     }
 
+    NSWindow* parentWindow = nullptr;
+    if (parentWindowId_) {
+        NSView* view = (NSView*)parentWindowId_;
+        parentWindow = [view window];
+    }
+
     [panel beginSheetForDirectory:nullptr
                              file:nullptr
-                   modalForWindow:nullptr
+                   modalForWindow:parentWindow
                     modalDelegate:delegate
                    didEndSelector:@selector(openPanelDidEnd:returnCode:contextInfo:)
                       contextInfo:nullptr];

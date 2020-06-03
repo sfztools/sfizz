@@ -54,6 +54,9 @@ bool FileDialog::chooseFile()
     ofn.lpstrFile = fileNameW.get();
     ofn.nMaxFile = fileNameMax;
 
+    if (parentWindowId_)
+        ofn.hwndOwner = reinterpret_cast<HWND>(parentWindowId_);
+
     std::wstring filtersW;
     if (!filters_.empty()) {
         for (const Filter& filter : filters_) {

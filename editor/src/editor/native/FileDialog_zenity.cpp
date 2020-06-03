@@ -23,6 +23,8 @@ bool FileDialog::chooseFile()
         args.push_back("--title=" + title_);
     if (!path_.empty())
         args.push_back("--filename=" + path_);
+    if (parentWindowId_)
+        args.push_back("--attach=" + std::to_string(parentWindowId_));
     for (const Filter& filter : filters_) {
         std::string arg = "--file-filter=" + filter.name + " |";
         for (const std::string& pattern : filter.patterns) {

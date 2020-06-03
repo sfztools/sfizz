@@ -10,6 +10,7 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <cstdint>
 
 class FileDialog {
 public:
@@ -28,6 +29,7 @@ public:
     void setMode(Mode mode) { mode_ = mode; }
     void setTitle(absl::string_view title) { title_ = std::string(title); }
     void setPath(absl::string_view path) { path_ = std::string(path); }
+    void setParentWindowId(uintptr_t id) { parentWindowId_ = id; }
     void addFilter(Filter filter) { filters_.push_back(std::move(filter)); }
 
     bool chooseFile();
@@ -38,6 +40,7 @@ private:
     Mode mode_ = Mode::Open;
     std::string title_;
     std::string path_;
+    uintptr_t parentWindowId_ = 0;
     std::vector<Filter> filters_;
 
 #if defined(__APPLE__)
