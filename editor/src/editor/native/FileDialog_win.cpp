@@ -29,7 +29,7 @@ static std::string wideToUtf8(const std::wstring& strW)
     return utf8.get();
 }
 
-std::string FileDialog::chooseFile()
+bool FileDialog::chooseFile()
 {
     OPENFILENAMEW ofn;
     memset(&ofn, 0, sizeof(ofn));
@@ -77,8 +77,12 @@ std::string FileDialog::chooseFile()
         success = GetOpenFileNameW(&ofn);
 
     if (!success)
-        return {};
+        return false;
 
-    std::wstring resultW(fileNameW.get(), wcsnlen(fileNameW.get(), fileNameMax));
-    return wideToUtf8(resultW);
+    if (onFileChosen) {
+        std::wstring resultW(fileNameW.get(), wcsnlen(fileNameW.get(), fileNameMax));
+        onFileChosen(wideToUtf8(resultW));
+    }
+
+    return true;
 }

@@ -8,6 +8,7 @@
 #include "absl/strings/string_view.h"
 #include <string>
 #include <vector>
+#include <functional>
 
 class FileDialog {
 public:
@@ -23,7 +24,9 @@ public:
     void setPath(absl::string_view path) { path_ = std::string(path); }
     void addFilter(Filter filter) { filters_.push_back(std::move(filter)); }
 
-    std::string chooseFile();
+    bool chooseFile();
+
+    std::function<void(absl::string_view)> onFileChosen;
 
 private:
     Mode mode_ = Mode::Open;

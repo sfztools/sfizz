@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 extern "C" { extern char **environ; }
 
-std::string FileDialog::chooseFile()
+bool FileDialog::chooseFile()
 {
     std::vector<std::string> args;
     args.reserve(16);
@@ -91,18 +91,18 @@ std::string FileDialog::chooseFile()
     ///
     SpawnData spawn;
     if (!spawn)
-        return {};
+        return false;
 
     Pipe pipe;
     if (!pipe)
-        return {};
+        return false;
 
     if (posix_spawn_file_actions_adddup2(&spawn.fileact, pipe.fd[1], 1) != 0)
-        return {};
+        return false;
 
     pid_t pid;
     if (posix_spawnp(&pid, argv[0], &spawn.fileact, &spawn.attr, argv.data(), environ) != 0)
-        return {};
+        return false;
 
     close(pipe.fd[1]);
     pipe.fd[1] = -1;
@@ -117,10 +117,13 @@ std::string FileDialog::chooseFile()
 
     int status;
     if (waitpid(pid, &status, 0) == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
-        return {};
+        return false;
 
     if (!result.empty() && result.back() == '\n')
         result.pop_back();
 
-    return result;
+    if (onFileChosen)
+        onFileChosen(result);
+
+    return true;
 }
