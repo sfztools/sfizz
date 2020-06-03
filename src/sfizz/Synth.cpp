@@ -144,6 +144,10 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (octaveOffset != 0 || noteOffset != 0)
         lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
 
+    // There was a combination of group= and polyphony= on a region, so set the group polyphony
+    if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
+        setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+
     lastRegion->parent = currentSet;
     currentSet->addRegion(lastRegion.get());
     regions.push_back(std::move(lastRegion));
