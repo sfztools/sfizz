@@ -52,14 +52,12 @@ void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
 
 void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
-    const auto newRegionSet = [&]() {
+    const auto newRegionSet = [&](RegionSet* parentSet) {
+        ASSERT(parentSet != nullptr);
         sets.emplace_back(new RegionSet);
         auto newSet = sets.back().get();
-        auto parentSet = currentSet->getParent();
-        ASSERT(parentSet != nullptr);
-        if (parentSet == nullptr)
-            parentSet = sets.front().get();
         parentSet->addSubset(newSet);
+        newSet->setParent(parentSet);
         currentSet = newSet;
     };
 
@@ -67,6 +65,7 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
     case hash("global"):
         globalOpcodes = members;
         currentSet = sets.front().get();
+        lastHeader = Header::Global;
         groupOpcodes.clear();
         masterOpcodes.clear();
         handleGlobalOpcodes(members);
@@ -77,13 +76,18 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("master"):
         masterOpcodes = members;
-        newRegionSet();
+        newRegionSet(sets.front().get());
         groupOpcodes.clear();
+        lastHeader = Header::Master;
         numMasters++;
         break;
     case hash("group"):
         groupOpcodes = members;
-        newRegionSet();
+        if (lastHeader == Header::Group)
+            newRegionSet(currentSet->getParent());
+        else
+            newRegionSet(currentSet);
+        lastHeader = Header::Group;
         handleGroupOpcodes(members, masterOpcodes);
         numGroups++;
         break;

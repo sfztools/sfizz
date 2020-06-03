@@ -33,10 +33,11 @@ public:
             voices.pop_back();
         }
     }
-    RegionSet* getParent() { return parent; }
-    const std::vector<Voice*>& getActiveVoices() { return voices; }
-    const std::vector<Region*>& getRegions() { return regions; }
-    const std::vector<RegionSet*>& getSubsets() { return subsets; }
+    RegionSet* getParent() const { return parent; }
+    void setParent(RegionSet* parent) { this->parent = parent; }
+    const std::vector<Voice*>& getActiveVoices() const { return voices; }
+    const std::vector<Region*>& getRegions() const { return regions; }
+    const std::vector<RegionSet*>& getSubsets() const { return subsets; }
 private:
     RegionSet* parent { nullptr };
     std::vector<Region*> regions;

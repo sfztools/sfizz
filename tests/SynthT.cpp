@@ -545,7 +545,7 @@ TEST_CASE("[Synth] Sisters and off-by")
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, 256 };
     synth.loadSfzString(fs::current_path(),
-R"(<region> <region> key=62 sample=*sine
+R"(<region> key=62 sample=*sine
 <group> group=1 off_by=2 <region> key=62 sample=*sine
 <group> group=2 <region> key=63 sample=*saw)");
     synth.noteOn(0, 62, 85);
@@ -558,4 +558,85 @@ R"(<region> <region> key=62 sample=*sine
     synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( synth.getVoiceView(0)->countSisterVoices() == 1 );
+}
+
+TEST_CASE("[Synth] Hierarchy 1")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(),
+R"(
+<region> key=61 sample=*sine
+<region> key=62 sample=*sine
+<region> key=63 sample=*sine
+)");
+    REQUIRE( synth.getRegionSetView(0)->getParent() == nullptr );
+    auto regions = synth.getRegionSetView(0)->getRegions();
+    REQUIRE( regions.size() == 3 );
+    for (auto* region : regions)
+        REQUIRE( region->parent == synth.getRegionSetView(0) );
+}
+
+TEST_CASE("[Synth] Hierarchy 2")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(),
+R"(
+<region> key=61 sample=*sine
+<group>
+<region> key=62 sample=*sine
+<region> key=62 sample=*sine
+<group>
+<region> key=63 sample=*sine
+<region> key=63 sample=*sine
+<region> key=63 sample=*sine
+)");
+    const auto* rootSet = synth.getRegionSetView(0);
+    REQUIRE( rootSet->getRegions().size() == 1 );
+    REQUIRE( rootSet->getSubsets().size() == 2 );
+    REQUIRE( rootSet->getSubsets()[0] == synth.getRegionSetView(1) );
+    REQUIRE( rootSet->getSubsets()[0]->getParent() == rootSet );
+    REQUIRE( rootSet->getSubsets()[1] == synth.getRegionSetView(2) );
+    REQUIRE( rootSet->getSubsets()[1]->getParent() == rootSet );
+    REQUIRE( rootSet->getSubsets()[0]->getRegions().size() == 2 );
+    REQUIRE( rootSet->getSubsets()[1]->getRegions().size() == 3 );
+    for (const auto* region: rootSet->getSubsets()[0]->getRegions())
+        REQUIRE(region->parent == rootSet->getSubsets()[0]);
+    for (const auto* region: rootSet->getSubsets()[1]->getRegions())
+        REQUIRE(region->parent == rootSet->getSubsets()[1]);
+}
+
+
+TEST_CASE("[Synth] Hierarchy 3")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(),
+R"(
+<region> key=61 sample=*sine
+<group>
+<region> key=62 sample=*sine
+<region> key=62 sample=*sine
+<master>
+<region> key=63 sample=*sine
+<region> key=63 sample=*sine
+<region> key=63 sample=*sine
+<group>
+<region> key=64 sample=*sine
+<region> key=64 sample=*sine
+<region> key=64 sample=*sine
+<region> key=64 sample=*sine
+)");
+    const auto* rootSet = synth.getRegionSetView(0);
+    REQUIRE( rootSet->getRegions().size() == 1 );
+    REQUIRE( rootSet->getSubsets().size() == 2 );
+    REQUIRE( rootSet->getSubsets()[0] == synth.getRegionSetView(1) );
+    REQUIRE( rootSet->getSubsets()[0]->getParent() == rootSet );
+    REQUIRE( rootSet->getSubsets()[0]->getRegions().size() == 2 );
+    REQUIRE( rootSet->getSubsets()[1] == synth.getRegionSetView(2) );
+    REQUIRE( rootSet->getSubsets()[1]->getParent() == rootSet );
+    REQUIRE( rootSet->getSubsets()[1]->getRegions().size() == 3 );
+    REQUIRE( rootSet->getSubsets()[1]->getSubsets().size() == 1 );
+    REQUIRE( rootSet->getSubsets()[1]->getSubsets()[0] == synth.getRegionSetView(3) );
+    REQUIRE( rootSet->getSubsets()[1]->getSubsets()[0]->getParent() == synth.getRegionSetView(2) );
+    REQUIRE( rootSet->getSubsets()[1]->getSubsets()[0]->getRegions().size() == 4 );
+    REQUIRE( rootSet->getSubsets()[1]->getSubsets()[0]->getSubsets().size() == 0 );
 }
