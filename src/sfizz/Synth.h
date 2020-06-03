@@ -585,6 +585,12 @@ private:
      */
     void handleGlobalOpcodes(const std::vector<Opcode>& members);
     /**
+     * @brief Helper function to dispatch <global> opcodes
+     *
+     * @param members the opcodes of the <global> block
+     */
+    void handleMasterOpcodes(const std::vector<Opcode>& members);
+    /**
      * @brief Helper function to dispatch <group> opcodes
      *
      * @param members the opcodes of the <group> block

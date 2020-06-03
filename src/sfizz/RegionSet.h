@@ -8,7 +8,7 @@ namespace sfz
 
 class RegionSet {
 public:
-    void setPolyphonyLimit(unsigned limit);
+    void setPolyphonyLimit(unsigned limit) { polyphonyLimit = limit; }
     unsigned getPolyphonyLimit() { return polyphonyLimit; }
     void addRegion(Region* region)
     {

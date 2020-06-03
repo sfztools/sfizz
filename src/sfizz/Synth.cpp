@@ -79,6 +79,7 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         newRegionSet(sets.front().get());
         groupOpcodes.clear();
         lastHeader = Header::Master;
+        handleMasterOpcodes(members);
         numMasters++;
         break;
     case hash("group"):
@@ -188,12 +189,34 @@ void sfz::Synth::clear()
     modificationTime = fs::file_time_type::min();
 }
 
+void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
+{
+    for (auto& rawMember : members) {
+        const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
+
+        switch (member.lettersOnlyHash) {
+        case hash("polyphony"):
+            ASSERT(currentSet != nullptr);
+            currentSet->setPolyphonyLimit(
+                readOpcode(member.value, Range<unsigned>(0, config::maxVoices)).value_or(config::maxVoices)
+            );
+            break;
+        }
+    }
+}
+
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
 
         switch (member.lettersOnlyHash) {
+        case hash("polyphony"):
+            ASSERT(currentSet != nullptr);
+            currentSet->setPolyphonyLimit(
+                readOpcode(member.value, Range<unsigned>(0, config::maxVoices)).value_or(config::maxVoices)
+            );
+            break;
         case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
             break;
@@ -218,6 +241,12 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             setValueFromOpcode(member, groupIdx, Default::groupRange);
             break;
         case hash("polyphony"):
+            ASSERT(currentSet != nullptr);
+            if (!groupIdx) {
+                const auto newPolyphony =
+                    readOpcode(member.value, Range<unsigned>(0, config::maxVoices)).value_or(config::maxVoices);
+                currentSet->setPolyphonyLimit(newPolyphony);
+            }
             setValueFromOpcode(member, maxPolyphony, Range<unsigned>(0, config::maxVoices));
             break;
         }
