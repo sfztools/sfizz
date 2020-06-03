@@ -558,7 +558,6 @@ private:
      * @param polyphone the max polyphony
      */
     void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
-    std::vector<unsigned> groupMaxPolyphony { config::maxVoices };
 
     /**
      * @brief Reset all CCs; to be used on CC 121
@@ -677,7 +676,6 @@ private:
     using VoicePtr = std::unique_ptr<Voice>;
     using RegionPtr = std::unique_ptr<Region>;
     using RegionSetPtr = std::unique_ptr<RegionSet>;
-    using PolyphonyGroupPtr = std::unique_ptr<PolyphonyGroup>;
     std::vector<RegionPtr> regions;
     std::vector<VoicePtr> voices;
     std::vector<VoicePtr> overflowVoices;
@@ -687,7 +685,7 @@ private:
     Header lastHeader { Header::Global };
     std::vector<RegionSetPtr> sets;
     // These are the `group=` groups where you can off voices
-    std::vector<PolyphonyGroupPtr> polyphonyGroups;
+    std::vector<PolyphonyGroup> polyphonyGroups;
     // Views to speed up iteration over the regions and voices
     VoiceViewVector voiceViewVector;
     std::array<RegionViewVector, 128> noteActivationLists;

@@ -7,21 +7,12 @@ namespace sfz
 {
 class PolyphonyGroup {
 public:
-    PolyphonyGroup() = delete;
-    PolyphonyGroup(unsigned id)
-    : id(id) {}
     void setPolyphonyLimit(unsigned limit)
     {
         polyphonyLimit = limit;
         voices.reserve(limit);
     }
     unsigned getPolyphonyLimit() const { return polyphonyLimit; }
-    unsigned getID() const { return id; }
-    void addRegion(Region* region)
-    {
-        if (absl::c_find(regions, region) == regions.end())
-            regions.push_back(region);
-    }
     void addVoice(Voice* voice)
     {
         if (absl::c_find(voices, voice) == voices.end())
@@ -29,10 +20,8 @@ public:
     }
     const std::vector<Voice*>& getActiveVoices() const { return voices; }
 private:
-    unsigned id;
     unsigned polyphonyLimit;
     std::vector<Voice*> voices;
-    std::vector<Region*> regions;
 };
 
 }

@@ -184,8 +184,9 @@ void sfz::Synth::clear()
     masterOpcodes.clear();
     groupOpcodes.clear();
     unknownOpcodes.clear();
-    groupMaxPolyphony.clear();
-    groupMaxPolyphony.push_back(config::maxVoices);
+    polyphonyGroups.clear();
+    polyphonyGroups.emplace_back();
+    polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
     modificationTime = fs::file_time_type::min();
 }
 
@@ -484,8 +485,10 @@ void sfz::Synth::finalizeSfzLoad()
             keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
-        while (groupMaxPolyphony.size() <= region->group)
-            groupMaxPolyphony.push_back(config::maxVoices);
+        while (polyphonyGroups.size() <= region->group) {
+            polyphonyGroups.emplace_back();
+            polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
+        }
 
         for (auto note = 0; note < 128; note++) {
             if (region->keyRange.containsWithEnd(note) || (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
@@ -880,9 +883,8 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            unsigned activeNotesInGroup { 0 };
-            unsigned sameNotes { 0 };
-            unsigned activeNotes { 0 };
+            unsigned notePolyphonyCounter { 0 };
+            unsigned regionPolyphonyCounter { 0 };
             Voice* selfMaskCandidate { nullptr };
 
             for (auto& voice : voices) {
@@ -891,14 +893,11 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     continue;
 
                 if (voiceRegion == region)
-                    activeNotes += 1;
-
-                if (voiceRegion->group == region->group)
-                    activeNotesInGroup += 1;
+                    regionPolyphonyCounter += 1;
 
                 if (region->notePolyphony) {
                     if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
-                        sameNotes += 1;
+                        notePolyphonyCounter += 1;
                         switch (region->selfMask) {
                         case SfzSelfMask::mask:
                             if (voice->getTriggerValue() < velocity) {
@@ -921,11 +920,12 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             // FIXME: After killing something (possibly) we should decrease the number of active notes
             // to avoid calling another voice stealing say at a group level or master level
             // FIXME: Do something for the polyphony limit
-            if (activeNotesInGroup >= groupMaxPolyphony[region->group])
+            if (polyphonyGroups[region->group].getActiveVoices().size()
+                == polyphonyGroups[region->group].getPolyphonyLimit())
                 continue;
 
             // FIXME: Do something for the polyphony limit
-            if (activeNotes >= region->polyphony)
+            if (regionPolyphonyCounter >= region->polyphony)
                 continue;
 
             auto parent = region->parent;
@@ -937,7 +937,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 parent = parent->getParent();
             }
 
-            if (region->notePolyphony && sameNotes >= *region->notePolyphony) {
+            if (region->notePolyphony && notePolyphonyCounter >= *region->notePolyphony) {
                 if (selfMaskCandidate != nullptr)
                     selfMaskCandidate->release(delay);
                 else // We're the lowest velocity guy here
@@ -1414,8 +1414,8 @@ void sfz::Synth::allSoundOff() noexcept
 
 void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
 {
-    while (groupMaxPolyphony.size() <= groupIdx)
-        groupMaxPolyphony.push_back(config::maxVoices);
+    while (polyphonyGroups.size() <= groupIdx)
+        polyphonyGroups.emplace_back();
 
-    groupMaxPolyphony[groupIdx] = polyphony;
+    polyphonyGroups[groupIdx].setPolyphonyLimit(polyphony);
 }
