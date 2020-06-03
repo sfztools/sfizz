@@ -35,7 +35,7 @@ public:
 BENCHMARK_DEFINE_F(CumArray, Sum_Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::cumsum, false);
         sfz::cumsum<float>(input, absl::MakeSpan(output));
     }
 }
@@ -43,7 +43,7 @@ BENCHMARK_DEFINE_F(CumArray, Sum_Scalar)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CumArray, Sum_SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::cumsum, true);
         sfz::cumsum<float>(input, absl::MakeSpan(output));
     }
 }
@@ -51,7 +51,7 @@ BENCHMARK_DEFINE_F(CumArray, Sum_SIMD)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CumArray, Sum_Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::cumsum, false);
         sfz::cumsum<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
@@ -59,7 +59,7 @@ BENCHMARK_DEFINE_F(CumArray, Sum_Scalar_Unaligned)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CumArray, Sum_SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::cumsum, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::cumsum, true);
         sfz::cumsum<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }

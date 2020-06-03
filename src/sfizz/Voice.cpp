@@ -264,8 +264,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 
@@ -282,7 +282,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     egEnvelope.getBlock(modulationSpan);
 
     // Amplitude envelope
-    applyGain<float>(baseGain, modulationSpan);
+    applyGain1<float>(baseGain, modulationSpan);
     for (const auto& mod : region->amplitudeCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         applyGain<float>(*tempSpan, modulationSpan);
@@ -305,7 +305,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     }
 
     // Volume envelope
-    applyGain<float>(db2mag(baseVolumedB), modulationSpan);
+    applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
     for (const auto& mod : region->volumeCC) {
         multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
             return db2mag(x);
@@ -480,7 +480,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
     sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
-    add<int>(sourcePosition, *indices);
+    add1<int>(sourcePosition, *indices);
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
@@ -488,7 +488,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         for (auto* index = indices->begin(); index < indices->end(); ++index) {
             if (*index > loopEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
-                subtract<int>(offset, { index, remainingElements });
+                subtract1<int>(offset, { index, remainingElements });
             }
         }
     } else {
@@ -542,8 +542,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 
@@ -624,8 +624,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             for (unsigned i = 0, n = waveUnisonSize; i < n; ++i) {
                 WavetableOscillator& osc = waveOscillators[i];
                 osc.processModulated(frequencies->data(), waveDetuneRatio[i], tempSpan->data(), numFrames);
-                sfz::multiplyAdd<float>(waveLeftGain[i], *tempSpan, leftSpan);
-                sfz::multiplyAdd<float>(waveRightGain[i], *tempSpan, rightSpan);
+                multiplyAdd1<float>(waveLeftGain[i], *tempSpan, leftSpan);
+                multiplyAdd1<float>(waveRightGain[i], *tempSpan, rightSpan);
             }
         }
     }
@@ -633,8 +633,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 

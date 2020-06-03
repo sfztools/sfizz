@@ -30,7 +30,7 @@ static void LinearScalar(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, false);
         sfz::linearRamp<float>(absl::MakeSpan(output), 0.0f, value);
     }
 }
@@ -43,7 +43,7 @@ static void LinearSIMD(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, true);
         sfz::linearRamp<float>(absl::MakeSpan(output), 0.0f, value);
     }
 }
@@ -55,7 +55,7 @@ static void LinearScalarUnaligned(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, false);
         sfz::linearRamp<float>(absl::MakeSpan(output).subspan(1), 0.0f, value);
     }
 }
@@ -68,7 +68,7 @@ static void LinearSIMDUnaligned(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::linearRamp, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, true);
         sfz::linearRamp<float>(absl::MakeSpan(output).subspan(1), 0.0f, value);
     }
 }
@@ -81,7 +81,7 @@ static void MulScalar(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplicativeRamp, false);
         sfz::multiplicativeRamp<float>(absl::MakeSpan(output), 1.0f, value);
     }
 }
@@ -94,7 +94,7 @@ static void MulSIMD(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplicativeRamp, true);
         sfz::multiplicativeRamp<float>(absl::MakeSpan(output), 1.0f, value);
     }
 }
@@ -106,7 +106,7 @@ static void MulScalarUnaligned(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplicativeRamp, false);
         sfz::multiplicativeRamp<float>(absl::MakeSpan(output).subspan(1), 1.0f, value);
     }
 }
@@ -119,7 +119,7 @@ static void MulSIMDUnaligned(benchmark::State& state) {
     for (auto _ : state)
     {
         auto value = dist(gen);
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplicativeRamp, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplicativeRamp, true);
         sfz::multiplicativeRamp<float>(absl::MakeSpan(output).subspan(1), 1.0f, value);
     }
 }

@@ -48,8 +48,8 @@ BENCHMARK_DEFINE_F(MultiplyAddFixedGain, Scalar)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplyAdd, false);
-        sfz::multiplyAdd<float>(gain, input, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyAdd1, false);
+        sfz::multiplyAdd1<float>(gain, input, absl::MakeSpan(output));
     }
 }
 
@@ -57,8 +57,8 @@ BENCHMARK_DEFINE_F(MultiplyAddFixedGain, SIMD)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplyAdd, true);
-        sfz::multiplyAdd<float>(gain, input, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyAdd1, true);
+        sfz::multiplyAdd1<float>(gain, input, absl::MakeSpan(output));
     }
 }
 
@@ -66,8 +66,8 @@ BENCHMARK_DEFINE_F(MultiplyAddFixedGain, Scalar_Unaligned)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplyAdd, false);
-        sfz::multiplyAdd<float>(gain, absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyAdd1, false);
+        sfz::multiplyAdd1<float>(gain, absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
@@ -75,8 +75,8 @@ BENCHMARK_DEFINE_F(MultiplyAddFixedGain, SIMD_Unaligned)
 (benchmark::State& state)
 {
     for (auto _ : state) {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::multiplyAdd, true);
-        sfz::multiplyAdd<float>(gain, absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyAdd1, true);
+        sfz::multiplyAdd1<float>(gain, absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 

@@ -491,7 +491,7 @@ constexpr bool checkSpanSizes(const absl::Span<T>& span1, Others... others)
     return _checkSpanSizes(span1.size(), others...);
 }
 
-#define CHECK_SPAN_SIZES(...) CHECK(checkSpanSizes(__VA_ARGS__))
+#define CHECK_SPAN_SIZES(...) SFIZZ_CHECK(checkSpanSizes(__VA_ARGS__))
 
 
 class ScopedRoundingMode {

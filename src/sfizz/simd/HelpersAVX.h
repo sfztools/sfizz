@@ -6,5 +6,5 @@
 
 #pragma once
 
-void applyGainAVX(float gain, const float* input, float* output, unsigned size) noexcept;
-void applyGainAVX(const float* gain, const float* input, float* output, unsigned size) noexcept;
+void gain1AVX(float gain, const float* input, float* output, unsigned size) noexcept;
+void gainAVX(const float* gain, const float* input, float* output, unsigned size) noexcept;

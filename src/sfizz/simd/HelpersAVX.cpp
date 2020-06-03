@@ -16,7 +16,7 @@ constexpr unsigned TypeAlignment = 8;
 constexpr unsigned ByteAlignment = TypeAlignment * sizeof(Type);
 #endif
 
-void applyGainAVX(float gain, const float* input, float* output, unsigned size) noexcept
+void gain1AVX(float gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -36,7 +36,7 @@ void applyGainAVX(float gain, const float* input, float* output, unsigned size) 
         *output++ = gain * (*input++);
 }
 
-void applyGainAVX(const float* gain, const float* input, float* output, unsigned size) noexcept
+void gainAVX(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 

@@ -82,7 +82,7 @@ void writeInterleavedSSE(const float* inputLeft, const float* inputRight, float*
     }
 }
 
-void applyGainSSE(float gain, const float* input, float* output, unsigned size) noexcept
+void gain1SSE(float gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -102,7 +102,7 @@ void applyGainSSE(float gain, const float* input, float* output, unsigned size) 
         *output++ = gain * (*input++);
 }
 
-void applyGainSSE(const float* gain, const float* input, float* output, unsigned size) noexcept
+void gainSSE(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -161,7 +161,7 @@ void multiplyAddSSE(const float* gain, const float* input, float* output, unsign
         *output++ += (*gain++) * (*input++);
 }
 
-void multiplyAddSSE(float gain, const float* input, float* output, unsigned size) noexcept
+void multiplyAdd1SSE(float gain, const float* input, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -260,7 +260,7 @@ void addSSE(const float* input, float* output, unsigned size) noexcept
         *output++ += *input++;
 }
 
-void addSSE(float value, float* output, unsigned size) noexcept
+void add1SSE(float value, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 
@@ -299,7 +299,7 @@ void subtractSSE(const float* input, float* output, unsigned size) noexcept
         *output++ -= *input++;
 }
 
-void subtractSSE(float value, float* output, unsigned size) noexcept
+void subtract1SSE(float value, float* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
 

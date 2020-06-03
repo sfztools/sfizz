@@ -28,7 +28,7 @@ inline void writeInterleavedScalar(const T* inputLeft, const T* inputRight, T* o
 }
 
 template<class T>
-inline void applyGainScalar(T gain, const T* input, T* output, unsigned size) noexcept
+inline void gain1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
     while (output < sentinel)
@@ -36,7 +36,7 @@ inline void applyGainScalar(T gain, const T* input, T* output, unsigned size) no
 }
 
 template<class T>
-inline void applyGainScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
+inline void gainScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
     while (output < sentinel)
@@ -60,7 +60,7 @@ inline void multiplyAddScalar(const T* gain, const T* input, T* output, unsigned
 }
 
 template <class T>
-inline void multiplyAddScalar(T gain, const T* input, T* output, unsigned size) noexcept
+inline void multiplyAdd1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
     while (output < sentinel)
@@ -98,7 +98,7 @@ inline void addScalar(const T* input, T* output, unsigned size) noexcept
 }
 
 template <class T>
-inline void addScalar(T value, T* output, unsigned size) noexcept
+inline void add1Scalar(T value, T* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
     while (output < sentinel)
@@ -114,7 +114,7 @@ inline void subtractScalar(const T* input, T* output, unsigned size) noexcept
 }
 
 template <class T>
-inline void subtractScalar(T value, T* output, unsigned size) noexcept
+inline void subtract1Scalar(T value, T* output, unsigned size) noexcept
 {
     const auto sentinel = output + size;
     while (output < sentinel)

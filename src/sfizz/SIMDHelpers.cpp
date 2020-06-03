@@ -18,326 +18,141 @@ namespace sfz {
 template <class T>
 struct SIMDDispatch {
     constexpr SIMDDispatch() = default;
-
     void resetStatus();
     bool getStatus(SIMDOps op) const;
     void setStatus(SIMDOps op, bool enable);
 
-    void (*writeInterleaved)(const T* inputLeft, const T* inputRight, T* output, unsigned outputSize) noexcept = &writeInterleavedScalar<float>;
-    void (*readInterleaved)(const T* input, T* outputLeft, T* outputRight, unsigned inputSize) noexcept = &readInterleavedScalar<float>;
-    void (*applyGain)(const T* gain, const T* input, T* output, unsigned size) noexcept = &applyGainScalar<float>;
-    void (*applyGain1)(T gain, const T* input, T* output, unsigned size) noexcept = &applyGainScalar<float>;
-    void (*divide)(const T* input, const T* divisor, T* output, unsigned size) noexcept = &divideScalar<float>;
-    void (*multiplyAdd)(const T* gain, const T* input, T* output, unsigned size) noexcept = &multiplyAddScalar<float>;
-    void (*multiplyAdd1)(T gain, const T* input, T* output, unsigned size) noexcept = &multiplyAddScalar<float>;
-    T (*linearRamp)(T* output, T start, T step, unsigned size) noexcept = &linearRampScalar<float>;
-    T (*multiplicativeRamp)(T* output, T start, T step, unsigned size) noexcept = &multiplicativeRampScalar<float>;
-    void (*add)(const T* input, T* output, unsigned size) noexcept = &addScalar<float>;
-    void (*add1)(T value, T* output, unsigned size) noexcept = &addScalar<float>;
-    void (*subtract)(const T* input, T* output, unsigned size) noexcept = &subtractScalar<float>;
-    void (*subtract1)(T value, T* output, unsigned size) noexcept = &subtractScalar<float>;
-    void (*copy)(const T* input, T* output, unsigned size) noexcept = &copyScalar<float>;
-    void (*cumsum)(const T* input, T* output, unsigned size) noexcept = &cumsumScalar<float>;
-    void (*diff)(const T* input, T* output, unsigned size) noexcept = &diffScalar<float>;
-    T (*mean)(const T* vector, unsigned size) noexcept = &meanScalar<float>;
-    T (*meanSquared)(const T* vector, unsigned size) noexcept = &meanSquaredScalar<float>;
+    decltype(&writeInterleavedScalar<T>) writeInterleaved = &writeInterleavedScalar<T>;
+    decltype(&readInterleavedScalar<T>) readInterleaved = &readInterleavedScalar<T>;
+    decltype(&gainScalar<T>) gain = &gainScalar<T>;
+    decltype(&gain1Scalar<T>) gain1 = &gain1Scalar<T>;
+    decltype(&divideScalar<T>) divide = &divideScalar<T>;
+    decltype(&multiplyAddScalar<T>) multiplyAdd = &multiplyAddScalar<T>;
+    decltype(&multiplyAdd1Scalar<T>) multiplyAdd1 = &multiplyAdd1Scalar<T>;
+    decltype(&linearRampScalar<T>) linearRamp = &linearRampScalar<T>;
+    decltype(&multiplicativeRampScalar<T>) multiplicativeRamp = &multiplicativeRampScalar<T>;
+    decltype(&addScalar<T>) add = &addScalar<T>;
+    decltype(&add1Scalar<T>) add1 = &add1Scalar<T>;
+    decltype(&subtractScalar<T>) subtract = &subtractScalar<T>;
+    decltype(&subtract1Scalar<T>) subtract1 = &subtract1Scalar<T>;
+    decltype(&copyScalar<T>) copy = &copyScalar<T>;
+    decltype(&cumsumScalar<T>) cumsum = &cumsumScalar<T>;
+    decltype(&diffScalar<T>) diff = &diffScalar<T>;
+    decltype(&meanScalar<T>) mean = &meanScalar<T>;
+    decltype(&meanSquaredScalar<T>) meanSquared = &meanSquaredScalar<T>;
 
 private:
     std::array<bool, static_cast<unsigned>(SIMDOps::_sentinel)> simdStatus;
+    bool initialized { false };
+    cpuid::cpuinfo info;
 };
 
-///
-
-static SIMDDispatch<float> simdDispatch;
-
-void resetSIMDOpStatus()
-{
-    simdDispatch.resetStatus();
-}
-
-void setSIMDOpStatus(SIMDOps op, bool status)
-{
-    simdDispatch.setStatus(op, status);
-}
-
-bool getSIMDOpStatus(SIMDOps op)
-{
-    return simdDispatch.getStatus(op);
-}
-
-///
-
-void readInterleaved(const float* input, float* outputLeft, float* outputRight, unsigned inputSize) noexcept
-{
-    return simdDispatch.readInterleaved(input, outputLeft, outputRight, inputSize);
-}
-
-void writeInterleaved(const float* inputLeft, const float* inputRight, float* output, unsigned outputSize) noexcept
-{
-    return simdDispatch.writeInterleaved(inputLeft, inputRight, output, outputSize);
-}
 
 template <>
-void applyGain<float>(float gain, const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.applyGain1(gain, input, output, size);
-}
-
-template <>
-void applyGain<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.applyGain(gain, input, output, size);
-}
-
-template <>
-void divide<float>(const float* input, const float* divisor, float* output, unsigned size) noexcept
-{
-    return simdDispatch.divide(input, divisor, output, size);
-}
-
-template <>
-void multiplyAdd<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.multiplyAdd(gain, input, output, size);
-}
-
-template <>
-void multiplyAdd<float>(float gain, const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.multiplyAdd1(gain, input, output, size);
-}
-
-template <>
-float linearRamp<float>(float* output, float start, float step, unsigned size) noexcept
-{
-    return simdDispatch.linearRamp(output, start, step, size);
-}
-
-template <>
-float multiplicativeRamp<float>(float* output, float start, float step, unsigned size) noexcept
-{
-    return simdDispatch.multiplicativeRamp(output, start, step, size);
-}
-
-template <>
-void add<float>(const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.add(input, output, size);
-}
-
-template <>
-void add<float>(float value, float* output, unsigned size) noexcept
-{
-    return simdDispatch.add1(value, output, size);
-}
-
-template <>
-void subtract<float>(const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.subtract(input, output, size);
-}
-
-template <>
-void subtract<float>(float value, float* output, unsigned size) noexcept
-{
-    return simdDispatch.subtract1(value, output, size);
-}
-
-template <>
-void copy<float>(const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.copy(input, output, size);
-}
-
-template <>
-float mean<float>(const float* vector, unsigned size) noexcept
-{
-    return simdDispatch.mean(vector, size);
-}
-
-template <>
-float meanSquared<float>(const float* vector, unsigned size) noexcept
-{
-    return simdDispatch.meanSquared(vector, size);
-}
-
-template <>
-void cumsum<float>(const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.cumsum(input, output, size);
-}
-
-template <>
-void diff<float>(const float* input, float* output, unsigned size) noexcept
-{
-    return simdDispatch.diff(input, output, size);
-}
-
-///
-
-static cpuid::cpuinfo& cpuInfo()
-{
-    static cpuid::cpuinfo info;
-    return info;
-}
-
-template <class T>
-bool SIMDDispatch<T>::getStatus(SIMDOps op) const
+bool SIMDDispatch<float>::getStatus(SIMDOps op) const
 {
     const unsigned index = static_cast<unsigned>(op);
     ASSERT(index < simdStatus.size());
     return simdStatus[index];
 }
 
-template <class T>
-void SIMDDispatch<T>::setStatus(SIMDOps op, bool enable)
+template <>
+void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
 {
     const unsigned index = static_cast<unsigned>(op);
     ASSERT(index < simdStatus.size());
-
     simdStatus[index] = enable;
 
-    const cpuid::cpuinfo& info = cpuInfo();
-    bool useSSE = enable && info.has_sse();
-    bool useAVX = enable && info.has_avx();
-
-    switch (op) {
-        default:
-            break;
-
-        case SIMDOps::writeInterleaved:
-            if (useSSE)
-                writeInterleaved = &writeInterleavedSSE;
-            else
-                writeInterleaved = &writeInterleavedScalar<float>;
-            break;
-
-        case SIMDOps::readInterleaved:
-            if (useSSE)
-                readInterleaved = &readInterleavedSSE;
-            else
-                readInterleaved = &readInterleavedScalar<float>;
-            break;
-
-        case SIMDOps::gain:
-            if (useAVX) {
-                applyGain = &applyGainAVX;
-                applyGain1 = &applyGainAVX;
-            }
-            else if (useSSE) {
-                applyGain = &applyGainSSE;
-                applyGain1 = &applyGainSSE;
-            }
-            else {
-                applyGain = &applyGainScalar<float>;
-                applyGain1 = &applyGainScalar<float>;
-            }
-            break;
-
-        case SIMDOps::divide:
-            if (useSSE)
-                divide = &divideSSE;
-            else
-                divide = &divideScalar<float>;
-            break;
-
-        case SIMDOps::multiplyAdd:
-            if (useSSE) {
-                multiplyAdd = &multiplyAddSSE;
-                multiplyAdd1 = &multiplyAddSSE;
-            }
-            else {
-                multiplyAdd = &multiplyAddScalar<float>;
-                multiplyAdd1 = &multiplyAddScalar<float>;
-            }
-            break;
-
-        case SIMDOps::linearRamp:
-            if (useSSE)
-                linearRamp = &linearRampSSE;
-            else
-                linearRamp = &linearRampScalar<float>;
-            break;
-
-        case SIMDOps::multiplicativeRamp:
-            if (useSSE)
-                multiplicativeRamp = &multiplicativeRampSSE;
-            else
-                multiplicativeRamp = &multiplicativeRampScalar<float>;
-            break;
-
-        case SIMDOps::add:
-            if (useSSE) {
-                add = &addSSE;
-                add1 = &addSSE;
-            }
-            else {
-                add = &addScalar<float>;
-                add1 = &addScalar<float>;
-            }
-            break;
-
-        case SIMDOps::subtract:
-            if (useSSE) {
-                subtract = &subtractSSE;
-                subtract1 = &subtractSSE;
-            }
-            else {
-                subtract = &subtractScalar<float>;
-                subtract1 = &subtractScalar<float>;
-            }
-            break;
-
-        case SIMDOps::copy:
-            if (useSSE)
-                copy = &copySSE;
-            else
-                copy = &copyScalar<float>;
-            break;
-
-        case SIMDOps::cumsum:
-            if (useSSE)
-                cumsum = &cumsumSSE;
-            else
-                cumsum = &cumsumScalar<float>;
-            break;
-
-        case SIMDOps::diff:
-            if (useSSE)
-                diff = &diffSSE;
-            else
-                diff = &diffScalar<float>;
-            break;
-
-        case SIMDOps::mean:
-            if (useSSE)
-                mean = &meanSSE;
-            else
-                mean = &meanScalar<float>;
-            break;
-
-        case SIMDOps::meanSquared:
-            if (useSSE)
-                meanSquared = &meanSquaredSSE;
-            else
-                meanSquared = &meanSquaredScalar<float>;
-            break;
+    if (!enable) {
+#define SIMD_OP(opname) case SIMDOps::opname : (opname) = opname ## Scalar<float>; return;
+        switch (op) {
+            default: break;
+            SIMD_OP(writeInterleaved)
+            SIMD_OP(readInterleaved)
+            SIMD_OP(gain)
+            SIMD_OP(gain1)
+            SIMD_OP(divide)
+            SIMD_OP(linearRamp)
+            SIMD_OP(multiplicativeRamp)
+            SIMD_OP(add)
+            SIMD_OP(add1)
+            SIMD_OP(subtract)
+            SIMD_OP(subtract1)
+            SIMD_OP(multiplyAdd)
+            SIMD_OP(multiplyAdd1)
+            SIMD_OP(copy)
+            SIMD_OP(cumsum)
+            SIMD_OP(diff)
+            SIMD_OP(mean)
+            SIMD_OP(meanSquared)
+        }
+#undef SIMD_OP
     }
+
+#if SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+#define SIMD_OP(opname) case SIMDOps::opname : (opname) = opname ## AVX; return;
+    if (info.has_avx()) {
+        switch (op) {
+            default: break;
+        }
+    }
+#undef SIMD_OP
+
+#define SIMD_OP(opname) case SIMDOps::opname : (opname) = opname ## SSE; return;
+    if (info.has_sse()) {
+        switch (op) {
+            default: break;
+            SIMD_OP(writeInterleaved)
+            SIMD_OP(readInterleaved)
+            SIMD_OP(gain)
+            SIMD_OP(gain1)
+            SIMD_OP(divide)
+            SIMD_OP(linearRamp)
+            SIMD_OP(multiplicativeRamp)
+            SIMD_OP(add)
+            SIMD_OP(add1)
+            SIMD_OP(subtract)
+            SIMD_OP(subtract1)
+            SIMD_OP(multiplyAdd)
+            SIMD_OP(multiplyAdd1)
+            SIMD_OP(copy)
+            SIMD_OP(cumsum)
+            SIMD_OP(diff)
+            SIMD_OP(mean)
+            SIMD_OP(meanSquared)
+        }
+    }
+#undef SIMD_OP
+#endif // SFIZZ_CPU_FAMILY_X86_64 || SFIZZ_CPU_FAMILY_I386
+
+#if SFIZZ_CPU_FAMILY_AARCH64 || SFIZZ_CPU_FAMILY_ARM
+#define SIMD_OP(opname) case SIMDOps::opname : (opname) = opname ## NEON; return;
+    if (info.has_neon()) {
+        switch (op) {
+            default: break;
+        }
+    }
+#undef SIMD_OP
+#endif // SFIZZ_CPU_FAMILY_AARCH64 || SFIZZ_CPU_FAMILY_ARM
 }
 
-template <class T>
-void SIMDDispatch<T>::resetStatus()
+template <>
+void SIMDDispatch<float>::resetStatus()
 {
     setStatus(SIMDOps::writeInterleaved, false);
     setStatus(SIMDOps::readInterleaved, false);
     setStatus(SIMDOps::fill, true);
     setStatus(SIMDOps::gain, true);
+    setStatus(SIMDOps::gain1, true);
     setStatus(SIMDOps::divide, false);
     setStatus(SIMDOps::linearRamp, false);
     setStatus(SIMDOps::multiplicativeRamp, true);
     setStatus(SIMDOps::add, false);
+    setStatus(SIMDOps::add1, false);
     setStatus(SIMDOps::subtract, false);
+    setStatus(SIMDOps::subtract1, false);
     setStatus(SIMDOps::multiplyAdd, false);
+    setStatus(SIMDOps::multiplyAdd1, false);
     setStatus(SIMDOps::copy, false);
     setStatus(SIMDOps::cumsum, true);
     setStatus(SIMDOps::diff, false);
@@ -349,17 +164,142 @@ void SIMDDispatch<T>::resetStatus()
 
 ///
 
-static volatile bool simdInitialized = false;
-static std::mutex simdMutex;
-
-SIMDInitializer::SIMDInitializer()
+template<class T>
+static SIMDDispatch<T>& simdDispatch()
 {
-    std::lock_guard<std::mutex> lock { simdMutex };
+    static SIMDDispatch<T> dispatch;
+    return dispatch;
+}
 
-    if (!simdInitialized) {
-        simdDispatch.resetStatus();
-        simdInitialized = true;
-    }
+template<>
+void resetSIMDOpStatus<float>()
+{
+    simdDispatch<float>().resetStatus();
+}
+
+template<>
+void setSIMDOpStatus<float>(SIMDOps op, bool status)
+{
+    simdDispatch<float>().setStatus(op, status);
+}
+
+template<>
+bool getSIMDOpStatus<float>(SIMDOps op)
+{
+    return simdDispatch<float>().getStatus(op);
+}
+
+void initializeSIMDDispatchers()
+{
+    simdDispatch<float>().resetStatus();
+}
+
+///
+
+void readInterleaved(const float* input, float* outputLeft, float* outputRight, unsigned inputSize) noexcept
+{
+    return simdDispatch<float>().readInterleaved(input, outputLeft, outputRight, inputSize);
+}
+
+void writeInterleaved(const float* inputLeft, const float* inputRight, float* output, unsigned outputSize) noexcept
+{
+    return simdDispatch<float>().writeInterleaved(inputLeft, inputRight, output, outputSize);
+}
+
+template <>
+void applyGain1<float>(float gain, const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().gain1(gain, input, output, size);
+}
+
+template <>
+void applyGain<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().gain(gain, input, output, size);
+}
+
+template <>
+void divide<float>(const float* input, const float* divisor, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().divide(input, divisor, output, size);
+}
+
+template <>
+void multiplyAdd<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().multiplyAdd(gain, input, output, size);
+}
+
+template <>
+void multiplyAdd1<float>(float gain, const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().multiplyAdd1(gain, input, output, size);
+}
+
+template <>
+float linearRamp<float>(float* output, float start, float step, unsigned size) noexcept
+{
+    return simdDispatch<float>().linearRamp(output, start, step, size);
+}
+
+template <>
+float multiplicativeRamp<float>(float* output, float start, float step, unsigned size) noexcept
+{
+    return simdDispatch<float>().multiplicativeRamp(output, start, step, size);
+}
+
+template <>
+void add<float>(const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().add(input, output, size);
+}
+
+template <>
+void add1<float>(float value, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().add1(value, output, size);
+}
+
+template <>
+void subtract<float>(const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().subtract(input, output, size);
+}
+
+template <>
+void subtract1<float>(float value, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().subtract1(value, output, size);
+}
+
+template <>
+void copy<float>(const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().copy(input, output, size);
+}
+
+template <>
+float mean<float>(const float* vector, unsigned size) noexcept
+{
+    return simdDispatch<float>().mean(vector, size);
+}
+
+template <>
+float meanSquared<float>(const float* vector, unsigned size) noexcept
+{
+    return simdDispatch<float>().meanSquared(vector, size);
+}
+
+template <>
+void cumsum<float>(const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().cumsum(input, output, size);
+}
+
+template <>
+void diff<float>(const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().diff(input, output, size);
 }
 
 }

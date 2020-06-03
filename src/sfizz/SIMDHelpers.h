@@ -42,12 +42,16 @@ enum class SIMDOps {
     readInterleaved,
     fill,
     gain,
+    gain1,
     divide,
     linearRamp,
     multiplicativeRamp,
     add,
+    add1,
     subtract,
+    subtract1,
     multiplyAdd,
+    multiplyAdd1,
     copy,
     cumsum,
     diff,
@@ -58,15 +62,28 @@ enum class SIMDOps {
     _sentinel //
 };
 
+// Call this at least once before using SIMD operations
+void initializeSIMDDispatchers();
+
 // Enable or disable SIMD accelerators at runtime
+template<class T>
 void resetSIMDOpStatus();
+
+template<class T>
 void setSIMDOpStatus(SIMDOps op, bool status);
+
+template<class T>
 bool getSIMDOpStatus(SIMDOps op);
 
-// Initializer object which ensures to prepare SIMD dispatch
-struct SIMDInitializer {
-    SIMDInitializer();
-};
+// Float specializations
+template<>
+void resetSIMDOpStatus<float>();
+
+template<>
+void setSIMDOpStatus<float>(SIMDOps op, bool status);
+
+template<>
+bool getSIMDOpStatus<float>(SIMDOps op);
 
 /**
  * @brief Read interleaved stereo data from a buffer and separate it in a left/right pair of buffers.
@@ -81,8 +98,8 @@ void readInterleaved(const float* input, float* outputLeft, float* outputRight, 
 inline void readInterleaved(absl::Span<const float> input, absl::Span<float> outputLeft, absl::Span<float> outputRight) noexcept
 {
     // Something is fishy with the sizes
-    CHECK(outputLeft.size() == input.size() / 2);
-    CHECK(outputRight.size() == input.size() / 2);
+    SFIZZ_CHECK(outputLeft.size() == input.size() / 2);
+    SFIZZ_CHECK(outputRight.size() == input.size() / 2);
     const auto size = min(input.size(), 2 * outputLeft.size(), 2 * outputRight.size());
     readInterleaved(input.data(), outputLeft.data(), outputRight.data(), size);
 }
@@ -100,8 +117,8 @@ void writeInterleaved(const float* inputLeft, const float* inputRight, float* ou
 inline void writeInterleaved(absl::Span<const float> inputLeft, absl::Span<const float> inputRight, absl::Span<float> output) noexcept
 {
     // Something is fishy with the sizes
-    CHECK(inputLeft.size() == output.size() / 2);
-    CHECK(inputRight.size() == output.size() / 2);
+    SFIZZ_CHECK(inputLeft.size() == output.size() / 2);
+    SFIZZ_CHECK(inputRight.size() == output.size() / 2);
     const auto size = min(output.size(), 2 * inputLeft.size(), 2 * inputRight.size());
     writeInterleaved(inputLeft.data(), inputRight.data(), output.data(), size);
 }
@@ -134,19 +151,19 @@ void fill(absl::Span<T> output, T value) noexcept
  * @param size
  */
 template<class T>
-void applyGain(T gain, const T* input, T* output, unsigned size) noexcept
+void applyGain1(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    applyGainScalar(gain, input, output, size);
+    gain1Scalar(gain, input, output, size);
 }
 
 template<>
-void applyGain<float>(float gain, const float* input, float* output, unsigned size) noexcept;
+void applyGain1<float>(float gain, const float* input, float* output, unsigned size) noexcept;
 
 template<class T>
-inline void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+inline void applyGain1(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     CHECK_SPAN_SIZES(input, output);
-    applyGain<T>(gain, input.data(), output.data(), minSpanSize(input, output));
+    applyGain1<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
 
 /**
@@ -157,15 +174,15 @@ inline void applyGain(T gain, absl::Span<const T> input, absl::Span<T> output) n
  * @param size
  */
 template<class T>
-inline void applyGain(float gain, float* array, unsigned size) noexcept
+inline void applyGain1(float gain, float* array, unsigned size) noexcept
 {
-    applyGain<T>(gain, array, array, size);
+    applyGain1<T>(gain, array, array, size);
 }
 
 template<class T>
-inline void applyGain(float gain, absl::Span<float> array) noexcept
+inline void applyGain1(float gain, absl::Span<float> array) noexcept
 {
-    applyGain<T>(gain, array.data(), array.data(), array.size());
+    applyGain1<T>(gain, array.data(), array.data(), array.size());
 }
 
 /**
@@ -179,7 +196,7 @@ inline void applyGain(float gain, absl::Span<float> array) noexcept
 template<class T>
 void applyGain(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    applyGainScalar(gain, input, output, size);
+    gainScalar(gain, input, output, size);
 }
 
 template<>
@@ -288,19 +305,19 @@ void multiplyAdd(absl::Span<const T> gain, absl::Span<const T> input, absl::Span
  * @param size
  */
 template <class T>
-void multiplyAdd(T gain, const T* input, T* output, unsigned size) noexcept
+void multiplyAdd1(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    multiplyAddScalar(gain, input, output, size);
+    multiplyAdd1Scalar(gain, input, output, size);
 }
 
 template <>
-void multiplyAdd<float>(float gain, const float* input, float* output, unsigned size) noexcept;
+void multiplyAdd1<float>(float gain, const float* input, float* output, unsigned size) noexcept;
 
 template <class T>
-void multiplyAdd(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+void multiplyAdd1(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     CHECK_SPAN_SIZES(input, output);
-    multiplyAdd<T>(gain, input.data(), output.data(), minSpanSize(input, output));
+    multiplyAdd1<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
 
 /**
@@ -386,18 +403,18 @@ void add(absl::Span<const T> input, absl::Span<T> output) noexcept
  * @param size
  */
 template <class T>
-void add(T value, T* output, unsigned size) noexcept
+void add1(T value, T* output, unsigned size) noexcept
 {
-    addScalar(value, output, size);
+    add1Scalar(value, output, size);
 }
 
 template <>
-void add<float>(float value, float* output, unsigned size) noexcept;
+void add1<float>(float value, float* output, unsigned size) noexcept;
 
 template <class T>
-void add(T value, absl::Span<T> output) noexcept
+void add1(T value, absl::Span<T> output) noexcept
 {
-    add<T>(value, output.data(), output.size());
+    add1<T>(value, output.data(), output.size());
 }
 
 /**
@@ -433,18 +450,18 @@ void subtract(absl::Span<const T> input, absl::Span<T> output) noexcept
  * @param size
  */
 template <class T>
-void subtract(T value, T* output, unsigned size) noexcept
+void subtract1(T value, T* output, unsigned size) noexcept
 {
-    subtractScalar(value, output, size);
+    subtract1Scalar(value, output, size);
 }
 
 template <>
-void subtract<float>(float value, float* output, unsigned size) noexcept;
+void subtract1<float>(float value, float* output, unsigned size) noexcept;
 
 template <class T>
-void subtract(T value, absl::Span<T> output) noexcept
+void subtract1(T value, absl::Span<T> output) noexcept
 {
-    subtract<T>(value, output.data(), output.size());
+    subtract1<T>(value, output.data(), output.size());
 }
 
 /**
@@ -568,8 +585,8 @@ namespace _internals {
 template <class T>
 void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps, absl::Span<T> coeffs) noexcept
 {
-    CHECK(jumps.size() >= floatJumps.size());
-    CHECK(jumps.size() == coeffs.size());
+    SFIZZ_CHECK(jumps.size() >= floatJumps.size());
+    SFIZZ_CHECK(jumps.size() == coeffs.size());
 
     auto floatJump = floatJumps.data();
     auto jump = jumps.data();

@@ -5,8 +5,6 @@
 
 int main(int argc, char* argv[])
 {
-    sfz::SIMDInitializer simdInit;
-
     int result = Catch::Session().run(argc, argv);
     return result;
 }

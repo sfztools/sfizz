@@ -43,7 +43,7 @@ BENCHMARK_DEFINE_F(CopyArray, StdCopy)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CopyArray, Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::copy, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::copy, false);
         sfz::copy<float>(input, absl::MakeSpan(output));
     }
 }
@@ -51,7 +51,7 @@ BENCHMARK_DEFINE_F(CopyArray, Scalar)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CopyArray, SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::copy, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::copy, true);
         sfz::copy<float>(input, absl::MakeSpan(output));
     }
 }
@@ -66,7 +66,7 @@ BENCHMARK_DEFINE_F(CopyArray, StdCopy_Unaligned)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CopyArray, Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::copy, false);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::copy, false);
         sfz::copy<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
@@ -74,7 +74,7 @@ BENCHMARK_DEFINE_F(CopyArray, Scalar_Unaligned)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(CopyArray, SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::setSIMDOpStatus(sfz::SIMDOps::copy, true);
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::copy, true);
         sfz::copy<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
