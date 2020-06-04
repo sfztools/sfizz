@@ -234,7 +234,7 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
 {
     absl::optional<unsigned> groupIdx;
-    unsigned maxPolyphony { config::maxVoices };
+    absl::optional<unsigned> maxPolyphony;
 
     const auto parseOpcode = [&](const Opcode& rawMember) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeGroup);
@@ -244,13 +244,7 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             setValueFromOpcode(member, groupIdx, Default::groupRange);
             break;
         case hash("polyphony"):
-            ASSERT(currentSet != nullptr);
-            if (auto value = readOpcode(member.value, Default::polyphonyRange)) {
-                if (!groupIdx)
-                    currentSet->setPolyphonyLimit(*value);
-                else
-                    maxPolyphony = *value;
-            }
+            setValueFromOpcode(member, maxPolyphony, Default::groupRange);
             break;
         }
     };
@@ -261,8 +255,14 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
     for (auto& member : members)
         parseOpcode(member);
 
-    if (groupIdx)
-        setGroupPolyphony(*groupIdx, maxPolyphony);
+    if (groupIdx && maxPolyphony) {
+        setGroupPolyphony(*groupIdx, *maxPolyphony);
+    } else if (maxPolyphony) {
+        ASSERT(currentSet != nullptr);
+        currentSet->setPolyphonyLimit(*maxPolyphony);
+    } else if (groupIdx && *groupIdx > polyphonyGroups.size()) {
+        setGroupPolyphony(*groupIdx, config::maxVoices);
+    }
 }
 
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
@@ -1185,6 +1185,11 @@ const sfz::RegionSet* sfz::Synth::getRegionSetView(int idx) const noexcept
     return (size_t)idx < sets.size() ? sets[idx].get() : nullptr;
 }
 
+const sfz::PolyphonyGroup* sfz::Synth::getPolyphonyGroupView(int idx) const noexcept
+{
+    return (size_t)idx < polyphonyGroups.size() ? &polyphonyGroups[idx] : nullptr;
+}
+
 const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
 {
     return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
@@ -1227,6 +1232,11 @@ const sfz::Voice* sfz::Synth::getVoiceById(NumericId<Voice> id) const noexcept
 const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
 {
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
+}
+
+unsigned sfz::Synth::getNumPolyphonyGroups() const noexcept
+{
+    return polyphonyGroups.size();
 }
 
 const std::vector<std::string>& sfz::Synth::getUnknownOpcodes() const noexcept

@@ -233,6 +233,20 @@ public:
      */
     const RegionSet* getRegionSetView(int idx) const noexcept;
     /**
+     * @brief Get a raw view into a specific polyphony group. This is mostly used
+     * for testing.
+     *
+     * @param idx
+     * @return const PolyphonyGroup*
+     */
+    const PolyphonyGroup* getPolyphonyGroupView(int idx) const noexcept;
+    /**
+     * @brief Get the number of polyphony groups
+     *
+     * @return unsigned
+     */
+    unsigned getNumPolyphonyGroups() const noexcept;
+    /**
      * @brief Get a list of unknown opcodes. The lifetime of the
      * string views in the code are linked to the currently loaded
      * sfz file.

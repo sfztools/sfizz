@@ -13,14 +13,22 @@ public:
         voices.reserve(limit);
     }
     unsigned getPolyphonyLimit() const { return polyphonyLimit; }
-    void addVoice(Voice* voice)
+    void registerVoice(Voice* voice)
     {
         if (absl::c_find(voices, voice) == voices.end())
             voices.push_back(voice);
     }
+    void removeVoice(Voice* voice)
+    {
+        auto it = absl::c_find(voices, voice);
+        if (it != voices.end()) {
+            std::iter_swap(it, voices.rbegin().base());
+            voices.pop_back();
+        }
+    }
     const std::vector<Voice*>& getActiveVoices() const { return voices; }
 private:
-    unsigned polyphonyLimit;
+    unsigned polyphonyLimit { config::maxVoices };
     std::vector<Voice*> voices;
 };
 
