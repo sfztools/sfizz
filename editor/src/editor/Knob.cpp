@@ -5,32 +5,23 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Knob.h"
-#include "Res.h"
 
-#define USE_ELEMENTS_RESOURCES 1
-
-Knob::Knob(el::view& view_, const std::string& lbl, double value, Type type)
+Knob::Knob(el::view& view_, const std::string& lbl, Type type, double value)
     : parentView_(view_)
-    , label_(el::share(el::label(lbl)))
+    , label_(lbl)
     , labelValue_(el::share(el::label("")))
-    , value_(value)
     , type_(type)
+    , value_(value)
 {
-#if USE_ELEMENTS_RESOURCES
-    float const knob_scale = 1.0 / 4;
-    el::sprite knob = el::sprite { "knob.png", 128 * knob_scale, knob_scale };
-    dial_ = el::share(el::dial(
-        el::radial_marks<15>(knob), value_));
-#else
-    dial_ = el::share(el::dial(
-        el::radial_marks<15>(el::basic_knob<40>()), value_));
-#endif
+    float const dialScale = 1.0 / 4;
+    el::sprite knob = el::sprite { "knob.png", 128 * dialScale, dialScale };
+    dial_ = el::share(el::dial(knob, value_));
+
     contents_ = el::share(
-        el::fixed_size({ 60, 60 },
-            el::vtile(
-                el::align_center(el::hold(label_)),
-                el::align_center(el::hold(dial_)),
-                el::align_center(el::hold(labelValue_)))));
+        el::vtile(
+            el::align_center(label_),
+            el::align_center(el::hold(dial_)),
+            el::align_center(el::hold(labelValue_))));
 
     setValue_(value_);
     parentView_.refresh(*labelValue_);
@@ -45,28 +36,17 @@ el::element_ptr Knob::contents() const
 }
 void Knob::setValue_(double val)
 {
-    char sVal[16];
+    std::string sVal;
 
-    if (type_ == Type::Cents) {
-        int8_t i = val * 100;
-        std::sprintf(sVal, "%i%%", i);
-
-    } else if (type_ == Type::Pan) {
-        int8_t i = (val * 2 - 1) * 100;
-        if (i < 0)
-            std::sprintf(sVal, "%i%% L", i);
-        else if (i > 0)
-            std::sprintf(sVal, "%i%% R", i);
-        else
-            std::sprintf(sVal, "Center");
-
-    } else if (type_ == Type::Transpose) {
-        int8_t i = (val * 2 - 1) * 12;
-        std::sprintf(sVal, "%i", i);
-
-    } else if (type_ == Type::Tune) {
-        int8_t i = (val * 2 - 1) * 100;
-        std::sprintf(sVal, "%i", i);
+    if (type_ == Type::Polyphony) {
+        int8_t i = val * 6 + 3;
+        sVal = std::to_string(1 << i) + " Voices";
+    } else if (type_ == Type::Oversampling) {
+        int8_t i = val * 3;
+        sVal = "x" + std::to_string(1 << i);
+    } else {
+        int8_t i = val * 6 + 2;
+        sVal = std::to_string(1 << i) + " KB";
     }
     labelValue_->set_text(sVal);
     parentView_.refresh();

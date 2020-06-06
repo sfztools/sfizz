@@ -10,8 +10,8 @@ class EditorController;
 
 class Editor {
 public:
-    static constexpr int fixedWidth = 640;
-    static constexpr int fixedHeight = 480;
+    static constexpr int fixedWidth = 570;
+    static constexpr int fixedHeight = 282;
 
     explicit Editor(EditorController& ctrl);
     ~Editor();

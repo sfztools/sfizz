@@ -10,18 +10,12 @@
 
 namespace el = cycfi::elements;
 
-class Knob {
+class Slider {
 
 public:
-    enum Type {
-        Polyphony = 1,
-        Oversampling,
-        PreloadSize
-    };
-    Knob() = delete;
+    Slider() = delete;
 
-    explicit Knob(el::view& view_, const std::string& lbl, Type type,
-        double value = 1.0f);
+    explicit Slider(el::view& view_, const std::string& lbl, double value = 1.0f);
 
     el::element_ptr contents() const;
 
@@ -30,11 +24,8 @@ private:
 
     el::view& parentView_;
     el::label label_;
-
-    std::shared_ptr<el::dial_base> dial_;
     std::shared_ptr<el::label> labelValue_;
-    el::element_ptr contents_;
-
-    Type type_;
+    std::shared_ptr<el::basic_slider_base> slider_;
     double value_;
+    el::element_ptr contents_;
 };

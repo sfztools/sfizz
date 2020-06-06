@@ -8,7 +8,7 @@
 
 #include <elements.hpp>
 #include <memory>
-#include "Knob.h"
+#include "PageHome.h"
 
 namespace el = cycfi::elements;
 
@@ -18,22 +18,9 @@ public:
     explicit UI(el::view& group);
 
 private:
-    el::basic_menu make_pbrange_menu(const char* title, el::menu_position pos);
-    el::basic_menu make_polyphony_menu(const char* title, el::menu_position pos);
-    el::element_ptr make_toolbar(el::view& view_);
-
-#if HAVE_ELEMENTS_NOTEBOOK
-    el::element_ptr make_tabs(el::view& view_);
-#endif
-    using knobPtr = std::shared_ptr<Knob>;
-
     // Main window background color
     static constexpr el::color bkd_color = el::rgba(35, 35, 37, 255);
     el::box_element background = el::box(bkd_color);
 
-    knobPtr dialVolume;
-    knobPtr dialPan;
-    knobPtr dialSend;
-    knobPtr dialTune;
-    knobPtr dialTranspose;
+    std::shared_ptr<PageHome> pageHome;
 };
