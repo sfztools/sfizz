@@ -71,7 +71,7 @@ combo_box(
             list.push_back(share(e));
         }
         auto menu = el::layer(
-            el::vsize(114, el::vscroller(list)),
+            el::vsize(80, el::vscroller(list)),
             el::panel {});
 
         r.first.menu(menu);
