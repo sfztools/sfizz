@@ -13,6 +13,8 @@
 
 namespace el = cycfi::elements;
 
+namespace sfizz {
+
 std::pair<el::basic_menu, std::shared_ptr<el::basic_label>>
 combo_box(std::string init)
 {
@@ -76,3 +78,4 @@ combo_box(
     }
     return r;
 }
+} // namespace sfizz

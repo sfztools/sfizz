@@ -98,7 +98,7 @@ el::element_ptr PageHome::contents() const
 }
 el::basic_menu PageHome::makeScalaCenterMenu()
 {
-    auto popup = combo_box(
+    auto popup = sfizz::combo_box(
         [](cycfi::string_view /*select*/) {
             // This will be called when an item is selected
         },
@@ -110,7 +110,7 @@ el::basic_menu PageHome::makeScalaCenterMenu()
 }
 el::basic_menu PageHome::makeScalaTuningMenu()
 {
-    auto popup = combo_box(
+    auto popup = sfizz::combo_box(
         [](cycfi::string_view /*select*/) {
             // This will be called when an item is selected
         },
