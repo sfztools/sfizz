@@ -307,7 +307,7 @@ extent base_view::size() const
 {
     PuglHostView* host = reinterpret_cast<PuglHostView*>(this->host());
     if (!host || !host->view)
-        return extent();
+        return point();
 
     PuglRect frame = puglGetFrame(host->view.get());
     return point(frame.width, frame.height);
