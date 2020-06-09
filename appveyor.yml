@@ -13,7 +13,9 @@ install:
 - cmd: if %platform%==Win32 set VCPKG_TRIPLET=x86-windows-static
 - cmd: if %platform%==x64   set VCPKG_TRIPLET=x64-windows-static
 - cmd: cd c:\tools\vcpkg\
-- cmd: git pull
+- cmd: git remote add vcpkg-cairo-pr https://github.com/NancyLi1013/vcpkg.git
+- cmd: git fetch vcpkg-cairo-pr dev/NancyLi/11640-fix-cairo
+- cmd: git checkout vcpkg-cairo-pr/dev/NancyLi/11640-fix-cairo
 - cmd: .\bootstrap-vcpkg.bat
 - cmd: cd %APPVEYOR_BUILD_FOLDER%
 - cmd: vcpkg install libsndfile:%VCPKG_TRIPLET%
