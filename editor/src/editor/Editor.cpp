@@ -59,7 +59,7 @@ bool Editor::open(void* parentWindowId)
         return false;
     }
 
-    view->size({fixedWidth, fixedHeight});
+    view->size(el::extent(fixedWidth, fixedHeight));
 
     ///
     DemoKnobsAndSliders* demo = new DemoKnobsAndSliders(*view);
