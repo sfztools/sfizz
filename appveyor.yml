@@ -21,7 +21,7 @@ install:
 - cmd: vcpkg install fontconfig:%VCPKG_TRIPLET%
 
 before_build:
-- cmd: git submodule update --init
+- cmd: git submodule update --init --recursive
 - cmd: mkdir CMakeBuild
 - cmd: cd CMakeBuild
 - cmd: cmake .. -G"Visual Studio 15 2017" -A"%platform%" -DSFIZZ_JACK=OFF -DSFIZZ_BENCHMARKS=OFF -DSFIZZ_TESTS=OFF -DSFIZZ_LV2=ON -DSFIZZ_VST=ON -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=%VCPKG_TRIPLET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
