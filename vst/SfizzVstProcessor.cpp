@@ -10,6 +10,7 @@
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include <algorithm>
 #include <cstring>
 #include <cassert>
 
