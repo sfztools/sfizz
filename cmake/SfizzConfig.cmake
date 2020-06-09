@@ -17,6 +17,11 @@ if (WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
+# Do not define macros `min` and `max`
+if (WIN32)
+    add_compile_definitions(NOMINMAX)
+endif()
+
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
 # see https://gitlab.kitware.com/cmake/cmake/issues/15170
 
