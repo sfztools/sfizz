@@ -12,6 +12,7 @@
 #include "StringViewHelpers.h"
 #include "absl/types/optional.h"
 #include "absl/meta/type_traits.h"
+#include "absl/strings/ascii.h"
 #include <string_view>
 #include <vector>
 #include <type_traits>
@@ -115,16 +116,18 @@ private:
 template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
-    const auto numberEnd = value.find_first_not_of("-1234567890.");
+    size_t numberEnd = 0;
+
+    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+        ++numberEnd;
+
     value = value.substr(0, numberEnd);
 
     int64_t returnedValue;
-    if (!absl::SimpleAtoi(value, &returnedValue)) {
-        float floatValue;
-        if (!absl::SimpleAtof(value, &floatValue))
+    if (!absl::SimpleAtoi(value, &returnedValue))
             return absl::nullopt;
-        returnedValue = static_cast<int64_t>(floatValue);
-    }
 
     if (returnedValue > std::numeric_limits<ValueType>::max())
         returnedValue = std::numeric_limits<ValueType>::max();
@@ -147,12 +150,24 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
 template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
-    const auto numberEnd = value.find_first_not_of("-1234567890.");
+    size_t numberEnd = 0;
+
+    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+        ++numberEnd;
+
+    if (numberEnd < value.size() && value[numberEnd] == '.') {
+        ++numberEnd;
+        while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+            ++numberEnd;
+    }
+
     value = value.substr(0, numberEnd);
 
     float returnedValue;
     if (!absl::SimpleAtof(value, &returnedValue))
-		return absl::nullopt;
+        return absl::nullopt;
 
     return validRange.clamp(returnedValue);
 }

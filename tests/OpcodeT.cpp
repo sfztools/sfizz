@@ -250,12 +250,15 @@ TEST_CASE("[Opcode] Normalization")
 TEST_CASE("[Opcode] readOpcode")
 {
     REQUIRE( sfz::readOpcode("16", sfz::Range<uint8_t>(0, 100)).value() == 16 );
+    REQUIRE( sfz::readOpcode("+16", sfz::Range<uint8_t>(0, 100)).value() == 16 );
     REQUIRE( sfz::readOpcode("110", sfz::Range<uint8_t>(0, 100)).value() == 100 );
     REQUIRE( sfz::readOpcode("-1", sfz::Range<uint8_t>(0, 100)).value() == 0 );
     REQUIRE( sfz::readOpcode("12.5", sfz::Range<int>(-100, 100)).value() == 12 );
+    REQUIRE( sfz::readOpcode("+12.5", sfz::Range<int>(-100, 100)).value() == 12 );
     REQUIRE( sfz::readOpcode("-40", sfz::Range<int>(-100, 100)).value() == -40 );
     REQUIRE( sfz::readOpcode("-140", sfz::Range<int>(-100, 100)).value() == -100 );
     REQUIRE( sfz::readOpcode("12.5", sfz::Range<float>(0.0f, 100.0f)).value() == 12.5_a );
+    REQUIRE( sfz::readOpcode("+12.5", sfz::Range<float>(0.0f, 100.0f)).value() == 12.5_a );
     REQUIRE( sfz::readOpcode("-22.5", sfz::Range<float>(-20.0f, 100.0f)).value() == -20.0_a );
     REQUIRE( sfz::readOpcode("150.5", sfz::Range<float>(-20.0f, 100.0f)).value() == 100.0_a );
     REQUIRE( sfz::readOpcode("50.25garbage", sfz::Range<float>(-20.0f, 100.0f)).value() == 50.25_a );
