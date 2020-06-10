@@ -74,6 +74,52 @@ public:
     bool loadSfzString(const std::string& path, const std::string& text);
 
     /**
+     * @brief Sets the tuning from a Scala file loaded from the file system.
+     *
+     * @param  path   The path to the file in Scala format.
+     * @return @true when tuning scale loaded OK,
+     *         @false if some error occurred.
+     */
+    bool loadScalaFile(const std::string& path);
+
+    /**
+     * @brief Sets the tuning from a Scala file loaded from memory.
+     *
+     * @param  text   The contents of the file in Scala format.
+     * @return @true when tuning scale loaded OK,
+     *         @false if some error occurred.
+     */
+    bool loadScalaString(const std::string& text);
+
+    /**
+     * @brief Sets the scala root key.
+     *
+     * @param rootKey The MIDI number of the Scala root key (default 60 for C4).
+     */
+    void setScalaRootKey(int rootKey);
+
+    /**
+     * @brief Gets the scala root key.
+     *
+     * @return The MIDI number of the Scala root key (default 60 for C4).
+     */
+    int getScalaRootKey() const;
+
+    /**
+     * @brief Sets the reference tuning frequency.
+     *
+     * @param frequency The frequency which indicates where standard tuning A4 is (default 440 Hz).
+     */
+    void setTuningFrequency(float frequency);
+
+    /**
+     * @brief Gets the reference tuning frequency.
+     *
+     * @return The frequency which indicates where standard tuning A4 is (default 440 Hz).
+     */
+    float getTuningFrequency() const;
+
+    /**
      * @brief Return the current number of regions loaded.
      */
     int getNumRegions() const noexcept;
@@ -303,6 +349,16 @@ public:
      *         been modified since the sfz file was loaded, @false otherwise.
      */
     bool shouldReloadFile();
+
+    /**
+     * @brief Check if the tuning (scala) file should be reloaded.
+     *
+     * Depending on the platform this can create file descriptors.
+     *
+     * @return true if a scala file has been loaded and has changed
+     * @return false
+     */
+    bool shouldReloadScala();
 
     /**
      * @brief Enable logging of timings to sidecar CSV files. This can produce

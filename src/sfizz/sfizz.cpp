@@ -28,6 +28,36 @@ bool sfz::Sfizz::loadSfzString(const std::string& path, const std::string& text)
     return synth->loadSfzString(path, text);
 }
 
+bool sfz::Sfizz::loadScalaFile(const std::string& path)
+{
+    return synth->loadScalaFile(path);
+}
+
+bool sfz::Sfizz::loadScalaString(const std::string& text)
+{
+    return synth->loadScalaString(text);
+}
+
+void sfz::Sfizz::setScalaRootKey(int rootKey)
+{
+    return synth->setScalaRootKey(rootKey);
+}
+
+int sfz::Sfizz::getScalaRootKey() const
+{
+    return synth->getScalaRootKey();
+}
+
+void sfz::Sfizz::setTuningFrequency(float frequency)
+{
+    return synth->setTuningFrequency(frequency);
+}
+
+float sfz::Sfizz::getTuningFrequency() const
+{
+    return synth->getTuningFrequency();
+}
+
 int sfz::Sfizz::getNumRegions() const noexcept
 {
     return synth->getNumRegions();
@@ -189,6 +219,11 @@ void sfz::Sfizz::disableFreeWheeling() noexcept
 bool sfz::Sfizz::shouldReloadFile()
 {
     return synth->shouldReloadFile();
+}
+
+bool sfz::Sfizz::shouldReloadScala()
+{
+    return synth->shouldReloadScala();
 }
 
 void sfz::Sfizz::enableLogging() noexcept

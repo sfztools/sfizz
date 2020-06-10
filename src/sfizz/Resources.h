@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "Wavetables.h"
 #include "Curve.h"
+#include "Tuning.h"
 
 namespace sfz
 {
@@ -27,6 +28,7 @@ struct Resources
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
     WavetablePool wavePool;
+    Tuning tuning;
 
     void setSampleRate(float samplerate)
     {

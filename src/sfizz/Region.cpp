@@ -1012,12 +1012,12 @@ void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
         bpmSwitched = false;
 }
 
-float sfz::Region::getBasePitchVariation(int noteNumber, float velocity) const noexcept
+float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     std::uniform_int_distribution<int> pitchDistribution { -pitchRandom, pitchRandom };
-    auto pitchVariationInCents = pitchKeytrack * (noteNumber - (int)pitchKeycenter); // note difference with pitch center
+    auto pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
     pitchVariationInCents += static_cast<int>(velocity) * pitchVeltrack; // track velocity

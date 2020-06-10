@@ -81,7 +81,11 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
-    pitchRatio = region->getBasePitchVariation(number, value);
+
+    // do Scala retuning and reconvert the frequency into a 12TET key number
+    const float numberRetuned = resources.tuning.getKeyFractional12TET(number);
+
+    pitchRatio = region->getBasePitchVariation(numberRetuned, value);
     baseVolumedB = region->getBaseVolumedB(number);
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
@@ -107,7 +111,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
-    baseFrequency = midiNoteFrequency(number);
+    baseFrequency = resources.tuning.getFrequencyOfKey(number);
     bendStepFactor = centsFactor(region->bendStep);
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
 }

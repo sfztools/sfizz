@@ -86,6 +86,58 @@ SFIZZ_EXPORTED_API bool sfizz_load_file(sfizz_synth_t* synth, const char* path);
 SFIZZ_EXPORTED_API bool sfizz_load_string(sfizz_synth_t* synth, const char* path, const char* text);
 
 /**
+ * @brief Sets the tuning from a Scala file loaded from the file system.
+ *
+ * @param      synth  The sfizz synth.
+ * @param      path   The path to the file in Scala format.
+ * @return     @true when tuning scale loaded OK,
+ *             @false if some error occurred.
+ */
+SFIZZ_EXPORTED_API bool sfizz_load_scala_file(sfizz_synth_t* synth, const char* path);
+
+/**
+ * @brief Sets the tuning from a Scala file loaded from memory.
+ *
+ * @param      synth  The sfizz synth.
+ * @param      text   The contents of the file in Scala format.
+ * @return     @true when tuning scale loaded OK,
+ *             @false if some error occurred.
+ */
+SFIZZ_EXPORTED_API bool sfizz_load_scala_string(sfizz_synth_t* synth, const char* text);
+
+/**
+ * @brief Sets the scala root key.
+ *
+ * @param      synth          The sfizz synth.
+ * @param      root_key       The MIDI number of the Scala root key (default 60 for C4).
+ */
+SFIZZ_EXPORTED_API void sfizz_set_scala_root_key(sfizz_synth_t* synth, int root_key);
+
+/**
+ * @brief Gets the scala root key.
+ *
+ * @param      synth          The sfizz synth.
+ * @return     The MIDI number of the Scala root key (default 60 for C4).
+ */
+SFIZZ_EXPORTED_API int sfizz_get_scala_root_key(sfizz_synth_t* synth);
+
+/**
+ * @brief Sets the reference tuning frequency.
+ *
+ * @param      synth          The sfizz synth.
+ * @param      frequency      The frequency which indicates where standard tuning A4 is (default 440 Hz).
+ */
+SFIZZ_EXPORTED_API void sfizz_set_tuning_frequency(sfizz_synth_t* synth, float frequency);
+
+/**
+ * @brief Gets the reference tuning frequency.
+ *
+ * @param      synth          The sfizz synth.
+ * @return     The frequency which indicates where standard tuning A4 is (default 440 Hz).
+ */
+SFIZZ_EXPORTED_API float sfizz_get_tuning_frequency(sfizz_synth_t* synth);
+
+/**
  * @brief      Return the number of regions in the currently loaded SFZ file.
  *
  * @param      synth  The synth.
@@ -371,6 +423,16 @@ SFIZZ_EXPORTED_API char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth);
  *             been modified since the sfz file was loaded, @false otherwise.
  */
 SFIZZ_EXPORTED_API bool sfizz_should_reload_file(sfizz_synth_t* synth);
+
+/**
+ * @brief      Check if the scala file should be reloaded.
+ *             Depending on the platform this can create file descriptors.
+ *
+ * @param      synth  The synth.
+ *
+ * @return     @true if the scala file has been modified since loading.
+ */
+SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
 
 /**
  * @brief      Enable logging of timings to sidecar CSV files. This can produce

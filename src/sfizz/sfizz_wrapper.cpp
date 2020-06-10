@@ -31,6 +31,42 @@ bool sfizz_load_string(sfizz_synth_t* synth, const char* path, const char* text)
     return self->loadSfzString(path, text);
 }
 
+bool sfizz_load_scala_file(sfizz_synth_t* synth, const char* path)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->loadScalaFile(path);
+}
+
+bool sfizz_load_scala_string(sfizz_synth_t* synth, const char* text)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->loadScalaString(text);
+}
+
+void sfizz_set_scala_root_key(sfizz_synth_t* synth, int root_key)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setScalaRootKey(root_key);
+}
+
+int sfizz_get_scala_root_key(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getScalaRootKey();
+}
+
+void sfizz_set_tuning_frequency(sfizz_synth_t* synth, float frequency)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setTuningFrequency(frequency);
+}
+
+float sfizz_get_tuning_frequency(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getTuningFrequency();
+}
+
 void sfizz_free(sfizz_synth_t* synth)
 {
     delete reinterpret_cast<sfz::Synth*>(synth);
@@ -237,6 +273,12 @@ bool sfizz_should_reload_file(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->shouldReloadFile();
+}
+
+bool sfizz_should_reload_scala(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->shouldReloadScala();
 }
 
 void sfizz_enable_logging(sfizz_synth_t* synth)

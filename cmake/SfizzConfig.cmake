@@ -78,6 +78,9 @@ target_include_directories(sfizz-pugixml PUBLIC "src/external/pugixml/src")
 add_library(sfizz-spline STATIC "src/external/spline/spline/spline.cpp")
 target_include_directories(sfizz-spline PUBLIC "src/external/spline")
 
+add_library(sfizz-tunings STATIC "src/external/tunings/src/Tunings.cpp")
+target_include_directories(sfizz-tunings PUBLIC "src/external/tunings/include")
+
 include (CheckLibraryExists)
 add_library (sfizz-atomic INTERFACE)
 if (UNIX AND NOT APPLE)

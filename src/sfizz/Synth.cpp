@@ -486,6 +486,36 @@ void sfz::Synth::finalizeSfzLoad()
     }
 }
 
+bool sfz::Synth::loadScalaFile(const fs::path& path)
+{
+    return resources.tuning.loadScalaFile(path);
+}
+
+bool sfz::Synth::loadScalaString(const std::string& text)
+{
+    return resources.tuning.loadScalaString(text);
+}
+
+void sfz::Synth::setScalaRootKey(int rootKey)
+{
+    resources.tuning.setScalaRootKey(rootKey);
+}
+
+int sfz::Synth::getScalaRootKey() const
+{
+    return resources.tuning.getScalaRootKey();
+}
+
+void sfz::Synth::setTuningFrequency(float frequency)
+{
+    resources.tuning.setTuningFrequency(frequency);
+}
+
+float sfz::Synth::getTuningFrequency() const
+{
+    return resources.tuning.getTuningFrequency();
+}
+
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
     auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) {
@@ -1160,6 +1190,11 @@ fs::file_time_type sfz::Synth::checkModificationTime()
 bool sfz::Synth::shouldReloadFile()
 {
     return (checkModificationTime() > modificationTime);
+}
+
+bool sfz::Synth::shouldReloadScala()
+{
+    return resources.tuning.shouldReloadScala();
 }
 
 void sfz::Synth::enableLogging(absl::string_view prefix) noexcept

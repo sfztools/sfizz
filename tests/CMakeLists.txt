@@ -30,6 +30,7 @@ set(SFIZZ_TEST_SOURCES
     FloatHelpersT.cpp
     WavetablesT.cpp
     SemaphoreT.cpp
+    TuningT.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
@@ -78,5 +79,8 @@ target_link_libraries(sfizz_plot_wavetables PRIVATE sfizz::sfizz)
 
 add_executable(sfizz_file_instrument FileInstrument.cpp)
 target_link_libraries(sfizz_file_instrument PRIVATE sfizz::sfizz)
+
+add_executable(sfizz_tuning Tuning.cpp)
+target_link_libraries(sfizz_tuning PRIVATE sfizz::sfizz)
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)

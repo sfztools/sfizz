@@ -61,6 +61,7 @@
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
 #define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
+#define SFIZZ__scalaFile "http://sfztools.github.io/sfizz:scalafile"
 #define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
 #define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
 #define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
@@ -105,6 +106,8 @@ typedef struct
     const float *oversampling_port;
     const float *preload_port;
     const float *freewheel_port;
+    const float *scala_root_key_port;
+    const float *tuning_frequency_port;
 
     // Atom forge
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
@@ -132,6 +135,7 @@ typedef struct
     LV2_URID patch_body_uri;
     LV2_URID state_changed_uri;
     LV2_URID sfizz_sfz_file_uri;
+    LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_num_voices_uri;
     LV2_URID sfizz_preload_size_uri;
     LV2_URID sfizz_oversampling_uri;
@@ -142,6 +146,7 @@ typedef struct
     sfizz_synth_t *synth;
     bool expect_nominal_block_length;
     char sfz_file_path[MAX_PATH_SIZE];
+    char scala_file_path[MAX_PATH_SIZE];
     int num_voices;
     unsigned int preload_size;
     sfizz_oversampling_factor_t oversampling;
@@ -162,7 +167,9 @@ enum
     SFIZZ_POLYPHONY = 5,
     SFIZZ_OVERSAMPLING = 6,
     SFIZZ_PRELOAD = 7,
-    SFIZZ_FREEWHEELING = 8
+    SFIZZ_FREEWHEELING = 8,
+    SFIZZ_SCALA_ROOT_KEY = 9,
+    SFIZZ_TUNING_FREQUENCY = 10,
 };
 
 static void
@@ -186,6 +193,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->patch_value_uri = map->map(map->handle, LV2_PATCH__value);
     self->state_changed_uri = map->map(map->handle, LV2_STATE__StateChanged);
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
+    self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__scalaFile);
     self->sfizz_num_voices_uri = map->map(map->handle, SFIZZ__numVoices);
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
@@ -227,6 +235,12 @@ connect_port(LV2_Handle instance,
         break;
     case SFIZZ_FREEWHEELING:
         self->freewheel_port = (const float *)data;
+        break;
+    case SFIZZ_SCALA_ROOT_KEY:
+        self->scala_root_key_port = (const float *)data;
+        break;
+    case SFIZZ_TUNING_FREQUENCY:
+        self->tuning_frequency_port = (const float *)data;
         break;
     default:
         break;
@@ -284,6 +298,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->sample_rate = (float)rate;
     self->expect_nominal_block_length = false;
     self->sfz_file_path[0] = '\0';
+    self->scala_file_path[0] = '\0';
     self->num_voices = DEFAULT_VOICES;
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
@@ -420,15 +435,15 @@ deactivate(LV2_Handle instance)
 }
 
 static void
-sfizz_lv2_send_file_path(sfizz_plugin_t *self)
+sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
 {
     LV2_Atom_Forge_Frame frame;
     lv2_atom_forge_frame_time(&self->forge, 0);
     lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri);
     lv2_atom_forge_key(&self->forge, self->patch_property_uri);
-    lv2_atom_forge_urid(&self->forge, self->sfizz_sfz_file_uri);
+    lv2_atom_forge_urid(&self->forge, urid);
     lv2_atom_forge_key(&self->forge, self->patch_value_uri);
-    lv2_atom_forge_path(&self->forge, self->sfz_file_path, (uint32_t)strlen(self->sfz_file_path));
+    lv2_atom_forge_path(&self->forge, path, (uint32_t)strlen(path));
     lv2_atom_forge_pop(&self->forge, &frame);
 }
 
@@ -475,6 +490,18 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         LV2_Atom *sfz_file_path = (LV2_Atom *)&atom_buffer;
         sfz_file_path->type = self->sfizz_sfz_file_uri;
         self->worker->schedule_work(self->worker->handle, null_terminated_atom_size, sfz_file_path);
+        self->check_modification = false;
+    }
+    else if (key == self->sfizz_scala_file_uri)
+    {
+        const uint32_t original_atom_size = lv2_atom_total_size((const LV2_Atom *)atom);
+        const uint32_t null_terminated_atom_size = original_atom_size + 1;
+        char atom_buffer[MAX_PATH_SIZE];
+        memcpy(&atom_buffer, atom, original_atom_size);
+        atom_buffer[original_atom_size] = 0; // Null terminate the string for safety
+        LV2_Atom *scala_file_path = (LV2_Atom *)&atom_buffer;
+        scala_file_path->type = self->sfizz_scala_file_uri;
+        self->worker->schedule_work(self->worker->handle, null_terminated_atom_size, scala_file_path);
         self->check_modification = false;
     }
     else
@@ -657,11 +684,16 @@ run(LV2_Handle instance, uint32_t sample_count)
                 lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
                 if (!property) // Send the full state
                 {
-                    sfizz_lv2_send_file_path(self);
+                    sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self);
+                    sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                }
+                else if (property->body == self->sfizz_scala_file_uri)
+                {
+                    sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
                 }
             }
             else
@@ -685,6 +717,8 @@ run(LV2_Handle instance, uint32_t sample_count)
     // Check and update parameters if needed
     sfizz_lv2_check_freewheeling(self);
     sfizz_set_volume(self->synth, *(self->volume_port));
+    sfizz_set_scala_root_key(self->synth, *(self->scala_root_key_port));
+    sfizz_set_tuning_frequency(self->synth, *(self->tuning_frequency_port));
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);
     sfizz_lv2_check_num_voices(self);
@@ -838,6 +872,22 @@ restore(LV2_Handle instance,
         }
     }
 
+    value = retrieve(handle, self->sfizz_scala_file_uri, &size, &type, &val_flags);
+    if (value)
+    {
+        if (sfizz_load_scala_file(self->synth, (const char *)value))
+        {
+            lv2_log_note(&self->logger,
+                "[sfizz] Restoring the scale %s\n", (const char *)value);
+            strcpy(self->scala_file_path, (const char *)value);
+        }
+        else
+        {
+            lv2_log_error(&self->logger,
+                "[sfizz] Error while restoring the scale %s\n", (const char *)value);
+        }
+    }
+
     value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
     if (value)
     {
@@ -894,6 +944,14 @@ save(LV2_Handle instance,
           self->atom_path_uri,
           LV2_STATE_IS_POD);
 
+    // Save the scala file path
+    store(handle,
+          self->sfizz_scala_file_uri,
+          self->scala_file_path,
+          strlen(self->scala_file_path) + 1,
+          self->atom_path_uri,
+          LV2_STATE_IS_POD);
+
     // Save the number of voices
     store(handle,
           self->sfizz_num_voices_uri,
@@ -921,6 +979,19 @@ save(LV2_Handle instance,
     return LV2_STATE_SUCCESS;
 }
 
+static void
+sfizz_lv2_activate_file_checking(
+    sfizz_plugin_t *self,
+    LV2_Worker_Respond_Function respond,
+    LV2_Worker_Respond_Handle handle)
+{
+    LV2_Atom check_modification_atom = {
+        .size = 0,
+        .type = self->sfizz_check_modification_uri
+    };
+    respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
+}
+
 // This runs in a lower priority thread
 static LV2_Worker_Status
 work(LV2_Handle instance,
@@ -942,15 +1013,26 @@ work(LV2_Handle instance,
         if (sfizz_load_file(self->synth, sfz_file_path)) {
             sfizz_lv2_update_file_info(self, sfz_file_path);
         } else {
-            lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
+            lv2_log_error(&self->logger,
+                "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
 
         // Reactivate checking for file changes
-        LV2_Atom check_modification_atom = {
-            .size = 0,
-            .type = self->sfizz_check_modification_uri
-        };
-        respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
+        sfizz_lv2_activate_file_checking(self, respond, handle);
+    }
+    else if (atom->type == self->sfizz_scala_file_uri)
+    {
+        const char *scala_file_path = LV2_ATOM_BODY_CONST(atom);
+        if (sfizz_load_scala_file(self->synth, scala_file_path)) {
+            strcpy(self->scala_file_path, scala_file_path);
+            lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", scala_file_path);
+        } else {
+            lv2_log_error(&self->logger,
+                "[sfizz] Error with %s; no new scala file should be loaded\n", scala_file_path);
+        }
+
+        // Reactivate checking for file changes
+        sfizz_lv2_activate_file_checking(self, respond, handle);
     }
     else if (atom->type == self->sfizz_num_voices_uri)
     {
@@ -997,10 +1079,26 @@ work(LV2_Handle instance,
             if (sfizz_load_file(self->synth, self->sfz_file_path)) {
                 sfizz_lv2_update_file_info(self, self->sfz_file_path);
             } else {
-                lv2_log_error(&self->logger, "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
+                lv2_log_error(&self->logger,
+                    "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
         }
-        respond(handle, size, data); // reactivate file checking
+
+        if (sfizz_should_reload_scala(self->synth))
+        {
+            lv2_log_note(&self->logger,
+                        "[sfizz] Scala file %s seems to have been updated, reloading\n",
+                        self->scala_file_path);
+            if (sfizz_load_scala_file(self->synth, self->scala_file_path)) {
+                lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", self->scala_file_path);
+            } else {
+                lv2_log_error(&self->logger,
+                    "[sfizz] Error with %s; no new scala file should be loaded\n", self->scala_file_path);
+            }
+        }
+
+        // Reactivate checking for file changes
+        sfizz_lv2_activate_file_checking(self, respond, handle);
     }
     else
     {
