@@ -159,6 +159,7 @@ namespace Tunings
         return res;
     }
 
+#if 0
     Scale evenDivisionOfSpanByM( int Span, int M )
     {
         if( Span <= 0 )
@@ -182,6 +183,7 @@ namespace Tunings
 
         return parseSCLData( oss.str() );
     }
+#endif
 
     KeyboardMapping readKBMStream(std::istream &inf)
     {

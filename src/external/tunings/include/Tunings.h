@@ -133,12 +133,14 @@ namespace Tunings
      */
     Scale evenTemperament12NoteScale();
 
+#if 0 // Note(jpc): not rewritten RT-safe, not used, disabled
     /**
      * evenDivisionOfSpanByM provides a scale referd to as "ED2-17" or
      * "ED3-24" by dividing the Span into M points. eventDivisionOfSpanByM(2,12)
      * should be the evenTemperament12NoteScale
      */
     Scale evenDivisionOfSpanByM( int Span, int M );
+#endif
 
     /**
      * readKBMStream returns a KeyboardMapping from a KBM input stream
