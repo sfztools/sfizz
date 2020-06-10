@@ -177,6 +177,11 @@ bool Tuning::loadScalaFile(const fs::path& path)
         return false;
     }
 
+    if (scl.count <= 0) {
+        DBG("The scale file is empty: " << path);
+        return false;
+    }
+
     impl_->updateScale(scl, path);
     return true;
 }
@@ -191,6 +196,11 @@ bool Tuning::loadScalaString(const std::string& text)
     }
     catch (Tunings::TuningError& error) {
         DBG("Tuning: " << error.what());
+        return false;
+    }
+
+    if (scl.count <= 0) {
+        DBG("The scale file is empty: " << path);
         return false;
     }
 
