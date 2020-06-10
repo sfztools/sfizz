@@ -9,6 +9,7 @@
 #include <elements.hpp>
 #include <memory>
 #include "PageHome.h"
+#include "PageSettings.h"
 
 namespace el = cycfi::elements;
 
@@ -23,4 +24,5 @@ private:
     el::box_element background = el::box(bkd_color);
 
     std::shared_ptr<PageHome> pageHome;
+    std::shared_ptr<PageSettings> pageSettings;
 };

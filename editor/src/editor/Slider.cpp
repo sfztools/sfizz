@@ -17,10 +17,11 @@ Slider::Slider(el::view& view_, const std::string& lbl, double value)
         el::align_center(slider_knob), el::slider_marks<30>(el::basic_track<4, true>()), value_));
 
     contents_ = el::share(
-        el::vtile(
-            label_,
-            el::hold(slider_),
-            el::hold(labelValue_)));
+        el::vmin_size(240,
+            el::vtile(
+                label_,
+                el::hold(slider_),
+                el::hold(labelValue_))));
 
     setValue_(value_);
     parentView_.refresh(*labelValue_);

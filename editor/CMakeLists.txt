@@ -122,6 +122,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/Slider.cpp
     src/editor/PageHome.h
     src/editor/PageHome.cpp
+    src/editor/PageSettings.h
+    src/editor/PageSettings.cpp
     src/editor/UI.h
     src/editor/UI.cpp
     src/host/ElementsPuglWindow.cpp

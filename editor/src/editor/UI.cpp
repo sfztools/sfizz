@@ -11,11 +11,16 @@ constexpr el::color UI::bkd_color;
 
 UI::UI(el::view& group)
     : pageHome(std::make_shared<PageHome>(group))
+    , pageSettings(std::make_shared<PageSettings>(group))
 {
     group.content(
         el::hmin_size(Editor::fixedWidth,
             el::vmin_size(Editor::fixedHeight,
                 el::vtile(
-                    el::hold(pageHome->contents())))),
+                    el::vnotebook(
+                        group,
+                        el::deck(el::hold(pageHome->contents()),
+                            el::hold(pageSettings->contents())),
+                        el::tab("Home"), el::tab("Settings"))))),
         background);
 }

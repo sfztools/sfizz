@@ -7,26 +7,22 @@
 #pragma once
 
 #include <elements.hpp>
-#include "Knob.h"
-#include "Slider.h"
 #include "native/FileDialog.h"
 
 namespace el = cycfi::elements;
 
-class PageHome {
+class PageSettings {
 
 public:
-    PageHome(el::view& view_);
+    PageSettings(el::view& view_);
 
     el::element_ptr contents() const;
 
 private:
-    el::element_ptr contents_;
+    el::basic_menu makeScalaCenterMenu();
+    el::basic_menu makeScalaTuningMenu();
 
-    std::shared_ptr<Knob> knbPolyphony;
-    std::shared_ptr<Knob> knbOversampling;
-    std::shared_ptr<Knob> knbPreload;
-    std::shared_ptr<Slider> sldVolume;
+    el::element_ptr contents_;
     std::shared_ptr<FileDialog> fileDialog;
-    std::shared_ptr<el::basic_input_box> txtSfz;
+    std::shared_ptr<el::basic_input_box> txtScala;
 };
