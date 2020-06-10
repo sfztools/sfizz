@@ -63,6 +63,7 @@ add_library(sfizz-elements STATIC EXCLUDE_FROM_ALL
     external/elements/lib/src/element/gallery/icon_button.cpp
     external/elements/lib/src/element/gallery/menu.cpp
     external/elements/lib/src/element/gallery/radio_button.cpp
+    external/elements/lib/src/element/gallery/tab.cpp
     external/elements/lib/src/element/grid.cpp
     external/elements/lib/src/element/image.cpp
     external/elements/lib/src/element/label.cpp
