@@ -361,22 +361,20 @@ void sfz::Synth::finalizeSfzLoad()
 {
     resources.filePool.setRootDirectory(parser.originalDirectory());
 
-    auto currentRegion = regions.begin();
-    auto lastRegion = regions.rbegin();
-    auto removeCurrentRegion = [&currentRegion, &lastRegion]() {
-        if (currentRegion->get() == nullptr)
-            return;
+    size_t currentRegionIndex = 0;
+    size_t currentRegionCount = regions.size();
 
-        DBG("Removing the region with sample " << currentRegion->get()->sampleId);
-        std::iter_swap(currentRegion, lastRegion);
-        ++lastRegion;
+    auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
+        DBG("Removing the region with sample " << regions[currentRegionIndex]->sampleId);
+        regions.erase(regions.begin() + currentRegionIndex);
+        --currentRegionCount;
     };
 
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
 
-    while (currentRegion < lastRegion.base()) {
-        auto region = currentRegion->get();
+    while (currentRegionIndex < currentRegionCount) {
+        auto region = regions[currentRegionIndex].get();
 
         if (!region->oscillator && !region->isGenerator()) {
             if (!resources.filePool.checkSampleId(region->sampleId)) {
@@ -481,11 +479,10 @@ void sfz::Synth::finalizeSfzLoad()
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
 
-        ++currentRegion;
+        ++currentRegionIndex;
     }
-    const auto remainingRegions = std::distance(regions.begin(), lastRegion.base());
-    DBG("Removing " << (regions.size() - remainingRegions) << " out of " << regions.size() << " regions");
-    regions.resize(remainingRegions);
+    DBG("Removing " << (regions.size() - currentRegionCount) << " out of " << regions.size() << " regions");
+    regions.resize(currentRegionCount);
     modificationTime = checkModificationTime();
 
     for (auto& voice : voices) {
