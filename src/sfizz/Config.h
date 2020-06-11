@@ -59,6 +59,7 @@ namespace config {
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
     constexpr int filtersInPool { maxVoices * 2 };
+    constexpr int excessFileFrames { 8 };
     /**
      * @brief The threshold for age stealing.
      *        In percentage of the voice's max age.

@@ -19,6 +19,7 @@
 #include <random>
 
 namespace sfz {
+enum InterpolatorModel : int;
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -242,6 +243,20 @@ private:
      * @param buffer
      */
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
+
+    /**
+     * @brief Fill a destination with an interpolated source.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     */
+    template <InterpolatorModel M>
+    static void fillInterpolated(
+        const AudioSpan<const float>& source, AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs);
+
     void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
     void ampStageMono(AudioSpan<float> buffer) noexcept;
     void ampStageStereo(AudioSpan<float> buffer) noexcept;

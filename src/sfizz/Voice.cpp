@@ -11,6 +11,7 @@
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "SfzHelpers.h"
+#include "Interpolators.h"
 #include "absl/algorithm/container.h"
 
 sfz::Voice::Voice(sfz::Resources& resources)
@@ -443,10 +444,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     auto jumps = resources.bufferPool.getBuffer(numSamples);
     auto bends = resources.bufferPool.getBuffer(numSamples);
-    auto leftCoeffs = resources.bufferPool.getBuffer(numSamples);
-    auto rightCoeffs = resources.bufferPool.getBuffer(numSamples);
+    auto coeffs = resources.bufferPool.getBuffer(numSamples);
     auto indices = resources.bufferPool.getIndexBuffer(numSamples);
-    if (!jumps || !bends || !indices || !rightCoeffs || !leftCoeffs)
+    if (!jumps || !bends || !indices || !coeffs)
         return;
 
     fill<float>(*jumps, pitchRatio * speedRatio);
@@ -470,7 +470,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
-    sfzInterpolationCast<float>(*jumps, *indices, *leftCoeffs, *rightCoeffs);
+    sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
     add<int>(sourcePosition, *indices);
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
@@ -486,7 +486,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         const auto sampleEnd = min(
             static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
             static_cast<int>(source.getNumFrames())
-        ) - 2;
+        ) - 1;
         for (unsigned i = 0; i < indices->size(); ++i) {
             if ((*indices)[i] >= sampleEnd) {
 #ifndef NDEBUG
@@ -500,35 +500,35 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #endif
                 egEnvelope.startRelease(i, true);
                 fill<int>(indices->subspan(i), sampleEnd);
-                fill<float>(leftCoeffs->subspan(i), 0.0f);
-                fill<float>(rightCoeffs->subspan(i), 1.0f);
+                fill<float>(coeffs->subspan(i), 1.0f);
                 break;
             }
         }
     }
 
-    auto ind = indices->data();
-    auto leftCoeff = leftCoeffs->data();
-    auto rightCoeff = rightCoeffs->data();
-    auto leftSource = source.getConstSpan(0);
-    auto left = buffer.getChannel(0);
-    if (source.getNumChannels() == 1) {
-        while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
-            incrementAll(ind, left, leftCoeff, rightCoeff);
-        }
-    } else {
-        auto right = buffer.getChannel(1);
-        auto rightSource = source.getConstSpan(1);
-        while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
-            *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *leftCoeff, *rightCoeff);
-            incrementAll(ind, left, right, leftCoeff, rightCoeff);
-        }
+    const int quality = region->sampleQuality;
+
+    switch (quality) {
+    default:
+        if (quality > 2)
+            goto high; // TODO sinc, not implemented
+        // fall through
+    case 1:
+        fillInterpolated<kInterpolatorLinear>(source, buffer, *indices, *coeffs);
+        break;
+    case 2: high:
+#if 1
+        // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
+        fillInterpolated<kInterpolatorBspline3>(source, buffer, *indices, *coeffs);
+#else
+        // Hermite polynomial
+        fillInterpolated<kInterpolatorHermite3>(source, buffer, *indices, *coeffs);
+#endif
+        break;
     }
 
     sourcePosition = indices->back();
-    floatPositionOffset = rightCoeffs->back();
+    floatPositionOffset = coeffs->back();
 
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
@@ -536,6 +536,31 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     CHECK(isReasonableAudio(buffer.getConstSpan(0)));
     CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
+}
+
+template <sfz::InterpolatorModel M>
+void sfz::Voice::fillInterpolated(
+    const sfz::AudioSpan<const float>& source, sfz::AudioSpan<float>& dest,
+    absl::Span<const int> indices, absl::Span<const float> coeffs)
+{
+    auto ind = indices.data();
+    auto coeff = coeffs.data();
+    auto leftSource = source.getConstSpan(0);
+    auto left = dest.getChannel(0);
+    if (source.getNumChannels() == 1) {
+        while (ind < indices.end()) {
+            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            incrementAll(ind, left, coeff);
+        }
+    } else {
+        auto right = dest.getChannel(1);
+        auto rightSource = source.getConstSpan(1);
+        while (ind < indices.end()) {
+            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            *right = sfz::interpolate<M>(&rightSource[*ind], *coeff);
+            incrementAll(ind, left, right, coeff);
+        }
+    }
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept

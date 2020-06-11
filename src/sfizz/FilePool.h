@@ -43,7 +43,9 @@
 #include <mutex>
 
 namespace sfz {
-using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
+using FileAudioBuffer = AudioBuffer<float, 2, SIMDConfig::defaultAlignment,
+                                    sfz::config::excessFileFrames, sfz::config::excessFileFrames>;
+using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
     uint32_t end { Default::sampleEndRange.getEnd() };
@@ -56,7 +58,7 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileDataHandle
 {
-    std::shared_ptr<AudioBuffer<float>> preloadedData;
+    FileAudioBufferPtr preloadedData;
     FileInformation information;
 };
 
@@ -96,8 +98,8 @@ struct FilePromise
     };
 
     FileId fileId {};
-    AudioBufferPtr preloadedData {};
-    AudioBuffer<float> fileData {};
+    FileAudioBufferPtr preloadedData {};
+    FileAudioBuffer fileData {};
     float sampleRate { config::defaultSampleRate };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic<size_t> availableFrames { 0 };
