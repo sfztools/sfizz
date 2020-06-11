@@ -1056,6 +1056,40 @@ const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
     return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
 }
 
+const sfz::Region* sfz::Synth::getRegionById(NumericId<Region> id) const noexcept
+{
+    const size_t size = regions.size();
+
+    if (size == 0 || !id.valid())
+        return nullptr;
+
+    // search a sequence of ordered identifiers with potential gaps
+    size_t index = static_cast<size_t>(id.number);
+    index = std::min(index, size - 1);
+
+    while (index > 0 && regions[index]->getId().number > id.number)
+        --index;
+
+    return (regions[index]->getId() == id) ? regions[index].get() : nullptr;
+}
+
+const sfz::Voice* sfz::Synth::getVoiceById(NumericId<Voice> id) const noexcept
+{
+    const size_t size = voices.size();
+
+    if (size == 0 || !id.valid())
+        return nullptr;
+
+    // search a sequence of ordered identifiers with potential gaps
+    size_t index = static_cast<size_t>(id.number);
+    index = std::min(index, size - 1);
+
+    while (index > 0 && voices[index]->getId().number > id.number)
+        --index;
+
+    return (voices[index]->getId() == id) ? voices[index].get() : nullptr;
+}
+
 const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
 {
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;

@@ -27,5 +27,15 @@ struct NumericId {
         return number != -1;
     }
 
+    constexpr bool operator==(NumericId other) const noexcept
+    {
+        return number == other.number;
+    }
+
+    constexpr bool operator!=(NumericId other) const noexcept
+    {
+        return number != other.number;
+    }
+
     const int number = -1;
 };

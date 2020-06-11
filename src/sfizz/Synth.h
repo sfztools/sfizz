@@ -179,6 +179,20 @@ public:
      */
     std::string exportMidnam(absl::string_view model = {}) const;
     /**
+     * @brief Find the region which is associated with the given identifier.
+     *
+     * @param id
+     * @return const Region*
+     */
+    const Region* getRegionById(NumericId<Region> id) const noexcept;
+    /**
+     * @brief Find the voice which is associated with the given identifier.
+     *
+     * @param id
+     * @return const Voice*
+     */
+    const Voice* getVoiceById(NumericId<Voice> id) const noexcept;
+    /**
      * @brief Get a raw view into a specific region. This is mostly used
      * for testing.
      *
