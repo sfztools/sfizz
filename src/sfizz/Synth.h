@@ -78,6 +78,15 @@ public:
      * @param numVoices
      */
     Synth(int numVoices);
+
+    /**
+     * @brief Processing mode
+     */
+    enum ProcessMode {
+        ProcessLive,
+        ProcessFreewheeling,
+    };
+
     /**
      * @brief Empties the current regions and load a new SFZ file into the synth.
      *
@@ -255,6 +264,21 @@ public:
      * @param sampleRate
      */
     void setSampleRate(float sampleRate) noexcept;
+    /**
+     * @brief Get the default resampling quality for the given mode.
+     *
+     * @param mode the processing mode
+     *
+     * @return the quality setting
+     */
+    int getSampleQuality(ProcessMode mode);
+    /**
+     * @brief Set the default resampling quality for the given mode.
+     *
+     * @param mode the processing mode
+     * @param quality the quality setting
+     */
+    void setSampleQuality(ProcessMode mode, int quality);
     /**
      * @brief Get the current value for the volume, in dB.
      *
@@ -669,7 +693,6 @@ private:
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
 
     std::mutex callbackGuard;
-    bool freeWheeling { false };
 
     // Singletons passed as references to the voices
     Resources resources;

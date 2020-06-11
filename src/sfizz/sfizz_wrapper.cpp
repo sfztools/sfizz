@@ -210,6 +210,18 @@ bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_fact
     }
 }
 
+int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode));
+}
+
+void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->setSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
+}
+
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);

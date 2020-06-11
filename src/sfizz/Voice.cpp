@@ -511,7 +511,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     }
 
-    const int quality = region->sampleQuality;
+    const int quality = region->sampleQuality ?
+        *region->sampleQuality : resources.synthConfig.currentSampleQuality();
 
     switch (quality) {
     default:

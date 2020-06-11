@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "SynthConfig.h"
 #include "FilePool.h"
 #include "BufferPool.h"
 #include "FilterPool.h"
@@ -21,6 +22,7 @@ class WavetableMulti;
 
 struct Resources
 {
+    SynthConfig synthConfig;
     BufferPool bufferPool;
     MidiState midiState;
     Logger logger;

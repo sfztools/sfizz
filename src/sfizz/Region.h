@@ -251,7 +251,7 @@ struct Region {
 
     // Sound source: sample playback
     FileId sampleId {}; // Sample
-    int sampleQuality { Default::sampleQuality };
+    absl::optional<int> sampleQuality {};
     float delay { Default::delay }; // delay
     float delayRandom { Default::delayRandom }; // delay_random
     int64_t offset { Default::offset }; // offset

@@ -667,7 +667,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         buffer.fill(0.0f);
     }
 
-    if (freeWheeling)
+    if (resources.synthConfig.freeWheeling)
         resources.filePool.waitForBackgroundLoading();
 
     const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
@@ -1112,6 +1112,34 @@ size_t sfz::Synth::getNumPreloadedSamples() const noexcept
     return resources.filePool.getNumPreloadedSamples();
 }
 
+int sfz::Synth::getSampleQuality(ProcessMode mode)
+{
+    switch (mode) {
+    case ProcessLive:
+        return resources.synthConfig.liveSampleQuality;
+    case ProcessFreewheeling:
+        return resources.synthConfig.freeWheelingSampleQuality;
+    default:
+        CHECK(false);
+        return 0;
+    }
+}
+
+void sfz::Synth::setSampleQuality(ProcessMode mode, int quality)
+{
+    switch (mode) {
+    case ProcessLive:
+        resources.synthConfig.liveSampleQuality = quality;
+        break;
+    case ProcessFreewheeling:
+        resources.synthConfig.freeWheelingSampleQuality = quality;
+        break;
+    default:
+        CHECK(false);
+        break;
+    }
+}
+
 float sfz::Synth::getVolume() const noexcept
 {
     return volume;
@@ -1200,15 +1228,15 @@ uint32_t sfz::Synth::getPreloadSize() const noexcept
 
 void sfz::Synth::enableFreeWheeling() noexcept
 {
-    if (!freeWheeling) {
-        freeWheeling = true;
+    if (!resources.synthConfig.freeWheeling) {
+        resources.synthConfig.freeWheeling = true;
         DBG("Enabling freewheeling");
     }
 }
 void sfz::Synth::disableFreeWheeling() noexcept
 {
-    if (freeWheeling) {
-        freeWheeling = false;
+    if (resources.synthConfig.freeWheeling) {
+        resources.synthConfig.freeWheeling = false;
         DBG("Disabling freewheeling");
     }
 }
