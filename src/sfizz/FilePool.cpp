@@ -39,11 +39,10 @@
 #include <sndfile.hh>
 #include <thread>
 
-template <class T>
-void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t numFrames, bool reverse)
+void readBaseFile(SndfileHandle& sndFile, sfz::FileAudioBuffer& output, uint32_t numFrames, bool reverse)
 {
     output.reset();
-    output.resize(numFrames + 2 * sfz::config::excessFileFrames);
+    output.resize(numFrames);
 
     if (reverse)
         sndFile.seek(-static_cast<sf_count_t>(numFrames), SEEK_END);
@@ -53,48 +52,42 @@ void readBaseFile(SndfileHandle& sndFile, sfz::AudioBuffer<T>& output, uint32_t 
     if (channels == 1) {
         output.addChannel();
         output.clear();
-        sndFile.readf(output.channelWriter(0) + sfz::config::excessFileFrames, numFrames);
+        sndFile.readf(output.channelWriter(0), numFrames);
     } else if (channels == 2) {
         output.addChannel();
         output.addChannel();
         output.clear();
-        sfz::Buffer<T> tempReadBuffer { 2 * numFrames };
+        sfz::Buffer<float> tempReadBuffer { 2 * numFrames };
         sndFile.readf(tempReadBuffer.data(), numFrames);
-        sfz::readInterleaved<T>(tempReadBuffer,
-            output.getSpan(0).subspan(sfz::config::excessFileFrames, numFrames),
-            output.getSpan(1).subspan(sfz::config::excessFileFrames, numFrames)
-        );
+        sfz::readInterleaved<float>(tempReadBuffer, output.getSpan(0), output.getSpan(1));
     }
 
     if (reverse) {
         for (unsigned c = 0; c < channels; ++c) {
             // TODO: consider optimizing with SIMD
-            absl::Span<float> channel = output.getSpan(c).subspan(sfz::config::excessFileFrames, numFrames);
+            absl::Span<float> channel = output.getSpan(c);
             std::reverse(channel.begin(), channel.end());
         }
     }
 }
 
-template <class T>
-std::unique_ptr<sfz::AudioBuffer<T>> readFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor, bool reverse)
+std::unique_ptr<sfz::FileAudioBuffer> readFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor, bool reverse)
 {
-    auto baseBuffer = absl::make_unique<sfz::AudioBuffer<T>>();
+    auto baseBuffer = absl::make_unique<sfz::FileAudioBuffer>();
     readBaseFile(sndFile, *baseBuffer, numFrames, reverse);
 
     if (factor == sfz::Oversampling::x1)
         return baseBuffer;
 
-    auto outputBuffer = absl::make_unique<sfz::AudioBuffer<T>>(sndFile.channels(), numFrames * static_cast<int>(factor) + 2 * sfz::config::excessFileFrames);
+    auto outputBuffer = absl::make_unique<sfz::FileAudioBuffer>(sndFile.channels(), numFrames * static_cast<int>(factor));
     outputBuffer->clear();
-    auto baseSpan = sfz::AudioSpan<T>(*baseBuffer).subspan(sfz::config::excessFileFrames, numFrames);
-    auto outputSpan = sfz::AudioSpan<T>(*outputBuffer).subspan(sfz::config::excessFileFrames, numFrames * static_cast<int>(factor));
     sfz::Oversampler oversampler { factor };
-    oversampler.stream(baseSpan, outputSpan);
+    oversampler.stream(*baseBuffer, *outputBuffer);
     return outputBuffer;
 }
 
 template <class T>
-void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor, bool reverse, sfz::AudioBuffer<float>& output, std::atomic<size_t>* filledFrames = nullptr)
+void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor, bool reverse, sfz::FileAudioBuffer& output, std::atomic<size_t>* filledFrames = nullptr)
 {
     if (factor == sfz::Oversampling::x1) {
         readBaseFile(sndFile, output, numFrames, reverse);
@@ -103,15 +96,13 @@ void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversamplin
         return;
     }
 
-    auto baseBuffer = readFromFile<T>(sndFile, numFrames, sfz::Oversampling::x1, reverse);
+    auto baseBuffer = readFromFile(sndFile, numFrames, sfz::Oversampling::x1, reverse);
     output.reset();
     output.addChannels(baseBuffer->getNumChannels());
-    output.resize(numFrames * static_cast<int>(factor) + 2 * sfz::config::excessFileFrames);
+    output.resize(numFrames * static_cast<int>(factor));
     output.clear();
     sfz::Oversampler oversampler { factor };
-    auto baseSpan = sfz::AudioSpan<T>(*baseBuffer).subspan(sfz::config::excessFileFrames, numFrames);
-    auto outputSpan = sfz::AudioSpan<T>(output).subspan(sfz::config::excessFileFrames, numFrames * static_cast<int>(factor));
-    oversampler.stream(baseSpan, outputSpan, filledFrames);
+    oversampler.stream(*baseBuffer, output, filledFrames);
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
@@ -272,12 +263,12 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     const auto existingFile = preloadedFiles.find(fileId);
     if (existingFile != preloadedFiles.end()) {
         if (framesToLoad > existingFile->second.preloadedData->getNumFrames()) {
-            preloadedFiles[fileId].preloadedData = readFromFile<float>(sndFile, framesToLoad, oversamplingFactor, fileId.isReverse());
+            preloadedFiles[fileId].preloadedData = readFromFile(sndFile, framesToLoad, oversamplingFactor, fileId.isReverse());
         }
     } else {
         fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate());
         FileDataHandle handle {
-            readFromFile<float>(sndFile, framesToLoad, oversamplingFactor, fileId.isReverse()),
+            readFromFile(sndFile, framesToLoad, oversamplingFactor, fileId.isReverse()),
             *fileInformation
         };
         preloadedFiles.insert_or_assign(fileId, handle);
@@ -302,7 +293,7 @@ absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const FileId& fileId
     } else {
         fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(sndFile.samplerate());
         FileDataHandle handle {
-            readFromFile<float>(sndFile, frames, oversamplingFactor, fileId.isReverse()),
+            readFromFile(sndFile, frames, oversamplingFactor, fileId.isReverse()),
             *fileInformation
         };
         loadedFiles.insert_or_assign(fileId, handle);
@@ -352,7 +343,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
         const auto maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         SndfileHandle sndFile(file.string().c_str());
-        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, oversamplingFactor, preloadedFile.first.isReverse());
+        preloadedFile.second.preloadedData = readFromFile(sndFile, preloadSize + maxOffset, oversamplingFactor, preloadedFile.first.isReverse());
     }
     this->preloadSize = preloadSize;
 }
@@ -481,7 +472,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
         const uint32_t maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         SndfileHandle sndFile(file.string().c_str());
-        preloadedFile.second.preloadedData = readFromFile<float>(sndFile, preloadSize + maxOffset, factor, preloadedFile.first.isReverse());
+        preloadedFile.second.preloadedData = readFromFile(sndFile, preloadSize + maxOffset, factor, preloadedFile.first.isReverse());
         preloadedFile.second.information.sampleRate *= samplerateChange;
     }
 

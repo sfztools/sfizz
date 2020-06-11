@@ -43,7 +43,9 @@
 #include <mutex>
 
 namespace sfz {
-using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
+using FileAudioBuffer = AudioBuffer<float, 2, SIMDConfig::defaultAlignment,
+                                    sfz::config::excessFileFrames, sfz::config::excessFileFrames>;
+using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
     uint32_t end { Default::sampleEndRange.getEnd() };
@@ -56,7 +58,7 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileDataHandle
 {
-    std::shared_ptr<AudioBuffer<float>> preloadedData;
+    FileAudioBufferPtr preloadedData;
     FileInformation information;
 };
 
@@ -65,16 +67,11 @@ struct FilePromise
     AudioSpan<const float> getData()
     {
         if (dataStatus == DataStatus::Ready)
-            return AudioSpan<const float>(fileData)
-                .subspan(sfz::config::excessFileFrames,
-                    fileData.getNumFrames() - 2 * sfz::config::excessFileFrames);
-        else if (availableFrames > preloadedData->getNumFrames() + sfz::config::excessFileFrames)
-            return AudioSpan<const float>(fileData)
-                .subspan(sfz::config::excessFileFrames, availableFrames - sfz::config::excessFileFrames);
+            return AudioSpan<const float>(fileData);
+        else if (availableFrames > preloadedData->getNumFrames())
+            return AudioSpan<const float>(fileData).first(availableFrames);
         else
-            return AudioSpan<const float>(*preloadedData)
-                .subspan(sfz::config::excessFileFrames,
-                    preloadedData->getNumFrames() - 2 * sfz::config::excessFileFrames);
+            return AudioSpan<const float>(*preloadedData);
     }
 
     void reset()
@@ -101,8 +98,8 @@ struct FilePromise
     };
 
     FileId fileId {};
-    AudioBufferPtr preloadedData {};
-    AudioBuffer<float> fileData {};
+    FileAudioBufferPtr preloadedData {};
+    FileAudioBuffer fileData {};
     float sampleRate { config::defaultSampleRate };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic<size_t> availableFrames { 0 };
