@@ -83,3 +83,38 @@ TEST_CASE("[AudioSpan] Constructions")
     sfz::AudioSpan<float> manualSpan2 { {buffer.getSpan(0), buffer.getSpan(1) } };
     sfz::AudioSpan<const float> manualConstSpan2 { { buffer.getConstSpan(0), buffer.getConstSpan(1) } };
 }
+
+TEST_CASE("[AudioBuffer] Padding")
+{
+    constexpr size_t channels = 2;
+    constexpr size_t numFrames = 7777;
+    constexpr unsigned alignment = 32;
+    constexpr size_t padLeft = 13;
+    constexpr size_t padRight = 51;
+
+    sfz::AudioBuffer<float, channels, alignment, padLeft, padRight> padded { channels, numFrames };
+
+    // ensure padding to be extended to respect alignment
+    constexpr size_t extendedPadLeft = padded.PaddingLeft;
+    REQUIRE(extendedPadLeft == 32);
+
+    // ensure access functions to return consistent addresses with offset
+    for (size_t c = 0; c < channels; ++c) {
+        REQUIRE(padded.getSpan(c).data() == &padded.getSample(c, 0));
+        REQUIRE(padded.getConstSpan(c).data() == &padded.getSample(c, 0));
+        REQUIRE(padded.getSpan(c).data() == padded.channelReader(c));
+        REQUIRE(padded.getSpan(c).data() == padded.channelWriter(c));
+        REQUIRE(padded.getSpan(c).end() == padded.channelReaderEnd(c));
+        REQUIRE(padded.getSpan(c).end() == padded.channelWriterEnd(c));
+    }
+
+    padded.clear();
+
+    // ensure all padding areas to be accessible and zero after clearing
+    for (size_t c = 0; c < channels; ++c) {
+        absl::Span<const float> leftSpan { padded.getSpan(0).data() - extendedPadLeft, extendedPadLeft };
+        absl::Span<const float> rightSpan { padded.getSpan(0).end(), padRight };
+        REQUIRE(std::all_of(leftSpan.begin(), leftSpan.end(), [](float value) { return value == 0.0f; }));
+        REQUIRE(std::all_of(rightSpan.begin(), rightSpan.end(), [](float value) { return value == 0.0f; }));
+    }
+}
