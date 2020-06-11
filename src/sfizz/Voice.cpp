@@ -87,6 +87,11 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     const float numberRetuned = resources.tuning.getKeyFractional12TET(number);
 
     pitchRatio = region->getBasePitchVariation(numberRetuned, value);
+
+    // apply stretch tuning if set
+    if (resources.stretch)
+        pitchRatio *= resources.stretch->getRatioForFractionalKey(numberRetuned);
+
     baseVolumedB = region->getBaseVolumedB(number);
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)

@@ -13,6 +13,7 @@
 #include "Wavetables.h"
 #include "Curve.h"
 #include "Tuning.h"
+#include "absl/types/optional.h"
 
 namespace sfz
 {
@@ -29,6 +30,7 @@ struct Resources
     EQPool eqPool { midiState };
     WavetablePool wavePool;
     Tuning tuning;
+    absl::optional<StretchTuning> stretch;
 
     void setSampleRate(float samplerate)
     {

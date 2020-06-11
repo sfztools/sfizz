@@ -138,6 +138,15 @@ SFIZZ_EXPORTED_API void sfizz_set_tuning_frequency(sfizz_synth_t* synth, float f
 SFIZZ_EXPORTED_API float sfizz_get_tuning_frequency(sfizz_synth_t* synth);
 
 /**
+ * @brief      Configure stretch tuning using a predefined parametric Railsback curve.
+ *             A ratio 1/2 is supposed to match the average piano; 0 disables (the default).
+ *
+ * @param      synth          The sfizz synth.
+ * @param      ratio          The parameter in domain 0-1.
+ */
+SFIZZ_EXPORTED_API void sfizz_load_stretch_tuning_by_ratio(sfizz_synth_t* synth, float ratio);
+
+/**
  * @brief      Return the number of regions in the currently loaded SFZ file.
  *
  * @param      synth  The synth.

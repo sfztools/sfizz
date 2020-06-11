@@ -120,6 +120,14 @@ public:
     float getTuningFrequency() const;
 
     /**
+     * @brief Configure stretch tuning using a predefined parametric Railsback curve.
+     * A ratio 1/2 is supposed to match the average piano; 0 disables (the default).
+     *
+     * @param ratio The parameter in domain 0-1.
+     */
+    void loadStretchTuningByRatio(float ratio);
+
+    /**
      * @brief Return the current number of regions loaded.
      */
     int getNumRegions() const noexcept;

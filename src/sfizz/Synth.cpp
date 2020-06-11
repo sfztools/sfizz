@@ -516,6 +516,17 @@ float sfz::Synth::getTuningFrequency() const
     return resources.tuning.getTuningFrequency();
 }
 
+void sfz::Synth::loadStretchTuningByRatio(float ratio)
+{
+    CHECK(ratio >= 0.0f && ratio <= 1.0f);
+    ratio = clamp(ratio, 0.0f, 1.0f);
+
+    if (ratio > 0.0f)
+        resources.stretch = StretchTuning::createRailsbackFromRatio(ratio);
+    else
+        resources.stretch.reset();
+}
+
 sfz::Voice* sfz::Synth::findFreeVoice() noexcept
 {
     auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) {
