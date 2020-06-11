@@ -1127,6 +1127,9 @@ int sfz::Synth::getSampleQuality(ProcessMode mode)
 
 void sfz::Synth::setSampleQuality(ProcessMode mode, int quality)
 {
+    CHECK(quality >= 1 && quality <= 10);
+    quality = clamp(quality, 1, 10);
+
     switch (mode) {
     case ProcessLive:
         resources.synthConfig.liveSampleQuality = quality;
