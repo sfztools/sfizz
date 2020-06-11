@@ -497,7 +497,7 @@ protected:
     /**
      * @brief The voice callback which is called during a change of state.
      */
-    void onVoiceStateChanged(int idNumber, Voice::State state) override;
+    void onVoiceStateChanged(NumericId<Voice> idNumber, Voice::State state) override;
 
 protected:
     /**

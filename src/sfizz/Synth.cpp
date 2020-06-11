@@ -44,11 +44,11 @@ sfz::Synth::~Synth()
     resources.filePool.emptyFileLoadingQueues();
 }
 
-void sfz::Synth::onVoiceStateChanged(int idNumber, Voice::State state)
+void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
 {
-    (void)idNumber;
+    (void)id;
     (void)state;
-    DBG("Voice " << idNumber << ": state " << static_cast<int>(state));
+    DBG("Voice " << id.number << ": state " << static_cast<int>(state));
 }
 
 void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)

@@ -16,6 +16,7 @@
 #include "AudioBuffer.h"
 #include "MidiState.h"
 #include "FileId.h"
+#include "NumericId.h"
 #include "absl/types/optional.h"
 #include <bitset>
 #include <string>
@@ -36,7 +37,7 @@ namespace sfz {
  */
 struct Region {
     Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath = "")
-    : regionNumber(regionNumber), midiState(midiState), defaultPath(std::move(defaultPath))
+    : id{regionNumber}, midiState(midiState), defaultPath(std::move(defaultPath))
     {
         ccSwitched.set();
 
@@ -49,9 +50,9 @@ struct Region {
     /**
      * @brief Get the number which identifies this region
      */
-    int getIdNumber() const noexcept
+    NumericId<Region> getId() const noexcept
     {
-        return regionNumber;
+        return id;
     }
 
     /**
@@ -246,7 +247,7 @@ struct Region {
      */
     float getGainToEffectBus(unsigned number) const noexcept;
 
-    const int regionNumber { -1 };
+    const NumericId<Region> id;
 
     // Sound source: sample playback
     FileId sampleId {}; // Sample

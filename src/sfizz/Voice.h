@@ -14,6 +14,7 @@
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include "OnePoleFilter.h"
+#include "NumericId.h"
 #include "absl/types/span.h"
 #include <memory>
 #include <random>
@@ -41,12 +42,13 @@ public:
         NoteOff,
         CC
     };
+
     /**
-     * @brief Get the number which identifies this voice
+     * @brief Get the unique identifier of this voice in a synth
      */
-    int getIdNumber() const noexcept
+    NumericId<Voice> getId() const noexcept
     {
-        return voiceNumber;
+        return id;
     }
 
     enum class State {
@@ -56,7 +58,7 @@ public:
 
     class StateListener {
     public:
-        virtual void onVoiceStateChanged(int /*idNumber*/, State /*state*/) {}
+        virtual void onVoiceStateChanged(NumericId<Voice> /*id*/, State /*state*/) {}
     };
 
     /**
@@ -299,7 +301,7 @@ private:
      */
     void switchState(State s);
 
-    const int voiceNumber { -1 };
+    const NumericId<Voice> id;
     StateListener* stateListener = nullptr;
 
     Region* region { nullptr };

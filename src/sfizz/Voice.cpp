@@ -15,7 +15,7 @@
 #include "absl/algorithm/container.h"
 
 sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
-: voiceNumber(voiceNumber), stateListener(nullptr), resources(resources)
+: id{voiceNumber}, stateListener(nullptr), resources(resources)
 {
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);
@@ -773,6 +773,6 @@ void sfz::Voice::switchState(State s)
     if (s != state) {
         state = s;
         if (stateListener)
-            stateListener->onVoiceStateChanged(voiceNumber, s);
+            stateListener->onVoiceStateChanged(id, s);
     }
 }
