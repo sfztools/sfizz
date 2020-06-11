@@ -180,8 +180,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.offBy);
         REQUIRE(*region.offBy == 5);
         region.parseOpcode({ "off_by", "-1" });
-        REQUIRE(region.offBy);
-        REQUIRE(*region.offBy == 0);
+        REQUIRE(!region.offBy);
     }
 
     SECTION("off_mode")
