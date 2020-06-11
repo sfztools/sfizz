@@ -292,22 +292,6 @@ public:
             addChannel();
     }
 
-    /**
-     * @brief Convert implicitly to a pointer of channels
-     */
-    operator const Type* const*() const noexcept
-    {
-        return buffers.data();
-    }
-
-    /**
-     * @brief Convert implicitly to a pointer of channels
-     */
-    operator Type* const*() noexcept
-    {
-        return buffers.data();
-    }
-
 private:
     using buffer_type = Buffer<Type, Alignment>;
     using buffer_ptr = std::unique_ptr<buffer_type>;
