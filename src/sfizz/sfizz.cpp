@@ -123,6 +123,11 @@ void sfz::Sfizz::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
     synth->cc(delay, ccNumber, ccValue);
 }
 
+void sfz::Sfizz::hdcc(int delay, int ccNumber, float normValue) noexcept
+{
+    synth->hdcc(delay, ccNumber, normValue);
+}
+
 void sfz::Sfizz::pitchWheel(int delay, int pitch) noexcept
 {
     synth->pitchWheel(delay, pitch);
