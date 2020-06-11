@@ -8,6 +8,7 @@
 #include "Debug.h"
 #include "absl/types/optional.h"
 #include "Tunings.h" // Surge tuning library
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <array>
@@ -248,5 +249,77 @@ bool Tuning::shouldReloadScala()
     return impl_->shouldReloadScala();
 }
 
+///
+float StretchTuning::getRatioForIntegralKey(int key) const noexcept
+{
+    return keyDetuneRatio_[std::max(0, std::min(127, key))];
+}
+
+float StretchTuning::getRatioForFractionalKey(float key) const noexcept
+{
+    int index1 = static_cast<int>(key);
+    float mu = key - index1;
+
+    index1 = std::max(0, std::min(127, index1));
+    int index2 = std::min(127, index1 + 1);
+
+    return keyDetuneRatio_[index1] * (1 - mu) + keyDetuneRatio_[index2] * mu;
+}
+
+StretchTuning StretchTuning::createFromDetuneRatios(const float detune[128])
+{
+    StretchTuning t;
+    std::copy(detune, detune + 128, t.keyDetuneRatio_);
+    return t;
+}
+
+StretchTuning StretchTuning::createRailsbackFromRatio(float stretch)
+{
+    float data[128];
+
+    static constexpr float railsback21[128] = {
+        #include "sfizz/railsback/2-1.h"
+    };
+    static constexpr float railsback41[128] = {
+        #include "sfizz/railsback/4-1.h"
+    };
+    static constexpr float railsback42[128] = {
+        #include "sfizz/railsback/4-2.h"
+    };
+
+    // known curves and their matching knob positions
+    const int num_curves = 3;
+    const float* curves[] = {railsback21, railsback41, railsback42};
+    const float points[] = {0.25f, 0.5f, 1.0f};
+
+    //
+    int index = -1;
+    while (index + 1 < num_curves && stretch >= points[index + 1])
+        ++index;
+
+    //
+    if (index < 0) {
+        float mu = std::max(0.0f, stretch / points[0]);
+        const float* c = curves[0];
+        for (int i = 0; i < 128; ++i)
+            data[i] = mu * c[i] + (1 - mu);
+    }
+    else if (index + 1 < num_curves) {
+        float mu = (stretch - points[index]) / (points[index + 1] - points[index]);
+        const float* c1 = curves[index];
+        const float* c2 = curves[index + 1];
+        for (int i = 0; i < 128; ++i)
+            data[i] = mu * c2[i] + (1 - mu) * c1[i];
+    }
+    else {
+        const float* c = curves[num_curves - 1];
+        for (int i = 0; i < 128; ++i)
+            data[i] = c[i];
+    }
+
+    //
+    return createFromDetuneRatios(data);
+
+}
 
 } // namespace sfz
