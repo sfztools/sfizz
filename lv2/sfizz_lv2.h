@@ -7,6 +7,7 @@
 #pragma once
 
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
+#define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
 #define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
 #define SFIZZ__tuningfile "http://sfztools.github.io/sfizz:tuningfile"

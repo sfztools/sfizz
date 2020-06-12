@@ -44,8 +44,6 @@
 #include <cstring>
 #include <cstdio>
 
-#define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
-
 struct sfizz_ui_t : EditorController {
     LV2UI_Write_Function write = nullptr;
     LV2UI_Controller con = nullptr;
