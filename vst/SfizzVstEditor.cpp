@@ -45,7 +45,7 @@ private:
 #endif
 
 ///
-SfizzVstEditor::SfizzVstEditor(Vst::EditController* controller)
+SfizzVstEditor::SfizzVstEditor(SfizzVstController* controller)
     : EditorView(controller, &kEditorViewRect)
 #if !defined(__APPLE__) && !defined(_WIN32)
     , idleTimerHandler_(new IdleTimerHandler(*this))
@@ -54,15 +54,19 @@ SfizzVstEditor::SfizzVstEditor(Vst::EditController* controller)
 #endif
 {
     Res::initializeRootPathFromCurrentModule("../Resources");
+
+    controller->addSfizzStateListener(this);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
 {
+    auto* controller = static_cast<SfizzVstController*>(getController());
+    controller->removeSfizzStateListener(this);
 }
 
 void SfizzVstEditor::onStateChanged()
 {
-    //TODO
+    updateStateDisplay();
 }
 
 tresult PLUGIN_API SfizzVstEditor::isPlatformTypeSupported(FIDString type)
@@ -110,6 +114,9 @@ tresult PLUGIN_API SfizzVstEditor::attached(void* parent, FIDString type)
 #endif
 
     EditorView::attached(parent, type);
+
+    updateStateDisplay();
+
     return kResultOk;
 }
 
@@ -133,11 +140,58 @@ tresult PLUGIN_API SfizzVstEditor::removed()
     return kResultOk;
 }
 
+///
+void SfizzVstEditor::updateStateDisplay()
+{
+    if (!editor_)
+        return;
+
+    auto* controller = static_cast<SfizzVstController*>(getController());
+    const SfizzVstState& state = controller->getSfizzState();
+    const SfizzUiState& uiState = controller->getSfizzUiState();
+
+    uiReceiveString(EditId::SfzFile, state.sfzFile);
+    uiReceiveNumber(EditId::Volume, state.volume);
+    uiReceiveNumber(EditId::Polyphony, state.numVoices);
+    uiReceiveNumber(EditId::Oversampling, 1 << state.oversamplingLog2);
+    uiReceiveNumber(EditId::PreloadSize, state.preloadSize);
+
+    // TODO(jpc) when implemented: ScalaFile, ScalaRootKey, TuningFrequency
+}
+
+///
 void SfizzVstEditor::uiSendNumber(EditId id, float v)
 {
-    // TODO
+    auto* controller = static_cast<SfizzVstController*>(getController());
+
+    auto normalizeAndSend = [controller](int pid, float v, const SfizzParameterRange& range) {
+        float vn = range.normalize(v);
+        controller->setParamNormalized(pid, v);
+        controller->performEdit(pid, v);
+    };
+
     switch (id) {
-        
+    case EditId::Volume:
+        normalizeAndSend(kPidVolume, v, kParamVolumeRange);
+        break;
+    case EditId::Polyphony:
+        normalizeAndSend(kPidNumVoices, v, kParamNumVoicesRange);
+        break;
+    case EditId::Oversampling:
+        {
+            int32 factor = std::max(1, static_cast<int32>(v));
+
+            // convert UI value using integer log2
+            int32 log2Factor = 0;
+            for (int32 f = factor; f > 1; f /= 2)
+                ++log2Factor;
+
+            normalizeAndSend(kPidOversampling, log2Factor, kParamOversamplingRange);
+        }
+        break;
+    case EditId::PreloadSize:
+        normalizeAndSend(kPidPreloadSize, v, kParamPreloadSizeRange);
+        break;
     default:
         break;
     }
@@ -145,9 +199,22 @@ void SfizzVstEditor::uiSendNumber(EditId id, float v)
 
 void SfizzVstEditor::uiSendString(EditId id, absl::string_view v)
 {
-    // TODO
+    auto* controller = static_cast<SfizzVstController*>(getController());
+
     switch (id) {
-        
+    case EditId::SfzFile:
+        {
+            Steinberg::OPtr<Vst::IMessage> msg { controller->allocateMessage() };
+            if (!msg) {
+                fprintf(stderr, "[Sfizz] UI could not allocate message\n");
+                break;
+            }
+            msg->setMessageID("LoadSfz");
+            Vst::IAttributeList* attr = msg->getAttributes();
+            attr->setBinary("File", v.data(), v.size());
+            controller->sendMessage(msg);
+        }
+        break;
     default:
         break;
     }
@@ -155,9 +222,21 @@ void SfizzVstEditor::uiSendString(EditId id, absl::string_view v)
 
 void SfizzVstEditor::uiBeginSend(EditId id)
 {
-    // TODO
+    auto* controller = static_cast<SfizzVstController*>(getController());
+
     switch (id) {
-        
+    case EditId::Volume:
+        controller->beginEdit(kPidVolume);
+        break;
+    case EditId::Polyphony:
+        controller->beginEdit(kPidNumVoices);
+        break;
+    case EditId::Oversampling:
+        controller->beginEdit(kPidOversampling);
+        break;
+    case EditId::PreloadSize:
+        controller->beginEdit(kPidPreloadSize);
+        break;
     default:
         break;
     }
@@ -165,9 +244,21 @@ void SfizzVstEditor::uiBeginSend(EditId id)
 
 void SfizzVstEditor::uiEndSend(EditId id)
 {
-    // TODO
+    auto* controller = static_cast<SfizzVstController*>(getController());
+
     switch (id) {
-        
+    case EditId::Volume:
+        controller->endEdit(kPidVolume);
+        break;
+    case EditId::Polyphony:
+        controller->endEdit(kPidNumVoices);
+        break;
+    case EditId::Oversampling:
+        controller->endEdit(kPidOversampling);
+        break;
+    case EditId::PreloadSize:
+        controller->endEdit(kPidPreloadSize);
+        break;
     default:
         break;
     }

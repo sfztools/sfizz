@@ -18,7 +18,7 @@ class SfizzVstEditor : public Vst::EditorView,
                        public SfizzVstController::StateListener,
                        public EditorController {
 public:
-    explicit SfizzVstEditor(Vst::EditController* controller);
+    explicit SfizzVstEditor(SfizzVstController* controller);
     ~SfizzVstEditor();
 
     void onStateChanged() override;
@@ -26,6 +26,9 @@ public:
     tresult PLUGIN_API isPlatformTypeSupported(FIDString type) override;
     tresult PLUGIN_API attached(void* parent, FIDString type) override;
     tresult PLUGIN_API removed() override;
+
+private:
+    void updateStateDisplay();
 
 protected:
     // EditorController
