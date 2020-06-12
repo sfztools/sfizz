@@ -52,6 +52,7 @@ Editor::Editor(EditorController& ctrl)
 
 Editor::~Editor()
 {
+    impl_->ctrl_->decorate(nullptr);
 }
 
 bool Editor::open(void* parentWindowId)
