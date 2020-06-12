@@ -9,4 +9,5 @@
     lv2:optionalFeature ui:noUserResize ;
     lv2:optionalFeature ui:resize ;
     lv2:optionalFeature ui:parent ;
+    lv2:optionalFeature ui:touch ;
     lv2:requiredFeature urid:map .

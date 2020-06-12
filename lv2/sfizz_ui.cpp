@@ -51,6 +51,7 @@ struct sfizz_ui_t : EditorController {
     LV2UI_Controller con = nullptr;
     LV2_URID_Map *map = nullptr;
     LV2UI_Resize *resize = nullptr;
+    LV2UI_Touch *touch = nullptr;
     std::unique_ptr<Editor> editor;
 
 protected:
@@ -59,6 +60,9 @@ protected:
     void uiBeginSend(EditId id) override;
     void uiEndSend(EditId id) override;
     void uiSendMIDI(const uint8_t* msg, uint32_t len) override;
+
+private:
+    void uiTouch(EditId id, bool t);
 };
 
 static LV2UI_Handle
@@ -86,6 +90,8 @@ instantiate(const LV2UI_Descriptor *descriptor,
             self->map = (LV2_URID_Map *)(**f).data;
         else if (!strcmp((**f).URI, LV2_UI__resize))
             self->resize = (LV2UI_Resize *)(**f).data;
+        else if (!strcmp((**f).URI, LV2_UI__touch))
+            self->touch = (LV2UI_Touch*)(**f).data;
         else if (!strcmp((**f).URI, LV2_UI__parent))
             parentWindowId = (**f).data;
     }
@@ -251,19 +257,32 @@ void sfizz_ui_t::uiSendString(EditId id, absl::string_view v)
 
 void sfizz_ui_t::uiBeginSend(EditId id)
 {
-    // TODO
-    switch (id) {
-        
-    default:
-        break;
-    }
+    uiTouch(id, true);
 }
 
 void sfizz_ui_t::uiEndSend(EditId id)
 {
-    // TODO
+    uiTouch(id, false);
+}
+
+void sfizz_ui_t::uiTouch(EditId id, bool t)
+{
+    if (!touch)
+        return;
+
     switch (id) {
-        
+    case EditId::Volume:
+        touch->touch(touch->handle, SFIZZ_VOLUME, t);
+        break;
+    case EditId::Polyphony:
+        touch->touch(touch->handle, SFIZZ_POLYPHONY, t);
+        break;
+    case EditId::Oversampling:
+        touch->touch(touch->handle, SFIZZ_OVERSAMPLING, t);
+        break;
+    case EditId::PreloadSize:
+        touch->touch(touch->handle, SFIZZ_PRELOAD, t);
+        break;
     default:
         break;
     }
