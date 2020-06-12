@@ -114,6 +114,9 @@ typedef struct
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
     LV2_Atom_Forge_Frame notify_frame; ///< Cached for worker replies
 
+    // Atom forge
+    LV2_Atom_Forge forge_secondary;    ///< Forge for writing into other buffers
+
     // Logger
     LV2_Log_Logger logger;
 
@@ -366,6 +369,7 @@ instantiate(const LV2_Descriptor *descriptor,
 
     // Initialize the forge
     lv2_atom_forge_init(&self->forge, self->map);
+    lv2_atom_forge_init(&self->forge_secondary, self->map);
 
     // Check the options for the block size and sample rate parameters
     if (options)
@@ -491,28 +495,28 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         return;
     }
 
+    typedef struct
+    {
+        LV2_Atom atom;
+        char body[MAX_PATH_SIZE];
+    } sfizz_path_atom_buffer_t;
+
     if (key == self->sfizz_sfz_file_uri)
     {
-        const uint32_t original_atom_size = lv2_atom_total_size((const LV2_Atom *)atom);
-        const uint32_t null_terminated_atom_size = original_atom_size + 1;
-        char atom_buffer[MAX_PATH_SIZE];
-        memcpy(&atom_buffer, atom, original_atom_size);
-        atom_buffer[original_atom_size] = 0; // Null terminate the string for safety
-        LV2_Atom *sfz_file_path = (LV2_Atom *)&atom_buffer;
-        sfz_file_path->type = self->sfizz_sfz_file_uri;
-        self->worker->schedule_work(self->worker->handle, null_terminated_atom_size, sfz_file_path);
+        LV2_Atom_Forge *forge = &self->forge_secondary;
+        sfizz_path_atom_buffer_t buffer;
+        lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+        if (lv2_atom_forge_typed_string(forge, self->sfizz_sfz_file_uri, LV2_ATOM_BODY_CONST(atom), strnlen(LV2_ATOM_BODY_CONST(atom), atom->size)))
+            self->worker->schedule_work(self->worker->handle, lv2_atom_total_size(&buffer.atom), &buffer.atom);
         self->check_modification = false;
     }
     else if (key == self->sfizz_scala_file_uri)
     {
-        const uint32_t original_atom_size = lv2_atom_total_size((const LV2_Atom *)atom);
-        const uint32_t null_terminated_atom_size = original_atom_size + 1;
-        char atom_buffer[MAX_PATH_SIZE];
-        memcpy(&atom_buffer, atom, original_atom_size);
-        atom_buffer[original_atom_size] = 0; // Null terminate the string for safety
-        LV2_Atom *scala_file_path = (LV2_Atom *)&atom_buffer;
-        scala_file_path->type = self->sfizz_scala_file_uri;
-        self->worker->schedule_work(self->worker->handle, null_terminated_atom_size, scala_file_path);
+        LV2_Atom_Forge *forge = &self->forge_secondary;
+        sfizz_path_atom_buffer_t buffer;
+        lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+        if (lv2_atom_forge_typed_string(forge, self->sfizz_scala_file_uri, LV2_ATOM_BODY_CONST(atom), strnlen(LV2_ATOM_BODY_CONST(atom), atom->size)))
+            self->worker->schedule_work(self->worker->handle, lv2_atom_total_size(&buffer.atom), &buffer.atom);
         self->check_modification = false;
     }
     else
