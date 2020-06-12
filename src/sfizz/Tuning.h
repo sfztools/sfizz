@@ -71,4 +71,16 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
+class StretchTuning {
+public:
+    float getRatioForIntegralKey(int key) const noexcept;
+    float getRatioForFractionalKey(float key) const noexcept;
+
+    static StretchTuning createFromDetuneRatios(const float detune[128]);
+    static StretchTuning createRailsbackFromRatio(float stretch);
+
+private:
+    float keyDetuneRatio_[128] {};
+};
+
 } // namespace sfz

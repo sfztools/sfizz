@@ -151,6 +151,12 @@ public:
      */
     float getTuningFrequency() const;
     /**
+     * @brief Configure stretch tuning using a predefined parametric Railsback curve.
+     *
+     * @param ratio The parameter in domain 0-1.
+     */
+    void loadStretchTuningByRatio(float ratio);
+    /**
      * @brief Get the current number of regions loaded
      *
      * @return int

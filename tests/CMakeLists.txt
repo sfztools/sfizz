@@ -64,6 +64,10 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     add_executable(sfizz_demo_parser DemoParser.cpp)
     target_link_libraries(sfizz_demo_parser PRIVATE sfizz_parser Qt5::Widgets)
     set_target_properties(sfizz_demo_parser PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_stretch_tuning DemoStretchTuning.cpp)
+    target_link_libraries(sfizz_demo_stretch_tuning PRIVATE sfizz::sfizz Qt5::Widgets)
+    set_target_properties(sfizz_demo_stretch_tuning PROPERTIES AUTOUIC ON)
 endif()
 
 add_executable(eq_apply EQ.cpp)

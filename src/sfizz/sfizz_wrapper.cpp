@@ -67,6 +67,12 @@ float sfizz_get_tuning_frequency(sfizz_synth_t* synth)
     return self->getTuningFrequency();
 }
 
+void sfizz_load_stretch_tuning_by_ratio(sfizz_synth_t* synth, float ratio)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->loadStretchTuningByRatio(ratio);
+}
+
 void sfizz_free(sfizz_synth_t* synth)
 {
     delete reinterpret_cast<sfz::Synth*>(synth);

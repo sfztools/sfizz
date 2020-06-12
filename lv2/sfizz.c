@@ -108,6 +108,7 @@ typedef struct
     const float *freewheel_port;
     const float *scala_root_key_port;
     const float *tuning_frequency_port;
+    const float *stretch_tuning_port;
 
     // Atom forge
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
@@ -150,6 +151,7 @@ typedef struct
     int num_voices;
     unsigned int preload_size;
     sfizz_oversampling_factor_t oversampling;
+    float stretch_tuning;
     volatile bool check_modification;
     int max_block_size;
     int sample_counter;
@@ -170,6 +172,7 @@ enum
     SFIZZ_FREEWHEELING = 8,
     SFIZZ_SCALA_ROOT_KEY = 9,
     SFIZZ_TUNING_FREQUENCY = 10,
+    SFIZZ_STRETCH_TUNING = 11,
 };
 
 static void
@@ -242,6 +245,9 @@ connect_port(LV2_Handle instance,
     case SFIZZ_TUNING_FREQUENCY:
         self->tuning_frequency_port = (const float *)data;
         break;
+    case SFIZZ_STRETCH_TUNING:
+        self->stretch_tuning_port = (const float *)data;
+        break;
     default:
         break;
     }
@@ -302,6 +308,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->num_voices = DEFAULT_VOICES;
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
+    self->stretch_tuning = 0.0f;
     self->check_modification = true;
     self->sample_counter = 0;
 
@@ -655,6 +662,17 @@ sfizz_lv2_check_freewheeling(sfizz_plugin_t* self)
 }
 
 static void
+sfizz_lv2_check_stretch_tuning(sfizz_plugin_t* self)
+{
+    float stretch_tuning = (float)*self->stretch_tuning_port;
+    if (stretch_tuning != self->stretch_tuning)
+    {
+        sfizz_load_stretch_tuning_by_ratio(self->synth, stretch_tuning);
+        self->stretch_tuning = stretch_tuning;
+    }
+}
+
+static void
 run(LV2_Handle instance, uint32_t sample_count)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
@@ -719,6 +737,7 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_set_volume(self->synth, *(self->volume_port));
     sfizz_set_scala_root_key(self->synth, *(self->scala_root_key_port));
     sfizz_set_tuning_frequency(self->synth, *(self->tuning_frequency_port));
+    sfizz_lv2_check_stretch_tuning(self);
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);
     sfizz_lv2_check_num_voices(self);

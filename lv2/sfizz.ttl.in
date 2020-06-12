@@ -280,4 +280,15 @@ midnam:update a lv2:Feature .
     lv2:minimum 300.0 ;
     lv2:maximum 500.0 ;
     units:unit units:hz
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 11 ;
+    lv2:symbol "stretched_tuning" ;
+    lv2:name "Stretched tuning",
+      "Accordage étiré"@fr ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 0.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 1.0 ;
+    units:unit units:coef
   ] .

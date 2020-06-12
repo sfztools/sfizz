@@ -58,6 +58,11 @@ float sfz::Sfizz::getTuningFrequency() const
     return synth->getTuningFrequency();
 }
 
+void sfz::Sfizz::loadStretchTuningByRatio(float ratio)
+{
+    return synth->loadStretchTuningByRatio(ratio);
+}
+
 int sfz::Sfizz::getNumRegions() const noexcept
 {
     return synth->getNumRegions();
