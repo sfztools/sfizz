@@ -32,6 +32,8 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "sfizz_lv2.h"
+
 #include <lv2/atom/forge.h>
 #include <lv2/atom/util.h>
 #include <lv2/buf-size/buf-size.h>
@@ -57,17 +59,6 @@
 #include <string.h>
 
 #include "atomic_compat.h"
-
-#define SFIZZ_URI "http://sfztools.github.io/sfizz"
-#define SFIZZ_PREFIX SFIZZ_URI "#"
-#define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
-#define SFIZZ__tuningfile "http://sfztools.github.io/sfizz:tuningfile"
-#define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
-#define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
-#define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
-// These ones are just for the worker
-#define SFIZZ__logStatus "http://sfztools.github.io/sfizz:log_status"
-#define SFIZZ__checkModification "http://sfztools.github.io/sfizz:check_modification"
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -167,22 +158,6 @@ typedef struct
     // Paths
     char bundle_path[MAX_BUNDLE_PATH_SIZE];
 } sfizz_plugin_t;
-
-enum
-{
-    SFIZZ_CONTROL = 0,
-    SFIZZ_NOTIFY = 1,
-    SFIZZ_LEFT = 2,
-    SFIZZ_RIGHT = 3,
-    SFIZZ_VOLUME = 4,
-    SFIZZ_POLYPHONY = 5,
-    SFIZZ_OVERSAMPLING = 6,
-    SFIZZ_PRELOAD = 7,
-    SFIZZ_FREEWHEELING = 8,
-    SFIZZ_SCALA_ROOT_KEY = 9,
-    SFIZZ_TUNING_FREQUENCY = 10,
-    SFIZZ_STRETCH_TUNING = 11,
-};
 
 static void
 sfizz_lv2_state_free_path(LV2_State_Free_Path_Handle handle,

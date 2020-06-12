@@ -32,6 +32,8 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "sfizz_lv2.h"
+
 #include "editor/Editor.h"
 #include "editor/EditorController.h"
 #include "editor/Res.h"
@@ -45,6 +47,8 @@
 #define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
 
 struct sfizz_ui_t : EditorController {
+    LV2UI_Write_Function write = nullptr;
+    LV2UI_Controller con = nullptr;
     LV2_URID_Map *map = nullptr;
     LV2UI_Resize *resize = nullptr;
     std::unique_ptr<Editor> editor;
@@ -67,6 +71,12 @@ instantiate(const LV2UI_Descriptor *descriptor,
             const LV2_Feature * const *features)
 {
     std::unique_ptr<sfizz_ui_t> self { new sfizz_ui_t };
+
+    (void)descriptor;
+    (void)plugin_uri;
+
+    self->write = write_function;
+    self->con = controller;
 
     void *parentWindowId = nullptr;
 
@@ -112,6 +122,29 @@ port_event(LV2UI_Handle ui,
            uint32_t format,
            const void *buffer)
 {
+    sfizz_ui_t *self = (sfizz_ui_t *)ui;
+
+    if (format == 0) {
+        const float v = *reinterpret_cast<const float*>(buffer);
+
+        switch (port_index) {
+        case SFIZZ_VOLUME:
+            self->uiReceiveNumber(EditId::Volume, v);
+            break;
+        case SFIZZ_POLYPHONY:
+            self->uiReceiveNumber(EditId::Polyphony, v);
+            break;
+        case SFIZZ_OVERSAMPLING:
+            self->uiReceiveNumber(EditId::Oversampling, v);
+            break;
+        case SFIZZ_PRELOAD:
+            self->uiReceiveNumber(EditId::PreloadSize, v);
+            break;
+        }
+    }
+    else {
+        (void)buffer_size;
+    }
 }
 
 static int
@@ -186,9 +219,19 @@ lv2ui_descriptor(uint32_t index)
 ///
 void sfizz_ui_t::uiSendNumber(EditId id, float v)
 {
-    // TODO
     switch (id) {
-        
+    case EditId::Volume:
+        write(con, SFIZZ_VOLUME, sizeof(float), 0, &v);
+        break;
+    case EditId::Polyphony:
+        write(con, SFIZZ_POLYPHONY, sizeof(float), 0, &v);
+        break;
+    case EditId::Oversampling:
+        write(con, SFIZZ_OVERSAMPLING, sizeof(float), 0, &v);
+        break;
+    case EditId::PreloadSize:
+        write(con, SFIZZ_PRELOAD, sizeof(float), 0, &v);
+        break;
     default:
         break;
     }
@@ -198,7 +241,9 @@ void sfizz_ui_t::uiSendString(EditId id, absl::string_view v)
 {
     // TODO
     switch (id) {
+    case EditId::SfzFile:
         
+        break;
     default:
         break;
     }
