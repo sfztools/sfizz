@@ -395,6 +395,15 @@ void set_cursor(cursor_type type)
 
 ///
 
+void* get_native_window_id(base_view& view)
+{
+    PuglHostView* host = reinterpret_cast<PuglHostView*>(view.host());
+    if (!host || !host->view)
+        return nullptr;
+
+    return reinterpret_cast<void*>(puglGetNativeWindow(host->view.get()));
+}
+
 void show_window(base_view& view)
 {
     PuglHostView* host = reinterpret_cast<PuglHostView*>(view.host());

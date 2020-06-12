@@ -19,6 +19,7 @@ public:
     bool open(void* parentWindowId);
     void close();
     bool isOpen() const;
+    void* getNativeWindowId();
 
     void show();
     void hide();

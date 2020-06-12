@@ -108,6 +108,8 @@ instantiate(const LV2UI_Descriptor *descriptor,
     if (!editor->open(parentWindowId))
         return nullptr;
 
+    *widget = reinterpret_cast<LV2UI_Widget>(editor->getNativeWindowId());
+
     if (self->resize)
         self->resize->ui_resize(self->resize->handle, Editor::fixedWidth, Editor::fixedHeight);
 

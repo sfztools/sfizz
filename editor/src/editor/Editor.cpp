@@ -17,6 +17,7 @@ namespace el = cycfi::elements;
 namespace cycfi {
 namespace elements {
 
+void* get_native_window_id(base_view& w);
 void show_window(base_view& w);
 void hide_window(base_view& w);
 void process_events(base_view& w);
@@ -86,6 +87,14 @@ void Editor::close()
 bool Editor::isOpen() const
 {
     return impl_->view_ != nullptr;
+}
+
+void* Editor::getNativeWindowId()
+{
+    if (!impl_->view_)
+        return nullptr;
+
+    return el::get_native_window_id(*impl_->view_);
 }
 
 void Editor::show()
