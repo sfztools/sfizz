@@ -288,9 +288,9 @@ StretchTuning StretchTuning::createRailsbackFromRatio(float stretch)
     };
 
     // known curves and their matching knob positions
-    const int num_curves = 3;
-    const float* curves[] = {railsback21, railsback41, railsback42};
-    const float points[] = {0.25f, 0.5f, 1.0f};
+    const float* curves[] = { railsback21, railsback41, railsback42 };
+    const float points[] = { 0.25f, 0.5f, 1.0f };
+    constexpr int num_curves = sizeof(curves) / sizeof(decltype(curves[0]));
 
     //
     int index = -1;
@@ -319,7 +319,6 @@ StretchTuning StretchTuning::createRailsbackFromRatio(float stretch)
 
     //
     return createFromDetuneRatios(data);
-
 }
 
 } // namespace sfz
