@@ -264,12 +264,6 @@ void SfizzVstEditor::uiEndSend(EditId id)
     }
 }
 
-void SfizzVstEditor::uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len)
+void SfizzVstEditor::uiSendMIDI(const uint8_t* msg, uint32_t len)
 {
-    // TODO
-    switch (id) {
-        
-    default:
-        break;
-    }
 }

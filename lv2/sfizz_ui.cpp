@@ -54,7 +54,7 @@ protected:
     void uiSendString(EditId id, absl::string_view v) override;
     void uiBeginSend(EditId id) override;
     void uiEndSend(EditId id) override;
-    void uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len) override;
+    void uiSendMIDI(const uint8_t* msg, uint32_t len) override;
 };
 
 static LV2UI_Handle
@@ -224,13 +224,7 @@ void sfizz_ui_t::uiEndSend(EditId id)
     }
 }
 
-void sfizz_ui_t::uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len)
+void sfizz_ui_t::uiSendMIDI(const uint8_t* msg, uint32_t len)
 {
     // TODO
-    switch (id) {
-        
-    default:
-        break;
-    }
 }
-

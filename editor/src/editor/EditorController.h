@@ -28,7 +28,7 @@ public:
     virtual void uiSendString(EditId id, absl::string_view v) = 0;
     virtual void uiBeginSend(EditId id) = 0;
     virtual void uiEndSend(EditId id) = 0;
-    virtual void uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len) = 0;
+    virtual void uiSendMIDI(const uint8_t* msg, uint32_t len) = 0;
     class Receiver;
     void decorate(Receiver* r) { r_ = r; }
 
