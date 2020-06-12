@@ -39,6 +39,9 @@ protected:
     void uiSendMIDI(const uint8_t* msg, uint32_t len) override;
 
 private:
+    void uiTouch(EditId id, bool t);
+
+private:
     std::unique_ptr<Editor> editor_;
 
 #if !defined(__APPLE__) && !defined(_WIN32)

@@ -222,42 +222,33 @@ void SfizzVstEditor::uiSendString(EditId id, absl::string_view v)
 
 void SfizzVstEditor::uiBeginSend(EditId id)
 {
-    auto* controller = static_cast<SfizzVstController*>(getController());
-
-    switch (id) {
-    case EditId::Volume:
-        controller->beginEdit(kPidVolume);
-        break;
-    case EditId::Polyphony:
-        controller->beginEdit(kPidNumVoices);
-        break;
-    case EditId::Oversampling:
-        controller->beginEdit(kPidOversampling);
-        break;
-    case EditId::PreloadSize:
-        controller->beginEdit(kPidPreloadSize);
-        break;
-    default:
-        break;
-    }
+    uiTouch(id, true);
 }
 
 void SfizzVstEditor::uiEndSend(EditId id)
 {
+    uiTouch(id, false);
+}
+
+void SfizzVstEditor::uiTouch(EditId id, bool t)
+{
     auto* controller = static_cast<SfizzVstController*>(getController());
+
+    tresult (Vst::EditController::*touch)(Vst::ParamID) = t ?
+        &Vst::EditController::beginEdit : &Vst::EditController::endEdit;
 
     switch (id) {
     case EditId::Volume:
-        controller->endEdit(kPidVolume);
+        (controller->*touch)(kPidVolume);
         break;
     case EditId::Polyphony:
-        controller->endEdit(kPidNumVoices);
+        (controller->*touch)(kPidNumVoices);
         break;
     case EditId::Oversampling:
-        controller->endEdit(kPidOversampling);
+        (controller->*touch)(kPidOversampling);
         break;
     case EditId::PreloadSize:
-        controller->endEdit(kPidPreloadSize);
+        (controller->*touch)(kPidPreloadSize);
         break;
     default:
         break;
