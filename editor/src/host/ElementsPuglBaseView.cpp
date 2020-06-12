@@ -19,6 +19,7 @@ struct PuglHostView {
     int buttonState = 0;
     mouse_button::what dragButton = static_cast<mouse_button::what>(-1);
     bool wasEverDrawn = false;
+    bool needsGrabFocus = false;
 };
 
 static int convertModifiers(PuglMods mods)
@@ -60,7 +61,7 @@ static PuglStatus onEvent(PuglView *view, const PuglEvent *event)
         break;
 
     case PUGL_MAP:
-        puglGrabFocus(view);
+        host->needsGrabFocus = true;
         break;
 
     case PUGL_BUTTON_PRESS:
@@ -423,6 +424,12 @@ void process_events(base_view& view)
     //            when the view is created before the parent window is shown.
     if (!host->wasEverDrawn)
         puglPostRedisplay(host->view.get());
+    // Note(jpc): do not grab focus immediately on PUGL_MAP, this can raise the
+    //            BadMatch error. Wait the window is sure to be ready.
+    else if (host->needsGrabFocus) {
+        puglGrabFocus(host->view.get());
+        host->needsGrabFocus = false;
+    }
 
     SingletonPuglWorld_s world = SingletonPuglWorld::instance();
 
