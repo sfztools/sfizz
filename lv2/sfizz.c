@@ -112,9 +112,6 @@ typedef struct
 
     // Atom forge
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
-    LV2_Atom_Forge_Frame notify_frame; ///< Cached for worker replies
-
-    // Atom forge
     LV2_Atom_Forge forge_secondary;    ///< Forge for writing into other buffers
 
     // Logger
@@ -692,7 +689,9 @@ run(LV2_Handle instance, uint32_t sample_count)
     lv2_atom_forge_set_buffer(&self->forge, (uint8_t *)self->notify_port, notify_capacity);
 
     // Start a sequence in the notify output port.
-    lv2_atom_forge_sequence_head(&self->forge, &self->notify_frame, 0);
+    LV2_Atom_Forge_Frame notify_frame;
+    if (!lv2_atom_forge_sequence_head(&self->forge, &notify_frame, 0))
+        assert(false);
 
     LV2_ATOM_SEQUENCE_FOREACH(self->control_port, ev)
     {
@@ -784,7 +783,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         self->midnam->update(self->midnam->handle);
     }
 
-    lv2_atom_forge_pop(&self->forge, &self->notify_frame);
+    lv2_atom_forge_pop(&self->forge, &notify_frame);
 }
 
 static uint32_t
