@@ -201,7 +201,7 @@ bool Tuning::loadScalaString(const std::string& text)
     }
 
     if (scl.count <= 0) {
-        DBG("The scale file is empty: " << path);
+        DBG("Error loading scala string: " << text);
         return false;
     }
 
