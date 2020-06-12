@@ -179,7 +179,7 @@ void SfizzVstEditor::uiSendNumber(EditId id, float v)
         break;
     case EditId::Oversampling:
         {
-            int32 factor = std::max(1, static_cast<int32>(v));
+            int32 factor = std::max(1, static_cast<int>(v));
 
             // convert UI value using integer log2
             int32 log2Factor = 0;
