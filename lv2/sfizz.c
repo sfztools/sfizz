@@ -445,13 +445,17 @@ static void
 sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
 {
     LV2_Atom_Forge_Frame frame;
-    lv2_atom_forge_frame_time(&self->forge, 0);
-    lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri);
-    lv2_atom_forge_key(&self->forge, self->patch_property_uri);
-    lv2_atom_forge_urid(&self->forge, urid);
-    lv2_atom_forge_key(&self->forge, self->patch_value_uri);
-    lv2_atom_forge_path(&self->forge, path, (uint32_t)strlen(path));
-    lv2_atom_forge_pop(&self->forge, &frame);
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(&self->forge, 0) &&
+        lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(&self->forge, urid) &&
+        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
+        lv2_atom_forge_path(&self->forge, path, (uint32_t)strlen(path));
+
+    if (write_ok)
+        lv2_atom_forge_pop(&self->forge, &frame);
 }
 
 
@@ -775,6 +779,8 @@ run(LV2_Handle instance, uint32_t sample_count)
     {
         self->midnam->update(self->midnam->handle);
     }
+
+    lv2_atom_forge_pop(&self->forge, &self->notify_frame);
 }
 
 static uint32_t
