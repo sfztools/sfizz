@@ -34,6 +34,7 @@
 
 #include "sfizz_lv2.h"
 
+#include <lv2/atom/atom.h>
 #include <lv2/atom/forge.h>
 #include <lv2/atom/util.h>
 #include <lv2/buf-size/buf-size.h>
@@ -65,8 +66,7 @@
 #define MIDI_STATUS(byte) (byte & ~CHANNEL_MASK)
 #define PITCH_BUILD_AND_CENTER(first_byte, last_byte) (int)(((unsigned int)last_byte << 7) + (unsigned int)first_byte) - 8192
 #define MAX_BLOCK_SIZE 8192
-#define MAX_PATH_SIZE 1024
-#define MAX_VOICES 256
+#define MAX_VOICES 512
 #define DEFAULT_VOICES 64
 #define DEFAULT_OVERSAMPLING SFIZZ_OVERSAMPLING_X1
 #define DEFAULT_PRELOAD 8192

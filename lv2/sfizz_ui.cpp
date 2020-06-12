@@ -38,6 +38,11 @@
 #include "editor/EditorController.h"
 #include "editor/Res.h"
 #include <lv2/ui/ui.h>
+#include <lv2/atom/atom.h>
+#include <lv2/atom/forge.h>
+#include <lv2/atom/util.h>
+#include <lv2/midi/midi.h>
+#include <lv2/patch/patch.h>
 #include <lv2/urid/urid.h>
 #include <string>
 #include <memory>
@@ -48,9 +53,23 @@ struct sfizz_ui_t : EditorController {
     LV2UI_Write_Function write = nullptr;
     LV2UI_Controller con = nullptr;
     LV2_URID_Map *map = nullptr;
+    LV2_URID_Unmap *unmap = nullptr;
     LV2UI_Resize *resize = nullptr;
     LV2UI_Touch *touch = nullptr;
     std::unique_ptr<Editor> editor;
+
+    LV2_Atom_Forge atom_forge;
+    LV2_URID atom_event_transfer_uri;
+    LV2_URID atom_object_uri;
+    LV2_URID atom_path_uri;
+    LV2_URID atom_urid_uri;
+    LV2_URID midi_event_uri;
+    LV2_URID patch_get_uri;
+    LV2_URID patch_set_uri;
+    LV2_URID patch_property_uri;
+    LV2_URID patch_value_uri;
+    LV2_URID sfizz_sfz_file_uri;
+    LV2_URID sfizz_scala_file_uri;
 
 protected:
     void uiSendNumber(EditId id, float v) override;
@@ -82,10 +101,15 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     void *parentWindowId = nullptr;
 
+    LV2_URID_Map *map = nullptr;
+    LV2_URID_Unmap *unmap = nullptr;
+
     for (const LV2_Feature *const *f = features; *f; f++)
     {
         if (!strcmp((**f).URI, LV2_URID__map))
-            self->map = (LV2_URID_Map *)(**f).data;
+            self->map = map = (LV2_URID_Map *)(**f).data;
+        else if (!strcmp((**f).URI, LV2_URID__unmap))
+            self->unmap = unmap = (LV2_URID_Unmap *)(**f).data;
         else if (!strcmp((**f).URI, LV2_UI__resize))
             self->resize = (LV2UI_Resize *)(**f).data;
         else if (!strcmp((**f).URI, LV2_UI__touch))
@@ -95,8 +119,22 @@ instantiate(const LV2UI_Descriptor *descriptor,
     }
 
     // The map feature is required
-    if (!self->map)
+    if (!map || !unmap)
         return nullptr;
+
+    LV2_Atom_Forge *forge = &self->atom_forge;
+    lv2_atom_forge_init(forge, map);
+    self->atom_event_transfer_uri = map->map(map->handle, LV2_ATOM__eventTransfer);
+    self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
+    self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
+    self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
+    self->midi_event_uri = map->map(map->handle, LV2_MIDI__MidiEvent);
+    self->patch_get_uri = map->map(map->handle, LV2_PATCH__Get);
+    self->patch_set_uri = map->map(map->handle, LV2_PATCH__Set);
+    self->patch_property_uri = map->map(map->handle, LV2_PATCH__property);
+    self->patch_value_uri = map->map(map->handle, LV2_PATCH__value);
+    self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
+    self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__scalaFile);
 
     Res::initializeRootPath((std::string(bundle_path) + "/Resources").c_str());
 
@@ -110,6 +148,14 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     if (self->resize)
         self->resize->ui_resize(self->resize->handle, Editor::fixedWidth, Editor::fixedHeight);
+
+    // send a request to receive all parameters
+    uint8_t buffer[256];
+    lv2_atom_forge_set_buffer(forge, buffer, sizeof(buffer));
+    LV2_Atom_Forge_Frame frame;
+    LV2_Atom *msg = (LV2_Atom *)lv2_atom_forge_object(forge, &frame, 0, self->patch_get_uri);
+    lv2_atom_forge_pop(forge, &frame);
+    write_function(controller, 0, lv2_atom_total_size(msg), self->atom_event_transfer_uri, msg);
 
     return self.release();
 }
@@ -157,9 +203,34 @@ port_event(LV2UI_Handle ui,
             break;
         }
     }
-    else {
-        (void)buffer_size;
+    else if (format == self->atom_event_transfer_uri) {
+        auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
+
+        if (atom->type == self->atom_object_uri) {
+            const LV2_Atom *prop = nullptr;
+            const LV2_Atom *value = nullptr;
+
+            lv2_atom_object_get(
+                reinterpret_cast<const LV2_Atom_Object *>(atom),
+                self->patch_property_uri, &prop, self->patch_value_uri, &value, 0);
+
+            if (prop && value && prop->type == self->atom_urid_uri) {
+                const LV2_URID prop_uri = reinterpret_cast<const LV2_Atom_URID *>(prop)->body;
+                auto *value_body = reinterpret_cast<const char *>(LV2_ATOM_BODY_CONST(value));
+
+                if (prop_uri == self->sfizz_sfz_file_uri && value->type == self->atom_path_uri) {
+                    std::string path(value_body, strnlen(value_body, value->size));
+                    self->uiReceiveString(EditId::SfzFile, path);
+                }
+                else if (prop_uri == self->sfizz_scala_file_uri && value->type == self->atom_path_uri) {
+                    std::string path(value_body, strnlen(value_body, value->size));
+                    self->uiReceiveString(EditId::ScalaFile, path);
+                }
+            }
+        }
     }
+
+    (void)buffer_size;
 }
 
 static int
@@ -263,13 +334,42 @@ void sfizz_ui_t::uiSendNumber(EditId id, float v)
 
 void sfizz_ui_t::uiSendString(EditId id, absl::string_view v)
 {
-    // TODO
     switch (id) {
     case EditId::SfzFile:
-        
+        {
+            LV2_Atom_Forge *forge = &atom_forge;
+            LV2_Atom_Forge_Frame frame;
+            alignas(LV2_Atom) uint8_t buffer[MAX_PATH_SIZE + 512];
+            auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
+            lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+            if (lv2_atom_forge_object(forge, &frame, 0, patch_set_uri) &&
+                lv2_atom_forge_key(forge, patch_property_uri) &&
+                lv2_atom_forge_urid(forge, sfizz_sfz_file_uri) &&
+                lv2_atom_forge_key(forge, patch_value_uri) &&
+                lv2_atom_forge_path(forge, v.data(), v.size()))
+            {
+                lv2_atom_forge_pop(forge, &frame);
+                write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+            }
+        }
         break;
     case EditId::ScalaFile:
-        
+        {
+            LV2_Atom_Forge *forge = &atom_forge;
+            LV2_Atom_Forge_Frame frame;
+            alignas(LV2_Atom) uint8_t buffer[MAX_PATH_SIZE + 512];
+            auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
+            lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+            if (lv2_atom_forge_object(forge, &frame, 0, patch_set_uri) &&
+                lv2_atom_forge_key(forge, patch_property_uri) &&
+                lv2_atom_forge_urid(forge, sfizz_scala_file_uri) &&
+                lv2_atom_forge_key(forge, patch_value_uri) &&
+                lv2_atom_forge_path(forge, v.data(), v.size()))
+            {
+                lv2_atom_forge_pop(forge, &frame);
+                write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+            }
+        }
         break;
     default:
         break;
@@ -320,5 +420,13 @@ void sfizz_ui_t::uiTouch(EditId id, bool t)
 
 void sfizz_ui_t::uiSendMIDI(const uint8_t* msg, uint32_t len)
 {
-    // TODO
+    LV2_Atom_Forge *forge = &atom_forge;
+    alignas(LV2_Atom) uint8_t buffer[512];
+    auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
+    lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+    if (lv2_atom_forge_atom(forge, len, midi_event_uri) &&
+        lv2_atom_forge_write(forge, msg, len))
+    {
+        write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+    }
 }

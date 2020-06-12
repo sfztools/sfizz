@@ -6,6 +6,8 @@
 
 #pragma once
 
+#define MAX_PATH_SIZE 1024
+
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
