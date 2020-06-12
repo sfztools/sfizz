@@ -17,6 +17,7 @@ enum class EditId {
     ScalaFile,
     ScalaRootKey,
     TuningFrequency,
+    StretchTuning,
 };
 
 class EditorController {

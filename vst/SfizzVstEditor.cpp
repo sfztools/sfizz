@@ -156,7 +156,7 @@ void SfizzVstEditor::updateStateDisplay()
     uiReceiveNumber(EditId::Oversampling, 1 << state.oversamplingLog2);
     uiReceiveNumber(EditId::PreloadSize, state.preloadSize);
 
-    // TODO(jpc) when implemented: ScalaFile, ScalaRootKey, TuningFrequency
+    // TODO(jpc) when implemented: ScalaFile, ScalaRootKey, TuningFrequency, StretchTuning
 }
 
 ///

@@ -148,6 +148,15 @@ port_event(LV2UI_Handle ui,
         case SFIZZ_PRELOAD:
             self->uiReceiveNumber(EditId::PreloadSize, v);
             break;
+        case SFIZZ_SCALA_ROOT_KEY:
+            self->uiReceiveNumber(EditId::ScalaRootKey, v);
+            break;
+        case SFIZZ_TUNING_FREQUENCY:
+            self->uiReceiveNumber(EditId::TuningFrequency, v);
+            break;
+        case SFIZZ_STRETCH_TUNING:
+            self->uiReceiveNumber(EditId::StretchTuning, v);
+            break;
         }
     }
     else {
@@ -240,6 +249,15 @@ void sfizz_ui_t::uiSendNumber(EditId id, float v)
     case EditId::PreloadSize:
         write(con, SFIZZ_PRELOAD, sizeof(float), 0, &v);
         break;
+    case EditId::ScalaRootKey:
+        write(con, SFIZZ_SCALA_ROOT_KEY, sizeof(float), 0, &v);
+        break;
+    case EditId::TuningFrequency:
+        write(con, SFIZZ_TUNING_FREQUENCY, sizeof(float), 0, &v);
+        break;
+    case EditId::StretchTuning:
+        write(con, SFIZZ_STRETCH_TUNING, sizeof(float), 0, &v);
+        break;
     default:
         break;
     }
@@ -250,6 +268,9 @@ void sfizz_ui_t::uiSendString(EditId id, absl::string_view v)
     // TODO
     switch (id) {
     case EditId::SfzFile:
+        
+        break;
+    case EditId::ScalaFile:
         
         break;
     default:
@@ -284,6 +305,15 @@ void sfizz_ui_t::uiTouch(EditId id, bool t)
         break;
     case EditId::PreloadSize:
         touch->touch(touch->handle, SFIZZ_PRELOAD, t);
+        break;
+    case EditId::ScalaRootKey:
+        touch->touch(touch->handle, SFIZZ_SCALA_ROOT_KEY, t);
+        break;
+    case EditId::TuningFrequency:
+        touch->touch(touch->handle, SFIZZ_TUNING_FREQUENCY, t);
+        break;
+    case EditId::StretchTuning:
+        touch->touch(touch->handle, SFIZZ_STRETCH_TUNING, t);
         break;
     default:
         break;
