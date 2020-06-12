@@ -90,7 +90,7 @@ tresult PLUGIN_API SfizzVstEditor::attached(void* parent, FIDString type)
     if (isPlatformTypeSupported(type) != kResultTrue)
         return kResultFalse;
 
-    Editor* editor = new Editor;
+    Editor* editor = new Editor(*this);
     editor_.reset(editor);
 
     if (!editor->open(parent)) {
@@ -131,4 +131,54 @@ tresult PLUGIN_API SfizzVstEditor::removed()
 
     EditorView::removed();
     return kResultOk;
+}
+
+void SfizzVstEditor::uiSendNumber(EditId id, float v)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void SfizzVstEditor::uiSendString(EditId id, absl::string_view v)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void SfizzVstEditor::uiBeginSend(EditId id)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void SfizzVstEditor::uiEndSend(EditId id)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void SfizzVstEditor::uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
 }

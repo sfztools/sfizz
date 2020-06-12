@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Editor.h"
+#include "EditorController.h"
 #include "Res.h"
 #include "Demo.h"
 #include <elements.hpp>
@@ -26,20 +27,27 @@ void process_events(base_view& w);
 constexpr int Editor::fixedWidth;
 constexpr int Editor::fixedHeight;
 
-struct Editor::Impl {
+struct Editor::Impl : EditorController::Receiver {
     std::unique_ptr<el::view> view_;
+    EditorController* ctrl_ = nullptr;
 
     //--- TODO UI: from sliders and knobs example
     std::unique_ptr<DemoKnobsAndSliders> demo_;
 
     static void initializeResourcePaths();
+
+    // EditorController::Receiver
+    void uiReceiveNumber(EditId id, float v) override;
+    void uiReceiveString(EditId id, absl::string_view v) override;
 };
 
 ///
 
-Editor::Editor()
+Editor::Editor(EditorController& ctrl)
     : impl_(new Impl)
 {
+    impl_->ctrl_ = &ctrl;
+    ctrl.decorate(impl_.get());
 }
 
 Editor::~Editor()
@@ -116,4 +124,25 @@ void Editor::Impl::initializeResourcePaths()
 
     addIfNotExisting(resPaths, resourcePath);
     addIfNotExisting(fontPaths, resourcePath);
+}
+
+///
+void Editor::Impl::uiReceiveNumber(EditId id, float v)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void uiReceiveString(EditId id, absl::string_view v)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
 }

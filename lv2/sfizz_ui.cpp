@@ -33,6 +33,7 @@
 */
 
 #include "editor/Editor.h"
+#include "editor/EditorController.h"
 #include "editor/Res.h"
 #include <lv2/ui/ui.h>
 #include <lv2/urid/urid.h>
@@ -43,10 +44,17 @@
 
 #define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
 
-struct sfizz_ui_t {
+struct sfizz_ui_t : EditorController {
     LV2_URID_Map *map = nullptr;
     LV2UI_Resize *resize = nullptr;
     std::unique_ptr<Editor> editor;
+
+protected:
+    void uiSendNumber(EditId id, float v) override;
+    void uiSendString(EditId id, absl::string_view v) override;
+    void uiBeginSend(EditId id) override;
+    void uiEndSend(EditId id) override;
+    void uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len) override;
 };
 
 static LV2UI_Handle
@@ -78,7 +86,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     Res::initializeRootPath((std::string(bundle_path) + "/Resources").c_str());
 
-    Editor *editor = new Editor;
+    Editor *editor = new Editor(*self);
     self->editor.reset(editor);
 
     if (!editor->open(parentWindowId))
@@ -174,3 +182,55 @@ lv2ui_descriptor(uint32_t index)
         return nullptr;
     }
 }
+
+///
+void sfizz_ui_t::uiSendNumber(EditId id, float v)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void sfizz_ui_t::uiSendString(EditId id, absl::string_view v)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void sfizz_ui_t::uiBeginSend(EditId id)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void sfizz_ui_t::uiEndSend(EditId id)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
+void sfizz_ui_t::uiSendMIDI(EditId id, const uint8_t* msg, uint32_t len)
+{
+    // TODO
+    switch (id) {
+        
+    default:
+        break;
+    }
+}
+
