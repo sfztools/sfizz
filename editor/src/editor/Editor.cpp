@@ -138,7 +138,7 @@ void Editor::Impl::uiReceiveNumber(EditId id, float v)
     }
 }
 
-void uiReceiveString(EditId id, absl::string_view v)
+void Editor::Impl::uiReceiveString(EditId id, absl::string_view v)
 {
     // TODO
     switch (id) {
