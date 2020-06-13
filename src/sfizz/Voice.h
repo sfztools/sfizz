@@ -108,6 +108,13 @@ public:
     void startVoice(Region* region, int delay, int number, float value, TriggerType triggerType) noexcept;
 
     /**
+     * @brief Get the sample quality determined by the active region.
+     *
+     * @return int
+     */
+    int getCurrentSampleQuality() const noexcept;
+
+    /**
      * @brief Register a note-off event; this may trigger a release.
      *
      * @param delay
