@@ -1296,8 +1296,11 @@ void sfz::Synth::resetVoices(int numVoices)
 
     overflowVoices.clear();
     overflowVoices.reserve(numVoices);
-    for (int i = 0; i < numVoices; ++i)
-        overflowVoices.push_back(absl::make_unique<Voice>(resources));
+    for (int i = 0; i < numVoices; ++i) {
+        auto voice = absl::make_unique<Voice>(numVoices + i, resources);
+        voice->setStateListener(this);
+        overflowVoices.push_back(std::move(voice));
+    }
 
     for (auto& voice : overflowVoices) {
         voice->setSampleRate(this->sampleRate);
