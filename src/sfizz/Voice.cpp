@@ -14,8 +14,8 @@
 #include "Interpolators.h"
 #include "absl/algorithm/container.h"
 
-sfz::Voice::Voice(sfz::Resources& resources)
-: resources(resources)
+sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
+: id{voiceNumber}, stateListener(nullptr), resources(resources)
 {
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);
@@ -36,7 +36,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     triggerValue = value;
 
     this->region = region;
-    state = State::playing;
+    switchState(State::playing);
 
     ASSERT(delay >= 0);
     if (delay < 0)
@@ -652,7 +652,7 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 
 void sfz::Voice::reset() noexcept
 {
-    state = State::idle;
+    switchState(State::idle);
     region = nullptr;
     currentPromise.reset();
     sourcePosition = 0;
@@ -769,5 +769,15 @@ void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
         for (unsigned s = 0; s < buffer.getNumFrames(); ++s)
             smoothedChannelEnvelopes[i] =
                 channelEnvelopeFilters[i].tickLowpass(std::abs(input[s]));
+    }
+}
+
+
+void sfz::Voice::switchState(State s)
+{
+    if (s != state) {
+        state = s;
+        if (stateListener)
+            stateListener->onVoiceStateChanged(id, s);
     }
 }

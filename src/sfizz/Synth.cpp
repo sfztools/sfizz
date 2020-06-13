@@ -44,6 +44,13 @@ sfz::Synth::~Synth()
     resources.filePool.emptyFileLoadingQueues();
 }
 
+void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
+{
+    (void)id;
+    (void)state;
+    DBG("Voice " << id.number << ": state " << static_cast<int>(state));
+}
+
 void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
     switch (hash(header)) {
@@ -95,7 +102,8 @@ void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& mes
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    auto lastRegion = absl::make_unique<Region>(resources.midiState, defaultPath);
+    int regionNumber = static_cast<int>(regions.size());
+    auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
 
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
@@ -353,22 +361,20 @@ void sfz::Synth::finalizeSfzLoad()
 {
     resources.filePool.setRootDirectory(parser.originalDirectory());
 
-    auto currentRegion = regions.begin();
-    auto lastRegion = regions.rbegin();
-    auto removeCurrentRegion = [&currentRegion, &lastRegion]() {
-        if (currentRegion->get() == nullptr)
-            return;
+    size_t currentRegionIndex = 0;
+    size_t currentRegionCount = regions.size();
 
-        DBG("Removing the region with sample " << currentRegion->get()->sampleId);
-        std::iter_swap(currentRegion, lastRegion);
-        ++lastRegion;
+    auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
+        DBG("Removing the region with sample " << regions[currentRegionIndex]->sampleId);
+        regions.erase(regions.begin() + currentRegionIndex);
+        --currentRegionCount;
     };
 
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
 
-    while (currentRegion < lastRegion.base()) {
-        auto region = currentRegion->get();
+    while (currentRegionIndex < currentRegionCount) {
+        auto region = regions[currentRegionIndex].get();
 
         if (!region->oscillator && !region->isGenerator()) {
             if (!resources.filePool.checkSampleId(region->sampleId)) {
@@ -473,11 +479,10 @@ void sfz::Synth::finalizeSfzLoad()
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
 
-        ++currentRegion;
+        ++currentRegionIndex;
     }
-    const auto remainingRegions = std::distance(regions.begin(), lastRegion.base());
-    DBG("Removing " << (regions.size() - remainingRegions) << " out of " << regions.size() << " regions");
-    regions.resize(remainingRegions);
+    DBG("Removing " << (regions.size() - currentRegionCount) << " out of " << regions.size() << " regions");
+    regions.resize(currentRegionCount);
     modificationTime = checkModificationTime();
 
     for (auto& voice : voices) {
@@ -1059,6 +1064,40 @@ const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
     return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
 }
 
+const sfz::Region* sfz::Synth::getRegionById(NumericId<Region> id) const noexcept
+{
+    const size_t size = regions.size();
+
+    if (size == 0 || !id.valid())
+        return nullptr;
+
+    // search a sequence of ordered identifiers with potential gaps
+    size_t index = static_cast<size_t>(id.number);
+    index = std::min(index, size - 1);
+
+    while (index > 0 && regions[index]->getId().number > id.number)
+        --index;
+
+    return (regions[index]->getId() == id) ? regions[index].get() : nullptr;
+}
+
+const sfz::Voice* sfz::Synth::getVoiceById(NumericId<Voice> id) const noexcept
+{
+    const size_t size = voices.size();
+
+    if (size == 0 || !id.valid())
+        return nullptr;
+
+    // search a sequence of ordered identifiers with potential gaps
+    size_t index = static_cast<size_t>(id.number);
+    index = std::min(index, size - 1);
+
+    while (index > 0 && voices[index]->getId().number > id.number)
+        --index;
+
+    return (voices[index]->getId() == id) ? voices[index].get() : nullptr;
+}
+
 const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
 {
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
@@ -1104,8 +1143,11 @@ void sfz::Synth::resetVoices(int numVoices)
     voices.clear();
     voices.reserve(numVoices);
 
-    for (int i = 0; i < numVoices; ++i)
-        voices.push_back(absl::make_unique<Voice>(resources));
+    for (int i = 0; i < numVoices; ++i) {
+        auto voice = absl::make_unique<Voice>(i, resources);
+        voice->setStateListener(this);
+        voices.emplace_back(std::move(voice));
+    }
 
     voiceViewArray.clear();
     voiceViewArray.reserve(numVoices);

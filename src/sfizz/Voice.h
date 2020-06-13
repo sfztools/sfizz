@@ -14,6 +14,7 @@
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include "OnePoleFilter.h"
+#include "NumericId.h"
 #include "absl/types/span.h"
 #include <memory>
 #include <random>
@@ -32,14 +33,39 @@ public:
     /**
      * @brief Construct a new voice with the midistate singleton
      *
+     * @param voiceNumber
      * @param midiState
      */
-    Voice(Resources& resources);
+    Voice(int voiceNumber, Resources& resources);
     enum class TriggerType {
         NoteOn,
         NoteOff,
         CC
     };
+
+    /**
+     * @brief Get the unique identifier of this voice in a synth
+     */
+    NumericId<Voice> getId() const noexcept
+    {
+        return id;
+    }
+
+    enum class State {
+        idle,
+        playing
+    };
+
+    class StateListener {
+    public:
+        virtual void onVoiceStateChanged(NumericId<Voice> /*id*/, State /*state*/) {}
+    };
+
+    /**
+     * @brief Sets the listener which is called when the voice state changes.
+     */
+    void setStateListener(StateListener *l) noexcept { stateListener = l; }
+
     /**
      * @brief Change the sample rate of the voice. This is used to compute all
      * pitch related transformations so it needs to be propagated from the synth
@@ -270,12 +296,16 @@ private:
     void setupOscillatorUnison();
     void updateChannelPowers(AudioSpan<float> buffer);
 
+    /**
+     * @brief Modify the voice state and notify any listeners.
+     */
+    void switchState(State s);
+
+    const NumericId<Voice> id;
+    StateListener* stateListener = nullptr;
+
     Region* region { nullptr };
 
-    enum class State {
-        idle,
-        playing
-    };
     State state { State::idle };
     bool noteIsOff { false };
 

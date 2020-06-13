@@ -6,6 +6,7 @@
 
 #include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
+#include "sfizz/NumericId.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 using namespace sfz::literals;
@@ -461,4 +462,27 @@ TEST_CASE("[Synth] velcurve")
     REQUIRE( synth.getRegionView(1)->velocityCurve(64_norm) == 1.0_a );
     REQUIRE( synth.getRegionView(1)->velocityCurve(96_norm) == Approx(0.5f).margin(1e-2) );
     REQUIRE( synth.getRegionView(1)->velocityCurve(127_norm) == 0.0_a );
+}
+
+TEST_CASE("[Synth] Region by identifier")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("regionByIdentifier.sfz", R"(
+<region>sample=*sine
+<region>sample=*sine
+<region>sample=doesNotExist.wav
+<region>sample=*sine
+<region>sample=doesNotExist.wav
+<region>sample=*sine
+)");
+
+    REQUIRE(synth.getNumRegions() == 4);
+    REQUIRE(synth.getRegionView(0) == synth.getRegionById(NumericId<sfz::Region>{0}));
+    REQUIRE(synth.getRegionView(1) == synth.getRegionById(NumericId<sfz::Region>{1}));
+    REQUIRE(nullptr == synth.getRegionById(NumericId<sfz::Region>{2}));
+    REQUIRE(synth.getRegionView(2) == synth.getRegionById(NumericId<sfz::Region>{3}));
+    REQUIRE(nullptr == synth.getRegionById(NumericId<sfz::Region>{4}));
+    REQUIRE(synth.getRegionView(3) == synth.getRegionById(NumericId<sfz::Region>{5}));
+    REQUIRE(nullptr == synth.getRegionById(NumericId<sfz::Region>{6}));
+    REQUIRE(nullptr == synth.getRegionById(NumericId<sfz::Region>{}));
 }
