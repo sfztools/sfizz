@@ -6,19 +6,26 @@
 
 #pragma once
 
-#include <elements.hpp>
 #include "Knob.h"
 #include "Slider.h"
 #include "native/FileDialog.h"
+#include <elements.hpp>
+#include <functional>
 
 namespace el = cycfi::elements;
 
 class PageHome {
 
 public:
-    PageHome(el::view& view_);
+    explicit PageHome(el::view& view_);
 
     el::element_ptr contents() const;
+
+    void updateVolume(float v);
+    void updateSfzFile(cycfi::string_view v);
+
+    std::function<void(double)> on_change_volume;
+    std::function<void(absl::string_view)> on_change_sfz_file;
 
 private:
     el::element_ptr contents_;

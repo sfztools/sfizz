@@ -26,7 +26,8 @@ PageHome::PageHome(el::view& view_)
             fileDialog->onFileChosen = [this](absl::string_view fileName) {
                 if (fileName != "" && fileName != txtSfz->get_text()) {
                     txtSfz->set_text(std::string(fileName));
-                    // TODO: Set scala file in plugin
+                    if (on_change_sfz_file)
+                        on_change_sfz_file(fileName);
                 }
             };
             fileDialog->setMode(FileDialog::Mode::Open);
@@ -60,4 +61,14 @@ PageHome::PageHome(el::view& view_)
 el::element_ptr PageHome::contents() const
 {
     return contents_;
+}
+
+void PageHome::updateVolume(float v)
+{
+    sldVolume->value(v);
+}
+
+void PageHome::updateSfzFile(cycfi::string_view v)
+{
+   txtSfz->value(v);
 }

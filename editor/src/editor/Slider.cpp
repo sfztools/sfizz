@@ -10,11 +10,10 @@ Slider::Slider(el::view& view_, const std::string& lbl, double value)
     : parentView_(view_)
     , label_(lbl)
     , labelValue_(el::share(el::label("")))
-    , value_(value)
 {
     el::image slider_knob = el::image { "slider-v.png", 1.0 / 4 };
     slider_ = el::share(el::slider(
-        el::align_center(slider_knob), el::slider_marks<30>(el::basic_track<4, true>()), value_));
+        el::align_center(slider_knob), el::slider_marks<30>(el::basic_track<4, true>()), value));
 
     contents_ = el::share(
         el::vmin_size(240,
@@ -23,23 +22,35 @@ Slider::Slider(el::view& view_, const std::string& lbl, double value)
                 el::hold(slider_),
                 el::hold(labelValue_))));
 
-    setValue_(value_);
-    parentView_.refresh(*labelValue_);
+    updateDisplay();
 
     slider_->on_change = [this](double val) {
-        setValue_(val);
-        // TODO: Set volume in plugin
+        updateDisplay();
+        if (on_change)
+            on_change(val);
     };
 }
+
 el::element_ptr Slider::contents() const
 {
     return contents_;
 }
-void Slider::setValue_(double val)
+
+double Slider::value() const
 {
-    char sVal[16];
-    int8_t i = val * 100;
-    std::sprintf(sVal, "%i%%", i);
+    return slider_->value();
+}
+
+void Slider::value(double v)
+{
+    slider_->value(v);
+    updateDisplay();
+}
+
+void Slider::updateDisplay()
+{
+    int8_t i = slider_->value() * 100;
+    std::string sVal = std::to_string(i) + '%';
     labelValue_->set_text(sVal);
     parentView_.refresh();
 }

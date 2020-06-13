@@ -5,8 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-
 #include <elements.hpp>
+#include <functional>
 
 namespace el = cycfi::elements;
 
@@ -24,6 +24,8 @@ public:
         double value = 1.0f);
 
     el::element_ptr contents() const;
+
+    std::function<void(double)> on_change;
 
 private:
     void setValue_(double val);

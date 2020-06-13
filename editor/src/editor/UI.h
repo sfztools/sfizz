@@ -6,19 +6,27 @@
 
 #pragma once
 
+#include "absl/strings/string_view.h"
 #include <elements.hpp>
 #include <memory>
-#include "PageHome.h"
-#include "PageSettings.h"
+class PageHome;
+class PageSettings;
+class EditorController;
 
 namespace el = cycfi::elements;
 
 class UI {
 
 public:
-    explicit UI(el::view& group);
+    UI(el::view& group, EditorController& ctrl);
+    ~UI();
+
+    void updateVolume(float v);
+    void updateSfzFile(cycfi::string_view v);
 
 private:
+    EditorController* ctrl_ = nullptr;
+
     // Main window background color
     static constexpr el::color bkd_color = el::rgba(35, 35, 37, 255);
     el::box_element background = el::box(bkd_color);

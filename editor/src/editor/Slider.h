@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-
 #include <elements.hpp>
 
 namespace el = cycfi::elements;
@@ -19,13 +18,17 @@ public:
 
     el::element_ptr contents() const;
 
+    double value() const;
+    void value(double v);
+
+    std::function<void(double)> on_change;
+
 private:
-    void setValue_(double val);
+    void updateDisplay();
 
     el::view& parentView_;
     el::label label_;
     std::shared_ptr<el::label> labelValue_;
     std::shared_ptr<el::basic_slider_base> slider_;
-    double value_;
     el::element_ptr contents_;
 };

@@ -71,7 +71,7 @@ bool Editor::open(void* parentWindowId)
     view->size(el::extent(fixedWidth, fixedHeight));
 
     ///
-    UI* ui = new UI(*view);
+    UI* ui = new UI(*view, *impl_->ctrl_);
     impl_->ui_.reset(ui);
 
     ///
@@ -138,8 +138,11 @@ void Editor::Impl::initializeResourcePaths()
 ///
 void Editor::Impl::uiReceiveNumber(EditId id, float v)
 {
-    // TODO
+    // TODO the other numeric values...
     switch (id) {
+    case EditId::Volume:
+        ui_->updateVolume(v);
+        break;
         
     default:
         break;
@@ -148,8 +151,11 @@ void Editor::Impl::uiReceiveNumber(EditId id, float v)
 
 void Editor::Impl::uiReceiveString(EditId id, absl::string_view v)
 {
-    // TODO
+    // TODO the other string values...
     switch (id) {
+    case EditId::SfzFile:
+        ui_->updateSfzFile(cycfi::string_view(v.data(), v.size()));
+        break;
         
     default:
         break;

@@ -28,6 +28,8 @@ Knob::Knob(el::view& view_, const std::string& lbl, Type type, double value)
 
     dial_->on_change = [this](double val) {
         setValue_(val);
+        if (on_change)
+            on_change(val);
     };
 }
 el::element_ptr Knob::contents() const
