@@ -40,6 +40,12 @@ void sfz::MidiState::noteOffEvent(int delay, int noteNumber, float velocity) noe
 
 }
 
+void sfz::MidiState::allNotesOff(int delay) noexcept
+{
+    for (int note = 0; note < 128; note++)
+        noteOffEvent(delay, note, 0.0f);
+}
+
 void sfz::MidiState::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;

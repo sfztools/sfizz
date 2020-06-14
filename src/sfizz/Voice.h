@@ -53,13 +53,19 @@ public:
 
     enum class State {
         idle,
-        playing
+        playing,
+        cleanMeUp,
     };
 
     class StateListener {
     public:
         virtual void onVoiceStateChanged(NumericId<Voice> /*id*/, State /*state*/) {}
     };
+
+    /**
+     * @brief Return true if the voice is to be cleaned up (zombie state)
+     */
+    bool toBeCleanedUp() const { return state == State::cleanMeUp; }
 
     /**
      * @brief Sets the listener which is called when the voice state changes.
