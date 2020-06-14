@@ -17,7 +17,7 @@
 	shallow = true
 [submodule "editor/external/pugl"]
 	path = editor/external/pugl
-	url = https://github.com/drobilla/pugl.git
+	url = https://github.com/lv2/pugl.git
 [submodule "editor/external/elements"]
 	path = editor/external/elements
 	url = https://github.com/sfztools/elements.git
