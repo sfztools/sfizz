@@ -63,7 +63,6 @@ Curve Curve::buildFromVelcurvePoints(
 {
     Curve curve;
     bool fillStatus[NumValues] = {};
-    const Range<float> fullRange { -HUGE_VALF, +HUGE_VALF };
 
     auto setPoint = [&curve, &fillStatus](int i, float x) {
         curve._points[i] = x;
