@@ -1,5 +1,0 @@
-<region> sample=*sine key=63
-<region> sample=*sine key=64 note_polyphony=2
-<region> sample=*sine key=66 note_polyphony=2 note_selfmask=off
-<group> group=1 polyphony=2
-<region> sample=*sine key=65
