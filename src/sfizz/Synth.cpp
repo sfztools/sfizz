@@ -15,6 +15,7 @@
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_replace.h"
+#include "SisterVoiceRing.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -800,6 +801,8 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
+    SisterVoiceRingBuilder ring;
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
@@ -807,6 +810,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
                 continue;
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            ring.addVoiceToRing(voice);
         }
     }
 }
@@ -814,6 +818,8 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
+    SisterVoiceRingBuilder ring;
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned activeNotesInGroup { 0 };
@@ -865,6 +871,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 continue;
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            ring.addVoiceToRing(voice);
         }
     }
 }
@@ -895,6 +902,8 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, normValue);
 
+    SisterVoiceRingBuilder ring;
+
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
@@ -902,6 +911,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
                 continue;
 
             voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
+            ring.addVoiceToRing(voice);
         }
     }
 }

@@ -211,6 +211,40 @@ public:
     void reset() noexcept;
 
     /**
+     * @brief Set the next voice in the "sister voice" ring
+     * The sister voices are voices that started on the same event.
+     * This has to be set by the synth. A voice will remove itself from
+     * the ring upon reset.
+     *
+     * @param voice
+     */
+    void setNextSisterVoice(Voice* voice) noexcept;
+
+    /**
+     * @brief Set the previous voice in the "sister voice" ring
+     * The sister voices are voices that started on the same event.
+     * This has to be set by the synth. A voice will remove itself from
+     * the ring upon reset.
+     *
+     * @param voice
+     */
+    void setPreviousSisterVoice(Voice* voice) noexcept;
+
+    /**
+     * @brief Get the next sister voice in the ring
+     *
+     * @return Voice*
+     */
+    Voice* getNextSisterVoice() const noexcept { return nextSisterVoice; };
+
+    /**
+     * @brief Get the previous sister voice in the ring
+     *
+     * @return Voice*
+     */
+    Voice* getPreviousSisterVoice() const noexcept { return previousSisterVoice; };
+
+    /**
      * @brief Get the mean squared power of the last rendered block. This is used
      * to determine which voice to steal if there are too many notes flying around.
      *
@@ -297,6 +331,12 @@ private:
     void panStageStereo(AudioSpan<float> buffer) noexcept;
     void filterStageMono(AudioSpan<float> buffer) noexcept;
     void filterStageStereo(AudioSpan<float> buffer) noexcept;
+
+    /**
+     * @brief Remove the voice from the sister ring
+     *
+     */
+    void removeVoiceFromRing() noexcept;
     /**
      * @brief Initialize frequency and gain coefficients for the oscillators.
      */
@@ -358,6 +398,9 @@ private:
     Duration amplitudeDuration;
     Duration panningDuration;
     Duration filterDuration;
+
+    Voice* nextSisterVoice { this };
+    Voice* previousSisterVoice { this };
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 

@@ -674,6 +674,30 @@ void sfz::Voice::reset() noexcept
 
     filters.clear();
     equalizers.clear();
+
+    removeVoiceFromRing();
+}
+
+void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept
+{
+    // Should never be null
+    ASSERT(voice);
+    nextSisterVoice = voice;
+}
+
+void sfz::Voice::setPreviousSisterVoice(Voice* voice) noexcept
+{
+    // Should never be null
+    ASSERT(voice);
+    previousSisterVoice = voice;
+}
+
+void sfz::Voice::removeVoiceFromRing() noexcept
+{
+    previousSisterVoice->setNextSisterVoice(nextSisterVoice);
+    nextSisterVoice->setPreviousSisterVoice(previousSisterVoice);
+    previousSisterVoice = this;
+    nextSisterVoice = this;
 }
 
 float sfz::Voice::getAverageEnvelope() const noexcept
