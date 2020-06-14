@@ -152,15 +152,18 @@ TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kil
 {
     sfz::Synth synth;
     synth.setSamplesPerBlock(1024);
+    sfz::AudioBuffer<float> buffer { 2, 1024 };
     synth.setNumVoices(1);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/delay_release.sfz");
     synth.noteOn(0, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
     synth.noteOff(100, 60, 63);
+    synth.renderBlock(buffer);
     REQUIRE( synth.getVoiceView(0)->isFree() );
     synth.noteOn(200, 60, 63);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
     synth.noteOff(1000, 60, 63);
+    synth.renderBlock(buffer);
     REQUIRE( !synth.getVoiceView(0)->isFree() );
 }
 

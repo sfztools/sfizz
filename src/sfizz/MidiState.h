@@ -25,6 +25,7 @@ public:
     /**
      * @brief Update the state after a note on event
      *
+     * @param delay
      * @param noteNumber
      * @param velocity
      */
@@ -33,11 +34,22 @@ public:
     /**
      * @brief Update the state after a note off event
      *
+     * @param delay
      * @param noteNumber
      * @param velocity
      */
     void noteOffEvent(int delay, int noteNumber, float velocity) noexcept;
 
+    /**
+     * @brief Set all notes off
+     *
+     * @param delay
+     */
+    void allNotesOff(int delay) noexcept;
+
+    /**
+     * @brief Get the number of active notes
+     */
     int getActiveNotes() const noexcept { return activeNotes; }
 
     /**

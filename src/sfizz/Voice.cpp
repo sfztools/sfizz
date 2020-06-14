@@ -77,7 +77,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     } else {
         currentPromise = resources.filePool.getFilePromise(region->sampleId);
         if (currentPromise == nullptr) {
-            reset();
+            switchState(State::cleanMeUp);
             return;
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
@@ -139,7 +139,7 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
         return;
 
     if (egEnvelope.getRemainingDelay() > delay) {
-        reset();
+        switchState(State::cleanMeUp);
     } else {
         egEnvelope.startRelease(delay, fastRelease);
     }
@@ -173,13 +173,8 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (region == nullptr)
         return;
 
-    if (state ==  State::idle)
+    if (state != State::playing)
         return;
-
-    if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
-        reset();
-        return;
-    }
 
     if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
@@ -187,7 +182,7 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 
 void sfz::Voice::registerPitchWheel(int delay, float pitch) noexcept
 {
-    if (state == State::idle)
+    if (state != State::playing)
         return;
     UNUSED(delay);
     UNUSED(pitch);
@@ -229,6 +224,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
     buffer.fill(0.0f);
 
+    ASSERT(region != nullptr);
+
     const auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
     initialDelay -= static_cast<int>(delay);
@@ -252,7 +249,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     if (!egEnvelope.isSmoothing())
-        reset();
+        switchState(State::cleanMeUp);
 
     updateChannelPowers(buffer);
 
@@ -683,7 +680,7 @@ float sfz::Voice::getAverageEnvelope() const noexcept
 
 bool sfz::Voice::releasedOrFree() const noexcept
 {
-    return state == State::idle || egEnvelope.isReleased();
+    return state != State::playing || egEnvelope.isReleased();
 }
 
 uint32_t sfz::Voice::getSourcePosition() const noexcept

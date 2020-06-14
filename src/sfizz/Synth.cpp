@@ -708,6 +708,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
             callbackBreakdown.filters += voice->getLastFilterDuration();
             callbackBreakdown.panning += voice->getLastPanningDuration();
+
+            if (voice->toBeCleanedUp())
+                    voice->reset();
         }
     }
 
@@ -889,6 +892,13 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 
     if (ccNumber == config::resetCC) {
         resetAllControllers(delay);
+        return;
+    }
+
+    if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
+        for (auto& voice : voices)
+            voice->reset();
+        resources.midiState.allNotesOff(delay);
         return;
     }
 
