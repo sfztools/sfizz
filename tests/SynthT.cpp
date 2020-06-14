@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Synth.h"
+#include "sfizz/SisterVoiceRing.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/NumericId.h"
 #include "catch2/catch.hpp"
@@ -542,4 +543,80 @@ TEST_CASE("[Synth] sample quality")
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
     synth.allSoundOff();
     synth.disableFreeWheeling();
+}
+
+
+TEST_CASE("[Synth] Sister voices")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=61 sample=*sine
+        <region> key=62 sample=*sine
+        <region> key=62 sample=*sine
+        <region> key=63 sample=*saw
+        <region> key=63 sample=*saw
+        <region> key=63 sample=*saw
+    )");
+    synth.noteOn(0, 61, 85);
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
+    REQUIRE( synth.getVoiceView(0)->getNextSisterVoice() == synth.getVoiceView(0) );
+    REQUIRE( synth.getVoiceView(0)->getPreviousSisterVoice() == synth.getVoiceView(0) );
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(1)) == 2 );
+    REQUIRE( synth.getVoiceView(1)->getNextSisterVoice() == synth.getVoiceView(2) );
+    REQUIRE( synth.getVoiceView(1)->getPreviousSisterVoice() == synth.getVoiceView(2) );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(2)) == 2 );
+    REQUIRE( synth.getVoiceView(2)->getNextSisterVoice() == synth.getVoiceView(1) );
+    REQUIRE( synth.getVoiceView(2)->getPreviousSisterVoice() == synth.getVoiceView(1) );
+    synth.noteOn(0, 63, 85);
+    REQUIRE( synth.getNumActiveVoices() == 6 );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(3)) == 3 );
+    REQUIRE( synth.getVoiceView(3)->getNextSisterVoice() == synth.getVoiceView(4) );
+    REQUIRE( synth.getVoiceView(3)->getPreviousSisterVoice() == synth.getVoiceView(5) );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(4)) == 3 );
+    REQUIRE( synth.getVoiceView(4)->getNextSisterVoice() == synth.getVoiceView(5) );
+    REQUIRE( synth.getVoiceView(4)->getPreviousSisterVoice() == synth.getVoiceView(3) );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(5)) == 3 );
+    REQUIRE( synth.getVoiceView(5)->getNextSisterVoice() == synth.getVoiceView(3) );
+    REQUIRE( synth.getVoiceView(5)->getPreviousSisterVoice() == synth.getVoiceView(4) );
+}
+
+TEST_CASE("[Synth] Apply function on sisters")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=63 sample=*saw
+        <region> key=63 sample=*saw
+        <region> key=63 sample=*saw
+    )");
+    synth.noteOn(0, 63, 85);
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 3 );
+    float start = 1.0f;
+    sfz::SisterVoiceRing::applyToRing(synth.getVoiceView(0), [&](const sfz::Voice* v) {
+        start += static_cast<float>(v->getTriggerNumber());
+    });
+    REQUIRE( start == 1.0f + 3.0f * 63.0f );
+}
+
+TEST_CASE("[Synth] Sisters and off-by")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=62 sample=*sine
+        <group> group=1 off_by=2 <region> key=62 sample=*sine
+        <group> group=2 <region> key=63 sample=*saw
+    )");
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 2 );
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.noteOn(0, 63, 85);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
 }

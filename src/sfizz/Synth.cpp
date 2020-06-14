@@ -15,6 +15,7 @@
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_replace.h"
+#include "SisterVoiceRing.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -550,49 +551,38 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         / static_cast<float>(voiceViewArray.size()) * config::stealingEnvelopeCoeff;
     const auto ageThreshold = voiceViewArray.front()->getAge() * config::stealingAgeCoeff;
 
-    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-    const auto killVoice = [&] (Voice* v) {
-        renderVoiceToOutputs(*v, *tempSpan);
-        v->reset();
-    };
-
     Voice* returnedVoice = voiceViewArray.front();
     unsigned idx = 0;
     while (idx < voiceViewArray.size()) {
-        const auto refIdx = idx;
         const auto ref = voiceViewArray[idx];
-        idx++;
 
         if (ref->getAge() < ageThreshold) {
-            unsigned killIdx = 1;
-            while (killIdx < voiceViewArray.size()
-                    && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
-                killVoice(voiceViewArray[killIdx]);
-                killIdx++;
-            }
-            // std::cout << "Went too far, picking the oldest voice and killing "
-            //           << killIdx << " voices" << '\n';
-            killVoice(returnedVoice);
+            // Went too far, we'll kill the oldest note.
             break;
         }
 
-        float maxEnvelope = ref->getAverageEnvelope();
-        while (idx < voiceViewArray.size()
-                && sisterVoices(ref, voiceViewArray[idx])) {
-            maxEnvelope = max(maxEnvelope, voiceViewArray[idx]->getAverageEnvelope());
-            idx++;
-        }
+        float maxEnvelope { 0.0f };
+        SisterVoiceRing::applyToRing(ref, [&](Voice* v) {
+            maxEnvelope = max(maxEnvelope, v->getAverageEnvelope());
+        });
 
         if (maxEnvelope < envThreshold) {
             returnedVoice = ref;
-            // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
-            for (unsigned j = refIdx; j < idx; j++) {
-                killVoice(voiceViewArray[j]);
-            }
             break;
         }
+
+        // Jump over the sister voices in the set
+        do { idx++; }
+        while (idx < voiceViewArray.size() && sisterVoices(ref, voiceViewArray[idx]));
     }
-    assert(returnedVoice->isFree());
+
+    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
+    SisterVoiceRing::applyToRing(returnedVoice, [&] (Voice* v) {
+        renderVoiceToOutputs(*v, *tempSpan);
+        v->reset();
+    });
+    ASSERT(returnedVoice->isFree());
+
     return returnedVoice;
 }
 
@@ -803,6 +793,8 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
+    SisterVoiceRingBuilder ring;
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
             auto voice = findFreeVoice();
@@ -810,6 +802,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
                 continue;
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOff);
+            ring.addVoiceToRing(voice);
         }
     }
 }
@@ -817,6 +810,8 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
+    SisterVoiceRingBuilder ring;
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned activeNotesInGroup { 0 };
@@ -868,6 +863,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 continue;
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            ring.addVoiceToRing(voice);
         }
     }
 }
@@ -905,6 +901,8 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, normValue);
 
+    SisterVoiceRingBuilder ring;
+
     for (auto& region : ccActivationLists[ccNumber]) {
         if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
@@ -912,6 +910,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
                 continue;
 
             voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
+            ring.addVoiceToRing(voice);
         }
     }
 }
