@@ -551,49 +551,38 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
         / static_cast<float>(voiceViewArray.size()) * config::stealingEnvelopeCoeff;
     const auto ageThreshold = voiceViewArray.front()->getAge() * config::stealingAgeCoeff;
 
-    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-    const auto killVoice = [&] (Voice* v) {
-        renderVoiceToOutputs(*v, *tempSpan);
-        v->reset();
-    };
-
     Voice* returnedVoice = voiceViewArray.front();
     unsigned idx = 0;
     while (idx < voiceViewArray.size()) {
-        const auto refIdx = idx;
         const auto ref = voiceViewArray[idx];
-        idx++;
 
         if (ref->getAge() < ageThreshold) {
-            unsigned killIdx = 1;
-            while (killIdx < voiceViewArray.size()
-                    && sisterVoices(returnedVoice, voiceViewArray[killIdx])) {
-                killVoice(voiceViewArray[killIdx]);
-                killIdx++;
-            }
-            // std::cout << "Went too far, picking the oldest voice and killing "
-            //           << killIdx << " voices" << '\n';
-            killVoice(returnedVoice);
+            // Went too far, we'll kill the oldest note.
             break;
         }
 
-        float maxEnvelope = ref->getAverageEnvelope();
-        while (idx < voiceViewArray.size()
-                && sisterVoices(ref, voiceViewArray[idx])) {
-            maxEnvelope = max(maxEnvelope, voiceViewArray[idx]->getAverageEnvelope());
-            idx++;
-        }
+        float maxEnvelope { 0.0f };
+        SisterVoiceRing::applyToRing(ref, [&](Voice* v) {
+            maxEnvelope = max(maxEnvelope, v->getAverageEnvelope());
+        });
 
         if (maxEnvelope < envThreshold) {
             returnedVoice = ref;
-            // std::cout << "Killing " << idx - refIdx << " voices" << '\n';
-            for (unsigned j = refIdx; j < idx; j++) {
-                killVoice(voiceViewArray[j]);
-            }
             break;
         }
+
+        // Jump over the sister voices in the set
+        do { idx++; }
+        while (idx < voiceViewArray.size() && sisterVoices(ref, voiceViewArray[idx]));
     }
-    assert(returnedVoice->isFree());
+
+    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
+    SisterVoiceRing::applyToRing(returnedVoice, [&] (Voice* v) {
+        renderVoiceToOutputs(*v, *tempSpan);
+        v->reset();
+    });
+    ASSERT(returnedVoice->isFree());
+
     return returnedVoice;
 }
 
