@@ -40,6 +40,13 @@ typedef enum {
     SFIZZ_OVERSAMPLING_X4 = 4,
     SFIZZ_OVERSAMPLING_X8 = 8
 } sfizz_oversampling_factor_t;
+/**
+ * @brief Processing mode
+ */
+typedef enum {
+    SFIZZ_PROCESS_LIVE,
+    SFIZZ_PROCESS_FREEWHEELING,
+} sfizz_process_mode_t;
 
 /**
  * @brief      Creates a sfizz synth. This object has to be freed by the caller
@@ -365,6 +372,33 @@ SFIZZ_EXPORTED_API sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfi
  * @return     @true if the oversampling factor was correct, @false otherwise.
  */
 SFIZZ_EXPORTED_API bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t oversampling);
+
+/**
+ * @brief      Get the default resampling quality. This is the quality setting
+ *             which the engine uses when the instrument does not use the
+ *             opcode `sample_quality`. The engine uses distinct default quality
+ *             settings for live mode and freewheeling mode, which both can be
+ *             accessed by the means of this function.
+ *
+ * @param      synth         The synth.
+ * @param[in]  mode          The processing mode.
+ *
+ * @return     The sample quality for the given mode, in the range 1 to 10.
+ */
+SFIZZ_EXPORTED_API int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode);
+
+/**
+ * @brief      Set the default resampling quality. This is the quality setting
+ *             which the engine uses when the instrument does not use the
+ *             opcode `sample_quality`. The engine uses distinct default quality
+ *             settings for live mode and freewheeling mode, which both can be
+ *             accessed by the means of this function.
+ *
+ * @param      synth         The synth.
+ * @param[in]  mode          The processing mode.
+ * @param[in]  quality       The desired sample quality, in the range 1 to 10.
+ */
+SFIZZ_EXPORTED_API void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
 
 /**
  * @brief      Set the global instrument volume.

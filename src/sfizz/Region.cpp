@@ -62,7 +62,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("sample_quality"):
         {
-            setValueFromOpcode(opcode, sampleQuality, Default::sampleQualityRange);
+            if (opcode.value == "-1")
+                sampleQuality.reset();
+            else
+                setValueFromOpcode(opcode, sampleQuality, Default::sampleQualityRange);
             break;
         }
         break;

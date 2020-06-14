@@ -122,6 +122,12 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
 }
 
+int sfz::Voice::getCurrentSampleQuality() const noexcept
+{
+    return (region && region->sampleQuality) ?
+        *region->sampleQuality : resources.synthConfig.currentSampleQuality();
+}
+
 bool sfz::Voice::isFree() const noexcept
 {
     return (state == State::idle);
@@ -511,7 +517,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     }
 
-    const int quality = region->sampleQuality;
+    const int quality = getCurrentSampleQuality();
 
     switch (quality) {
     default:

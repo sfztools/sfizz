@@ -44,6 +44,14 @@ public:
     ~Sfizz();
 
     /**
+     * @brief Processing mode
+     */
+    enum ProcessMode {
+        ProcessLive,
+        ProcessFreewheeling,
+    };
+
+    /**
      * @brief Empties the current regions and load a new SFZ file into the synth.
      *
      * This function will disable all callbacks so it is safe to call from a
@@ -173,6 +181,31 @@ public:
      * @param sampleRate The sample rate.
      */
     void setSampleRate(float sampleRate) noexcept;
+
+    /**
+     * @brief Get the default resampling quality. This is the quality setting
+     * which the engine uses when the instrument does not use the
+     * opcode `sample_quality`. The engine uses distinct default quality
+     * settings for live mode and freewheeling mode, which both can be
+     * accessed by the means of this function.
+     *
+     * @param[in] mode  The processing mode.
+     *
+     * @return The sample quality for the given mode, in the range 1 to 10.
+     */
+    int getSampleQuality(ProcessMode mode);
+
+    /**
+     * @brief Set the default resampling quality. This is the quality setting
+     * which the engine uses when the instrument does not use the
+     * opcode `sample_quality`. The engine uses distinct default quality
+     * settings for live mode and freewheeling mode, which both can be
+     * accessed by the means of this function.
+     *
+     * @param[in] mode    The processing mode.
+     * @param[in] quality The desired sample quality, in the range 1 to 10.
+     */
+    void setSampleQuality(ProcessMode mode, int quality);
 
     /**
      * @brief Return the current value for the volume, in dB.

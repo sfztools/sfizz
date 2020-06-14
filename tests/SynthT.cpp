@@ -486,3 +486,57 @@ TEST_CASE("[Synth] Region by identifier")
     REQUIRE(nullptr == synth.getRegionById(NumericId<sfz::Region>{6}));
     REQUIRE(nullptr == synth.getRegionById(NumericId<sfz::Region>{}));
 }
+
+TEST_CASE("[Synth] sample quality")
+{
+    sfz::Synth synth;
+
+    synth.loadSfzString("tests/TestFiles/sampleQuality.sfz", R"(
+<region> sample=kick.wav key=60
+<region> sample=kick.wav key=61 sample_quality=5
+)");
+
+    // default sample quality
+    synth.noteOn(0, 60, 100);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQuality);
+    synth.allSoundOff();
+
+    // default sample quality, freewheeling
+    synth.enableFreeWheeling();
+    synth.noteOn(0, 60, 100);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQualityInFreewheelingMode);
+    synth.allSoundOff();
+    synth.disableFreeWheeling();
+
+    // user-defined sample quality
+    synth.setSampleQuality(sfz::Synth::ProcessLive, 3);
+    synth.noteOn(0, 60, 100);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 3);
+    synth.allSoundOff();
+
+    // user-defined sample quality, freewheeling
+    synth.enableFreeWheeling();
+    synth.setSampleQuality(sfz::Synth::ProcessFreewheeling, 8);
+    synth.noteOn(0, 60, 100);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 8);
+    synth.allSoundOff();
+    synth.disableFreeWheeling();
+
+    // region sample quality
+    synth.noteOn(0, 61, 100);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
+    synth.allSoundOff();
+
+    // region sample quality, freewheeling
+    synth.enableFreeWheeling();
+    synth.noteOn(0, 61, 100);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
+    synth.allSoundOff();
+    synth.disableFreeWheeling();
+}
