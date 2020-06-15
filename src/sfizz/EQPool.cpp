@@ -2,6 +2,7 @@
 #include <thread>
 #include "absl/algorithm/container.h"
 #include "SIMDHelpers.h"
+#include "SwapAndPop.h"
 
 sfz::EQHolder::EQHolder(const MidiState& state)
 :midiState(state)
@@ -133,18 +134,8 @@ size_t sfz::EQPool::setnumEQs(size_t numEQs)
 {
     const std::lock_guard<std::mutex> eqLock { eqGuard };
 
-    auto eqIterator = eqs.begin();
-    auto eqSentinel = eqs.rbegin();
-    while (eqIterator < eqSentinel.base()) {
-        if (eqIterator->use_count() == 1) {
-            std::iter_swap(eqIterator, eqSentinel);
-            ++eqSentinel;
-        } else {
-            ++eqIterator;
-        }
-    }
+    swapAndPopAll(eqs, [](sfz::EQHolderPtr& eq) { return eq.use_count() == 1; });
 
-    eqs.resize(std::distance(eqs.begin(), eqSentinel.base()));
     for (size_t i = eqs.size(); i < numEQs; ++i) {
         eqs.emplace_back(std::make_shared<EQHolder>(midiState));
         eqs.back()->setSampleRate(sampleRate);

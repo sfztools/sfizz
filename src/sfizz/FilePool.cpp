@@ -28,6 +28,7 @@
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
+#include "SwapAndPop.h"
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
@@ -431,37 +432,19 @@ void sfz::FilePool::cleanupPromises() noexcept
 
     // The garbage collection cleared the data from these so we can move them
     // back to the empty queue
-    auto clearedIterator = promisesToClear.begin();
-    auto clearedSentinel = promisesToClear.rbegin();
-    while (clearedIterator < clearedSentinel.base()) {
-        if (clearedIterator->get()->dataStatus == FilePromise::DataStatus::Wait) {
-            emptyPromises.push_back(*clearedIterator);
-            std::iter_swap(clearedIterator, clearedSentinel);
-            ++clearedSentinel;
-        } else {
-            ++clearedIterator;
-        }
-    }
-    promisesToClear.resize(std::distance(promisesToClear.begin(), clearedSentinel.base()));
+    auto promiseWaiting = [](FilePromisePtr& p) { return p->waiting(); };
+    auto moveToEmpty = [&](FilePromisePtr& p) { return emptyPromises.push_back(p); };
+    swapAndPopAll(promisesToClear, promiseWaiting, moveToEmpty);
 
-    FilePromisePtr promise;
     // Remove the promises from the filled queue and put them in a linear
     // storage
+    FilePromisePtr promise;
     while (filledPromiseQueue.try_pop(promise))
         temporaryFilePromises.push_back(promise);
 
-    auto filledIterator = temporaryFilePromises.begin();
-    auto filledSentinel = temporaryFilePromises.rbegin();
-    while (filledIterator < filledSentinel.base()) {
-        if (filledIterator->use_count() == 1) {
-            promisesToClear.push_back(*filledIterator);
-            std::iter_swap(filledIterator, filledSentinel);
-            ++filledSentinel;
-        } else {
-            ++filledIterator;
-        }
-    }
-    temporaryFilePromises.resize(std::distance(temporaryFilePromises.begin(), filledSentinel.base()));
+    auto promiseUsedOnce = [](FilePromisePtr& p) { return p.use_count() == 1; };
+    auto moveToClear = [&](FilePromisePtr& p) { return promisesToClear.push_back(p); };
+    swapAndPopAll(temporaryFilePromises, promiseUsedOnce, moveToClear);
 }
 
 void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
