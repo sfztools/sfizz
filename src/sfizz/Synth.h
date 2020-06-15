@@ -707,9 +707,8 @@ private:
     std::vector<RegionPtr> regions;
     std::vector<VoicePtr> voices;
     // These are more general "groups" than sfz and encapsulates the full hierarchy
-    enum class Header { Global, Master, Group };
     RegionSet* currentSet;
-    Header lastHeader { Header::Global };
+    OpcodeScope lastHeader { OpcodeScope::kOpcodeScopeGlobal };
     std::vector<RegionSetPtr> sets;
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups;

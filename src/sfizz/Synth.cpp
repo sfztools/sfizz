@@ -74,7 +74,7 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
     case hash("global"):
         globalOpcodes = members;
         currentSet = sets.front().get();
-        lastHeader = Header::Global;
+        lastHeader = OpcodeScope::kOpcodeScopeGlobal;
         groupOpcodes.clear();
         masterOpcodes.clear();
         handleGlobalOpcodes(members);
@@ -87,17 +87,17 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         masterOpcodes = members;
         newRegionSet(sets.front().get());
         groupOpcodes.clear();
-        lastHeader = Header::Master;
+        lastHeader = OpcodeScope::kOpcodeScopeMaster;
         handleMasterOpcodes(members);
         numMasters++;
         break;
     case hash("group"):
         groupOpcodes = members;
-        if (lastHeader == Header::Group)
+        if (lastHeader == OpcodeScope::kOpcodeScopeGroup)
             newRegionSet(currentSet->getParent());
         else
             newRegionSet(currentSet);
-        lastHeader = Header::Group;
+        lastHeader = OpcodeScope::kOpcodeScopeGroup;
         handleGroupOpcodes(members, masterOpcodes);
         numGroups++;
         break;
@@ -175,6 +175,7 @@ void sfz::Synth::clear()
     for (auto& list : ccActivationLists)
         list.clear();
 
+    lastHeader = OpcodeScope::kOpcodeScopeGlobal;
     sets.clear();
     sets.emplace_back(new RegionSet);
     currentSet = sets.front().get();
