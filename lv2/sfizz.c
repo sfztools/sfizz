@@ -75,7 +75,7 @@
 #define PITCH_BUILD_AND_CENTER(first_byte, last_byte) (int)(((unsigned int)last_byte << 7) + (unsigned int)first_byte) - 8192
 #define MAX_BLOCK_SIZE 8192
 #define MAX_PATH_SIZE 1024
-#define MAX_VOICES 512
+#define MAX_VOICES 256
 #define DEFAULT_VOICES 64
 #define DEFAULT_OVERSAMPLING SFIZZ_OVERSAMPLING_X1
 #define DEFAULT_PRELOAD 8192
