@@ -85,17 +85,19 @@ struct FilePromise
         sampleRate = config::defaultSampleRate;
     }
 
-    void waitCompletion()
-    {
-        while (dataStatus == DataStatus::Wait)
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
     enum class DataStatus {
         Wait = 0,
         Ready,
         Error,
     };
+
+    bool waiting() const { return dataStatus == DataStatus::Wait; }
+
+    void sleepUntilComplete()
+    {
+        while (waiting())
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
 
     FileId fileId {};
     FileAudioBufferPtr preloadedData {};

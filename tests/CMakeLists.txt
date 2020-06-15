@@ -31,6 +31,7 @@ set(SFIZZ_TEST_SOURCES
     FloatHelpersT.cpp
     WavetablesT.cpp
     SemaphoreT.cpp
+    SwapAndPopT.cpp
     TuningT.cpp
 )
 

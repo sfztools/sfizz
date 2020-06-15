@@ -1,5 +1,6 @@
 #include "FilterPool.h"
 #include "SIMDHelpers.h"
+#include "SwapAndPop.h"
 #include "absl/algorithm/container.h"
 #include <thread>
 #include <chrono>
@@ -134,18 +135,8 @@ size_t sfz::FilterPool::setNumFilters(size_t numFilters)
 {
     const std::lock_guard<std::mutex> filterLock { filterGuard };
 
-    auto filterIterator = filters.begin();
-    auto filterSentinel = filters.rbegin();
-    while (filterIterator < filterSentinel.base()) {
-        if (filterIterator->use_count() == 1) {
-            std::iter_swap(filterIterator, filterSentinel);
-            ++filterSentinel;
-        } else {
-            ++filterIterator;
-        }
-    }
+    swapAndPopAll(filters, [](sfz::FilterHolderPtr& filter) { return filter.use_count() == 1; });
 
-    filters.resize(std::distance(filters.begin(), filterSentinel.base()));
     for (size_t i = filters.size(); i < numFilters; ++i) {
         filters.emplace_back(std::make_shared<FilterHolder>(midiState));
         filters.back()->setSampleRate(sampleRate);
