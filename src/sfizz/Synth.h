@@ -9,6 +9,8 @@
 #include "Parser.h"
 #include "Voice.h"
 #include "Region.h"
+#include "RegionSet.h"
+#include "PolyphonyGroup.h"
 #include "Effects.h"
 #include "LeakDetector.h"
 #include "MidiState.h"
@@ -220,17 +222,39 @@ public:
      * for testing.
      *
      * @param idx
-     * @return const Region*
+     * @return const Voice*
      */
     const Voice* getVoiceView(int idx) const noexcept;
     /**
-     * @brief Get a raw view into a specific voice. This is mostly used
+     * @brief Get a raw view into a specific effect bus. This is mostly used
      * for testing.
      *
      * @param idx
-     * @return const Region*
+     * @return const EffectBus*
      */
     const EffectBus* getEffectBusView(int idx) const noexcept;
+    /**
+     * @brief Get a raw view into a specific set of regions. This is mostly used
+     * for testing.
+     *
+     * @param idx
+     * @return const RegionSet*
+     */
+    const RegionSet* getRegionSetView(int idx) const noexcept;
+    /**
+     * @brief Get a raw view into a specific polyphony group. This is mostly used
+     * for testing.
+     *
+     * @param idx
+     * @return const PolyphonyGroup*
+     */
+    const PolyphonyGroup* getPolyphonyGroupView(int idx) const noexcept;
+    /**
+     * @brief Get the number of polyphony groups
+     *
+     * @return unsigned
+     */
+    unsigned getNumPolyphonyGroups() const noexcept;
     /**
      * @brief Get a list of unknown opcodes. The lifetime of the
      * string views in the code are linked to the currently loaded
@@ -572,7 +596,6 @@ private:
      * @param polyphone the max polyphony
      */
     void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
-    std::vector<unsigned> groupMaxPolyphony { config::maxVoices };
 
     /**
      * @brief Reset all CCs; to be used on CC 121
@@ -598,6 +621,12 @@ private:
      * @param members the opcodes of the <global> block
      */
     void handleGlobalOpcodes(const std::vector<Opcode>& members);
+    /**
+     * @brief Helper function to dispatch <master> opcodes
+     *
+     * @param members the opcodes of the <master> block
+     */
+    void handleMasterOpcodes(const std::vector<Opcode>& members);
     /**
      * @brief Helper function to dispatch <group> opcodes
      *
@@ -649,8 +678,6 @@ private:
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
 
-    unsigned killSisterVoices(const Voice* voiceToKill) noexcept;
-
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block
     std::vector<Opcode> globalOpcodes;
@@ -672,15 +699,25 @@ private:
     // Default active switch if multiple keyswitchable regions are present
     absl::optional<uint8_t> defaultSwitch;
     std::vector<std::string> unknownOpcodes;
-    using RegionPtrVector = std::vector<Region*>;
-    using VoicePtrVector = std::vector<Voice*>;
-    std::vector<std::unique_ptr<Region>> regions;
-    std::vector<std::unique_ptr<Voice>> voices;
+    using RegionViewVector = std::vector<Region*>;
+    using VoiceViewVector = std::vector<Voice*>;
+    using VoicePtr = std::unique_ptr<Voice>;
+    using RegionPtr = std::unique_ptr<Region>;
+    using RegionSetPtr = std::unique_ptr<RegionSet>;
+    std::vector<RegionPtr> regions;
+    std::vector<VoicePtr> voices;
+    // These are more general "groups" than sfz and encapsulates the full hierarchy
+    enum class Header { Global, Master, Group };
+    RegionSet* currentSet;
+    Header lastHeader { Header::Global };
+    std::vector<RegionSetPtr> sets;
+    // These are the `group=` groups where you can off voices
+    std::vector<PolyphonyGroup> polyphonyGroups;
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
-    VoicePtrVector voiceViewArray;
-    std::array<RegionPtrVector, 128> noteActivationLists;
-    std::array<RegionPtrVector, config::numCCs> ccActivationLists;
+    VoiceViewVector voiceViewArray;
+    std::array<RegionViewVector, 128> noteActivationLists;
+    std::array<RegionViewVector, config::numCCs> ccActivationLists;
 
     // Effect factory and buses
     EffectFactory effectFactory;

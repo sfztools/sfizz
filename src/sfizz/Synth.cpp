@@ -51,14 +51,31 @@ void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
 {
     (void)id;
     (void)state;
-    DBG("Voice " << id.number << ": state " << static_cast<int>(state));
+    if (state == Voice::State::idle) {
+        auto voice = getVoiceById(id);
+        DBG("Removing voice " << id.number << " from hierarchies");
+        RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
+        polyphonyGroups[voice->getRegion()->group].removeVoice(voice);
+    }
+
 }
 
 void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
+    const auto newRegionSet = [&](RegionSet* parentSet) {
+        ASSERT(parentSet != nullptr);
+        sets.emplace_back(new RegionSet);
+        auto newSet = sets.back().get();
+        parentSet->addSubset(newSet);
+        newSet->setParent(parentSet);
+        currentSet = newSet;
+    };
+
     switch (hash(header)) {
     case hash("global"):
         globalOpcodes = members;
+        currentSet = sets.front().get();
+        lastHeader = Header::Global;
         groupOpcodes.clear();
         masterOpcodes.clear();
         handleGlobalOpcodes(members);
@@ -69,11 +86,19 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("master"):
         masterOpcodes = members;
+        newRegionSet(sets.front().get());
         groupOpcodes.clear();
+        lastHeader = Header::Master;
+        handleMasterOpcodes(members);
         numMasters++;
         break;
     case hash("group"):
         groupOpcodes = members;
+        if (lastHeader == Header::Group)
+            newRegionSet(currentSet->getParent());
+        else
+            newRegionSet(currentSet);
+        lastHeader = Header::Group;
         handleGroupOpcodes(members, masterOpcodes);
         numGroups++;
         break;
@@ -105,6 +130,8 @@ void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& mes
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
+    ASSERT(currentSet != nullptr);
+
     int regionNumber = static_cast<int>(regions.size());
     auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
 
@@ -128,6 +155,13 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (octaveOffset != 0 || noteOffset != 0)
         lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
 
+    // There was a combination of group= and polyphony= on a region, so set the group polyphony
+    if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
+        setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+
+    lastRegion->parent = currentSet;
+    currentSet->addRegion(lastRegion.get());
+
     regions.push_back(std::move(lastRegion));
 }
 
@@ -142,6 +176,9 @@ void sfz::Synth::clear()
     for (auto& list : ccActivationLists)
         list.clear();
 
+    sets.clear();
+    sets.emplace_back(new RegionSet);
+    currentSet = sets.front().get();
     regions.clear();
     effectBuses.clear();
     effectBuses.emplace_back(new EffectBus);
@@ -162,9 +199,25 @@ void sfz::Synth::clear()
     masterOpcodes.clear();
     groupOpcodes.clear();
     unknownOpcodes.clear();
-    groupMaxPolyphony.clear();
-    groupMaxPolyphony.push_back(config::maxVoices);
+    polyphonyGroups.clear();
+    polyphonyGroups.emplace_back();
+    polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
     modificationTime = fs::file_time_type::min();
+}
+
+void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
+{
+    for (auto& rawMember : members) {
+        const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
+
+        switch (member.lettersOnlyHash) {
+        case hash("polyphony"):
+            ASSERT(currentSet != nullptr);
+            if (auto value = readOpcode(member.value, Default::polyphonyRange))
+                currentSet->setPolyphonyLimit(*value);
+            break;
+        }
+    }
 }
 
 void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
@@ -173,6 +226,11 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
         const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
 
         switch (member.lettersOnlyHash) {
+        case hash("polyphony"):
+            ASSERT(currentSet != nullptr);
+            if (auto value = readOpcode(member.value, Default::polyphonyRange))
+                currentSet->setPolyphonyLimit(*value);
+            break;
         case hash("sw_default"):
             setValueFromOpcode(member, defaultSwitch, Default::keyRange);
             break;
@@ -187,7 +245,7 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
 void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
 {
     absl::optional<unsigned> groupIdx;
-    unsigned maxPolyphony { config::maxVoices };
+    absl::optional<unsigned> maxPolyphony;
 
     const auto parseOpcode = [&](const Opcode& rawMember) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeGroup);
@@ -197,7 +255,7 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             setValueFromOpcode(member, groupIdx, Default::groupRange);
             break;
         case hash("polyphony"):
-            setValueFromOpcode(member, maxPolyphony, Range<unsigned>(0, config::maxVoices));
+            setValueFromOpcode(member, maxPolyphony, Default::polyphonyRange);
             break;
         }
     };
@@ -208,8 +266,14 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
     for (auto& member : members)
         parseOpcode(member);
 
-    if (groupIdx)
-        setGroupPolyphony(*groupIdx, maxPolyphony);
+    if (groupIdx && maxPolyphony) {
+        setGroupPolyphony(*groupIdx, *maxPolyphony);
+    } else if (maxPolyphony) {
+        ASSERT(currentSet != nullptr);
+        currentSet->setPolyphonyLimit(*maxPolyphony);
+    } else if (groupIdx && *groupIdx > polyphonyGroups.size()) {
+        setGroupPolyphony(*groupIdx, config::maxVoices);
+    }
 }
 
 void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
@@ -437,8 +501,10 @@ void sfz::Synth::finalizeSfzLoad()
             keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
-        while (groupMaxPolyphony.size() <= region->group)
-            groupMaxPolyphony.push_back(config::maxVoices);
+        while (polyphonyGroups.size() <= region->group) {
+            polyphonyGroups.emplace_back();
+            polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
+        }
 
         for (auto note = 0; note < 128; note++) {
             if (region->keyRange.containsWithEnd(note) || (region->hasKeyswitches() && region->keyswitchRange.containsWithEnd(note)))
@@ -809,6 +875,8 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOff);
             ring.addVoiceToRing(voice);
+            RegionSet::registerVoiceInHierarchy(region, voice);
+            polyphonyGroups[region->group].registerVoice(voice);
         }
     }
 }
@@ -820,8 +888,8 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            unsigned activeNotesInGroup { 0 };
-            unsigned activeNotes { 0 };
+            unsigned notePolyphonyCounter { 0 };
+            unsigned regionPolyphonyCounter { 0 };
             Voice* selfMaskCandidate { nullptr };
 
             for (auto& voice : voices) {
@@ -829,12 +897,12 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 if (voiceRegion == nullptr)
                     continue;
 
-                if (voiceRegion->group == region->group)
-                    activeNotesInGroup += 1;
+                if (voiceRegion == region)
+                    regionPolyphonyCounter += 1;
 
                 if (region->notePolyphony) {
                     if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
-                        activeNotes += 1;
+                        notePolyphonyCounter += 1;
                         switch (region->selfMask) {
                         case SfzSelfMask::mask:
                             if (voice->getTriggerValue() < velocity) {
@@ -854,10 +922,30 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
 
-            if (activeNotesInGroup >= groupMaxPolyphony[region->group])
+            // FIXME: Do something for the polyphony limit
+            if (polyphonyGroups[region->group].getActiveVoices().size()
+                == polyphonyGroups[region->group].getPolyphonyLimit())
                 continue;
 
-            if (region->notePolyphony && activeNotes >= *region->notePolyphony) {
+            // FIXME: Do something for the polyphony limit
+            if (regionPolyphonyCounter >= region->polyphony)
+                continue;
+
+            // FIXME: Do something for the polyphony limit
+            auto parent = region->parent;
+            bool polyphonyReached { false };
+            while (parent != nullptr) {
+                if (parent->getActiveVoices().size() >= parent->getPolyphonyLimit()) {
+                    polyphonyReached = true;
+                    break;
+                }
+
+                parent = parent->getParent();
+            }
+            if (polyphonyReached)
+                continue;
+
+            if (region->notePolyphony && notePolyphonyCounter >= *region->notePolyphony) {
                 if (selfMaskCandidate != nullptr)
                     selfMaskCandidate->release(delay);
                 else // We're the lowest velocity guy here
@@ -870,6 +958,8 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
             voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
             ring.addVoiceToRing(voice);
+            RegionSet::registerVoiceInHierarchy(region, voice);
+            polyphonyGroups[region->group].registerVoice(voice);
         }
     }
 }
@@ -917,6 +1007,8 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 
             voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
             ring.addVoiceToRing(voice);
+            RegionSet::registerVoiceInHierarchy(region, voice);
+            polyphonyGroups[region->group].registerVoice(voice);
         }
     }
 }
@@ -1079,6 +1171,16 @@ const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
     return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
 }
 
+const sfz::RegionSet* sfz::Synth::getRegionSetView(int idx) const noexcept
+{
+    return (size_t)idx < sets.size() ? sets[idx].get() : nullptr;
+}
+
+const sfz::PolyphonyGroup* sfz::Synth::getPolyphonyGroupView(int idx) const noexcept
+{
+    return (size_t)idx < polyphonyGroups.size() ? &polyphonyGroups[idx] : nullptr;
+}
+
 const sfz::Region* sfz::Synth::getRegionById(NumericId<Region> id) const noexcept
 {
     const size_t size = regions.size();
@@ -1116,6 +1218,11 @@ const sfz::Voice* sfz::Synth::getVoiceById(NumericId<Voice> id) const noexcept
 const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
 {
     return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
+}
+
+unsigned sfz::Synth::getNumPolyphonyGroups() const noexcept
+{
+    return polyphonyGroups.size();
 }
 
 const std::vector<std::string>& sfz::Synth::getUnknownOpcodes() const noexcept
@@ -1226,8 +1333,10 @@ void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
     if (factor == oversamplingFactor)
         return;
 
-    for (auto& voice : voices)
+    for (auto& voice : voices) {
+
         voice->reset();
+    }
 
     resources.filePool.emptyFileLoadingQueues();
     resources.filePool.setOversamplingFactor(factor);
@@ -1339,8 +1448,8 @@ void sfz::Synth::allSoundOff() noexcept
 
 void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
 {
-    while (groupMaxPolyphony.size() <= groupIdx)
-        groupMaxPolyphony.push_back(config::maxVoices);
+    while (polyphonyGroups.size() <= groupIdx)
+        polyphonyGroups.emplace_back();
 
-    groupMaxPolyphony[groupIdx] = polyphony;
+    polyphonyGroups[groupIdx].setPolyphonyLimit(polyphony);
 }
