@@ -53,7 +53,6 @@ void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
     (void)state;
     if (state == Voice::State::idle) {
         auto voice = getVoiceById(id);
-        DBG("Removing voice " << id.number << " from hierarchies");
         RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
         polyphonyGroups[voice->getRegion()->group].removeVoice(voice);
     }

@@ -1,6 +1,7 @@
 #pragma once
 #include "Region.h"
 #include "Voice.h"
+#include "SwapAndPop.h"
 #include <vector>
 
 namespace sfz
@@ -31,16 +32,7 @@ public:
     }
     void removeVoice(const Voice* voice)
     {
-        auto it = absl::c_find(voices, voice);
-        if (it == voices.end())
-            return;
-
-        auto last = voices.end() - 1;
-        if (it != last)
-            std::iter_swap(it, last);
-
-        voices.pop_back();
-        DBG("Active voices size " << voices.size());
+        swapAndPopFirst(voices, [voice](const Voice* v) { return v == voice; });
     }
     static void registerVoiceInHierarchy(const Region* region, Voice* voice)
     {

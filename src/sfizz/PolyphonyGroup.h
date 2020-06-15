@@ -1,6 +1,7 @@
 #pragma once
 #include "Region.h"
 #include "Voice.h"
+#include "SwapAndPop.h"
 #include "absl/algorithm/container.h"
 
 namespace sfz
@@ -20,15 +21,7 @@ public:
     }
     void removeVoice(const Voice* voice)
     {
-        auto it = absl::c_find(voices, voice);
-        if (it == voices.end())
-            return;
-
-        auto last = voices.end() - 1;
-        if (it != last)
-            std::iter_swap(it, last);
-
-        voices.pop_back();
+        swapAndPopFirst(voices, [voice](const Voice* v) { return v == voice; });
     }
     const std::vector<Voice*>& getActiveVoices() const { return voices; }
     std::vector<Voice*>& getActiveVoices() { return voices; }
