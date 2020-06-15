@@ -90,6 +90,8 @@ add_library(sfizz-elements STATIC EXCLUDE_FROM_ALL
 target_include_directories(sfizz-elements PUBLIC
     external/elements/lib/include
     external/elements/lib/infra/include
+    external/elements/lib/infra/external/string-view-lite/include
+    external/elements/lib/infra/external/optional-lite/include
     ../src/external # use our ghc::filesystem
     )
 target_link_libraries(sfizz-elements PUBLIC sfizz-cairo sfizz-fontconfig)
