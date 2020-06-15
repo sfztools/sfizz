@@ -98,6 +98,14 @@ target_link_libraries(sfizz-elements PUBLIC sfizz-cairo sfizz-fontconfig)
 target_compile_definitions(sfizz-elements PUBLIC
     "ELEMENTS_HOST_UI_LIBRARY_CUSTOM=1")
 
+# Warnings from Elements headers
+#   https://github.com/cycfi/elements/issues/155
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(sfizz-elements PUBLIC
+        "-Wno-overloaded-virtual"
+        "-Wno-unused-parameter")
+endif()
+
 # editor
 add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/Editor.cpp
