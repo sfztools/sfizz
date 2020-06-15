@@ -36,7 +36,7 @@ public:
     }
     static void registerVoiceInHierarchy(const Region* region, Voice* voice)
     {
-        auto parent = region->parent;
+        auto* parent = region->parent;
         while (parent != nullptr) {
             parent->registerVoice(voice);
             parent = parent->getParent();
@@ -44,7 +44,7 @@ public:
     }
     static void removeVoiceFromHierarchy(const Region* region, const Voice* voice)
     {
-        auto parent = region->parent;
+        auto* parent = region->parent;
         while (parent != nullptr) {
             parent->removeVoice(voice);
             parent = parent->getParent();
