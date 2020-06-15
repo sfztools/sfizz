@@ -88,14 +88,13 @@ void Tuning::Impl::updateScale(const Tunings::Scale& scale, absl::optional<fs::p
 
 bool Tuning::Impl::shouldReloadScala()
 {
-    DBG("Should reload scala called");
     if (!scalaFile_)
         return false;
 
     std::error_code ec;
     const auto newTime = fs::last_write_time(*scalaFile_, ec);
     if (newTime > modificationTime_) {
-        DBG("File changed!");
+        DBG("Scala file changed!");
         modificationTime_ = newTime;
         return true;
     }
