@@ -29,6 +29,7 @@ set(SFIZZ_TEST_SOURCES
     CurveT.cpp
     RegionTriggersT.cpp
     FloatHelpersT.cpp
+    RandomHelpersT.cpp
     WavetablesT.cpp
     SemaphoreT.cpp
     TuningT.cpp
