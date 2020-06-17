@@ -28,7 +28,7 @@ namespace sfz
  */
 template <class Type, size_t MaxChannels = sfz::config::numChannels,
           unsigned int Alignment = SIMDConfig::defaultAlignment,
-          size_t PaddingLeft_ = 0, size_t PaddingRight = 0>
+          size_t PaddingLeft_ = 0, size_t PaddingRight_ = 0>
 class AudioBuffer {
 public:
     using value_type = typename std::remove_cv<Type>::type;
@@ -40,6 +40,8 @@ public:
     enum {
         //! Increased left padding to preserve required alignment
         PaddingLeft = PaddingLeft_ + (Alignment - (PaddingLeft_ % Alignment)) % Alignment,
+        //! Padding to the right
+        PaddingRight = PaddingRight_,
         //! Total padding left and right
         PaddingTotal = PaddingLeft + PaddingRight,
     };
