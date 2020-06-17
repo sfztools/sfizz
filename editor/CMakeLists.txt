@@ -116,16 +116,15 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/Editor.cpp
     src/editor/Res.h
     src/editor/Res.cpp
-    src/editor/Knob.h
-    src/editor/Knob.cpp
-    src/editor/Slider.h
-    src/editor/Slider.cpp
     src/editor/PageHome.h
     src/editor/PageHome.cpp
     src/editor/PageSettings.h
     src/editor/PageSettings.cpp
     src/editor/UI.h
     src/editor/UI.cpp
+    src/editor/parts/dials.cpp
+    src/editor/parts/sliders.cpp
+    src/editor/parts/formatters.cpp
     src/host/ElementsPuglWindow.cpp
     src/host/ElementsPuglBaseView.cpp
     src/host/PuglHelpers.cpp)

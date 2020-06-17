@@ -5,35 +5,34 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-
-#include "Knob.h"
-#include "Slider.h"
-#include "native/FileDialog.h"
 #include <elements.hpp>
+#include <absl/strings/string_view.h>
+#include <memory>
 #include <functional>
 
 namespace el = cycfi::elements;
 
-class PageHome {
-
+class PageHome : public el::proxy_base {
 public:
-    explicit PageHome(el::view& view_);
+    explicit PageHome(el::view& view);
+    ~PageHome();
 
-    el::element_ptr contents() const;
+    const el::element& subject() const override;
+    el::element& subject() override;
 
+    void updatePreloadSize(int v);
     void updateVolume(float v);
+    void updatePolyphony(int v);
+    void updateOversampling(int v);
     void updateSfzFile(cycfi::string_view v);
 
+    std::function<void(int)> on_change_preload_size;
     std::function<void(double)> on_change_volume;
+    std::function<void(int)> on_change_polyphony;
+    std::function<void(int)> on_change_oversampling;
     std::function<void(absl::string_view)> on_change_sfz_file;
 
 private:
-    el::element_ptr contents_;
-
-    std::shared_ptr<Knob> knbPolyphony;
-    std::shared_ptr<Knob> knbOversampling;
-    std::shared_ptr<Knob> knbPreload;
-    std::shared_ptr<Slider> sldVolume;
-    std::shared_ptr<FileDialog> fileDialog;
-    std::shared_ptr<el::basic_input_box> txtSfz;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };

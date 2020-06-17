@@ -7,7 +7,6 @@
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
 =============================================================================*/
 #pragma once
-
 #include "elements.hpp"
 #include <functional>
 
@@ -33,7 +32,7 @@ combo_box(std::string init)
 template <typename T>
 std::pair<el::basic_menu, std::shared_ptr<el::basic_label>>
 combo_box(
-    std::function<void(cycfi::string_view item)> on_select, std::initializer_list<T> const& list)
+    std::function<void(std::size_t index)> on_select, std::initializer_list<T> const& list)
 {
     struct init_list_menu_selector : el::menu_selector {
         init_list_menu_selector(std::initializer_list<T> const& list_)
@@ -56,7 +55,7 @@ combo_box(
 }
 std::pair<el::basic_menu, std::shared_ptr<el::basic_label>>
 combo_box(
-    std::function<void(cycfi::string_view item)> on_select, el::menu_selector const& items)
+    std::function<void(std::size_t index)> on_select, el::menu_selector const& items)
 {
     auto r = combo_box(items.size() ? std::string(items[0]) : "");
 
@@ -64,9 +63,9 @@ combo_box(
         el::vtile_composite list;
         for (std::size_t i = 0; i != items.size(); ++i) {
             auto e = el::menu_item(std::string(items[i]));
-            e.on_click = [btn_text = r.second, on_select, text = items[i]]() {
+            e.on_click = [i, btn_text = r.second, on_select, text = items[i]]() {
                 btn_text->set_text(text);
-                on_select(text);
+                on_select(i);
             };
             list.push_back(share(e));
         }

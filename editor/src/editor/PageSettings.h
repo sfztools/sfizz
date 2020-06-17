@@ -5,24 +5,32 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-
 #include <elements.hpp>
-#include "native/FileDialog.h"
+#include <absl/strings/string_view.h>
+#include <functional>
+#include <memory>
 
 namespace el = cycfi::elements;
 
-class PageSettings {
-
+class PageSettings : public el::proxy_base {
 public:
-    PageSettings(el::view& view_);
+    explicit PageSettings(el::view& view_);
+    ~PageSettings();
 
-    el::element_ptr contents() const;
+    const el::element& subject() const override;
+    el::element& subject() override;
+
+    void updateScalaFile(cycfi::string_view v);
+    void updateScalaRootKey(float v);
+    void updateTuningFrequency(float v);
+    void updateStretchTuning(float v);
+
+    std::function<void(absl::string_view)> on_change_scala_file;
+    std::function<void(int)> on_change_scala_root_key;
+    std::function<void(double)> on_change_tuning_frequency;
+    std::function<void(double)> on_change_stretch_tuning;
 
 private:
-    el::basic_menu makeScalaCenterMenu();
-    el::basic_menu makeScalaTuningMenu();
-
-    el::element_ptr contents_;
-    std::shared_ptr<FileDialog> fileDialog;
-    std::shared_ptr<el::basic_input_box> txtScala;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };

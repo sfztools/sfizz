@@ -5,70 +5,159 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "PageHome.h"
+#include "parts/dials.hpp"
+#include "parts/sliders.hpp"
+#include "parts/misc.hpp"
+#include "native/FileDialog.h"
 
-#include <memory>
-#include <functional>
+struct PageHome::Impl {
+    PageHome* self_ = nullptr;
 
-PageHome::PageHome(el::view& view_)
-    : knbPolyphony(std::make_shared<Knob>(view_, "Polyphony", Knob::Type::Polyphony, 0.85))
-    , knbOversampling(std::make_shared<Knob>(view_, "Oversampling", Knob::Type::Oversampling, 0))
-    , knbPreload(std::make_shared<Knob>(view_, "Preload", Knob::Type::PreloadSize, 0.58))
-    , sldVolume(std::make_shared<Slider>(view_, "Volume", 0.75f))
+    void init(el::view& view);
+    void askToChooseSfzFile();
+
+    el::element_ptr contents_;
+
+    value_dial_ptr knbPolyphony_;
+    multi_choice_dial_ptr knbOversampling_;
+    value_dial_ptr knbPreload_;
+    value_slider_ptr sldVolume_;
+    std::shared_ptr<FileDialog> fileDialog_;
+    std::shared_ptr<el::basic_input_box> txtSfz_;
+};
+
+PageHome::PageHome(el::view& view)
+    : impl_(new Impl)
 {
+    impl_->self_ = this;
+    impl_->init(view);
+}
+
+PageHome::~PageHome()
+{
+}
+
+const el::element& PageHome::subject() const
+{
+    return *impl_->contents_;
+}
+
+el::element& PageHome::subject()
+{
+    return *impl_->contents_;
+}
+
+void PageHome::updatePreloadSize(int v)
+{
+    impl_->knbPreload_->value(v);
+}
+
+void PageHome::updateVolume(float v)
+{
+    impl_->sldVolume_->value(v);
+}
+
+void PageHome::updatePolyphony(int v)
+{
+    impl_->knbPolyphony_->value(v);
+}
+
+void PageHome::updateOversampling(int v)
+{
+    // convert UI value using integer log2
+    int i = 0;
+    for (int f = std::max(1, v); f > 1; f /= 2)
+        ++i;
+
+    impl_->knbOversampling_->value(i);
+}
+
+void PageHome::updateSfzFile(cycfi::string_view v)
+{
+   impl_->txtSfz_->value(v);
+}
+
+void PageHome::Impl::init(el::view& view)
+{
+    const float dialScale = 1.0 / 4;
+    auto dialSprite = el::share(el::sprite { "knob.png", 128 * dialScale, dialScale });
+    auto thumbImg = el::share(el::image { "slider-v.png", 1.0 / 4 });
+
+    knbPolyphony_ = value_dial(el::hold(dialSprite), { 8, 512 });
+    knbOversampling_ = multi_choice_dial(el::hold(dialSprite), {"1x", "2x", "4x", "8x"});
+    knbPreload_ = value_dial(el::hold(dialSprite), { 1024, 65536 });
+    sldVolume_ = value_slider(
+        el::align_center(el::hold(thumbImg)),
+        el::slider_marks<30>(el::basic_track<4, true>()),
+        { -80.0, 6.0 });
+
+    knbPolyphony_->formatter(create_integer_printf_formatter("%d voices"));
+    knbPreload_->formatter(create_file_size_formatter());
+    sldVolume_->formatter(create_printf_formatter("%.1f dB"));
+
+    knbPreload_->on_change = [this](double v) { self_->on_change_preload_size(static_cast<int>(v)); };
+    sldVolume_->on_change = [this](double v) { self_->on_change_volume(v); };
+    knbPolyphony_->on_change = [this](double v) { self_->on_change_polyphony(static_cast<int>(v)); };
+    knbOversampling_->on_change = [this](double v) { self_->on_change_oversampling(1 << static_cast<int>(v)); };
+
     auto ibSfz = el::input_box(""); // FIXME: "Select a sfz file..." inputbox is messed up
-    txtSfz = ibSfz.second;
+    txtSfz_ = ibSfz.second;
 
     el::layered_button btnSfz = el::button("...");
 
-    btnSfz.on_click =
-        [this](bool) mutable {
-            fileDialog.reset(new FileDialog);
-            fileDialog->onFileChosen = [this](absl::string_view fileName) {
-                if (fileName != "" && fileName != txtSfz->get_text()) {
-                    txtSfz->set_text(std::string(fileName));
-                    if (on_change_sfz_file)
-                        on_change_sfz_file(fileName);
-                }
-            };
-            fileDialog->setMode(FileDialog::Mode::Open);
-            fileDialog->setTitle("Open a sfz file...");
-            fileDialog->addFilter(FileDialog::Filter { "SFZ Files", { "*.sfz", "*.SFZ" } });
-            fileDialog->chooseFile();
-            fileDialog.reset();
-        };
-    contents_
-        = el::share(
-            el::layer(
-                el::htile(
-                    el::margin({ 10, 10, 10, 10 },
-                        el::vtile(
-                            el::group("SFZ File",
+    btnSfz.on_click = [this](bool) { askToChooseSfzFile(); };
+
+    auto sfzGroup = el::group("SFZ File",
                                 el::margin({ 10, 10, 10, 10 },
                                     el::top_margin(26,
                                         el::htile(
                                             ibSfz.first,
                                             el::left_margin(10,
                                                 el::hsize(30,
-                                                    btnSfz)))))),
+                                                    btnSfz))))));
+
+    contents_
+        = el::share(
+            el::layer(
+                el::htile(
+                    el::margin({ 10, 10, 10, 10 },
+                        el::vtile(
+                            std::move(sfzGroup),
                             el::top_margin(10,
                                 el::htile(
-                                    el::hold(knbPolyphony->contents()),
-                                    el::hold(knbOversampling->contents()),
-                                    el::hold(knbPreload->contents()))))),
+                                    top_labeled("Polyphony",
+                                        el::hold(knbPolyphony_)),
+                                    top_labeled("Oversampling",
+                                        el::hold(knbOversampling_)),
+                                    top_labeled("Preload size",
+                                        el::hold(knbPreload_)))))),
                     el::margin({ 0, 10, 10, 10 },
-                        el::hold(sldVolume->contents())))));
-}
-el::element_ptr PageHome::contents() const
-{
-    return contents_;
+                        top_labeled("Volume",
+                            el::hold(sldVolume_))))));
 }
 
-void PageHome::updateVolume(float v)
+void PageHome::Impl::askToChooseSfzFile()
 {
-    sldVolume->value(v);
-}
+    FileDialog* dlg = fileDialog_.get();
+    if (dlg)
+        return;
 
-void PageHome::updateSfzFile(cycfi::string_view v)
-{
-   txtSfz->value(v);
+    dlg = new FileDialog;
+    fileDialog_.reset(dlg);
+
+    dlg->setMode(FileDialog::Mode::Open);
+    dlg->setTitle("Open a sfz file...");
+    dlg->addFilter(FileDialog::Filter { "SFZ Files", { "*.sfz" } });
+
+    dlg->onFileChosen = [this](absl::string_view fileName) {
+         if (!fileName.empty()) {
+             txtSfz_->set_text(std::string(fileName));
+             if (self_->on_change_sfz_file)
+                 self_->on_change_sfz_file(fileName);
+         }
+         fileDialog_.reset();
+    };
+
+    if (!dlg->chooseFile())
+        fileDialog_.reset();
 }

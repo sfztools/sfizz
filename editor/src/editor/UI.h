@@ -5,32 +5,28 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-
-#include "absl/strings/string_view.h"
 #include <elements.hpp>
 #include <memory>
-class PageHome;
-class PageSettings;
 class EditorController;
 
 namespace el = cycfi::elements;
 
 class UI {
-
 public:
     UI(el::view& group, EditorController& ctrl);
     ~UI();
 
+    void updatePreloadSize(int v);
     void updateVolume(float v);
+    void updatePolyphony(float v);
+    void updateOversampling(int v);
     void updateSfzFile(cycfi::string_view v);
+    void updateScalaFile(cycfi::string_view v);
+    void updateScalaRootKey(float v);
+    void updateTuningFrequency(float v);
+    void updateStretchTuning(float v);
 
 private:
-    EditorController* ctrl_ = nullptr;
-
-    // Main window background color
-    static constexpr el::color bkd_color = el::rgba(35, 35, 37, 255);
-    el::box_element background = el::box(bkd_color);
-
-    std::shared_ptr<PageHome> pageHome;
-    std::shared_ptr<PageSettings> pageSettings;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
