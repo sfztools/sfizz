@@ -7,9 +7,9 @@
 #include "PageSettings.h"
 #include "parts/formatters.hpp"
 #include "parts/dials.hpp"
+#include "parts/combobox.hpp"
 #include "parts/misc.hpp"
 #include "native/FileDialog.h"
-#include <combobox.hpp>
 
 struct PageSettings::Impl {
     PageSettings* self_ = nullptr;

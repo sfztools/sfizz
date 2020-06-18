@@ -111,7 +111,6 @@ endif()
 
 # editor
 add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
-    external/elements-extra/combobox.hpp
     src/editor/Editor.h
     src/editor/Editor.cpp
     src/editor/Res.h
@@ -125,6 +124,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/parts/dials.cpp
     src/editor/parts/sliders.cpp
     src/editor/parts/formatters.cpp
+    src/editor/parts/combobox.hpp
     src/host/ElementsPuglWindow.cpp
     src/host/ElementsPuglBaseView.cpp
     src/host/PuglHelpers.cpp)
