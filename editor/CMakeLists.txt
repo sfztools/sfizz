@@ -4,6 +4,10 @@ set(EDITOR_RESOURCES
     logo.png
     slider-v.png
     elements_basic.ttf
+    Roboto-Bold.ttf
+    Roboto-Light.ttf
+    Roboto-Medium.ttf
+    Roboto-Regular.ttf
     PARENT_SCOPE)
 
 # dependency checks
