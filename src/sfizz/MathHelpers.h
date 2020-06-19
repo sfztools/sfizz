@@ -9,6 +9,7 @@
  * @brief Contains math helper functions and math constants
  */
 #pragma once
+#include "Debug.h"
 #include "Config.h"
 #include "Macros.h"
 #include "SIMDConfig.h"
@@ -254,6 +255,20 @@ template <class Type>
 constexpr Type sqrtTwoInv() { return static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588); };
 
 /**
+ * @brief lround for positive values
+ * This optimizes a bit better by ignoring the negative code path
+ *
+ * @tparam T
+ * @param value
+ * @return constexpr long int
+ */
+template<class T, absl::enable_if_t<std::is_floating_point<T>::value, int> = 0 >
+constexpr long int lroundPositive(T value)
+{
+    return static_cast<int>(0.5f + value); // NOLINT
+}
+
+/**
    @brief A fraction which is parameterized by integer type
  */
 template <class I>
@@ -476,7 +491,7 @@ constexpr bool checkSpanSizes(const absl::Span<T>& span1, Others... others)
     return _checkSpanSizes(span1.size(), others...);
 }
 
-#define CHECK_SPAN_SIZES(...) CHECK(checkSpanSizes(__VA_ARGS__))
+#define CHECK_SPAN_SIZES(...) SFIZZ_CHECK(checkSpanSizes(__VA_ARGS__))
 
 
 class ScopedRoundingMode {

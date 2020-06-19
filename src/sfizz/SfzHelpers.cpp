@@ -7,7 +7,9 @@
 #include "SfzHelpers.h"
 #include "StringViewHelpers.h"
 
-absl::optional<uint8_t> sfz::readNoteValue(const absl::string_view& value)
+namespace sfz{
+
+absl::optional<uint8_t> readNoteValue(const absl::string_view& value)
 {
     switch(hash(value))
     {
@@ -153,7 +155,7 @@ absl::optional<uint8_t> sfz::readNoteValue(const absl::string_view& value)
     }
 }
 
-bool sfz::findHeader(absl::string_view& source, absl::string_view& header, absl::string_view& members)
+bool findHeader(absl::string_view& source, absl::string_view& header, absl::string_view& members)
 {
     auto openHeader = source.find("<");
     if (openHeader == absl::string_view::npos)
@@ -176,7 +178,7 @@ bool sfz::findHeader(absl::string_view& source, absl::string_view& header, absl:
     return true;
 }
 
-bool sfz::findOpcode(absl::string_view& source, absl::string_view& opcode, absl::string_view& value)
+bool findOpcode(absl::string_view& source, absl::string_view& opcode, absl::string_view& value)
 {
     auto opcodeEnd = source.find("=");
     if (opcodeEnd == absl::string_view::npos)
@@ -203,7 +205,7 @@ bool sfz::findOpcode(absl::string_view& source, absl::string_view& opcode, absl:
 }
 
 
-bool sfz::findDefine(absl::string_view line, absl::string_view& variable, absl::string_view& value)
+bool findDefine(absl::string_view line, absl::string_view& variable, absl::string_view& value)
 {
     const auto defPosition = line.find("#define");
     if (defPosition == absl::string_view::npos)
@@ -229,7 +231,7 @@ bool sfz::findDefine(absl::string_view line, absl::string_view& variable, absl::
     return true;
 }
 
-bool sfz::findInclude(absl::string_view line, std::string& path)
+bool findInclude(absl::string_view line, std::string& path)
 {
     const auto defPosition = line.find("#include");
     if (defPosition == absl::string_view::npos)
@@ -245,4 +247,6 @@ bool sfz::findInclude(absl::string_view line, std::string& path)
 
     path = std::string(line.substr(pathStart + 1, pathEnd - pathStart - 1));
     return true;
+}
+
 }

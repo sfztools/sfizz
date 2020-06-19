@@ -60,7 +60,7 @@ void readBaseFile(SndfileHandle& sndFile, sfz::FileAudioBuffer& output, uint32_t
         output.clear();
         sfz::Buffer<float> tempReadBuffer { 2 * numFrames };
         sndFile.readf(tempReadBuffer.data(), numFrames);
-        sfz::readInterleaved<float>(tempReadBuffer, output.getSpan(0), output.getSpan(1));
+        sfz::readInterleaved(tempReadBuffer, output.getSpan(0), output.getSpan(1));
     }
 
     if (reverse) {
@@ -87,7 +87,6 @@ std::unique_ptr<sfz::FileAudioBuffer> readFromFile(SndfileHandle& sndFile, uint3
     return outputBuffer;
 }
 
-template <class T>
 void streamFromFile(SndfileHandle& sndFile, uint32_t numFrames, sfz::Oversampling factor, bool reverse, sfz::FileAudioBuffer& output, std::atomic<size_t>* filledFrames = nullptr)
 {
     if (factor == sfz::Oversampling::x1) {
@@ -400,7 +399,7 @@ void sfz::FilePool::loadingThread() noexcept
             continue;
         }
         const auto frames = static_cast<uint32_t>(sndFile.frames());
-        streamFromFile<float>(sndFile, frames, oversamplingFactor, promise->fileId.isReverse(), promise->fileData, &promise->availableFrames);
+        streamFromFile(sndFile, frames, oversamplingFactor, promise->fileId.isReverse(), promise->fileData, &promise->availableFrames);
         promise->dataStatus = FilePromise::DataStatus::Ready;
         const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
         logger.logFileTime(waitDuration, loadDuration, frames, promise->fileId.filename());

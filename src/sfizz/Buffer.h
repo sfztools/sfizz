@@ -119,9 +119,9 @@ private:
  *
  * @tparam     Type       The buffer type
  * @tparam     Alignment  the required alignment in bytes (defaults to
- *                        SIMDConfig::defaultAlignment)
+ *                        config::defaultAlignment)
  */
-template <class Type, unsigned int Alignment = SIMDConfig::defaultAlignment>
+template <class Type, unsigned int Alignment = config::defaultAlignment>
 class Buffer {
 public:
     using value_type = typename std::remove_cv<Type>::type;

@@ -103,8 +103,8 @@ namespace fx {
 
         // mix down the stereo signal to create the resonator excitation source
         absl::Span<float> resInput = _tempBuffer.getSpan(0).first(nframes);
-        sfz::applyGain<float>(M_SQRT1_2, inputL, resInput);
-        sfz::multiplyAdd<float>(M_SQRT1_2, inputR, resInput);
+        sfz::applyGain1<float>(M_SQRT1_2, inputL, resInput);
+        sfz::multiplyAdd1<float>(M_SQRT1_2, inputR, resInput);
 
         // generate the strings summed into a common buffer
         absl::Span<float> resOutput = _tempBuffer.getSpan(1).first(nframes);

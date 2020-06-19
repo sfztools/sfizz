@@ -46,7 +46,7 @@
         std::cerr << "Check failed at " << __FILE__ << ":" << __LINE__ << '\n'; \
     } while (0)
 
-#define CHECK(expression)                                         \
+#define SFIZZ_CHECK(expression)                                         \
     do {                                                          \
         if (!(expression)) {                                      \
             std::cerr << "Check failed: " << #expression << '\n'; \
@@ -59,7 +59,7 @@
 #define ASSERTFALSE do {} while (0)
 #define ASSERT(expression) do {} while (0)
 #define CHECKFALSE do {} while (0)
-#define CHECK(expression) do {} while (0)
+#define SFIZZ_CHECK(expression) do {} while (0)
 
 #endif
 

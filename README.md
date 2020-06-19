@@ -21,8 +21,6 @@ The sfizz library also uses in some subprojects:
 - [benchmark], licensed under the Apache License 2.0
 - [LV2], licensed under the ISC license
 - [JACK], licensed under the GNU Lesser General Public License v2.1
-- `neon_mathfun.h` and `sse_mathfun.h` by Julien Pommier,
-  licensed under the zlib license
 
 [Abseil]:       https://github.com/abseil/abseil-cpp
 [atomic_queue]: https://github.com/max0x7ba/atomic_queue

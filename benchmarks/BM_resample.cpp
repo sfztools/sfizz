@@ -232,7 +232,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR2X_scalar)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample2x<float, false>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }
@@ -242,7 +242,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR4X_scalar)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample4x<float, false>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }
@@ -252,7 +252,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR8X_scalar)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample8x<float, false>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }
@@ -262,7 +262,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR2X_vector)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample2x<float, true>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }
@@ -272,7 +272,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR4X_vector)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample4x<float, true>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }
@@ -282,7 +282,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR8X_vector)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample8x<float, true>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }
@@ -300,7 +300,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC2x_BEST)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_BEST_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -317,7 +317,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC2x_MEDIUM)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -334,7 +334,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC2x_FASTEST)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_FASTEST, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -352,7 +352,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC4x_BEST)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_BEST_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -369,7 +369,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC4x_MEDIUM)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -386,7 +386,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC4x_FASTEST)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_FASTEST, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -403,7 +403,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_BEST)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_BEST_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -420,7 +420,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_MEDIUM)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_MEDIUM_QUALITY, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -437,7 +437,7 @@ BENCHMARK_DEFINE_F(SndFile, SRC8x_FASTEST)(benchmark::State& state)
         srcData.output_frames = static_cast<long>(2 * numFrames);
         src_simple(&srcData, SRC_SINC_FASTEST, static_cast<int>(numChannels));
         auto outBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, 2 * numFrames);
-        sfz::readInterleaved<float>(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
+        sfz::readInterleaved(*intermediateBuffer, outBuffer->getSpan(0), outBuffer->getSpan(1));
         benchmark::DoNotOptimize(outBuffer);
     }
 }
@@ -446,7 +446,7 @@ BENCHMARK_DEFINE_F(SndFile, HIIR8X_default)(benchmark::State& state)
 {
     for (auto _ : state) {
         auto baseBuffer = absl::make_unique<sfz::AudioBuffer<float>>(numChannels, numFrames);
-        sfz::readInterleaved<float>(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
+        sfz::readInterleaved(*interleavedBuffer, baseBuffer->getSpan(0), baseBuffer->getSpan(1));
         auto outBuffer = upsample8x<float>(*baseBuffer);
         benchmark::DoNotOptimize(outBuffer);
     }

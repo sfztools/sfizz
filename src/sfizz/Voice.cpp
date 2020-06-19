@@ -10,6 +10,7 @@
 #include "ModifierHelpers.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
+#include "Panning.h"
 #include "SfzHelpers.h"
 #include "Interpolators.h"
 #include "absl/algorithm/container.h"
@@ -263,8 +264,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 
@@ -281,7 +282,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     egEnvelope.getBlock(modulationSpan);
 
     // Amplitude envelope
-    applyGain<float>(baseGain, modulationSpan);
+    applyGain1<float>(baseGain, modulationSpan);
     for (const auto& mod : region->amplitudeCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         applyGain<float>(*tempSpan, modulationSpan);
@@ -304,7 +305,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     }
 
     // Volume envelope
-    applyGain<float>(db2mag(baseVolumedB), modulationSpan);
+    applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
     for (const auto& mod : region->volumeCC) {
         multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
             return db2mag(x);
@@ -358,12 +359,12 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     copy<float>(leftBuffer, rightBuffer);
 
     // Apply panning
-    fill<float>(*modulationSpan, region->pan);
+    fill(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
@@ -379,27 +380,27 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     // Apply panning
-    fill<float>(*modulationSpan, region->pan);
+    fill(*modulationSpan, region->pan);
     for (const auto& mod : region->panCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
-    fill<float>(*modulationSpan, region->width);
+    fill(*modulationSpan, region->width);
     for (const auto& mod : region->widthCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    width<float>(*modulationSpan, leftBuffer, rightBuffer);
+    width(*modulationSpan, leftBuffer, rightBuffer);
 
-    fill<float>(*modulationSpan, region->position);
+    fill(*modulationSpan, region->position);
     for (const auto& mod : region->positionCC) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
         add<float>(*tempSpan, *modulationSpan);
     }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept
@@ -457,7 +458,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     if (!jumps || !bends || !indices || !coeffs)
         return;
 
-    fill<float>(*jumps, pitchRatio * speedRatio);
+    fill(*jumps, pitchRatio * speedRatio);
 
     const auto events = resources.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
@@ -479,7 +480,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
     sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
-    add<int>(sourcePosition, *indices);
+    add1<int>(sourcePosition, *indices);
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
@@ -487,7 +488,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         for (auto* index = indices->begin(); index < indices->end(); ++index) {
             if (*index > loopEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
-                subtract<int>(offset, { index, remainingElements });
+                subtract1<int>(offset, { index, remainingElements });
             }
         }
     } else {
@@ -541,8 +542,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 
@@ -588,7 +589,7 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             return;
 
         float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
-        fill<float>(*frequencies, pitchRatio * keycenterFrequency);
+        fill(*frequencies, pitchRatio * keycenterFrequency);
 
         const auto events = resources.midiState.getPitchEvents();
         const auto bendLambda = [this](float bend) {
@@ -623,8 +624,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
             for (unsigned i = 0, n = waveUnisonSize; i < n; ++i) {
                 WavetableOscillator& osc = waveOscillators[i];
                 osc.processModulated(frequencies->data(), waveDetuneRatio[i], tempSpan->data(), numFrames);
-                sfz::multiplyAdd<float>(waveLeftGain[i], *tempSpan, leftSpan);
-                sfz::multiplyAdd<float>(waveRightGain[i], *tempSpan, rightSpan);
+                multiplyAdd1<float>(waveLeftGain[i], *tempSpan, leftSpan);
+                multiplyAdd1<float>(waveRightGain[i], *tempSpan, rightSpan);
             }
         }
     }
@@ -632,8 +633,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #if 0
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 #endif
 }
 

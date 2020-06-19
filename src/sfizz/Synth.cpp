@@ -24,6 +24,7 @@
 sfz::Synth::Synth()
     : Synth(config::numVoices)
 {
+    initializeSIMDDispatchers();
 }
 
 sfz::Synth::Synth(int numVoices)
@@ -524,7 +525,7 @@ float sfz::Synth::getTuningFrequency() const
 
 void sfz::Synth::loadStretchTuningByRatio(float ratio)
 {
-    CHECK(ratio >= 0.0f && ratio <= 1.0f);
+    SFIZZ_CHECK(ratio >= 0.0f && ratio <= 1.0f);
     ratio = clamp(ratio, 0.0f, 1.0f);
 
     if (ratio > 0.0f)
@@ -747,8 +748,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(0)));
-    CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -1129,14 +1130,14 @@ int sfz::Synth::getSampleQuality(ProcessMode mode)
     case ProcessFreewheeling:
         return resources.synthConfig.freeWheelingSampleQuality;
     default:
-        CHECK(false);
+        SFIZZ_CHECK(false);
         return 0;
     }
 }
 
 void sfz::Synth::setSampleQuality(ProcessMode mode, int quality)
 {
-    CHECK(quality >= 1 && quality <= 10);
+    SFIZZ_CHECK(quality >= 1 && quality <= 10);
     quality = clamp(quality, 1, 10);
 
     switch (mode) {
@@ -1147,7 +1148,7 @@ void sfz::Synth::setSampleQuality(ProcessMode mode, int quality)
         resources.synthConfig.freeWheelingSampleQuality = quality;
         break;
     default:
-        CHECK(false);
+        SFIZZ_CHECK(false);
         break;
     }
 }

@@ -45,96 +45,6 @@ BENCHMARK_DEFINE_F(MyFixture, Dummy)
     }
 }
 
-BENCHMARK_DEFINE_F(MyFixture, ScalarExp)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::exp<float, false>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, SIMDExp)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::exp<float, true>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, ScalarExp_Unaligned)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::exp<float, false>(absl::MakeSpan(source).subspan(1), absl::MakeSpan(result).subspan(1));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, SIMDExp_Unaligned)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::exp<float, true>(absl::MakeSpan(source).subspan(1), absl::MakeSpan(result).subspan(1));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, ScalarLog)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::log<float, false>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, SIMDLog)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::log<float, true>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, ScalarSin)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::sin<float, false>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, SIMDSin)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::sin<float, true>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, ScalarCos)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::cos<float, false>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
-BENCHMARK_DEFINE_F(MyFixture, SIMDCos)
-(benchmark::State& state)
-{
-    for (auto _ : state) {
-        sfz::cos<float, true>(source, absl::MakeSpan(result));
-        benchmark::DoNotOptimize(result);
-    }
-}
-
 BENCHMARK_DEFINE_F(MyFixture, ScalarLibmFloorLog2)
 (benchmark::State& state)
 {
@@ -159,16 +69,6 @@ BENCHMARK_DEFINE_F(MyFixture, ScalarFastFloorLog2)
 }
 
 BENCHMARK_REGISTER_F(MyFixture, Dummy)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, ScalarExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, SIMDExp)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, ScalarExp_Unaligned)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, SIMDExp_Unaligned)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, ScalarLog)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, SIMDLog)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, ScalarSin)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, SIMDSin)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, ScalarCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
-BENCHMARK_REGISTER_F(MyFixture, SIMDCos)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 BENCHMARK_REGISTER_F(MyFixture, ScalarLibmFloorLog2)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 BENCHMARK_REGISTER_F(MyFixture, ScalarFastFloorLog2)->RangeMultiplier(4)->Range(1 << 6, 1 << 10);
 

@@ -23,6 +23,7 @@ set (SFIZZ_SOURCES
     sfizz/Wavetables.cpp
     sfizz/Tuning.cpp
     sfizz/RTSemaphore.cpp
+    sfizz/Panning.cpp
     sfizz/Effects.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp

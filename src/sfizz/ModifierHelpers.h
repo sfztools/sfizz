@@ -74,7 +74,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
         lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
         lastDelay += length;
     }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
+    fill(envelope.subspan(lastDelay), lastValue);
 }
 
 template <class F>
@@ -100,7 +100,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
         const auto length = min(events[i].delay, maxDelay) - lastDelay;
 
         if (difference < step) {
-            fill<float>(envelope.subspan(lastDelay, length), lastValue);
+            fill(envelope.subspan(lastDelay, length), lastValue);
             lastValue = nextValue;
             lastDelay += length;
             continue;
@@ -109,12 +109,12 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
         const auto numSteps = static_cast<int>(difference / step);
         const auto stepLength = static_cast<int>(length / numSteps);
         for (int i = 0; i < numSteps; ++i) {
-            fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
+            fill(envelope.subspan(lastDelay, stepLength), lastValue);
             lastValue += lastValue <= nextValue ? step : -step;
             lastDelay += stepLength;
         }
     }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
+    fill(envelope.subspan(lastDelay), lastValue);
 }
 
 template <class F>
@@ -137,7 +137,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
         lastValue = nextValue;
         lastDelay += length;
     }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
+    fill(envelope.subspan(lastDelay), lastValue);
 }
 
 template <class F, bool Round = false>
@@ -170,7 +170,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
         const auto difference = nextValue > lastValue ? nextValue / lastValue : lastValue / nextValue;
 
         if (difference < step) {
-            fill<float>(envelope.subspan(lastDelay, length), lastValue);
+            fill(envelope.subspan(lastDelay, length), lastValue);
             lastValue = nextValue;
             lastDelay += length;
             continue;
@@ -179,12 +179,12 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
         const auto numSteps = std::round(std::log(difference) / logStep);
         const auto stepLength = static_cast<int>(length / numSteps);
         for (int i = 0; i < static_cast<int>(numSteps); ++i) {
-            fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
+            fill(envelope.subspan(lastDelay, stepLength), lastValue);
             lastValue = nextValue > lastValue ? lastValue * step : lastValue / step;
             lastDelay += stepLength;
         }
     }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
+    fill(envelope.subspan(lastDelay), lastValue);
 }
 
 template <class F>
