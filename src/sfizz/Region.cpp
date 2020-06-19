@@ -1039,7 +1039,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
 
 float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 {
-    std::uniform_real_distribution<float> volumeDistribution { -ampRandom, ampRandom };
+    fast_real_distribution<float> volumeDistribution { -ampRandom, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
         baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
@@ -1058,7 +1058,7 @@ float sfz::Region::getPhase() const noexcept
         phase = oscillatorPhase * (1.0f / 360.0f);
         phase -= static_cast<float>(static_cast<int>(phase));
     } else {
-        std::uniform_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
+        fast_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
         phase = phaseDist(Random::randomGenerator);
     }
     return phase;
@@ -1075,7 +1075,7 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
 
 float sfz::Region::getDelay() const noexcept
 {
-    std::uniform_real_distribution<float> delayDistribution { 0, delayRandom };
+    fast_real_distribution<float> delayDistribution { 0, delayRandom };
     return delay + delayDistribution(Random::randomGenerator);
 }
 
