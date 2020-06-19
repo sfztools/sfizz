@@ -95,7 +95,9 @@ namespace fx {
             }
         }
 
-        return absl::make_unique<Filter>(desc);
+        Filter* filter = new Filter(desc);
+        std::unique_ptr<Effect> fx { filter };
+        return fx;
     }
 
     void Filter::prepareFilter()

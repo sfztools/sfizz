@@ -126,20 +126,21 @@ namespace fx {
 
     std::unique_ptr<Effect> Strings::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Strings>();
+        Strings* strings = new Strings;
+        std::unique_ptr<Effect> fx { strings };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("strings_number"):
-                setValueFromOpcode(opc, fx->_numStrings, {0, MaximumNumStrings});
+                setValueFromOpcode(opc, strings->_numStrings, {0, MaximumNumStrings});
                 break;
             case hash("strings_wet"):
-                setValueFromOpcode(opc, fx->_wet, {0.0f, 100.0f});
+                setValueFromOpcode(opc, strings->_wet, {0.0f, 100.0f});
                 break;
             }
         }
 
-        return CXX11_MOVE(fx);
+        return fx;
     }
 
 } // namespace fx
