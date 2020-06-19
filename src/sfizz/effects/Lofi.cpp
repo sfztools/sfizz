@@ -79,20 +79,21 @@ namespace fx {
 
     std::unique_ptr<Effect> Lofi::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Lofi>();
+        Lofi* lofi = new Lofi;
+        std::unique_ptr<Effect> fx { lofi };
 
         for (const Opcode& opcode : members) {
             switch (opcode.lettersOnlyHash) {
             case hash("bitred"):
-                setValueFromOpcode(opcode, fx->_bitred_depth, { 0.0, 100.0 });
+                setValueFromOpcode(opcode, lofi->_bitred_depth, { 0.0, 100.0 });
                 break;
             case hash("decim"):
-                setValueFromOpcode(opcode, fx->_decim_depth, { 0.0, 100.0 });
+                setValueFromOpcode(opcode, lofi->_decim_depth, { 0.0, 100.0 });
                 break;
             }
         }
 
-        return std::unique_ptr<Effect> { fx.release() };
+        return fx;
     }
 
     ///

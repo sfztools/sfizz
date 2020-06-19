@@ -63,17 +63,18 @@ namespace fx {
 
     std::unique_ptr<Effect> Width::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Width>();
+        Width* width = new Width;
+        std::unique_ptr<Effect> fx { width };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("width"):
-                setValueFromOpcode(opc, fx->_width, {-100.0f, 100.0f});
+                setValueFromOpcode(opc, width->_width, {-100.0f, 100.0f});
                 break;
             }
         }
 
-        return std::unique_ptr<Effect> { fx.release() };
+        return fx;
     }
 
 } // namespace fx

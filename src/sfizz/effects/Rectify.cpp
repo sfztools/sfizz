@@ -83,23 +83,24 @@ namespace fx {
 
     std::unique_ptr<Effect> Rectify::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Rectify>();
+        Rectify* rectify = new Rectify;
+        std::unique_ptr<Effect> fx { rectify };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("rectify_mode"):
                 if (opc.value == "full")
-                    fx->_full = true;
+                    rectify->_full = true;
                 else if (opc.value == "half")
-                    fx->_full = false;
+                    rectify->_full = false;
                 break;
             case hash("rectify"):
-                setValueFromOpcode(opc, fx->_amount, { 0.0, 100.0 });
+                setValueFromOpcode(opc, rectify->_amount, { 0.0, 100.0 });
                 break;
             }
         }
 
-        return std::unique_ptr<Effect> { fx.release() };
+        return fx;
     }
 
 } // namespace fx

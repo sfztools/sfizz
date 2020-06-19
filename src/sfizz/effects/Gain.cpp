@@ -56,17 +56,18 @@ namespace fx {
 
     std::unique_ptr<Effect> Gain::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Gain>();
+        Gain* gain = new Gain;
+        std::unique_ptr<Effect> fx { gain };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("gain"):
-                setValueFromOpcode(opc, fx->_gain, {-96.0f, 96.0f});
+                setValueFromOpcode(opc, gain->_gain, {-96.0f, 96.0f});
                 break;
             }
         }
 
-        return std::unique_ptr<Effect> { fx.release() };
+        return fx;
     }
 
 } // namespace fx

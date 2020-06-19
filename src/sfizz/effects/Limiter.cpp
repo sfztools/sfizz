@@ -71,14 +71,15 @@ namespace fx {
 
     std::unique_ptr<Effect> Limiter::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Limiter>();
+        Limiter* limiter = new Limiter;
+        std::unique_ptr<Effect> fx { limiter };
 
         for (const Opcode& opc : members) {
             // no opcodes
             (void)opc;
         }
 
-        return std::unique_ptr<Effect> { fx.release() };
+        return fx;
     }
 
 } // namespace fx
