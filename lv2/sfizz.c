@@ -61,7 +61,7 @@
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
 #define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
-#define SFIZZ__scalaFile "http://sfztools.github.io/sfizz:scalafile"
+#define SFIZZ__tuningfile "http://sfztools.github.io/sfizz:tuningfile"
 #define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
 #define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
 #define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
@@ -196,7 +196,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->patch_value_uri = map->map(map->handle, LV2_PATCH__value);
     self->state_changed_uri = map->map(map->handle, LV2_STATE__StateChanged);
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
-    self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__scalaFile);
+    self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_num_voices_uri = map->map(map->handle, SFIZZ__numVoices);
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);

@@ -41,7 +41,7 @@ midnam:update a lv2:Feature .
     "File SFZ"@it ;
   rdfs:range atom:Path .
 
-<@LV2PLUGIN_URI@:scalafile>
+<@LV2PLUGIN_URI@:tuningfile>
   a lv2:Parameter ;
   pg:group <@LV2PLUGIN_URI@#tuning> ;
   rdfs:label "Scala file",
@@ -77,7 +77,7 @@ midnam:update a lv2:Feature .
   opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ;
-  patch:writable <@LV2PLUGIN_URI@:scalafile> ;
+  patch:writable <@LV2PLUGIN_URI@:tuningfile> ;
 
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
