@@ -124,7 +124,7 @@ TEST_CASE("[Synth] All notes offs/all sounds off")
 {
     sfz::Synth synth;
     synth.setNumVoices(8);
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sound_off.sfz", R"(
         <region> key=60 sample=*noise
         <region> key=62 sample=*noise
     )");
@@ -157,7 +157,7 @@ TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kil
     synth.setSamplesPerBlock(1024);
     sfz::AudioBuffer<float> buffer { 2, 1024 };
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/delay_release.sfz", R"(
         <region> ampeg_delay=0.005 ampeg_release=1 sample=*noise
     )");
     synth.noteOn(0, 60, 63);
@@ -178,7 +178,7 @@ TEST_CASE("[Synth] Releasing after the initial and normal mode does not trigger 
     synth.setSamplesPerBlock(1024);
     sfz::AudioBuffer<float> buffer(2, 1024);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/delay_release.sfz", R"(
         <region> ampeg_delay=0.005 ampeg_release=1 sample=*noise
     )");
     synth.noteOn(200, 60, 63);
@@ -197,7 +197,7 @@ TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at t
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_trigger_release.sfz", R"(
         <group> lovel=0 hivel=127
         <region> trigger=release sample=*noise loop_mode=one_shot
                  ampeg_attack=0.02 ampeg_decay=0.02 ampeg_release=0.1 ampeg_sustain=0
@@ -224,7 +224,7 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_trigger_release_key.sfz", R"(
         <group> lovel=0 hivel=127
         <region> trigger=release_key sample=*noise loop_mode=one_shot
                  ampeg_attack=0.02 ampeg_decay=0.02 ampeg_release=0.1 ampeg_sustain=0
@@ -251,7 +251,7 @@ TEST_CASE("[Synth] loopmode=one_shot and an envelope properly kills the voice at
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_one_shot.sfz", R"(
         <group> lovel=0 hivel=127
         <region> sample=*noise loop_mode=one_shot
                  ampeg_attack=0.02 ampeg_decay=0.02 ampeg_release=0.1 ampeg_sustain=0
@@ -278,7 +278,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     sfz::AudioBuffer<float> buffer { 2, blockSize };
 
     REQUIRE( synth.getEffectBusView(0) == nullptr); // No effects at first
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
     REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
@@ -286,7 +286,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     for (int i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
 
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10
     )");
@@ -296,7 +296,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     for (int i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
 
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
     REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
@@ -305,7 +305,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     for (int i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
 
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx3tomain=50 type=lofi bus=fx3 bitred=90 decim=10
     )");
@@ -322,7 +322,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
 TEST_CASE("[Synth] No effect in the main bus")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
     auto bus = synth.getEffectBusView(0);
@@ -335,7 +335,7 @@ TEST_CASE("[Synth] No effect in the main bus")
 TEST_CASE("[Synth] One effect")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_1.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
         <effect> type=lofi bitred=90 decim=10
     )");
@@ -349,7 +349,7 @@ TEST_CASE("[Synth] One effect")
 TEST_CASE("[Synth] Effect on a second bus")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10
     )");
@@ -369,7 +369,7 @@ TEST_CASE("[Synth] Effect on a second bus")
 TEST_CASE("[Synth] Effect on a third bus")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx3tomain=50 type=lofi bus=fx3 bitred=90 decim=10
     )");
@@ -388,7 +388,7 @@ TEST_CASE("[Synth] Effect on a third bus")
 TEST_CASE("[Synth] Gain to mix")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/to_mix.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> fx1tomix=50 bus=fx1 type=lofi bitred=90 decim=10
     )");
@@ -408,7 +408,7 @@ TEST_CASE("[Synth] Basic curves")
 {
     sfz::Synth synth;
     const auto& curves = synth.getResources().curves;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/curves.sfz", R"(
         <region> sample=*sine
         <curve>curve_index=18 v000=0 v095=0.5 v127=1
         <curve>curve_index=17 v000=0 v095=0.5 v100=1
@@ -425,7 +425,7 @@ TEST_CASE("[Synth] Basic curves")
 TEST_CASE("[Synth] Velocity points")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/velocity_endpoints.sfz", R"(
         <region> amp_velcurve_064=1 sample=*sine
         <region> amp_velcurve_064=1 amp_veltrack=-100 sample=*sine
     )");
@@ -440,7 +440,7 @@ TEST_CASE("[Synth] Velocity points")
 TEST_CASE("[Synth] velcurve")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/velocity_endpoints.sfz", R"(
         <region> amp_velcurve_064=1 sample=*sine
         <region> amp_velcurve_064=1 amp_veltrack=-100 sample=*sine
     )");
