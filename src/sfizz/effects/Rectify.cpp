@@ -99,7 +99,7 @@ namespace fx {
             }
         }
 
-        return CXX11_MOVE(fx);
+        return std::unique_ptr<Effect> { fx.release() };
     }
 
 } // namespace fx

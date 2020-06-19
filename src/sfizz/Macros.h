@@ -10,10 +10,8 @@
 
 #if __cplusplus > 201103L
 #define CXX14_CONSTEXPR constexpr
-#define CXX11_MOVE(x) x
 #else
 #define CXX14_CONSTEXPR
-#define CXX11_MOVE(x) std::move(x)
 #endif
 
 #if __cplusplus >= 201703L
