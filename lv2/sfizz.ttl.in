@@ -31,7 +31,8 @@ midnam:update a lv2:Feature .
   a pg:Group ;
   lv2:symbol "tuning" ;
   lv2:name "Tuning",
-    "Accordage"@fr .
+    "Accordage"@fr ,
+    "Accordatura"@it .
 
 <@LV2PLUGIN_URI@:sfzfile>
   a lv2:Parameter ;
@@ -257,7 +258,8 @@ midnam:update a lv2:Feature .
     lv2:index 9 ;
     lv2:symbol "scala_root_key" ;
     lv2:name "Scala root key",
-      "Tonalité de base Scala"@fr ;
+      "Tonalité de base Scala"@fr ,
+      "Tonalità di base Scala"@it ;
     pg:group <@LV2PLUGIN_URI@#tuning> ;
     lv2:portProperty lv2:integer ;
     lv2:default 60 ;
@@ -269,7 +271,8 @@ midnam:update a lv2:Feature .
     lv2:index 10 ;
     lv2:symbol "tuning_frequency" ;
     lv2:name "Tuning frequency",
-      "Fréquence d'accordage"@fr ;
+      "Fréquence d'accordage"@fr ,
+      "Frequenza di accordatura"@it ;
     pg:group <@LV2PLUGIN_URI@#tuning> ;
     lv2:default 440.0 ;
     lv2:minimum 300.0 ;
@@ -280,7 +283,8 @@ midnam:update a lv2:Feature .
     lv2:index 11 ;
     lv2:symbol "stretched_tuning" ;
     lv2:name "Stretched tuning",
-      "Accordage étiré"@fr ;
+      "Accordage étiré"@fr ,
+      "Tensione di accordatura"@it ;
     pg:group <@LV2PLUGIN_URI@#tuning> ;
     lv2:default 0.0 ;
     lv2:minimum 0.0 ;
