@@ -43,7 +43,6 @@ struct SIMDDispatch {
 
 private:
     std::array<bool, static_cast<unsigned>(SIMDOps::_sentinel)> simdStatus;
-    bool initialized { false };
     cpuid::cpuinfo info;
 };
 
