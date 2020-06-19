@@ -1,7 +1,0 @@
-<master> polyphony=2
-<group> group=2
-<region> sample=*sine key=65
-<group> group=3
-<region> sample=*sine key=63
-<master> // Empty master resets the polyphony
-<region> sample=*sine key=61
