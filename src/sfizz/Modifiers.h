@@ -5,9 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Config.h"
 #include <numeric>
 #include <array>
 #include <vector>
+#include <limits>
+#include <cstdint>
 
 namespace sfz {
 
