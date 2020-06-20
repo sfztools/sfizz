@@ -197,7 +197,7 @@ struct Region {
      */
     float velocityCurve(float velocity) const noexcept;
     /**
-     * @brief Get the cents factor for a given bend value between -1 and 1
+     * @brief Get the detuning in cents for a given bend value between -1 and 1
      *
      * @param bend
      * @return float

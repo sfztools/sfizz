@@ -1225,6 +1225,5 @@ float sfz::Region::getGainToEffectBus(unsigned number) const noexcept
 
 float sfz::Region::getBendInCents(float bend) const noexcept
 {
-    const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(bendUp) : -bend * static_cast<float>(bendDown);
-    return centsFactor(bendInCents);
+    return bend > 0.0f ? bend * static_cast<float>(bendUp) : -bend * static_cast<float>(bendDown);
 }

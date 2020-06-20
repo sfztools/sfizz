@@ -821,7 +821,7 @@ void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
 
     const auto events = resources.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
-        return region->getBendInCents(bend);
+        return centsFactor(region->getBendInCents(bend));
     };
 
     if (region->bendStep > 1)
