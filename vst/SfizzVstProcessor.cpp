@@ -48,6 +48,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
 
     fprintf(stderr, "[sfizz] new synth\n");
     _synth.reset(new sfz::Sfizz);
+    loadSfzFileOrDefault(*_synth, {});
 
     return result;
 }
@@ -91,7 +92,7 @@ void SfizzVstProcessor::syncStateToSynth()
     if (!synth)
         return;
 
-    synth->loadSfzFile(_state.sfzFile);
+    loadSfzFileOrDefault(*synth, _state.sfzFile);
     synth->setVolume(_state.volume);
     synth->setNumVoices(_state.numVoices);
     synth->setOversamplingFactor(1 << _state.oversamplingLog2);
@@ -325,7 +326,7 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 
         std::lock_guard<std::mutex> lock(_processMutex);
         _state.sfzFile.assign(static_cast<const char *>(data), size);
-        _synth->loadSfzFile(_state.sfzFile);
+        loadSfzFileOrDefault(*_synth, _state.sfzFile);
     }
 
     return result;
@@ -334,6 +335,14 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 FUnknown* SfizzVstProcessor::createInstance(void*)
 {
     return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessor);
+}
+
+void SfizzVstProcessor::loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath)
+{
+    if (!filePath.empty())
+        synth.loadSfzFile(filePath);
+    else
+        synth.loadSfzString("default.sfz", "<region>sample=*sine");
 }
 
 void SfizzVstProcessor::doBackgroundWork()
@@ -367,7 +376,7 @@ void SfizzVstProcessor::doBackgroundWork()
         else if (!std::strcmp(id, "CheckShouldReload")) {
             if (_synth->shouldReloadFile()) {
                 fprintf(stderr, "[Sfizz] file has changed, reloading\n");
-                _synth->loadSfzFile(_state.sfzFile);
+                loadSfzFileOrDefault(*_synth, _state.sfzFile);
             }
         }
     }
