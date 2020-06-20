@@ -120,7 +120,7 @@ void SfizzVstEditor::valueChanged(CControl* ctl)
     case kTagSetScalaRootKey:
         controller->setParamNormalized(kPidScalaRootKey, valueNorm);
         controller->performEdit(kPidScalaRootKey, valueNorm);
-        updateScalaRootKeyLabel(value);
+        updateScalaRootKeyLabel(static_cast<int>(value));
         break;
 
     case kTagSetTuningFrequency:
