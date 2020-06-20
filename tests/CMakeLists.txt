@@ -16,7 +16,6 @@ set(SFIZZ_TEST_SOURCES
     SIMDHelpersT.cpp
     FilesT.cpp
     MidiStateT.cpp
-    OnePoleFilterT.cpp
     InterpolatorsT.cpp
     SmoothersT.cpp
     RegionActivationT.cpp
