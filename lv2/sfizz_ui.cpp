@@ -134,7 +134,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->patch_property_uri = map->map(map->handle, LV2_PATCH__property);
     self->patch_value_uri = map->map(map->handle, LV2_PATCH__value);
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
-    self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__scalaFile);
+    self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
 
     Res::initializeRootPath((std::string(bundle_path) + "/Resources").c_str());
 
