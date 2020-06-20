@@ -44,12 +44,14 @@ public:
     tresult PLUGIN_API setState(IBStream* state) override;
     tresult PLUGIN_API getState(IBStream* state) override;
     tresult PLUGIN_API setComponentState(IBStream* state) override;
+    tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
     struct StateListener {
         virtual void onStateChanged() = 0;
     };
 
     const SfizzVstState& getSfizzState() const { return _state; }
+    SfizzVstState& getSfizzState() { return _state; }
 
     const SfizzUiState& getSfizzUiState() const { return _uiState; }
     SfizzUiState& getSfizzUiState() { return _uiState; }
