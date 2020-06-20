@@ -267,12 +267,20 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         const void* data = nullptr;
         uint32 size = 0;
         result = attr->getBinary("File", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
         _state.sfzFile.assign(static_cast<const char *>(data), size);
     }
     else if (!strcmp(id, "LoadedScala")) {
         const void* data = nullptr;
         uint32 size = 0;
         result = attr->getBinary("File", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
         _state.scalaFile.assign(static_cast<const char *>(data), size);
     }
 
