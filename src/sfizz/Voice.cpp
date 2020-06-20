@@ -124,7 +124,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     baseFrequency = resources.tuning.getFrequencyOfKey(number);
     bendStepFactor = centsFactor(region->bendStep);
     bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
-    bendSmoother.reset(region->getBendInCents(resources.midiState.getPitchBend()));
+    bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
 
     for (auto& modId : allModifiers) {
