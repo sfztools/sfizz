@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Tuning.h"
+#include "sfizz/Opcode.h"
 #include "sfizz/SfzHelpers.h"
 #include "cxxopts.hpp"
 #include <string>

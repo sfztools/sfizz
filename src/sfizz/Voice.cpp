@@ -24,6 +24,8 @@ sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
 
+    gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
+
     for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
 }
@@ -97,6 +99,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
+    gainSmoother.reset();
 
     // Check that we can handle the number of filters; filters should be cleared here
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
@@ -120,7 +123,33 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
     baseFrequency = resources.tuning.getFrequencyOfKey(number);
     bendStepFactor = centsFactor(region->bendStep);
+    bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
+    bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
+
+    for (auto& modId : allModifiers) {
+        ASSERT(modifierSmoothers[modId].size() >= region->modifiers[modId].size());
+        forEachWithSmoother(modId, [modId, this](const CCData<Modifier>& mod, Smoother& smoother) {
+            switch (modId) {
+            case Mod::volume:
+                smoother.reset(db2mag(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                break;
+            case Mod::pitch:
+                smoother.reset(centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                break;
+            case Mod::amplitude:
+            case Mod::pan:
+            case Mod::width:
+            case Mod::position:
+                smoother.reset(normalizePercents(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                break;
+            default:
+                smoother.reset(resources.midiState.getCCValue(mod.cc) * mod.data.value);
+                break;
+            }
+            smoother.setSmoothing(mod.data.smooth, sampleRate);
+        });
+    }
 }
 
 int sfz::Voice::getCurrentSampleQuality() const noexcept
@@ -206,6 +235,7 @@ void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
+    gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
 
     for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
@@ -283,10 +313,11 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 
     // Amplitude envelope
     applyGain1<float>(baseGain, modulationSpan);
-    for (const auto& mod : region->amplitudeCC) {
+    forEachWithSmoother(Mod::amplitude, [&](const CCData<Modifier>& mod, Smoother& smoother) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         applyGain<float>(*tempSpan, modulationSpan);
-    }
+    });
 
     // Crossfade envelopes
     for (const auto& mod : region->crossfadeCCInRange) {
@@ -306,12 +337,16 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 
     // Volume envelope
     applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
-    for (const auto& mod : region->volumeCC) {
+    forEachWithSmoother(Mod::volume, [&](const CCData<Modifier>& mod, Smoother& smoother) {
         multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
             return db2mag(x);
         });
+        smoother.process(*tempSpan, *tempSpan);
         applyGain<float>(*tempSpan, modulationSpan);
-    }
+    });
+
+    // Smooth the gain transitions
+    gainSmoother.process(modulationSpan, modulationSpan);
 }
 
 void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
@@ -360,10 +395,11 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
 
     // Apply panning
     fill(*modulationSpan, region->pan);
-    for (const auto& mod : region->panCC) {
+    forEachWithSmoother(Mod::pan, [&](const CCData<Modifier>& mod, Smoother& smoother) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
+    });
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
@@ -381,25 +417,28 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
 
     // Apply panning
     fill(*modulationSpan, region->pan);
-    for (const auto& mod : region->panCC) {
+    forEachWithSmoother(Mod::pan, [&](const CCData<Modifier>& mod, Smoother& smoother) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
+    });
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
     fill(*modulationSpan, region->width);
-    for (const auto& mod : region->widthCC) {
+    forEachWithSmoother(Mod::width, [&](const CCData<Modifier>& mod, Smoother& smoother) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
+    });
     width(*modulationSpan, leftBuffer, rightBuffer);
 
     fill(*modulationSpan, region->position);
-    for (const auto& mod : region->positionCC) {
+    forEachWithSmoother(Mod::position, [&](const CCData<Modifier>& mod, Smoother& smoother) {
         linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
+    });
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
@@ -452,30 +491,13 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto source = currentPromise->getData();
 
     auto jumps = resources.bufferPool.getBuffer(numSamples);
-    auto bends = resources.bufferPool.getBuffer(numSamples);
     auto coeffs = resources.bufferPool.getBuffer(numSamples);
     auto indices = resources.bufferPool.getIndexBuffer(numSamples);
-    if (!jumps || !bends || !indices || !coeffs)
+    if (!jumps || !indices || !coeffs)
         return;
 
     fill(*jumps, pitchRatio * speedRatio);
-
-    const auto events = resources.midiState.getPitchEvents();
-    const auto bendLambda = [this](float bend) {
-        const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
-        return centsFactor(bendInCents);
-    };
-
-    if (region->bendStep > 1)
-        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
-    else
-        pitchBendEnvelope(events, *bends, bendLambda);
-    applyGain<float>(*bends, *jumps);
-
-    for (const auto& mod : region->tuneCC) {
-        multiplicativeModifier(resources, *bends, mod, [](float x) { return centsFactor(x); });
-        applyGain<float>(*bends, *jumps);
-    }
+    pitchEnvelope(*jumps);
 
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
@@ -584,30 +606,12 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         const auto numFrames = buffer.getNumFrames();
 
         auto frequencies = resources.bufferPool.getBuffer(numFrames);
-        auto bends = resources.bufferPool.getBuffer(numFrames);
-        if (!frequencies || !bends)
+        if (!frequencies)
             return;
 
         float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
         fill(*frequencies, pitchRatio * keycenterFrequency);
-
-        const auto events = resources.midiState.getPitchEvents();
-        const auto bendLambda = [this](float bend) {
-            const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
-            return centsFactor(bendInCents);
-        };
-        if (region->bendStep > 1)
-            pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
-        else
-            pitchBendEnvelope(events, *bends, bendLambda);
-        applyGain<float>(*bends, *frequencies);
-
-        for (const auto& mod : region->tuneCC) {
-            multiplicativeModifier(resources, *bends, mod, [](float x) {
-                return centsFactor(x);
-            });
-            applyGain<float>(*bends, *frequencies);
-        }
+        pitchEnvelope(*frequencies);
 
         if (waveUnisonSize == 1) {
             WavetableOscillator& osc = waveOscillators[0];
@@ -784,7 +788,6 @@ void sfz::Voice::setupOscillatorUnison()
 #endif
 }
 
-
 void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
 {
     assert(smoothedChannelEnvelopes.size() == channelEnvelopeFilters.size());
@@ -808,4 +811,59 @@ void sfz::Voice::switchState(State s)
         if (stateListener)
             stateListener->onVoiceStateChanged(id, s);
     }
+}
+
+void sfz::Voice::prepareSmoothers(const ModifierArray<size_t>& numModifiers)
+{
+    for (auto& mod : allModifiers)
+        modifierSmoothers[mod].resize(numModifiers[mod]);
+}
+
+void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
+{
+    const auto numFrames = pitchSpan.size();
+    auto bends = resources.bufferPool.getBuffer(numFrames);
+    if (!bends)
+        return;
+
+    const auto events = resources.midiState.getPitchEvents();
+    const auto bendLambda = [this](float bend) {
+        return centsFactor(region->getBendInCents(bend));
+    };
+
+    if (region->bendStep > 1)
+        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
+    else
+        pitchBendEnvelope(events, *bends, bendLambda);
+    bendSmoother.process(*bends, *bends);
+    applyGain<float>(*bends, pitchSpan);
+
+    forEachWithSmoother(Mod::pitch, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        multiplicativeModifier(resources, *bends, mod, [](float x) {
+            return centsFactor(x);
+        });
+        smoother.process(*bends, *bends);
+        applyGain<float>(*bends, pitchSpan);
+    });
+}
+
+void sfz::Voice::resetSmoothers() noexcept
+{
+    for (auto& mod : allModifiers) {
+        const auto resetValue = [mod] {
+            switch (mod) {
+            case Mod::volume: // fallthrough
+            case Mod::pitch:
+                return 1.0f;
+            default:
+                return 0.0f;
+            }
+        }();
+
+        for (auto& smoother : modifierSmoothers[mod]) {
+            smoother.reset(resetValue);
+        }
+    }
+    bendSmoother.reset(1.0f);
+    gainSmoother.reset(0.0f);
 }

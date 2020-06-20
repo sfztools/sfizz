@@ -16,8 +16,8 @@ set(SFIZZ_TEST_SOURCES
     SIMDHelpersT.cpp
     FilesT.cpp
     MidiStateT.cpp
-    OnePoleFilterT.cpp
     InterpolatorsT.cpp
+    SmoothersT.cpp
     RegionActivationT.cpp
     RegionValueComputationsT.cpp
     # If we're tweaking the curves this kind of tests does not make sense
@@ -52,6 +52,11 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     target_include_directories(sfizz_demo_filters PRIVATE ${JACK_INCLUDE_DIRS})
     target_link_libraries(sfizz_demo_filters PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
     set_target_properties(sfizz_demo_filters PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_smooth DemoSmooth.cpp)
+    target_include_directories(sfizz_demo_smooth PRIVATE ${JACK_INCLUDE_DIRS})
+    target_link_libraries(sfizz_demo_smooth PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
+    set_target_properties(sfizz_demo_smooth PROPERTIES AUTOUIC ON)
 
     add_executable(sfizz_demo_stereo DemoStereo.cpp)
     target_include_directories(sfizz_demo_stereo PRIVATE ${JACK_INCLUDE_DIRS})

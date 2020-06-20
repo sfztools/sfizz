@@ -70,7 +70,8 @@ sfz::Logger::~Logger()
             loadLogFile << time.waitDuration.count() << ','
                         << time.loadDuration.count() << ','
                         << time.fileSize << ','
-                        << time.filename << '\n';
+                        << "disabled" << '\n';
+                        // << time.filename << '\n';
     }
 
     if (!callbackTimes.empty()) {

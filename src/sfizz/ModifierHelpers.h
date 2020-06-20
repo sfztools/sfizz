@@ -1,13 +1,18 @@
+// SPDX-License-Identifier: BSD-2-Clause
+
+// This code is part of the sfizz library and is licensed under a BSD 2-clause
+// license. You should have receive a LICENSE.md file along with the code.
+// If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
+
 #pragma once
 
 #include "Range.h"
 #include "Defaults.h"
-#include "SfzHelpers.h"
+#include "Modifiers.h"
 #include "Resources.h"
 #include "absl/types/span.h"
 
 namespace sfz {
-
 /**
  * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
  */
@@ -56,6 +61,14 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
     return 1.0f;
 }
 
+/**
+ * @brief Compute a linear envelope based on events, with a lambda applied to the event values
+ *
+ * @tparam F
+ * @param events
+ * @param envelope
+ * @param lambda
+ */
 template <class F>
 void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
 {
@@ -77,6 +90,15 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
     fill(envelope.subspan(lastDelay), lastValue);
 }
 
+/**
+ * @brief Compute a quantized linear envelope based on events, with a lambda applied to the event values
+ *
+ * @tparam F
+ * @param events
+ * @param envelope
+ * @param lambda
+ * @param step
+ */
 template <class F>
 void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
 {
@@ -117,6 +139,15 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
     fill(envelope.subspan(lastDelay), lastValue);
 }
 
+
+/**
+ * @brief Compute a multiplicative envelope based on events, with a lambda applied to the event values
+ *
+ * @tparam F
+ * @param events
+ * @param envelope
+ * @param lambda
+ */
 template <class F>
 void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
 {
@@ -140,6 +171,16 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     fill(envelope.subspan(lastDelay), lastValue);
 }
 
+/**
+ * @brief Compute a quantized multiplicative envelope based on events, with a lambda applied to the event values
+ *
+ * @tparam F
+ * @tparam Round is true if the quantization rounds rather than truncs the elements
+ * @param events
+ * @param envelope
+ * @param lambda
+ * @param step
+ */
 template <class F, bool Round = false>
 void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
 {
@@ -187,18 +228,46 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
     fill(envelope.subspan(lastDelay), lastValue);
 }
 
+/**
+ * @brief Alias for a multiplicative envelope that rounds the elements
+ *
+ * @tparam F
+ * @param events
+ * @param envelope
+ * @param lambda
+ * @param step
+ */
 template <class F>
 void pitchBendEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
 {
     multiplicativeEnvelope<F, true>(events, envelope, std::forward<F>(lambda), step);
 }
 
+/**
+ * @brief Alias for a multiplicative envelope
+ *
+ * @tparam F
+ * @param events
+ * @param envelope
+ * @param lambda
+ */
 template <class F>
 void pitchBendEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
 {
     multiplicativeEnvelope<F>(events, envelope, std::forward<F>(lambda));
 }
 
+/**
+ * @brief Builds a linear envelope, possibly quantized, based on the events fetched
+ * from a midi state and the modifier data. This is a helper function for recurrent
+ * code in the voice logic.
+ *
+ * @tparam F
+ * @param resources
+ * @param span
+ * @param ccData
+ * @param lambda
+ */
 template <class F>
 void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
 {
@@ -218,6 +287,17 @@ void linearModifier(const sfz::Resources& resources, absl::Span<float> span, con
     }
 }
 
+/**
+ * @brief Builds a multiplicative envelope, possibly quantized, based on the events fetched
+ * from a midi state and the modifier data. This is a helper function for recurrent
+ * code in the voice logic.
+ *
+ * @tparam F
+ * @param resources
+ * @param span
+ * @param ccData
+ * @param lambda
+ */
 template <class F>
 void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
 {
@@ -237,6 +317,15 @@ void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> s
     }
 }
 
+/**
+ * @brief Alias for a simple linear modifier with no lambda
+ *
+ * @tparam F
+ * @param resources
+ * @param span
+ * @param ccData
+ * @param lambda
+ */
 inline void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
 {
     linearModifier(resources, span, ccData, [](float x) { return x; });

@@ -11,6 +11,7 @@
 #include "Region.h"
 #include "AudioBuffer.h"
 #include "Resources.h"
+#include "Smoothers.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include "OnePoleFilter.h"
@@ -301,6 +302,8 @@ public:
     Duration getLastFilterDuration() const noexcept { return filterDuration; }
     Duration getLastPanningDuration() const noexcept { return panningDuration; }
 
+    void prepareSmoothers(const ModifierArray<size_t>& numModifiers);
+
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
@@ -330,19 +333,73 @@ private:
         const AudioSpan<const float>& source, AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs);
 
+    /**
+     * @brief Compute the amplitude envelope, applied as a gain to a mono
+     * or stereo buffer
+     *
+     * @param modulationSpan
+     */
     void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void ampStageMono(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a stereo source
+     *
+     * @param buffer
+     */
     void ampStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void panStageMono(AudioSpan<float> buffer) noexcept;
     void panStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void filterStageMono(AudioSpan<float> buffer) noexcept;
     void filterStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Compute the pitch envelope. This envelope is meant to multiply
+     * the frequency parameter for each sample (which translates to floating
+     * point intervals for sample-based voices, or phases for generators)
+     *
+     * @param pitchSpan
+     */
+    void pitchEnvelope(absl::Span<float> pitchSpan) noexcept;
 
     /**
      * @brief Remove the voice from the sister ring
      *
      */
     void removeVoiceFromRing() noexcept;
+
+    /**
+     * @brief Helper function to iterate jointly on modifiers and smoothers
+     * for a given modulation target of type sfz::Mod
+     *
+     * @tparam F
+     * @param modId
+     * @param lambda
+     */
+    template <class F>
+    void forEachWithSmoother(sfz::Mod modId, F&& lambda)
+    {
+        auto mod = region->modifiers[modId].begin();
+        auto smoother = modifierSmoothers[modId].begin();
+        while (mod < region->modifiers[modId].end()) {
+            lambda(*mod, *smoother);
+            incrementAll(mod, smoother);
+        }
+    }
+
     /**
      * @brief Initialize frequency and gain coefficients for the oscillators.
      */
@@ -410,8 +467,15 @@ private:
 
     std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
 
+    ModifierArray<std::vector<Smoother>> modifierSmoothers;
+    Smoother gainSmoother;
+    Smoother bendSmoother;
+    void resetSmoothers() noexcept;
+
     std::array<OnePoleFilter<float>, 2> channelEnvelopeFilters;
     std::array<float, 2> smoothedChannelEnvelopes;
+
+    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
     LEAK_DETECTOR(Voice);
 };
 

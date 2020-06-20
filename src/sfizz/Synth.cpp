@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "Macros.h"
 #include "MidiState.h"
+#include "ModifierHelpers.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
 #include "pugixml.hpp"
@@ -374,6 +375,7 @@ void sfz::Synth::finalizeSfzLoad()
 
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
+    ModifierArray<size_t> maxModifiers { 0 };
 
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
@@ -480,6 +482,8 @@ void sfz::Synth::finalizeSfzLoad()
         region->registerTempo(2.0f);
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
+        for (const auto& mod : allModifiers)
+            maxModifiers[mod] = max(maxModifiers[mod], region->modifiers[mod].size());
 
         ++currentRegionIndex;
     }
@@ -490,6 +494,7 @@ void sfz::Synth::finalizeSfzLoad()
     for (auto& voice : voices) {
         voice->setMaxFiltersPerVoice(maxFilters);
         voice->setMaxEQsPerVoice(maxEQs);
+        voice->prepareSmoothers(maxModifiers);
     }
 }
 

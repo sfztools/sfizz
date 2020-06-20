@@ -254,6 +254,11 @@ constexpr Type sqrtTwo() { return static_cast<Type>(1.41421356237309504880168872
 template <class Type>
 constexpr Type sqrtTwoInv() { return static_cast<Type>(0.707106781186547524400844362104849039284835937688474036588); };
 
+constexpr unsigned int mask(int x)
+{
+    return (1U << x) - 1;
+}
+
 /**
  * @brief lround for positive values
  * This optimizes a bit better by ignoring the negative code path
@@ -492,7 +497,6 @@ constexpr bool checkSpanSizes(const absl::Span<T>& span1, Others... others)
 }
 
 #define CHECK_SPAN_SIZES(...) SFIZZ_CHECK(checkSpanSizes(__VA_ARGS__))
-
 
 class ScopedRoundingMode {
 public:

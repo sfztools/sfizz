@@ -26,6 +26,7 @@ enum class Oversampling: int {
 
 namespace config {
     constexpr float defaultSampleRate { 48000 };
+    constexpr float maxSampleRate { 192000 };
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
     constexpr int bufferPoolSize { 6 };
@@ -39,6 +40,9 @@ namespace config {
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
+    constexpr unsigned smoothingSteps { 512 };
+    constexpr uint8_t gainSmoothing { 5 };
+    constexpr unsigned powerTableSizeExponent { 11 };
     constexpr int maxFilePromises { maxVoices };
     constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };

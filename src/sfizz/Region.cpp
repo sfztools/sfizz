@@ -351,35 +351,35 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
     case_any_ccN("volume"): // also gain
-        processGenericCc(opcode, Default::volumeCCRange, &volumeCC);
+        processGenericCc(opcode, Default::volumeCCRange, &modifiers[Mod::volume]);
         break;
     case hash("amplitude"):
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
             amplitude = normalizePercents(*value);
         break;
     case_any_ccN("amplitude"):
-        processGenericCc(opcode, Default::amplitudeRange, &amplitudeCC);
+        processGenericCc(opcode, Default::amplitudeRange, &modifiers[Mod::amplitude]);
         break;
     case hash("pan"):
         if (auto value = readOpcode(opcode.value, Default::panRange))
             pan = normalizePercents(*value);
         break;
     case_any_ccN("pan"):
-        processGenericCc(opcode, Default::panCCRange, &panCC);
+        processGenericCc(opcode, Default::panCCRange, &modifiers[Mod::pan]);
         break;
     case hash("position"):
         if (auto value = readOpcode(opcode.value, Default::positionRange))
             position = normalizePercents(*value);
         break;
     case_any_ccN("position"):
-        processGenericCc(opcode, Default::positionCCRange, &positionCC);
+        processGenericCc(opcode, Default::positionCCRange, &modifiers[Mod::position]);
         break;
     case hash("width"):
         if (auto value = readOpcode(opcode.value, Default::widthRange))
             width = normalizePercents(*value);
         break;
     case_any_ccN("width"):
-        processGenericCc(opcode, Default::widthCCRange, &widthCC);
+        processGenericCc(opcode, Default::widthCCRange, &modifiers[Mod::width]);
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
@@ -742,7 +742,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
     case_any_ccN("pitch"): // also tune
-        processGenericCc(opcode, Default::tuneCCRange, &tuneCC);
+        processGenericCc(opcode, Default::tuneCCRange, &modifiers[Mod::pitch]);
         break;
     case hash("bend_up"): // also bendup
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
@@ -752,6 +752,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("bend_step"):
         setValueFromOpcode(opcode, bendStep, Default::bendStepRange);
+        break;
+    case hash("bend_smooth"):
+        setValueFromOpcode(opcode, bendSmooth, Default::smoothCCRange);
         break;
 
     // Amplitude Envelope
@@ -1218,4 +1221,9 @@ float sfz::Region::getGainToEffectBus(unsigned number) const noexcept
         return 0.0;
 
     return gainToEffect[number];
+}
+
+float sfz::Region::getBendInCents(float bend) const noexcept
+{
+    return bend > 0.0f ? bend * static_cast<float>(bendUp) : -bend * static_cast<float>(bendDown);
 }
