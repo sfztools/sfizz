@@ -20,6 +20,10 @@ constexpr int fastRound(T x)
     return static_cast<int>(x + T{ 0.5 }); // NOLINT
 }
 
+static const char defaultSfzText[] =
+    "<region>sample=*sine" "\n"
+    "ampeg_attack=0.02 ampeg_release=0.1" "\n";
+
 SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(64 * 1024)
 {
@@ -342,7 +346,7 @@ void SfizzVstProcessor::loadSfzFileOrDefault(sfz::Sfizz& synth, const std::strin
     if (!filePath.empty())
         synth.loadSfzFile(filePath);
     else
-        synth.loadSfzString("default.sfz", "<region>sample=*sine");
+        synth.loadSfzString("default.sfz", defaultSfzText);
 }
 
 void SfizzVstProcessor::doBackgroundWork()

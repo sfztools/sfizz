@@ -88,6 +88,10 @@
 #define LV2_DEBUG(...)
 #endif
 
+static const char default_sfz_text[] =
+    "<region>sample=*sine" "\n"
+    "ampeg_attack=0.02 ampeg_release=0.1" "\n";
+
 typedef struct
 {
     // Features
@@ -416,7 +420,7 @@ instantiate(const LV2_Descriptor *descriptor,
     }
 
     self->synth = sfizz_create_synth();
-    sfizz_load_string(self->synth, "default.sfz", "<region>sample=*sine");
+    sfizz_load_string(self->synth, "default.sfz", default_sfz_text);
 
     return (LV2_Handle)self;
 }
@@ -886,7 +890,7 @@ sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
 
     if (file_path[0] == '\0')
     {
-        if (!sfizz_load_string(self->synth, "default.sfz", "<region>sample=*sine"))
+        if (!sfizz_load_string(self->synth, "default.sfz", default_sfz_text))
             return false;
     }
     else
