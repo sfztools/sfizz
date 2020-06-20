@@ -137,8 +137,15 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
             case Mod::pitch:
                 smoother.reset(centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data.value));
                 break;
+            case Mod::amplitude:
+            case Mod::pan:
+            case Mod::width:
+            case Mod::position:
+                smoother.reset(normalizePercents(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                break;
             default:
                 smoother.reset(resources.midiState.getCCValue(mod.cc) * mod.data.value);
+                break;
             }
             smoother.setSmoothing(mod.data.smooth, sampleRate);
         });
