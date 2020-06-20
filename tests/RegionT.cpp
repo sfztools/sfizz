@@ -1603,9 +1603,9 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "amplitude_smoothcc14", "-2" });
         REQUIRE(region.modifiers[Mod::amplitude][14].smooth == 0);
         region.parseOpcode({ "amplitude_stepcc120", "24" });
-        REQUIRE(region.[Mod::amplitude][120].step == 24.0_a);
+        REQUIRE(region.modifiers[Mod::amplitude][120].step == 24.0_a);
         region.parseOpcode({ "amplitude_stepcc120", "15482" });
-        REQUIRE(region.[Mod::amplitude][120].step == 100.0_a);
+        REQUIRE(region.modifiers[Mod::amplitude][120].step == 100.0_a);
         region.parseOpcode({ "amplitude_stepcc120", "-2" });
         REQUIRE(region.modifiers[Mod::amplitude][120].step == 0.0f);
     }
