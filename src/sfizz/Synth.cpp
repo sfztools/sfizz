@@ -491,11 +491,11 @@ void sfz::Synth::finalizeSfzLoad()
     regions.resize(currentRegionCount);
     modificationTime = checkModificationTime();
 
-    for (auto& voice : voices) {
-        voice->setMaxFiltersPerVoice(maxFilters);
-        voice->setMaxEQsPerVoice(maxEQs);
-        voice->prepareSmoothers(maxModifiers);
-    }
+    settingsPerVoice.maxFilters = maxFilters;
+    settingsPerVoice.maxEQs = maxEQs;
+    settingsPerVoice.maxModifiers = maxModifiers;
+
+    applySettingsPerVoice();
 }
 
 bool sfz::Synth::loadScalaFile(const fs::path& path)
@@ -1205,6 +1205,17 @@ void sfz::Synth::resetVoices(int numVoices)
     }
 
     this->numVoices = numVoices;
+
+    applySettingsPerVoice();
+}
+
+void sfz::Synth::applySettingsPerVoice()
+{
+    for (auto& voice : voices) {
+        voice->setMaxFiltersPerVoice(settingsPerVoice.maxFilters);
+        voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
+        voice->prepareSmoothers(settingsPerVoice.maxModifiers);
+    }
 }
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept

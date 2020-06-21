@@ -631,6 +631,10 @@ private:
      * @param numVoices
      */
     void resetVoices(int numVoices);
+    /**
+     * @brief Make the stored settings take effect in all the voices
+     */
+    void applySettingsPerVoice();
 
     /**
      * @brief Render the voice to its designated outputs and effect busses.
@@ -701,6 +705,14 @@ private:
     std::string defaultPath { "" };
     int noteOffset { 0 };
     int octaveOffset { 0 };
+
+    // Settings per voice
+    struct SettingsPerVoice {
+        size_t maxFilters { 0 };
+        size_t maxEQs { 0 };
+        ModifierArray<size_t> maxModifiers { 0 };
+    };
+    SettingsPerVoice settingsPerVoice;
 
     Duration dispatchDuration { 0 };
 
