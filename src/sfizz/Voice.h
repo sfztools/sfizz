@@ -393,7 +393,7 @@ private:
     void forEachWithSmoother(sfz::Mod modId, F&& lambda)
     {
         size_t count = region->modifiers[modId].size();
-        ASSERT(count == modifierSmoothers[modId].size());
+        ASSERT(modifierSmoothers[modId].size() >= count);
         auto mod = region->modifiers[modId].begin();
         auto smoother = modifierSmoothers[modId].begin();
         for (size_t i = 0; i < count; ++i) {
