@@ -49,6 +49,9 @@ private:
     std::unique_ptr<sfz::Sfizz> _synth;
     SfizzVstState _state;
 
+    // misc
+    static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);
+
     // worker and thread sync
     std::thread _worker;
     volatile bool _workRunning = false;

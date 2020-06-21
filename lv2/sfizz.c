@@ -88,6 +88,10 @@
 #define LV2_DEBUG(...)
 #endif
 
+static const char default_sfz_text[] =
+    "<region>sample=*sine" "\n"
+    "ampeg_attack=0.02 ampeg_release=0.1" "\n";
+
 typedef struct
 {
     // Features
@@ -416,6 +420,8 @@ instantiate(const LV2_Descriptor *descriptor,
     }
 
     self->synth = sfizz_create_synth();
+    sfizz_load_string(self->synth, "default.sfz", default_sfz_text);
+
     return (LV2_Handle)self;
 }
 
@@ -433,6 +439,7 @@ activate(LV2_Handle instance)
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     sfizz_set_samples_per_block(self->synth, self->max_block_size);
     sfizz_set_sample_rate(self->synth, self->sample_rate);
+    atomic_store(&self->must_update_midnam, 1);
 }
 
 static void
@@ -856,11 +863,13 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
 }
 
 static void
-sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char* file_path)
+sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
 {
     strcpy(self->sfz_file_path, file_path);
 
-    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", self->sfz_file_path);
+    const char *display_path = (file_path[0] != '\0') ? file_path : "(default)";
+    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", display_path);
+
     char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
     if (unknown_opcodes)
     {
@@ -872,6 +881,26 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char* file_path)
     lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
 
     atomic_store(&self->must_update_midnam, 1);
+}
+
+static bool
+sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+
+    if (file_path[0] == '\0')
+    {
+        if (!sfizz_load_string(self->synth, "default.sfz", default_sfz_text))
+            return false;
+    }
+    else
+    {
+        if (!sfizz_load_file(self->synth, file_path))
+            return false;
+    }
+
+    sfizz_lv2_update_file_info(self, file_path);
+    return true;
 }
 
 static LV2_State_Status
@@ -894,10 +923,7 @@ restore(LV2_Handle instance,
     if (value)
     {
         lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", (const char *)value);
-        if (sfizz_load_file(self->synth, (const char *)value))
-        {
-            sfizz_lv2_update_file_info(self, (const char *)value);
-        }
+        sfizz_lv2_load_file(instance, (const char *)value);
     }
 
     value = retrieve(handle, self->sfizz_scala_file_uri, &size, &type, &val_flags);
@@ -1038,9 +1064,7 @@ work(LV2_Handle instance,
     if (atom->type == self->sfizz_sfz_file_uri)
     {
         const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_load_file(self->synth, sfz_file_path)) {
-            sfizz_lv2_update_file_info(self, sfz_file_path);
-        } else {
+        if (!sfizz_lv2_load_file(self, sfz_file_path)) {
             lv2_log_error(&self->logger,
                 "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
@@ -1104,9 +1128,7 @@ work(LV2_Handle instance,
             lv2_log_note(&self->logger,
                         "[sfizz] File %s seems to have been updated, reloading\n",
                         self->sfz_file_path);
-            if (sfizz_load_file(self->synth, self->sfz_file_path)) {
-                sfizz_lv2_update_file_info(self, self->sfz_file_path);
-            } else {
+            if (!sfizz_lv2_load_file(self, self->sfz_file_path)) {
                 lv2_log_error(&self->logger,
                     "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
