@@ -52,6 +52,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
 
     fprintf(stderr, "[sfizz] new synth\n");
     _synth.reset(new sfz::Sfizz);
+    _currentStretchedTuning = 0.0;
     loadSfzFileOrDefault(*_synth, {});
 
     return result;
@@ -101,6 +102,10 @@ void SfizzVstProcessor::syncStateToSynth()
     synth->setNumVoices(_state.numVoices);
     synth->setOversamplingFactor(1 << _state.oversamplingLog2);
     synth->setPreloadSize(_state.preloadSize);
+    synth->loadScalaFile(_state.scalaFile);
+    synth->setScalaRootKey(_state.scalaRootKey);
+    synth->setTuningFrequency(_state.tuningFrequency);
+    synth->loadStretchTuningByRatio(_state.stretchedTuning);
 }
 
 tresult PLUGIN_API SfizzVstProcessor::canProcessSampleSize(int32 symbolicSampleSize)
@@ -174,6 +179,12 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         processEvents(*events);
 
     synth.setVolume(_state.volume);
+    synth.setScalaRootKey(_state.scalaRootKey);
+    synth.setTuningFrequency(_state.tuningFrequency);
+    if (_currentStretchedTuning != _state.stretchedTuning) {
+        synth.loadStretchTuningByRatio(_state.stretchedTuning);
+        _currentStretchedTuning = _state.stretchedTuning;
+    }
 
     synth.renderBlock(outputs, numFrames, numChannels);
 
@@ -229,6 +240,18 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
                 if (writeWorkerMessage("SetPreloadSize", &data, sizeof(data)))
                     _semaToWorker.post();
             }
+            break;
+        case kPidScalaRootKey:
+            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
+                _state.scalaRootKey = static_cast<int32>(kParamScalaRootKey.denormalize(value));
+            break;
+        case kPidTuningFrequency:
+            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
+                _state.tuningFrequency = kParamTuningFrequency.denormalize(value);
+            break;
+        case kPidStretchedTuning:
+            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
+                _state.stretchedTuning = kParamStretchedTuning.denormalize(value);
             break;
         }
     }
@@ -328,9 +351,33 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        std::lock_guard<std::mutex> lock(_processMutex);
+        std::unique_lock<std::mutex> lock(_processMutex);
         _state.sfzFile.assign(static_cast<const char *>(data), size);
         loadSfzFileOrDefault(*_synth, _state.sfzFile);
+        lock.unlock();
+
+        Steinberg::OPtr<Vst::IMessage> reply { allocateMessage() };
+        reply->setMessageID("LoadedSfz");
+        reply->getAttributes()->setBinary("File", _state.sfzFile.data(), _state.sfzFile.size());
+        sendMessage(reply);
+    }
+    else if (!std::strcmp(id, "LoadScala")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("File", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        std::unique_lock<std::mutex> lock(_processMutex);
+        _state.scalaFile.assign(static_cast<const char *>(data), size);
+        _synth->loadScalaFile(_state.scalaFile);
+        lock.unlock();
+
+        Steinberg::OPtr<Vst::IMessage> reply { allocateMessage() };
+        reply->setMessageID("LoadedScala");
+        reply->getAttributes()->setBinary("File", _state.scalaFile.data(), _state.scalaFile.size());
+        sendMessage(reply);
     }
 
     return result;
@@ -379,8 +426,12 @@ void SfizzVstProcessor::doBackgroundWork()
         }
         else if (!std::strcmp(id, "CheckShouldReload")) {
             if (_synth->shouldReloadFile()) {
-                fprintf(stderr, "[Sfizz] file has changed, reloading\n");
+                fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
                 loadSfzFileOrDefault(*_synth, _state.sfzFile);
+            }
+            else if (_synth->shouldReloadScala()) {
+                fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
+                _synth->loadScalaFile(_state.scalaFile);
             }
         }
     }

@@ -48,6 +48,7 @@ private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
     SfizzVstState _state;
+    float _currentStretchedTuning = 0;
 
     // misc
     static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);

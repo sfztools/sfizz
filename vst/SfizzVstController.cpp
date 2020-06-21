@@ -34,10 +34,22 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         kParamPreloadSizeRange.createParameter(
             Steinberg::String("Preload size"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        kParamScalaRootKey.createParameter(
+            Steinberg::String("Scala root key"), pid++, nullptr,
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        kParamTuningFrequency.createParameter(
+            Steinberg::String("Tuning frequency"), pid++, Steinberg::String("Hz"),
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        kParamStretchedTuning.createParameter(
+            Steinberg::String("Stretched tuning"), pid++, nullptr,
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
 
     // MIDI special controllers
     parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
-    parameters.addParameter(Steinberg::String("Pitch Bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
+    parameters.addParameter(Steinberg::String("Pitch bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
 
     // MIDI controllers
     for (unsigned i = 0; i < kNumControllerParams; ++i) {
@@ -161,6 +173,21 @@ tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst:
         value = kParamPreloadSizeRange.denormalize(normValue);
         break;
     }
+    case kPidScalaRootKey: {
+        slotI32 = &_state.scalaRootKey;
+        value = kParamScalaRootKey.denormalize(normValue);
+        break;
+    }
+    case kPidTuningFrequency: {
+        slotF32 = &_state.tuningFrequency;
+        value = kParamTuningFrequency.denormalize(normValue);
+        break;
+    }
+    case kPidStretchedTuning: {
+        slotF32 = &_state.stretchedTuning;
+        value = kParamStretchedTuning.denormalize(normValue);
+        break;
+    }
     }
 
     bool update = false;
@@ -217,11 +244,50 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
     setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
     setParamNormalized(kPidOversampling, kParamOversamplingRange.normalize(s.oversamplingLog2));
     setParamNormalized(kPidPreloadSize, kParamPreloadSizeRange.normalize(s.preloadSize));
+    setParamNormalized(kPidScalaRootKey, kParamScalaRootKey.normalize(s.scalaRootKey));
+    setParamNormalized(kPidTuningFrequency, kParamTuningFrequency.normalize(s.tuningFrequency));
+    setParamNormalized(kPidStretchedTuning, kParamStretchedTuning.normalize(s.stretchedTuning));
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();
 
     return kResultTrue;
+}
+
+tresult SfizzVstController::notify(Vst::IMessage* message)
+{
+    tresult result = SfizzVstControllerNoUi::notify(message);
+    if (result != kResultFalse)
+        return result;
+
+    const char* id = message->getMessageID();
+    Vst::IAttributeList* attr = message->getAttributes();
+
+    if (!strcmp(id, "LoadedSfz")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("File", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        _state.sfzFile.assign(static_cast<const char *>(data), size);
+    }
+    else if (!strcmp(id, "LoadedScala")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("File", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        _state.scalaFile.assign(static_cast<const char *>(data), size);
+    }
+
+    for (StateListener* listener : _stateListeners)
+        listener->onStateChanged();
+
+    return result;
 }
 
 void SfizzVstController::addSfizzStateListener(StateListener* listener)

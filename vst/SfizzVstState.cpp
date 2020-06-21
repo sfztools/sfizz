@@ -34,6 +34,33 @@ tresult SfizzVstState::load(IBStream* state)
     if (!s.readInt32(preloadSize))
         return kResultFalse;
 
+    const SfizzVstState defaults;
+
+    if (version >= 1) {
+        if (const char* str = s.readStr8())
+            scalaFile = str;
+        else
+            return kResultFalse;
+
+        if (!s.readInt32(scalaRootKey))
+            return kResultFalse;
+
+        if (!s.readFloat(tuningFrequency))
+            return kResultFalse;
+
+        if (!s.readFloat(stretchedTuning))
+            return kResultFalse;
+    }
+    else {
+        scalaFile = defaults.scalaFile;
+        scalaRootKey = defaults.scalaRootKey;
+        tuningFrequency = defaults.tuningFrequency;
+        stretchedTuning = defaults.stretchedTuning;
+    }
+
+    if (version > 1)
+        return kResultFalse;
+
     return kResultTrue;
 }
 
@@ -59,8 +86,22 @@ tresult SfizzVstState::store(IBStream* state) const
     if (!s.writeInt32(preloadSize))
         return kResultFalse;
 
+    if (!s.writeStr8(scalaFile.c_str()))
+        return kResultFalse;
+
+    if (!s.writeInt32(scalaRootKey))
+        return kResultFalse;
+
+    if (!s.writeFloat(tuningFrequency))
+        return kResultFalse;
+
+    if (!s.writeFloat(stretchedTuning))
+        return kResultFalse;
+
     return kResultTrue;
 }
+
+constexpr uint64 SfizzVstState::currentStateVersion;
 
 tresult SfizzUiState::load(IBStream* state)
 {
@@ -71,6 +112,9 @@ tresult SfizzUiState::load(IBStream* state)
         return kResultFalse;
 
     if (!s.readInt32u(activePanel))
+        return kResultFalse;
+
+    if (version > 0)
         return kResultFalse;
 
     return kResultTrue;
@@ -88,3 +132,5 @@ tresult SfizzUiState::store(IBStream* state) const
 
     return kResultTrue;
 }
+
+constexpr uint64 SfizzUiState::currentStateVersion;

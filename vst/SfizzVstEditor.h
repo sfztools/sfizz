@@ -43,9 +43,21 @@ private:
     void chooseSfzFile();
     void loadSfzFile(const std::string& filePath);
 
+    void chooseScalaFile();
+    void loadScalaFile(const std::string& filePath);
+
     void createFrameContents();
     void updateStateDisplay();
-    void updateFileLabel(const std::string& filePath);
+    void updateSfzFileLabel(const std::string& filePath);
+    void updateScalaFileLabel(const std::string& filePath);
+    static void updateLabelWithFileName(CTextLabel* label, const std::string& filePath);
+    void updateVolumeLabel(float volume);
+    void updateNumVoicesLabel(int numVoices);
+    void updateOversamplingLabel(int oversamplingLog2);
+    void updatePreloadSizeLabel(int preloadSize);
+    void updateScalaRootKeyLabel(int rootKey);
+    void updateTuningFrequencyLabel(float tuningFrequency);
+    void updateStretchedTuningLabel(float stretchedTuning);
     void setActivePanel(unsigned panelId);
 
     template <class Control>
@@ -60,6 +72,7 @@ private:
         kPanelGeneral,
         // kPanelControls,
         kPanelSettings,
+        kPanelTuning,
         kNumPanels,
     };
 
@@ -72,16 +85,31 @@ private:
         kTagSetNumVoices,
         kTagSetOversampling,
         kTagSetPreloadSize,
+        kTagLoadScalaFile,
+        kTagSetScalaRootKey,
+        kTagSetTuningFrequency,
+        kTagSetStretchedTuning,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
 
     CBitmap _logo;
-    CTextLabel* _fileLabel = nullptr;
+    CTextLabel* _sfzFileLabel = nullptr;
+    CTextLabel* _scalaFileLabel = nullptr;
     CSliderBase *_volumeSlider = nullptr;
+    CTextLabel* _volumeLabel = nullptr;
     CSliderBase *_numVoicesSlider = nullptr;
+    CTextLabel* _numVoicesLabel = nullptr;
     CSliderBase *_oversamplingSlider = nullptr;
+    CTextLabel* _oversamplingLabel = nullptr;
     CSliderBase *_preloadSizeSlider = nullptr;
+    CTextLabel* _preloadSizeLabel = nullptr;
+    CSliderBase *_scalaRootKeySlider = nullptr;
+    CTextLabel* _scalaRootKeyLabel = nullptr;
+    CSliderBase *_tuningFrequencySlider = nullptr;
+    CTextLabel* _tuningFrequencyLabel = nullptr;
+    CSliderBase *_stretchedTuningSlider = nullptr;
+    CTextLabel* _stretchedTuningLabel = nullptr;
 
 #if !defined(__APPLE__) && !defined(_WIN32)
     SharedPointer<RunLoop> _runLoop;
