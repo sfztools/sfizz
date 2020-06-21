@@ -323,111 +323,88 @@ void SfizzVstEditor::createFrameContents()
         CRect row = topRow;
         row.top += 45.0;
         row.bottom += 45.0;
-        row.left += 100.0;
-        row.right -= 100.0;
+        row.left += 20.0;
+        row.right -= 20.0;
 
-        CCoord interRow = 35.0;
+        static const CCoord interRow = 35.0;
+        static const CCoord interColumn = 20.0;
+        static const int numColumns = 3;
 
-        auto leftSide = [&row]() -> CRect {
+        auto nthColumn = [&row](int colIndex) -> CRect {
             CRect div = row;
-            div.right = 0.5 * (div.left + div.right);
-            return div;
-        };
-
-        auto rightSide = [&row]() -> CRect {
-            CRect div = row;
-            div.left = 0.5 * (div.left + div.right);
-            return div;
-        };
-
-        auto labelArea = [&topRow, &row]() -> CRect {
-            CRect div = row;
-            div.right = topRow.right - 10.0;
-            div.left = div.right - 100.0 + 20.0;
+            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
+            div.left = div.left + colIndex * (columnWidth + interColumn);
+            div.right = div.left + columnWidth;
             return div;
         };
 
         CTextLabel* label;
         SimpleSlider* slider;
 
-        label = new CTextLabel(leftSide(), "Volume");
+        label = new CTextLabel(nthColumn(0), "Volume");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetVolume);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetVolume);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidVolume);
         _volumeSlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _volumeLabel = label;
         panel->addView(label);
 
         row.top += interRow;
         row.bottom += interRow;
 
-        label = new CTextLabel(leftSide(), "Polyphony");
+        label = new CTextLabel(nthColumn(0), "Polyphony");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetNumVoices);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetNumVoices);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidNumVoices);
         _numVoicesSlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _numVoicesLabel = label;
         panel->addView(label);
 
         row.top += interRow;
         row.bottom += interRow;
 
-        label = new CTextLabel(leftSide(), "Oversampling");
+        label = new CTextLabel(nthColumn(0), "Oversampling");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetOversampling);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetOversampling);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidOversampling);
         _oversamplingSlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _oversamplingLabel = label;
         panel->addView(label);
 
         row.top += interRow;
         row.bottom += interRow;
 
-        label = new CTextLabel(leftSide(), "Preload size");
+        label = new CTextLabel(nthColumn(0), "Preload size");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetPreloadSize);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetPreloadSize);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidPreloadSize);
         _preloadSizeSlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _preloadSizeLabel = label;
         panel->addView(label);
-
-        // row.top += interRow;
-        // row.bottom += interRow;
-
-        // label = new CTextLabel(leftSide(), "Freewheel");
-        // label->setFontColor(CColor(0x00, 0x00, 0x00));
-        // label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        // label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        // label->setHoriAlign(kLeftText);
-        // panel->addView(label);
-        // slider = new SimpleSlider(rightSide(), this, kTag);
-        // panel->addView(slider);
-        // adjustMinMaxToRangeParam(slider, kPid);
-        // _aSlider = slider;
 
         _subPanels[kPanelSettings] = panel;
     }
@@ -446,27 +423,18 @@ void SfizzVstEditor::createFrameContents()
         CRect row = topRow;
         row.top += 45.0;
         row.bottom += 45.0;
-        row.left += 100.0;
-        row.right -= 100.0;
+        row.left += 20.0;
+        row.right -= 20.0;
 
-        CCoord interRow = 35.0;
+        static const CCoord interRow = 35.0;
+        static const CCoord interColumn = 20.0;
+        static const int numColumns = 3;
 
-        auto leftSide = [&row]() -> CRect {
+        auto nthColumn = [&row](int colIndex) -> CRect {
             CRect div = row;
-            div.right = 0.5 * (div.left + div.right);
-            return div;
-        };
-
-        auto rightSide = [&row]() -> CRect {
-            CRect div = row;
-            div.left = 0.5 * (div.left + div.right);
-            return div;
-        };
-
-        auto labelArea = [&topRow, &row]() -> CRect {
-            CRect div = row;
-            div.right = topRow.right - 10.0;
-            div.left = div.right - 100.0 + 20.0;
+            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
+            div.left = div.left + colIndex * (columnWidth + interColumn);
+            div.right = div.left + columnWidth;
             return div;
         };
 
@@ -474,66 +442,66 @@ void SfizzVstEditor::createFrameContents()
         SimpleSlider* slider;
         CTextButton* textbutton;
 
-        label = new CTextLabel(leftSide(), "Scala file");
+        label = new CTextLabel(nthColumn(0), "Scala file");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        textbutton = new CTextButton(rightSide(), this, kTagLoadScalaFile, "Choose");
+        textbutton = new CTextButton(nthColumn(1), this, kTagLoadScalaFile, "Choose");
         panel->addView(textbutton);
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _scalaFileLabel = label;
         panel->addView(label);
 
         row.top += interRow;
         row.bottom += interRow;
 
-        label = new CTextLabel(leftSide(), "Scala root key");
+        label = new CTextLabel(nthColumn(0), "Scala root key");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetScalaRootKey);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetScalaRootKey);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidScalaRootKey);
         _scalaRootKeySlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _scalaRootKeyLabel = label;
         panel->addView(label);
 
         row.top += interRow;
         row.bottom += interRow;
 
-        label = new CTextLabel(leftSide(), "Tuning frequency");
+        label = new CTextLabel(nthColumn(0), "Tuning frequency");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetTuningFrequency);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetTuningFrequency);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidTuningFrequency);
         _tuningFrequencySlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _tuningFrequencyLabel = label;
         panel->addView(label);
 
         row.top += interRow;
         row.bottom += interRow;
 
-        label = new CTextLabel(leftSide(), "Stretched tuning");
+        label = new CTextLabel(nthColumn(0), "Stretched tuning");
         label->setFontColor(CColor(0x00, 0x00, 0x00));
         label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
         label->setHoriAlign(kLeftText);
         panel->addView(label);
-        slider = new SimpleSlider(rightSide(), this, kTagSetStretchedTuning);
+        slider = new SimpleSlider(nthColumn(1), this, kTagSetStretchedTuning);
         panel->addView(slider);
         adjustMinMaxToRangeParam(slider, kPidStretchedTuning);
         _stretchedTuningSlider = slider;
-        label = new CTextLabel(labelArea(), "");
+        label = new CTextLabel(nthColumn(2), "");
         _stretchedTuningLabel = label;
         panel->addView(label);
 
