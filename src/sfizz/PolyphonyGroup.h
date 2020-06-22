@@ -15,23 +15,43 @@ namespace sfz
 {
 class PolyphonyGroup {
 public:
-    void setPolyphonyLimit(unsigned limit)
-    {
-        polyphonyLimit = limit;
-        voices.reserve(limit);
-    }
-    unsigned getPolyphonyLimit() const { return polyphonyLimit; }
-    void registerVoice(Voice* voice)
-    {
-        if (absl::c_find(voices, voice) == voices.end())
-            voices.push_back(voice);
-    }
-    void removeVoice(const Voice* voice)
-    {
-        swapAndPopFirst(voices, [voice](const Voice* v) { return v == voice; });
-    }
-    const std::vector<Voice*>& getActiveVoices() const { return voices; }
-    std::vector<Voice*>& getActiveVoices() { return voices; }
+    /**
+     * @brief Set the polyphony limit for this polyphony group.
+     *
+     * @param limit
+     */
+    void setPolyphonyLimit(unsigned limit) noexcept;
+    /**
+     * @brief Register an active voice in this polyphony group.
+     *
+     * @param voice
+     */
+    void registerVoice(Voice* voice) noexcept;
+    /**
+     * @brief Remove a voice from this polyphony group.
+     * If the voice was not registered before, this has no effect.
+     *
+     * @param voice
+     */
+    void removeVoice(const Voice* voice) noexcept;
+    /**
+     * @brief Get the polyphony limit for this group
+     *
+     * @return unsigned
+     */
+    unsigned getPolyphonyLimit() const noexcept { return polyphonyLimit; }
+    /**
+     * @brief Get the active voices
+     *
+     * @return const std::vector<Voice*>&
+     */
+    const std::vector<Voice*>& getActiveVoices() const noexcept { return voices; }
+    /**
+     * @brief Get the active voices
+     *
+     * @return std::vector<Voice*>&
+     */
+    std::vector<Voice*>& getActiveVoices() noexcept { return voices; }
 private:
     unsigned polyphonyLimit { config::maxVoices };
     std::vector<Voice*> voices;

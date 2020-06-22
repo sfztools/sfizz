@@ -14,7 +14,7 @@ namespace sfz
 struct SisterVoiceRing {
     template<class F, class T,
         absl::enable_if_t<std::is_same<Voice, absl::remove_const_t<T>>::value, int> = 0>
-    static void applyToRing(T* voice, F&& lambda)
+    static void applyToRing(T* voice, F&& lambda) noexcept
     {
         auto v = voice->getNextSisterVoice();
         while (v != voice) {
@@ -25,7 +25,7 @@ struct SisterVoiceRing {
         lambda(voice);
     }
 
-    static unsigned countSisterVoices(const Voice* start)
+    static unsigned countSisterVoices(const Voice* start) noexcept
     {
         if (!start)
             return 0;
@@ -50,7 +50,7 @@ struct SisterVoiceRing {
  */
 class SisterVoiceRingBuilder {
 public:
-    ~SisterVoiceRingBuilder() {
+    ~SisterVoiceRingBuilder() noexcept {
         if (lastStartedVoice != nullptr) {
             ASSERT(firstStartedVoice);
             lastStartedVoice->setNextSisterVoice(firstStartedVoice);
@@ -63,7 +63,7 @@ public:
      *
      * @param voice
      */
-    void addVoiceToRing(Voice* voice) {
+    void addVoiceToRing(Voice* voice) noexcept {
         if (firstStartedVoice == nullptr)
             firstStartedVoice = voice;
 

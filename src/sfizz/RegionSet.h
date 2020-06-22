@@ -16,53 +16,93 @@ namespace sfz
 
 class RegionSet {
 public:
-    void setPolyphonyLimit(unsigned limit)
-    {
-        polyphonyLimit = limit;
-        voices.reserve(limit);
-    }
-    unsigned getPolyphonyLimit() const { return polyphonyLimit; }
-    void addRegion(Region* region)
-    {
-        if (absl::c_find(regions, region) == regions.end())
-            regions.push_back(region);
-    }
-    void addSubset(RegionSet* group)
-    {
-        if (absl::c_find(subsets, group) == subsets.end())
-            subsets.push_back(group);
-    }
-    void registerVoice(Voice* voice)
-    {
-        if (absl::c_find(voices, voice) == voices.end())
-            voices.push_back(voice);
-    }
-    void removeVoice(const Voice* voice)
-    {
-        swapAndPopFirst(voices, [voice](const Voice* v) { return v == voice; });
-    }
-    static void registerVoiceInHierarchy(const Region* region, Voice* voice)
-    {
-        auto* parent = region->parent;
-        while (parent != nullptr) {
-            parent->registerVoice(voice);
-            parent = parent->getParent();
-        }
-    }
-    static void removeVoiceFromHierarchy(const Region* region, const Voice* voice)
-    {
-        auto* parent = region->parent;
-        while (parent != nullptr) {
-            parent->removeVoice(voice);
-            parent = parent->getParent();
-        }
-    }
-    RegionSet* getParent() const { return parent; }
-    void setParent(RegionSet* parent) { this->parent = parent; }
-    const std::vector<Voice*>& getActiveVoices() const { return voices; }
-    std::vector<Voice*>& getActiveVoices() { return voices; }
-    const std::vector<Region*>& getRegions() const { return regions; }
-    const std::vector<RegionSet*>& getSubsets() const { return subsets; }
+    /**
+     * @brief Set the polyphony limit for the set
+     *
+     * @param limit
+     */
+    void setPolyphonyLimit(unsigned limit) noexcept;
+    /**
+     * @brief Add a region to the set
+     *
+     * @param region
+     */
+    void addRegion(Region* region) noexcept;
+    /**
+     * @brief Add a subset to the set
+     *
+     * @param group
+     */
+    void addSubset(RegionSet* group) noexcept;
+    /**
+     * @brief Register a voice as active in this set
+     *
+     * @param voice
+     */
+    void registerVoice(Voice* voice) noexcept;
+    /**
+     * @brief Remove an active voice for this set.
+     * If the voice was not registered this has no effect.
+     *
+     * @param voice
+     */
+    void removeVoice(const Voice* voice) noexcept;
+    /**
+     * @brief Register a voice in the whole parent hierarchy of the region
+     *
+     * @param region
+     * @param voice
+     */
+    static void registerVoiceInHierarchy(const Region* region, Voice* voice) noexcept;
+    /**
+     * @brief Remove an active voice from the whole parent hierarchy of the region.
+     *
+     * @param region
+     * @param voice
+     */
+    static void removeVoiceFromHierarchy(const Region* region, const Voice* voice) noexcept;
+    /**
+     * @brief Get the polyphony limit
+     *
+     * @return unsigned
+     */
+    unsigned getPolyphonyLimit() const noexcept { return polyphonyLimit; }
+    /**
+     * @brief Get the parent set
+     *
+     * @return RegionSet*
+     */
+    RegionSet* getParent() const noexcept { return parent; }
+    /**
+     * @brief Set the parent set
+     *
+     * @param parent
+     */
+    void setParent(RegionSet* parent) noexcept { this->parent = parent; }
+    /**
+     * @brief Get the active voices
+     *
+     * @return const std::vector<Voice*>&
+     */
+    const std::vector<Voice*>& getActiveVoices() const noexcept { return voices; }
+    /**
+     * @brief Get the active voices
+     *
+     * @return std::vector<Voice*>&
+     */
+    std::vector<Voice*>& getActiveVoices() noexcept { return voices; }
+    /**
+     * @brief Get the regions in the set
+     *
+     * @return const std::vector<Region*>&
+     */
+    const std::vector<Region*>& getRegions() const noexcept { return regions; }
+    /**
+     * @brief Get the region subsets in this set
+     *
+     * @return const std::vector<RegionSet*>&
+     */
+    const std::vector<RegionSet*>& getSubsets() const noexcept { return subsets; }
 private:
     RegionSet* parent { nullptr };
     std::vector<Region*> regions;
