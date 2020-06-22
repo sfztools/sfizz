@@ -113,6 +113,7 @@ public:
     static constexpr float frequencyScaleFactor = 0.05;
 
     static unsigned getOctaveForFrequency(float f);
+    static float getFractionalOctaveForFrequency(float f);
     static WavetableRange getRangeForOctave(int o);
     static WavetableRange getRangeForFrequency(float f);
 

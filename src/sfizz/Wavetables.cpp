@@ -200,6 +200,39 @@ unsigned WavetableRange::getOctaveForFrequency(float f)
     return clamp<int>(oct, 0, countOctaves - 1);
 }
 
+static const auto octaveForFrequencyTable = []()
+{
+    static constexpr unsigned N = 1024;
+    std::array<float, N> table;
+
+    constexpr double fmin = 1 / WavetableRange::frequencyScaleFactor;
+    constexpr double fmax = (1 << (WavetableRange::countOctaves - 1)) / WavetableRange::frequencyScaleFactor;
+
+    for (unsigned i = 0; i < N; ++i) {
+        double f = fmin + (i * (1.0 / (N - 1))) * (fmax - fmin);
+        table[i] = std::log2(f * WavetableRange::frequencyScaleFactor);
+    }
+
+    return table;
+}();
+
+float WavetableRange::getFractionalOctaveForFrequency(float f)
+{
+    static constexpr unsigned N = octaveForFrequencyTable.size();
+
+    constexpr double fmin = 1 / WavetableRange::frequencyScaleFactor;
+    constexpr double fmax = (1 << (WavetableRange::countOctaves - 1)) / WavetableRange::frequencyScaleFactor;
+
+    float pos = (f - fmin) * ((N - 1) / static_cast<float>(fmax - fmin));
+    int index1 = static_cast<int>(pos);
+    float frac = pos - index1;
+    index1 = clamp<int>(index1, 0, N - 1);
+    int index2 = std::min<int>(index1 + 1, N - 1);
+
+    return (1.0f - frac) * octaveForFrequencyTable[index1] +
+        frac * octaveForFrequencyTable[index2];
+}
+
 WavetableRange WavetableRange::getRangeForOctave(int o)
 {
     WavetableRange range;
