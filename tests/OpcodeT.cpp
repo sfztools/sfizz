@@ -137,6 +137,20 @@ TEST_CASE("[Opcode] Note values")
     noteValue = sfz::readNoteValue("C#4");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 61);
+    noteValue = sfz::readNoteValue("e#4");
+    REQUIRE(!noteValue);
+    noteValue = sfz::readNoteValue("E#4");
+    REQUIRE(!noteValue);
+    noteValue = sfz::readNoteValue("db4");
+    REQUIRE(noteValue);
+    REQUIRE(*noteValue == 61);
+    noteValue = sfz::readNoteValue("Db4");
+    REQUIRE(noteValue);
+    REQUIRE(*noteValue == 61);
+    noteValue = sfz::readNoteValue("fb4");
+    REQUIRE(!noteValue);
+    noteValue = sfz::readNoteValue("Fb4");
+    REQUIRE(!noteValue);
 }
 
 TEST_CASE("[Opcode] Categories")

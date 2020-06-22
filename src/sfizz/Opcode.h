@@ -109,7 +109,7 @@ private:
  * @param value
  * @return absl::optional<uint8_t>
  */
-absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
+absl::optional<uint8_t> readNoteValue(absl::string_view value);
 
 /**
  * @brief Read a value from the sfz file and cast it to the destination parameter along
