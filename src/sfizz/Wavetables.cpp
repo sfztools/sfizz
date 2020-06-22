@@ -6,6 +6,7 @@
 
 #include "Wavetables.h"
 #include "FilePool.h"
+#include "Interpolators.h"
 #include "MathHelpers.h"
 #include "absl/meta/type_traits.h"
 #include <kiss_fftr.h>
@@ -35,7 +36,8 @@ void WavetableOscillator::setPhase(float phase)
     _phase = phase;
 }
 
-void WavetableOscillator::process(float frequency, float detuneRatio, float* output, unsigned nframes)
+template <InterpolatorModel M>
+void WavetableOscillator::processSingle(float frequency, float detuneRatio, float* output, unsigned nframes)
 {
     float phase = _phase;
     float phaseInc = frequency * (detuneRatio * _sampleInterval);
@@ -48,7 +50,7 @@ void WavetableOscillator::process(float frequency, float detuneRatio, float* out
         float position = phase * tableSize;
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
-        output[i] = interpolate(&table[index], frac);
+        output[i] = interpolate<M>(&table[index], frac);
 
         phase += phaseInc;
         phase -= static_cast<int>(phase);
@@ -57,7 +59,8 @@ void WavetableOscillator::process(float frequency, float detuneRatio, float* out
     _phase = phase;
 }
 
-void WavetableOscillator::processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+template <InterpolatorModel M>
+void WavetableOscillator::processModulatedSingle(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
 {
     float phase = _phase;
     float sampleInterval = _sampleInterval;
@@ -73,7 +76,7 @@ void WavetableOscillator::processModulated(const float* frequencies, float detun
         float position = phase * tableSize;
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
-        output[i] = interpolate(&table[index], frac);
+        output[i] = interpolate<M>(&table[index], frac);
 
         phase += phaseInc;
         phase -= static_cast<int>(phase);
@@ -82,9 +85,96 @@ void WavetableOscillator::processModulated(const float* frequencies, float detun
     _phase = phase;
 }
 
-float WavetableOscillator::interpolate(const float* x, float delta)
+template <InterpolatorModel M>
+void WavetableOscillator::processDual(float frequency, float detuneRatio, float* output, unsigned nframes)
 {
-    return x[0] + delta * (x[1] - x[0]);
+    float phase = _phase;
+    float phaseInc = frequency * (detuneRatio * _sampleInterval);
+
+    const WavetableMulti& multi = *_multi;
+    unsigned tableSize = multi.tableSize();
+    WavetableMulti::DualTable dt = multi.getInterpolationPairForFrequency(frequency);
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float position = phase * tableSize;
+        unsigned index = static_cast<unsigned>(position);
+        float frac = position - index;
+        output[i] =
+            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
+            dt.delta * interpolate<M>(&dt.table2[index], frac);
+
+        phase += phaseInc;
+        phase -= static_cast<int>(phase);
+    }
+
+    _phase = phase;
+}
+
+template <InterpolatorModel M>
+void WavetableOscillator::processModulatedDual(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+{
+    float phase = _phase;
+    float sampleInterval = _sampleInterval;
+
+    const WavetableMulti& multi = *_multi;
+    unsigned tableSize = multi.tableSize();
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float frequency = frequencies[i];
+        float phaseInc = frequency * (detuneRatio * sampleInterval);
+
+        WavetableMulti::DualTable dt = multi.getInterpolationPairForFrequency(frequency);
+
+        float position = phase * tableSize;
+        unsigned index = static_cast<unsigned>(position);
+        float frac = position - index;
+        output[i] =
+            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
+            dt.delta * interpolate<M>(&dt.table2[index], frac);
+
+        phase += phaseInc;
+        phase -= static_cast<int>(phase);
+    }
+
+    _phase = phase;
+}
+
+void WavetableOscillator::process(float frequency, float detuneRatio, float* output, unsigned nframes)
+{
+    int quality = clamp(_quality, 0, 3);
+
+    switch (quality) {
+    case 0: // supposed to be nearest according to book
+        // fall through
+    case 1:
+        processSingle<kInterpolatorLinear>(frequency, detuneRatio, output, nframes);
+        break;
+    case 2:
+        processSingle<kInterpolatorBspline3>(frequency, detuneRatio, output, nframes);
+        break;
+    case 3:
+        processDual<kInterpolatorBspline3>(frequency, detuneRatio, output, nframes);
+        break;
+    }
+}
+
+void WavetableOscillator::processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+{
+    int quality = clamp(_quality, 0, 3);
+
+    switch (quality) {
+    case 0: // supposed to be nearest according to book
+        // fall through
+    case 1:
+        processModulatedSingle<kInterpolatorLinear>(frequencies, detuneRatio, output, nframes);
+        break;
+    case 2:
+        processModulatedSingle<kInterpolatorBspline3>(frequencies, detuneRatio, output, nframes);
+        break;
+    case 3:
+        processModulatedDual<kInterpolatorBspline3>(frequencies, detuneRatio, output, nframes);
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -304,7 +394,7 @@ const WavetableMulti* WavetableMulti::getSilenceWavetable()
 
 void WavetableMulti::allocateStorage(unsigned tableSize)
 {
-    _multiData.resize((tableSize + _tableExtra) * numTables());
+    _multiData.resize((tableSize + 2 * _tableExtra) * numTables());
     _tableSize = tableSize;
 }
 
@@ -315,9 +405,22 @@ void WavetableMulti::fillExtra()
     constexpr unsigned numTables = WavetableMulti::numTables();
 
     for (unsigned m = 0; m < numTables; ++m) {
-        float* ptr = const_cast<float*>(getTablePointer(m));
-        for (unsigned i = 0; i < tableExtra; ++i)
-            ptr[tableSize + i] = ptr[i % tableSize];
+        float* beg = const_cast<float*>(getTablePointer(m));
+        float* end = beg + tableSize;
+        // fill right
+        float* src = beg;
+        float* dst = end;
+        for (unsigned i = 0; i < tableExtra; ++i) {
+            *dst++ = *src;
+            src = (src + 1 != end) ? (src + 1) : beg;
+        }
+        // fill left
+        src = end - 1;
+        dst = beg - 1;
+        for (unsigned i = 0; i < tableExtra; ++i) {
+            *dst-- = *src;
+            src = (src != beg) ? (src - 1) : (end - 1);
+        }
     }
 }
 
