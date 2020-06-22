@@ -884,6 +884,14 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
 
+            // Polyphony reached on note_polyphony
+            if (region->notePolyphony && notePolyphonyCounter >= *region->notePolyphony) {
+                if (selfMaskCandidate != nullptr)
+                    selfMaskCandidate->release(delay);
+                else // We're the lowest velocity guy here
+                    continue;
+            }
+
             auto parent = region->parent;
 
             // Polyphony reached on region
@@ -908,14 +916,6 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     goto render;
                 }
                 parent = parent->getParent();
-            }
-
-            // Polyphony reached on note_polyphony
-            if (region->notePolyphony && notePolyphonyCounter >= *region->notePolyphony) {
-                if (selfMaskCandidate == nullptr)
-                    continue; // We're the lowest velocity guy here
-                selectedVoice = selfMaskCandidate;
-                goto render;
             }
 
             // Engine polyphony reached, we're stealing something
