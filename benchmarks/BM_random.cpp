@@ -65,7 +65,30 @@ BENCHMARK_DEFINE_F(RandomFill, FastRandomBipolar)(benchmark::State& state) {
     }
 }
 
+BENCHMARK_DEFINE_F(RandomFill, StdNormal)(benchmark::State& state) {
+    std::minstd_rand prng;
+    std::normal_distribution<float> dist(0.0f, 0.25f);
+
+    for (auto _ : state)
+    {
+        for (float &out : output)
+            out = dist(prng);
+    }
+}
+
+BENCHMARK_DEFINE_F(RandomFill, FastNormal)(benchmark::State& state) {
+    fast_gaussian_generator<float, 4> generator(0.0f, 0.25f);
+
+    for (auto _ : state)
+    {
+        for (float &out : output)
+            out = generator();
+    }
+}
+
 BENCHMARK_REGISTER_F(RandomFill, StdRandom)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(RandomFill, StdRandomBipolar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(RandomFill, FastRandom)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(RandomFill, FastRandomBipolar)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(RandomFill, StdNormal)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
+BENCHMARK_REGISTER_F(RandomFill, FastNormal)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);

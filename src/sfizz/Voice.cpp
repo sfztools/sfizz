@@ -600,8 +600,8 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto rightSpan  = buffer.getSpan(1);
 
     if (region->sampleId.filename() == "*noise") {
-        absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
-        absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
+        absl::c_generate(leftSpan, noiseDist);
+        absl::c_generate(rightSpan, noiseDist);
     } else {
         const auto numFrames = buffer.getNumFrames();
 
