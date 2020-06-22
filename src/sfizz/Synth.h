@@ -16,6 +16,7 @@
 #include "MidiState.h"
 #include "AudioSpan.h"
 #include "parser/Parser.h"
+#include "VoiceStealing.h"
 #include "absl/types/span.h"
 #include <absl/types/optional.h>
 #include <random>
@@ -714,6 +715,9 @@ private:
     std::vector<PolyphonyGroup> polyphonyGroups;
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
+    VoiceViewVector regionPolyphonyArray;
+    VoiceStealing stealer;
+
     VoiceViewVector voiceViewArray;
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;

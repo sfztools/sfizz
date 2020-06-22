@@ -610,52 +610,11 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) {
         return voice->isFree();
     });
+
     if (freeVoice != voices.end())
         return freeVoice->get();
 
-    // Start of the voice stealing algorithm
-    absl::c_sort(voiceViewArray, voiceOrdering);
-
-    const auto sumEnvelope = absl::c_accumulate(voiceViewArray, 0.0f, [](float sum, const Voice* v) {
-        return sum + v->getAverageEnvelope();
-    });
-    const auto envThreshold = sumEnvelope
-        / static_cast<float>(voiceViewArray.size()) * config::stealingEnvelopeCoeff;
-    const auto ageThreshold = voiceViewArray.front()->getAge() * config::stealingAgeCoeff;
-
-    Voice* returnedVoice = voiceViewArray.front();
-    unsigned idx = 0;
-    while (idx < voiceViewArray.size()) {
-        const auto ref = voiceViewArray[idx];
-
-        if (ref->getAge() < ageThreshold) {
-            // Went too far, we'll kill the oldest note.
-            break;
-        }
-
-        float maxEnvelope { 0.0f };
-        SisterVoiceRing::applyToRing(ref, [&](Voice* v) {
-            maxEnvelope = max(maxEnvelope, v->getAverageEnvelope());
-        });
-
-        if (maxEnvelope < envThreshold) {
-            returnedVoice = ref;
-            break;
-        }
-
-        // Jump over the sister voices in the set
-        do { idx++; }
-        while (idx < voiceViewArray.size() && sisterVoices(ref, voiceViewArray[idx]));
-    }
-
-    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-    SisterVoiceRing::applyToRing(returnedVoice, [&] (Voice* v) {
-        renderVoiceToOutputs(*v, *tempSpan);
-        v->reset();
-    });
-    ASSERT(returnedVoice->isFree());
-
-    return returnedVoice;
+    return {};
 }
 
 int sfz::Synth::getNumActiveVoices() const noexcept
@@ -716,7 +675,6 @@ void sfz::Synth::renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) 
             bus->addToInputs(tempSpan, addGain, tempSpan.getNumFrames());
         }
     }
-
 }
 
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
@@ -889,9 +847,9 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned notePolyphonyCounter { 0 };
-            unsigned regionPolyphonyCounter { 0 };
             Voice* selfMaskCandidate { nullptr };
             Voice* selectedVoice { nullptr };
+            regionPolyphonyArray.clear();
 
             for (auto& voice : voices) {
                 if (voice->isFree()) {
@@ -900,8 +858,9 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     continue;
                 }
 
-                if (voice->getRegion() == region)
-                    regionPolyphonyCounter += 1;
+                if (voice->getRegion() == region) {
+                    regionPolyphonyArray.push_back(voice.get());
+                }
 
                 if (region->notePolyphony) {
                     if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
@@ -925,36 +884,58 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
 
-            // FIXME: Do something for the polyphony limit
-            if (regionPolyphonyCounter >= region->polyphony)
-                continue;
-
-            // FIXME: Do something for the polyphony limit
-            if (polyphonyGroups[region->group].getActiveVoices().size()
-                == polyphonyGroups[region->group].getPolyphonyLimit())
-                continue;
-
-            // FIXME: Do something for the polyphony limit
             auto parent = region->parent;
-            bool polyphonyReached { false };
+
+            // Polyphony reached on region
+            if (regionPolyphonyArray.size() >= region->polyphony) {
+                selectedVoice = stealer.steal(absl::MakeSpan(regionPolyphonyArray));
+                goto render;
+            }
+
+            // Polyphony reached on polyphony group
+            if (polyphonyGroups[region->group].getActiveVoices().size()
+                == polyphonyGroups[region->group].getPolyphonyLimit()) {
+                const auto activeVoices = absl::MakeSpan(polyphonyGroups[region->group].getActiveVoices());
+                selectedVoice = stealer.steal(activeVoices);
+                goto render;
+            }
+
+            // Polyphony reached some parent group/master/etc
             while (parent != nullptr) {
                 if (parent->getActiveVoices().size() >= parent->getPolyphonyLimit()) {
-                    polyphonyReached = true;
-                    break;
+                    const auto activeVoices = absl::MakeSpan(parent->getActiveVoices());
+                    selectedVoice = stealer.steal(activeVoices);
+                    goto render;
                 }
-
                 parent = parent->getParent();
             }
-            if (polyphonyReached)
-                continue;
 
+            // Polyphony reached on note_polyphony
             if (region->notePolyphony && notePolyphonyCounter >= *region->notePolyphony) {
-                if (selfMaskCandidate != nullptr)
-                    selfMaskCandidate->release(delay);
-                else // We're the lowest velocity guy here
-                    continue;
+                if (selfMaskCandidate == nullptr)
+                    continue; // We're the lowest velocity guy here
+                selectedVoice = selfMaskCandidate;
+                goto render;
             }
 
+            // Engine polyphony reached, we're stealing something
+            if (selectedVoice == nullptr) {
+                selectedVoice = stealer.steal(absl::MakeSpan(voiceViewArray));
+            }
+
+            render:
+            // Kill voice if necessary, pre-rendering it into the output buffers
+            ASSERT(selectedVoice);
+            if (!selectedVoice->isFree()) {
+                auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
+                SisterVoiceRing::applyToRing(selectedVoice, [&] (Voice* v) {
+                    renderVoiceToOutputs(*v, *tempSpan);
+                    v->reset();
+                });
+            }
+
+            // Voice should be free now
+            ASSERT(selectedVoice->isFree());
             selectedVoice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
             ring.addVoiceToRing(selectedVoice);
             RegionSet::registerVoiceInHierarchy(region, selectedVoice);
@@ -1303,6 +1284,9 @@ void sfz::Synth::resetVoices(int numVoices)
 
     voiceViewArray.clear();
     voiceViewArray.reserve(numVoices);
+
+    regionPolyphonyArray.clear();
+    regionPolyphonyArray.reserve(numVoices);
 
     for (auto& voice : voices) {
         voice->setSampleRate(this->sampleRate);
