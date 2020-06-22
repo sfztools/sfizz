@@ -129,11 +129,14 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
         <region> sample=*saw key=65
         <master>
         <group> polyphony=5
-        <region> sample=*sine key=65
+        <region> sample=*sine key=66
     )");
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
+    synth.noteOn(0, 66, 64);
+    synth.noteOn(0, 66, 64);
+    synth.noteOn(0, 66, 64);
     REQUIRE(synth.getNumActiveVoices() == 5);
 }
 
