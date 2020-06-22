@@ -891,13 +891,16 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             unsigned notePolyphonyCounter { 0 };
             unsigned regionPolyphonyCounter { 0 };
             Voice* selfMaskCandidate { nullptr };
+            Voice* selectedVoice { nullptr };
 
             for (auto& voice : voices) {
-                const auto voiceRegion = voice->getRegion();
-                if (voiceRegion == nullptr)
+                if (voice->isFree()) {
+                    if (selectedVoice == nullptr)
+                        selectedVoice = voice.get();
                     continue;
+                }
 
-                if (voiceRegion == region)
+                if (voice->getRegion() == region)
                     regionPolyphonyCounter += 1;
 
                 if (region->notePolyphony) {
@@ -923,12 +926,12 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             }
 
             // FIXME: Do something for the polyphony limit
-            if (polyphonyGroups[region->group].getActiveVoices().size()
-                == polyphonyGroups[region->group].getPolyphonyLimit())
+            if (regionPolyphonyCounter >= region->polyphony)
                 continue;
 
             // FIXME: Do something for the polyphony limit
-            if (regionPolyphonyCounter >= region->polyphony)
+            if (polyphonyGroups[region->group].getActiveVoices().size()
+                == polyphonyGroups[region->group].getPolyphonyLimit())
                 continue;
 
             // FIXME: Do something for the polyphony limit
@@ -952,14 +955,10 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     continue;
             }
 
-            auto voice = findFreeVoice();
-            if (voice == nullptr)
-                continue;
-
-            voice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
-            ring.addVoiceToRing(voice);
-            RegionSet::registerVoiceInHierarchy(region, voice);
-            polyphonyGroups[region->group].registerVoice(voice);
+            selectedVoice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            ring.addVoiceToRing(selectedVoice);
+            RegionSet::registerVoiceInHierarchy(region, selectedVoice);
+            polyphonyGroups[region->group].registerVoice(selectedVoice);
         }
     }
 }
