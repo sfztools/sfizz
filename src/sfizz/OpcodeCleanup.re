@@ -6,6 +6,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Opcode.h"
+#include "Macros.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/ascii.h"
@@ -31,6 +32,7 @@ static std::string cleanUpOpcodeName(absl::string_view rawOpcode, OpcodeScope sc
     const char* YYMARKER;
     const char* yypmatch[2 * YYMAXNMATCH];
     size_t yynmatch;
+    UNUSED(yynmatch);
 
     /*!stags:re2c format = "const char* @@; "; */
 
