@@ -22,3 +22,11 @@ if (SFIZZ_RENDER)
     sfizz_enable_lto_if_needed (sfizz_render)
     install (TARGETS sfizz_render DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "render" OPTIONAL)
 endif()
+
+if (SFIZZ_FLAT)
+    add_executable(sfizz_flat sfizz_flat.cpp)
+    target_link_libraries(sfizz_flat PRIVATE sfizz::parser)
+    sfizz_enable_lto_if_needed (sfizz_flat)
+    install (TARGETS sfizz_flat DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "flat" OPTIONAL)
+endif()
+
