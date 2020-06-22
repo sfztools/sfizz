@@ -65,16 +65,20 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
             wave = resources.wavePool.getWaveSaw();
             break;
         }
+        const int quality = region->oscillatorQuality ? *region->oscillatorQuality : Default::oscillatorQuality;
         for (WavetableOscillator& osc : waveOscillators) {
             osc.setWavetable(wave);
             osc.setPhase(region->getPhase());
+            osc.setQuality(quality);
         }
         setupOscillatorUnison();
     } else if (region->oscillator) {
         const WavetableMulti* wave = resources.wavePool.getFileWave(region->sampleId.filename());
+        const int quality = region->oscillatorQuality ? *region->oscillatorQuality : Default::oscillatorQuality;
         for (WavetableOscillator& osc : waveOscillators) {
             osc.setWavetable(wave);
             osc.setPhase(region->getPhase());
+            osc.setQuality(quality);
         }
         setupOscillatorUnison();
     } else {
