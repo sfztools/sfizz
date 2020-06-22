@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "LeakDetector.h"
 #include "Buffer.h"
+#include "MathHelpers.h"
 #include <absl/types/span.h>
 #include <absl/container/flat_hash_map.h>
 #include <memory>
@@ -17,6 +18,8 @@ namespace sfz {
 class FilePool;
 
 class WavetableMulti;
+
+enum InterpolatorModel : int;
 
 /**
    An oscillator based on wavetables
@@ -45,6 +48,16 @@ public:
     void setPhase(float phase);
 
     /**
+       Set the quality of this oscillator. (cf. `oscillator_quality`)
+
+       0: nearest
+       1: linear
+       2: high
+       3: dual-high
+     */
+    void setQuality(int q) { _quality = q; }
+
+    /**
        Compute a cycle of the oscillator, with constant frequency.
      */
     void process(float frequency, float detuneRatio, float* output, unsigned nframes);
@@ -55,17 +68,23 @@ public:
     void processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
 
 private:
-    /**
-       Interpolate a value from a part of table, with delta in 0 to 1 excluded.
-       There are `TableExtra` elements available for reading.
-       (cf. WavetableMulti)
-     */
-    static float interpolate(const float* x, float delta);
+    // single-table interpolation
+    template <InterpolatorModel M>
+    void processSingle(float frequency, float detuneRatio, float* output, unsigned nframes);
+    template <InterpolatorModel M>
+    void processModulatedSingle(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
+
+    // dual-table interpolation
+    template <InterpolatorModel M>
+    void processDual(float frequency, float detuneRatio, float* output, unsigned nframes);
+    template <InterpolatorModel M>
+    void processModulatedDual(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
 
 private:
     float _phase = 0.0f;
     float _sampleInterval = 0.0f;
     const WavetableMulti* _multi = nullptr;
+    int _quality = 1;
     LEAK_DETECTOR(WavetableOscillator);
 };
 
@@ -113,6 +132,7 @@ public:
     static constexpr float frequencyScaleFactor = 0.05;
 
     static unsigned getOctaveForFrequency(float f);
+    static float getFractionalOctaveForFrequency(float f);
     static WavetableRange getRangeForOctave(int o);
     static WavetableRange getRangeForFrequency(float f);
 
@@ -153,6 +173,31 @@ public:
         return getTable(WavetableRange::getOctaveForFrequency(freq));
     }
 
+    // adjacent tables with interpolation factor between them
+    struct DualTable {
+        const float* table1;
+        const float* table2;
+        float delta;
+    };
+
+    // get the pair of tables at the fractional multisample position (range checked)
+    DualTable getInterpolationPair(float position) const
+    {
+        DualTable dt;
+        int index = static_cast<int>(position);
+        dt.delta = position - index;
+        dt.table1 = getTablePointer(clamp<int>(index, 0, WavetableRange::countOctaves - 1));
+        dt.table2 = getTablePointer(clamp<int>(index + 1, 0, WavetableRange::countOctaves - 1));
+        return dt;
+    }
+
+    // get the pair of tables for the given playback frequency (range checked)
+    DualTable getInterpolationPairForFrequency(float freq) const
+    {
+        float position = WavetableRange::getFractionalOctaveForFrequency(freq);
+        return getInterpolationPair(position);
+    }
+
     // create a multisample according to a given harmonic profile
     // the reference sample rate is the minimum value accepted by the DSP
     // system (most defavorable wrt. aliasing)
@@ -166,7 +211,7 @@ private:
     // get a pointer to the beginning of the N-th table
     const float* getTablePointer(unsigned index) const
     {
-        return _multiData.data() + index * (_tableSize + _tableExtra);
+        return _multiData.data() + index * (_tableSize + 2 * _tableExtra) + _tableExtra;
     }
 
     // allocate the internal data for tables of the given size

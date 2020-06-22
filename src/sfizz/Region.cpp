@@ -135,6 +135,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("oscillator_detune"):
         setValueFromOpcode(opcode, oscillatorDetune, Default::oscillatorDetuneRange);
         break;
+    case hash("oscillator_quality"):
+        if (opcode.value == "-1")
+            oscillatorQuality.reset();
+        else
+            setValueFromOpcode(opcode, oscillatorQuality, Default::oscillatorQualityRange);
+        break;
 
     // Instrument settings: voice lifecycle
     case hash("group"): // also polyphony_group

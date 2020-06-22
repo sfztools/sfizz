@@ -276,6 +276,7 @@ struct Region {
     bool oscillator = false;
     int oscillatorMulti = Default::oscillatorMulti;
     float oscillatorDetune = Default::oscillatorDetune;
+    absl::optional<int> oscillatorQuality;
 
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group

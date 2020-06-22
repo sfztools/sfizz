@@ -20,6 +20,19 @@ inline R interpolate(const R* values, R coeff)
 }
 
 //------------------------------------------------------------------------------
+// Nearest
+
+template <class R>
+class Interpolator<kInterpolatorNearest, R>
+{
+public:
+    static inline R process(const R* values, R coeff)
+    {
+        return values[coeff > static_cast<R>(0.5)];
+    }
+};
+
+//------------------------------------------------------------------------------
 // Linear
 
 template <class R>
