@@ -144,8 +144,9 @@ void WavetableOscillator::process(float frequency, float detuneRatio, float* out
     int quality = clamp(_quality, 0, 3);
 
     switch (quality) {
-    case 0: // supposed to be nearest according to book
-        // fall through
+    case 0:
+        processSingle<kInterpolatorNearest>(frequency, detuneRatio, output, nframes);
+        break;
     case 1:
         processSingle<kInterpolatorLinear>(frequency, detuneRatio, output, nframes);
         break;
@@ -163,8 +164,9 @@ void WavetableOscillator::processModulated(const float* frequencies, float detun
     int quality = clamp(_quality, 0, 3);
 
     switch (quality) {
-    case 0: // supposed to be nearest according to book
-        // fall through
+    case 0:
+        processModulatedSingle<kInterpolatorNearest>(frequencies, detuneRatio, output, nframes);
+        break;
     case 1:
         processModulatedSingle<kInterpolatorLinear>(frequencies, detuneRatio, output, nframes);
         break;

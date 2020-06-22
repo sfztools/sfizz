@@ -9,6 +9,8 @@
 namespace sfz {
 
 enum InterpolatorModel : int {
+    // a nearest interpolator
+    kInterpolatorNearest,
     // a linear interpolator
     kInterpolatorLinear,
     // a Hermite 3rd order interpolator
