@@ -99,6 +99,10 @@ namespace config {
     static constexpr double amplitudeTriangle = 0.625;
     static constexpr double amplitudeSaw = 0.515;
     static constexpr double amplitudeSquare = 0.515;
+    /**
+       Background file loading
+     */
+    static constexpr int backgroundLoaderPthreadPriority = 50; // expressed in %
 } // namespace config
 
 } // namespace sfz

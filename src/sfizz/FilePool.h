@@ -259,6 +259,11 @@ public:
      * in the queue.
      */
     void waitForBackgroundLoading() noexcept;
+    /**
+     * @brief Assign the current thread a priority which is appropriate
+     * for background sample file processing.
+     */
+    static void raiseCurrentThreadPriority() noexcept;
 private:
     Logger& logger;
     fs::path rootDirectory;

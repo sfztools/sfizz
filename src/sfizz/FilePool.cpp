@@ -37,8 +37,14 @@
 #include "absl/memory/memory.h"
 #include <algorithm>
 #include <memory>
-#include <sndfile.hh>
 #include <thread>
+#include <system_error>
+#include <sndfile.hh>
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
 
 void readBaseFile(SndfileHandle& sndFile, sfz::FileAudioBuffer& output, uint32_t numFrames, bool reverse)
 {
@@ -365,6 +371,8 @@ void sfz::FilePool::tryToClearPromises()
 
 void sfz::FilePool::clearingThread()
 {
+    raiseCurrentThreadPriority();
+
     RTSemaphore& request = semClearingRequest;
     do {
         request.wait();
@@ -376,6 +384,8 @@ void sfz::FilePool::clearingThread()
 
 void sfz::FilePool::loadingThread() noexcept
 {
+    raiseCurrentThreadPriority();
+
     FilePromisePtr promise;
     do {
         workerBarrier.wait();
@@ -501,4 +511,37 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
     while (threadsLoading > 0) {
         std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
+}
+
+void sfz::FilePool::raiseCurrentThreadPriority() noexcept
+{
+#if defined(_WIN32)
+    #pragma message("Implement Win32 thread background priority")
+    HANDLE thread = GetCurrentThread();
+    const int priority = THREAD_PRIORITY_ABOVE_NORMAL; /*THREAD_PRIORITY_HIGHEST*/
+    if (!SetThreadPriority(thread, priority)) {
+        std::system_error error(GetLastError(), std::system_category());
+        DBG("[sfizz] Cannot set current thread priority: " << error.what());
+    }
+#else
+    pthread_t thread = pthread_self();
+    int policy;
+    sched_param param;
+
+    if (pthread_getschedparam(thread, &policy, &param) != 0) {
+        DBG("[sfizz] Cannot get current thread scheduling parameters");
+        return;
+    }
+
+    policy = SCHED_RR;
+    const int minprio = sched_get_priority_min(policy);
+    const int maxprio = sched_get_priority_max(policy);
+    param.sched_priority = minprio +
+        config::backgroundLoaderPthreadPriority * (maxprio - minprio) / 100;
+
+    if (pthread_setschedparam(thread, policy, &param) != 0) {
+        DBG("[sfizz] Cannot set current thread scheduling parameters");
+        return;
+    }
+#endif
 }
