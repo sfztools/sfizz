@@ -415,10 +415,8 @@ void sfz::FilePool::loadingThread() noexcept
 
         threadsLoading--;
 
-        while (!filledPromiseQueue.try_push(promise)) {
-            DBG("[sfizz] Error enqueuing the promise for " << promise->fileId << " in the filledPromiseQueue");
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        semFilledPromiseQueueAvailable.wait();
+        filledPromiseQueue.push(promise);
 
         promise.reset();
     } while (1);
@@ -447,8 +445,10 @@ void sfz::FilePool::cleanupPromises() noexcept
     // Remove the promises from the filled queue and put them in a linear
     // storage
     FilePromisePtr promise;
-    while (filledPromiseQueue.try_pop(promise))
+    while (filledPromiseQueue.try_pop(promise)) {
+        semFilledPromiseQueueAvailable.post();
         temporaryFilePromises.push_back(promise);
+    }
 
     auto promiseUsedOnce = [](FilePromisePtr& p) { return p.use_count() == 1; };
     auto moveToClear = [&](FilePromisePtr& p) { return promisesToClear.push_back(p); };

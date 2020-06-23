@@ -268,6 +268,7 @@ private:
 
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
+    RTSemaphore semFilledPromiseQueueAvailable { config::maxVoices };
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals
