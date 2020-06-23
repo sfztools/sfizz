@@ -273,6 +273,7 @@ private:
     // Signals
     volatile bool quitThread { false };
     volatile bool emptyQueue { false };
+    RTSemaphore semEmptyQueueFinished;
     std::atomic<int> threadsLoading { 0 };
     RTSemaphore workerBarrier;
     RTSemaphore semClearingRequest;

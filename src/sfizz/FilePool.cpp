@@ -378,18 +378,16 @@ void sfz::FilePool::loadingThread() noexcept
 {
     FilePromisePtr promise;
     while (!quitThread) {
+        workerBarrier.wait();
 
         if (emptyQueue) {
-            while(promiseQueue.try_pop(promise)) {
+            while (promiseQueue.try_pop(promise)) {
                 // We're just dequeuing
             }
             emptyQueue = false;
+            semEmptyQueueFinished.post();
             continue;
         }
-
-        std::error_code ec;
-        workerBarrier.wait(ec);
-        ASSERT(!ec);
 
         if (!promiseQueue.try_pop(promise)) {
             continue;
@@ -483,12 +481,8 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
 void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
-    std::error_code ec;
-    workerBarrier.post(ec);
-    ASSERT(!ec);
-
-    while (emptyQueue)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    workerBarrier.post();
+    semEmptyQueueFinished.wait();
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
