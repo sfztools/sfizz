@@ -275,6 +275,7 @@ private:
     volatile bool emptyQueue { false };
     std::atomic<int> threadsLoading { 0 };
     RTSemaphore workerBarrier;
+    RTSemaphore semClearingRequest;
 
     // File promises data structures along with their guards.
     std::vector<FilePromisePtr> emptyPromises;

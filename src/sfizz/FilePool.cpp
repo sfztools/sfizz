@@ -125,10 +125,15 @@ sfz::FilePool::~FilePool()
 {
     quitThread = true;
 
+    std::error_code ec;
+
     for (unsigned i = 0; i < threadPool.size(); ++i) {
-        std::error_code ec;
+        ec = std::error_code();
         workerBarrier.post(ec);
     }
+
+    ec = std::error_code();
+    semClearingRequest.post(ec);
 
     for (auto& thread: threadPool)
         thread.join();
@@ -360,10 +365,13 @@ void sfz::FilePool::tryToClearPromises()
 
 void sfz::FilePool::clearingThread()
 {
-    while (!quitThread) {
+    RTSemaphore& request = semClearingRequest;
+    do {
+        request.wait();
+        if (quitThread)
+            return;
         tryToClearPromises();
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+    } while (1);
 }
 
 void sfz::FilePool::loadingThread() noexcept
@@ -443,7 +451,8 @@ void sfz::FilePool::cleanupPromises() noexcept
 
     auto promiseUsedOnce = [](FilePromisePtr& p) { return p.use_count() == 1; };
     auto moveToClear = [&](FilePromisePtr& p) { return promisesToClear.push_back(p); };
-    swapAndPopAll(temporaryFilePromises, promiseUsedOnce, moveToClear);
+    if (swapAndPopAll(temporaryFilePromises, promiseUsedOnce, moveToClear) > 0)
+        semClearingRequest.post();
 }
 
 void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
