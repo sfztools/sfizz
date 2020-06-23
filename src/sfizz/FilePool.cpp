@@ -377,7 +377,7 @@ void sfz::FilePool::clearingThread()
 void sfz::FilePool::loadingThread() noexcept
 {
     FilePromisePtr promise;
-    while (!quitThread) {
+    do {
         workerBarrier.wait();
 
         if (emptyQueue) {
@@ -388,6 +388,9 @@ void sfz::FilePool::loadingThread() noexcept
             semEmptyQueueFinished.post();
             continue;
         }
+
+        if (quitThread)
+            return;
 
         if (!promiseQueue.try_pop(promise)) {
             continue;
@@ -418,7 +421,7 @@ void sfz::FilePool::loadingThread() noexcept
         }
 
         promise.reset();
-    }
+    } while (1);
 }
 
 void sfz::FilePool::clear()
