@@ -516,7 +516,6 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
 void sfz::FilePool::raiseCurrentThreadPriority() noexcept
 {
 #if defined(_WIN32)
-    #pragma message("Implement Win32 thread background priority")
     HANDLE thread = GetCurrentThread();
     const int priority = THREAD_PRIORITY_ABOVE_NORMAL; /*THREAD_PRIORITY_HIGHEST*/
     if (!SetThreadPriority(thread, priority)) {
