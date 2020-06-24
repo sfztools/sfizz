@@ -15,6 +15,8 @@
 #include "Config.h"
 
 namespace sfz {
+class AudioReader;
+
 /**
  * @brief Wraps the internal oversampler in a single function that takes an
  *        AudioBuffer and oversamples it in another pre-allocated one. The
@@ -41,6 +43,16 @@ public:
      * @param framesReady an atomic counter for the ready frames. If null no signaling is done.
      */
     void stream(AudioSpan<float> input, AudioSpan<float> output, std::atomic<size_t>* framesReady = nullptr);
+    /**
+     * @brief Stream the oversampling of an input AudioReader into an output
+     *        one, possibly signaling the caller along the way of the number of
+     *        frames that are written.
+     *
+     * @param input
+     * @param output
+     * @param framesReady an atomic counter for the ready frames. If null no signaling is done.
+     */
+    void stream(AudioReader& input, AudioSpan<float> output, std::atomic<size_t>* framesReady = nullptr);
 
     Oversampler() = delete;
     Oversampler(const Oversampler&) = delete;
