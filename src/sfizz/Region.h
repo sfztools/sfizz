@@ -366,6 +366,7 @@ struct Region {
     // Modifiers
     ModifierArray<CCMap<Modifier>> modifiers;
 
+    bool triggerOnCC { false }; // whether the region triggers on CC events or note events
 private:
     const MidiState& midiState;
     bool keySwitched { true };
@@ -376,7 +377,6 @@ private:
     bool aftertouchSwitched { true };
     bool noteIsOff { false };
     std::bitset<config::numCCs> ccSwitched;
-    bool triggerOnCC { false };
     absl::string_view defaultPath { "" };
 
     int sequenceCounter { 0 };

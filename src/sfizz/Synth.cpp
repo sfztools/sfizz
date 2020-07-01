@@ -446,7 +446,9 @@ void sfz::Synth::finalizeSfzLoad()
         }
 
         for (int cc = 0; cc < config::numCCs; cc++) {
-            if (region->ccTriggers.contains(cc) || region->ccConditions.contains(cc))
+            if (region->ccTriggers.contains(cc)
+                || region->ccConditions.contains(cc)
+                || (cc == region->sustainCC && region->trigger == SfzTrigger::release))
                 ccActivationLists[cc].push_back(region);
         }
 
@@ -915,7 +917,14 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
             if (voice == nullptr)
                 continue;
 
-            voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
+            if (!region->triggerOnCC) {
+                // This is a sustain trigger
+                const auto replacedVelocity = resources.midiState.getNoteVelocity(region->pitchKeycenter);
+                voice->startVoice(region, delay, region->pitchKeycenter, replacedVelocity, Voice::TriggerType::NoteOff);
+            } else {
+                voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
+            }
+
             ring.addVoiceToRing(voice);
         }
     }
