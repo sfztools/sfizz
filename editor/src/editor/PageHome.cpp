@@ -83,7 +83,7 @@ void PageHome::Impl::init(el::view& view)
     auto dialSprite = el::share(el::sprite { "knob.png", 128 * dialScale, dialScale });
     auto thumbImg = el::share(el::image { "slider-v.png", 1.0 / 4 });
 
-    knbPolyphony_ = value_dial(el::hold(dialSprite), { 8, 512 });
+    knbPolyphony_ = value_dial(el::hold(dialSprite), { 8, 256 });
     knbOversampling_ = multi_choice_dial(el::hold(dialSprite), {"1x", "2x", "4x", "8x"});
     knbPreload_ = value_dial(el::hold(dialSprite), { 1024, 65536 });
     sldVolume_ = value_slider(
