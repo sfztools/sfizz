@@ -215,6 +215,7 @@ namespace Default
 	constexpr float vel2release { 0.0f };
 	constexpr float start { 0.0 };
 	constexpr float sustain { 100.0 };
+    constexpr uint16_t sustainCC { 64 };
 	constexpr float vel2sustain { 0.0 };
 	constexpr int depth { 0 };
 	constexpr Range<float> egTimeRange { 0.0, 100.0 };

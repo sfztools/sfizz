@@ -44,7 +44,6 @@ namespace config {
     constexpr uint8_t gainSmoothing { 5 };
     constexpr unsigned powerTableSizeExponent { 11 };
     constexpr int maxFilePromises { maxVoices };
-    constexpr int sustainCC { 64 };
     constexpr int allSoundOffCC { 120 };
     constexpr int resetCC { 121 };
     constexpr int allNotesOffCC { 123 };

@@ -273,6 +273,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
 
+    case hash("sustain_cc"):
+        setValueFromOpcode(opcode, sustainCC, Default::ccNumberRange);
+        break;
     case hash("sustain_sw"):
         checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
         break;
@@ -984,7 +987,13 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue);
-    const bool releaseTrigger = (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key);
+    bool releaseTrigger = (trigger == SfzTrigger::release_key);
+    if (trigger == SfzTrigger::release) {
+        if (midiState.getCCValue(sustainCC) < config::halfCCThreshold)
+            releaseTrigger = true;
+        else
+            noteIsOff = true;
+    }
     return keyOk && velOk && randOk && releaseTrigger;
 }
 
@@ -999,13 +1008,18 @@ bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
     if (!isSwitchedOn())
         return false;
 
+    if (sustainCC == ccNumber && ccValue < config::halfCCThreshold && noteIsOff) {
+        noteIsOff = false;
+        return true;
+    }
+
     if (!triggerOnCC)
         return false;
 
     if (ccTriggers.contains(ccNumber) && ccTriggers[ccNumber].containsWithEnd(ccValue))
         return true;
-    else
-        return false;
+
+    return false;
 }
 
 void sfz::Region::registerPitchWheel(float pitch) noexcept
