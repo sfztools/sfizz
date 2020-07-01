@@ -6,6 +6,7 @@
 
 #include "FileDialog.h"
 #include <windows.h>
+#include <commdlg.h>
 #include <ghc/fs_std.hpp>
 #include <memory>
 #include <cstring>
