@@ -105,6 +105,12 @@ target_link_libraries(sfizz-elements PUBLIC sfizz-cairo sfizz-fontconfig)
 target_compile_definitions(sfizz-elements PUBLIC
     "ELEMENTS_HOST_UI_LIBRARY_CUSTOM=1"
     "ASIO_HEADER_ONLY=1")
+if(WIN32)
+    target_compile_definitions(sfizz-elements PUBLIC
+      "WIN32_LEAN_AND_MEAN"
+      "NOMINMAX"
+      "_UNICODE")
+endif()
 
 # Warnings from Elements headers
 #   https://github.com/cycfi/elements/issues/155
