@@ -88,7 +88,6 @@ add_library(sfizz-elements STATIC EXCLUDE_FROM_ALL
     external/elements/lib/src/support/draw_utils.cpp
     external/elements/lib/src/support/font.cpp
     external/elements/lib/src/support/glyphs.cpp
-    external/elements/lib/src/support/io_context.cpp
     external/elements/lib/src/support/pixmap.cpp
     external/elements/lib/src/support/rect.cpp
     external/elements/lib/src/support/resource_paths.cpp
@@ -96,6 +95,7 @@ add_library(sfizz-elements STATIC EXCLUDE_FROM_ALL
     external/elements/lib/src/support/theme.cpp)
 target_include_directories(sfizz-elements PUBLIC
     external/elements/lib/include
+    external/elements/lib/external/asio/asio/include
     external/elements/lib/infra/include
     external/elements/lib/infra/external/string-view-lite/include
     external/elements/lib/infra/external/optional-lite/include
@@ -103,7 +103,8 @@ target_include_directories(sfizz-elements PUBLIC
     )
 target_link_libraries(sfizz-elements PUBLIC sfizz-cairo sfizz-fontconfig)
 target_compile_definitions(sfizz-elements PUBLIC
-    "ELEMENTS_HOST_UI_LIBRARY_CUSTOM=1")
+    "ELEMENTS_HOST_UI_LIBRARY_CUSTOM=1"
+    "ASIO_HEADER_ONLY=1")
 
 # Warnings from Elements headers
 #   https://github.com/cycfi/elements/issues/155
