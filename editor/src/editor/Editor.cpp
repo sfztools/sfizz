@@ -75,6 +75,14 @@ bool Editor::open(void* parentWindowId)
     impl_->ui_.reset(ui);
 
     ///
+    ui->sendNumber = [this](EditId id, float v) {
+        impl_->ctrl_->uiSendNumber(id, v);
+    };
+    ui->sendString = [this](EditId id, cycfi::string_view v) {
+        impl_->ctrl_->uiSendString(id, absl::string_view(v.data(), v.size()));
+    };
+
+    ///
     return true;
 }
 
@@ -138,43 +146,10 @@ void Editor::Impl::initializeResourcePaths()
 ///
 void Editor::Impl::uiReceiveNumber(EditId id, float v)
 {
-    switch (id) {
-    case EditId::PreloadSize:
-        ui_->updatePreloadSize(static_cast<int>(v));
-        break;
-    case EditId::Volume:
-        ui_->updateVolume(v);
-        break;
-    case EditId::Polyphony:
-        ui_->updatePolyphony(static_cast<int>(v));
-        break;
-    case EditId::Oversampling:
-        ui_->updateOversampling(static_cast<int>(v));
-        break;
-    case EditId::ScalaRootKey:
-        ui_->updateScalaRootKey(static_cast<int>(v));
-        break;
-    case EditId::TuningFrequency:
-        ui_->updateTuningFrequency(v);
-        break;
-    case EditId::StretchTuning:
-        ui_->updateStretchTuning(v);
-        break;
-    default:
-        break;
-    }
+    ui_->receiveNumber(id, v);
 }
 
 void Editor::Impl::uiReceiveString(EditId id, absl::string_view v)
 {
-    switch (id) {
-    case EditId::SfzFile:
-        ui_->updateSfzFile(cycfi::string_view(v.data(), v.size()));
-        break;
-    case EditId::ScalaFile:
-        ui_->updateScalaFile(cycfi::string_view(v.data(), v.size()));
-        break;
-    default:
-        break;
-    }
+    ui_->receiveString(id, cycfi::string_view(v.data(), v.size()));
 }

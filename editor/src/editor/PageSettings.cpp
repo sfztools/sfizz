@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "PageSettings.h"
+#include "EditIds.h"
 #include "parts/formatters.hpp"
 #include "parts/dials.hpp"
 #include "parts/combobox.hpp"
@@ -93,30 +94,38 @@ el::element& PageSettings::subject()
     return *impl_->contents_;
 }
 
-void PageSettings::updateScalaFile(cycfi::string_view v)
+void PageSettings::receiveNumber(EditId id, float v)
 {
-    impl_->txtScala_->value(v);
-}
-
-void PageSettings::updateScalaRootKey(float v)
-{
-    impl_->lblScalaRootKey_->set_text(midiKeyNumberToName(static_cast<int>(v)));
-}
-
-void PageSettings::updateTuningFrequency(float v)
-{
-    for (const TuningItem& t : tuningItems) {
-        if (t.value == v) {
-            impl_->lblTuningFrequency_->set_text(t.name);
-            return;
+    switch (id) {
+    case EditId::ScalaRootKey:
+        impl_->lblScalaRootKey_->set_text(midiKeyNumberToName(static_cast<int>(v)));
+        break;
+    case EditId::TuningFrequency:
+        for (const TuningItem& t : tuningItems) {
+            if (t.value == v) {
+                impl_->lblTuningFrequency_->set_text(t.name);
+                return;
+            }
         }
+        impl_->lblTuningFrequency_->set_text(strprintf(256, "%.1f Hz", v));
+        break;
+    case EditId::StretchTuning:
+        impl_->knbStretchTuning_->value(v);
+        break;
+    default:
+        break;
     }
-    impl_->lblTuningFrequency_->set_text(strprintf(256, "%.1f Hz", v));
 }
 
-void PageSettings::updateStretchTuning(float v)
+void PageSettings::receiveString(EditId id, cycfi::string_view v)
 {
-    impl_->knbStretchTuning_->value(v);
+    switch (id) {
+    case EditId::ScalaFile:
+        impl_->txtScala_->value(v);
+        break;
+    default:
+        break;
+    }
 }
 
 void PageSettings::Impl::init()
@@ -132,7 +141,7 @@ void PageSettings::Impl::init()
         [f = create_integer_printf_formatter("%d %%")](double v) -> std::string {
             return f(static_cast<int>(std::lround(100 * v)));
         });
-    knbStretchTuning_->on_change = [this](double v) { self_->on_change_stretch_tuning(v); };
+    knbStretchTuning_->on_change = [this](double v) { self_->sendNumber(EditId::StretchTuning, v); };
 
     el::layered_button btnScala = el::button("...");
 
@@ -194,8 +203,7 @@ el::basic_menu PageSettings::Impl::makeScalaCenterMenu()
     //
     auto popup = sfizz::combo_box(
         [this](std::size_t index) {
-            if (self_->on_change_scala_root_key)
-                self_->on_change_scala_root_key(keyList[index]);
+            self_->sendNumber(EditId::ScalaRootKey, keyList[index]);
         },
         selector(keyNames)
     );
@@ -216,8 +224,7 @@ el::basic_menu PageSettings::Impl::makeScalaTuningMenu()
 
     auto popup = sfizz::combo_box(
         [this](std::size_t index) {
-            if (self_->on_change_tuning_frequency)
-                self_->on_change_tuning_frequency(tuningItems[index].value);
+            self_->sendNumber(EditId::TuningFrequency, tuningItems[index].value);
         },
         selector(tuningItems, numTuningItems)
     );
@@ -239,11 +246,11 @@ void PageSettings::Impl::askToChooseScalaFile()
     dlg->setTitle("Open a scala file...");
     dlg->addFilter(FileDialog::Filter { "Scala Files", { "*.scl" } });
 
-    dlg->onFileChosen = [this](absl::string_view fileName) {
-         if (!fileName.empty()) {
-             txtScala_->set_text(std::string(fileName));
-             if (self_->on_change_scala_file)
-                 self_->on_change_scala_file(fileName);
+    dlg->onFileChosen = [this](absl::string_view fileName_) {
+         if (!fileName_.empty()) {
+             std::string fileName(fileName_);
+             txtScala_->set_text(fileName);
+             self_->sendString(EditId::ScalaFile, fileName);
          }
          fileDialog_.reset();
     };

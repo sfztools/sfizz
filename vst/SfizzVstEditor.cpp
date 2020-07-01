@@ -7,6 +7,7 @@
 #include "SfizzVstEditor.h"
 #include "SfizzVstState.h"
 #include "editor/Editor.h"
+#include "editor/EditIds.h"
 #include "editor/Res.h"
 #include <cstring>
 #if !defined(__APPLE__) && !defined(_WIN32)

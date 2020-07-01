@@ -9,6 +9,7 @@
 #include <absl/strings/string_view.h>
 #include <functional>
 #include <memory>
+enum class EditId : int;
 
 namespace el = cycfi::elements;
 
@@ -20,15 +21,10 @@ public:
     const el::element& subject() const override;
     el::element& subject() override;
 
-    void updateScalaFile(cycfi::string_view v);
-    void updateScalaRootKey(float v);
-    void updateTuningFrequency(float v);
-    void updateStretchTuning(float v);
-
-    std::function<void(absl::string_view)> on_change_scala_file;
-    std::function<void(int)> on_change_scala_root_key;
-    std::function<void(double)> on_change_tuning_frequency;
-    std::function<void(double)> on_change_stretch_tuning;
+    void receiveNumber(EditId id, float v);
+    void receiveString(EditId id, cycfi::string_view v);
+    std::function<void(EditId, float)> sendNumber = [](EditId, float) {};
+    std::function<void(EditId, cycfi::string_view)> sendString = [](EditId, cycfi::string_view) {};
 
 private:
     struct Impl;

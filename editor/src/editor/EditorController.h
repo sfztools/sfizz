@@ -7,18 +7,7 @@
 #pragma once
 #include "absl/strings/string_view.h"
 #include <cstdint>
-
-enum class EditId {
-    SfzFile,
-    Volume,
-    Polyphony,
-    Oversampling,
-    PreloadSize,
-    ScalaFile,
-    ScalaRootKey,
-    TuningFrequency,
-    StretchTuning,
-};
+enum class EditId : int;
 
 class EditorController {
 public:

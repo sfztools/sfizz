@@ -7,7 +7,9 @@
 #pragma once
 #include <elements.hpp>
 #include <memory>
+#include <functional>
 class EditorController;
+enum class EditId : int;
 
 namespace el = cycfi::elements;
 
@@ -16,15 +18,10 @@ public:
     UI(el::view& group, EditorController& ctrl);
     ~UI();
 
-    void updatePreloadSize(int v);
-    void updateVolume(float v);
-    void updatePolyphony(float v);
-    void updateOversampling(int v);
-    void updateSfzFile(cycfi::string_view v);
-    void updateScalaFile(cycfi::string_view v);
-    void updateScalaRootKey(float v);
-    void updateTuningFrequency(float v);
-    void updateStretchTuning(float v);
+    void receiveNumber(EditId id, float v);
+    void receiveString(EditId id, cycfi::string_view v);
+    std::function<void(EditId, float)> sendNumber = [](EditId, float) {};
+    std::function<void(EditId, cycfi::string_view)> sendString = [](EditId, cycfi::string_view) {};
 
 private:
     struct Impl;

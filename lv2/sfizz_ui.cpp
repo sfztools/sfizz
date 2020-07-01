@@ -36,6 +36,7 @@
 
 #include "editor/Editor.h"
 #include "editor/EditorController.h"
+#include "editor/EditIds.h"
 #include "editor/Res.h"
 #include <lv2/ui/ui.h>
 #include <lv2/atom/atom.h>

@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "PageHome.h"
+#include "EditIds.h"
 #include "parts/dials.hpp"
 #include "parts/sliders.hpp"
 #include "parts/misc.hpp"
@@ -47,34 +48,41 @@ el::element& PageHome::subject()
     return *impl_->contents_;
 }
 
-void PageHome::updatePreloadSize(int v)
+void PageHome::receiveNumber(EditId id, float v)
 {
-    impl_->knbPreload_->value(v);
+    switch (id) {
+    case EditId::Volume:
+        impl_->sldVolume_->value(v);
+        break;
+    case EditId::Polyphony:
+        impl_->knbPolyphony_->value(v);
+        break;
+    case EditId::Oversampling:
+        {
+            // convert UI value using integer log2
+            int i = 0;
+            for (int f = std::max<int>(1, v); f > 1; f /= 2)
+                ++i;
+            impl_->knbOversampling_->value(i);
+        }
+        break;
+    case EditId::PreloadSize:
+        impl_->knbPreload_->value(v);
+        break;
+    default:
+        break;
+    }
 }
 
-void PageHome::updateVolume(float v)
+void PageHome::receiveString(EditId id, cycfi::string_view v)
 {
-    impl_->sldVolume_->value(v);
-}
-
-void PageHome::updatePolyphony(int v)
-{
-    impl_->knbPolyphony_->value(v);
-}
-
-void PageHome::updateOversampling(int v)
-{
-    // convert UI value using integer log2
-    int i = 0;
-    for (int f = std::max(1, v); f > 1; f /= 2)
-        ++i;
-
-    impl_->knbOversampling_->value(i);
-}
-
-void PageHome::updateSfzFile(cycfi::string_view v)
-{
-   impl_->txtSfz_->value(v);
+    switch (id) {
+    case EditId::SfzFile:
+        impl_->txtSfz_->value(v);
+        break;
+    default:
+        break;
+    }
 }
 
 void PageHome::Impl::init(el::view& view)
@@ -95,10 +103,10 @@ void PageHome::Impl::init(el::view& view)
     knbPreload_->formatter(create_file_size_formatter());
     sldVolume_->formatter(create_printf_formatter("%.1f dB"));
 
-    knbPreload_->on_change = [this](double v) { self_->on_change_preload_size(static_cast<int>(v)); };
-    sldVolume_->on_change = [this](double v) { self_->on_change_volume(v); };
-    knbPolyphony_->on_change = [this](double v) { self_->on_change_polyphony(static_cast<int>(v)); };
-    knbOversampling_->on_change = [this](double v) { self_->on_change_oversampling(1 << static_cast<int>(v)); };
+    knbPreload_->on_change = [this](double v) { self_->sendNumber(EditId::PreloadSize, static_cast<int>(v)); };
+    sldVolume_->on_change = [this](double v) { self_->sendNumber(EditId::Volume, v); };
+    knbPolyphony_->on_change = [this](double v) { self_->sendNumber(EditId::Polyphony, static_cast<int>(v)); };
+    knbOversampling_->on_change = [this](double v) { self_->sendNumber(EditId::Oversampling, 1 << static_cast<int>(v)); };
 
     auto ibSfz = el::input_box(""); // FIXME: "Select a sfz file..." inputbox is messed up
     txtSfz_ = ibSfz.second;
@@ -149,11 +157,11 @@ void PageHome::Impl::askToChooseSfzFile()
     dlg->setTitle("Open a sfz file...");
     dlg->addFilter(FileDialog::Filter { "SFZ Files", { "*.sfz" } });
 
-    dlg->onFileChosen = [this](absl::string_view fileName) {
-         if (!fileName.empty()) {
-             txtSfz_->set_text(std::string(fileName));
-             if (self_->on_change_sfz_file)
-                 self_->on_change_sfz_file(fileName);
+    dlg->onFileChosen = [this](absl::string_view fileName_) {
+         if (!fileName_.empty()) {
+             std::string fileName(fileName_);
+             txtSfz_->set_text(fileName);
+             self_->sendString(EditId::SfzFile, fileName);
          }
          fileDialog_.reset();
     };
