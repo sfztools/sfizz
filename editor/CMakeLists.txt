@@ -110,6 +110,7 @@ if(WIN32)
       "WIN32_LEAN_AND_MEAN"
       "NOMINMAX"
       "_UNICODE")
+  target_link_libraries(sfizz-elements PRIVATE ws2_32 mswsock)
 endif()
 
 # Warnings from Elements headers
