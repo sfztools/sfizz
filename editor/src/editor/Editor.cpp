@@ -147,9 +147,11 @@ void Editor::Impl::initializeResourcePaths()
 void Editor::Impl::uiReceiveNumber(EditId id, float v)
 {
     ui_->receiveNumber(id, v);
+    view_->refresh();
 }
 
 void Editor::Impl::uiReceiveString(EditId id, absl::string_view v)
 {
     ui_->receiveString(id, cycfi::string_view(v.data(), v.size()));
+    view_->refresh();
 }
