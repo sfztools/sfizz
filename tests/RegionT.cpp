@@ -522,8 +522,8 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.volume == -123.0f);
         region.parseOpcode({ "volume", "-185" });
         REQUIRE(region.volume == -144.0f);
-        region.parseOpcode({ "volume", "19" });
-        REQUIRE(region.volume == 6.0f);
+        region.parseOpcode({ "volume", "79" });
+        REQUIRE(region.volume == 48.0f);
     }
 
     SECTION("pan")
