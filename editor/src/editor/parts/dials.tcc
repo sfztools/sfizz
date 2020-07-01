@@ -38,7 +38,6 @@ multi_choice_dial_ptr multi_choice_dial(Knob&& knob, std::vector<std::string> va
 template <class Knob>
 value_dial_ptr value_dial(Knob&& knob, value_range range)
 {
-    assert(!values.empty());
     auto vd = std::make_shared<basic_value_dial<Knob>>();
 
     auto dial = el::share(el::dial(std::move(knob)));

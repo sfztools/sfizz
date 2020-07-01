@@ -10,7 +10,6 @@
 template <class Thumb, class Track>
 value_slider_ptr value_slider(Thumb&& thumb, Track&& track, value_range range)
 {
-    assert(!values.empty());
     auto vd = std::make_shared<basic_value_slider<Thumb, Track>>();
 
     auto slider = el::share(el::slider(std::move(thumb), std::move(track)));
