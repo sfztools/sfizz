@@ -16,21 +16,28 @@ namespace el = cycfi::elements;
 
 namespace sfizz {
 
+namespace detail {
+
 std::pair<el::basic_menu, std::shared_ptr<el::basic_label>>
-combo_box(std::string init)
+combo_box(std::string init, el::color color = el::get_theme().default_button_color)
 {
     auto btn_text = el::share(el::label(std::move(init)).relative_font_size(1.0));
 
     auto menu_btn = el::text_button<el::basic_menu>(
+        el::layer(
+            el::basic_button_body(color),
         el::margin(
             el::get_theme().button_margin,
             el::htile(
                 el::align_left(el::hold(btn_text)),
-                el::align_right(el::left_margin(12, el::icon(el::icons::down_dir, 1.0))))));
+                el::align_right(el::left_margin(12, el::icon(el::icons::down_dir, 1.0)))))));
 
     menu_btn.position(el::menu_position::bottom_right);
     return { std::move(menu_btn), btn_text };
 }
+
+} // namespace detail
+
 template <typename T>
 std::pair<el::basic_menu, std::shared_ptr<el::basic_label>>
 combo_box(
@@ -53,20 +60,28 @@ combo_box(
         }
         std::initializer_list<T> const& _list;
     };
-    return combo_box(on_select, init_list_menu_selector { list });
+    return detail::combo_box(on_select, init_list_menu_selector { list });
 }
+
 std::pair<el::basic_menu, std::shared_ptr<el::basic_label>>
 combo_box(
-    std::function<void(std::size_t index)> on_select, el::menu_selector const& items)
+    std::function<void(std::size_t index)> on_select, el::menu_selector const& items,
+    std::function<std::string(std::size_t, cycfi::string_view)> btn_format = {},
+    el::color color = el::get_theme().text_box_font_color)
 {
-    auto r = combo_box(items.size() ? std::string(items[0]) : "");
+    if (!btn_format)
+        btn_format = [](std::size_t, cycfi::string_view s) { return std::string(s); };
+
+    auto r = detail::combo_box(
+        (items.size() == 0) ? std::string() : btn_format(0, items[0]),
+        color);
 
     if (items.size()) {
         el::vtile_composite list;
         for (std::size_t i = 0; i != items.size(); ++i) {
             auto e = el::menu_item(std::string(items[i]));
-            e.on_click = [i, btn_text = r.second, on_select, text = items[i]]() {
-                btn_text->set_text(text);
+            e.on_click = [i, btn_format, btn_text = r.second, on_select, text = items[i]]() {
+                btn_text->set_text(btn_format(i, text));
                 on_select(i);
             };
             list.push_back(share(e));

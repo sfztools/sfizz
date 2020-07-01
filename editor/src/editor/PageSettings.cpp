@@ -25,8 +25,8 @@ struct PageSettings::Impl {
     std::shared_ptr<el::basic_input_box> txtScala_;
     value_dial_ptr knbStretchTuning_;
 
-    std::shared_ptr<el::basic_label> lblScalaRootKey_;
-    std::shared_ptr<el::basic_label> lblTuningFrequency_;
+    el::text_writer* lblScalaRootKey_ = nullptr;
+    el::text_writer* lblTuningFrequency_ = nullptr;
 };
 
 ///
@@ -45,7 +45,7 @@ static const TuningItem tuningItems[] = {
     { 439.0, "British Phil 439 (1896)"},
     { 440.0, "International 440"},
     { 442.0, "European 442"},
-    { 445.0, "Germany}, China 445"},
+    { 445.0, "Germany, China 445"},
     { 451.0, "La Scala in Milan 451 (18th)"},
 };
 
@@ -101,12 +101,6 @@ void PageSettings::receiveNumber(EditId id, float v)
         impl_->lblScalaRootKey_->set_text(midiKeyNumberToName(static_cast<int>(v)));
         break;
     case EditId::TuningFrequency:
-        for (const TuningItem& t : tuningItems) {
-            if (t.value == v) {
-                impl_->lblTuningFrequency_->set_text(t.name);
-                return;
-            }
-        }
         impl_->lblTuningFrequency_->set_text(strprintf(256, "%.1f Hz", v));
         break;
     case EditId::StretchTuning:
@@ -143,27 +137,40 @@ void PageSettings::Impl::init()
         });
     knbStretchTuning_->on_change = [this](double v) { self_->sendNumber(EditId::StretchTuning, v); };
 
-    el::layered_button btnScala = el::button("...");
+    auto btnScala = el::button("Select", el::icons::right_circled, 1.0, el::colors::green.level(0.7).opacity(0.4));
 
     btnScala.on_click = [this](bool) { askToChooseScalaFile(); };
 
-    auto scalaGroup = el::group("Scala Tuning",
+    auto ibScalaCenter = el::input_box("");
+    auto ibScalaTuning = el::input_box("");
+
+    lblScalaRootKey_ = ibScalaCenter.second.get();
+    lblTuningFrequency_ = ibScalaTuning.second.get();
+
+    auto scalaGroup = el::pane("Scala Tuning",
                             el::margin({ 10, 10, 10, 10 },
-                                el::top_margin(26,
+                                el::htile(
                                     el::vtile(
-                                        el::htile(
-                                            ibScala.first,
-                                            el::left_margin(10,
-                                                el::hsize(30,
-                                                    btnScala))),
+                                        el::layer(
+                                            el::align_center(el::icon(el::icons::doc, 3.0)),
+                                            el::align_center_middle(el::label("scl").relative_font_size(0.8))),
                                         el::top_margin(10,
+                                            el::hmin_size(100, ibScala.first)),
+                                        el::top_margin(10,
+                                            btnScala)),
+                                    el::left_margin(10, el::vtile(
                                             el::htile(
                                                 makeScalaCenterMenu(),
                                                 el::left_margin(10,
-                                                    makeScalaTuningMenu()),
-                                                el::left_margin(10,
-                                                    top_labeled("Stretch",
-                                                        el::hold(knbStretchTuning_)))))))));
+                                                    ibScalaCenter.first)),
+                                            el::top_margin(10,
+                                                el::htile(
+                                                    makeScalaTuningMenu(),
+                                                    el::left_margin(10,
+                                                        ibScalaTuning.first))))),
+                                    el::left_margin(10, el::vtile(
+                                        top_labeled("Stretch",
+                                            el::hold(knbStretchTuning_)))))));
 
     contents_
         = el::share(
@@ -204,11 +211,15 @@ el::basic_menu PageSettings::Impl::makeScalaCenterMenu()
     auto popup = sfizz::combo_box(
         [this](std::size_t index) {
             self_->sendNumber(EditId::ScalaRootKey, keyList[index]);
+            // update the label
+            self_->receiveNumber(EditId::ScalaRootKey, keyList[index]);
         },
-        selector(keyNames)
+        selector(keyNames),
+        [](std::size_t, cycfi::string_view) { return "Key"; },
+        el::colors::blue.opacity(0.4)
     );
 
-    lblScalaRootKey_ = popup.second;
+    // lblScalaRootKey_ = popup.second;
     return std::move(popup.first);
 }
 
@@ -225,11 +236,15 @@ el::basic_menu PageSettings::Impl::makeScalaTuningMenu()
     auto popup = sfizz::combo_box(
         [this](std::size_t index) {
             self_->sendNumber(EditId::TuningFrequency, tuningItems[index].value);
+            // update the label
+            self_->receiveNumber(EditId::TuningFrequency, tuningItems[index].value);
         },
-        selector(tuningItems, numTuningItems)
+        selector(tuningItems, numTuningItems),
+        [](std::size_t, cycfi::string_view) { return "Frequency"; },
+        el::colors::blue.opacity(0.4)
     );
 
-    lblTuningFrequency_ = popup.second;
+    // lblTuningFrequency_ = popup.second;
     return std::move(popup.first);
 }
 

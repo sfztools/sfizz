@@ -10,6 +10,7 @@
 #include "parts/sliders.hpp"
 #include "parts/misc.hpp"
 #include "native/FileDialog.h"
+#include <infra/filesystem.hpp>
 
 struct PageHome::Impl {
     PageHome* self_ = nullptr;
@@ -111,16 +112,20 @@ void PageHome::Impl::init(el::view& view)
     auto ibSfz = el::input_box(""); // FIXME: "Select a sfz file..." inputbox is messed up
     txtSfz_ = ibSfz.second;
 
-    el::layered_button btnSfz = el::button("...");
+    auto btnSfz = el::button("Select", el::icons::right_circled, 1.0, el::colors::green.level(0.7).opacity(0.4));
 
     btnSfz.on_click = [this](bool) { askToChooseSfzFile(); };
 
-    auto sfzGroup = el::group("SFZ File",
-                                el::margin({ 10, 10, 10, 10 },
-                                    el::top_margin(26,
+    auto sfzGroup = el::pane("Instrument",
+                                el::margin({ 10, 0, 10, 10 },
                                         el::htile(
-                                            ibSfz.first,
-                                            el::left_margin(10,
+                                            el::left_margin(10, el::vtile(
+                                                el::layer(
+                                                    el::align_center(el::icon(el::icons::doc, 3.0)),
+                                                    el::align_center_middle(el::label("sfz").relative_font_size(0.8))),
+                                                el::top_margin(10,
+                                                    el::hmin_size(200, ibSfz.first)))),
+                                            el::left_margin(10, el::align_bottom(
                                                 el::hsize(30,
                                                     btnSfz))))));
 
@@ -131,7 +136,7 @@ void PageHome::Impl::init(el::view& view)
                     el::margin({ 10, 10, 10, 10 },
                         el::vtile(
                             std::move(sfzGroup),
-                            el::top_margin(10,
+                            el::top_margin(20,
                                 el::htile(
                                     top_labeled("Polyphony",
                                         el::hold(knbPolyphony_)),
@@ -157,11 +162,11 @@ void PageHome::Impl::askToChooseSfzFile()
     dlg->setTitle("Open a sfz file...");
     dlg->addFilter(FileDialog::Filter { "SFZ Files", { "*.sfz" } });
 
-    dlg->onFileChosen = [this](absl::string_view fileName_) {
-         if (!fileName_.empty()) {
-             std::string fileName(fileName_);
-             txtSfz_->set_text(fileName);
-             self_->sendString(EditId::SfzFile, fileName);
+    dlg->onFileChosen = [this](absl::string_view fileName) {
+         cycfi::fs::path path = cycfi::fs::u8path(fileName.begin(), fileName.end());
+         if (!path.empty()) {
+             txtSfz_->set_text(path.filename().u8string());
+             self_->sendString(EditId::SfzFile, path.u8string());
          }
          fileDialog_.reset();
     };

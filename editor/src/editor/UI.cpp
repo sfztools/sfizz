@@ -35,8 +35,9 @@ UI::UI(el::view& group, EditorController& ctrl)
                 el::vtile(
                     el::vnotebook(
                         group,
-                        el::deck(el::hold(pageHome),
-                            el::hold(pageSettings)),
+                        el::deck(
+                            el::layer(el::hold(pageHome), el::frame{}),
+                            el::layer(el::hold(pageSettings), el::frame{})),
                         el::tab("Home"), el::tab("Settings"))))),
         el::box(bg_color));
 
