@@ -136,21 +136,24 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     for (auto& modId : allModifiers) {
         ASSERT(modifierSmoothers[modId].size() >= region->modifiers[modId].size());
         forEachWithSmoother(modId, [modId, this](const CCData<Modifier>& mod, Smoother& smoother) {
+            const auto ccValue = resources.midiState.getCCValue(mod.cc);
+            const auto curve = resources.curves.getCurve(mod.data.curve);
+            const auto finalValue = curve.evalNormalized(ccValue) * mod.data.value;
             switch (modId) {
             case Mod::volume:
-                smoother.reset(db2mag(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                smoother.reset(db2mag(finalValue));
                 break;
             case Mod::pitch:
-                smoother.reset(centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                smoother.reset(centsFactor(finalValue));
                 break;
             case Mod::amplitude:
             case Mod::pan:
             case Mod::width:
             case Mod::position:
-                smoother.reset(normalizePercents(resources.midiState.getCCValue(mod.cc) * mod.data.value));
+                smoother.reset(normalizePercents(finalValue));
                 break;
             default:
-                smoother.reset(resources.midiState.getCCValue(mod.cc) * mod.data.value);
+                smoother.reset(finalValue);
                 break;
             }
             smoother.setSmoothing(mod.data.smooth, sampleRate);
