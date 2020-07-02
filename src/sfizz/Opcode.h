@@ -47,6 +47,8 @@ enum OpcodeScope {
     kOpcodeScopeGlobal,
     //! control scope
     kOpcodeScopeControl,
+    //! Master scope
+    kOpcodeScopeMaster,
     //! group scope
     kOpcodeScopeGroup,
     //! region scope

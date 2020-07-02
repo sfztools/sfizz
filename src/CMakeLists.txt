@@ -23,6 +23,9 @@ set (SFIZZ_SOURCES
     sfizz/Smoothers.cpp
     sfizz/Wavetables.cpp
     sfizz/Tuning.cpp
+    sfizz/RegionSet.cpp
+    sfizz/PolyphonyGroup.cpp
+    sfizz/VoiceStealing.cpp
     sfizz/RTSemaphore.cpp
     sfizz/Panning.cpp
     sfizz/Effects.cpp

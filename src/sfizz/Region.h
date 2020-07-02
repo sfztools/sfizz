@@ -24,6 +24,9 @@
 #include <vector>
 
 namespace sfz {
+
+class RegionSet;
+
 /**
  * @brief Regions are the basic building blocks for the SFZ parsing and handling code.
  * All SFZ files are made of regions that are activated when a key is pressed or a CC
@@ -282,7 +285,8 @@ struct Region {
     uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
     SfzOffMode offMode { Default::offMode }; // off_mode
-    absl::optional<uint32_t> notePolyphony {};
+    absl::optional<uint32_t> notePolyphony {}; // note_polyphony
+    unsigned polyphony { config::maxVoices }; // polyphony
     SfzSelfMask selfMask { Default::selfMask };
 
     // Region logic: key mapping
@@ -365,6 +369,8 @@ struct Region {
     // Modifiers
     ModifierArray<CCMap<Modifier>> modifiers;
 
+    // Parent
+    RegionSet* parent { nullptr };
 private:
     const MidiState& midiState;
     bool keySwitched { true };
