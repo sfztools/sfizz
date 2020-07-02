@@ -730,7 +730,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             callbackBreakdown.panning += voice->getLastPanningDuration();
 
             if (voice->toBeCleanedUp())
-                    voice->reset();
+                voice->reset();
         }
     }
 
