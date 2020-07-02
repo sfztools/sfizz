@@ -98,6 +98,8 @@ typedef struct
     LV2_URID_Map *map;
     LV2_URID_Unmap *unmap;
     LV2_Worker_Schedule *worker;
+    LV2_State_Make_Path *make_path;
+    LV2_State_Free_Path *free_path;
     LV2_Log_Log *log;
     LV2_Midnam *midnam;
 
@@ -285,6 +287,40 @@ sfizz_lv2_parse_sample_rate(sfizz_plugin_t* self, const LV2_Options_Option* opt)
     }
 }
 
+static void
+sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
+{
+    strcpy(self->sfz_file_path, file_path);
+
+    const char *display_path = (file_path[0] != '\0') ? file_path : "(default)";
+    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", display_path);
+
+    char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
+    if (unknown_opcodes)
+    {
+        lv2_log_note(&self->logger, "[sfizz] Unknown opcodes: %s\n", unknown_opcodes);
+        free(unknown_opcodes);
+    }
+    lv2_log_note(&self->logger, "[sfizz] Number of masters: %d\n", sfizz_get_num_masters(self->synth));
+    lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
+    lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
+
+    atomic_store(&self->must_update_midnam, 1);
+}
+
+static bool
+sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    printf("Loading %s\n", file_path);
+
+    if (!sfizz_load_file(self->synth, file_path))
+        return false;
+
+    sfizz_lv2_update_file_info(self, file_path);
+    return true;
+}
+
 static LV2_Handle
 instantiate(const LV2_Descriptor *descriptor,
             double rate,
@@ -344,6 +380,12 @@ instantiate(const LV2_Descriptor *descriptor,
 
         if (!strcmp((**f).URI, LV2_MIDNAM__update))
             self->midnam = (**f).data;
+
+        if (!strcmp((**f).URI, LV2_STATE__makePath))
+            self->make_path = (**f).data;
+
+        if (!strcmp((**f).URI, LV2_STATE__freePath))
+            self->free_path = (**f).data;
     }
 
     // Setup the loggers
@@ -420,7 +462,21 @@ instantiate(const LV2_Descriptor *descriptor,
     }
 
     self->synth = sfizz_create_synth();
-    sfizz_load_string(self->synth, "default.sfz", default_sfz_text);
+
+    // Ardour does not provide free_path for now, and make_path alone excepts
+    if (self->make_path && self->free_path)
+    {
+        char* path = self->make_path->path(self->make_path->handle, "default.sfz");
+        if (path)
+        {
+            printf("Saving default file to %s\n", path);
+            FILE* file = fopen(path, "w");
+            fprintf(file, default_sfz_text);
+            fclose(file);
+            sfizz_lv2_load_file(self, path);
+            self->free_path->free_path(self->free_path->handle, path);
+        }
+    }
 
     return (LV2_Handle)self;
 }
@@ -860,47 +916,6 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
         }
     }
     return LV2_OPTIONS_SUCCESS;
-}
-
-static void
-sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
-{
-    strcpy(self->sfz_file_path, file_path);
-
-    const char *display_path = (file_path[0] != '\0') ? file_path : "(default)";
-    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", display_path);
-
-    char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
-    if (unknown_opcodes)
-    {
-        lv2_log_note(&self->logger, "[sfizz] Unknown opcodes: %s\n", unknown_opcodes);
-        free(unknown_opcodes);
-    }
-    lv2_log_note(&self->logger, "[sfizz] Number of masters: %d\n", sfizz_get_num_masters(self->synth));
-    lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
-    lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
-
-    atomic_store(&self->must_update_midnam, 1);
-}
-
-static bool
-sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
-{
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-
-    if (file_path[0] == '\0')
-    {
-        if (!sfizz_load_string(self->synth, "default.sfz", default_sfz_text))
-            return false;
-    }
-    else
-    {
-        if (!sfizz_load_file(self->synth, file_path))
-            return false;
-    }
-
-    sfizz_lv2_update_file_info(self, file_path);
-    return true;
 }
 
 static LV2_State_Status
