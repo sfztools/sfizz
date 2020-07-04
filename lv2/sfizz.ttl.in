@@ -67,7 +67,7 @@ midnam:update a lv2:Feature .
   lv2:microVersion @LV2PLUGIN_VERSION_MICRO@ ;
 
   lv2:requiredFeature urid:map, bufsize:boundedBlockLength, work:schedule ;
-  lv2:optionalFeature lv2:hardRTCapable, opts:options ;
+  lv2:optionalFeature lv2:hardRTCapable, opts:options, state:mapPath ;
   lv2:extensionData opts:interface, state:interface, work:interface ;
 
   lv2:optionalFeature midnam:update ;

@@ -911,8 +911,14 @@ restore(LV2_Handle instance,
         const LV2_Feature *const *features)
 {
     UNUSED(flags);
-    UNUSED(features);
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+
+    LV2_State_Map_Path *map_path = NULL;
+    for (const LV2_Feature *const *f = features; *f; ++f)
+    {
+        if (!strcmp((*f)->URI, LV2_STATE__mapPath))
+            map_path = (LV2_State_Map_Path *)(**f).data;
+    }
 
     // Fetch back the saved file path, if any
     size_t size;
@@ -922,24 +928,46 @@ restore(LV2_Handle instance,
     value = retrieve(handle, self->sfizz_sfz_file_uri, &size, &type, &val_flags);
     if (value)
     {
-        lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", (const char *)value);
-        sfizz_lv2_load_file(instance, (const char *)value);
+        const char *path = (const char *)value;
+        if (map_path)
+        {
+            path = map_path->absolute_path(map_path->handle, path);
+            if (!path)
+                return LV2_STATE_ERR_UNKNOWN;
+        }
+
+        lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", path);
+        sfizz_lv2_load_file(instance, path);
+
+        if (map_path)
+            free((char *)path);
     }
 
     value = retrieve(handle, self->sfizz_scala_file_uri, &size, &type, &val_flags);
     if (value)
     {
-        if (sfizz_load_scala_file(self->synth, (const char *)value))
+        const char *path = (const char *)value;
+        if (map_path)
+        {
+            path = map_path->absolute_path(map_path->handle, path);
+            if (!path)
+                return LV2_STATE_ERR_UNKNOWN;
+        }
+
+        if (sfizz_load_scala_file(self->synth, path))
         {
             lv2_log_note(&self->logger,
-                "[sfizz] Restoring the scale %s\n", (const char *)value);
-            strcpy(self->scala_file_path, (const char *)value);
+                "[sfizz] Restoring the scale %s\n", path);
+            strcpy(self->scala_file_path, path);
         }
         else
         {
             lv2_log_error(&self->logger,
-                "[sfizz] Error while restoring the scale %s\n", (const char *)value);
+                "[sfizz] Error while restoring the scale %s\n", path);
         }
+
+        if (map_path)
+            free((char *)path);
     }
 
     value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
@@ -988,23 +1016,52 @@ save(LV2_Handle instance,
      const LV2_Feature *const *features)
 {
     UNUSED(flags);
-    UNUSED(features);
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+
+    LV2_State_Map_Path *map_path = NULL;
+    for (const LV2_Feature *const *f = features; *f; ++f)
+    {
+        if (!strcmp((*f)->URI, LV2_STATE__mapPath))
+            map_path = (LV2_State_Map_Path *)(**f).data;
+    }
+
+    const char *path;
+
     // Save the file path
+    path = self->sfz_file_path;
+    if (map_path)
+    {
+        path = map_path->abstract_path(map_path->handle, path);
+        if (!path)
+            return LV2_STATE_ERR_UNKNOWN;
+    }
     store(handle,
           self->sfizz_sfz_file_uri,
-          self->sfz_file_path,
-          strlen(self->sfz_file_path) + 1,
+          path,
+          strlen(path) + 1,
           self->atom_path_uri,
           LV2_STATE_IS_POD);
+    if (map_path)
+        free((char *)path);
 
     // Save the scala file path
+    path = self->scala_file_path;
+    if (map_path)
+    {
+        path = map_path->abstract_path(map_path->handle, path);
+        if (!path)
+            return LV2_STATE_ERR_UNKNOWN;
+    }
+    if (!path)
+        return LV2_STATE_ERR_UNKNOWN;
     store(handle,
           self->sfizz_scala_file_uri,
-          self->scala_file_path,
-          strlen(self->scala_file_path) + 1,
+          path,
+          strlen(path) + 1,
           self->atom_path_uri,
           LV2_STATE_IS_POD);
+    if (map_path)
+        free((char *)path);
 
     // Save the number of voices
     store(handle,

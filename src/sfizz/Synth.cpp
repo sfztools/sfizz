@@ -331,7 +331,11 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
     clear();
 
     const std::lock_guard<std::mutex> disableCallback { callbackGuard };
-    parser.parseFile(file);
+
+    std::error_code ec;
+    fs::path realFile = fs::canonical(file, ec);
+
+    parser.parseFile(ec ? file : realFile);
     if (parser.getErrorCount() > 0)
         return false;
 
