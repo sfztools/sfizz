@@ -409,8 +409,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (opcode.parameters.back() > 127)
                 return false;
 
+            const auto inputVelocity = static_cast<uint8_t>(opcode.parameters.back());
             if (value)
-                velocityPoints.emplace_back(opcode.parameters.back(), *value);
+                velocityPoints.emplace_back(inputVelocity, *value);
         }
         break;
     case hash("xfin_lokey"):
