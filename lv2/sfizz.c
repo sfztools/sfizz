@@ -306,13 +306,6 @@ sfizz_lv2_get_default_sfz_path(LV2_Handle instance, char *path, size_t size)
 }
 
 static void
-sfizz_lv2_get_empty_sfz_path(LV2_Handle instance, char *path, size_t size)
-{
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    snprintf(path, size, "%s/%s", self->bundle_path, "Resources/EmptyInstrument.sfz");
-}
-
-static void
 sfizz_lv2_get_default_scala_path(LV2_Handle instance, char *path, size_t size)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
@@ -975,8 +968,8 @@ restore(LV2_Handle instance,
 
         lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", path);
         // Load an empty file to remove the default sine
-        sfizz_lv2_get_empty_sfz_path(instance, self->sfz_file_path, MAX_PATH_SIZE);
-        sfizz_lv2_load_file(instance, self->sfz_file_path);
+        strcpy(self->sfz_file_path, "");
+        sfizz_load_string(self->synth, "empty.sfz", "");
 
         // Try loading the new file
         sfizz_lv2_load_file(instance, path);
