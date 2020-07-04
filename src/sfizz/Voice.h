@@ -467,7 +467,8 @@ private:
     Voice* nextSisterVoice { this };
     Voice* previousSisterVoice { this };
 
-    fast_gaussian_generator<float> noiseDist { 0.0f, config::noiseVariance };
+    fast_real_distribution<float> uniformNoiseDist { -config::uniformNoiseBounds, config::uniformNoiseBounds };
+    fast_gaussian_generator<float> gaussianNoiseDist { 0.0f, config::noiseVariance };
 
     ModifierArray<std::vector<Smoother>> modifierSmoothers;
     Smoother gainSmoother;
