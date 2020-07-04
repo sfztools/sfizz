@@ -77,12 +77,13 @@ BENCHMARK_DEFINE_F(RandomFill, StdNormal)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(RandomFill, FastNormal)(benchmark::State& state) {
+    fast_rand prng;
     fast_gaussian_generator<float, 4> generator(0.0f, 0.25f);
 
     for (auto _ : state)
     {
         for (float &out : output)
-            out = generator();
+            out = generator(prng);
     }
 }
 

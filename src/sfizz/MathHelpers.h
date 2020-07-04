@@ -571,8 +571,7 @@ class fast_real_distribution {
 public:
     static_assert(std::is_floating_point<T>::value, "The type must be floating point.");
 
-    typedef T result_type;
-
+    fast_real_distribution() = delete;
     fast_real_distribution(T a, T b)
         : a_(a), b_(b), k_(b - a)
     {
@@ -628,38 +627,25 @@ static fast_rand randomGenerator;
  */
 template <class T, unsigned N = 4>
 class fast_gaussian_generator {
-    static_assert(N > 1, "Invalid quality setting");
-
 public:
-    explicit fast_gaussian_generator(float mean, float variance, uint32_t initialSeed = Random::randomGenerator())
+    fast_gaussian_generator() = delete;
+    explicit fast_gaussian_generator(T mean, T variance)
     {
         mean_ = mean;
-        gain_ = variance / std::sqrt(N / 3.0);
-        seed(initialSeed);
+        gain_ = variance / std::sqrt(N / T{ 3 });
     }
 
-    void seed(uint32_t s)
+    template <class G>
+    T operator()(G& g) noexcept
     {
-        seeds_[0] = s;
-        for (unsigned i = 1; i < N; ++i) {
-            s += s * 1664525u + 1013904223u;
-            seeds_[i] = s;
-        }
-    }
-
-    float operator()() noexcept
-    {
-        float sum = 0;
+        T sum { 0.0 };
         for (unsigned i = 0; i < N; ++i) {
-            uint32_t next = seeds_[i] * 1664525u + 1013904223u;
-            seeds_[i] = next;
-            sum += static_cast<int32_t>(next) * (1.0f / (1ll << 31));
+            sum += static_cast<int32_t>(g()) * (1.0f / (1ll << 31));
         }
         return mean_ + gain_ * sum;
     }
 
 private:
-    std::array<uint32_t, N> seeds_ {};
-    float mean_ { 0 };
-    float gain_ { 0 };
+    T mean_ { 0 };
+    T gain_ { T{ 1 } / std::sqrt(N / T{ 3 }) };
 };

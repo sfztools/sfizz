@@ -76,7 +76,7 @@ static bool gaussianRandomTest(double mean, float variance, size_t numGen, size_
     // generate, quantify, count occurrences
     std::vector<size_t> counts(histSize);
     for (size_t i = 0; i < numGen; ++i) {
-        double value = gen();
+        double value = gen(prng);
         double normalized = (value - min) / (max - min);
         long bin = std::lround(histSize * normalized);
         if (bin >= 0 && static_cast<size_t>(bin) < histSize)
