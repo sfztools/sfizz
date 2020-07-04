@@ -609,8 +609,20 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto rightSpan  = buffer.getSpan(1);
 
     if (region->sampleId.filename() == "*noise") {
-        absl::c_generate(leftSpan, noiseDist);
-        absl::c_generate(rightSpan, noiseDist);
+        auto gen = [&]() {
+            return uniformNoiseDist(Random::randomGenerator);
+        };
+        absl::c_generate(leftSpan, gen);
+        absl::c_generate(rightSpan, gen);
+    } else if (region->sampleId.filename() == "*gnoise") {
+        // You need to wrap in a lambda, otherwise generate will
+        // make a copy of the gaussian distribution *along with its state*
+        // leading to periodic behavior....
+        auto gen = [&]() {
+            return gaussianNoiseDist();
+        };
+        absl::c_generate(leftSpan, gen);
+        absl::c_generate(rightSpan, gen);
     } else {
         const auto numFrames = buffer.getNumFrames();
 
