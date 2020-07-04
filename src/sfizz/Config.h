@@ -79,6 +79,7 @@ namespace config {
     constexpr int eqsPerVoice { 3 };
     constexpr int oscillatorsPerVoice { 9 };
     constexpr float noiseVariance { 0.25f };
+    constexpr float uniformNoiseBounds { 0.25f };
     /**
        Minimum interval in frames between recomputations of coefficients of the
        modulated filter. The lower, the more CPU resources are consumed.
