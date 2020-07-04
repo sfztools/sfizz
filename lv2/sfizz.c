@@ -88,12 +88,11 @@
 #define LV2_DEBUG(...)
 #endif
 
-static const char default_sfz_text[] =
-    "<region>sample=*sine" "\n"
-    "ampeg_attack=0.02 ampeg_release=0.1" "\n";
-
 typedef struct
 {
+    // Paths
+    const char *bundle_path;
+
     // Features
     LV2_URID_Map *map;
     LV2_URID_Unmap *unmap;
@@ -299,14 +298,27 @@ sfizz_lv2_parse_sample_rate(sfizz_plugin_t* self, const LV2_Options_Option* opt)
     }
 }
 
+static void
+sfizz_lv2_get_default_sfz_path(LV2_Handle instance, char *path, size_t size)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    snprintf(path, size, "%s/%s", self->bundle_path, "Resources/DefaultInstrument.sfz");
+}
+
+static void
+sfizz_lv2_get_default_scala_path(LV2_Handle instance, char *path, size_t size)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    snprintf(path, size, "%s/%s", self->bundle_path, "Resources/DefaultScale.scl");
+}
+
 static LV2_Handle
 instantiate(const LV2_Descriptor *descriptor,
             double rate,
-            const char *path,
+            const char *bundle_path,
             const LV2_Feature *const *features)
 {
     UNUSED(descriptor);
-    UNUSED(path);
     LV2_Options_Option *options = NULL;
     bool supports_bounded_block_size = false;
     bool options_has_block_size = false;
@@ -316,6 +328,10 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_plugin_t *self = (sfizz_plugin_t *)calloc(1, sizeof(sfizz_plugin_t));
     if (!self)
         return NULL;
+
+    LV2_Handle instance = (LV2_Handle)self;
+
+    self->bundle_path = bundle_path;
 
     // Set defaults
     self->max_block_size = MAX_BLOCK_SIZE;
@@ -434,7 +450,12 @@ instantiate(const LV2_Descriptor *descriptor,
     }
 
     self->synth = sfizz_create_synth();
-    sfizz_load_string(self->synth, "default.sfz", default_sfz_text);
+
+    sfizz_lv2_get_default_sfz_path(instance, self->sfz_file_path, MAX_PATH_SIZE);
+    sfizz_lv2_get_default_scala_path(instance, self->scala_file_path, MAX_PATH_SIZE);
+
+    sfizz_load_file(self->synth, self->sfz_file_path);
+    sfizz_load_scala_file(self->synth, self->scala_file_path);
 
     return (LV2_Handle)self;
 }
@@ -902,16 +923,8 @@ sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
 
-    if (file_path[0] == '\0')
-    {
-        if (!sfizz_load_string(self->synth, "default.sfz", default_sfz_text))
-            return false;
-    }
-    else
-    {
-        if (!sfizz_load_file(self->synth, file_path))
-            return false;
-    }
+    if (!sfizz_load_file(self->synth, file_path))
+        return false;
 
     sfizz_lv2_update_file_info(self, file_path);
     return true;
