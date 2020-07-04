@@ -180,6 +180,20 @@ enum
 };
 
 static void
+sfizz_lv2_state_free_path(LV2_State_Free_Path_Handle handle,
+                          char *path)
+{
+    (void)handle;
+    free(path);
+}
+
+static LV2_State_Free_Path sfizz_State_Free_Path =
+{
+    .handle = NULL,
+    .free_path = &sfizz_lv2_state_free_path,
+};
+
+static void
 sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
 {
     LV2_URID_Map *map = self->map;
@@ -914,10 +928,13 @@ restore(LV2_Handle instance,
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
 
     LV2_State_Map_Path *map_path = NULL;
+    LV2_State_Free_Path *free_path = &sfizz_State_Free_Path;
     for (const LV2_Feature *const *f = features; *f; ++f)
     {
         if (!strcmp((*f)->URI, LV2_STATE__mapPath))
             map_path = (LV2_State_Map_Path *)(**f).data;
+        else if (!strcmp((*f)->URI, LV2_STATE__freePath))
+            free_path = (LV2_State_Free_Path *)(**f).data;
     }
 
     // Fetch back the saved file path, if any
@@ -940,7 +957,7 @@ restore(LV2_Handle instance,
         sfizz_lv2_load_file(instance, path);
 
         if (map_path)
-            free((char *)path);
+            free_path->free_path(free_path->handle, (char *)path);
     }
 
     value = retrieve(handle, self->sfizz_scala_file_uri, &size, &type, &val_flags);
@@ -967,7 +984,7 @@ restore(LV2_Handle instance,
         }
 
         if (map_path)
-            free((char *)path);
+            free_path->free_path(free_path->handle, (char *)path);
     }
 
     value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
@@ -1019,10 +1036,13 @@ save(LV2_Handle instance,
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
 
     LV2_State_Map_Path *map_path = NULL;
+    LV2_State_Free_Path *free_path = &sfizz_State_Free_Path;
     for (const LV2_Feature *const *f = features; *f; ++f)
     {
         if (!strcmp((*f)->URI, LV2_STATE__mapPath))
             map_path = (LV2_State_Map_Path *)(**f).data;
+        else if (!strcmp((*f)->URI, LV2_STATE__freePath))
+            free_path = (LV2_State_Free_Path *)(**f).data;
     }
 
     const char *path;
@@ -1042,7 +1062,7 @@ save(LV2_Handle instance,
           self->atom_path_uri,
           LV2_STATE_IS_POD);
     if (map_path)
-        free((char *)path);
+        free_path->free_path(free_path->handle, (char *)path);
 
     // Save the scala file path
     path = self->scala_file_path;
@@ -1061,7 +1081,7 @@ save(LV2_Handle instance,
           self->atom_path_uri,
           LV2_STATE_IS_POD);
     if (map_path)
-        free((char *)path);
+        free_path->free_path(free_path->handle, (char *)path);
 
     // Save the number of voices
     store(handle,
