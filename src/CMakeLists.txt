@@ -3,6 +3,13 @@ include (GNUInstallDirs)
 add_subdirectory(external/kiss_fft)
 add_subdirectory(external/cpuid)
 
+set (FAUST_FILES
+    sfizz/dsp/filters/filters_modulable.dsp
+    sfizz/dsp/filters/rbj_filters.dsp
+    sfizz/dsp/filters/sallenkey_modulable.dsp
+    sfizz/dsp/filters/sfz_filters.dsp)
+source_group ("Faust Files" FILES ${FAUST_FILES})
+
 set (SFIZZ_HEADERS
     sfizz/ADSREnvelope.h
     sfizz/AudioBuffer.h
@@ -62,6 +69,7 @@ set (SFIZZ_HEADERS
     sfizz/RTSemaphore.h
     sfizz/ScopedFTZ.h
     sfizz/SfzFilter.h
+    sfizz/SfzFilterImpls.hpp
     sfizz/simd/Common.h
     sfizz/simd/HelpersAVX.h
     sfizz/simd/HelpersScalar.h
@@ -161,7 +169,7 @@ target_link_libraries (sfizz_parser PUBLIC absl::strings PRIVATE absl::flat_hash
 # Sfizz static library
 add_library(sfizz_static STATIC)
 target_sources(sfizz_static PRIVATE
-    ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+    ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
@@ -200,7 +208,7 @@ add_library (sfizz::sfizz ALIAS sfizz_static)
 if (SFIZZ_SHARED)
     add_library (sfizz_shared SHARED)
     target_sources(sfizz_shared PRIVATE
-        ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+        ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
     target_include_directories (sfizz_shared PRIVATE external)
     target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-atomic)
