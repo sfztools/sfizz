@@ -114,8 +114,8 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "on_locc47", "64" });
         region.parseOpcode({ "on_hicc47", "68" });
         REQUIRE(!region.registerCC(47, 63_norm));
-        REQUIRE(!region.registerCC(47, 64_norm));
-        REQUIRE(!region.registerCC(47, 65_norm));
+        REQUIRE(region.registerCC(47, 64_norm));
+        REQUIRE(region.registerCC(47, 65_norm));
         region.parseOpcode({ "hikey", "-1" });
         REQUIRE(region.registerCC(47, 64_norm));
         REQUIRE(region.registerCC(47, 65_norm));

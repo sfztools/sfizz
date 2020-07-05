@@ -186,6 +186,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     // Region logic: key mapping
     case hash("lokey"):
+        triggerOnCC = false;
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("hikey"):
@@ -334,26 +335,34 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("start_locc&"): // also on_locc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+        if (auto value = readOpcode(opcode.value, Default::midi7Range)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setStart(normalizeCC(*value));
+        }
         break;
     case hash("start_hicc&"): // also on_hicc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+        if (auto value = readOpcode(opcode.value, Default::midi7Range)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setEnd(normalizeCC(*value));
+        }
         break;
     case hash("start_lohdcc&"): // also on_lohdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setStart(*value);
+        }
         break;
     case hash("start_hihdcc&"): // also on_hihdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setEnd(*value);
+        }
         break;
 
     // Performance parameters: amplifier
