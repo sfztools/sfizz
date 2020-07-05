@@ -51,14 +51,14 @@ plugin_add_vst3sdk(${VSTPLUGIN_PRJ_NAME})
 plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
 
 # Add the ring buffer
-set (HEADER_FILES
+set (RINGBUFFER_HEADERS
     "external/ring_buffer/ring_buffer/ring_buffer.h"
     "external/ring_buffer/ring_buffer/ring_buffer.tcc")
-source_group ("Header Files" FILES ${HEADER_FILES})
+source_group ("Header Files" FILES ${RINGBUFFER_HEADERS})
 target_include_directories(${VSTPLUGIN_PRJ_NAME} PRIVATE "external/ring_buffer")
 target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE
     "external/ring_buffer/ring_buffer/ring_buffer.cpp"
-    ${HEADER_FILES})
+    ${RINGBUFFER_HEADERS})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
