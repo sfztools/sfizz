@@ -3,6 +3,83 @@ include (GNUInstallDirs)
 add_subdirectory(external/kiss_fft)
 add_subdirectory(external/cpuid)
 
+set (SFIZZ_HEADERS
+    sfizz/ADSREnvelope.h
+    sfizz/AudioBuffer.h
+    sfizz/AudioSpan.h
+    sfizz/Buffer.h
+    sfizz/BufferPool.h
+    sfizz/CCMap.h
+    sfizz/Config.h
+    sfizz/Curve.h
+    sfizz/Debug.h
+    sfizz/effects/impl/ResonantArray.h
+    sfizz/effects/impl/ResonantArrayAVX.h
+    sfizz/effects/impl/ResonantArraySSE.h
+    sfizz/effects/impl/ResonantString.h
+    sfizz/effects/impl/ResonantStringAVX.h
+    sfizz/effects/impl/ResonantStringSSE.h
+    sfizz/effects/Apan.h
+    sfizz/effects/CommonLFO.h
+    sfizz/effects/CommonLFO.hpp
+    sfizz/effects/Eq.h
+    sfizz/effects/Filter.h
+    sfizz/effects/Gain.h
+    sfizz/effects/Limiter.h
+    sfizz/effects/Lofi.h
+    sfizz/effects/Nothing.h
+    sfizz/effects/Rectify.h
+    sfizz/effects/Strings.h
+    sfizz/effects/Width.h
+    sfizz/Effects.h
+    sfizz/EGDescription.h
+    sfizz/EQDescription.h
+    sfizz/EQPool.h
+    sfizz/FileId.h
+    sfizz/FileInstrument.h
+    sfizz/FilePool.h
+    sfizz/FilterDescription.h
+    sfizz/FilterPool.h
+    sfizz/HistoricalBuffer.h
+    sfizz/Interpolators.h
+    sfizz/Interpolators.hpp
+    sfizz/Logger.h
+    sfizz/MathHelpers.h
+    sfizz/MidiState.h
+    sfizz/ModifierHelpers.h
+    sfizz/Modifiers.h
+    sfizz/NumericId.h
+    sfizz/OnePoleFilter.h
+    sfizz/Oversampler.h
+    sfizz/Panning.h
+    sfizz/PolyphonyGroup.h
+    sfizz/railsback/2-1.h
+    sfizz/railsback/4-1.h
+    sfizz/railsback/4-2.h
+    sfizz/Region.h
+    sfizz/RegionSet.h
+    sfizz/Resources.h
+    sfizz/RTSemaphore.h
+    sfizz/ScopedFTZ.h
+    sfizz/SfzFilter.h
+    sfizz/simd/Common.h
+    sfizz/simd/HelpersAVX.h
+    sfizz/simd/HelpersScalar.h
+    sfizz/simd/HelpersSSE.h
+    sfizz/SIMDConfig.h
+    sfizz/SIMDHelpers.h
+    sfizz/SisterVoiceRing.h
+    sfizz/Smoothers.h
+    sfizz/SwapAndPop.h
+    sfizz/Synth.h
+    sfizz/SynthConfig.h
+    sfizz/Tuning.h
+    sfizz/Voice.h
+    sfizz/VoiceStealing.h
+    sfizz/Wavetables.h
+    sfizz.h
+    sfizz.hpp)
+
 set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FileId.cpp
@@ -50,17 +127,41 @@ include (SfizzSIMDSourceFiles)
 sfizz_add_simd_sources (SFIZZ_SOURCES ".")
 
 # Parser core library
+set (SFIZZ_PARSER_HEADERS
+    sfizz/Defaults.h
+    sfizz/LeakDetector.h
+    sfizz/Range.h
+    sfizz/Opcode.h
+    sfizz/Macros.h
+    sfizz/Parser.h
+    sfizz/parser/Parser.h
+    sfizz/parser/ParserPrivate.h
+    sfizz/parser/ParserPrivate.hpp
+    sfizz/SfzHelpers.h
+    sfizz/StringViewHelpers.h)
+
+set (SFIZZ_PARSER_SOURCES
+    sfizz/Parser.cpp
+    sfizz/Opcode.cpp
+    sfizz/OpcodeCleanup.cpp
+    sfizz/SfzHelpers.cpp
+    sfizz/parser/Parser.cpp
+    sfizz/parser/ParserPrivate.cpp)
+
+set (SFIZZ_PARSER_OTHER sfizz/OpcodeCleanup.re)
+source_group ("Other Files" FILES ${SFIZZ_PARSER_OTHER})
+
 add_library (sfizz_parser STATIC)
 target_sources (sfizz_parser PRIVATE
-    sfizz/Parser.cpp sfizz/Opcode.cpp sfizz/OpcodeCleanup.cpp sfizz/SfzHelpers.cpp
-    sfizz/parser/Parser.cpp sfizz/parser/ParserPrivate.cpp)
+    ${SFIZZ_PARSER_HEADERS} ${SFIZZ_PARSER_SOURCES} ${SFIZZ_PARSER_OTHER})
 target_include_directories (sfizz_parser PUBLIC sfizz)
 target_include_directories (sfizz_parser PUBLIC external)
 target_link_libraries (sfizz_parser PUBLIC absl::strings PRIVATE absl::flat_hash_map)
 
 # Sfizz static library
 add_library(sfizz_static STATIC)
-target_sources(sfizz_static PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+target_sources(sfizz_static PRIVATE
+    ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
@@ -98,7 +199,8 @@ add_library (sfizz::sfizz ALIAS sfizz_static)
 # Shared library and installation target
 if (SFIZZ_SHARED)
     add_library (sfizz_shared SHARED)
-    target_sources(sfizz_shared PRIVATE ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+    target_sources(sfizz_shared PRIVATE
+        ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
     target_include_directories (sfizz_shared PRIVATE external)
     target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-atomic)

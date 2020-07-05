@@ -11,7 +11,13 @@ set (LV2PLUGIN_TTL_SRC_FILES
     manifest.ttl.in
     ${PROJECT_NAME}.ttl.in
 )
-add_library (${LV2PLUGIN_PRJ_NAME} MODULE ${PROJECT_NAME}.c ${LV2PLUGIN_TTL_SRC_FILES})
+source_group("Turtle Files" FILES
+    ${LV2PLUGIN_TTL_SRC_FILES}
+)
+add_library (${LV2PLUGIN_PRJ_NAME} MODULE
+    ${PROJECT_NAME}.c
+    atomic_compat.h
+    ${LV2PLUGIN_TTL_SRC_FILES})
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
 # Explicitely strip all symbols on Linux but lv2_descriptor()
 # MacOS linker does not support this apparently https://bugs.webkit.org/show_bug.cgi?id=144555
