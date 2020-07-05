@@ -6,7 +6,8 @@
 
 #include "sfizz/Interpolators.h"
 #include "catch2/catch.hpp"
-#include <algorithm>
+#include <array>
+#include <numeric>
 using namespace Catch::literals;
 
 TEST_CASE("[Interpolators] Sample at points")

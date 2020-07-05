@@ -301,8 +301,10 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
                 ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
-            if (Default::keyRange.containsWithEnd(member.parameters.back()))
-                keyLabels.emplace_back(member.parameters.back(), std::string(member.value));
+            if (member.parameters.back() <= Default::keyRange.getEnd()) {
+                const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
+                keyLabels.emplace_back(noteNumber, std::string(member.value));
+            }
             break;
         case hash("default_path"):
             defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
