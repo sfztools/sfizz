@@ -90,9 +90,6 @@
 
 typedef struct
 {
-    // Paths
-    const char *bundle_path;
-
     // Features
     LV2_URID_Map *map;
     LV2_URID_Unmap *unmap;
@@ -160,6 +157,9 @@ typedef struct
     int sample_counter;
     float sample_rate;
     atomic_int must_update_midnam;
+
+    // Paths
+    char bundle_path[MAX_PATH_SIZE];
 } sfizz_plugin_t;
 
 enum
@@ -331,7 +331,8 @@ instantiate(const LV2_Descriptor *descriptor,
 
     LV2_Handle instance = (LV2_Handle)self;
 
-    self->bundle_path = bundle_path;
+    strncpy(self->bundle_path, bundle_path, MAX_PATH_SIZE);
+    self->bundle_path[MAX_PATH_SIZE - 1] = '\0';
 
     // Set defaults
     self->max_block_size = MAX_BLOCK_SIZE;
@@ -900,10 +901,10 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
 static void
 sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
 {
-    strcpy(self->sfz_file_path, file_path);
+    if (file_path != self->sfz_file_path)
+        strcpy(self->sfz_file_path, file_path);
 
-    const char *display_path = (file_path[0] != '\0') ? file_path : "(default)";
-    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", display_path);
+    lv2_log_note(&self->logger, "[sfizz] File changed to: %s\n", file_path);
 
     char *unknown_opcodes = sfizz_get_unknown_opcodes(self->synth);
     if (unknown_opcodes)
@@ -922,12 +923,19 @@ static bool
 sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-
-    if (!sfizz_load_file(self->synth, file_path))
-        return false;
-
+    bool status = sfizz_load_file(self->synth, file_path);
     sfizz_lv2_update_file_info(self, file_path);
-    return true;
+    return status;
+}
+
+static bool
+sfizz_lv2_load_scala_file(LV2_Handle instance, const char *file_path)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    bool status = sfizz_load_scala_file(self->synth, file_path);
+    if (file_path != self->scala_file_path)
+        strcpy(self->scala_file_path, file_path);
+    return status;
 }
 
 static LV2_State_Status
@@ -938,6 +946,7 @@ restore(LV2_Handle instance,
         const LV2_Feature *const *features)
 {
     UNUSED(flags);
+    LV2_State_Status status = LV2_STATE_SUCCESS;
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
 
     LV2_State_Map_Path *map_path = NULL;
@@ -949,6 +958,13 @@ restore(LV2_Handle instance,
         else if (!strcmp((*f)->URI, LV2_STATE__freePath))
             free_path = (LV2_State_Free_Path *)(**f).data;
     }
+
+    // Set default values
+    sfizz_lv2_get_default_sfz_path(instance, self->sfz_file_path, MAX_PATH_SIZE);
+    sfizz_lv2_get_default_scala_path(instance, self->scala_file_path, MAX_PATH_SIZE);
+    self->num_voices = DEFAULT_VOICES;
+    self->preload_size = DEFAULT_PRELOAD;
+    self->oversampling = DEFAULT_OVERSAMPLING;
 
     // Fetch back the saved file path, if any
     size_t size;
@@ -963,16 +979,11 @@ restore(LV2_Handle instance,
         {
             path = map_path->absolute_path(map_path->handle, path);
             if (!path)
-                return LV2_STATE_ERR_UNKNOWN;
+                status = LV2_STATE_ERR_UNKNOWN;
         }
 
-        lv2_log_note(&self->logger, "[sfizz] Restoring the file %s\n", path);
-        // Load an empty file to remove the default sine
-        strcpy(self->sfz_file_path, "");
-        sfizz_load_string(self->synth, "empty.sfz", "");
-
-        // Try loading the new file
-        sfizz_lv2_load_file(instance, path);
+        strncpy(self->sfz_file_path, path, MAX_PATH_SIZE);
+        self->sfz_file_path[MAX_PATH_SIZE - 1] = '\0';
 
         if (map_path)
             free_path->free_path(free_path->handle, (char *)path);
@@ -986,20 +997,11 @@ restore(LV2_Handle instance,
         {
             path = map_path->absolute_path(map_path->handle, path);
             if (!path)
-                return LV2_STATE_ERR_UNKNOWN;
+                status = LV2_STATE_ERR_UNKNOWN;
         }
 
-        if (sfizz_load_scala_file(self->synth, path))
-        {
-            lv2_log_note(&self->logger,
-                "[sfizz] Restoring the scale %s\n", path);
-            strcpy(self->scala_file_path, path);
-        }
-        else
-        {
-            lv2_log_error(&self->logger,
-                "[sfizz] Error while restoring the scale %s\n", path);
-        }
+        strncpy(self->scala_file_path, path, MAX_PATH_SIZE);
+        self->scala_file_path[MAX_PATH_SIZE - 1] = '\0';
 
         if (map_path)
             free_path->free_path(free_path->handle, (char *)path);
@@ -1009,38 +1011,60 @@ restore(LV2_Handle instance,
     if (value)
     {
         int num_voices = *(const int *)value;
-        if (num_voices > 0 && num_voices <= MAX_VOICES && num_voices != self->num_voices)
-        {
-            lv2_log_note(&self->logger, "[sfizz] Restoring the number of voices to %d\n", num_voices);
-            sfizz_set_num_voices(self->synth, num_voices);
+        if (num_voices > 0 && num_voices <= MAX_VOICES)
             self->num_voices = num_voices;
-        }
     }
 
     value = retrieve(handle, self->sfizz_preload_size_uri, &size, &type, &val_flags);
     if (value)
     {
         unsigned int preload_size = *(const unsigned int *)value;
-        if (preload_size != self->preload_size)
-        {
-            lv2_log_note(&self->logger, "[sfizz] Restoring the preload size to %d\n", preload_size);
-            sfizz_set_preload_size(self->synth, preload_size);
-            self->preload_size = preload_size;
-        }
+        self->preload_size = preload_size;
     }
 
     value = retrieve(handle, self->sfizz_oversampling_uri, &size, &type, &val_flags);
     if (value)
     {
         sfizz_oversampling_factor_t oversampling = *(const sfizz_oversampling_factor_t *)value;
-        if (oversampling != self->oversampling)
-        {
-            lv2_log_note(&self->logger, "[sfizz] Restoring the oversampling to %d\n", oversampling);
-            sfizz_set_oversampling_factor(self->synth, oversampling);
-            self->oversampling = oversampling;
-        }
+        self->oversampling = oversampling;
     }
-    return LV2_STATE_SUCCESS;
+
+    // Sync the parameters to the synth
+
+    // Load an empty file to remove the default sine, and then the new file.
+    sfizz_load_string(self->synth, "empty.sfz", "");
+    if (sfizz_lv2_load_file(instance, self->sfz_file_path))
+    {
+        lv2_log_note(&self->logger,
+            "[sfizz] Restoring the file %s\n", self->sfz_file_path);
+    }
+    else
+    {
+        lv2_log_error(&self->logger,
+            "[sfizz] Error while restoring the file %s\n", self->sfz_file_path);
+    }
+
+    if (sfizz_load_scala_file(self->synth, self->scala_file_path))
+    {
+        lv2_log_note(&self->logger,
+            "[sfizz] Restoring the scale %s\n", self->scala_file_path);
+    }
+    else
+    {
+        lv2_log_error(&self->logger,
+            "[sfizz] Error while restoring the scale %s\n", self->scala_file_path);
+    }
+
+    lv2_log_note(&self->logger, "[sfizz] Restoring the number of voices to %d\n", self->num_voices);
+    sfizz_set_num_voices(self->synth, self->num_voices);
+
+    lv2_log_note(&self->logger, "[sfizz] Restoring the preload size to %d\n", self->preload_size);
+    sfizz_set_preload_size(self->synth, self->preload_size);
+
+    lv2_log_note(&self->logger, "[sfizz] Restoring the oversampling to %d\n", self->oversampling);
+    sfizz_set_oversampling_factor(self->synth, self->oversampling);
+
+    return status;
 }
 
 static LV2_State_Status
@@ -1171,8 +1195,7 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_scala_file_uri)
     {
         const char *scala_file_path = LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_load_scala_file(self->synth, scala_file_path)) {
-            strcpy(self->scala_file_path, scala_file_path);
+        if (sfizz_lv2_load_scala_file(self->synth, scala_file_path)) {
             lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", scala_file_path);
         } else {
             lv2_log_error(&self->logger,
@@ -1235,7 +1258,7 @@ work(LV2_Handle instance,
             lv2_log_note(&self->logger,
                         "[sfizz] Scala file %s seems to have been updated, reloading\n",
                         self->scala_file_path);
-            if (sfizz_load_scala_file(self->synth, self->scala_file_path)) {
+            if (sfizz_lv2_load_scala_file(self->synth, self->scala_file_path)) {
                 lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", self->scala_file_path);
             } else {
                 lv2_log_error(&self->logger,
