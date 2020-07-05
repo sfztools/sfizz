@@ -107,6 +107,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
     gainSmoother.reset();
+    resetCrossfades();
 
     // Check that we can handle the number of filters; filters should be cleared here
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
@@ -310,14 +311,36 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #endif
 }
 
+void sfz::Voice::resetCrossfades() noexcept
+{
+    float xfadeValue { 1.0f };
+    const auto xfCurve = region->crossfadeCCCurve;
+
+    for (const auto& mod : region->crossfadeCCInRange) {
+        const auto value = resources.midiState.getCCValue(mod.cc);
+        xfadeValue *= crossfadeIn(mod.data, value, xfCurve);
+    }
+
+    for (const auto& mod : region->crossfadeCCOutRange) {
+        const auto value = resources.midiState.getCCValue(mod.cc);
+        xfadeValue *= crossfadeOut(mod.data, value, xfCurve);
+    }
+
+    xfadeSmoother.reset(xfadeValue);
+}
+
 void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
     const auto xfCurve = region->crossfadeCCCurve;
 
     auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!tempSpan)
+    auto xfadeSpan = resources.bufferPool.getBuffer(numSamples);
+
+    if (!tempSpan || !xfadeSpan)
         return;
+
+    fill<float>(*xfadeSpan, 1.0f);
 
     bool smoothOutput = false;
     for (const auto& mod : region->crossfadeCCInRange) {
@@ -326,7 +349,7 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeIn(mod.data, x, xfCurve);
         });
-        applyGain<float>(*tempSpan, modulationSpan);
+        applyGain<float>(*tempSpan, *xfadeSpan);
     }
 
     for (const auto& mod : region->crossfadeCCOutRange) {
@@ -335,13 +358,11 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeOut(mod.data, x, xfCurve);
         });
-        applyGain<float>(*tempSpan, modulationSpan);
+        applyGain<float>(*tempSpan, *xfadeSpan);
     }
 
-    if (smoothOutput) {
-        xfadeSmoother.reset(modulationSpan.front());
-        xfadeSmoother.process(modulationSpan, modulationSpan);
-    }
+    xfadeSmoother.process(*xfadeSpan, *xfadeSpan);
+    applyGain<float>(*xfadeSpan, modulationSpan);
 }
 
 

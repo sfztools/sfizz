@@ -347,6 +347,7 @@ private:
      * @param modulationSpan
      */
     void applyCrossfades(absl::Span<float> modulationSpan) noexcept;
+    void resetCrossfades() noexcept;
 
     /**
      * @brief Amplitude stage for a mono source
