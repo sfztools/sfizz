@@ -57,7 +57,6 @@
 
 #include "atomic_compat.h"
 
-#define DEFAULT_SFZ_FILE "/home/paul/Documents/AVL_Percussions/AVL_Drumkits_Percussion-1.0-Alt.sfz"
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
 #define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
@@ -81,6 +80,11 @@
 #define DEFAULT_PRELOAD 8192
 #define LOG_SAMPLE_COUNT 48000
 #define UNUSED(x) (void)(x)
+
+#define DEFAULT_SCALA_FILE  "Resources/DefaultScale.scl"
+#define DEFAULT_SFZ_FILE    "Resources/DefaultInstrument.sfz"
+// This assumes that the longest path is the default sfz file; if not, change it
+#define MAX_BUNDLE_PATH_SIZE (MAX_PATH_SIZE - sizeof(DEFAULT_SFZ_FILE))
 
 #ifndef NDEBUG
 #define LV2_DEBUG(...) lv2_log_note(&self->logger, "[DEBUG] " __VA_ARGS__)
@@ -159,7 +163,7 @@ typedef struct
     atomic_int must_update_midnam;
 
     // Paths
-    char bundle_path[MAX_PATH_SIZE];
+    char bundle_path[MAX_BUNDLE_PATH_SIZE];
 } sfizz_plugin_t;
 
 enum
@@ -302,14 +306,14 @@ static void
 sfizz_lv2_get_default_sfz_path(LV2_Handle instance, char *path, size_t size)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    snprintf(path, size, "%s/%s", self->bundle_path, "Resources/DefaultInstrument.sfz");
+    snprintf(path, size, "%s/%s", self->bundle_path, DEFAULT_SFZ_FILE);
 }
 
 static void
 sfizz_lv2_get_default_scala_path(LV2_Handle instance, char *path, size_t size)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    snprintf(path, size, "%s/%s", self->bundle_path, "Resources/DefaultScale.scl");
+    snprintf(path, size, "%s/%s", self->bundle_path, DEFAULT_SCALA_FILE);
 }
 
 static LV2_Handle
@@ -331,8 +335,8 @@ instantiate(const LV2_Descriptor *descriptor,
 
     LV2_Handle instance = (LV2_Handle)self;
 
-    strncpy(self->bundle_path, bundle_path, MAX_PATH_SIZE);
-    self->bundle_path[MAX_PATH_SIZE - 1] = '\0';
+    strncpy(self->bundle_path, bundle_path, MAX_BUNDLE_PATH_SIZE);
+    self->bundle_path[MAX_BUNDLE_PATH_SIZE - 1] = '\0';
 
     // Set defaults
     self->max_block_size = MAX_BLOCK_SIZE;
