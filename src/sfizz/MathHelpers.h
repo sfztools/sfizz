@@ -15,6 +15,7 @@
 #include "SIMDConfig.h"
 #include "absl/types/span.h"
 #include <algorithm>
+#include <array>
 #include <random>
 #include <limits>
 #include <type_traits>

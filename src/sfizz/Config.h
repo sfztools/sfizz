@@ -41,7 +41,7 @@ namespace config {
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
     constexpr unsigned smoothingSteps { 512 };
-    constexpr uint8_t gainSmoothing { 5 };
+    constexpr uint8_t gainSmoothing { 0 };
     constexpr unsigned powerTableSizeExponent { 11 };
     constexpr int maxFilePromises { maxVoices };
     constexpr int allSoundOffCC { 120 };
@@ -77,6 +77,7 @@ namespace config {
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
     constexpr int oscillatorsPerVoice { 9 };
+    constexpr float uniformNoiseBounds { 0.25f };
     constexpr float noiseVariance { 0.25f };
     /**
        Minimum interval in frames between recomputations of coefficients of the
@@ -98,6 +99,10 @@ namespace config {
     static constexpr double amplitudeTriangle = 0.625;
     static constexpr double amplitudeSaw = 0.515;
     static constexpr double amplitudeSquare = 0.515;
+    /**
+       Background file loading
+     */
+    static constexpr int backgroundLoaderPthreadPriority = 50; // expressed in %
 } // namespace config
 
 } // namespace sfz

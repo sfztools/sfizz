@@ -37,8 +37,14 @@
 #include "absl/memory/memory.h"
 #include <algorithm>
 #include <memory>
-#include <sndfile.hh>
 #include <thread>
+#include <system_error>
+#include <sndfile.hh>
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
 
 void readBaseFile(SndfileHandle& sndFile, sfz::FileAudioBuffer& output, uint32_t numFrames, bool reverse)
 {
@@ -125,10 +131,15 @@ sfz::FilePool::~FilePool()
 {
     quitThread = true;
 
+    std::error_code ec;
+
     for (unsigned i = 0; i < threadPool.size(); ++i) {
-        std::error_code ec;
+        ec = std::error_code();
         workerBarrier.post(ec);
     }
+
+    ec = std::error_code();
+    semClearingRequest.post(ec);
 
     for (auto& thread: threadPool)
         thread.join();
@@ -360,28 +371,36 @@ void sfz::FilePool::tryToClearPromises()
 
 void sfz::FilePool::clearingThread()
 {
-    while (!quitThread) {
+    raiseCurrentThreadPriority();
+
+    RTSemaphore& request = semClearingRequest;
+    do {
+        request.wait();
+        if (quitThread)
+            return;
         tryToClearPromises();
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+    } while (1);
 }
 
 void sfz::FilePool::loadingThread() noexcept
 {
+    raiseCurrentThreadPriority();
+
     FilePromisePtr promise;
-    while (!quitThread) {
+    do {
+        workerBarrier.wait();
 
         if (emptyQueue) {
-            while(promiseQueue.try_pop(promise)) {
+            while (promiseQueue.try_pop(promise)) {
                 // We're just dequeuing
             }
             emptyQueue = false;
+            semEmptyQueueFinished.post();
             continue;
         }
 
-        std::error_code ec;
-        workerBarrier.wait(ec);
-        ASSERT(!ec);
+        if (quitThread)
+            return;
 
         if (!promiseQueue.try_pop(promise)) {
             continue;
@@ -406,13 +425,11 @@ void sfz::FilePool::loadingThread() noexcept
 
         threadsLoading--;
 
-        while (!filledPromiseQueue.try_push(promise)) {
-            DBG("[sfizz] Error enqueuing the promise for " << promise->fileId << " in the filledPromiseQueue");
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        semFilledPromiseQueueAvailable.wait();
+        filledPromiseQueue.push(promise);
 
         promise.reset();
-    }
+    } while (1);
 }
 
 void sfz::FilePool::clear()
@@ -438,12 +455,15 @@ void sfz::FilePool::cleanupPromises() noexcept
     // Remove the promises from the filled queue and put them in a linear
     // storage
     FilePromisePtr promise;
-    while (filledPromiseQueue.try_pop(promise))
+    while (filledPromiseQueue.try_pop(promise)) {
+        semFilledPromiseQueueAvailable.post();
         temporaryFilePromises.push_back(promise);
+    }
 
     auto promiseUsedOnce = [](FilePromisePtr& p) { return p.use_count() == 1; };
     auto moveToClear = [&](FilePromisePtr& p) { return promisesToClear.push_back(p); };
-    swapAndPopAll(temporaryFilePromises, promiseUsedOnce, moveToClear);
+    if (swapAndPopAll(temporaryFilePromises, promiseUsedOnce, moveToClear) > 0)
+        semClearingRequest.post();
 }
 
 void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
@@ -474,12 +494,8 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
 void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
     emptyQueue = true;
-    std::error_code ec;
-    workerBarrier.post(ec);
-    ASSERT(!ec);
-
-    while (emptyQueue)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    workerBarrier.post();
+    semEmptyQueueFinished.wait();
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
@@ -495,4 +511,36 @@ void sfz::FilePool::waitForBackgroundLoading() noexcept
     while (threadsLoading > 0) {
         std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
+}
+
+void sfz::FilePool::raiseCurrentThreadPriority() noexcept
+{
+#if defined(_WIN32)
+    HANDLE thread = GetCurrentThread();
+    const int priority = THREAD_PRIORITY_ABOVE_NORMAL; /*THREAD_PRIORITY_HIGHEST*/
+    if (!SetThreadPriority(thread, priority)) {
+        std::system_error error(GetLastError(), std::system_category());
+        DBG("[sfizz] Cannot set current thread priority: " << error.what());
+    }
+#else
+    pthread_t thread = pthread_self();
+    int policy;
+    sched_param param;
+
+    if (pthread_getschedparam(thread, &policy, &param) != 0) {
+        DBG("[sfizz] Cannot get current thread scheduling parameters");
+        return;
+    }
+
+    policy = SCHED_RR;
+    const int minprio = sched_get_priority_min(policy);
+    const int maxprio = sched_get_priority_max(policy);
+    param.sched_priority = minprio +
+        config::backgroundLoaderPthreadPriority * (maxprio - minprio) / 100;
+
+    if (pthread_setschedparam(thread, policy, &param) != 0) {
+        DBG("[sfizz] Cannot set current thread scheduling parameters");
+        return;
+    }
+#endif
 }

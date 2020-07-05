@@ -80,13 +80,13 @@ struct EGDescription {
     float vel2sustain { Default::vel2sustain };
     int vel2depth { Default::depth };
 
-    absl::optional<CCData<float>> ccAttack;
-    absl::optional<CCData<float>> ccDecay;
-    absl::optional<CCData<float>> ccDelay;
-    absl::optional<CCData<float>> ccHold;
-    absl::optional<CCData<float>> ccRelease;
-    absl::optional<CCData<float>> ccStart;
-    absl::optional<CCData<float>> ccSustain;
+    CCMap<float> ccAttack;
+    CCMap<float> ccDecay;
+    CCMap<float> ccDelay;
+    CCMap<float> ccHold;
+    CCMap<float> ccRelease;
+    CCMap<float> ccStart;
+    CCMap<float> ccSustain;
 
     /**
      * @brief Get the attack with possibly a CC modifier and a velocity modifier
@@ -98,7 +98,11 @@ struct EGDescription {
     float getAttack(const MidiState& state, float velocity) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccAttack, attack) + velocity * vel2attack);
+        float returnedValue { attack + velocity * vel2attack };
+        for (auto& mod: ccAttack) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egTimeRange.clamp(returnedValue);
     }
     /**
      * @brief Get the decay with possibly a CC modifier and a velocity modifier
@@ -110,7 +114,11 @@ struct EGDescription {
     float getDecay(const MidiState& state, float velocity) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDecay, decay) + velocity * vel2decay);
+        float returnedValue { decay + velocity * vel2decay };
+        for (auto& mod: ccDecay) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egTimeRange.clamp(returnedValue);
     }
     /**
      * @brief Get the delay with possibly a CC modifier and a velocity modifier
@@ -122,7 +130,11 @@ struct EGDescription {
     float getDelay(const MidiState& state, float velocity) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccDelay, delay) + velocity * vel2delay);
+        float returnedValue { delay + velocity * vel2delay };
+        for (auto& mod: ccDelay) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egTimeRange.clamp(returnedValue);
     }
     /**
      * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
@@ -134,7 +146,11 @@ struct EGDescription {
     float getHold(const MidiState& state, float velocity) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccHold, hold) + velocity * vel2hold);
+        float returnedValue { hold + velocity * vel2hold };
+        for (auto& mod: ccHold) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egTimeRange.clamp(returnedValue);
     }
     /**
      * @brief Get the release duration with possibly a CC modifier and a velocity modifier
@@ -146,7 +162,11 @@ struct EGDescription {
     float getRelease(const MidiState& state, float velocity) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        return Default::egTimeRange.clamp(ccSwitchedValue(state, ccRelease, release) + velocity * vel2release);
+        float returnedValue { release + velocity * vel2release };
+        for (auto& mod: ccRelease) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egTimeRange.clamp(returnedValue);
     }
     /**
      * @brief Get the starting level with possibly a CC modifier and a velocity modifier
@@ -158,7 +178,11 @@ struct EGDescription {
     float getStart(const MidiState& state, float velocity) const noexcept
     {
         UNUSED(velocity);
-        return Default::egPercentRange.clamp(ccSwitchedValue(state, ccStart, start));
+        float returnedValue { start };
+        for (auto& mod: ccStart) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egPercentRange.clamp(returnedValue);
     }
     /**
      * @brief Get the sustain level with possibly a CC modifier and a velocity modifier
@@ -170,7 +194,11 @@ struct EGDescription {
     float getSustain(const MidiState& state, float velocity) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        return Default::egPercentRange.clamp(ccSwitchedValue(state, ccSustain, sustain) + velocity * vel2sustain);
+        float returnedValue { sustain + velocity * vel2sustain };
+        for (auto& mod: ccSustain) {
+            returnedValue += state.getCCValue(mod.cc) * mod.data;
+        }
+        return Default::egPercentRange.clamp(returnedValue);
     }
     LEAK_DETECTOR(EGDescription);
 };

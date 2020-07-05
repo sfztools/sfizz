@@ -259,6 +259,11 @@ public:
      * in the queue.
      */
     void waitForBackgroundLoading() noexcept;
+    /**
+     * @brief Assign the current thread a priority which is appropriate
+     * for background sample file processing.
+     */
+    static void raiseCurrentThreadPriority() noexcept;
 private:
     Logger& logger;
     fs::path rootDirectory;
@@ -268,13 +273,16 @@ private:
 
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
+    RTSemaphore semFilledPromiseQueueAvailable { config::maxVoices };
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals
     volatile bool quitThread { false };
     volatile bool emptyQueue { false };
+    RTSemaphore semEmptyQueueFinished;
     std::atomic<int> threadsLoading { 0 };
     RTSemaphore workerBarrier;
+    RTSemaphore semClearingRequest;
 
     // File promises data structures along with their guards.
     std::vector<FilePromisePtr> emptyPromises;

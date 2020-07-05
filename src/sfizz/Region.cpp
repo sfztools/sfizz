@@ -164,6 +164,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             DBG("Unkown off mode:" << std::string(opcode.value));
         }
         break;
+    case hash("polyphony"):
+        if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
+            polyphony = *value;
+        break;
     case hash("note_polyphony"):
         if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
             notePolyphony = *value;
@@ -408,8 +412,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (opcode.parameters.back() > 127)
                 return false;
 
+            const auto inputVelocity = static_cast<uint8_t>(opcode.parameters.back());
             if (value)
-                velocityPoints.emplace_back(opcode.parameters.back(), *value);
+                velocityPoints.emplace_back(inputVelocity, *value);
         }
         break;
     case hash("xfin_lokey"):
@@ -819,25 +824,60 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, amplitudeEG.vel2sustain, Default::egOnCCPercentRange);
         break;
     case hash("ampeg_attack_oncc&"): // also ampeg_attackcc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccAttack, Default::egOnCCTimeRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            amplitudeEG.ccAttack[opcode.parameters.back()] = *value;
+
         break;
     case hash("ampeg_decay_oncc&"): // also ampeg_decaycc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccDecay, Default::egOnCCTimeRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            amplitudeEG.ccDecay[opcode.parameters.back()] = *value;
+
         break;
     case hash("ampeg_delay_oncc&"): // also ampeg_delaycc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccDelay, Default::egOnCCTimeRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            amplitudeEG.ccDelay[opcode.parameters.back()] = *value;
+
         break;
     case hash("ampeg_hold_oncc&"): // also ampeg_holdcc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccHold, Default::egOnCCTimeRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            amplitudeEG.ccHold[opcode.parameters.back()] = *value;
+
         break;
     case hash("ampeg_release_oncc&"): // also ampeg_releasecc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccRelease, Default::egOnCCTimeRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            amplitudeEG.ccRelease[opcode.parameters.back()] = *value;
+
         break;
     case hash("ampeg_start_oncc&"): // also ampeg_startcc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccStart, Default::egOnCCPercentRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
+            amplitudeEG.ccStart[opcode.parameters.back()] = *value;
+
         break;
     case hash("ampeg_sustain_oncc&"): // also ampeg_sustaincc&
-        setCCPairFromOpcode(opcode, amplitudeEG.ccSustain, Default::egOnCCPercentRange);
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
+            amplitudeEG.ccSustain[opcode.parameters.back()] = *value;
+
         break;
 
     case hash("effect&"):

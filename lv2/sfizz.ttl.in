@@ -12,6 +12,7 @@
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix state:   <http://lv2plug.in/ns/ext/state#> .
+@prefix time:    <http://lv2plug.in/ns/ext/time#> .
 @prefix units:   <http://lv2plug.in/ns/extensions/units#> .
 @prefix urid:    <http://lv2plug.in/ns/ext/urid#> .
 @prefix work:    <http://lv2plug.in/ns/ext/worker#> .
@@ -67,7 +68,7 @@ midnam:update a lv2:Feature .
   lv2:microVersion @LV2PLUGIN_VERSION_MICRO@ ;
 
   lv2:requiredFeature urid:map, bufsize:boundedBlockLength, work:schedule ;
-  lv2:optionalFeature lv2:hardRTCapable, opts:options ;
+  lv2:optionalFeature lv2:hardRTCapable, opts:options, state:mapPath, state:freePath ;
   lv2:extensionData opts:interface, state:interface, work:interface ;
 
   lv2:optionalFeature midnam:update ;
@@ -82,7 +83,7 @@ midnam:update a lv2:Feature .
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
-    atom:supports patch:Message, midi:MidiEvent ;
+    atom:supports patch:Message, midi:MidiEvent, time:Position ;
     lv2:designation lv2:control ;
     lv2:index 0 ;
     lv2:symbol "control" ;
