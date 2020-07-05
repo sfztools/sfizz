@@ -344,7 +344,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->oversampling = DEFAULT_OVERSAMPLING;
     self->preload_size = DEFAULT_PRELOAD;
     self->stretch_tuning = 0.0f;
-    self->check_modification = true;
+    self->check_modification = false;
     self->sample_counter = 0;
 
     // Get the features from the host and populate the structure
@@ -1033,10 +1033,12 @@ restore(LV2_Handle instance,
 
     // Load an empty file to remove the default sine, and then the new file.
     sfizz_load_string(self->synth, "empty.sfz", "");
+    self->check_modification = false;
     if (sfizz_lv2_load_file(instance, self->sfz_file_path))
     {
         lv2_log_note(&self->logger,
             "[sfizz] Restoring the file %s\n", self->sfz_file_path);
+        self->check_modification = true;
     }
     else
     {
