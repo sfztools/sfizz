@@ -45,6 +45,7 @@ public:
      */
     void process(absl::Span<const float> input, absl::Span<float> output);
 
+    float current() const { return filter.current(); }
 private:
     bool smoothing { false };
     OnePoleFilter<float> filter {};

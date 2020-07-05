@@ -27,10 +27,25 @@ void Smoother::reset(float value)
 
 void Smoother::process(absl::Span<const float> input, absl::Span<float> output)
 {
-    if (smoothing)
+    CHECK_SPAN_SIZES(input, output);
+    if (input.size() == 0)
+        return;
+
+    const auto midValue = input[input.size() / 2];
+    const bool shortcut = (
+        input.front() == input.back()
+        && input.front() == midValue
+        && input.front() == current()
+    );
+
+    if (smoothing && !shortcut) {
         filter.processLowpass(input, output);
-    else
+    }
+    else if (input.data() != output.data()) {
         copy<float>(input, output);
+    } else {
+        // Nothing to do
+    }
 }
 
 }

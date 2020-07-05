@@ -25,6 +25,8 @@ class OnePoleFilter {
 public:
     OnePoleFilter() = default;
 
+    Type current() const { return state; }
+
     void setGain(Type gain)
     {
         G = gain / (1 + gain);
