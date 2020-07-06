@@ -34,6 +34,9 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 {
     ASSERT(value >= 0.0f && value <= 1.0f);
 
+    if (triggerType == TriggerType::CC)
+        number = region->pitchKeycenter;
+
     this->triggerType = triggerType;
     triggerNumber = number;
     triggerValue = value;

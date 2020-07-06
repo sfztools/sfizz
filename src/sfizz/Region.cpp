@@ -186,14 +186,15 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     // Region logic: key mapping
     case hash("lokey"):
+        triggerOnNote = true;
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("hikey"):
-        triggerOnCC = (opcode.value == "-1");
+        triggerOnNote = (opcode.value != "-1");
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("key"):
-        triggerOnCC = (opcode.value == "-1");
+        triggerOnNote = (opcode.value != "-1");
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
@@ -334,26 +335,34 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("start_locc&"): // also on_locc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+        if (auto value = readOpcode(opcode.value, Default::midi7Range)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setStart(normalizeCC(*value));
+        }
         break;
     case hash("start_hicc&"): // also on_hicc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
+        if (auto value = readOpcode(opcode.value, Default::midi7Range)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setEnd(normalizeCC(*value));
+        }
         break;
     case hash("start_lohdcc&"): // also on_lohdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setStart(*value);
+        }
         break;
     case hash("start_hihdcc&"): // also on_hihdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
+        if (auto value = readOpcode(opcode.value, Default::normalizedRange)) {
+            triggerOnCC = true;
             ccTriggers[opcode.parameters.back()].setEnd(*value);
+        }
         break;
 
     // Performance parameters: amplifier
@@ -987,7 +996,7 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     if (!isSwitchedOn())
         return false;
 
-    if (triggerOnCC)
+    if (!triggerOnNote)
         return false;
 
     if (previousNote && !(previousKeySwitched && noteNumber != *previousNote))
@@ -1019,7 +1028,7 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
     if (!isSwitchedOn())
         return false;
 
-    if (triggerOnCC)
+    if (!triggerOnNote)
         return false;
 
     const bool velOk = velocityRange.containsWithEnd(velocity);

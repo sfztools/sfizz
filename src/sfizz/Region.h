@@ -381,6 +381,7 @@ private:
     bool aftertouchSwitched { true };
     std::bitset<config::numCCs> ccSwitched;
     bool triggerOnCC { false };
+    bool triggerOnNote { true };
     absl::string_view defaultPath { "" };
 
     int sequenceCounter { 0 };
