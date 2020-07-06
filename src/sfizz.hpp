@@ -72,6 +72,7 @@ public:
      * This accepts a virtual path name for the imaginary sfz file, which is not
      * required to exist on disk. The purpose of the virtual path is to locate
      * samples with relative paths.
+     * @since 0.4.0
      *
      * @param path The virtual path of the SFZ file, as string.
      * @param text The contents of the virtual SFZ file.
@@ -83,6 +84,7 @@ public:
 
     /**
      * @brief Sets the tuning from a Scala file loaded from the file system.
+     * @since 0.4.0
      *
      * @param  path   The path to the file in Scala format.
      * @return @true when tuning scale loaded OK,
@@ -92,6 +94,7 @@ public:
 
     /**
      * @brief Sets the tuning from a Scala file loaded from memory.
+     * @since 0.4.0
      *
      * @param  text   The contents of the file in Scala format.
      * @return @true when tuning scale loaded OK,
@@ -101,6 +104,7 @@ public:
 
     /**
      * @brief Sets the scala root key.
+     * @since 0.4.0
      *
      * @param rootKey The MIDI number of the Scala root key (default 60 for C4).
      */
@@ -108,6 +112,7 @@ public:
 
     /**
      * @brief Gets the scala root key.
+     * @since 0.4.0
      *
      * @return The MIDI number of the Scala root key (default 60 for C4).
      */
@@ -115,6 +120,7 @@ public:
 
     /**
      * @brief Sets the reference tuning frequency.
+     * @since 0.4.0
      *
      * @param frequency The frequency which indicates where standard tuning A4 is (default 440 Hz).
      */
@@ -122,6 +128,7 @@ public:
 
     /**
      * @brief Gets the reference tuning frequency.
+     * @since 0.4.0
      *
      * @return The frequency which indicates where standard tuning A4 is (default 440 Hz).
      */
@@ -130,6 +137,7 @@ public:
     /**
      * @brief Configure stretch tuning using a predefined parametric Railsback curve.
      * A ratio 1/2 is supposed to match the average piano; 0 disables (the default).
+     * @since 0.4.0
      *
      * @param ratio The parameter in domain 0-1.
      */
@@ -188,6 +196,7 @@ public:
      * opcode `sample_quality`. The engine uses distinct default quality
      * settings for live mode and freewheeling mode, which both can be
      * accessed by the means of this function.
+     * @since 0.4.0
      *
      * @param[in] mode  The processing mode.
      *
@@ -201,6 +210,7 @@ public:
      * opcode `sample_quality`. The engine uses distinct default quality
      * settings for live mode and freewheeling mode, which both can be
      * accessed by the means of this function.
+     * @since 0.4.0
      *
      * @param[in] mode    The processing mode.
      * @param[in] quality The desired sample quality, in the range 1 to 10.
@@ -252,6 +262,7 @@ public:
 
     /**
      * @brief Send a high precision CC event to the synth
+     * @since 0.4.0
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
@@ -449,7 +460,7 @@ public:
      * @brief Add external definitions prior to loading;
      * Note that these do not get reset by loading or resetting the synth.
      * You need to call clearExternalDefintions() to erase them.
-     * @since 0.4.0-dev
+     * @since 0.4.0
      *
      * @param id
      * @param value
@@ -458,20 +469,20 @@ public:
 
     /**
      * @brief Clears external definitions for the next file loading.
-     * @since 0.4.0-dev
+     * @since 0.4.0
      *
      */
     void clearExternalDefinitions();
 
     /**
      * @brief Get the key labels, if any
-     * @since 0.4.0-dev
+     * @since 0.4.0
      *
      */
     const std::vector<std::pair<uint8_t, std::string>>& getKeyLabels() const noexcept;
     /**
      * @brief Get the CC labels, if any
-     * @since 0.4.0-dev
+     * @since 0.4.0
      *
      */
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
