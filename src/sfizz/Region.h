@@ -371,6 +371,8 @@ struct Region {
     ModifierArray<CCMap<Modifier>> modifiers;
 
     bool triggerOnCC { false }; // whether the region triggers on CC events or note events
+    bool triggerOnNote { true };
+  
     // Parent
     RegionSet* parent { nullptr };
 private:

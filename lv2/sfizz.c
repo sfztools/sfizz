@@ -46,6 +46,7 @@
 #include <lv2/worker/worker.h>
 #include <lv2/log/logger.h>
 #include <lv2/log/log.h>
+#include <lv2/time/time.h>
 
 #include <ardour/lv2_extensions.h>
 
@@ -146,6 +147,7 @@ typedef struct
     LV2_URID sfizz_oversampling_uri;
     LV2_URID sfizz_log_status_uri;
     LV2_URID sfizz_check_modification_uri;
+    LV2_URID time_position_uri;
 
     // Sfizz related data
     sfizz_synth_t *synth;
@@ -220,6 +222,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
+    self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
 }
 
 static void
@@ -741,6 +744,10 @@ run(LV2_Handle instance, uint32_t sample_count)
                 {
                     sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
                 }
+            }
+            else if (obj->body.otype == self->time_position_uri)
+            {
+                // TODO: Handle time position atom
             }
             else
             {

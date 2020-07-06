@@ -21,10 +21,19 @@ set(VSTPLUGIN_SOURCES
     VstPluginFactory.cpp
     X11RunLoop.cpp)
 
+set(VSTPLUGIN_HEADERS
+    SfizzVstProcessor.h
+    SfizzVstController.h
+    SfizzVstEditor.h
+    SfizzVstState.h
+    GUIComponents.h
+    X11RunLoop.h)
+
 set(VSTPLUGIN_RESOURCES
     logo.png)
 
 add_library(${VSTPLUGIN_PRJ_NAME} MODULE
+    ${VSTPLUGIN_HEADERS}
     ${VSTPLUGIN_SOURCES})
 
 if(WIN32)
@@ -42,8 +51,14 @@ plugin_add_vst3sdk(${VSTPLUGIN_PRJ_NAME})
 plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
 
 # Add the ring buffer
+set (RINGBUFFER_HEADERS
+    "external/ring_buffer/ring_buffer/ring_buffer.h"
+    "external/ring_buffer/ring_buffer/ring_buffer.tcc")
+source_group ("Header Files" FILES ${RINGBUFFER_HEADERS})
 target_include_directories(${VSTPLUGIN_PRJ_NAME} PRIVATE "external/ring_buffer")
-target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE "external/ring_buffer/ring_buffer/ring_buffer.cpp")
+target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE
+    "external/ring_buffer/ring_buffer/ring_buffer.cpp"
+    ${RINGBUFFER_HEADERS})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
