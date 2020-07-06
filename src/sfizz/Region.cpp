@@ -186,15 +186,15 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     // Region logic: key mapping
     case hash("lokey"):
-        triggerOnCC = false;
+        triggerOnNote = true;
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("hikey"):
-        triggerOnCC = (opcode.value == "-1");
+        triggerOnNote = (opcode.value != "-1");
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         break;
     case hash("key"):
-        triggerOnCC = (opcode.value == "-1");
+        triggerOnNote = (opcode.value != "-1");
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
@@ -996,7 +996,7 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     if (!isSwitchedOn())
         return false;
 
-    if (triggerOnCC)
+    if (!triggerOnNote)
         return false;
 
     if (previousNote && !(previousKeySwitched && noteNumber != *previousNote))
@@ -1028,7 +1028,7 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
     if (!isSwitchedOn())
         return false;
 
-    if (triggerOnCC)
+    if (!triggerOnNote)
         return false;
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
