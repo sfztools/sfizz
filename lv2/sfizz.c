@@ -993,11 +993,14 @@ restore(LV2_Handle instance,
                 status = LV2_STATE_ERR_UNKNOWN;
         }
 
-        strncpy(self->sfz_file_path, path, MAX_PATH_SIZE);
-        self->sfz_file_path[MAX_PATH_SIZE - 1] = '\0';
+        if (path)
+        {
+            strncpy(self->sfz_file_path, path, MAX_PATH_SIZE);
+            self->sfz_file_path[MAX_PATH_SIZE - 1] = '\0';
 
-        if (map_path)
-            free_path->free_path(free_path->handle, (char *)path);
+            if (map_path)
+                free_path->free_path(free_path->handle, (char *)path);
+        }
     }
 
     value = retrieve(handle, self->sfizz_scala_file_uri, &size, &type, &val_flags);
@@ -1011,11 +1014,14 @@ restore(LV2_Handle instance,
                 status = LV2_STATE_ERR_UNKNOWN;
         }
 
-        strncpy(self->scala_file_path, path, MAX_PATH_SIZE);
-        self->scala_file_path[MAX_PATH_SIZE - 1] = '\0';
+        if (path)
+        {
+            strncpy(self->scala_file_path, path, MAX_PATH_SIZE);
+            self->scala_file_path[MAX_PATH_SIZE - 1] = '\0';
 
-        if (map_path)
-            free_path->free_path(free_path->handle, (char *)path);
+            if (map_path)
+                free_path->free_path(free_path->handle, (char *)path);
+        }
     }
 
     value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
