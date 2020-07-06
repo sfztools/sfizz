@@ -49,6 +49,17 @@ if (SFIZZ_USE_VCPKG OR SFIZZ_STATIC_LIBSNDFILE OR CMAKE_CXX_COMPILER_ID MATCHES 
     file(COPY "lgpl-3.0.txt" DESTINATION ${PROJECT_BINARY_DIR})
 endif()
 
+# Copy resource files into the bundle
+set(LV2_RESOURCES
+    DefaultInstrument.sfz
+    DefaultScale.scl)
+execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/Resources")
+foreach(res ${LV2_RESOURCES})
+    file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources/${res}"
+        DESTINATION "${PROJECT_BINARY_DIR}/Resources")
+endforeach()
+
 # Installation
 if (NOT MSVC)
     install (DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR}
