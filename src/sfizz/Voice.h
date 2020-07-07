@@ -340,6 +340,15 @@ private:
      * @param modulationSpan
      */
     void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
+
+    /**
+     * @brief Apply the crossfade envelope to a span.
+     *
+     * @param modulationSpan
+     */
+    void applyCrossfades(absl::Span<float> modulationSpan) noexcept;
+    void resetCrossfades() noexcept;
+
     /**
      * @brief Amplitude stage for a mono source
      *
@@ -473,6 +482,7 @@ private:
     ModifierArray<std::vector<Smoother>> modifierSmoothers;
     Smoother gainSmoother;
     Smoother bendSmoother;
+    Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
 
     std::array<OnePoleFilter<float>, 2> channelEnvelopeFilters;

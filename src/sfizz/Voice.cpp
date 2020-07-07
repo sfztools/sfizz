@@ -25,6 +25,7 @@ sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
         osc.init(sampleRate);
 
     gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
+    xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
 
     for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
@@ -109,6 +110,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
     gainSmoother.reset();
+    resetCrossfades();
 
     // Check that we can handle the number of filters; filters should be cleared here
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
@@ -248,6 +250,7 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
     gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
+    xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
 
     for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
@@ -311,10 +314,64 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #endif
 }
 
-void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
+void sfz::Voice::resetCrossfades() noexcept
+{
+    float xfadeValue { 1.0f };
+    const auto xfCurve = region->crossfadeCCCurve;
+
+    for (const auto& mod : region->crossfadeCCInRange) {
+        const auto value = resources.midiState.getCCValue(mod.cc);
+        xfadeValue *= crossfadeIn(mod.data, value, xfCurve);
+    }
+
+    for (const auto& mod : region->crossfadeCCOutRange) {
+        const auto value = resources.midiState.getCCValue(mod.cc);
+        xfadeValue *= crossfadeOut(mod.data, value, xfCurve);
+    }
+
+    xfadeSmoother.reset(xfadeValue);
+}
+
+void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
     const auto xfCurve = region->crossfadeCCCurve;
+
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    auto xfadeSpan = resources.bufferPool.getBuffer(numSamples);
+
+    if (!tempSpan || !xfadeSpan)
+        return;
+
+    fill<float>(*xfadeSpan, 1.0f);
+
+    bool canShortcut = true;
+    for (const auto& mod : region->crossfadeCCInRange) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        canShortcut &= (events.size() == 1);
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeIn(mod.data, x, xfCurve);
+        });
+        applyGain<float>(*tempSpan, *xfadeSpan);
+    }
+
+    for (const auto& mod : region->crossfadeCCOutRange) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        canShortcut &= (events.size() == 1);
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeOut(mod.data, x, xfCurve);
+        });
+        applyGain<float>(*tempSpan, *xfadeSpan);
+    }
+
+    xfadeSmoother.process(*xfadeSpan, *xfadeSpan, canShortcut);
+    applyGain<float>(*xfadeSpan, modulationSpan);
+}
+
+
+void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
+{
+    const auto numSamples = modulationSpan.size();
 
     auto tempSpan = resources.bufferPool.getBuffer(numSamples);
     if (!tempSpan)
@@ -330,22 +387,6 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
         smoother.process(*tempSpan, *tempSpan);
         applyGain<float>(*tempSpan, modulationSpan);
     });
-
-    // Crossfade envelopes
-    for (const auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) {
-            return crossfadeIn(mod.data, x, xfCurve);
-        });
-        applyGain<float>(*tempSpan, modulationSpan);
-    }
-    for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) {
-            return crossfadeOut(mod.data, x, xfCurve);
-        });
-        applyGain<float>(*tempSpan, modulationSpan);
-    }
 
     // Volume envelope
     applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
@@ -373,6 +414,7 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
         return;
 
     amplitudeEnvelope(*modulationSpan);
+    applyCrossfades(*modulationSpan);
     applyGain<float>(*modulationSpan, leftBuffer);
 }
 
@@ -386,6 +428,7 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     amplitudeEnvelope(*modulationSpan);
+    applyCrossfades(*modulationSpan);
     buffer.applyGain(*modulationSpan);
 }
 

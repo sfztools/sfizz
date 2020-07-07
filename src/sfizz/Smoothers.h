@@ -42,9 +42,13 @@ public:
      *
      * @param input
      * @param output
+     * @param canShortcut whether we can have a fast path if the filter is within
+     *                    a reasonable range around the first value of the input
+     *                    span.
      */
-    void process(absl::Span<const float> input, absl::Span<float> output);
+    void process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut = false);
 
+    float current() const { return filter.current(); }
 private:
     bool smoothing { false };
     OnePoleFilter<float> filter {};
