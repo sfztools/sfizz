@@ -115,7 +115,10 @@ void PageSettings::receiveString(EditId id, cycfi::string_view v)
 {
     switch (id) {
     case EditId::ScalaFile:
-        impl_->txtScala_->value(v);
+        {
+            const cycfi::fs::path path(v.begin(), v.end());
+            impl_->txtScala_->value(path.filename().u8string());
+        }
         break;
     default:
         break;

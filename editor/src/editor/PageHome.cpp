@@ -79,7 +79,10 @@ void PageHome::receiveString(EditId id, cycfi::string_view v)
 {
     switch (id) {
     case EditId::SfzFile:
-        impl_->txtSfz_->value(v);
+        {
+            const cycfi::fs::path path(v.begin(), v.end());
+            impl_->txtSfz_->value(path.filename().u8string());
+        }
         break;
     default:
         break;
