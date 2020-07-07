@@ -1,6 +1,6 @@
 # Configuration for this plugin
 # TODO: generate version from git
-set (LV2PLUGIN_VERSION_MINOR   4)
+set (LV2PLUGIN_VERSION_MINOR   6)
 set (LV2PLUGIN_VERSION_MICRO   0)
 set (LV2PLUGIN_NAME            "sfizz")
 set (LV2PLUGIN_COMMENT         "SFZ sampler")
