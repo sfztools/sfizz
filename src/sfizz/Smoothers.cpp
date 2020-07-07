@@ -25,26 +25,21 @@ void Smoother::reset(float value)
     filter.reset(value);
 }
 
-void Smoother::process(absl::Span<const float> input, absl::Span<float> output)
+void Smoother::process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut)
 {
     CHECK_SPAN_SIZES(input, output);
     if (input.size() == 0)
         return;
 
-    const auto midValue = input[input.size() / 2];
-    const bool shortcut = (
-        input.front() == input.back()
-        && input.front() == midValue
-        && input.front() == current()
-    );
+    if (canShortcut && std::abs(input.front() - current()) < config::virtuallyZero) {
+        if (input.data() != output.data())
+            copy<float>(input, output);
 
-    if (smoothing && !shortcut) {
+        filter.reset(input.back());
+    } else if (smoothing) {
         filter.processLowpass(input, output);
-    }
-    else if (input.data() != output.data()) {
+    } else if (input.data() != output.data()) {
         copy<float>(input, output);
-    } else {
-        // Nothing to do
     }
 }
 

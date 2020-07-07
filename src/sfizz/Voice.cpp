@@ -342,10 +342,10 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 
     fill<float>(*xfadeSpan, 1.0f);
 
-    bool smoothOutput = false;
+    bool canShortcut = true;
     for (const auto& mod : region->crossfadeCCInRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
-        smoothOutput |= (events.size() > 1);
+        canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeIn(mod.data, x, xfCurve);
         });
@@ -354,14 +354,14 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 
     for (const auto& mod : region->crossfadeCCOutRange) {
         const auto events = resources.midiState.getCCEvents(mod.cc);
-        smoothOutput |= (events.size() > 1);
+        canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeOut(mod.data, x, xfCurve);
         });
         applyGain<float>(*tempSpan, *xfadeSpan);
     }
 
-    xfadeSmoother.process(*xfadeSpan, *xfadeSpan);
+    xfadeSmoother.process(*xfadeSpan, *xfadeSpan, canShortcut);
     applyGain<float>(*xfadeSpan, modulationSpan);
 }
 
