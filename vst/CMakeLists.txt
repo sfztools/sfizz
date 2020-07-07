@@ -23,9 +23,7 @@ set(VSTPLUGIN_HEADERS
     SfizzVstProcessor.h
     SfizzVstController.h
     SfizzVstEditor.h
-    SfizzVstState.h
-    GUIComponents.h
-    X11RunLoop.h)
+    SfizzVstState.h)
 
 if(WIN32)
     list(APPEND VSTPLUGIN_SOURCES NativeIdleRunner_win.cpp)

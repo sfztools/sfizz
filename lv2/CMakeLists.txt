@@ -22,8 +22,6 @@ add_library (${LV2PLUGIN_PRJ_NAME} MODULE
     ${PROJECT_NAME}.c
     atomic_compat.h
     ${LV2PLUGIN_TTL_SRC_FILES})
-add_library (${LV2PLUGIN_PRJ_NAME}_ui MODULE
-    ${PROJECT_NAME}_ui.cpp)
 target_link_libraries (${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
 
 if (SFIZZ_LV2_UI)
