@@ -82,6 +82,7 @@ SFIZZ_EXPORTED_API bool sfizz_load_file(sfizz_synth_t* synth, const char* path);
  *             path name for the imaginary sfz file, which is not required to
  *             exist on disk. The purpose of the virtual path is to locate
  *             samples with relative paths.
+ * @since 0.4.0
  *
  * @param      synth  The sfizz synth.
  * @param      path   The virtual path of the SFZ file.
@@ -94,6 +95,7 @@ SFIZZ_EXPORTED_API bool sfizz_load_string(sfizz_synth_t* synth, const char* path
 
 /**
  * @brief Sets the tuning from a Scala file loaded from the file system.
+ * @since 0.4.0
  *
  * @param      synth  The sfizz synth.
  * @param      path   The path to the file in Scala format.
@@ -104,6 +106,7 @@ SFIZZ_EXPORTED_API bool sfizz_load_scala_file(sfizz_synth_t* synth, const char* 
 
 /**
  * @brief Sets the tuning from a Scala file loaded from memory.
+ * @since 0.4.0
  *
  * @param      synth  The sfizz synth.
  * @param      text   The contents of the file in Scala format.
@@ -114,6 +117,7 @@ SFIZZ_EXPORTED_API bool sfizz_load_scala_string(sfizz_synth_t* synth, const char
 
 /**
  * @brief Sets the scala root key.
+ * @since 0.4.0
  *
  * @param      synth          The sfizz synth.
  * @param      root_key       The MIDI number of the Scala root key (default 60 for C4).
@@ -122,6 +126,7 @@ SFIZZ_EXPORTED_API void sfizz_set_scala_root_key(sfizz_synth_t* synth, int root_
 
 /**
  * @brief Gets the scala root key.
+ * @since 0.4.0
  *
  * @param      synth          The sfizz synth.
  * @return     The MIDI number of the Scala root key (default 60 for C4).
@@ -130,6 +135,7 @@ SFIZZ_EXPORTED_API int sfizz_get_scala_root_key(sfizz_synth_t* synth);
 
 /**
  * @brief Sets the reference tuning frequency.
+ * @since 0.4.0
  *
  * @param      synth          The sfizz synth.
  * @param      frequency      The frequency which indicates where standard tuning A4 is (default 440 Hz).
@@ -138,6 +144,7 @@ SFIZZ_EXPORTED_API void sfizz_set_tuning_frequency(sfizz_synth_t* synth, float f
 
 /**
  * @brief Gets the reference tuning frequency.
+ * @since 0.4.0
  *
  * @param      synth          The sfizz synth.
  * @return     The frequency which indicates where standard tuning A4 is (default 440 Hz).
@@ -147,6 +154,7 @@ SFIZZ_EXPORTED_API float sfizz_get_tuning_frequency(sfizz_synth_t* synth);
 /**
  * @brief      Configure stretch tuning using a predefined parametric Railsback curve.
  *             A ratio 1/2 is supposed to match the average piano; 0 disables (the default).
+ * @since 0.4.0
  *
  * @param      synth          The sfizz synth.
  * @param      ratio          The parameter in domain 0-1.
@@ -276,6 +284,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_
  * @brief      Send a pitch wheel event. As with all MIDI events, this needs
  *             to happen before the call to sfizz_render_block in each block and
  *             should appear in order of the delays.
+ * @since 0.4.0
  *
  * @param      synth    The synth.
  * @param      delay    The delay.
@@ -379,6 +388,7 @@ SFIZZ_EXPORTED_API bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfiz
  *             opcode `sample_quality`. The engine uses distinct default quality
  *             settings for live mode and freewheeling mode, which both can be
  *             accessed by the means of this function.
+ * @since 0.4.0
  *
  * @param      synth         The synth.
  * @param[in]  mode          The processing mode.
@@ -393,6 +403,7 @@ SFIZZ_EXPORTED_API int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_proc
  *             opcode `sample_quality`. The engine uses distinct default quality
  *             settings for live mode and freewheeling mode, which both can be
  *             accessed by the means of this function.
+ * @since 0.4.0
  *
  * @param      synth         The synth.
  * @param[in]  mode          The processing mode.
@@ -525,7 +536,7 @@ SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
  * @brief Add external definitions prior to loading;
  * Note that these do not get reset by loading or resetting the synth.
  * You need to call sfizz_clear_external_definitions() to erase them.
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  * @param synth
  * @param id
@@ -535,7 +546,7 @@ SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, con
 
 /**
  * @brief Clears external definitions for the next file loading.
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  * @param synth
  */
@@ -545,13 +556,13 @@ SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
 
 /**
  * @brief Get the number of key labels registered in the current sfz file
- * @since 0.4.0-dev
+ * @since 0.4.0
  */
 SFIZZ_EXPORTED_API unsigned int sfizz_get_num_key_labels(sfizz_synth_t* synth);
 
 /**
  * @brief Get the key number for the label registered at index label_index.
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  * @returns the number or SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX if the index is out of bounds.
  */
@@ -559,7 +570,7 @@ SFIZZ_EXPORTED_API int sfizz_get_key_label_number(sfizz_synth_t* synth, int labe
 
 /**
  * @brief Get the key text for the label registered at index label_index.
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  * @returns the label or NULL if the index is out of bounds.
  */
@@ -567,14 +578,14 @@ SFIZZ_EXPORTED_API const char * sfizz_get_key_label_text(sfizz_synth_t* synth, i
 
 /**
  * @brief Get the number of CC labels registered in the current sfz file
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  */
 SFIZZ_EXPORTED_API unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth);
 
 /**
  * @brief Get the CC number for the label registered at index label_index.
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  * @returns the number or SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX if the index is out of bounds.
  */
@@ -582,7 +593,7 @@ SFIZZ_EXPORTED_API unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth);
 SFIZZ_EXPORTED_API int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label_index);
 /**
  * @brief Get the CC text for the label registered at index label_index.
- * @since 0.4.0-dev
+ * @since 0.4.0
  *
  * @returns the label or NULL if the index is out of bounds.
  */
