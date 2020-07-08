@@ -305,6 +305,7 @@ struct Region {
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
+    uint16_t sustainCC { Default::sustainCC }; // sustain_cc
 
     // Region logic: internal conditions
     Range<uint8_t> aftertouchRange { Default::aftertouchRange }; // hichanaft and lochanaft
@@ -369,6 +370,9 @@ struct Region {
     // Modifiers
     ModifierArray<CCMap<Modifier>> modifiers;
 
+    bool triggerOnCC { false }; // whether the region triggers on CC events or note events
+    bool triggerOnNote { true };
+  
     // Parent
     RegionSet* parent { nullptr };
 private:
@@ -379,9 +383,8 @@ private:
     bool pitchSwitched { true };
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
+    bool noteIsOff { false };
     std::bitset<config::numCCs> ccSwitched;
-    bool triggerOnCC { false };
-    bool triggerOnNote { true };
     absl::string_view defaultPath { "" };
 
     int sequenceCounter { 0 };

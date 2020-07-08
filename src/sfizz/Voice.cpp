@@ -206,7 +206,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noex
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (!region->checkSustain || resources.midiState.getCCValue(config::sustainCC) < config::halfCCThreshold)
+        if (!region->checkSustain || resources.midiState.getCCValue(region->sustainCC) < config::halfCCThreshold)
             release(delay);
     }
 }
@@ -220,7 +220,7 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (state != State::playing)
         return;
 
-    if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
+    if (region->checkSustain && noteIsOff && ccNumber == region->sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
 }
 

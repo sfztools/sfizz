@@ -1207,6 +1207,15 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.checkSostenuto);
     }
 
+    SECTION("sustain_cc")
+    {
+        REQUIRE(region.sustainCC == 64);
+        region.parseOpcode({ "sustain_cc", "63" });
+        REQUIRE(region.sustainCC == 63);
+        region.parseOpcode({ "sustain_cc", "-1" });
+        REQUIRE(region.sustainCC == 0);
+    }
+
     SECTION("Filter stacking and cutoffs")
     {
         REQUIRE(region.filters.empty());
@@ -1720,4 +1729,53 @@ TEST_CASE("[Region] Non-conforming floating point values in integer opcodes")
     REQUIRE(region.offset == 2014);
     region.parseOpcode({ "pitch_keytrack", "-2.1" });
     REQUIRE(region.pitchKeytrack == -2);
+}
+
+
+TEST_CASE("[Region] Release and release key")
+{
+    MidiState midiState;
+    Region region { 0, midiState };
+    region.parseOpcode({ "key", "63" });
+    region.parseOpcode({ "sample", "*sine" });
+    SECTION("Release key without sustain")
+    {
+        region.parseOpcode({ "trigger", "release_key" });
+        midiState.ccEvent(0, 64, 0.0f);
+        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
+    }
+    SECTION("Release key with sustain")
+    {
+        region.parseOpcode({ "trigger", "release_key" });
+        midiState.ccEvent(0, 64, 1.0f);
+        REQUIRE( !region.registerCC(64, 1.0f) );
+        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
+        midiState.ccEvent(0, 64, 0.0f);
+        REQUIRE( !region.registerCC(64, 0.0f) );
+    }
+    SECTION("Release without sustain")
+    {
+        region.parseOpcode({ "trigger", "release" });
+        midiState.ccEvent(0, 64, 0.0f);
+        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
+    }
+    SECTION("Release with sustain")
+    {
+        region.parseOpcode({ "trigger", "release" });
+        midiState.ccEvent(0, 64, 1.0f);
+        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
+    }
+    SECTION("Release with sustain")
+    {
+        region.parseOpcode({ "trigger", "release" });
+        midiState.ccEvent(0, 64, 1.0f);
+        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
+        midiState.ccEvent(0, 64, 0.0f);
+        REQUIRE( region.registerCC(64, 0.0f) );
+    }
 }

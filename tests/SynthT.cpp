@@ -609,3 +609,57 @@ TEST_CASE("[Synth] Sisters and off-by")
     REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
 }
+
+TEST_CASE("[Synth] Release key")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=62 sample=*sine trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 64, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+}
+
+TEST_CASE("[Synth] Release")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 64, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+    synth.cc(0, 64, 0);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+}
+
+TEST_CASE("[Synth] Release key (Different sustain CC)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <global>sustain_cc=54
+        <region> key=62 sample=*sine trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+}
+
+TEST_CASE("[Synth] Release (Different sustain CC)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <global>sustain_cc=54
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+    synth.cc(0, 54, 0);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+}
