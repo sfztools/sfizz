@@ -41,6 +41,19 @@ Other projects that bundle or use sfizz are:
 If you use the library, maybe you will have specific needs and requests that could be useful to you.
 Be sure to post an issue for this so we can improve the API, especially because we have to queue API changes so it stays a bit stable over time.
 
+### Financial contribution
+
+Sfizz and the work in the SFZ tools organization is purely driven by hobbyists up to now, who chose and still choose to use their free time to benefit this project.
+The core sfizz library and the plugins are available under permissive licenses to make them reusable within your own music projects or as components to build applications.
+We firmly believe in the honesty and goodwill of users as a whole, and we want to promote a healthy relationship to software and to the cost of producing quality software.
+No financial returns is explicitely required from using sfizz in any shape.
+However, if you feel that sfizz produces value for you or your products, and if you find that your financial situation allows for it, we put together ways to donate to the project.
+You are never compelled to do so, and as seen throughout this document there are many ways to contribute to the project.
+
+In all of sfizz's governance model, we strive to live in the open as much as the project allows.
+Finances are no different, and we put in place a process so that the use of donations is as transparent as possible.
+We invite you to check out the [GOVERNANCE] file to see how the organization is governed and how are donations handled.
+
 ## Developing for sfizz
 
 We welcome all code contributions to sfizz, whatever your coding level.
@@ -217,6 +230,7 @@ The file `scripts/performance_report.py` is made to process and produce a nice i
 [build]: https://sfz.tools/sfizz/development/build/
 [benchmark]: https://github.com/google/benchmark
 [sfizz-render]: https://github.com/sfztools/sfizz-render
+[GOVERNANCE]: https://github.com/sfztools/sfizz/blob/develop/GOVERNANCE.md
 [api]: https://sfz.tools/sfizz/api/
 [RAII]: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-resource
 [CppCoreGuidelines]: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
