@@ -129,8 +129,7 @@ void PageHome::Impl::init(el::view& view)
                                                 el::top_margin(10,
                                                     el::hmin_size(200, ibSfz.first)))),
                                             el::left_margin(10, el::align_bottom(
-                                                el::hsize(30,
-                                                    btnSfz))))));
+                                                btnSfz)))));
 
     contents_
         = el::share(
