@@ -22,7 +22,7 @@ We wish to:
 - facilitate a transparent handling of the finances of the project from the maintainers;
 - abide by international laws for the transfer and handling of money in support of a project.
 
-Considering these constraints, we chose to host the SFZ tools organization within the [Open-source Open Collective].
+Considering these constraints, we chose to host the SFZ tools organization within the [SFZTools Open Collective].
 The Open Collective fiscal host holds the money of unincorporated partnerships such as SFZ tools, providing legal channels and accounting, as well as tools to support a transparent budget management by members of the collective.
 
 We apply the following ruleset to handle the project's financial resources:
@@ -47,4 +47,4 @@ It is the role of maintainers to best adapt the governance model to the evolutio
 3. Maintainers can be invited from regular contributors at any point in time; maintainers wishing to leave the governance of the project may inform the other maintainers.
 In both cases, updates to this document reflect the evolution of the governance team and rules.
 
-[Open-source Open Collective]: https://opencollective.com/opensource
+[Open-source Open Collective]: https://opencollective.com/sfztools
