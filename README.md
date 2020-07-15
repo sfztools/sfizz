@@ -16,7 +16,7 @@ Our [releases] are an immediate way to get a working library or LV2/VST plugin, 
 ## Contributing to sfizz
 
 There is actually many things anyone can do, programming-related or music-related.
-Please check out (CONTRIBUTING.md) for information about filing bug reports or feature requests, and helping the development of sfizz
+Please check out the [CONTRIBUTING](CONTRIBUTING.md) document for information about filing bug reports or feature requests, and helping the development of sfizz
 
 ## Donating to sfizz
 
@@ -25,11 +25,11 @@ We firmly believe in the honesty and goodwill of users as a whole, and we want t
 
 No financial returns is explicitely required from using sfizz in any shape.
 However, if you feel that sfizz produces value for you or your products, and if you find that your financial situation allows for it, we put together ways to donate to the project.
-You are never compelled to do so, the (CONTRIBUTING.md) file contains different ways to contribute.
+You are never compelled to do so, the [CONTRIBUTING](CONTRIBUTING.md) file contains different ways to contribute.
 
 In all of sfizz's governance model, we strive to live in the open.
 Finances are no different, and we put in place a process so that the use of donations is as transparent as possible through our [Open Collective].
-We invite you to check out the (GOVERNANCE.md) file to see how the organization is governed and how are donations handled.
+We invite you to check out the [GOVERNANCE](GOVERNANCE.md) file to see how the organization is governed and how are donations handled.
 
 ## Dependencies and licenses
 
