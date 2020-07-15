@@ -22,8 +22,8 @@ We wish to:
 - facilitate a transparent handling of the finances of the project from the maintainers;
 - abide by international laws for the transfer and handling of money in support of a project.
 
-Considering these constraints, we chose to host the SFZ tools organization within [Open Collective Europe].
-The Open Collective Europe fiscal host holds the money of unincorporated partnerships such as SFZ tools, providing legal channels and accounting, as well as tools to support a transparent budget management by members of the collective.
+Considering these constraints, we chose to host the SFZ tools organization within the [Open-source Open Collective].
+The Open Collective fiscal host holds the money of unincorporated partnerships such as SFZ tools, providing legal channels and accounting, as well as tools to support a transparent budget management by members of the collective.
 
 We apply the following ruleset to handle the project's financial resources:
 
@@ -37,7 +37,7 @@ The partition may also include other project that sfizz uses or wish to support.
 7. Failure to reach a unanimous agreement will see the donations pooled back until the next budget meeting.
 8. The budget and expenses are kept public so all donators can keep track of how their donations are used.
 
-Note that the Open Collective platform charges a 5% administrative fee on all donations; subsequent fees may be charged by credit card or banks as the money is moved from the collective to individual accounts.
+Note that the Open Collective platform charges a 10% administrative fee on all donations; subsequent fees may be charged by credit card or banks as the money is moved from the collective to individual accounts.
 
 ## Changes to the governance model
 
@@ -47,4 +47,4 @@ It is the role of maintainers to best adapt the governance model to the evolutio
 3. Maintainers can be invited from regular contributors at any point in time; maintainers wishing to leave the governance of the project may inform the other maintainers.
 In both cases, updates to this document reflect the evolution of the governance team and rules.
 
-[Open Collective Europe]: https://opencollective.com/europe
+[Open-source Open Collective]: https://opencollective.com/opensource
