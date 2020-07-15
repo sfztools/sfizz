@@ -36,7 +36,6 @@ The project [sfizz-render] illustrates how one might use sfizz as a shared libra
 Other projects that bundle or use sfizz are:
 
 - (https://github.com/sfztools/beatbox): a live drum machine
--
 
 If you use the library, maybe you will have specific needs and requests that could be useful to you.
 Be sure to post an issue for this so we can improve the API, especially because we have to queue API changes so it stays a bit stable over time.
@@ -217,6 +216,7 @@ The file `scripts/performance_report.py` is made to process and produce a nice i
 [build]: https://sfz.tools/sfizz/development/build/
 [benchmark]: https://github.com/google/benchmark
 [sfizz-render]: https://github.com/sfztools/sfizz-render
+[GOVERNANCE]: GOVERNANCE.md
 [api]: https://sfz.tools/sfizz/api/
 [RAII]: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-resource
 [CppCoreGuidelines]: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
