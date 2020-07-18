@@ -413,7 +413,7 @@ instantiate(const LV2_Descriptor *descriptor,
     // Check the options for the block size and sample rate parameters
     if (options)
     {
-        for (const LV2_Options_Option *opt = options; opt->value; ++opt)
+        for (const LV2_Options_Option *opt = options; opt->key || opt->value; ++opt)
         {
             if (opt->key == self->sample_rate_uri)
             {
@@ -845,7 +845,7 @@ lv2_get_options(LV2_Handle instance, LV2_Options_Option *options)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     LV2_DEBUG("[DEBUG] get_options called\n");
-    for (LV2_Options_Option *opt = options; opt->value; ++opt)
+    for (LV2_Options_Option *opt = options; opt->key || opt->value; ++opt)
     {
         if (self->unmap) {
             LV2_DEBUG("[DEBUG] Called for an option with key (subject): %s (%s) \n",
@@ -878,7 +878,7 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
 
     // Update the block size and sample rate as needed
-    for (const LV2_Options_Option *opt = options; opt->value; ++opt)
+    for (const LV2_Options_Option *opt = options; opt->key || opt->value; ++opt)
     {
         if (opt->key == self->sample_rate_uri)
         {
