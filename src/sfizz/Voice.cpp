@@ -270,7 +270,8 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
     buffer.fill(0.0f);
 
-    ASSERT(region != nullptr);
+    if (region == nullptr)
+        return;
 
     const auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);

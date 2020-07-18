@@ -680,6 +680,9 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 void sfz::Synth::renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept
 {
     const Region* region = voice.getRegion();
+    if (region == nullptr)
+        return;
+
     voice.renderBlock(tempSpan);
     for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
         if (auto& bus = effectBuses[i]) {
@@ -936,8 +939,12 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             }
 
             render:
+            // For some reason we did not find a voice to use.
+            // This is a degraded case but we'll just drop the note on.
+            if (selectedVoice == nullptr)
+                continue;
+
             // Kill voice if necessary, pre-rendering it into the output buffers
-            ASSERT(selectedVoice);
             if (!selectedVoice->isFree()) {
                 auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
                 SisterVoiceRing::applyToRing(selectedVoice, [&] (Voice* v) {
@@ -1295,22 +1302,22 @@ void sfz::Synth::resetVoices(int numVoices)
     voices.clear();
     voices.reserve(numVoices);
 
-    for (int i = 0; i < numVoices; ++i) {
-        auto voice = absl::make_unique<Voice>(i, resources);
-        voice->setStateListener(this);
-        voices.emplace_back(std::move(voice));
-    }
-
     voiceViewArray.clear();
     voiceViewArray.reserve(numVoices);
 
     regionPolyphonyArray.clear();
     regionPolyphonyArray.reserve(numVoices);
 
+    for (int i = 0; i < numVoices; ++i) {
+        auto voice = absl::make_unique<Voice>(i, resources);
+        voice->setStateListener(this);
+        voiceViewArray.push_back(voice.get());
+        voices.emplace_back(std::move(voice));
+    }
+
     for (auto& voice : voices) {
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
-        voiceViewArray.push_back(voice.get());
     }
 
     this->numVoices = numVoices;
