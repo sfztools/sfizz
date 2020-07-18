@@ -731,6 +731,7 @@ private:
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
     int numVoices { config::numVoices };
+    int activeVoices { 0 };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes
