@@ -35,6 +35,12 @@ midnam:update a lv2:Feature .
     "Accordage"@fr ,
     "Accordatura"@it .
 
+<@LV2PLUGIN_URI@#status>
+  a pg:Group ;
+  lv2:symbol "status" ;
+  lv2:name "status",
+    "Status"@fr .
+
 <@LV2PLUGIN_URI@:sfzfile>
   a lv2:Parameter ;
   rdfs:label "SFZ file",
@@ -49,6 +55,16 @@ midnam:update a lv2:Feature .
     "Fichier Scala"@fr ,
     "File Scala"@it ;
   rdfs:range atom:Path .
+
+<@LV2PLUGIN_URI@:activevoices>
+  a lv2:Parameter ;
+  pg:group <@LV2PLUGIN_URI@#status> ;
+  rdfs:label "Active voices",
+    "Voix utilisées"@fr ;
+  rdfs:range atom:Int ;
+  lv2:minimum 0 ;
+  lv2:maximum 256
+  .
 
 <@LV2PLUGIN_URI@>
   a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
@@ -77,8 +93,9 @@ midnam:update a lv2:Feature .
   opts:supportedOption param:sampleRate ;
   opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
 
-  patch:writable <@LV2PLUGIN_URI@:sfzfile> ;
-  patch:writable <@LV2PLUGIN_URI@:tuningfile> ;
+  patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
+                 <@LV2PLUGIN_URI@:tuningfile> ;
+  patch:readable <@LV2PLUGIN_URI@:activevoices> ;
 
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;

@@ -60,14 +60,15 @@
 
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
-#define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
-#define SFIZZ__tuningfile "http://sfztools.github.io/sfizz:tuningfile"
-#define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
-#define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
-#define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
+#define SFIZZ__sfzFile SFIZZ_URI ":" "sfzfile"
+#define SFIZZ__tuningfile SFIZZ_URI ":" "tuningfile"
+#define SFIZZ__numVoices SFIZZ_URI ":" "numvoices"
+#define SFIZZ__activeVoices SFIZZ_URI ":" "activevoices"
+#define SFIZZ__preloadSize SFIZZ_URI ":" "preload_size"
+#define SFIZZ__oversampling SFIZZ_URI ":" "oversampling"
 // These ones are just for the worker
-#define SFIZZ__logStatus "http://sfztools.github.io/sfizz:log_status"
-#define SFIZZ__checkModification "http://sfztools.github.io/sfizz:check_modification"
+#define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
+#define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -147,6 +148,7 @@ typedef struct
     LV2_URID sfizz_oversampling_uri;
     LV2_URID sfizz_log_status_uri;
     LV2_URID sfizz_check_modification_uri;
+    LV2_URID sfizz_active_voices_uri;
     LV2_URID time_position_uri;
 
     // Sfizz related data
@@ -224,7 +226,9 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
+    self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
+    self->sfizz_active_voices_uri = map->map(map->handle, SFIZZ__activeVoices);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
 }
 
@@ -509,6 +513,23 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
         lv2_atom_forge_pop(&self->forge, &frame);
 }
 
+static void
+sfizz_lv2_send_active_voices(sfizz_plugin_t *self)
+{
+    LV2_Atom_Forge_Frame frame;
+    const int active_voices = sfizz_get_num_active_voices(self->synth);
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(&self->forge, 0) &&
+        lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(&self->forge, self->sfizz_active_voices_uri) &&
+        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
+        lv2_atom_forge_int(&self->forge, active_voices);
+
+    if (write_ok)
+        lv2_atom_forge_pop(&self->forge, &frame);
+}
 
 static void
 sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
@@ -770,6 +791,10 @@ run(LV2_Handle instance, uint32_t sample_count)
                 {
                     sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
                 }
+                else if (property->body == self->sfizz_active_voices_uri)
+                {
+                    // We're sending it anyway, nothing to do
+                }
             }
             else if (obj->body.otype == self->time_position_uri)
             {
@@ -802,6 +827,7 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);
     sfizz_lv2_check_num_voices(self);
+    sfizz_lv2_send_active_voices(self);
 
     // Log the buffer usage
     self->sample_counter += (int)sample_count;
