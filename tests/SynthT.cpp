@@ -23,11 +23,11 @@ TEST_CASE("[Synth] Play and check active voices")
 
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
     // Render for a while
     for (int i = 0; i < 200; ++i)
         synth.renderBlock(buffer);
-    REQUIRE(synth.getNumActiveVoices() == 0);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
 }
 
 TEST_CASE("[Synth] All sound off")
@@ -36,9 +36,9 @@ TEST_CASE("[Synth] All sound off")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
     synth.allSoundOff();
-    REQUIRE(synth.getNumActiveVoices() == 0);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
 }
 
 TEST_CASE("[Synth] Change the number of voice while playing")
@@ -51,9 +51,9 @@ TEST_CASE("[Synth] Change the number of voice while playing")
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
     synth.renderBlock(buffer);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
     synth.setNumVoices(8);
-    REQUIRE(synth.getNumActiveVoices() == 0);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
     REQUIRE(synth.getNumVoices() == 8);
 }
 
@@ -131,15 +131,15 @@ TEST_CASE("[Synth] All notes offs/all sounds off")
     )");
     synth.noteOn(0, 60, 63);
     synth.noteOn(0, 62, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.cc(0, 120, 63);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
 
     synth.noteOn(0, 62, 63);
     synth.noteOn(0, 60, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.cc(0, 123, 63);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
 }
 
 TEST_CASE("[Synth] Reset all controllers")
@@ -491,14 +491,14 @@ TEST_CASE("[Synth] sample quality")
 
     // default sample quality
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQuality);
     synth.allSoundOff();
 
     // default sample quality, freewheeling
     synth.enableFreeWheeling();
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQualityInFreewheelingMode);
     synth.allSoundOff();
     synth.disableFreeWheeling();
@@ -506,7 +506,7 @@ TEST_CASE("[Synth] sample quality")
     // user-defined sample quality
     synth.setSampleQuality(sfz::Synth::ProcessLive, 3);
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 3);
     synth.allSoundOff();
 
@@ -514,21 +514,21 @@ TEST_CASE("[Synth] sample quality")
     synth.enableFreeWheeling();
     synth.setSampleQuality(sfz::Synth::ProcessFreewheeling, 8);
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 8);
     synth.allSoundOff();
     synth.disableFreeWheeling();
 
     // region sample quality
     synth.noteOn(0, 61, 100);
-    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
     synth.allSoundOff();
 
     // region sample quality, freewheeling
     synth.enableFreeWheeling();
     synth.noteOn(0, 61, 100);
-    REQUIRE(synth.getNumActiveVoices() == 1);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
     synth.allSoundOff();
     synth.disableFreeWheeling();
@@ -551,7 +551,7 @@ TEST_CASE("[Synth] Sister voices")
     REQUIRE( synth.getVoiceView(0)->getNextSisterVoice() == synth.getVoiceView(0) );
     REQUIRE( synth.getVoiceView(0)->getPreviousSisterVoice() == synth.getVoiceView(0) );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(1)) == 2 );
     REQUIRE( synth.getVoiceView(1)->getNextSisterVoice() == synth.getVoiceView(2) );
     REQUIRE( synth.getVoiceView(1)->getPreviousSisterVoice() == synth.getVoiceView(2) );
@@ -559,7 +559,7 @@ TEST_CASE("[Synth] Sister voices")
     REQUIRE( synth.getVoiceView(2)->getNextSisterVoice() == synth.getVoiceView(1) );
     REQUIRE( synth.getVoiceView(2)->getPreviousSisterVoice() == synth.getVoiceView(1) );
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices() == 6 );
+    REQUIRE( synth.getNumActiveVoices(true) == 6 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(3)) == 3 );
     REQUIRE( synth.getVoiceView(3)->getNextSisterVoice() == synth.getVoiceView(4) );
     REQUIRE( synth.getVoiceView(3)->getPreviousSisterVoice() == synth.getVoiceView(5) );
@@ -599,14 +599,14 @@ TEST_CASE("[Synth] Sisters and off-by")
         <group> group=2 <region> key=63 sample=*saw
     )");
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 2 );
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
 }
 
@@ -619,7 +619,7 @@ TEST_CASE("[Synth] Release key")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
 
 TEST_CASE("[Synth] Release")
@@ -631,9 +631,9 @@ TEST_CASE("[Synth] Release")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
 
 TEST_CASE("[Synth] Release key (Different sustain CC)")
@@ -646,7 +646,7 @@ TEST_CASE("[Synth] Release key (Different sustain CC)")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 54, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
 
 TEST_CASE("[Synth] Release (Different sustain CC)")
@@ -659,9 +659,9 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 54, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
     synth.cc(0, 54, 0);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
 
 TEST_CASE("[Synth] Sustain threshold default")

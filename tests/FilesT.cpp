@@ -474,7 +474,7 @@ TEST_CASE("[Files] Off by with different delays")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
     REQUIRE( synth.getNumRegions() == 4 );
     synth.noteOn(0, 63, 63);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
     auto group1Voice = synth.getVoiceView(0);
     REQUIRE( group1Voice->getRegion()->group == 1ul );
     REQUIRE( group1Voice->getRegion()->offBy == 2ul );
@@ -490,7 +490,7 @@ TEST_CASE("[Files] Off by with the same delays")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
     REQUIRE( synth.getNumRegions() == 4 );
     synth.noteOn(0, 63, 63);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
     auto group1Voice = synth.getVoiceView(0);
     REQUIRE( group1Voice->getRegion()->group == 1ul );
     REQUIRE( group1Voice->getRegion()->offBy == 2ul );
@@ -505,14 +505,14 @@ TEST_CASE("[Files] Off by with the same notes at the same time")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
     REQUIRE( synth.getNumRegions() == 4 );
     synth.noteOn(0, 65, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.noteOn(0, 65, 63);
-    REQUIRE( synth.getNumActiveVoices() == 4 );
+    REQUIRE( synth.getNumActiveVoices(true) == 4 );
     AudioBuffer<float> buffer { 2, 256 };
     synth.renderBlock(buffer);
     synth.noteOn(0, 65, 63);
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
 }
 
 TEST_CASE("[Files] Off modes")
@@ -522,7 +522,7 @@ TEST_CASE("[Files] Off modes")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
     synth.noteOn(0, 64, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     const auto* fastVoice =
         synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
             synth.getVoiceView(0) :
@@ -532,10 +532,10 @@ TEST_CASE("[Files] Off modes")
             synth.getVoiceView(1) :
             synth.getVoiceView(0) ;
     synth.noteOn(100, 63, 63);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
     AudioBuffer<float> buffer { 2, 256 };
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     REQUIRE( fastVoice->isFree() );
     REQUIRE( !normalVoice->isFree() );
 }
