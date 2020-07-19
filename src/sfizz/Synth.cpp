@@ -161,7 +161,26 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     lastRegion->parent = currentSet;
     currentSet->addRegion(lastRegion.get());
 
+    updateUsedCCs(*lastRegion);
+
     regions.push_back(std::move(lastRegion));
+}
+
+void sfz::Synth::updateUsedCCs(const Region& region)
+{
+    for (auto& mod: region.offsetCC)
+        usedCCs[mod.cc] = true;
+
+    for (auto& mod: region.crossfadeCCInRange)
+        usedCCs[mod.cc] = true;
+
+    for (auto& mod: region.crossfadeCCOutRange)
+        usedCCs[mod.cc] = true;
+
+    for (auto& map: region.modifiers) {
+        for (auto& mod: map)
+            usedCCs[mod.cc] = true;
+    }
 }
 
 void sfz::Synth::clear()
@@ -203,6 +222,7 @@ void sfz::Synth::clear()
     polyphonyGroups.emplace_back();
     polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
     modificationTime = fs::file_time_type::min();
+    usedCCs.reset();
 }
 
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
@@ -1110,13 +1130,25 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     }
 
     {
+        auto anonymousCCs = usedCCs;
+
         pugi::xml_node cns = device.append_child("ControlNameList");
         cns.append_attribute("Name").set_value("Controls");
         for (const auto& pair : ccLabels) {
+            anonymousCCs.set(pair.first, false);
             pugi::xml_node cn = cns.append_child("Control");
             cn.append_attribute("Type").set_value("7bit");
             cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             cn.append_attribute("Name").set_value(pair.second.c_str());
+        }
+
+        for (unsigned i = 0; i < anonymousCCs.size(); ++i) {
+            if (anonymousCCs[i]) {
+                pugi::xml_node cn = cns.append_child("Control");
+                cn.append_attribute("Type").set_value("7bit");
+                cn.append_attribute("Number").set_value(std::to_string(i).c_str());
+                cn.append_attribute("Name").set_value("Unnamed");
+            }
         }
     }
 
