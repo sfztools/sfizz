@@ -171,6 +171,12 @@ void sfz::Synth::updateUsedCCs(const Region& region)
     for (auto& mod: region.offsetCC)
         usedCCs[mod.cc] = true;
 
+    for (auto& mod: region.ccConditions)
+        usedCCs[mod.cc] = true;
+
+    for (auto& mod: region.ccTriggers)
+        usedCCs[mod.cc] = true;
+
     for (auto& mod: region.crossfadeCCInRange)
         usedCCs[mod.cc] = true;
 
