@@ -428,4 +428,28 @@ std::string ModMatrix::toDotGraph() const
     return dot;
 }
 
+bool ModMatrix::visitSources(KeyVisitor& vtor) const
+{
+    const Impl& impl = *impl_;
+
+    for (const Impl::Source& item : impl.sources_) {
+        if (!vtor.visit(item.key))
+            return false;
+    }
+
+    return true;
+}
+
+bool ModMatrix::visitTargets(KeyVisitor& vtor) const
+{
+    const Impl& impl = *impl_;
+
+    for (const Impl::Target& item : impl.targets_) {
+        if (!vtor.visit(item.key))
+            return false;
+    }
+
+    return true;
+}
+
 } // namespace sfz

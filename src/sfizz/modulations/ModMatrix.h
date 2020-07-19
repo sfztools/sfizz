@@ -173,6 +173,34 @@ public:
      */
     std::string toDotGraph() const;
 
+    class KeyVisitor {
+    public:
+        virtual ~KeyVisitor() {}
+        /**
+         * @brief Visit a key of the modulation matrix.
+         *
+         * @param key
+         * @return true to continue visiting, false to stop
+         */
+        virtual bool visit(const ModKey& key) = 0;
+    };
+
+    /**
+     * @brief Visit the keys of all the sources in the matrix.
+     *
+     * @param vtor a visitor object
+     * @return last return code from the visitor
+     */
+    bool visitSources(KeyVisitor& vtor) const;
+
+    /**
+     * @brief Visit the keys of all the sources in the matrix.
+     *
+     * @param vtor a visitor object
+     * @return last return code from the visitor
+     */
+    bool visitTargets(KeyVisitor& vtor) const;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
