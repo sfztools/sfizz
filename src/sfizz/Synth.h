@@ -562,6 +562,13 @@ public:
      */
     const std::vector<CCNamePair>& getCCLabels() const noexcept { return ccLabels; }
 
+    /**
+     * @brief Get the used CCs
+     *
+     * @return const std::bitset<config::numCCs>&
+     */
+    const std::bitset<config::numCCs>& getUsedCCs() const noexcept { return usedCCs; }
+
 protected:
     /**
      * @brief The voice callback which is called during a change of state.
@@ -679,6 +686,12 @@ private:
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
 
+    template<class T>
+    void updateUsedCCsFromCCMap(const CCMap<T> map)
+    {
+        for (auto& mod: map)
+            usedCCs[mod.cc] = true;
+    }
     void updateUsedCCs(const Region& region);
 
     // Opcode memory; these are used to build regions, as a new region

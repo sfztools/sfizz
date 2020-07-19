@@ -168,25 +168,34 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::updateUsedCCs(const Region& region)
 {
-    for (auto& mod: region.offsetCC)
-        usedCCs[mod.cc] = true;
-
-    for (auto& mod: region.ccConditions)
-        usedCCs[mod.cc] = true;
-
-    for (auto& mod: region.ccTriggers)
-        usedCCs[mod.cc] = true;
-
-    for (auto& mod: region.crossfadeCCInRange)
-        usedCCs[mod.cc] = true;
-
-    for (auto& mod: region.crossfadeCCOutRange)
-        usedCCs[mod.cc] = true;
-
-    for (auto& map: region.modifiers) {
-        for (auto& mod: map)
-            usedCCs[mod.cc] = true;
-    }
+    updateUsedCCsFromCCMap(region.offsetCC);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccAttack);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccRelease);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccDecay);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccDelay);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccHold);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccStart);
+    updateUsedCCsFromCCMap(region.amplitudeEG.ccSustain);
+    updateUsedCCsFromCCMap(region.pitchEG.ccAttack);
+    updateUsedCCsFromCCMap(region.pitchEG.ccRelease);
+    updateUsedCCsFromCCMap(region.pitchEG.ccDecay);
+    updateUsedCCsFromCCMap(region.pitchEG.ccDelay);
+    updateUsedCCsFromCCMap(region.pitchEG.ccHold);
+    updateUsedCCsFromCCMap(region.pitchEG.ccStart);
+    updateUsedCCsFromCCMap(region.pitchEG.ccSustain);
+    updateUsedCCsFromCCMap(region.filterEG.ccAttack);
+    updateUsedCCsFromCCMap(region.filterEG.ccRelease);
+    updateUsedCCsFromCCMap(region.filterEG.ccDecay);
+    updateUsedCCsFromCCMap(region.filterEG.ccDelay);
+    updateUsedCCsFromCCMap(region.filterEG.ccHold);
+    updateUsedCCsFromCCMap(region.filterEG.ccStart);
+    updateUsedCCsFromCCMap(region.filterEG.ccSustain);
+    updateUsedCCsFromCCMap(region.ccConditions);
+    updateUsedCCsFromCCMap(region.ccTriggers);
+    updateUsedCCsFromCCMap(region.crossfadeCCInRange);
+    updateUsedCCsFromCCMap(region.crossfadeCCOutRange);
+    for (auto& map: region.modifiers)
+        updateUsedCCsFromCCMap(map);
 }
 
 void sfz::Synth::clear()
