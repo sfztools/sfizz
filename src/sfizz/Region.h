@@ -376,6 +376,9 @@ struct Region {
 
     // Parent
     RegionSet* parent { nullptr };
+
+    // Started notes
+    std::vector<std::pair<int, float>> delayedReleases;
 private:
     const MidiState& midiState;
     bool keySwitched { true };
@@ -384,7 +387,6 @@ private:
     bool pitchSwitched { true };
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
-    bool noteIsOff { false };
     std::bitset<config::numCCs> ccSwitched;
     absl::string_view defaultPath { "" };
 

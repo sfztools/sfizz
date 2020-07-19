@@ -695,3 +695,57 @@ TEST_CASE("[Synth] Sustain threshold")
     synth.noteOff(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices(true) == 2 );
 }
+
+TEST_CASE("[Synth] Release (Multiple notes)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> lokey=62 hikey=64 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.noteOn(0, 63, 78);
+    synth.noteOn(0, 64, 34);
+    synth.cc(0, 64, 127);
+    synth.noteOff(0, 64, 0);
+    synth.noteOff(0, 63, 2);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+    synth.cc(0, 64, 0);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+}
+
+TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> lokey=62 hikey=64 sample=*sine trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.noteOn(0, 63, 78);
+    synth.noteOn(0, 64, 34);
+    synth.cc(0, 64, 127);
+    synth.noteOff(0, 64, 0);
+    synth.noteOff(0, 63, 2);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+}
+
+TEST_CASE("[Synth] Release (Multiple notes, cleared the delayed voices after)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> lokey=62 hikey=64 sample=*sine trigger=release
+            loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.noteOn(0, 63, 78);
+    synth.noteOn(0, 64, 34);
+    synth.cc(0, 64, 127);
+    synth.noteOff(0, 64, 0);
+    synth.noteOff(0, 63, 2);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+    synth.cc(0, 64, 0);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getRegionView(0)->delayedReleases.empty() );
+}

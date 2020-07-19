@@ -1031,24 +1031,45 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
             keySwitched = true;
     }
 
-    const bool keyOk = keyRange.containsWithEnd(noteNumber);
-
     if (!isSwitchedOn())
         return false;
 
     if (!triggerOnNote)
         return false;
 
+    // Prerequisites
+
+    const bool keyOk = keyRange.containsWithEnd(noteNumber);
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue);
-    bool releaseTrigger = (trigger == SfzTrigger::release_key);
+
+    if (!(velOk && keyOk && randOk))
+        return false;
+
+    // Release logic
+
+    if (trigger == SfzTrigger::release_key)
+        return true;
+
     if (trigger == SfzTrigger::release) {
         if (midiState.getCCValue(sustainCC) < sustainThreshold)
-            releaseTrigger = true;
+            return true;
+
+        // If we reach this part, we're storing the notes to delay their release on CC up
+        // This is handled by the Synth object
+
+        const auto sameNoteTest = [noteNumber](const std::pair<int, float>& noteAndValue) {
+            return noteAndValue.first == noteNumber;
+        };
+
+        auto it = absl::c_find_if(delayedReleases, sameNoteTest);
+        if (it == delayedReleases.end())
+            delayedReleases.emplace_back(noteNumber, midiState.getNoteVelocity(noteNumber));
         else
-            noteIsOff = true;
+            it->second = velocity;
     }
-    return keyOk && velOk && randOk && releaseTrigger;
+
+    return false;
 }
 
 bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
@@ -1061,11 +1082,6 @@ bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 
     if (!isSwitchedOn())
         return false;
-
-    if (sustainCC == ccNumber && ccValue < sustainThreshold && noteIsOff) {
-        noteIsOff = false;
-        return true;
-    }
 
     if (!triggerOnCC)
         return false;

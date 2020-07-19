@@ -161,6 +161,9 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     lastRegion->parent = currentSet;
     currentSet->addRegion(lastRegion.get());
 
+    // Adapt the size of the delayed releases to avoid allocating later on
+    lastRegion->delayedReleases.reserve(lastRegion->keyRange.length());
+
     regions.push_back(std::move(lastRegion));
 }
 
@@ -998,18 +1001,28 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     SisterVoiceRingBuilder ring;
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCC(ccNumber, normValue)) {
+        if (ccNumber == region->sustainCC) {
+            for (auto& note: region->delayedReleases) {
+                // FIXME: we really need to have some form of common method to find and start voices...
+                auto voice = findFreeVoice();
+                if (voice == nullptr)
+                    continue;
+
+                voice->startVoice(region, delay, note.first, note.second, Voice::TriggerType::NoteOff);
+
+                ring.addVoiceToRing(voice);
+                RegionSet::registerVoiceInHierarchy(region, voice);
+                polyphonyGroups[region->group].registerVoice(voice);
+            }
+
+            region->delayedReleases.clear();
+        } else if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            if (!region->triggerOnCC) {
-                // This is a sustain trigger
-                const auto replacedVelocity = resources.midiState.getNoteVelocity(region->pitchKeycenter);
-                voice->startVoice(region, delay, region->pitchKeycenter, replacedVelocity, Voice::TriggerType::NoteOff);
-            } else {
-                voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
-            }
+
+            voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
 
             ring.addVoiceToRing(voice);
             RegionSet::registerVoiceInHierarchy(region, voice);
