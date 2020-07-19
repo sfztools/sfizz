@@ -663,3 +663,35 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
     synth.cc(0, 54, 0);
     REQUIRE( synth.getNumActiveVoices() == 1 );
 }
+
+TEST_CASE("[Synth] Sustain threshold default")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 64, 1);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 0 );
+}
+
+TEST_CASE("[Synth] Sustain threshold")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <global> sustain_lo=63
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 64, 1);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    synth.noteOn(0, 62, 85);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 64, 64);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+}

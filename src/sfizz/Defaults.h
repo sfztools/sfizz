@@ -57,6 +57,7 @@ namespace Default
 
     // common defaults
     constexpr Range<uint8_t> midi7Range { 0, 127 };
+    constexpr Range<float> float7Range { 0.0f, 127.0f };
     constexpr Range<float> normalizedRange { 0.0f, 1.0f };
     constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
 
@@ -216,6 +217,7 @@ namespace Default
 	constexpr float start { 0.0 };
 	constexpr float sustain { 100.0 };
     constexpr uint16_t sustainCC { 64 };
+    constexpr float sustainThreshold { 0.0039f }; // sforzando default (0.5f/127.0f)
 	constexpr float vel2sustain { 0.0 };
 	constexpr int depth { 0 };
 	constexpr Range<float> egTimeRange { 0.0, 100.0 };
