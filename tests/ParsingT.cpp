@@ -635,14 +635,14 @@ TEST_CASE("[Parsing] Strange #define behavior")
 )");
 
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
-            {{"amplitude_oncc100", "100"}},
-            {{"sample", "*sine"}},
-            {{"transpose", "-12"}},
-            {{"amplitude_oncc100", "100"}},
-            {{"sample", "*sine"}},
-            {{"transpose", "-12"}},
-            {{"amplitude_oncc100", "100"}},
-            {{"sample", "*sine"}},
+            {{"amplitude_oncc100", "100"},
+             {"sample", "*sine"}},
+            {{"transpose", "-12"},
+             {"amplitude_oncc100", "100"},
+             {"sample", "*sine"}},
+            {{"transpose", "-12"},
+             {"amplitude_oncc100", "100"},
+             {"sample", "*sine"}},
         };
 
         std::vector<std::string> expectedHeaders = {
