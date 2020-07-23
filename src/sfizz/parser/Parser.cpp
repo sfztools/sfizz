@@ -314,7 +314,7 @@ void Parser::processOpcode()
             // if sequence of identifier chars and then "=", an opcode follows
             else if (isIdentifierChar(valueRaw[i])) {
                 ++i;
-                while (i < valueSize && isIdentifierChar(valueRaw[i]))
+                while (i < valueSize && (isIdentifierChar(valueRaw[i]) || valueRaw[i] == '$'))
                     ++i;
                 if (i < valueSize && valueRaw[i] == '=')
                     stop = true;
