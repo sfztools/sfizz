@@ -6,7 +6,7 @@
 
 #pragma once
 #include "SfizzVstState.h"
-#include "RTSemaphore.h"
+#include "sfizz/RTSemaphore.h"
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <sfizz.hpp>
@@ -48,6 +48,10 @@ private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
     SfizzVstState _state;
+    float _currentStretchedTuning = 0;
+
+    // misc
+    static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);
 
     // worker and thread sync
     std::thread _worker;

@@ -27,8 +27,10 @@
 #include "Config.h"
 #include "Defaults.h"
 #include "LeakDetector.h"
+#include "RTSemaphore.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
+#include "FileId.h"
 #include "SIMDHelpers.h"
 #include "ghc/fs_std.hpp"
 #include <absl/container/flat_hash_map.h>
@@ -38,10 +40,12 @@
 #include "Logger.h"
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 namespace sfz {
-using AudioBufferPtr = std::shared_ptr<AudioBuffer<float>>;
-
+using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
+                                    sfz::config::excessFileFrames, sfz::config::excessFileFrames>;
+using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
     uint32_t end { Default::sampleEndRange.getEnd() };
@@ -54,7 +58,7 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileDataHandle
 {
-    std::shared_ptr<AudioBuffer<float>> preloadedData;
+    FileAudioBufferPtr preloadedData;
     FileInformation information;
 };
 
@@ -74,17 +78,11 @@ struct FilePromise
     {
         fileData.reset();
         preloadedData.reset();
-        filename = "";
+        fileId = FileId {};
         availableFrames = 0;
         dataStatus = DataStatus::Wait;
         oversamplingFactor = config::defaultOversamplingFactor;
         sampleRate = config::defaultSampleRate;
-    }
-
-    void waitCompletion()
-    {
-        while (dataStatus == DataStatus::Wait)
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     enum class DataStatus {
@@ -93,9 +91,17 @@ struct FilePromise
         Error,
     };
 
-    absl::string_view filename {};
-    AudioBufferPtr preloadedData {};
-    AudioBuffer<float> fileData {};
+    bool waiting() const { return dataStatus == DataStatus::Wait; }
+
+    void sleepUntilComplete()
+    {
+        while (waiting())
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    FileId fileId {};
+    FileAudioBufferPtr preloadedData {};
+    FileAudioBuffer fileData {};
     float sampleRate { config::defaultSampleRate };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     std::atomic<size_t> availableFrames { 0 };
@@ -153,30 +159,30 @@ public:
     /**
      * @brief Get metadata information about a file.
      *
-     * @param filename
+     * @param fileId
      * @return absl::optional<FileInformation>
      */
-    absl::optional<FileInformation> getFileInformation(const std::string& filename) noexcept;
+    absl::optional<FileInformation> getFileInformation(const FileId& fileId) noexcept;
 
     /**
      * @brief Preload a file with the proper offset bounds
      *
-     * @param filename
-     * @param offset the maximum offset to consider for preloading. The total preloaded
+     * @param fileId
+     * @param maxOffset the maximum offset to consider for preloading. The total preloaded
      *                  size will be preloadSize + offset
      * @return true if the preloading went fine
      * @return false if something went wrong ()
      */
-    bool preloadFile(const std::string& filename, uint32_t maxOffset) noexcept;
+    bool preloadFile(const FileId& fileId, uint32_t maxOffset) noexcept;
 
     /**
      * @brief Load a file and return its information. The file pool will store this
      * data for future requests so use this function responsibly.
      *
-     * @param filename
+     * @param fileId
      * @return A handle on the file data
      */
-    absl::optional<sfz::FileDataHandle> loadFile(const std::string& filename) noexcept;
+    absl::optional<sfz::FileDataHandle> loadFile(const FileId& fileId) noexcept;
 
     /**
      * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
@@ -186,6 +192,15 @@ public:
      * @return false if no sample was found even with a case insensitive search
      */
     bool checkSample(std::string& filename) const noexcept;
+
+    /**
+     * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
+     *
+     * @param fileId the sample file identifier; may be updated by the method
+     * @return true if the sample exists or was updated properly
+     * @return false if no sample was found even with a case insensitive search
+     */
+    bool checkSampleId(FileId& fileId) const noexcept;
 
     /**
      * @brief Clear all preloaded files.
@@ -202,10 +217,10 @@ public:
     /**
      * @brief Get a file promise
      *
-     * @param filename the file to preload
+     * @param fileId the file to preload
      * @return FilePromisePtr a file promise
      */
-    FilePromisePtr getFilePromise(const std::string& filename) noexcept;
+    FilePromisePtr getFilePromise(const FileId& fileId) noexcept;
     /**
      * @brief Change the preloading size. This will trigger a full
      * reload of all samples, so don't call it on the audio thread.
@@ -244,6 +259,11 @@ public:
      * in the queue.
      */
     void waitForBackgroundLoading() noexcept;
+    /**
+     * @brief Assign the current thread a priority which is appropriate
+     * for background sample file processing.
+     */
+    static void raiseCurrentThreadPriority() noexcept;
 private:
     Logger& logger;
     fs::path rootDirectory;
@@ -253,23 +273,26 @@ private:
 
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
+    RTSemaphore semFilledPromiseQueueAvailable { config::maxVoices };
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals
-    bool quitThread { false };
-    bool emptyQueue { false };
+    volatile bool quitThread { false };
+    volatile bool emptyQueue { false };
+    RTSemaphore semEmptyQueueFinished;
     std::atomic<int> threadsLoading { 0 };
+    RTSemaphore workerBarrier;
+    RTSemaphore semClearingRequest;
 
     // File promises data structures along with their guards.
     std::vector<FilePromisePtr> emptyPromises;
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
-    std::atomic<bool> addingPromisesToClear { false };
-    std::atomic<bool> canAddPromisesToClear { true };
+    std::mutex promiseGuard;
 
     // Preloaded data
-    absl::flat_hash_map<absl::string_view, FileDataHandle> preloadedFiles;
-    absl::flat_hash_map<absl::string_view, FileDataHandle> loadedFiles;
+    absl::flat_hash_map<FileId, FileDataHandle> preloadedFiles;
+    absl::flat_hash_map<FileId, FileDataHandle> loadedFiles;
     std::vector<std::thread> threadPool { };
     LEAK_DETECTOR(FilePool);
 };

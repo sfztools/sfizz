@@ -203,18 +203,26 @@ function(plugin_add_vstgui NAME)
         endif()
     elseif(APPLE)
         find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
+        find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
         find_library(APPLE_COCOA_LIBRARY "Cocoa")
         find_library(APPLE_OPENGL_LIBRARY "OpenGL")
         find_library(APPLE_ACCELERATE_LIBRARY "Accelerate")
         find_library(APPLE_QUARTZCORE_LIBRARY "QuartzCore")
         find_library(APPLE_CARBON_LIBRARY "Carbon")
+        find_library(APPLE_AUDIOTOOLBOX_LIBRARY "AudioToolbox")
+        find_library(APPLE_COREAUDIO_LIBRARY "CoreAudio")
+        find_library(APPLE_COREMIDI_LIBRARY "CoreMIDI")
         target_link_libraries("${NAME}" PRIVATE
             "${APPLE_COREFOUNDATION_LIBRARY}"
+            "${APPLE_FOUNDATION_LIBRARY}"
             "${APPLE_COCOA_LIBRARY}"
             "${APPLE_OPENGL_LIBRARY}"
             "${APPLE_ACCELERATE_LIBRARY}"
             "${APPLE_QUARTZCORE_LIBRARY}"
-            "${APPLE_CARBON_LIBRARY}")
+            "${APPLE_CARBON_LIBRARY}"
+            "${APPLE_AUDIOTOOLBOX_LIBRARY}"
+            "${APPLE_COREAUDIO_LIBRARY}"
+            "${APPLE_COREMIDI_LIBRARY}")
     else()
         find_package(X11 REQUIRED)
         find_package(Freetype REQUIRED)

@@ -4,36 +4,46 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Macros.h"
 #include "Voice.h"
-#include "AudioSpan.h"
-#include "Config.h"
+#include "Macros.h"
 #include "Defaults.h"
+#include "ModifierHelpers.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
+#include "Panning.h"
 #include "SfzHelpers.h"
+#include "Interpolators.h"
 #include "absl/algorithm/container.h"
-#include <memory>
 
-sfz::Voice::Voice(sfz::Resources& resources)
-: resources(resources)
+sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
+: id{voiceNumber}, stateListener(nullptr), resources(resources)
 {
     filters.reserve(config::filtersPerVoice);
     equalizers.reserve(config::eqsPerVoice);
 
-    waveOscillator.init(sampleRate);
+    for (WavetableOscillator& osc : waveOscillators)
+        osc.init(sampleRate);
+
+    gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
+    xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
+
+    for (auto & filter : channelEnvelopeFilters)
+        filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, float value, sfz::Voice::TriggerType triggerType) noexcept
 {
     ASSERT(value >= 0.0f && value <= 1.0f);
 
+    if (triggerType == TriggerType::CC)
+        number = region->pitchKeycenter;
+
     this->triggerType = triggerType;
     triggerNumber = number;
     triggerValue = value;
 
     this->region = region;
-    state = State::playing;
+    switchState(State::playing);
 
     ASSERT(delay >= 0);
     if (delay < 0)
@@ -41,7 +51,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     if (region->isGenerator()) {
         const WavetableMulti* wave = nullptr;
-        switch (hash(region->sample)) {
+        switch (hash(region->sampleId.filename())) {
         default:
         case hash("*silence"):
             break;
@@ -59,31 +69,54 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
             wave = resources.wavePool.getWaveSaw();
             break;
         }
-        waveOscillator.setWavetable(wave);
-        waveOscillator.setPhase(region->getPhase());
+        const float phase = region->getPhase();
+        const int quality = region->oscillatorQuality.value_or(Default::oscillatorQuality);
+        for (WavetableOscillator& osc : waveOscillators) {
+            osc.setWavetable(wave);
+            osc.setPhase(phase);
+            osc.setQuality(quality);
+        }
+        setupOscillatorUnison();
     } else if (region->oscillator) {
-        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sample);
-        waveOscillator.setWavetable(wave);
-        waveOscillator.setPhase(region->getPhase());
+        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sampleId.filename());
+        const float phase = region->getPhase();
+        const int quality = region->oscillatorQuality.value_or(Default::oscillatorQuality);
+        for (WavetableOscillator& osc : waveOscillators) {
+            osc.setWavetable(wave);
+            osc.setPhase(phase);
+            osc.setQuality(quality);
+        }
+        setupOscillatorUnison();
     } else {
-        currentPromise = resources.filePool.getFilePromise(region->sample);
+        currentPromise = resources.filePool.getFilePromise(region->sampleId);
         if (currentPromise == nullptr) {
-            reset();
+            switchState(State::cleanMeUp);
             return;
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
-    pitchRatio = region->getBasePitchVariation(number, value);
+
+    // do Scala retuning and reconvert the frequency into a 12TET key number
+    const float numberRetuned = resources.tuning.getKeyFractional12TET(number);
+
+    pitchRatio = region->getBasePitchVariation(numberRetuned, value);
+
+    // apply stretch tuning if set
+    if (resources.stretch)
+        pitchRatio *= resources.stretch->getRatioForFractionalKey(numberRetuned);
+
     baseVolumedB = region->getBaseVolumedB(number);
     baseGain = region->getBaseGain();
     if (triggerType != TriggerType::CC)
         baseGain *= region->getNoteGain(number, value);
+    gainSmoother.reset();
+    resetCrossfades();
 
     // Check that we can handle the number of filters; filters should be cleared here
     ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
     ASSERT((equalizers.capacity() - equalizers.size()) >= region->equalizers.size());
 
-    const unsigned numChannels = region->isStereo ? 2 : 1;
+    const unsigned numChannels = region->isStereo() ? 2 : 1;
     for (auto& filter: region->filters) {
         auto newFilter = resources.filterPool.getFilter(filter, numChannels, number, value);
         if (newFilter)
@@ -99,9 +132,44 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
-    baseFrequency = midiNoteFrequency(number);
+    baseFrequency = resources.tuning.getFrequencyOfKey(number);
     bendStepFactor = centsFactor(region->bendStep);
+    bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
+    bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
+
+    for (auto& modId : allModifiers) {
+        ASSERT(modifierSmoothers[modId].size() >= region->modifiers[modId].size());
+        forEachWithSmoother(modId, [modId, this](const CCData<Modifier>& mod, Smoother& smoother) {
+            const auto ccValue = resources.midiState.getCCValue(mod.cc);
+            const auto curve = resources.curves.getCurve(mod.data.curve);
+            const auto finalValue = curve.evalNormalized(ccValue) * mod.data.value;
+            switch (modId) {
+            case Mod::volume:
+                smoother.reset(db2mag(finalValue));
+                break;
+            case Mod::pitch:
+                smoother.reset(centsFactor(finalValue));
+                break;
+            case Mod::amplitude:
+            case Mod::pan:
+            case Mod::width:
+            case Mod::position:
+                smoother.reset(normalizePercents(finalValue));
+                break;
+            default:
+                smoother.reset(finalValue);
+                break;
+            }
+            smoother.setSmoothing(mod.data.smooth, sampleRate);
+        });
+    }
+}
+
+int sfz::Voice::getCurrentSampleQuality() const noexcept
+{
+    return (region && region->sampleQuality) ?
+        *region->sampleQuality : resources.synthConfig.currentSampleQuality();
 }
 
 bool sfz::Voice::isFree() const noexcept
@@ -114,8 +182,8 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     if (state != State::playing)
         return;
 
-    if (egEnvelope.getRemainingDelay() > std::max(0, delay - initialDelay)) {
-        reset();
+    if (egEnvelope.getRemainingDelay() > delay) {
+        switchState(State::cleanMeUp);
     } else {
         egEnvelope.startRelease(delay, fastRelease);
     }
@@ -138,7 +206,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noex
         if (region->loopMode == SfzLoopMode::one_shot)
             return;
 
-        if (!region->checkSustain || resources.midiState.getCCValue(config::sustainCC) < config::halfCCThreshold)
+        if (!region->checkSustain || resources.midiState.getCCValue(region->sustainCC) < config::halfCCThreshold)
             release(delay);
     }
 }
@@ -149,21 +217,16 @@ void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (region == nullptr)
         return;
 
-    if (state ==  State::idle)
+    if (state != State::playing)
         return;
 
-    if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
-        reset();
-        return;
-    }
-
-    if (region->checkSustain && noteIsOff && ccNumber == config::sustainCC && ccValue < config::halfCCThreshold)
+    if (region->checkSustain && noteIsOff && ccNumber == region->sustainCC && ccValue < config::halfCCThreshold)
         release(delay);
 }
 
 void sfz::Voice::registerPitchWheel(int delay, float pitch) noexcept
 {
-    if (state == State::idle)
+    if (state != State::playing)
         return;
     UNUSED(delay);
     UNUSED(pitch);
@@ -186,8 +249,14 @@ void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
+    gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
+    xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
 
-    waveOscillator.init(sampleRate);
+    for (auto & filter : channelEnvelopeFilters)
+        filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
+
+    for (WavetableOscillator& osc : waveOscillators)
+        osc.init(sampleRate);
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -201,10 +270,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
     buffer.fill(0.0f);
 
-    if (state == State::idle || region == nullptr) {
-        powerHistory.push(0.0f);
-        return;
-    }
+    ASSERT(region != nullptr);
 
     const auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
@@ -218,7 +284,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
             fillWithData(delayed_buffer);
     }
 
-    if (region->isStereo) {
+    if (region->isStereo()) {
         ampStageStereo(buffer);
         panStageStereo(buffer);
         filterStageStereo(buffer);
@@ -229,16 +295,83 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     if (!egEnvelope.isSmoothing())
-        reset();
+        switchState(State::cleanMeUp);
 
-    powerHistory.push(buffer.meanSquared());
-    this->triggerDelay = absl::nullopt;
+    updateChannelPowers(buffer);
+
+    age += buffer.getNumFrames();
+    if (triggerDelay) {
+        // Should be OK but just in case;
+        age = min(age - *triggerDelay, 0);
+        triggerDelay = absl::nullopt;
+    }
+
+#if 0
+    ASSERT(!hasNanInf(buffer.getConstSpan(0)));
+    ASSERT(!hasNanInf(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+#endif
 }
+
+void sfz::Voice::resetCrossfades() noexcept
+{
+    float xfadeValue { 1.0f };
+    const auto xfCurve = region->crossfadeCCCurve;
+
+    for (const auto& mod : region->crossfadeCCInRange) {
+        const auto value = resources.midiState.getCCValue(mod.cc);
+        xfadeValue *= crossfadeIn(mod.data, value, xfCurve);
+    }
+
+    for (const auto& mod : region->crossfadeCCOutRange) {
+        const auto value = resources.midiState.getCCValue(mod.cc);
+        xfadeValue *= crossfadeOut(mod.data, value, xfCurve);
+    }
+
+    xfadeSmoother.reset(xfadeValue);
+}
+
+void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
+{
+    const auto numSamples = modulationSpan.size();
+    const auto xfCurve = region->crossfadeCCCurve;
+
+    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
+    auto xfadeSpan = resources.bufferPool.getBuffer(numSamples);
+
+    if (!tempSpan || !xfadeSpan)
+        return;
+
+    fill<float>(*xfadeSpan, 1.0f);
+
+    bool canShortcut = true;
+    for (const auto& mod : region->crossfadeCCInRange) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        canShortcut &= (events.size() == 1);
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeIn(mod.data, x, xfCurve);
+        });
+        applyGain<float>(*tempSpan, *xfadeSpan);
+    }
+
+    for (const auto& mod : region->crossfadeCCOutRange) {
+        const auto events = resources.midiState.getCCEvents(mod.cc);
+        canShortcut &= (events.size() == 1);
+        linearEnvelope(events, *tempSpan, [&](float x) {
+            return crossfadeOut(mod.data, x, xfCurve);
+        });
+        applyGain<float>(*tempSpan, *xfadeSpan);
+    }
+
+    xfadeSmoother.process(*xfadeSpan, *xfadeSpan, canShortcut);
+    applyGain<float>(*xfadeSpan, modulationSpan);
+}
+
 
 void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
-    const auto xfCurve = region->crossfadeCCCurve;
 
     auto tempSpan = resources.bufferPool.getBuffer(numSamples);
     if (!tempSpan)
@@ -248,32 +381,25 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     egEnvelope.getBlock(modulationSpan);
 
     // Amplitude envelope
-    applyGain<float>(baseGain, modulationSpan);
-    for (const auto& mod : region->amplitudeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+    applyGain1<float>(baseGain, modulationSpan);
+    forEachWithSmoother(Mod::amplitude, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         applyGain<float>(*tempSpan, modulationSpan);
-    }
-
-    // Crossfade envelopes
-    for (const auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeIn(mod.value, x, xfCurve); });
-        applyGain<float>(*tempSpan, modulationSpan);
-    }
-    for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&](float x) { return crossfadeOut(mod.value, x, xfCurve); });
-        applyGain<float>(*tempSpan, modulationSpan);
-    }
+    });
 
     // Volume envelope
-    applyGain<float>(db2mag(baseVolumedB), modulationSpan);
-    for (const auto& mod : region->volumeCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *tempSpan, [&](float x) { return db2mag(x * mod.value); });
+    applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
+    forEachWithSmoother(Mod::volume, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
+            return db2mag(x);
+        });
+        smoother.process(*tempSpan, *tempSpan);
         applyGain<float>(*tempSpan, modulationSpan);
-    }
+    });
+
+    // Smooth the gain transitions
+    gainSmoother.process(modulationSpan, modulationSpan);
 }
 
 void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
@@ -288,6 +414,7 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
         return;
 
     amplitudeEnvelope(*modulationSpan);
+    applyCrossfades(*modulationSpan);
     applyGain<float>(*modulationSpan, leftBuffer);
 }
 
@@ -301,6 +428,7 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     amplitudeEnvelope(*modulationSpan);
+    applyCrossfades(*modulationSpan);
     buffer.applyGain(*modulationSpan);
 }
 
@@ -321,13 +449,13 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     copy<float>(leftBuffer, rightBuffer);
 
     // Apply panning
-    fill<float>(*modulationSpan, region->pan);
-    for (const auto& mod : region->panCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+    fill(*modulationSpan, region->pan);
+    forEachWithSmoother(Mod::pan, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    });
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
@@ -343,33 +471,30 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     // Apply panning
-    // panningModulation(*modulationSpan);
-    fill<float>(*modulationSpan, region->pan);
-    for (const auto& mod : region->panCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+    fill(*modulationSpan, region->pan);
+    forEachWithSmoother(Mod::pan, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    });
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
-    // widthModulation(*modulationSpan);
-    fill<float>(*modulationSpan, region->width);
-    for (const auto& mod : region->widthCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+    fill(*modulationSpan, region->width);
+    forEachWithSmoother(Mod::width, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
-    width<float>(*modulationSpan, leftBuffer, rightBuffer);
+    });
+    width(*modulationSpan, leftBuffer, rightBuffer);
 
-    // positionModulation(*modulationSpan);
-    fill<float>(*modulationSpan, region->position);
-    for (const auto& mod : region->positionCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        linearEnvelope(events, *tempSpan, [&mod](float x) { return x * mod.value; });
+    fill(*modulationSpan, region->position);
+    forEachWithSmoother(Mod::position, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
+        smoother.process(*tempSpan, *tempSpan);
         add<float>(*tempSpan, *modulationSpan);
-    }
-    pan<float>(*modulationSpan, leftBuffer, rightBuffer);
+    });
+    pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
 void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept
@@ -421,37 +546,18 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     auto source = currentPromise->getData();
 
     auto jumps = resources.bufferPool.getBuffer(numSamples);
-    auto bends = resources.bufferPool.getBuffer(numSamples);
-    auto leftCoeffs = resources.bufferPool.getBuffer(numSamples);
-    auto rightCoeffs = resources.bufferPool.getBuffer(numSamples);
+    auto coeffs = resources.bufferPool.getBuffer(numSamples);
     auto indices = resources.bufferPool.getIndexBuffer(numSamples);
-    if (!jumps || !bends || !indices || !rightCoeffs || !leftCoeffs)
+    if (!jumps || !indices || !coeffs)
         return;
 
-    fill<float>(*jumps, pitchRatio * speedRatio);
-
-    const auto events = resources.midiState.getPitchEvents();
-    const auto bendLambda = [this](float bend) {
-        const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
-        return centsFactor(bendInCents);
-    };
-
-    if (region->bendStep > 1)
-        multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
-    else
-        multiplicativeEnvelope(events, *bends, bendLambda);
-    applyGain<float>(*bends, *jumps);
-
-    for (const auto& mod : region->tuneCC) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
-        multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.value); });
-        applyGain<float>(*bends, *jumps);
-    }
+    fill(*jumps, pitchRatio * speedRatio);
+    pitchEnvelope(*jumps);
 
     jumps->front() += floatPositionOffset;
     cumsum<float>(*jumps, *jumps);
-    sfzInterpolationCast<float>(*jumps, *indices, *leftCoeffs, *rightCoeffs);
-    add<int>(sourcePosition, *indices);
+    sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
+    add1<int>(sourcePosition, *indices);
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
@@ -459,54 +565,88 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         for (auto* index = indices->begin(); index < indices->end(); ++index) {
             if (*index > loopEnd) {
                 const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
-                subtract<int>(offset, { index, remainingElements });
+                subtract1<int>(offset, { index, remainingElements });
             }
         }
     } else {
         const auto sampleEnd = min(
             static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
             static_cast<int>(source.getNumFrames())
-        ) - 2;
-        for (auto* index = indices->begin(); index < indices->end(); ++index) {
-            if (*index >= sampleEnd) {
-                release(static_cast<int>(std::distance(indices->begin(), index)));
-                const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
+        ) - 1;
+        for (unsigned i = 0; i < indices->size(); ++i) {
+            if ((*indices)[i] >= sampleEnd) {
+#ifndef NDEBUG
+                // Check for underflow
                 if (source.getNumFrames() - 1 < region->trueSampleEnd(currentPromise->oversamplingFactor)) {
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
                         << region->trueSampleEnd(currentPromise->oversamplingFactor)
-                        << " for sample " << region->sample);
+                        << " for sample " << region->sampleId);
                 }
-                fill<int>(indices->last(remainingElements), sampleEnd);
-                fill<float>(leftCoeffs->last(remainingElements), 0.0f);
-                fill<float>(rightCoeffs->last(remainingElements), 1.0f);
+#endif
+                egEnvelope.startRelease(i, true);
+                fill<int>(indices->subspan(i), sampleEnd);
+                fill<float>(coeffs->subspan(i), 1.0f);
                 break;
             }
         }
     }
 
-    auto ind = indices->data();
-    auto leftCoeff = leftCoeffs->data();
-    auto rightCoeff = rightCoeffs->data();
-    auto leftSource = source.getConstSpan(0);
-    auto left = buffer.getChannel(0);
-    if (source.getNumChannels() == 1) {
-        while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
-            incrementAll(ind, left, leftCoeff, rightCoeff);
-        }
-    } else {
-        auto right = buffer.getChannel(1);
-        auto rightSource = source.getConstSpan(1);
-        while (ind < indices->end()) {
-            *left = linearInterpolation(leftSource[*ind], leftSource[*ind + 1], *leftCoeff, *rightCoeff);
-            *right = linearInterpolation(rightSource[*ind], rightSource[*ind + 1], *leftCoeff, *rightCoeff);
-            incrementAll(ind, left, right, leftCoeff, rightCoeff);
-        }
+    const int quality = getCurrentSampleQuality();
+
+    switch (quality) {
+    default:
+        if (quality > 2)
+            goto high; // TODO sinc, not implemented
+        // fall through
+    case 1:
+        fillInterpolated<kInterpolatorLinear>(source, buffer, *indices, *coeffs);
+        break;
+    case 2: high:
+#if 1
+        // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
+        fillInterpolated<kInterpolatorBspline3>(source, buffer, *indices, *coeffs);
+#else
+        // Hermite polynomial
+        fillInterpolated<kInterpolatorHermite3>(source, buffer, *indices, *coeffs);
+#endif
+        break;
     }
 
     sourcePosition = indices->back();
-    floatPositionOffset = rightCoeffs->back();
+    floatPositionOffset = coeffs->back();
+
+#if 0
+    ASSERT(!hasNanInf(buffer.getConstSpan(0)));
+    ASSERT(!hasNanInf(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+#endif
+}
+
+template <sfz::InterpolatorModel M>
+void sfz::Voice::fillInterpolated(
+    const sfz::AudioSpan<const float>& source, sfz::AudioSpan<float>& dest,
+    absl::Span<const int> indices, absl::Span<const float> coeffs)
+{
+    auto ind = indices.data();
+    auto coeff = coeffs.data();
+    auto leftSource = source.getConstSpan(0);
+    auto left = dest.getChannel(0);
+    if (source.getNumChannels() == 1) {
+        while (ind < indices.end()) {
+            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            incrementAll(ind, left, coeff);
+        }
+    } else {
+        auto right = dest.getChannel(1);
+        auto rightSource = source.getConstSpan(1);
+        while (ind < indices.end()) {
+            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            *right = sfz::interpolate<M>(&rightSource[*ind], *coeff);
+            incrementAll(ind, left, right, coeff);
+        }
+    }
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
@@ -514,39 +654,59 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
-    if (region->sample == "*noise") {
-        absl::c_generate(leftSpan, [&](){ return noiseDist(Random::randomGenerator); });
-        absl::c_generate(rightSpan, [&](){ return noiseDist(Random::randomGenerator); });
+    if (region->sampleId.filename() == "*noise") {
+        auto gen = [&]() {
+            return uniformNoiseDist(Random::randomGenerator);
+        };
+        absl::c_generate(leftSpan, gen);
+        absl::c_generate(rightSpan, gen);
+    } else if (region->sampleId.filename() == "*gnoise") {
+        // You need to wrap in a lambda, otherwise generate will
+        // make a copy of the gaussian distribution *along with its state*
+        // leading to periodic behavior....
+        auto gen = [&]() {
+            return gaussianNoiseDist();
+        };
+        absl::c_generate(leftSpan, gen);
+        absl::c_generate(rightSpan, gen);
     } else {
-        const auto numSamples = buffer.getNumFrames();
-        auto frequencies = resources.bufferPool.getBuffer(numSamples);
-        auto bends = resources.bufferPool.getBuffer(numSamples);
-        if (!frequencies || !bends)
+        const auto numFrames = buffer.getNumFrames();
+
+        auto frequencies = resources.bufferPool.getBuffer(numFrames);
+        if (!frequencies)
             return;
 
         float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
-        fill<float>(*frequencies, pitchRatio * keycenterFrequency);
+        fill(*frequencies, pitchRatio * keycenterFrequency);
+        pitchEnvelope(*frequencies);
 
-        const auto events = resources.midiState.getPitchEvents();
-        const auto bendLambda = [this](float bend) {
-            const auto bendInCents = bend > 0.0f ? bend * static_cast<float>(region->bendUp) : -bend * static_cast<float>(region->bendDown);
-            return centsFactor(bendInCents);
-        };
-        if (region->bendStep > 1)
-            multiplicativeEnvelope(events, *bends, bendLambda, bendStepFactor);
-        else
-            multiplicativeEnvelope(events, *bends, bendLambda);
-        applyGain<float>(*bends, *frequencies);
-
-        for (const auto& mod : region->tuneCC) {
-            const auto events = resources.midiState.getCCEvents(mod.cc);
-            multiplicativeEnvelope(events, *bends, [&](float x) { return centsFactor(x * mod.value); });
-            applyGain<float>(*bends, *frequencies);
+        if (waveUnisonSize == 1) {
+            WavetableOscillator& osc = waveOscillators[0];
+            osc.processModulated(frequencies->data(), 1.0, leftSpan.data(), buffer.getNumFrames());
+            copy<float>(leftSpan, rightSpan);
         }
+        else {
+            buffer.fill(0.0f);
 
-        waveOscillator.processModulated(frequencies->data(), leftSpan.data(), buffer.getNumFrames());
-        copy<float>(leftSpan, rightSpan);
+            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
+            if (!tempSpan)
+                return;
+
+            for (unsigned i = 0, n = waveUnisonSize; i < n; ++i) {
+                WavetableOscillator& osc = waveOscillators[i];
+                osc.processModulated(frequencies->data(), waveDetuneRatio[i], tempSpan->data(), numFrames);
+                multiplyAdd1<float>(waveLeftGain[i], *tempSpan, leftSpan);
+                multiplyAdd1<float>(waveRightGain[i], *tempSpan, rightSpan);
+            }
+        }
     }
+
+#if 0
+    ASSERT(!hasNanInf(buffer.getConstSpan(0)));
+    ASSERT(!hasNanInf(buffer.getConstSpan(1)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
+    SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+#endif
 }
 
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
@@ -565,41 +725,58 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
     return false;
 }
 
-int sfz::Voice::getTriggerNumber() const noexcept
-{
-    return triggerNumber;
-}
-
-float sfz::Voice::getTriggerValue() const noexcept
-{
-    return triggerValue;
-}
-
-sfz::Voice::TriggerType sfz::Voice::getTriggerType() const noexcept
-{
-    return triggerType;
-}
-
 void sfz::Voice::reset() noexcept
 {
-    state = State::idle;
+    switchState(State::idle);
     region = nullptr;
     currentPromise.reset();
     sourcePosition = 0;
+    age = 0;
     floatPositionOffset = 0.0f;
     noteIsOff = false;
+
+    for (auto& f : channelEnvelopeFilters)
+        f.reset();
+
+    for (auto& p : smoothedChannelEnvelopes)
+        p = 0.0f;
+
     filters.clear();
     equalizers.clear();
+
+    removeVoiceFromRing();
 }
 
-float sfz::Voice::getMeanSquaredAverage() const noexcept
+void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept
 {
-    return powerHistory.getAverage();
+    // Should never be null
+    ASSERT(voice);
+    nextSisterVoice = voice;
 }
 
-bool sfz::Voice::canBeStolen() const noexcept
+void sfz::Voice::setPreviousSisterVoice(Voice* voice) noexcept
 {
-    return state == State::idle || egEnvelope.isReleased();
+    // Should never be null
+    ASSERT(voice);
+    previousSisterVoice = voice;
+}
+
+void sfz::Voice::removeVoiceFromRing() noexcept
+{
+    previousSisterVoice->setNextSisterVoice(nextSisterVoice);
+    nextSisterVoice->setPreviousSisterVoice(previousSisterVoice);
+    previousSisterVoice = this;
+    nextSisterVoice = this;
+}
+
+float sfz::Voice::getAverageEnvelope() const noexcept
+{
+    return max(smoothedChannelEnvelopes[0], smoothedChannelEnvelopes[1]);
+}
+
+bool sfz::Voice::releasedOrFree() const noexcept
+{
+    return state != State::playing || egEnvelope.isReleased();
 }
 
 uint32_t sfz::Voice::getSourcePosition() const noexcept
@@ -619,4 +796,141 @@ void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
     // There are filters in there, this call is unexpected
     ASSERT(equalizers.size() == 0);
     equalizers.reserve(numFilters);
+}
+
+void sfz::Voice::setupOscillatorUnison()
+{
+    int m = region->oscillatorMulti;
+    float d = region->oscillatorDetune;
+
+    // 3-9: unison mode, 1: normal/RM, 2: PM/FM
+    // TODO(jpc) RM/FM/PM synthesis
+    if (m < 3) {
+        waveUnisonSize = 1;
+        waveDetuneRatio[0] = 1.0;
+        waveLeftGain[0] = 1.0;
+        waveRightGain[0] = 1.0;
+        return;
+    }
+
+    // oscillator count, aka. unison size
+    waveUnisonSize = m;
+
+    // detune (cents)
+    float detunes[config::oscillatorsPerVoice];
+    detunes[0] = 0.0;
+    detunes[1] = -d;
+    detunes[2] = +d;
+    for (int i = 3; i < m; ++i) {
+        int n = (i - 1) / 2;
+        detunes[i] = d * ((i & 1) ? -0.25f : +0.25f) * float(n);
+    }
+
+    // detune (ratio)
+    for (int i = 0; i < m; ++i)
+        waveDetuneRatio[i] = std::exp2(detunes[i] * (0.01f / 12.0f));
+
+    // gains
+    waveLeftGain[0] = 0.0;
+    waveRightGain[m - 1] = 0.0;
+    for (int i = 0; i < m - 1; ++i) {
+        float g = 1.0f - float(i) / float(m - 1);
+        waveLeftGain[m - 1 - i] = g;
+        waveRightGain[i] = g;
+    }
+
+#if 0
+    fprintf(stderr, "\n");
+    fprintf(stderr, "# Left:\n");
+    for (int i = m - 1; i >= 0; --i) {
+        if (waveLeftGain[i] != 0)
+            fprintf(stderr, "[%d] %10g cents, %10g dB\n", i, detunes[i], 20.0f * std::log10(waveLeftGain[i]));
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "# Right:\n");
+    for (int i = 0; i < m; ++i) {
+        if (waveRightGain[i] != 0)
+            fprintf(stderr, "[%d] %10g cents, %10g dB\n", i, detunes[i], 20.0f * std::log10(waveRightGain[i]));
+    }
+#endif
+}
+
+void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
+{
+    assert(smoothedChannelEnvelopes.size() == channelEnvelopeFilters.size());
+    assert(buffer.getNumChannels() <= channelEnvelopeFilters.size());
+    if (buffer.getNumFrames() == 0)
+        return;
+
+    for (unsigned i = 0; i < smoothedChannelEnvelopes.size(); ++i) {
+        const auto input = buffer.getConstSpan(i);
+        for (unsigned s = 0; s < buffer.getNumFrames(); ++s)
+            smoothedChannelEnvelopes[i] =
+                channelEnvelopeFilters[i].tickLowpass(std::abs(input[s]));
+    }
+}
+
+
+void sfz::Voice::switchState(State s)
+{
+    if (s != state) {
+        state = s;
+        if (stateListener)
+            stateListener->onVoiceStateChanged(id, s);
+    }
+}
+
+void sfz::Voice::prepareSmoothers(const ModifierArray<size_t>& numModifiers)
+{
+    for (auto& mod : allModifiers)
+        modifierSmoothers[mod].resize(numModifiers[mod]);
+}
+
+void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
+{
+    const auto numFrames = pitchSpan.size();
+    auto bends = resources.bufferPool.getBuffer(numFrames);
+    if (!bends)
+        return;
+
+    const auto events = resources.midiState.getPitchEvents();
+    const auto bendLambda = [this](float bend) {
+        return centsFactor(region->getBendInCents(bend));
+    };
+
+    if (region->bendStep > 1)
+        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
+    else
+        pitchBendEnvelope(events, *bends, bendLambda);
+    bendSmoother.process(*bends, *bends);
+    applyGain<float>(*bends, pitchSpan);
+
+    forEachWithSmoother(Mod::pitch, [&](const CCData<Modifier>& mod, Smoother& smoother) {
+        multiplicativeModifier(resources, *bends, mod, [](float x) {
+            return centsFactor(x);
+        });
+        smoother.process(*bends, *bends);
+        applyGain<float>(*bends, pitchSpan);
+    });
+}
+
+void sfz::Voice::resetSmoothers() noexcept
+{
+    for (auto& mod : allModifiers) {
+        const auto resetValue = [mod] {
+            switch (mod) {
+            case Mod::volume: // fallthrough
+            case Mod::pitch:
+                return 1.0f;
+            default:
+                return 0.0f;
+            }
+        }();
+
+        for (auto& smoother : modifierSmoothers[mod]) {
+            smoother.reset(resetValue);
+        }
+    }
+    bendSmoother.reset(1.0f);
+    gainSmoother.reset(0.0f);
 }

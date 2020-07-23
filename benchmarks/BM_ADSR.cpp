@@ -35,7 +35,7 @@ public:
     }
 
     sfz::MidiState midiState;
-    sfz::Region region{midiState};
+    sfz::Region region{0, midiState};
     sfz::ADSREnvelope<float> envelope;
     std::vector<float> output;
 };

@@ -17,51 +17,35 @@
 #include "absl/meta/type_traits.h"
 #include "Defaults.h"
 
-namespace sfz
-{
+namespace sfz {
 
 using CCNamePair = std::pair<uint16_t, std::string>;
+using NoteNamePair = std::pair<uint8_t, std::string>;
+
 template <class T>
 using MidiNoteArray = std::array<T, 128>;
-template<class ValueType>
-struct CCValuePair {
+template <class ValueType>
+struct CCData {
     int cc;
-    ValueType value;
+    ValueType data;
+    static_assert(config::numCCs - 1 < std::numeric_limits<decltype(cc)>::max(), "The cc type in the CCData struct cannot support the required number of CCs");
 };
 
-template<class ValueType, bool CompareValue = false>
-struct CCValuePairComparator {
-    bool operator()(const CCValuePair<ValueType>& valuePair, const int& cc)
+template <class ValueType>
+struct CCDataComparator {
+    bool operator()(const CCData<ValueType>& ccData, const int& cc)
     {
-        return (valuePair.cc < cc);
+        return (ccData.cc < cc);
     }
 
-    bool operator()(const int& cc, const CCValuePair<ValueType>& valuePair)
+    bool operator()(const int& cc, const CCData<ValueType>& ccData)
     {
-        return (cc < valuePair.cc);
+        return (cc < ccData.cc);
     }
 
-    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
+    bool operator()(const CCData<ValueType>& lhs, const CCData<ValueType>& rhs)
     {
         return (lhs.cc < rhs.cc);
-    }
-};
-
-template<class ValueType>
-struct CCValuePairComparator<ValueType, true> {
-    bool operator()(const CCValuePair<ValueType>& valuePair, const ValueType& value)
-    {
-        return (valuePair.value < value);
-    }
-
-    bool operator()(const ValueType& value, const CCValuePair<ValueType>& valuePair)
-    {
-        return (value < valuePair.value);
-    }
-
-    bool operator()(const CCValuePair<ValueType>& lhs, const CCValuePair<ValueType>& rhs)
-    {
-        return (lhs.value < rhs.value);
     }
 };
 
@@ -113,13 +97,13 @@ struct MidiEventValueComparator {
  * @param centsPerOctave
  * @return constexpr float
  */
-template<class T>
+template <class T>
 constexpr float centsFactor(T cents, T centsPerOctave = 1200)
 {
     return std::pow(2.0f, static_cast<float>(cents) / centsPerOctave);
 }
 
-template<class T, absl::enable_if_t<std::is_integral<T>::value, int> = 0>
+template <class T, absl::enable_if_t<std::is_integral<T>::value, int> = 0>
 constexpr T denormalize7Bits(float value)
 {
     return static_cast<T>(value * 127.0f);
@@ -135,10 +119,10 @@ constexpr uint8_t denormalizeVelocity(float value)
     return denormalize7Bits<uint8_t>(value);
 }
 
-template<class T>
+template <class T>
 constexpr float normalize7Bits(T value)
 {
-    return static_cast<float>(min(max(value, T{ 0 }), T{ 127 })) / 127.0f;
+    return static_cast<float>(min(max(value, T { 0 }), T { 127 })) / 127.0f;
 }
 
 /**
@@ -148,7 +132,7 @@ constexpr float normalize7Bits(T value)
  * @param ccValue
  * @return constexpr float
  */
-template<class T>
+template <class T>
 constexpr float normalizeCC(T ccValue)
 {
     return normalize7Bits(ccValue);
@@ -161,12 +145,11 @@ constexpr float normalizeCC(T ccValue)
  * @param ccValue
  * @return constexpr float
  */
-template<class T>
+template <class T>
 constexpr float normalizeVelocity(T velocity)
 {
     return normalize7Bits(velocity);
 }
-
 
 /**
  * @brief Normalize a percentage between 0 and 1
@@ -175,7 +158,7 @@ constexpr float normalizeVelocity(T velocity)
  * @param percentValue
  * @return constexpr float
  */
-template<class T>
+template <class T>
 constexpr float normalizePercents(T percentValue)
 {
     return percentValue * 0.01f;
@@ -201,15 +184,23 @@ namespace literals {
 
         return normalize7Bits(value);
     }
+
+    inline float operator""_norm(long double value)
+    {
+        if (value < 0)
+            value = 0;
+        if (value > 127)
+            value = 127;
+
+        return normalize7Bits(value);
+    }
 }
 
-/**
- * @brief Convert a note in string to its equivalent midi note number
- *
- * @param value
- * @return absl::optional<uint8_t>
- */
-absl::optional<uint8_t> readNoteValue(const absl::string_view& value);
+template <class Type>
+inline CXX14_CONSTEXPR Type vaGain(Type cutoff, Type sampleRate)
+{
+    return std::tan(cutoff / sampleRate * pi<Type>());
+}
 
 /**
  * @brief From a source view, find the next sfz header and its members and
@@ -273,200 +264,4 @@ bool findDefine(absl::string_view line, absl::string_view& variable, absl::strin
  */
 bool findInclude(absl::string_view line, std::string& path);
 
-/**
- * @brief multiply a value by a factor, in cents. To be used for pitch variations.
- *
- * @param base
- * @param modifier
- */
-inline CXX14_CONSTEXPR float multiplyByCentsModifier(int modifier, float base)
-{
-    return base * centsFactor(modifier);
-}
-
-template <class T>
-inline CXX14_CONSTEXPR float gainModifier(T modifier, float value)
-{
-    return value * modifier;
-}
-
-/**
- * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
- */
-template <class T, class U>
-float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
-{
-    if (value < crossfadeRange.getStart())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
-        return 1.0f;
-
-    else if (value < crossfadeRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
-            return sqrt(crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
-            return crossfadePosition;
-    }
-
-    return 1.0f;
-}
-
-/**
- * @brief Compute a crossfade out value with respect to a crossfade range (note, velocity, cc, ...)
- */
-template <class T, class U>
-float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
-{
-    if (value > crossfadeRange.getEnd())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
-        return 1.0f;
-
-    else if (value > crossfadeRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
-            return std::sqrt(1 - crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
-            return 1 - crossfadePosition;
-    }
-
-    return 1.0f;
-}
-
-template <class F>
-void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
-{
-    ASSERT(events.size() > 0);
-    ASSERT(events[0].delay == 0);
-    if (envelope.size() == 0)
-        return;
-
-    const auto maxDelay = static_cast<int>(envelope.size() - 1);
-
-    auto lastValue = lambda(events[0].value);
-    auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
-        const auto length = min(events[i].delay, maxDelay) - lastDelay;
-        const auto step = (lambda(events[i].value) - lastValue) / length;
-        lastValue = linearRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
-        lastDelay += length;
-    }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
-}
-
-template <class F>
-void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
-{
-    ASSERT(events.size() > 0);
-    ASSERT(events[0].delay == 0);
-    ASSERT(step != 0.0);
-
-    if (envelope.size() == 0)
-        return;
-
-    auto quantize = [step](float value) -> float {
-        return std::round(value / step) * step;
-    };
-    const auto maxDelay = static_cast<int>(envelope.size() - 1);
-
-    auto lastValue = quantize(lambda(events[0].value));
-    auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
-        const auto nextValue = quantize(lambda(events[i].value));
-        const auto difference = std::abs(nextValue - lastValue);
-        const auto length = min(events[i].delay, maxDelay) - lastDelay;
-
-        if (difference < step) {
-            fill<float>(envelope.subspan(lastDelay, length), lastValue);
-            lastValue = nextValue;
-            lastDelay += length;
-            continue;
-        }
-
-        const auto numSteps = static_cast<int>(difference / step);
-        const auto stepLength = static_cast<int>(length / numSteps);
-        for (int i = 0; i < numSteps; ++i) {
-            fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
-            lastValue += lastValue <= nextValue ? step : -step;
-            lastDelay += stepLength;
-        }
-    }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
-}
-
-template <class F>
-void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda)
-{
-    ASSERT(events.size() > 0);
-    ASSERT(events[0].delay == 0);
-
-    if (envelope.size() == 0)
-        return;
-    const auto maxDelay = static_cast<int>(envelope.size() - 1);
-
-    auto lastValue = lambda(events[0].value);
-    auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
-        const auto length = min(events[i].delay, maxDelay) - lastDelay;
-        const auto nextValue = lambda(events[i].value);
-        const auto step = std::exp((std::log(nextValue) - std::log(lastValue)) / length);
-        multiplicativeRamp<float>(envelope.subspan(lastDelay, length), lastValue, step);
-        lastValue = nextValue;
-        lastDelay += length;
-    }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
-}
-
-template <class F>
-void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelope, F&& lambda, float step)
-{
-    ASSERT(events.size() > 0);
-    ASSERT(events[0].delay == 0);
-    ASSERT(step != 0.0f);
-
-    if (envelope.size() == 0)
-        return;
-    const auto maxDelay = static_cast<int>(envelope.size() - 1);
-
-    const auto logStep = std::log(step);
-    // If we assume that a = b.q^r for b in (1, q) then
-    // log a     log b
-    // -----  =  -----  +  r
-    // log q     log q
-    // and log(b)\log(q) is between 0 and 1.
-    auto quantize = [logStep](float value) -> float {
-        return std::exp(logStep * std::round(std::log(value) / logStep));
-    };
-
-    auto lastValue = quantize(lambda(events[0].value));
-    auto lastDelay = events[0].delay;
-    for (unsigned i = 1; i < events.size() && lastDelay < maxDelay; ++i) {
-        const auto length = min(events[i].delay, maxDelay) - lastDelay;
-        const auto nextValue = quantize(lambda(events[i].value));
-        const auto difference = nextValue > lastValue ? nextValue / lastValue : lastValue / nextValue;
-
-        if (difference < step) {
-            fill<float>(envelope.subspan(lastDelay, length), lastValue);
-            lastValue = nextValue;
-            lastDelay += length;
-            continue;
-        }
-
-        const auto numSteps = static_cast<int>(std::log(difference) / logStep);
-        const auto stepLength = static_cast<int>(length / numSteps);
-        for (int i = 0; i < numSteps; ++i) {
-            fill<float>(envelope.subspan(lastDelay, stepLength), lastValue);
-            lastValue = nextValue > lastValue ? lastValue * step : lastValue / step;
-            lastDelay += stepLength;
-        }
-    }
-    fill<float>(envelope.subspan(lastDelay), lastValue);
-}
-
 } // namespace sfz
-

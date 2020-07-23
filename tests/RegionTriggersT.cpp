@@ -13,7 +13,7 @@ using namespace sfz::literals;
 TEST_CASE("Basic triggers", "Region triggers")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
 
     region.parseOpcode({ "sample", "*sine" });
     SECTION("key")
@@ -114,8 +114,8 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "on_locc47", "64" });
         region.parseOpcode({ "on_hicc47", "68" });
         REQUIRE(!region.registerCC(47, 63_norm));
-        REQUIRE(!region.registerCC(47, 64_norm));
-        REQUIRE(!region.registerCC(47, 65_norm));
+        REQUIRE(region.registerCC(47, 64_norm));
+        REQUIRE(region.registerCC(47, 65_norm));
         region.parseOpcode({ "hikey", "-1" });
         REQUIRE(region.registerCC(47, 64_norm));
         REQUIRE(region.registerCC(47, 65_norm));
@@ -125,12 +125,46 @@ TEST_CASE("Basic triggers", "Region triggers")
         REQUIRE(!region.registerCC(47, 69_norm));
         REQUIRE(!region.registerCC(40, 64_norm));
     }
+
+    SECTION("on_loccN does not disable key triggering")
+    {
+        region.parseOpcode({ "sample", "*sine" });
+        region.parseOpcode({ "on_locc1", "127" });
+        region.parseOpcode({ "on_hicc1", "127" });
+        REQUIRE(!region.registerCC(1, 126_norm));
+        REQUIRE(!region.registerCC(2, 127_norm));
+        REQUIRE(region.registerCC(1, 127_norm));
+        REQUIRE(region.registerNoteOn(64, 127_norm, 0.5f));
+    }
+
+    SECTION("on_loccN does not disable key triggering, but adding key=-1 does")
+    {
+        region.parseOpcode({ "sample", "*sine" });
+        region.parseOpcode({ "on_locc1", "127" });
+        region.parseOpcode({ "on_hicc1", "127" });
+        region.parseOpcode({ "key", "-1" });
+        REQUIRE(!region.registerCC(1, 126_norm));
+        REQUIRE(region.registerCC(1, 127_norm));
+        REQUIRE(!region.registerNoteOn(64, 127_norm, 0.5f));
+    }
+
+    SECTION("on_loccN does not disable key triggering, but adding hikey=-1 does")
+    {
+        region.parseOpcode({ "sample", "*sine" });
+        region.parseOpcode({ "on_locc1", "127" });
+        region.parseOpcode({ "on_hicc1", "127" });
+        region.parseOpcode({ "hikey", "-1" });
+        REQUIRE(!region.registerCC(1, 126_norm));
+        REQUIRE(!region.registerCC(2, 127_norm));
+        REQUIRE(region.registerCC(1, 127_norm));
+        REQUIRE(!region.registerNoteOn(64, 127_norm, 0.5f));
+    }
 }
 
 TEST_CASE("Legato triggers", "Region triggers")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     SECTION("First note playing")
     {

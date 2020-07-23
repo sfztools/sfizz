@@ -13,7 +13,7 @@ using namespace sfz::literals;
 TEST_CASE("Region activation", "Region tests")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
 
     region.parseOpcode({ "sample", "*sine" });
     SECTION("Basic state")

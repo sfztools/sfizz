@@ -76,3 +76,15 @@ constexpr uint64_t hashNoAmpersand(absl::string_view s, uint64_t h = Fnv1aBasis)
             : hashNoAmpersand( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime )
     );
 }
+
+/**
+ * @brief Run-time hashing function for numbers, useful for example to
+ *        create hash functions for keys which depend on numeric values.
+ */
+template <class Int>
+uint64_t hashNumber(Int i, uint64_t h = Fnv1aBasis)
+{
+    static_assert(std::is_arithmetic<Int>::value,
+                  "The hashed object must be of arithmetic type");
+    return hash(absl::string_view(reinterpret_cast<const char*>(&i), sizeof(i)), h);
+}

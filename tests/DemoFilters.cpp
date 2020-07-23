@@ -62,7 +62,7 @@ private:
     static constexpr float lfoRateMin = 0.1;
     static constexpr float lfoRateMax = 10.0;
 
-    static constexpr int cutoffModMin = 1;
+    static constexpr int cutoffModMin = 0;
     static constexpr int cutoffModMax = 48;
 
     int fType = sfz::kFilterNone;

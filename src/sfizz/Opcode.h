@@ -10,8 +10,9 @@
 #include "Range.h"
 #include "SfzHelpers.h"
 #include "StringViewHelpers.h"
-#include <absl/types/optional.h>
+#include "absl/types/optional.h"
 #include "absl/meta/type_traits.h"
+#include "absl/strings/ascii.h"
 #include <string_view>
 #include <vector>
 #include <type_traits>
@@ -20,6 +21,42 @@
 #include "absl/strings/numbers.h"
 
 namespace sfz {
+/**
+ * @brief A category which an opcode may belong to.
+ */
+enum OpcodeCategory {
+    //! An ordinary opcode
+    kOpcodeNormal,
+    //! A region opcode which matches *_onccN or *_ccN
+    kOpcodeOnCcN,
+    //! A region opcode which matches *_curveccN
+    kOpcodeCurveCcN,
+    //! A region opcode which matches *_stepccN
+    kOpcodeStepCcN,
+    //! A region opcode which matches *_smoothccN
+    kOpcodeSmoothCcN,
+};
+
+/**
+ * @brief A scope where an opcode may appear.
+ */
+enum OpcodeScope {
+    //! unknown scope or other
+    kOpcodeScopeGeneric,
+    //! global scope
+    kOpcodeScopeGlobal,
+    //! control scope
+    kOpcodeScopeControl,
+    //! Master scope
+    kOpcodeScopeMaster,
+    //! group scope
+    kOpcodeScopeGroup,
+    //! region scope
+    kOpcodeScopeRegion,
+    //! effect scope
+    kOpcodeScopeEffect,
+};
+
 /**
  * @brief Opcode description class. The class parses the parameters
  * of the opcode on construction.
@@ -33,8 +70,48 @@ struct Opcode {
     uint64_t lettersOnlyHash { Fnv1aBasis };
     // This is to handle the integer parameters of some opcodes
     std::vector<uint16_t> parameters;
+    OpcodeCategory category;
+
+    /*
+     * @brief Normalize in order to make the ampersand-name unique, and
+     * facilitate subsequent processing.
+     *
+     * @param scope scope where this opcode appears
+     * @return normalized opcode
+     */
+    Opcode cleanUp(OpcodeScope scope) const;
+
+    /*
+     * @brief Get the derived opcode name to convert it to another category.
+     *
+     * @param newCategory category to convert to
+     * @param number optional CC number, needed if destination is CC and source is not
+     * @return derived opcode name
+     */
+    std::string getDerivedName(OpcodeCategory newCategory, unsigned number = ~0u) const;
+
+    /**
+     * @brief Get whether the opcode categorizes as `ccN` of any kind.
+     * @return true if `ccN`, otherwise false
+     */
+    bool isAnyCcN() const
+    {
+        return category == kOpcodeOnCcN || category == kOpcodeCurveCcN ||
+            category == kOpcodeStepCcN || category == kOpcodeSmoothCcN;
+    }
+
+private:
+    static OpcodeCategory identifyCategory(absl::string_view name);
     LEAK_DETECTOR(Opcode);
 };
+
+/**
+ * @brief Convert a note in string to its equivalent midi note number
+ *
+ * @param value
+ * @return absl::optional<uint8_t>
+ */
+absl::optional<uint8_t> readNoteValue(absl::string_view value);
 
 /**
  * @brief Read a value from the sfz file and cast it to the destination parameter along
@@ -49,20 +126,25 @@ struct Opcode {
 template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
-        int64_t returnedValue;
-        if (!absl::SimpleAtoi(value, &returnedValue)) {
-            float floatValue;
-            if (!absl::SimpleAtof(value, &floatValue))
-                return {};
-            returnedValue = static_cast<int64_t>(floatValue);
-        }
+    size_t numberEnd = 0;
 
-        if (returnedValue > std::numeric_limits<ValueType>::max())
-            returnedValue = std::numeric_limits<ValueType>::max();
-        if (returnedValue < std::numeric_limits<ValueType>::min())
-            returnedValue = std::numeric_limits<ValueType>::min();
+    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+        ++numberEnd;
 
-        return validRange.clamp(static_cast<ValueType>(returnedValue));
+    value = value.substr(0, numberEnd);
+
+    int64_t returnedValue;
+    if (!absl::SimpleAtoi(value, &returnedValue))
+            return absl::nullopt;
+
+    if (returnedValue > std::numeric_limits<ValueType>::max())
+        returnedValue = std::numeric_limits<ValueType>::max();
+    if (returnedValue < std::numeric_limits<ValueType>::min())
+        returnedValue = std::numeric_limits<ValueType>::min();
+
+    return validRange.clamp(static_cast<ValueType>(returnedValue));
 }
 
 /**
@@ -78,9 +160,24 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
 template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
 inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
 {
+    size_t numberEnd = 0;
+
+    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+        ++numberEnd;
+
+    if (numberEnd < value.size() && value[numberEnd] == '.') {
+        ++numberEnd;
+        while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+            ++numberEnd;
+    }
+
+    value = value.substr(0, numberEnd);
+
     float returnedValue;
     if (!absl::SimpleAtof(value, &returnedValue))
-		return absl::nullopt;
+        return absl::nullopt;
 
     return validRange.clamp(returnedValue);
 }
@@ -185,7 +282,7 @@ inline void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& targ
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCValuePair<ValueType>>& target, const Range<ValueType>& validRange)
+inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange)
 {
     auto value = readOpcode(opcode.value, validRange);
     if (value && Default::ccNumberRange.containsWithEnd(opcode.parameters.back()))

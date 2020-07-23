@@ -92,7 +92,9 @@ namespace fx {
             }
         }
 
-        return absl::make_unique<Eq>(desc);
+        Eq* eq = new Eq(desc);
+        std::unique_ptr<Effect> fx { eq };
+        return fx;
     }
 
     void Eq::prepareFilter()

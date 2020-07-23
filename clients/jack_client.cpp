@@ -23,6 +23,7 @@
 
 #include "sfizz/Synth.h"
 #include "sfizz/Macros.h"
+#include "MidiHelpers.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
 #include <absl/types/span.h>
@@ -44,33 +45,6 @@ static jack_port_t* outputPort1;
 static jack_port_t* outputPort2;
 static jack_client_t* client;
 
-namespace midi {
-constexpr uint8_t statusMask { 0b11110000 };
-constexpr uint8_t channelMask { 0b00001111 };
-constexpr uint8_t noteOff { 0x80 };
-constexpr uint8_t noteOn { 0x90 };
-constexpr uint8_t polyphonicPressure { 0xA0 };
-constexpr uint8_t controlChange { 0xB0 };
-constexpr uint8_t programChange { 0xC0 };
-constexpr uint8_t channelPressure { 0xD0 };
-constexpr uint8_t pitchBend { 0xE0 };
-constexpr uint8_t systemMessage { 0xF0 };
-
-constexpr uint8_t status(uint8_t midiStatusByte)
-{
-    return midiStatusByte & statusMask;
-}
-constexpr uint8_t channel(uint8_t midiStatusByte)
-{
-    return midiStatusByte & channelMask;
-}
-
-constexpr int buildAndCenterPitch(uint8_t firstByte, uint8_t secondByte)
-{
-    return (int)(((unsigned int)secondByte << 7) + (unsigned int)firstByte) - 8192;
-}
-}
-
 int process(jack_nframes_t numFrames, void* arg)
 {
     auto synth = reinterpret_cast<sfz::Synth*>(arg);
@@ -90,11 +64,13 @@ int process(jack_nframes_t numFrames, void* arg)
             continue;
 
         switch (midi::status(event.buffer[0])) {
-        case midi::noteOff:
+        case midi::noteOff: noteoff:
             // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
             synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
+            if (event.buffer[2] == 0)
+                goto noteoff;
             // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
             synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
@@ -165,6 +141,7 @@ static void done(int sig)
 ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
 ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
 int main(int argc, char** argv)
 {
@@ -179,6 +156,7 @@ int main(int argc, char** argv)
     const std::string clientName = absl::GetFlag(FLAGS_client_name);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+    const bool verboseState = absl::GetFlag(FLAGS_state);
 
     std::cout << "Flags" << '\n';
     std::cout << "- Client name: " << clientName << '\n';
@@ -285,11 +263,14 @@ int main(int argc, char** argv)
     signal(SIGQUIT, done);
 
     while (!shouldClose){
+        if (verboseState) {
+            std::cout << "Active voices: " << synth.getNumActiveVoices() << '\n';
 #ifndef NDEBUG
         std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
         std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
 #endif
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     std::cout << "Closing..." << '\n';

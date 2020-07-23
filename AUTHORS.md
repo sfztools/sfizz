@@ -7,3 +7,4 @@ Contributors to `sfizz`, in chronologic order:
 - Alexander Mitchell (2020)
 - Michael Willis (2020)
 - Jean-Pierre Cimalando (2020)
+- Tobiasz "unfa" Karoń (2020)

@@ -6,7 +6,9 @@
 
 #include "Wavetables.h"
 #include "FilePool.h"
+#include "Interpolators.h"
 #include "MathHelpers.h"
+#include "absl/meta/type_traits.h"
 #include <kiss_fftr.h>
 
 namespace sfz {
@@ -34,10 +36,11 @@ void WavetableOscillator::setPhase(float phase)
     _phase = phase;
 }
 
-void WavetableOscillator::process(float frequency, float* output, unsigned nframes)
+template <InterpolatorModel M>
+void WavetableOscillator::processSingle(float frequency, float detuneRatio, float* output, unsigned nframes)
 {
     float phase = _phase;
-    float phaseInc = frequency * _sampleInterval;
+    float phaseInc = frequency * (detuneRatio * _sampleInterval);
 
     const WavetableMulti& multi = *_multi;
     unsigned tableSize = multi.tableSize();
@@ -47,7 +50,7 @@ void WavetableOscillator::process(float frequency, float* output, unsigned nfram
         float position = phase * tableSize;
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
-        output[i] = interpolate(&table[index], frac);
+        output[i] = interpolate<M>(&table[index], frac);
 
         phase += phaseInc;
         phase -= static_cast<int>(phase);
@@ -56,7 +59,8 @@ void WavetableOscillator::process(float frequency, float* output, unsigned nfram
     _phase = phase;
 }
 
-void WavetableOscillator::processModulated(const float* frequencies, float* output, unsigned nframes)
+template <InterpolatorModel M>
+void WavetableOscillator::processModulatedSingle(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
 {
     float phase = _phase;
     float sampleInterval = _sampleInterval;
@@ -66,13 +70,13 @@ void WavetableOscillator::processModulated(const float* frequencies, float* outp
 
     for (unsigned i = 0; i < nframes; ++i) {
         float frequency = frequencies[i];
-        float phaseInc = frequency * sampleInterval;
+        float phaseInc = frequency * (detuneRatio * sampleInterval);
         absl::Span<const float> table = multi.getTableForFrequency(frequency);
 
         float position = phase * tableSize;
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
-        output[i] = interpolate(&table[index], frac);
+        output[i] = interpolate<M>(&table[index], frac);
 
         phase += phaseInc;
         phase -= static_cast<int>(phase);
@@ -81,9 +85,98 @@ void WavetableOscillator::processModulated(const float* frequencies, float* outp
     _phase = phase;
 }
 
-float WavetableOscillator::interpolate(const float* x, float delta)
+template <InterpolatorModel M>
+void WavetableOscillator::processDual(float frequency, float detuneRatio, float* output, unsigned nframes)
 {
-    return x[0] + delta * (x[1] - x[0]);
+    float phase = _phase;
+    float phaseInc = frequency * (detuneRatio * _sampleInterval);
+
+    const WavetableMulti& multi = *_multi;
+    unsigned tableSize = multi.tableSize();
+    WavetableMulti::DualTable dt = multi.getInterpolationPairForFrequency(frequency);
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float position = phase * tableSize;
+        unsigned index = static_cast<unsigned>(position);
+        float frac = position - index;
+        output[i] =
+            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
+            dt.delta * interpolate<M>(&dt.table2[index], frac);
+
+        phase += phaseInc;
+        phase -= static_cast<int>(phase);
+    }
+
+    _phase = phase;
+}
+
+template <InterpolatorModel M>
+void WavetableOscillator::processModulatedDual(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+{
+    float phase = _phase;
+    float sampleInterval = _sampleInterval;
+
+    const WavetableMulti& multi = *_multi;
+    unsigned tableSize = multi.tableSize();
+
+    for (unsigned i = 0; i < nframes; ++i) {
+        float frequency = frequencies[i];
+        float phaseInc = frequency * (detuneRatio * sampleInterval);
+
+        WavetableMulti::DualTable dt = multi.getInterpolationPairForFrequency(frequency);
+
+        float position = phase * tableSize;
+        unsigned index = static_cast<unsigned>(position);
+        float frac = position - index;
+        output[i] =
+            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
+            dt.delta * interpolate<M>(&dt.table2[index], frac);
+
+        phase += phaseInc;
+        phase -= static_cast<int>(phase);
+    }
+
+    _phase = phase;
+}
+
+void WavetableOscillator::process(float frequency, float detuneRatio, float* output, unsigned nframes)
+{
+    int quality = clamp(_quality, 0, 3);
+
+    switch (quality) {
+    case 0:
+        processSingle<kInterpolatorNearest>(frequency, detuneRatio, output, nframes);
+        break;
+    case 1:
+        processSingle<kInterpolatorLinear>(frequency, detuneRatio, output, nframes);
+        break;
+    case 2:
+        processSingle<kInterpolatorBspline3>(frequency, detuneRatio, output, nframes);
+        break;
+    case 3:
+        processDual<kInterpolatorBspline3>(frequency, detuneRatio, output, nframes);
+        break;
+    }
+}
+
+void WavetableOscillator::processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+{
+    int quality = clamp(_quality, 0, 3);
+
+    switch (quality) {
+    case 0:
+        processModulatedSingle<kInterpolatorNearest>(frequencies, detuneRatio, output, nframes);
+        break;
+    case 1:
+        processModulatedSingle<kInterpolatorLinear>(frequencies, detuneRatio, output, nframes);
+        break;
+    case 2:
+        processModulatedSingle<kInterpolatorBspline3>(frequencies, detuneRatio, output, nframes);
+        break;
+    case 3:
+        processModulatedDual<kInterpolatorBspline3>(frequencies, detuneRatio, output, nframes);
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -199,6 +292,39 @@ unsigned WavetableRange::getOctaveForFrequency(float f)
     return clamp<int>(oct, 0, countOctaves - 1);
 }
 
+static const auto octaveForFrequencyTable = []()
+{
+    static constexpr unsigned N = 1024;
+    std::array<float, N> table;
+
+    constexpr double fmin = 1 / WavetableRange::frequencyScaleFactor;
+    constexpr double fmax = (1 << (WavetableRange::countOctaves - 1)) / WavetableRange::frequencyScaleFactor;
+
+    for (unsigned i = 0; i < N; ++i) {
+        double f = fmin + (i * (1.0 / (N - 1))) * (fmax - fmin);
+        table[i] = std::log2(f * WavetableRange::frequencyScaleFactor);
+    }
+
+    return table;
+}();
+
+float WavetableRange::getFractionalOctaveForFrequency(float f)
+{
+    static constexpr unsigned N = octaveForFrequencyTable.size();
+
+    constexpr double fmin = 1 / WavetableRange::frequencyScaleFactor;
+    constexpr double fmax = (1 << (WavetableRange::countOctaves - 1)) / WavetableRange::frequencyScaleFactor;
+
+    float pos = (f - fmin) * ((N - 1) / static_cast<float>(fmax - fmin));
+    int index1 = static_cast<int>(pos);
+    float frac = pos - index1;
+    index1 = clamp<int>(index1, 0, N - 1);
+    int index2 = std::min<int>(index1 + 1, N - 1);
+
+    return (1.0f - frac) * octaveForFrequencyTable[index1] +
+        frac * octaveForFrequencyTable[index2];
+}
+
 WavetableRange WavetableRange::getRangeForOctave(int o)
 {
     WavetableRange range;
@@ -253,14 +379,24 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
 const WavetableMulti* WavetableMulti::getSilenceWavetable()
 {
     static WavetableMulti wm;
-    wm.allocateStorage(1);
-    wm.fillExtra();
+    static bool initialized { false };
+
+    if (!initialized) {
+        constexpr unsigned numTables = WavetableMulti::numTables();
+        wm.allocateStorage(1);
+        for (unsigned m = 0; m < numTables; ++m) {
+            float* ptr = const_cast<float*>(wm.getTablePointer(m));
+            *ptr = 0;
+        }
+        wm.fillExtra();
+        initialized = true;
+    }
     return &wm;
 }
 
 void WavetableMulti::allocateStorage(unsigned tableSize)
 {
-    _multiData.resize((tableSize + _tableExtra) * numTables());
+    _multiData.resize((tableSize + 2 * _tableExtra) * numTables());
     _tableSize = tableSize;
 }
 
@@ -271,9 +407,22 @@ void WavetableMulti::fillExtra()
     constexpr unsigned numTables = WavetableMulti::numTables();
 
     for (unsigned m = 0; m < numTables; ++m) {
-        float* ptr = const_cast<float*>(getTablePointer(m));
-        for (unsigned i = 0; i < tableExtra; ++i)
-            ptr[tableSize + i] = ptr[i % tableSize];
+        float* beg = const_cast<float*>(getTablePointer(m));
+        float* end = beg + tableSize;
+        // fill right
+        float* src = beg;
+        float* dst = end;
+        for (unsigned i = 0; i < tableExtra; ++i) {
+            *dst++ = *src;
+            src = (src + 1 != end) ? (src + 1) : beg;
+        }
+        // fill left
+        src = end - 1;
+        dst = beg - 1;
+        for (unsigned i = 0; i < tableExtra; ++i) {
+            *dst-- = *src;
+            src = (src != beg) ? (src - 1) : (end - 1);
+        }
     }
 }
 
@@ -355,7 +504,7 @@ bool WavetablePool::createFileWave(FilePool& filePool, const std::string& filena
     if (_fileWaves.contains(filename))
         return true;
 
-    auto fileHandle = filePool.loadFile(filename);
+    auto fileHandle = filePool.loadFile(FileId(filename));
     if (!fileHandle)
         return false;
 
@@ -363,6 +512,13 @@ bool WavetablePool::createFileWave(FilePool& filePool, const std::string& filena
         DBG("[sfizz] Only the first channel of " << filename << " will be used to create the wavetable");
 
     auto audioData = fileHandle->preloadedData->getConstSpan(0);
+
+    // an even size is required for FFT
+    static_assert(absl::remove_reference_t<decltype(*fileHandle->preloadedData)>::PaddingRight > 0,
+                  "Right padding is required on the audio file buffer");
+    if (audioData.size() & 1)
+        audioData = absl::MakeConstSpan(audioData.data(), audioData.size() + 1);
+
     size_t fftSize = audioData.size();
     size_t specSize = fftSize / 2 + 1;
 

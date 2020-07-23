@@ -18,7 +18,7 @@ if(SAMPLERATE_LIBRARY AND SAMPLERATE_INCLUDE_DIR)
 endif()
 
 add_library(bm_simd STATIC ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_simd PRIVATE absl::span)
+target_link_libraries(bm_simd PRIVATE absl::span sfizz-cpuid)
 target_include_directories(bm_simd PRIVATE ../src/external)
 add_library(bm_ftz STATIC ../src/sfizz/ScopedFTZ.cpp)
 
@@ -38,12 +38,9 @@ sfizz_add_benchmark(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
 sfizz_add_benchmark(bm_clock BM_clock.cpp)
 sfizz_add_benchmark(bm_write BM_writeInterleaved.cpp)
 sfizz_add_benchmark(bm_read BM_readInterleaved.cpp)
-sfizz_add_benchmark(bm_fill BM_fill.cpp)
 sfizz_add_benchmark(bm_mathfuns BM_mathfuns.cpp)
 sfizz_add_benchmark(bm_gain BM_gain.cpp)
 sfizz_add_benchmark(bm_divide BM_divide.cpp)
-sfizz_add_benchmark(bm_looping BM_looping.cpp)
-sfizz_add_benchmark(bm_saturating BM_saturating.cpp)
 sfizz_add_benchmark(bm_ramp BM_ramp.cpp)
 sfizz_add_benchmark(bm_ADSR BM_ADSR.cpp)
 target_link_libraries(bm_ADSR PRIVATE sfizz::sfizz)
@@ -53,24 +50,24 @@ sfizz_add_benchmark(bm_multiplyAdd BM_multiplyAdd.cpp)
 sfizz_add_benchmark(bm_multiplyAddFixedGain BM_multiplyAddFixedGain.cpp)
 sfizz_add_benchmark(bm_subtract BM_subtract.cpp)
 sfizz_add_benchmark(bm_copy BM_copy.cpp)
-sfizz_add_benchmark(bm_pan BM_pan.cpp)
 sfizz_add_benchmark(bm_mean BM_mean.cpp)
 sfizz_add_benchmark(bm_meanSquared BM_meanSquared.cpp)
 sfizz_add_benchmark(bm_cumsum BM_cumsum.cpp)
 sfizz_add_benchmark(bm_diff BM_diff.cpp)
-sfizz_add_benchmark(bm_widthPos BM_widthPos.cpp)
-sfizz_add_benchmark(bm_interpolationCast BM_interpolationCast.cpp)
 sfizz_add_benchmark(bm_pointerIterationOrOffsets BM_pointerIterationOrOffsets.cpp)
 sfizz_add_benchmark(bm_maps BM_maps.cpp)
 target_link_libraries(bm_maps PRIVATE absl::flat_hash_map)
 sfizz_add_benchmark(bm_mapVsArray BM_mapVsArray.cpp)
+sfizz_add_benchmark(bm_random BM_random.cpp)
 
 sfizz_add_benchmark(bm_logger BM_logger.cpp)
 target_link_libraries(bm_logger PRIVATE sfizz::sfizz)
+sfizz_add_benchmark(bm_smoothers BM_smoothers.cpp)
+target_link_libraries(bm_smoothers PRIVATE sfizz::sfizz)
 
 if (TARGET sfizz-samplerate)
 sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile)
+target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile sfizz-cpuid)
 endif()
 
 sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
@@ -83,9 +80,13 @@ target_link_libraries(bm_flacfile PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_readChunk BM_readChunk.cpp)
 target_link_libraries(bm_readChunk PRIVATE sfizz-sndfile)
+sfizz_add_benchmark(bm_readChunkFlac BM_readChunkFlac.cpp)
+target_link_libraries(bm_readChunkFlac PRIVATE sfizz-sndfile)
 
 sfizz_add_benchmark(bm_resampleChunk BM_resampleChunk.cpp)
 target_link_libraries(bm_resampleChunk PRIVATE sfizz-sndfile)
+
+sfizz_add_benchmark(bm_interpolators BM_interpolators.cpp)
 
 sfizz_add_benchmark(bm_filterModulation BM_filterModulation.cpp ../src/sfizz/SfzFilter.cpp)
 target_link_libraries(bm_filterModulation PRIVATE sfizz-sndfile)
@@ -111,27 +112,21 @@ add_dependencies(sfizz_benchmarks
 	bm_read
 	bm_mean
 	bm_meanSquared
-	bm_fill
 	bm_cumsum
 	bm_diff
-	bm_interpolationCast
 	bm_mathfuns
 	bm_gain
 	bm_divide
-	bm_looping
-	bm_saturating
 	bm_ramp
 	bm_ADSR
 	bm_add
 	bm_logger
-	bm_pan
 	bm_subtract
 	bm_multiplyAdd
 	bm_readChunk
 	bm_resampleChunk
 	bm_envelopes
 	bm_wavfile
-	bm_widthPos
 	bm_flacfile
 	bm_filterModulation
 	bm_filterStereoMono
@@ -142,9 +137,9 @@ if (TARGET bm_resample)
 	add_dependencies(sfizz_benchmarks bm_resample)
 endif()
 
-file(COPY "sample1.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
-file(COPY "sample2.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
-file(COPY "sample3.wav" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
-file(COPY "sample1.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
-file(COPY "sample2.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
-file(COPY "sample3.flac" DESTINATION ${CMAKE_BINARY_DIR}/benchmarks)
+configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample1.wav" COPYONLY)
+configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample2.wav" COPYONLY)
+configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample3.wav" COPYONLY)
+configure_file("sample.flac" "${CMAKE_BINARY_DIR}/benchmarks/sample1.flac" COPYONLY)
+configure_file("sample.flac" "${CMAKE_BINARY_DIR}/benchmarks/sample2.flac" COPYONLY)
+configure_file("sample.flac" "${CMAKE_BINARY_DIR}/benchmarks/sample3.flac" COPYONLY)

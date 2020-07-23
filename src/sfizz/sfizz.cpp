@@ -23,6 +23,46 @@ bool sfz::Sfizz::loadSfzFile(const std::string& path)
     return synth->loadSfzFile(path);
 }
 
+bool sfz::Sfizz::loadSfzString(const std::string& path, const std::string& text)
+{
+    return synth->loadSfzString(path, text);
+}
+
+bool sfz::Sfizz::loadScalaFile(const std::string& path)
+{
+    return synth->loadScalaFile(path);
+}
+
+bool sfz::Sfizz::loadScalaString(const std::string& text)
+{
+    return synth->loadScalaString(text);
+}
+
+void sfz::Sfizz::setScalaRootKey(int rootKey)
+{
+    return synth->setScalaRootKey(rootKey);
+}
+
+int sfz::Sfizz::getScalaRootKey() const
+{
+    return synth->getScalaRootKey();
+}
+
+void sfz::Sfizz::setTuningFrequency(float frequency)
+{
+    return synth->setTuningFrequency(frequency);
+}
+
+float sfz::Sfizz::getTuningFrequency() const
+{
+    return synth->getTuningFrequency();
+}
+
+void sfz::Sfizz::loadStretchTuningByRatio(float ratio)
+{
+    return synth->loadStretchTuningByRatio(ratio);
+}
+
 int sfz::Sfizz::getNumRegions() const noexcept
 {
     return synth->getNumRegions();
@@ -63,6 +103,16 @@ void sfz::Sfizz::setSampleRate(float sampleRate) noexcept
     synth->setSampleRate(sampleRate);
 }
 
+int sfz::Sfizz::getSampleQuality(ProcessMode mode)
+{
+    return synth->getSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode));
+}
+
+void sfz::Sfizz::setSampleQuality(ProcessMode mode, int quality)
+{
+    synth->setSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
+}
+
 float sfz::Sfizz::getVolume() const noexcept
 {
     return synth->getVolume();
@@ -86,6 +136,11 @@ void sfz::Sfizz::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 void sfz::Sfizz::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     synth->cc(delay, ccNumber, ccValue);
+}
+
+void sfz::Sfizz::hdcc(int delay, int ccNumber, float normValue) noexcept
+{
+    synth->hdcc(delay, ccNumber, normValue);
 }
 
 void sfz::Sfizz::pitchWheel(int delay, int pitch) noexcept
@@ -186,6 +241,11 @@ bool sfz::Sfizz::shouldReloadFile()
     return synth->shouldReloadFile();
 }
 
+bool sfz::Sfizz::shouldReloadScala()
+{
+    return synth->shouldReloadScala();
+}
+
 void sfz::Sfizz::enableLogging() noexcept
 {
     synth->enableLogging();
@@ -209,4 +269,24 @@ void sfz::Sfizz::disableLogging() noexcept
 void sfz::Sfizz::allSoundOff() noexcept
 {
     synth->allSoundOff();
+}
+
+void sfz::Sfizz::addExternalDefinition(const std::string& id, const std::string& value)
+{
+    synth->getParser().addExternalDefinition(id, value);
+}
+
+void sfz::Sfizz::clearExternalDefinitions()
+{
+    synth->getParser().clearExternalDefinitions();
+}
+
+const std::vector<std::pair<uint8_t, std::string>>& sfz::Sfizz::getKeyLabels() const noexcept
+{
+    return synth->getKeyLabels();
+}
+
+const std::vector<std::pair<uint16_t, std::string>>& sfz::Sfizz::getCCLabels() const noexcept
+{
+    return synth->getCCLabels();
 }

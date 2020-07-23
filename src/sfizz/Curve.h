@@ -45,7 +45,7 @@ public:
      */
     float evalNormalized(float value) const
     {
-        return evalCC7(denormalize7Bits<int>(value));
+        return evalCC7(value * 127.0f);
     }
 
     /**
@@ -66,6 +66,17 @@ public:
     static Curve buildCurveFromHeader(
         absl::Span<const Opcode> members,
         Interpolator itp = Interpolator::Linear, bool limit = false);
+
+    /**
+     * @brief Build a curve based on sfz v1 "amp_velcurve_&" points
+     *
+     * @param points the points vector
+     * @param itp kind of interpolator to fill between values
+     * @param invert whether to invert the curve
+     */
+    static Curve buildFromVelcurvePoints(
+        absl::Span<const std::pair<uint8_t, float>> points,
+        Interpolator itp = Interpolator::Linear, bool invert = false);
 
     /**
      * @brief Number of predefined curves

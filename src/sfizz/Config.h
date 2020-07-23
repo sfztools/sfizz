@@ -26,9 +26,10 @@ enum class Oversampling: int {
 
 namespace config {
     constexpr float defaultSampleRate { 48000 };
+    constexpr float maxSampleRate { 192000 };
     constexpr int defaultSamplesPerBlock { 1024 };
     constexpr int maxBlockSize { 8192 };
-    constexpr int bufferPoolSize { 4 };
+    constexpr int bufferPoolSize { 6 };
     constexpr int stereoBufferPoolSize { 4 };
     constexpr int indexBufferPoolSize { 2 };
     constexpr int preloadSize { 8192 };
@@ -39,8 +40,11 @@ namespace config {
     constexpr int numBackgroundThreads { 4 };
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
-    constexpr int maxFilePromises { maxVoices * 2 };
-    constexpr int sustainCC { 64 };
+    constexpr unsigned smoothingSteps { 512 };
+    constexpr uint8_t xfadeSmoothing { 5 };
+    constexpr uint8_t gainSmoothing { 0 };
+    constexpr unsigned powerTableSizeExponent { 11 };
+    constexpr int maxFilePromises { maxVoices };
     constexpr int allSoundOffCC { 120 };
     constexpr int resetCC { 121 };
     constexpr int allNotesOffCC { 123 };
@@ -54,12 +58,27 @@ namespace config {
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
-    constexpr float voiceStealingThreshold { 0.00001f };
+    constexpr float filteredEnvelopeCutoff { 5 };
     constexpr uint16_t numCCs { 512 };
+    constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
+    constexpr unsigned int defaultAlignment { 16 };
     constexpr int filtersInPool { maxVoices * 2 };
+    constexpr int excessFileFrames { 8 };
+    /**
+     * @brief The threshold for age stealing.
+     *        In percentage of the voice's max age.
+     */
+    constexpr float stealingAgeCoeff { 0.5f };
+    /**
+     * @brief The threshold for envelope stealing.
+     *        In percentage of the sum of all envelopes.
+     */
+    constexpr float stealingEnvelopeCoeff { 0.5f };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
+    constexpr int oscillatorsPerVoice { 9 };
+    constexpr float uniformNoiseBounds { 0.25f };
     constexpr float noiseVariance { 0.25f };
     /**
        Minimum interval in frames between recomputations of coefficients of the
@@ -81,31 +100,10 @@ namespace config {
     static constexpr double amplitudeTriangle = 0.625;
     static constexpr double amplitudeSaw = 0.515;
     static constexpr double amplitudeSquare = 0.515;
+    /**
+       Background file loading
+     */
+    static constexpr int backgroundLoaderPthreadPriority = 50; // expressed in %
 } // namespace config
 
-// Enable or disable SIMD accelerators by default
-namespace SIMDConfig {
-    constexpr unsigned int defaultAlignment { 16 };
-    constexpr bool writeInterleaved { true };
-    constexpr bool readInterleaved { true };
-    constexpr bool fill { true };
-    constexpr bool gain { false };
-    constexpr bool divide { false };
-    constexpr bool mathfuns { false };
-    constexpr bool loopingSFZIndex { true };
-    constexpr bool saturatingSFZIndex { true };
-    constexpr bool linearRamp { false };
-    constexpr bool multiplicativeRamp { true };
-    constexpr bool add { false };
-    constexpr bool subtract { false };
-    constexpr bool multiplyAdd { false };
-    constexpr bool copy { false };
-    constexpr bool pan { false };
-    constexpr bool cumsum { true };
-    constexpr bool diff { false };
-    constexpr bool sfzInterpolationCast { true };
-    constexpr bool mean { false };
-    constexpr bool meanSquared { false };
-    constexpr bool upsampling { true };
-}
 } // namespace sfz

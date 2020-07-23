@@ -1,3 +1,5 @@
+include(CMakeDependentOption)
+
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard to be used")
 set(CMAKE_C_STANDARD 99 CACHE STRING "C standard to be used")
 
@@ -32,7 +34,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wextra)
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
-    if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^i.86$")
+    if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
         add_compile_options(-msse2)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -60,15 +62,14 @@ else()
 endif()
 
 
-# If we build with Clang use libc++
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT ANDROID)
-set(USE_LIBCPP ON CACHE BOOL "Use libc++ with clang")
+# If we build with Clang, optionally use libc++. Enabled by default on Apple OS.
+cmake_dependent_option(USE_LIBCPP "Use libc++ with clang" "${APPLE}"
+    "CMAKE_CXX_COMPILER_ID MATCHES Clang" OFF)
 if (USE_LIBCPP)
-add_compile_options(-stdlib=libc++)
-# Presumably need the above for linking too, maybe other options missing as well
-add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
-endif()
+    add_compile_options(-stdlib=libc++)
+    # Presumably need the above for linking too, maybe other options missing as well
+    add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
+    add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
 
 add_library(sfizz-pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
@@ -77,9 +78,22 @@ target_include_directories(sfizz-pugixml PUBLIC "src/external/pugixml/src")
 add_library(sfizz-spline STATIC "src/external/spline/spline/spline.cpp")
 target_include_directories(sfizz-spline PUBLIC "src/external/spline")
 
+add_library(sfizz-tunings STATIC "src/external/tunings/src/Tunings.cpp")
+target_include_directories(sfizz-tunings PUBLIC "src/external/tunings/include")
+
 include (CheckLibraryExists)
+add_library (sfizz-atomic INTERFACE)
 if (UNIX AND NOT APPLE)
-    check_library_exists(atomic __atomic_load "" LIBATOMIC_FOUND)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic/check_libatomic.c" "int main() { return 0; }")
+    try_compile(SFIZZ_LINK_LIBATOMIC "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic"
+        SOURCES "${CMAKE_CURRENT_BINARY_DIR}/check_libatomic/check_libatomic.c"
+        LINK_LIBRARIES "atomic")
+    if (SFIZZ_LINK_LIBATOMIC)
+        target_link_libraries (sfizz-atomic INTERFACE "atomic")
+    endif()
+else()
+    set(SFIZZ_LINK_LIBATOMIC FALSE)
 endif()
 
 # Don't show build information when building a different project
@@ -94,10 +108,14 @@ Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
 Build LV2 plug-in:             ${SFIZZ_LV2}
 Build VST plug-in:             ${SFIZZ_VST}
+Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
+Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
+Use clang libc++:              ${USE_LIBCPP}
+Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}

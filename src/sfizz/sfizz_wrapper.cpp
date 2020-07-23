@@ -8,6 +8,7 @@
 #include "Macros.h"
 #include "Synth.h"
 #include "sfizz.h"
+#include <limits>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +23,54 @@ bool sfizz_load_file(sfizz_synth_t* synth, const char* path)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->loadSfzFile(path);
+}
+
+bool sfizz_load_string(sfizz_synth_t* synth, const char* path, const char* text)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->loadSfzString(path, text);
+}
+
+bool sfizz_load_scala_file(sfizz_synth_t* synth, const char* path)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->loadScalaFile(path);
+}
+
+bool sfizz_load_scala_string(sfizz_synth_t* synth, const char* text)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->loadScalaString(text);
+}
+
+void sfizz_set_scala_root_key(sfizz_synth_t* synth, int root_key)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setScalaRootKey(root_key);
+}
+
+int sfizz_get_scala_root_key(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getScalaRootKey();
+}
+
+void sfizz_set_tuning_frequency(sfizz_synth_t* synth, float frequency)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setTuningFrequency(frequency);
+}
+
+float sfizz_get_tuning_frequency(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getTuningFrequency();
+}
+
+void sfizz_load_stretch_tuning_by_ratio(sfizz_synth_t* synth, float ratio)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->loadStretchTuningByRatio(ratio);
 }
 
 void sfizz_free(sfizz_synth_t* synth)
@@ -91,6 +140,11 @@ void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     self->cc(delay, cc_number, cc_value);
 }
+void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->hdcc(delay, cc_number, norm_value);
+}
 void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
@@ -154,6 +208,18 @@ bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_fact
         default:
             return false;
     }
+}
+
+int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode));
+}
+
+void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->setSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
@@ -232,6 +298,12 @@ bool sfizz_should_reload_file(sfizz_synth_t* synth)
     return self->shouldReloadFile();
 }
 
+bool sfizz_should_reload_scala(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->shouldReloadScala();
+}
+
 void sfizz_enable_logging(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
@@ -254,6 +326,92 @@ void sfizz_all_sound_off(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     return self->allSoundOff();
+}
+
+void sfizz_add_external_definitions(sfizz_synth_t* synth, const char* id, const char* value)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->getParser().addExternalDefinition(id, value);
+}
+
+void sfizz_clear_external_definitions(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->getParser().clearExternalDefinitions();
+}
+
+unsigned int sfizz_get_num_key_labels(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getKeyLabels().size();
+}
+
+int sfizz_get_key_label_number(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto keyLabels = self->getKeyLabels();
+    if (label_index < 0)
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    if (static_cast<unsigned int>(label_index) >= keyLabels.size())
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    // Sanity checks for the future or platforms
+    static_assert(
+        std::numeric_limits<sfz::NoteNamePair::first_type>::max() < std::numeric_limits<int>::max(),
+        "The C API sends back an int but the note index in NoteNamePair can overflow it on this platform"
+    );
+    return static_cast<int>(keyLabels[label_index].first);
+}
+
+const char * sfizz_get_key_label_text(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto keyLabels = self->getKeyLabels();
+    if (label_index < 0)
+        return NULL;
+
+    if (static_cast<unsigned int>(label_index) >= keyLabels.size())
+        return NULL;
+
+    return keyLabels[label_index].second.c_str();
+}
+
+unsigned int sfizz_get_num_cc_labels(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->getCCLabels().size();
+}
+
+int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto ccLabels = self->getCCLabels();
+    if (label_index < 0)
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    if (static_cast<unsigned int>(label_index) >= ccLabels.size())
+        return SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX;
+
+    // Sanity checks for the future or platforms
+    static_assert(
+        std::numeric_limits<sfz::CCNamePair::first_type>::max() < std::numeric_limits<int>::max(),
+        "The C API sends back an int but the cc index in CCNamePair can overflow it on this platform"
+    );
+    return static_cast<int>(ccLabels[label_index].first);
+}
+
+const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    const auto ccLabels = self->getCCLabels();
+    if (label_index < 0)
+        return NULL;
+
+    if (static_cast<unsigned int>(label_index) >= ccLabels.size())
+        return NULL;
+
+    return ccLabels[label_index].second.c_str();
 }
 
 #ifdef __cplusplus

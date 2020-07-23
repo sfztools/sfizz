@@ -9,6 +9,7 @@
 #include "Config.h"
 #include "Debug.h"
 #include "LeakDetector.h"
+#include "SIMDHelpers.h"
 #include "absl/types/span.h"
 #include "absl/memory/memory.h"
 #include <array>
@@ -25,7 +26,9 @@ namespace sfz
  * @tparam MaxChannels the maximum number of channels in the buffer
  * @tparam Alignment the alignment for the buffers
  */
-template <class Type, size_t MaxChannels = sfz::config::numChannels, unsigned int Alignment = SIMDConfig::defaultAlignment>
+template <class Type, size_t MaxChannels = config::numChannels,
+          unsigned int Alignment = config::defaultAlignment,
+          size_t PaddingLeft_ = 0, size_t PaddingRight_ = 0>
 class AudioBuffer {
 public:
     using value_type = typename std::remove_cv<Type>::type;
@@ -33,6 +36,15 @@ public:
     using const_pointer = const value_type*;
     using iterator = pointer;
     using const_iterator = const_pointer;
+
+    enum {
+        //! Increased left padding to preserve required alignment
+        PaddingLeft = PaddingLeft_ + (Alignment - (PaddingLeft_ % Alignment)) % Alignment,
+        //! Padding to the right
+        PaddingRight = PaddingRight_,
+        //! Total padding left and right
+        PaddingTotal = PaddingLeft + PaddingRight,
+    };
 
     /**
      * @brief Construct a new Audio Buffer object
@@ -54,7 +66,7 @@ public:
         , numFrames(numFrames)
     {
         for (size_t i = 0; i < numChannels; ++i)
-            buffers[i] = absl::make_unique<buffer_type>(numFrames);
+            buffers[i] = absl::make_unique<buffer_type>(numFrames + PaddingTotal);
     }
 
     /**
@@ -64,17 +76,30 @@ public:
      * @return true if the resize worked
      * @return false otherwise
      */
-    bool resize(size_t newSize)
+    bool resize(size_t newSize, std::nothrow_t) noexcept
     {
         bool returnedOK = true;
 
         for (size_t i = 0; i < numChannels; ++i)
-            returnedOK &= buffers[i]->resize(newSize);
+            returnedOK &= buffers[i]->resize(newSize + PaddingTotal, std::nothrow);
 
         if (returnedOK)
             numFrames = newSize;
 
         return returnedOK;
+    }
+
+    /**
+     * @brief Resizes all the underlying buffers to a new size.
+     *
+     * @param newSize
+     */
+    void resize(size_t newSize)
+    {
+        for (size_t i = 0; i < numChannels; ++i)
+            buffers[i]->resize(newSize + PaddingTotal);
+
+        numFrames = newSize;
     }
 
     /**
@@ -87,7 +112,7 @@ public:
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
-            return buffers[channelIndex]->data();
+            return buffers[channelIndex]->data() + PaddingLeft;
 
         return {};
     }
@@ -102,7 +127,7 @@ public:
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
-            return buffers[channelIndex]->end();
+            return buffers[channelIndex]->end() - PaddingRight;
 
         return {};
     }
@@ -117,7 +142,7 @@ public:
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
-            return buffers[channelIndex]->data();
+            return buffers[channelIndex]->data() + PaddingLeft;
 
         return {};
     }
@@ -132,7 +157,7 @@ public:
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
-            return buffers[channelIndex]->end();
+            return buffers[channelIndex]->end() - PaddingRight;
 
         return {};
     }
@@ -147,7 +172,7 @@ public:
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
-            return { buffers[channelIndex]->data(), buffers[channelIndex]->size() };
+            return { buffers[channelIndex]->data() + PaddingLeft, numFrames };
 
         return {};
     }
@@ -170,7 +195,7 @@ public:
     void addChannel()
     {
         if (numChannels < MaxChannels)
-            buffers[numChannels++] = absl::make_unique<buffer_type>(numFrames);
+            buffers[numChannels++] = absl::make_unique<buffer_type>(numFrames + PaddingTotal);
     }
 
     /**
@@ -219,7 +244,7 @@ public:
         ASSERT(buffers[channelIndex] != nullptr);
         ASSERT(frameIndex < numFrames);
 
-        return *(buffers[channelIndex]->data() + frameIndex);
+        return *(buffers[channelIndex]->data() + PaddingLeft + frameIndex);
     }
 
     /**
@@ -244,6 +269,17 @@ public:
             buffers[i].reset();
         numFrames = 0;
         numChannels = 0;
+    }
+
+    /**
+     * Writes zeros in the buffer
+     */
+    void clear()
+    {
+        for (size_t i = 0; i < numChannels; ++i) {
+            absl::Span<Type> paddedSpan { buffers[i]->data(), numFrames + PaddingTotal };
+            fill<Type>(paddedSpan, Type{ 0.0 });
+        }
     }
 
     /**

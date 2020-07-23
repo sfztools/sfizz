@@ -1,0 +1,3 @@
+<region>
+sample=*sine
+ampeg_attack=0.02 ampeg_release=0.1

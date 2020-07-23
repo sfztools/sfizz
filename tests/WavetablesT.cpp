@@ -8,6 +8,7 @@
 #include "sfizz/MathHelpers.h"
 #include "catch2/catch.hpp"
 #include <algorithm>
+#include <cmath>
 
 TEST_CASE("[Wavetables] Frequency ranges")
 {
@@ -37,4 +38,19 @@ TEST_CASE("[Wavetables] Frequency ranges")
     // check ranges to be decently adjusted to the MIDI frequency range
     REQUIRE(min_oct == 0);
     REQUIRE(max_oct == sfz::WavetableRange::countOctaves - 1);
+}
+
+TEST_CASE("[Wavetables] Octave number lookup")
+{
+    for (int note = 0; note < 128; ++note) {
+        double f = midiNoteFrequency(note);
+
+        float ref = std::log2(f * sfz::WavetableRange::frequencyScaleFactor);
+        float oct = sfz::WavetableRange::getFractionalOctaveForFrequency(f);
+
+        ref = clamp<float>(ref, 0, sfz::WavetableRange::countOctaves - 1);
+        oct = clamp<float>(oct, 0, sfz::WavetableRange::countOctaves - 1);
+
+        REQUIRE(oct == Approx(ref).margin(0.03f));
+    }
 }

@@ -11,6 +11,7 @@
 #include "Debug.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
+#include "AudioSpan.h"
 #include "Config.h"
 
 namespace sfz {
@@ -39,7 +40,7 @@ public:
      * @param output
      * @param framesReady an atomic counter for the ready frames. If null no signaling is done.
      */
-    void stream(const AudioBuffer<float>& input, AudioBuffer<float>& output, std::atomic<size_t>* framesReady = nullptr);
+    void stream(AudioSpan<float> input, AudioSpan<float> output, std::atomic<size_t>* framesReady = nullptr);
 
     Oversampler() = delete;
     Oversampler(const Oversampler&) = delete;

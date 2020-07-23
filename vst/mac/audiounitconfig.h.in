@@ -1,0 +1,15 @@
+#define kAudioUnitBundleIdentifier @SFIZZ_AU_BUNDLE_IDENTIFIER@
+#define kAudioUnitVersion 0x@SFIZZ_AU_HEXADECIMAL_VERSION@
+#define kAUPluginName  @SFIZZ_AU_BUNDLE_MANUFACTURER@: @PROJECT_NAME@
+#define kAUPluginDescription  @PROJECT_NAME@
+#define kAUPluginType  @SFIZZ_AU_BUNDLE_TYPE@
+#define kAUPluginSubType  @SFIZZ_AU_BUNDLE_SUBTYPE@
+#define kAUPluginManufacturer  @SFIZZ_AU_BUNDLE_MANUFACTURER@
+
+#define kAudioUnitName "@SFIZZ_AU_BUNDLE_MANUFACTURER@: @PROJECT_NAME@"
+#define kAudioUnitDescription "@PROJECT_NAME@"
+#define kAudioUnitType '@SFIZZ_AU_BUNDLE_TYPE@'
+#define kAudioUnitComponentSubType '@SFIZZ_AU_BUNDLE_SUBTYPE@'
+#define kAudioUnitComponentManuf '@SFIZZ_AU_BUNDLE_MANUFACTURER@'
+
+#define kAudioUnitCarbonView 1

@@ -1,8 +1,8 @@
 #include "EQPool.h"
-#include "AtomicGuard.h"
 #include <thread>
 #include "absl/algorithm/container.h"
 #include "SIMDHelpers.h"
+#include "SwapAndPop.h"
 
 sfz::EQHolder::EQHolder(const MidiState& state)
 :midiState(state)
@@ -30,17 +30,17 @@ void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels
     // Setup the modulated values
     lastFrequency = baseFrequency;
     for (const auto& mod : description.frequencyCC)
-        lastFrequency += midiState.getCCValue(mod.cc) * mod.value;
+        lastFrequency += midiState.getCCValue(mod.cc) * mod.data;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
 
     lastBandwidth = baseBandwidth;
     for (const auto& mod : description.bandwidthCC)
-        lastBandwidth += midiState.getCCValue(mod.cc) * mod.value;
+        lastBandwidth += midiState.getCCValue(mod.cc) * mod.data;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
 
     lastGain = baseGain;
     for (const auto& mod : description.gainCC)
-        lastGain += midiState.getCCValue(mod.cc) * mod.value;
+        lastGain += midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
     // Initialize the EQ
@@ -63,17 +63,17 @@ void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numF
     // For now we take the last value
     lastFrequency = baseFrequency;
     for (const auto& mod : description->frequencyCC)
-        lastFrequency += midiState.getCCValue(mod.cc) * mod.value;
+        lastFrequency += midiState.getCCValue(mod.cc) * mod.data;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
 
     lastBandwidth = baseBandwidth;
     for (const auto& mod : description->bandwidthCC)
-        lastBandwidth += midiState.getCCValue(mod.cc) * mod.value;
+        lastBandwidth += midiState.getCCValue(mod.cc) * mod.data;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
 
     lastGain = baseGain;
     for (const auto& mod : description->gainCC)
-        lastGain += midiState.getCCValue(mod.cc) * mod.value;
+        lastGain += midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
     if (lastGain == 0.0f) {
@@ -108,8 +108,8 @@ sfz::EQPool::EQPool(const MidiState& state, int numEQs)
 
 sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned numChannels, float velocity)
 {
-    AtomicGuard guard { givingOutEQs };
-    if (!canGiveOutEQs)
+    const std::unique_lock<std::mutex> lock { eqGuard, std::try_to_lock };
+    if (!lock.owns_lock())
         return {};
 
     auto eq = absl::c_find_if(eqs, [](const EQHolderPtr& holder) {
@@ -132,23 +132,10 @@ size_t sfz::EQPool::getActiveEQs() const
 
 size_t sfz::EQPool::setnumEQs(size_t numEQs)
 {
-    AtomicDisabler disabler { canGiveOutEQs };
+    const std::lock_guard<std::mutex> eqLock { eqGuard };
 
-    while(givingOutEQs)
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    swapAndPopAll(eqs, [](sfz::EQHolderPtr& eq) { return eq.use_count() == 1; });
 
-    auto eqIterator = eqs.begin();
-    auto eqSentinel = eqs.rbegin();
-    while (eqIterator < eqSentinel.base()) {
-        if (eqIterator->use_count() == 1) {
-            std::iter_swap(eqIterator, eqSentinel);
-            ++eqSentinel;
-        } else {
-            ++eqIterator;
-        }
-    }
-
-    eqs.resize(std::distance(eqs.begin(), eqSentinel.base()));
     for (size_t i = eqs.size(); i < numEQs; ++i) {
         eqs.emplace_back(std::make_shared<EQHolder>(midiState));
         eqs.back()->setSampleRate(sampleRate);

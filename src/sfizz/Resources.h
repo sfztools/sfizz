@@ -5,12 +5,16 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "SynthConfig.h"
 #include "FilePool.h"
 #include "BufferPool.h"
 #include "FilterPool.h"
 #include "EQPool.h"
 #include "Logger.h"
 #include "Wavetables.h"
+#include "Curve.h"
+#include "Tuning.h"
+#include "absl/types/optional.h"
 
 namespace sfz
 {
@@ -18,13 +22,17 @@ class WavetableMulti;
 
 struct Resources
 {
+    SynthConfig synthConfig;
     BufferPool bufferPool;
     MidiState midiState;
     Logger logger;
+    CurveSet curves;
     FilePool filePool { logger };
     FilterPool filterPool { midiState };
     EQPool eqPool { midiState };
     WavetablePool wavePool;
+    Tuning tuning;
+    absl::optional<StretchTuning> stretch;
 
     void setSampleRate(float samplerate)
     {
@@ -37,6 +45,15 @@ struct Resources
     {
         bufferPool.setBufferSize(samplesPerBlock);
         midiState.setSamplesPerBlock(samplesPerBlock);
+    }
+
+    void clear()
+    {
+        curves = CurveSet::createPredefined();
+        filePool.clear();
+        wavePool.clearFileWaves();
+        logger.clear();
+        midiState.reset();
     }
 };
 }

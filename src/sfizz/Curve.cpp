@@ -57,6 +57,34 @@ Curve Curve::buildCurveFromHeader(
     return curve;
 }
 
+Curve Curve::buildFromVelcurvePoints(
+    absl::Span<const std::pair<uint8_t, float>> points,
+    Interpolator itp, bool invert)
+{
+    Curve curve;
+    bool fillStatus[NumValues] = {};
+
+    auto setPoint = [&curve, &fillStatus](int i, float x) {
+        curve._points[i] = x;
+        fillStatus[i] = true;
+    };
+
+    if (invert) {
+        setPoint(0, 1.0);
+        setPoint(NumValues - 1, 0.0);
+    } else {
+        setPoint(0, 0.0);
+        setPoint(NumValues - 1, 1.0);
+    }
+
+    for (const auto& point: points) {
+        setPoint(point.first, point.second);
+    }
+
+    curve.fill(itp, fillStatus);
+    return curve;
+}
+
 Curve Curve::buildPredefinedCurve(int index)
 {
     Curve curve;
@@ -79,20 +107,24 @@ Curve Curve::buildPredefinedCurve(int index)
         break;
     case 4:
         for (unsigned i = 0; i < NumValues; ++i) {
-            double x = i * (1.0 / (NumValues - 1));
+            double x = i / static_cast<double>(NumValues - 1);
             curve._points[i] = x * x;
         }
         break;
     case 5:
-        for (unsigned i = 0; i < NumValues; ++i) {
-            double x = i * (1.0 / (NumValues - 1));
-            curve._points[i] = std::pow(x, 0.5);
+        curve._points[0] = 0.0;
+        curve._points[NumValues - 1] = 1.0;
+        for (unsigned i = 1; i < NumValues - 1; ++i) {
+            double x = i / static_cast<double>(NumValues - 1);
+            curve._points[i] = std::sqrt(x);
         }
         break;
     case 6:
-        for (unsigned i = 0; i < NumValues; ++i) {
-            double x = i * (1.0 / (NumValues - 1));
-            curve._points[i] = std::pow(1.0 - x, 0.5);
+        curve._points[0] = 1.0;
+        curve._points[NumValues - 1] = 0.0;
+        for (unsigned i = 1; i < NumValues - 1; ++i) {
+            double x = i / static_cast<double>(NumValues - 1);
+            curve._points[i] = std::sqrt(1.0 - x);
         }
         break;
     }
@@ -191,6 +223,12 @@ CurveSet CurveSet::createPredefined()
 void CurveSet::addCurve(const Curve& curve, int explicitIndex)
 {
     std::unique_ptr<Curve>* slot;
+
+    if (explicitIndex < -1)
+        return;
+
+    if (explicitIndex >= config::maxCurves)
+        return;
 
     if (explicitIndex == -1) {
         if (_useExplicitIndexing)

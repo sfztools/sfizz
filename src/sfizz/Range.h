@@ -28,8 +28,8 @@ public:
     {
 
     }
-    Type getStart() const noexcept { return _start; }
-    Type getEnd() const noexcept { return _end; }
+    constexpr Type getStart() const noexcept { return _start; }
+    constexpr Type getEnd() const noexcept { return _end; }
     /**
      * @brief Get the range as an std::pair of the endpoints
      *
@@ -100,6 +100,20 @@ public:
             _end = value;
         else
             _start = value;
+    }
+
+    /**
+     * @brief Convert the range to a different value type
+     *
+     * @return Range<Other>
+     */
+    template <class Other>
+    Range<Other> to() const noexcept
+    {
+        return Range<Other> {
+            static_cast<Other>(_start),
+            static_cast<Other>(_end),
+        };
     }
 
 private:

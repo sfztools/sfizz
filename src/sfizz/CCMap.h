@@ -22,7 +22,10 @@ namespace sfz {
 template <class ValueType>
 class CCMap {
 public:
-    CCMap() = delete;
+    CCMap()
+        : defaultValue(ValueType {})
+    {
+    }
     /**
      * @brief Construct a new CCMap object with the specified default value.
      *
@@ -44,11 +47,11 @@ public:
      */
     const ValueType& getWithDefault(int index) const noexcept
     {
-        auto it = absl::c_lower_bound(container, index, CCValuePairComparator<ValueType>{});
+        auto it = absl::c_lower_bound(container, index, CCDataComparator<ValueType> {});
         if (it == container.end() || it->cc != index) {
             return defaultValue;
         } else {
-            return it->value;
+            return it->data;
         }
     }
 
@@ -60,12 +63,12 @@ public:
      */
     ValueType& operator[](const int& index) noexcept
     {
-        auto it = absl::c_lower_bound(container, index, CCValuePairComparator<ValueType>{});
+        auto it = absl::c_lower_bound(container, index, CCDataComparator<ValueType> {});
         if (it == container.end() || it->cc != index) {
             auto inserted = container.insert(it, { index, defaultValue });
-            return inserted->value;
+            return inserted->data;
         } else {
-            return it->value;
+            return it->data;
         }
     }
 
@@ -85,16 +88,25 @@ public:
      */
     bool contains(int index) const noexcept
     {
-        return absl::c_binary_search(container, index, CCValuePairComparator<ValueType>{});
+        return absl::c_binary_search(container, index, CCDataComparator<ValueType> {});
     }
-    typename std::vector<CCValuePair<ValueType>>::const_iterator begin() const { return container.cbegin(); }
-    typename std::vector<CCValuePair<ValueType>>::const_iterator end() const { return container.cend(); }
+
+    /**
+     * @brief Container size
+     *
+     * @return size_t
+     */
+    size_t size() const noexcept { return container.size(); }
+
+    typename std::vector<CCData<ValueType>>::const_iterator begin() const { return container.cbegin(); }
+    typename std::vector<CCData<ValueType>>::const_iterator end() const { return container.cend(); }
+
 private:
     // typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
     // typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
 
     const ValueType defaultValue;
-    std::vector<CCValuePair<ValueType>> container;
+    std::vector<CCData<ValueType>> container;
     LEAK_DETECTOR(CCMap);
 };
 }

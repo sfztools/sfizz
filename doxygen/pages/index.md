@@ -2,4 +2,5 @@
 
 SFZ file format library
 
-[public API](sfizz_8h.html)
+- [public C API](sfizz_8h.html)
+- [public C++ API](classsfz_1_1_sfizz.html)

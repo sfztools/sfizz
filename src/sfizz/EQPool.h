@@ -4,6 +4,7 @@
 #include "MidiState.h"
 #include <vector>
 #include <memory>
+#include <mutex>
 
 namespace sfz
 {
@@ -114,8 +115,7 @@ public:
      */
     void setSampleRate(float sampleRate);
 private:
-    std::atomic<bool> givingOutEQs { false };
-    std::atomic<bool> canGiveOutEQs { true };
+    std::mutex eqGuard;
     float sampleRate { config::defaultSampleRate };
     const MidiState& midiState;
     std::vector<EQHolderPtr> eqs;

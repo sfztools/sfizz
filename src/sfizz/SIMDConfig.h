@@ -13,19 +13,27 @@
 
    - SFIZZ_HAVE_SSE
    - SFIZZ_HAVE_SSE2
+   - SFIZZ_HAVE_AVX
    - SFIZZ_HAVE_NEON
  */
 
 #if defined(__GNUC__)
-#   if defined(__SSE2__)
+#   if defined(__AVX__)
 #       define SFIZZ_DETECT_SSE 1
 #       define SFIZZ_DETECT_SSE2 1
+#       define SFIZZ_DETECT_AVX 1
+#   elif defined(__SSE2__)
+#       define SFIZZ_DETECT_SSE 1
+#       define SFIZZ_DETECT_SSE2 1
+#       define SFIZZ_DETECT_AVX 0
 #   elif defined(__SSE__)
 #       define SFIZZ_DETECT_SSE 1
 #       define SFIZZ_DETECT_SSE2 0
+#       define SFIZZ_DETECT_AVX 0
 #   else
 #       define SFIZZ_DETECT_SSE 0
 #       define SFIZZ_DETECT_SSE2 0
+#       define SFIZZ_DETECT_AVX 0
 #   endif
 #   if defined(__ARM_NEON__)
 #       define SFIZZ_DETECT_NEON 1
@@ -33,15 +41,22 @@
 #       define SFIZZ_DETECT_NEON 0
 #   endif
 #elif defined(_MSC_VER)
-#   if defined(_M_AMD64) || defined(_M_X64)
+#   if defined(__AVX__)
 #       define SFIZZ_DETECT_SSE 1
 #       define SFIZZ_DETECT_SSE2 1
+#       define SFIZZ_DETECT_AVX 1
+#   elif defined(_M_AMD64) || defined(_M_X64)
+#       define SFIZZ_DETECT_SSE 1
+#       define SFIZZ_DETECT_SSE2 1
+#       define SFIZZ_DETECT_AVX 0
 #   elif _M_IX86_FP == 2
 #       define SFIZZ_DETECT_SSE 1
 #       define SFIZZ_DETECT_SSE2 1
+#       define SFIZZ_DETECT_AVX 0
 #   elif _M_IX86_FP == 1
 #       define SFIZZ_DETECT_SSE 1
 #       define SFIZZ_DETECT_SSE2 0
+#       define SFIZZ_DETECT_AVX 0
 #   endif
 // TODO: how to check for NEON on MSVC ARM?
 #endif
@@ -58,6 +73,13 @@
 #       define SFIZZ_HAVE_SSE2 SFIZZ_DETECT_SSE2
 #   else
 #       define SFIZZ_HAVE_SSE2 0
+#   endif
+#endif
+#ifndef SFIZZ_HAVE_AVX
+#   ifdef SFIZZ_DETECT_AVX
+#       define SFIZZ_HAVE_AVX SFIZZ_DETECT_AVX
+#   else
+#       define SFIZZ_HAVE_AVX 0
 #   endif
 #endif
 #ifndef SFIZZ_HAVE_NEON
