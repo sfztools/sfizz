@@ -622,6 +622,48 @@ R"(#define $B foo-$A-baz
         REQUIRE(mock.fullBlockMembers == expectedMembers);
 }
 
+TEST_CASE("[Parsing] Strange #define behavior")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/define_cc_bug.sfz",R"(
+#define $CCVAL 100
+<region> amplitude_oncc$CCVAL=100 sample=*sine
+<region> transpose=-12 amplitude_oncc$CCVAL=100 sample=*sine
+<region> transpose=-12 amplitude_oncc100=100 sample=*sine
+)");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"amplitude_oncc100", "100"},
+             {"sample", "*sine"}},
+            {{"transpose", "-12"},
+             {"amplitude_oncc100", "100"},
+             {"sample", "*sine"}},
+            {{"transpose", "-12"},
+             {"amplitude_oncc100", "100"},
+             {"sample", "*sine"}},
+        };
+
+        std::vector<std::string> expectedHeaders = {
+            "region", "region", "region"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
+
 TEST_CASE("[Parsing] Opcode value special character")
 {
         sfz::Parser parser;
