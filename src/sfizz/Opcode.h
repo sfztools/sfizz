@@ -16,6 +16,7 @@
 #include <string_view>
 #include <vector>
 #include <type_traits>
+#include <iosfwd>
 
 // charconv support is still sketchy with clang/gcc so we use abseil's numbers
 #include "absl/strings/numbers.h"
@@ -292,3 +293,5 @@ inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<Valu
 }
 
 }
+
+std::ostream &operator<<(std::ostream &os, const sfz::Opcode &opcode);

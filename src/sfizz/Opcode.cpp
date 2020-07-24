@@ -9,6 +9,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include <iostream>
 #include <cctype>
 #include <cassert>
 
@@ -153,4 +154,9 @@ absl::optional<uint8_t> sfz::readNoteValue(absl::string_view value)
         return {};
 
     return static_cast<uint8_t>(noteNumber);
+}
+
+std::ostream &operator<<(std::ostream &os, const sfz::Opcode &opcode)
+{
+    return os << opcode.opcode << '=' << '"' << opcode.value << '"';
 }
