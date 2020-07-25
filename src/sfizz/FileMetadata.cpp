@@ -4,7 +4,16 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+// Note: Based on some format research from Surge synthesizer
+//       made by Paul Walker and Mario Kruselj
+//       cf. Surge src/common/WavSupport.cpp
+
 #include "FileMetadata.h"
+#include <absl/strings/ascii.h>
+#include <absl/strings/numbers.h>
+#include <absl/strings/string_view.h>
+#include <map>
+#include <string>
 #include <cstdio>
 #include <cstring>
 
@@ -19,12 +28,22 @@ typedef std::unique_ptr<FILE, FILE_deleter> FILE_u;
 
 // Utility: binary file IO
 
+static uint32_t u32le(const uint8_t *bytes)
+{
+    return bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+}
+
+static uint32_t u32be(const uint8_t *bytes)
+{
+    return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+}
+
 static bool fread_u32le(FILE* stream, uint32_t& value)
 {
     uint8_t bytes[4];
     if (fread(bytes, 4, 1, stream) != 1)
         return false;
-    value = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+    value = u32le(bytes);
     return true;
 }
 
@@ -33,7 +52,7 @@ static bool fread_u32be(FILE* stream, uint32_t& value)
     uint8_t bytes[4];
     if (fread(bytes, 4, 1, stream) != 1)
         return false;
-    value = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+    value = u32be(bytes);
     return true;
 }
 
@@ -45,6 +64,14 @@ struct FileMetadataReader::Impl {
 
     bool openFlac();
     bool openRiff();
+
+    bool extractClmWavetable(WavetableInfo &wt);
+    bool extractSurgeWavetable(WavetableInfo &wt);
+    bool extractUheWavetable(WavetableInfo &wt);
+
+    const RiffChunkInfo* riffChunk(size_t index) const;
+    const RiffChunkInfo* riffChunkById(RiffChunkId id) const;
+    size_t readRiffData(size_t index, void* buffer, size_t count);
 };
 
 FileMetadataReader::FileMetadataReader()
@@ -172,13 +199,23 @@ size_t FileMetadataReader::riffChunkCount() const
 
 const RiffChunkInfo* FileMetadataReader::riffChunk(size_t index) const
 {
-    const std::vector<RiffChunkInfo>& riffChunks = impl_->riffChunks_;
+    return impl_->riffChunk(index);
+}
+
+const RiffChunkInfo* FileMetadataReader::Impl::riffChunk(size_t index) const
+{
+    const std::vector<RiffChunkInfo>& riffChunks = riffChunks_;
     return (index < riffChunks.size()) ? &riffChunks[index] : nullptr;
 }
 
 const RiffChunkInfo* FileMetadataReader::riffChunkById(RiffChunkId id) const
 {
-    for (const RiffChunkInfo& riff : impl_->riffChunks_) {
+    return impl_->riffChunkById(id);
+}
+
+const RiffChunkInfo* FileMetadataReader::Impl::riffChunkById(RiffChunkId id) const
+{
+    for (const RiffChunkInfo& riff : riffChunks_) {
         if (riff.id == id)
             return &riff;
     }
@@ -187,13 +224,18 @@ const RiffChunkInfo* FileMetadataReader::riffChunkById(RiffChunkId id) const
 
 size_t FileMetadataReader::readRiffData(size_t index, void* buffer, size_t count)
 {
+    return impl_->readRiffData(index, buffer, count);
+}
+
+size_t FileMetadataReader::Impl::readRiffData(size_t index, void* buffer, size_t count)
+{
     const RiffChunkInfo* riff = riffChunk(index);
     if (!riff)
         return 0;
 
     count = (count < riff->length) ? count : riff->length;
 
-    FILE* stream = impl_->stream_.get();
+    FILE* stream = stream_.get();
     if (fseek(stream, riff->fileOffset, SEEK_SET) != 0)
         return 0;
 
@@ -204,7 +246,7 @@ bool FileMetadataReader::extractRiffInstrument(SF_INSTRUMENT& ins)
 {
     const RiffChunkInfo* riff = riffChunkById(RiffChunkId{'s', 'm', 'p', 'l'});
     if (!riff)
-        return 0;
+        return false;
 
     constexpr uint32_t maxLoops = 16;
     constexpr uint32_t maxChunkSize = 9 * 4 + maxLoops * 6 * 4;
@@ -253,6 +295,93 @@ bool FileMetadataReader::extractRiffInstrument(SF_INSTRUMENT& ins)
         ins.loops[i].end = extractU32(loopOffset + 0x0c) + 1;
         ins.loops[i].count = extractU32(loopOffset + 0x14);
     }
+
+    return true;
+}
+
+bool FileMetadataReader::extractWavetableInfo(WavetableInfo& wt)
+{
+    if (impl_->extractClmWavetable(wt))
+        return true;
+
+    if (impl_->extractSurgeWavetable(wt))
+        return true;
+
+    if (impl_->extractUheWavetable(wt))
+        return true;
+
+    // there also exists a method based on cue chunks used in Surge
+    // files possibly already covered by the Native case
+    // otherwise do later when I will have a few samples at hand
+
+    return false;
+}
+
+bool FileMetadataReader::Impl::extractClmWavetable(WavetableInfo &wt)
+{
+    const RiffChunkInfo* clm = riffChunkById(RiffChunkId{'c', 'l', 'm', ' '});
+    if (!clm)
+        return false;
+
+    char data[16] {};
+    if (readRiffData(clm->index, data, sizeof(data)) != sizeof(data))
+        return false;
+
+    // 0-2 are "<!>"
+    // 3-6 is the decimal table size written in ASCII (most likely "2048")
+    // 7 is a space character
+    // 8-15 are flags as ASCII digit characters (eg. "01000000")
+    // 16-end "wavetable (<maker name>)"
+
+    if (!absl::SimpleAtoi(absl::string_view(data + 3, 4), &wt.tableSize))
+        return false;
+
+    int cti = static_cast<unsigned char>(data[8]);
+    if (cti >= '0' && cti <= '4')
+        cti -= '0';
+    else
+        cti = 0; // unknown interpolation
+    wt.crossTableInterpolation = cti;
+
+    wt.oneShot = false;
+
+    return true;
+}
+
+bool FileMetadataReader::Impl::extractSurgeWavetable(WavetableInfo &wt)
+{
+    const RiffChunkInfo* srge;
+
+    if ((srge = riffChunkById(RiffChunkId{'s', 'r', 'g', 'e'})))
+        wt.oneShot = false;
+    else if ((srge = riffChunkById(RiffChunkId{'s', 'r', 'g', 'o'})))
+        wt.oneShot = true;
+    else
+        return false;
+
+    uint8_t data[8];
+    if (readRiffData(srge->index, data, sizeof(data)) != sizeof(data))
+        return false;
+
+    //const uint32_t version = u32le(data);
+    wt.tableSize = u32le(data + 4);
+
+    wt.crossTableInterpolation = 0;
+
+    return true;
+}
+
+bool FileMetadataReader::Impl::extractUheWavetable(WavetableInfo &wt)
+{
+    const RiffChunkInfo* uhwt = riffChunkById(RiffChunkId{'u', 'h', 'W', 'T'});
+    if (!uhwt)
+        return false;
+
+    // u-he Hive: no idea what is inside this one, 2048 assumed
+
+    wt.tableSize = 2048;
+    wt.crossTableInterpolation = 0;
+    wt.oneShot = false;
 
     return true;
 }
