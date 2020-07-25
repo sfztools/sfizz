@@ -1216,6 +1216,19 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.sustainCC == 0);
     }
 
+    SECTION("sustain_lo")
+    {
+        REQUIRE(region.sustainThreshold == Approx(0.5_norm).margin(1e-3));
+        region.parseOpcode({ "sustain_lo", "-1" });
+        REQUIRE(region.sustainThreshold == 0_norm);
+        region.parseOpcode({ "sustain_lo", "1" });
+        REQUIRE(region.sustainThreshold == 1_norm);
+        region.parseOpcode({ "sustain_lo", "63" });
+        REQUIRE(region.sustainThreshold == 63_norm);
+        region.parseOpcode({ "sustain_lo", "128" });
+        REQUIRE(region.sustainThreshold == 127_norm);
+    }
+
     SECTION("Filter stacking and cutoffs")
     {
         REQUIRE(region.filters.empty());

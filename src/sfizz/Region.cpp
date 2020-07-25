@@ -281,6 +281,11 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sustain_cc"):
         setValueFromOpcode(opcode, sustainCC, Default::ccNumberRange);
         break;
+    case hash("sustain_lo"):
+        if (auto value = readOpcode(opcode.value, Default::float7Range)) {
+            sustainThreshold = normalizeCC(*value);
+        }
+        break;
     case hash("sustain_sw"):
         checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
         break;
@@ -1038,7 +1043,7 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
     const bool randOk = randRange.contains(randValue);
     bool releaseTrigger = (trigger == SfzTrigger::release_key);
     if (trigger == SfzTrigger::release) {
-        if (midiState.getCCValue(sustainCC) < config::halfCCThreshold)
+        if (midiState.getCCValue(sustainCC) < sustainThreshold)
             releaseTrigger = true;
         else
             noteIsOff = true;
@@ -1057,7 +1062,7 @@ bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
     if (!isSwitchedOn())
         return false;
 
-    if (sustainCC == ccNumber && ccValue < config::halfCCThreshold && noteIsOff) {
+    if (sustainCC == ccNumber && ccValue < sustainThreshold && noteIsOff) {
         noteIsOff = false;
         return true;
     }
