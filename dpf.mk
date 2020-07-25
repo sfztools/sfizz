@@ -77,7 +77,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/effects/Width.cpp \
 	src/sfizz/EQPool.cpp \
 	src/sfizz/FileId.cpp \
-	src/sfizz/FileInstrument.cpp \
+	src/sfizz/FileMetadata.cpp \
 	src/sfizz/FilePool.cpp \
 	src/sfizz/FilterPool.cpp \
 	src/sfizz/FloatEnvelopes.cpp \
