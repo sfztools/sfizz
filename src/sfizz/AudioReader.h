@@ -9,6 +9,7 @@
 #include "ghc/fs_std.hpp"
 #include <system_error>
 #include <memory>
+#include <cstdio>
 #if defined(_WIN32)
 #define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
 #include <windows.h>
@@ -52,8 +53,18 @@ typedef std::unique_ptr<AudioReader> AudioReaderPtr;
 AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, std::error_code* ec = nullptr);
 
 /**
+ * @brief Create a file reader of detected type.
+ */
+AudioReaderPtr createAudioReaderWithFd(int fd, bool reverse, std::error_code* ec = nullptr);
+
+/**
  * @brief Create a file reader of explicit type. (for testing purposes)
  */
 AudioReaderPtr createExplicitAudioReader(const fs::path& path, AudioReaderType type, std::error_code* ec = nullptr);
+
+/**
+ * @brief Create a file reader of explicit type. (for testing purposes)
+ */
+AudioReaderPtr createExplicitAudioReaderWithFd(int fd, AudioReaderType type, std::error_code* ec = nullptr);
 
 } // namespace sfz
