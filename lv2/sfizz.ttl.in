@@ -56,16 +56,6 @@ midnam:update a lv2:Feature .
     "File Scala"@it ;
   rdfs:range atom:Path .
 
-<@LV2PLUGIN_URI@:activevoices>
-  a lv2:Parameter ;
-  pg:group <@LV2PLUGIN_URI@#status> ;
-  rdfs:label "Active voices",
-    "Voix utilisées"@fr ;
-  rdfs:range atom:Int ;
-  lv2:minimum 0 ;
-  lv2:maximum 256
-  .
-
 <@LV2PLUGIN_URI@>
   a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
 
@@ -95,7 +85,6 @@ midnam:update a lv2:Feature .
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
                  <@LV2PLUGIN_URI@:tuningfile> ;
-  patch:readable <@LV2PLUGIN_URI@:activevoices> ;
 
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
@@ -308,4 +297,15 @@ midnam:update a lv2:Feature .
     lv2:minimum 0.0 ;
     lv2:maximum 1.0 ;
     units:unit units:coef
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 12 ;
+    lv2:symbol "active_voices" ;
+    lv2:name "Active voices",
+      "Voix utilisées"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 256 ;
   ] .
