@@ -60,14 +60,14 @@
 
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
-#define SFIZZ__sfzFile "http://sfztools.github.io/sfizz:sfzfile"
-#define SFIZZ__tuningfile "http://sfztools.github.io/sfizz:tuningfile"
-#define SFIZZ__numVoices "http://sfztools.github.io/sfizz:numvoices"
-#define SFIZZ__preloadSize "http://sfztools.github.io/sfizz:preload_size"
-#define SFIZZ__oversampling "http://sfztools.github.io/sfizz:oversampling"
+#define SFIZZ__sfzFile SFIZZ_URI ":" "sfzfile"
+#define SFIZZ__tuningfile SFIZZ_URI ":" "tuningfile"
+#define SFIZZ__numVoices SFIZZ_URI ":" "numvoices"
+#define SFIZZ__preloadSize SFIZZ_URI ":" "preload_size"
+#define SFIZZ__oversampling SFIZZ_URI ":" "oversampling"
 // These ones are just for the worker
-#define SFIZZ__logStatus "http://sfztools.github.io/sfizz:log_status"
-#define SFIZZ__checkModification "http://sfztools.github.io/sfizz:check_modification"
+#define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
+#define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -114,6 +114,7 @@ typedef struct
     const float *scala_root_key_port;
     const float *tuning_frequency_port;
     const float *stretch_tuning_port;
+    float *active_voices_port;
 
     // Atom forge
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
@@ -147,6 +148,7 @@ typedef struct
     LV2_URID sfizz_oversampling_uri;
     LV2_URID sfizz_log_status_uri;
     LV2_URID sfizz_check_modification_uri;
+    LV2_URID sfizz_active_voices_uri;
     LV2_URID time_position_uri;
 
     // Sfizz related data
@@ -182,6 +184,7 @@ enum
     SFIZZ_SCALA_ROOT_KEY = 9,
     SFIZZ_TUNING_FREQUENCY = 10,
     SFIZZ_STRETCH_TUNING = 11,
+    SFIZZ_ACTIVE_VOICES = 12,
 };
 
 static void
@@ -223,6 +226,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_num_voices_uri = map->map(map->handle, SFIZZ__numVoices);
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
+    self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
@@ -271,6 +275,9 @@ connect_port(LV2_Handle instance,
         break;
     case SFIZZ_STRETCH_TUNING:
         self->stretch_tuning_port = (const float *)data;
+        break;
+    case SFIZZ_ACTIVE_VOICES:
+        self->active_voices_port = (float *)data;
         break;
     default:
         break;
@@ -508,7 +515,6 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
     if (write_ok)
         lv2_atom_forge_pop(&self->forge, &frame);
 }
-
 
 static void
 sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
@@ -802,6 +808,7 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);
     sfizz_lv2_check_num_voices(self);
+    *(self->active_voices_port) = sfizz_get_num_active_voices(self->synth);
 
     // Log the buffer usage
     self->sample_counter += (int)sample_count;

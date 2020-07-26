@@ -78,7 +78,7 @@ TEST_CASE("[Polyphony] group polyphony limits")
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2); // group polyphony should block the last note
+    REQUIRE(synth.getNumActiveVoices(true) == 2); // group polyphony should block the last note
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits")
@@ -91,7 +91,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits")
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (group)")
@@ -104,7 +104,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (group)")
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (master)")
@@ -118,7 +118,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (master)")
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
@@ -137,7 +137,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
     synth.noteOn(0, 66, 64);
     synth.noteOn(0, 66, 64);
     synth.noteOn(0, 66, 64);
-    REQUIRE(synth.getNumActiveVoices() == 5);
+    REQUIRE(synth.getNumActiveVoices(true) == 5);
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (global)")
@@ -151,7 +151,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (global)")
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
 TEST_CASE("[Polyphony] Polyphony in master")
@@ -171,21 +171,21 @@ TEST_CASE("[Polyphony] Polyphony in master")
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
     synth.noteOn(0, 65, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2); // group polyphony should block the last note
+    REQUIRE(synth.getNumActiveVoices(true) == 2); // group polyphony should block the last note
     synth.allSoundOff();
     synth.renderBlock(buffer);
-    REQUIRE(synth.getNumActiveVoices() == 0);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
     synth.noteOn(0, 63, 64);
     synth.noteOn(0, 63, 64);
     synth.noteOn(0, 63, 64);
-    REQUIRE(synth.getNumActiveVoices() == 2); // group polyphony should block the last note
+    REQUIRE(synth.getNumActiveVoices(true) == 2); // group polyphony should block the last note
     synth.allSoundOff();
     synth.renderBlock(buffer);
-    REQUIRE(synth.getNumActiveVoices() == 0);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
     synth.noteOn(0, 61, 64);
     synth.noteOn(0, 61, 64);
     synth.noteOn(0, 61, 64);
-    REQUIRE(synth.getNumActiveVoices() == 3);
+    REQUIRE(synth.getNumActiveVoices(true) == 3);
 }
 
 
@@ -198,7 +198,7 @@ TEST_CASE("[Polyphony] Self-masking")
     synth.noteOn(0, 64, 63);
     synth.noteOn(0, 64, 62);
     synth.noteOn(0, 64, 64);
-    REQUIRE(synth.getNumActiveVoices() == 3); // One of these is releasing
+    REQUIRE(synth.getNumActiveVoices(true) == 3); // One of these is releasing
     REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
     REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
@@ -216,7 +216,7 @@ TEST_CASE("[Polyphony] Not self-masking")
     synth.noteOn(0, 66, 63);
     synth.noteOn(0, 66, 62);
     synth.noteOn(0, 66, 64);
-    REQUIRE(synth.getNumActiveVoices() == 3); // One of these is releasing
+    REQUIRE(synth.getNumActiveVoices(true) == 3); // One of these is releasing
     REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
     REQUIRE(synth.getVoiceView(0)->releasedOrFree()); // The first encountered voice is the masking candidate
     REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);

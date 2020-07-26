@@ -625,14 +625,18 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     return {};
 }
 
-int sfz::Synth::getNumActiveVoices() const noexcept
+int sfz::Synth::getNumActiveVoices(bool recompute) const noexcept
 {
-    auto activeVoices = 0;
-    for (const auto& voice : voices) {
+    if (!recompute)
+        return activeVoices;
+
+    int active { 0 };
+    for (auto& voice: voices) {
         if (!voice->isFree())
-            activeVoices++;
+            active++;
     }
-    return activeVoices;
+
+    return active;
 }
 
 void sfz::Synth::garbageCollect() noexcept
@@ -711,7 +715,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
     }
 
-    int numActiveVoices { 0 };
+    activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempSpan->fill(0.0f);
@@ -730,7 +734,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             if (voice->isFree())
                 continue;
 
-            numActiveVoices++;
+            activeVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);
             callbackBreakdown.data += voice->getLastDataDuration();
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
@@ -770,7 +774,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     callbackBreakdown.dispatch = dispatchDuration;
-    resources.logger.logCallbackTime(callbackBreakdown, numActiveVoices, numFrames);
+    resources.logger.logCallbackTime(callbackBreakdown, activeVoices, numFrames);
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);

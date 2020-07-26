@@ -396,7 +396,7 @@ public:
      *
      * @return int
      */
-    int getNumActiveVoices() const noexcept;
+    int getNumActiveVoices(bool recompute = false) const noexcept;
     /**
      * @brief Get the total number of voices in the synth (the polyphony)
      *
@@ -731,6 +731,7 @@ private:
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
     int numVoices { config::numVoices };
+    int activeVoices { 0 };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes

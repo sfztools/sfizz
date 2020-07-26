@@ -35,6 +35,12 @@ midnam:update a lv2:Feature .
     "Accordage"@fr ,
     "Accordatura"@it .
 
+<@LV2PLUGIN_URI@#status>
+  a pg:Group ;
+  lv2:symbol "status" ;
+  lv2:name "status",
+    "Status"@fr .
+
 <@LV2PLUGIN_URI@:sfzfile>
   a lv2:Parameter ;
   rdfs:label "SFZ file",
@@ -77,8 +83,8 @@ midnam:update a lv2:Feature .
   opts:supportedOption param:sampleRate ;
   opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
 
-  patch:writable <@LV2PLUGIN_URI@:sfzfile> ;
-  patch:writable <@LV2PLUGIN_URI@:tuningfile> ;
+  patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
+                 <@LV2PLUGIN_URI@:tuningfile> ;
 
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
@@ -291,4 +297,15 @@ midnam:update a lv2:Feature .
     lv2:minimum 0.0 ;
     lv2:maximum 1.0 ;
     units:unit units:coef
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 12 ;
+    lv2:symbol "active_voices" ;
+    lv2:name "Active voices",
+      "Voix utilisées"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 256 ;
   ] .
