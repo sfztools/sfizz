@@ -673,7 +673,7 @@ TEST_CASE("[Synth] Sustain threshold default")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 1);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
 }
 
 TEST_CASE("[Synth] Sustain threshold")
@@ -686,12 +686,12 @@ TEST_CASE("[Synth] Sustain threshold")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 1);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
     synth.noteOn(0, 62, 85);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 64);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
 }
