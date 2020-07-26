@@ -142,7 +142,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
         ASSERT(modifierSmoothers[modId].size() >= region->modifiers[modId].size());
         forEachWithSmoother(modId, [modId, this](const CCData<Modifier>& mod, Smoother& smoother) {
             const auto ccValue = resources.midiState.getCCValue(mod.cc);
-            const auto curve = resources.curves.getCurve(mod.data.curve);
+            const auto& curve = resources.curves.getCurve(mod.data.curve);
             const auto finalValue = curve.evalNormalized(ccValue) * mod.data.value;
             switch (modId) {
             case Mod::volume:
@@ -347,7 +347,7 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 
     bool canShortcut = true;
     for (const auto& mod : region->crossfadeCCInRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
+        const auto& events = resources.midiState.getCCEvents(mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeIn(mod.data, x, xfCurve);
@@ -356,7 +356,7 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
     }
 
     for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto events = resources.midiState.getCCEvents(mod.cc);
+        const auto& events = resources.midiState.getCCEvents(mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeOut(mod.data, x, xfCurve);
