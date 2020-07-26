@@ -271,8 +271,8 @@ void pitchBendEnvelope(const EventVector& events, absl::Span<float> envelope, F&
 template <class F>
 void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
 {
-    const auto events = resources.midiState.getCCEvents(ccData.cc);
-    const auto curve = resources.curves.getCurve(ccData.data.curve);
+    const auto& events = resources.midiState.getCCEvents(ccData.cc);
+    const auto& curve = resources.curves.getCurve(ccData.data.curve);
     if (ccData.data.step == 0.0f) {
         linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
@@ -301,8 +301,8 @@ void linearModifier(const sfz::Resources& resources, absl::Span<float> span, con
 template <class F>
 void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
 {
-    const auto events = resources.midiState.getCCEvents(ccData.cc);
-    const auto curve = resources.curves.getCurve(ccData.data.curve);
+    const auto& events = resources.midiState.getCCEvents(ccData.cc);
+    const auto& curve = resources.curves.getCurve(ccData.data.curve);
     if (ccData.data.step == 0.0f) {
         multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
             return lambda(curve.evalNormalized(x) * ccData.data.value);
