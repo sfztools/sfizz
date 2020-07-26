@@ -18,24 +18,35 @@ struct NumericId {
     constexpr NumericId() = default;
 
     explicit constexpr NumericId(int number)
-        : number(number)
+        : number_(number)
     {
     }
 
     constexpr bool valid() const noexcept
     {
-        return number != -1;
+        return number_ != -1;
+    }
+
+    constexpr int number() const noexcept
+    {
+        return number_;
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return valid();
     }
 
     constexpr bool operator==(NumericId other) const noexcept
     {
-        return number == other.number;
+        return number_ == other.number_;
     }
 
     constexpr bool operator!=(NumericId other) const noexcept
     {
-        return number != other.number;
+        return number_ != other.number_;
     }
 
-    const int number = -1;
+private:
+    int number_ = -1;
 };

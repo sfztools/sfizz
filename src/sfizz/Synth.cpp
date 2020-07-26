@@ -1188,10 +1188,10 @@ const sfz::Region* sfz::Synth::getRegionById(NumericId<Region> id) const noexcep
         return nullptr;
 
     // search a sequence of ordered identifiers with potential gaps
-    size_t index = static_cast<size_t>(id.number);
+    size_t index = static_cast<size_t>(id.number());
     index = std::min(index, size - 1);
 
-    while (index > 0 && regions[index]->getId().number > id.number)
+    while (index > 0 && regions[index]->getId().number() > id.number())
         --index;
 
     return (regions[index]->getId() == id) ? regions[index].get() : nullptr;
@@ -1205,10 +1205,10 @@ const sfz::Voice* sfz::Synth::getVoiceById(NumericId<Voice> id) const noexcept
         return nullptr;
 
     // search a sequence of ordered identifiers with potential gaps
-    size_t index = static_cast<size_t>(id.number);
+    size_t index = static_cast<size_t>(id.number());
     index = std::min(index, size - 1);
 
-    while (index > 0 && voices[index]->getId().number > id.number)
+    while (index > 0 && voices[index]->getId().number() > id.number())
         --index;
 
     return (voices[index]->getId() == id) ? voices[index].get() : nullptr;
