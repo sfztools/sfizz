@@ -12,6 +12,10 @@
 #include "ModifierHelpers.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
+#include "modulations/ModMatrix.h"
+#include "modulations/ModKey.h"
+#include "modulations/ModId.h"
+#include "modulations/sources/Controller.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
@@ -35,6 +39,9 @@ sfz::Synth::Synth(int numVoices)
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
     resetVoices(numVoices);
+
+    // modulation sources
+    genController.reset(new ControllerSource(resources));
 }
 
 sfz::Synth::~Synth()
@@ -570,6 +577,8 @@ void sfz::Synth::finalizeSfzLoad()
     settingsPerVoice.maxModifiers = maxModifiers;
 
     applySettingsPerVoice();
+
+    setupModMatrix();
 }
 
 bool sfz::Synth::loadScalaFile(const fs::path& path)
@@ -717,12 +726,16 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
     }
 
+    ModMatrix& mm = resources.modMatrix;
+
     activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempSpan->fill(0.0f);
         tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
+
+        mm.beginCycle(numFrames);
 
         // Ramp out whatever is in the buffer at this point; should only be killed voice data
         linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));
@@ -735,6 +748,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         for (auto& voice : voices) {
             if (voice->isFree())
                 continue;
+
+            mm.beginVoice(voice->getId());
 
             activeVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);
@@ -1333,6 +1348,52 @@ void sfz::Synth::applySettingsPerVoice()
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
         voice->prepareSmoothers(settingsPerVoice.maxModifiers);
     }
+}
+
+void sfz::Synth::setupModMatrix()
+{
+    ModMatrix& mm = resources.modMatrix;
+
+    for (const RegionPtr& region : regions) {
+        for (const Region::Connection& conn : region->connections) {
+            ModGenerator* gen = nullptr;
+
+            switch (conn.first.id()) {
+            case ModId::Controller:
+                gen = genController.get();
+                break;
+            default:
+                DBG("[sfizz] Have unknown type of source generator");
+                break;
+            }
+
+            ASSERT(gen);
+            if (!gen)
+                continue;
+
+            ModMatrix::SourceId source = mm.registerSource(conn.first, *gen);
+            ModMatrix::TargetId target = mm.registerTarget(conn.second);
+
+            ASSERT(source);
+            if (!source) {
+                DBG("[sfizz] Failed to register modulation source");
+                continue;
+            }
+
+            ASSERT(target);
+            if (!source) {
+                DBG("[sfizz] Failed to register modulation target");
+                continue;
+            }
+
+            if (!mm.connect(source, target)) {
+                DBG("[sfizz] Failed to connect modulation source and target");
+                ASSERTFALSE;
+            }
+        }
+    }
+
+    mm.init();
 }
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept

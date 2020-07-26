@@ -26,6 +26,8 @@
 #include <vector>
 
 namespace sfz {
+class ControllerSource;
+
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point
  * of entry and in C the interface basically maps the functions of the class into
@@ -678,6 +680,11 @@ private:
     void applySettingsPerVoice();
 
     /**
+     * @brief Establish all connections of the modulation matrix.
+     */
+    void setupModMatrix();
+
+    /**
      * @brief Render the voice to its designated outputs and effect busses.
      *
      * @param voice
@@ -757,6 +764,9 @@ private:
     std::string defaultPath { "" };
     int noteOffset { 0 };
     int octaveOffset { 0 };
+
+    // Modulation source generators
+    std::unique_ptr<ControllerSource> genController;
 
     // Settings per voice
     struct SettingsPerVoice {

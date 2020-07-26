@@ -18,6 +18,7 @@
 #include "FileId.h"
 #include "NumericId.h"
 #include "Modifiers.h"
+#include "modulations/ModKey.h"
 #include "absl/types/optional.h"
 #include <bitset>
 #include <string>
@@ -241,10 +242,11 @@ struct Region {
      * @param opcode
      * @param range
      * @param ccMap
+     * @param target
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap);
+    bool processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap, const ModKey& target);
 
     void offsetAllKeys(int offset) noexcept;
 
@@ -373,6 +375,10 @@ struct Region {
 
     bool triggerOnCC { false }; // whether the region triggers on CC events or note events
     bool triggerOnNote { true };
+
+    // Modulation matrix connections
+    typedef std::pair<ModKey, ModKey> Connection;
+    std::vector<Connection> connections;
 
     // Parent
     RegionSet* parent { nullptr };

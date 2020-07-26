@@ -12,6 +12,9 @@
 #include "SIMDHelpers.h"
 #include "Panning.h"
 #include "SfzHelpers.h"
+#include "modulations/ModId.h"
+#include "modulations/ModKey.h"
+#include "modulations/ModMatrix.h"
 #include "Interpolators.h"
 #include "absl/algorithm/container.h"
 
@@ -164,6 +167,8 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
             smoother.setSmoothing(mod.data.smooth, sampleRate);
         });
     }
+
+    resources.modMatrix.initVoice(id);
 }
 
 int sfz::Voice::getCurrentSampleQuality() const noexcept
@@ -374,30 +379,24 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
 
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!tempSpan)
-        return;
+    ModMatrix& mm = resources.modMatrix;
+    const ModKey volumeKey = ModKey::createNXYZ(ModId::Volume, region->getId());
+    const ModKey amplitudeKey = ModKey::createNXYZ(ModId::Amplitude, region->getId());
 
     // AmpEG envelope
     egEnvelope.getBlock(modulationSpan);
 
     // Amplitude envelope
-    applyGain1<float>(baseGain, modulationSpan);
-    forEachWithSmoother(Mod::amplitude, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
-        smoother.process(*tempSpan, *tempSpan);
-        applyGain<float>(*tempSpan, modulationSpan);
-    });
+    if (float* mod = mm.getModulationByKey(amplitudeKey)) {
+        for (size_t i = 0; i < numSamples; ++i)
+            modulationSpan[i] *= normalizePercents(mod[i]);
+    }
 
     // Volume envelope
-    applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
-    forEachWithSmoother(Mod::volume, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        multiplicativeModifier(resources, *tempSpan, mod, [](float x) {
-            return db2mag(x);
-        });
-        smoother.process(*tempSpan, *tempSpan);
-        applyGain<float>(*tempSpan, modulationSpan);
-    });
+    if (float* mod = mm.getModulationByKey(volumeKey)) {
+        for (size_t i = 0; i < numSamples; ++i)
+            modulationSpan[i] *= db2mag(mod[i]);
+    }
 
     // Smooth the gain transitions
     gainSmoother.process(modulationSpan, modulationSpan);
@@ -442,20 +441,21 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
     const auto rightBuffer = buffer.getSpan(1);
 
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationSpan || !tempSpan)
+    if (!modulationSpan)
         return;
+
+    ModMatrix& mm = resources.modMatrix;
+    const ModKey panKey = ModKey::createNXYZ(ModId::Pan, region->getId());
 
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
 
     // Apply panning
     fill(*modulationSpan, region->pan);
-    forEachWithSmoother(Mod::pan, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
-        smoother.process(*tempSpan, *tempSpan);
-        add<float>(*tempSpan, *modulationSpan);
-    });
+    if (float* mod = mm.getModulationByKey(panKey)) {
+        for (size_t i = 0; i < numSamples; ++i)
+            (*modulationSpan)[i] += normalizePercents(mod[i]);
+    }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
@@ -467,34 +467,35 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     const auto rightBuffer = buffer.getSpan(1);
 
     auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    if (!modulationSpan || !tempSpan)
+    if (!modulationSpan)
         return;
+
+    ModMatrix& mm = resources.modMatrix;
+    const ModKey panKey = ModKey::createNXYZ(ModId::Pan, region->getId());
+    const ModKey widthKey = ModKey::createNXYZ(ModId::Width, region->getId());
+    const ModKey positionKey = ModKey::createNXYZ(ModId::Position, region->getId());
 
     // Apply panning
     fill(*modulationSpan, region->pan);
-    forEachWithSmoother(Mod::pan, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
-        smoother.process(*tempSpan, *tempSpan);
-        add<float>(*tempSpan, *modulationSpan);
-    });
+    if (float* mod = mm.getModulationByKey(panKey)) {
+        for (size_t i = 0; i < numSamples; ++i)
+            (*modulationSpan)[i] += normalizePercents(mod[i]);
+    }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
     fill(*modulationSpan, region->width);
-    forEachWithSmoother(Mod::width, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
-        smoother.process(*tempSpan, *tempSpan);
-        add<float>(*tempSpan, *modulationSpan);
-    });
+    if (float* mod = mm.getModulationByKey(widthKey)) {
+        for (size_t i = 0; i < numSamples; ++i)
+            (*modulationSpan)[i] += normalizePercents(mod[i]);
+    }
     width(*modulationSpan, leftBuffer, rightBuffer);
 
     fill(*modulationSpan, region->position);
-    forEachWithSmoother(Mod::position, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        linearModifier(resources, *tempSpan, mod, normalizePercents<float>);
-        smoother.process(*tempSpan, *tempSpan);
-        add<float>(*tempSpan, *modulationSpan);
-    });
+    if (float* mod = mm.getModulationByKey(positionKey)) {
+        for (size_t i = 0; i < numSamples; ++i)
+            (*modulationSpan)[i] += normalizePercents(mod[i]);
+    }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
@@ -906,13 +907,13 @@ void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
     bendSmoother.process(*bends, *bends);
     applyGain<float>(*bends, pitchSpan);
 
-    forEachWithSmoother(Mod::pitch, [&](const CCData<Modifier>& mod, Smoother& smoother) {
-        multiplicativeModifier(resources, *bends, mod, [](float x) {
-            return centsFactor(x);
-        });
-        smoother.process(*bends, *bends);
-        applyGain<float>(*bends, pitchSpan);
-    });
+    ModMatrix& mm = resources.modMatrix;
+    const ModKey pitchKey = ModKey::createNXYZ(ModId::Pitch, region->getId());
+
+    if (float* mod = mm.getModulationByKey(pitchKey)) {
+        for (size_t i = 0; i < numFrames; ++i)
+            pitchSpan[i] *= centsFactor(mod[i]);
+    }
 }
 
 void sfz::Voice::resetSmoothers() noexcept

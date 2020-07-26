@@ -60,6 +60,11 @@ SFIZZ_SOURCES = \
 	src/sfizz/Curve.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
+	src/sfizz/modulations/ModId.cpp \
+	src/sfizz/modulations/ModKey.cpp \
+	src/sfizz/modulations/ModKeyHash.cpp \
+	src/sfizz/modulations/ModMatrix.cpp \
+	src/sfizz/modulations/sources/Controller.cpp \
 	src/sfizz/effects/Compressor.cpp \
 	src/sfizz/effects/Disto.cpp \
 	src/sfizz/effects/Eq.cpp \
