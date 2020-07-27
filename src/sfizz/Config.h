@@ -103,6 +103,10 @@ namespace config {
        Background file loading
      */
     static constexpr int backgroundLoaderPthreadPriority = 50; // expressed in %
+    /**
+       @brief Ratio to target under which smoothing is considered as completed
+     */
+    static constexpr float smoothingShortcutThreshold = 5e-3;
 } // namespace config
 
 } // namespace sfz
