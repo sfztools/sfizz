@@ -12,7 +12,7 @@
 
 namespace sfz {
 
-ModKey ModKey::createCC(uint8_t cc, uint8_t curve, uint8_t smooth, float value, float step)
+ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float value, float step)
 {
     ModKey::Parameters p;
     p.cc = cc;
