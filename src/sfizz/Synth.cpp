@@ -723,6 +723,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     ModMatrix& mm = resources.modMatrix;
+    mm.beginCycle(numFrames);
 
     activeVoices = 0;
     { // Main render block
@@ -730,8 +731,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         tempSpan->fill(0.0f);
         tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
-
-        mm.beginCycle(numFrames);
 
         // Ramp out whatever is in the buffer at this point; should only be killed voice data
         linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));
@@ -753,6 +752,8 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
             callbackBreakdown.filters += voice->getLastFilterDuration();
             callbackBreakdown.panning += voice->getLastPanningDuration();
+
+            mm.endVoice();
 
             if (voice->toBeCleanedUp())
                 voice->reset();
@@ -780,6 +781,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Apply the master volume
     buffer.applyGain(db2mag(volume));
+
+    // Perform any remaining modulators
+    mm.endCycle();
 
     { // Clear events and advance midi time
         ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };

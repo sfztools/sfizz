@@ -224,6 +224,22 @@ void ModMatrix::beginCycle(unsigned numFrames)
         target.bufferReady = false;
 }
 
+void ModMatrix::endCycle()
+{
+    Impl& impl = *impl_;
+    const uint32_t numFrames = impl.numFrames_;
+
+    for (Impl::Source &source : impl.sources_) {
+        if (!source.bufferReady) {
+            int flags = source.key.flags();
+            if (flags & kModIsPerCycle) {
+                absl::Span<float> buffer(source.buffer.data(), numFrames);
+                source.gen->generateDiscarded(source.key, {}, buffer);
+            }
+        }
+    }
+}
+
 void ModMatrix::beginVoice(NumericId<Voice> voiceId)
 {
     Impl& impl = *impl_;
@@ -239,6 +255,23 @@ void ModMatrix::beginVoice(NumericId<Voice> voiceId)
         const int flags = target.key.flags();
         if (flags & kModIsPerVoice)
             target.bufferReady = false;
+    }
+}
+
+void ModMatrix::endVoice()
+{
+    Impl& impl = *impl_;
+    const uint32_t numFrames = impl.numFrames_;
+    const NumericId<Voice> voiceId = impl.voiceId_;
+
+    for (Impl::Source &source : impl.sources_) {
+        if (!source.bufferReady) {
+            int flags = source.key.flags();
+            if (flags & kModIsPerVoice) {
+                absl::Span<float> buffer(source.buffer.data(), numFrames);
+                source.gen->generateDiscarded(source.key, voiceId, buffer);
+            }
+        }
     }
 }
 

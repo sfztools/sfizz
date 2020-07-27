@@ -47,6 +47,20 @@ public:
      * @param buffer output buffer
      */
     virtual void generate(const ModKey& sourceKey, NumericId<Voice> voiceNum, absl::Span<float> buffer) = 0;
+
+    /**
+     * @brief Advance the generator by a number of frames
+     * This is called instead of `generate` in case the output is discarded.
+     * It can be overriden with a faster implementation if wanted.
+     *
+     * @param sourceKey source key
+     * @param voiceNum voice number if the generator is per-voice, otherwise undefined
+     * @param buffer writable spare buffer, contents will be discarded
+     */
+    virtual void generateDiscarded(const ModKey& sourceKey, NumericId<Voice> voiceNum, absl::Span<float> buffer)
+    {
+        generate(sourceKey, voiceNum, buffer);
+    }
 };
 
 } // namespace sfz

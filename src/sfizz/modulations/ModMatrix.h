@@ -114,12 +114,24 @@ public:
     void beginCycle(unsigned numFrames);
 
     /**
+     * @brief End modulation processing for the entire cycle.
+     * This performs a dummy run of any unused modulations.
+     */
+    void endCycle();
+
+    /**
      * @brief Start modulation processing for a given voice.
      * This clears all the buffers which are per-voice.
      *
      * @param voiceId the identifier of the current voice
      */
     void beginVoice(NumericId<Voice> voiceId);
+
+    /**
+     * @brief End modulation processing for a given voice.
+     * This performs a dummy run of any unused modulations which are per-cycle.
+     */
+    void endVoice();
 
     /**
      * @brief Get the modulation buffer for the given target.
