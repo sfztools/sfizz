@@ -113,7 +113,7 @@ std::string ModKey::toString() const
 
 bool sfz::ModKey::operator==(const ModKey &other) const noexcept
 {
-    return id_ == other.id_ && region_ && other.region_ &&
+    return id_ == other.id_ && region_ == other.region_ &&
         parameters() == other.parameters();
 }
 
