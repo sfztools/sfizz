@@ -5,12 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include <functional>
 #include <cstddef>
 
 namespace sfz { class ModKey; }
 
 namespace std {
-    template <class> struct hash;
     template <> struct hash<sfz::ModKey> {
         size_t operator()(const sfz::ModKey &key) const;
     };
