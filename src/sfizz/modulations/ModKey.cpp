@@ -12,6 +12,36 @@
 
 namespace sfz {
 
+ModKey::Parameters::Parameters() noexcept
+{
+    // zero-fill the structure
+    //  1. this ensures that non-used values will be always 0
+    //  2. this makes the object memcmp-comparable
+    std::memset(this, 0, sizeof(*this));
+}
+
+ModKey::Parameters::Parameters(const Parameters& other) noexcept
+{
+    std::memcpy(this, &other, sizeof(*this));
+}
+
+ModKey::Parameters& ModKey::Parameters::operator=(const Parameters& other) noexcept
+{
+    if (this != &other)
+        std::memcpy(this, &other, sizeof(*this));
+    return *this;
+}
+
+bool ModKey::Parameters::operator==(const Parameters& other) const noexcept
+{
+    return std::memcmp(this, &other, sizeof(*this)) == 0;
+}
+
+bool ModKey::Parameters::operator!=(const Parameters& other) const noexcept
+{
+    return std::memcmp(this, &other, sizeof(*this)) != 0;
+}
+
 ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float value, float step)
 {
     ModKey::Parameters p;
@@ -84,7 +114,7 @@ std::string ModKey::toString() const
 bool sfz::ModKey::operator==(const ModKey &other) const noexcept
 {
     return id_ == other.id_ && region_ && other.region_ &&
-        !std::memcmp(&parameters(), &other.parameters(), sizeof(ModKey::Parameters));
+        parameters() == other.parameters();
 }
 
 bool sfz::ModKey::operator!=(const ModKey &other) const noexcept

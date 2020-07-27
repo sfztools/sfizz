@@ -8,7 +8,6 @@
 #include "ModKeyHash.h"
 #include "../NumericId.h"
 #include <string>
-#include <cstring>
 
 namespace sfz {
 
@@ -42,7 +41,16 @@ public:
     std::string toString() const;
 
     struct Parameters {
-        Parameters() { std::memset(this, 0, sizeof(*this)); }
+        Parameters() noexcept;
+        Parameters(const Parameters& other) noexcept;
+        Parameters& operator=(const Parameters& other) noexcept;
+
+        Parameters(Parameters&&) = delete;
+        Parameters &operator=(Parameters&&) = delete;
+
+        bool operator==(const Parameters& other) const noexcept;
+        bool operator!=(const Parameters& other) const noexcept;
+
         union {
             //! Parameters if this key identifies a CC source
             struct { uint16_t cc; uint8_t curve, smooth; float value, step; };
