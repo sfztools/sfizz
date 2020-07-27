@@ -86,10 +86,7 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
     auto it = impl_->smoother_.find(sourceKey);
     if (it != impl_->smoother_.end()) {
         Smoother& s = it->second;
-
-        #pragma message("TODO: implement CC shortcut")
-        bool canShortcut = false;
-
+        bool canShortcut = events.size() == 1;
         s.process(buffer, buffer, canShortcut);
     }
 }
