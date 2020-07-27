@@ -379,35 +379,35 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
     case_any_ccN("volume"): // also gain
-        processGenericCc(opcode, Default::volumeCCRange, &modifiers[Mod::volume], ModKey::createNXYZ(ModId::Volume, id));
+        processGenericCc(opcode, Default::volumeCCRange, ModKey::createNXYZ(ModId::Volume, id));
         break;
     case hash("amplitude"):
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
             amplitude = normalizePercents(*value);
         break;
     case_any_ccN("amplitude"):
-        processGenericCc(opcode, Default::amplitudeRange, &modifiers[Mod::amplitude], ModKey::createNXYZ(ModId::Amplitude, id));
+        processGenericCc(opcode, Default::amplitudeRange, ModKey::createNXYZ(ModId::Amplitude, id));
         break;
     case hash("pan"):
         if (auto value = readOpcode(opcode.value, Default::panRange))
             pan = normalizePercents(*value);
         break;
     case_any_ccN("pan"):
-        processGenericCc(opcode, Default::panCCRange, &modifiers[Mod::pan], ModKey::createNXYZ(ModId::Pan, id));
+        processGenericCc(opcode, Default::panCCRange, ModKey::createNXYZ(ModId::Pan, id));
         break;
     case hash("position"):
         if (auto value = readOpcode(opcode.value, Default::positionRange))
             position = normalizePercents(*value);
         break;
     case_any_ccN("position"):
-        processGenericCc(opcode, Default::positionCCRange, &modifiers[Mod::position], ModKey::createNXYZ(ModId::Position, id));
+        processGenericCc(opcode, Default::positionCCRange, ModKey::createNXYZ(ModId::Position, id));
         break;
     case hash("width"):
         if (auto value = readOpcode(opcode.value, Default::widthRange))
             width = normalizePercents(*value);
         break;
     case_any_ccN("width"):
-        processGenericCc(opcode, Default::widthCCRange, &modifiers[Mod::width], ModKey::createNXYZ(ModId::Width, id));
+        processGenericCc(opcode, Default::widthCCRange, ModKey::createNXYZ(ModId::Width, id));
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
@@ -771,7 +771,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
     case_any_ccN("pitch"): // also tune
-        processGenericCc(opcode, Default::tuneCCRange, &modifiers[Mod::pitch], ModKey::createNXYZ(ModId::Pitch, id));
+        processGenericCc(opcode, Default::tuneCCRange, ModKey::createNXYZ(ModId::Pitch, id));
         break;
     case hash("bend_up"): // also bendup
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
@@ -925,7 +925,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     return true;
 }
 
-bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap, const ModKey& target)
+bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, const ModKey& target)
 {
     if (!opcode.isAnyCcN())
         return false;
@@ -933,31 +933,6 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCM
     const auto ccNumber = opcode.parameters.back();
     if (ccNumber >= config::numCCs)
         return false;
-
-    // TODO obsolete after implementing mod matrix
-    if (ccMap) {
-        Modifier& modifier = (*ccMap)[ccNumber];
-        switch (opcode.category) {
-        case kOpcodeOnCcN:
-            setValueFromOpcode(opcode, modifier.value, range);
-            break;
-        case kOpcodeCurveCcN:
-            setValueFromOpcode(opcode, modifier.curve, Default::curveCCRange);
-            break;
-        case kOpcodeStepCcN:
-            {
-                const Range<float> stepCCRange { 0.0f, std::max(std::abs(range.getStart()), std::abs(range.getEnd())) };
-                setValueFromOpcode(opcode, modifier.step, stepCCRange);
-            }
-            break;
-        case kOpcodeSmoothCcN:
-            setValueFromOpcode(opcode, modifier.smooth, Default::smoothCCRange);
-            break;
-        default:
-            assert(false);
-            break;
-        }
-    }
 
     if (target) {
         // search an existing connection of same CC number and target

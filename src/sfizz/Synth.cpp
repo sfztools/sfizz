@@ -452,7 +452,6 @@ void sfz::Synth::finalizeSfzLoad()
 
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
-    ModifierArray<size_t> maxModifiers { 0 };
 
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
@@ -563,8 +562,6 @@ void sfz::Synth::finalizeSfzLoad()
         region->registerTempo(2.0f);
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
-        for (const auto& mod : allModifiers)
-            maxModifiers[mod] = max(maxModifiers[mod], region->modifiers[mod].size());
 
         ++currentRegionIndex;
     }
@@ -574,7 +571,6 @@ void sfz::Synth::finalizeSfzLoad()
 
     settingsPerVoice.maxFilters = maxFilters;
     settingsPerVoice.maxEQs = maxEQs;
-    settingsPerVoice.maxModifiers = maxModifiers;
 
     applySettingsPerVoice();
 
@@ -1346,7 +1342,6 @@ void sfz::Synth::applySettingsPerVoice()
     for (auto& voice : voices) {
         voice->setMaxFiltersPerVoice(settingsPerVoice.maxFilters);
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
-        voice->prepareSmoothers(settingsPerVoice.maxModifiers);
     }
 }
 

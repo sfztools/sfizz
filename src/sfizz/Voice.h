@@ -302,8 +302,6 @@ public:
     Duration getLastFilterDuration() const noexcept { return filterDuration; }
     Duration getLastPanningDuration() const noexcept { return panningDuration; }
 
-    void prepareSmoothers(const ModifierArray<size_t>& numModifiers);
-
 private:
     /**
      * @brief Fill a span with data from a file source. This is the first step
@@ -391,27 +389,6 @@ private:
     void removeVoiceFromRing() noexcept;
 
     /**
-     * @brief Helper function to iterate jointly on modifiers and smoothers
-     * for a given modulation target of type sfz::Mod
-     *
-     * @tparam F
-     * @param modId
-     * @param lambda
-     */
-    template <class F>
-    void forEachWithSmoother(sfz::Mod modId, F&& lambda)
-    {
-        size_t count = region->modifiers[modId].size();
-        ASSERT(modifierSmoothers[modId].size() >= count);
-        auto mod = region->modifiers[modId].begin();
-        auto smoother = modifierSmoothers[modId].begin();
-        for (size_t i = 0; i < count; ++i) {
-            lambda(*mod, *smoother);
-            incrementAll(mod, smoother);
-        }
-    }
-
-    /**
      * @brief Initialize frequency and gain coefficients for the oscillators.
      */
     void setupOscillatorUnison();
@@ -479,7 +456,6 @@ private:
     fast_real_distribution<float> uniformNoiseDist { -config::uniformNoiseBounds, config::uniformNoiseBounds };
     fast_gaussian_generator<float> gaussianNoiseDist { 0.0f, config::noiseVariance };
 
-    ModifierArray<std::vector<Smoother>> modifierSmoothers;
     Smoother gainSmoother;
     Smoother bendSmoother;
     Smoother xfadeSmoother;

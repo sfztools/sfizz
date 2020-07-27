@@ -4,10 +4,14 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "RegionTHelpers.h"
 #include "sfizz/MidiState.h"
 #include "sfizz/Region.h"
 #include "sfizz/SfzHelpers.h"
+#include "sfizz/modulations/ModId.h"
+#include "sfizz/modulations/ModKey.h"
 #include "catch2/catch.hpp"
+#include <stdexcept>
 using namespace Catch::literals;
 using namespace sfz::literals;
 using namespace sfz;
@@ -541,28 +545,29 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("pan_oncc")
     {
-        REQUIRE(region.modifiers[Mod::pan].empty());
+        const ModKey target = ModKey::createNXYZ(ModId::Pan, region.getId());
+        const RegionCCView view(region, target);
+        REQUIRE(view.empty());
         region.parseOpcode({ "pan_oncc45", "4.2" });
-        REQUIRE(region.modifiers[Mod::pan].contains(45));
-        REQUIRE(region.modifiers[Mod::pan][45].value == 4.2_a);
+        REQUIRE(view.at(45).value == 4.2_a);
         region.parseOpcode({ "pan_curvecc17", "18" });
-        REQUIRE(region.modifiers[Mod::pan][17].curve == 18);
+        REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "pan_curvecc17", "15482" });
-        REQUIRE(region.modifiers[Mod::pan][17].curve == 255);
+        REQUIRE(view.at(17).curve == 255);
         region.parseOpcode({ "pan_curvecc17", "-2" });
-        REQUIRE(region.modifiers[Mod::pan][17].curve == 0);
+        REQUIRE(view.at(17).curve == 0);
         region.parseOpcode({ "pan_smoothcc14", "85" });
-        REQUIRE(region.modifiers[Mod::pan][14].smooth == 85);
+        REQUIRE(view.at(14).smooth == 85);
         region.parseOpcode({ "pan_smoothcc14", "15482" });
-        REQUIRE(region.modifiers[Mod::pan][14].smooth == 100);
+        REQUIRE(view.at(14).smooth == 100);
         region.parseOpcode({ "pan_smoothcc14", "-2" });
-        REQUIRE(region.modifiers[Mod::pan][14].smooth == 0);
+        REQUIRE(view.at(14).smooth == 0);
         region.parseOpcode({ "pan_stepcc120", "24" });
-        REQUIRE(region.modifiers[Mod::pan][120].step == 24.0_a);
+        REQUIRE(view.at(120).step == 24.0_a);
         region.parseOpcode({ "pan_stepcc120", "15482" });
-        REQUIRE(region.modifiers[Mod::pan][120].step == 200.0_a);
+        REQUIRE(view.at(120).step == 200.0_a);
         region.parseOpcode({ "pan_stepcc120", "-2" });
-        REQUIRE(region.modifiers[Mod::pan][120].step == 0.0f);
+        REQUIRE(view.at(120).step == 0.0f);
     }
 
     SECTION("width")
@@ -580,28 +585,29 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("width_oncc")
     {
-        REQUIRE(region.modifiers[Mod::width].empty());
+        const ModKey target = ModKey::createNXYZ(ModId::Width, region.getId());
+        const RegionCCView view(region, target);
+        REQUIRE(view.empty());
         region.parseOpcode({ "width_oncc45", "4.2" });
-        REQUIRE(region.modifiers[Mod::width].contains(45));
-        REQUIRE(region.modifiers[Mod::width][45].value == 4.2_a);
+        REQUIRE(view.at(45).value == 4.2_a);
         region.parseOpcode({ "width_curvecc17", "18" });
-        REQUIRE(region.modifiers[Mod::width][17].curve == 18);
+        REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "width_curvecc17", "15482" });
-        REQUIRE(region.modifiers[Mod::width][17].curve == 255);
+        REQUIRE(view.at(17).curve == 255);
         region.parseOpcode({ "width_curvecc17", "-2" });
-        REQUIRE(region.modifiers[Mod::width][17].curve == 0);
+        REQUIRE(view.at(17).curve == 0);
         region.parseOpcode({ "width_smoothcc14", "85" });
-        REQUIRE(region.modifiers[Mod::width][14].smooth == 85);
+        REQUIRE(view.at(14).smooth == 85);
         region.parseOpcode({ "width_smoothcc14", "15482" });
-        REQUIRE(region.modifiers[Mod::width][14].smooth == 100);
+        REQUIRE(view.at(14).smooth == 100);
         region.parseOpcode({ "width_smoothcc14", "-2" });
-        REQUIRE(region.modifiers[Mod::width][14].smooth == 0);
+        REQUIRE(view.at(14).smooth == 0);
         region.parseOpcode({ "width_stepcc120", "24" });
-        REQUIRE(region.modifiers[Mod::width][120].step == 24.0_a);
+        REQUIRE(view.at(120).step == 24.0_a);
         region.parseOpcode({ "width_stepcc120", "15482" });
-        REQUIRE(region.modifiers[Mod::width][120].step == 200.0_a);
+        REQUIRE(view.at(120).step == 200.0_a);
         region.parseOpcode({ "width_stepcc120", "-20" });
-        REQUIRE(region.modifiers[Mod::width][120].step == 0.0f);
+        REQUIRE(view.at(120).step == 0.0f);
     }
 
     SECTION("position")
@@ -619,28 +625,29 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("position_oncc")
     {
-        REQUIRE(region.modifiers[Mod::position].empty());
+        const ModKey target = ModKey::createNXYZ(ModId::Position, region.getId());
+        const RegionCCView view(region, target);
+        REQUIRE(view.empty());
         region.parseOpcode({ "position_oncc45", "4.2" });
-        REQUIRE(region.modifiers[Mod::position].contains(45));
-        REQUIRE(region.modifiers[Mod::position][45].value == 4.2_a);
+        REQUIRE(view.at(45).value == 4.2_a);
         region.parseOpcode({ "position_curvecc17", "18" });
-        REQUIRE(region.modifiers[Mod::position][17].curve == 18);
+        REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "position_curvecc17", "15482" });
-        REQUIRE(region.modifiers[Mod::position][17].curve == 255);
+        REQUIRE(view.at(17).curve == 255);
         region.parseOpcode({ "position_curvecc17", "-2" });
-        REQUIRE(region.modifiers[Mod::position][17].curve == 0);
+        REQUIRE(view.at(17).curve == 0);
         region.parseOpcode({ "position_smoothcc14", "85" });
-        REQUIRE(region.modifiers[Mod::position][14].smooth == 85);
+        REQUIRE(view.at(14).smooth == 85);
         region.parseOpcode({ "position_smoothcc14", "15482" });
-        REQUIRE(region.modifiers[Mod::position][14].smooth == 100);
+        REQUIRE(view.at(14).smooth == 100);
         region.parseOpcode({ "position_smoothcc14", "-2" });
-        REQUIRE(region.modifiers[Mod::position][14].smooth == 0);
+        REQUIRE(view.at(14).smooth == 0);
         region.parseOpcode({ "position_stepcc120", "24" });
-        REQUIRE(region.modifiers[Mod::position][120].step == 24.0_a);
+        REQUIRE(view.at(120).step == 24.0_a);
         region.parseOpcode({ "position_stepcc120", "15482" });
-        REQUIRE(region.modifiers[Mod::position][120].step == 200.0_a);
+        REQUIRE(view.at(120).step == 200.0_a);
         region.parseOpcode({ "position_stepcc120", "-2" });
-        REQUIRE(region.modifiers[Mod::position][120].step == 0.0f);
+        REQUIRE(view.at(120).step == 0.0f);
     }
 
     SECTION("amp_keycenter")
@@ -1641,95 +1648,93 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("amplitude_cc")
     {
-        REQUIRE(region.modifiers[Mod::amplitude].empty());
+        const ModKey target = ModKey::createNXYZ(ModId::Amplitude, region.getId());
+        const RegionCCView view(region, target);
+        REQUIRE(view.empty());
         region.parseOpcode({ "amplitude_cc1", "40" });
-        REQUIRE(region.modifiers[Mod::amplitude].contains(1));
-        REQUIRE(region.modifiers[Mod::amplitude][1].value == 40.0_a);
+        REQUIRE(view.at(1).value == 40.0_a);
         region.parseOpcode({ "amplitude_oncc2", "30" });
-        REQUIRE(region.modifiers[Mod::amplitude].contains(2));
-        REQUIRE(region.modifiers[Mod::amplitude][2].value == 30.0_a);
+        REQUIRE(view.at(2).value == 30.0_a);
         region.parseOpcode({ "amplitude_curvecc17", "18" });
-        REQUIRE(region.modifiers[Mod::amplitude][17].curve == 18);
+        REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "amplitude_curvecc17", "15482" });
-        REQUIRE(region.modifiers[Mod::amplitude][17].curve == 255);
+        REQUIRE(view.at(17).curve == 255);
         region.parseOpcode({ "amplitude_curvecc17", "-2" });
-        REQUIRE(region.modifiers[Mod::amplitude][17].curve == 0);
+        REQUIRE(view.at(17).curve == 0);
         region.parseOpcode({ "amplitude_smoothcc14", "85" });
-        REQUIRE(region.modifiers[Mod::amplitude][14].smooth == 85);
+        REQUIRE(view.at(14).smooth == 85);
         region.parseOpcode({ "amplitude_smoothcc14", "15482" });
-        REQUIRE(region.modifiers[Mod::amplitude][14].smooth == 100);
+        REQUIRE(view.at(14).smooth == 100);
         region.parseOpcode({ "amplitude_smoothcc14", "-2" });
-        REQUIRE(region.modifiers[Mod::amplitude][14].smooth == 0);
+        REQUIRE(view.at(14).smooth == 0);
         region.parseOpcode({ "amplitude_stepcc120", "24" });
-        REQUIRE(region.modifiers[Mod::amplitude][120].step == 24.0_a);
+        REQUIRE(view.at(120).step == 24.0_a);
         region.parseOpcode({ "amplitude_stepcc120", "15482" });
-        REQUIRE(region.modifiers[Mod::amplitude][120].step == 100.0_a);
+        REQUIRE(view.at(120).step == 100.0_a);
         region.parseOpcode({ "amplitude_stepcc120", "-2" });
-        REQUIRE(region.modifiers[Mod::amplitude][120].step == 0.0f);
+        REQUIRE(view.at(120).step == 0.0f);
     }
 
     SECTION("volume_oncc/gain_cc")
     {
-        REQUIRE(region.modifiers[Mod::volume].empty());
+        const ModKey target = ModKey::createNXYZ(ModId::Volume, region.getId());
+        const RegionCCView view(region, target);
+        REQUIRE(view.empty());
         region.parseOpcode({ "gain_cc1", "40" });
-        REQUIRE(region.modifiers[Mod::volume].contains(1));
-        REQUIRE(region.modifiers[Mod::volume][1].value == 40_a);
+        REQUIRE(view.at(1).value == 40_a);
         region.parseOpcode({ "volume_oncc2", "-76" });
-        REQUIRE(region.modifiers[Mod::volume].contains(2));
-        REQUIRE(region.modifiers[Mod::volume][2].value == -76.0_a);
+        REQUIRE(view.at(2).value == -76.0_a);
         region.parseOpcode({ "gain_oncc4", "-1" });
-        REQUIRE(region.modifiers[Mod::volume].contains(4));
-        REQUIRE(region.modifiers[Mod::volume][4].value == -1.0_a);
+        REQUIRE(view.at(4).value == -1.0_a);
         region.parseOpcode({ "volume_curvecc17", "18" });
-        REQUIRE(region.modifiers[Mod::volume][17].curve == 18);
+        REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "volume_curvecc17", "15482" });
-        REQUIRE(region.modifiers[Mod::volume][17].curve == 255);
+        REQUIRE(view.at(17).curve == 255);
         region.parseOpcode({ "volume_curvecc17", "-2" });
-        REQUIRE(region.modifiers[Mod::volume][17].curve == 0);
+        REQUIRE(view.at(17).curve == 0);
         region.parseOpcode({ "volume_smoothcc14", "85" });
-        REQUIRE(region.modifiers[Mod::volume][14].smooth == 85);
+        REQUIRE(view.at(14).smooth == 85);
         region.parseOpcode({ "volume_smoothcc14", "15482" });
-        REQUIRE(region.modifiers[Mod::volume][14].smooth == 100);
+        REQUIRE(view.at(14).smooth == 100);
         region.parseOpcode({ "volume_smoothcc14", "-2" });
-        REQUIRE(region.modifiers[Mod::volume][14].smooth == 0);
+        REQUIRE(view.at(14).smooth == 0);
         region.parseOpcode({ "volume_stepcc120", "24" });
-        REQUIRE(region.modifiers[Mod::volume][120].step == 24.0f);
+        REQUIRE(view.at(120).step == 24.0f);
         region.parseOpcode({ "volume_stepcc120", "15482" });
-        REQUIRE(region.modifiers[Mod::volume][120].step == 144.0f);
+        REQUIRE(view.at(120).step == 144.0f);
         region.parseOpcode({ "volume_stepcc120", "-2" });
-        REQUIRE(region.modifiers[Mod::volume][120].step == 0.0f);
+        REQUIRE(view.at(120).step == 0.0f);
     }
 
     SECTION("tune_cc/pitch_cc")
     {
-        REQUIRE(region.modifiers[Mod::pitch].empty());
+        const ModKey target = ModKey::createNXYZ(ModId::Pitch, region.getId());
+        const RegionCCView view(region, target);
+        REQUIRE(view.empty());
         region.parseOpcode({ "pitch_cc1", "40" });
-        REQUIRE(region.modifiers[Mod::pitch].contains(1));
-        REQUIRE(region.modifiers[Mod::pitch][1].value == 40.0);
+        REQUIRE(view.at(1).value == 40.0);
         region.parseOpcode({ "tune_oncc2", "-76" });
-        REQUIRE(region.modifiers[Mod::pitch].contains(2));
-        REQUIRE(region.modifiers[Mod::pitch][2].value == -76.0);
+        REQUIRE(view.at(2).value == -76.0);
         region.parseOpcode({ "pitch_oncc4", "-1" });
-        REQUIRE(region.modifiers[Mod::pitch].contains(4));
-        REQUIRE(region.modifiers[Mod::pitch][4].value == -1.0);
+        REQUIRE(view.at(4).value == -1.0);
         region.parseOpcode({ "tune_curvecc17", "18" });
-        REQUIRE(region.modifiers[Mod::pitch][17].curve == 18);
+        REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "pitch_curvecc17", "15482" });
-        REQUIRE(region.modifiers[Mod::pitch][17].curve == 255);
+        REQUIRE(view.at(17).curve == 255);
         region.parseOpcode({ "tune_curvecc17", "-2" });
-        REQUIRE(region.modifiers[Mod::pitch][17].curve == 0);
+        REQUIRE(view.at(17).curve == 0);
         region.parseOpcode({ "pitch_smoothcc14", "85" });
-        REQUIRE(region.modifiers[Mod::pitch][14].smooth == 85);
+        REQUIRE(view.at(14).smooth == 85);
         region.parseOpcode({ "tune_smoothcc14", "15482" });
-        REQUIRE(region.modifiers[Mod::pitch][14].smooth == 100);
+        REQUIRE(view.at(14).smooth == 100);
         region.parseOpcode({ "pitch_smoothcc14", "-2" });
-        REQUIRE(region.modifiers[Mod::pitch][14].smooth == 0);
+        REQUIRE(view.at(14).smooth == 0);
         region.parseOpcode({ "tune_stepcc120", "24" });
-        REQUIRE(region.modifiers[Mod::pitch][120].step == 24.0f);
+        REQUIRE(view.at(120).step == 24.0f);
         region.parseOpcode({ "pitch_stepcc120", "15482" });
-        REQUIRE(region.modifiers[Mod::pitch][120].step == 9600.0f);
+        REQUIRE(view.at(120).step == 9600.0f);
         region.parseOpcode({ "tune_stepcc120", "-2" });
-        REQUIRE(region.modifiers[Mod::pitch][120].step == 0.0f);
+        REQUIRE(view.at(120).step == 0.0f);
     }
 }
 

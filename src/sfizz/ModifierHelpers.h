@@ -8,8 +8,7 @@
 
 #include "Range.h"
 #include "Defaults.h"
-#include "Modifiers.h"
-#include "Resources.h"
+#include "SfzHelpers.h"
 #include "absl/types/span.h"
 
 namespace sfz {
@@ -257,77 +256,4 @@ void pitchBendEnvelope(const EventVector& events, absl::Span<float> envelope, F&
     multiplicativeEnvelope<F>(events, envelope, std::forward<F>(lambda));
 }
 
-/**
- * @brief Builds a linear envelope, possibly quantized, based on the events fetched
- * from a midi state and the modifier data. This is a helper function for recurrent
- * code in the voice logic.
- *
- * @tparam F
- * @param resources
- * @param span
- * @param ccData
- * @param lambda
- */
-template <class F>
-void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
-{
-    const auto& events = resources.midiState.getCCEvents(ccData.cc);
-    const auto& curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.step == 0.0f) {
-        linearEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        });
-    } else {
-        const float stepSize { lambda(ccData.data.step) };
-        linearEnvelope(
-            events, span, [&ccData, &curve, &lambda](float x) {
-                return lambda(curve.evalNormalized(x) * ccData.data.value);
-            },
-            stepSize);
-    }
-}
-
-/**
- * @brief Builds a multiplicative envelope, possibly quantized, based on the events fetched
- * from a midi state and the modifier data. This is a helper function for recurrent
- * code in the voice logic.
- *
- * @tparam F
- * @param resources
- * @param span
- * @param ccData
- * @param lambda
- */
-template <class F>
-void multiplicativeModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData, F&& lambda)
-{
-    const auto& events = resources.midiState.getCCEvents(ccData.cc);
-    const auto& curve = resources.curves.getCurve(ccData.data.curve);
-    if (ccData.data.step == 0.0f) {
-        multiplicativeEnvelope(events, span, [&ccData, &curve, &lambda](float x) {
-            return lambda(curve.evalNormalized(x) * ccData.data.value);
-        });
-    } else {
-        const float stepSize { lambda(ccData.data.step) };
-        multiplicativeEnvelope(
-            events, span, [&ccData, &curve, &lambda](float x) {
-                return lambda(curve.evalNormalized(x) * ccData.data.value);
-            },
-            stepSize);
-    }
-}
-
-/**
- * @brief Alias for a simple linear modifier with no lambda
- *
- * @tparam F
- * @param resources
- * @param span
- * @param ccData
- * @param lambda
- */
-inline void linearModifier(const sfz::Resources& resources, absl::Span<float> span, const sfz::CCData<sfz::Modifier>& ccData)
-{
-    linearModifier(resources, span, ccData, [](float x) { return x; });
-}
-}
+} // namespace sfz

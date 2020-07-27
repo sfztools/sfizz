@@ -141,33 +141,6 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
 
-    for (auto& modId : allModifiers) {
-        ASSERT(modifierSmoothers[modId].size() >= region->modifiers[modId].size());
-        forEachWithSmoother(modId, [modId, this](const CCData<Modifier>& mod, Smoother& smoother) {
-            const auto ccValue = resources.midiState.getCCValue(mod.cc);
-            const auto& curve = resources.curves.getCurve(mod.data.curve);
-            const auto finalValue = curve.evalNormalized(ccValue) * mod.data.value;
-            switch (modId) {
-            case Mod::volume:
-                smoother.reset(db2mag(finalValue));
-                break;
-            case Mod::pitch:
-                smoother.reset(centsFactor(finalValue));
-                break;
-            case Mod::amplitude:
-            case Mod::pan:
-            case Mod::width:
-            case Mod::position:
-                smoother.reset(normalizePercents(finalValue));
-                break;
-            default:
-                smoother.reset(finalValue);
-                break;
-            }
-            smoother.setSmoothing(mod.data.smooth, sampleRate);
-        });
-    }
-
     resources.modMatrix.initVoice(id);
 }
 
@@ -882,12 +855,6 @@ void sfz::Voice::switchState(State s)
     }
 }
 
-void sfz::Voice::prepareSmoothers(const ModifierArray<size_t>& numModifiers)
-{
-    for (auto& mod : allModifiers)
-        modifierSmoothers[mod].resize(numModifiers[mod]);
-}
-
 void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
 {
     const auto numFrames = pitchSpan.size();
@@ -918,21 +885,6 @@ void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
 
 void sfz::Voice::resetSmoothers() noexcept
 {
-    for (auto& mod : allModifiers) {
-        const auto resetValue = [mod] {
-            switch (mod) {
-            case Mod::volume: // fallthrough
-            case Mod::pitch:
-                return 1.0f;
-            default:
-                return 0.0f;
-            }
-        }();
-
-        for (auto& smoother : modifierSmoothers[mod]) {
-            smoother.reset(resetValue);
-        }
-    }
     bendSmoother.reset(1.0f);
     gainSmoother.reset(0.0f);
 }

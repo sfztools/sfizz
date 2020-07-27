@@ -4,8 +4,11 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "RegionTHelpers.h"
 #include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
+#include "sfizz/modulations/ModId.h"
+#include "sfizz/modulations/ModKey.h"
 #include "catch2/catch.hpp"
 #include "ghc/fs_std.hpp"
 #if defined(__APPLE__)
@@ -356,9 +359,11 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
 
     REQUIRE( synth.getRegionView(1)->keyRange.getStart() == 57 );
     REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
-    REQUIRE(!synth.getRegionView(2)->modifiers[Mod::amplitude].empty());
-    REQUIRE(synth.getRegionView(2)->modifiers[Mod::amplitude].contains(10));
-    REQUIRE(synth.getRegionView(2)->modifiers[Mod::amplitude].getWithDefault(10).value == 34.0f);
+
+    const ModKey target = ModKey::createNXYZ(ModId::Amplitude, synth.getRegionView(2)->getId());
+    const RegionCCView view(*synth.getRegionView(2), target);
+    REQUIRE(!view.empty());
+    REQUIRE(view.at(10).value == 34.0f);
 }
 
 TEST_CASE("[Files] Specific bug: relative path with backslashes")

@@ -17,9 +17,9 @@
 #include "MidiState.h"
 #include "FileId.h"
 #include "NumericId.h"
-#include "Modifiers.h"
 #include "modulations/ModKey.h"
 #include "absl/types/optional.h"
+#include "absl/strings/string_view.h"
 #include <bitset>
 #include <string>
 #include <vector>
@@ -241,12 +241,11 @@ struct Region {
      *
      * @param opcode
      * @param range
-     * @param ccMap
      * @param target
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap, const ModKey& target);
+    bool processGenericCc(const Opcode& opcode, Range<float> range, const ModKey& target);
 
     void offsetAllKeys(int offset) noexcept;
 
@@ -369,9 +368,6 @@ struct Region {
 
     // Effects
     std::vector<float> gainToEffect;
-
-    // Modifiers
-    ModifierArray<CCMap<Modifier>> modifiers;
 
     bool triggerOnCC { false }; // whether the region triggers on CC events or note events
     bool triggerOnNote { true };

@@ -73,7 +73,6 @@ set (SFIZZ_HEADERS
     sfizz/MathHelpers.h
     sfizz/MidiState.h
     sfizz/ModifierHelpers.h
-    sfizz/Modifiers.h
     sfizz/NumericId.h
     sfizz/OnePoleFilter.h
     sfizz/Oversampler.h
