@@ -85,7 +85,7 @@ std::string ModKey::toString() const
     case ModId::Controller:
         return absl::StrCat("Controller ", params_.cc,
             " {curve=", params_.curve, ", smooth=", params_.smooth,
-            ", value=", params_.value, ", step=", params_.value, "}");
+            ", value=", params_.value, ", step=", params_.step, "}");
     case ModId::Envelope:
         return absl::StrCat("EG ", 1 + params_.N);
     case ModId::LFO:
