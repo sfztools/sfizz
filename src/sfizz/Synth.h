@@ -211,6 +211,17 @@ public:
      */
     const Voice* getVoiceById(NumericId<Voice> id) const noexcept;
     /**
+     * @brief Find the voice which is associated with the given identifier.
+     *
+     * @param id
+     * @return Voice*
+     */
+    Voice* getVoiceById(NumericId<Voice> id) noexcept
+    {
+        return const_cast<Voice*>(
+            const_cast<const Synth*>(this)->getVoiceById(id));
+    }
+    /**
      * @brief Get a raw view into a specific region. This is mostly used
      * for testing.
      *
