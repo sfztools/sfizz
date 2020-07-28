@@ -786,6 +786,228 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, bendSmooth, Default::smoothCCRange);
         break;
 
+    // Modulation: LFO
+    case hash("lfo&_freq"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].freq, Default::lfoFreqRange);
+        }
+        break;
+    case hash("lfo&_phase"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoPhaseRange)) {
+                float normalPhase = *value * (1.0 / 360.0);
+                normalPhase -= int(normalPhase);
+                normalPhase += (normalPhase < 0) ? 1 : 0;
+                lfos[lfoNumber - 1].phase0 = normalPhase;
+            }
+        }
+        break;
+    case hash("lfo&_delay"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].delay, Default::lfoDelayRange);
+        }
+        break;
+    case hash("lfo&_fade"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].fade, Default::lfoFadeRange);
+        }
+        break;
+    case hash("lfo&_count"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].count, Default::lfoCountRange);
+        }
+        break;
+    case hash("lfo&_steps"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoStepsRange)) {
+                if (!lfos[lfoNumber - 1].seq)
+                    lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
+                lfos[lfoNumber - 1].seq->steps.resize(*value);
+            }
+        }
+        break;
+    case hash("lfo&_step&"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto stepNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || stepNumber == 0 || stepNumber > config::maxLFOSteps)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoStepXRange)) {
+                if (!lfos[lfoNumber - 1].seq)
+                    lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
+                if (!extendIfNecessary(lfos[lfoNumber - 1].seq->steps, stepNumber, Default::numLFOSteps))
+                    return false;
+                lfos[lfoNumber - 1].seq->steps[stepNumber - 1] = *value * 0.01f;
+            }
+        }
+        break;
+    case hash("lfo&_wave&"): // also lfo&_wave
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoWaveRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].wave = static_cast<LFOWave>(*value);
+            }
+        }
+        break;
+    case hash("lfo&_offset&"): // also lfo&_offset
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoOffsetRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].offset = *value;
+            }
+        }
+        break;
+    case hash("lfo&_ratio&"): // also lfo&_ratio
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoRatioRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].ratio = *value;
+            }
+        }
+        break;
+    case hash("lfo&_scale&"): // also lfo&_scale
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoScaleRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].scale = *value;
+            }
+        }
+        break;
+
+    // Modulation: LFO (targets)
+    case hash("lfo&_amplitude"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
+                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_pan"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
+                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_width"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
+                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                ModKey target = ModKey::createNXYZ(ModId::Width, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_position"): // sfizz extension
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
+                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                ModKey target = ModKey::createNXYZ(ModId::Position, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_pitch"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
+                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_volume"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
+                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+
     // Amplitude Envelope
     case hash("ampeg_attack"):
         setValueFromOpcode(opcode, amplitudeEG.attack, Default::egTimeRange);
@@ -1323,4 +1545,23 @@ float sfz::Region::getGainToEffectBus(unsigned number) const noexcept
 float sfz::Region::getBendInCents(float bend) const noexcept
 {
     return bend > 0.0f ? bend * static_cast<float>(bendUp) : -bend * static_cast<float>(bendDown);
+}
+
+sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source, const ModKey& target)
+{
+    auto pred = [&source, &target](const Connection& c)
+    {
+        return c.source == source && c.target == target;
+    };
+
+    auto it = std::find_if(connections.begin(), connections.end(), pred);
+    if (it != connections.end())
+        return *it;
+
+    sfz::Region::Connection c;
+    c.source = source;
+    c.target = target;
+
+    connections.push_back(c);
+    return connections.back();
 }

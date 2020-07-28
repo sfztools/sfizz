@@ -22,6 +22,7 @@
 
 namespace sfz {
 enum InterpolatorModel : int;
+class LFO;
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -38,6 +39,9 @@ public:
      * @param midiState
      */
     Voice(int voiceNumber, Resources& resources);
+
+    ~Voice();
+
     enum class TriggerType {
         NoteOn,
         NoteOff,
@@ -271,6 +275,12 @@ public:
      */
     const Region* getRegion() const noexcept { return region; }
     /**
+     * @brief Get the LFO designated by the given index
+     *
+     * @param index
+     */
+    LFO* getLFO(size_t index) { return lfos[index].get(); }
+    /**
      * @brief Set the max number of filters per voice
      *
      * @param numFilters
@@ -279,9 +289,15 @@ public:
     /**
      * @brief Set the max number of EQs per voice
      *
-     * @param numFilters
+     * @param numEQs
      */
     void setMaxEQsPerVoice(size_t numEQs);
+    /**
+     * @brief Set the max number of LFOs per voice
+     *
+     * @param numLFOs
+     */
+    void setMaxLFOsPerVoice(size_t numLFOs);
     /**
      * @brief Release the voice after a given delay
      *
@@ -433,6 +449,7 @@ private:
 
     std::vector<FilterHolderPtr> filters;
     std::vector<EQHolderPtr> equalizers;
+    std::vector<std::unique_ptr<LFO>> lfos;
 
     ADSREnvelope<float> egEnvelope;
     float bendStepFactor { centsFactor(1) };

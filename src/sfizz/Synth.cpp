@@ -16,6 +16,7 @@
 #include "modulations/ModKey.h"
 #include "modulations/ModId.h"
 #include "modulations/sources/Controller.h"
+#include "modulations/sources/LFO.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
@@ -42,6 +43,7 @@ sfz::Synth::Synth(int numVoices)
 
     // modulation sources
     genController.reset(new ControllerSource(resources));
+    genLFO.reset(new LFOSource(*this));
 }
 
 sfz::Synth::~Synth()
@@ -452,6 +454,7 @@ void sfz::Synth::finalizeSfzLoad()
 
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
+    size_t maxLFOs { 0 };
 
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
@@ -562,6 +565,7 @@ void sfz::Synth::finalizeSfzLoad()
         region->registerTempo(2.0f);
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
+        maxLFOs = max(maxLFOs, region->lfos.size());
 
         ++currentRegionIndex;
     }
@@ -571,6 +575,7 @@ void sfz::Synth::finalizeSfzLoad()
 
     settingsPerVoice.maxFilters = maxFilters;
     settingsPerVoice.maxEQs = maxEQs;
+    settingsPerVoice.maxLFOs = maxLFOs;
 
     applySettingsPerVoice();
 
@@ -1346,6 +1351,7 @@ void sfz::Synth::applySettingsPerVoice()
     for (auto& voice : voices) {
         voice->setMaxFiltersPerVoice(settingsPerVoice.maxFilters);
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
+        voice->setMaxLFOsPerVoice(settingsPerVoice.maxLFOs);
     }
 }
 
@@ -1360,6 +1366,9 @@ void sfz::Synth::setupModMatrix()
             switch (conn.source.id()) {
             case ModId::Controller:
                 gen = genController.get();
+                break;
+            case ModId::LFO:
+                gen = genLFO.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");

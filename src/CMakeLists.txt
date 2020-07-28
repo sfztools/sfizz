@@ -35,6 +35,7 @@ set (SFIZZ_HEADERS
     sfizz/modulations/ModMatrix.h
     sfizz/modulations/ModGenerator.h
     sfizz/modulations/sources/Controller.h
+    sfizz/modulations/sources/LFO.h
     sfizz/effects/impl/ResonantArray.h
     sfizz/effects/impl/ResonantArrayAVX.h
     sfizz/effects/impl/ResonantArraySSE.h
@@ -70,6 +71,8 @@ set (SFIZZ_HEADERS
     sfizz/Interpolators.h
     sfizz/Interpolators.hpp
     sfizz/Logger.h
+    sfizz/LFO.h
+    sfizz/LFODescription.h
     sfizz/MathHelpers.h
     sfizz/MidiState.h
     sfizz/ModifierHelpers.h
@@ -133,11 +136,14 @@ set (SFIZZ_SOURCES
     sfizz/RTSemaphore.cpp
     sfizz/Panning.cpp
     sfizz/Effects.cpp
+    sfizz/LFO.cpp
+    sfizz/LFODescription.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
     sfizz/modulations/ModMatrix.cpp
     sfizz/modulations/sources/Controller.cpp
+    sfizz/modulations/sources/LFO.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
     sfizz/effects/Eq.cpp

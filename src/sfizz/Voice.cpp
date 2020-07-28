@@ -12,6 +12,7 @@
 #include "SIMDHelpers.h"
 #include "Panning.h"
 #include "SfzHelpers.h"
+#include "LFO.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -32,6 +33,10 @@ sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
 
     for (auto & filter : channelEnvelopeFilters)
         filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
+}
+
+sfz::Voice::~Voice()
+{
 }
 
 void sfz::Voice::startVoice(Region* region, int delay, int number, float value, sfz::Voice::TriggerType triggerType) noexcept
@@ -235,6 +240,9 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
+
+    for (auto& lfo : lfos)
+        lfo->setSampleRate(sampleRate);
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -771,6 +779,17 @@ void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
     // There are filters in there, this call is unexpected
     ASSERT(equalizers.size() == 0);
     equalizers.reserve(numFilters);
+}
+
+void sfz::Voice::setMaxLFOsPerVoice(size_t numLFOs)
+{
+    lfos.resize(numLFOs);
+
+    for (size_t i = 0; i < numLFOs; ++i) {
+        auto lfo = absl::make_unique<LFO>();
+        lfo->setSampleRate(sampleRate);
+        lfos[i] = std::move(lfo);
+    }
 }
 
 void sfz::Voice::setupOscillatorUnison()

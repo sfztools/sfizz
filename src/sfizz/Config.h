@@ -64,6 +64,8 @@ namespace config {
     constexpr unsigned int defaultAlignment { 16 };
     constexpr int filtersInPool { maxVoices * 2 };
     constexpr int excessFileFrames { 8 };
+    constexpr int maxLFOSubs { 8 };
+    constexpr int maxLFOSteps { 128 };
     /**
      * @brief The threshold for age stealing.
      *        In percentage of the voice's max age.
