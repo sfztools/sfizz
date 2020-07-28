@@ -167,6 +167,11 @@ public:
      */
     bool validSource(SourceId id) const;
 
+    /**
+     * @brief Get a representation of the matrix written as a Dot graph.
+     */
+    std::string toDotGraph() const;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

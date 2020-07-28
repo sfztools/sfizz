@@ -13,6 +13,7 @@
 #include "SIMDHelpers.h"
 #include "Debug.h"
 #include <absl/container/flat_hash_map.h>
+#include <absl/strings/string_view.h>
 #include <vector>
 #include <algorithm>
 
@@ -380,6 +381,47 @@ bool ModMatrix::validTarget(TargetId id) const
 bool ModMatrix::validSource(SourceId id) const
 {
     return static_cast<unsigned>(id.number()) < impl_->sources_.size();
+}
+
+std::string ModMatrix::toDotGraph() const
+{
+    const Impl& impl = *impl_;
+
+    struct Edge {
+        std::string source;
+        std::string target;
+    };
+
+    // collect all connections as string pairs
+    std::vector<Edge> edges;
+    for (const Impl::Target& target : impl.targets_) {
+        for (const auto& cs : target.connectedSources) {
+            const Impl::Source& source = impl.sources_[cs.first];
+            Edge e;
+            e.source = source.key.toString();
+            e.target = target.key.toString();
+            edges.push_back(std::move(e));
+        }
+    }
+
+    // alphabetic sort, to produce stable output for unit testing
+    auto compare = [](const Edge& a, const Edge& b) -> bool {
+        std::pair<absl::string_view, absl::string_view> aa{a.source, a.target};
+        std::pair<absl::string_view, absl::string_view> bb{b.source, b.target};
+        return aa < bb;
+    };
+    std::sort(edges.begin(), edges.end(), compare);
+
+    // write dot graph
+    std::string dot;
+    dot.reserve(1024);
+    absl::StrAppend(&dot, "digraph {" "\n");
+    for (const Edge& e : edges) {
+        absl::StrAppend(&dot, "\t" "\"", e.source, "\""
+                        " -> " "\"", e.target, "\"" "\n");
+    }
+    absl::StrAppend(&dot, "}" "\n");
+    return dot;
 }
 
 } // namespace sfz
