@@ -57,6 +57,8 @@ public:
             //! Parameters otherwise, based on the related opcode
             // eg. `N` in `lfoN`, `N, X` in `lfoN_eqX`
             struct { uint8_t N, X, Y, Z; };
+            // !!! NOTE: NXYZ is expected to be stored in 0-indexed form
+            //           eg. `lfo1_eq2` is N=0, X=1
         };
     };
 
