@@ -8,4 +8,4 @@ mkdir -p build/${INSTALL_DIR} && cd build
 buildenv mod-plugin-builder /usr/local/bin/cmake \
          -DSFIZZ_SYSTEM_PROCESSOR=armv7-a \
          -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF ..
-buildenv mod-plugin-builder make -j
+buildenv mod-plugin-builder make -j$(nproc)
