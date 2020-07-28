@@ -24,6 +24,7 @@ struct ModMatrix::Impl {
 
     uint32_t numFrames_ {};
     NumericId<Voice> voiceId_ {};
+    NumericId<Region> regionId_ {};
 
     struct Source {
         ModKey key;
@@ -195,7 +196,7 @@ void ModMatrix::init()
     Impl& impl = *impl_;
 
     for (Impl::Source &source : impl.sources_) {
-        int flags = source.key.flags();
+        const int flags = source.key.flags();
         if (flags & kModIsPerCycle)
             source.gen->init(source.key, {});
     }
@@ -206,7 +207,7 @@ void ModMatrix::initVoice(NumericId<Voice> voiceId)
     Impl& impl = *impl_;
 
     for (Impl::Source &source : impl.sources_) {
-        int flags = source.key.flags();
+        const int flags = source.key.flags();
         if (flags & kModIsPerVoice)
             source.gen->init(source.key, voiceId);
     }
@@ -231,20 +232,23 @@ void ModMatrix::endCycle()
 
     for (Impl::Source &source : impl.sources_) {
         if (!source.bufferReady) {
-            int flags = source.key.flags();
+            const int flags = source.key.flags();
             if (flags & kModIsPerCycle) {
                 absl::Span<float> buffer(source.buffer.data(), numFrames);
                 source.gen->generateDiscarded(source.key, {}, buffer);
             }
         }
     }
+
+    impl.numFrames_ = 0;
 }
 
-void ModMatrix::beginVoice(NumericId<Voice> voiceId)
+void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
 {
     Impl& impl = *impl_;
 
     impl.voiceId_ = voiceId;
+    impl.regionId_ = regionId;
 
     for (Impl::Source &source : impl.sources_) {
         const int flags = source.key.flags();
@@ -263,16 +267,20 @@ void ModMatrix::endVoice()
     Impl& impl = *impl_;
     const uint32_t numFrames = impl.numFrames_;
     const NumericId<Voice> voiceId = impl.voiceId_;
+    const NumericId<Region> regionId = impl.regionId_;
 
     for (Impl::Source &source : impl.sources_) {
         if (!source.bufferReady) {
-            int flags = source.key.flags();
-            if (flags & kModIsPerVoice) {
+            const int flags = source.key.flags();
+            if ((flags & kModIsPerVoice) && source.key.region() == regionId) {
                 absl::Span<float> buffer(source.buffer.data(), numFrames);
                 source.gen->generateDiscarded(source.key, voiceId, buffer);
             }
         }
     }
+
+    impl.voiceId_ = {};
+    impl.regionId_ = {};
 }
 
 float* ModMatrix::getModulation(TargetId targetId)
@@ -281,12 +289,17 @@ float* ModMatrix::getModulation(TargetId targetId)
         return nullptr;
 
     Impl& impl = *impl_;
+    const NumericId<Region> regionId = impl.regionId_;
     const uint32_t targetIndex = targetId.number();
     Impl::Target &target = impl.targets_[targetIndex];
-    const int flags = target.key.flags();
+    const int targetFlags = target.key.flags();
 
     const uint32_t numFrames = impl.numFrames_;
     absl::Span<float> buffer(target.buffer.data(), numFrames);
+
+    // only accept per-voice targets of the same region
+    if ((targetFlags & kModIsPerVoice) && regionId != target.key.region())
+        return nullptr;
 
     // check if already processed
     if (target.bufferReady)
@@ -295,45 +308,59 @@ float* ModMatrix::getModulation(TargetId targetId)
     // set the ready flag to prevent a cycle
     // in case there is, be sure to initialize the buffer
     target.bufferReady = true;
-    if (flags & kModIsMultiplicative)
-        sfz::fill(buffer, 1.0f);
-    else if (flags & kModIsPercentMultiplicative)
-        sfz::fill(buffer, 100.0f);
-    else {
-        ASSERT(flags & kModIsAdditive);
-        sfz::fill(buffer, 0.0f);
-    }
 
     auto sourcesPos = target.connectedSources.begin();
     auto sourcesEnd = target.connectedSources.end();
+    bool isFirstSource = true;
 
-    // generate the first source in buffer
-    if (sourcesPos != sourcesEnd) {
+    // generate first source in output buffer, next sources in temporary buffer
+    // then add or multiply, depending on target flags
+    while (sourcesPos != sourcesEnd) {
         Impl::Source &source = impl.sources_[sourcesPos->first];
-        source.gen->generate(source.key, impl.voiceId_, buffer);
+        const int sourceFlags = source.key.flags();
+
+        // only accept per-voice sources of the same region
+        bool useThisSource = true;
+        if (sourceFlags & kModIsPerVoice)
+            useThisSource = (regionId == source.key.region());
+
+        if (useThisSource) {
+            if (isFirstSource) {
+                source.gen->generate(source.key, impl.voiceId_, buffer);
+                isFirstSource = false;
+            }
+            else {
+                absl::Span<float> temp(impl.temp_.data(), numFrames);
+                source.gen->generate(source.key, impl.voiceId_, temp);
+                if (targetFlags & kModIsMultiplicative) {
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] *= temp[i];
+                }
+                else if (targetFlags & kModIsPercentMultiplicative) {
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] *= 0.01f * temp[i];
+                }
+                else {
+                    ASSERT(targetFlags & kModIsAdditive);
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] += temp[i];
+                }
+            }
+        }
+
         ++sourcesPos;
     }
 
-    // generate next sources in temporary buffer
-    // then add or multiply, depending on target flags
-    absl::Span<float> temp(impl.temp_.data(), numFrames);
-    while (sourcesPos != sourcesEnd) {
-        Impl::Source &source = impl.sources_[sourcesPos->first];
-        source.gen->generate(source.key, impl.voiceId_, temp);
-        if (flags & kModIsMultiplicative) {
-            for (uint32_t i = 0; i < numFrames; ++i)
-                buffer[i] *= temp[i];
-        }
-        else if (flags & kModIsPercentMultiplicative) {
-            for (uint32_t i = 0; i < numFrames; ++i)
-                buffer[i] *= 0.01f * temp[i];
-        }
+    // if there were no source, fill output with the neutral element
+    if (isFirstSource) {
+        if (targetFlags & kModIsMultiplicative)
+            sfz::fill(buffer, 1.0f);
+        else if (targetFlags & kModIsPercentMultiplicative)
+            sfz::fill(buffer, 100.0f);
         else {
-            ASSERT(flags & kModIsAdditive);
-            for (uint32_t i = 0; i < numFrames; ++i)
-                buffer[i] += temp[i];
+            ASSERT(targetFlags & kModIsAdditive);
+            sfz::fill(buffer, 0.0f);
         }
-        ++sourcesPos;
     }
 
     return buffer.data();

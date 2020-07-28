@@ -744,7 +744,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             if (voice->isFree())
                 continue;
 
-            mm.beginVoice(voice->getId());
+            mm.beginVoice(voice->getId(), voice->getRegion()->getId());
 
             activeVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);

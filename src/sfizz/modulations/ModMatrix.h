@@ -14,6 +14,7 @@ namespace sfz {
 class ModKey;
 class ModGenerator;
 class Voice;
+struct Region;
 
 /**
  * @brief Modulation matrix
@@ -124,8 +125,9 @@ public:
      * This clears all the buffers which are per-voice.
      *
      * @param voiceId the identifier of the current voice
+     * @param regionId the identifier of the region of the current voice
      */
-    void beginVoice(NumericId<Voice> voiceId);
+    void beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId);
 
     /**
      * @brief End modulation processing for a given voice.
