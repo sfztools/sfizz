@@ -90,9 +90,10 @@ public:
      *
      * @param sourceId source of the connection
      * @param targetId target of the connection
+     * @param sourceDepth amount which multiplies the source output
      * @return true if the connection was successfully made, otherwise false
      */
-    bool connect(SourceId sourceId, TargetId targetId);
+    bool connect(SourceId sourceId, TargetId targetId, float sourceDepth);
 
     /**
      * @brief Reinitialize modulation sources overall.

@@ -373,7 +373,11 @@ struct Region {
     bool triggerOnNote { true };
 
     // Modulation matrix connections
-    typedef std::pair<ModKey, ModKey> Connection;
+    struct Connection {
+        ModKey source;
+        ModKey target;
+        float sourceDepth = 1.0f;
+    };
     std::vector<Connection> connections;
 
     // Parent

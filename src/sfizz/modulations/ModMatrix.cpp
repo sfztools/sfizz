@@ -34,7 +34,7 @@ struct ModMatrix::Impl {
     };
 
     struct ConnectionData {
-        // nothing
+        float sourceDepth_ {};
     };
 
     struct Target {
@@ -176,7 +176,7 @@ ModMatrix::TargetId ModMatrix::findTarget(const ModKey& key)
     return TargetId(it->second);
 }
 
-bool ModMatrix::connect(SourceId sourceId, TargetId targetId)
+bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth)
 {
     Impl& impl = *impl_;
     unsigned sourceIndex = sourceId.number();
@@ -186,7 +186,8 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId)
         return false;
 
     Impl::Target& target = impl.targets_[targetIndex];
-    /*Impl::ConnectionData& conn =*/ target.connectedSources[sourceIndex];
+    Impl::ConnectionData& conn = target.connectedSources[sourceIndex];
+    conn.sourceDepth_ = sourceDepth;
 
     return true;
 }
@@ -317,6 +318,7 @@ float* ModMatrix::getModulation(TargetId targetId)
     // then add or multiply, depending on target flags
     while (sourcesPos != sourcesEnd) {
         Impl::Source &source = impl.sources_[sourcesPos->first];
+        const float sourceDepth = sourcesPos->second.sourceDepth_;
         const int sourceFlags = source.key.flags();
 
         // only accept per-voice sources of the same region
@@ -334,16 +336,16 @@ float* ModMatrix::getModulation(TargetId targetId)
                 source.gen->generate(source.key, impl.voiceId_, temp);
                 if (targetFlags & kModIsMultiplicative) {
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= temp[i];
+                        buffer[i] *= sourceDepth * temp[i];
                 }
                 else if (targetFlags & kModIsPercentMultiplicative) {
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= 0.01f * temp[i];
+                        buffer[i] *= (0.01f * sourceDepth) * temp[i];
                 }
                 else {
                     ASSERT(targetFlags & kModIsAdditive);
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] += temp[i];
+                        buffer[i] += sourceDepth * temp[i];
                 }
             }
         }

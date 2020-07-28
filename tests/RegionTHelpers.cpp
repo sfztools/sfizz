@@ -27,7 +27,7 @@ sfz::ModKey::Parameters RegionCCView::at(int cc) const
 {
     for (const sfz::Region::Connection& conn : region_.connections) {
         if (match(conn)) {
-            const sfz::ModKey::Parameters p = conn.first.parameters();
+            const sfz::ModKey::Parameters p = conn.source.parameters();
             if (p.cc == cc)
                 return p;
         }
@@ -37,5 +37,5 @@ sfz::ModKey::Parameters RegionCCView::at(int cc) const
 
 bool RegionCCView::match(const sfz::Region::Connection& conn) const
 {
-    return conn.first.id() == sfz::ModId::Controller && conn.second == target_;
+    return conn.source.id() == sfz::ModId::Controller && conn.target == target_;
 }

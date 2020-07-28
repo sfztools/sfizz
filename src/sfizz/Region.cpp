@@ -940,9 +940,9 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, con
         auto it = std::find_if(connections.begin(), connections.end(),
             [ccNumber, &target](const Connection& x) -> bool
             {
-                return x.first.id() == ModId::Controller &&
-                    x.first.parameters().cc == ccNumber &&
-                    x.second == target;
+                return x.source.id() == ModId::Controller &&
+                    x.source.parameters().cc == ccNumber &&
+                    x.target == target;
             });
 
         Connection *conn;
@@ -951,12 +951,12 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, con
         else {
             connections.emplace_back();
             conn = &connections.back();
-            conn->first = ModKey::createCC(ccNumber, 0, 0, 0, 0);
-            conn->second = target;
+            conn->source = ModKey::createCC(ccNumber, 0, 0, 0, 0);
+            conn->target = target;
         }
 
         //
-        ModKey::Parameters p = conn->first.parameters();
+        ModKey::Parameters p = conn->source.parameters();
         switch (opcode.category) {
         case kOpcodeOnCcN:
             setValueFromOpcode(opcode, p.value, range);
@@ -977,7 +977,7 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, con
             assert(false);
             break;
         }
-        conn->first = ModKey(ModId::Controller, {}, p);
+        conn->source = ModKey(ModId::Controller, {}, p);
     }
 
     return true;
