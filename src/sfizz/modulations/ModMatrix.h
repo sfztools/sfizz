@@ -104,7 +104,7 @@ public:
      * @brief Reinitialize modulation source for a given voice.
      * This must be called first after a voice enters active state.
      */
-    void initVoice(NumericId<Voice> voiceId);
+    void initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId);
 
     /**
      * @brief Start modulation processing for the entire cycle.

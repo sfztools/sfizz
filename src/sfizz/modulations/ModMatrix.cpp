@@ -202,13 +202,13 @@ void ModMatrix::init()
     }
 }
 
-void ModMatrix::initVoice(NumericId<Voice> voiceId)
+void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
 {
     Impl& impl = *impl_;
 
     for (Impl::Source &source : impl.sources_) {
         const int flags = source.key.flags();
-        if (flags & kModIsPerVoice)
+        if ((flags & kModIsPerVoice) && source.key.region() == regionId)
             source.gen->init(source.key, voiceId);
     }
 }
