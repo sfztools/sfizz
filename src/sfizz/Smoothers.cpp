@@ -31,7 +31,13 @@ void Smoother::process(absl::Span<const float> input, absl::Span<float> output, 
     if (input.size() == 0)
         return;
 
-    if (canShortcut && std::abs(input.front() - current()) < config::virtuallyZero) {
+    if (canShortcut) {
+        float in = input.front();
+        float rel = std::abs(in - current()) / (std::abs(in) + config::virtuallyZero);
+        canShortcut = rel < config::smoothingShortcutThreshold;
+    }
+
+    if (canShortcut) {
         if (input.data() != output.data())
             copy<float>(input, output);
 
