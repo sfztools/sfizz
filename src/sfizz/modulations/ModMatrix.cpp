@@ -329,6 +329,10 @@ float* ModMatrix::getModulation(TargetId targetId)
         if (useThisSource) {
             if (isFirstSource) {
                 source.gen->generate(source.key, impl.voiceId_, buffer);
+                if (sourceDepth != 1) {
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] *= sourceDepth;
+                }
                 isFirstSource = false;
             }
             else {
