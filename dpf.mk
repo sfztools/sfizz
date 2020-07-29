@@ -64,6 +64,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/effects/Disto.cpp \
 	src/sfizz/effects/Eq.cpp \
 	src/sfizz/effects/Filter.cpp \
+	src/sfizz/effects/Fverb.cpp \
 	src/sfizz/effects/Gain.cpp \
 	src/sfizz/effects/Gate.cpp \
 	src/sfizz/effects/impl/ResonantArrayAVX.cpp \
