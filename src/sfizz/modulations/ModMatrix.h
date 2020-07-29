@@ -6,6 +6,7 @@
 
 #pragma once
 #include "../NumericId.h"
+#include <string>
 #include <memory>
 #include <cstdint>
 
