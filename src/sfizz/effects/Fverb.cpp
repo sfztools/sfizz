@@ -212,7 +212,7 @@ namespace fx {
                 setValueFromOpcode(opc, size, {0.0f, 100.0f});
                 break;
             case hash("reverb_predelay"):
-                setValueFromOpcode(opc, predelay, {0.0f, 1.0f});
+                setValueFromOpcode(opc, predelay, {0.0f, 10.0f});
                 break;
             case hash("reverb_tone"):
                 setValueFromOpcode(opc, tone, {0.0f, 100.0f});
