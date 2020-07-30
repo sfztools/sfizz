@@ -34,20 +34,22 @@ TEST_CASE("[Modulations] Flags")
     static auto* checkBasicFlags = +[](int flags)
     {
         REQUIRE(flags != sfz::kModFlagsInvalid);
-        REQUIRE(((flags & sfz::kModIsPerCycle) ^
-                 (flags & sfz::kModIsPerVoice)) != 0);
+        REQUIRE((bool(flags & sfz::kModIsPerCycle) +
+                 bool(flags & sfz::kModIsPerVoice)) == 1);
     };
     static auto* checkSourceFlags = +[](int flags)
     {
         checkBasicFlags(flags);
-        // nothing else
+        REQUIRE((bool(flags & sfz::kModIsAdditive) +
+                 bool(flags & sfz::kModIsMultiplicative) +
+                 bool(flags & sfz::kModIsPercentMultiplicative)) == 0);
     };
     static auto* checkTargetFlags = +[](int flags)
     {
         checkBasicFlags(flags);
-        REQUIRE(((flags & sfz::kModIsAdditive) ^
-                 (flags & sfz::kModIsMultiplicative) ^
-                 (flags & sfz::kModIsPercentMultiplicative)) != 0);
+        REQUIRE((bool(flags & sfz::kModIsAdditive) +
+                 bool(flags & sfz::kModIsMultiplicative) +
+                 bool(flags & sfz::kModIsPercentMultiplicative)) == 1);
     };
 
     sfz::ModIds::forEachSourceId([](sfz::ModId id)

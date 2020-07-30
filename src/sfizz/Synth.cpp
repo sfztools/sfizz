@@ -1380,7 +1380,7 @@ void sfz::Synth::setupModMatrix()
             }
 
             ASSERT(target);
-            if (!source) {
+            if (!target) {
                 DBG("[sfizz] Failed to register modulation target");
                 continue;
             }
