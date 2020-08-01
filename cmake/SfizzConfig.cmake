@@ -35,7 +35,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
     if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
-        add_compile_options(-msse2)
+        add_compile_options(-msse4.1)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_STANDARD 17)
