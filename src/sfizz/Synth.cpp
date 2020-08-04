@@ -30,7 +30,7 @@ sfz::Synth::Synth()
 
 sfz::Synth::Synth(int numVoices)
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
     parser.setListener(this);
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
@@ -39,7 +39,7 @@ sfz::Synth::Synth(int numVoices)
 
 sfz::Synth::~Synth()
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -166,7 +166,7 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
@@ -396,7 +396,7 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
     clear();
 
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     std::error_code ec;
     fs::path realFile = fs::canonical(file, ec);
@@ -417,7 +417,7 @@ bool sfz::Synth::loadSfzString(const fs::path& path, absl::string_view text)
 {
     clear();
 
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
     parser.parseString(path, text);
     if (parser.getErrorCount() > 0)
         return false;
@@ -643,7 +643,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     ASSERT(samplesPerBlock < config::maxBlockSize);
 
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     this->samplesPerBlock = samplesPerBlock;
     for (auto& voice : voices)
@@ -659,7 +659,7 @@ void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 
 void sfz::Synth::setSampleRate(float sampleRate) noexcept
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     this->sampleRate = sampleRate;
     for (auto& voice : voices)
@@ -698,7 +698,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (resources.synthConfig.freeWheeling)
         resources.filePool.waitForBackgroundLoading();
 
-    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
@@ -797,7 +797,7 @@ void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 
-    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
@@ -813,7 +813,7 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
-    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
@@ -966,7 +966,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
     resources.midiState.ccEvent(delay, ccNumber, normValue);
 
-    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
@@ -1277,7 +1277,7 @@ int sfz::Synth::getNumVoices() const noexcept
 void sfz::Synth::setNumVoices(int numVoices) noexcept
 {
     ASSERT(numVoices > 0);
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     // fast path
     if (numVoices == this->numVoices)
@@ -1325,7 +1325,7 @@ void sfz::Synth::applySettingsPerVoice()
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     // fast path
     if (factor == oversamplingFactor)
@@ -1348,7 +1348,7 @@ sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
 
 void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     // fast path
     if (preloadSize == resources.filePool.getPreloadSize())
@@ -1381,7 +1381,7 @@ void sfz::Synth::resetAllControllers(int delay) noexcept
 {
     resources.midiState.resetAllControllers(delay);
 
-    const std::unique_lock<std::mutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
@@ -1436,7 +1436,7 @@ void sfz::Synth::disableLogging() noexcept
 
 void sfz::Synth::allSoundOff() noexcept
 {
-    const std::lock_guard<std::mutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     for (auto& voice : voices)
         voice->reset();
