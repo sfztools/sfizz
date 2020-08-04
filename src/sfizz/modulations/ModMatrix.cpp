@@ -24,8 +24,8 @@ struct ModMatrix::Impl {
     uint32_t samplesPerBlock_ {};
 
     uint32_t numFrames_ {};
-    NumericId<Voice> voiceId_ {};
-    NumericId<Region> regionId_ {};
+    NumericId<Voice> currentVoiceId_ {};
+    NumericId<Region> currentRegionId_ {};
 
     struct Source {
         ModKey key;
@@ -249,8 +249,8 @@ void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
 {
     Impl& impl = *impl_;
 
-    impl.voiceId_ = voiceId;
-    impl.regionId_ = regionId;
+    impl.currentVoiceId_ = voiceId;
+    impl.currentRegionId_ = regionId;
 
     for (Impl::Source &source : impl.sources_) {
         const int flags = source.key.flags();
@@ -268,8 +268,8 @@ void ModMatrix::endVoice()
 {
     Impl& impl = *impl_;
     const uint32_t numFrames = impl.numFrames_;
-    const NumericId<Voice> voiceId = impl.voiceId_;
-    const NumericId<Region> regionId = impl.regionId_;
+    const NumericId<Voice> voiceId = impl.currentVoiceId_;
+    const NumericId<Region> regionId = impl.currentRegionId_;
 
     for (Impl::Source &source : impl.sources_) {
         if (!source.bufferReady) {
@@ -281,8 +281,8 @@ void ModMatrix::endVoice()
         }
     }
 
-    impl.voiceId_ = {};
-    impl.regionId_ = {};
+    impl.currentVoiceId_ = {};
+    impl.currentRegionId_ = {};
 }
 
 float* ModMatrix::getModulation(TargetId targetId)
@@ -291,7 +291,7 @@ float* ModMatrix::getModulation(TargetId targetId)
         return nullptr;
 
     Impl& impl = *impl_;
-    const NumericId<Region> regionId = impl.regionId_;
+    const NumericId<Region> regionId = impl.currentRegionId_;
     const uint32_t targetIndex = targetId.number();
     Impl::Target &target = impl.targets_[targetIndex];
     const int targetFlags = target.key.flags();
@@ -329,7 +329,7 @@ float* ModMatrix::getModulation(TargetId targetId)
 
         if (useThisSource) {
             if (isFirstSource) {
-                source.gen->generate(source.key, impl.voiceId_, buffer);
+                source.gen->generate(source.key, impl.currentVoiceId_, buffer);
                 if (sourceDepth != 1) {
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] *= sourceDepth;
@@ -338,7 +338,7 @@ float* ModMatrix::getModulation(TargetId targetId)
             }
             else {
                 absl::Span<float> temp(impl.temp_.data(), numFrames);
-                source.gen->generate(source.key, impl.voiceId_, temp);
+                source.gen->generate(source.key, impl.currentVoiceId_, temp);
                 if (targetFlags & kModIsMultiplicative) {
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] *= sourceDepth * temp[i];
