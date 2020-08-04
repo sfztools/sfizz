@@ -24,12 +24,12 @@ public:
     /**
      * @brief Set the sample rate
      */
-    virtual void setSampleRate(double sampleRate) = 0;
+    virtual void setSampleRate(double sampleRate) { (void)sampleRate; }
 
     /**
      * @brief Set the maximum block size
      */
-    virtual void setSamplesPerBlock(unsigned count) = 0;
+    virtual void setSamplesPerBlock(unsigned count) { (void)count; }
 
     /**
      * @brief Initialize the generator.
