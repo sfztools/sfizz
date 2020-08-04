@@ -78,6 +78,9 @@ target_link_libraries(bm_wavfile PRIVATE sfizz-sndfile)
 sfizz_add_benchmark(bm_flacfile BM_flacfile.cpp)
 target_link_libraries(bm_flacfile PRIVATE sfizz-sndfile)
 
+sfizz_add_benchmark(bm_audioReaders BM_audioReaders.cpp ../src/sfizz/AudioReader.cpp)
+target_link_libraries(bm_audioReaders PRIVATE sfizz-sndfile)
+
 sfizz_add_benchmark(bm_readChunk BM_readChunk.cpp)
 target_link_libraries(bm_readChunk PRIVATE sfizz-sndfile)
 sfizz_add_benchmark(bm_readChunkFlac BM_readChunkFlac.cpp)

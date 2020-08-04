@@ -93,6 +93,7 @@ set (SFIZZ_SOURCES
     sfizz/FileId.cpp
     sfizz/FilePool.cpp
     sfizz/FileInstrument.cpp
+    sfizz/AudioReader.cpp
     sfizz/FilterPool.cpp
     sfizz/EQPool.cpp
     sfizz/Region.cpp

@@ -56,6 +56,7 @@ sfizz-clean:
 
 SFIZZ_SOURCES = \
 	src/sfizz/ADSREnvelope.cpp \
+	src/sfizz/AudioReader.cpp \
 	src/sfizz/Curve.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
