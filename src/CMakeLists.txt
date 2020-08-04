@@ -13,6 +13,7 @@ source_group ("Faust Files" FILES ${FAUST_FILES})
 set (SFIZZ_HEADERS
     sfizz/ADSREnvelope.h
     sfizz/AudioBuffer.h
+    sfizz/AudioReader.h
     sfizz/AudioSpan.h
     sfizz/Buffer.h
     sfizz/BufferPool.h
