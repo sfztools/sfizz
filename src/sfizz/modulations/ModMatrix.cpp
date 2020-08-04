@@ -51,8 +51,6 @@ struct ModMatrix::Impl {
 
     std::vector<Source> sources_;
     std::vector<Target> targets_;
-
-    Buffer<float> temp_;
 };
 
 ModMatrix::ModMatrix()
@@ -104,8 +102,6 @@ void ModMatrix::setSamplesPerBlock(unsigned samplesPerBlock)
     }
     for (Impl::Target &target : impl.targets_)
         target.buffer.resize(samplesPerBlock);
-
-    impl.temp_.resize(samplesPerBlock);
 }
 
 ModMatrix::SourceId ModMatrix::registerSource(const ModKey& key, ModGenerator& gen)
@@ -315,7 +311,7 @@ float* ModMatrix::getModulation(TargetId targetId)
     auto sourcesEnd = target.connectedSources.end();
     bool isFirstSource = true;
 
-    // generate first source in output buffer, next sources in temporary buffer
+    // generate sources in their dedicated buffers
     // then add or multiply, depending on target flags
     while (sourcesPos != sourcesEnd) {
         Impl::Source &source = impl.sources_[sourcesPos->first];
@@ -328,29 +324,37 @@ float* ModMatrix::getModulation(TargetId targetId)
             useThisSource = (regionId == source.key.region());
 
         if (useThisSource) {
+            absl::Span<float> sourceBuffer(source.buffer.data(), numFrames);
+
+            // unless source is already done, process it
+            if (!source.bufferReady) {
+                source.gen->generate(source.key, impl.currentVoiceId_, sourceBuffer);
+                source.bufferReady = true;
+            }
+
             if (isFirstSource) {
-                source.gen->generate(source.key, impl.currentVoiceId_, buffer);
                 if (sourceDepth != 1) {
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= sourceDepth;
+                        buffer[i] = sourceDepth * sourceBuffer[i];
+                }
+                else {
+                    copy(absl::Span<const float>(sourceBuffer), buffer);
                 }
                 isFirstSource = false;
             }
             else {
-                absl::Span<float> temp(impl.temp_.data(), numFrames);
-                source.gen->generate(source.key, impl.currentVoiceId_, temp);
                 if (targetFlags & kModIsMultiplicative) {
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= sourceDepth * temp[i];
+                        buffer[i] *= sourceDepth * sourceBuffer[i];
                 }
                 else if (targetFlags & kModIsPercentMultiplicative) {
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= (0.01f * sourceDepth) * temp[i];
+                        buffer[i] *= (0.01f * sourceDepth) * sourceBuffer[i];
                 }
                 else {
                     ASSERT(targetFlags & kModIsAdditive);
                     for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] += sourceDepth * temp[i];
+                        buffer[i] += sourceDepth * sourceBuffer[i];
                 }
             }
         }
@@ -361,12 +365,12 @@ float* ModMatrix::getModulation(TargetId targetId)
     // if there were no source, fill output with the neutral element
     if (isFirstSource) {
         if (targetFlags & kModIsMultiplicative)
-            sfz::fill(buffer, 1.0f);
+            fill(buffer, 1.0f);
         else if (targetFlags & kModIsPercentMultiplicative)
-            sfz::fill(buffer, 100.0f);
+            fill(buffer, 100.0f);
         else {
             ASSERT(targetFlags & kModIsAdditive);
-            sfz::fill(buffer, 0.0f);
+            fill(buffer, 0.0f);
         }
     }
 
