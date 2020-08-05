@@ -17,6 +17,7 @@
 #include "effects/Limiter.h"
 #include "effects/Compressor.h"
 #include "effects/Gate.h"
+#include "effects/Disto.h"
 #include "effects/Strings.h"
 #include "effects/Rectify.h"
 #include "effects/Gain.h"
@@ -35,6 +36,7 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("limiter", fx::Limiter::makeInstance);
     registerEffectType("comp", fx::Compressor::makeInstance);
     registerEffectType("gate", fx::Gate::makeInstance);
+    registerEffectType("disto", fx::Disto::makeInstance);
     registerEffectType("strings", fx::Strings::makeInstance);
 
     // extensions (book)
