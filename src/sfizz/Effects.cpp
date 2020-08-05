@@ -16,6 +16,7 @@
 #include "effects/Lofi.h"
 #include "effects/Limiter.h"
 #include "effects/Compressor.h"
+#include "effects/Gate.h"
 #include "effects/Strings.h"
 #include "effects/Rectify.h"
 #include "effects/Gain.h"
@@ -33,6 +34,7 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("lofi", fx::Lofi::makeInstance);
     registerEffectType("limiter", fx::Limiter::makeInstance);
     registerEffectType("comp", fx::Compressor::makeInstance);
+    registerEffectType("gate", fx::Gate::makeInstance);
     registerEffectType("strings", fx::Strings::makeInstance);
 
     // extensions (book)
