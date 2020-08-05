@@ -11,7 +11,7 @@
 - [x] gate_release        Release time (s)
 - [x] gate_threshold      Threshold (dB)
 - [x] gate_stlink         Stereo link (boolean)
-- [ ] gate_onccN          Gate manual control (% - 0%=on, 100%=off)
+- [ ] gate_onccN          Gate manual control (% - 0%=gate open, 100%=gate closed)
 
   Sfizz Extra
 
