@@ -19,6 +19,7 @@
 #include "effects/Gate.h"
 #include "effects/Disto.h"
 #include "effects/Strings.h"
+#include "effects/Fverb.h"
 #include "effects/Rectify.h"
 #include "effects/Gain.h"
 #include "effects/Width.h"
@@ -38,6 +39,7 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("gate", fx::Gate::makeInstance);
     registerEffectType("disto", fx::Disto::makeInstance);
     registerEffectType("strings", fx::Strings::makeInstance);
+    registerEffectType("fverb", fx::Fverb::makeInstance);
 
     // extensions (book)
     registerEffectType("rectify", fx::Rectify::makeInstance);
