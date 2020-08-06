@@ -108,7 +108,7 @@ sfz::EQPool::EQPool(const MidiState& state, int numEQs)
 
 sfz::EQHolderPtr sfz::EQPool::getEQ(const EQDescription& description, unsigned numChannels, float velocity)
 {
-    const std::unique_lock<std::mutex> lock { eqGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { eqGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return {};
 
@@ -132,7 +132,7 @@ size_t sfz::EQPool::getActiveEQs() const
 
 size_t sfz::EQPool::setnumEQs(size_t numEQs)
 {
-    const std::lock_guard<std::mutex> eqLock { eqGuard };
+    const std::lock_guard<SpinMutex> eqLock { eqGuard };
 
     swapAndPopAll(eqs, [](sfz::EQHolderPtr& eq) { return eq.use_count() == 1; });
 
