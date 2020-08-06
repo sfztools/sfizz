@@ -11,7 +11,8 @@ set (FAUST_FILES
     sfizz/effects/dsp/limiter.dsp
     sfizz/effects/dsp/resonant_string.dsp
     sfizz/effects/dsp/compressor.dsp
-    sfizz/effects/dsp/gate.dsp)
+    sfizz/effects/dsp/gate.dsp
+    sfizz/effects/dsp/disto_stage.dsp)
 source_group ("Faust Files" FILES ${FAUST_FILES})
 
 set (SFIZZ_HEADERS
@@ -35,6 +36,7 @@ set (SFIZZ_HEADERS
     sfizz/effects/CommonLFO.h
     sfizz/effects/CommonLFO.hpp
     sfizz/effects/Compressor.h
+    sfizz/effects/Disto.h
     sfizz/effects/Eq.h
     sfizz/effects/Filter.h
     sfizz/effects/Gain.h
@@ -130,6 +132,7 @@ set (SFIZZ_SOURCES
     sfizz/effects/Limiter.cpp
     sfizz/effects/Compressor.cpp
     sfizz/effects/Gate.cpp
+    sfizz/effects/Disto.cpp
     sfizz/effects/Strings.cpp
     sfizz/effects/Rectify.cpp
     sfizz/effects/Gain.cpp

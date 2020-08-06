@@ -61,6 +61,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
 	src/sfizz/effects/Compressor.cpp \
+	src/sfizz/effects/Disto.cpp \
 	src/sfizz/effects/Eq.cpp \
 	src/sfizz/effects/Filter.cpp \
 	src/sfizz/effects/Gain.cpp \
