@@ -17,10 +17,10 @@
 #include "AudioSpan.h"
 #include "parser/Parser.h"
 #include "VoiceStealing.h"
+#include "utility/SpinMutex.h"
 #include "absl/types/span.h"
 #include <absl/types/optional.h>
 #include <random>
-#include <mutex>
 #include <set>
 #include <string_view>
 #include <vector>
@@ -748,7 +748,7 @@ private:
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
 
-    std::mutex callbackGuard;
+    SpinMutex callbackGuard;
 
     // Singletons passed as references to the voices
     Resources resources;

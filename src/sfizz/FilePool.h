@@ -32,6 +32,7 @@
 #include "AudioSpan.h"
 #include "FileId.h"
 #include "SIMDHelpers.h"
+#include "utility/SpinMutex.h"
 #include "ghc/fs_std.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
@@ -288,7 +289,7 @@ private:
     std::vector<FilePromisePtr> emptyPromises;
     std::vector<FilePromisePtr> temporaryFilePromises;
     std::vector<FilePromisePtr> promisesToClear;
-    std::mutex promiseGuard;
+    SpinMutex promiseGuard;
 
     // Preloaded data
     absl::flat_hash_map<FileId, FileDataHandle> preloadedFiles;

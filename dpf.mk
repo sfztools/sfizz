@@ -106,6 +106,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/simd/HelpersAVX.cpp \
 	src/sfizz/Synth.cpp \
 	src/sfizz/Tuning.cpp \
+	src/sfizz/utility/SpinMutex.cpp \
 	src/sfizz/Voice.cpp \
 	src/sfizz/Wavetables.cpp
 

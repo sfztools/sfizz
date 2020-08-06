@@ -27,6 +27,8 @@ set (SFIZZ_HEADERS
     sfizz/Config.h
     sfizz/Curve.h
     sfizz/Debug.h
+    sfizz/utility/SpinMutex.h
+    sfizz/utility/SpinMutex.cpp
     sfizz/effects/impl/ResonantArray.h
     sfizz/effects/impl/ResonantArrayAVX.h
     sfizz/effects/impl/ResonantArraySSE.h

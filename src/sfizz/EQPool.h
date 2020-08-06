@@ -2,6 +2,7 @@
 #include "SfzFilter.h"
 #include "EQDescription.h"
 #include "MidiState.h"
+#include "utility/SpinMutex.h"
 #include <vector>
 #include <memory>
 #include <mutex>
@@ -115,7 +116,7 @@ public:
      */
     void setSampleRate(float sampleRate);
 private:
-    std::mutex eqGuard;
+    SpinMutex eqGuard;
     float sampleRate { config::defaultSampleRate };
     const MidiState& midiState;
     std::vector<EQHolderPtr> eqs;

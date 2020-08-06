@@ -35,6 +35,7 @@ set(SFIZZ_TEST_SOURCES
     SemaphoreT.cpp
     SwapAndPopT.cpp
     TuningT.cpp
+    ConcurrencyT.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})

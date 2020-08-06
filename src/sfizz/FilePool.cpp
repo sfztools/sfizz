@@ -345,7 +345,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 
 void sfz::FilePool::tryToClearPromises()
 {
-    const std::lock_guard<std::mutex> promiseLock { promiseGuard };
+    const std::lock_guard<SpinMutex> promiseLock { promiseGuard };
 
     for (auto& promise: promisesToClear) {
         if (promise->dataStatus != FilePromise::DataStatus::Wait)
@@ -427,7 +427,7 @@ void sfz::FilePool::clear()
 
 void sfz::FilePool::cleanupPromises() noexcept
 {
-    const std::unique_lock<std::mutex> lock { promiseGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { promiseGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 

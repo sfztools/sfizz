@@ -109,7 +109,7 @@ sfz::FilterPool::FilterPool(const MidiState& state, int numFilters)
 
 sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
 {
-    const std::unique_lock<std::mutex> lock { filterGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { filterGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return {};
 
@@ -133,7 +133,7 @@ size_t sfz::FilterPool::getActiveFilters() const
 
 size_t sfz::FilterPool::setNumFilters(size_t numFilters)
 {
-    const std::lock_guard<std::mutex> filterLock { filterGuard };
+    const std::lock_guard<SpinMutex> filterLock { filterGuard };
 
     swapAndPopAll(filters, [](sfz::FilterHolderPtr& filter) { return filter.use_count() == 1; });
 

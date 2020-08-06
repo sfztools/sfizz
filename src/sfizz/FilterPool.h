@@ -3,6 +3,7 @@
 #include "FilterDescription.h"
 #include "MidiState.h"
 #include "Defaults.h"
+#include "utility/SpinMutex.h"
 #include <vector>
 #include <memory>
 #include <mutex>
@@ -120,7 +121,7 @@ public:
      */
     void setSampleRate(float sampleRate);
 private:
-    std::mutex filterGuard;
+    SpinMutex filterGuard;
     float sampleRate { config::defaultSampleRate };
     const MidiState& midiState;
     std::vector<FilterHolderPtr> filters;
