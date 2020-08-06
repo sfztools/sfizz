@@ -61,6 +61,7 @@ namespace fx {
         static const Profile largeHall;
         static const Profile midHall;
         static const Profile smallHall;
+        static const Profile chamber;
 
         static double lpfCutoff(double x)
         {
@@ -114,6 +115,14 @@ namespace fx {
         20, // tail density
         50, // decay at max size
         0.65, // modulation frequency
+        1.5, // modulation depth
+        100, // dry
+        60, // wet
+    };
+    const Fverb::Impl::Profile Fverb::Impl::chamber {
+        80, // tail density
+        95, // decay at max size
+        0.85, // modulation frequency
         1.5, // modulation depth
         100, // dry
         60, // wet
@@ -197,6 +206,8 @@ namespace fx {
                         profile = &Impl::midHall;
                     else if (value == "small_hall")
                         profile = &Impl::smallHall;
+                    else if (value == "chamber")
+                        profile = &Impl::chamber;
                 }
                 break;
             case hash("reverb_dry"):
