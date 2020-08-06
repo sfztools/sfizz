@@ -21,6 +21,7 @@
 #include "Disto.h"
 #include "Opcode.h"
 #include "Config.h"
+#include "MathHelpers.h"
 #include <hiir/Upsampler2xFpu.h>
 #include <hiir/Downsampler2xFpu.h>
 #include <absl/types/span.h>
@@ -57,7 +58,11 @@ struct Disto::Impl {
     std::unique_ptr<float[]> _temp8x[2];
 
     // use the same formula as reverb
-    float toneCutoff() const noexcept { return 21.0f + _tone * 1.08f; }
+    float toneCutoff() const noexcept
+    {
+        float mk = 21.0f + _tone * 1.08f;
+        return 440.0f * std::exp2((mk - 69.0f) * (1.0f / 12.0f));
+    }
 
     #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
         float get_##ident(size_t c, size_t s) const noexcept { return _stages[c][s].var; } \
