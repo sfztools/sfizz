@@ -511,17 +511,17 @@ inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
 
 inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
 {
-    if (lhs->getAge() > rhs->getAge())
-        return true;
+    if (lhs->getAge() != rhs->getAge())
+        return lhs->getAge() > rhs->getAge();
 
-    if (lhs->getTriggerNumber() < rhs->getTriggerNumber())
-        return true;
+    if (lhs->getTriggerNumber() != rhs->getTriggerNumber())
+        return lhs->getTriggerNumber() < rhs->getTriggerNumber();
 
-    if (lhs->getTriggerValue() < rhs->getTriggerValue())
-        return true;
+    if (lhs->getTriggerValue() != rhs->getTriggerValue())
+        return lhs->getTriggerValue() < rhs->getTriggerValue();
 
-    if (lhs->getTriggerType() > rhs->getTriggerType())
-        return true;
+    if (lhs->getTriggerType() != rhs->getTriggerType())
+        return lhs->getTriggerType() > rhs->getTriggerType();
 
     return false;
 }
