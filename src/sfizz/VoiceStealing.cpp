@@ -8,7 +8,7 @@ sfz::VoiceStealing::VoiceStealing()
 sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
 {
     // Start of the voice stealing algorithm
-    absl::c_sort(voices, voiceOrdering);
+    absl::c_stable_sort(voices, voiceOrdering);
 
     const auto sumEnvelope = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {
         return sum + v->getAverageEnvelope();
@@ -21,9 +21,8 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
     // This is not perfect because pad-type voices will take a long time to output
     // their sound, but it's reasonable for sounds with a quick attack and longer
     // release.
-    const auto ageThreshold = voices.front()->getAge() * config::stealingAgeCoeff;
-    // This needs to be positive
-    ASSERT(ageThreshold >= 0);
+    const auto ageThreshold =
+        static_cast<int>(voices.front()->getAge() * config::stealingAgeCoeff) + 1;
 
     Voice* returnedVoice = voices.front();
     unsigned idx = 0;
@@ -49,5 +48,10 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
         do { idx++; }
         while (idx < voices.size() && sisterVoices(ref, voices[idx]));
     }
+
+    // Guard for future changes: voices with age 0 just started; don't kill those.
+    if (returnedVoice->getAge() == 0)
+        return {};
+
     return returnedVoice;
 }

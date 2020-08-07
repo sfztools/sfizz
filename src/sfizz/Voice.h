@@ -494,31 +494,34 @@ private:
 
 inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
 {
-    return lhs->getAge() == rhs->getAge()
-        && lhs->getTriggerNumber() == rhs->getTriggerNumber()
-        && lhs->getTriggerValue() == rhs->getTriggerValue()
-        && lhs->getTriggerType() == rhs->getTriggerType();
+    if (lhs->getAge() != rhs->getAge())
+        return false;
+
+    if (lhs->getTriggerNumber() != rhs->getTriggerNumber())
+        return false;
+
+    if (lhs->getTriggerValue() != rhs->getTriggerValue())
+        return false;
+
+    if (lhs->getTriggerType() != rhs->getTriggerType())
+        return false;
+
+    return true;
 }
 
 inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
 {
-    if (lhs->getAge() > rhs->getAge())
-        return true;
-    if (lhs->getAge() < rhs->getAge())
-        return false;
+    if (lhs->getAge() != rhs->getAge())
+        return lhs->getAge() > rhs->getAge();
 
-    if (lhs->getTriggerNumber() > rhs->getTriggerNumber())
-        return true;
-    if (lhs->getTriggerNumber() < rhs->getTriggerNumber())
-        return false;
+    if (lhs->getTriggerNumber() != rhs->getTriggerNumber())
+        return lhs->getTriggerNumber() < rhs->getTriggerNumber();
 
-    if (lhs->getTriggerValue() > rhs->getTriggerValue())
-        return true;
-    if (lhs->getTriggerValue() < rhs->getTriggerValue())
-        return false;
+    if (lhs->getTriggerValue() != rhs->getTriggerValue())
+        return lhs->getTriggerValue() < rhs->getTriggerValue();
 
-    if (lhs->getTriggerType() > rhs->getTriggerType())
-        return true;
+    if (lhs->getTriggerType() != rhs->getTriggerType())
+        return lhs->getTriggerType() > rhs->getTriggerType();
 
     return false;
 }
