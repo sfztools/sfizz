@@ -709,9 +709,9 @@ TEST_CASE("[Synth] Release (Multiple notes)")
     synth.noteOff(0, 64, 0);
     synth.noteOff(0, 63, 2);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
 }
 
 TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
@@ -727,7 +727,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
     synth.noteOff(0, 64, 0);
     synth.noteOff(0, 63, 2);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
 }
 
 TEST_CASE("[Synth] Release (Multiple notes, cleared the delayed voices after)")
@@ -744,8 +744,8 @@ TEST_CASE("[Synth] Release (Multiple notes, cleared the delayed voices after)")
     synth.noteOff(0, 64, 0);
     synth.noteOff(0, 63, 2);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
     REQUIRE( synth.getRegionView(0)->delayedReleases.empty() );
 }
