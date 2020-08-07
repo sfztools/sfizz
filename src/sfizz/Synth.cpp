@@ -680,8 +680,7 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
 void sfz::Synth::renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept
 {
     const Region* region = voice.getRegion();
-    if (region == nullptr)
-        return;
+    ASSERT(region != nullptr);
 
     voice.renderBlock(tempSpan);
     for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
