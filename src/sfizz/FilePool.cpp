@@ -207,7 +207,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     const unsigned channels = reader->channels();
 
     if (channels != 1 && channels != 2) {
-        DBG("[sfizz] Missing logic for " << sndFile.channels() << " channels, discarding sample " << fileId);
+        DBG("[sfizz] Missing logic for " << reader->channels() << " channels, discarding sample " << fileId);
         return {};
     }
 
@@ -398,7 +398,7 @@ void sfz::FilePool::loadingThread() noexcept
         std::error_code readError;
         AudioReaderPtr reader = createAudioReader(file, promise->fileId.isReverse(), &readError);
         if (readError) {
-            DBG("[sfizz] libsndfile errored for " << promise->fileId << " with message " << readError.what());
+            DBG("[sfizz] libsndfile errored for " << promise->fileId << " with message " << readError.message());
             promise->dataStatus = FilePromise::DataStatus::Error;
             continue;
         }
