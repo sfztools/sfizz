@@ -111,7 +111,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             loopMode = SfzLoopMode::loop_sustain;
             break;
         default:
-            DBG("Unkown loop mode:" << std::string(opcode.value));
+            DBG("Unkown loop mode:" << opcode.value);
         }
         break;
     case hash("loop_end"): // also loopend
@@ -161,7 +161,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             offMode = SfzOffMode::normal;
             break;
         default:
-            DBG("Unkown off mode:" << std::string(opcode.value));
+            DBG("Unkown off mode:" << opcode.value);
         }
         break;
     case hash("polyphony"):
@@ -181,7 +181,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             selfMask = SfzSelfMask::dontMask;
             break;
         default:
-            DBG("Unkown self mask value:" << std::string(opcode.value));
+            DBG("Unkown self mask value:" << opcode.value);
+        }
+        break;
+    case hash("rt_dead"):
+        if (opcode.value == "on") {
+            rtDead = true;
+        } else if (opcode.value == "off") {
+            rtDead = false;
+        } else {
+            DBG("Unkown rt_dead value:" << opcode.value);
         }
         break;
     // Region logic: key mapping
@@ -274,7 +283,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             velocityOverride = SfzVelocityOverride::previous;
             break;
         default:
-            DBG("Unknown velocity mode: " << std::string(opcode.value));
+            DBG("Unknown velocity mode: " << opcode.value);
         }
         break;
 
@@ -337,7 +346,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             trigger = SfzTrigger::release_key;
             break;
         default:
-            DBG("Unknown trigger mode: " << std::string(opcode.value));
+            DBG("Unknown trigger mode: " << opcode.value);
         }
         break;
     case hash("start_locc&"): // also on_locc&
@@ -468,7 +477,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeKeyCurve = SfzCrossfadeCurve::gain;
             break;
         default:
-            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+            DBG("Unknown crossfade power curve: " << opcode.value);
         }
         break;
     case hash("xf_velcurve"):
@@ -480,7 +489,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeVelCurve = SfzCrossfadeCurve::gain;
             break;
         default:
-            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+            DBG("Unknown crossfade power curve: " << opcode.value);
         }
         break;
     case hash("xfin_locc&"):
@@ -516,7 +525,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeCCCurve = SfzCrossfadeCurve::gain;
             break;
         default:
-            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+            DBG("Unknown crossfade power curve: " << opcode.value);
         }
         break;
     case hash("rt_decay"):
@@ -636,7 +645,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 filters[filterIndex].type = *ftype;
             else {
                 filters[filterIndex].type = FilterType::kFilterNone;
-                DBG("Unknown filter type: " << std::string(opcode.value));
+                DBG("Unknown filter type: " << opcode.value);
             }
         }
         break;
@@ -745,7 +754,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 equalizers[eqNumber - 1].type = *ftype;
             else {
                 equalizers[eqNumber - 1].type = EqType::kEqNone;
-                DBG("Unknown EQ type: " << std::string(opcode.value));
+                DBG("Unknown EQ type: " << opcode.value);
             }
         }
         break;

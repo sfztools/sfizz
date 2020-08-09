@@ -143,6 +143,7 @@ namespace Default
 	constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
 	constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
 	constexpr float rtDecay { 0.0f };
+	constexpr bool rtDead { false };
 	constexpr Range<float> rtDecayRange { 0.0f, 200.0f };
 
     // Performance parameters: Filters

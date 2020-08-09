@@ -1628,6 +1628,18 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.selfMask == SfzSelfMask::dontMask);
     }
 
+    SECTION("Release dead")
+    {
+        REQUIRE(region.rtDead == false);
+        region.parseOpcode({ "rt_dead", "on" });
+        REQUIRE(region.rtDead == true);
+        region.parseOpcode({ "rt_dead", "off" });
+        REQUIRE(region.rtDead == false);
+        region.parseOpcode({ "rt_dead", "on" });
+        region.parseOpcode({ "rt_dead", "garbage" });
+        REQUIRE(region.rtDead == true);
+    }
+
     SECTION("amplitude")
     {
         REQUIRE(region.amplitude == 1.0_a);

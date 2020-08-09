@@ -288,6 +288,7 @@ struct Region {
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony
     unsigned polyphony { config::maxVoices }; // polyphony
     SfzSelfMask selfMask { Default::selfMask };
+    bool rtDead { Default::rtDead };
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
