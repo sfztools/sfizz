@@ -540,7 +540,7 @@ TEST_CASE("[Synth] sample quality")
 TEST_CASE("[Synth] Sister voices")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sister_voices.sfz", R"(
         <region> key=61 sample=*sine
         <region> key=62 sample=*sine
         <region> key=62 sample=*sine
@@ -577,7 +577,7 @@ TEST_CASE("[Synth] Apply function on sisters")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, 256 };
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sister_voices.sfz", R"(
         <region> key=63 sample=*saw
         <region> key=63 sample=*saw
         <region> key=63 sample=*saw
@@ -595,7 +595,7 @@ TEST_CASE("[Synth] Sisters and off-by")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, 256 };
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sister_voices.sfz", R"(
         <region> key=62 sample=*sine
         <group> group=1 off_by=2 <region> key=62 sample=*sine
         <group> group=2 <region> key=63 sample=*saw
@@ -615,7 +615,7 @@ TEST_CASE("[Synth] Sisters and off-by")
 TEST_CASE("[Synth] Release key")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> key=62 sample=*sine trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
@@ -627,7 +627,7 @@ TEST_CASE("[Synth] Release key")
 TEST_CASE("[Synth] Release")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
     )");
@@ -642,7 +642,7 @@ TEST_CASE("[Synth] Release")
 TEST_CASE("[Synth] Release (pedal was already down)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
     )");
@@ -659,7 +659,7 @@ TEST_CASE("[Synth] Release (pedal was already down)")
 TEST_CASE("[Synth] Release samples don't play unless there is another playing region that matches")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> key=62 sample=*sine trigger=release
     )");
     synth.noteOn(0, 62, 85);
@@ -675,7 +675,7 @@ TEST_CASE("[Synth] Release samples don't play unless there is another playing re
 TEST_CASE("[Synth] Release key (Different sustain CC)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <global>sustain_cc=54
         <region> key=62 sample=*sine trigger=release_key
     )");
@@ -688,7 +688,7 @@ TEST_CASE("[Synth] Release key (Different sustain CC)")
 TEST_CASE("[Synth] Release (Different sustain CC)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <global>sustain_cc=54
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -704,7 +704,7 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
 TEST_CASE("[Synth] Sustain threshold default")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> key=62 sample=*sine trigger=release
     )");
     synth.noteOn(0, 62, 85);
@@ -716,7 +716,7 @@ TEST_CASE("[Synth] Sustain threshold default")
 TEST_CASE("[Synth] Sustain threshold")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <global> sustain_lo=63
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -762,7 +762,7 @@ const std::vector<const sfz::Voice*> getActiveVoices(const sfz::Synth& synth)
 TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*sine trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
@@ -786,7 +786,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
 TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices after)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*silence
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -816,7 +816,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
 TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared the delayed voices after)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*silence
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -846,7 +846,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
 TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*silence
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -876,8 +876,8 @@ TEST_CASE("[Synth] No release sample after the main sample stopped sounding by d
     synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
 
-    synth.loadSfzString(fs::current_path(), R"(
-        <region> lokey=62 hikey=64 sample=tests/TestFiles/closedhat.wav loop_mode=one_shot
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <region> lokey=62 hikey=64 sample=closedhat.wav loop_mode=one_shot
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
     )");
@@ -911,8 +911,8 @@ TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the a
     synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
 
-    synth.loadSfzString(fs::current_path(), R"(
-        <region> lokey=62 hikey=64 sample=tests/TestFiles/closedhat.wav loop_mode=one_shot
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <region> lokey=62 hikey=64 sample=closedhat.wav loop_mode=one_shot
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
     )");
