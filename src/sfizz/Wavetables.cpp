@@ -295,10 +295,9 @@ const std::array<float, 1024> MipmapRange::FrequencyToIndex = []()
     std::array<float, 1024> table;
 
     for (unsigned i = 0; i < table.size() - 1; ++i) {
-        double r = i * (1.0 / (table.size() - 1));
-        double f = F1 + r * (FN - F1);
-        double t = std::log(K * f) / LogB;
-        table[i] = clamp<float>(t, 0, N - 1);
+        float r = i * (1.0f / (table.size() - 1));
+        float f = F1 + r * (FN - F1);
+        table[i] = getExactIndexForFrequency(f);
     }
     // ensure the last element to be exact
     table[table.size() - 1] = N - 1;
@@ -319,6 +318,12 @@ float MipmapRange::getIndexForFrequency(float f)
 
     return (1.0f - frac) * FrequencyToIndex[index1] +
         frac * FrequencyToIndex[index2];
+}
+
+float MipmapRange::getExactIndexForFrequency(float f)
+{
+    float t = (f < F1) ? 0.0f : (std::log(K * f) / LogB);
+    return clamp<float>(t, 0, N - 1);
 }
 
 const std::array<float, MipmapRange::N + 1> MipmapRange::IndexToStartFrequency = []()

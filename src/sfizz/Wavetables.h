@@ -142,6 +142,7 @@ public:
     static constexpr float FN = 12000.0;
 
     static float getIndexForFrequency(float f);
+    static float getExactIndexForFrequency(float f);
     static MipmapRange getRangeForIndex(int o);
     static MipmapRange getRangeForFrequency(float f);
 
