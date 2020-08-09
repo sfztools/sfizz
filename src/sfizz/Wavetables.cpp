@@ -283,65 +283,70 @@ const HarmonicProfile& HarmonicProfile::getSquare()
 }
 
 //------------------------------------------------------------------------------
-constexpr unsigned WavetableRange::countOctaves;
-constexpr float WavetableRange::frequencyScaleFactor;
+constexpr unsigned MipmapRange::N;
+constexpr float MipmapRange::F1;
+constexpr float MipmapRange::FN;
 
-unsigned WavetableRange::getOctaveForFrequency(float f)
+const float MipmapRange::K = 1.0 / F1;
+const float MipmapRange::LogB = std::log(FN / F1) / (N - 1);
+
+const std::array<float, 1024> MipmapRange::FrequencyToIndex = []()
 {
-    int oct = fp_exponent(frequencyScaleFactor * f);
-    return clamp<int>(oct, 0, countOctaves - 1);
-}
+    std::array<float, 1024> table;
 
-static const auto octaveForFrequencyTable = []()
-{
-    static constexpr unsigned N = 1024;
-    std::array<float, N> table;
-
-    constexpr double fmin = 1 / WavetableRange::frequencyScaleFactor;
-    constexpr double fmax = (1 << (WavetableRange::countOctaves - 1)) / WavetableRange::frequencyScaleFactor;
-
-    for (unsigned i = 0; i < N; ++i) {
-        double f = fmin + (i * (1.0 / (N - 1))) * (fmax - fmin);
-        table[i] = std::log2(f * WavetableRange::frequencyScaleFactor);
+    for (unsigned i = 0; i < table.size() - 1; ++i) {
+        double r = i * (1.0 / (table.size() - 1));
+        double f = F1 + r * (FN - F1);
+        double t = std::log(K * f) / LogB;
+        table[i] = clamp<float>(t, 0, N - 1);
     }
+    // ensure the last element to be exact
+    table[table.size() - 1] = N - 1;
 
     return table;
 }();
 
-float WavetableRange::getFractionalOctaveForFrequency(float f)
+float MipmapRange::getIndexForFrequency(float f)
 {
-    static constexpr unsigned N = octaveForFrequencyTable.size();
+    static constexpr unsigned tableSize = FrequencyToIndex.size();
 
-    constexpr double fmin = 1 / WavetableRange::frequencyScaleFactor;
-    constexpr double fmax = (1 << (WavetableRange::countOctaves - 1)) / WavetableRange::frequencyScaleFactor;
+    float pos = (f - F1) * ((tableSize - 1) / static_cast<float>(FN - F1));
+    pos = clamp<float>(pos, 0, tableSize - 1);
 
-    float pos = (f - fmin) * ((N - 1) / static_cast<float>(fmax - fmin));
     int index1 = static_cast<int>(pos);
+    int index2 = std::min<int>(index1 + 1, tableSize - 1);
     float frac = pos - index1;
-    index1 = clamp<int>(index1, 0, N - 1);
-    int index2 = std::min<int>(index1 + 1, N - 1);
 
-    return (1.0f - frac) * octaveForFrequencyTable[index1] +
-        frac * octaveForFrequencyTable[index2];
+    return (1.0f - frac) * FrequencyToIndex[index1] +
+        frac * FrequencyToIndex[index2];
 }
 
-WavetableRange WavetableRange::getRangeForOctave(int o)
+const std::array<float, MipmapRange::N + 1> MipmapRange::IndexToStartFrequency = []()
 {
-    WavetableRange range;
+    std::array<float, N + 1> table;
+    for (unsigned t = 0; t < N; ++t)
+        table[t] = std::exp(t * LogB) / K;
+    // end value for final table
+    table[N] = 22050.0;
 
-    Fraction<uint64_t> mant = fp_mantissa(0.0f);
-    float k = 1.0f / frequencyScaleFactor;
+    return table;
+}();
 
-    range.minFrequency = k * fp_from_parts<float>(0, o, 0);
-    range.maxFrequency = k * fp_from_parts<float>(0, o, mant.den - 1);
+MipmapRange MipmapRange::getRangeForIndex(int o)
+{
+    o = clamp<int>(o, 0, N - 1);
+
+    MipmapRange range;
+    range.minFrequency = IndexToStartFrequency[o];
+    range.maxFrequency = IndexToStartFrequency[o + 1];
 
     return range;
 }
 
-WavetableRange WavetableRange::getRangeForFrequency(float f)
+MipmapRange MipmapRange::getRangeForFrequency(float f)
 {
-    int oct = getOctaveForFrequency(f);
-    return getRangeForOctave(oct);
+    int index = static_cast<int>(getIndexForFrequency(f));
+    return getRangeForIndex(index);
 }
 
 //------------------------------------------------------------------------------
@@ -356,7 +361,7 @@ WavetableMulti WavetableMulti::createForHarmonicProfile(
     wm.allocateStorage(tableSize);
 
     for (unsigned m = 0; m < numTables; ++m) {
-        WavetableRange range = WavetableRange::getRangeForOctave(m);
+        MipmapRange range = MipmapRange::getRangeForIndex(m);
 
         double freq = range.maxFrequency;
 

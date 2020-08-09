@@ -11,6 +11,7 @@
 #include "MathHelpers.h"
 #include <absl/types/span.h>
 #include <absl/container/flat_hash_map.h>
+#include <array>
 #include <memory>
 #include <complex>
 
@@ -56,6 +57,11 @@ public:
        3: dual-high
      */
     void setQuality(int q) { _quality = q; }
+
+    /**
+       Get the quality of this oscillator. (cf. `oscillator_quality`)
+    */
+    int quality() const { return _quality; }
 
     /**
        Compute a cycle of the oscillator, with constant frequency.
@@ -117,36 +123,41 @@ public:
 };
 
 /**
-   A helper to select ranges of a multi-sampled oscillator, according to the
+   A helper to select ranges of a mip-mapped wave, according to the
    frequency of an oscillator.
 
    The ranges are identified by octave numbers; not octaves in a musical sense,
    but as logarithmic divisions of the frequency range.
  */
-class WavetableRange {
+class MipmapRange {
 public:
     float minFrequency = 0;
     float maxFrequency = 0;
 
-    static constexpr unsigned countOctaves = 10;
-    static constexpr float frequencyScaleFactor = 0.05;
+    // number of tables in the mipmap
+    static constexpr unsigned N = 24;
+    // start frequency of the first table in the mipmap
+    static constexpr float F1 = 20.0;
+    // start frequency of the last table in the mipmap
+    static constexpr float FN = 12000.0;
 
-    static unsigned getOctaveForFrequency(float f);
-    static float getFractionalOctaveForFrequency(float f);
-    static WavetableRange getRangeForOctave(int o);
-    static WavetableRange getRangeForFrequency(float f);
+    static float getIndexForFrequency(float f);
+    static MipmapRange getRangeForIndex(int o);
+    static MipmapRange getRangeForFrequency(float f);
 
-    // Note: using the frequency factor 0.05, octaves are as follows:
-    //     octave 0: 20 Hz - 40 Hz
-    //     octave 1: 40 Hz - 80 Hz
-    //     octave 2: 80 Hz - 160 Hz
-    //     octave 3: 160 Hz - 320 Hz
-    //     octave 4: 320 Hz - 640 Hz
-    //     octave 5: 640 Hz - 1280 Hz
-    //     octave 6: 1280 Hz - 2560 Hz
-    //     octave 7: 2560 Hz - 5120 Hz
-    //     octave 8: 5120 Hz - 10240 Hz
-    //     octave 9: 10240 Hz - 20480 Hz
+    // the frequency mapping of the mipmap is defined by formula:
+    //     T(f) = log(k*f)/log(b)
+    // - T is the table number, converted to index by rounding down
+    // - f is the oscillation frequency
+    // - k and b are adjustment parameters according to constant parameters
+    //     k = 1/F1
+    //     b = exp(log(FN/F1)/(N-1))
+
+    static const float K;
+    static const float LogB;
+
+    static const std::array<float, 1024> FrequencyToIndex;
+    static const std::array<float, N + 1> IndexToStartFrequency;
 };
 
 /**
@@ -159,7 +170,7 @@ public:
     unsigned tableSize() const { return _tableSize; }
 
     // number of tables in the multisample
-    static constexpr unsigned numTables() { return WavetableRange::countOctaves; }
+    static constexpr unsigned numTables() { return MipmapRange::N; }
 
     // get the N-th table in the multisample
     absl::Span<const float> getTable(unsigned index) const
@@ -170,7 +181,7 @@ public:
     // get the table which is adequate for a given playback frequency
     absl::Span<const float> getTableForFrequency(float freq) const
     {
-        return getTable(WavetableRange::getOctaveForFrequency(freq));
+        return getTable(MipmapRange::getIndexForFrequency(freq));
     }
 
     // adjacent tables with interpolation factor between them
@@ -186,15 +197,15 @@ public:
         DualTable dt;
         int index = static_cast<int>(position);
         dt.delta = position - index;
-        dt.table1 = getTablePointer(clamp<int>(index, 0, WavetableRange::countOctaves - 1));
-        dt.table2 = getTablePointer(clamp<int>(index + 1, 0, WavetableRange::countOctaves - 1));
+        dt.table1 = getTablePointer(clamp<int>(index, 0, MipmapRange::N - 1));
+        dt.table2 = getTablePointer(clamp<int>(index + 1, 0, MipmapRange::N - 1));
         return dt;
     }
 
     // get the pair of tables for the given playback frequency (range checked)
     DualTable getInterpolationPairForFrequency(float freq) const
     {
-        float position = WavetableRange::getFractionalOctaveForFrequency(freq);
+        float position = MipmapRange::getIndexForFrequency(freq);
         return getInterpolationPair(position);
     }
 
