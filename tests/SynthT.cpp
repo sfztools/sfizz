@@ -201,6 +201,7 @@ TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at t
     synth.setNumVoices(1);
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_trigger_release.sfz", R"(
         <group> lovel=0 hivel=127
+        <region> sample=*silence
         <region> trigger=release sample=*noise loop_mode=one_shot
                  ampeg_attack=0.02 ampeg_decay=0.02 ampeg_release=0.1 ampeg_sustain=0
     )");
@@ -681,7 +682,7 @@ TEST_CASE("[Synth] Release key (Different sustain CC)")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 54, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
 
 TEST_CASE("[Synth] Release (Different sustain CC)")
@@ -872,10 +873,11 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
 TEST_CASE("[Synth] No release sample after the main sample stopped sounding by default")
 {
     sfz::Synth synth;
+    synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
 
     synth.loadSfzString(fs::current_path(), R"(
-        <region> lokey=62 hikey=64 sample=TestFiles/closedhat.wav loop_mode=one_shot
+        <region> lokey=62 hikey=64 sample=tests/TestFiles/closedhat.wav loop_mode=one_shot
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
     )");
@@ -906,10 +908,11 @@ TEST_CASE("[Synth] No release sample after the main sample stopped sounding by d
 TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the attack sample died")
 {
     sfz::Synth synth;
+    synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
 
     synth.loadSfzString(fs::current_path(), R"(
-        <region> lokey=62 hikey=64 sample=TestFiles/closedhat.wav loop_mode=one_shot
+        <region> lokey=62 hikey=64 sample=tests/TestFiles/closedhat.wav loop_mode=one_shot
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
     )");
