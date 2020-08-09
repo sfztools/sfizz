@@ -844,6 +844,25 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
+            if (region->triggerOnNote && region->trigger == SfzTrigger::release && !region->rtDead) {
+                // check that a voice with compatible trigger is playing
+                // FIXME:   we're going twice over the voices, when the synth
+                //          handles the regions completely these dispatch functions
+                //          should be overhauled, also to include voice stealing on
+                //          all events
+                const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
+                    return (
+                        !v->isFree()
+                        && v->getTriggerType() == Voice::TriggerType::NoteOn
+                        && region->keyRange.containsWithEnd(v->getTriggerNumber())
+                        && region->velocityRange.containsWithEnd(v->getTriggerValue())
+                    );
+                };
+
+                if (absl::c_find_if(voices, compatibleVoice) == voices.end())
+                    continue;
+            }
+
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
@@ -1002,6 +1021,27 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 
     for (auto& region : ccActivationLists[ccNumber]) {
         if (ccNumber == region->sustainCC) {
+            if (!region->rtDead) {
+                // check that a voice with compatible trigger is playing
+                // FIXME:   we're going twice over the voices, when the synth
+                //          handles the regions completely these dispatch functions
+                //          should be overhauled, also to include voice stealing on
+                //          all events
+                const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
+                    return (
+                        !v->isFree()
+                        && v->getTriggerType() == Voice::TriggerType::NoteOn
+                        && region->keyRange.containsWithEnd(v->getTriggerNumber())
+                        && region->velocityRange.containsWithEnd(v->getTriggerValue())
+                    );
+                };
+
+                if (absl::c_find_if(voices, compatibleVoice) == voices.end()) {
+                    region->delayedReleases.clear();
+                    continue;
+                }
+            }
+
             for (auto& note: region->delayedReleases) {
                 // FIXME: we really need to have some form of common method to find and start voices...
                 auto voice = findFreeVoice();
