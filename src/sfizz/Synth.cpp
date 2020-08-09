@@ -218,7 +218,7 @@ void sfz::Synth::clear()
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& rawMember : members) {
-        const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
+        const Opcode member = rawMember.cleanUp(kOpcodeScopeMaster);
 
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
