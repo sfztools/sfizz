@@ -377,9 +377,16 @@ bool FileMetadataReader::Impl::extractUheWavetable(WavetableInfo &wt)
     if (!uhwt)
         return false;
 
-    // u-he Hive: no idea what is inside this one, 2048 assumed
+    // zeros (chunk version?), 4 bytes LE
+    // number of tables, 4 bytes LE
+    // table size, 4 bytes LE
 
-    wt.tableSize = 2048;
+    uint8_t data[12];
+    if (readRiffData(uhwt->index, data, sizeof(data)) != sizeof(data))
+        return false;
+
+    wt.tableSize = u32le(data + 8);
+
     wt.crossTableInterpolation = 0;
     wt.oneShot = false;
 
