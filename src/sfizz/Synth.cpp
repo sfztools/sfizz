@@ -226,6 +226,9 @@ void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
             if (auto value = readOpcode(member.value, Default::polyphonyRange))
                 currentSet->setPolyphonyLimit(*value);
             break;
+        case hash("sw_default"):
+            setValueFromOpcode(member, defaultSwitch, Default::keyRange);
+            break;
         }
     }
 }
@@ -266,6 +269,9 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             break;
         case hash("polyphony"):
             setValueFromOpcode(member, maxPolyphony, Default::polyphonyRange);
+            break;
+        case hash("sw_default"):
+            setValueFromOpcode(member, defaultSwitch, Default::keyRange);
             break;
         }
     };
