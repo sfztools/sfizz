@@ -360,12 +360,14 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     egEnvelope.getBlock(modulationSpan);
 
     // Amplitude envelope
+    applyGain1<float>(baseGain, modulationSpan);
     if (float* mod = mm.getModulationByKey(amplitudeKey)) {
         for (size_t i = 0; i < numSamples; ++i)
             modulationSpan[i] *= normalizePercents(mod[i]);
     }
 
     // Volume envelope
+    applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
     if (float* mod = mm.getModulationByKey(volumeKey)) {
         for (size_t i = 0; i < numSamples; ++i)
             modulationSpan[i] *= db2mag(mod[i]);
