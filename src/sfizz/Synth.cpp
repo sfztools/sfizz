@@ -930,7 +930,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                         notePolyphonyCounter += 1;
                         switch (region->selfMask) {
                         case SfzSelfMask::mask:
-                            if (voice->getTriggerValue() < velocity) {
+                            if (voice->getTriggerValue() <= velocity) {
                                 if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
                                     selfMaskCandidate = voice.get();
                             }

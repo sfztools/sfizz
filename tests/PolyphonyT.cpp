@@ -224,3 +224,21 @@ TEST_CASE("[Polyphony] Not self-masking")
     REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
     REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
 }
+
+TEST_CASE("[Polyphony] Self-masking with the exact same velocity")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> sample=*sine key=64 note_polyphony=2
+    )");
+    synth.noteOn(0, 64, 64);
+    synth.noteOn(0, 64, 63);
+    synth.noteOn(0, 64, 63);
+    REQUIRE(synth.getNumActiveVoices(true) == 3); // One of these is releasing
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 64_norm);
+    REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 63_norm);
+    REQUIRE(synth.getVoiceView(1)->releasedOrFree()); // The first one is the masking candidate since they have the same velocity
+    REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
+}
