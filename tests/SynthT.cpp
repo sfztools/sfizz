@@ -939,3 +939,45 @@ TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the a
 
     REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
 }
+
+TEST_CASE("[Synth] sw_default works at a global level")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <global> sw_default=36 sw_lokey=36 sw_hikey=39
+        <region> sw_last=36 key=62 sample=*sine
+        <region> sw_last=37 key=63 sample=*sine
+    )");
+    synth.noteOn(0, 63, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+}
+
+TEST_CASE("[Synth] sw_default works at a master level")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <master> sw_default=36 sw_lokey=36 sw_hikey=39
+        <region> sw_last=36 key=62 sample=*sine
+        <region> sw_last=37 key=63 sample=*sine
+    )");
+    synth.noteOn(0, 63, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+}
+
+TEST_CASE("[Synth] sw_default works at a group level")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <group> sw_default=36 sw_lokey=36 sw_hikey=39
+        <region> sw_last=36 key=62 sample=*sine
+        <region> sw_last=37 key=63 sample=*sine
+    )");
+    synth.noteOn(0, 63, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+}
