@@ -17,7 +17,7 @@ constexpr int blockSize { 256 };
 TEST_CASE("[Polyphony] Polyphony in hierarchy")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> key=61 sample=*sine polyphony=2
         <group> polyphony=2
         <region> key=62 sample=*sine
@@ -44,7 +44,7 @@ TEST_CASE("[Polyphony] Polyphony in hierarchy")
 TEST_CASE("[Polyphony] Polyphony groups")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> polyphony=2
         <region> key=62 sample=*sine
         <group> group=1 polyphony=3
@@ -71,7 +71,7 @@ TEST_CASE("[Polyphony] Polyphony groups")
 TEST_CASE("[Polyphony] group polyphony limits")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> group=1 polyphony=2
         <region> sample=*sine key=65
     )");
@@ -84,7 +84,7 @@ TEST_CASE("[Polyphony] group polyphony limits")
 TEST_CASE("[Polyphony] Hierarchy polyphony limits")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> polyphony=2
         <region> sample=*sine key=65
     )");
@@ -97,7 +97,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits")
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (group)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> polyphony=2
         <region> sample=*sine key=65
     )");
@@ -110,7 +110,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (group)")
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (master)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <master> polyphony=2
         <group> polyphony=5
         <region> sample=*sine key=65
@@ -124,7 +124,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (master)")
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <master> polyphony=2
         <region> sample=*saw key=65
         <master>
@@ -143,7 +143,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (global)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <global> polyphony=2
         <group> polyphony=5
         <region> sample=*sine key=65
@@ -159,7 +159,7 @@ TEST_CASE("[Polyphony] Polyphony in master")
     sfz::Synth synth;
     synth.setSamplesPerBlock(blockSize);
     sfz::AudioBuffer<float> buffer { 2, blockSize };
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <master> polyphony=2
         <group> group=2
         <region> sample=*sine key=65
@@ -192,7 +192,7 @@ TEST_CASE("[Polyphony] Polyphony in master")
 TEST_CASE("[Polyphony] Self-masking")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*sine key=64 note_polyphony=2
     )");
     synth.noteOn(0, 64, 63);
@@ -210,7 +210,7 @@ TEST_CASE("[Polyphony] Self-masking")
 TEST_CASE("[Polyphony] Not self-masking")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path(), R"(
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*sine key=66 note_polyphony=2 note_selfmask=off
     )");
     synth.noteOn(0, 66, 63);
