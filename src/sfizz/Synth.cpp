@@ -877,7 +877,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 }
 
                 if (region->notePolyphony) {
-                    if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
+                    if (voice->getTriggerNumber() == noteNumber && voice->getTriggerType() == Voice::TriggerType::NoteOn && !voice->releasedOrFree()) {
                         notePolyphonyCounter += 1;
                         switch (region->selfMask) {
                         case SfzSelfMask::mask:
