@@ -93,6 +93,9 @@ target_link_libraries(sfizz_plot_wavetables PRIVATE sfizz::sfizz)
 add_executable(sfizz_file_instrument FileInstrument.cpp)
 target_link_libraries(sfizz_file_instrument PRIVATE sfizz::sfizz)
 
+add_executable(sfizz_file_wavetable FileWavetable.cpp)
+target_link_libraries(sfizz_file_wavetable PRIVATE sfizz::sfizz)
+
 add_executable(sfizz_tuning Tuning.cpp)
 target_link_libraries(sfizz_tuning PRIVATE sfizz::sfizz)
 
