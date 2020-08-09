@@ -14,6 +14,7 @@
 #include "Wavetables.h"
 #include "Curve.h"
 #include "Tuning.h"
+#include "modulations/ModMatrix.h"
 #include "absl/types/optional.h"
 
 namespace sfz
@@ -33,18 +34,21 @@ struct Resources
     WavetablePool wavePool;
     Tuning tuning;
     absl::optional<StretchTuning> stretch;
+    ModMatrix modMatrix;
 
     void setSampleRate(float samplerate)
     {
         midiState.setSampleRate(samplerate);
         filterPool.setSampleRate(samplerate);
         eqPool.setSampleRate(samplerate);
+        modMatrix.setSampleRate(samplerate);
     }
 
     void setSamplesPerBlock(int samplesPerBlock)
     {
         bufferPool.setBufferSize(samplesPerBlock);
         midiState.setSamplesPerBlock(samplesPerBlock);
+        modMatrix.setSamplesPerBlock(samplesPerBlock);
     }
 
     void clear()
@@ -54,6 +58,7 @@ struct Resources
         wavePool.clearFileWaves();
         logger.clear();
         midiState.reset();
+        modMatrix.clear();
     }
 };
 }

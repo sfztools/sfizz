@@ -5,6 +5,8 @@ project(sfizz)
 
 set(SFIZZ_TEST_SOURCES
     RegionT.cpp
+    RegionTHelpers.h
+    RegionTHelpers.cpp
     ParsingT.cpp
     HelpersT.cpp
     HelpersT.cpp
@@ -36,6 +38,7 @@ set(SFIZZ_TEST_SOURCES
     SwapAndPopT.cpp
     TuningT.cpp
     ConcurrencyT.cpp
+    ModulationsT.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})

@@ -12,6 +12,10 @@
 #include "ModifierHelpers.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
+#include "modulations/ModMatrix.h"
+#include "modulations/ModKey.h"
+#include "modulations/ModId.h"
+#include "modulations/sources/Controller.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
@@ -35,6 +39,9 @@ sfz::Synth::Synth(int numVoices)
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
     resetVoices(numVoices);
+
+    // modulation sources
+    genController.reset(new ControllerSource(resources));
 }
 
 sfz::Synth::~Synth()
@@ -445,7 +452,6 @@ void sfz::Synth::finalizeSfzLoad()
 
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
-    ModifierArray<size_t> maxModifiers { 0 };
 
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
@@ -556,8 +562,6 @@ void sfz::Synth::finalizeSfzLoad()
         region->registerTempo(2.0f);
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
-        for (const auto& mod : allModifiers)
-            maxModifiers[mod] = max(maxModifiers[mod], region->modifiers[mod].size());
 
         ++currentRegionIndex;
     }
@@ -567,9 +571,10 @@ void sfz::Synth::finalizeSfzLoad()
 
     settingsPerVoice.maxFilters = maxFilters;
     settingsPerVoice.maxEQs = maxEQs;
-    settingsPerVoice.maxModifiers = maxModifiers;
 
     applySettingsPerVoice();
+
+    setupModMatrix();
 }
 
 bool sfz::Synth::loadScalaFile(const fs::path& path)
@@ -717,6 +722,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
     }
 
+    ModMatrix& mm = resources.modMatrix;
+    mm.beginCycle(numFrames);
+
     activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
@@ -736,12 +744,16 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             if (voice->isFree())
                 continue;
 
+            mm.beginVoice(voice->getId(), voice->getRegion()->getId());
+
             activeVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);
             callbackBreakdown.data += voice->getLastDataDuration();
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
             callbackBreakdown.filters += voice->getLastFilterDuration();
             callbackBreakdown.panning += voice->getLastPanningDuration();
+
+            mm.endVoice();
 
             if (voice->toBeCleanedUp())
                 voice->reset();
@@ -769,6 +781,9 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Apply the master volume
     buffer.applyGain(db2mag(volume));
+
+    // Perform any remaining modulators
+    mm.endCycle();
 
     { // Clear events and advance midi time
         ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
@@ -1331,8 +1346,53 @@ void sfz::Synth::applySettingsPerVoice()
     for (auto& voice : voices) {
         voice->setMaxFiltersPerVoice(settingsPerVoice.maxFilters);
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
-        voice->prepareSmoothers(settingsPerVoice.maxModifiers);
     }
+}
+
+void sfz::Synth::setupModMatrix()
+{
+    ModMatrix& mm = resources.modMatrix;
+
+    for (const RegionPtr& region : regions) {
+        for (const Region::Connection& conn : region->connections) {
+            ModGenerator* gen = nullptr;
+
+            switch (conn.source.id()) {
+            case ModId::Controller:
+                gen = genController.get();
+                break;
+            default:
+                DBG("[sfizz] Have unknown type of source generator");
+                break;
+            }
+
+            ASSERT(gen);
+            if (!gen)
+                continue;
+
+            ModMatrix::SourceId source = mm.registerSource(conn.source, *gen);
+            ModMatrix::TargetId target = mm.registerTarget(conn.target);
+
+            ASSERT(source);
+            if (!source) {
+                DBG("[sfizz] Failed to register modulation source");
+                continue;
+            }
+
+            ASSERT(target);
+            if (!target) {
+                DBG("[sfizz] Failed to register modulation target");
+                continue;
+            }
+
+            if (!mm.connect(source, target, conn.sourceDepth)) {
+                DBG("[sfizz] Failed to connect modulation source and target");
+                ASSERTFALSE;
+            }
+        }
+    }
+
+    mm.init();
 }
 
 void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept

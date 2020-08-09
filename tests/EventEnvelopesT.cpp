@@ -261,6 +261,7 @@ TEST_CASE("[MultiplicativeEnvelope] Going down quantized with 2 steps")
     REQUIRE(approxEqual<float>(output, expected));
 }
 
+#if 0
 TEST_CASE("[linearModifiers] Compare with envelopes")
 {
     sfz::Resources resources;
@@ -360,4 +361,4 @@ TEST_CASE("[multiplicativeModifiers] Compare with envelopes")
     });
     REQUIRE(approxEqual<float>(output, envelope));
 }
-
+#endif
