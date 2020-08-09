@@ -1058,15 +1058,7 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
         // If we reach this part, we're storing the notes to delay their release on CC up
         // This is handled by the Synth object
 
-        const auto sameNoteTest = [noteNumber](const std::pair<int, float>& noteAndValue) {
-            return noteAndValue.first == noteNumber;
-        };
-
-        auto it = absl::c_find_if(delayedReleases, sameNoteTest);
-        if (it == delayedReleases.end())
-            delayedReleases.emplace_back(noteNumber, midiState.getNoteVelocity(noteNumber));
-        else
-            it->second = velocity;
+        delayedReleases.emplace_back(noteNumber, midiState.getNoteVelocity(noteNumber));
     }
 
     return false;
