@@ -289,6 +289,7 @@ struct Region {
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony
     unsigned polyphony { config::maxVoices }; // polyphony
     SfzSelfMask selfMask { Default::selfMask };
+    bool rtDead { Default::rtDead };
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
@@ -382,6 +383,9 @@ struct Region {
 
     // Parent
     RegionSet* parent { nullptr };
+
+    // Started notes
+    std::vector<std::pair<int, float>> delayedReleases;
 private:
     const MidiState& midiState;
     bool keySwitched { true };
@@ -390,7 +394,6 @@ private:
     bool pitchSwitched { true };
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
-    bool noteIsOff { false };
     std::bitset<config::numCCs> ccSwitched;
     absl::string_view defaultPath { "" };
 

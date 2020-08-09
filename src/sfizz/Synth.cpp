@@ -168,6 +168,9 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     lastRegion->parent = currentSet;
     currentSet->addRegion(lastRegion.get());
 
+    // Adapt the size of the delayed releases to avoid allocating later on
+    lastRegion->delayedReleases.reserve(lastRegion->keyRange.length());
+
     regions.push_back(std::move(lastRegion));
 }
 
@@ -849,6 +852,15 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
+bool matchReleaseRegionAndVoice(const sfz::Region& region, const sfz::Voice& voice) {
+    return (
+        !voice.isFree()
+        && voice.getTriggerType() == sfz::Voice::TriggerType::NoteOn
+        && region.keyRange.containsWithEnd(voice.getTriggerNumber())
+        && region.velocityRange.containsWithEnd(voice.getTriggerValue())
+    );
+}
+
 void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
@@ -856,6 +868,20 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
+            if (region->triggerOnNote && region->trigger == SfzTrigger::release && !region->rtDead) {
+                // check that a voice with compatible trigger is playing
+                // FIXME:   we're going twice over the voices, when the synth
+                //          handles the regions completely these dispatch functions
+                //          should be overhauled, also to include voice stealing on
+                //          all events
+                const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
+                    return matchReleaseRegionAndVoice(*region, *v);
+                };
+
+                if (absl::c_find_if(voices, compatibleVoice) == voices.end())
+                    continue;
+            }
+
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
@@ -1015,18 +1041,44 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     SisterVoiceRingBuilder ring;
 
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (region->registerCC(ccNumber, normValue)) {
+        if (ccNumber == region->sustainCC) {
+            if (!region->rtDead) {
+                // check that a voice with compatible trigger is playing
+                // FIXME:   we're going twice over the voices, when the synth
+                //          handles the regions completely these dispatch functions
+                //          should be overhauled, also to include voice stealing on
+                //          all events
+                const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
+                    return matchReleaseRegionAndVoice(*region, *v);
+                };
+
+                if (absl::c_find_if(voices, compatibleVoice) == voices.end()) {
+                    region->delayedReleases.clear();
+                    continue;
+                }
+            }
+
+            for (auto& note: region->delayedReleases) {
+                // FIXME: we really need to have some form of common method to find and start voices...
+                auto voice = findFreeVoice();
+                if (voice == nullptr)
+                    continue;
+
+                voice->startVoice(region, delay, note.first, note.second, Voice::TriggerType::NoteOff);
+
+                ring.addVoiceToRing(voice);
+                RegionSet::registerVoiceInHierarchy(region, voice);
+                polyphonyGroups[region->group].registerVoice(voice);
+            }
+
+            region->delayedReleases.clear();
+        } else if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
 
-            if (!region->triggerOnCC) {
-                // This is a sustain trigger
-                const auto replacedVelocity = resources.midiState.getNoteVelocity(region->pitchKeycenter);
-                voice->startVoice(region, delay, region->pitchKeycenter, replacedVelocity, Voice::TriggerType::NoteOff);
-            } else {
-                voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
-            }
+
+            voice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
 
             ring.addVoiceToRing(voice);
             RegionSet::registerVoiceInHierarchy(region, voice);

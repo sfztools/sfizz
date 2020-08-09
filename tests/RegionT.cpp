@@ -1635,6 +1635,18 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.selfMask == SfzSelfMask::dontMask);
     }
 
+    SECTION("Release dead")
+    {
+        REQUIRE(region.rtDead == false);
+        region.parseOpcode({ "rt_dead", "on" });
+        REQUIRE(region.rtDead == true);
+        region.parseOpcode({ "rt_dead", "off" });
+        REQUIRE(region.rtDead == false);
+        region.parseOpcode({ "rt_dead", "on" });
+        region.parseOpcode({ "rt_dead", "garbage" });
+        REQUIRE(region.rtDead == true);
+    }
+
     SECTION("amplitude")
     {
         REQUIRE(region.amplitude == 1.0_a);
@@ -1754,7 +1766,8 @@ TEST_CASE("[Region] Release and release key")
 {
     MidiState midiState;
     Region region { 0, midiState };
-    region.parseOpcode({ "key", "63" });
+    region.parseOpcode({ "lokey", "63" });
+    region.parseOpcode({ "hikey", "65" });
     region.parseOpcode({ "sample", "*sine" });
     SECTION("Release key without sustain")
     {
@@ -1770,9 +1783,8 @@ TEST_CASE("[Region] Release and release key")
         REQUIRE( !region.registerCC(64, 1.0f) );
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
-        midiState.ccEvent(0, 64, 0.0f);
-        REQUIRE( !region.registerCC(64, 0.0f) );
     }
+
     SECTION("Release without sustain")
     {
         region.parseOpcode({ "trigger", "release" });
@@ -1780,20 +1792,53 @@ TEST_CASE("[Region] Release and release key")
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
     }
+
     SECTION("Release with sustain")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
+        REQUIRE( region.delayedReleases.size() == 1 );
+        std::vector<std::pair<int, float>> expected = {
+            { 63, 0.5f }
+        };
+        REQUIRE( region.delayedReleases == expected );
     }
-    SECTION("Release with sustain")
+
+    SECTION("Release with sustain and 2 notes")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
-        REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
-        midiState.ccEvent(0, 64, 0.0f);
-        REQUIRE( region.registerCC(64, 0.0f) );
+        midiState.noteOnEvent(0, 64, 0.6f);
+        REQUIRE( !region.registerNoteOn(64, 0.6f, 0.0f) );
+        REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
+        REQUIRE( !region.registerNoteOff(64, 0.2f, 0.0f) );
+        REQUIRE( region.delayedReleases.size() == 2 );
+        std::vector<std::pair<int, float>> expected = {
+            { 63, 0.5f },
+            { 64, 0.6f }
+        };
+        REQUIRE( region.delayedReleases == expected );
+    }
+
+    SECTION("Release with sustain and 2 notes but 1 outside")
+    {
+        region.parseOpcode({ "trigger", "release" });
+        midiState.ccEvent(0, 64, 1.0f);
+        midiState.noteOnEvent(0, 63, 0.5f);
+        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        midiState.noteOnEvent(0, 66, 0.6f);
+        REQUIRE( !region.registerNoteOn(66, 0.6f, 0.0f) );
+        REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
+        REQUIRE( !region.registerNoteOff(66, 0.2f, 0.0f) );
+        REQUIRE( region.delayedReleases.size() == 1 );
+        std::vector<std::pair<int, float>> expected = {
+            { 63, 0.5f }
+        };
+        REQUIRE( region.delayedReleases == expected );
     }
 }
