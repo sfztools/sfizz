@@ -64,10 +64,10 @@
 #endif
 
 // Debug message
-#if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_DBG)
 #include <iostream>
+#if !defined(NDEBUG) || defined(SFIZZ_ENABLE_RELEASE_DBG)
 #include <iomanip>
 #define DBG(ostream) do { std::cerr << std::fixed << std::setprecision(2) << ostream << '\n'; } while (0)
 #else
-#define DBG(ostream) do {} while (0)
+#define DBG(ostream) do { if (0) { std::cerr << ostream; } } while (0)
 #endif
