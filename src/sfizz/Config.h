@@ -95,6 +95,7 @@ namespace config {
     constexpr int maxEffectBuses { 256 };
     // Wavetable constants; amplitude values are matched to reference
     static constexpr unsigned tableSize = 1024;
+    static constexpr double tableRefSampleRate = 44100.0 * 1.1; // +10% aliasing permissivity
     static constexpr double amplitudeSine = 0.625;
     static constexpr double amplitudeTriangle = 0.625;
     static constexpr double amplitudeSaw = 0.515;
