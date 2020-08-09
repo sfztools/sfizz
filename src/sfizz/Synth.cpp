@@ -837,6 +837,15 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
+bool matchReleaseRegionAndVoice(const sfz::Region& region, const sfz::Voice& voice) {
+    return (
+        !voice.isFree()
+        && voice.getTriggerType() == sfz::Voice::TriggerType::NoteOn
+        && region.keyRange.containsWithEnd(voice.getTriggerNumber())
+        && region.velocityRange.containsWithEnd(voice.getTriggerValue())
+    );
+}
+
 void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
@@ -851,12 +860,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
                 //          should be overhauled, also to include voice stealing on
                 //          all events
                 const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
-                    return (
-                        !v->isFree()
-                        && v->getTriggerType() == Voice::TriggerType::NoteOn
-                        && region->keyRange.containsWithEnd(v->getTriggerNumber())
-                        && region->velocityRange.containsWithEnd(v->getTriggerValue())
-                    );
+                    return matchReleaseRegionAndVoice(*region, *v);
                 };
 
                 if (absl::c_find_if(voices, compatibleVoice) == voices.end())
@@ -1028,12 +1032,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
                 //          should be overhauled, also to include voice stealing on
                 //          all events
                 const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
-                    return (
-                        !v->isFree()
-                        && v->getTriggerType() == Voice::TriggerType::NoteOn
-                        && region->keyRange.containsWithEnd(v->getTriggerNumber())
-                        && region->velocityRange.containsWithEnd(v->getTriggerValue())
-                    );
+                    return matchReleaseRegionAndVoice(*region, *v);
                 };
 
                 if (absl::c_find_if(voices, compatibleVoice) == voices.end()) {
