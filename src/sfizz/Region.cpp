@@ -161,9 +161,15 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         case hash("normal"):
             offMode = SfzOffMode::normal;
             break;
+        case hash("time"):
+            offMode = SfzOffMode::time;
+            break;
         default:
             DBG("Unkown off mode:" << opcode.value);
         }
+        break;
+    case hash("off_time"):
+        setValueFromOpcode(opcode, offTime, Default::egTimeRange);
         break;
     case hash("polyphony"):
         if (auto value = readOpcode(opcode.value, Default::polyphonyRange))

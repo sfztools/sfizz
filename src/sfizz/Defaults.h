@@ -31,7 +31,7 @@
 
 enum class SfzTrigger { attack, release, release_key, first, legato };
 enum class SfzLoopMode { no_loop, one_shot, loop_continuous, loop_sustain };
-enum class SfzOffMode { fast, normal };
+enum class SfzOffMode { fast, normal, time };
 enum class SfzVelocityOverride { current, previous };
 enum class SfzCrossfadeCurve { gain, power };
 enum class SfzSelfMask { mask, dontMask };
@@ -75,6 +75,7 @@ namespace Default
 	constexpr uint32_t group { 0 };
 	constexpr Range<uint32_t> groupRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr SfzOffMode offMode { SfzOffMode::fast };
+	constexpr float offTime { 6e-3f };
     constexpr Range<uint32_t> polyphonyRange { 0, config::maxVoices };
     constexpr SfzSelfMask selfMask { SfzSelfMask::mask };
 
