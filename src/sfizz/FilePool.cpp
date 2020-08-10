@@ -261,13 +261,13 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     if (!fileInformation)
         return false;
 
+    fileInformation->maxOffset = maxOffset;
     const fs::path file { rootDirectory / fileId.filename() };
     AudioReaderPtr reader = createAudioReader(file, fileId.isReverse());
 
-    // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
     const auto frames = static_cast<uint32_t>(reader->frames());
     const auto framesToLoad = [&]() {
-        if (preloadSize == 0)
+        if (loadInRam)
             return frames;
         else
             return min(frames, maxOffset + preloadSize);
@@ -276,6 +276,7 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     const auto existingFile = preloadedFiles.find(fileId);
     if (existingFile != preloadedFiles.end()) {
         if (framesToLoad > existingFile->second.preloadedData->getNumFrames()) {
+            preloadedFiles[fileId].information.maxOffset = maxOffset;
             preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad, oversamplingFactor);
         }
     } else {
@@ -350,15 +351,17 @@ sfz::FilePromisePtr sfz::FilePool::getFilePromise(const FileId& fileId) noexcept
 
 void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 {
+    this->preloadSize = preloadSize;
+    if (loadInRam)
+        return;
+
     // Update all the preloaded sizes
     for (auto& preloadedFile : preloadedFiles) {
-        const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / static_cast<int>(oversamplingFactor);
-        const auto maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
+        const auto maxOffset = preloadedFile.second.information.maxOffset;
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
         preloadedFile.second.preloadedData = readFromFile(*reader, preloadSize + maxOffset, oversamplingFactor);
     }
-    this->preloadSize = preloadSize;
 }
 
 void sfz::FilePool::tryToClearPromises()
@@ -473,11 +476,18 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
 {
     float samplerateChange { static_cast<float>(factor) / static_cast<float>(this->oversamplingFactor) };
     for (auto& preloadedFile : preloadedFiles) {
-        const auto numFrames = preloadedFile.second.preloadedData->getNumFrames() / static_cast<int>(this->oversamplingFactor);
-        const uint32_t maxOffset = numFrames > this->preloadSize ? static_cast<uint32_t>(numFrames) - this->preloadSize : 0;
+        const auto framesToLoad = [&]() {
+            if (loadInRam)
+                return preloadedFile.second.information.end;
+            else
+                return min(
+                    preloadedFile.second.information.end,
+                    preloadedFile.second.information.maxOffset + preloadSize
+                );
+        }();
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
-        preloadedFile.second.preloadedData = readFromFile(*reader, preloadSize + maxOffset, factor);
+        preloadedFile.second.preloadedData = readFromFile(*reader, framesToLoad, factor);
         preloadedFile.second.information.sampleRate *= samplerateChange;
     }
 
@@ -546,4 +556,26 @@ void sfz::FilePool::raiseCurrentThreadPriority() noexcept
         return;
     }
 #endif
+}
+
+void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
+{
+    if (loadInRam == this->loadInRam)
+        return;
+
+    this->loadInRam = loadInRam;
+
+    if (loadInRam) {
+        for (auto& preloadedFile : preloadedFiles) {
+            fs::path file { rootDirectory / preloadedFile.first.filename() };
+            AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
+            preloadedFile.second.preloadedData = readFromFile(
+                *reader,
+                preloadedFile.second.information.end,
+                oversamplingFactor
+            );
+        }
+    } else {
+        setPreloadSize(preloadSize);
+    }
 }
