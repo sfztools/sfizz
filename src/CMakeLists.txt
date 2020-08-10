@@ -62,7 +62,7 @@ set (SFIZZ_HEADERS
     sfizz/EQDescription.h
     sfizz/EQPool.h
     sfizz/FileId.h
-    sfizz/FileInstrument.h
+    sfizz/FileMetadata.h
     sfizz/FilePool.h
     sfizz/FilterDescription.h
     sfizz/FilterPool.h
@@ -110,7 +110,7 @@ set (SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FileId.cpp
     sfizz/FilePool.cpp
-    sfizz/FileInstrument.cpp
+    sfizz/FileMetadata.cpp
     sfizz/AudioReader.cpp
     sfizz/FilterPool.cpp
     sfizz/EQPool.cpp

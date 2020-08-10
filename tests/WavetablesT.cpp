@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Wavetables.h"
+#include "sfizz/FileMetadata.h"
 #include "sfizz/MathHelpers.h"
 #include "catch2/catch.hpp"
 #include <algorithm>
@@ -53,4 +54,35 @@ TEST_CASE("[Wavetables] Octave number lookup")
 
         REQUIRE(oct == Approx(ref).margin(0.03f));
     }
+}
+
+TEST_CASE("[Wavetables] Wavetable sound files: Surge")
+{
+    sfz::FileMetadataReader reader;
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open("tests/TestFiles/wavetables/surge.wav"));
+    REQUIRE(reader.extractWavetableInfo(wt));
+
+    REQUIRE(wt.tableSize == 256);
+}
+
+TEST_CASE("[Wavetables] Wavetable sound files: Clm")
+{
+    sfz::FileMetadataReader reader;
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open("tests/TestFiles/wavetables/clm.wav"));
+    REQUIRE(reader.extractWavetableInfo(wt));
+
+    REQUIRE(wt.tableSize == 256);
+}
+
+TEST_CASE("[Wavetables] Non-wavetable sound files")
+{
+    sfz::FileMetadataReader reader;
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open("tests/TestFiles/snare.wav"));
+    REQUIRE(!reader.extractWavetableInfo(wt));
 }
