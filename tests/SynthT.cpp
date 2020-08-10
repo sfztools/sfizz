@@ -8,6 +8,7 @@
 #include "sfizz/SisterVoiceRing.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/NumericId.h"
+#include "TestHelpers.h"
 #include <algorithm>
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
@@ -607,7 +608,8 @@ TEST_CASE("[Synth] Sisters and off-by")
     REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.noteOn(0, 63, 85);
     REQUIRE( synth.getNumActiveVoices(true) == 3 );
-    synth.renderBlock(buffer);
+    for (unsigned i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices(true) == 2 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
 }
@@ -733,30 +735,6 @@ TEST_CASE("[Synth] Sustain threshold")
     synth.cc(0, 64, 64);
     synth.noteOff(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices(true) == 5 );
-}
-
-template<class C>
-void sortAll(C& container)
-{
-    std::sort(container.begin(), container.end());
-}
-
-template<class C, class... Args>
-void sortAll(C& container, Args&... others)
-{
-    std::sort(container.begin(), container.end());
-    sortAll(others...);
-}
-
-const std::vector<const sfz::Voice*> getActiveVoices(const sfz::Synth& synth)
-{
-    std::vector<const sfz::Voice*> activeVoices;
-    for (int i = 0; i < synth.getNumVoices(); ++i) {
-        const auto* voice = synth.getVoiceView(i);
-        if (!voice->isFree())
-            activeVoices.push_back(voice);
-    }
-    return activeVoices;
 }
 
 TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")

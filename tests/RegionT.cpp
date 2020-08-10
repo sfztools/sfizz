@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "RegionTHelpers.h"
+#include "TestHelpers.h"
 #include "sfizz/MidiState.h"
 #include "sfizz/Region.h"
 #include "sfizz/SfzHelpers.h"

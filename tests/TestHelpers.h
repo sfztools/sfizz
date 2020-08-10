@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "sfizz/Synth.h"
 #include "sfizz/Region.h"
 #include "sfizz/modulations/ModKey.h"
 
@@ -26,3 +27,32 @@ private:
     const sfz::Region& region_;
     sfz::ModKey target_;
 };
+
+template<class C>
+void sortAll(C& container)
+{
+    std::sort(container.begin(), container.end());
+}
+
+template<class C, class... Args>
+void sortAll(C& container, Args&... others)
+{
+    std::sort(container.begin(), container.end());
+    sortAll(others...);
+}
+
+/**
+ * @brief Get active voices from the synth
+ *
+ * @param synth
+ * @return const std::vector<const sfz::Voice*>
+ */
+const std::vector<const sfz::Voice*> getActiveVoices(const sfz::Synth& synth);
+
+/**
+ * @brief Count the number of playing (unreleased) voices from the synth
+ *
+ * @param synth
+ * @return unsigned
+ */
+unsigned numPlayingVoices(const sfz::Synth& synth);
