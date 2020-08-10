@@ -220,9 +220,9 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
 
     if (!reader->getInstrument(&instrumentInfo)) {
         // if no instrument, then try extracting from embedded RIFF chunks (flac)
-        FileMetadataReader reader;
-        if (reader.open(file))
-            reader.extractRiffInstrument(instrumentInfo);
+        FileMetadataReader mdReader;
+        if (mdReader.open(file))
+            mdReader.extractRiffInstrument(instrumentInfo);
     }
 
     if (!fileId.isReverse()) {
