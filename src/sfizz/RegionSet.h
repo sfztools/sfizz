@@ -80,6 +80,10 @@ public:
      */
     void setParent(RegionSet* parent) noexcept { this->parent = parent; }
     /**
+     * @brief Returns the number of playing (unreleased) voices
+     */
+    unsigned numPlayingVoices() const noexcept;
+    /**
      * @brief Get the active voices
      *
      * @return const std::vector<Voice*>&

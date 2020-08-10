@@ -41,6 +41,10 @@ public:
      */
     unsigned getPolyphonyLimit() const noexcept { return polyphonyLimit; }
     /**
+     * @brief Returns the number of playing (unreleased) voices
+     */
+    unsigned numPlayingVoices() const noexcept;
+    /**
      * @brief Get the active voices
      *
      * @return const std::vector<Voice*>&
