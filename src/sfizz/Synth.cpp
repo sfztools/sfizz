@@ -919,7 +919,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                     continue;
                 }
 
-                if (voice->getRegion() == region) {
+                if (voice->getRegion() == region && !voice->releasedOrFree()) {
                     regionPolyphonyArray.push_back(voice.get());
                 }
 
@@ -953,31 +953,29 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             if (region->notePolyphony
                 && notePolyphonyCounter >= *region->notePolyphony
                 && selfMaskCandidate != nullptr) {
-                selfMaskCandidate->release(delay);
+                SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
             }
 
             auto parent = region->parent;
 
             // Polyphony reached on region
             if (regionPolyphonyArray.size() >= region->polyphony) {
-                selectedVoice = stealer.steal(absl::MakeSpan(regionPolyphonyArray));
-                goto render;
+                const auto activeVoices = absl::MakeSpan(regionPolyphonyArray);
+                SisterVoiceRing::offAllSisters(stealer.steal(activeVoices), delay);
             }
 
             // Polyphony reached on polyphony group
-            if (polyphonyGroups[region->group].getActiveVoices().size()
+            if (polyphonyGroups[region->group].numPlayingVoices()
                 == polyphonyGroups[region->group].getPolyphonyLimit()) {
                 const auto activeVoices = absl::MakeSpan(polyphonyGroups[region->group].getActiveVoices());
-                selectedVoice = stealer.steal(activeVoices);
-                goto render;
+                SisterVoiceRing::offAllSisters(stealer.steal(activeVoices), delay);
             }
 
             // Polyphony reached some parent group/master/etc
             while (parent != nullptr) {
-                if (parent->getActiveVoices().size() >= parent->getPolyphonyLimit()) {
+                if (parent->numPlayingVoices() >= parent->getPolyphonyLimit()) {
                     const auto activeVoices = absl::MakeSpan(parent->getActiveVoices());
-                    selectedVoice = stealer.steal(activeVoices);
-                    goto render;
+                    SisterVoiceRing::offAllSisters(stealer.steal(activeVoices), delay);
                 }
                 parent = parent->getParent();
             }
@@ -987,7 +985,6 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 selectedVoice = stealer.steal(absl::MakeSpan(voiceViewArray));
             }
 
-            render:
             // For some reason we did not find a voice to use.
             // This is a degraded case but we'll just drop the note on.
             if (selectedVoice == nullptr)
