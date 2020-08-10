@@ -155,7 +155,7 @@ bool sfz::Voice::isFree() const noexcept
     return (state == State::idle);
 }
 
-void sfz::Voice::release(int delay, bool fastRelease) noexcept
+void sfz::Voice::release(int delay) noexcept
 {
     if (state != State::playing)
         return;
@@ -163,8 +163,19 @@ void sfz::Voice::release(int delay, bool fastRelease) noexcept
     if (egEnvelope.getRemainingDelay() > delay) {
         switchState(State::cleanMeUp);
     } else {
-        egEnvelope.startRelease(delay, fastRelease);
+        egEnvelope.startRelease(delay);
     }
+}
+
+void sfz::Voice::off(int delay) noexcept
+{
+    if (region->offMode == SfzOffMode::fast) {
+        egEnvelope.setReleaseTime( Default::offTime );
+    } else if (region->offMode == SfzOffMode::time) {
+        egEnvelope.setReleaseTime(region->offTime);
+    }
+
+    release(delay);
 }
 
 void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
@@ -561,7 +572,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                         << " for sample " << region->sampleId);
                 }
 #endif
-                egEnvelope.startRelease(i, true);
+                egEnvelope.setReleaseTime(0.0f);
+                egEnvelope.startRelease(i);
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
                 break;
@@ -695,7 +707,7 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
         return false;
 
     if (triggerType == TriggerType::NoteOn && region->offBy == group) {
-        release(delay, region->offMode == SfzOffMode::fast);
+        off(delay);
         return true;
     }
 

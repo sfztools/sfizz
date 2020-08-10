@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "RegionTHelpers.h"
+#include "TestHelpers.h"
 #include "sfizz/modulations/ModId.h"
 
 size_t RegionCCView::size() const
@@ -38,4 +38,22 @@ sfz::ModKey::Parameters RegionCCView::at(int cc) const
 bool RegionCCView::match(const sfz::Region::Connection& conn) const
 {
     return conn.source.id() == sfz::ModId::Controller && conn.target == target_;
+}
+
+const std::vector<const sfz::Voice*> getActiveVoices(const sfz::Synth& synth)
+{
+    std::vector<const sfz::Voice*> activeVoices;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->isFree())
+            activeVoices.push_back(voice);
+    }
+    return activeVoices;
+}
+
+unsigned numPlayingVoices(const sfz::Synth& synth)
+{
+    return absl::c_count_if(getActiveVoices(synth), [](const sfz::Voice* v) {
+        return !v->releasedOrFree();
+    });
 }

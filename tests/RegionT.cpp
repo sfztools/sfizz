@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "RegionTHelpers.h"
+#include "TestHelpers.h"
 #include "sfizz/MidiState.h"
 #include "sfizz/Region.h"
 #include "sfizz/SfzHelpers.h"
@@ -195,6 +195,22 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.offMode == SfzOffMode::fast);
         region.parseOpcode({ "off_mode", "normal" });
         REQUIRE(region.offMode == SfzOffMode::normal);
+        region.parseOpcode({ "off_mode", "time" });
+        REQUIRE(region.offMode == SfzOffMode::time);
+    }
+
+    SECTION("off_time")
+    {
+        REQUIRE(region.offTime == 0.006f);
+        REQUIRE(region.offMode == SfzOffMode::fast);
+        region.parseOpcode({ "off_time", "0.1" });
+        REQUIRE(region.offTime == 0.1f);
+        REQUIRE(region.offMode == SfzOffMode::time);
+        region.parseOpcode({ "off_time", "0" });
+        REQUIRE(region.offTime == 0.0f);
+        region.parseOpcode({ "off_time", "0.1" });
+        region.parseOpcode({ "off_time", "-1" });
+        REQUIRE(region.offTime == 0.0f);
     }
 
     SECTION("lokey, hikey, and key")

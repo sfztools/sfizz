@@ -7,6 +7,9 @@ sfz::VoiceStealing::VoiceStealing()
 
 sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
 {
+    if (voices.empty())
+        return {};
+
     // Start of the voice stealing algorithm
     absl::c_stable_sort(voices, voiceOrdering);
 
@@ -48,10 +51,6 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
         do { idx++; }
         while (idx < voices.size() && sisterVoices(ref, voices[idx]));
     }
-
-    // Guard for future changes: voices with age 0 just started; don't kill those.
-    if (returnedVoice->getAge() == 0)
-        return {};
 
     return returnedVoice;
 }

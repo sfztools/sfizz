@@ -5,8 +5,8 @@ project(sfizz)
 
 set(SFIZZ_TEST_SOURCES
     RegionT.cpp
-    RegionTHelpers.h
-    RegionTHelpers.cpp
+    TestHelpers.h
+    TestHelpers.cpp
     ParsingT.cpp
     HelpersT.cpp
     HelpersT.cpp

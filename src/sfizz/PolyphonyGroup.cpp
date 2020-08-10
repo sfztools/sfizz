@@ -16,3 +16,10 @@ void sfz::PolyphonyGroup::removeVoice(const Voice* voice) noexcept
 {
     swapAndPopFirst(voices, [voice](const Voice* v) { return v == voice; });
 }
+
+unsigned sfz::PolyphonyGroup::numPlayingVoices() const noexcept
+{
+    return absl::c_count_if(voices, [](const Voice* v) {
+        return !v->releasedOrFree();
+    });
+}

@@ -288,7 +288,15 @@ public:
      * @param delay
      * @param fastRelease whether to do a normal release or cut the voice abruptly
      */
-    void release(int delay, bool fastRelease = false) noexcept;
+    void release(int delay) noexcept;
+
+    /**
+     * @brief Off the voice (steal). This will respect the off mode of the region
+     *      and set the envelopes if necessary.
+     *
+     * @param delay
+     */
+    void off(int delay) noexcept;
 
     /**
      * @brief gets the age of the Voice

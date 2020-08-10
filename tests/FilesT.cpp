@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "RegionTHelpers.h"
+#include "TestHelpers.h"
 #include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/modulations/ModId.h"
@@ -517,7 +517,8 @@ TEST_CASE("[Files] Off by with the same notes at the same time")
     synth.renderBlock(buffer);
     synth.noteOn(0, 65, 63);
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 6 );
+    REQUIRE( numPlayingVoices(synth) == 2 );
 }
 
 TEST_CASE("[Files] Off modes")
@@ -538,8 +539,10 @@ TEST_CASE("[Files] Off modes")
             synth.getVoiceView(0) ;
     synth.noteOn(100, 63, 63);
     REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( numPlayingVoices(synth) == 1 );
     AudioBuffer<float> buffer { 2, 256 };
-    synth.renderBlock(buffer);
+    for (unsigned i = 0; i < 10; ++i) // Not enough for the "normal" voice to die
+        synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices(true) == 2 );
     REQUIRE( fastVoice->isFree() );
     REQUIRE( !normalVoice->isFree() );
