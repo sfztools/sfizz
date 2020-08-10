@@ -218,7 +218,7 @@ TEST_CASE("[Polyphony] Not self-masking")
     synth.noteOn(0, 66, 64);
     REQUIRE(synth.getNumActiveVoices(true) == 3); // One of these is releasing
     REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
-    REQUIRE(synth.getVoiceView(0)->releasedOrFree()); // The first encountered voice is the masking candidate
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
     REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
     REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
     REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 64_norm);
@@ -241,4 +241,102 @@ TEST_CASE("[Polyphony] Self-masking with the exact same velocity")
     REQUIRE(synth.getVoiceView(1)->releasedOrFree()); // The first one is the masking candidate since they have the same velocity
     REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 63_norm);
     REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Self-masking only works from low to high")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*sine key=64 note_polyphony=1
+    )");
+    synth.noteOn(0, 64, 63);
+    synth.noteOn(0, 64, 62);
+    REQUIRE(synth.getNumActiveVoices(true) == 2); // Both notes are playing
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same polyphony group (default)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*saw key=64 note_polyphony=1
+        <region> sample=*sine key=64 note_polyphony=1
+    )");
+    synth.noteOn(0, 64, 62);
+    synth.noteOn(0, 64, 63);
+    REQUIRE(synth.getNumActiveVoices(true) == 4); // Both notes are playing
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 62_norm);
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree()); // got killed
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE(synth.getVoiceView(1)->releasedOrFree()); // got killed
+    REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 63_norm);
+    REQUIRE(synth.getVoiceView(2)->releasedOrFree()); // got killed
+    REQUIRE(synth.getVoiceView(3)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(3)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same polyphony group (default, with keyswitches)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <global> sw_lokey=36 sw_hikey=37 sw_default=36
+        <region> sw_last=36 key=48 note_polyphony=1 sample=*saw
+        <region> sw_last=37 key=48 transpose=12 note_polyphony=1 sample=*tri
+    )");
+    synth.noteOn(0, 48, 63);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.cc(0, 64, 127);
+    synth.noteOn(0, 37, 127);
+    synth.noteOff(0, 37, 0);
+    synth.noteOn(0, 48, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 64_norm);
+    REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
+}
+
+
+TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> group=1 sample=*saw key=64 note_polyphony=1
+        <region> group=2 sample=*sine key=64 note_polyphony=1
+    )");
+    synth.noteOn(0, 64, 62);
+    synth.noteOn(0, 64, 63);
+    REQUIRE(synth.getNumActiveVoices(true) == 4); // Both notes are playing
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 62_norm);
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree()); // got killed
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE(synth.getVoiceView(1)->releasedOrFree()); // got killed
+    REQUIRE(synth.getVoiceView(2)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(3)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(3)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups (with keyswitches)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <global> sw_lokey=36 sw_hikey=37 sw_default=36
+        <region> group=1 sw_last=36 key=48 note_polyphony=1 sample=*saw
+        <region> group=2 sw_last=37 key=48 transpose=12 note_polyphony=1 sample=*tri
+    )");
+    synth.noteOn(0, 48, 63);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.cc(0, 64, 127);
+    synth.noteOn(0, 37, 127);
+    synth.noteOff(0, 37, 0);
+    synth.noteOn(0, 48, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(1)->getTriggerValue() == 64_norm);
+    REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
 }

@@ -925,6 +925,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
                 if (region->notePolyphony) {
                     if (!voice->releasedOrFree()
+                        && voice->getRegion()->group == region->group
                         && voice->getTriggerNumber() == noteNumber
                         && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
                         notePolyphonyCounter += 1;
@@ -948,11 +949,11 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             }
 
             // Polyphony reached on note_polyphony
-            if (region->notePolyphony && notePolyphonyCounter >= *region->notePolyphony) {
-                if (selfMaskCandidate != nullptr)
-                    selfMaskCandidate->release(delay);
-                else // We're the lowest velocity guy here
-                    continue;
+            // If there's a self-masking candidate, release it
+            if (region->notePolyphony
+                && notePolyphonyCounter >= *region->notePolyphony
+                && selfMaskCandidate != nullptr) {
+                selfMaskCandidate->release(delay);
             }
 
             auto parent = region->parent;
