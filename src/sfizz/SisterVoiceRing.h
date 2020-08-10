@@ -57,6 +57,22 @@ struct SisterVoiceRing {
     }
 
     /**
+     * @brief Off all sisters in a ring
+     *
+     * @param voice
+     * @param delay
+     */
+    template<class T,
+        absl::enable_if_t<std::is_same<Voice, absl::remove_const_t<T>>::value, int> = 0>
+    static void offAllSisters(T* voice, int delay) {
+        if (voice != nullptr) {
+            SisterVoiceRing::applyToRing(voice, [&] (Voice* v) {
+                v->off(delay);
+            });
+        }
+    }
+
+    /**
      * @brief Check if a sister voice ring is well formed
      *
      * @param start
