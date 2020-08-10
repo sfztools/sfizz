@@ -52,9 +52,5 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
         while (idx < voices.size() && sisterVoices(ref, voices[idx]));
     }
 
-    // Guard for future changes: voices with age 0 just started; don't kill those.
-    if (returnedVoice->getAge() == 0)
-        return {};
-
     return returnedVoice;
 }
