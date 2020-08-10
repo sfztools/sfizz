@@ -204,8 +204,7 @@ const RiffChunkInfo* FileMetadataReader::riffChunk(size_t index) const
 
 const RiffChunkInfo* FileMetadataReader::Impl::riffChunk(size_t index) const
 {
-    const std::vector<RiffChunkInfo>& riffChunks = riffChunks_;
-    return (index < riffChunks.size()) ? &riffChunks[index] : nullptr;
+    return (index < riffChunks_.size()) ? &riffChunks_[index] : nullptr;
 }
 
 const RiffChunkInfo* FileMetadataReader::riffChunkById(RiffChunkId id) const
