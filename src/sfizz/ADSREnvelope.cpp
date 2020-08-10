@@ -11,22 +11,30 @@
 
 namespace sfz {
 
+template<class Type>
+Type ADSREnvelope<Type>::secondsToSamples (Type timeInSeconds) const noexcept
+{
+    return static_cast<int>(timeInSeconds * sampleRate);
+};
+
+template<class Type>
+Type ADSREnvelope<Type>::secondsToLinRate (Type timeInSeconds) const noexcept
+{
+    timeInSeconds = std::max<Type>(timeInSeconds, config::virtuallyZero);
+    return 1 / (sampleRate * timeInSeconds);
+};
+
+template<class Type>
+Type ADSREnvelope<Type>::secondsToExpRate (Type timeInSeconds) const noexcept
+{
+    timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
+    return std::exp(-8.0 / (timeInSeconds * sampleRate));
+};
+
 template <class Type>
 void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
 {
-    auto secondsToSamples = [sampleRate](Type timeInSeconds) {
-        return static_cast<int>(timeInSeconds * sampleRate);
-    };
-
-    auto secondsToLinRate = [sampleRate](Type timeInSeconds) {
-        timeInSeconds = std::max<Type>(timeInSeconds, config::virtuallyZero);
-        return 1 / (sampleRate * timeInSeconds);
-    };
-
-    auto secondsToExpRate = [sampleRate](Type timeInSeconds) {
-        timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
-        return std::exp(-8.0 / (timeInSeconds * sampleRate));
-    };
+    this->sampleRate = sampleRate;
 
     this->delay = delay + secondsToSamples(desc.getDelay(state, velocity));
     this->attackStep = secondsToLinRate(desc.getAttack(state, velocity));
@@ -208,13 +216,16 @@ int ADSREnvelope<Type>::getRemainingDelay() const noexcept
 }
 
 template <class Type>
-void ADSREnvelope<Type>::startRelease(int releaseDelay, bool fastRelease) noexcept
+void ADSREnvelope<Type>::startRelease(int releaseDelay) noexcept
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
+}
 
-    if (fastRelease)
-        this->releaseRate = 0;
+template <class Type>
+void ADSREnvelope<Type>::setReleaseTime(Type timeInSeconds) noexcept
+{
+    releaseRate = secondsToExpRate(timeInSeconds);
 }
 
 }
