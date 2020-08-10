@@ -169,6 +169,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
     case hash("off_time"):
+        offMode = SfzOffMode::time;
         setValueFromOpcode(opcode, offTime, Default::egTimeRange);
         break;
     case hash("polyphony"):

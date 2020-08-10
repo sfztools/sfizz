@@ -202,8 +202,10 @@ TEST_CASE("[Region] Parsing opcodes")
     SECTION("off_time")
     {
         REQUIRE(region.offTime == 0.006f);
+        REQUIRE(region.offMode == SfzOffMode::fast);
         region.parseOpcode({ "off_time", "0.1" });
         REQUIRE(region.offTime == 0.1f);
+        REQUIRE(region.offMode == SfzOffMode::time);
         region.parseOpcode({ "off_time", "0" });
         REQUIRE(region.offTime == 0.0f);
         region.parseOpcode({ "off_time", "0.1" });
