@@ -1193,13 +1193,25 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     }
 
     {
+        auto anonymousCCs = getUsedCCs();
+
         pugi::xml_node cns = device.append_child("ControlNameList");
         cns.append_attribute("Name").set_value("Controls");
         for (const auto& pair : ccLabels) {
+            anonymousCCs.set(pair.first, false);
             pugi::xml_node cn = cns.append_child("Control");
             cn.append_attribute("Type").set_value("7bit");
             cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             cn.append_attribute("Name").set_value(pair.second.c_str());
+        }
+
+        for (unsigned i = 0; i < anonymousCCs.size(); ++i) {
+            if (anonymousCCs[i]) {
+                pugi::xml_node cn = cns.append_child("Control");
+                cn.append_attribute("Type").set_value("7bit");
+                cn.append_attribute("Number").set_value(std::to_string(i).c_str());
+                cn.append_attribute("Name").set_value(("Unnamed CC " + std::to_string(i)).c_str());
+            }
         }
     }
 
@@ -1578,4 +1590,65 @@ void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexce
         polyphonyGroups.emplace_back();
 
     polyphonyGroups[groupIdx].setPolyphonyLimit(polyphony);
+}
+
+std::bitset<sfz::config::numCCs> sfz::Synth::getUsedCCs() const noexcept
+{
+    std::bitset<sfz::config::numCCs> used;
+    for (const RegionPtr& region : regions)
+        updateUsedCCsFromRegion(used, *region);
+    updateUsedCCsFromModulations(used, resources.modMatrix);
+    return used;
+}
+
+void sfz::Synth::updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedCCs, const Region& region)
+{
+    updateUsedCCsFromCCMap(usedCCs, region.offsetCC);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccRelease);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDecay);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDelay);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
+    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccAttack);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccRelease);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccDecay);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccDelay);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccHold);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccStart);
+    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccSustain);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccAttack);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccRelease);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccDecay);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccDelay);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccHold);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccStart);
+    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccSustain);
+    updateUsedCCsFromCCMap(usedCCs, region.ccConditions);
+    updateUsedCCsFromCCMap(usedCCs, region.ccTriggers);
+    updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCInRange);
+    updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCOutRange);
+}
+
+void sfz::Synth::updateUsedCCsFromModulations(std::bitset<sfz::config::numCCs>& usedCCs, const ModMatrix& mm)
+{
+    class CCSourceCollector : public ModMatrix::KeyVisitor {
+    public:
+        explicit CCSourceCollector(std::bitset<sfz::config::numCCs>& used)
+            : used_(used)
+        {
+        }
+
+        bool visit(const ModKey& key) override
+        {
+            if (key.id() == ModId::Controller)
+                used_.set(key.parameters().cc);
+            return true;
+        }
+        std::bitset<sfz::config::numCCs>& used_;
+    };
+
+    CCSourceCollector vtor(usedCCs);
+    mm.visitSources(vtor);
 }

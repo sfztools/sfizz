@@ -959,3 +959,91 @@ TEST_CASE("[Synth] sw_default works at a group level")
     synth.noteOn(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
+
+TEST_CASE("[Synth] Used CCs")
+{
+    sfz::Synth synth;
+    REQUIRE( !synth.getUsedCCs().any() );
+    synth.loadSfzString(fs::current_path(), R"(
+        <global> amplitude_cc1=100
+        <group> volume_oncc2=5
+        <region> locc4=64 hicc67=32 pan_cc5=200 sample=*sine
+        <region> width_cc98=200 sample=*sine
+        <region> position_cc42=200 pitch_oncc56=200 sample=*sine
+        <region> start_locc44=200 hikey=-1 sample=*sine
+    )");
+    auto usedCCs = synth.getUsedCCs();
+    REQUIRE( usedCCs[1] );
+    REQUIRE( usedCCs[2] );
+    REQUIRE( !usedCCs[3] );
+    REQUIRE( usedCCs[4] );
+    REQUIRE( usedCCs[5] );
+    REQUIRE( !usedCCs[6] );
+    REQUIRE( usedCCs[42] );
+    REQUIRE( usedCCs[44] );
+    REQUIRE( usedCCs[56] );
+    REQUIRE( usedCCs[67] );
+    REQUIRE( usedCCs[98] );
+    REQUIRE( !usedCCs[127] );
+}
+
+TEST_CASE("[Synth] Used CCs EGs")
+{
+    sfz::Synth synth;
+    REQUIRE( !synth.getUsedCCs().any() );
+    synth.loadSfzString(fs::current_path(), R"(
+        <region>
+            ampeg_attack_oncc1=1
+            ampeg_sustain_oncc2=2
+            ampeg_start_oncc3=3
+            ampeg_hold_oncc4=4
+            ampeg_decay_oncc5=5
+            ampeg_delay_oncc6=6
+            ampeg_release_oncc7=7
+            sample=*sine
+        <region>
+            pitcheg_attack_oncc11=11
+            pitcheg_sustain_oncc12=12
+            pitcheg_start_oncc13=13
+            pitcheg_hold_oncc14=14
+            pitcheg_decay_oncc15=15
+            pitcheg_delay_oncc16=16
+            pitcheg_release_oncc17=17
+            sample=*sine
+        <region>
+            fileg_attack_oncc21=21
+            fileg_sustain_oncc22=22
+            fileg_start_oncc23=23
+            fileg_hold_oncc24=24
+            fileg_decay_oncc25=25
+            fileg_delay_oncc26=26
+            fileg_release_oncc27=27
+            sample=*sine
+    )");
+    auto usedCCs = synth.getUsedCCs();
+    REQUIRE( usedCCs[1] );
+    REQUIRE( usedCCs[2] );
+    REQUIRE( usedCCs[3] );
+    REQUIRE( usedCCs[4] );
+    REQUIRE( usedCCs[5] );
+    REQUIRE( usedCCs[6] );
+    REQUIRE( usedCCs[7] );
+    // FIXME: enable when supported
+    // REQUIRE( !usedCCs[8] );
+    // REQUIRE( usedCCs[11] );
+    // REQUIRE( usedCCs[12] );
+    // REQUIRE( usedCCs[13] );
+    // REQUIRE( usedCCs[14] );
+    // REQUIRE( usedCCs[15] );
+    // REQUIRE( usedCCs[16] );
+    // REQUIRE( usedCCs[17] );
+    // REQUIRE( !usedCCs[18] );
+    // REQUIRE( usedCCs[21] );
+    // REQUIRE( usedCCs[22] );
+    // REQUIRE( usedCCs[23] );
+    // REQUIRE( usedCCs[24] );
+    // REQUIRE( usedCCs[25] );
+    // REQUIRE( usedCCs[26] );
+    // REQUIRE( usedCCs[27] );
+    // REQUIRE( !usedCCs[28] );
+}
