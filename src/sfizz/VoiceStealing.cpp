@@ -7,6 +7,9 @@ sfz::VoiceStealing::VoiceStealing()
 
 sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
 {
+    if (voices.empty())
+        return {};
+
     // Start of the voice stealing algorithm
     absl::c_stable_sort(voices, voiceOrdering);
 
