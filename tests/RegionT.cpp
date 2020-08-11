@@ -882,6 +882,46 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.crossfadeCCCurve == SfzCrossfadeCurve::gain);
     }
 
+    SECTION("*_volume")
+    {
+        const std::pair<absl::string_view, float*> assoc_pairs[] = {
+            {"global_volume", &region.globalVolume},
+            {"master_volume", &region.masterVolume},
+            {"group_volume", &region.groupVolume},
+        };
+        for (auto a : assoc_pairs) {
+            REQUIRE(region.volume == 0.0f);
+            region.parseOpcode({ a.first, "4.2" });
+            REQUIRE(*a.second == 4.2f);
+            region.parseOpcode({ a.first, "-4.2" });
+            REQUIRE(*a.second == -4.2f);
+            region.parseOpcode({ a.first, "-123" });
+            REQUIRE(*a.second == -123.0f);
+            region.parseOpcode({ a.first, "-185" });
+            REQUIRE(*a.second == -144.0f);
+            region.parseOpcode({ a.first, "79" });
+            REQUIRE(*a.second == 48.0f);
+        }
+    }
+
+    SECTION("*_amplitude")
+    {
+        const std::pair<absl::string_view, float*> assoc_pairs[] = {
+            {"global_amplitude", &region.globalAmplitude},
+            {"master_amplitude", &region.masterAmplitude},
+            {"group_amplitude", &region.groupAmplitude},
+        };
+        for (auto a : assoc_pairs) {
+            REQUIRE(*a.second == 1.0_a);
+            region.parseOpcode({ a.first, "40" });
+            REQUIRE(*a.second == 0.4_a);
+            region.parseOpcode({ a.first, "-40" });
+            REQUIRE(*a.second == 0_a);
+            region.parseOpcode({ a.first, "140" });
+            REQUIRE(*a.second == 1.0_a);
+        }
+    }
+
     SECTION("pitch_keycenter")
     {
         REQUIRE(region.pitchKeycenter == 60);
