@@ -345,6 +345,13 @@ struct Region {
     CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
 
+    float globalAmplitude { 1.0 }; // global_amplitude
+    float masterAmplitude { 1.0 }; // master_amplitude
+    float groupAmplitude { 1.0 }; // group_amplitude
+    float globalVolume { 0.0 }; // global_volume
+    float masterVolume { 0.0 }; // master_volume
+    float groupVolume { 0.0 }; // group_volume
+
     // Filters and EQs
     std::vector<EQDescription> equalizers;
     std::vector<FilterDescription> filters;

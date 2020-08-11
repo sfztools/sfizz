@@ -539,6 +539,27 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("rt_decay"):
         setValueFromOpcode(opcode, rtDecay, Default::rtDecayRange);
         break;
+    case hash("global_amplitude"):
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            globalAmplitude = normalizePercents(*value);
+        break;
+    case hash("master_amplitude"):
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            masterAmplitude = normalizePercents(*value);
+        break;
+    case hash("group_amplitude"):
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            groupAmplitude = normalizePercents(*value);
+        break;
+    case hash("global_volume"):
+        setValueFromOpcode(opcode, globalVolume, Default::volumeRange);
+        break;
+    case hash("master_volume"):
+        setValueFromOpcode(opcode, masterVolume, Default::volumeRange);
+        break;
+    case hash("group_volume"):
+        setValueFromOpcode(opcode, groupVolume, Default::volumeRange);
+        break;
 
     // Performance parameters: filters
     case hash("cutoff&"): // also cutoff
@@ -1165,6 +1186,9 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 {
     fast_real_distribution<float> volumeDistribution { -ampRandom, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
+    baseVolumedB += globalVolume;
+    baseVolumedB += masterVolume;
+    baseVolumedB += groupVolume;
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
         baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
@@ -1172,7 +1196,13 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 
 float sfz::Region::getBaseGain() const noexcept
 {
-    return amplitude;
+    float baseGain = amplitude;
+
+    baseGain *= globalAmplitude;
+    baseGain *= masterAmplitude;
+    baseGain *= groupAmplitude;
+
+    return baseGain;
 }
 
 float sfz::Region::getPhase() const noexcept
