@@ -83,6 +83,10 @@ int main(int argc, char* argv[])
     size_t numFrames = (size_t)std::ceil(sampleRate * duration);
     std::vector<float> outputMemory(numLfos * numFrames);
 
+    for (size_t l = 0; l < numLfos; ++l) {
+        lfos[l].start();
+    }
+
     std::vector<absl::Span<float>> lfoOutputs(numLfos);
     for (size_t l = 0; l < numLfos; ++l) {
         lfoOutputs[l] = absl::MakeSpan(&outputMemory[l * numFrames], numFrames);
