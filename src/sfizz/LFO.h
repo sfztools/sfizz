@@ -39,7 +39,7 @@ struct LFODescription;
     note: if there are gaps in subwaveforms, these subwaveforms which are gaps
           will be initialized and processed.
 
-    example: lfo1_ratio4=1.0 // instanciate implicitly the subs #2 and #3
+    example: lfo1_ratio4=1.0 // instantiate implicitly the subs #2 and #3
 
   lfoN_wave[X]: Wave
   lfoN_offset[X]: DC offset - Add to LFO output; not affected by scale.
