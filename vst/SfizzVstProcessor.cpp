@@ -225,6 +225,8 @@ void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
         beats -= int(bars) * _timeSigNumerator;
         synth.timePosition(0, int(bars), float(beats));
     }
+
+    synth.playbackState(0, (context.state & context.kPlaying) != 0);
 }
 
 void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
