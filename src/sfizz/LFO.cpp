@@ -127,12 +127,12 @@ void LFO::processWave(unsigned nth, absl::Span<float> out)
     const LFODescription::Sub& sub = desc.sub[nth];
     const size_t numFrames = out.size();
 
-    float samplePeriod = 1.0f / impl.sampleRate_;
+    const float samplePeriod = 1.0f / impl.sampleRate_;
+    const float baseFreq = desc.freq;
+    const float offset = sub.offset;
+    const float ratio = sub.ratio;
+    const float scale = sub.scale;
     float phase = impl.subPhases_[nth];
-    float baseFreq = desc.freq;
-    float offset = sub.offset;
-    float ratio = sub.ratio;
-    float scale = sub.scale;
 
     for (size_t i = 0; i < numFrames; ++i) {
         out[i] += offset + scale * eval<W>(phase);
@@ -156,13 +156,13 @@ void LFO::processSH(unsigned nth, absl::Span<float> out)
     const LFODescription::Sub& sub = desc.sub[nth];
     const size_t numFrames = out.size();
 
-    float samplePeriod = 1.0f / impl.sampleRate_;
-    float phase = impl.subPhases_[nth];
-    float baseFreq = desc.freq;
-    float offset = sub.offset;
-    float ratio = sub.ratio;
-    float scale = sub.scale;
+    const float samplePeriod = 1.0f / impl.sampleRate_;
+    const float baseFreq = desc.freq;
+    const float offset = sub.offset;
+    const float ratio = sub.ratio;
+    const float scale = sub.scale;
     float sampleHoldValue = impl.sampleHoldMem_[nth];
+    float phase = impl.subPhases_[nth];
 
     for (size_t i = 0; i < numFrames; ++i) {
         out[i] += offset + scale * sampleHoldValue;
@@ -203,12 +203,12 @@ void LFO::processSteps(absl::Span<float> out)
     if (numSteps <= 0)
         return;
 
-    float samplePeriod = 1.0f / impl.sampleRate_;
+    const float samplePeriod = 1.0f / impl.sampleRate_;
+    const float baseFreq = desc.freq;
+    const float offset = sub.offset;
+    const float ratio = sub.ratio;
+    const float scale = sub.scale;
     float phase = impl.subPhases_[nth];
-    float baseFreq = desc.freq;
-    float offset = sub.offset;
-    float ratio = sub.ratio;
-    float scale = sub.scale;
 
     for (size_t i = 0; i < numFrames; ++i) {
         float step = steps[static_cast<int>(phase * numSteps)];
