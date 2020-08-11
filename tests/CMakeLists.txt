@@ -39,6 +39,9 @@ set(SFIZZ_TEST_SOURCES
     TuningT.cpp
     ConcurrencyT.cpp
     ModulationsT.cpp
+    LFOT.cpp
+    DataHelpers.h
+    DataHelpers.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})

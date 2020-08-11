@@ -1,0 +1,7 @@
+<region>
+sample=*sine
+//
+lfo1_freq=1
+lfo1_wave=3
+lfo1_delay=0.5
+lfo1_fade=1
