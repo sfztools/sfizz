@@ -160,6 +160,21 @@ void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter
     auto self = reinterpret_cast<sfz::Synth*>(synth);
     self->tempo(delay, seconds_per_quarter);
 }
+void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_bar, int beat_unit)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->timeSignature(delay, beats_per_bar, beat_unit);
+}
+void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, float bar_beat)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->timePosition(delay, bar, bar_beat);
+}
+void sfizz_send_playback_state(sfizz_synth_t* synth, int delay, int playback_state)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    self->playbackState(delay, playback_state);
+}
 
 void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels, int num_frames)
 {

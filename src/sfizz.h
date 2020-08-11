@@ -302,13 +302,43 @@ SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, 
 SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
 
 /**
- * @brief      Send a tempo event. (CURRENTLY UNIMPLEMENTED)
+ * @brief      Send a tempo event.
  *
  * @param      synth                The synth.
  * @param      delay                The delay.
- * @param      seconds_per_quarter  The seconds per quarter.
+ * @param      seconds_per_beat     The seconds per beat.
  */
-SFIZZ_EXPORTED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter);
+SFIZZ_EXPORTED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_beat);
+
+/**
+ * @brief      Send the time signature.
+ *
+ * @param      synth                The synth.
+ * @param      delay                The delay.
+ * @param      beats_per_bar        The number of beats per bar, or time signature numerator.
+ * @param      beat_unit            The note corresponding to one beat, or time signature denominator.
+ */
+SFIZZ_EXPORTED_API void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_bar, int beat_unit);
+
+/**
+ * @brief      Send the time position.
+ *
+ * @param      synth                The synth.
+ * @param      delay                The delay.
+ * @param      bar                  The current bar.
+ * @param      bar_beat             The fractional position of the current beat within the bar.
+ */
+SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, float bar_beat);
+
+/**
+ * @brief      Send the playback state.
+ *
+ * @param      synth                The synth.
+ * @param      delay                The delay.
+ * @param      playback_state       The playback state, 1 if playing, 0 if stopped.
+ */
+SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int delay, int playback_state);
+
 
 /**
  * @brief      Render a block audio data into a stereo channel. No other channel

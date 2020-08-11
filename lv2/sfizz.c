@@ -131,7 +131,9 @@ typedef struct
     LV2_URID sample_rate_uri;
     LV2_URID atom_object_uri;
     LV2_URID atom_float_uri;
+    LV2_URID atom_double_uri;
     LV2_URID atom_int_uri;
+    LV2_URID atom_long_uri;
     LV2_URID atom_urid_uri;
     LV2_URID atom_path_uri;
     LV2_URID patch_set_uri;
@@ -150,6 +152,12 @@ typedef struct
     LV2_URID sfizz_check_modification_uri;
     LV2_URID sfizz_active_voices_uri;
     LV2_URID time_position_uri;
+    LV2_URID time_bar_uri;
+    LV2_URID time_bar_beat_uri;
+    LV2_URID time_beat_unit_uri;
+    LV2_URID time_beats_per_bar_uri;
+    LV2_URID time_beats_per_minute_uri;
+    LV2_URID time_speed_uri;
 
     // Sfizz related data
     sfizz_synth_t *synth;
@@ -165,6 +173,14 @@ typedef struct
     int sample_counter;
     float sample_rate;
     atomic_int must_update_midnam;
+
+    // Timing data
+    int bar;
+    float bar_beat;
+    int beats_per_bar;
+    int beat_unit;
+    float bpm_tempo;
+    float speed;
 
     // Paths
     char bundle_path[MAX_BUNDLE_PATH_SIZE];
@@ -185,6 +201,14 @@ enum
     SFIZZ_TUNING_FREQUENCY = 10,
     SFIZZ_STRETCH_TUNING = 11,
     SFIZZ_ACTIVE_VOICES = 12,
+};
+
+enum
+{
+    SFIZZ_TIMEINFO_POSITION = 1 << 0,
+    SFIZZ_TIMEINFO_SIGNATURE = 1 << 1,
+    SFIZZ_TIMEINFO_TEMPO = 1 << 2,
+    SFIZZ_TIMEINFO_SPEED = 1 << 3,
 };
 
 static void
@@ -210,7 +234,9 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->nominal_block_length_uri = map->map(map->handle, LV2_BUF_SIZE__nominalBlockLength);
     self->sample_rate_uri = map->map(map->handle, LV2_PARAMETERS__sampleRate);
     self->atom_float_uri = map->map(map->handle, LV2_ATOM__Float);
+    self->atom_double_uri = map->map(map->handle, LV2_ATOM__Double);
     self->atom_int_uri = map->map(map->handle, LV2_ATOM__Int);
+    self->atom_long_uri = map->map(map->handle, LV2_ATOM__Long);
     self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
     self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
@@ -230,6 +256,68 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
+    self->time_bar_uri = map->map(map->handle, LV2_TIME__bar);
+    self->time_bar_beat_uri = map->map(map->handle, LV2_TIME__barBeat);
+    self->time_beat_unit_uri = map->map(map->handle, LV2_TIME__beatUnit);
+    self->time_beats_per_bar_uri = map->map(map->handle, LV2_TIME__beatsPerBar);
+    self->time_beats_per_minute_uri = map->map(map->handle, LV2_TIME__beatsPerMinute);
+    self->time_speed_uri = map->map(map->handle, LV2_TIME__speed);
+}
+
+static bool
+sfizz_atom_extract_real(sfizz_plugin_t *self, const LV2_Atom *atom, double *real)
+{
+    if (!atom)
+        return false;
+
+    const LV2_URID type = atom->type;
+
+    if (type == self->atom_int_uri && atom->size >= sizeof(int32_t)) {
+        *real = ((const LV2_Atom_Int *)atom)->body;
+        return true;
+    }
+    if (type == self->atom_long_uri && atom->size >= sizeof(int64_t)) {
+        *real = ((const LV2_Atom_Long *)atom)->body;
+        return true;
+    }
+    if (type == self->atom_float_uri && atom->size >= sizeof(float)) {
+        *real = ((const LV2_Atom_Float *)atom)->body;
+        return true;
+    }
+    if (type == self->atom_double_uri && atom->size >= sizeof(double)) {
+        *real = ((const LV2_Atom_Double *)atom)->body;
+        return true;
+    }
+
+    return false;
+}
+
+static bool
+sfizz_atom_extract_integer(sfizz_plugin_t *self, const LV2_Atom *atom, int64_t *integer)
+{
+    if (!atom)
+        return false;
+
+    const LV2_URID type = atom->type;
+
+    if (type == self->atom_int_uri && atom->size >= sizeof(int32_t)) {
+        *integer = ((const LV2_Atom_Int *)atom)->body;
+        return true;
+    }
+    if (type == self->atom_long_uri && atom->size >= sizeof(int64_t)) {
+        *integer = ((const LV2_Atom_Long *)atom)->body;
+        return true;
+    }
+    if (type == self->atom_float_uri && atom->size >= sizeof(float)) {
+        *integer = (int64_t)((const LV2_Atom_Float *)atom)->body;
+        return true;
+    }
+    if (type == self->atom_double_uri && atom->size >= sizeof(double)) {
+        *integer = (int64_t)((const LV2_Atom_Double *)atom)->body;
+        return true;
+    }
+
+    return false;
 }
 
 static void
@@ -326,6 +414,19 @@ sfizz_lv2_get_default_scala_path(LV2_Handle instance, char *path, size_t size)
     snprintf(path, size, "%s/%s", self->bundle_path, DEFAULT_SCALA_FILE);
 }
 
+static void
+sfizz_lv2_update_timeinfo(sfizz_plugin_t *self, int delay, int updates)
+{
+    if (updates & SFIZZ_TIMEINFO_POSITION)
+        sfizz_send_time_position(self->synth, delay, self->bar, self->bar_beat);
+    if (updates & SFIZZ_TIMEINFO_SIGNATURE)
+        sfizz_send_time_signature(self->synth, delay, self->beats_per_bar, self->beat_unit);
+    if (updates & SFIZZ_TIMEINFO_TEMPO)
+        sfizz_send_tempo(self->synth, delay, 60.0f / self->bpm_tempo);
+    if (updates & SFIZZ_TIMEINFO_SPEED)
+        sfizz_send_playback_state(self->synth, delay, self->speed > 0);
+}
+
 static LV2_Handle
 instantiate(const LV2_Descriptor *descriptor,
             double rate,
@@ -360,6 +461,14 @@ instantiate(const LV2_Descriptor *descriptor,
     self->stretch_tuning = 0.0f;
     self->check_modification = false;
     self->sample_counter = 0;
+
+    // Initial timing
+    self->bar = 0;
+    self->bar_beat = 0;
+    self->beats_per_bar = 4;
+    self->beat_unit = 4;
+    self->bpm_tempo = 120;
+    self->speed = 1;
 
     // Get the features from the host and populate the structure
     for (const LV2_Feature *const *f = features; *f; f++)
@@ -471,6 +580,8 @@ instantiate(const LV2_Descriptor *descriptor,
 
     sfizz_load_file(self->synth, self->sfz_file_path);
     sfizz_load_scala_file(self->synth, self->scala_file_path);
+
+    sfizz_lv2_update_timeinfo(self, 0, ~0);
 
     return (LV2_Handle)self;
 }
@@ -751,6 +862,8 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     LV2_ATOM_SEQUENCE_FOREACH(self->control_port, ev)
     {
+        const int delay = (int)ev->time.frames;
+
         // If the received atom is an object/patch message
         if (ev->body.type == self->atom_object_uri)
         {
@@ -779,7 +892,60 @@ run(LV2_Handle instance, uint32_t sample_count)
             }
             else if (obj->body.otype == self->time_position_uri)
             {
-                // TODO: Handle time position atom
+                const LV2_Atom *bar_atom = NULL;
+                const LV2_Atom *bar_beat_atom = NULL;
+                const LV2_Atom *beat_unit_atom = NULL;
+                const LV2_Atom *beats_per_bar_atom = NULL;
+                const LV2_Atom *beats_per_minute_atom = NULL;
+                const LV2_Atom *speed_atom = NULL;
+
+                lv2_atom_object_get(
+                    obj,
+                    self->time_bar_uri, &bar_atom,
+                    self->time_bar_beat_uri, &bar_beat_atom,
+                    self->time_beats_per_bar_uri, &beats_per_bar_atom,
+                    self->time_beats_per_minute_uri, &beats_per_minute_atom,
+                    self->time_beat_unit_uri, &beat_unit_atom,
+                    self->time_speed_uri, &speed_atom,
+                    0);
+
+                int updates = 0;
+
+                int64_t bar;
+                double bar_beat;
+                if (sfizz_atom_extract_integer(self, bar_atom, &bar)) {
+                    self->bar = (int)bar;
+                    updates |= SFIZZ_TIMEINFO_POSITION;
+                }
+                if (sfizz_atom_extract_real(self, bar_beat_atom, &bar_beat)) {
+                    self->bar_beat = (float)bar_beat;
+                    updates |= SFIZZ_TIMEINFO_POSITION;
+                }
+
+                double beats_per_bar;
+                int64_t beat_unit;
+                if (sfizz_atom_extract_real(self, beats_per_bar_atom, &beats_per_bar)) {
+                    self->beats_per_bar = (int)beats_per_bar;
+                    updates |= SFIZZ_TIMEINFO_SIGNATURE;
+                }
+                if (sfizz_atom_extract_integer(self, beat_unit_atom, &beat_unit)) {
+                    self->beat_unit = (int)beat_unit;
+                    updates |= SFIZZ_TIMEINFO_SIGNATURE;
+                }
+
+                double tempo;
+                if (sfizz_atom_extract_real(self, beats_per_minute_atom, &tempo)) {
+                    self->bpm_tempo = (float)tempo;
+                    updates |= SFIZZ_TIMEINFO_TEMPO;
+                }
+
+                double speed;
+                if (sfizz_atom_extract_real(self, speed_atom, &speed)) {
+                    self->speed = (float)speed;
+                    updates |= SFIZZ_TIMEINFO_SPEED;
+                }
+
+                sfizz_lv2_update_timeinfo(self, delay, updates);
             }
             else
             {
