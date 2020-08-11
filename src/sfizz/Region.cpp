@@ -941,8 +941,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (lfoNumber == 0)
                 return false;
             if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
-                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
@@ -953,8 +953,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (lfoNumber == 0)
                 return false;
             if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
-                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
@@ -965,8 +965,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (lfoNumber == 0)
                 return false;
             if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
-                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                ModKey target = ModKey::createNXYZ(ModId::Width, id);
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Width, id);
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
@@ -977,8 +977,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (lfoNumber == 0)
                 return false;
             if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
-                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                ModKey target = ModKey::createNXYZ(ModId::Position, id);
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Position, id);
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
@@ -989,8 +989,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (lfoNumber == 0)
                 return false;
             if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
-                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
@@ -1001,8 +1001,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (lfoNumber == 0)
                 return false;
             if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
-                ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
