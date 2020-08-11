@@ -393,6 +393,29 @@ public:
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
+     * @brief      Send the time signature.
+     *
+     * @param      delay                The delay.
+     * @param      beats_per_bar        The number of beats per bar, or time signature numerator.
+     * @param      beat_unit            The note corresponding to one beat, or time signature denominator.
+     */
+    void timeSignature(int delay, int beatsPerBar, int beatUnit);
+    /**
+     * @brief      Send the time position.
+     *
+     * @param      delay                The delay.
+     * @param      bar                  The current bar.
+     * @param      bar_beat             The fractional position of the current beat within the bar.
+     */
+    void timePosition(int delay, int bar, float barBeat);
+    /**
+     * @brief      Send the playback state.
+     *
+     * @param      delay                The delay.
+     * @param      playback_state       The playback state, 1 if playing, 0 if stopped.
+     */
+    void playbackState(int delay, int playbackState);
+    /**
      * @brief Render an block of audio data in the buffer. This call will reset
      * the synth in its waiting state for the next batch of events. The size of
      * the block is integrated in the AudioSpan object. You can build an

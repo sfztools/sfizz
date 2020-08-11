@@ -64,6 +64,11 @@ private:
     uint32 _fileChangeCounter = 0;
     uint32 _fileChangePeriod = 0;
 
+    // time info
+    int _timeSigNumerator = 0;
+    int _timeSigDenominator = 0;
+    void updateTimeInfo(const Vst::ProcessContext& context);
+
     // messaging
     struct RTMessage {
         const char* type;

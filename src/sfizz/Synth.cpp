@@ -1116,6 +1116,29 @@ void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
 {
     ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
 }
+void sfz::Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
+{
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+
+    (void)delay;
+    (void)beatsPerBar;
+    (void)beatUnit;
+}
+void sfz::Synth::timePosition(int delay, int bar, float barBeat)
+{
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+
+    (void)delay;
+    (void)bar;
+    (void)barBeat;
+}
+void sfz::Synth::playbackState(int delay, int playbackState)
+{
+    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+
+    (void)delay;
+    (void)playbackState;
+}
 
 int sfz::Synth::getNumRegions() const noexcept
 {

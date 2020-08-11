@@ -153,9 +153,24 @@ void sfz::Sfizz::aftertouch(int delay, uint8_t aftertouch) noexcept
     synth->aftertouch(delay, aftertouch);
 }
 
-void sfz::Sfizz::tempo(int delay, float secondsPerQuarter) noexcept
+void sfz::Sfizz::tempo(int delay, float secondsPerBeat) noexcept
 {
-    synth->tempo(delay, secondsPerQuarter);
+    synth->tempo(delay, secondsPerBeat);
+}
+
+void sfz::Sfizz::timeSignature(int delay, int beatsPerBar, int beatUnit)
+{
+    synth->timeSignature(delay, beatsPerBar, beatUnit);
+}
+
+void sfz::Sfizz::timePosition(int delay, int bar, float barBeat)
+{
+    synth->timePosition(delay, bar, barBeat);
+}
+
+void sfz::Sfizz::playbackState(int delay, int playbackState)
+{
+    synth->playbackState(delay, playbackState);
 }
 
 void sfz::Sfizz::renderBlock(float** buffers, size_t numSamples, int /*numOutputs*/) noexcept

@@ -12,8 +12,6 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <cstring>
 
-#pragma message("TODO: send tempo") // NOLINT
-
 template<class T>
 constexpr int fastRound(T x)
 {
@@ -54,6 +52,13 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth.reset(new sfz::Sfizz);
     _currentStretchedTuning = 0.0;
     loadSfzFileOrDefault(*_synth, {});
+
+    _synth->tempo(0, 0.5);
+    _timeSigNumerator = 4;
+    _timeSigDenominator = 4;
+    _synth->timeSignature(0, _timeSigNumerator, _timeSigDenominator);
+    _synth->timePosition(0, 0, 0);
+    _synth->playbackState(0, 0);
 
     return result;
 }
@@ -143,6 +148,9 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 {
     sfz::Sfizz& synth = *_synth;
 
+    if (data.processContext)
+        updateTimeInfo(*data.processContext);
+
     if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processParameterChanges(*pc);
 
@@ -196,6 +204,29 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     }
 
     return kResultTrue;
+}
+
+void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
+{
+    sfz::Sfizz& synth = *_synth;
+
+    if (context.state & context.kTempoValid)
+        synth.tempo(0, 60.0f / context.tempo);
+
+    if (context.state & context.kTimeSigValid) {
+        _timeSigNumerator = context.timeSigNumerator;
+        _timeSigDenominator = context.timeSigDenominator;
+        synth.timeSignature(0, _timeSigNumerator, _timeSigDenominator);
+    }
+
+    if (context.state & context.kProjectTimeMusicValid) {
+        double beats = context.projectTimeMusic * 0.25 * _timeSigDenominator;
+        double bars = beats / _timeSigNumerator;
+        beats -= int(bars) * _timeSigNumerator;
+        synth.timePosition(0, int(bars), float(beats));
+    }
+
+    synth.playbackState(0, (context.state & context.kPlaying) != 0);
 }
 
 void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)

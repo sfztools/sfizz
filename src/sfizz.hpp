@@ -291,13 +291,39 @@ public:
     void aftertouch(int delay, uint8_t aftertouch) noexcept;
 
     /**
-     * @brief Send a tempo event to the synth. (CURRENTLY UNIMPLEMENTED)
+     * @brief Send a tempo event to the synth.
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
      *              the block in the next call to renderBlock().
-     * @param secondsPerQuarter the new period of the quarter note.
+     * @param secondsPerBeat the new period of the beat.
      */
-    void tempo(int delay, float secondsPerQuarter) noexcept;
+    void tempo(int delay, float secondsPerBeat) noexcept;
+
+    /**
+     * @brief      Send the time signature.
+     *
+     * @param      delay                The delay.
+     * @param      beats_per_bar        The number of beats per bar, or time signature numerator.
+     * @param      beat_unit            The note corresponding to one beat, or time signature denominator.
+     */
+    void timeSignature(int delay, int beatsPerBar, int beatUnit);
+
+    /**
+     * @brief      Send the time position.
+     *
+     * @param      delay                The delay.
+     * @param      bar                  The current bar.
+     * @param      bar_beat             The fractional position of the current beat within the bar.
+     */
+    void timePosition(int delay, int bar, float barBeat);
+
+    /**
+     * @brief      Send the playback state.
+     *
+     * @param      delay                The delay.
+     * @param      playback_state       The playback state, 1 if playing, 0 if stopped.
+     */
+    void playbackState(int delay, int playbackState);
 
     /**
      * @brief Render an block of audio data in the buffer. This call will reset
