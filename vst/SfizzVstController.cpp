@@ -283,6 +283,16 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
 
         _state.scalaFile.assign(static_cast<const char *>(data), size);
     }
+    else if (!strcmp(id, "NotifiedPlayState")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("PlayState", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        _playState = *static_cast<const SfizzPlayState*>(data);
+    }
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();

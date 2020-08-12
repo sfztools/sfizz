@@ -508,6 +508,139 @@ void SfizzVstEditor::createFrameContents()
         _subPanels[kPanelTuning] = panel;
     }
 
+    // info panel
+    {
+        panel = new CViewContainer(bounds);
+        frame->addView(panel);
+        panel->setTransparency(true);
+
+        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Information");
+        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
+        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        panel->addView(topLeftLabel);
+
+        CRect row = topRow;
+        row.top += 45.0;
+        row.bottom += 45.0;
+        row.left += 20.0;
+        row.right -= 20.0;
+
+        static const CCoord interRow = 20.0;
+        static const CCoord interColumn = 20.0;
+        static const int numColumns = 3;
+
+        auto nthColumn = [&row](int colIndex) -> CRect {
+            CRect div = row;
+            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
+            div.left = div.left + colIndex * (columnWidth + interColumn);
+            div.right = div.left + columnWidth;
+            return div;
+        };
+
+        CTextLabel* label;
+
+        label = new CTextLabel(nthColumn(0), "Curves");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        label = new CTextLabel(nthColumn(1), "");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        _infoCurvesLabel = label;
+        panel->addView(label);
+
+        row.top += interRow;
+        row.bottom += interRow;
+
+        label = new CTextLabel(nthColumn(0), "Masters");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        label = new CTextLabel(nthColumn(1), "");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        _infoMastersLabel = label;
+        panel->addView(label);
+
+        row.top += interRow;
+        row.bottom += interRow;
+
+        label = new CTextLabel(nthColumn(0), "Groups");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        label = new CTextLabel(nthColumn(1), "");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        _infoGroupsLabel = label;
+        panel->addView(label);
+
+        row.top += interRow;
+        row.bottom += interRow;
+
+        label = new CTextLabel(nthColumn(0), "Regions");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        label = new CTextLabel(nthColumn(1), "");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        _infoRegionsLabel = label;
+        panel->addView(label);
+
+        row.top += interRow;
+        row.bottom += interRow;
+
+        label = new CTextLabel(nthColumn(0), "Samples");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        label = new CTextLabel(nthColumn(1), "");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        _infoSamplesLabel = label;
+        panel->addView(label);
+
+        row.top += interRow;
+        row.bottom += interRow;
+
+        label = new CTextLabel(nthColumn(0), "Voices");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        panel->addView(label);
+        label = new CTextLabel(nthColumn(1), "");
+        label->setFontColor(CColor(0x00, 0x00, 0x00));
+        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+        label->setHoriAlign(kLeftText);
+        _infoVoicesLabel = label;
+        panel->addView(label);
+
+        _subPanels[kPanelInfo] = panel;
+    }
+
     // all panels
     for (unsigned currentPanel = 0; currentPanel < kNumPanels; ++currentPanel) {
         panel = _subPanels[currentPanel];
@@ -528,6 +661,7 @@ void SfizzVstEditor::createFrameContents()
             case kPanelGeneral: text = "File"; break;
             case kPanelSettings: text = "Setup"; break;
             case kPanelTuning: text = "Tuning"; break;
+            case kPanelInfo: text = "Info"; break;
             default: text = "?"; break;
             }
 
@@ -549,7 +683,9 @@ void SfizzVstEditor::updateStateDisplay()
     SfizzVstController* controller = getController();
     const SfizzVstState& state = controller->getSfizzState();
     const SfizzUiState& uiState = controller->getSfizzUiState();
+    const SfizzPlayState& playState = controller->getSfizzPlayState();
 
+    ///
     updateSfzFileLabel(state.sfzFile);
     if (_volumeSlider)
         _volumeSlider->setValue(state.volume);
@@ -574,6 +710,25 @@ void SfizzVstEditor::updateStateDisplay()
         _stretchedTuningSlider->setValue(state.stretchedTuning);
     updateStretchedTuningLabel(state.stretchedTuning);
 
+    ///
+    struct InfoLabel { const uint32* src; CTextLabel* dst; };
+    for (const auto& item : {
+            InfoLabel{&playState.curves, _infoCurvesLabel},
+            InfoLabel{&playState.masters, _infoMastersLabel},
+            InfoLabel{&playState.groups, _infoGroupsLabel},
+            InfoLabel{&playState.regions, _infoRegionsLabel},
+            InfoLabel{&playState.preloadedSamples, _infoSamplesLabel},
+            InfoLabel{&playState.activeVoices, _infoVoicesLabel} })
+    {
+        if (item.dst) {
+            char text[64];
+            sprintf(text, "%u", *item.src);
+            text[sizeof(text) - 1] = '\0';
+            item.dst->setText(text);
+        }
+    }
+
+    ///
     setActivePanel(uiState.activePanel);
 }
 

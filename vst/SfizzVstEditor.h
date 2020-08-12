@@ -73,6 +73,7 @@ private:
         // kPanelControls,
         kPanelSettings,
         kPanelTuning,
+        kPanelInfo,
         kNumPanels,
     };
 
@@ -110,6 +111,13 @@ private:
     CTextLabel* _tuningFrequencyLabel = nullptr;
     CSliderBase *_stretchedTuningSlider = nullptr;
     CTextLabel* _stretchedTuningLabel = nullptr;
+
+    CTextLabel* _infoCurvesLabel = nullptr;
+    CTextLabel* _infoMastersLabel = nullptr;
+    CTextLabel* _infoGroupsLabel = nullptr;
+    CTextLabel* _infoRegionsLabel = nullptr;
+    CTextLabel* _infoSamplesLabel = nullptr;
+    CTextLabel* _infoVoicesLabel = nullptr;
 
 #if !defined(__APPLE__) && !defined(_WIN32)
     SharedPointer<RunLoop> _runLoop;
