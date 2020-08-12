@@ -23,8 +23,7 @@ struct LFO::Impl {
 
     // state
     size_t delayFramesLeft_ = 0;
-    float fadeInPole_ = 0;
-    float fadeInMemory_ = 0;
+    float fadePosition_ = 0;
     std::array<float, config::maxLFOSubs> subPhases_ {{}};
     std::array<float, config::maxLFOSubs> sampleHoldMem_ {{}};
 };
@@ -62,9 +61,7 @@ void LFO::start()
     const float delay = desc.delay;
     impl.delayFramesLeft_ = (delay > 0) ? static_cast<size_t>(std::ceil(sampleRate * delay)) : 0u;
 
-    const float fade = desc.fade;
-    impl.fadeInPole_ = (fade > 0) ? std::exp(-1.0 / (fade * sampleRate)) : 0.0f;
-    impl.fadeInMemory_ = 0;
+    impl.fadePosition_ = (desc.fade > 0) ? 0.0f : 1.0f;
 }
 
 template <>
@@ -283,13 +280,28 @@ void LFO::process(absl::Span<float> out)
         }
     }
 
-    float fadeIn = impl.fadeInMemory_;
-    const float fadeInPole = impl.fadeInPole_;
-    for (size_t i = 0; i < numFrames; ++i) {
-        out[i] *= fadeIn;
-        fadeIn = fadeInPole * fadeIn + (1 - fadeInPole);
+    processFadeIn(out);
+}
+
+void LFO::processFadeIn(absl::Span<float> out)
+{
+    Impl& impl = *impl_;
+    const LFODescription& desc = *impl.desc_;
+    const float samplePeriod = 1.0f / impl.sampleRate_;
+    size_t numFrames = out.size();
+
+    float fadePosition = impl.fadePosition_;
+    if (fadePosition >= 1.0f)
+        return;
+
+    const float fadeTime = desc.fade;
+
+    for (size_t i = 0; i < numFrames && fadePosition < 1; ++i) {
+        out[i] *= fadePosition;
+        fadePosition = std::min(1.0f, fadePosition + samplePeriod / fadeTime);
     }
-    impl.fadeInMemory_ = fadeIn;
+
+    impl.fadePosition_ = fadePosition;
 }
 
 } // namespace sfz

@@ -104,6 +104,11 @@ private:
      */
     void processSteps(absl::Span<float> out);
 
+    /**
+       Process the fade in gain, and apply it to the buffer.
+     */
+    void processFadeIn(absl::Span<float> out);
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
