@@ -812,3 +812,30 @@ TEST_CASE("[Helpers] Width Scalar")
         REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
     }
 }
+
+TEST_CASE("[Helpers] clampAll")
+{
+    std::array<float, 10> inputScalar { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
+    std::array<float, 10> inputSIMD;
+    sfz::copy<float>(inputScalar, absl::MakeSpan(inputSIMD));
+    std::array<float, 10> expected { 2.5f, 2.5f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 8.0f, 8.0f };
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::clampAll, false);
+    sfz::clampAll<float>(absl::MakeSpan(inputScalar), 2.5f, 8.0f);
+    REQUIRE(  approxEqual<float>(inputScalar, expected) );
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::clampAll, true);
+    sfz::clampAll<float>(absl::MakeSpan(inputSIMD), 2.5f, 8.0f);
+    REQUIRE(  approxEqual<float>(inputSIMD, expected) );
+}
+
+TEST_CASE("[Helpers] clampAll (SIMD vs scalar)")
+{
+    std::vector<float> inputScalar(medBufferSize);
+    std::vector<float> inputSIMD(medBufferSize);
+    absl::c_iota(inputScalar, 2.0f);
+    sfz::copy<float>(inputScalar, absl::MakeSpan(inputSIMD));
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::clampAll, false);
+    sfz::clampAll<float>(absl::MakeSpan(inputScalar), 10.0f, 50.0f);
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::clampAll, true);
+    sfz::clampAll<float>(absl::MakeSpan(inputSIMD), 10.0f, 50.0f);
+    REQUIRE( approxEqual<float>(inputScalar, inputSIMD) );
+}

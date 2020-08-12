@@ -186,3 +186,17 @@ void diffScalar(const T* input, T* output, unsigned size) noexcept
         incrementAll(input, output);
     }
 }
+
+template <class T>
+void clampAllScalar(T* input, T low, T high, unsigned size ) noexcept
+{
+    if (size == 0)
+        return;
+
+    const auto sentinel = input + size;
+    while (input < sentinel) {
+        const float clampedAbove = *input > high ? high : *input;
+        *input = clampedAbove < low ? low : clampedAbove;
+        incrementAll(input);
+    }
+}
