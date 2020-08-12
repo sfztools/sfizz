@@ -295,10 +295,11 @@ void LFO::processFadeIn(absl::Span<float> out)
         return;
 
     const float fadeTime = desc.fade;
+    const float fadeStep = samplePeriod / fadeTime;
 
     for (size_t i = 0; i < numFrames && fadePosition < 1; ++i) {
         out[i] *= fadePosition;
-        fadePosition = std::min(1.0f, fadePosition + samplePeriod / fadeTime);
+        fadePosition = std::min(1.0f, fadePosition + fadeStep);
     }
 
     impl.fadePosition_ = fadePosition;
