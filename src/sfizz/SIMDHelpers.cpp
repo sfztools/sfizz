@@ -41,6 +41,7 @@ struct SIMDDispatch {
     decltype(&meanScalar<T>) mean = &meanScalar<T>;
     decltype(&meanSquaredScalar<T>) meanSquared = &meanSquaredScalar<T>;
     decltype(&clampAllScalar<T>) clampAll = &clampAllScalar<T>;
+    decltype(&allWithinScalar<T>) allWithin = &allWithinScalar<T>;
 
 private:
     std::array<bool, static_cast<unsigned>(SIMDOps::_sentinel)> simdStatus;
@@ -86,6 +87,7 @@ void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
             SIMD_OP(mean)
             SIMD_OP(meanSquared)
             SIMD_OP(clampAll)
+            SIMD_OP(allWithin)
         }
 #undef SIMD_OP
     }
@@ -122,6 +124,7 @@ void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
             SIMD_OP(mean)
             SIMD_OP(meanSquared)
             SIMD_OP(clampAll)
+            SIMD_OP(allWithin)
         }
     }
 #undef SIMD_OP
@@ -163,6 +166,7 @@ void SIMDDispatch<float>::resetStatus()
     setStatus(SIMDOps::meanSquared, false);
     setStatus(SIMDOps::upsampling, true);
     setStatus(SIMDOps::clampAll, false);
+    setStatus(SIMDOps::allWithin, true);
 }
 
 ///
@@ -308,7 +312,13 @@ void diff<float>(const float* input, float* output, unsigned size) noexcept
 template <>
 void clampAll<float>(float* input, float low, float high, unsigned size) noexcept
 {
-    return simdDispatch<float>().clampAll(input, low, high, size);
+    simdDispatch<float>().clampAll(input, low, high, size);
+}
+
+template <>
+bool allWithin<float>(const float* input, float low, float high, unsigned size) noexcept
+{
+    return simdDispatch<float>().allWithin(input, low, high, size);
 }
 
 }

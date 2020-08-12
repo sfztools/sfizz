@@ -839,3 +839,14 @@ TEST_CASE("[Helpers] clampAll (SIMD vs scalar)")
     sfz::clampAll<float>(absl::MakeSpan(inputSIMD), 10.0f, 50.0f);
     REQUIRE( approxEqual<float>(inputScalar, inputSIMD) );
 }
+
+TEST_CASE("[Helpers] allWithin")
+{
+    std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::allWithin, false);
+    REQUIRE( sfz::allWithin<float>(input, 0.5f, 11.0f) );
+    REQUIRE( !sfz::allWithin<float>(input, 2.5f, 8.0f) );
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::allWithin, true);
+    REQUIRE( sfz::allWithin<float>(input, 0.5f, 11.0f) );
+    REQUIRE( !sfz::allWithin<float>(input, 2.5f, 8.0f) );
+}

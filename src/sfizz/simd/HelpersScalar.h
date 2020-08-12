@@ -200,3 +200,23 @@ void clampAllScalar(T* input, T low, T high, unsigned size ) noexcept
         incrementAll(input);
     }
 }
+
+template <class T>
+bool allWithinScalar(const T* input, T low, T high, unsigned size ) noexcept
+{
+    if (size == 0)
+        return true;
+
+    if (low > high)
+        std::swap(low, high);
+
+    const auto sentinel = input + size;
+    while (input < sentinel) {
+        if (*input < low || *input > high)
+            return false;
+
+        incrementAll(input);
+    }
+
+    return true;
+}
