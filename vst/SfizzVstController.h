@@ -56,6 +56,9 @@ public:
     const SfizzUiState& getSfizzUiState() const { return _uiState; }
     SfizzUiState& getSfizzUiState() { return _uiState; }
 
+    const SfizzPlayState& getSfizzPlayState() const { return _playState; }
+    SfizzPlayState& getSfizzPlayState() { return _playState; }
+
     void addSfizzStateListener(StateListener* listener);
     void removeSfizzStateListener(StateListener* listener);
 
@@ -67,5 +70,6 @@ public:
 private:
     SfizzVstState _state;
     SfizzUiState _uiState;
+    SfizzPlayState _playState {};
     std::vector<StateListener*> _stateListeners;
 };

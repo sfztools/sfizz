@@ -64,6 +64,10 @@ private:
     uint32 _fileChangeCounter = 0;
     uint32 _fileChangePeriod = 0;
 
+    // state notification periodic timer
+    uint32 _playStateChangeCounter = 0;
+    uint32 _playStateChangePeriod = 0;
+
     // time info
     int _timeSigNumerator = 0;
     int _timeSigDenominator = 0;

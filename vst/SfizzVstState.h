@@ -62,6 +62,15 @@ public:
     tresult store(IBStream* state) const;
 };
 
+struct SfizzPlayState {
+    uint32 curves;
+    uint32 masters;
+    uint32 groups;
+    uint32 regions;
+    uint32 preloadedSamples;
+    uint32 activeVoices;
+};
+
 struct SfizzParameterRange {
     float def = 0.0;
     float min = 0.0;

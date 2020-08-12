@@ -132,7 +132,8 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
 
-        _fileChangePeriod = static_cast<uint32>(processSetup.sampleRate);
+        _fileChangePeriod = static_cast<uint32>(1.0 * processSetup.sampleRate);
+        _playStateChangePeriod = static_cast<uint32>(50e-3 * processSetup.sampleRate);
 
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
@@ -200,6 +201,20 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     if (_fileChangeCounter > _fileChangePeriod) {
         _fileChangeCounter %= _fileChangePeriod;
         if (writeWorkerMessage("CheckShouldReload", nullptr, 0))
+            _semaToWorker.post();
+    }
+
+    _playStateChangeCounter += numFrames;
+    if (_playStateChangeCounter > _playStateChangePeriod) {
+        _playStateChangeCounter %= _playStateChangePeriod;
+        SfizzPlayState playState;
+        playState.curves = synth.getNumCurves();
+        playState.masters = synth.getNumMasters();
+        playState.groups = synth.getNumGroups();
+        playState.regions = synth.getNumRegions();
+        playState.preloadedSamples = synth.getNumPreloadedSamples();
+        playState.activeVoices = synth.getNumActiveVoices();
+        if (writeWorkerMessage("NotifyPlayState", &playState, sizeof(playState)))
             _semaToWorker.post();
     }
 
@@ -464,6 +479,13 @@ void SfizzVstProcessor::doBackgroundWork()
                 fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
                 _synth->loadScalaFile(_state.scalaFile);
             }
+        }
+        else if (!std::strcmp(id, "NotifyPlayState")) {
+            SfizzPlayState playState = *msg->payload<SfizzPlayState>();
+            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
+            notification->setMessageID("NotifiedPlayState");
+            notification->getAttributes()->setBinary("PlayState", &playState, sizeof(playState));
+            sendMessage(notification);
         }
     }
 }
