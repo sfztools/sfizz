@@ -82,6 +82,7 @@ class faustCompressor {
 	}
 
 	static void classInit(int sample_rate) {
+		(void)sample_rate;
 	}
 
 	void instanceConstants(int sample_rate) {

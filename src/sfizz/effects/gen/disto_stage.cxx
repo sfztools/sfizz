@@ -55,6 +55,7 @@ class faustDistoSIG0 {
 	}
 
 	void instanceInitfaustDistoSIG0(int sample_rate) {
+		(void)sample_rate;
 		for (int l3 = 0; (l3 < 2); l3 = (l3 + 1)) {
 			iRec3[l3] = 0;
 		}

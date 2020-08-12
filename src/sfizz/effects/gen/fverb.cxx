@@ -58,6 +58,7 @@ class faustFverbSIG0 {
 	}
 
 	void instanceInitfaustFverbSIG0(int sample_rate) {
+		(void)sample_rate;
 		for (int l4 = 0; (l4 < 2); l4 = (l4 + 1)) {
 			iRec19[l4] = 0;
 		}
