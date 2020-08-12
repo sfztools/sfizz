@@ -846,7 +846,11 @@ TEST_CASE("[Helpers] allWithin")
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::allWithin, false);
     REQUIRE( sfz::allWithin<float>(input, 0.5f, 11.0f) );
     REQUIRE( !sfz::allWithin<float>(input, 2.5f, 8.0f) );
+    REQUIRE( !sfz::allWithin<float>(input, 0.0f, 5.0f) );
+    REQUIRE( !sfz::allWithin<float>(input, -1.0f, 7.0f) );
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::allWithin, true);
     REQUIRE( sfz::allWithin<float>(input, 0.5f, 11.0f) );
     REQUIRE( !sfz::allWithin<float>(input, 2.5f, 8.0f) );
+    REQUIRE( !sfz::allWithin<float>(input, 0.0f, 5.0f) );
+    REQUIRE( !sfz::allWithin<float>(input, -1.0f, 7.0f) );
 }
