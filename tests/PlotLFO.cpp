@@ -18,6 +18,7 @@
 #include "sfizz/Synth.h"
 #include "sfizz/LFO.h"
 #include "sfizz/LFODescription.h"
+#include "cxxopts.hpp"
 #include <absl/types/span.h>
 #include <vector>
 #include <iostream>
@@ -25,16 +26,8 @@
 
 //==============================================================================
 
-static constexpr double sampleRate = 44100.0; // sample rate used to compute
-static constexpr double duration = 5.0; // length in seconds
-
-/**
-   Print usage information
- */
-static void usage()
-{
-    std::cerr << "Usage: sfizz_plot_lfo <file.sfz>" "\n";
-}
+static double sampleRate = 1000.0; // sample rate used to compute
+static double duration = 5.0; // length in seconds
 
 static std::vector<sfz::LFODescription> lfoDescriptionFromSfzFile(const fs::path &sfzPath, bool &success)
 {
@@ -61,16 +54,49 @@ static std::vector<sfz::LFODescription> lfoDescriptionFromSfzFile(const fs::path
  */
 int main(int argc, char* argv[])
 {
-    if (argc < 2 || argc > 2) {
-        usage();
+    cxxopts::Options options("sfizz_plot_lfo", "Compute LFO and generate plot data");
+
+    options.add_options()
+        ("s,samplerate", "Sample rate", cxxopts::value(sampleRate))
+        ("d,duration", "Duration", cxxopts::value(duration))
+        ("h,help", "Print usage")
+    ;
+    options.positional_help("sfz-file");
+
+    fs::path sfzPath;
+
+    try {
+        cxxopts::ParseResult result = options.parse(argc, argv);
+        options.parse_positional({ "sfz-file" });
+
+        if (result.count("help")) {
+            std::cout << options.help() << std::endl;
+            return 0;
+        }
+
+        if (argc != 2) {
+            std::cerr << "Please indicate the SFZ file to process.\n";
+            return 1;
+        }
+
+        sfzPath = argv[1];
+    }
+    catch (cxxopts::OptionException& ex) {
+        std::cerr << ex.what() << "\n";
         return 1;
     }
 
-    fs::path sfzPath = argv[1];
     bool success = false;
     const std::vector<sfz::LFODescription> desc = lfoDescriptionFromSfzFile(sfzPath, success);
-    if (!success)
+    if (!success){
+        std::cerr << "Could not extract LFO descriptions from SFZ file.\n";
         return 1;
+    }
+
+    if (sampleRate <= 0) {
+        std::cerr << "The sample rate provided is invalid.\n";
+        return 1;
+    }
 
     size_t numLfos = desc.size();
     std::vector<sfz::LFO> lfos(numLfos);
