@@ -16,6 +16,7 @@
 #include <string>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 
 namespace sfz {
 
