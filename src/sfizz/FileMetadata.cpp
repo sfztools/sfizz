@@ -263,7 +263,7 @@ bool FileMetadataReader::extractRiffInstrument(SF_INSTRUMENT& ins)
     ins.gain = 1;
     ins.basenote = extractU32(0x14 - 8);
     ins.detune = static_cast<unsigned char>( // Q0,32 semitones to cents
-        (static_cast<uint64_t>(extractU32(0x18 - 8)) * 100) >> 32);
+        std::lround(extractU32(0x18 - 8) * (100.0 / (static_cast<int64_t>(1) << 32))));
     ins.velocity_lo = 0;
     ins.velocity_hi = 127;
     ins.key_lo = 0;
