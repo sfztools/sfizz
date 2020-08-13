@@ -382,6 +382,7 @@ struct Region {
 
     // Performance parameters: pitch
     uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter
+    bool pitchKeycenterFromSample { false };
     int pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
     int pitchRandom { Default::pitchRandom }; // pitch_random
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack

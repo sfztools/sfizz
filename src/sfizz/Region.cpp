@@ -779,7 +779,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
 
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
-        setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+        if (opcode.value == "sample")
+            pitchKeycenterFromSample = true;
+        else {
+            pitchKeycenterFromSample = false;
+            setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+        }
         break;
     case hash("pitch_keytrack"):
         setValueFromOpcode(opcode, pitchKeytrack, Default::pitchKeytrackRange);

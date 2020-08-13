@@ -56,6 +56,7 @@ struct FileInformation {
     bool hasLoop { false };
     double sampleRate { config::defaultSampleRate };
     int numChannels { 0 };
+    int rootKey { 0 };
     absl::optional<WavetableInfo> wavetable;
 };
 
