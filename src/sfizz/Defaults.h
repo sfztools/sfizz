@@ -209,6 +209,22 @@ namespace Default
     constexpr int bendStep { 1 };
     constexpr uint8_t bendSmooth { 0 };
 
+     // Modulation: LFO
+    constexpr int numLFOs { 4 };
+    constexpr int numLFOSubs { 2 };
+    constexpr int numLFOSteps { 8 };
+    constexpr Range<float> lfoFreqRange { 0.0, 100.0 };
+    constexpr Range<float> lfoPhaseRange { 0.0, 360.0 };
+    constexpr Range<float> lfoDelayRange { 0.0, 30.0 };
+    constexpr Range<float> lfoFadeRange { 0.0, 30.0 };
+    constexpr Range<unsigned> lfoCountRange { 0, 1000 };
+    constexpr Range<unsigned> lfoStepsRange { 0, static_cast<unsigned>(config::maxLFOSteps) };
+    constexpr Range<float> lfoStepXRange { -100.0, 100.0 };
+    constexpr Range<int> lfoWaveRange { 0, 15 };
+    constexpr Range<float> lfoOffsetRange { -1.0, 1.0 };
+    constexpr Range<float> lfoRatioRange { 0.0, 100.0 };
+    constexpr Range<float> lfoScaleRange { 0.0, 1.0 };
+
     // Envelope generators
 	constexpr float attack { 0 };
 	constexpr float decay { 0 };

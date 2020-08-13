@@ -12,6 +12,7 @@
 #include "EGDescription.h"
 #include "EQDescription.h"
 #include "FilterDescription.h"
+#include "LFODescription.h"
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
@@ -373,6 +374,9 @@ struct Region {
     EGDescription pitchEG;
     EGDescription filterEG;
 
+    // LFOs
+    std::vector<LFODescription> lfos;
+
     bool hasStereoSample { false };
 
     // Effects
@@ -388,6 +392,7 @@ struct Region {
         float sourceDepth = 1.0f;
     };
     std::vector<Connection> connections;
+    Connection& getOrCreateConnection(const ModKey& source, const ModKey& target);
 
     // Parent
     RegionSet* parent { nullptr };

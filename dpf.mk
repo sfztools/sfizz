@@ -1,3 +1,4 @@
+
 #
 # A build file to help using sfizz with the DISTRHO Plugin Framework (DPF)
 # ------------------------------------------------------------------------
@@ -65,6 +66,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModKeyHash.cpp \
 	src/sfizz/modulations/ModMatrix.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
+	src/sfizz/modulations/sources/LFO.cpp \
 	src/sfizz/effects/Compressor.cpp \
 	src/sfizz/effects/Disto.cpp \
 	src/sfizz/effects/Eq.cpp \
@@ -91,6 +93,8 @@ SFIZZ_SOURCES = \
 	src/sfizz/FilterPool.cpp \
 	src/sfizz/FloatEnvelopes.cpp \
 	src/sfizz/Logger.cpp \
+	src/sfizz/LFO.cpp \
+	src/sfizz/LFODescription.cpp \
 	src/sfizz/MidiState.cpp \
 	src/sfizz/OpcodeCleanup.cpp \
 	src/sfizz/Opcode.cpp \
