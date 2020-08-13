@@ -684,3 +684,21 @@ TEST_CASE("[Files] Duplicate labels")
     REQUIRE(xmlMidnam.find("<Note Number=\"60\" Name=\"Quux\" />") != xmlMidnam.npos);
     REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"20\" Name=\"Bar\" />") != xmlMidnam.npos);
 }
+
+TEST_CASE("[Files] Key center from audio file")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sample_keycenter.sfz", R"(
+        <group> pitch_keycenter=sample
+        <region> sample=root_key_38.wav
+        <region> sample=root_key_62.wav
+        <region> sample=root_key_38.flac
+        <region> sample=root_key_62.flac
+    )");
+
+    REQUIRE(synth.getNumRegions() == 4);
+    REQUIRE(synth.getRegionView(0)->pitchKeycenter == 38);
+    REQUIRE(synth.getRegionView(1)->pitchKeycenter == 62);
+    REQUIRE(synth.getRegionView(2)->pitchKeycenter == 38);
+    REQUIRE(synth.getRegionView(3)->pitchKeycenter == 62);
+}
