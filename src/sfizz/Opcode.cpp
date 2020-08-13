@@ -272,12 +272,12 @@ void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>
 
 ///
 #define INSTANCIATE_FOR(T) \
-    template absl::optional<T> readOpcode<T>(absl::string_view value, const Range<T>& validRange); \
-    template void setValueFromOpcode<T>(const Opcode& opcode, T& target, const Range<T>& validRange); \
-    template void setValueFromOpcode<T>(const Opcode& opcode, absl::optional<T>& target, const Range<T>& validRange); \
-    template void setRangeEndFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); \
-    template void setRangeStartFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); \
-    template void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<T>>& target, const Range<T>& validRange);
+    template absl::optional<T> readOpcode<T>(absl::string_view value, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setValueFromOpcode<T>(const Opcode& opcode, T& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setValueFromOpcode<T>(const Opcode& opcode, absl::optional<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setRangeEndFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setRangeStartFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<T>>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/
 
 INSTANCIATE_FOR(float)
 INSTANCIATE_FOR(double)
