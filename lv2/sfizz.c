@@ -130,6 +130,7 @@ typedef struct
     LV2_URID nominal_block_length_uri;
     LV2_URID sample_rate_uri;
     LV2_URID atom_object_uri;
+    LV2_URID atom_blank_uri;
     LV2_URID atom_float_uri;
     LV2_URID atom_double_uri;
     LV2_URID atom_int_uri;
@@ -240,6 +241,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
     self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
+    self->atom_blank_uri = map->map(map->handle, LV2_ATOM__Blank);
     self->patch_set_uri = map->map(map->handle, LV2_PATCH__Set);
     self->patch_get_uri = map->map(map->handle, LV2_PATCH__Get);
     self->patch_put_uri = map->map(map->handle, LV2_PATCH__Put);
@@ -865,7 +867,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         const int delay = (int)ev->time.frames;
 
         // If the received atom is an object/patch message
-        if (ev->body.type == self->atom_object_uri)
+        if (ev->body.type == self->atom_object_uri || ev->body.type == self->atom_blank_uri)
         {
             const LV2_Atom_Object *obj = (const LV2_Atom_Object *)&ev->body;
             if (obj->body.otype == self->patch_set_uri)
