@@ -21,6 +21,7 @@ set (SFIZZ_HEADERS
     sfizz/AudioBuffer.h
     sfizz/AudioReader.h
     sfizz/AudioSpan.h
+    sfizz/BeatClock.h
     sfizz/Buffer.h
     sfizz/BufferPool.h
     sfizz/CCMap.h
@@ -79,6 +80,7 @@ set (SFIZZ_HEADERS
     sfizz/LFO.h
     sfizz/LFODescription.h
     sfizz/MathHelpers.h
+    sfizz/Metronome.h
     sfizz/MidiState.h
     sfizz/ModifierHelpers.h
     sfizz/OnePoleFilter.h
@@ -149,6 +151,8 @@ set (SFIZZ_SOURCES
     sfizz/PowerFollower.cpp
     sfizz/FlexEGDescription.cpp
     sfizz/FlexEnvelope.cpp
+    sfizz/BeatClock.cpp
+    sfizz/Metronome.cpp
     sfizz/SynthMessaging.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp

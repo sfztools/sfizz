@@ -856,6 +856,9 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     ModMatrix& mm = impl.resources_.modMatrix;
     mm.beginCycle(numFrames);
 
+    BeatClock& bc = impl.resources_.beatClock;
+    bc.beginCycle(numFrames);
+
     { // Clear effect busses
         ScopedTiming logger { callbackBreakdown.effects };
         for (auto& bus : impl.effectBuses_) {
@@ -918,8 +921,19 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // Apply the master volume
     buffer.applyGain(db2mag(impl.volume_));
 
+    // Process the metronome (debugging tool for host time info)
+    constexpr bool metronomeEnabled = false;
+    if (metronomeEnabled) {
+        impl.resources_.metronome.processAdding(
+            bc.getRunningBeat().data(), bc.getRunningBeatsPerBar().data(),
+            buffer.getChannel(0), buffer.getChannel(1), numFrames);
+    }
+
     // Perform any remaining modulators
     mm.endCycle();
+
+    // Advance the clock to the end of cycle
+    bc.endCycle();
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1167,36 +1181,33 @@ void Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 }
-void Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
+void Synth::tempo(int delay, float secondsPerBeat) noexcept
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+
+    impl.resources_.beatClock.setTempo(delay, secondsPerBeat);
 }
 void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    (void)delay;
-    (void)beatsPerBar;
-    (void)beatUnit;
+    impl.resources_.beatClock.setTimeSignature(delay, TimeSignature(beatsPerBar, beatUnit));
 }
-void Synth::timePosition(int delay, int bar, float barBeat)
+void Synth::timePosition(int delay, int bar, double barBeat)
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    (void)delay;
-    (void)bar;
-    (void)barBeat;
+    impl.resources_.beatClock.setTimePosition(delay, BBT(bar, barBeat));
 }
 void Synth::playbackState(int delay, int playbackState)
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    (void)delay;
-    (void)playbackState;
+    impl.resources_.beatClock.setPlaying(delay, playbackState == 1);
 }
 
 int Synth::getNumRegions() const noexcept

@@ -396,7 +396,7 @@ public:
      * @param      bar                  The current bar.
      * @param      bar_beat             The fractional position of the current beat within the bar.
      */
-    void timePosition(int delay, int bar, float barBeat);
+    void timePosition(int delay, int bar, double barBeat);
     /**
      * @brief      Send the playback state.
      *

@@ -286,7 +286,7 @@ void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
         double beats = context.projectTimeMusic * 0.25 * _timeSigDenominator;
         double bars = beats / _timeSigNumerator;
         beats -= int(bars) * _timeSigNumerator;
-        synth.timePosition(0, int(bars), float(beats));
+        synth.timePosition(0, int(bars), beats);
     }
 
     synth.playbackState(0, (context.state & context.kPlaying) != 0);

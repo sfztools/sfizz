@@ -164,7 +164,7 @@ void sfz::Sfizz::timeSignature(int delay, int beatsPerBar, int beatUnit)
     synth->timeSignature(delay, beatsPerBar, beatUnit);
 }
 
-void sfz::Sfizz::timePosition(int delay, int bar, float barBeat)
+void sfz::Sfizz::timePosition(int delay, int bar, double barBeat)
 {
     synth->timePosition(delay, bar, barBeat);
 }
