@@ -232,6 +232,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
         setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
         setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+        pitchKeycenterFromSample = false;
         break;
     case hash("lovel"):
         if (auto value = readOpcode(opcode.value, Default::midi7Range))

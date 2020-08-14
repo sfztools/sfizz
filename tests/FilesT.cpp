@@ -694,11 +694,13 @@ TEST_CASE("[Files] Key center from audio file")
         <region> sample=root_key_62.wav
         <region> sample=root_key_38.flac
         <region> sample=root_key_62.flac
+        <region> key=10 sample=root_key_62.flac
     )");
 
-    REQUIRE(synth.getNumRegions() == 4);
+    REQUIRE(synth.getNumRegions() == 5);
     REQUIRE(synth.getRegionView(0)->pitchKeycenter == 38);
     REQUIRE(synth.getRegionView(1)->pitchKeycenter == 62);
     REQUIRE(synth.getRegionView(2)->pitchKeycenter == 38);
     REQUIRE(synth.getRegionView(3)->pitchKeycenter == 62);
+    REQUIRE(synth.getRegionView(4)->pitchKeycenter == 10);
 }
