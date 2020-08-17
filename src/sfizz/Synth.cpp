@@ -569,8 +569,6 @@ void sfz::Synth::finalizeSfzLoad()
         if (!region->velocityPoints.empty())
             region->velCurve = Curve::buildFromVelcurvePoints(
                 region->velocityPoints, Curve::Interpolator::Linear);
-        else
-            region->velCurve = resources.curves.getCurve(4);
 
         region->registerPitchWheel(0);
         region->registerAftertouch(0);

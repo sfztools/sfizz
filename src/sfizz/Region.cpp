@@ -1518,7 +1518,13 @@ float sfz::Region::velocityCurve(float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    float gain = std::fabs(ampVeltrack) * (1.0f - velCurve->evalNormalized(velocity));
+    float gain;
+    if (velCurve)
+        gain = velCurve->evalNormalized(velocity);
+    else
+        gain = velocity * velocity;
+
+    gain = std::fabs(ampVeltrack) * (1.0f - gain);
     gain = (ampVeltrack < 0) ? gain : (1.0f - gain);
 
     return gain;
