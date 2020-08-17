@@ -692,15 +692,15 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("amp_veltrack")
     {
-        REQUIRE(region.ampVeltrack == 100.0f);
+        REQUIRE(region.ampVeltrack == 1.0f);
         region.parseOpcode({ "amp_veltrack", "4.2" });
-        REQUIRE(region.ampVeltrack == 4.2f);
+        REQUIRE(region.ampVeltrack == Approx(0.042f));
         region.parseOpcode({ "amp_veltrack", "-4.2" });
-        REQUIRE(region.ampVeltrack == -4.2f);
+        REQUIRE(region.ampVeltrack == Approx(-0.042f));
         region.parseOpcode({ "amp_veltrack", "-123" });
-        REQUIRE(region.ampVeltrack == -100.0f);
+        REQUIRE(region.ampVeltrack == -1.0f);
         region.parseOpcode({ "amp_veltrack", "132" });
-        REQUIRE(region.ampVeltrack == 100.0f);
+        REQUIRE(region.ampVeltrack == 1.0f);
     }
 
     SECTION("amp_random")

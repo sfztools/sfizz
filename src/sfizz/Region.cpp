@@ -432,7 +432,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, ampKeytrack, Default::ampKeytrackRange);
         break;
     case hash("amp_veltrack"):
-        setValueFromOpcode(opcode, ampVeltrack, Default::ampVeltrackRange);
+        if (auto value = readOpcode(opcode.value, Default::ampVeltrackRange))
+            ampVeltrack = normalizePercents(*value);
         break;
     case hash("amp_random"):
         setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
@@ -1517,19 +1518,14 @@ float sfz::Region::velocityCurve(float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    float gain { 1.0f };
-    if (velCurve) { // Custom velocity curve
-        return velCurve->evalNormalized(velocity);
-    } else { // Standard velocity curve
-        // FIXME: Maybe there's a prettier way to check the boundaries?
-        const float gaindB = [&]() {
-            if (ampVeltrack >= 0)
-                return velocity == 0.0f ? -90.0f : 40 * std::log(velocity) / std::log(10.0f);
-            else
-                return velocity == 1.0f ? -90.0f : 40 * std::log(1 - velocity) / std::log(10.0f);
-        }();
-        gain *= db2mag( gaindB * std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd());
-    }
+    float gain;
+    if (velCurve)
+        gain = velCurve->evalNormalized(velocity);
+    else
+        gain = velocity * velocity;
+
+    gain = std::fabs(ampVeltrack) * (1.0f - gain);
+    gain = (ampVeltrack < 0) ? gain : (1.0f - gain);
 
     return gain;
 }
