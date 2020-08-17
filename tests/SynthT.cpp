@@ -448,16 +448,89 @@ TEST_CASE("[Synth] velcurve")
         <region> amp_velcurve_064=1 sample=*sine
         <region> amp_velcurve_064=1 amp_veltrack=-100 sample=*sine
     )");
-    REQUIRE( synth.getRegionView(0)->velocityCurve(0_norm) == 0.0_a );
-    REQUIRE( synth.getRegionView(0)->velocityCurve(32_norm) == Approx(0.5f).margin(1e-2) );
-    REQUIRE( synth.getRegionView(0)->velocityCurve(64_norm) == 1.0_a );
-    REQUIRE( synth.getRegionView(0)->velocityCurve(96_norm) == 1.0_a );
-    REQUIRE( synth.getRegionView(0)->velocityCurve(127_norm) == 1.0_a );
-    REQUIRE( synth.getRegionView(1)->velocityCurve(0_norm) == 1.0_a );
-    REQUIRE( synth.getRegionView(1)->velocityCurve(32_norm) == 1.0_a );
-    REQUIRE( synth.getRegionView(1)->velocityCurve(64_norm) == 1.0_a );
-    REQUIRE( synth.getRegionView(1)->velocityCurve(96_norm) == Approx(0.5f).margin(1e-2) );
-    REQUIRE( synth.getRegionView(1)->velocityCurve(127_norm) == 0.0_a );
+
+    struct VelocityData { float velocity, gain; bool exact; };
+
+    static const VelocityData veldata[] = {
+        { 0_norm, 0.0, true },
+        { 32_norm, 0.5f, false },
+        { 64_norm, 1.0, true },
+        { 96_norm, 1.0, true },
+        { 127_norm, 1.0, true },
+    };
+
+    REQUIRE(synth.getNumRegions() == 2);
+    const sfz::Region* r1 = synth.getRegionView(0);
+    const sfz::Region* r2 = synth.getRegionView(1);
+
+    for (const VelocityData& vd : veldata) {
+        if (vd.exact) {
+            REQUIRE(r1->velocityCurve(vd.velocity) == vd.gain);
+            REQUIRE(r2->velocityCurve(vd.velocity) == 1.0f - vd.gain);
+        }
+        else {
+            REQUIRE(r1->velocityCurve(vd.velocity) == Approx(vd.gain).margin(1e-2));
+            REQUIRE(r2->velocityCurve(vd.velocity) == Approx(1.0f - vd.gain).margin(1e-2));
+        }
+    }
+}
+
+TEST_CASE("[Synth] veltrack")
+{
+    struct VelocityData { float velocity, dBGain; };
+    struct VeltrackData { float veltrack; absl::Span<const VelocityData> veldata; };
+
+    // measured on ARIA
+    const VelocityData veldata25[] = {
+        { 127_norm, 0.0 },
+        { 96_norm,  -1 },
+        { 64_norm,  -1.8 },
+        { 32_norm,  -2.3 },
+        { 1_norm,   -2.5 },
+    };
+    const VelocityData veldata50[] = {
+        { 127_norm,  0.0 },
+        { 96_norm,  -2.1 },
+        { 64_norm,  -4.1 },
+        { 32_norm,  -5.5 },
+        { 1_norm,   -6.0 },
+    };
+    const VelocityData veldata75[] = {
+        { 127_norm,  0.0 },
+        { 96_norm,  -3.4 },
+        { 64_norm,  -7.2 },
+        { 32_norm,  -10.5 },
+        { 1_norm,   -12.0 },
+    };
+    const VelocityData veldata100[] = {
+        { 127_norm,  0.0 },
+        { 96_norm,  -4.9 },
+        { 64_norm,  -12.0 },
+        { 32_norm,  -24.0 },
+        { 1_norm,   -84.1 },
+    };
+
+    const VeltrackData veltrackdata[] = {
+        { 25, veldata25 },
+        { 50, veldata50 },
+        { 75, veldata75 },
+        { 100, veldata100 },
+    };
+
+    for (const VeltrackData& vt : veltrackdata) {
+        sfz::Synth synth;
+        const std::string sfzCode = "<region>sample=*sine amp_veltrack=" +
+            std::to_string(vt.veltrack);
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/veltrack.sfz", sfzCode);
+
+        REQUIRE(synth.getNumRegions() == 1);
+        const sfz::Region* r = synth.getRegionView(0);
+
+        for (const VelocityData& vd : vt.veldata) {
+            float dBGain = 20.0f * std::log10(r->velocityCurve(vd.velocity));
+            REQUIRE(dBGain == Approx(vd.dBGain).margin(0.1));
+        }
+    }
 }
 
 TEST_CASE("[Synth] Region by identifier")
