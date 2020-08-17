@@ -125,28 +125,7 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value);
  * @return absl::optional<ValueType> the cast value, or null
  */
 template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
-inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
-{
-    size_t numberEnd = 0;
-
-    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
-        ++numberEnd;
-    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
-        ++numberEnd;
-
-    value = value.substr(0, numberEnd);
-
-    int64_t returnedValue;
-    if (!absl::SimpleAtoi(value, &returnedValue))
-            return absl::nullopt;
-
-    if (returnedValue > std::numeric_limits<ValueType>::max())
-        returnedValue = std::numeric_limits<ValueType>::max();
-    if (returnedValue < std::numeric_limits<ValueType>::min())
-        returnedValue = std::numeric_limits<ValueType>::min();
-
-    return validRange.clamp(static_cast<ValueType>(returnedValue));
-}
+absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange);
 
 /**
  * @brief Read a value from the sfz file and cast it to the destination parameter along
@@ -159,44 +138,12 @@ inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range
  * @return absl::optional<ValueType> the cast value, or null
  */
 template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
-inline absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
-{
-    size_t numberEnd = 0;
-
-    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
-        ++numberEnd;
-    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
-        ++numberEnd;
-
-    if (numberEnd < value.size() && value[numberEnd] == '.') {
-        ++numberEnd;
-        while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
-            ++numberEnd;
-    }
-
-    value = value.substr(0, numberEnd);
-
-    float returnedValue;
-    if (!absl::SimpleAtof(value, &returnedValue))
-        return absl::nullopt;
-
-    return validRange.clamp(returnedValue);
-}
+absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange);
 
 /**
  * @brief Read a boolean value from the sfz file and cast it to the destination parameter.
  */
-inline absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
-{
-    switch (hash(opcode.value)) {
-    case hash("off"):
-        return false;
-    case hash("on"):
-        return true;
-    default:
-        return {};
-    }
-}
+absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode);
 
 /**
  * @brief Set a target parameter from an opcode value, with possibly a textual note rather
@@ -208,14 +155,7 @@ inline absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Range<ValueType>& validRange)
-{
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target = *value;
-}
+void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Range<ValueType>& validRange);
 
 /**
  * @brief Set a target parameter from an opcode value, with possibly a textual note rather
@@ -227,14 +167,7 @@ inline void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Ra
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& target, const Range<ValueType>& validRange)
-{
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target = *value;
-}
+void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& target, const Range<ValueType>& validRange);
 
 /**
  * @brief Set a target end of a range from an opcode value, with possibly a textual note rather
@@ -246,14 +179,7 @@ inline void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& 
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setRangeEndFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange)
-{
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target.setEnd(*value);
-}
+void setRangeEndFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange);
 
 /**
  * @brief Set a target beginning of a range from an opcode value, with possibly a textual note rather
@@ -265,14 +191,7 @@ inline void setRangeEndFromOpcode(const Opcode& opcode, Range<ValueType>& target
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange)
-{
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target.setStart(*value);
-}
+void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange);
 
 /**
  * @brief Set a CC modulation parameter from an opcode value.
@@ -283,14 +202,7 @@ inline void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& targ
  * @param validRange the range of admitted values used to clamp the opcode
  */
 template <class ValueType>
-inline void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange)
-{
-    auto value = readOpcode(opcode.value, validRange);
-    if (value && Default::ccNumberRange.containsWithEnd(opcode.parameters.back()))
-        target = { opcode.parameters.back(), *value };
-    else
-        target = {};
-}
+void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange);
 
 }
 

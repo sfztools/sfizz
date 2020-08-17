@@ -13,7 +13,9 @@
 #include <cctype>
 #include <cassert>
 
-sfz::Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
+namespace sfz {
+
+Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
     : opcode(trim(inputOpcode))
     , value(trim(inputValue))
     , category(identifyCategory(inputOpcode))
@@ -49,7 +51,7 @@ static absl::string_view extractBackInteger(absl::string_view opcodeName)
     return opcodeName.substr(i);
 }
 
-std::string sfz::Opcode::getDerivedName(sfz::OpcodeCategory newCategory, unsigned number) const
+std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) const
 {
     std::string derivedName(opcode);
 
@@ -95,9 +97,9 @@ std::string sfz::Opcode::getDerivedName(sfz::OpcodeCategory newCategory, unsigne
     return derivedName;
 }
 
-sfz::OpcodeCategory sfz::Opcode::identifyCategory(absl::string_view name)
+OpcodeCategory Opcode::identifyCategory(absl::string_view name)
 {
-    sfz::OpcodeCategory category = kOpcodeNormal;
+    OpcodeCategory category = kOpcodeNormal;
 
     if (!name.empty() && absl::ascii_isdigit(name.back())) {
         absl::string_view part = name;
@@ -115,7 +117,7 @@ sfz::OpcodeCategory sfz::Opcode::identifyCategory(absl::string_view name)
     return category;
 }
 
-absl::optional<uint8_t> sfz::readNoteValue(absl::string_view value)
+absl::optional<uint8_t> readNoteValue(absl::string_view value)
 {
     char noteLetter = absl::ascii_tolower(value.empty() ? '\0' : value.front());
     value.remove_prefix(1);
@@ -155,6 +157,142 @@ absl::optional<uint8_t> sfz::readNoteValue(absl::string_view value)
 
     return static_cast<uint8_t>(noteNumber);
 }
+
+///
+template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int>>
+absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
+{
+    size_t numberEnd = 0;
+
+    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+        ++numberEnd;
+
+    value = value.substr(0, numberEnd);
+
+    int64_t returnedValue;
+    if (!absl::SimpleAtoi(value, &returnedValue))
+            return absl::nullopt;
+
+    if (returnedValue > std::numeric_limits<ValueType>::max())
+        returnedValue = std::numeric_limits<ValueType>::max();
+    if (returnedValue < std::numeric_limits<ValueType>::min())
+        returnedValue = std::numeric_limits<ValueType>::min();
+
+    return validRange.clamp(static_cast<ValueType>(returnedValue));
+}
+
+template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int>>
+absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
+{
+    size_t numberEnd = 0;
+
+    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+        ++numberEnd;
+
+    if (numberEnd < value.size() && value[numberEnd] == '.') {
+        ++numberEnd;
+        while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
+            ++numberEnd;
+    }
+
+    value = value.substr(0, numberEnd);
+
+    float returnedValue;
+    if (!absl::SimpleAtof(value, &returnedValue))
+        return absl::nullopt;
+
+    return validRange.clamp(returnedValue);
+}
+
+absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
+{
+    switch (hash(opcode.value)) {
+    case hash("off"):
+        return false;
+    case hash("on"):
+        return true;
+    default:
+        return {};
+    }
+}
+
+template <class ValueType>
+void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Range<ValueType>& validRange)
+{
+    auto value = readOpcode(opcode.value, validRange);
+    if (!value) // Try and read a note rather than a number
+        value = readNoteValue(opcode.value);
+    if (value)
+        target = *value;
+}
+
+template <class ValueType>
+inline void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& target, const Range<ValueType>& validRange)
+{
+    auto value = readOpcode(opcode.value, validRange);
+    if (!value) // Try and read a note rather than a number
+        value = readNoteValue(opcode.value);
+    if (value)
+        target = *value;
+}
+
+template <class ValueType>
+void setRangeEndFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange)
+{
+    auto value = readOpcode(opcode.value, validRange);
+    if (!value) // Try and read a note rather than a number
+        value = readNoteValue(opcode.value);
+    if (value)
+        target.setEnd(*value);
+}
+
+template <class ValueType>
+void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange)
+{
+    auto value = readOpcode(opcode.value, validRange);
+    if (!value) // Try and read a note rather than a number
+        value = readNoteValue(opcode.value);
+    if (value)
+        target.setStart(*value);
+}
+
+template <class ValueType>
+void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange)
+{
+    auto value = readOpcode(opcode.value, validRange);
+    if (value && Default::ccNumberRange.containsWithEnd(opcode.parameters.back()))
+        target = { opcode.parameters.back(), *value };
+    else
+        target = {};
+}
+
+///
+#define INSTANCIATE_FOR(T) \
+    template absl::optional<T> readOpcode<T>(absl::string_view value, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setValueFromOpcode<T>(const Opcode& opcode, T& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setValueFromOpcode<T>(const Opcode& opcode, absl::optional<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setRangeEndFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setRangeStartFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
+    template void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<T>>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/
+
+INSTANCIATE_FOR(float)
+INSTANCIATE_FOR(double)
+INSTANCIATE_FOR(int8_t)
+INSTANCIATE_FOR(int16_t)
+INSTANCIATE_FOR(int32_t)
+INSTANCIATE_FOR(int64_t)
+INSTANCIATE_FOR(uint8_t)
+INSTANCIATE_FOR(uint16_t)
+INSTANCIATE_FOR(uint32_t)
+//INSTANCIATE_FOR(uint64_t)
+
+#undef INSTANCIATE_FOR
+
+} // namespace sfz
 
 std::ostream &operator<<(std::ostream &os, const sfz::Opcode &opcode)
 {
