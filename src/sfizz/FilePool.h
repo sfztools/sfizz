@@ -52,6 +52,7 @@ struct FileInformation {
     uint32_t end { Default::sampleEndRange.getEnd() };
     uint32_t loopBegin { Default::loopRange.getStart() };
     uint32_t loopEnd { Default::loopRange.getEnd() };
+    bool hasLoop { false };
     double sampleRate { config::defaultSampleRate };
     int numChannels { 0 };
 };
