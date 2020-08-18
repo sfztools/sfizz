@@ -25,3 +25,5 @@ float meanSSE(const float* vector, unsigned size) noexcept;
 float meanSquaredSSE(const float* vector, unsigned size) noexcept;
 void cumsumSSE(const float* input, float* output, unsigned size) noexcept;
 void diffSSE(const float* input, float* output, unsigned size) noexcept;
+void clampAllSSE(float* input, float low, float high, unsigned size) noexcept;
+bool allWithinSSE(const float* input, float low, float high, unsigned size) noexcept;

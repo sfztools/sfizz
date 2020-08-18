@@ -59,6 +59,8 @@ sfizz_add_benchmark(bm_maps BM_maps.cpp)
 target_link_libraries(bm_maps PRIVATE absl::flat_hash_map)
 sfizz_add_benchmark(bm_mapVsArray BM_mapVsArray.cpp)
 sfizz_add_benchmark(bm_random BM_random.cpp)
+sfizz_add_benchmark(bm_clamp BM_clamp.cpp)
+sfizz_add_benchmark(bm_allWithin BM_allWithin.cpp)
 
 sfizz_add_benchmark(bm_logger BM_logger.cpp)
 target_link_libraries(bm_logger PRIVATE sfizz::sfizz)

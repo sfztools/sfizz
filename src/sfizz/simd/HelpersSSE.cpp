@@ -472,3 +472,75 @@ void diffSSE(const float* input, float* output, unsigned size) noexcept
         incrementAll(input, output);
     }
 }
+
+void clampAllSSE(float* input, float low, float high, unsigned size) noexcept
+{
+    if (size == 0)
+        return;
+
+    const auto sentinel = input + size;
+
+#if SFIZZ_HAVE_SSE2
+    const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
+    while (unaligned<ByteAlignment>(input) && input < lastAligned){
+        const float clampedAbove = *input > high ? high : *input;
+        *input = clampedAbove < low ? low : clampedAbove;
+        incrementAll(input);
+    }
+
+    const auto mmLow = _mm_set1_ps(low);
+    const auto mmHigh = _mm_set1_ps(high);
+    while (input < lastAligned) {
+        const auto mmIn = _mm_load_ps(input);
+        _mm_store_ps(input, _mm_max_ps(_mm_min_ps(mmIn, mmHigh), mmLow));
+        incrementAll<TypeAlignment>(input);
+    }
+#endif
+
+    while (input < sentinel) {
+        const float clampedAbove = *input > high ? high : *input;
+        *input = clampedAbove < low ? low : clampedAbove;
+        incrementAll(input);
+    }
+}
+
+bool allWithinSSE(const float* input, float low, float high, unsigned size) noexcept
+{
+    if (size == 0)
+        return true;
+
+    if (low > high)
+        std::swap(low, high);
+
+    const auto sentinel = input + size;
+
+#if SFIZZ_HAVE_SSE2
+    const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
+    while (unaligned<ByteAlignment>(input) && input < lastAligned){
+        if (*input < low || *input > high)
+            return false;
+
+        incrementAll(input);
+    }
+
+    const auto mmLow = _mm_set1_ps(low);
+    const auto mmHigh = _mm_set1_ps(high);
+    while (input < lastAligned) {
+        const auto mmIn = _mm_load_ps(input);
+        const auto mmOutside = _mm_or_ps(_mm_cmplt_ps(mmIn, mmLow), _mm_cmpgt_ps(mmIn, mmHigh));
+        if (_mm_movemask_ps(mmOutside) != 0)
+            return false;
+
+        incrementAll<TypeAlignment>(input);
+    }
+#endif
+
+    while (input < sentinel) {
+        if (*input < low || *input > high)
+            return false;
+
+        incrementAll(input);
+    }
+
+    return true;
+}

@@ -59,6 +59,8 @@ enum class SIMDOps {
     mean,
     meanSquared,
     upsampling,
+    clampAll,
+    allWithin,
     _sentinel //
 };
 
@@ -620,6 +622,54 @@ void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     CHECK_SPAN_SIZES(input, output);
     diff<T>(input.data(), output.data(), minSpanSize(input, output));
+}
+
+/**
+ * @brief Clamp a vector between a low and high bound
+ *
+ * @tparam T the underlying type
+ * @param input
+ * @param low
+ * @param high
+ * @param size
+ */
+template <class T>
+void clampAll(T* input, T low, T high, unsigned size) noexcept
+{
+    clampAllScalar(input, low, high, size);
+}
+
+template <>
+void clampAll<float>(float* input, float low, float high, unsigned size) noexcept;
+
+template <class T>
+void clampAll(absl::Span<T> input, T low, T high) noexcept
+{
+    clampAll<T>(input.data(), low, high, input.size());
+}
+
+/**
+ * @brief Check that all values are within bounds (inclusive)
+ *
+ * @tparam T the underlying type
+ * @param input
+ * @param low
+ * @param high
+ * @param size
+ */
+template <class T>
+bool allWithin(const T* input, T low, T high, unsigned size) noexcept
+{
+    return allWithinScalar(input, low, high, size);
+}
+
+template <>
+bool allWithin<float>(const float* input, float low, float high, unsigned size) noexcept;
+
+template <class T>
+bool allWithin(absl::Span<const T> input, T low, T high) noexcept
+{
+    return allWithin<T>(input.data(), low, high, input.size());
 }
 
 } // namespace sfz
