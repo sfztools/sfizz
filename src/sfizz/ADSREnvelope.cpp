@@ -96,7 +96,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         return currentValue;
     case State::Release:
         currentValue *= releaseRate;
-        if (currentValue > config::virtuallyZero)
+        if (currentValue > config::egReleaseThreshold)
             return currentValue;
 
         currentState = State::Done;
@@ -169,9 +169,9 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
             sfz::fill(output.first(count), currentValue);
             break;
         case State::Release:
-            while (count < size && (currentValue *= releaseRate) > config::virtuallyZero)
+            while (count < size && (currentValue *= releaseRate) > config::egReleaseThreshold)
                 output[count++] = currentValue;
-            if (currentValue <= config::virtuallyZero) {
+            if (currentValue <= config::egReleaseThreshold) {
                 currentValue = 0;
                 currentState = State::Done;
             }
