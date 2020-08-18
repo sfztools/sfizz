@@ -28,7 +28,7 @@ template<class Type>
 Type ADSREnvelope<Type>::secondsToExpRate (Type timeInSeconds) const noexcept
 {
     timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
-    return std::exp(-8.0 / (timeInSeconds * sampleRate));
+    return std::exp(-9.0 / (timeInSeconds * sampleRate));
 };
 
 template <class Type>
