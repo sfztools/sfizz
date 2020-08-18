@@ -50,6 +50,15 @@ void sortAll(C& container, Args&... others)
 const std::vector<const sfz::Voice*> getActiveVoices(const sfz::Synth& synth);
 
 /**
+ * @brief Get playing (unreleased) voices from the synth
+ *
+ * @param synth
+ * @return const std::vector<const sfz::Voice*>
+ */
+const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth);
+
+
+/**
  * @brief Count the number of playing (unreleased) voices from the synth
  *
  * @param synth
