@@ -349,9 +349,11 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             break;
         case hash("release"):
             trigger = SfzTrigger::release;
+            loopMode = SfzLoopMode::one_shot;
             break;
         case hash("release_key"):
             trigger = SfzTrigger::release_key;
+            loopMode = SfzLoopMode::one_shot;
             break;
         default:
             DBG("Unknown trigger mode: " << opcode.value);
