@@ -1143,3 +1143,83 @@ TEST_CASE("[Synth] Trigger also on the sustain CC")
     synth.cc(0, 64, 127);
     REQUIRE( synth.getNumActiveVoices(true) == 1 );
 }
+
+TEST_CASE("[Synth] end=-1 voices are immediately killed after triggering but they kill other voices")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=60 end=-1 sample=*sine
+        <region> key=61 end=-1 sample=*silence
+        <region> key=62 sample=*sine off_by=2
+        <region> key=63 end=-1 sample=*saw group=2
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 61, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(1, 63, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 0 );
+}
+
+TEST_CASE("[Synth] Off by standard")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=2 sample=*saw transpose=12 key=60
+        <region> group=2 off_by=1 sample=*triangle key=62
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(10, 62, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    auto playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(62) );
+    synth.noteOn(10, 60, 85);
+    playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
+}
+
+TEST_CASE("[Synth] Off by same group")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=1 sample=*saw transpose=12 key=60
+        <region> group=1 off_by=1 sample=*triangle key=62
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(10, 62, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    auto playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(62) );
+    synth.noteOn(10, 60, 85);
+    playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
+}
+
+
+TEST_CASE("[Synth] Off by same note")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=1 sample=*saw transpose=12 key=60
+        <region> group=1 off_by=1 sample=*triangle key=60
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    auto playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->sampleId.filename() == "*triangle" );
+}
+

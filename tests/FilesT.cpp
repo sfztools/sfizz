@@ -471,56 +471,6 @@ TEST_CASE("[Files] Note and octave offsets")
     REQUIRE( synth.getRegionView(6)->pitchKeycenter == 50 );
 }
 
-TEST_CASE("[Files] Off by with different delays")
-{
-    Synth synth;
-    synth.setSamplesPerBlock(256);
-    AudioBuffer<float> buffer(2, 256);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
-    REQUIRE( synth.getNumRegions() == 4 );
-    synth.noteOn(0, 63, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
-    auto group1Voice = synth.getVoiceView(0);
-    REQUIRE( group1Voice->getRegion()->group == 1ul );
-    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
-    synth.noteOn(100, 64, 63);
-    synth.renderBlock(buffer);
-    REQUIRE(group1Voice->releasedOrFree());
-}
-
-TEST_CASE("[Files] Off by with the same delays")
-{
-    Synth synth;
-    synth.setSamplesPerBlock(256);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
-    REQUIRE( synth.getNumRegions() == 4 );
-    synth.noteOn(0, 63, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
-    auto group1Voice = synth.getVoiceView(0);
-    REQUIRE( group1Voice->getRegion()->group == 1ul );
-    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
-    synth.noteOn(0, 64, 63);
-    REQUIRE(!group1Voice->releasedOrFree());
-}
-
-TEST_CASE("[Files] Off by with the same notes at the same time")
-{
-    Synth synth;
-    synth.setSamplesPerBlock(256);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
-    REQUIRE( synth.getNumRegions() == 4 );
-    synth.noteOn(0, 65, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
-    synth.noteOn(0, 65, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 4 );
-    AudioBuffer<float> buffer { 2, 256 };
-    synth.renderBlock(buffer);
-    synth.noteOn(0, 65, 63);
-    synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 6 );
-    REQUIRE( numPlayingVoices(synth) == 2 );
-}
-
 TEST_CASE("[Files] Off modes")
 {
     Synth synth;

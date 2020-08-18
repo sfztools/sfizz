@@ -51,6 +51,10 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     triggerValue = value;
 
     this->region = region;
+
+    if (region->disabled)
+        return;
+
     switchState(State::playing);
 
     ASSERT(delay >= 0);
@@ -713,9 +717,6 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
 {
     if (region == nullptr)
-        return false;
-
-    if (delay <= this->triggerDelay)
         return false;
 
     if (triggerType == TriggerType::NoteOn && region->offBy == group) {
