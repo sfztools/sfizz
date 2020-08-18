@@ -87,6 +87,11 @@ namespace config {
     */
     constexpr int filterControlInterval { 16 };
     /**
+       Amplitude below which an exponential releasing envelope is considered as
+       finished.
+     */
+    constexpr float egReleaseThreshold = 1e-4;
+    /**
        Default metadata for MIDIName documents
      */
     const absl::string_view midnamManufacturer { "The Sfizz authors" };
