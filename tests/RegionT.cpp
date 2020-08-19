@@ -497,6 +497,8 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.trigger == SfzTrigger::attack);
         region.parseOpcode({ "trigger", "release" });
         REQUIRE(region.trigger == SfzTrigger::release);
+        region.parseOpcode({ "trigger", "release_key" });
+        REQUIRE(region.trigger == SfzTrigger::release_key);
         region.parseOpcode({ "trigger", "first" });
         REQUIRE(region.trigger == SfzTrigger::first);
         region.parseOpcode({ "trigger", "legato" });

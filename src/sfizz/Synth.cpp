@@ -507,6 +507,9 @@ void sfz::Synth::finalizeSfzLoad()
                     region->loopMode = SfzLoopMode::loop_continuous;
             }
 
+            if (region->isRelease() && !region->loopMode)
+                region->loopMode = SfzLoopMode::one_shot;
+
             if (region->loopRange.getEnd() == Default::loopRange.getEnd())
                 region->loopRange.setEnd(region->sampleEnd);
 
