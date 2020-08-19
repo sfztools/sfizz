@@ -176,13 +176,13 @@ inline void applyGain1(T gain, absl::Span<const T> input, absl::Span<T> output) 
  * @param size
  */
 template<class T>
-inline void applyGain1(float gain, float* array, unsigned size) noexcept
+inline void applyGain1(T gain, T* array, unsigned size) noexcept
 {
     applyGain1<T>(gain, array, array, size);
 }
 
 template<class T>
-inline void applyGain1(float gain, absl::Span<float> array) noexcept
+inline void applyGain1(T gain, absl::Span<T> array) noexcept
 {
     applyGain1<T>(gain, array.data(), array.data(), array.size());
 }
