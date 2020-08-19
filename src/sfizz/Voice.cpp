@@ -491,6 +491,10 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
             (*modulationSpan)[i] += normalizePercents(mod[i]);
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
+
+    // add +3dB to compensate for the 2 pan stages (-3dB each stage)
+    applyGain1(1.4125375446227544f, leftBuffer);
+    applyGain1(1.4125375446227544f, rightBuffer);
 }
 
 void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept

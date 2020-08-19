@@ -103,10 +103,14 @@ namespace config {
     // Wavetable constants; amplitude values are matched to reference
     static constexpr unsigned tableSize = 1024;
     static constexpr double tableRefSampleRate = 44100.0 * 1.1; // +10% aliasing permissivity
-    static constexpr double amplitudeSine = 0.625;
-    static constexpr double amplitudeTriangle = 0.625;
-    static constexpr double amplitudeSaw = 0.515;
-    static constexpr double amplitudeSquare = 0.515;
+    /**
+       Default wave amplitudes, adjusted for consistent RMS among all waves.
+       (except square curiously, but it's to match ARIA)
+     */
+    static constexpr double amplitudeSine = 1.0;
+    static constexpr double amplitudeTriangle = 1.0;
+    static constexpr double amplitudeSaw = 0.8164965809277261; // sqrt(2)/sqrt(3)
+    static constexpr double amplitudeSquare = 0.8164965809277261; // should have been sqrt(2)?
     /**
        Background file loading
      */

@@ -143,6 +143,16 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     int regionNumber = static_cast<int>(regions.size());
     auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
 
+    // Create default connections
+    constexpr unsigned defaultSmoothness = 10;
+    lastRegion->getOrCreateConnection(
+        ModKey::createCC(7, 4, defaultSmoothness, 100, 0),
+        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id));
+    lastRegion->getOrCreateConnection(
+        ModKey::createCC(10, 1, defaultSmoothness, 100, 0),
+        ModKey::createNXYZ(ModId::Pan, lastRegion->id));
+
+    //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
             const auto unknown = absl::c_find_if(unknownOpcodes, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
@@ -215,6 +225,10 @@ void sfz::Synth::clear()
     polyphonyGroups.emplace_back();
     polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
     modificationTime = fs::file_time_type::min();
+
+    // set default controllers
+    cc(0, 7, 100);     // volume
+    hdcc(0, 10, 0.5f); // pan
 }
 
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)

@@ -78,6 +78,32 @@ TEST_CASE("[Modulations] Display names")
     });
 }
 
+static std::string createReferenceGraph(std::vector<std::string> lines)
+{
+    const char* defaultConnections[] = {
+        R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude")",
+        R"("Controller 10 {curve=1, smooth=10, value=100, step=0}" -> "Pan")"
+    };
+
+    for (const char* line : defaultConnections)
+        lines.push_back(line);
+
+    std::sort(lines.begin(), lines.end());
+
+    std::string graph;
+    graph.reserve(1024);
+
+    graph += "digraph {\n";
+    for (const std::string& line : lines) {
+        graph.push_back('\t');
+        graph += line;
+        graph.push_back('\n');
+    }
+    graph += "}\n";
+
+    return graph;
+};
+
 TEST_CASE("[Modulations] Connection graph from SFZ")
 {
     sfz::Synth synth;
@@ -89,12 +115,12 @@ pitch_oncc42=71 pitch_smoothcc42=32
 pan_oncc36=14.5 pan_stepcc36=1.5
 width_oncc425=29
 )");
+
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
-    REQUIRE(graph == R"(digraph {
-	"Controller 20 {curve=3, smooth=0, value=59, step=0}" -> "Amplitude"
-	"Controller 36 {curve=0, smooth=0, value=14.5, step=1.5}" -> "Pan"
-	"Controller 42 {curve=0, smooth=32, value=71, step=0}" -> "Pitch"
-	"Controller 425 {curve=0, smooth=0, value=29, step=0}" -> "Width"
-}
-)");
+    REQUIRE(graph == createReferenceGraph({
+        R"("Controller 20 {curve=3, smooth=0, value=59, step=0}" -> "Amplitude")",
+        R"("Controller 42 {curve=0, smooth=32, value=71, step=0}" -> "Pitch")",
+        R"("Controller 36 {curve=0, smooth=0, value=14.5, step=1.5}" -> "Pan")",
+        R"("Controller 425 {curve=0, smooth=0, value=29, step=0}" -> "Width")",
+    }));
 }
