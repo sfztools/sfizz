@@ -564,6 +564,17 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
     REQUIRE(synth.getRegionView(2)->loopRange == Range<uint32_t> { 4, 124 });
 }
 
+TEST_CASE("[Files] Looped regions can start at 0")
+{
+    Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/loop_can_start_at_0.sfz", R"(
+    <region> sample=wavetable_with_loop_at_endings.wav
+    )");
+    REQUIRE( synth.getNumRegions() == 1 );
+    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(0)->loopRange == Range<uint32_t> { 0, synth.getRegionView(0)->sampleEnd } );
+}
+
 TEST_CASE("[Files] Case sentitiveness")
 {
     const fs::path sfzFilePath = fs::current_path() / "tests/TestFiles/case_insensitive.sfz";

@@ -482,7 +482,7 @@ void sfz::Synth::finalizeSfzLoad()
 
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
 
-            if (fileInformation->loopBegin != Default::loopRange.getStart() && fileInformation->loopEnd != Default::loopRange.getEnd()) {
+            if (fileInformation->hasLoop) {
                 if (region->loopRange.getStart() == Default::loopRange.getStart())
                     region->loopRange.setStart(fileInformation->loopBegin);
 
