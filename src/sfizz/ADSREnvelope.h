@@ -102,6 +102,7 @@ private:
     Type start { 0 };
     Type peak { 0 };
     Type sustain { 0 };
+    Type sustainThreshold { config::virtuallyZero };
     int releaseDelay { 0 };
     bool shouldRelease { false };
     bool freeRunning { false };

@@ -1167,6 +1167,55 @@ TEST_CASE("[Synth] end=-1 voices are immediately killed after triggering but the
     REQUIRE( numPlayingVoices(synth) == 0 );
 }
 
+TEST_CASE("[Synth] end=0 voices are immediately killed after triggering but they kill other voices")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=60 end=0 sample=*sine
+        <region> key=61 end=0 sample=*silence
+        <region> key=62 sample=*sine off_by=2
+        <region> key=63 end=0 sample=*saw group=2
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 61, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(1, 63, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 0 );
+}
+
+TEST_CASE("[Synth] ampeg_sustain = 0 puts the ampeg envelope in free-running mode, which kills the voice almost instantly in most cases")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=60 sample=*sine ampeg_sustain=0
+        <region> key=61 sample=*sine ampeg_sustain=0 ampeg_attack=0.1 ampeg_decay=0.1
+    )");
+
+    synth.noteOn(0, 60, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.noteOn(0, 61, 85);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    // Render a bit; this does not kill the voice
+    for (unsigned i = 0; i < 5; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    // Render about half a second
+    for (unsigned i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+}
+
 TEST_CASE("[Synth] Off by standard")
 {
     sfz::Synth synth;
@@ -1222,4 +1271,3 @@ TEST_CASE("[Synth] Off by same note")
     auto playingVoices = getPlayingVoices(synth);
     REQUIRE( playingVoices.front()->getRegion()->sampleId.filename() == "*triangle" );
 }
-
