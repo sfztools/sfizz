@@ -20,13 +20,18 @@ Type ADSREnvelope<Type>::secondsToSamples (Type timeInSeconds) const noexcept
 template<class Type>
 Type ADSREnvelope<Type>::secondsToLinRate (Type timeInSeconds) const noexcept
 {
-    timeInSeconds = std::max<Type>(timeInSeconds, config::virtuallyZero);
+    if (timeInSeconds == 0)
+        return 1.0f;
+
     return 1 / (sampleRate * timeInSeconds);
 };
 
 template<class Type>
 Type ADSREnvelope<Type>::secondsToExpRate (Type timeInSeconds) const noexcept
 {
+    if (timeInSeconds == 0)
+        return 0.0f;
+
     timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
     return std::exp(-9.0 / (timeInSeconds * sampleRate));
 };
