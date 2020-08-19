@@ -95,7 +95,12 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "end", "184" });
         REQUIRE(region.sampleEnd == 184);
         region.parseOpcode({ "end", "-1" });
-        REQUIRE(region.disabled);
+        REQUIRE(region.disabled());
+        region.parseOpcode({ "end", "2" });
+        REQUIRE(!region.disabled());
+        REQUIRE(region.sampleEnd == 2);
+        region.parseOpcode({ "end", "0" });
+        REQUIRE(region.disabled());
     }
 
     SECTION("count")

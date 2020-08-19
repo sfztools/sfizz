@@ -261,6 +261,11 @@ struct Region {
      */
     float getGainToEffectBus(unsigned number) const noexcept;
 
+    /**
+     * @brief Check if a region is disabled, if its sample end is weakly negative for example.
+     */
+    bool disabled() const noexcept;
+
     const NumericId<Region> id;
 
     // Sound source: sample playback
@@ -272,7 +277,6 @@ struct Region {
     int64_t offsetRandom { Default::offsetRandom }; // offset_random
     CCMap<int64_t> offsetCC { Default::offset };
     uint32_t sampleEnd { Default::sampleEndRange.getEnd() }; // end
-    bool disabled { false }; // end=-1 and other disabling events
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<SfzLoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopRange }; //loopstart and loopend

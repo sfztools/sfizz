@@ -52,7 +52,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     this->region = region;
 
-    if (region->disabled)
+    if (region->disabled())
         return;
 
     switchState(State::playing);
