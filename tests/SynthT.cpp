@@ -1120,3 +1120,26 @@ TEST_CASE("[Synth] Used CCs EGs")
     // REQUIRE( usedCCs[27] );
     // REQUIRE( !usedCCs[28] );
 }
+
+TEST_CASE("[Synth] Activate also on the sustain CC")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> locc64=64 key=53 sample=*sine
+    )");
+    synth.noteOn(0, 53, 127);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    synth.cc(1, 64, 127);
+    synth.noteOn(2, 53, 127);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+}
+
+TEST_CASE("[Synth] Trigger also on the sustain CC")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> on_locc64=64 sample=*sine
+    )");
+    synth.cc(0, 64, 127);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+}

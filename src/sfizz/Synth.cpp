@@ -1062,10 +1062,8 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
                     return matchReleaseRegionAndVoice(*region, *v);
                 };
 
-                if (absl::c_find_if(voices, compatibleVoice) == voices.end()) {
+                if (absl::c_find_if(voices, compatibleVoice) == voices.end())
                     region->delayedReleases.clear();
-                    continue;
-                }
             }
 
             for (auto& note: region->delayedReleases) {
@@ -1082,7 +1080,9 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
             }
 
             region->delayedReleases.clear();
-        } else if (region->registerCC(ccNumber, normValue)) {
+        }
+
+        if (region->registerCC(ccNumber, normValue)) {
             auto voice = findFreeVoice();
             if (voice == nullptr)
                 continue;
