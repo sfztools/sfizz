@@ -575,6 +575,28 @@ TEST_CASE("[Files] Looped regions can start at 0")
     REQUIRE( synth.getRegionView(0)->loopRange == Range<uint32_t> { 0, synth.getRegionView(0)->sampleEnd } );
 }
 
+TEST_CASE("[Synth] Release triggers automatically sets the loop mode")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/triggers_setting_loops.sfz", R"(
+        <region> sample=kick.wav pitch_keycenter=69 loop_mode=loop_sustain trigger=release
+        <region> sample=kick.wav pitch_keycenter=69 loop_mode=loop_sustain trigger=release_key
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release loop_mode=loop_sustain
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release_key loop_mode=loop_sustain
+        <region> sample=looped_flute.wav pitch_keycenter=69 trigger=release_key
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release_key // These are normal and set to one_shot
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release
+    )");
+    REQUIRE( synth.getNumRegions() == 7 );
+    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(1)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(2)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(3)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(4)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(5)->loopMode == SfzLoopMode::one_shot );
+    REQUIRE( synth.getRegionView(6)->loopMode == SfzLoopMode::one_shot );
+}
+
 TEST_CASE("[Files] Case sentitiveness")
 {
     const fs::path sfzFilePath = fs::current_path() / "tests/TestFiles/case_insensitive.sfz";

@@ -497,15 +497,12 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.trigger == SfzTrigger::attack);
         region.parseOpcode({ "trigger", "release" });
         REQUIRE(region.trigger == SfzTrigger::release);
-        REQUIRE(region.loopMode == SfzLoopMode::one_shot);
+        region.parseOpcode({ "trigger", "release_key" });
+        REQUIRE(region.trigger == SfzTrigger::release_key);
         region.parseOpcode({ "trigger", "first" });
         REQUIRE(region.trigger == SfzTrigger::first);
         region.parseOpcode({ "trigger", "legato" });
         REQUIRE(region.trigger == SfzTrigger::legato);
-        region.parseOpcode({ "loop_mode", "no_loop" });
-        region.parseOpcode({ "trigger", "release_key" });
-        REQUIRE(region.trigger == SfzTrigger::release_key);
-        REQUIRE(region.loopMode == SfzLoopMode::one_shot);
     }
 
     SECTION("on_locc, on_hicc")
