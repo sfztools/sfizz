@@ -1900,3 +1900,21 @@ TEST_CASE("[Region] Release and release key")
         REQUIRE( region.delayedReleases == expected );
     }
 }
+
+TEST_CASE("[Region] Offsets with CCs")
+{
+    MidiState midiState;
+    Region region { 0, midiState };
+
+    region.parseOpcode({ "offset_cc4", "255" });
+    region.parseOpcode({ "offset", "10" });
+    REQUIRE( region.getOffset() == 10 );
+    midiState.ccEvent(0, 4, 127_norm);
+    REQUIRE( region.getOffset() == 265 );
+    midiState.ccEvent(0, 4, 100_norm);
+    REQUIRE( region.getOffset() == 210 );
+    midiState.ccEvent(0, 4, 10_norm);
+    REQUIRE( region.getOffset() == 30 );
+    midiState.ccEvent(0, 4, 0);
+    REQUIRE( region.getOffset() == 10 );
+}

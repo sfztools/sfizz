@@ -1447,7 +1447,7 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
         finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
-    return Default::offsetCCRange.clamp(offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint64_t>(factor);
+    return Default::offsetRange.clamp(finalOffset) * static_cast<uint64_t>(factor);
 }
 
 float sfz::Region::getDelay() const noexcept
