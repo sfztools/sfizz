@@ -30,9 +30,6 @@ sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
 
     gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
     xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
-
-    for (auto & filter : channelEnvelopeFilters)
-        filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
 }
 
 sfz::Voice::~Voice()
@@ -246,20 +243,19 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
     gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
     xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
 
-    for (auto & filter : channelEnvelopeFilters)
-        filter.setGain(vaGain(config::filteredEnvelopeCutoff, sampleRate));
-
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
 
     for (auto& lfo : lfos)
         lfo->setSampleRate(sampleRate);
+
+    trackingFactor = samplesPerBlock / sampleRate * config::powerFollowerFactor;
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
-    this->minEnvelopeDelay = samplesPerBlock / 2;
+    this->trackingFactor = samplesPerBlock / sampleRate * config::powerFollowerFactor;
 }
 
 void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
@@ -736,10 +732,7 @@ void sfz::Voice::reset() noexcept
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
-    for (auto& f : channelEnvelopeFilters)
-        f.reset();
-
-    for (auto& p : smoothedChannelEnvelopes)
+    for (auto& p : meanChannelPowers)
         p = 0.0f;
 
     filters.clear();
@@ -770,9 +763,9 @@ void sfz::Voice::removeVoiceFromRing() noexcept
     nextSisterVoice = this;
 }
 
-float sfz::Voice::getAverageEnvelope() const noexcept
+float sfz::Voice::getAveragePower() const noexcept
 {
-    return max(smoothedChannelEnvelopes[0], smoothedChannelEnvelopes[1]);
+    return max(meanChannelPowers[0], meanChannelPowers[1]);
 }
 
 bool sfz::Voice::releasedOrFree() const noexcept
@@ -869,16 +862,14 @@ void sfz::Voice::setupOscillatorUnison()
 
 void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
 {
-    assert(smoothedChannelEnvelopes.size() == channelEnvelopeFilters.size());
-    assert(buffer.getNumChannels() <= channelEnvelopeFilters.size());
     if (buffer.getNumFrames() == 0)
         return;
 
-    for (unsigned i = 0; i < smoothedChannelEnvelopes.size(); ++i) {
+    const float factor = buffer.getNumFrames() / samplesPerBlock * trackingFactor;
+    for (unsigned i = 0; i < meanChannelPowers.size(); ++i) {
         const auto input = buffer.getConstSpan(i);
-        for (unsigned s = 0; s < buffer.getNumFrames(); ++s)
-            smoothedChannelEnvelopes[i] =
-                channelEnvelopeFilters[i].tickLowpass(std::abs(input[s]));
+        const float meanPower = sfz::meanSquared(input);
+        meanChannelPowers[i] = meanChannelPowers[i] * (1 - factor) + meanPower * factor;
     }
 }
 

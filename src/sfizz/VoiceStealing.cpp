@@ -13,12 +13,12 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
     // Start of the voice stealing algorithm
     absl::c_stable_sort(voices, voiceOrdering);
 
-    const auto sumEnvelope = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {
-        return sum + v->getAverageEnvelope();
+    const auto sumPower = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {
+        return sum + v->getAveragePower();
     });
-    // We are checking the envelope to try and kill voices with relative low contribution
+    // We are checking the power to try and kill voices with relative low contribution
     // to the output compared to the rest.
-    const auto envThreshold = sumEnvelope
+    const auto powerThreshold = sumPower
         / static_cast<float>(voices.size()) * config::stealingEnvelopeCoeff;
     // We are checking the age so that voices have the time to build up attack
     // This is not perfect because pad-type voices will take a long time to output
@@ -37,12 +37,12 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
             break;
         }
 
-        float maxEnvelope { 0.0f };
+        float maxPower { 0.0f };
         SisterVoiceRing::applyToRing(ref, [&](Voice* v) {
-            maxEnvelope = max(maxEnvelope, v->getAverageEnvelope());
+            maxPower = max(maxPower, v->getAveragePower());
         });
 
-        if (maxEnvelope < envThreshold) {
+        if (maxPower < powerThreshold) {
             returnedVoice = ref;
             break;
         }

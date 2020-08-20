@@ -261,7 +261,7 @@ public:
      *
      * @return float
      */
-    float getAverageEnvelope() const noexcept;
+    float getAveragePower() const noexcept;
     /**
      * @brief Get the position of the voice in the source, in samples
      *
@@ -450,7 +450,6 @@ private:
     FilePromisePtr currentPromise { nullptr };
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
-    int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
     float sampleRate { config::defaultSampleRate };
 
     Resources& resources;
@@ -486,10 +485,8 @@ private:
     Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
 
-    std::array<OnePoleFilter<float>, 2> channelEnvelopeFilters;
-    std::array<float, 2> smoothedChannelEnvelopes;
-
-    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
+    float trackingFactor { config::defaultSamplesPerBlock / config::defaultSampleRate * config::powerFollowerFactor };
+    std::array<float, 2> meanChannelPowers;
     LEAK_DETECTOR(Voice);
 };
 
