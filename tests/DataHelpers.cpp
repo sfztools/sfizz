@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <fstream>
 
 void load_txt(DataPoints& dp, std::istream& in)
 {

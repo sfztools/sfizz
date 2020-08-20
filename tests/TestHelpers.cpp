@@ -51,6 +51,17 @@ const std::vector<const sfz::Voice*> getActiveVoices(const sfz::Synth& synth)
     return activeVoices;
 }
 
+const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth)
+{
+    std::vector<const sfz::Voice*> playingVoices;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->releasedOrFree())
+            playingVoices.push_back(voice);
+    }
+    return playingVoices;
+}
+
 unsigned numPlayingVoices(const sfz::Synth& synth)
 {
     return absl::c_count_if(getActiveVoices(synth), [](const sfz::Voice* v) {

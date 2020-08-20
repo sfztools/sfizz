@@ -20,13 +20,18 @@ Type ADSREnvelope<Type>::secondsToSamples (Type timeInSeconds) const noexcept
 template<class Type>
 Type ADSREnvelope<Type>::secondsToLinRate (Type timeInSeconds) const noexcept
 {
-    timeInSeconds = std::max<Type>(timeInSeconds, config::virtuallyZero);
+    if (timeInSeconds == 0)
+        return 1.0f;
+
     return 1 / (sampleRate * timeInSeconds);
 };
 
 template<class Type>
 Type ADSREnvelope<Type>::secondsToExpRate (Type timeInSeconds) const noexcept
 {
+    if (timeInSeconds == 0)
+        return 0.0f;
+
     timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
     return std::exp(-9.0 / (timeInSeconds * sampleRate));
 };
@@ -43,12 +48,14 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
     this->hold = secondsToSamples(desc.getHold(state, velocity));
     this->peak = 1.0;
     this->sustain = normalizePercents(desc.getSustain(state, velocity));
-    this->sustain = max(this->sustain, config::virtuallyZero);
     this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
+    sustainThreshold = this->sustain + config::virtuallyZero;
     shouldRelease = false;
-    freeRunning = ((region.trigger == SfzTrigger::release)
+    freeRunning = (
+        (region.trigger == SfzTrigger::release)
+        || (this->sustain == 0.0f)
         || (region.trigger == SfzTrigger::release_key)
         || (region.loopMode == SfzLoopMode::one_shot && (region.isGenerator() || region.oscillator)));
     currentValue = this->start;
@@ -84,7 +91,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         // fallthrough
     case State::Decay:
         currentValue *= decayRate;
-        if (currentValue > sustain)
+        if (currentValue > sustainThreshold )
             return currentValue;
 
         currentState = State::Sustain;
@@ -154,7 +161,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         case State::Decay:
             while (count < size && (currentValue *= decayRate) > sustain)
                 output[count++] = currentValue;
-            if (currentValue <= sustain) {
+            if (currentValue <= sustainThreshold) {
                 currentValue = sustain;
                 currentState = State::Sustain;
             }

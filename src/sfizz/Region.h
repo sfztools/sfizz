@@ -261,6 +261,11 @@ struct Region {
      */
     float getGainToEffectBus(unsigned number) const noexcept;
 
+    /**
+     * @brief Check if a region is disabled, if its sample end is weakly negative for example.
+     */
+    bool disabled() const noexcept;
+
     const NumericId<Region> id;
 
     // Sound source: sample playback

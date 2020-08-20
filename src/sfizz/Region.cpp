@@ -1458,7 +1458,10 @@ float sfz::Region::getDelay() const noexcept
 
 uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept
 {
-    return min(sampleEnd, loopRange.getEnd()) * static_cast<uint32_t>(factor);
+    if (sampleEnd <= 0)
+        return 0;
+
+    return min(static_cast<uint32_t>(sampleEnd), loopRange.getEnd()) * static_cast<uint32_t>(factor);
 }
 
 uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
@@ -1614,4 +1617,9 @@ sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source
 
     connections.push_back(c);
     return connections.back();
+}
+
+bool sfz::Region::disabled() const noexcept
+{
+    return (sampleEnd == 0);
 }
