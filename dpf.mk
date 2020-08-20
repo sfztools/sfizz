@@ -66,6 +66,8 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModKeyHash.cpp \
 	src/sfizz/modulations/ModMatrix.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
+	src/sfizz/modulations/sources/FlexEGDescription.cpp \
+	src/sfizz/modulations/sources/FlexEnvelope.cpp \
 	src/sfizz/modulations/sources/LFO.cpp \
 	src/sfizz/effects/Compressor.cpp \
 	src/sfizz/effects/Disto.cpp \
@@ -91,6 +93,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/FileMetadata.cpp \
 	src/sfizz/FilePool.cpp \
 	src/sfizz/FilterPool.cpp \
+	src/sfizz/FlexEnvelope.cpp \
 	src/sfizz/FloatEnvelopes.cpp \
 	src/sfizz/Logger.cpp \
 	src/sfizz/LFO.cpp \

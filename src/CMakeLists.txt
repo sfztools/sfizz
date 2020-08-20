@@ -35,6 +35,7 @@ set (SFIZZ_HEADERS
     sfizz/modulations/ModMatrix.h
     sfizz/modulations/ModGenerator.h
     sfizz/modulations/sources/Controller.h
+    sfizz/modulations/sources/FlexEnvelope.h
     sfizz/modulations/sources/LFO.h
     sfizz/effects/impl/ResonantArray.h
     sfizz/effects/impl/ResonantArrayAVX.h
@@ -67,6 +68,8 @@ set (SFIZZ_HEADERS
     sfizz/FilePool.h
     sfizz/FilterDescription.h
     sfizz/FilterPool.h
+    sfizz/FlexEGDescription.h
+    sfizz/FlexEnvelope.h
     sfizz/HistoricalBuffer.h
     sfizz/Interpolators.h
     sfizz/Interpolators.hpp
@@ -139,11 +142,14 @@ set (SFIZZ_SOURCES
     sfizz/LFO.cpp
     sfizz/LFODescription.cpp
     sfizz/PowerFollower.cpp
+    sfizz/FlexEGDescription.cpp
+    sfizz/FlexEnvelope.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
     sfizz/modulations/ModMatrix.cpp
     sfizz/modulations/sources/Controller.cpp
+    sfizz/modulations/sources/FlexEnvelope.cpp
     sfizz/modulations/sources/LFO.cpp
     sfizz/utility/SpinMutex.cpp
     sfizz/effects/Nothing.cpp

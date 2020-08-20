@@ -10,6 +10,7 @@
 #include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
+#include "FlexEGDescription.h"
 #include "EQDescription.h"
 #include "FilterDescription.h"
 #include "LFODescription.h"
@@ -378,6 +379,9 @@ struct Region {
     EGDescription amplitudeEG;
     EGDescription pitchEG;
     EGDescription filterEG;
+
+    // Envelopes
+    std::vector<FlexEGDescription> flexEGs;
 
     // LFOs
     std::vector<LFODescription> lfos;

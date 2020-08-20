@@ -21,6 +21,8 @@ struct Opcode;
  */
 class Curve {
 public:
+    enum { NumValues = 128 };
+
     /**
      * @brief Compute the curve for integral x in domain [0:127]
      */
@@ -94,12 +96,14 @@ public:
     static Curve buildBipolar(float v1, float v2);
 
     /**
+     * @brief Build a curve from a table of points
+     */
+    static Curve buildFromPoints(const float points[NumValues]);
+
+    /**
      * @brief Get a linear curve from 0 to 1
      */
     static const Curve& getDefault();
-
-private:
-    enum { NumValues = 128 };
 
 private:
     void fill(Interpolator itp, const bool fillStatus[NumValues]);

@@ -28,6 +28,7 @@
 namespace sfz {
 class ControllerSource;
 class LFOSource;
+class FlexEnvelopeSource;
 
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point
@@ -897,12 +898,14 @@ private:
     // Modulation source generators
     std::unique_ptr<ControllerSource> genController;
     std::unique_ptr<LFOSource> genLFO;
+    std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope;
 
     // Settings per voice
     struct SettingsPerVoice {
         size_t maxFilters { 0 };
         size_t maxEQs { 0 };
         size_t maxLFOs { 0 };
+        size_t maxFlexEGs { 0 };
     };
     SettingsPerVoice settingsPerVoice;
 
