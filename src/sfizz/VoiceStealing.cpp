@@ -19,7 +19,7 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
     // We are checking the power to try and kill voices with relative low contribution
     // to the output compared to the rest.
     const auto powerThreshold = sumPower
-        / static_cast<float>(voices.size()) * config::stealingEnvelopeCoeff;
+        / static_cast<float>(voices.size()) * config::stealingPowerCoeff;
     // We are checking the age so that voices have the time to build up attack
     // This is not perfect because pad-type voices will take a long time to output
     // their sound, but it's reasonable for sounds with a quick attack and longer

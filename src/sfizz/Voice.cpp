@@ -249,13 +249,13 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
     for (auto& lfo : lfos)
         lfo->setSampleRate(sampleRate);
 
-    trackingFactor = samplesPerBlock / sampleRate * config::powerFollowerFactor;
+    attackTrackingFactor =  config::powerFollowerAttackFactor / sampleRate;
+    releaseTrackingFactor =  config::powerFollowerReleaseFactor / sampleRate;
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
-    this->trackingFactor = samplesPerBlock / sampleRate * config::powerFollowerFactor;
 }
 
 void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
@@ -732,8 +732,7 @@ void sfz::Voice::reset() noexcept
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
-    for (auto& p : meanChannelPowers)
-        p = 0.0f;
+    meanChannelPower = 0.0f;
 
     filters.clear();
     equalizers.clear();
@@ -765,7 +764,7 @@ void sfz::Voice::removeVoiceFromRing() noexcept
 
 float sfz::Voice::getAveragePower() const noexcept
 {
-    return max(meanChannelPowers[0], meanChannelPowers[1]);
+    return meanChannelPower;
 }
 
 bool sfz::Voice::releasedOrFree() const noexcept
@@ -865,12 +864,23 @@ void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
     if (buffer.getNumFrames() == 0)
         return;
 
-    const float factor = buffer.getNumFrames() / samplesPerBlock * trackingFactor;
-    for (unsigned i = 0; i < meanChannelPowers.size(); ++i) {
-        const auto input = buffer.getConstSpan(i);
-        const float meanPower = sfz::meanSquared(input);
-        meanChannelPowers[i] = meanChannelPowers[i] * (1 - factor) + meanPower * factor;
-    }
+    auto tempBuffer = resources.bufferPool.getBuffer(buffer.getNumFrames());
+    if (!tempBuffer)
+        return;
+
+    sfz::copy(buffer.getConstSpan(0), *tempBuffer);
+    for (unsigned i = 1; i < buffer.getNumChannels(); ++i)
+        sfz::add(buffer.getConstSpan(i), *tempBuffer);
+
+    const float meanPower = sfz::meanSquared<float>(*tempBuffer);
+
+    const float attackFactor = static_cast<float>(buffer.getNumFrames()) * attackTrackingFactor;
+    const float releaseFactor = static_cast<float>(buffer.getNumFrames()) * releaseTrackingFactor;
+
+    meanChannelPower = max(
+        meanChannelPower * (1 - attackFactor) + meanPower * attackFactor,
+        meanChannelPower * (1 - releaseFactor) + meanPower * releaseFactor
+    );
 }
 
 

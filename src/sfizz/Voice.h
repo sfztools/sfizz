@@ -485,8 +485,9 @@ private:
     Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
 
-    float trackingFactor { config::defaultSamplesPerBlock / config::defaultSampleRate * config::powerFollowerFactor };
-    std::array<float, 2> meanChannelPowers;
+    float attackTrackingFactor { config::powerFollowerAttackFactor / config::defaultSampleRate };
+    float releaseTrackingFactor { config::powerFollowerReleaseFactor / config::defaultSampleRate };
+    float meanChannelPower;
     LEAK_DETECTOR(Voice);
 };
 
