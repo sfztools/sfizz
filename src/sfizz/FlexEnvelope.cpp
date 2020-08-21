@@ -129,13 +129,12 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
     }
 
     size_t frameIndex = 0;
-    absl::optional<size_t> framesUntilRelease = currentFramesUntilRelease_;
 
     while (frameIndex < numFrames) {
         // Check for release
-        if (framesUntilRelease && *framesUntilRelease == 0) {
+        if (currentFramesUntilRelease_ && *currentFramesUntilRelease_ == 0) {
             isReleased_ = true;
-            framesUntilRelease = absl::nullopt;
+            currentFramesUntilRelease_ = absl::nullopt;
         }
 
         // Perform stage transitions
@@ -150,8 +149,8 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
 
         // Process without going past the release point, if there is one
         size_t maxFrameIndex = numFrames;
-        if (framesUntilRelease)
-            maxFrameIndex = std::min(maxFrameIndex, frameIndex + *framesUntilRelease);
+        if (currentFramesUntilRelease_)
+            maxFrameIndex = std::min(maxFrameIndex, frameIndex + *currentFramesUntilRelease_);
 
         // Process the current stage
         float time = currentTime_;
@@ -173,13 +172,11 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
         currentLevel_ = level;
 
         // Update the counter to release
-        if (framesUntilRelease)
-            *framesUntilRelease -= framesDone;
+        if (currentFramesUntilRelease_)
+            *currentFramesUntilRelease_ -= framesDone;
 
         currentTime_ = time;
     }
-
-    currentFramesUntilRelease_ = framesUntilRelease;
 }
 
 bool FlexEnvelope::Impl::advanceToNextStage()
