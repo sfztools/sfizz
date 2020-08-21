@@ -31,7 +31,7 @@ static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRat
     std::vector<float> outputMemory(numLfos * numFrames);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].start();
+        lfos[l].start(0);
     }
 
     std::vector<absl::Span<float>> lfoOutputs(numLfos);

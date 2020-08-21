@@ -49,7 +49,7 @@ void LFO::configure(const LFODescription* desc)
     impl_->desc_ = desc ? desc : &LFODescription::getDefault();
 }
 
-void LFO::start()
+void LFO::start(unsigned triggerDelay)
 {
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
@@ -59,7 +59,8 @@ void LFO::start()
     impl.sampleHoldMem_.fill(0.0f);
 
     const float delay = desc.delay;
-    impl.delayFramesLeft_ = (delay > 0) ? static_cast<size_t>(std::ceil(sampleRate * delay)) : 0u;
+    size_t delayFrames = (delay > 0) ? static_cast<size_t>(std::ceil(sampleRate * delay)) : 0u;
+    impl.delayFramesLeft_ = triggerDelay + delayFrames;
 
     impl.fadePosition_ = (desc.fade > 0) ? 0.0f : 1.0f;
 }

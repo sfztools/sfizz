@@ -36,8 +36,9 @@ public:
      *
      * @param sourceKey identifier of the source to initialize
      * @param voiceId the particular voice to initialize, if per-voice
+     * @param delay the frame time when it happens
      */
-    virtual void init(const ModKey& sourceKey, NumericId<Voice> voiceId) = 0;
+    virtual void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) = 0;
 
     /**
      * @brief Generate a cycle of the modulator

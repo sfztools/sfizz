@@ -49,9 +49,10 @@ void ControllerSource::setSamplesPerBlock(unsigned count)
     (void)count;
 }
 
-void ControllerSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId)
+void ControllerSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
     (void)voiceId;
+    (void)delay;
 
     const ModKey::Parameters p = sourceKey.parameters();
     if (p.smooth > 0) {

@@ -19,7 +19,7 @@ LFOSource::LFOSource(Synth &synth)
 {
 }
 
-void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId)
+void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
     Synth& synth = *synth_;
     unsigned lfoIndex = sourceKey.parameters().N;
@@ -38,7 +38,7 @@ void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId)
 
     LFO* lfo = voice->getLFO(lfoIndex);
     lfo->configure(&region->lfos[lfoIndex]);
-    lfo->start();
+    lfo->start(delay);
 }
 
 void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)

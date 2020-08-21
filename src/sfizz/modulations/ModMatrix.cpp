@@ -196,18 +196,18 @@ void ModMatrix::init()
     for (Impl::Source &source : impl.sources_) {
         const int flags = source.key.flags();
         if (flags & kModIsPerCycle)
-            source.gen->init(source.key, {});
+            source.gen->init(source.key, {}, 0);
     }
 }
 
-void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
+void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay)
 {
     Impl& impl = *impl_;
 
     for (Impl::Source &source : impl.sources_) {
         const int flags = source.key.flags();
         if ((flags & kModIsPerVoice) && source.key.region() == regionId)
-            source.gen->init(source.key, voiceId);
+            source.gen->init(source.key, voiceId, delay);
     }
 }
 

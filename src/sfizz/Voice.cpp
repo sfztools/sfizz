@@ -150,7 +150,7 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
 
-    resources.modMatrix.initVoice(id, region->getId());
+    resources.modMatrix.initVoice(id, region->getId(), delay);
 }
 
 int sfz::Voice::getCurrentSampleQuality() const noexcept
