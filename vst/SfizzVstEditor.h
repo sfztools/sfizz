@@ -66,6 +66,7 @@ private:
         auto* p = static_cast<Vst::RangeParameter*>(getController()->getParameterObject(id));
         c->setMin(p->getMin());
         c->setMax(p->getMax());
+        c->setDefaultValue(p->toPlain(p->getInfo().defaultNormalizedValue));
     }
 
     enum {
