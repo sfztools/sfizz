@@ -174,6 +174,8 @@ void sfz::Voice::release(int delay) noexcept
     } else {
         egEnvelope.startRelease(delay);
     }
+
+    resources.modMatrix.releaseVoice(id, region->getId(), delay);
 }
 
 void sfz::Voice::off(int delay) noexcept

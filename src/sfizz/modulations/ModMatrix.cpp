@@ -211,6 +211,17 @@ void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, 
     }
 }
 
+void ModMatrix::releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay)
+{
+    Impl& impl = *impl_;
+
+    for (Impl::Source &source : impl.sources_) {
+        const int flags = source.key.flags();
+        if ((flags & kModIsPerVoice) && source.key.region() == regionId)
+            source.gen->release(source.key, voiceId, delay);
+    }
+}
+
 void ModMatrix::beginCycle(unsigned numFrames)
 {
     Impl& impl = *impl_;
