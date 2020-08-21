@@ -485,6 +485,12 @@ private:
     Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
 
+    /**
+     * @brief Update and clamp the tracking factors to ensure the power
+     *          follower does not blow up.
+     *
+     */
+    void updateTrackingFactor() noexcept;
     float attackTrackingFactor { config::powerFollowerAttackFactor / config::defaultSampleRate };
     float releaseTrackingFactor { config::powerFollowerReleaseFactor / config::defaultSampleRate };
     float meanChannelPower;

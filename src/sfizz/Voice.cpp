@@ -237,6 +237,14 @@ void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
     UNUSED(secondsPerQuarter);
 }
 
+void sfz::Voice::updateTrackingFactor() noexcept
+{
+    // Protect the envelope follower against blowups
+    const auto maxTrackingFactor = sampleRate / samplesPerBlock;
+    attackTrackingFactor =  min(config::powerFollowerAttackFactor, maxTrackingFactor) / sampleRate;
+    releaseTrackingFactor =  min(config::powerFollowerReleaseFactor, maxTrackingFactor) / sampleRate;
+}
+
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
@@ -249,13 +257,13 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
     for (auto& lfo : lfos)
         lfo->setSampleRate(sampleRate);
 
-    attackTrackingFactor =  config::powerFollowerAttackFactor / sampleRate;
-    releaseTrackingFactor =  config::powerFollowerReleaseFactor / sampleRate;
+    updateTrackingFactor();
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
+    updateTrackingFactor();
 }
 
 void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
