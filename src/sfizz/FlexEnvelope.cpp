@@ -189,10 +189,10 @@ bool FlexEnvelope::Impl::advanceToNextStage()
     unsigned nextStageNo = currentStageNumber_ + 1;
     currentStageNumber_ = nextStageNo;
 
-    if (currentStageNumber_ >= desc.points.size())
+    if (nextStageNo >= desc.points.size())
         return false;
 
-    const FlexEGPoint& point = desc.points[currentStageNumber_];
+    const FlexEGPoint& point = desc.points[nextStageNo];
     stageSourceLevel_ = currentLevel_;
     stageTargetLevel_ = point.level;
     stageTime_ = point.time;
