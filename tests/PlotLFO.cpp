@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     std::vector<float> outputMemory(numLfos * numFrames);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].start();
+        lfos[l].start(0);
     }
 
     std::vector<absl::Span<float>> lfoOutputs(numLfos);

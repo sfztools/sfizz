@@ -18,7 +18,7 @@ public:
     ~ControllerSource();
     void setSampleRate(double sampleRate) override;
     void setSamplesPerBlock(unsigned count) override;
-    void init(const ModKey& sourceKey, NumericId<Voice> voiceId) override;
+    void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
