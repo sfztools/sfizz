@@ -932,16 +932,9 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             unsigned notePolyphonyCounter { 0 };
             Voice* selfMaskCandidate { nullptr };
-            Voice* selectedVoice { nullptr };
             regionPolyphonyArray.clear();
 
             for (auto& voice : voices) {
-                if (voice->isFree()) {
-                    if (selectedVoice == nullptr)
-                        selectedVoice = voice.get();
-                    continue;
-                }
-
                 if (voice->getRegion() == region && !voice->releasedOrFree()) {
                     regionPolyphonyArray.push_back(voice.get());
                 }
@@ -1002,6 +995,8 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 }
                 parent = parent->getParent();
             }
+
+            Voice* selectedVoice = findFreeVoice();
 
             // Engine polyphony reached, we're stealing something
             if (selectedVoice == nullptr) {
