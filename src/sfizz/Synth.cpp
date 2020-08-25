@@ -665,6 +665,11 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     if (stolenVoice == nullptr)
         return {};
 
+    // Never kill age 0 voices
+    if (stolenVoice->getAge() == 0)
+        return {};
+
+
     auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
     SisterVoiceRing::applyToRing(stolenVoice, [&] (Voice* v) {
         renderVoiceToOutputs(*v, *tempSpan);
@@ -991,8 +996,9 @@ void sfz::Synth::checkNotePolyphony(const Region* region, int delay, const Trigg
         }
     }
 
-    if (notePolyphonyCounter >= *region->notePolyphony && selfMaskCandidate)
+    if (notePolyphonyCounter >= *region->notePolyphony && selfMaskCandidate) {
         SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
+    }
 }
 
 void sfz::Synth::checkGroupPolyphony(const Region* region, int delay) noexcept
