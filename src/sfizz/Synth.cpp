@@ -979,7 +979,6 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
             }
 
-            auto parent = region->parent;
 
             // Polyphony reached on region
             if (regionPolyphonyArray.size() >= region->polyphony) {
@@ -995,6 +994,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             }
 
             // Polyphony reached some parent group/master/etc
+            auto parent = region->parent;
             while (parent != nullptr) {
                 if (parent->numPlayingVoices() >= parent->getPolyphonyLimit()) {
                     const auto activeVoices = absl::MakeSpan(parent->getActiveVoices());
