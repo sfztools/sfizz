@@ -659,7 +659,18 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     if (freeVoice != voices.end())
         return freeVoice->get();
 
-    return {};
+    // Engine polyphony reached
+    Voice* stolenVoice = stealer.steal(absl::MakeSpan(voiceViewArray));
+    if (stolenVoice == nullptr)
+        return {};
+
+    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
+    SisterVoiceRing::applyToRing(stolenVoice, [&] (Voice* v) {
+        renderVoiceToOutputs(*v, *tempSpan);
+        v->reset();
+    });
+
+    return stolenVoice;
 }
 
 int sfz::Synth::getNumActiveVoices(bool recompute) const noexcept
@@ -997,27 +1008,11 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             }
 
             Voice* selectedVoice = findFreeVoice();
-
-            // Engine polyphony reached, we're stealing something
-            if (selectedVoice == nullptr) {
-                selectedVoice = stealer.steal(absl::MakeSpan(voiceViewArray));
-            }
-
             // For some reason we did not find a voice to use.
             // This is a degraded case but we'll just drop the note on.
             if (selectedVoice == nullptr)
                 continue;
 
-            // Kill voice if necessary, pre-rendering it into the output buffers
-            if (!selectedVoice->isFree()) {
-                auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-                SisterVoiceRing::applyToRing(selectedVoice, [&] (Voice* v) {
-                    renderVoiceToOutputs(*v, *tempSpan);
-                    v->reset();
-                });
-            }
-
-            // Voice should be free now
             ASSERT(selectedVoice->isFree());
             selectedVoice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
             ring.addVoiceToRing(selectedVoice);

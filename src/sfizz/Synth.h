@@ -765,18 +765,21 @@ private:
     using RegionSetPtr = std::unique_ptr<RegionSet>;
     std::vector<RegionPtr> regions;
     std::vector<VoicePtr> voices;
+
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet;
     OpcodeScope lastHeader { OpcodeScope::kOpcodeScopeGlobal };
     std::vector<RegionSetPtr> sets;
+
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups;
+
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
     VoiceViewVector regionPolyphonyArray;
+    VoiceViewVector voiceViewArray;
     VoiceStealing stealer;
 
-    VoiceViewVector voiceViewArray;
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
 
