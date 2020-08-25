@@ -44,12 +44,6 @@ public:
 
     ~Voice();
 
-    enum class TriggerType {
-        NoteOn,
-        NoteOff,
-        CC
-    };
-
     /**
      * @brief Get the unique identifier of this voice in a synth
      */
