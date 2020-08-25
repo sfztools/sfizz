@@ -893,6 +893,24 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
+void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
+{
+    checkNotePolyphony(region, delay, triggerEvent);
+    checkRegionPolyphony(region, delay);
+    checkGroupPolyphony(region, delay);
+    checkSetPolyphony(region, delay);
+
+    Voice* selectedVoice = findFreeVoice();
+    if (selectedVoice == nullptr)
+        return;
+
+    ASSERT(selectedVoice->isFree());
+    selectedVoice->startVoice(region, delay, triggerEvent);
+    ring.addVoiceToRing(selectedVoice);
+    RegionSet::registerVoiceInHierarchy(region, selectedVoice);
+    polyphonyGroups[region->group].registerVoice(selectedVoice);
+}
+
 bool matchReleaseRegionAndVoice(const sfz::Region& region, const sfz::Voice& voice)
 {
     const sfz::TriggerEvent& event = voice.getTriggerEvent();
@@ -926,13 +944,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
                     continue;
             }
 
-            if (Voice* selectedVoice = findFreeVoice()) {
-                ASSERT(selectedVoice->isFree());
-                selectedVoice->startVoice(region, delay, triggerEvent);
-                ring.addVoiceToRing(selectedVoice);
-                RegionSet::registerVoiceInHierarchy(region, selectedVoice);
-                polyphonyGroups[region->group].registerVoice(selectedVoice);
-            }
+            startVoice(region, delay, triggerEvent, ring);
         }
     }
 }
@@ -1040,18 +1052,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
                 }
             }
 
-            checkNotePolyphony(region, delay, triggerEvent);
-            checkRegionPolyphony(region, delay);
-            checkGroupPolyphony(region, delay);
-            checkSetPolyphony(region, delay);
-
-            if (Voice* selectedVoice = findFreeVoice()) {
-                ASSERT(selectedVoice->isFree());
-                selectedVoice->startVoice(region, delay, triggerEvent);
-                ring.addVoiceToRing(selectedVoice);
-                RegionSet::registerVoiceInHierarchy(region, selectedVoice);
-                polyphonyGroups[region->group].registerVoice(selectedVoice);
-            }
+            startVoice(region, delay, triggerEvent, ring);
         }
     }
 }
@@ -1096,10 +1097,6 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
         if (ccNumber == region->sustainCC) {
             if (!region->rtDead) {
                 // check that a voice with compatible trigger is playing
-                // FIXME:   we're going twice over the voices, when the synth
-                //          handles the regions completely these dispatch functions
-                //          should be overhauled, also to include voice stealing on
-                //          all events
                 const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
                     return matchReleaseRegionAndVoice(*region, *v);
                 };
@@ -1110,29 +1107,15 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 
             for (auto& note: region->delayedReleases) {
                 // FIXME: we really need to have some form of common method to find and start voices...
-                auto voice = findFreeVoice();
-                if (voice == nullptr)
-                    continue;
-
                 const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
-                voice->startVoice(region, delay, noteOffEvent);
-
-                ring.addVoiceToRing(voice);
-                RegionSet::registerVoiceInHierarchy(region, voice);
-                polyphonyGroups[region->group].registerVoice(voice);
+                startVoice(region, delay, noteOffEvent, ring);
             }
 
             region->delayedReleases.clear();
         }
 
         if (region->registerCC(ccNumber, normValue)) {
-            if (Voice* selectedVoice = findFreeVoice()) {
-                ASSERT(selectedVoice->isFree());
-                selectedVoice->startVoice(region, delay, triggerEvent);
-                ring.addVoiceToRing(selectedVoice);
-                RegionSet::registerVoiceInHierarchy(region, selectedVoice);
-                polyphonyGroups[region->group].registerVoice(selectedVoice);
-            }
+            startVoice(region, delay, triggerEvent, ring);
         }
     }
 }
