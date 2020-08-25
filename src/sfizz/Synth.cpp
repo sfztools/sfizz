@@ -933,6 +933,92 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
     }
 }
 
+void sfz::Synth::checkRegionPolyphony(const Region* region, int delay) noexcept
+{
+    tempPolyphonyArray.clear();
+
+    for (Voice* voice : voiceViewArray) {
+        if (voice->getRegion() == region && !voice->releasedOrFree()) {
+            tempPolyphonyArray.push_back(voice);
+        }
+    }
+
+    if (tempPolyphonyArray.size() >= region->polyphony) {
+        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
+        SisterVoiceRing::offAllSisters(voiceToSteal, delay);
+    }
+}
+
+void sfz::Synth::checkNotePolyphony(const Region* region, int delay, int number, float value, Voice::TriggerType triggerType) noexcept
+{
+    if (!region->notePolyphony)
+        return;
+
+    unsigned notePolyphonyCounter { 0 };
+    Voice* selfMaskCandidate { nullptr };
+
+    for (Voice* voice : voiceViewArray) {
+        if (!voice->releasedOrFree()
+            && voice->getRegion()->group == region->group
+            && voice->getTriggerNumber() == number
+            && voice->getTriggerType() ==triggerType) {
+            notePolyphonyCounter += 1;
+            switch (region->selfMask) {
+            case SfzSelfMask::mask:
+                if (voice->getTriggerValue() <= value) {
+                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
+                        selfMaskCandidate = voice;
+                }
+                break;
+            case SfzSelfMask::dontMask:
+                if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
+                    selfMaskCandidate = voice;
+                break;
+            }
+        }
+    }
+
+    if (notePolyphonyCounter >= *region->notePolyphony && selfMaskCandidate)
+        SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
+}
+
+void sfz::Synth::checkGroupPolyphony(const Region* region, int delay) noexcept
+{
+    const auto& activeVoices = polyphonyGroups[region->group].getActiveVoices();
+    tempPolyphonyArray.clear();
+    for (Voice* voice : activeVoices) {
+        if (!voice->releasedOrFree()) {
+            tempPolyphonyArray.push_back(voice);
+        }
+    }
+
+    if (tempPolyphonyArray.size() >= polyphonyGroups[region->group].getPolyphonyLimit()) {
+        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
+        SisterVoiceRing::offAllSisters(voiceToSteal, delay);
+    }
+}
+
+void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
+{
+    auto parent = region->parent;
+    while (parent != nullptr) {
+        const auto& activeVoices = parent->getActiveVoices();
+        tempPolyphonyArray.clear();
+        for (Voice* voice : activeVoices) {
+            if (!voice->releasedOrFree()) {
+                tempPolyphonyArray.push_back(voice);
+            }
+        }
+
+        if (tempPolyphonyArray.size() >= parent->getPolyphonyLimit()) {
+            const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
+            SisterVoiceRing::offAllSisters(voiceToSteal, delay);
+        }
+
+        parent = parent->getParent();
+    }
+}
+
 void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
@@ -940,71 +1026,16 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            unsigned notePolyphonyCounter { 0 };
-            Voice* selfMaskCandidate { nullptr };
-            regionPolyphonyArray.clear();
 
             for (auto& voice : voices) {
-                if (voice->getRegion() == region && !voice->releasedOrFree()) {
-                    regionPolyphonyArray.push_back(voice.get());
-                }
-
-                if (region->notePolyphony) {
-                    if (!voice->releasedOrFree()
-                        && voice->getRegion()->group == region->group
-                        && voice->getTriggerNumber() == noteNumber
-                        && voice->getTriggerType() == Voice::TriggerType::NoteOn) {
-                        notePolyphonyCounter += 1;
-                        switch (region->selfMask) {
-                        case SfzSelfMask::mask:
-                            if (voice->getTriggerValue() <= velocity) {
-                                if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
-                                    selfMaskCandidate = voice.get();
-                            }
-                            break;
-                        case SfzSelfMask::dontMask:
-                            if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
-                                selfMaskCandidate = voice.get();
-                            break;
-                        }
-                    }
-                }
-
                 if (voice->checkOffGroup(delay, region->group))
                     noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
             }
 
-            // Polyphony reached on note_polyphony
-            // If there's a self-masking candidate, release it
-            if (region->notePolyphony
-                && notePolyphonyCounter >= *region->notePolyphony
-                && selfMaskCandidate != nullptr) {
-                SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
-            }
-
-
-            // Polyphony reached on region
-            if (regionPolyphonyArray.size() >= region->polyphony) {
-                const auto activeVoices = absl::MakeSpan(regionPolyphonyArray);
-                SisterVoiceRing::offAllSisters(stealer.steal(activeVoices), delay);
-            }
-
-            // Polyphony reached on polyphony group
-            if (polyphonyGroups[region->group].numPlayingVoices()
-                == polyphonyGroups[region->group].getPolyphonyLimit()) {
-                const auto activeVoices = absl::MakeSpan(polyphonyGroups[region->group].getActiveVoices());
-                SisterVoiceRing::offAllSisters(stealer.steal(activeVoices), delay);
-            }
-
-            // Polyphony reached some parent group/master/etc
-            auto parent = region->parent;
-            while (parent != nullptr) {
-                if (parent->numPlayingVoices() >= parent->getPolyphonyLimit()) {
-                    const auto activeVoices = absl::MakeSpan(parent->getActiveVoices());
-                    SisterVoiceRing::offAllSisters(stealer.steal(activeVoices), delay);
-                }
-                parent = parent->getParent();
-            }
+            checkNotePolyphony(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            checkRegionPolyphony(region, delay);
+            checkGroupPolyphony(region, delay);
+            checkSetPolyphony(region, delay);
 
             if (Voice* selectedVoice = findFreeVoice()) {
                 ASSERT(selectedVoice->isFree());
@@ -1417,8 +1448,8 @@ void sfz::Synth::resetVoices(int numVoices)
     voiceViewArray.clear();
     voiceViewArray.reserve(numVoices);
 
-    regionPolyphonyArray.clear();
-    regionPolyphonyArray.reserve(numVoices);
+    tempPolyphonyArray.clear();
+    tempPolyphonyArray.reserve(numVoices);
 
     for (int i = 0; i < numVoices; ++i) {
         auto voice = absl::make_unique<Voice>(i, resources);

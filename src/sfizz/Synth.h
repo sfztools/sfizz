@@ -776,9 +776,14 @@ private:
 
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
-    VoiceViewVector regionPolyphonyArray;
+    VoiceViewVector tempPolyphonyArray;
     VoiceViewVector voiceViewArray;
     VoiceStealing stealer;
+
+    void checkRegionPolyphony(const Region* region, int delay) noexcept;
+    void checkNotePolyphony(const Region* region, int delay, int number, float value, Voice::TriggerType triggerType) noexcept;
+    void checkGroupPolyphony(const Region* region, int delay) noexcept;
+    void checkSetPolyphony(const Region* region, int delay) noexcept;
 
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
