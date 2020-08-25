@@ -36,21 +36,17 @@ sfz::Voice::~Voice()
 {
 }
 
-void sfz::Voice::startVoice(Region* region, int delay, int number, float value, sfz::Voice::TriggerType triggerType) noexcept
+void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
 {
-    ASSERT(value >= 0.0f && value <= 1.0f);
-
-    if (triggerType == TriggerType::CC)
-        number = region->pitchKeycenter;
-
-    this->triggerType = triggerType;
-    triggerNumber = number;
-    triggerValue = value;
+    ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
     this->region = region;
-
     if (region->disabled())
         return;
+
+    triggerEvent = event;
+    if (triggerEvent.type == TriggerEventType::CC)
+        triggerEvent.number = region->pitchKeycenter;
 
     switchState(State::playing);
 
@@ -106,18 +102,18 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
-    const float numberRetuned = resources.tuning.getKeyFractional12TET(number);
+    const float numberRetuned = resources.tuning.getKeyFractional12TET(triggerEvent.number);
 
-    pitchRatio = region->getBasePitchVariation(numberRetuned, value);
+    pitchRatio = region->getBasePitchVariation(numberRetuned, triggerEvent.value);
 
     // apply stretch tuning if set
     if (resources.stretch)
         pitchRatio *= resources.stretch->getRatioForFractionalKey(numberRetuned);
 
-    baseVolumedB = region->getBaseVolumedB(number);
+    baseVolumedB = region->getBaseVolumedB(triggerEvent.number);
     baseGain = region->getBaseGain();
-    if (triggerType != TriggerType::CC)
-        baseGain *= region->getNoteGain(number, value);
+    if (triggerEvent.type != TriggerEventType::CC)
+        baseGain *= region->getNoteGain(triggerEvent.number, triggerEvent.value);
     gainSmoother.reset();
     resetCrossfades();
 
@@ -127,13 +123,13 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
 
     const unsigned numChannels = region->isStereo() ? 2 : 1;
     for (auto& filter: region->filters) {
-        auto newFilter = resources.filterPool.getFilter(filter, numChannels, number, value);
+        auto newFilter = resources.filterPool.getFilter(filter, numChannels, triggerEvent.number, triggerEvent.value);
         if (newFilter)
             filters.push_back(newFilter);
     }
 
     for (auto& eq: region->equalizers) {
-        auto newEQ = resources.eqPool.getEQ(eq, numChannels, value);
+        auto newEQ = resources.eqPool.getEQ(eq, numChannels, triggerEvent.value);
         if (newEQ)
             equalizers.push_back(newEQ);
     }
@@ -141,11 +137,11 @@ void sfz::Voice::startVoice(Region* region, int delay, int number, float value, 
     sourcePosition = region->getOffset();
     triggerDelay = delay;
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
-    baseFrequency = resources.tuning.getFrequencyOfKey(number);
+    baseFrequency = resources.tuning.getFrequencyOfKey(triggerEvent.number);
     bendStepFactor = centsFactor(region->bendStep);
     bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
     bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
-    egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, value, sampleRate);
+    egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
 
     resources.modMatrix.initVoice(id, region->getId(), delay);
 }
@@ -197,7 +193,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noex
     if (state != State::playing)
         return;
 
-    if (triggerNumber == noteNumber) {
+    if (triggerEvent.number == noteNumber) {
         noteIsOff = true;
 
         if (region->loopMode == SfzLoopMode::one_shot)
@@ -717,7 +713,7 @@ bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
     if (region == nullptr)
         return false;
 
-    if (triggerType == TriggerType::NoteOn && region->offBy == group) {
+    if (triggerEvent.type == TriggerEventType::NoteOn && region->offBy == group) {
         off(delay);
         return true;
     }

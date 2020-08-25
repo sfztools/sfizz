@@ -660,7 +660,7 @@ TEST_CASE("[Synth] Apply function on sisters")
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 3 );
     float start = 1.0f;
     sfz::SisterVoiceRing::applyToRing(synth.getVoiceView(0), [&](const sfz::Voice* v) {
-        start += static_cast<float>(v->getTriggerNumber());
+        start += static_cast<float>(v->getTriggerEvent().number);
     });
     REQUIRE( start == 1.0f + 3.0f * 63.0f );
 }
@@ -828,7 +828,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm};
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -856,7 +856,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm, 34_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -886,7 +886,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm, 34_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -914,7 +914,7 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
     std::vector<float> requiredVelocities { 78_norm, 85_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );

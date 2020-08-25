@@ -781,7 +781,7 @@ private:
     VoiceStealing stealer;
 
     void checkRegionPolyphony(const Region* region, int delay) noexcept;
-    void checkNotePolyphony(const Region* region, int delay, int number, float value, Voice::TriggerType triggerType) noexcept;
+    void checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept;
     void checkGroupPolyphony(const Region* region, int delay) noexcept;
     void checkSetPolyphony(const Region* region, int delay) noexcept;
 

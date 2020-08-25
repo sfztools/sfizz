@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "Macros.h"
 #include "MidiState.h"
+#include "TriggerEvent.h"
 #include "ModifierHelpers.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
@@ -892,12 +893,14 @@ void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
-bool matchReleaseRegionAndVoice(const sfz::Region& region, const sfz::Voice& voice) {
+bool matchReleaseRegionAndVoice(const sfz::Region& region, const sfz::Voice& voice)
+{
+    const sfz::TriggerEvent& event = voice.getTriggerEvent();
     return (
         !voice.isFree()
-        && voice.getTriggerType() == sfz::Voice::TriggerType::NoteOn
-        && region.keyRange.containsWithEnd(voice.getTriggerNumber())
-        && region.velocityRange.containsWithEnd(voice.getTriggerValue())
+        && event.type == sfz::TriggerEventType::NoteOn
+        && region.keyRange.containsWithEnd(event.number)
+        && region.velocityRange.containsWithEnd(event.value)
     );
 }
 
@@ -905,6 +908,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
+    const TriggerEvent triggerEvent { TriggerEventType::NoteOff, noteNumber, velocity };
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
@@ -924,7 +928,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 
             if (Voice* selectedVoice = findFreeVoice()) {
                 ASSERT(selectedVoice->isFree());
-                selectedVoice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOff);
+                selectedVoice->startVoice(region, delay, triggerEvent);
                 ring.addVoiceToRing(selectedVoice);
                 RegionSet::registerVoiceInHierarchy(region, selectedVoice);
                 polyphonyGroups[region->group].registerVoice(selectedVoice);
@@ -949,7 +953,7 @@ void sfz::Synth::checkRegionPolyphony(const Region* region, int delay) noexcept
     }
 }
 
-void sfz::Synth::checkNotePolyphony(const Region* region, int delay, int number, float value, Voice::TriggerType triggerType) noexcept
+void sfz::Synth::checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept
 {
     if (!region->notePolyphony)
         return;
@@ -958,15 +962,16 @@ void sfz::Synth::checkNotePolyphony(const Region* region, int delay, int number,
     Voice* selfMaskCandidate { nullptr };
 
     for (Voice* voice : voiceViewArray) {
+        const sfz::TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
         if (!voice->releasedOrFree()
             && voice->getRegion()->group == region->group
-            && voice->getTriggerNumber() == number
-            && voice->getTriggerType() ==triggerType) {
+            && voiceTriggerEvent.number == triggerEvent.number
+            && voiceTriggerEvent.type == triggerEvent.type) {
             notePolyphonyCounter += 1;
             switch (region->selfMask) {
             case SfzSelfMask::mask:
-                if (voice->getTriggerValue() <= value) {
-                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerValue() > voice->getTriggerValue())
+                if (voiceTriggerEvent.value <= triggerEvent.value) {
+                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value)
                         selfMaskCandidate = voice;
                 }
                 break;
@@ -1023,23 +1028,26 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
+    const TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
 
             for (auto& voice : voices) {
-                if (voice->checkOffGroup(delay, region->group))
-                    noteOffDispatch(delay, voice->getTriggerNumber(), voice->getTriggerValue());
+                if (voice->checkOffGroup(delay, region->group)) {
+                    const TriggerEvent& event = voice->getTriggerEvent();
+                    noteOffDispatch(delay, event.number, event.value);
+                }
             }
 
-            checkNotePolyphony(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+            checkNotePolyphony(region, delay, triggerEvent);
             checkRegionPolyphony(region, delay);
             checkGroupPolyphony(region, delay);
             checkSetPolyphony(region, delay);
 
             if (Voice* selectedVoice = findFreeVoice()) {
                 ASSERT(selectedVoice->isFree());
-                selectedVoice->startVoice(region, delay, noteNumber, velocity, Voice::TriggerType::NoteOn);
+                selectedVoice->startVoice(region, delay, triggerEvent);
                 ring.addVoiceToRing(selectedVoice);
                 RegionSet::registerVoiceInHierarchy(region, selectedVoice);
                 polyphonyGroups[region->group].registerVoice(selectedVoice);
@@ -1082,6 +1090,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
         voice->registerCC(delay, ccNumber, normValue);
 
     SisterVoiceRingBuilder ring;
+    const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, normValue };
 
     for (auto& region : ccActivationLists[ccNumber]) {
         if (ccNumber == region->sustainCC) {
@@ -1105,7 +1114,8 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
                 if (voice == nullptr)
                     continue;
 
-                voice->startVoice(region, delay, note.first, note.second, Voice::TriggerType::NoteOff);
+                const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
+                voice->startVoice(region, delay, noteOffEvent);
 
                 ring.addVoiceToRing(voice);
                 RegionSet::registerVoiceInHierarchy(region, voice);
@@ -1118,7 +1128,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
         if (region->registerCC(ccNumber, normValue)) {
             if (Voice* selectedVoice = findFreeVoice()) {
                 ASSERT(selectedVoice->isFree());
-                selectedVoice->startVoice(region, delay, ccNumber, normValue, Voice::TriggerType::CC);
+                selectedVoice->startVoice(region, delay, triggerEvent);
                 ring.addVoiceToRing(selectedVoice);
                 RegionSet::registerVoiceInHierarchy(region, selectedVoice);
                 polyphonyGroups[region->group].registerVoice(selectedVoice);
