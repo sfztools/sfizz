@@ -128,14 +128,6 @@ struct SisterVoiceRing {
  */
 class SisterVoiceRingBuilder {
 public:
-    ~SisterVoiceRingBuilder() noexcept {
-        if (lastStartedVoice != nullptr) {
-            ASSERT(firstStartedVoice);
-            lastStartedVoice->setNextSisterVoice(firstStartedVoice);
-            firstStartedVoice->setPreviousSisterVoice(lastStartedVoice);
-        }
-    }
-
     /**
      * @brief Add a voice to the sister ring
      *
@@ -144,6 +136,9 @@ public:
     void addVoiceToRing(Voice* voice) noexcept {
         if (firstStartedVoice == nullptr)
             firstStartedVoice = voice;
+
+        firstStartedVoice->setPreviousSisterVoice(voice);
+        voice->setNextSisterVoice(firstStartedVoice);
 
         if (lastStartedVoice != nullptr) {
             voice->setPreviousSisterVoice(lastStartedVoice);
