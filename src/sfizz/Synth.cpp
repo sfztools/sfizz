@@ -976,7 +976,8 @@ void sfz::Synth::checkNotePolyphony(const Region* region, int delay, const Trigg
 
     for (Voice* voice : voiceViewArray) {
         const sfz::TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        if (!voice->releasedOrFree()
+        const bool skipVoice = (triggerEvent.type == TriggerEventType::NoteOn && voice->releasedOrFree()) || voice->isFree();
+        if (!skipVoice
             && voice->getRegion()->group == region->group
             && voiceTriggerEvent.number == triggerEvent.number
             && voiceTriggerEvent.type == triggerEvent.type) {
@@ -984,8 +985,9 @@ void sfz::Synth::checkNotePolyphony(const Region* region, int delay, const Trigg
             switch (region->selfMask) {
             case SfzSelfMask::mask:
                 if (voiceTriggerEvent.value <= triggerEvent.value) {
-                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value)
+                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
                         selfMaskCandidate = voice;
+                    }
                 }
                 break;
             case SfzSelfMask::dontMask:

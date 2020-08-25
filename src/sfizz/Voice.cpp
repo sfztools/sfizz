@@ -193,7 +193,7 @@ void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noex
     if (state != State::playing)
         return;
 
-    if (triggerEvent.number == noteNumber) {
+    if (triggerEvent.number == noteNumber && triggerEvent.type == TriggerEventType::NoteOn) {
         noteIsOff = true;
 
         if (region->loopMode == SfzLoopMode::one_shot)
