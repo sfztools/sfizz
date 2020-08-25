@@ -911,15 +911,22 @@ void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& trigg
     polyphonyGroups[region->group].registerVoice(selectedVoice);
 }
 
-bool matchReleaseRegionAndVoice(const sfz::Region& region, const sfz::Voice& voice)
+bool sfz::Synth::matchAttackRegion(const Region* releaseRegion) noexcept
 {
-    const sfz::TriggerEvent& event = voice.getTriggerEvent();
-    return (
-        !voice.isFree()
-        && event.type == sfz::TriggerEventType::NoteOn
-        && region.keyRange.containsWithEnd(event.number)
-        && region.velocityRange.containsWithEnd(event.value)
-    );
+    const auto compatibleVoice = [releaseRegion](const Voice* v) -> bool {
+        const sfz::TriggerEvent& event = v->getTriggerEvent();
+        return (
+            !v->isFree()
+            && event.type == sfz::TriggerEventType::NoteOn
+            && releaseRegion->keyRange.containsWithEnd(event.number)
+            && releaseRegion->velocityRange.containsWithEnd(event.value)
+        );
+    };
+
+    if (absl::c_find_if(voiceViewArray, compatibleVoice) == voiceViewArray.end())
+        return false;
+    else
+        return true;
 }
 
 void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
@@ -930,19 +937,8 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->triggerOnNote && region->trigger == SfzTrigger::release && !region->rtDead) {
-                // check that a voice with compatible trigger is playing
-                // FIXME:   we're going twice over the voices, when the synth
-                //          handles the regions completely these dispatch functions
-                //          should be overhauled, also to include voice stealing on
-                //          all events
-                const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
-                    return matchReleaseRegionAndVoice(*region, *v);
-                };
-
-                if (absl::c_find_if(voices, compatibleVoice) == voices.end())
-                    continue;
-            }
+            if (region->trigger == SfzTrigger::release && !region->rtDead && !matchAttackRegion(region))
+                continue;
 
             startVoice(region, delay, triggerEvent, ring);
         }
@@ -1036,6 +1032,16 @@ void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
     }
 }
 
+void sfz::Synth::checkOffGroups(Region* region, int delay) noexcept
+{
+    for (auto& voice : voices) {
+        if (voice->checkOffGroup(delay, region->group)) {
+            const TriggerEvent& event = voice->getTriggerEvent();
+            noteOffDispatch(delay, event.number, event.value);
+        }
+    }
+}
+
 void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
@@ -1044,28 +1050,17 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            for (auto& voice : voices) {
-                if (voice->checkOffGroup(delay, region->group)) {
-                    const TriggerEvent& event = voice->getTriggerEvent();
-                    noteOffDispatch(delay, event.number, event.value);
-                }
-            }
-
+            checkOffGroups(region, delay);
             startVoice(region, delay, triggerEvent, ring);
         }
     }
 }
 
-void sfz::Synth::checkDelayedReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+void sfz::Synth::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead) {
-        // check that a voice with compatible trigger is playing
-        const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
-            return matchReleaseRegionAndVoice(*region, *v);
-        };
-
-        if (absl::c_find_if(voices, compatibleVoice) == voices.end())
-            region->delayedReleases.clear();
+    if (!region->rtDead && !matchAttackRegion(region)) {
+        region->delayedReleases.clear();
+        return;
     }
 
     for (auto& note: region->delayedReleases) {
@@ -1073,7 +1068,6 @@ void sfz::Synth::checkDelayedReleases(Region* region, int delay, SisterVoiceRing
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
         startVoice(region, delay, noteOffEvent, ring);
     }
-
     region->delayedReleases.clear();
 }
 
@@ -1082,6 +1076,19 @@ void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     const auto normalizedCC = normalizeCC(ccValue);
     hdcc(delay, ccNumber, normalizedCC);
+}
+
+void sfz::Synth::ccDispatch(int delay, int ccNumber, float value) noexcept
+{
+    SisterVoiceRingBuilder ring;
+    const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
+    for (auto& region : ccActivationLists[ccNumber]) {
+        if (ccNumber == region->sustainCC)
+            startDelayedReleaseVoices(region, delay, ring);
+
+        if (region->registerCC(ccNumber, value))
+            startVoice(region, delay, triggerEvent, ring);
+    }
 }
 
 void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
@@ -1111,15 +1118,7 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     for (auto& voice : voices)
         voice->registerCC(delay, ccNumber, normValue);
 
-    SisterVoiceRingBuilder ring;
-    const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, normValue };
-    for (auto& region : ccActivationLists[ccNumber]) {
-        if (ccNumber == region->sustainCC)
-            checkDelayedReleases(region, delay, ring);
-
-        if (region->registerCC(ccNumber, normValue))
-            startVoice(region, delay, triggerEvent, ring);
-    }
+    ccDispatch(delay, ccNumber, normValue);
 }
 
 void sfz::Synth::pitchWheel(int delay, int pitch) noexcept

@@ -727,6 +727,7 @@ private:
 
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
+    void ccDispatch(int delay, int ccNumber, float value) noexcept;
 
     template<class T>
     static void updateUsedCCsFromCCMap(std::bitset<sfz::config::numCCs>& usedCCs, const CCMap<T> map)
@@ -785,7 +786,9 @@ private:
     void checkGroupPolyphony(const Region* region, int delay) noexcept;
     void checkSetPolyphony(const Region* region, int delay) noexcept;
     void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
-    void checkDelayedReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    void checkOffGroups(Region* region, int delay) noexcept;
+    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    bool matchAttackRegion(const Region* region) noexcept;
 
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
