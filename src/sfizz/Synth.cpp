@@ -911,7 +911,7 @@ void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& trigg
     polyphonyGroups[region->group].registerVoice(selectedVoice);
 }
 
-bool sfz::Synth::matchAttackRegion(const Region* releaseRegion) noexcept
+bool sfz::Synth::playingAttackVoice(const Region* releaseRegion) noexcept
 {
     const auto compatibleVoice = [releaseRegion](const Voice* v) -> bool {
         const sfz::TriggerEvent& event = v->getTriggerEvent();
@@ -937,7 +937,7 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == SfzTrigger::release && !region->rtDead && !matchAttackRegion(region))
+            if (region->trigger == SfzTrigger::release && !region->rtDead && !playingAttackVoice(region))
                 continue;
 
             startVoice(region, delay, triggerEvent, ring);
@@ -1058,7 +1058,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
 void sfz::Synth::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead && !matchAttackRegion(region)) {
+    if (!region->rtDead && !playingAttackVoice(region)) {
         region->delayedReleases.clear();
         return;
     }
