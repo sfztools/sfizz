@@ -785,6 +785,7 @@ private:
     void checkGroupPolyphony(const Region* region, int delay) noexcept;
     void checkSetPolyphony(const Region* region, int delay) noexcept;
     void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
+    void checkDelayedReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;

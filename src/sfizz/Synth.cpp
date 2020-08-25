@@ -1044,7 +1044,6 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-
             for (auto& voice : voices) {
                 if (voice->checkOffGroup(delay, region->group)) {
                     const TriggerEvent& event = voice->getTriggerEvent();
@@ -1056,6 +1055,28 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
         }
     }
 }
+
+void sfz::Synth::checkDelayedReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+{
+    if (!region->rtDead) {
+        // check that a voice with compatible trigger is playing
+        const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
+            return matchReleaseRegionAndVoice(*region, *v);
+        };
+
+        if (absl::c_find_if(voices, compatibleVoice) == voices.end())
+            region->delayedReleases.clear();
+    }
+
+    for (auto& note: region->delayedReleases) {
+        // FIXME: we really need to have some form of common method to find and start voices...
+        const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
+        startVoice(region, delay, noteOffEvent, ring);
+    }
+
+    region->delayedReleases.clear();
+}
+
 
 void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
@@ -1092,31 +1113,12 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, normValue };
-
     for (auto& region : ccActivationLists[ccNumber]) {
-        if (ccNumber == region->sustainCC) {
-            if (!region->rtDead) {
-                // check that a voice with compatible trigger is playing
-                const auto compatibleVoice = [region](const VoicePtr& v) -> bool {
-                    return matchReleaseRegionAndVoice(*region, *v);
-                };
+        if (ccNumber == region->sustainCC)
+            checkDelayedReleases(region, delay, ring);
 
-                if (absl::c_find_if(voices, compatibleVoice) == voices.end())
-                    region->delayedReleases.clear();
-            }
-
-            for (auto& note: region->delayedReleases) {
-                // FIXME: we really need to have some form of common method to find and start voices...
-                const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
-                startVoice(region, delay, noteOffEvent, ring);
-            }
-
-            region->delayedReleases.clear();
-        }
-
-        if (region->registerCC(ccNumber, normValue)) {
+        if (region->registerCC(ccNumber, normValue))
             startVoice(region, delay, triggerEvent, ring);
-        }
     }
 }
 
