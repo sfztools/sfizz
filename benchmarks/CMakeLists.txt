@@ -66,6 +66,8 @@ sfizz_add_benchmark(bm_logger BM_logger.cpp)
 target_link_libraries(bm_logger PRIVATE sfizz::sfizz)
 sfizz_add_benchmark(bm_smoothers BM_smoothers.cpp)
 target_link_libraries(bm_smoothers PRIVATE sfizz::sfizz)
+sfizz_add_benchmark(bm_powerFollower BM_powerFollower.cpp)
+target_link_libraries(bm_powerFollower PRIVATE sfizz::sfizz)
 
 if (TARGET sfizz-samplerate)
 sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
