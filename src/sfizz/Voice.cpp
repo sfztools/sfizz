@@ -237,14 +237,6 @@ void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
     UNUSED(secondsPerQuarter);
 }
 
-void sfz::Voice::updateTrackingFactor() noexcept
-{
-    // Protect the envelope follower against blowups
-    const auto maxTrackingFactor = sampleRate / samplesPerBlock;
-    attackTrackingFactor =  min(config::powerFollowerAttackFactor, maxTrackingFactor) / sampleRate;
-    releaseTrackingFactor =  min(config::powerFollowerReleaseFactor, maxTrackingFactor) / sampleRate;
-}
-
 void sfz::Voice::setSampleRate(float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
@@ -257,13 +249,13 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
     for (auto& lfo : lfos)
         lfo->setSampleRate(sampleRate);
 
-    updateTrackingFactor();
+    powerFollower.setSampleRate(sampleRate);
 }
 
 void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     this->samplesPerBlock = samplesPerBlock;
-    updateTrackingFactor();
+    powerFollower.setSamplesPerBlock(samplesPerBlock);
 }
 
 void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
@@ -299,7 +291,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
     if (!egEnvelope.isSmoothing())
         switchState(State::cleanMeUp);
 
-    updateChannelPowers(buffer);
+    powerFollower.process(buffer);
 
     age += buffer.getNumFrames();
     if (triggerDelay) {
@@ -740,7 +732,7 @@ void sfz::Voice::reset() noexcept
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
-    meanChannelPower = 0.0f;
+    powerFollower.clear();
 
     filters.clear();
     equalizers.clear();
@@ -772,7 +764,7 @@ void sfz::Voice::removeVoiceFromRing() noexcept
 
 float sfz::Voice::getAveragePower() const noexcept
 {
-    return meanChannelPower;
+    return powerFollower.getAveragePower();
 }
 
 bool sfz::Voice::releasedOrFree() const noexcept
@@ -866,31 +858,6 @@ void sfz::Voice::setupOscillatorUnison()
     }
 #endif
 }
-
-void sfz::Voice::updateChannelPowers(AudioSpan<float> buffer)
-{
-    if (buffer.getNumFrames() == 0)
-        return;
-
-    auto tempBuffer = resources.bufferPool.getBuffer(buffer.getNumFrames());
-    if (!tempBuffer)
-        return;
-
-    sfz::copy(buffer.getConstSpan(0), *tempBuffer);
-    for (unsigned i = 1; i < buffer.getNumChannels(); ++i)
-        sfz::add(buffer.getConstSpan(i), *tempBuffer);
-
-    const float meanPower = sfz::meanSquared<float>(*tempBuffer);
-
-    const float attackFactor = static_cast<float>(buffer.getNumFrames()) * attackTrackingFactor;
-    const float releaseFactor = static_cast<float>(buffer.getNumFrames()) * releaseTrackingFactor;
-
-    meanChannelPower = max(
-        meanChannelPower * (1 - attackFactor) + meanPower * attackFactor,
-        meanChannelPower * (1 - releaseFactor) + meanPower * releaseFactor
-    );
-}
-
 
 void sfz::Voice::switchState(State s)
 {

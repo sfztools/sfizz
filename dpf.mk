@@ -103,6 +103,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/Parser.cpp \
 	src/sfizz/parser/Parser.cpp \
 	src/sfizz/parser/ParserPrivate.cpp \
+	src/sfizz/PowerFollower.cpp \
 	src/sfizz/Region.cpp \
 	src/sfizz/RTSemaphore.cpp \
 	src/sfizz/ScopedFTZ.cpp \
