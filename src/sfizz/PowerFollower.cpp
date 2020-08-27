@@ -42,26 +42,51 @@ void PowerFollower::process(AudioSpan<float> buffer) noexcept
     if (numFrames == 0)
         return;
 
-    absl::Span<float> tempBuffer(tempBuffer_.get(), numFrames);
+    ///
+    constexpr size_t step = config::powerFollowerStep;
+    float currentPower = currentPower_;
+    float currentSum = currentSum_;
+    size_t currentCount = currentCount_;
 
-    copy(buffer.getConstSpan(0), tempBuffer);
-    for (unsigned i = 1; i < buffer.getNumChannels(); ++i)
-        add(buffer.getConstSpan(i), tempBuffer);
+    const float attackFactor = static_cast<float>(numFrames) * attackTrackingFactor_;
+    const float releaseFactor = static_cast<float>(numFrames) * releaseTrackingFactor_;
 
-    const float meanPower = meanSquared<float>(tempBuffer);
+    ///
+    size_t index = 0;
+    while (index < numFrames) {
+        size_t blockSize = std::min(step - currentCount, numFrames - index);
+        absl::Span<float> tempBuffer(tempBuffer_.get(), blockSize);
 
-    const float attackFactor = static_cast<float>(buffer.getNumFrames()) * attackTrackingFactor_;
-    const float releaseFactor = static_cast<float>(buffer.getNumFrames()) * releaseTrackingFactor_;
+        copy(buffer.getConstSpan(0).subspan(index, blockSize), tempBuffer);
+        for (unsigned i = 1, n = buffer.getNumChannels(); i < n; ++i)
+            add(buffer.getConstSpan(i).subspan(index, blockSize), tempBuffer);
 
-    meanChannelPower_ = max(
-        meanChannelPower_ * (1 - attackFactor) + meanPower * attackFactor,
-        meanChannelPower_ * (1 - releaseFactor) + meanPower * releaseFactor
-    );
+        currentSum += sumSquares<float>(tempBuffer);
+        currentCount += blockSize;
+
+        if (currentCount == step) {
+            const float meanPower = currentSum / step;
+            currentPower = max(
+                currentPower * (1 - attackFactor) + meanPower * attackFactor,
+                currentPower * (1 - releaseFactor) + meanPower * releaseFactor);
+            currentSum = 0;
+            currentCount = 0;
+        }
+
+        index += blockSize;
+    }
+
+    ///
+    currentPower_ = currentPower;
+    currentSum_ = currentSum;
+    currentCount_ = currentCount;
 }
 
 void PowerFollower::clear() noexcept
 {
-    meanChannelPower_ = 0;
+    currentPower_ = 0;
+    currentSum_ = 0;
+    currentCount_ = 0;
 }
 
 void PowerFollower::updateTrackingFactor() noexcept

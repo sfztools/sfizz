@@ -17,7 +17,7 @@ public:
     void setSamplesPerBlock(unsigned samplesPerBlock);
     void process(AudioSpan<float> buffer) noexcept;
     void clear() noexcept;
-    float getAveragePower() const noexcept { return meanChannelPower_; }
+    float getAveragePower() const noexcept { return currentPower_; }
 
 private:
     void updateTrackingFactor() noexcept;
@@ -31,7 +31,9 @@ private:
     float attackTrackingFactor_ {};
     float releaseTrackingFactor_ {};
 
-    float meanChannelPower_ {};
+    float currentPower_ {};
+    float currentSum_ = 0;
+    size_t currentCount_ = 0;
 };
 
 } // namespace sfz

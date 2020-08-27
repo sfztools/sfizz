@@ -57,6 +57,7 @@ namespace config {
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
+    constexpr size_t powerFollowerStep { 512 };
     constexpr float powerFollowerAttackFactor { 100 };
     constexpr float powerFollowerReleaseFactor { 10 };
     constexpr uint16_t numCCs { 512 };
