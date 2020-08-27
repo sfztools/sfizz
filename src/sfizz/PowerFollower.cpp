@@ -32,7 +32,6 @@ void PowerFollower::setSamplesPerBlock(unsigned samplesPerBlock)
     if (samplesPerBlock_ != samplesPerBlock) {
         tempBuffer_.reset(new float[samplesPerBlock]);
         samplesPerBlock_ = samplesPerBlock;
-        updateTrackingFactor();
     }
 }
 
@@ -48,8 +47,8 @@ void PowerFollower::process(AudioSpan<float> buffer) noexcept
     float currentSum = currentSum_;
     size_t currentCount = currentCount_;
 
-    const float attackFactor = static_cast<float>(numFrames) * attackTrackingFactor_;
-    const float releaseFactor = static_cast<float>(numFrames) * releaseTrackingFactor_;
+    const float attackFactor = attackTrackingFactor_;
+    const float releaseFactor = releaseTrackingFactor_;
 
     ///
     size_t index = 0;
@@ -67,8 +66,8 @@ void PowerFollower::process(AudioSpan<float> buffer) noexcept
         if (currentCount == step) {
             const float meanPower = currentSum / step;
             currentPower = max(
-                currentPower * (1 - attackFactor) + meanPower * attackFactor,
-                currentPower * (1 - releaseFactor) + meanPower * releaseFactor);
+                currentPower * attackFactor + meanPower * (1 - attackFactor),
+                currentPower * releaseFactor + meanPower * (1 - releaseFactor));
             currentSum = 0;
             currentCount = 0;
         }
@@ -92,9 +91,8 @@ void PowerFollower::clear() noexcept
 void PowerFollower::updateTrackingFactor() noexcept
 {
     // Protect the envelope follower against blowups
-    const auto maxTrackingFactor = sampleRate_ / samplesPerBlock_;
-    attackTrackingFactor_ =  min(config::powerFollowerAttackFactor, maxTrackingFactor) / sampleRate_;
-    releaseTrackingFactor_ =  min(config::powerFollowerReleaseFactor, maxTrackingFactor) / sampleRate_;
+    attackTrackingFactor_ = std::exp(-1.0f / ((config::powerFollowerAttackTime / config::powerFollowerStep) * sampleRate_));
+    releaseTrackingFactor_ = std::exp(-1.0f / ((config::powerFollowerReleaseTime / config::powerFollowerStep) * sampleRate_));
 }
 
 } // namespace sfz

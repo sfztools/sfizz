@@ -58,8 +58,8 @@ namespace config {
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
     constexpr size_t powerFollowerStep { 512 };
-    constexpr float powerFollowerAttackFactor { 100 };
-    constexpr float powerFollowerReleaseFactor { 10 };
+    constexpr float powerFollowerAttackTime { 5e-3f };
+    constexpr float powerFollowerReleaseTime { 200e-3f };
     constexpr uint16_t numCCs { 512 };
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
