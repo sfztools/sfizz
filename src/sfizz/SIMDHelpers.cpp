@@ -39,7 +39,7 @@ struct SIMDDispatch {
     decltype(&cumsumScalar<T>) cumsum = &cumsumScalar<T>;
     decltype(&diffScalar<T>) diff = &diffScalar<T>;
     decltype(&meanScalar<T>) mean = &meanScalar<T>;
-    decltype(&meanSquaredScalar<T>) meanSquared = &meanSquaredScalar<T>;
+    decltype(&sumSquaresScalar<T>) sumSquares = &sumSquaresScalar<T>;
     decltype(&clampAllScalar<T>) clampAll = &clampAllScalar<T>;
     decltype(&allWithinScalar<T>) allWithin = &allWithinScalar<T>;
 
@@ -85,7 +85,7 @@ void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
             SIMD_OP(cumsum)
             SIMD_OP(diff)
             SIMD_OP(mean)
-            SIMD_OP(meanSquared)
+            SIMD_OP(sumSquares)
             SIMD_OP(clampAll)
             SIMD_OP(allWithin)
         }
@@ -122,7 +122,7 @@ void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
             SIMD_OP(cumsum)
             SIMD_OP(diff)
             SIMD_OP(mean)
-            SIMD_OP(meanSquared)
+            SIMD_OP(sumSquares)
             SIMD_OP(clampAll)
             SIMD_OP(allWithin)
         }
@@ -163,7 +163,7 @@ void SIMDDispatch<float>::resetStatus()
     setStatus(SIMDOps::diff, false);
     setStatus(SIMDOps::sfzInterpolationCast, true);
     setStatus(SIMDOps::mean, false);
-    setStatus(SIMDOps::meanSquared, false);
+    setStatus(SIMDOps::sumSquares, false);
     setStatus(SIMDOps::upsampling, true);
     setStatus(SIMDOps::clampAll, false);
     setStatus(SIMDOps::allWithin, true);
@@ -292,9 +292,9 @@ float mean<float>(const float* vector, unsigned size) noexcept
 }
 
 template <>
-float meanSquared<float>(const float* vector, unsigned size) noexcept
+float sumSquares<float>(const float* vector, unsigned size) noexcept
 {
-    return simdDispatch<float>().meanSquared(vector, size);
+    return simdDispatch<float>().sumSquares(vector, size);
 }
 
 template <>

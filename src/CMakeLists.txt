@@ -81,6 +81,7 @@ set (SFIZZ_HEADERS
     sfizz/Oversampler.h
     sfizz/Panning.h
     sfizz/PolyphonyGroup.h
+    sfizz/PowerFollower.h
     sfizz/railsback/2-1.h
     sfizz/railsback/4-1.h
     sfizz/railsback/4-2.h
@@ -138,6 +139,7 @@ set (SFIZZ_SOURCES
     sfizz/Effects.cpp
     sfizz/LFO.cpp
     sfizz/LFODescription.cpp
+    sfizz/PowerFollower.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp

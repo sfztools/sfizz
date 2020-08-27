@@ -22,7 +22,7 @@ void subtractSSE(const float* input, float* output, unsigned size) noexcept;
 void subtract1SSE(float value, float* output, unsigned size) noexcept;
 void copySSE(const float* input, float* output, unsigned size) noexcept;
 float meanSSE(const float* vector, unsigned size) noexcept;
-float meanSquaredSSE(const float* vector, unsigned size) noexcept;
+float sumSquaresSSE(const float* vector, unsigned size) noexcept;
 void cumsumSSE(const float* input, float* output, unsigned size) noexcept;
 void diffSSE(const float* input, float* output, unsigned size) noexcept;
 void clampAllSSE(float* input, float low, float high, unsigned size) noexcept;

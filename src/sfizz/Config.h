@@ -57,7 +57,9 @@ namespace config {
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
-    constexpr float filteredEnvelopeCutoff { 5 };
+    constexpr size_t powerFollowerStep { 512 };
+    constexpr float powerFollowerAttackTime { 5e-3f };
+    constexpr float powerFollowerReleaseTime { 200e-3f };
     constexpr uint16_t numCCs { 512 };
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
@@ -72,10 +74,10 @@ namespace config {
      */
     constexpr float stealingAgeCoeff { 0.5f };
     /**
-     * @brief The threshold for envelope stealing.
-     *        In percentage of the sum of all envelopes.
+     * @brief The threshold for power stealing.
+     *        In percentage of the sum of all powers.
      */
-    constexpr float stealingEnvelopeCoeff { 0.5f };
+    constexpr float stealingPowerCoeff { 0.5f };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
     constexpr int oscillatorsPerVoice { 9 };

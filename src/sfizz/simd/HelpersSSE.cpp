@@ -370,7 +370,7 @@ float meanSSE(const float* vector, unsigned size) noexcept
     return result / static_cast<float>(size);
 }
 
-float meanSquaredSSE(const float* vector, unsigned size) noexcept
+float sumSquaresSSE(const float* vector, unsigned size) noexcept
 {
     const auto sentinel = vector + size;
 
@@ -404,7 +404,7 @@ float meanSquaredSSE(const float* vector, unsigned size) noexcept
         vector++;
     }
 
-    return result / static_cast<float>(size);
+    return result;
 }
 
 void cumsumSSE(const float* input, float* output, unsigned size) noexcept
