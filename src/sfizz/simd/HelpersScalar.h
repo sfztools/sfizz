@@ -142,7 +142,7 @@ T meanScalar(const T* vector, unsigned size) noexcept
 }
 
 template <class T>
-T meanSquaredScalar(const T* vector, unsigned size) noexcept
+T sumSquaresScalar(const T* vector, unsigned size) noexcept
 {
     T result{ 0.0 };
     if (size == 0)
@@ -154,7 +154,7 @@ T meanSquaredScalar(const T* vector, unsigned size) noexcept
         vector++;
     }
 
-    return result / static_cast<T>(size);
+    return result;
 }
 
 template <class T>

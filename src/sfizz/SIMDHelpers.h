@@ -57,7 +57,7 @@ enum class SIMDOps {
     diff,
     sfzInterpolationCast,
     mean,
-    meanSquared,
+    sumSquares,
     upsampling,
     clampAll,
     allWithin,
@@ -515,7 +515,7 @@ T mean(absl::Span<const T> vector) noexcept
 }
 
 /**
- * @brief Computes the mean squared of a span
+ * @brief Computes the sum of squares of a span
  *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
@@ -523,13 +523,33 @@ T mean(absl::Span<const T> vector) noexcept
  * @return T
  */
 template <class T>
-T meanSquared(const T* vector, unsigned size) noexcept
+T sumSquares(const T* vector, unsigned size) noexcept
 {
-    meanSquaredScalar(vector, size);
+    return sumSquaresScalar(vector, size);
 }
 
 template <>
-float meanSquared<float>(const float* vector, unsigned size) noexcept;
+float sumSquares<float>(const float* vector, unsigned size) noexcept;
+
+template <class T>
+T sumSquares(absl::Span<const T> vector) noexcept
+{
+    return sumSquares(vector.data(), vector.size());
+}
+
+/**
+ * @brief Computes the mean squared of a span
+ *
+ * @tparam T the underlying type
+ * @param vector
+ * @return T
+ */
+template <class T>
+T meanSquared(const T* vector, unsigned size) noexcept
+{
+    T sum = sumSquares(vector, size);
+    return sum / size;
+}
 
 template <class T>
 T meanSquared(absl::Span<const T> vector) noexcept

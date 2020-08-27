@@ -690,9 +690,9 @@ TEST_CASE("[Helpers] Mean (SIMD vs scalar)")
 TEST_CASE("[Helpers] Mean Squared")
 {
     std::array<float, 10> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f };
-    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::meanSquared, false);
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::sumSquares, false);
     REQUIRE(sfz::meanSquared<float>(input) == 38.5f);
-    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::meanSquared, true);
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::sumSquares, true);
     REQUIRE(sfz::meanSquared<float>(input) == 38.5f);
 }
 
@@ -700,9 +700,9 @@ TEST_CASE("[Helpers] Mean Squared (SIMD vs scalar)")
 {
     std::vector<float> input(medBufferSize);
     absl::c_iota(input, 0.0f);
-    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::meanSquared, false);
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::sumSquares, false);
     auto scalarResult = sfz::meanSquared<float>(input);
-    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::meanSquared, true);
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::sumSquares, true);
     auto simdResult = sfz::meanSquared<float>(input);
     REQUIRE( scalarResult == Approx(simdResult).margin(1e-3) );
 }
