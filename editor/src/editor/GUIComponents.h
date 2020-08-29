@@ -5,8 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+
+#include "utility/vstgui_before.h"
 #include "vstgui/lib/controls/cslider.h"
 #include "vstgui/lib/ccolor.h"
+#include "utility/vstgui_after.h"
 
 using namespace VSTGUI;
 

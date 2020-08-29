@@ -9,7 +9,7 @@ if [[ ${CROSS_COMPILE} == "mingw32" ]]; then
                                   -DENABLE_LTO=OFF \
                                   -DSFIZZ_JACK=OFF \
                                   -DSFIZZ_VST=ON \
-                                  -DSFIZZ_STATIC_LIBSNDFILE=ON \
+                                  -DSFIZZ_STATIC_DEPENDENCIES=ON \
                                   -DCMAKE_CXX_STANDARD=17 \
                                   ..
   buildenv make -j$(nproc)
@@ -18,7 +18,7 @@ elif [[ ${CROSS_COMPILE} == "mingw64" ]]; then
                                     -DENABLE_LTO=OFF \
                                     -DSFIZZ_JACK=OFF \
                                     -DSFIZZ_VST=ON \
-                                    -DSFIZZ_STATIC_LIBSNDFILE=ON \
+                                    -DSFIZZ_STATIC_DEPENDENCIES=ON \
                                     -DCMAKE_CXX_STANDARD=17 \
                                     ..
   buildenv make -j$(nproc)

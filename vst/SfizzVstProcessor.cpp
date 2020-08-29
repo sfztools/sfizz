@@ -289,15 +289,15 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             break;
         case kPidScalaRootKey:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.scalaRootKey = static_cast<int32>(kParamScalaRootKey.denormalize(value));
+                _state.scalaRootKey = static_cast<int32>(kParamScalaRootKeyRange.denormalize(value));
             break;
         case kPidTuningFrequency:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.tuningFrequency = kParamTuningFrequency.denormalize(value);
+                _state.tuningFrequency = kParamTuningFrequencyRange.denormalize(value);
             break;
         case kPidStretchedTuning:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.stretchedTuning = kParamStretchedTuning.denormalize(value);
+                _state.stretchedTuning = kParamStretchedTuningRange.denormalize(value);
             break;
         }
     }

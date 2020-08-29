@@ -17,7 +17,6 @@ set(VSTPLUGIN_SOURCES
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
-    GUIComponents.cpp
     VstPluginFactory.cpp
     X11RunLoop.cpp)
 
@@ -26,7 +25,6 @@ set(VSTPLUGIN_HEADERS
     SfizzVstController.h
     SfizzVstEditor.h
     SfizzVstState.h
-    GUIComponents.h
     X11RunLoop.h)
 
 set(VSTPLUGIN_RESOURCES
@@ -40,7 +38,8 @@ if(WIN32)
     target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
-    PRIVATE ${PROJECT_NAME}::${PROJECT_NAME})
+    PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
+    PRIVATE sfizz_editor)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES

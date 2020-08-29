@@ -17,6 +17,11 @@ if (WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
+# Do not define macros `min` and `max`
+if (WIN32)
+    add_compile_definitions(NOMINMAX)
+endif()
+
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
 # see https://gitlab.kitware.com/cmake/cmake/issues/15170
 
@@ -48,6 +53,7 @@ function(sfizz_enable_fast_math NAME)
     endif()
 endfunction()
 
+# The sndfile library
 add_library(sfizz-sndfile INTERFACE)
 
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -59,11 +65,12 @@ else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(SNDFILE "sndfile" REQUIRED)
     target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
-    if (SFIZZ_STATIC_LIBSNDFILE)
+    if (SFIZZ_STATIC_DEPENDENCIES)
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
     else()
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
     endif()
+    link_directories(${SNDFILE_LIBRARY_DIRS})
 endif()
 
 
@@ -112,12 +119,13 @@ Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
 Build LV2 plug-in:             ${SFIZZ_LV2}
+Build LV2 user interface:      ${SFIZZ_LV2_UI}
 Build VST plug-in:             ${SFIZZ_VST}
 Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
-Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
+Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
 Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
