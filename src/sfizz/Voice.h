@@ -248,6 +248,19 @@ public:
      * @return float
      */
     float getAveragePower() const noexcept;
+
+    /**
+     * @brief Enable the power follower
+     *
+     */
+
+    void enablePowerFollower() noexcept;
+    /**
+     * @brief Disable the power follower
+     *
+     */
+    void disablePowerFollower() noexcept;
+
     /**
      * Returns the region that is currently playing. May be null if the voice is not active!
      *
@@ -519,6 +532,7 @@ private:
     ModMatrix::TargetId oscillatorDetuneTarget;
     ModMatrix::TargetId oscillatorModDepthTarget;
 
+    bool followPower { false };
     PowerFollower powerFollower;
 
     LEAK_DETECTOR(Voice);

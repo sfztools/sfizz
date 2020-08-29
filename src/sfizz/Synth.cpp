@@ -366,12 +366,21 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
+                for (auto& voice : voices)
+                    voice->disablePowerFollower();
+
                 stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::First);
                 break;
             case hash("oldest"):
+                for (auto& voice : voices)
+                    voice->disablePowerFollower();
+
                 stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
                 break;
             case hash("envelope_and_age"):
+                for (auto& voice : voices)
+                    voice->enablePowerFollower();
+
                 stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::EnvelopeAndAge);
                 break;
             default:
