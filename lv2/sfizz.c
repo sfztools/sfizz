@@ -32,6 +32,9 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "sfizz_lv2.h"
+
+#include <lv2/atom/atom.h>
 #include <lv2/atom/forge.h>
 #include <lv2/atom/util.h>
 #include <lv2/buf-size/buf-size.h>
@@ -58,23 +61,11 @@
 
 #include "atomic_compat.h"
 
-#define SFIZZ_URI "http://sfztools.github.io/sfizz"
-#define SFIZZ_PREFIX SFIZZ_URI "#"
-#define SFIZZ__sfzFile SFIZZ_URI ":" "sfzfile"
-#define SFIZZ__tuningfile SFIZZ_URI ":" "tuningfile"
-#define SFIZZ__numVoices SFIZZ_URI ":" "numvoices"
-#define SFIZZ__preloadSize SFIZZ_URI ":" "preload_size"
-#define SFIZZ__oversampling SFIZZ_URI ":" "oversampling"
-// These ones are just for the worker
-#define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
-#define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
-
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
 #define MIDI_STATUS(byte) (byte & ~CHANNEL_MASK)
 #define PITCH_BUILD_AND_CENTER(first_byte, last_byte) (int)(((unsigned int)last_byte << 7) + (unsigned int)first_byte) - 8192
 #define MAX_BLOCK_SIZE 8192
-#define MAX_PATH_SIZE 1024
 #define MAX_VOICES 256
 #define DEFAULT_VOICES 64
 #define DEFAULT_OVERSAMPLING SFIZZ_OVERSAMPLING_X1
@@ -82,8 +73,8 @@
 #define LOG_SAMPLE_COUNT 48000
 #define UNUSED(x) (void)(x)
 
-#define DEFAULT_SCALA_FILE  "Resources/DefaultScale.scl"
-#define DEFAULT_SFZ_FILE    "Resources/DefaultInstrument.sfz"
+#define DEFAULT_SCALA_FILE  "Contents/Resources/DefaultScale.scl"
+#define DEFAULT_SFZ_FILE    "Contents/Resources/DefaultInstrument.sfz"
 // This assumes that the longest path is the default sfz file; if not, change it
 #define MAX_BUNDLE_PATH_SIZE (MAX_PATH_SIZE - sizeof(DEFAULT_SFZ_FILE))
 
@@ -115,6 +106,11 @@ typedef struct
     const float *tuning_frequency_port;
     const float *stretch_tuning_port;
     float *active_voices_port;
+    float *num_curves_port;
+    float *num_masters_port;
+    float *num_groups_port;
+    float *num_regions_port;
+    float *num_samples_port;
 
     // Atom forge
     LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
@@ -186,23 +182,6 @@ typedef struct
     // Paths
     char bundle_path[MAX_BUNDLE_PATH_SIZE];
 } sfizz_plugin_t;
-
-enum
-{
-    SFIZZ_CONTROL = 0,
-    SFIZZ_NOTIFY = 1,
-    SFIZZ_LEFT = 2,
-    SFIZZ_RIGHT = 3,
-    SFIZZ_VOLUME = 4,
-    SFIZZ_POLYPHONY = 5,
-    SFIZZ_OVERSAMPLING = 6,
-    SFIZZ_PRELOAD = 7,
-    SFIZZ_FREEWHEELING = 8,
-    SFIZZ_SCALA_ROOT_KEY = 9,
-    SFIZZ_TUNING_FREQUENCY = 10,
-    SFIZZ_STRETCH_TUNING = 11,
-    SFIZZ_ACTIVE_VOICES = 12,
-};
 
 enum
 {
@@ -368,6 +347,21 @@ connect_port(LV2_Handle instance,
         break;
     case SFIZZ_ACTIVE_VOICES:
         self->active_voices_port = (float *)data;
+        break;
+    case SFIZZ_NUM_CURVES:
+        self->num_curves_port = (float *)data;
+        break;
+    case SFIZZ_NUM_MASTERS:
+        self->num_masters_port = (float *)data;
+        break;
+    case SFIZZ_NUM_GROUPS:
+        self->num_groups_port = (float *)data;
+        break;
+    case SFIZZ_NUM_REGIONS:
+        self->num_regions_port = (float *)data;
+        break;
+    case SFIZZ_NUM_SAMPLES:
+        self->num_samples_port = (float *)data;
         break;
     default:
         break;
@@ -977,6 +971,11 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_lv2_check_oversampling(self);
     sfizz_lv2_check_num_voices(self);
     *(self->active_voices_port) = sfizz_get_num_active_voices(self->synth);
+    *(self->num_curves_port) = sfizz_get_num_curves(self->synth);
+    *(self->num_masters_port) = sfizz_get_num_masters(self->synth);
+    *(self->num_groups_port) = sfizz_get_num_groups(self->synth);
+    *(self->num_regions_port) = sfizz_get_num_regions(self->synth);
+    *(self->num_samples_port) = sfizz_get_num_preloaded_samples(self->synth);
 
     // Log the buffer usage
     self->sample_counter += (int)sample_count;

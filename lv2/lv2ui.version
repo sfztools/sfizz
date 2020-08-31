@@ -1,0 +1,4 @@
+LV2UIABI_1.0 {
+    global: *lv2ui_descriptor*;
+    local: *;
+};

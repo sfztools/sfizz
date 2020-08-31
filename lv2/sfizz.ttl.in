@@ -13,6 +13,7 @@
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix state:   <http://lv2plug.in/ns/ext/state#> .
 @prefix time:    <http://lv2plug.in/ns/ext/time#> .
+@prefix ui:      <http://lv2plug.in/ns/extensions/ui#> .
 @prefix units:   <http://lv2plug.in/ns/extensions/units#> .
 @prefix urid:    <http://lv2plug.in/ns/ext/urid#> .
 @prefix work:    <http://lv2plug.in/ns/ext/worker#> .
@@ -82,6 +83,8 @@ midnam:update a lv2:Feature .
 
   opts:supportedOption param:sampleRate ;
   opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
+
+  @LV2PLUGIN_IF_ENABLE_UI@ui:ui <@LV2PLUGIN_URI@#ui> ;
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
                  <@LV2PLUGIN_URI@:tuningfile> ;
@@ -310,4 +313,70 @@ midnam:update a lv2:Feature .
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 256 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 12 ;
+    lv2:symbol "active_voices" ;
+    lv2:name "Active voices",
+      "Voix utilisées"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 256 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 13 ;
+    lv2:symbol "num_curves" ;
+    lv2:name "Number of curves",
+      "Nombre de courbes"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 14 ;
+    lv2:symbol "num_masters" ;
+    lv2:name "Number of masters",
+      "Nombre de maîtres"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 15 ;
+    lv2:symbol "num_groups" ;
+    lv2:name "Number of groups",
+      "Nombre de groupes"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 16 ;
+    lv2:symbol "num_regions" ;
+    lv2:name "Number of regions",
+      "Nombre de regions"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 17 ;
+    lv2:symbol "num_samples" ;
+    lv2:name "Number of samples",
+      "Nombre d'échantillons"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
   ] .

@@ -27,9 +27,6 @@ set(VSTPLUGIN_HEADERS
     SfizzVstState.h
     X11RunLoop.h)
 
-set(VSTPLUGIN_RESOURCES
-    logo.png)
-
 add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     ${VSTPLUGIN_HEADERS}
     ${VSTPLUGIN_SOURCES})
@@ -71,8 +68,8 @@ endif()
 # Create the bundle (see "VST 3 Locations / Format")
 execute_process (
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
-foreach(res ${VSTPLUGIN_RESOURCES})
-    file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources/${res}"
+foreach(res ${EDITOR_RESOURCES})
+    file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources/${res}"
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 endforeach()
 if(WIN32)

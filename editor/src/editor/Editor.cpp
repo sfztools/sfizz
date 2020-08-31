@@ -288,7 +288,7 @@ void Editor::Impl::createFrameContents()
 
     view->setBackgroundColor(CColor(0xff, 0xff, 0xff));
 
-    SharedPointer<CBitmap> logo = new CBitmap("logo.png");
+    SharedPointer<CBitmap> logo { new CBitmap("logo.png") };
 
     CRect bottomRow = bounds;
     bottomRow.top = bottomRow.bottom - 30;

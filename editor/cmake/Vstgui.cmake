@@ -207,3 +207,14 @@ endif()
 if(${CMAKE_BUILD_TYPE} MATCHES "Release")
     target_compile_definitions(sfizz-vstgui PRIVATE "RELEASE")
 endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(sfizz-vstgui PRIVATE
+        "-Wno-deprecated-copy"
+        "-Wno-ignored-qualifiers"
+        "-Wno-reorder"
+        "-Wno-sign-compare"
+        "-Wno-unused-function"
+        "-Wno-unused-parameter"
+        "-Wno-unused-variable")
+endif()
