@@ -54,6 +54,9 @@
 #include "editor/utility/vstgui_before.h"
 #include "vstgui/lib/cframe.h"
 #include "vstgui/lib/platform/iplatformframe.h"
+#if defined(_WIN32)
+#include "vstgui/lib/platform/platform_win32.h"
+#endif
 #include "editor/utility/vstgui_after.h"
 using namespace VSTGUI;
 
