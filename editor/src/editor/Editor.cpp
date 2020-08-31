@@ -282,7 +282,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 
 void Editor::Impl::createFrameContents()
 {
-    const CRect bounds { 0.0, 0.0, viewWidth, viewHeight };
+    const CRect bounds { 0.0, 0.0, static_cast<CCoord>(viewWidth), static_cast<CCoord>(viewHeight) };
     CViewContainer* view = new CViewContainer(bounds);
     view_ = view;
 
