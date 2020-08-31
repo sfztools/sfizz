@@ -5,11 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "EditValue.h"
 #include <absl/strings/string_view.h>
-#include <absl/types/variant.h>
+#include <string>
 #include <cstdint>
 enum class EditId : int;
-typedef absl::variant<float, std::string> EditValue;
 
 class EditorController {
 public:

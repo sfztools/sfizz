@@ -410,31 +410,31 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
 
     switch (id) {
     case EditId::Volume:
-        sendFloat(SFIZZ_VOLUME, absl::get<float>(v));
+        sendFloat(SFIZZ_VOLUME, v.to_float());
         break;
     case EditId::Polyphony:
-        sendFloat(SFIZZ_POLYPHONY, absl::get<float>(v));
+        sendFloat(SFIZZ_POLYPHONY, v.to_float());
         break;
     case EditId::Oversampling:
-        sendFloat(SFIZZ_OVERSAMPLING, absl::get<float>(v));
+        sendFloat(SFIZZ_OVERSAMPLING, v.to_float());
         break;
     case EditId::PreloadSize:
-        sendFloat(SFIZZ_PRELOAD, absl::get<float>(v));
+        sendFloat(SFIZZ_PRELOAD, v.to_float());
         break;
     case EditId::ScalaRootKey:
-        sendFloat(SFIZZ_SCALA_ROOT_KEY, absl::get<float>(v));
+        sendFloat(SFIZZ_SCALA_ROOT_KEY, v.to_float());
         break;
     case EditId::TuningFrequency:
-        sendFloat(SFIZZ_TUNING_FREQUENCY, absl::get<float>(v));
+        sendFloat(SFIZZ_TUNING_FREQUENCY, v.to_float());
         break;
     case EditId::StretchTuning:
-        sendFloat(SFIZZ_STRETCH_TUNING, absl::get<float>(v));
+        sendFloat(SFIZZ_STRETCH_TUNING, v.to_float());
         break;
     case EditId::SfzFile:
-        sendPath(sfizz_sfz_file_uri, absl::get<std::string>(v));
+        sendPath(sfizz_sfz_file_uri, v.to_string());
         break;
     case EditId::ScalaFile:
-        sendPath(sfizz_scala_file_uri, absl::get<std::string>(v));
+        sendPath(sfizz_scala_file_uri, v.to_string());
         break;
     default:
         break;

@@ -18,4 +18,4 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/utility/vstgui_before.h)
 target_include_directories(sfizz_editor PUBLIC "src")
 target_link_libraries(sfizz_editor PRIVATE sfizz-vstgui)
-target_link_libraries(sfizz_editor PUBLIC absl::strings absl::variant)
+target_link_libraries(sfizz_editor PUBLIC absl::strings)

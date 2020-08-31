@@ -158,13 +158,13 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     switch (id) {
     case EditId::SfzFile:
         {
-            const std::string& value = absl::get<std::string>(v);
+            const std::string& value = v.to_string();
             updateSfzFileLabel(value);
         }
         break;
     case EditId::Volume:
         {
-            const float value = absl::get<float>(v);
+            const float value = v.to_float();
             if (volumeSlider_)
                 volumeSlider_->setValue(value);
             updateVolumeLabel(value);
@@ -172,7 +172,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::Polyphony:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (numVoicesSlider_)
                 numVoicesSlider_->setValue(value);
             updateNumVoicesLabel(value);
@@ -180,7 +180,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::Oversampling:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
 
             int log2Value = 0;
             for (int f = value; f > 1; f /= 2)
@@ -193,7 +193,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::PreloadSize:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (preloadSizeSlider_)
                 preloadSizeSlider_->setValue(value);
             updatePreloadSizeLabel(value);
@@ -201,13 +201,13 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::ScalaFile:
         {
-            const std::string& value = absl::get<std::string>(v);
+            const std::string& value = v.to_string();
             updateScalaFileLabel(value);
         }
         break;
     case EditId::ScalaRootKey:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (scalaRootKeySlider_)
                 scalaRootKeySlider_->setValue(value);
             updateScalaRootKeyLabel(value);
@@ -215,7 +215,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::TuningFrequency:
         {
-            const float value = absl::get<float>(v);
+            const float value = v.to_float();
             if (tuningFrequencySlider_)
                 tuningFrequencySlider_->setValue(value);
             updateTuningFrequencyLabel(value);
@@ -223,7 +223,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::StretchTuning:
         {
-            const float value = absl::get<float>(v);
+            const float value = v.to_float();
             if (stretchedTuningSlider_)
                 stretchedTuningSlider_->setValue(value);
             updateStretchedTuningLabel(value);
@@ -231,49 +231,49 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::UINumCurves:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (CTextLabel* label = infoCurvesLabel_)
                 formatLabel(label, "%u", value);
         }
         break;
     case EditId::UINumMasters:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (CTextLabel* label = infoMastersLabel_)
                 formatLabel(label, "%u", value);
         }
         break;
     case EditId::UINumGroups:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (CTextLabel* label = infoGroupsLabel_)
                 formatLabel(label, "%u", value);
         }
         break;
     case EditId::UINumRegions:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (CTextLabel* label = infoRegionsLabel_)
                 formatLabel(label, "%u", value);
         }
         break;
     case EditId::UINumPreloadedSamples:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (CTextLabel* label = infoSamplesLabel_)
                 formatLabel(label, "%u", value);
         }
         break;
     case EditId::UINumActiveVoices:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             if (CTextLabel* label = infoVoicesLabel_)
                 formatLabel(label, "%u", value);
         }
         break;
     case EditId::UIActivePanel:
         {
-            const int value = static_cast<int>(absl::get<float>(v));
+            const int value = static_cast<int>(v.to_float());
             setActivePanel(value);
         }
         break;

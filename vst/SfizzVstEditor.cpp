@@ -109,9 +109,9 @@ void SfizzVstEditor::onStateChanged()
 void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
 {
     if (id == EditId::SfzFile)
-        loadSfzFile(absl::get<std::string>(v));
+        loadSfzFile(v.to_string());
     else if (id == EditId::ScalaFile)
-        loadScalaFile(absl::get<std::string>(v));
+        loadScalaFile(v.to_string());
     else {
         SfizzVstController* ctrl = getController();
 
@@ -123,14 +123,14 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
 
         switch (id) {
         case EditId::Volume:
-            normalizeAndSet(kPidVolume, kParamVolumeRange, absl::get<float>(v));
+            normalizeAndSet(kPidVolume, kParamVolumeRange, v.to_float());
             break;
         case EditId::Polyphony:
-            normalizeAndSet(kPidNumVoices, kParamNumVoicesRange, absl::get<float>(v));
+            normalizeAndSet(kPidNumVoices, kParamNumVoicesRange, v.to_float());
             break;
         case EditId::Oversampling:
             {
-                const int32 value = static_cast<int32>(absl::get<float>(v));
+                const int32 value = static_cast<int32>(v.to_float());
 
                 int32 log2Value = 0;
                 for (int32 f = value; f > 1; f /= 2)
@@ -140,20 +140,20 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             }
             break;
         case EditId::PreloadSize:
-            normalizeAndSet(kPidPreloadSize, kParamPreloadSizeRange, absl::get<float>(v));
+            normalizeAndSet(kPidPreloadSize, kParamPreloadSizeRange, v.to_float());
             break;
         case EditId::ScalaRootKey:
-            normalizeAndSet(kPidScalaRootKey, kParamScalaRootKeyRange, absl::get<float>(v));
+            normalizeAndSet(kPidScalaRootKey, kParamScalaRootKeyRange, v.to_float());
             break;
         case EditId::TuningFrequency:
-            normalizeAndSet(kPidTuningFrequency, kParamTuningFrequencyRange, absl::get<float>(v));
+            normalizeAndSet(kPidTuningFrequency, kParamTuningFrequencyRange, v.to_float());
             break;
         case EditId::StretchTuning:
-            normalizeAndSet(kPidStretchedTuning, kParamStretchedTuningRange, absl::get<float>(v));
+            normalizeAndSet(kPidStretchedTuning, kParamStretchedTuningRange, v.to_float());
             break;
 
         case EditId::UIActivePanel:
-            ctrl->getSfizzUiState().activePanel = static_cast<int32>(absl::get<float>(v));
+            ctrl->getSfizzUiState().activePanel = static_cast<int32>(v.to_float());
             break;
 
         default:
