@@ -39,7 +39,7 @@ midnam:update a lv2:Feature .
   a pg:Group ;
   lv2:symbol "status" ;
   lv2:name "status",
-    "Status"@fr .
+    "Statut"@fr .
 
 <@LV2PLUGIN_URI@:sfzfile>
   a lv2:Parameter ;
@@ -93,7 +93,8 @@ midnam:update a lv2:Feature .
     lv2:designation lv2:control ;
     lv2:index 0 ;
     lv2:symbol "control" ;
-    lv2:name "Control"
+    lv2:name "Control",
+      "Contrôle"@fr ;
   ] , [
     a lv2:OutputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
@@ -101,7 +102,8 @@ midnam:update a lv2:Feature .
     lv2:designation lv2:control ;
     lv2:index 1 ;
     lv2:symbol "notify" ;
-    lv2:name "Notify" ;
+    lv2:name "Notify",
+      "Notification"@fr ;
   ] , [
     a lv2:AudioPort, lv2:OutputPort ;
     lv2:index 2 ;
