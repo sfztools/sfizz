@@ -172,9 +172,9 @@ instantiate(const LV2UI_Descriptor *descriptor,
     //     name, and appending "Contents/Resources" (not overridable)
     // * on Windows, the folder is set programmatically
     // * on macOS, resource files are looked up using CFBundle APIs
-#if _WIN32
+#if defined(_WIN32)
     IWin32PlatformFrame::setResourceBasePath((std::string(bundle_path) + "\\Contents\\Resources\\").c_str());
-#elif __APPLE__
+#elif defined(__APPLE__)
     #pragma message("TODO: make resources work on macOS using bundles")
 #endif
 
