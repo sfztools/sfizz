@@ -33,4 +33,5 @@ clang-tidy \
   -- -Iexternal/abseil-cpp -Isrc/external -Isrc/external/pugixml/src \
       -Isrc/sfizz -Isrc -Isrc/external/spline -Isrc/external/cpuid/src \
       -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -Ivst/external/ring_buffer \
+      -Ieditor/src \
       -DNDEBUG -std=c++17
