@@ -315,6 +315,8 @@ idle(LV2UI_Handle ui)
 
 #if LINUX
    self->runLoop->execIdle();
+#else
+   (void)self;
 #endif
 
     return 0;
