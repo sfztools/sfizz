@@ -29,6 +29,7 @@ build_script:
 
 after_build:
 - cmd: cp sfizz.lv2/Release/sfizz.dll sfizz.lv2/
+- cmd: cp sfizz.lv2/Release/sfizz_ui.dll sfizz.lv2/
 - cmd: rm -rf sfizz.lv2/Release
 - cmd: if %platform%==Win32 set RELEASE_ARCH=x86
 - cmd: if %platform%==x64   set RELEASE_ARCH=x64
