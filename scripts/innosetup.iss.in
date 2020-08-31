@@ -49,6 +49,7 @@ Name: "vst3"; Description: "VST3 plugin"; Types: full custom;
 
 [Files]
 Source: "sfizz.lv2\sfizz.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"; Flags: ignoreversion
+Source: "sfizz.lv2\sfizz_ui.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"; Flags: ignoreversion
 Source: "sfizz.lv2\manifest.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\sfizz.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\lgpl-3.0.txt"; Components: main; DestDir: "{app}"
