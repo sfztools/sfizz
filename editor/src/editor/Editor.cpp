@@ -909,7 +909,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
         break;
 
     case kTagSetOversampling:
-        ctrl.uiSendValue(EditId::Oversampling, 1 << static_cast<int>(value));
+        ctrl.uiSendValue(EditId::Oversampling, static_cast<float>(1 << static_cast<int>(value)));
         updateOversamplingLabel(static_cast<int>(value));
         break;
 
@@ -936,7 +936,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
     default:
         if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel) {
             int panelId = tag - kTagFirstChangePanel;
-            ctrl.uiSendValue(EditId::UIActivePanel, panelId);
+            ctrl.uiSendValue(EditId::UIActivePanel, static_cast<float>(panelId));
             setActivePanel(panelId);
         }
         break;
