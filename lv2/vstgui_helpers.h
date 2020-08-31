@@ -66,3 +66,10 @@ namespace VSTGUI
 void initializeSoHandle();
 }
 #endif
+
+#if MAC
+namespace VSTGUI
+{
+void initializeBundleRef();
+}
+#endif

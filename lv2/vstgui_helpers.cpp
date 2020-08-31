@@ -18,6 +18,9 @@
 #if WINDOWS
 #include <windows.h>
 #endif
+#if MAC
+#include "vstgui/plugin-bindings/getpluginbundle.h"
+#endif
 
 #if LINUX
 void Lv2IdleRunLoop::execIdle()
@@ -182,5 +185,40 @@ BOOL WINAPI DllMain(HINSTANCE dllInstance, DWORD reason, LPVOID)
     if (reason == DLL_PROCESS_ATTACH)
         hInstance = dllInstance;
     return TRUE;
+}
+#endif
+
+///
+#if MAC
+namespace VSTGUI
+{
+void* gBundleRef = nullptr;
+
+static volatile bool gBundleRefInitialized = false;
+static std::mutex gBundleRefMutex;
+
+struct CFBundle_deleter {
+    void operator()(CFBundleRef x) const noexcept
+    {
+        CFRelease(x);
+    }
+};
+static std::unique_ptr<__CFBundle, CFBundle_deleter> gBundleRefPointer;
+} // namespace VSTGUI
+
+void VSTGUI::initializeBundleRef()
+{
+   if (VSTGUI::gBundleRefInitialized)
+      return;
+
+   std::lock_guard<std::mutex> lock(VSTGUI::gBundleRefMutex);
+   if (VSTGUI::gBundleRefInitialized)
+      return;
+
+   CFBundleRef bundleRef = GetPluginBundle();
+   VSTGUI::gBundleRef = bundleRef;
+   VSTGUI::gBundleRefPointer.reset(bundleRef);
+
+   VSTGUI::gBundleRefInitialized = true;
 }
 #endif

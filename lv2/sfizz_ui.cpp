@@ -374,6 +374,9 @@ lv2ui_descriptor(uint32_t index)
 #if LINUX
    VSTGUI::initializeSoHandle();
 #endif
+#if MAC
+   VSTGUI::initializeBundleRef();
+#endif
 
     switch (index)
     {
