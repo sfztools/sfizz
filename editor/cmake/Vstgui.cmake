@@ -208,12 +208,21 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Release")
     target_compile_definitions(sfizz-vstgui PRIVATE "RELEASE")
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # higher C++ requirement on Windows
+    set_property(TARGET sfizz-vstgui PROPERTY CXX_STANDARD 14)
+endif()
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(sfizz-vstgui PRIVATE
         "-Wno-deprecated-copy"
+        "-Wno-deprecated-declarations"
+        "-Wno-extra"
         "-Wno-ignored-qualifiers"
+        "-Wno-multichar"
         "-Wno-reorder"
         "-Wno-sign-compare"
+        "-Wno-unknown-pragmas"
         "-Wno-unused-function"
         "-Wno-unused-parameter"
         "-Wno-unused-variable")
