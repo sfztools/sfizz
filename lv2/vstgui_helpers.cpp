@@ -15,6 +15,9 @@
 #include <dlfcn.h>
 #include <poll.h>
 #endif
+#if WINDOWS
+#include <windows.h>
+#endif
 
 #if LINUX
 void Lv2IdleRunLoop::execIdle()
@@ -166,5 +169,18 @@ void VSTGUI::initializeSoHandle()
       VSTGUI::soHandlePointer.reset(VSTGUI::soHandle);
    }
    VSTGUI::soHandleInitialized = true;
+}
+#endif
+
+///
+#if WINDOWS
+void* hInstance = nullptr;
+
+__declspec(dllexport)
+BOOL WINAPI DllMain(HINSTANCE dllInstance, DWORD reason, LPVOID)
+{
+    if (reason == DLL_PROCESS_ATTACH)
+        hInstance = dllInstance;
+    return TRUE;
 }
 #endif
