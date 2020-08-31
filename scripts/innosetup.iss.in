@@ -48,10 +48,14 @@ Name: "lv2"; Description: "LV2 plugin"; Types: full custom;
 Name: "vst3"; Description: "VST3 plugin"; Types: full custom;
 
 [Files]
-Source: "sfizz.lv2\sfizz.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"; Flags: ignoreversion
-Source: "sfizz.lv2\sfizz_ui.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"; Flags: ignoreversion
+Source: "sfizz.lv2\Contents\Binary\sfizz.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2\Contents\Binary"; Flags: ignoreversion
+Source: "sfizz.lv2\Contents\Binary\sfizz_ui.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2\Contents\Binary"; Flags: ignoreversion
+Source: "sfizz.lv2\Contents\Resources\DefaultInstrument.sfz"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2\Contents\Resources"
+Source: "sfizz.lv2\Contents\Resources\DefaultScale.scl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2\Contents\Resources"
+Source: "sfizz.lv2\Contents\Resources\logo.png"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2\Contents\Resources"
 Source: "sfizz.lv2\manifest.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\sfizz.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
+Source: "sfizz.lv2\sfizz_ui.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\lgpl-3.0.txt"; Components: main; DestDir: "{app}"
 Source: "sfizz.lv2\LICENSE.md"; Components: main; DestDir: "{app}"
 Source: "sfizz.vst3\desktop.ini"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
