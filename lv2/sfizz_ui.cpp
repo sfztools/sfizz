@@ -174,8 +174,6 @@ instantiate(const LV2UI_Descriptor *descriptor,
     // * on macOS, resource files are looked up using CFBundle APIs
 #if defined(_WIN32)
     IWin32PlatformFrame::setResourceBasePath((std::string(bundle_path) + "\\Contents\\Resources\\").c_str());
-#elif defined(__APPLE__)
-    #pragma message("TODO: make resources work on macOS using bundles")
 #endif
 
     // makes labels refresh correctly
