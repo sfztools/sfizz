@@ -62,12 +62,12 @@ endif()
 # <build_dir>/lv2/<plugin_name>.lv2/<plugin_name>.<ext>
 set_target_properties (${LV2PLUGIN_PRJ_NAME} PROPERTIES PREFIX "")
 set_target_properties (${LV2PLUGIN_PRJ_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
-set_target_properties (${LV2PLUGIN_PRJ_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Contents/Binary")
+set_target_properties (${LV2PLUGIN_PRJ_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Contents/Binary/$<0:>")
 
 if (SFIZZ_LV2_UI)
     set_target_properties (${LV2PLUGIN_PRJ_NAME}_ui PROPERTIES PREFIX "")
     set_target_properties (${LV2PLUGIN_PRJ_NAME}_ui PROPERTIES OUTPUT_NAME "${PROJECT_NAME}_ui")
-    set_target_properties (${LV2PLUGIN_PRJ_NAME}_ui PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Contents/Binary")
+    set_target_properties (${LV2PLUGIN_PRJ_NAME}_ui PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Contents/Binary/$<0:>")
 endif()
 
 # Generate *.ttl files from *.in sources,
