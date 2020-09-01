@@ -32,7 +32,6 @@ endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
-    add_compile_options(-ffast-math)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
     if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
         add_compile_options(-msse2)
@@ -42,6 +41,12 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_compile_options(/Zc:__cplusplus)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
+
+function(sfizz_enable_fast_math NAME)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options("${NAME}" PRIVATE "-ffast-math")
+    endif()
+endfunction()
 
 add_library(sfizz-sndfile INTERFACE)
 
