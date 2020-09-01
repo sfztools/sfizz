@@ -217,6 +217,7 @@ endif()
 if (SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions (sfizz_static PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
+sfizz_enable_fast_math(sfizz_static)
 
 if (NOT MSVC)
     install (TARGETS sfizz_static
@@ -257,6 +258,7 @@ if (SFIZZ_SHARED)
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
     set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz)
     sfizz_enable_lto_if_needed(sfizz_shared)
+    sfizz_enable_fast_math(sfizz_shared)
 
     if (NOT MSVC)
         install (TARGETS sfizz_shared

@@ -32,6 +32,7 @@ macro(sfizz_add_benchmark TARGET)
         target_link_libraries ("${TARGET}" PRIVATE atomic)
     endif()
 	target_include_directories("${TARGET}" PRIVATE ../src/sfizz ../src/external)
+	sfizz_enable_fast_math("${TARGET}")
 endmacro()
 
 sfizz_add_benchmark(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
