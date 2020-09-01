@@ -40,8 +40,26 @@ jobs:
     install: .travis/download_cmake.sh
     script: .travis/script_test.sh
 
-  - name: "Windows mingw32"
+  - name: "macOS"
     stage: "Build"
+    os: osx
+    env:
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    install: .travis/install_osx.sh
+    script: .travis/script_osx.sh
+    after_success: .travis/prepare_osx.sh
+
+  - name: "MOD devices arm"
+    env:
+    - CONTAINER=jpcima/mod-plugin-builder
+    - CROSS_COMPILE=moddevices-arm
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
+    before_install: .travis/before_install_moddevices.sh
+    install: .travis/install_moddevices.sh
+    script: .travis/script_moddevices.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Windows mingw32"
     env:
     - CROSS_COMPILE=mingw32
     - CONTAINER=archlinux
@@ -125,25 +143,6 @@ jobs:
     - .travis/download_cmake.sh
     - .travis/download_static_libs.sh
     script: .travis/script_plugins.sh
-    after_success: .travis/prepare_tarball.sh
-
-  - name: "macOS"
-    os: osx
-    env:
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    install: .travis/install_osx.sh
-    script: .travis/script_osx.sh
-    after_success: .travis/prepare_osx.sh
-
-  - name: "MOD devices arm"
-    stage: "Build"
-    env:
-    - CONTAINER=jpcima/mod-plugin-builder
-    - CROSS_COMPILE=moddevices-arm
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
-    before_install: .travis/before_install_moddevices.sh
-    install: .travis/install_moddevices.sh
-    script: .travis/script_moddevices.sh
     after_success: .travis/prepare_tarball.sh
 
   - stage: "Deploy"
