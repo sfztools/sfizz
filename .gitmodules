@@ -1,6 +1,6 @@
 [submodule "external/abseil-cpp"]
 	path = external/abseil-cpp
-	url = https://github.com/abseil/abseil-cpp
+	url = https://github.com/abseil/abseil-cpp.git
 	branch = lts_2020_02_25
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/base"]
