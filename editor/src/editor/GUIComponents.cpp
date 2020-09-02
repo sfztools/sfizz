@@ -28,6 +28,8 @@ void SimpleSlider::draw(CDrawContext* dc)
     CRect bounds = getViewSize();
     CRect handle = calculateHandleRect(getValueNormalized());
 
+    dc->setDrawMode(kAntiAliasing);
+
     dc->setFrameColor(_frame);
     dc->drawRect(bounds, kDrawStroked);
 
