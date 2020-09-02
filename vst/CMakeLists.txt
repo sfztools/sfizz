@@ -68,10 +68,9 @@ endif()
 # Create the bundle (see "VST 3 Locations / Format")
 execute_process (
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
-foreach(res ${EDITOR_RESOURCES})
-    file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources/${res}"
-        DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
-endforeach()
+copy_editor_resources(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
+    "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 if(WIN32)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         SUFFIX ".vst3"

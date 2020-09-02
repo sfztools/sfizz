@@ -211,6 +211,8 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # higher C++ requirement on Windows
     set_property(TARGET sfizz-vstgui PROPERTY CXX_STANDARD 14)
+    # Windows 10 RS2 DDI for custom fonts
+    target_compile_definitions(sfizz-vstgui PRIVATE "NTDDI_VERSION=0x0A000003")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

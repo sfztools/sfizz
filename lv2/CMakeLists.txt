@@ -98,10 +98,9 @@ endforeach()
 if (SFIZZ_LV2_UI)
     execute_process (
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/Contents/Resources")
-    foreach(res ${EDITOR_RESOURCES})
-        file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources/${res}"
-            DESTINATION "${PROJECT_BINARY_DIR}/Contents/Resources")
-    endforeach()
+    copy_editor_resources(
+        "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
+        "${PROJECT_BINARY_DIR}/Contents/Resources")
 endif()
 
 # Installation

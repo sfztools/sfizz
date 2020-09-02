@@ -8,7 +8,10 @@
 #include "EditorController.h"
 #include "EditIds.h"
 #include "GUIComponents.h"
+#include "NativeHelpers.h"
 #include <absl/strings/string_view.h>
+#include <absl/strings/match.h>
+#include <array>
 #include <cstdarg>
 #include <cstdio>
 
@@ -18,19 +21,20 @@
 
 using namespace VSTGUI;
 
-const int Editor::viewWidth { 482 };
-const int Editor::viewHeight { 225 };
+const int Editor::viewWidth { 800 };
+const int Editor::viewHeight { 475 };
 
 struct Editor::Impl : EditorController::Receiver, IControlListener {
     EditorController* ctrl_ = nullptr;
     CFrame* frame_ = nullptr;
-    SharedPointer<CViewContainer> view_;
+    SharedPointer<CViewContainer> mainView_;
+
+    std::string currentSfzFile_;
 
     enum {
         kPanelGeneral,
-        // kPanelControls,
+        kPanelControls,
         kPanelSettings,
-        kPanelTuning,
         kPanelInfo,
         kNumPanels,
     };
@@ -40,6 +44,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     enum {
         kTagLoadSfzFile,
+        kTagEditSfzFile,
         kTagSetVolume,
         kTagSetNumVoices,
         kTagSetOversampling,
@@ -54,19 +59,21 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     CTextLabel* sfzFileLabel_ = nullptr;
     CTextLabel* scalaFileLabel_ = nullptr;
-    CSliderBase *volumeSlider_ = nullptr;
+    CTextButton* scalaFileButton_ = nullptr;
+    CControl *volumeSlider_ = nullptr;
     CTextLabel* volumeLabel_ = nullptr;
-    CSliderBase *numVoicesSlider_ = nullptr;
+    SValueMenu *numVoicesSlider_ = nullptr;
     CTextLabel* numVoicesLabel_ = nullptr;
-    CSliderBase *oversamplingSlider_ = nullptr;
+    SValueMenu *oversamplingSlider_ = nullptr;
     CTextLabel* oversamplingLabel_ = nullptr;
-    CSliderBase *preloadSizeSlider_ = nullptr;
+    SValueMenu *preloadSizeSlider_ = nullptr;
     CTextLabel* preloadSizeLabel_ = nullptr;
-    CSliderBase *scalaRootKeySlider_ = nullptr;
+    SValueMenu *scalaRootKeySlider_ = nullptr;
+    SValueMenu *scalaRootOctaveSlider_ = nullptr;
     CTextLabel* scalaRootKeyLabel_ = nullptr;
-    CSliderBase *tuningFrequencySlider_ = nullptr;
+    SValueMenu *tuningFrequencySlider_ = nullptr;
     CTextLabel* tuningFrequencyLabel_ = nullptr;
-    CSliderBase *stretchedTuningSlider_ = nullptr;
+    CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
 
     CTextLabel* infoCurvesLabel_ = nullptr;
@@ -75,6 +82,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* infoRegionsLabel_ = nullptr;
     CTextLabel* infoSamplesLabel_ = nullptr;
     CTextLabel* infoVoicesLabel_ = nullptr;
+
+    CTextLabel* memoryLabel_ = nullptr;
 
     void uiReceiveValue(EditId id, const EditValue& v) override;
 
@@ -90,11 +99,16 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     }
 
     void chooseSfzFile();
+    void changeSfzFile(const std::string& filePath);
     void chooseScalaFile();
+    void changeScalaFile(const std::string& filePath);
+
+    static absl::string_view simplifiedFileName(absl::string_view path, absl::string_view removedSuffix, absl::string_view ifEmpty);
 
     void updateSfzFileLabel(const std::string& filePath);
     void updateScalaFileLabel(const std::string& filePath);
-    static void updateLabelWithFileName(CTextLabel* label, const std::string& filePath);
+    static void updateLabelWithFileName(CTextLabel* label, const std::string& filePath, absl::string_view removedSuffix);
+    static void updateButtonWithFileName(CTextButton* button, const std::string& filePath, absl::string_view removedSuffix);
     void updateVolumeLabel(float volume);
     void updateNumVoicesLabel(int numVoices);
     void updateOversamplingLabel(int oversamplingLog2);
@@ -142,7 +156,7 @@ void Editor::open(CFrame& frame)
     Impl& impl = *impl_;
 
     impl.frame_ = &frame;
-    frame.addView(impl.view_.get());
+    frame.addView(impl.mainView_.get());
 }
 
 void Editor::close()
@@ -150,7 +164,7 @@ void Editor::close()
     Impl& impl = *impl_;
 
     if (impl.frame_) {
-        impl.frame_->removeView(impl.view_.get(), false);
+        impl.frame_->removeView(impl.mainView_.get(), false);
         impl.frame_ = nullptr;
     }
 }
@@ -161,22 +175,27 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::SfzFile:
         {
             const std::string& value = v.to_string();
+            currentSfzFile_ = value;
             updateSfzFileLabel(value);
         }
         break;
     case EditId::Volume:
         {
             const float value = v.to_float();
-            if (volumeSlider_)
+            if (volumeSlider_) {
                 volumeSlider_->setValue(value);
+                volumeSlider_->setDirty();
+            }
             updateVolumeLabel(value);
         }
         break;
     case EditId::Polyphony:
         {
             const int value = static_cast<int>(v.to_float());
-            if (numVoicesSlider_)
+            if (numVoicesSlider_) {
                 numVoicesSlider_->setValue(value);
+                numVoicesSlider_->setDirty();
+            }
             updateNumVoicesLabel(value);
         }
         break;
@@ -188,16 +207,20 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             for (int f = value; f > 1; f /= 2)
                 ++log2Value;
 
-            if (oversamplingSlider_)
+            if (oversamplingSlider_) {
                 oversamplingSlider_->setValue(log2Value);
+                oversamplingSlider_->setDirty();
+            }
             updateOversamplingLabel(log2Value);
         }
         break;
     case EditId::PreloadSize:
         {
             const int value = static_cast<int>(v.to_float());
-            if (preloadSizeSlider_)
+            if (preloadSizeSlider_) {
                 preloadSizeSlider_->setValue(value);
+                preloadSizeSlider_->setDirty();
+            }
             updatePreloadSizeLabel(value);
         }
         break;
@@ -209,25 +232,35 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     case EditId::ScalaRootKey:
         {
-            const int value = static_cast<int>(v.to_float());
-            if (scalaRootKeySlider_)
-                scalaRootKeySlider_->setValue(value);
+            const int value = std::max(0, static_cast<int>(v.to_float()));
+            if (scalaRootKeySlider_) {
+                scalaRootKeySlider_->setValue(value % 12);
+                scalaRootKeySlider_->setDirty();
+            }
+            if (scalaRootOctaveSlider_) {
+                scalaRootOctaveSlider_->setValue(value / 12);
+                scalaRootOctaveSlider_->setDirty();
+            }
             updateScalaRootKeyLabel(value);
         }
         break;
     case EditId::TuningFrequency:
         {
             const float value = v.to_float();
-            if (tuningFrequencySlider_)
+            if (tuningFrequencySlider_) {
                 tuningFrequencySlider_->setValue(value);
+                tuningFrequencySlider_->setDirty();
+            }
             updateTuningFrequencyLabel(value);
         }
         break;
     case EditId::StretchTuning:
         {
             const float value = v.to_float();
-            if (stretchedTuningSlider_)
+            if (stretchedTuningSlider_) {
                 stretchedTuningSlider_->setValue(value);
+                stretchedTuningSlider_->setDirty();
+            }
             updateStretchedTuningLabel(value);
         }
         break;
@@ -284,405 +317,319 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 
 void Editor::Impl::createFrameContents()
 {
-    const CRect bounds { 0.0, 0.0, static_cast<CCoord>(viewWidth), static_cast<CCoord>(viewHeight) };
-    CViewContainer* view = new CViewContainer(bounds);
-    view_ = owned(view);
+    CViewContainer* mainView;
 
-    view->setBackgroundColor(CColor(0xff, 0xff, 0xff));
+    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("icon_white.png"));
+    SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
+    SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
 
-    SharedPointer<CBitmap> logo = owned(new CBitmap("logo.png"));
+    {
+        const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
 
-    CRect bottomRow = bounds;
-    bottomRow.top = bottomRow.bottom - 30;
+        struct Theme {
+            CColor boxBackground;
+            CColor text;
+            CColor titleBoxText;
+            CColor titleBoxBackground;
+            CColor icon;
+            CColor valueText;
+            CColor valueBackground;
+        };
 
-    CRect topRow = bounds;
-    topRow.bottom = topRow.top + 30;
+        Theme lightTheme;
+        lightTheme.boxBackground = { 0xba, 0xbd, 0xb6 };
+        lightTheme.text = { 0x00, 0x00, 0x00 };
+        lightTheme.titleBoxText = { 0xff, 0xff, 0xff };
+        lightTheme.titleBoxBackground = { 0x2e, 0x34, 0x36 };
+        lightTheme.icon = lightTheme.text;
+        lightTheme.valueText = { 0xff, 0xff, 0xff };
+        lightTheme.valueBackground = { 0x2e, 0x34, 0x36 };
+        Theme darkTheme;
+        darkTheme.boxBackground = { 0x2e, 0x34, 0x36 };
+        darkTheme.text = { 0xff, 0xff, 0xff };
+        darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
+        darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
+        darkTheme.icon = darkTheme.text;
+        darkTheme.valueText = { 0x2e, 0x34, 0x36 };
+        darkTheme.valueBackground = { 0xff, 0xff, 0xff };
+        Theme& defaultTheme = lightTheme;
 
+        Theme* theme = &defaultTheme;
+        auto enterTheme = [&theme](Theme& t) { theme = &t; };
+
+        typedef CViewContainer LogicalGroup;
+        typedef SBoxContainer RoundedGroup;
+        typedef STitleContainer TitleGroup;
+        typedef CKickButton SfizzMainButton;
+        typedef CTextLabel Label;
+        typedef CViewContainer HLine;
+        typedef CTextButton LightButton;
+        typedef CAnimKnob Knob48;
+        typedef CTextLabel ValueLabel;
+        typedef CViewContainer VMeter;
+        typedef CView SfizzLargePicture;
+        typedef SValueMenu ValueMenu;
+#if 0
+        typedef CTextButton Button;
+#endif
+        typedef CTextButton ValueButton;
+        typedef CTextButton LoadFileButton;
+        typedef CTextButton EditFileButton;
+        typedef SPiano Piano;
+
+        auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            CViewContainer* container = new CViewContainer(bounds);
+            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+            return container;
+        };
+        auto createRoundedGroup = [&theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            auto* box =  new SBoxContainer(bounds);
+            box->setCornerRadius(10.0);
+            box->setBackgroundColor(theme->boxBackground);
+            return box;
+        };
+        auto createTitleGroup = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
+            auto* box =  new STitleContainer(bounds, label);
+            box->setCornerRadius(10.0);
+            box->setBackgroundColor(theme->boxBackground);
+            box->setTitleFontColor(theme->titleBoxText);
+            box->setTitleBackgroundColor(theme->titleBoxBackground);
+            auto font = owned(new CFontDesc(*box->getTitleFont()));
+            font->setSize(fontsize);
+            box->setTitleFont(font);
+            return box;
+        };
+        auto createSfizzMainButton = [this, &iconWhite](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CKickButton(bounds, this, tag, iconWhite);
+        };
+        auto createLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(theme->text);
+            lbl->setHoriAlign(align);
+            auto font = owned(new CFontDesc(*lbl->getFont()));
+            font->setSize(fontsize);
+            lbl->setFont(font);
+            return lbl;
+        };
+        auto createHLine = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            int y = static_cast<int>(0.5 * (bounds.top + bounds.bottom));
+            CRect lineBounds(bounds.left, y, bounds.right, y + 1);
+            CViewContainer* hline = new CViewContainer(lineBounds);
+            hline->setBackgroundColor(CColor(0xff, 0xff, 0xff, 0xff));
+            return hline;
+        };
+        auto createLightButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int) {
+            CTextButton* button = new CTextButton(bounds, this, tag, label);
+            button->setTextAlignment(align);
+            return button;
+        };
+        auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
+        };
+        auto createValueLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(theme->text);
+            lbl->setHoriAlign(align);
+            auto font = owned(new CFontDesc(*lbl->getFont()));
+            font->setSize(fontsize);
+            lbl->setFont(font);
+            return lbl;
+        };
+        auto createVMeter = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            // TODO the volume meter...
+            CViewContainer* container = new CViewContainer(bounds);
+            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+            return container;
+        };
+        auto createSfizzLargePicture = [&logoText](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            CView* picture = new CView(bounds);
+            picture->setBackground(logoText);
+            return picture;
+        };
+#if 0
+        auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextButton* button = new CTextButton(bounds, this, tag, label);
+            auto font = owned(new CFontDesc(*button->getFont()));
+            font->setSize(fontsize);
+            button->setFont(font);
+            button->setTextAlignment(align);
+            return button;
+        };
+#endif
+        auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextButton* button = new CTextButton(bounds, this, tag, label);
+            auto font = owned(new CFontDesc(*button->getFont()));
+            font->setSize(fontsize);
+            button->setFont(font);
+            button->setTextAlignment(align);
+            button->setTextColor(theme->valueText);
+            button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, theme->valueBackground, theme->valueBackground));
+            button->setGradient(gradient);
+            button->setGradientHighlighted(gradient);
+            return button;
+        };
+        auto createValueMenu = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
+            SValueMenu* vm = new SValueMenu(bounds, this, tag);
+            vm->setHoriAlign(align);
+            auto font = owned(new CFontDesc(*vm->getFont()));
+            font->setSize(fontsize);
+            vm->setFont(font);
+            vm->setFontColor(theme->valueText);
+            vm->setBackColor(theme->valueBackground);
+            vm->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            vm->setStyle(CParamDisplay::kRoundRectStyle);
+            vm->setRoundRectRadius(5.0);
+            return vm;
+        };
+        auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
+            CTextButton* btn = new CTextButton(bounds, this, tag, glyph);
+            btn->setFont(new CFontDesc("Fluent System Regular W20", fontsize));
+            btn->setTextColor(theme->icon);
+            btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            btn->setGradient(nullptr);
+            btn->setGradientHighlighted(nullptr);
+            return btn;
+        };
+        auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton("\ue142", bounds, tag, fontsize);
+        };
+        auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton("\ue148", bounds, tag, fontsize);
+        };
+        auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            SPiano* piano = new SPiano(bounds);
+            return piano;
+        };
+
+        #include "layout/main.hpp"
+
+        mainView->setBackgroundColor(frameBackground);
+
+        mainView_ = owned(mainView);
+    }
+
+    ///
+    SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
+
+    fileDropTarget->setFileDropFunction([this](const std::string& file) {
+        changeSfzFile(file);
+    });
+
+    mainView_->setDropTarget(fileDropTarget);
+
+    ///
+    adjustMinMaxToEditRange(volumeSlider_, EditId::Volume);
+    adjustMinMaxToEditRange(numVoicesSlider_, EditId::Polyphony);
+    adjustMinMaxToEditRange(oversamplingSlider_, EditId::Oversampling);
+    adjustMinMaxToEditRange(preloadSizeSlider_, EditId::PreloadSize);
+    if (scalaRootKeySlider_) {
+        scalaRootKeySlider_->setMin(0.0);
+        scalaRootKeySlider_->setMax(11.0);
+        scalaRootKeySlider_->setDefaultValue(
+            static_cast<int>(EditRange::get(EditId::ScalaRootKey).def) % 12);
+    }
+    if (scalaRootOctaveSlider_) {
+        scalaRootOctaveSlider_->setMin(0.0);
+        scalaRootOctaveSlider_->setMax(10.0);
+        scalaRootOctaveSlider_->setDefaultValue(
+            static_cast<int>(EditRange::get(EditId::ScalaRootKey).def) / 12);
+    }
+    adjustMinMaxToEditRange(tuningFrequencySlider_, EditId::TuningFrequency);
+    adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
+
+    for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
+        numVoicesSlider_->addEntry(std::to_string(value), value);
+    numVoicesSlider_->setValueToStringFunction2(
+        [](float value, std::string& result, CParamDisplay*) -> bool
+        {
+            result = std::to_string(static_cast<int32_t>(value));
+            return true;
+        });
+
+    for (int log2value = 0; log2value <= 3; ++log2value) {
+        int value = 1 << log2value;
+        oversamplingSlider_->addEntry(std::to_string(value) + "x", log2value);
+    }
+    oversamplingSlider_->setValueToStringFunction2(
+        [](float value, std::string& result, CParamDisplay*) -> bool
+        {
+            result = std::to_string(1 << static_cast<int32_t>(value)) + "x";
+            return true;
+        });
+
+    for (int log2value = 10; log2value <= 16; ++log2value) {
+        int value = 1 << log2value;
+        char text[256];
+        sprintf(text, "%d kB", value / 1024);
+        text[sizeof(text) - 1] = '\0';
+        preloadSizeSlider_->addEntry(text, value);
+    }
+    preloadSizeSlider_->setValueToStringFunction2(
+        [](float value, std::string& result, CParamDisplay*) -> bool
+        {
+            result = std::to_string(static_cast<int>(std::round(value * (1.0 / 1024)))) + " kB";
+            return true;
+        });
+
+    static const std::pair<float, const char*> tuningFrequencies[] = {
+        {380.0f, "English pitchpipe 380 (1720)"},
+        {409.0f, "Handel fork 409 (1780)"},
+        {415.0f, "Baroque 415"},
+        {422.5f, "Handel fork 422.5 (1740)"},
+        {423.2f, "Dresden opera 423.2 (1815)"},
+        {435.0f, "French Law 435 (1859)"},
+        {439.0f, "British Phil 439 (1896)"},
+        {440.0f, "International 440"},
+        {442.0f, "European 442"},
+        {445.0f, "Germany, China 445"},
+        {451.0f, "La Scala in Milan 451 (18th)"},
+    };
+
+    for (std::pair<float, const char*> value : tuningFrequencies)
+        tuningFrequencySlider_->addEntry(value.second, value.first);
+    tuningFrequencySlider_->setValueToStringFunction(
+        [](float value, char result[256], CParamDisplay*) -> bool
+        {
+            sprintf(result, "%.1f Hz", value);
+            return true;
+        });
+
+    static const char* notesInOctave[12] = {
+        "C", "C#", "D", "D#", "E",
+        "F", "F#", "G", "G#", "A", "A#", "B",
+    };
+    for (int note = 0; note < 12; ++note)
+        scalaRootKeySlider_->addEntry(notesInOctave[note], note);
+    for (int octave = 0; octave <= 10; ++octave)
+        scalaRootOctaveSlider_->addEntry(std::to_string(octave - 1), octave);
+    scalaRootKeySlider_->setValueToStringFunction2(
+        [](float value, std::string& result, CParamDisplay*) -> bool
+        {
+            result = notesInOctave[std::max(0, static_cast<int>(value)) % 12];
+            return true;
+        });
+    scalaRootOctaveSlider_->setValueToStringFunction2(
+        [](float value, std::string& result, CParamDisplay*) -> bool
+        {
+            result = std::to_string(static_cast<int>(value) - 1);
+            return true;
+        });
+
+    ///
     CViewContainer* panel;
     activePanel_ = 0;
-
-    CRect topLeftLabelBox = topRow;
-    topLeftLabelBox.right -= 20 * kNumPanels;
-
-    // general panel
-    {
-        panel = new CViewContainer(bounds);
-        view->addView(panel);
-        panel->setTransparency(true);
-
-        CKickButton* sfizzButton = new CKickButton(bounds, this, kTagLoadSfzFile, logo);
-        panel->addView(sfizzButton);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "No file loaded");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-        sfzFileLabel_ = topLeftLabel;
-
-        subPanels_[kPanelGeneral] = panel;
-    }
-
-    // settings panel
-    {
-        panel = new CViewContainer(bounds);
-        view->addView(panel);
-        panel->setTransparency(true);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Settings");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-
-        CRect row = topRow;
-        row.top += 45.0;
-        row.bottom += 45.0;
-        row.left += 20.0;
-        row.right -= 20.0;
-
-        static const CCoord interRow = 35.0;
-        static const CCoord interColumn = 20.0;
-        static const int numColumns = 3;
-
-        auto nthColumn = [&row](int colIndex) -> CRect {
-            CRect div = row;
-            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
-            div.left = div.left + colIndex * (columnWidth + interColumn);
-            div.right = div.left + columnWidth;
-            return div;
-        };
-
-        CTextLabel* label;
-        SimpleSlider* slider;
-
-        label = new CTextLabel(nthColumn(0), "Volume");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetVolume);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::Volume);
-        volumeSlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        volumeLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Polyphony");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetNumVoices);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::Polyphony);
-        numVoicesSlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        numVoicesLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Oversampling");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetOversampling);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::Oversampling);
-        oversamplingSlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        oversamplingLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Preload size");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetPreloadSize);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::PreloadSize);
-        preloadSizeSlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        preloadSizeLabel_ = label;
-        panel->addView(label);
-
-        subPanels_[kPanelSettings] = panel;
-    }
-
-    // tuning panel
-    {
-        panel = new CViewContainer(bounds);
-        view->addView(panel);
-        panel->setTransparency(true);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Tuning");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-
-        CRect row = topRow;
-        row.top += 45.0;
-        row.bottom += 45.0;
-        row.left += 20.0;
-        row.right -= 20.0;
-
-        static const CCoord interRow = 35.0;
-        static const CCoord interColumn = 20.0;
-        static const int numColumns = 3;
-
-        auto nthColumn = [&row](int colIndex) -> CRect {
-            CRect div = row;
-            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
-            div.left = div.left + colIndex * (columnWidth + interColumn);
-            div.right = div.left + columnWidth;
-            return div;
-        };
-
-        CTextLabel* label;
-        SimpleSlider* slider;
-        CTextButton* textbutton;
-
-        label = new CTextLabel(nthColumn(0), "Scala file");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        textbutton = new CTextButton(nthColumn(1), this, kTagLoadScalaFile, "Choose");
-        panel->addView(textbutton);
-        label = new CTextLabel(nthColumn(2), "");
-        scalaFileLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Scala root key");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetScalaRootKey);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::ScalaRootKey);
-        scalaRootKeySlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        scalaRootKeyLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Tuning frequency");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetTuningFrequency);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::TuningFrequency);
-        tuningFrequencySlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        tuningFrequencyLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Stretched tuning");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetStretchedTuning);
-        panel->addView(slider);
-        adjustMinMaxToEditRange(slider, EditId::StretchTuning);
-        stretchedTuningSlider_ = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        stretchedTuningLabel_ = label;
-        panel->addView(label);
-
-        subPanels_[kPanelTuning] = panel;
-    }
-
-    // info panel
-    {
-        panel = new CViewContainer(bounds);
-        view->addView(panel);
-        panel->setTransparency(true);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Information");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-
-        CRect row = topRow;
-        row.top += 45.0;
-        row.bottom += 45.0;
-        row.left += 20.0;
-        row.right -= 20.0;
-
-        static const CCoord interRow = 20.0;
-        static const CCoord interColumn = 20.0;
-        static const int numColumns = 3;
-
-        auto nthColumn = [&row](int colIndex) -> CRect {
-            CRect div = row;
-            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
-            div.left = div.left + colIndex * (columnWidth + interColumn);
-            div.right = div.left + columnWidth;
-            return div;
-        };
-
-        CTextLabel* label;
-
-        label = new CTextLabel(nthColumn(0), "Curves");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        label = new CTextLabel(nthColumn(1), "");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        infoCurvesLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Masters");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        label = new CTextLabel(nthColumn(1), "");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        infoMastersLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Groups");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        label = new CTextLabel(nthColumn(1), "");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        infoGroupsLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Regions");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        label = new CTextLabel(nthColumn(1), "");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        infoRegionsLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Samples");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        label = new CTextLabel(nthColumn(1), "");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        infoSamplesLabel_ = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Voices");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        label = new CTextLabel(nthColumn(1), "");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        infoVoicesLabel_ = label;
-        panel->addView(label);
-
-        subPanels_[kPanelInfo] = panel;
-    }
 
     // all panels
     for (unsigned currentPanel = 0; currentPanel < kNumPanels; ++currentPanel) {
         panel = subPanels_[currentPanel];
 
-        CTextLabel* descLabel = new CTextLabel(
-            bottomRow, "Paul Ferrand and the SFZ Tools work group");
-        descLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        descLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(descLabel);
-
-        for (unsigned i = 0; i < kNumPanels; ++i) {
-            CRect btnRect = topRow;
-            btnRect.left = topRow.right - (kNumPanels - i) * 50;
-            btnRect.right = btnRect.left + 50;
-
-            const char *text;
-            switch (i) {
-            case kPanelGeneral: text = "File"; break;
-            case kPanelSettings: text = "Setup"; break;
-            case kPanelTuning: text = "Tuning"; break;
-            case kPanelInfo: text = "Info"; break;
-            default: text = "?"; break;
-            }
-
-            CTextButton* changePanelButton = new CTextButton(btnRect, this, kTagFirstChangePanel + i, text);
-            panel->addView(changePanelButton);
-
-            changePanelButton->setRoundRadius(0.0);
-        }
+        if (!panel)
+            continue;
 
         panel->setVisible(currentPanel == activePanel_);
     }
@@ -697,12 +644,16 @@ void Editor::Impl::chooseSfzFile()
 
     if (fs->runModal()) {
         UTF8StringPtr file = fs->getSelectedFile(0);
-        if (file) {
-            std::string str(file);
-            ctrl_->uiSendValue(EditId::SfzFile, str);
-            updateSfzFileLabel(str);
-        }
+        if (file)
+            changeSfzFile(file);
     }
+}
+
+void Editor::Impl::changeSfzFile(const std::string& filePath)
+{
+    ctrl_->uiSendValue(EditId::SfzFile, filePath);
+    currentSfzFile_ = filePath;
+    updateSfzFileLabel(filePath);
 }
 
 void Editor::Impl::chooseScalaFile()
@@ -714,42 +665,64 @@ void Editor::Impl::chooseScalaFile()
 
     if (fs->runModal()) {
         UTF8StringPtr file = fs->getSelectedFile(0);
-        if (file) {
-            std::string str(file);
-            ctrl_->uiSendValue(EditId::ScalaFile, str);
-            updateScalaFileLabel(str);
-        }
+        if (file)
+            changeScalaFile(file);
     }
+}
+
+void Editor::Impl::changeScalaFile(const std::string& filePath)
+{
+    ctrl_->uiSendValue(EditId::ScalaFile, filePath);
+    updateScalaFileLabel(filePath);
+}
+
+absl::string_view Editor::Impl::simplifiedFileName(absl::string_view path, absl::string_view removedSuffix, absl::string_view ifEmpty)
+{
+    if (path.empty())
+        return ifEmpty;
+
+#if defined (_WIN32)
+    size_t pos = path.find_last_of("/\\");
+#else
+    size_t pos = path.rfind('/');
+#endif
+    path = (pos != path.npos) ? path.substr(pos + 1) : path;
+
+    if (!removedSuffix.empty() && absl::EndsWithIgnoreCase(path, removedSuffix))
+        path.remove_suffix(removedSuffix.size());
+
+    return path;
 }
 
 void Editor::Impl::updateSfzFileLabel(const std::string& filePath)
 {
-    updateLabelWithFileName(sfzFileLabel_, filePath);
+    updateLabelWithFileName(sfzFileLabel_, filePath, ".sfz");
 }
 
 void Editor::Impl::updateScalaFileLabel(const std::string& filePath)
 {
-    updateLabelWithFileName(scalaFileLabel_, filePath);
+    updateLabelWithFileName(scalaFileLabel_, filePath, ".scl");
+    updateButtonWithFileName(scalaFileButton_, filePath, ".scl");
 }
 
-void Editor::Impl::updateLabelWithFileName(CTextLabel* label, const std::string& filePath)
+void Editor::Impl::updateLabelWithFileName(CTextLabel* label, const std::string& filePath, absl::string_view removedSuffix)
 {
     if (!label)
         return;
 
-    std::string fileName;
-    if (filePath.empty())
-        fileName = "<No file>";
-    else {
-#if defined (_WIN32)
-        size_t pos = filePath.find_last_of("/\\");
-#else
-        size_t pos = filePath.rfind('/');
-#endif
-        fileName = (pos != filePath.npos) ?
-            filePath.substr(pos + 1) : filePath;
-    }
+    std::string fileName = std::string(simplifiedFileName(filePath, removedSuffix, "<No file>"));
     label->setText(fileName.c_str());
+    label->setDirty();
+}
+
+void Editor::Impl::updateButtonWithFileName(CTextButton* button, const std::string& filePath, absl::string_view removedSuffix)
+{
+    if (!button)
+        return;
+
+    std::string fileName = std::string(simplifiedFileName(filePath, removedSuffix, "<No file>"));
+    button->setTitle(fileName.c_str());
+    button->setDirty();
 }
 
 void Editor::Impl::updateVolumeLabel(float volume)
@@ -762,6 +735,7 @@ void Editor::Impl::updateVolumeLabel(float volume)
     sprintf(text, "%.1f dB", volume);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+    label->setDirty();
 }
 
 void Editor::Impl::updateNumVoicesLabel(int numVoices)
@@ -774,6 +748,7 @@ void Editor::Impl::updateNumVoicesLabel(int numVoices)
     sprintf(text, "%d", numVoices);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+    label->setDirty();
 }
 
 void Editor::Impl::updateOversamplingLabel(int oversamplingLog2)
@@ -786,6 +761,7 @@ void Editor::Impl::updateOversamplingLabel(int oversamplingLog2)
     sprintf(text, "%dx", 1 << oversamplingLog2);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+    label->setDirty();
 }
 
 void Editor::Impl::updatePreloadSizeLabel(int preloadSize)
@@ -795,9 +771,10 @@ void Editor::Impl::updatePreloadSizeLabel(int preloadSize)
         return;
 
     char text[64];
-    sprintf(text, "%.1f kB", preloadSize * (1.0 / 1024));
+    sprintf(text, "%d kB", static_cast<int>(std::round(preloadSize * (1.0 / 1024))));
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+    label->setDirty();
 }
 
 void Editor::Impl::updateScalaRootKeyLabel(int rootKey)
@@ -826,6 +803,7 @@ void Editor::Impl::updateScalaRootKeyLabel(int rootKey)
     };
 
     label->setText(noteName(rootKey));
+    label->setDirty();
 }
 
 void Editor::Impl::updateTuningFrequencyLabel(float tuningFrequency)
@@ -838,6 +816,7 @@ void Editor::Impl::updateTuningFrequencyLabel(float tuningFrequency)
     sprintf(text, "%.1f", tuningFrequency);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+    label->setDirty();
 }
 
 void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
@@ -850,6 +829,7 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     sprintf(text, "%.3f", stretchedTuning);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+    label->setDirty();
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)
@@ -857,9 +837,11 @@ void Editor::Impl::setActivePanel(unsigned panelId)
     panelId = std::max(0, std::min(kNumPanels - 1, static_cast<int>(panelId)));
 
     if (activePanel_ != panelId) {
-        subPanels_[activePanel_]->setVisible(false);
+        if (subPanels_[activePanel_])
+            subPanels_[activePanel_]->setVisible(false);
+        if (subPanels_[panelId])
+            subPanels_[panelId]->setVisible(true);
         activePanel_ = panelId;
-        subPanels_[panelId]->setVisible(true);
     }
 }
 
@@ -893,6 +875,14 @@ void Editor::Impl::valueChanged(CControl* ctl)
         Call::later([this]() { chooseSfzFile(); });
         break;
 
+    case kTagEditSfzFile:
+        if (value != 1)
+            break;
+
+        if (!currentSfzFile_.empty())
+            openFileInExternalEditor(currentSfzFile_.c_str());
+        break;
+
     case kTagLoadScalaFile:
         if (value != 1)
             break;
@@ -921,8 +911,15 @@ void Editor::Impl::valueChanged(CControl* ctl)
         break;
 
     case kTagSetScalaRootKey:
-        ctrl.uiSendValue(EditId::ScalaRootKey, value);
-        updateScalaRootKeyLabel(static_cast<int>(value));
+        {
+            if (scalaRootKeySlider_ && scalaRootOctaveSlider_) {
+                int key = static_cast<int>(scalaRootKeySlider_->getValue());
+                int octave = static_cast<int>(scalaRootOctaveSlider_->getValue());
+                int midiKey = key + 12 * octave;
+                ctrl.uiSendValue(EditId::ScalaRootKey, midiKey);
+                updateScalaRootKeyLabel(midiKey);
+            }
+        }
         break;
 
     case kTagSetTuningFrequency:
