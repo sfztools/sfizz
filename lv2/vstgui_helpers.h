@@ -63,13 +63,27 @@ private:
 #if LINUX
 namespace VSTGUI
 {
-void initializeSoHandle();
+class SoHandleInitializer {
+public:
+    SoHandleInitializer();
+    ~SoHandleInitializer();
+private:
+    SoHandleInitializer(const SoHandleInitializer&) = delete;
+    SoHandleInitializer& operator=(const SoHandleInitializer&) = delete;
+};
 }
 #endif
 
 #if MAC
 namespace VSTGUI
 {
-void initializeBundleRef();
+class BundleRefInitializer {
+public:
+    BundleRefInitializer();
+    ~BundleRefInitializer();
+private:
+    BundleRefInitializer(const BundleRefInitializer&) = delete;
+    BundleRefInitializer& operator=(const BundleRefInitializer&) = delete;
+};
 }
 #endif

@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #if LINUX
 #include <dlfcn.h>
 #include <poll.h>
@@ -143,36 +144,31 @@ namespace VSTGUI
 {
 void* soHandle = nullptr;
 
-static volatile bool soHandleInitialized = false;
+static volatile size_t soHandleCount = 0;
 static std::mutex soHandleMutex;
 
-struct Dl_handle_deleter
+SoHandleInitializer::SoHandleInitializer()
 {
-   void operator()(void* x) const noexcept
-   {
-      dlclose(x);
-   }
-};
-static std::unique_ptr<void, Dl_handle_deleter> soHandlePointer;
-} // namespace VSTGUI
-
-void VSTGUI::initializeSoHandle()
-{
-   if (VSTGUI::soHandleInitialized)
-      return;
-
-   std::lock_guard<std::mutex> lock(VSTGUI::soHandleMutex);
-   if (VSTGUI::soHandleInitialized)
-      return;
-
-   Dl_info info;
-   if (dladdr((void*)&lv2ui_descriptor, &info))
-   {
-      VSTGUI::soHandle = dlopen(info.dli_fname, RTLD_LAZY);
-      VSTGUI::soHandlePointer.reset(VSTGUI::soHandle);
-   }
-   VSTGUI::soHandleInitialized = true;
+    std::lock_guard<std::mutex> lock(soHandleMutex);
+    if (soHandleCount++ == 0) {
+        Dl_info info;
+        if (dladdr((void*)&lv2ui_descriptor, &info))
+            soHandle = dlopen(info.dli_fname, RTLD_LAZY);
+        if (!soHandle)
+            throw std::runtime_error("SoHandleInitializer");
+    }
 }
+
+SoHandleInitializer::~SoHandleInitializer()
+{
+    std::lock_guard<std::mutex> lock(soHandleMutex);
+    if (--soHandleCount == 0) {
+        dlclose(soHandle);
+        soHandle = nullptr;
+    }
+}
+
+} // namespace VSTGUI
 #endif
 
 ///
@@ -194,31 +190,27 @@ namespace VSTGUI
 {
 void* gBundleRef = nullptr;
 
-static volatile bool gBundleRefInitialized = false;
+static volatile size_t gBundleRefCount = 0;
 static std::mutex gBundleRefMutex;
 
-struct CFBundle_deleter {
-    void operator()(CFBundleRef x) const noexcept
-    {
-        CFRelease(x);
-    }
-};
-static std::unique_ptr<__CFBundle, CFBundle_deleter> gBundleRefPointer;
-} // namespace VSTGUI
-
-void VSTGUI::initializeBundleRef()
+BundleRefInitializer::BundleRefInitializer()
 {
-   if (VSTGUI::gBundleRefInitialized)
-      return;
-
-   std::lock_guard<std::mutex> lock(VSTGUI::gBundleRefMutex);
-   if (VSTGUI::gBundleRefInitialized)
-      return;
-
-   CFBundleRef bundleRef = GetPluginBundle();
-   VSTGUI::gBundleRef = bundleRef;
-   VSTGUI::gBundleRefPointer.reset(bundleRef);
-
-   VSTGUI::gBundleRefInitialized = true;
+    std::lock_guard<std::mutex> lock(gBundleRefMutex);
+    if (bundleRefCount++ == 0) {
+        gBundleRef = GetPluginBundle();
+        if (!gBundleRef)
+            throw std::runtime_error("BundleRefInitializer");
+    }
 }
+
+BundleRefInitializer::~BundleRefInitializer()
+{
+    std::lock_guard<std::mutex> lock(gBundleRefMutex);
+    if (--bundleRefCount == 0) {
+        CFRelease((CFBundleRef)gBundleRef);
+        gBundleRef = nullptr;
+    }
+}
+
+} // namespace VSTGUI
 #endif

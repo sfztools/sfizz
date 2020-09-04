@@ -74,6 +74,12 @@ typedef std::unique_ptr<CFrame, FrameHolderDeleter> FrameHolder;
 
 ///
 struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
+#if LINUX
+    SoHandleInitializer soHandleInitializer;
+#endif
+#if MAC
+    BundleRefInitializer bundleRefInitializer;
+#endif
     LV2UI_Write_Function write = nullptr;
     LV2UI_Controller con = nullptr;
     LV2_URID_Map *map = nullptr;
@@ -369,13 +375,6 @@ LV2_SYMBOL_EXPORT
 const LV2UI_Descriptor *
 lv2ui_descriptor(uint32_t index)
 {
-#if LINUX
-   VSTGUI::initializeSoHandle();
-#endif
-#if MAC
-   VSTGUI::initializeBundleRef();
-#endif
-
     switch (index)
     {
     case 0:
