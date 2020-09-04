@@ -131,6 +131,8 @@ Editor::~Editor()
 {
     Impl& impl = *impl_;
 
+    close();
+
     EditorController& ctrl = *impl.ctrl_;
     ctrl.decorate(nullptr);
 }
@@ -148,7 +150,7 @@ void Editor::close()
     Impl& impl = *impl_;
 
     if (impl.frame_) {
-        impl.frame_->removeView(impl.view_.get());
+        impl.frame_->removeView(impl.view_.get(), false);
         impl.frame_ = nullptr;
     }
 }
@@ -284,11 +286,11 @@ void Editor::Impl::createFrameContents()
 {
     const CRect bounds { 0.0, 0.0, static_cast<CCoord>(viewWidth), static_cast<CCoord>(viewHeight) };
     CViewContainer* view = new CViewContainer(bounds);
-    view_ = view;
+    view_ = owned(view);
 
     view->setBackgroundColor(CColor(0xff, 0xff, 0xff));
 
-    SharedPointer<CBitmap> logo { new CBitmap("logo.png") };
+    SharedPointer<CBitmap> logo = owned(new CBitmap("logo.png"));
 
     CRect bottomRow = bounds;
     bottomRow.top = bottomRow.bottom - 30;
@@ -688,7 +690,7 @@ void Editor::Impl::createFrameContents()
 
 void Editor::Impl::chooseSfzFile()
 {
-    SharedPointer<CNewFileSelector> fs(CNewFileSelector::create(frame_));
+    SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
 
     fs->setTitle("Load SFZ file");
     fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
@@ -705,7 +707,7 @@ void Editor::Impl::chooseSfzFile()
 
 void Editor::Impl::chooseScalaFile()
 {
-    SharedPointer<CNewFileSelector> fs(CNewFileSelector::create(frame_));
+    SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
 
     fs->setTitle("Load Scala file");
     fs->setDefaultExtension(CFileExtension("SCL", "scl"));

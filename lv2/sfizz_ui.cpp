@@ -86,8 +86,8 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID_Unmap *unmap = nullptr;
     LV2UI_Resize *resize = nullptr;
     LV2UI_Touch *touch = nullptr;
-    std::unique_ptr<Editor> editor;
     FrameHolder uiFrame;
+    std::unique_ptr<Editor> editor;
 #if LINUX
     SharedPointer<Lv2IdleRunLoop> runLoop;
 #endif
@@ -191,7 +191,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     IPlatformFrameConfig* config = nullptr;
 #if LINUX
-    SharedPointer<Lv2IdleRunLoop> runLoop = new Lv2IdleRunLoop;
+    SharedPointer<Lv2IdleRunLoop> runLoop = owned(new Lv2IdleRunLoop);
     self->runLoop = runLoop;
     VSTGUI::X11::FrameConfig x11Config;
     x11Config.runLoop = runLoop;
