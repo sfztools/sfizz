@@ -5,7 +5,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "GUIComponents.h"
+
+#include "utility/vstgui_before.h"
 #include "vstgui/lib/cdrawcontext.h"
+#include "utility/vstgui_after.h"
 
 SimpleSlider::SimpleSlider(const CRect& bounds, IControlListener* listener, int32_t tag)
     : CSliderBase(bounds, listener, tag)
@@ -24,6 +27,8 @@ void SimpleSlider::draw(CDrawContext* dc)
 {
     CRect bounds = getViewSize();
     CRect handle = calculateHandleRect(getValueNormalized());
+
+    dc->setDrawMode(kAntiAliasing);
 
     dc->setFrameColor(_frame);
     dc->drawRect(bounds, kDrawStroked);

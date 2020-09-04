@@ -110,6 +110,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=OFF
+    - ENABLE_LV2_UI=OFF
     addons:
       apt:
         packages:
@@ -125,6 +126,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=ON
+    - ENABLE_LV2_UI=ON
     addons:
       apt:
         packages:
