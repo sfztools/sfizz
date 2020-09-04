@@ -196,7 +196,7 @@ static std::mutex gBundleRefMutex;
 BundleRefInitializer::BundleRefInitializer()
 {
     std::lock_guard<std::mutex> lock(gBundleRefMutex);
-    if (bundleRefCount++ == 0) {
+    if (gBundleRefCount++ == 0) {
         gBundleRef = GetPluginBundle();
         if (!gBundleRef)
             throw std::runtime_error("BundleRefInitializer");
@@ -206,7 +206,7 @@ BundleRefInitializer::BundleRefInitializer()
 BundleRefInitializer::~BundleRefInitializer()
 {
     std::lock_guard<std::mutex> lock(gBundleRefMutex);
-    if (--bundleRefCount == 0) {
+    if (--gBundleRefCount == 0) {
         CFRelease((CFBundleRef)gBundleRef);
         gBundleRef = nullptr;
     }
