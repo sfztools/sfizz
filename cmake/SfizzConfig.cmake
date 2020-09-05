@@ -17,6 +17,11 @@ if (WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
+# Set macOS compatibility level
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+endif()
+
 # Do not define macros `min` and `max`
 if (WIN32)
     add_compile_definitions(NOMINMAX)
