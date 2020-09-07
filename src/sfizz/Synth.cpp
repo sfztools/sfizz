@@ -1040,16 +1040,6 @@ void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
     }
 }
 
-void sfz::Synth::checkOffGroups(Region* region, int delay) noexcept
-{
-    for (auto& voice : voices) {
-        if (voice->checkOffGroup(delay, region->group)) {
-            const TriggerEvent& event = voice->getTriggerEvent();
-            noteOffDispatch(delay, event.number, event.value);
-        }
-    }
-}
-
 void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution(Random::randomGenerator);
@@ -1058,7 +1048,13 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
 
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            checkOffGroups(region, delay);
+            for (auto& voice : voices) {
+                if (voice->checkOffGroup(region, delay, noteNumber)) {
+                    const TriggerEvent& event = voice->getTriggerEvent();
+                    noteOffDispatch(delay, event.number, event.value);
+                }
+            }
+
             startVoice(region, delay, triggerEvent, ring);
         }
     }

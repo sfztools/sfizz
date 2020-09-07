@@ -708,12 +708,14 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #endif
 }
 
-bool sfz::Voice::checkOffGroup(int delay, uint32_t group) noexcept
+bool sfz::Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
 {
-    if (region == nullptr)
+    if (region == nullptr || other == nullptr)
         return false;
 
-    if (triggerEvent.type == TriggerEventType::NoteOn && region->offBy == group) {
+    if (triggerEvent.type == TriggerEventType::NoteOn 
+        && region->offBy == other->group
+        && noteNumber != triggerEvent.number) {
         off(delay);
         return true;
     }

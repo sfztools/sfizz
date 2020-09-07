@@ -1256,8 +1256,24 @@ TEST_CASE("[Synth] Off by same group")
     REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
 }
 
+TEST_CASE("[Synth] Off by alone and repeated")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
 
-TEST_CASE("[Synth] Off by same note")
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=1 sample=*sine key=60
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 2 );
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 3 );
+}
+
+
+TEST_CASE("[Synth] Off by same note and group")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, 256 };
@@ -1267,7 +1283,6 @@ TEST_CASE("[Synth] Off by same note")
         <region> group=1 off_by=1 sample=*triangle key=60
     )");
     synth.noteOn(0, 60, 85);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    auto playingVoices = getPlayingVoices(synth);
-    REQUIRE( playingVoices.front()->getRegion()->sampleId.filename() == "*triangle" );
+    REQUIRE( numPlayingVoices(synth) == 2 );
+    synth.noteOn(0, 60, 85);
 }

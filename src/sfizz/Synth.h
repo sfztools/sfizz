@@ -849,14 +849,6 @@ private:
     void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
-     * @brief Check the off groups of all playing voices, releasing if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkOffGroups(Region* region, int delay) noexcept;
-
-    /**
      * @brief Start all delayed release voices of the region if necessary
      *
      * @param region

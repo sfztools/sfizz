@@ -163,11 +163,12 @@ public:
      * This will trigger the release if true.
      *
      * @param delay
+     * @param noteNumber
      * @param group
      * @return true
      * @return false
      */
-    bool checkOffGroup(int delay, uint32_t group) noexcept;
+    bool checkOffGroup(const Region* other, int delay, int noteNumber) noexcept;
 
     /**
      * @brief Render a block of data for this voice into the span
