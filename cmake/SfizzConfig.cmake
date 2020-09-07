@@ -27,6 +27,21 @@ if (WIN32)
     add_compile_definitions(NOMINMAX)
 endif()
 
+# Find macOS system libraries
+if(APPLE)
+    find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
+    find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
+    find_library(APPLE_COCOA_LIBRARY "Cocoa")
+    find_library(APPLE_CARBON_LIBRARY "Carbon")
+    find_library(APPLE_OPENGL_LIBRARY "OpenGL")
+    find_library(APPLE_ACCELERATE_LIBRARY "Accelerate")
+    find_library(APPLE_QUARTZCORE_LIBRARY "QuartzCore")
+    find_library(APPLE_AUDIOTOOLBOX_LIBRARY "AudioToolbox")
+    find_library(APPLE_AUDIOUNIT_LIBRARY "AudioUnit")
+    find_library(APPLE_COREAUDIO_LIBRARY "CoreAudio")
+    find_library(APPLE_COREMIDI_LIBRARY "CoreMIDI")
+endif()
+
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
 # see https://gitlab.kitware.com/cmake/cmake/issues/15170
 
