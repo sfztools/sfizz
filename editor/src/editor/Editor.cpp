@@ -496,10 +496,10 @@ void Editor::Impl::createFrameContents()
             return btn;
         };
         auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton("\ue142", bounds, tag, fontsize);
+            return createGlyphButton(u8"\ue142", bounds, tag, fontsize);
         };
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton("\ue148", bounds, tag, fontsize);
+            return createGlyphButton(u8"\ue148", bounds, tag, fontsize);
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             SPiano* piano = new SPiano(bounds);
