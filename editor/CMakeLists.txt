@@ -74,7 +74,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 
     add_custom_command(
         OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
-        COMMAND "${CMAKE_CURRENT_BINARY_DIR}/layout-maker"
+        COMMAND "$<TARGET_FILE:layout-maker>"
         "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl"
         > "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
         DEPENDS layout-maker "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl")
