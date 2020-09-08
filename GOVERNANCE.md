@@ -50,7 +50,7 @@ In both cases, updates to this document reflect the evolution of the governance 
 ## License for the GOVERNANCE.md file
 
 Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty this notice is preserved.
-This file is offered as-is, without any warranty.
+are permitted in any medium without royalty provided that this notice
+is preserved. This file is offered as-is, without any warranty.
 
 [Open-source Open Collective]: https://opencollective.com/sfztools
