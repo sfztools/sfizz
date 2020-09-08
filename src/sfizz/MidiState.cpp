@@ -164,6 +164,9 @@ void sfz::MidiState::resetAllControllers(int delay) noexcept
     for (int ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
         ccEvent(delay, ccIdx, 0.0f);
 
+    if (ccObserver)
+        ccObserver->onAllControllersReset();
+
     pitchBendEvent(delay, 0.0f);
 }
 
