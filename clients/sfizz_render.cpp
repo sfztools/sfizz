@@ -65,6 +65,7 @@ int main(int argc, char** argv)
     bool verbose { false };
     bool help { false };
     bool useEOT { false };
+    int quality { 2 };
     int oversampling { 1 };
 
     options.add_options()
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
         ("b,blocksize", "Block size for the sfizz callbacks", cxxopts::value(blockSize))
         ("s,samplerate", "Output sample rate", cxxopts::value(sampleRate))
         ("oversampling", "Internal oversampling factor", cxxopts::value(oversampling))
+        ("q,quality", "Resampling quality", cxxopts::value(quality))
         ("v,verbose", "Verbose output", cxxopts::value(verbose))
         ("log", "Produce logs", cxxopts::value<std::string>())
         ("use-eot", "End the rendering at the last End of Track Midi message", cxxopts::value(useEOT))
@@ -118,6 +120,7 @@ int main(int argc, char** argv)
     sfz::Synth synth;
     synth.setSamplesPerBlock(blockSize);
     synth.setSampleRate(sampleRate);
+    synth.setSampleQuality(sfz::Synth::ProcessMode::ProcessFreewheeling, 1);
     synth.enableFreeWheeling();
 
     if (params.count("log") > 0)
