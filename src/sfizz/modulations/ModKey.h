@@ -9,6 +9,7 @@
 #include "ModId.h"
 #include "../NumericId.h"
 #include <string>
+#include <cstring>
 
 namespace sfz {
 
@@ -49,8 +50,15 @@ public:
         Parameters(Parameters&&) = delete;
         Parameters &operator=(Parameters&&) = delete;
 
-        bool operator==(const Parameters& other) const noexcept;
-        bool operator!=(const Parameters& other) const noexcept;
+        bool operator==(const Parameters& other) const noexcept
+        {
+            return std::memcmp(this, &other, sizeof(*this)) == 0;
+        }
+
+        bool operator!=(const Parameters& other) const noexcept
+        {
+            return std::memcmp(this, &other, sizeof(*this)) != 0;
+        }
 
         union {
             //! Parameters if this key identifies a CC source
@@ -64,8 +72,17 @@ public:
     };
 
 public:
-    bool operator==(const ModKey &other) const noexcept;
-    bool operator!=(const ModKey &other) const noexcept;
+    bool operator==(const ModKey &other) const noexcept
+    {
+        return id_ == other.id_ && region_ == other.region_ &&
+            parameters() == other.parameters();
+    }
+
+    bool operator!=(const ModKey &other) const noexcept
+    {
+        return !this->operator==(other);
+    }
+
 
 private:
     //! Identifier

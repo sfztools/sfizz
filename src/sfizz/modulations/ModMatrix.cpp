@@ -364,8 +364,7 @@ float* ModMatrix::getModulation(TargetId targetId)
                 }
                 else {
                     ASSERT(targetFlags & kModIsAdditive);
-                    for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] += sourceDepth * sourceBuffer[i];
+                    sfz::multiplyAdd1<float>(sourceDepth, sourceBuffer, buffer);
                 }
             }
         }
