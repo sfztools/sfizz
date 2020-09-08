@@ -29,6 +29,8 @@ struct SIMDDispatch {
     decltype(&divideScalar<T>) divide = &divideScalar<T>;
     decltype(&multiplyAddScalar<T>) multiplyAdd = &multiplyAddScalar<T>;
     decltype(&multiplyAdd1Scalar<T>) multiplyAdd1 = &multiplyAdd1Scalar<T>;
+    decltype(&multiplyMulScalar<T>) multiplyMul = &multiplyMulScalar<T>;
+    decltype(&multiplyMul1Scalar<T>) multiplyMul1 = &multiplyMul1Scalar<T>;
     decltype(&linearRampScalar<T>) linearRamp = &linearRampScalar<T>;
     decltype(&multiplicativeRampScalar<T>) multiplicativeRamp = &multiplicativeRampScalar<T>;
     decltype(&addScalar<T>) add = &addScalar<T>;
@@ -81,6 +83,8 @@ void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
             SIMD_OP(subtract1)
             SIMD_OP(multiplyAdd)
             SIMD_OP(multiplyAdd1)
+            SIMD_OP(multiplyMul)
+            SIMD_OP(multiplyMul1)
             SIMD_OP(copy)
             SIMD_OP(cumsum)
             SIMD_OP(diff)
@@ -118,6 +122,8 @@ void SIMDDispatch<float>::setStatus(SIMDOps op, bool enable)
             SIMD_OP(subtract1)
             SIMD_OP(multiplyAdd)
             SIMD_OP(multiplyAdd1)
+            SIMD_OP(multiplyMul)
+            SIMD_OP(multiplyMul1)
             SIMD_OP(copy)
             SIMD_OP(cumsum)
             SIMD_OP(diff)
@@ -158,6 +164,8 @@ void SIMDDispatch<float>::resetStatus()
     setStatus(SIMDOps::subtract1, false);
     setStatus(SIMDOps::multiplyAdd, false);
     setStatus(SIMDOps::multiplyAdd1, false);
+    setStatus(SIMDOps::multiplyMul, false);
+    setStatus(SIMDOps::multiplyMul1, false);
     setStatus(SIMDOps::copy, false);
     setStatus(SIMDOps::cumsum, true);
     setStatus(SIMDOps::diff, false);
@@ -241,6 +249,18 @@ template <>
 void multiplyAdd1<float>(float gain, const float* input, float* output, unsigned size) noexcept
 {
     return simdDispatch<float>().multiplyAdd1(gain, input, output, size);
+}
+
+template <>
+void multiplyMul<float>(const float* gain, const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().multiplyMul(gain, input, output, size);
+}
+
+template <>
+void multiplyMul1<float>(float gain, const float* input, float* output, unsigned size) noexcept
+{
+    return simdDispatch<float>().multiplyMul1(gain, input, output, size);
 }
 
 template <>

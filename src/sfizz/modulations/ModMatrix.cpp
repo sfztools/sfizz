@@ -355,16 +355,14 @@ float* ModMatrix::getModulation(TargetId targetId)
             }
             else {
                 if (targetFlags & kModIsMultiplicative) {
-                    for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= sourceDepth * sourceBuffer[i];
+                    multiplyMul1<float>(sourceDepth, sourceBuffer, buffer);
                 }
                 else if (targetFlags & kModIsPercentMultiplicative) {
-                    for (uint32_t i = 0; i < numFrames; ++i)
-                        buffer[i] *= (0.01f * sourceDepth) * sourceBuffer[i];
+                    multiplyMul1<float>(0.01f * sourceDepth, sourceBuffer, buffer);
                 }
                 else {
                     ASSERT(targetFlags & kModIsAdditive);
-                    sfz::multiplyAdd1<float>(sourceDepth, sourceBuffer, buffer);
+                    multiplyAdd1<float>(sourceDepth, sourceBuffer, buffer);
                 }
             }
         }

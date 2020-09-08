@@ -183,6 +183,49 @@ void multiplyAdd1SSE(float gain, const float* input, float* output, unsigned siz
         *output++ += gain * (*input++);
 }
 
+void multiplyMulSSE(const float* gain, const float* input, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+#if SFIZZ_HAVE_SSE2
+    const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
+    while (unaligned<ByteAlignment>(input, output) && output < lastAligned)
+        *output++ *= (*gain++) * (*input++);
+
+    while (output < lastAligned) {
+        auto mmOut = _mm_load_ps(output);
+        mmOut = _mm_mul_ps(_mm_mul_ps(_mm_load_ps(gain), _mm_load_ps(input)), mmOut);
+        _mm_store_ps(output, mmOut);
+        incrementAll<TypeAlignment>(gain, input, output);
+    }
+#endif
+
+    while (output < sentinel)
+        *output++ *= (*gain++) * (*input++);
+}
+
+void multiplyMul1SSE(float gain, const float* input, float* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+
+#if SFIZZ_HAVE_SSE2
+    const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
+    while (unaligned<ByteAlignment>(input, output) && output < lastAligned)
+        *output++ *= gain * (*input++);
+
+    auto mmGain = _mm_set1_ps(gain);
+    while (output < lastAligned) {
+        auto mmOut = _mm_load_ps(output);
+        mmOut = _mm_mul_ps(_mm_mul_ps(mmGain, _mm_load_ps(input)), mmOut);
+        _mm_store_ps(output, mmOut);
+        incrementAll<TypeAlignment>(input, output);
+    }
+#endif
+
+    while (output < sentinel)
+        *output++ *= gain * (*input++);
+}
+
 float linearRampSSE(float* output, float start, float step, unsigned size) noexcept
 {
     const auto sentinel = output + size;
