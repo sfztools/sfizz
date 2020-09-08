@@ -178,6 +178,11 @@ void sfz::Sfizz::renderBlock(float** buffers, size_t numSamples, int /*numOutput
     synth->renderBlock({{buffers[0], buffers[1]}, numSamples});
 }
 
+bool sfz::Sfizz::checkHdcc(int& ccNumber, float& ccValue) noexcept
+{
+    return synth->checkHdcc(ccNumber, ccValue);
+}
+
 int sfz::Sfizz::getNumActiveVoices() const noexcept
 {
     return synth->getNumActiveVoices();

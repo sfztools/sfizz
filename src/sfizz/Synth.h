@@ -429,6 +429,18 @@ public:
     void renderBlock(AudioSpan<float> buffer) noexcept;
 
     /**
+     * @brief Extract a controller change notification which occurred since the
+     * previous call of this function, or the startup of the synth otherwise.
+     * The notifications are not guaranteed to be received in order.
+     *
+     * @param[out] ccNumber Number of the controller which has changed
+     *                      The special value -1 indicates all CC reset to zero.
+     * @param[out] ccValue Value of the controller which has changed
+     * @return true if a controller change is extracted, otherwise false
+     */
+    bool checkHdcc(int& ccNumber, float& ccValue) noexcept;
+
+    /**
      * @brief Get the number of active voices
      *
      * @return int
@@ -816,6 +828,9 @@ private:
         size_t maxLFOs { 0 };
     };
     SettingsPerVoice settingsPerVoice;
+
+    // Controller state
+    std::unique_ptr<MidiState::ControllerChangeRecorder> ccRecorder;
 
     Duration dispatchDuration { 0 };
 

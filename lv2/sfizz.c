@@ -147,7 +147,7 @@ typedef struct
     LV2_URID sfizz_oversampling_uri;
     LV2_URID sfizz_log_status_uri;
     LV2_URID sfizz_check_modification_uri;
-    LV2_URID sfizz_active_voices_uri;
+    LV2_URID sfizz_controller_change_uri;
     LV2_URID time_position_uri;
     LV2_URID time_bar_uri;
     LV2_URID time_bar_beat_uri;
@@ -178,6 +178,11 @@ typedef struct
     int beat_unit;
     float bpm_tempo;
     float speed;
+
+    // Controller state
+    bool have_cc_notification;
+    int ccn_number;
+    float ccn_value;
 
     // Paths
     char bundle_path[MAX_BUNDLE_PATH_SIZE];
@@ -236,6 +241,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
+    self->sfizz_controller_change_uri = map->map(map->handle, SFIZZ__controllerChange);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
     self->time_bar_uri = map->map(map->handle, LV2_TIME__bar);
     self->time_bar_beat_uri = map->map(map->handle, LV2_TIME__barBeat);
@@ -579,6 +585,10 @@ instantiate(const LV2_Descriptor *descriptor,
 
     sfizz_lv2_update_timeinfo(self, 0, ~0);
 
+    self->have_cc_notification = true;
+    self->ccn_number = -1;
+    self->ccn_value = 0.0f;
+
     return (LV2_Handle)self;
 }
 
@@ -621,6 +631,34 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
 
     if (write_ok)
         lv2_atom_forge_pop(&self->forge, &frame);
+}
+
+static bool
+sfizz_lv2_send_cc_notification(sfizz_plugin_t *self)
+{
+    if (!self->have_cc_notification)
+        return false;
+
+    LV2_Atom_Forge_Frame frame_patch_set;
+    LV2_Atom_Forge_Frame frame_patch_value;
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(&self->forge, 0) &&
+        lv2_atom_forge_object(&self->forge, &frame_patch_set, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(&self->forge, self->sfizz_controller_change_uri) &&
+        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
+        lv2_atom_forge_tuple(&self->forge, &frame_patch_value) &&
+        lv2_atom_forge_int(&self->forge, self->ccn_number) &&
+        lv2_atom_forge_float(&self->forge, self->ccn_value);
+
+    if (!write_ok)
+        return false;
+
+    lv2_atom_forge_pop(&self->forge, &frame_patch_value);
+    lv2_atom_forge_pop(&self->forge, &frame_patch_set);
+    self->have_cc_notification = false;
+    return true;
 }
 
 static void
@@ -1005,6 +1043,12 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
+
+    if (!self->have_cc_notification)
+        self->have_cc_notification = sfizz_check_hdcc(self->synth, &self->ccn_number, &self->ccn_value);
+
+    while (sfizz_lv2_send_cc_notification(self))
+        self->have_cc_notification = sfizz_check_hdcc(self->synth, &self->ccn_number, &self->ccn_value);
 
     if (self->midnam && atomic_exchange(&self->must_update_midnam, 0))
     {

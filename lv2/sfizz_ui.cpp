@@ -100,6 +100,9 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID atom_object_uri;
     LV2_URID atom_path_uri;
     LV2_URID atom_urid_uri;
+    LV2_URID atom_tuple_uri;
+    LV2_URID atom_int_uri;
+    LV2_URID atom_float_uri;
     LV2_URID midi_event_uri;
     LV2_URID patch_get_uri;
     LV2_URID patch_set_uri;
@@ -107,6 +110,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID patch_value_uri;
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
+    LV2_URID sfizz_controller_change_uri;
 
 protected:
     void uiSendValue(EditId id, const EditValue& v) override;
@@ -165,6 +169,9 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
     self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
+    self->atom_tuple_uri = map->map(map->handle, LV2_ATOM__Tuple);
+    self->atom_int_uri = map->map(map->handle, LV2_ATOM__Int);
+    self->atom_float_uri = map->map(map->handle, LV2_ATOM__Float);
     self->midi_event_uri = map->map(map->handle, LV2_MIDI__MidiEvent);
     self->patch_get_uri = map->map(map->handle, LV2_PATCH__Get);
     self->patch_set_uri = map->map(map->handle, LV2_PATCH__Set);
@@ -172,6 +179,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->patch_value_uri = map->map(map->handle, LV2_PATCH__value);
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
+    self->sfizz_controller_change_uri = map->map(map->handle, SFIZZ__controllerChange);
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path
@@ -304,6 +312,29 @@ port_event(LV2UI_Handle ui,
                 else if (prop_uri == self->sfizz_scala_file_uri && value->type == self->atom_path_uri) {
                     std::string path(value_body, strnlen(value_body, value->size));
                     self->uiReceiveValue(EditId::ScalaFile, path);
+                }
+                else if (prop_uri == self->sfizz_controller_change_uri && value->type == self->atom_tuple_uri) {
+                    const LV2_Atom_Tuple *tuple = reinterpret_cast<const LV2_Atom_Tuple *>(value);
+                    const void *tuple_body = LV2_ATOM_BODY_CONST(tuple);
+
+                    LV2_Atom *iter1st;
+                    LV2_Atom *iter2nd;
+                    bool good = true;
+
+                    iter1st = lv2_atom_tuple_begin(tuple);
+                    good = good && !lv2_atom_tuple_is_end(tuple_body, tuple->atom.size, iter1st) &&
+                        iter1st->type == self->atom_int_uri && iter1st->size == sizeof(int32_t);
+
+                    iter2nd = good ? lv2_atom_tuple_next(iter1st) : nullptr;
+                    good = good && !lv2_atom_tuple_is_end(tuple_body, tuple->atom.size, iter2nd) &&
+                        iter2nd->type == self->atom_float_uri && iter2nd->size == sizeof(float);
+
+                    if (good) {
+                        int ccNumber = *reinterpret_cast<const int32_t *>(LV2_ATOM_BODY_CONST(iter1st));
+                        float ccValue = *reinterpret_cast<const float *>(LV2_ATOM_BODY_CONST(iter2nd));
+                        std::vector<float> value { static_cast<float>(ccNumber), ccValue };
+                        self->uiReceiveValue(EditId::ControllerChange, std::move(value));
+                    }
                 }
             }
         }

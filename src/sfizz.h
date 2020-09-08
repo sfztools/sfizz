@@ -405,6 +405,19 @@ SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int dela
 SFIZZ_EXPORTED_API void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels, int num_frames);
 
 /**
+ * @brief Extract a controller change notification which occurred since the
+ * previous call of this function, or the startup of the synth otherwise.
+ * The notifications are not guaranteed to be received in order.
+ *
+ * @param synth           The synth.
+ * @param[out] cc_number  Number of the controller which has changed
+ *                        The special value -1 indicates all CC reset to zero.
+ * @param[out] cc_value   Value of the controller which has changed
+ * @return true if a controller change is extracted, otherwise false
+ */
+SFIZZ_EXPORTED_API bool sfizz_check_hdcc(sfizz_synth_t* synth, int* cc_number, float* cc_value);
+
+/**
  * @brief Get the size of the preloaded data.
  *
  * This returns the number of floats used in the preloading buffers.

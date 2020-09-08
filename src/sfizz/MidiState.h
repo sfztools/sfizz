@@ -136,6 +136,43 @@ public:
     const EventVector& getCCEvents(int ccIdx) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
 
+    /**
+     * @brief Observer of controller change events
+     */
+    class ControllerChangeObserver {
+    public:
+        virtual ~ControllerChangeObserver() {}
+        virtual void onAllControllersReset() = 0;
+        virtual void onControllerChange(int ccNumber, float ccValue) = 0;
+    };
+
+    /**
+     * @brief Observer of controller change events, which records the
+     * information in a linked list of non-duplicated controller changes.
+     */
+    class ControllerChangeRecorder : public ControllerChangeObserver {
+    public:
+        ControllerChangeRecorder();
+        ~ControllerChangeRecorder();
+        bool getNextControllerChange(int& ccNumber, float& ccValue) noexcept; // O(1)
+
+    protected:
+        void onAllControllersReset() override;
+        void onControllerChange(int ccNumber, float ccValue) override;
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> impl_;
+    };
+
+    /**
+     * @brief Set the controller change observer
+     */
+    void setControllerChangeObserver(ControllerChangeObserver* obs)
+    {
+        ccObserver = obs;
+    }
+
 private:
     int activeNotes { 0 };
 
@@ -178,5 +215,10 @@ private:
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     unsigned internalClock { 0 };
+
+    /**
+     * @brief Controller change observer
+     */
+    ControllerChangeObserver* ccObserver = nullptr;
 };
 }

@@ -24,6 +24,7 @@ enum class EditId : int {
     UINumPreloadedSamples,
     UINumActiveVoices,
     UIActivePanel,
+    ControllerChange,
 };
 
 struct EditRange {

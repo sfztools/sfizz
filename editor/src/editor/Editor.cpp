@@ -279,6 +279,16 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             setActivePanel(value);
         }
         break;
+    case EditId::ControllerChange:
+        {
+            const std::vector<float>& value = v.to_float_vector();
+
+            const int ccNumber = static_cast<int>(value.at(0));
+            const float ccValue = static_cast<float>(value.at(1));
+
+            #pragma message("UI: implement CC received")
+        }
+        break;
     }
 }
 

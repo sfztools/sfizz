@@ -125,6 +125,9 @@ void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
         cc[ccNumber].insert(insertionPoint, { delay, ccValue });
     else
         insertionPoint->value = ccValue;
+
+    if (ccObserver)
+        ccObserver->onControllerChange(ccNumber, ccValue);
 }
 
 float sfz::MidiState::getCCValue(int ccNumber) const noexcept
@@ -151,6 +154,9 @@ void sfz::MidiState::reset() noexcept
     internalClock = 0;
     absl::c_fill(noteOnTimes, 0);
     absl::c_fill(noteOffTimes, 0);
+
+    if (ccObserver)
+        ccObserver->onAllControllersReset();
 }
 
 void sfz::MidiState::resetAllControllers(int delay) noexcept
@@ -172,4 +178,104 @@ const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept
 const sfz::EventVector& sfz::MidiState::getPitchEvents() const noexcept
 {
     return pitchEvents;
+}
+
+///
+struct sfz::MidiState::ControllerChangeRecorder::Impl {
+    void unlink(unsigned ccIdx);
+    void linkToBack(unsigned ccIdx);
+
+    struct Record {
+        int ccNumber; float ccValue;
+        unsigned linkToPrev, linkToNext;
+    };
+
+    unsigned linkToFirst = ~0u;
+    unsigned linkToLast = ~0u;
+    std::array<Record, config::numCCs + 1> reserve;
+};
+
+///
+sfz::MidiState::ControllerChangeRecorder::ControllerChangeRecorder()
+    : impl_(new Impl)
+{
+    Impl& impl = *impl_;
+
+    for (Impl::Record& record : impl.reserve) {
+        record.linkToPrev = ~0u;
+        record.linkToNext = ~0u;
+    }
+}
+
+sfz::MidiState::ControllerChangeRecorder::~ControllerChangeRecorder()
+{
+}
+
+bool sfz::MidiState::ControllerChangeRecorder::getNextControllerChange(int& ccNumber, float& ccValue) noexcept
+{
+    Impl& impl = *impl_;
+
+    if (impl.linkToFirst == ~0u)
+        return false;
+
+    const Impl::Record& record = impl.reserve[impl.linkToFirst];
+    ccNumber = record.ccNumber;
+    ccValue = record.ccValue;
+    impl.unlink(impl.linkToFirst);
+    return true;
+}
+
+void sfz::MidiState::ControllerChangeRecorder::onAllControllersReset()
+{
+    Impl& impl = *impl_;
+
+    // empty the list and insert the Reset element (ccIdx=-1)
+    Impl::Record& record = impl.reserve[config::numCCs];
+    record.ccNumber = -1;
+    record.ccValue = 0;
+    record.linkToPrev = ~0u;
+    record.linkToNext = ~0u;
+    impl.linkToFirst = config::numCCs;
+    impl.linkToLast = config::numCCs;
+}
+
+void sfz::MidiState::ControllerChangeRecorder::onControllerChange(int ccNumber, float ccValue)
+{
+    Impl& impl = *impl_;
+
+    ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
+    impl.unlink(ccNumber);
+    Impl::Record& record = impl.reserve[ccNumber];
+    record.ccNumber = ccNumber;
+    record.ccValue = ccValue;
+    impl.linkToBack(ccNumber);
+}
+
+void sfz::MidiState::ControllerChangeRecorder::Impl::unlink(unsigned ccIdx)
+{
+    Impl::Record& record = reserve[ccIdx];
+    if (linkToFirst == ccIdx)
+        linkToFirst = record.linkToNext;
+    if (linkToLast == ccIdx)
+        linkToLast = record.linkToPrev;
+    if (record.linkToPrev != ~0u) {
+        reserve[record.linkToPrev].linkToNext = record.linkToNext;
+        record.linkToPrev = ~0u;
+    }
+    if (record.linkToNext != ~0u) {
+        reserve[record.linkToNext].linkToPrev = record.linkToPrev;
+        record.linkToNext = ~0u;
+    }
+}
+
+void sfz::MidiState::ControllerChangeRecorder::Impl::linkToBack(unsigned ccIdx)
+{
+    Impl::Record& record = reserve[ccIdx];
+    record.linkToPrev = linkToLast;
+    record.linkToNext = ~0u;
+    if (linkToFirst == ~0u)
+        linkToFirst = ccIdx;
+    if (linkToLast != ~0u)
+        reserve[linkToLast].linkToNext = ccIdx;
+    linkToLast = ccIdx;
 }

@@ -19,6 +19,7 @@
 // These ones are just for the worker
 #define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
 #define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
+#define SFIZZ__controllerChange SFIZZ_URI ":" "controller_change"
 
 enum
 {

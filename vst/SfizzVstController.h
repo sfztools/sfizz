@@ -49,6 +49,9 @@ public:
     struct StateListener {
         virtual void onStateChanged() = 0;
     };
+    struct ControllerChangeListener {
+        virtual void onControllerChange(int ccNumber, float ccValue) = 0;
+    };
 
     const SfizzVstState& getSfizzState() const { return _state; }
     SfizzVstState& getSfizzState() { return _state; }
@@ -62,6 +65,9 @@ public:
     void addSfizzStateListener(StateListener* listener);
     void removeSfizzStateListener(StateListener* listener);
 
+    void addSfizzControllerChangeListener(ControllerChangeListener* listener);
+    void removeSfizzControllerChangeListener(ControllerChangeListener* listener);
+
     ///
     static FUnknown* createInstance(void*);
 
@@ -72,4 +78,5 @@ private:
     SfizzUiState _uiState;
     SfizzPlayState _playState {};
     std::vector<StateListener*> _stateListeners;
+    std::vector<ControllerChangeListener*> _ccListeners;
 };

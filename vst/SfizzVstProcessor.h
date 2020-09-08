@@ -73,6 +73,11 @@ private:
     int _timeSigDenominator = 0;
     void updateTimeInfo(const Vst::ProcessContext& context);
 
+    // controller state
+    bool _haveCCNotification = false;
+    int _ccnNumber = 0;
+    float _ccnValue = 0.0f;
+
     // messaging
     struct RTMessage {
         const char* type;

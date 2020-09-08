@@ -293,6 +293,21 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
 
         _playState = *static_cast<const SfizzPlayState*>(data);
     }
+    else if (!strcmp(id, "NotifiedController")) {
+        int64 ccNumber;
+        double ccValue;
+
+        result = attr->getInt("Number", ccNumber);
+        if (result != kResultTrue)
+            return result;
+
+        result = attr->getFloat("Value", ccValue);
+        if (result != kResultTrue)
+            return result;
+
+        for (ControllerChangeListener* listener : _ccListeners)
+            listener->onControllerChange(ccNumber, ccValue);
+    }
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();
@@ -310,6 +325,18 @@ void SfizzVstController::removeSfizzStateListener(StateListener* listener)
     auto it = std::find(_stateListeners.begin(), _stateListeners.end(), listener);
     if (it != _stateListeners.end())
         _stateListeners.erase(it);
+}
+
+void SfizzVstController::addSfizzControllerChangeListener(ControllerChangeListener* listener)
+{
+    _ccListeners.push_back(listener);
+}
+
+void SfizzVstController::removeSfizzControllerChangeListener(ControllerChangeListener* listener)
+{
+    auto it = std::find(_ccListeners.begin(), _ccListeners.end(), listener);
+    if (it != _ccListeners.end())
+        _ccListeners.erase(it);
 }
 
 FUnknown* SfizzVstController::createInstance(void*)

@@ -38,6 +38,10 @@ sfz::Synth::Synth(int numVoices)
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
     parser.setListener(this);
+
+    ccRecorder.reset(new MidiState::ControllerChangeRecorder);
+    resources.midiState.setControllerChangeObserver(ccRecorder.get());
+
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
     resetVoices(numVoices);
@@ -841,6 +845,11 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
     SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
     SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
+}
+
+bool sfz::Synth::checkHdcc(int& ccNumber, float& ccValue) noexcept
+{
+    return ccRecorder->getNextControllerChange(ccNumber, ccValue);
 }
 
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept

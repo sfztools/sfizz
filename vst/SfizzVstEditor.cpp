@@ -20,11 +20,13 @@ SfizzVstEditor::SfizzVstEditor(void *controller)
     : VSTGUIEditor(controller, &sfizzUiViewRect)
 {
     getController()->addSfizzStateListener(this);
+    getController()->addSfizzControllerChangeListener(this);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
 {
     getController()->removeSfizzStateListener(this);
+    getController()->removeSfizzControllerChangeListener(this);
 }
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
@@ -103,6 +105,12 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
 void SfizzVstEditor::onStateChanged()
 {
     updateStateDisplay();
+}
+
+void SfizzVstEditor::onControllerChange(int ccNumber, float ccValue)
+{
+    std::vector<float> editValue { static_cast<float>(ccNumber), ccValue };
+    uiReceiveValue(EditId::ControllerChange, std::move(editValue));
 }
 
 ///

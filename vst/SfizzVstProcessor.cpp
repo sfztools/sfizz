@@ -60,6 +60,10 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth->timePosition(0, 0, 0);
     _synth->playbackState(0, 0);
 
+    _haveCCNotification = true;
+    _ccnNumber = -1;
+    _ccnValue = 0.0f;
+
     return result;
 }
 
@@ -217,6 +221,23 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         if (writeWorkerMessage("NotifyPlayState", &playState, sizeof(playState)))
             _semaToWorker.post();
     }
+
+    if (!_haveCCNotification)
+        _haveCCNotification = synth.checkHdcc(_ccnNumber, _ccnValue);
+
+    auto sendCCNotification = [this]() -> bool {
+        if (!_haveCCNotification)
+            return false;
+        std::pair<int, float> payload { _ccnNumber, _ccnValue };
+        if (!writeWorkerMessage("NotifyController", &payload, sizeof(payload)))
+            return false;
+        _semaToWorker.post();
+        _haveCCNotification = false;
+        return true;
+    };
+
+    while (sendCCNotification())
+        _haveCCNotification = synth.checkHdcc(_ccnNumber, _ccnValue);
 
     return kResultTrue;
 }
@@ -485,6 +506,15 @@ void SfizzVstProcessor::doBackgroundWork()
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("NotifiedPlayState");
             notification->getAttributes()->setBinary("PlayState", &playState, sizeof(playState));
+            sendMessage(notification);
+        }
+        else if (!std::strcmp(id, "NotifyController")) {
+            std::pair<int, float> cc = *msg->payload<std::pair<int, float>>();
+            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
+            notification->setMessageID("NotifiedController");
+            Vst::IAttributeList* attr = notification->getAttributes();
+            attr->setInt("Number", cc.first);
+            attr->setFloat("Value", cc.second);
             sendMessage(notification);
         }
     }

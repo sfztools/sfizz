@@ -185,6 +185,12 @@ void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels
     self->renderBlock({{channels[0], channels[1]}, static_cast<size_t>(num_frames)});
 }
 
+bool sfizz_check_hdcc(sfizz_synth_t* synth, int* cc_number, float* cc_value)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->checkHdcc(*cc_number, *cc_value);
+}
+
 unsigned int sfizz_get_preload_size(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);

@@ -16,7 +16,10 @@ namespace VSTGUI { class RunLoop; }
 using namespace Steinberg;
 using namespace VSTGUI;
 
-class SfizzVstEditor : public Vst::VSTGUIEditor, public SfizzVstController::StateListener, public EditorController {
+class SfizzVstEditor : public Vst::VSTGUIEditor,
+                       public SfizzVstController::StateListener,
+                       public SfizzVstController::ControllerChangeListener,
+                       public EditorController {
 public:
     explicit SfizzVstEditor(void *controller);
     ~SfizzVstEditor();
@@ -34,6 +37,9 @@ public:
 
     // SfizzVstController::StateListener
     void onStateChanged() override;
+
+    // SfizzVstController::ControllerChangeListener
+    void onControllerChange(int ccNumber, float ccValue) override;
 
 protected:
     // EditorController
