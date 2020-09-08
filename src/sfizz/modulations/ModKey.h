@@ -6,6 +6,7 @@
 
 #pragma once
 #include "ModKeyHash.h"
+#include "ModId.h"
 #include "../NumericId.h"
 #include <string>
 
@@ -24,7 +25,7 @@ public:
 
     ModKey() = default;
     explicit ModKey(ModId id, NumericId<Region> region = {}, Parameters params = {})
-        : id_(id), region_(region), params_(params) {}
+        : id_(id), region_(region), params_(params), flags_(ModIds::flags(id_)) {}
 
     static ModKey createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float value, float step);
     static ModKey createNXYZ(ModId id, NumericId<Region> region, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
@@ -34,10 +35,10 @@ public:
     const ModId& id() const noexcept { return id_; }
     NumericId<Region> region() const noexcept { return region_; }
     const Parameters& parameters() const noexcept { return params_; }
+    int flags() const noexcept { return flags_; }
 
     bool isSource() const noexcept;
     bool isTarget() const noexcept;
-    int flags() const noexcept;
     std::string toString() const;
 
     struct Parameters {
@@ -73,6 +74,8 @@ private:
     NumericId<Region> region_;
     //! List of values which identify the key uniquely, along with the hash and region
     Parameters params_ {};
+    // Memorize the flag
+    int flags_;
 };
 
 } // namespace sfz

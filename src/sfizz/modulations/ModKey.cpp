@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ModKey.h"
-#include "ModId.h"
 #include "../Debug.h"
 #include <absl/strings/str_cat.h>
 #include <cstring>
@@ -74,10 +73,6 @@ bool ModKey::isTarget() const noexcept
     return ModIds::isTarget(id_);
 }
 
-int ModKey::flags() const noexcept
-{
-    return ModIds::flags(id_);
-}
 
 std::string ModKey::toString() const
 {
