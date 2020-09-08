@@ -120,7 +120,7 @@ int main(int argc, char** argv)
     sfz::Synth synth;
     synth.setSamplesPerBlock(blockSize);
     synth.setSampleRate(sampleRate);
-    synth.setSampleQuality(sfz::Synth::ProcessMode::ProcessFreewheeling, 1);
+    synth.setSampleQuality(sfz::Synth::ProcessMode::ProcessFreewheeling, quality);
     synth.enableFreeWheeling();
 
     if (params.count("log") > 0)
