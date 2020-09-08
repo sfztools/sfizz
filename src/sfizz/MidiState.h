@@ -5,9 +5,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include <array>
 #include "CCMap.h"
 #include "Range.h"
+#include <array>
+#include <memory>
 
 namespace sfz
 {
