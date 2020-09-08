@@ -43,6 +43,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
     add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
+    add_compile_options(-Werror=return-type)
     if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
         add_compile_options(-msse2)
     endif()
