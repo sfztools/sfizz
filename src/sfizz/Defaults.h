@@ -245,7 +245,7 @@ namespace Default
 	constexpr Range<float> egOnCCPercentRange { -100.0, 100.0 };
 
     // ***** SFZ v2 ********
-    constexpr int sampleQuality { 2 };
+    constexpr int sampleQuality { 1 };
     constexpr int sampleQualityInFreewheelingMode { 10 }; // for future use, possibly excessive
     constexpr Range<int> sampleQualityRange { 1, 10 }; // sample_quality
 
