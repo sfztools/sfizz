@@ -30,11 +30,12 @@
 sfz::Synth::Synth()
     : Synth(config::numVoices)
 {
-    initializeSIMDDispatchers();
 }
 
 sfz::Synth::Synth(int numVoices)
 {
+    initializeSIMDDispatchers();
+
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
     parser.setListener(this);
     effectFactory.registerStandardEffectTypes();
