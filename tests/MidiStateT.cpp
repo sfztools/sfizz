@@ -14,6 +14,7 @@
 #include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"
+#include <vector>
 using namespace Catch::literals;
 using namespace sfz::literals;
 
@@ -81,4 +82,52 @@ TEST_CASE("[MidiState] Extended CCs")
 {
     sfz::MidiState state;
     state.ccEvent(0, 142, 64_norm); // should not trap
+}
+
+TEST_CASE("[MidiState] Controller change recording")
+{
+    sfz::MidiState state;
+    sfz::MidiState::ControllerChangeRecorder recorder;
+    state.setControllerChangeObserver(&recorder);
+
+    typedef std::pair<int, float> Record;
+
+    //
+    auto getCCList = [&recorder]() -> std::vector<Record> {
+        std::vector<Record> ccList;
+        int ccNumber;
+        float ccValue;
+        while (recorder.getNextControllerChange(ccNumber, ccValue))
+            ccList.emplace_back(ccNumber, ccValue);
+        return ccList;
+    };
+
+    // initial
+    REQUIRE(getCCList() == std::vector<Record>{});
+
+    // ordinary
+    state.advanceTime(10);
+    state.ccEvent(0, 1, 0.5f);
+    state.ccEvent(3, 2, 0.75f);
+    state.ccEvent(8, 3, 0.1f);
+    REQUIRE(getCCList() == std::vector<Record>{{1, 0.5f}, {2, 0.75f}, {3, 0.1f}});
+
+    // no events
+    state.advanceTime(10);
+    REQUIRE(getCCList() == std::vector<Record>{});
+
+    // duplicate
+    state.advanceTime(10);
+    state.ccEvent(0, 1, 0.5f);
+    state.ccEvent(3, 2, 0.75f);
+    state.ccEvent(8, 1, 0.1f);
+    REQUIRE(getCCList() == std::vector<Record>{{2, 0.75f}, {1, 0.1f}});
+
+    // reset all controllers
+    state.advanceTime(10);
+    state.ccEvent(0, 1, 0.5f);
+    state.ccEvent(3, 2, 0.75f);
+    state.ccEvent(8, 1, 0.1f);
+    state.resetAllControllers(9);
+    REQUIRE(getCCList() == std::vector<Record>{{-1, 0.0f}});
 }
