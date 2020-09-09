@@ -1286,3 +1286,27 @@ TEST_CASE("[Synth] Off by same note and group")
     REQUIRE( numPlayingVoices(synth) == 2 );
     synth.noteOn(0, 60, 85);
 }
+
+
+TEST_CASE("[Synth] Off by with CC switches")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <group> ampeg_decay=5 ampeg_sustain=0 ampeg_release=5 key=60
+        <region> sample=*saw transpose=12   group=1   off_by=2 hicc4=63
+        <region> sample=*triangle           group=2   off_by=1 locc4=64
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*saw" );
+    synth.cc(0, 4, 127);
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*triangle" );
+    synth.cc(0, 4, 0);
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*saw" );
+}
