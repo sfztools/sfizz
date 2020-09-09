@@ -5,10 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ModKey.h"
-#include "ModId.h"
 #include "../Debug.h"
 #include <absl/strings/str_cat.h>
-#include <cstring>
 
 namespace sfz {
 
@@ -30,16 +28,6 @@ ModKey::Parameters& ModKey::Parameters::operator=(const Parameters& other) noexc
     if (this != &other)
         std::memcpy(this, &other, sizeof(*this));
     return *this;
-}
-
-bool ModKey::Parameters::operator==(const Parameters& other) const noexcept
-{
-    return std::memcmp(this, &other, sizeof(*this)) == 0;
-}
-
-bool ModKey::Parameters::operator!=(const Parameters& other) const noexcept
-{
-    return std::memcmp(this, &other, sizeof(*this)) != 0;
 }
 
 ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float value, float step)
@@ -74,10 +62,6 @@ bool ModKey::isTarget() const noexcept
     return ModIds::isTarget(id_);
 }
 
-int ModKey::flags() const noexcept
-{
-    return ModIds::flags(id_);
-}
 
 std::string ModKey::toString() const
 {
@@ -111,13 +95,3 @@ std::string ModKey::toString() const
 
 } // namespace sfz
 
-bool sfz::ModKey::operator==(const ModKey &other) const noexcept
-{
-    return id_ == other.id_ && region_ == other.region_ &&
-        parameters() == other.parameters();
-}
-
-bool sfz::ModKey::operator!=(const ModKey &other) const noexcept
-{
-    return !this->operator==(other);
-}
