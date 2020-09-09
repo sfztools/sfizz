@@ -406,6 +406,12 @@ private:
      */
     void switchState(State s);
 
+    /**
+     * @brief Save the modulation targets to avoid recomputing them in every callback.
+     * Must be called during startVoice() ideally.
+     */
+    void saveModulationTargets(const Region* region) noexcept;
+
     const NumericId<Voice> id;
     StateListener* stateListener = nullptr;
 
@@ -465,6 +471,13 @@ private:
     Smoother bendSmoother;
     Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
+
+    ModMatrix::TargetId amplitudeTarget;
+    ModMatrix::TargetId volumeTarget;
+    ModMatrix::TargetId panTarget;
+    ModMatrix::TargetId positionTarget;
+    ModMatrix::TargetId widthTarget;
+    ModMatrix::TargetId pitchTarget;
 
     PowerFollower powerFollower;
 

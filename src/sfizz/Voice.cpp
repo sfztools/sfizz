@@ -144,6 +144,7 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
 
     resources.modMatrix.initVoice(id, region->getId(), delay);
+    saveModulationTargets(region);
 }
 
 int sfz::Voice::getCurrentSampleQuality() const noexcept
@@ -370,22 +371,20 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     const auto numSamples = modulationSpan.size();
 
     ModMatrix& mm = resources.modMatrix;
-    const ModKey volumeKey = ModKey::createNXYZ(ModId::Volume, region->getId());
-    const ModKey amplitudeKey = ModKey::createNXYZ(ModId::Amplitude, region->getId());
 
     // AmpEG envelope
     egEnvelope.getBlock(modulationSpan);
 
     // Amplitude envelope
     applyGain1<float>(baseGain, modulationSpan);
-    if (float* mod = mm.getModulationByKey(amplitudeKey)) {
+    if (float* mod = mm.getModulation(amplitudeTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
             modulationSpan[i] *= normalizePercents(mod[i]);
     }
 
     // Volume envelope
     applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
-    if (float* mod = mm.getModulationByKey(volumeKey)) {
+    if (float* mod = mm.getModulation(volumeTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
             modulationSpan[i] *= db2mag(mod[i]);
     }
@@ -437,14 +436,13 @@ void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
         return;
 
     ModMatrix& mm = resources.modMatrix;
-    const ModKey panKey = ModKey::createNXYZ(ModId::Pan, region->getId());
 
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
 
     // Apply panning
     fill(*modulationSpan, region->pan);
-    if (float* mod = mm.getModulationByKey(panKey)) {
+    if (float* mod = mm.getModulation(panTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
             (*modulationSpan)[i] += normalizePercents(mod[i]);
     }
@@ -463,13 +461,10 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
         return;
 
     ModMatrix& mm = resources.modMatrix;
-    const ModKey panKey = ModKey::createNXYZ(ModId::Pan, region->getId());
-    const ModKey widthKey = ModKey::createNXYZ(ModId::Width, region->getId());
-    const ModKey positionKey = ModKey::createNXYZ(ModId::Position, region->getId());
 
     // Apply panning
     fill(*modulationSpan, region->pan);
-    if (float* mod = mm.getModulationByKey(panKey)) {
+    if (float* mod = mm.getModulation(panTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
             (*modulationSpan)[i] += normalizePercents(mod[i]);
     }
@@ -477,14 +472,14 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
 
     // Apply the width/position process
     fill(*modulationSpan, region->width);
-    if (float* mod = mm.getModulationByKey(widthKey)) {
+    if (float* mod = mm.getModulation(widthTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
             (*modulationSpan)[i] += normalizePercents(mod[i]);
     }
     width(*modulationSpan, leftBuffer, rightBuffer);
 
     fill(*modulationSpan, region->position);
-    if (float* mod = mm.getModulationByKey(positionKey)) {
+    if (float* mod = mm.getModulation(positionTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
             (*modulationSpan)[i] += normalizePercents(mod[i]);
     }
@@ -889,9 +884,8 @@ void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
     applyGain<float>(*bends, pitchSpan);
 
     ModMatrix& mm = resources.modMatrix;
-    const ModKey pitchKey = ModKey::createNXYZ(ModId::Pitch, region->getId());
 
-    if (float* mod = mm.getModulationByKey(pitchKey)) {
+    if (float* mod = mm.getModulation(pitchTarget)) {
         for (size_t i = 0; i < numFrames; ++i)
             pitchSpan[i] *= centsFactor(mod[i]);
     }
@@ -901,4 +895,15 @@ void sfz::Voice::resetSmoothers() noexcept
 {
     bendSmoother.reset(1.0f);
     gainSmoother.reset(0.0f);
+}
+
+void sfz::Voice::saveModulationTargets(const Region* region) noexcept
+{
+    ModMatrix& mm = resources.modMatrix;
+    amplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Amplitude, region->getId()));
+    volumeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Volume, region->getId()));
+    panTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pan, region->getId()));
+    positionTarget = mm.findTarget(ModKey::createNXYZ(ModId::Position, region->getId()));
+    widthTarget = mm.findTarget(ModKey::createNXYZ(ModId::Width, region->getId()));
+    pitchTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pitch, region->getId()));
 }
