@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "TriggerEvent.h"
 #include "Config.h"
 #include "ADSREnvelope.h"
 #include "HistoricalBuffer.h"
@@ -42,12 +43,6 @@ public:
     Voice(int voiceNumber, Resources& resources);
 
     ~Voice();
-
-    enum class TriggerType {
-        NoteOn,
-        NoteOff,
-        CC
-    };
 
     /**
      * @brief Get the unique identifier of this voice in a synth
@@ -113,11 +108,9 @@ public:
      *
      * @param region
      * @param delay
-     * @param number
-     * @param value
-     * @param triggerType
+     * @param evebt
      */
-    void startVoice(Region* region, int delay, int number, float value, TriggerType triggerType) noexcept;
+    void startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
 
     /**
      * @brief Get the sample quality determined by the active region.
@@ -170,11 +163,12 @@ public:
      * This will trigger the release if true.
      *
      * @param delay
+     * @param noteNumber
      * @param group
      * @return true
      * @return false
      */
-    bool checkOffGroup(int delay, uint32_t group) noexcept;
+    bool checkOffGroup(const Region* other, int delay, int noteNumber) noexcept;
 
     /**
      * @brief Render a block of data for this voice into the span
@@ -198,23 +192,11 @@ public:
      */
     bool releasedOrFree() const noexcept;
     /**
-     * @brief Get the number that triggered the voice (note number or cc number)
+     * @brief Get the event that triggered the voice
      *
      * @return int
      */
-    int getTriggerNumber() const noexcept { return triggerNumber; }
-    /**
-     * @brief Get the value that triggered the voice (note velocity or cc value)
-     *
-     * @return float
-     */
-    float getTriggerValue() const noexcept { return triggerValue; }
-    /**
-     * @brief Get the type of trigger
-     *
-     * @return TriggerType
-     */
-    TriggerType getTriggerType() const noexcept { return triggerType; }
+    const TriggerEvent& getTriggerEvent() const noexcept { return triggerEvent; }
 
     /**
      * @brief Reset the voice to its initial values
@@ -432,9 +414,7 @@ private:
     State state { State::idle };
     bool noteIsOff { false };
 
-    TriggerType triggerType;
-    int triggerNumber;
-    float triggerValue;
+    TriggerEvent triggerEvent;
     absl::optional<int> triggerDelay;
 
     float speedRatio { 1.0 };
@@ -496,13 +476,16 @@ inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
     if (lhs->getAge() != rhs->getAge())
         return false;
 
-    if (lhs->getTriggerNumber() != rhs->getTriggerNumber())
+    const TriggerEvent& lhsTrigger = lhs->getTriggerEvent();
+    const TriggerEvent& rhsTrigger = rhs->getTriggerEvent();
+
+    if (lhsTrigger.number != rhsTrigger.number)
         return false;
 
-    if (lhs->getTriggerValue() != rhs->getTriggerValue())
+    if (lhsTrigger.value != rhsTrigger.value)
         return false;
 
-    if (lhs->getTriggerType() != rhs->getTriggerType())
+    if (lhsTrigger.type != rhsTrigger.type)
         return false;
 
     return true;
@@ -513,14 +496,17 @@ inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
     if (lhs->getAge() != rhs->getAge())
         return lhs->getAge() > rhs->getAge();
 
-    if (lhs->getTriggerNumber() != rhs->getTriggerNumber())
-        return lhs->getTriggerNumber() < rhs->getTriggerNumber();
+    const TriggerEvent& lhsTrigger = lhs->getTriggerEvent();
+    const TriggerEvent& rhsTrigger = rhs->getTriggerEvent();
 
-    if (lhs->getTriggerValue() != rhs->getTriggerValue())
-        return lhs->getTriggerValue() < rhs->getTriggerValue();
+    if (lhsTrigger.number != rhsTrigger.number)
+        return lhsTrigger.number < rhsTrigger.number;
 
-    if (lhs->getTriggerType() != rhs->getTriggerType())
-        return lhs->getTriggerType() > rhs->getTriggerType();
+    if (lhsTrigger.value != rhsTrigger.value)
+        return lhsTrigger.value < rhsTrigger.value;
+
+    if (lhsTrigger.type != rhsTrigger.type)
+        return lhsTrigger.type > rhsTrigger.type;
 
     return false;
 }

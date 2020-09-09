@@ -725,8 +725,32 @@ private:
 
     fs::file_time_type checkModificationTime();
 
+    /**
+     * @brief Check all regions and start voices for note on events
+     *
+     * @param delay
+     * @param noteNumber
+     * @param velocity
+     */
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
+     * @brief Check all regions and start voices for note off events
+     *
+     * @param delay
+     * @param noteNumber
+     * @param velocity
+     */
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
+     * @brief Check all regions and start voices for cc events
+     *
+     * @param delay
+     * @param ccNumber
+     * @param value
+     */
+    void ccDispatch(int delay, int ccNumber, float value) noexcept;
 
     template<class T>
     static void updateUsedCCsFromCCMap(std::bitset<sfz::config::numCCs>& usedCCs, const CCMap<T> map)
@@ -765,18 +789,83 @@ private:
     using RegionSetPtr = std::unique_ptr<RegionSet>;
     std::vector<RegionPtr> regions;
     std::vector<VoicePtr> voices;
+
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet;
     OpcodeScope lastHeader { OpcodeScope::kOpcodeScopeGlobal };
     std::vector<RegionSetPtr> sets;
+
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups;
+
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
-    VoiceViewVector regionPolyphonyArray;
+    VoiceViewVector tempPolyphonyArray;
+    VoiceViewVector voiceViewArray;
     VoiceStealing stealer;
 
-    VoiceViewVector voiceViewArray;
+    /**
+     * @brief Check the region polyphony, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     */
+    void checkRegionPolyphony(const Region* region, int delay) noexcept;
+
+    /**
+     * @brief Check the note polyphony, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     * @param triggerEvent
+     */
+    void checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept;
+
+    /**
+     * @brief Check the group polyphony, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     */
+    void checkGroupPolyphony(const Region* region, int delay) noexcept;
+
+    /**
+     * @brief Check the region set polyphony at all levels, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     */
+    void checkSetPolyphony(const Region* region, int delay) noexcept;
+
+    /**
+     * @brief Start a voice for a specific region.
+     * This will do the needed polyphony checks and voice stealing.
+     *
+     * @param region
+     * @param delay
+     * @param triggerEvent
+     * @param ring
+     */
+    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Start all delayed release voices of the region if necessary
+     *
+     * @param region
+     * @param delay
+     * @param ring
+     */
+    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Check if a playing voice matches the release region
+     *
+     * @param releaseRegion
+     * @return true
+     * @return false
+     */
+    bool playingAttackVoice(const Region* releaseRegion) noexcept;
+
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
 

@@ -227,11 +227,11 @@ TEST_CASE("[Polyphony] Self-masking")
     REQUIRE( synth.getNumActiveVoices(true) == 3 ); // One of these is releasing
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 2 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(1)->releasedOrFree()); // The lowest velocity voice is the masking candidate
-    REQUIRE( synth.getVoiceView(2)->getTriggerValue() == 64_norm);
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
 }
 
@@ -248,11 +248,11 @@ TEST_CASE("[Polyphony] Not self-masking")
     REQUIRE( synth.getNumActiveVoices(true) == 3 ); // One of these is releasing
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 2 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
     REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(2)->getTriggerValue() == 64_norm);
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
 }
 
@@ -269,11 +269,11 @@ TEST_CASE("[Polyphony] Self-masking with the exact same velocity")
     REQUIRE( synth.getNumActiveVoices(true) == 3 ); // One of these is releasing
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 2 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 64_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(1)->releasedOrFree()); // The first one is the masking candidate since they have the same velocity
-    REQUIRE( synth.getVoiceView(2)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
 }
 
@@ -286,9 +286,10 @@ TEST_CASE("[Polyphony] Self-masking only works from low to high")
     synth.noteOn(0, 64, 63 );
     synth.noteOn(0, 64, 62 );
     REQUIRE( synth.getNumActiveVoices(true) == 2 ); // Both notes are playing
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE( numPlayingVoices(synth) == 2 ); // id
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
     REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
 }
 
@@ -305,13 +306,13 @@ TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same po
     REQUIRE( synth.getNumActiveVoices(true) == 4);
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree()); // got killed
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(1)->releasedOrFree()); // got killed
-    REQUIRE( synth.getVoiceView(2)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(2)->releasedOrFree()); // got killed
-    REQUIRE( synth.getVoiceView(3)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(3)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(3)->releasedOrFree());
 }
 
@@ -333,9 +334,9 @@ TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same po
     REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 64_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
 }
 
@@ -353,13 +354,13 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups")
     REQUIRE( synth.getNumActiveVoices(true) == 4); // Both notes are playing
     synth.renderBlock(buffer);
     REQUIRE(numPlayingVoices(synth) == 2 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree()); // got killed
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(1)->releasedOrFree()); // got killed
-    REQUIRE( synth.getVoiceView(2)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(2)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(3)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(3)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(3)->releasedOrFree());
 }
 
@@ -381,8 +382,118 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups (wi
     REQUIRE( synth.getNumActiveVoices(true) == 2 );
     synth.renderBlock(buffer);
     REQUIRE(numPlayingVoices(synth) == 2 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerValue() == 63_norm);
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerValue() == 64_norm);
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony operates on release voices")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=48 note_polyphony=1 sample=*saw trigger=release_key ampeg_attack=1 ampeg_decay=1
+    )");
+    synth.noteOn(0, 48, 63 );
+    synth.noteOff(10, 48, 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(20, 48, 65 );
+    synth.noteOff(30, 48, 10 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    synth.renderBlock(buffer);
+    REQUIRE(numPlayingVoices(synth) == 1 );
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
+    REQUIRE( synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 65_norm);
+    REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony operates on release voices (masking works from low to high but takes into account the replaced velocity)")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=48 note_polyphony=1 sample=*saw trigger=release_key ampeg_attack=1 ampeg_decay=1
+    )");
+    synth.noteOn(0, 48, 63 );
+    synth.noteOff(10, 48, 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 1);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(20, 48, 61 );
+    synth.noteOff(30, 48, 10 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( numPlayingVoices(synth) == 2 );
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
+    REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 61_norm);
+    REQUIRE(!synth.getVoiceView(1)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain pedal")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=48 sample=*silence
+        <region> key=48 note_polyphony=1 sample=*saw trigger=release ampeg_attack=1 ampeg_decay=1
+    )");
+    synth.cc(0, 64, 127);
+    synth.noteOn(0, 48, 61 );
+    synth.noteOff(1, 48, 0 );
+    synth.noteOn(2, 48, 62 );
+    synth.noteOff(3, 48, 0 );
+    synth.noteOn(4, 48, 63 );
+    synth.noteOff(5, 48, 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3);
+    REQUIRE( numPlayingVoices(synth) == 3 );
+    synth.cc(20, 64, 0);
+    REQUIRE( synth.getNumActiveVoices(true) == 6 );
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 61_norm);
+    REQUIRE( synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 63_norm);
+    REQUIRE( synth.getVoiceView(2)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(3)->getTriggerEvent().value == 61_norm);
+    REQUIRE( synth.getVoiceView(3)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(4)->getTriggerEvent().value == 62_norm);
+    REQUIRE( synth.getVoiceView(4)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(5)->getTriggerEvent().value == 63_norm);
+    REQUIRE(!synth.getVoiceView(5)->releasedOrFree());
+}
+
+TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain pedal (masking)")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=48 sample=*silence
+        <region> key=48 note_polyphony=1 sample=*saw trigger=release ampeg_attack=1 ampeg_decay=1
+    )");
+    synth.cc(0, 64, 127);
+    synth.noteOn(0, 48, 63 );
+    synth.noteOff(1, 48, 0 );
+    synth.noteOn(2, 48, 62 );
+    synth.noteOff(3, 48, 0 );
+    synth.noteOn(4, 48, 61 );
+    synth.noteOff(5, 48, 0 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3);
+    REQUIRE( numPlayingVoices(synth) == 3 );
+    synth.cc(20, 64, 0);
+    REQUIRE( synth.getNumActiveVoices(true) == 6 );
+    REQUIRE( numPlayingVoices(synth) == 3 );
+    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
+    REQUIRE( synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
+    REQUIRE( synth.getVoiceView(1)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 61_norm);
+    REQUIRE( synth.getVoiceView(2)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(3)->getTriggerEvent().value == 63_norm);
+    REQUIRE(!synth.getVoiceView(3)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(4)->getTriggerEvent().value == 62_norm);
+    REQUIRE(!synth.getVoiceView(4)->releasedOrFree());
+    REQUIRE( synth.getVoiceView(5)->getTriggerEvent().value == 61_norm);
+    REQUIRE(!synth.getVoiceView(5)->releasedOrFree());
 }

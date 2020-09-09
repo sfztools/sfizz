@@ -25,7 +25,7 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
     // their sound, but it's reasonable for sounds with a quick attack and longer
     // release.
     const auto ageThreshold =
-        static_cast<int>(voices.front()->getAge() * config::stealingAgeCoeff) + 1;
+        static_cast<int>(voices.front()->getAge() * config::stealingAgeCoeff);
 
     Voice* returnedVoice = voices.front();
     unsigned idx = 0;

@@ -660,7 +660,7 @@ TEST_CASE("[Synth] Apply function on sisters")
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 3 );
     float start = 1.0f;
     sfz::SisterVoiceRing::applyToRing(synth.getVoiceView(0), [&](const sfz::Voice* v) {
-        start += static_cast<float>(v->getTriggerNumber());
+        start += static_cast<float>(v->getTriggerEvent().number);
     });
     REQUIRE( start == 1.0f + 3.0f * 63.0f );
 }
@@ -828,7 +828,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm};
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -856,7 +856,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm, 34_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -886,7 +886,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm, 34_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -914,7 +914,7 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
     std::vector<float> requiredVelocities { 78_norm, 85_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
     for (auto* v: getActiveVoices(synth)) {
-        actualVelocities.push_back(v->getTriggerValue());
+        actualVelocities.push_back(v->getTriggerEvent().value);
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
@@ -1256,8 +1256,24 @@ TEST_CASE("[Synth] Off by same group")
     REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
 }
 
+TEST_CASE("[Synth] Off by alone and repeated")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, 256 };
 
-TEST_CASE("[Synth] Off by same note")
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=1 sample=*sine key=60
+    )");
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 2 );
+    synth.noteOn(0, 60, 85);
+    REQUIRE( numPlayingVoices(synth) == 3 );
+}
+
+
+TEST_CASE("[Synth] Off by same note and group")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, 256 };
@@ -1267,7 +1283,6 @@ TEST_CASE("[Synth] Off by same note")
         <region> group=1 off_by=1 sample=*triangle key=60
     )");
     synth.noteOn(0, 60, 85);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    auto playingVoices = getPlayingVoices(synth);
-    REQUIRE( playingVoices.front()->getRegion()->sampleId.filename() == "*triangle" );
+    REQUIRE( numPlayingVoices(synth) == 2 );
+    synth.noteOn(0, 60, 85);
 }
