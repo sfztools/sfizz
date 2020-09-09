@@ -68,6 +68,22 @@ inline void multiplyAdd1Scalar(T gain, const T* input, T* output, unsigned size)
 }
 
 template <class T>
+inline void multiplyMulScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ *= (*gain++) * (*input++);
+}
+
+template <class T>
+inline void multiplyMul1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ *= gain * (*input++);
+}
+
+template <class T>
 T linearRampScalar(T* output, T start, T step, unsigned size) noexcept
 {
     const auto sentinel = output + size;

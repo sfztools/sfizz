@@ -52,6 +52,8 @@ enum class SIMDOps {
     subtract1,
     multiplyAdd,
     multiplyAdd1,
+    multiplyMul,
+    multiplyMul1,
     copy,
     cumsum,
     diff,
@@ -320,6 +322,56 @@ void multiplyAdd1(T gain, absl::Span<const T> input, absl::Span<T> output) noexc
 {
     CHECK_SPAN_SIZES(input, output);
     multiplyAdd1<T>(gain, input.data(), output.data(), minSpanSize(input, output));
+}
+
+/**
+ * @brief Applies a gain to the input and multiply the output with it
+ *
+ * @tparam T the underlying type
+ * @param gain
+ * @param input
+ * @param output
+ * @param size
+ */
+template <class T>
+void multiplyMul(const T* gain, const T* input, T* output, unsigned size) noexcept
+{
+    multiplyMulScalar(gain, input, output, size);
+}
+
+template <>
+void multiplyMul<float>(const float* gain, const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void multiplyMul(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(gain, input, output);
+    multiplyMul<T>(gain.data(), input.data(), output.data(), minSpanSize(gain, input, output));
+}
+
+/**
+ * @brief Applies a fixed gain to the input and multiply the output with it
+ *
+ * @tparam T the underlying type
+ * @param gain
+ * @param input
+ * @param output
+ * @param size
+ */
+template <class T>
+void multiplyMul1(T gain, const T* input, T* output, unsigned size) noexcept
+{
+    multiplyMul1Scalar(gain, input, output, size);
+}
+
+template <>
+void multiplyMul1<float>(float gain, const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void multiplyMul1(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    multiplyMul1<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
 
 /**

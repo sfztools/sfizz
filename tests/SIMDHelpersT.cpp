@@ -517,6 +517,7 @@ TEST_CASE("[Helpers] MultiplyAdd (SIMD)")
     REQUIRE(output == expected);
 }
 
+
 TEST_CASE("[Helpers] MultiplyAdd (SIMD vs scalar)")
 {
     std::vector<float> gain(bigBufferSize);
@@ -571,6 +572,84 @@ TEST_CASE("[Helpers] MultiplyAdd fixed gain (SIMD vs scalar)")
     sfz::multiplyAdd1<float>(gain, input, absl::MakeSpan(outputScalar));
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyAdd1, true);
     sfz::multiplyAdd1<float>(gain, input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}
+
+TEST_CASE("[Helpers] MultiplyMul (Scalar)")
+{
+    std::array<float, 5> gain { 0.0f, 0.1f, 0.2f, 0.3f, 0.4f };
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 5.0f, 4.0f, 3.0f, 2.0f, 1.0f };
+    std::array<float, 5> expected { 0.0f, 0.8f, 1.8f, 2.4f, 2.0f };
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul, true);
+    sfz::multiplyMul<float>(gain, input, absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[Helpers] MultiplyMul (SIMD)")
+{
+    std::array<float, 5> gain { 0.0f, 0.1f, 0.2f, 0.3f, 0.4f };
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 5.0f, 4.0f, 3.0f, 2.0f, 1.0f };
+    std::array<float, 5> expected { 0.0f, 0.8f, 1.8f, 2.4f, 2.0f };
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul, true);
+    sfz::multiplyMul<float>(gain, input, absl::MakeSpan(output));
+    REQUIRE(approxEqual<float>(output, expected));
+}
+
+TEST_CASE("[Helpers] MultiplyMul (SIMD vs Scalar)")
+{
+    std::vector<float> gain(bigBufferSize);
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(gain, 0.0f);
+    absl::c_iota(input, 0.0f);
+    absl::c_iota(outputScalar, 0.0f);
+    absl::c_iota(outputSIMD, 0.0f);
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul, false);
+    sfz::multiplyMul<float>(gain, input, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul, true);
+    sfz::multiplyMul<float>(gain, input, absl::MakeSpan(outputSIMD));
+    REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
+}
+
+TEST_CASE("[Helpers] MultiplyMul fixed gain (Scalar)")
+{
+    float gain = 0.3f;
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 5.0f, 4.0f, 3.0f, 2.0f, 1.0f };
+    std::array<float, 5> expected { 1.5f, 2.4f, 2.7f, 2.4f, 1.5f };
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul1, false);
+    sfz::multiplyMul1<float>(gain, input, absl::MakeSpan(output));
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[Helpers] MultiplyMul fixed gain (SIMD)")
+{
+    float gain = 0.3f;
+    std::array<float, 5> input { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f };
+    std::array<float, 5> output { 5.0f, 4.0f, 3.0f, 2.0f, 1.0f };
+    std::array<float, 5> expected { 1.5f, 2.4f, 2.7f, 2.4f, 1.5f };
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul1, true);
+    sfz::multiplyMul1<float>(gain, input, absl::MakeSpan(output));
+    REQUIRE(output == expected);
+}
+
+TEST_CASE("[Helpers] MultiplyMul fixed gain (SIMD vs scalar)")
+{
+    float gain = 0.3f;
+    std::vector<float> input(bigBufferSize);
+    std::vector<float> outputScalar(bigBufferSize);
+    std::vector<float> outputSIMD(bigBufferSize);
+    absl::c_iota(input, 0.0f);
+    absl::c_iota(outputScalar, 0.0f);
+    absl::c_iota(outputSIMD, 0.0f);
+
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul1, false);
+    sfz::multiplyMul1<float>(gain, input, absl::MakeSpan(outputScalar));
+    sfz::setSIMDOpStatus<float>(sfz::SIMDOps::multiplyMul1, true);
+    sfz::multiplyMul1<float>(gain, input, absl::MakeSpan(outputSIMD));
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 

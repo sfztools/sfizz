@@ -14,6 +14,8 @@ void gain1SSE(float gain, const float* input, float* output, unsigned size) noex
 void divideSSE(const float* input, const float* divisor, float* output, unsigned size) noexcept;
 void multiplyAddSSE(const float* gain, const float* input, float* output, unsigned size) noexcept;
 void multiplyAdd1SSE(float gain, const float* input, float* output, unsigned size) noexcept;
+void multiplyMulSSE(const float* gain, const float* input, float* output, unsigned size) noexcept;
+void multiplyMul1SSE(float gain, const float* input, float* output, unsigned size) noexcept;
 float linearRampSSE(float* output, float start, float step, unsigned size) noexcept;
 float multiplicativeRampSSE(float* output, float start, float step, unsigned size) noexcept;
 void addSSE(const float* input, float* output, unsigned size) noexcept;
