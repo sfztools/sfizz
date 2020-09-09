@@ -687,16 +687,54 @@ TEST_CASE("[Synth] Sisters and off-by")
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
 }
 
-TEST_CASE("[Synth] Release key")
+TEST_CASE("[Synth] Release (basic behavior with sample)")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.setSamplesPerBlock(4096);
+    sfz::AudioBuffer<float> buffer { 2, 4096 };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release_key_sample.sfz", R"(
+        <region> key=62 sample=*sine
+        <region> key=62 sample=closedhat.wav trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*sine" );
+    synth.noteOff(0, 62, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "closedhat.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "closedhat.wav" );
+}
+
+TEST_CASE("[Synth] Release key (basic behavior with sample)")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(4096);
+    sfz::AudioBuffer<float> buffer { 2, 4096 };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release_key_sample.sfz", R"(
+        <region> key=62 sample=closedhat.wav trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "closedhat.wav" );
+}
+
+TEST_CASE("[Synth] Release key (pedal)")
+{
+    sfz::Synth synth;
+    synth.setSamplesPerBlock(4096);
+    sfz::AudioBuffer<float> buffer { 2, 4096 };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release_key_pedal.sfz", R"(
         <region> key=62 sample=*sine trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( numPlayingVoices(synth) == 1 );
 }
 
 TEST_CASE("[Synth] Release")
