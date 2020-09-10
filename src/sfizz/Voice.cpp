@@ -713,9 +713,9 @@ bool sfz::Voice::checkOffGroup(const Region* other, int delay, int noteNumber) n
     if (region == nullptr || other == nullptr)
         return false;
 
-    if (triggerEvent.type == TriggerEventType::NoteOn 
+    if (triggerEvent.type == TriggerEventType::NoteOn
         && region->offBy == other->group
-        && noteNumber != triggerEvent.number) {
+        && (region->group != other->group || noteNumber != triggerEvent.number)) {
         off(delay);
         return true;
     }
