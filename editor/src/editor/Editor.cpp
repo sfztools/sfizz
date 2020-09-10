@@ -565,14 +565,14 @@ void Editor::Impl::createFrameContents()
     for (int log2value = 10; log2value <= 16; ++log2value) {
         int value = 1 << log2value;
         char text[256];
-        sprintf(text, "%d kB", value / 1024 * 4);
+        sprintf(text, "%lu kB", value / 1024 * sizeof(float));
         text[sizeof(text) - 1] = '\0';
         preloadSizeSlider_->addEntry(text, value);
     }
     preloadSizeSlider_->setValueToStringFunction2(
         [](float value, std::string& result, CParamDisplay*) -> bool
         {
-            result = std::to_string(static_cast<int>(std::round(value * (1.0 / 1024 * 4)))) + " kB";
+            result = std::to_string(static_cast<int>(std::round(value * (1.0 / 1024 * sizeof(float))))) + " kB";
             return true;
         });
 
