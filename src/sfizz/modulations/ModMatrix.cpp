@@ -213,18 +213,24 @@ void ModMatrix::init()
 
     for (unsigned i = 0; i < impl.sources_.size(); ++i) {
         Impl::Source& source = impl.sources_[i];
-        if (source.key.flags() & kModIsPerCycle)
+        const int flags = source.key.flags();
+        if (flags & kModIsPerCycle) {
+            ASSERT(!source.key.region());
             source.gen->init(source.key, {}, 0);
-
-        if (source.key.region()) {
+        }
+        else if (flags & kModIsPerVoice) {
+            ASSERT(source.key.region());
             impl.sourceIndicesForRegion_[source.key.region().number()].push_back(i);
         }
     }
 
     for (unsigned i = 0; i < impl.targets_.size(); ++i) {
         Impl::Target& target = impl.targets_[i];
-        if (target.key.region())
+        const int flags = target.key.flags();
+        if (flags & kModIsPerVoice) {
+            ASSERT(target.key.region());
             impl.targetIndicesForRegion_[target.key.region().number()].push_back(i);
+        }
     }
 }
 
