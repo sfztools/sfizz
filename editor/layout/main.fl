@@ -1,12 +1,12 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0304
+version 1.0305
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
   xywh {572 266 800 475} type Double
   class LogicalGroup visible
 } {
-  Fl_Box {} {selected
+  Fl_Box {} {
     image {../resources/background.png} xywh {190 110 600 280}
     class Background
   }
@@ -142,7 +142,7 @@ widget_class mainView {open
     }
   }
   Fl_Group {subPanels_[kPanelGeneral]} {
-    xywh {5 110 791 285}
+    xywh {5 110 791 285} hide
     class LogicalGroup
   } {
     Fl_Group {} {open
@@ -216,95 +216,95 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {
-    xywh {5 109 790 286} hide
+  Fl_Group {subPanels_[kPanelSettings]} {open
+    xywh {5 109 790 286}
     class LogicalGroup
   } {
     Fl_Group {} {
-      label Engine open
-      xywh {260 110 280 110} box ROUNDED_BOX labelsize 12 align 17
+      label Engine open selected
+      xywh {260 135 280 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
       Fl_Spinner numVoicesSlider_ {
         comment {tag=kTagSetNumVoices}
-        xywh {285 170 60 25} labelsize 12 textsize 12
+        xywh {285 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Polyphony
-        xywh {275 130 80 25} labelsize 12
+        xywh {275 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Spinner oversamplingSlider_ {
         comment {tag=kTagSetOversampling}
-        xywh {370 170 60 25} labelsize 12 textsize 12
+        xywh {370 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Oversampling
-        xywh {360 130 80 25} labelsize 12
+        xywh {360 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Box {} {
         label {Preload size}
-        xywh {445 130 80 25} labelsize 12
+        xywh {445 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Spinner preloadSizeSlider_ {
         comment {tag=kTagSetPreloadSize}
-        xywh {455 170 60 25} labelsize 12 textsize 12
+        xywh {455 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
     }
     Fl_Group {} {
       label Tuning open
-      xywh {205 268 390 120} box ROUNDED_BOX labelsize 12 align 17
+      xywh {205 270 390 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
       Fl_Box {} {
         label {Root key}
-        xywh {330 288 80 25} labelsize 12
+        xywh {330 290 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Spinner tuningFrequencySlider_ {
         comment {tag=kTagSetTuningFrequency}
-        xywh {425 328 60 25} labelsize 12 textsize 12
+        xywh {425 330 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Frequency
-        xywh {415 288 80 25} labelsize 12
+        xywh {415 290 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Dial stretchedTuningSlider_ {
         comment {tag=kTagSetStretchedTuning}
-        xywh {515 313 48 48} value 0.5
+        xywh {515 315 48 48} value 0.5
         class Knob48
       }
       Fl_Box {} {
         label Stretch
-        xywh {500 288 80 25} labelsize 12
+        xywh {500 290 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Box {} {
         label {Scala file}
-        xywh {225 288 100 25} labelsize 12
+        xywh {225 290 100 25} labelsize 12
         class ValueLabel
       }
       Fl_Button scalaFileButton_ {
         label DefaultScale
         comment {tag=kTagLoadScalaFile}
-        xywh {225 328 100 25} labelsize 12
+        xywh {225 330 100 25} labelsize 12
         class ValueButton
       }
       Fl_Spinner scalaRootKeySlider_ {
         comment {tag=kTagSetScalaRootKey}
-        xywh {340 328 35 25} labelsize 12 textsize 12
+        xywh {340 330 35 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Spinner scalaRootOctaveSlider_ {
         comment {tag=kTagSetScalaRootKey}
-        xywh {375 328 30 25} labelsize 12 textsize 12
+        xywh {375 330 30 25} labelsize 12 textsize 12
         class ValueMenu
       }
     }
