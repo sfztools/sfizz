@@ -49,6 +49,13 @@ struct ModMatrix::Impl {
     absl::flat_hash_map<ModKey, uint32_t> sourceIndex_;
     absl::flat_hash_map<ModKey, uint32_t> targetIndex_;
 
+    std::vector<uint32_t> sourceIndicesForGlobal_;
+    std::vector<uint32_t> targetIndicesForGlobal_;
+
+    int maxRegionIdx_ { -1 };
+    std::vector<std::vector<uint32_t>> sourceIndicesForRegion_;
+    std::vector<std::vector<uint32_t>> targetIndicesForRegion_;
+
     std::vector<Source> sources_;
     std::vector<Target> targets_;
 };
@@ -72,6 +79,11 @@ void ModMatrix::clear()
     impl.targetIndex_.clear();
     impl.sources_.clear();
     impl.targets_.clear();
+    impl.sourceIndicesForGlobal_.clear();
+    impl.targetIndicesForGlobal_.clear();
+    impl.sourceIndicesForRegion_.clear();
+    impl.targetIndicesForRegion_.clear();
+    impl.maxRegionIdx_ = -1;
 }
 
 void ModMatrix::setSampleRate(double sampleRate)
@@ -124,6 +136,8 @@ ModMatrix::SourceId ModMatrix::registerSource(const ModKey& key, ModGenerator& g
     source.buffer.resize(impl.samplesPerBlock_);
 
     impl.sourceIndex_[key] = id.number();
+    if (key.region().number() > impl.maxRegionIdx_)
+        impl.maxRegionIdx_ = key.region().number();
 
     gen.setSampleRate(impl.sampleRate_);
     gen.setSamplesPerBlock(impl.samplesPerBlock_);
@@ -148,6 +162,9 @@ ModMatrix::TargetId ModMatrix::registerTarget(const ModKey& key)
     target.buffer.resize(impl.samplesPerBlock_);
 
     impl.targetIndex_[key] = id.number();
+    if (key.region().number() > impl.maxRegionIdx_)
+        impl.maxRegionIdx_ = key.region().number();
+
     return id;
 }
 
@@ -193,21 +210,50 @@ void ModMatrix::init()
 {
     Impl& impl = *impl_;
 
-    for (Impl::Source &source : impl.sources_) {
+    if (impl.maxRegionIdx_ >= 0) {
+        const size_t numRegions = impl.maxRegionIdx_ + 1;
+        impl.sourceIndicesForRegion_.resize(numRegions);
+        impl.targetIndicesForRegion_.resize(numRegions);
+    }
+
+    for (unsigned i = 0; i < impl.sources_.size(); ++i) {
+        Impl::Source& source = impl.sources_[i];
         const int flags = source.key.flags();
-        if (flags & kModIsPerCycle)
+        if (flags & kModIsPerCycle) {
+            ASSERT(!source.key.region());
             source.gen->init(source.key, {}, 0);
+            impl.sourceIndicesForGlobal_.push_back(i);
+        }
+        else if (flags & kModIsPerVoice) {
+            ASSERT(source.key.region());
+            impl.sourceIndicesForRegion_[source.key.region().number()].push_back(i);
+        }
+    }
+
+    for (unsigned i = 0; i < impl.targets_.size(); ++i) {
+        Impl::Target& target = impl.targets_[i];
+        const int flags = target.key.flags();
+        if (flags & kModIsPerCycle) {
+            ASSERT(!target.key.region());
+            impl.targetIndicesForGlobal_.push_back(i);
+        }
+        else if (flags & kModIsPerVoice) {
+            ASSERT(target.key.region());
+            impl.targetIndicesForRegion_[target.key.region().number()].push_back(i);
+        }
     }
 }
 
 void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay)
 {
     Impl& impl = *impl_;
+    ASSERT(regionId);
+    ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceIndicesForRegion_.size());
 
-    for (Impl::Source &source : impl.sources_) {
-        const int flags = source.key.flags();
-        if ((flags & kModIsPerVoice) && source.key.region() == regionId)
-            source.gen->init(source.key, voiceId, delay);
+    const auto idNumber = static_cast<size_t>(regionId.number());
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
+        const Impl::Source& source = impl.sources_[idx];
+        source.gen->init(source.key, voiceId, delay);
     }
 }
 
@@ -215,10 +261,12 @@ void ModMatrix::releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionI
 {
     Impl& impl = *impl_;
 
-    for (Impl::Source &source : impl.sources_) {
-        const int flags = source.key.flags();
-        if ((flags & kModIsPerVoice) && source.key.region() == regionId)
-            source.gen->release(source.key, voiceId, delay);
+    ASSERT(regionId);
+
+    const auto idNumber = static_cast<size_t>(regionId.number());
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
+        const Impl::Source& source = impl.sources_[idx];
+        source.gen->release(source.key, voiceId, delay);
     }
 }
 
@@ -228,10 +276,14 @@ void ModMatrix::beginCycle(unsigned numFrames)
 
     impl.numFrames_ = numFrames;
 
-    for (Impl::Source &source : impl.sources_)
+    for (auto idx: impl.sourceIndicesForGlobal_) {
+        Impl::Source& source = impl.sources_[idx];
         source.bufferReady = false;
-    for (Impl::Target &target : impl.targets_)
+    }
+    for (auto idx: impl.targetIndicesForGlobal_) {
+        Impl::Target& target = impl.targets_[idx];
         target.bufferReady = false;
+    }
 }
 
 void ModMatrix::endCycle()
@@ -239,13 +291,11 @@ void ModMatrix::endCycle()
     Impl& impl = *impl_;
     const uint32_t numFrames = impl.numFrames_;
 
-    for (Impl::Source &source : impl.sources_) {
+    for (auto idx: impl.sourceIndicesForGlobal_) {
+        Impl::Source& source = impl.sources_[idx];
         if (!source.bufferReady) {
-            const int flags = source.key.flags();
-            if (flags & kModIsPerCycle) {
-                absl::Span<float> buffer(source.buffer.data(), numFrames);
-                source.gen->generateDiscarded(source.key, {}, buffer);
-            }
+            absl::Span<float> buffer(source.buffer.data(), numFrames);
+            source.gen->generateDiscarded(source.key, {}, buffer);
         }
     }
 
@@ -259,15 +309,17 @@ void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
     impl.currentVoiceId_ = voiceId;
     impl.currentRegionId_ = regionId;
 
-    for (Impl::Source &source : impl.sources_) {
-        const int flags = source.key.flags();
-        if (flags & kModIsPerVoice)
-            source.bufferReady = false;
+    ASSERT(regionId);
+
+    const auto idNumber = static_cast<size_t>(regionId.number());
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
+        Impl::Source& source = impl.sources_[idx];
+        source.bufferReady = false;
     }
-    for (Impl::Target &target : impl.targets_) {
-        const int flags = target.key.flags();
-        if (flags & kModIsPerVoice)
-            target.bufferReady = false;
+
+    for (auto idx: impl.targetIndicesForRegion_[idNumber]) {
+        Impl::Target& target = impl.targets_[idx];
+        target.bufferReady = false;
     }
 }
 
@@ -278,13 +330,16 @@ void ModMatrix::endVoice()
     const NumericId<Voice> voiceId = impl.currentVoiceId_;
     const NumericId<Region> regionId = impl.currentRegionId_;
 
-    for (Impl::Source &source : impl.sources_) {
+    ASSERT(regionId);
+    ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceIndicesForRegion_.size());
+
+    const auto idNumber = static_cast<size_t>(regionId.number());
+
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
+        const Impl::Source& source = impl.sources_[idx];
         if (!source.bufferReady) {
-            const int flags = source.key.flags();
-            if ((flags & kModIsPerVoice) && source.key.region() == regionId) {
-                absl::Span<float> buffer(source.buffer.data(), numFrames);
-                source.gen->generateDiscarded(source.key, voiceId, buffer);
-            }
+            absl::Span<float> buffer(source.buffer.data(), numFrames);
+            source.gen->generateDiscarded(source.key, voiceId, buffer);
         }
     }
 
