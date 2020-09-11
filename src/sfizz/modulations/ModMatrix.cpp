@@ -50,8 +50,8 @@ struct ModMatrix::Impl {
     absl::flat_hash_map<ModKey, uint32_t> targetIndex_;
 
     int maxRegionIdx_ { -1 };
-    std::vector<std::vector<uint32_t>> sourceRegionIndex_;
-    std::vector<std::vector<uint32_t>> targetRegionIndex_;
+    std::vector<std::vector<uint32_t>> sourceIndicesForRegion_;
+    std::vector<std::vector<uint32_t>> targetIndicesForRegion_;
 
     std::vector<Source> sources_;
     std::vector<Target> targets_;
@@ -76,8 +76,8 @@ void ModMatrix::clear()
     impl.targetIndex_.clear();
     impl.sources_.clear();
     impl.targets_.clear();
-    impl.sourceRegionIndex_.clear();
-    impl.targetRegionIndex_.clear();
+    impl.sourceIndicesForRegion_.clear();
+    impl.targetIndicesForRegion_.clear();
     impl.maxRegionIdx_ = -1;
 }
 
@@ -207,8 +207,8 @@ void ModMatrix::init()
 
     if (impl.maxRegionIdx_ >= 0) {
         const size_t numRegions = impl.maxRegionIdx_ + 1;
-        impl.sourceRegionIndex_.resize(numRegions);
-        impl.targetRegionIndex_.resize(numRegions);
+        impl.sourceIndicesForRegion_.resize(numRegions);
+        impl.targetIndicesForRegion_.resize(numRegions);
     }
 
     for (unsigned i = 0; i < impl.sources_.size(); ++i) {
@@ -217,14 +217,14 @@ void ModMatrix::init()
             source.gen->init(source.key, {}, 0);
 
         if (source.key.region()) {
-            impl.sourceRegionIndex_[source.key.region().number()].push_back(i);
+            impl.sourceIndicesForRegion_[source.key.region().number()].push_back(i);
         }
     }
 
     for (unsigned i = 0; i < impl.targets_.size(); ++i) {
         Impl::Target& target = impl.targets_[i];
         if (target.key.region())
-            impl.targetRegionIndex_[target.key.region().number()].push_back(i);
+            impl.targetIndicesForRegion_[target.key.region().number()].push_back(i);
     }
 }
 
@@ -232,10 +232,10 @@ void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, 
 {
     Impl& impl = *impl_;
     ASSERT(regionId);
-    ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceRegionIndex_.size());
+    ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceIndicesForRegion_.size());
 
     const auto idNumber = static_cast<size_t>(regionId.number());
-    for (auto idx: impl.sourceRegionIndex_[idNumber]) {
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         const auto& source = impl.sources_[idx];
         if (source.key.flags() & kModIsPerVoice)
             source.gen->init(source.key, voiceId, delay);
@@ -249,7 +249,7 @@ void ModMatrix::releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionI
     ASSERT(regionId);
 
     const auto idNumber = static_cast<size_t>(regionId.number());
-    for (auto idx: impl.sourceRegionIndex_[idNumber]) {
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         const auto& source = impl.sources_[idx];
         if (source.key.flags() & kModIsPerVoice)
             source.gen->release(source.key, voiceId, delay);
@@ -295,13 +295,13 @@ void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
     ASSERT(regionId);
 
     const auto idNumber = static_cast<size_t>(regionId.number());
-    for (auto idx: impl.sourceRegionIndex_[idNumber]) {
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         auto& source = impl.sources_[idx];
         if (source.key.flags() & kModIsPerVoice)
             source.bufferReady = false;
     }
 
-    for (auto idx: impl.targetRegionIndex_[idNumber]) {
+    for (auto idx: impl.targetIndicesForRegion_[idNumber]) {
         auto& target = impl.targets_[idx];
         if (target.key.flags() & kModIsPerVoice)
             target.bufferReady = false;
@@ -316,11 +316,11 @@ void ModMatrix::endVoice()
     const NumericId<Region> regionId = impl.currentRegionId_;
 
     ASSERT(regionId);
-    ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceRegionIndex_.size());
+    ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceIndicesForRegion_.size());
 
     const auto idNumber = static_cast<size_t>(regionId.number());
 
-    for (auto idx: impl.sourceRegionIndex_[idNumber]) {
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         const auto& source = impl.sources_[idx];
         if (!source.bufferReady) {
             if (source.key.flags() & kModIsPerVoice) {
