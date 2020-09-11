@@ -427,3 +427,21 @@ void SValueMenu::onItemClicked(int32_t index)
     if (getValue() != oldValue)
         valueChanged();
 }
+
+void CHoverButton::setHoverColor (const CColor& color)
+{
+    hoverColor_ = color;
+}
+
+CMouseEventResult CHoverButton::onMouseEntered (CPoint& where, const CButtonState& buttons)
+{
+    backupColor_ = getTextColor();
+    setTextColor(hoverColor_);
+    return CTextButton::onMouseEntered(where, buttons);
+}
+
+CMouseEventResult CHoverButton::onMouseExited (CPoint& where, const CButtonState& buttons)
+{
+    setTextColor(backupColor_);
+    return CTextButton::onMouseExited(where, buttons);
+}

@@ -11,6 +11,7 @@
 #include "vstgui/lib/controls/cslider.h"
 #include "vstgui/lib/controls/cknob.h"
 #include "vstgui/lib/controls/ctextlabel.h"
+#include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/coptionmenu.h"
 #include "vstgui/lib/cviewcontainer.h"
 #include "vstgui/lib/ccolor.h"
@@ -145,4 +146,18 @@ private:
     private:
         SValueMenu& menu_;
     };
+};
+
+///
+class CHoverButton: public CTextButton {
+public:
+    CHoverButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
+    : CTextButton(size, listener, tag, title) {}
+
+    void setHoverColor(const CColor& color);
+    CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override;
+    CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override;
+private:
+    CColor hoverColor_;
+    CColor backupColor_;
 };

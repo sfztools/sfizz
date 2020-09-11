@@ -313,32 +313,6 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     }
 }
-class CHoverButton: public CTextButton {
-public:
-    CHoverButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
-    : CTextButton(size, listener, tag, title) {}
-
-    void setHoverColor(const CColor& color)
-    {
-        hoverColor = color;
-    }
-
-    CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override
-    {
-        backupColor = getTextColor();
-        setTextColor(hoverColor);
-        return CTextButton::onMouseEntered(where, buttons);
-    }
-
-    CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override
-    {
-        setTextColor(backupColor);
-        return CTextButton::onMouseExited(where, buttons);
-    }
-private:
-    CColor hoverColor;
-    CColor backupColor;
-};
 
 void Editor::Impl::createFrameContents()
 {
