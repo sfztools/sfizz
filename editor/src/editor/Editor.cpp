@@ -502,7 +502,7 @@ void Editor::Impl::createFrameContents()
             return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
         };
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue142", bounds, tag, fontsize);
+            return createGlyphButton(u8"\ue148", bounds, tag, fontsize);
         };
         auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue1a3", bounds, tag, fontsize);
