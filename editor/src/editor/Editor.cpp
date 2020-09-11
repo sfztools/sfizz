@@ -318,7 +318,8 @@ void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
 
-    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("logo_full_white.png"));
+    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("logo_text_white.png"));
+    SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
 
@@ -369,6 +370,7 @@ void Editor::Impl::createFrameContents()
         typedef CTextLabel ValueLabel;
         typedef CViewContainer VMeter;
         typedef SValueMenu ValueMenu;
+        typedef CViewContainer Background;
 #if 0
         typedef CTextButton Button;
 #endif
@@ -397,7 +399,7 @@ void Editor::Impl::createFrameContents()
             box->setBackgroundColor(theme->boxBackground);
             box->setTitleFontColor(theme->titleBoxText);
             box->setTitleBackgroundColor(theme->titleBoxBackground);
-            auto font = owned(new CFontDesc("ABeeZee", fontsize));
+            auto font = owned(new CFontDesc("Roboto", fontsize));
             font->setSize(fontsize);
             box->setTitleFont(font);
             return box;
@@ -411,7 +413,7 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
-            auto font = owned(new CFontDesc("ABeeZee", fontsize));
+            auto font = owned(new CFontDesc("Roboto", fontsize));
             font->setSize(fontsize);
             lbl->setFont(font);
             return lbl;
@@ -432,7 +434,7 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
-            auto font = owned(new CFontDesc("ABeeZee", fontsize));
+            auto font = owned(new CFontDesc("Roboto", fontsize));
             font->setSize(fontsize);
             lbl->setFont(font);
             return lbl;
@@ -455,7 +457,7 @@ void Editor::Impl::createFrameContents()
 #endif
         auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextButton* button = new CTextButton(bounds, this, tag, label);
-            auto font = owned(new CFontDesc("ABeeZee", fontsize));
+            auto font = owned(new CFontDesc("Roboto", fontsize));
             font->setSize(fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
@@ -469,7 +471,7 @@ void Editor::Impl::createFrameContents()
         auto createValueMenu = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
             SValueMenu* vm = new SValueMenu(bounds, this, tag);
             vm->setHoriAlign(align);
-            auto font = owned(new CFontDesc("ABeeZee", fontsize));
+            auto font = owned(new CFontDesc("Roboto", fontsize));
             font->setSize(fontsize);
             vm->setFont(font);
             vm->setFontColor(theme->valueText);
@@ -508,6 +510,11 @@ void Editor::Impl::createFrameContents()
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             SPiano* piano = new SPiano(bounds);
             return piano;
+        };
+        auto createBackground = [&background](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            CViewContainer* container = new CViewContainer(bounds);
+            container->setBackground(background);
+            return container;
         };
 
         #include "layout/main.hpp"

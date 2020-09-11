@@ -4,15 +4,17 @@ include("cmake/Vstgui.cmake")
 set(EDITOR_RESOURCES
     logo.png
     logo_text.png
+    logo_text_white.png
     logo_text@2x.png
-    logo_full_white.png
+    logo_text_white@2x.png
+    background.png
+    background@2x.png
     icon_white.png
     icon_white@2x.png
     knob48.png
     knob48@2x.png
     Fonts/fluentui-system-regular-20.ttf
-    Fonts/ABeeZee-Regular.ttf
-    Fonts/ABeeZee-Regular.ttf
+    Fonts/Roboto-Regular.ttf
     PARENT_SCOPE)
 
 function(copy_editor_resources SOURCE_DIR DESTINATION_DIR)

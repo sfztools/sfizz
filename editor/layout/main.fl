@@ -6,8 +6,12 @@ widget_class mainView {open
   xywh {572 266 800 475} type Double
   class LogicalGroup visible
 } {
+  Fl_Box {} {selected
+    image {../resources/background.png} xywh {190 110 600 280}
+    class Background
+  }
   Fl_Group {} {
-    comment {theme=darkTheme} open
+    comment {theme=darkTheme}
     xywh {0 0 800 110}
     class LogicalGroup
   } {
@@ -17,22 +21,22 @@ widget_class mainView {open
     } {
       Fl_Box {} {
         comment {tag=kTagFirstChangePanel+kPanelGeneral}
-        image {../resources/logo_full_white.png} xywh {10 11 165 63}
+        image {../resources/logo_text_white.png} xywh {35 9 120 60}
         class SfizzMainButton
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelGeneral}
-        xywh {55 75 25 25} labelsize 24
+        xywh {49 73 25 25} labelsize 24
         class HomeButton
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelControls}
-        xywh {80 75 25 25} labelsize 24
+        xywh {81 73 25 25} labelsize 24
         class CCButton
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelSettings}
-        xywh {105 75 25 25} labelsize 24
+        xywh {112 73 25 25} labelsize 24
         class SettingsButton
       }
     }
@@ -137,7 +141,7 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelGeneral]} {open selected
+  Fl_Group {subPanels_[kPanelGeneral]} {
     xywh {5 110 791 285}
     class LogicalGroup
   } {
