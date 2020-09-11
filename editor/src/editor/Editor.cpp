@@ -35,7 +35,6 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kPanelGeneral,
         kPanelControls,
         kPanelSettings,
-        kPanelInfo,
         kNumPanels,
     };
 
@@ -314,12 +313,38 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         break;
     }
 }
+class CHoverButton: public CTextButton {
+public:
+    CHoverButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
+    : CTextButton(size, listener, tag, title) {}
+
+    void setHoverColor(const CColor& color)
+    {
+        hoverColor = color;
+    }
+
+    CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override
+    {
+        backupColor = getTextColor();
+        setTextColor(hoverColor);
+        return CTextButton::onMouseEntered(where, buttons);
+    }
+
+    CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override
+    {
+        setTextColor(backupColor);
+        return CTextButton::onMouseExited(where, buttons);
+    }
+private:
+    CColor hoverColor;
+    CColor backupColor;
+};
 
 void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
 
-    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("icon_white.png"));
+    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("logo_full_white.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
 
@@ -332,6 +357,7 @@ void Editor::Impl::createFrameContents()
             CColor titleBoxText;
             CColor titleBoxBackground;
             CColor icon;
+            CColor iconHighlight;
             CColor valueText;
             CColor valueBackground;
         };
@@ -342,6 +368,7 @@ void Editor::Impl::createFrameContents()
         lightTheme.titleBoxText = { 0xff, 0xff, 0xff };
         lightTheme.titleBoxBackground = { 0x2e, 0x34, 0x36 };
         lightTheme.icon = lightTheme.text;
+        lightTheme.iconHighlight = { 0xa8, 0x62, 0x34 };
         lightTheme.valueText = { 0xff, 0xff, 0xff };
         lightTheme.valueBackground = { 0x2e, 0x34, 0x36 };
         Theme darkTheme;
@@ -350,6 +377,7 @@ void Editor::Impl::createFrameContents()
         darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
         darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
         darkTheme.icon = darkTheme.text;
+        darkTheme.iconHighlight = { 0xa8, 0x62, 0x34 };
         darkTheme.valueText = { 0x2e, 0x34, 0x36 };
         darkTheme.valueBackground = { 0xff, 0xff, 0xff };
         Theme& defaultTheme = lightTheme;
@@ -363,18 +391,19 @@ void Editor::Impl::createFrameContents()
         typedef CKickButton SfizzMainButton;
         typedef CTextLabel Label;
         typedef CViewContainer HLine;
-        typedef CTextButton LightButton;
         typedef CAnimKnob Knob48;
         typedef CTextLabel ValueLabel;
         typedef CViewContainer VMeter;
-        typedef CView SfizzLargePicture;
         typedef SValueMenu ValueMenu;
 #if 0
         typedef CTextButton Button;
 #endif
         typedef CTextButton ValueButton;
-        typedef CTextButton LoadFileButton;
-        typedef CTextButton EditFileButton;
+        typedef CHoverButton LoadFileButton;
+        typedef CHoverButton CCButton;
+        typedef CHoverButton HomeButton;
+        typedef CHoverButton SettingsButton;
+        typedef CHoverButton EditFileButton;
         typedef SPiano Piano;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
@@ -394,7 +423,7 @@ void Editor::Impl::createFrameContents()
             box->setBackgroundColor(theme->boxBackground);
             box->setTitleFontColor(theme->titleBoxText);
             box->setTitleBackgroundColor(theme->titleBoxBackground);
-            auto font = owned(new CFontDesc(*box->getTitleFont()));
+            auto font = owned(new CFontDesc("ABeeZee", fontsize));
             font->setSize(fontsize);
             box->setTitleFont(font);
             return box;
@@ -408,7 +437,7 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
-            auto font = owned(new CFontDesc(*lbl->getFont()));
+            auto font = owned(new CFontDesc("ABeeZee", fontsize));
             font->setSize(fontsize);
             lbl->setFont(font);
             return lbl;
@@ -420,11 +449,6 @@ void Editor::Impl::createFrameContents()
             hline->setBackgroundColor(CColor(0xff, 0xff, 0xff, 0xff));
             return hline;
         };
-        auto createLightButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int) {
-            CTextButton* button = new CTextButton(bounds, this, tag, label);
-            button->setTextAlignment(align);
-            return button;
-        };
         auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
         };
@@ -434,7 +458,7 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
-            auto font = owned(new CFontDesc(*lbl->getFont()));
+            auto font = owned(new CFontDesc("ABeeZee", fontsize));
             font->setSize(fontsize);
             lbl->setFont(font);
             return lbl;
@@ -444,11 +468,6 @@ void Editor::Impl::createFrameContents()
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
             return container;
-        };
-        auto createSfizzLargePicture = [&logoText](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            CView* picture = new CView(bounds);
-            picture->setBackground(logoText);
-            return picture;
         };
 #if 0
         auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -462,7 +481,7 @@ void Editor::Impl::createFrameContents()
 #endif
         auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextButton* button = new CTextButton(bounds, this, tag, label);
-            auto font = owned(new CFontDesc(*button->getFont()));
+            auto font = owned(new CFontDesc("ABeeZee", fontsize));
             font->setSize(fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
@@ -476,7 +495,7 @@ void Editor::Impl::createFrameContents()
         auto createValueMenu = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
             SValueMenu* vm = new SValueMenu(bounds, this, tag);
             vm->setHoriAlign(align);
-            auto font = owned(new CFontDesc(*vm->getFont()));
+            auto font = owned(new CFontDesc("ABeeZee", fontsize));
             font->setSize(fontsize);
             vm->setFont(font);
             vm->setFontColor(theme->valueText);
@@ -487,19 +506,30 @@ void Editor::Impl::createFrameContents()
             return vm;
         };
         auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
-            CTextButton* btn = new CTextButton(bounds, this, tag, glyph);
+            CHoverButton* btn = new CHoverButton(bounds, this, tag, glyph);
             btn->setFont(new CFontDesc("Fluent System Regular W20", fontsize));
             btn->setTextColor(theme->icon);
+            btn->setHoverColor(theme->iconHighlight);
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setGradient(nullptr);
             btn->setGradientHighlighted(nullptr);
             return btn;
         };
-        auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue142", bounds, tag, fontsize);
+        auto createHomeButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
+        };
+        auto createCCButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            // return createGlyphButton(u8"\ue240", bounds, tag, fontsize);
+            return createGlyphButton(u8"\ue140", bounds, tag, fontsize);
+        };
+        auto createSettingsButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
         };
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue148", bounds, tag, fontsize);
+            return createGlyphButton(u8"\ue142", bounds, tag, fontsize);
+        };
+        auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue1a3", bounds, tag, fontsize);
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             SPiano* piano = new SPiano(bounds);

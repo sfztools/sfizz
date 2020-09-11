@@ -408,6 +408,9 @@ CMouseEventResult SValueMenu::onMouseDown(CPoint& where, const CButtonState& but
                     menu->addEntry(item);
                     item->remember(); // above call does not increment refcount
                 }
+                menu->setFont(self->getFont());
+                menu->setFontColor(self->getFontColor());
+                menu->setBackColor(self->getBackColor());
                 menu->popup(frame, frameWhere + CPoint(0.0, 1.0));
             }
         });
