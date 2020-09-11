@@ -5,6 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "../StringViewHelpers.h"
+#include <functional>
 
 /**
  * @brief Numeric identifier
@@ -50,3 +52,12 @@ struct NumericId {
 private:
     int number_ = -1;
 };
+
+namespace std {
+    template <class U> struct hash<NumericId<U>> {
+        size_t operator()(const NumericId<U> &id) const
+        {
+            return hashNumber(id.number());
+        }
+    };
+}
