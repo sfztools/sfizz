@@ -29,7 +29,6 @@ set (SFIZZ_HEADERS
     sfizz/Debug.h
     sfizz/utility/NumericId.h
     sfizz/utility/SpinMutex.h
-    sfizz/utility/SpinMutex.cpp
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
     sfizz/modulations/ModKeyHash.h
@@ -146,6 +145,7 @@ set (SFIZZ_SOURCES
     sfizz/modulations/ModMatrix.cpp
     sfizz/modulations/sources/Controller.cpp
     sfizz/modulations/sources/LFO.cpp
+    sfizz/utility/SpinMutex.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
     sfizz/effects/Eq.cpp
