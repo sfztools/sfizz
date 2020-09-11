@@ -216,14 +216,14 @@ void ModMatrix::init()
         if (source.key.flags() & kModIsPerCycle)
             source.gen->init(source.key, {}, 0);
 
-        if (source.key.region().number() >= 0) {
+        if (source.key.region()) {
             impl.sourceRegionIndex_[source.key.region().number()].push_back(i);
         }
     }
 
     for (unsigned i = 0; i < impl.targets_.size(); ++i) {
         Impl::Target& target = impl.targets_[i];
-        if (target.key.region().number() >= 0)
+        if (target.key.region())
             impl.targetRegionIndex_[target.key.region().number()].push_back(i);
     }
 }
@@ -231,7 +231,7 @@ void ModMatrix::init()
 void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay)
 {
     Impl& impl = *impl_;
-    ASSERT(regionId.number() >= 0);
+    ASSERT(regionId);
     ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceRegionIndex_.size());
 
     const auto idNumber = static_cast<size_t>(regionId.number());
@@ -246,7 +246,7 @@ void ModMatrix::releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionI
 {
     Impl& impl = *impl_;
 
-    ASSERT(regionId.number() >= 0);
+    ASSERT(regionId);
 
     const auto idNumber = static_cast<size_t>(regionId.number());
     for (auto idx: impl.sourceRegionIndex_[idNumber]) {
@@ -292,7 +292,7 @@ void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
     impl.currentVoiceId_ = voiceId;
     impl.currentRegionId_ = regionId;
 
-    ASSERT(regionId.number() >= 0);
+    ASSERT(regionId);
 
     const auto idNumber = static_cast<size_t>(regionId.number());
     for (auto idx: impl.sourceRegionIndex_[idNumber]) {
@@ -315,7 +315,7 @@ void ModMatrix::endVoice()
     const NumericId<Voice> voiceId = impl.currentVoiceId_;
     const NumericId<Region> regionId = impl.currentRegionId_;
 
-    ASSERT(regionId.number() >= 0);
+    ASSERT(regionId);
     ASSERT(static_cast<size_t>(regionId.number()) < impl.sourceRegionIndex_.size());
 
     const auto idNumber = static_cast<size_t>(regionId.number());
