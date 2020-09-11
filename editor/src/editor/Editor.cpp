@@ -375,11 +375,11 @@ void Editor::Impl::createFrameContents()
         typedef CTextButton Button;
 #endif
         typedef CTextButton ValueButton;
-        typedef SHoverButton LoadFileButton;
-        typedef SHoverButton CCButton;
-        typedef SHoverButton HomeButton;
-        typedef SHoverButton SettingsButton;
-        typedef SHoverButton EditFileButton;
+        typedef STextButton LoadFileButton;
+        typedef STextButton CCButton;
+        typedef STextButton HomeButton;
+        typedef STextButton SettingsButton;
+        typedef STextButton EditFileButton;
         typedef SPiano Piano;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
@@ -482,7 +482,7 @@ void Editor::Impl::createFrameContents()
             return vm;
         };
         auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
-            SHoverButton* btn = new SHoverButton(bounds, this, tag, glyph);
+            STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(new CFontDesc("Fluent System Regular W20", fontsize));
             btn->setTextColor(theme->icon);
             btn->setHoverColor(theme->iconHighlight);

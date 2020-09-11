@@ -149,15 +149,17 @@ private:
 };
 
 ///
-class SHoverButton: public CTextButton {
+class STextButton: public CTextButton {
 public:
-    SHoverButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
+    STextButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
     : CTextButton(size, listener, tag, title) {}
 
     void setHoverColor(const CColor& color);
     CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override;
     CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override;
+    void draw(CDrawContext* context) override;
 private:
     CColor hoverColor_;
     CColor backupColor_;
+    bool hovered { false };
 };

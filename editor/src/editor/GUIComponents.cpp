@@ -428,20 +428,33 @@ void SValueMenu::onItemClicked(int32_t index)
         valueChanged();
 }
 
-void SHoverButton::setHoverColor (const CColor& color)
+void STextButton::setHoverColor (const CColor& color)
 {
     hoverColor_ = color;
 }
 
-CMouseEventResult SHoverButton::onMouseEntered (CPoint& where, const CButtonState& buttons)
+void STextButton::draw(CDrawContext* context)
 {
-    backupColor_ = getTextColor();
-    setTextColor(hoverColor_);
+    backupColor_ = textColor;
+    if (hovered) {
+        textColor = hoverColor_; // textColor is protected
+    }
+    CTextButton::draw(context);
+    if (hovered)
+        textColor = backupColor_;
+}
+
+
+CMouseEventResult STextButton::onMouseEntered (CPoint& where, const CButtonState& buttons)
+{
+    hovered = true;
+    setDirty();
     return CTextButton::onMouseEntered(where, buttons);
 }
 
-CMouseEventResult SHoverButton::onMouseExited (CPoint& where, const CButtonState& buttons)
+CMouseEventResult STextButton::onMouseExited (CPoint& where, const CButtonState& buttons)
 {
-    setTextColor(backupColor_);
+    hovered = false;
+    setDirty();
     return CTextButton::onMouseExited(where, buttons);
 }
