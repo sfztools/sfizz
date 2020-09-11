@@ -7,7 +7,7 @@
 #pragma once
 #include "ModKeyHash.h"
 #include "ModId.h"
-#include "../NumericId.h"
+#include "../utility/NumericId.h"
 #include <string>
 #include <cstring>
 

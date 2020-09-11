@@ -17,7 +17,7 @@
 #include "AudioBuffer.h"
 #include "MidiState.h"
 #include "FileId.h"
-#include "NumericId.h"
+#include "utility/NumericId.h"
 #include "modulations/ModKey.h"
 #include "absl/types/optional.h"
 #include "absl/strings/string_view.h"

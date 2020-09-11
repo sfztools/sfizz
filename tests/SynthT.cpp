@@ -7,7 +7,7 @@
 #include "sfizz/Synth.h"
 #include "sfizz/SisterVoiceRing.h"
 #include "sfizz/SfzHelpers.h"
-#include "sfizz/NumericId.h"
+#include "sfizz/utility/NumericId.h"
 #include "TestHelpers.h"
 #include <algorithm>
 #include "catch2/catch.hpp"

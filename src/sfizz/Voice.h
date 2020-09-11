@@ -17,7 +17,7 @@
 #include "LeakDetector.h"
 #include "OnePoleFilter.h"
 #include "PowerFollower.h"
-#include "NumericId.h"
+#include "utility/NumericId.h"
 #include "absl/types/span.h"
 #include <memory>
 #include <random>

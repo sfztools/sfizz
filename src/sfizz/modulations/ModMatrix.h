@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "../NumericId.h"
+#include "../utility/NumericId.h"
 #include <string>
 #include <memory>
 #include <cstdint>
