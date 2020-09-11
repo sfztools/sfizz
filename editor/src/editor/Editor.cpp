@@ -400,7 +400,6 @@ void Editor::Impl::createFrameContents()
             box->setTitleFontColor(theme->titleBoxText);
             box->setTitleBackgroundColor(theme->titleBoxBackground);
             auto font = owned(new CFontDesc("Roboto", fontsize));
-            font->setSize(fontsize);
             box->setTitleFont(font);
             return box;
         };
@@ -414,7 +413,6 @@ void Editor::Impl::createFrameContents()
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
             auto font = owned(new CFontDesc("Roboto", fontsize));
-            font->setSize(fontsize);
             lbl->setFont(font);
             return lbl;
         };
@@ -435,7 +433,6 @@ void Editor::Impl::createFrameContents()
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
             auto font = owned(new CFontDesc("Roboto", fontsize));
-            font->setSize(fontsize);
             lbl->setFont(font);
             return lbl;
         };
@@ -448,8 +445,7 @@ void Editor::Impl::createFrameContents()
 #if 0
         auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextButton* button = new CTextButton(bounds, this, tag, label);
-            auto font = owned(new CFontDesc(*button->getFont()));
-            font->setSize(fontsize);
+            auto font = owned(new CFontDesc("Roboto", fontsize));
             button->setFont(font);
             button->setTextAlignment(align);
             return button;
@@ -458,7 +454,6 @@ void Editor::Impl::createFrameContents()
         auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextButton* button = new CTextButton(bounds, this, tag, label);
             auto font = owned(new CFontDesc("Roboto", fontsize));
-            font->setSize(fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
             button->setTextColor(theme->valueText);
@@ -472,7 +467,6 @@ void Editor::Impl::createFrameContents()
             SValueMenu* vm = new SValueMenu(bounds, this, tag);
             vm->setHoriAlign(align);
             auto font = owned(new CFontDesc("Roboto", fontsize));
-            font->setSize(fontsize);
             vm->setFont(font);
             vm->setFontColor(theme->valueText);
             vm->setBackColor(theme->valueBackground);
