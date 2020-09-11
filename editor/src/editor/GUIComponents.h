@@ -160,6 +160,5 @@ public:
     void draw(CDrawContext* context) override;
 private:
     CColor hoverColor_;
-    CColor backupColor_;
     bool hovered { false };
 };

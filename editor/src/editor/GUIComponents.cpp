@@ -435,13 +435,13 @@ void STextButton::setHoverColor (const CColor& color)
 
 void STextButton::draw(CDrawContext* context)
 {
-    backupColor_ = textColor;
+    CColor backupColor = textColor;
     if (hovered) {
         textColor = hoverColor_; // textColor is protected
     }
     CTextButton::draw(context);
     if (hovered)
-        textColor = backupColor_;
+        textColor = backupColor;
 }
 
 
