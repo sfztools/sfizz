@@ -27,6 +27,7 @@ set (SFIZZ_HEADERS
     sfizz/Config.h
     sfizz/Curve.h
     sfizz/Debug.h
+    sfizz/utility/NumericId.h
     sfizz/utility/SpinMutex.h
     sfizz/utility/SpinMutex.cpp
     sfizz/modulations/ModId.h
@@ -76,7 +77,6 @@ set (SFIZZ_HEADERS
     sfizz/MathHelpers.h
     sfizz/MidiState.h
     sfizz/ModifierHelpers.h
-    sfizz/NumericId.h
     sfizz/OnePoleFilter.h
     sfizz/Oversampler.h
     sfizz/Panning.h
