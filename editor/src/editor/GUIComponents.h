@@ -149,9 +149,9 @@ private:
 };
 
 ///
-class CHoverButton: public CTextButton {
+class SHoverButton: public CTextButton {
 public:
-    CHoverButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
+    SHoverButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
     : CTextButton(size, listener, tag, title) {}
 
     void setHoverColor(const CColor& color);
