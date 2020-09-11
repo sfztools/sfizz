@@ -243,8 +243,7 @@ void ModMatrix::initVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, 
     const auto idNumber = static_cast<size_t>(regionId.number());
     for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         const auto& source = impl.sources_[idx];
-        if (source.key.flags() & kModIsPerVoice)
-            source.gen->init(source.key, voiceId, delay);
+        source.gen->init(source.key, voiceId, delay);
     }
 }
 
@@ -257,8 +256,7 @@ void ModMatrix::releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionI
     const auto idNumber = static_cast<size_t>(regionId.number());
     for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         const auto& source = impl.sources_[idx];
-        if (source.key.flags() & kModIsPerVoice)
-            source.gen->release(source.key, voiceId, delay);
+        source.gen->release(source.key, voiceId, delay);
     }
 }
 
@@ -303,14 +301,12 @@ void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
     const auto idNumber = static_cast<size_t>(regionId.number());
     for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         auto& source = impl.sources_[idx];
-        if (source.key.flags() & kModIsPerVoice)
-            source.bufferReady = false;
+        source.bufferReady = false;
     }
 
     for (auto idx: impl.targetIndicesForRegion_[idNumber]) {
         auto& target = impl.targets_[idx];
-        if (target.key.flags() & kModIsPerVoice)
-            target.bufferReady = false;
+        target.bufferReady = false;
     }
 }
 
@@ -329,10 +325,8 @@ void ModMatrix::endVoice()
     for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
         const auto& source = impl.sources_[idx];
         if (!source.bufferReady) {
-            if (source.key.flags() & kModIsPerVoice) {
-                absl::Span<float> buffer(source.buffer.data(), numFrames);
-                source.gen->generateDiscarded(source.key, voiceId, buffer);
-            }
+            absl::Span<float> buffer(source.buffer.data(), numFrames);
+            source.gen->generateDiscarded(source.key, voiceId, buffer);
         }
     }
 
