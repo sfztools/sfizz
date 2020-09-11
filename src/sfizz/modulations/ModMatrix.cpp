@@ -49,7 +49,7 @@ struct ModMatrix::Impl {
     absl::flat_hash_map<ModKey, uint32_t> sourceIndex_;
     absl::flat_hash_map<ModKey, uint32_t> targetIndex_;
 
-    int maxRegionIdx { -1 };
+    int maxRegionIdx_ { -1 };
     std::vector<std::vector<uint32_t>> sourceRegionIndex_;
     std::vector<std::vector<uint32_t>> targetRegionIndex_;
 
@@ -78,7 +78,7 @@ void ModMatrix::clear()
     impl.targets_.clear();
     impl.sourceRegionIndex_.clear();
     impl.targetRegionIndex_.clear();
-    impl.maxRegionIdx = -1;
+    impl.maxRegionIdx_ = -1;
 }
 
 void ModMatrix::setSampleRate(double sampleRate)
@@ -131,8 +131,8 @@ ModMatrix::SourceId ModMatrix::registerSource(const ModKey& key, ModGenerator& g
     source.buffer.resize(impl.samplesPerBlock_);
 
     impl.sourceIndex_[key] = id.number();
-    if (key.region().number() > impl.maxRegionIdx)
-        impl.maxRegionIdx = key.region().number();
+    if (key.region().number() > impl.maxRegionIdx_)
+        impl.maxRegionIdx_ = key.region().number();
 
     gen.setSampleRate(impl.sampleRate_);
     gen.setSamplesPerBlock(impl.samplesPerBlock_);
@@ -157,8 +157,8 @@ ModMatrix::TargetId ModMatrix::registerTarget(const ModKey& key)
     target.buffer.resize(impl.samplesPerBlock_);
 
     impl.targetIndex_[key] = id.number();
-    if (key.region().number() > impl.maxRegionIdx)
-        impl.maxRegionIdx = key.region().number();
+    if (key.region().number() > impl.maxRegionIdx_)
+        impl.maxRegionIdx_ = key.region().number();
 
     return id;
 }
@@ -205,8 +205,8 @@ void ModMatrix::init()
 {
     Impl& impl = *impl_;
 
-    if (impl.maxRegionIdx >= 0) {
-        const size_t numRegions = impl.maxRegionIdx + 1;
+    if (impl.maxRegionIdx_ >= 0) {
+        const size_t numRegions = impl.maxRegionIdx_ + 1;
         impl.sourceRegionIndex_.resize(numRegions);
         impl.targetRegionIndex_.resize(numRegions);
     }
