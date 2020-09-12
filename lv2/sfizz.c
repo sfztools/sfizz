@@ -133,6 +133,7 @@ typedef struct
     LV2_URID atom_long_uri;
     LV2_URID atom_urid_uri;
     LV2_URID atom_path_uri;
+    LV2_URID patch_request_uri;
     LV2_URID patch_set_uri;
     LV2_URID patch_get_uri;
     LV2_URID patch_put_uri;
@@ -226,6 +227,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
     self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
     self->atom_blank_uri = map->map(map->handle, LV2_ATOM__Blank);
+    self->patch_request_uri = map->map(map->handle, LV2_PATCH__Request);
     self->patch_set_uri = map->map(map->handle, LV2_PATCH__Set);
     self->patch_get_uri = map->map(map->handle, LV2_PATCH__Get);
     self->patch_put_uri = map->map(map->handle, LV2_PATCH__Put);
@@ -639,12 +641,12 @@ sfizz_lv2_send_cc_notification(sfizz_plugin_t *self)
     if (!self->have_cc_notification)
         return false;
 
-    LV2_Atom_Forge_Frame frame_patch_set;
+    LV2_Atom_Forge_Frame frame_patch_request;
     LV2_Atom_Forge_Frame frame_patch_value;
 
     bool write_ok =
         lv2_atom_forge_frame_time(&self->forge, 0) &&
-        lv2_atom_forge_object(&self->forge, &frame_patch_set, 0, self->patch_set_uri) &&
+        lv2_atom_forge_object(&self->forge, &frame_patch_request, 0, self->patch_request_uri) &&
         lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
         lv2_atom_forge_urid(&self->forge, self->sfizz_controller_change_uri) &&
         lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
@@ -656,7 +658,7 @@ sfizz_lv2_send_cc_notification(sfizz_plugin_t *self)
         return false;
 
     lv2_atom_forge_pop(&self->forge, &frame_patch_value);
-    lv2_atom_forge_pop(&self->forge, &frame_patch_set);
+    lv2_atom_forge_pop(&self->forge, &frame_patch_request);
     self->have_cc_notification = false;
     return true;
 }
