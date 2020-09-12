@@ -19,7 +19,9 @@
 // These ones are just for the worker
 #define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
 #define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
+// These ones are for information exchange with the editor
 #define SFIZZ__controllerChange SFIZZ_URI ":" "controller_change"
+#define SFIZZ__recheckControllers SFIZZ_URI ":" "recheck_controllers"
 
 enum
 {

@@ -104,6 +104,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID atom_int_uri;
     LV2_URID atom_float_uri;
     LV2_URID midi_event_uri;
+    LV2_URID patch_request_uri;
     LV2_URID patch_get_uri;
     LV2_URID patch_set_uri;
     LV2_URID patch_property_uri;
@@ -111,6 +112,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_controller_change_uri;
+    LV2_URID sfizz_recheck_controllers_uri;
 
 protected:
     void uiSendValue(EditId id, const EditValue& v) override;
@@ -173,6 +175,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->atom_int_uri = map->map(map->handle, LV2_ATOM__Int);
     self->atom_float_uri = map->map(map->handle, LV2_ATOM__Float);
     self->midi_event_uri = map->map(map->handle, LV2_MIDI__MidiEvent);
+    self->patch_request_uri = map->map(map->handle, LV2_PATCH__Request);
     self->patch_get_uri = map->map(map->handle, LV2_PATCH__Get);
     self->patch_set_uri = map->map(map->handle, LV2_PATCH__Set);
     self->patch_property_uri = map->map(map->handle, LV2_PATCH__property);
@@ -180,6 +183,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_controller_change_uri = map->map(map->handle, SFIZZ__controllerChange);
+    self->sfizz_recheck_controllers_uri = map->map(map->handle, SFIZZ__recheckControllers);
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path
@@ -220,9 +224,17 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     // send a request to receive all parameters
     uint8_t buffer[256];
-    lv2_atom_forge_set_buffer(forge, buffer, sizeof(buffer));
     LV2_Atom_Forge_Frame frame;
-    LV2_Atom *msg = (LV2_Atom *)lv2_atom_forge_object(forge, &frame, 0, self->patch_get_uri);
+    LV2_Atom *msg;
+    lv2_atom_forge_set_buffer(forge, buffer, sizeof(buffer));
+    msg = (LV2_Atom *)lv2_atom_forge_object(forge, &frame, 0, self->patch_get_uri);
+    lv2_atom_forge_pop(forge, &frame);
+    write_function(controller, 0, lv2_atom_total_size(msg), self->atom_event_transfer_uri, msg);
+    // send a request to receive the controller state
+    lv2_atom_forge_set_buffer(forge, buffer, sizeof(buffer));
+    msg = (LV2_Atom *)lv2_atom_forge_object(forge, &frame, 0, self->patch_request_uri);
+    lv2_atom_forge_key(forge, self->patch_property_uri);
+    lv2_atom_forge_urid(forge, self->sfizz_recheck_controllers_uri);
     lv2_atom_forge_pop(forge, &frame);
     write_function(controller, 0, lv2_atom_total_size(msg), self->atom_event_transfer_uri, msg);
 

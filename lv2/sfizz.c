@@ -149,6 +149,7 @@ typedef struct
     LV2_URID sfizz_log_status_uri;
     LV2_URID sfizz_check_modification_uri;
     LV2_URID sfizz_controller_change_uri;
+    LV2_URID sfizz_recheck_controllers_uri;
     LV2_URID time_position_uri;
     LV2_URID time_bar_uri;
     LV2_URID time_bar_beat_uri;
@@ -244,6 +245,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
     self->sfizz_controller_change_uri = map->map(map->handle, SFIZZ__controllerChange);
+    self->sfizz_recheck_controllers_uri = map->map(map->handle, SFIZZ__recheckControllers);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
     self->time_bar_uri = map->map(map->handle, LV2_TIME__bar);
     self->time_bar_beat_uri = map->map(map->handle, LV2_TIME__barBeat);
@@ -924,6 +926,16 @@ run(LV2_Handle instance, uint32_t sample_count)
                 else if (property->body == self->sfizz_scala_file_uri)
                 {
                     sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+                }
+            }
+            else if (obj->body.otype == self->patch_request_uri)
+            {
+                const LV2_Atom_URID *property = NULL;
+                lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
+                if (property)
+                {
+                    if (property->body == self->sfizz_recheck_controllers_uri)
+                        sfizz_recheck_all_hdcc(self->synth);
                 }
             }
             else if (obj->body.otype == self->time_position_uri)
