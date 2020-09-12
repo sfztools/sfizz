@@ -13,6 +13,9 @@
 - [x] egN_shapeX
 - [x] egN_sustain
 - [ ] egN_dynamic
+- [ ] egN_loop
+- [ ] egN_loop_shape
+- [ ] egN_loop_count
 */
 
 #include "FlexEnvelope.h"
