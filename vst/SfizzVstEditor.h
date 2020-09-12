@@ -51,6 +51,7 @@ protected:
 private:
     void loadSfzFile(const std::string& filePath);
     void loadScalaFile(const std::string& filePath);
+    void requestControllerState();
 
     void updateStateDisplay();
 

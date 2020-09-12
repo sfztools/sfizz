@@ -222,6 +222,9 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
             _semaToWorker.post();
     }
 
+    if (_requestedControllerState.exchange(false))
+        synth.recheckAllHdcc();
+
     if (!_haveCCNotification)
         _haveCCNotification = synth.checkHdcc(_ccnNumber, _ccnValue);
 
@@ -445,6 +448,9 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         reply->setMessageID("LoadedScala");
         reply->getAttributes()->setBinary("File", _state.scalaFile.data(), _state.scalaFile.size());
         sendMessage(reply);
+    }
+    else if (!std::strcmp(id, "RequestControllerState")) {
+        _requestedControllerState.store(true);
     }
 
     return result;

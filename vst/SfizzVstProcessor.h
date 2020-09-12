@@ -77,6 +77,7 @@ private:
     bool _haveCCNotification = false;
     int _ccnNumber = 0;
     float _ccnValue = 0.0f;
+    std::atomic_bool _requestedControllerState { false };
 
     // messaging
     struct RTMessage {

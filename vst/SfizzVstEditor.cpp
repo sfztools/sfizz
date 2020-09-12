@@ -61,6 +61,8 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
 
     editor->open(*frame);
 
+    requestControllerState();
+
     return true;
 }
 
@@ -220,6 +222,20 @@ void SfizzVstEditor::loadScalaFile(const std::string& filePath)
     msg->setMessageID("LoadScala");
     Vst::IAttributeList* attr = msg->getAttributes();
     attr->setBinary("File", filePath.data(), filePath.size());
+    ctl->sendMessage(msg);
+}
+
+void SfizzVstEditor::requestControllerState()
+{
+    SfizzVstController* ctl = getController();
+
+    Steinberg::OPtr<Vst::IMessage> msg { ctl->allocateMessage() };
+    if (!msg) {
+        fprintf(stderr, "[Sfizz] UI could not allocate message\n");
+        return;
+    }
+
+    msg->setMessageID("RequestControllerState");
     ctl->sendMessage(msg);
 }
 
