@@ -418,6 +418,14 @@ SFIZZ_EXPORTED_API void sfizz_render_block(sfizz_synth_t* synth, float** channel
 SFIZZ_EXPORTED_API bool sfizz_check_hdcc(sfizz_synth_t* synth, int* cc_number, float* cc_value);
 
 /**
+ * @brief Requests the entire controller state to be notified.
+ * The state will be received by subsequent calls to sfizz_check_hdcc().
+ *
+ * @param synth  The synth.
+ */
+SFIZZ_EXPORTED_API void sfizz_recheck_all_hdcc(sfizz_synth_t* synth);
+
+/**
  * @brief Get the size of the preloaded data.
  *
  * This returns the number of floats used in the preloading buffers.

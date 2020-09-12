@@ -191,6 +191,12 @@ bool sfizz_check_hdcc(sfizz_synth_t* synth, int* cc_number, float* cc_value)
     return self->checkHdcc(*cc_number, *cc_value);
 }
 
+void sfizz_recheck_all_hdcc(sfizz_synth_t* synth)
+{
+    auto self = reinterpret_cast<sfz::Synth*>(synth);
+    return self->recheckAllHdcc();
+}
+
 unsigned int sfizz_get_preload_size(sfizz_synth_t* synth)
 {
     auto self = reinterpret_cast<sfz::Synth*>(synth);

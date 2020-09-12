@@ -130,4 +130,14 @@ TEST_CASE("[MidiState] Controller change recording")
     state.ccEvent(8, 1, 0.1f);
     state.resetAllControllers(9);
     REQUIRE(getCCList() == std::vector<Record>{{-1, 0.0f}});
+
+    // ordinary + recheck
+    state.advanceTime(10);
+    state.ccEvent(0, 1, 0.5f);
+    state.ccEvent(3, 2, 0.75f);
+    state.ccEvent(8, 3, 0.1f);
+    REQUIRE(getCCList() == std::vector<Record>{{1, 0.5f}, {2, 0.75f}, {3, 0.1f}});
+    REQUIRE(getCCList() == std::vector<Record>{});
+    state.notifyAllControllers();
+    REQUIRE(getCCList() == std::vector<Record>{{-1, 0.0f}, {1, 0.5f}, {2, 0.75f}, {3, 0.1f}});
 }

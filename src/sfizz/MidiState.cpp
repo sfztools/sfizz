@@ -170,6 +170,24 @@ void sfz::MidiState::resetAllControllers(int delay) noexcept
     pitchBendEvent(delay, 0.0f);
 }
 
+void sfz::MidiState::notifyAllControllers() noexcept
+{
+    auto* observer = ccObserver;
+    if (!observer)
+        return;
+
+    observer->onAllControllersReset();
+
+    for (int ccIdx = 0; ccIdx < config::numCCs; ++ccIdx) {
+        const auto& ccEvents = cc[ccIdx];
+        ASSERT(!ccEvents.empty()); // CC event vectors should never be empty
+
+        float value = ccEvents.back().value;
+        if (value != 0.0f)
+            observer->onControllerChange(ccIdx, value);
+    }
+}
+
 const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept
 {
     if (ccIdx < 0 || ccIdx >= config::numCCs)
@@ -228,7 +246,7 @@ bool sfz::MidiState::ControllerChangeRecorder::getNextControllerChange(int& ccNu
     return true;
 }
 
-void sfz::MidiState::ControllerChangeRecorder::onAllControllersReset()
+void sfz::MidiState::ControllerChangeRecorder::onAllControllersReset() noexcept
 {
     Impl& impl = *impl_;
 
@@ -242,7 +260,7 @@ void sfz::MidiState::ControllerChangeRecorder::onAllControllersReset()
     impl.linkToLast = config::numCCs;
 }
 
-void sfz::MidiState::ControllerChangeRecorder::onControllerChange(int ccNumber, float ccValue)
+void sfz::MidiState::ControllerChangeRecorder::onControllerChange(int ccNumber, float ccValue) noexcept
 {
     Impl& impl = *impl_;
 

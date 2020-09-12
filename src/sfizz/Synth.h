@@ -441,6 +441,12 @@ public:
     bool checkHdcc(int& ccNumber, float& ccValue) noexcept;
 
     /**
+     * @brief Requests the entire controller state to be notified.
+     * The state will be received by subsequent calls to checkHdcc().
+     */
+    void recheckAllHdcc() noexcept;
+
+    /**
      * @brief Get the number of active voices
      *
      * @return int

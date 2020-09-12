@@ -134,6 +134,11 @@ public:
      */
     void resetAllControllers(int delay) noexcept;
 
+    /**
+     * @brief Notify all the controllers to the observer
+     */
+    void notifyAllControllers() noexcept;
+
     const EventVector& getCCEvents(int ccIdx) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
 
@@ -143,8 +148,8 @@ public:
     class ControllerChangeObserver {
     public:
         virtual ~ControllerChangeObserver() {}
-        virtual void onAllControllersReset() = 0;
-        virtual void onControllerChange(int ccNumber, float ccValue) = 0;
+        virtual void onAllControllersReset() noexcept = 0;
+        virtual void onControllerChange(int ccNumber, float ccValue) noexcept = 0;
     };
 
     /**
@@ -158,8 +163,8 @@ public:
         bool getNextControllerChange(int& ccNumber, float& ccValue) noexcept; // O(1)
 
     protected:
-        void onAllControllersReset() override;
-        void onControllerChange(int ccNumber, float ccValue) override;
+        void onAllControllersReset() noexcept override;
+        void onControllerChange(int ccNumber, float ccValue) noexcept override;
 
     private:
         struct Impl;

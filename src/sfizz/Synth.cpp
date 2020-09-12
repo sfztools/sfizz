@@ -852,6 +852,11 @@ bool sfz::Synth::checkHdcc(int& ccNumber, float& ccValue) noexcept
     return ccRecorder->getNextControllerChange(ccNumber, ccValue);
 }
 
+void sfz::Synth::recheckAllHdcc() noexcept
+{
+    resources.midiState.notifyAllControllers();
+}
+
 void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);

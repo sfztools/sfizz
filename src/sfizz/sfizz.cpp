@@ -183,6 +183,11 @@ bool sfz::Sfizz::checkHdcc(int& ccNumber, float& ccValue) noexcept
     return synth->checkHdcc(ccNumber, ccValue);
 }
 
+void sfz::Sfizz::recheckAllHdcc() noexcept
+{
+    return synth->recheckAllHdcc();
+}
+
 int sfz::Sfizz::getNumActiveVoices() const noexcept
 {
     return synth->getNumActiveVoices();
