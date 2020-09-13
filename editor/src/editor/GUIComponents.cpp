@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "GUIComponents.h"
+#include <complex>
 #include <cmath>
 
 #include "utility/vstgui_before.h"
@@ -428,6 +429,7 @@ void SValueMenu::onItemClicked(int32_t index)
         valueChanged();
 }
 
+///
 void STextButton::setHoverColor (const CColor& color)
 {
     hoverColor_ = color;
@@ -457,4 +459,94 @@ CMouseEventResult STextButton::onMouseExited (CPoint& where, const CButtonState&
     hovered = false;
     setDirty();
     return CTextButton::onMouseExited(where, buttons);
+}
+
+///
+SStyledKnob::SStyledKnob(const CRect& size, IControlListener* listener, int32_t tag)
+    : CKnobBase(size, listener, tag, nullptr)
+{
+}
+
+void SStyledKnob::setActiveTrackColor(const CColor& color)
+{
+    if (activeTrackColor_ == color)
+        return;
+    activeTrackColor_ = color;
+    setDirty();
+}
+
+void SStyledKnob::setInactiveTrackColor(const CColor& color)
+{
+    if (inactiveTrackColor_ == color)
+        return;
+    inactiveTrackColor_ = color;
+    setDirty();
+}
+
+void SStyledKnob::setLineIndicatorColor(const CColor& color)
+{
+    if (lineIndicatorColor_ == color)
+        return;
+    lineIndicatorColor_ = color;
+    setDirty();
+}
+
+void SStyledKnob::draw(CDrawContext* dc)
+{
+    const CCoord lineWidth = 4.0;
+    const CCoord indicatorLineLength = 10.0;
+    const CCoord angleSpread = 250.0;
+    const CCoord angle1 = 270.0 - 0.5 * angleSpread;
+    const CCoord angle2 = 270.0 + 0.5 * angleSpread;
+
+    dc->setDrawMode(kAntiAliasing);
+
+    const CRect bounds = getViewSize();
+
+    // compute inner bounds
+    CRect rect(bounds);
+    rect.setWidth(std::min(rect.getWidth(), rect.getHeight()));
+    rect.setHeight(rect.getWidth());
+    rect.centerInside(bounds);
+    rect.extend(-lineWidth, -lineWidth);
+
+    SharedPointer<CGraphicsPath> path;
+
+    // inactive track
+    path = owned(dc->createGraphicsPath());
+    path->addArc(rect, angle1, angle2, true);
+
+    dc->setFrameColor(inactiveTrackColor_);
+    dc->setLineWidth(lineWidth);
+    dc->setLineStyle(kLineSolid);
+    dc->drawGraphicsPath(path, CDrawContext::kPathStroked);
+
+    // active track
+    const CCoord v = getValueNormalized();
+    const CCoord vAngle = angle1 + v * angleSpread;
+    path = owned(dc->createGraphicsPath());
+    path->addArc(rect, angle1, vAngle, true);
+
+    dc->setFrameColor(activeTrackColor_);
+    dc->setLineWidth(lineWidth + 0.5);
+    dc->setLineStyle(kLineSolid);
+    dc->drawGraphicsPath(path, CDrawContext::kPathStroked);
+
+    // indicator line
+    {
+        CCoord module1 = 0.5 * rect.getWidth() - indicatorLineLength;
+        CCoord module2 = 0.5 * rect.getWidth();
+        std::complex<CCoord> c1 = std::polar(module1, vAngle * (M_PI / 180.0));
+        std::complex<CCoord> c2 = std::polar(module2, vAngle * (M_PI / 180.0));
+
+        CPoint p1(c1.real(), c1.imag());
+        CPoint p2(c2.real(), c2.imag());
+        p1.offset(rect.getCenter());
+        p2.offset(rect.getCenter());
+
+        dc->setFrameColor(lineIndicatorColor_);
+        dc->setLineWidth(1.0);
+        dc->setLineStyle(kLineSolid);
+        dc->drawLine(p1, p2);
+    }
 }

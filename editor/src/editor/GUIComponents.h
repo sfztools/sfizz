@@ -162,3 +162,25 @@ private:
     CColor hoverColor_;
     bool hovered { false };
 };
+
+///
+class SStyledKnob : public CKnobBase {
+public:
+    SStyledKnob(const CRect& size, IControlListener* listener, int32_t tag);
+
+    const CColor& getActiveTrackColor() const { return activeTrackColor_; }
+    void setActiveTrackColor(const CColor& color);
+    const CColor& getInactiveTrackColor() const { return inactiveTrackColor_; }
+    void setInactiveTrackColor(const CColor& color);
+    const CColor& getLineIndicatorColor() const { return lineIndicatorColor_; }
+    void setLineIndicatorColor(const CColor& color);
+
+    CLASS_METHODS(SStyledKnob, CKnobBase)
+protected:
+    void draw(CDrawContext* dc) override;
+
+private:
+    CColor activeTrackColor_;
+    CColor inactiveTrackColor_;
+    CColor lineIndicatorColor_;
+};
