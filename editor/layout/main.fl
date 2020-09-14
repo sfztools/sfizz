@@ -3,7 +3,7 @@ version 1.0305
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {572 266 800 475} type Double
+  xywh {576 416 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box {} {
@@ -128,7 +128,7 @@ widget_class mainView {open
       Fl_Dial volumeSlider_ {
         comment {tag=kTagSetVolume}
         xywh {680 20 48 48} value 0.5
-        class Knob48
+        class StyledKnob
       }
       Fl_Box volumeLabel_ {
         label {0.0 dB}
@@ -216,12 +216,12 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {open
+  Fl_Group {subPanels_[kPanelSettings]} {selected
     xywh {5 109 790 286}
     class LogicalGroup
   } {
     Fl_Group {} {
-      label Engine open selected
+      label Engine open
       xywh {260 135 280 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
@@ -279,7 +279,7 @@ widget_class mainView {open
       Fl_Dial stretchedTuningSlider_ {
         comment {tag=kTagSetStretchedTuning}
         xywh {515 315 48 48} value 0.5
-        class Knob48
+        class StyledKnob
       }
       Fl_Box {} {
         label Stretch

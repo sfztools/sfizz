@@ -335,6 +335,9 @@ void Editor::Impl::createFrameContents()
             CColor iconHighlight;
             CColor valueText;
             CColor valueBackground;
+            CColor knobActiveTrackColor;
+            CColor knobInactiveTrackColor;
+            CColor knobLineIndicatorColor;
         };
 
         Theme lightTheme;
@@ -346,6 +349,9 @@ void Editor::Impl::createFrameContents()
         lightTheme.iconHighlight = { 0xa8, 0x62, 0x34 };
         lightTheme.valueText = { 0xff, 0xff, 0xff };
         lightTheme.valueBackground = { 0x2e, 0x34, 0x36 };
+        lightTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
+        lightTheme.knobInactiveTrackColor = { 0x30, 0x30, 0x30 };
+        lightTheme.knobLineIndicatorColor = { 0x00, 0x00, 0x00 };
         Theme darkTheme;
         darkTheme.boxBackground = { 0x2e, 0x34, 0x36 };
         darkTheme.text = { 0xff, 0xff, 0xff };
@@ -355,6 +361,9 @@ void Editor::Impl::createFrameContents()
         darkTheme.iconHighlight = { 0xa8, 0x62, 0x34 };
         darkTheme.valueText = { 0x2e, 0x34, 0x36 };
         darkTheme.valueBackground = { 0xff, 0xff, 0xff };
+        darkTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
+        darkTheme.knobInactiveTrackColor = { 0x60, 0x60, 0x60 };
+        darkTheme.knobLineIndicatorColor = { 0xff, 0xff, 0xff };
         Theme& defaultTheme = lightTheme;
 
         Theme* theme = &defaultTheme;
@@ -367,6 +376,7 @@ void Editor::Impl::createFrameContents()
         typedef CTextLabel Label;
         typedef CViewContainer HLine;
         typedef CAnimKnob Knob48;
+        typedef SStyledKnob StyledKnob;
         typedef CTextLabel ValueLabel;
         typedef CViewContainer VMeter;
         typedef SValueMenu ValueMenu;
@@ -425,6 +435,13 @@ void Editor::Impl::createFrameContents()
         };
         auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
+        };
+        auto createStyledKnob = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
+            knob->setActiveTrackColor(theme->knobActiveTrackColor);
+            knob->setInactiveTrackColor(theme->knobInactiveTrackColor);
+            knob->setLineIndicatorColor(theme->knobLineIndicatorColor);
+            return knob;
         };
         auto createValueLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
