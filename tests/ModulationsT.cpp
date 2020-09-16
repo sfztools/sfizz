@@ -93,9 +93,9 @@ width_oncc425=29
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createReferenceGraph({
-        R"("Controller 20 {curve=3, smooth=0, value=59, step=0}" -> "Amplitude {region=0}")",
-        R"("Controller 42 {curve=0, smooth=32, value=71, step=0}" -> "Pitch {region=0}")",
-        R"("Controller 36 {curve=0, smooth=0, value=14.5, step=1.5}" -> "Pan {region=0}")",
-        R"("Controller 425 {curve=0, smooth=0, value=29, step=0}" -> "Width {region=0}")",
+        R"("Controller 20 {curve=3, smooth=0, value=59, step=0}" -> "Amplitude {0}")",
+        R"("Controller 42 {curve=0, smooth=32, value=71, step=0}" -> "Pitch {0}")",
+        R"("Controller 36 {curve=0, smooth=0, value=14.5, step=1.5}" -> "Pan {0}")",
+        R"("Controller 425 {curve=0, smooth=0, value=29, step=0}" -> "Width {0}")",
     }));
 }

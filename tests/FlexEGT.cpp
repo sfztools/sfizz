@@ -41,7 +41,7 @@ TEST_CASE("[FlexEG] Values")
     REQUIRE( egDescription.points[4].level == 1.0_a );
     REQUIRE( egDescription.sustain == 3 );
     REQUIRE(synth.getResources().modMatrix.toDotGraph() == createReferenceGraph({
-        R"("EG 1 {region=0}" -> "Amplitude {region=0}")",
+        R"("EG 1 {0}" -> "Amplitude {0}")",
     }));
 }
 
@@ -85,12 +85,12 @@ TEST_CASE("[FlexEG] Connections")
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     REQUIRE( synth.getRegionView(0)->flexEGs[0].points.size() == 2 );
     REQUIRE( synth.getResources().modMatrix.toDotGraph() == createReferenceGraph({
-        R"("EG 1 {region=0}" -> "Amplitude {region=0}")",
-        R"("EG 1 {region=1}" -> "Pan {region=1}")",
-        R"("EG 1 {region=2}" -> "Width {region=2}")",
-        R"("EG 1 {region=3}" -> "Position {region=3}")",
-        R"("EG 1 {region=4}" -> "Pitch {region=4}")",
-        R"("EG 1 {region=5}" -> "Volume {region=5}")",
+        R"("EG 1 {0}" -> "Amplitude {0}")",
+        R"("EG 1 {1}" -> "Pan {1}")",
+        R"("EG 1 {2}" -> "Width {2}")",
+        R"("EG 1 {3}" -> "Position {3}")",
+        R"("EG 1 {4}" -> "Pitch {4}")",
+        R"("EG 1 {5}" -> "Volume {5}")",
     }, 6));
 }
 
