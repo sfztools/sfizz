@@ -585,6 +585,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
+            processGenericCc(opcode, Default::filterCutoffModRange, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
             setValueFromOpcode(
                 opcode,
                 filters[filterIndex].cutoffCC[opcode.parameters.back()],
@@ -598,6 +599,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
+            processGenericCc(opcode, Default::filterResonanceModRange, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
             setValueFromOpcode(
                 opcode,
                 filters[filterIndex].resonanceCC[opcode.parameters.back()],
@@ -656,6 +658,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
+            processGenericCc(opcode, Default::filterGainModRange, ModKey::createNXYZ(ModId::FilGain, id, filterIndex));
             setValueFromOpcode(
                 opcode,
                 filters[filterIndex].gainCC[opcode.parameters.back()],
@@ -688,6 +691,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
                 return false;
+
             setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidth, Default::eqBandwidthRange);
         }
         break;
@@ -699,6 +703,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
                 return false;
 
+            processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqNumber));
             setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidthCC[opcode.parameters.back()], Default::eqBandwidthModRange);
         }
         break;
@@ -720,6 +725,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
                 return false;
 
+            processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqNumber));
             setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequencyCC[opcode.parameters.back()], Default::eqFrequencyModRange);
         }
         break;
@@ -754,6 +760,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
                 return false;
 
+            processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqNumber));
             setValueFromOpcode(opcode, equalizers[eqNumber - 1].gainCC[opcode.parameters.back()], Default::eqGainModRange);
         }
         break;

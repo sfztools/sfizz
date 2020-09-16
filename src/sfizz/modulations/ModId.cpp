@@ -44,6 +44,18 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::Volume:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::FilGain:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::FilCutoff:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::FilResonance:
+        return kModIsPerVoice|kModIsMultiplicative;
+    case ModId::EqGain:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EqFrequency:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EqBandwidth:
+        return kModIsPerVoice|kModIsAdditive;
 
         // unknown
     default:

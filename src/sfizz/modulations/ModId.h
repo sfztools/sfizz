@@ -37,6 +37,12 @@ enum class ModId : int {
     Position,
     Pitch,
     Volume,
+    FilGain,
+    FilCutoff,
+    FilResonance,
+    EqGain,
+    EqFrequency,
+    EqBandwidth,
 
     _TargetsEnd,
     // [/targets] --------------------------------------------------------------
