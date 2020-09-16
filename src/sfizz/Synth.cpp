@@ -231,6 +231,10 @@ void sfz::Synth::clear()
     // set default controllers
     cc(0, 7, 100);     // volume
     hdcc(0, 10, 0.5f); // pan
+
+    // set default controller labels
+    ccLabels.emplace_back(7, "Volume");
+    ccLabels.emplace_back(10, "Pan");
 }
 
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
