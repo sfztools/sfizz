@@ -145,6 +145,7 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
         while ((!stageSustained_ && currentTime_ >= stageTime_) ||
                (stageSustained_ && isReleased)) {
             if (!advanceToNextStage()) {
+                out.remove_prefix(frameIndex);
                 fill(out, 0.0f);
                 return;
             }
