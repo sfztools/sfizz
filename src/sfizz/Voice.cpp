@@ -121,13 +121,12 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     gainSmoother.reset();
     resetCrossfades();
 
-    const unsigned numChannels = region->isStereo() ? 2 : 1;
     for (unsigned i = 0; i < region->filters.size(); ++i) {
-        filters[i].setup(region->filters[i], numChannels, triggerEvent.number, triggerEvent.value);
+        filters[i].setup(*region, i, triggerEvent.number, triggerEvent.value);
     }
 
     for (unsigned i = 0; i < region->equalizers.size(); ++i) {
-        equalizers[i].setup(region->equalizers[i], numChannels, triggerEvent.value);
+        equalizers[i].setup(*region, i, triggerEvent.value);
     }
 
     sourcePosition = region->getOffset();

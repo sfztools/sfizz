@@ -16,31 +16,33 @@ void sfz::EQHolder::reset()
     eq->clear();
 }
 
-void sfz::EQHolder::setup(const EQDescription& description, unsigned numChannels, float velocity)
+void sfz::EQHolder::setup(const Region& region, unsigned eqId, float velocity)
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-    eq->setType(description.type);
-    eq->setChannels(numChannels);
-    this->description = &description;
+    ASSERT(eqId < region.equalizers.size());
+
+    this->description = &region.equalizers[eqId];
+    eq->setType(description->type);
+    eq->setChannels(region.isStereo() ? 2 : 1);
 
     // Setup the base values
-    baseFrequency = description.frequency + velocity * description.vel2frequency;
-    baseBandwidth = description.bandwidth;
-    baseGain = description.gain + velocity * description.vel2gain;
+    baseFrequency = description->frequency + velocity * description->vel2frequency;
+    baseBandwidth = description->bandwidth;
+    baseGain = description->gain + velocity * description->vel2gain;
 
     // Setup the modulated values
     float lastFrequency = baseFrequency;
-    for (const auto& mod : description.frequencyCC)
+    for (const auto& mod : description->frequencyCC)
         lastFrequency += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
 
     float lastBandwidth = baseBandwidth;
-    for (const auto& mod : description.bandwidthCC)
+    for (const auto& mod : description->bandwidthCC)
         lastBandwidth += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
 
     float lastGain = baseGain;
-    for (const auto& mod : description.gainCC)
+    for (const auto& mod : description->gainCC)
         lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 

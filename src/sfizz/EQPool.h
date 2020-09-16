@@ -1,6 +1,6 @@
 #pragma once
 #include "SfzFilter.h"
-#include "EQDescription.h"
+#include "Region.h"
 #include "Resources.h"
 #include "utility/SpinMutex.h"
 #include <vector>
@@ -16,13 +16,13 @@ public:
     EQHolder() = delete;
     EQHolder(const Resources& resources);
     /**
-     * @brief Setup a new EQ based on an EQ description.
+     * @brief Setup a new EQ from a region and an index
      *
-     * @param description the EQ description
-     * @param numChannels the number of channels for the EQ
-     * @param description the triggering velocity/value
+     * @param description   the region from which we take the EQ
+     * @param eqId          the EQ index in the region
+     * @param description   the triggering velocity/value
      */
-    void setup(const EQDescription& description, unsigned numChannels, float velocity);
+    void setup(const Region& region, unsigned eqId, float velocity);
     /**
      * @brief Process a block of stereo inputs
      *

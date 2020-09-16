@@ -1,6 +1,6 @@
 #pragma once
 #include "SfzFilter.h"
-#include "FilterDescription.h"
+#include "Region.h"
 #include "Resources.h"
 #include "Defaults.h"
 #include "utility/SpinMutex.h"
@@ -19,12 +19,12 @@ public:
     /**
      * @brief Setup a new filter based on a filter description, and a triggering note parameters.
      *
-     * @param description the filter description
-     * @param numChannels the number of channels
-     * @param noteNumber the triggering note number
-     * @param velocity the triggering note velocity/value
+     * @param description   the region from which we take the filter
+     * @param filterId      the filter index in the region
+     * @param noteNumber    the triggering note number
+     * @param velocity      the triggering note velocity/value
      */
-    void setup(const FilterDescription& description, unsigned numChannels, int noteNumber = static_cast<int>(Default::filterKeycenter), float velocity = 0);
+    void setup(const Region& region, unsigned filterId, int noteNumber = static_cast<int>(Default::filterKeycenter), float velocity = 0);
     /**
      * @brief Process a block of stereo inputs
      *

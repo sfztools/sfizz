@@ -17,42 +17,43 @@ void sfz::FilterHolder::reset()
     filter->clear();
 }
 
-void sfz::FilterHolder::setup(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
+void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteNumber, float velocity)
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+    ASSERT(filterId < region.filters.size());
 
-    this->description = &description;
-    filter->setType(description.type);
-    filter->setChannels(numChannels);
+    this->description = &region.filters[filterId];
+    filter->setType(description->type);
+    filter->setChannels(region.isStereo() ? 2 : 1);
 
     // Setup the base values
-    baseCutoff = description.cutoff;
-    if (description.random != 0) {
-       dist.param(filterRandomDist::param_type(0, description.random));
+    baseCutoff = description->cutoff;
+    if (description->random != 0) {
+       dist.param(filterRandomDist::param_type(0, description->random));
        baseCutoff *= centsFactor(dist(Random::randomGenerator));
     }
-    const auto keytrack = description.keytrack * (noteNumber - description.keycenter);
+    const auto keytrack = description->keytrack * (noteNumber - description->keycenter);
     baseCutoff *= centsFactor(keytrack);
-    const auto veltrack = static_cast<float>(description.veltrack) * velocity;
+    const auto veltrack = static_cast<float>(description->veltrack) * velocity;
     baseCutoff *= centsFactor(veltrack);
     baseCutoff = Default::filterCutoffRange.clamp(baseCutoff);
 
-    baseGain = description.gain;
-    baseResonance = description.resonance;
+    baseGain = description->gain;
+    baseResonance = description->resonance;
 
     // Setup the modulated values
     float lastCutoff = baseCutoff;
-    for (const auto& mod : description.cutoffCC)
+    for (const auto& mod : description->cutoffCC)
         lastCutoff *= centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
     float lastResonance = baseResonance;
-    for (const auto& mod : description.resonanceCC)
+    for (const auto& mod : description->resonanceCC)
         lastResonance += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
     float lastGain = baseGain;
-    for (const auto& mod : description.gainCC)
+    for (const auto& mod : description->gainCC)
         lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
