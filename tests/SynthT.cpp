@@ -1348,3 +1348,24 @@ TEST_CASE("[Synth] Off by with CC switches")
     REQUIRE( numPlayingVoices(synth) == 1 );
     REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*saw" );
 }
+
+TEST_CASE("[Synth] Initial values of CC")
+{
+    sfz::Synth synth;
+
+    synth.loadSfzString(fs::current_path() / "init_cc.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    REQUIRE(synth.getHdccInit(111) == 0.0f);
+    REQUIRE(synth.getHdccInit(7) == Approx(100.0f / 127)); // default volume
+    REQUIRE(synth.getHdccInit(10) == 0.5f); // default pan
+
+    synth.loadSfzString(fs::current_path() / "init_cc.sfz", R"(
+        <control> set_hdcc111=0.1234 set_cc112=77
+        <region> sample=*sine
+    )");
+
+    REQUIRE(synth.getHdccInit(111) == Approx(0.1234f));
+    REQUIRE(synth.getHdccInit(112) == Approx(77.0f / 127));
+}

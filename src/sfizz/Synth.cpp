@@ -231,8 +231,9 @@ void sfz::Synth::clear()
     modificationTime = fs::file_time_type::min();
 
     // set default controllers
-    cc(0, 7, 100);     // volume
-    hdcc(0, 10, 0.5f); // pan
+    fill(absl::MakeSpan(ccInitialValues), 0.0f);
+    initCc(7, 100);     // volume
+    initHdcc(10, 0.5f); // pan
 
     // set default controller labels
     insertPairUniquely(ccLabels, 7, "Volume");
@@ -326,14 +327,14 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::midi7Range);
                 if (ccValue)
-                    resources.midiState.ccEvent(0, member.parameters.back(), normalizeCC(*ccValue));
+                    initCc(member.parameters.back(), *ccValue);
             }
             break;
         case hash("set_hdcc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::normalizedRange);
                 if (ccValue)
-                    resources.midiState.ccEvent(0, member.parameters.back(), *ccValue);
+                    initHdcc(member.parameters.back(), *ccValue);
             }
             break;
         case hash("label_cc&"):
@@ -1135,6 +1136,27 @@ void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
         voice->registerCC(delay, ccNumber, normValue);
 
     ccDispatch(delay, ccNumber, normValue);
+}
+
+void sfz::Synth::initCc(int ccNumber, uint8_t ccValue) noexcept
+{
+    const float normValue = normalizeCC(ccValue);
+    initHdcc(ccNumber, normValue);
+}
+
+void sfz::Synth::initHdcc(int ccNumber, float normValue) noexcept
+{
+    ASSERT(ccNumber >= 0);
+    ASSERT(ccNumber < config::numCCs);
+    ccInitialValues[ccNumber] = normValue;
+    resources.midiState.ccEvent(0, ccNumber, normValue);
+}
+
+float sfz::Synth::getHdccInit(int ccNumber)
+{
+    ASSERT(ccNumber >= 0);
+    ASSERT(ccNumber < config::numCCs);
+    return ccInitialValues[ccNumber];
 }
 
 void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
