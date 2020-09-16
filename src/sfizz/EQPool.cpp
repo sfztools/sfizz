@@ -14,6 +14,7 @@ sfz::EQHolder::EQHolder(Resources& resources)
 void sfz::EQHolder::reset()
 {
     eq->clear();
+    prepared = false;
 }
 
 void sfz::EQHolder::setup(const Region& region, unsigned eqId, float velocity)
@@ -30,29 +31,12 @@ void sfz::EQHolder::setup(const Region& region, unsigned eqId, float velocity)
     baseBandwidth = description->bandwidth;
     baseGain = description->gain + velocity * description->vel2gain;
 
-    // Setup the modulated values
-    float lastFrequency = baseFrequency;
-    for (const auto& mod : description->frequencyCC)
-        lastFrequency += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastFrequency = Default::eqFrequencyRange.clamp(lastFrequency);
-
-    float lastBandwidth = baseBandwidth;
-    for (const auto& mod : description->bandwidthCC)
-        lastBandwidth += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastBandwidth = Default::eqBandwidthRange.clamp(lastBandwidth);
-
-    float lastGain = baseGain;
-    for (const auto& mod : description->gainCC)
-        lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastGain = Default::filterGainRange.clamp(lastGain);
-
     gainTarget = resources.modMatrix.findTarget(ModKey::createNXYZ(ModId::EqGain, region.id, eqId));
     bandwidthTarget = resources.modMatrix.findTarget(ModKey::createNXYZ(ModId::EqBandwidth, region.id, eqId));
     frequencyTarget = resources.modMatrix.findTarget(ModKey::createNXYZ(ModId::EqFrequency, region.id, eqId));
 
-    // Initialize the EQ
-    DBG(baseFrequency << " " << baseBandwidth << " " << baseGain);
-    eq->prepare(lastFrequency, lastBandwidth, lastGain);
+    // Disables smoothing of the parameters on the first call
+    prepared = false;
 }
 
 void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numFrames)
@@ -83,7 +67,10 @@ void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numF
     if (float* mod = mm.getModulation(gainTarget))
         add<float>(absl::Span<float>(mod, numFrames), *gainSpan);
 
-    DBG(frequencySpan->back() << " " << bandwidthSpan->back() << " " << gainSpan->back());
+    if (!prepared) {
+        eq->prepare(frequencySpan->front(), bandwidthSpan->front(), gainSpan->front());
+        prepared = true;
+    }
 
     eq->processModulated(
         inputs,

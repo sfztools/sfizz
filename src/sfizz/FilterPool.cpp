@@ -15,6 +15,7 @@ sfz::FilterHolder::FilterHolder(Resources& resources)
 void sfz::FilterHolder::reset()
 {
     filter->clear();
+    prepared = false;
 }
 
 void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteNumber, float velocity)
@@ -41,33 +42,20 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
     baseGain = description->gain;
     baseResonance = description->resonance;
 
-    // Setup the modulated values
-    float lastCutoff = baseCutoff;
-    for (const auto& mod : description->cutoffCC)
-        lastCutoff *= centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data);
-    lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
-
-    float lastResonance = baseResonance;
-    for (const auto& mod : description->resonanceCC)
-        lastResonance += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastResonance = Default::filterResonanceRange.clamp(lastResonance);
-
-    float lastGain = baseGain;
-    for (const auto& mod : description->gainCC)
-        lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastGain = Default::filterGainRange.clamp(lastGain);
-
     ModMatrix& mm = resources.modMatrix;
     gainTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilGain, region.id, filterId));
     cutoffTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilCutoff, region.id, filterId));
     resonanceTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilResonance, region.id, filterId));
 
-    // Initialize the filter
-    filter->prepare(lastCutoff, lastResonance, lastGain);
+    // Disable smoothing of the parameters on the first call
+    prepared = false;
 }
 
 void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned numFrames)
 {
+    if (numFrames == 0)
+        return;
+
     if (description == nullptr) {
         for (unsigned channelIdx = 0; channelIdx < filter->channels(); channelIdx++)
             copy<float>({ inputs[channelIdx], numFrames }, { outputs[channelIdx], numFrames });
@@ -95,6 +83,11 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
     fill<float>(*gainSpan, baseGain);
     if (float* mod = mm.getModulation(gainTarget))
         add<float>(absl::Span<float>(mod, numFrames), *gainSpan);
+
+    if (!prepared) {
+        filter->prepare(cutoffSpan->front(), resonanceSpan->front(), gainSpan->front());
+        prepared = true;
+    }
 
     filter->processModulated(
         inputs,

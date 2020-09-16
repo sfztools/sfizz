@@ -48,6 +48,7 @@ private:
     float baseBandwidth { Default::eqBandwidth };
     float baseFrequency { Default::eqFrequency1 };
     float baseGain { Default::eqGain };
+    bool prepared { false };
     ModMatrix::TargetId gainTarget;
     ModMatrix::TargetId frequencyTarget;
     ModMatrix::TargetId bandwidthTarget;
