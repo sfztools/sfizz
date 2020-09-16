@@ -168,7 +168,7 @@ ModMatrix::TargetId ModMatrix::registerTarget(const ModKey& key)
     return id;
 }
 
-ModMatrix::SourceId ModMatrix::findSource(const ModKey& key)
+ModMatrix::SourceId ModMatrix::findSource(const ModKey& key) const
 {
     Impl& impl = *impl_;
 
@@ -179,7 +179,7 @@ ModMatrix::SourceId ModMatrix::findSource(const ModKey& key)
     return SourceId(it->second);
 }
 
-ModMatrix::TargetId ModMatrix::findTarget(const ModKey& key)
+ModMatrix::TargetId ModMatrix::findTarget(const ModKey& key) const
 {
     Impl& impl = *impl_;
 

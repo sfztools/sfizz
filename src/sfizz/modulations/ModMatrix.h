@@ -77,14 +77,14 @@ public:
      *
      * @param key source key
      */
-    SourceId findSource(const ModKey& key);
+    SourceId findSource(const ModKey& key) const;
 
     /**
      * @brief Look up a target by key.
      *
      * @param key target key
      */
-    TargetId findTarget(const ModKey& key);
+    TargetId findTarget(const ModKey& key) const;
 
     /**
      * @brief Connect a source and a destination inside the matrix.
