@@ -233,8 +233,8 @@ void sfz::Synth::clear()
     hdcc(0, 10, 0.5f); // pan
 
     // set default controller labels
-    ccLabels.emplace_back(7, "Volume");
-    ccLabels.emplace_back(10, "Pan");
+    insertPairUniquely(ccLabels, 7, "Volume");
+    insertPairUniquely(ccLabels, 10, "Pan");
 }
 
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
@@ -336,12 +336,12 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
+                insertPairUniquely(ccLabels, member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
             if (member.parameters.back() <= Default::keyRange.getEnd()) {
                 const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
-                keyLabels.emplace_back(noteNumber, std::string(member.value));
+                insertPairUniquely(keyLabels, noteNumber, std::string(member.value));
             }
             break;
         case hash("default_path"):
@@ -545,7 +545,7 @@ void sfz::Synth::finalizeSfzLoad()
         }
 
         if (region->keyswitchLabel && region->keyswitch)
-            keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
+            insertPairUniquely(keyswitchLabels, *region->keyswitch, *region->keyswitchLabel);
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
         while (polyphonyGroups.size() <= region->group) {
