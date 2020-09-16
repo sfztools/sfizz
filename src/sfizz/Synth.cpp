@@ -231,6 +231,10 @@ void sfz::Synth::clear()
     // set default controllers
     cc(0, 7, 100);     // volume
     hdcc(0, 10, 0.5f); // pan
+
+    // set default controller labels
+    insertPairUniquely(ccLabels, 7, "Volume");
+    insertPairUniquely(ccLabels, 10, "Pan");
 }
 
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
@@ -332,12 +336,12 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                ccLabels.emplace_back(member.parameters.back(), std::string(member.value));
+                insertPairUniquely(ccLabels, member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
             if (member.parameters.back() <= Default::keyRange.getEnd()) {
                 const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
-                keyLabels.emplace_back(noteNumber, std::string(member.value));
+                insertPairUniquely(keyLabels, noteNumber, std::string(member.value));
             }
             break;
         case hash("default_path"):
@@ -541,7 +545,7 @@ void sfz::Synth::finalizeSfzLoad()
         }
 
         if (region->keyswitchLabel && region->keyswitch)
-            keyswitchLabels.push_back({ *region->keyswitch, *region->keyswitchLabel });
+            insertPairUniquely(keyswitchLabels, *region->keyswitch, *region->keyswitchLabel);
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
         while (polyphonyGroups.size() <= region->group) {
@@ -1257,13 +1261,15 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         cns.append_attribute("Name").set_value("Controls");
         for (const auto& pair : ccLabels) {
             anonymousCCs.set(pair.first, false);
-            pugi::xml_node cn = cns.append_child("Control");
-            cn.append_attribute("Type").set_value("7bit");
-            cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
-            cn.append_attribute("Name").set_value(pair.second.c_str());
+            if (pair.first < 128) {
+                pugi::xml_node cn = cns.append_child("Control");
+                cn.append_attribute("Type").set_value("7bit");
+                cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
+                cn.append_attribute("Name").set_value(pair.second.c_str());
+            }
         }
 
-        for (unsigned i = 0; i < anonymousCCs.size(); ++i) {
+        for (unsigned i = 0, n = std::min<unsigned>(128, anonymousCCs.size()); i < n; ++i) {
             if (anonymousCCs[i]) {
                 pugi::xml_node cn = cns.append_child("Control");
                 cn.append_attribute("Type").set_value("7bit");
