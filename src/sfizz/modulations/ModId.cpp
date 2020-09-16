@@ -49,7 +49,7 @@ int ModIds::flags(ModId id) noexcept
     case ModId::FilCutoff:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::FilResonance:
-        return kModIsPerVoice|kModIsMultiplicative;
+        return kModIsPerVoice|kModIsAdditive;
     case ModId::EqGain:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::EqFrequency:

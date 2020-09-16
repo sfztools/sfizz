@@ -5,7 +5,7 @@
 #include <thread>
 #include <chrono>
 
-sfz::FilterHolder::FilterHolder(const Resources& resources)
+sfz::FilterHolder::FilterHolder(Resources& resources)
 : resources(resources)
 {
     filter = absl::make_unique<Filter>();
@@ -57,6 +57,11 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
         lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
+    ModMatrix& mm = resources.modMatrix;
+    gainTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilGain, region.id, filterId));
+    cutoffTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilCutoff, region.id, filterId));
+    resonanceTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilResonance, region.id, filterId));
+
     // Initialize the filter
     filter->prepare(lastCutoff, lastResonance, lastGain);
 }
@@ -69,25 +74,36 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
         return;
     }
 
-    // TODO: Once the midistate envelopes are done, add modulation in there!
-    // For now we take the last value
-    // TODO: the template deduction could be automatic here?
-    float lastCutoff = baseCutoff;
-    for (const auto& mod : description->cutoffCC)
-        lastCutoff *= centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data);
-    lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
+    ModMatrix& mm = resources.modMatrix;
+    auto cutoffSpan = resources.bufferPool.getBuffer(numFrames);
+    auto resonanceSpan = resources.bufferPool.getBuffer(numFrames);
+    auto gainSpan = resources.bufferPool.getBuffer(numFrames);
 
-    float lastResonance = baseResonance;
-    for (const auto& mod : description->resonanceCC)
-        lastResonance += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastResonance = Default::filterResonanceRange.clamp(lastResonance);
+    if (!cutoffSpan || !resonanceSpan || !gainSpan)
+        return;
 
-    float lastGain = baseGain;
-    for (const auto& mod : description->gainCC)
-        lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
-    lastGain = Default::filterGainRange.clamp(lastGain);
+    fill<float>(*cutoffSpan, baseCutoff);
+    if (float* mod = mm.getModulation(cutoffTarget)) {
+        for (size_t i = 0; i < numFrames; ++i)
+            (*cutoffSpan)[i] *= centsFactor(mod[i]);
+    }
 
-    filter->process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);
+    fill<float>(*resonanceSpan, baseResonance);
+    if (float* mod = mm.getModulation(resonanceTarget))
+        add<float>(absl::Span<float>(mod, numFrames), *resonanceSpan);
+
+    fill<float>(*gainSpan, baseGain);
+    if (float* mod = mm.getModulation(gainTarget))
+        add<float>(absl::Span<float>(mod, numFrames), *gainSpan);
+
+    filter->processModulated(
+        inputs,
+        outputs,
+        cutoffSpan->data(),
+        resonanceSpan->data(),
+        gainSpan->data(),
+        numFrames
+    );
 }
 
 

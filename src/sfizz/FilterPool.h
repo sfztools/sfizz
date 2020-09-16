@@ -15,7 +15,7 @@ class FilterHolder
 {
 public:
     FilterHolder() = delete;
-    FilterHolder(const Resources& resources);
+    FilterHolder(Resources& resources);
     /**
      * @brief Setup a new filter based on a filter description, and a triggering note parameters.
      *
@@ -44,15 +44,15 @@ public:
      */
     void reset();
 private:
-    const Resources& resources;
+    Resources& resources;
     const FilterDescription* description;
     std::unique_ptr<Filter> filter;
     float baseCutoff { Default::filterCutoff };
     float baseResonance { Default::filterResonance };
     float baseGain { Default::filterGain };
-    ModMatrix::TargetId filterGainTarget;
-    ModMatrix::TargetId filterCutoffTarget;
-    ModMatrix::TargetId filterResonanceTarget;
+    ModMatrix::TargetId gainTarget;
+    ModMatrix::TargetId cutoffTarget;
+    ModMatrix::TargetId resonanceTarget;
     using filterRandomDist = std::uniform_int_distribution<int>;
     filterRandomDist dist { 0, sfz::Default::filterRandom };
 };

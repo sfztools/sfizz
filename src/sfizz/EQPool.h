@@ -14,7 +14,7 @@ class EQHolder
 {
 public:
     EQHolder() = delete;
-    EQHolder(const Resources& resources);
+    EQHolder(Resources& resources);
     /**
      * @brief Setup a new EQ from a region and an index
      *
@@ -42,15 +42,15 @@ public:
      */
     void reset();
 private:
-    const Resources& resources;
+    Resources& resources;
     const EQDescription* description;
     std::unique_ptr<FilterEq> eq;
     float baseBandwidth { Default::eqBandwidth };
     float baseFrequency { Default::eqFrequency1 };
     float baseGain { Default::eqGain };
-    ModMatrix::TargetId eqGainTarget;
-    ModMatrix::TargetId eqFrequencyTarget;
-    ModMatrix::TargetId eqBandwidthTarget;
+    ModMatrix::TargetId gainTarget;
+    ModMatrix::TargetId frequencyTarget;
+    ModMatrix::TargetId bandwidthTarget;
 };
 
 }
