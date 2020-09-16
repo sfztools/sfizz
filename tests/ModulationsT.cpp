@@ -99,3 +99,21 @@ width_oncc425=29
         R"("Controller 425 {curve=0, smooth=0, value=29, step=0}" -> "Width {0}")",
     }));
 }
+
+TEST_CASE("[Modulations] Filter CC connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        cutoff=100 fil1_gain_oncc3=5 fil1_gain_stepcc3=0.5
+        cutoff2=300 cutoff2_cc2=100 cutoff2_curvecc2=2
+        resonance2=-1 resonance2_oncc1=2 resonance2_smoothcc1=10
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createReferenceGraph({
+        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "FilResonance")",
+        R"("Controller 2 {curve=2, smooth=0, value=100, step=0}" -> "FilCutoff")",
+        R"("Controller 3 {curve=0, smooth=0, value=5, step=0.5}" -> "FilGain")",
+    }));
+}

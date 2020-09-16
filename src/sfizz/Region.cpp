@@ -586,11 +586,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             processGenericCc(opcode, Default::filterCutoffModRange, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].cutoffCC[opcode.parameters.back()],
-                Default::filterCutoffModRange
-            );
         }
         break;
     case hash("resonance&_oncc&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
@@ -600,11 +595,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             processGenericCc(opcode, Default::filterResonanceModRange, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].resonanceCC[opcode.parameters.back()],
-                Default::filterResonanceModRange
-            );
         }
         break;
     case hash("fil&_keytrack"): // also fil_keytrack
@@ -659,11 +649,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             processGenericCc(opcode, Default::filterGainModRange, ModKey::createNXYZ(ModId::FilGain, id, filterIndex));
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].gainCC[opcode.parameters.back()],
-                Default::filterGainModRange
-            );
         }
         break;
     case hash("fil&_type"): // also fil_type, filtype
@@ -700,7 +685,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqIndex));
-            setValueFromOpcode(opcode, equalizers[eqIndex].bandwidthCC[opcode.parameters.back()], Default::eqBandwidthModRange);
         }
         break;
     case hash("eq&_freq"):
@@ -718,7 +702,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
-            setValueFromOpcode(opcode, equalizers[eqIndex].frequencyCC[opcode.parameters.back()], Default::eqFrequencyModRange);
         }
         break;
     case hash("eq&_vel&freq"):
@@ -747,7 +730,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
 
             processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
-            setValueFromOpcode(opcode, equalizers[eqIndex].gainCC[opcode.parameters.back()], Default::eqGainModRange);
         }
         break;
     case hash("eq&_vel&gain"):
