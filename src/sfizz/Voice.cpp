@@ -23,8 +23,11 @@
 sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
 : id{voiceNumber}, stateListener(nullptr), resources(resources)
 {
-    filters.reserve(config::filtersPerVoice);
-    equalizers.reserve(config::eqsPerVoice);
+    for (unsigned i = 0; i < config::filtersPerVoice; ++i)
+        filters.emplace_back(resources);
+
+    for (unsigned i = 0; i < config::eqsPerVoice; ++i)
+        equalizers.emplace_back(resources);
 
     for (WavetableOscillator& osc : waveOscillators)
         osc.init(sampleRate);
@@ -118,21 +121,13 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     gainSmoother.reset();
     resetCrossfades();
 
-    // Check that we can handle the number of filters; filters should be cleared here
-    ASSERT((filters.capacity() - filters.size()) >= region->filters.size());
-    ASSERT((equalizers.capacity() - equalizers.size()) >= region->equalizers.size());
-
     const unsigned numChannels = region->isStereo() ? 2 : 1;
-    for (auto& filter: region->filters) {
-        auto newFilter = resources.filterPool.getFilter(filter, numChannels, triggerEvent.number, triggerEvent.value);
-        if (newFilter)
-            filters.push_back(newFilter);
+    for (unsigned i = 0; i < region->filters.size(); ++i) {
+        filters[i].setup(region->filters[i], numChannels, triggerEvent.number, triggerEvent.value);
     }
 
-    for (auto& eq: region->equalizers) {
-        auto newEQ = resources.eqPool.getEQ(eq, numChannels, triggerEvent.value);
-        if (newEQ)
-            equalizers.push_back(newEQ);
+    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
+        equalizers[i].setup(region->equalizers[i], numChannels, triggerEvent.value);
     }
 
     sourcePosition = region->getOffset();
@@ -252,6 +247,12 @@ void sfz::Voice::setSampleRate(float sampleRate) noexcept
 
     for (auto& lfo : lfos)
         lfo->setSampleRate(sampleRate);
+
+    for (auto& filter : filters)
+        filter.setSampleRate(sampleRate);
+
+    for (auto& eq : equalizers)
+        eq.setSampleRate(sampleRate);
 
     powerFollower.setSampleRate(sampleRate);
 }
@@ -498,12 +499,12 @@ void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept
     const auto leftBuffer = buffer.getSpan(0);
     const float* inputChannel[1] { leftBuffer.data() };
     float* outputChannel[1] { leftBuffer.data() };
-    for (auto& filter : filters) {
-        filter->process(inputChannel, outputChannel, numSamples);
+    for (unsigned i = 0; i < region->filters.size(); ++i) {
+        filters[i].process(inputChannel, outputChannel, numSamples);
     }
 
-    for (auto& eq : equalizers) {
-        eq->process(inputChannel, outputChannel, numSamples);
+    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
+        equalizers[i].process(inputChannel, outputChannel, numSamples);
     }
 }
 
@@ -517,12 +518,12 @@ void sfz::Voice::filterStageStereo(AudioSpan<float> buffer) noexcept
     const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
     float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
 
-    for (auto& filter : filters) {
-        filter->process(inputChannels, outputChannels, numSamples);
+    for (unsigned i = 0; i < region->filters.size(); ++i) {
+        filters[i].process(inputChannels, outputChannels, numSamples);
     }
 
-    for (auto& eq : equalizers) {
-        eq->process(inputChannels, outputChannels, numSamples);
+    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
+        equalizers[i].process(inputChannels, outputChannels, numSamples);
     }
 }
 
@@ -611,7 +612,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     sourcePosition = indices->back();
     floatPositionOffset = coeffs->back();
 
-#if 0
+#if 1
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
     SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(0)));
@@ -731,8 +732,11 @@ void sfz::Voice::reset() noexcept
 
     powerFollower.clear();
 
-    filters.clear();
-    equalizers.clear();
+    for (auto& filter : filters)
+        filter.reset();
+
+    for (auto& eq : equalizers)
+        eq.reset();
 
     removeVoiceFromRing();
 }
@@ -776,16 +780,22 @@ uint32_t sfz::Voice::getSourcePosition() const noexcept
 
 void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
 {
-    // There are filters in there, this call is unexpected
-    ASSERT(filters.size() == 0);
-    filters.reserve(numFilters);
+    if (numFilters == filters.size())
+        return;
+
+    filters.clear();
+    for (unsigned i = 0; i < numFilters; ++i)
+        filters.emplace_back(resources);
 }
 
 void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
 {
-    // There are filters in there, this call is unexpected
-    ASSERT(equalizers.size() == 0);
-    equalizers.reserve(numFilters);
+    if (numFilters == equalizers.size())
+        return;
+
+    equalizers.clear();
+    for (unsigned i = 0; i < numFilters; ++i)
+        equalizers.emplace_back(resources);
 }
 
 void sfz::Voice::setMaxLFOsPerVoice(size_t numLFOs)

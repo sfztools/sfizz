@@ -12,6 +12,8 @@
 #include "Region.h"
 #include "AudioBuffer.h"
 #include "Resources.h"
+#include "FilterPool.h"
+#include "EQPool.h"
 #include "Smoothers.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
@@ -454,8 +456,8 @@ private:
 
     Resources& resources;
 
-    std::vector<FilterHolderPtr> filters;
-    std::vector<EQHolderPtr> equalizers;
+    std::vector<FilterHolder> filters;
+    std::vector<EQHolder> equalizers;
     std::vector<std::unique_ptr<LFO>> lfos;
     std::vector<std::unique_ptr<FlexEnvelope>> flexEGs;
 

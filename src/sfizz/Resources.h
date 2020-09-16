@@ -6,10 +6,9 @@
 
 #pragma once
 #include "SynthConfig.h"
+#include "MidiState.h"
 #include "FilePool.h"
 #include "BufferPool.h"
-#include "FilterPool.h"
-#include "EQPool.h"
 #include "Logger.h"
 #include "Wavetables.h"
 #include "Curve.h"
@@ -29,8 +28,6 @@ struct Resources
     Logger logger;
     CurveSet curves;
     FilePool filePool { logger };
-    FilterPool filterPool { midiState };
-    EQPool eqPool { midiState };
     WavetablePool wavePool;
     Tuning tuning;
     absl::optional<StretchTuning> stretch;
@@ -39,8 +36,6 @@ struct Resources
     void setSampleRate(float samplerate)
     {
         midiState.setSampleRate(samplerate);
-        filterPool.setSampleRate(samplerate);
-        eqPool.setSampleRate(samplerate);
         modMatrix.setSampleRate(samplerate);
     }
 

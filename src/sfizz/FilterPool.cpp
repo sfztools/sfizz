@@ -5,15 +5,16 @@
 #include <thread>
 #include <chrono>
 
-sfz::FilterHolder::FilterHolder(const MidiState& midiState)
-: midiState(midiState)
+sfz::FilterHolder::FilterHolder(const Resources& resources)
+: resources(resources)
 {
-
+    filter = absl::make_unique<Filter>();
+    filter->init(config::defaultSampleRate);
 }
 
 void sfz::FilterHolder::reset()
 {
-    filter.clear();
+    filter->clear();
 }
 
 void sfz::FilterHolder::setup(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
@@ -21,8 +22,8 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     this->description = &description;
-    filter.setType(description.type);
-    filter.setChannels(numChannels);
+    filter->setType(description.type);
+    filter->setChannels(numChannels);
 
     // Setup the base values
     baseCutoff = description.cutoff;
@@ -40,29 +41,29 @@ void sfz::FilterHolder::setup(const FilterDescription& description, unsigned num
     baseResonance = description.resonance;
 
     // Setup the modulated values
-    lastCutoff = baseCutoff;
+    float lastCutoff = baseCutoff;
     for (const auto& mod : description.cutoffCC)
-        lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.data);
+        lastCutoff *= centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
-    lastResonance = baseResonance;
+    float lastResonance = baseResonance;
     for (const auto& mod : description.resonanceCC)
-        lastResonance += midiState.getCCValue(mod.cc) * mod.data;
+        lastResonance += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
-    lastGain = baseGain;
+    float lastGain = baseGain;
     for (const auto& mod : description.gainCC)
-        lastGain += midiState.getCCValue(mod.cc) * mod.data;
+        lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
     // Initialize the filter
-    filter.prepare(lastCutoff, lastResonance, lastGain);
+    filter->prepare(lastCutoff, lastResonance, lastGain);
 }
 
 void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned numFrames)
 {
     if (description == nullptr) {
-        for (unsigned channelIdx = 0; channelIdx < filter.channels(); channelIdx++)
+        for (unsigned channelIdx = 0; channelIdx < filter->channels(); channelIdx++)
             copy<float>({ inputs[channelIdx], numFrames }, { outputs[channelIdx], numFrames });
         return;
     }
@@ -70,88 +71,26 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
     // TODO: Once the midistate envelopes are done, add modulation in there!
     // For now we take the last value
     // TODO: the template deduction could be automatic here?
-    lastCutoff = baseCutoff;
+    float lastCutoff = baseCutoff;
     for (const auto& mod : description->cutoffCC)
-        lastCutoff *= centsFactor(midiState.getCCValue(mod.cc) * mod.data);
+        lastCutoff *= centsFactor(resources.midiState.getCCValue(mod.cc) * mod.data);
     lastCutoff = Default::filterCutoffRange.clamp(lastCutoff);
 
-    lastResonance = baseResonance;
+    float lastResonance = baseResonance;
     for (const auto& mod : description->resonanceCC)
-        lastResonance += midiState.getCCValue(mod.cc) * mod.data;
+        lastResonance += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastResonance = Default::filterResonanceRange.clamp(lastResonance);
 
-    lastGain = baseGain;
+    float lastGain = baseGain;
     for (const auto& mod : description->gainCC)
-        lastGain += midiState.getCCValue(mod.cc) * mod.data;
+        lastGain += resources.midiState.getCCValue(mod.cc) * mod.data;
     lastGain = Default::filterGainRange.clamp(lastGain);
 
-    filter.process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);
+    filter->process(inputs, outputs, lastCutoff, lastResonance, lastGain, numFrames);
 }
 
-float sfz::FilterHolder::getLastCutoff() const
-{
-    return lastCutoff;
-}
-float sfz::FilterHolder::getLastResonance() const
-{
-    return lastResonance;
-}
-float sfz::FilterHolder::getLastGain() const
-{
-    return lastGain;
-}
-
-sfz::FilterPool::FilterPool(const MidiState& state, int numFilters)
-: midiState(state)
-{
-    setNumFilters(numFilters);
-}
-
-sfz::FilterHolderPtr sfz::FilterPool::getFilter(const FilterDescription& description, unsigned numChannels, int noteNumber, float velocity)
-{
-    const std::unique_lock<SpinMutex> lock { filterGuard, std::try_to_lock };
-    if (!lock.owns_lock())
-        return {};
-
-    auto filter = absl::c_find_if(filters, [](const FilterHolderPtr& holder) {
-        return holder.use_count() == 1;
-    });
-
-    if (filter == filters.end())
-        return {};
-
-    (**filter).setup(description, numChannels, noteNumber, velocity);
-    return *filter;
-}
-
-size_t sfz::FilterPool::getActiveFilters() const
-{
-    return absl::c_count_if(filters, [](const FilterHolderPtr& holder) {
-        return holder.use_count() > 1;
-    });
-}
-
-size_t sfz::FilterPool::setNumFilters(size_t numFilters)
-{
-    const std::lock_guard<SpinMutex> filterLock { filterGuard };
-
-    swapAndPopAll(filters, [](sfz::FilterHolderPtr& filter) { return filter.use_count() == 1; });
-
-    for (size_t i = filters.size(); i < numFilters; ++i) {
-        filters.emplace_back(std::make_shared<FilterHolder>(midiState));
-        filters.back()->setSampleRate(sampleRate);
-    }
-
-    return filters.size();
-}
-
-void sfz::FilterPool::setSampleRate(float sampleRate)
-{
-    for (auto& filter: filters)
-        filter->setSampleRate(sampleRate);
-}
 
 void sfz::FilterHolder::setSampleRate(float sampleRate)
 {
-    filter.init(static_cast<double>(sampleRate));
+    filter->init(static_cast<double>(sampleRate));
 }
