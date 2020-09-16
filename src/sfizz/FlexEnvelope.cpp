@@ -165,11 +165,11 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
         const Curve& curve = *stageCurve_;
         size_t framesDone = 0;
         while ((time < stageEndTime || sustained) && frameIndex < maxFrameIndex) {
+            time += samplePeriod;
             float x = time * (1.0f / stageEndTime);
             float c = curve.evalNormalized(x);
             level = sourceLevel + c * (targetLevel - sourceLevel);
             out[frameIndex++] = level;
-            time += samplePeriod;
             ++framesDone;
         }
         currentLevel_ = level;
