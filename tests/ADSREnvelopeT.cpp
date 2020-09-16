@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/ADSREnvelope.h"
+#include "TestHelpers.h"
 #include "catch2/catch.hpp"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
@@ -12,21 +13,6 @@
 #include <array>
 #include <iostream>
 using namespace Catch::literals;
-
-template <class Type>
-inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
-{
-    if (lhs.size() != rhs.size())
-        return false;
-
-    for (size_t i = 0; i < rhs.size(); ++i)
-        if (rhs[i] != Approx(lhs[i]).epsilon(eps)) {
-            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
-            return false;
-        }
-
-    return true;
-}
 
 TEST_CASE("[ADSREnvelope] Basic state")
 {

@@ -68,3 +68,34 @@ unsigned numPlayingVoices(const sfz::Synth& synth)
         return !v->releasedOrFree();
     });
 }
+
+std::string createReferenceGraph(std::vector<std::string> lines, int numRegions)
+{
+    for (int regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
+        lines.push_back(absl::StrCat(
+            R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude {region=)",
+            regionIdx,
+            R"(}")"
+        ));
+        lines.push_back(absl::StrCat(
+            R"("Controller 10 {curve=1, smooth=10, value=100, step=0}" -> "Pan {region=)",
+            regionIdx,
+            R"(}")"
+        ));
+    }
+
+    std::sort(lines.begin(), lines.end());
+
+    std::string graph;
+    graph.reserve(1024);
+
+    graph += "digraph {\n";
+    for (const std::string& line : lines) {
+        graph.push_back('\t');
+        graph += line;
+        graph.push_back('\n');
+    }
+    graph += "}\n";
+
+    return graph;
+};
