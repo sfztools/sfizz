@@ -1257,13 +1257,15 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         cns.append_attribute("Name").set_value("Controls");
         for (const auto& pair : ccLabels) {
             anonymousCCs.set(pair.first, false);
-            pugi::xml_node cn = cns.append_child("Control");
-            cn.append_attribute("Type").set_value("7bit");
-            cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
-            cn.append_attribute("Name").set_value(pair.second.c_str());
+            if (pair.first < 128) {
+                pugi::xml_node cn = cns.append_child("Control");
+                cn.append_attribute("Type").set_value("7bit");
+                cn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
+                cn.append_attribute("Name").set_value(pair.second.c_str());
+            }
         }
 
-        for (unsigned i = 0; i < anonymousCCs.size(); ++i) {
+        for (unsigned i = 0, n = std::min<unsigned>(128, anonymousCCs.size()); i < n; ++i) {
             if (anonymousCCs[i]) {
                 pugi::xml_node cn = cns.append_child("Control");
                 cn.append_attribute("Type").set_value("7bit");
