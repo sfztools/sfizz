@@ -1046,6 +1046,80 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
 
+    // Modulation: Flex EG (targets)
+    case hash("eg&_amplitude"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_pan"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_width"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_position"): // sfizz extension
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_pitch"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_volume"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+
     // Amplitude Envelope
     case hash("ampeg_attack"):
         setValueFromOpcode(opcode, amplitudeEG.attack, Default::egTimeRange);
@@ -1153,6 +1227,73 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
             amplitudeEG.ccSustain[opcode.parameters.back()] = *value;
 
+        break;
+
+    // Flex envelopes
+    case hash("eg&_dynamic"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            setValueFromOpcode(opcode, eg.dynamic, Default::flexEGDynamicRange);
+        }
+        break;
+    case hash("eg&_sustain"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            setValueFromOpcode(opcode, eg.sustain, Default::flexEGSustainRange);
+        }
+        break;
+    case hash("eg&_time&"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            const auto pointNumber = opcode.parameters[1];
+            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+                return false;
+            setValueFromOpcode(opcode, eg.points[pointNumber].time, Default::flexEGPointTimeRange);
+        }
+        break;
+    case hash("eg&_level&"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            const auto pointNumber = opcode.parameters[1];
+            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+                return false;
+            setValueFromOpcode(opcode, eg.points[pointNumber].level, Default::flexEGPointLevelRange);
+        }
+        break;
+    case hash("eg&_shape&"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            const auto pointNumber = opcode.parameters[1];
+            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::flexEGPointShapeRange))
+                eg.points[pointNumber].setShape(*value);
+        }
         break;
 
     case hash("effect&"):

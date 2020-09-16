@@ -65,3 +65,24 @@ const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth);
  * @return unsigned
  */
 unsigned numPlayingVoices(const sfz::Synth& synth);
+
+/**
+ * @brief Create the dot graph representation from a list of strings
+ *
+ */
+std::string createReferenceGraph(std::vector<std::string> lines, int numRegions = 1);
+
+template <class Type>
+inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < rhs.size(); ++i)
+        if (rhs[i] != Approx(lhs[i]).epsilon(eps)) {
+            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
+            return false;
+        }
+
+    return true;
+}

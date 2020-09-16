@@ -18,6 +18,7 @@
 #include "modulations/ModId.h"
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/LFO.h"
+#include "modulations/sources/FlexEnvelope.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
@@ -46,6 +47,7 @@ sfz::Synth::Synth(int numVoices)
     // modulation sources
     genController.reset(new ControllerSource(resources));
     genLFO.reset(new LFOSource(*this));
+    genFlexEnvelope.reset(new FlexEnvelopeSource(*this));
 }
 
 sfz::Synth::~Synth()
@@ -484,6 +486,9 @@ void sfz::Synth::finalizeSfzLoad()
     size_t maxFilters { 0 };
     size_t maxEQs { 0 };
     size_t maxLFOs { 0 };
+    size_t maxFlexEGs { 0 };
+
+    FlexEGs::clearUnusedCurves();
 
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
@@ -599,6 +604,7 @@ void sfz::Synth::finalizeSfzLoad()
         maxFilters = max(maxFilters, region->filters.size());
         maxEQs = max(maxEQs, region->equalizers.size());
         maxLFOs = max(maxLFOs, region->lfos.size());
+        maxFlexEGs = max(maxFlexEGs, region->flexEGs.size());
 
         ++currentRegionIndex;
     }
@@ -609,6 +615,7 @@ void sfz::Synth::finalizeSfzLoad()
     settingsPerVoice.maxFilters = maxFilters;
     settingsPerVoice.maxEQs = maxEQs;
     settingsPerVoice.maxLFOs = maxLFOs;
+    settingsPerVoice.maxFlexEGs = maxFlexEGs;
 
     applySettingsPerVoice();
 
@@ -1479,6 +1486,7 @@ void sfz::Synth::applySettingsPerVoice()
         voice->setMaxFiltersPerVoice(settingsPerVoice.maxFilters);
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
         voice->setMaxLFOsPerVoice(settingsPerVoice.maxLFOs);
+        voice->setMaxFlexEGsPerVoice(settingsPerVoice.maxFlexEGs);
     }
 }
 
@@ -1496,6 +1504,9 @@ void sfz::Synth::setupModMatrix()
                 break;
             case ModId::LFO:
                 gen = genLFO.get();
+                break;
+            case ModId::Envelope:
+                gen = genFlexEnvelope.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");

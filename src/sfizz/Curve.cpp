@@ -147,6 +147,13 @@ Curve Curve::buildBipolar(float v1, float v2)
     return curve;
 }
 
+Curve Curve::buildFromPoints(const float points[NumValues])
+{
+    Curve curve;
+    copy(absl::MakeConstSpan(points, NumValues), absl::Span<float>(curve._points));
+    return curve;
+}
+
 const Curve& Curve::getDefault()
 {
     return defaultCurve;

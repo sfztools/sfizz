@@ -26,6 +26,7 @@ set(SFIZZ_TEST_SOURCES
     # If we're tweaking the curves this kind of tests does not make sense
     # Use integration tests with comparison curves
     # ADSREnvelopeT.cpp
+    FlexEGT.cpp
     EventEnvelopesT.cpp
     MainT.cpp
     SynthT.cpp

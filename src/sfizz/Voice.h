@@ -25,6 +25,7 @@
 namespace sfz {
 enum InterpolatorModel : int;
 class LFO;
+class FlexEnvelope;
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -264,6 +265,12 @@ public:
      */
     LFO* getLFO(size_t index) { return lfos[index].get(); }
     /**
+     * @brief Get the Flex EG designated by the given index
+     *
+     * @param index
+     */
+    FlexEnvelope* getFlexEG(size_t index) { return flexEGs[index].get(); }
+    /**
      * @brief Set the max number of filters per voice
      *
      * @param numFilters
@@ -281,6 +288,12 @@ public:
      * @param numLFOs
      */
     void setMaxLFOsPerVoice(size_t numLFOs);
+    /**
+     * @brief Set the max number of Flex EGs per voice
+     *
+     * @param numFlexEGs
+     */
+    void setMaxFlexEGsPerVoice(size_t numFlexEGs);
     /**
      * @brief Release the voice after a given delay
      *
@@ -444,6 +457,7 @@ private:
     std::vector<FilterHolderPtr> filters;
     std::vector<EQHolderPtr> equalizers;
     std::vector<std::unique_ptr<LFO>> lfos;
+    std::vector<std::unique_ptr<FlexEnvelope>> flexEGs;
 
     ADSREnvelope<float> egEnvelope;
     float bendStepFactor { centsFactor(1) };

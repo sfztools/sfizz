@@ -244,6 +244,20 @@ namespace Default
 	constexpr Range<float> egOnCCTimeRange { -100.0, 100.0 };
 	constexpr Range<float> egOnCCPercentRange { -100.0, 100.0 };
 
+    // Flex envelope generators
+    constexpr int numFlexEGs { 4 };
+    constexpr int numFlexEGPoints { 8 };
+    constexpr int flexEGDynamic { 0 };
+    constexpr int flexEGSustain { 0 };
+    constexpr float flexEGPointTime { 0 };
+    constexpr float flexEGPointLevel { 0 };
+    constexpr float flexEGPointShape { 0 };
+    constexpr Range<int> flexEGDynamicRange { 0, 1 };
+    constexpr Range<int> flexEGSustainRange { 0, 100 };
+    constexpr Range<float> flexEGPointTimeRange { 0.0f, 100.0f };
+    constexpr Range<float> flexEGPointLevelRange { -1.0f, 1.0f };
+    constexpr Range<float> flexEGPointShapeRange { -100.0f, 100.0f };
+
     // ***** SFZ v2 ********
     constexpr int sampleQuality { 1 };
     constexpr int sampleQualityInFreewheelingMode { 10 }; // for future use, possibly excessive

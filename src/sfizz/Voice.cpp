@@ -13,6 +13,7 @@
 #include "Panning.h"
 #include "SfzHelpers.h"
 #include "LFO.h"
+#include "FlexEnvelope.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -795,6 +796,17 @@ void sfz::Voice::setMaxLFOsPerVoice(size_t numLFOs)
         auto lfo = absl::make_unique<LFO>();
         lfo->setSampleRate(sampleRate);
         lfos[i] = std::move(lfo);
+    }
+}
+
+void sfz::Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
+{
+    flexEGs.resize(numFlexEGs);
+
+    for (size_t i = 0; i < numFlexEGs; ++i) {
+        auto eg = absl::make_unique<FlexEnvelope>();
+        eg->setSampleRate(sampleRate);
+        flexEGs[i] = std::move(eg);
     }
 }
 

@@ -71,22 +71,22 @@ std::string ModKey::toString() const
             " {curve=", params_.curve, ", smooth=", params_.smooth,
             ", value=", params_.value, ", step=", params_.step, "}");
     case ModId::Envelope:
-        return absl::StrCat("EG ", 1 + params_.N);
+        return absl::StrCat("EG ", 1 + params_.N, " {", region_.number(), "}");
     case ModId::LFO:
-        return absl::StrCat("LFO ", 1 + params_.N);
+        return absl::StrCat("LFO ", 1 + params_.N, " {", region_.number(), "}");
 
     case ModId::Amplitude:
-        return "Amplitude";
+        return absl::StrCat("Amplitude {", region_.number(), "}");
     case ModId::Pan:
-        return "Pan";
+        return absl::StrCat("Pan {", region_.number(), "}");
     case ModId::Width:
-        return "Width";
+        return absl::StrCat("Width {", region_.number(), "}");
     case ModId::Position:
-        return "Position";
+        return absl::StrCat("Position {", region_.number(), "}");
     case ModId::Pitch:
-        return "Pitch";
+        return absl::StrCat("Pitch {", region_.number(), "}");
     case ModId::Volume:
-        return "Volume";
+        return absl::StrCat("Volume {", region_.number(), "}");
 
     default:
         return {};
