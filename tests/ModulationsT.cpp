@@ -107,13 +107,31 @@ TEST_CASE("[Modulations] Filter CC connections")
         <region> sample=*sine
         cutoff=100 fil1_gain_oncc3=5 fil1_gain_stepcc3=0.5
         cutoff2=300 cutoff2_cc2=100 cutoff2_curvecc2=2
-        resonance2=-1 resonance2_oncc1=2 resonance2_smoothcc1=10
+        resonance3=-1 resonance3_oncc1=2 resonance3_smoothcc1=10
     )");
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createReferenceGraph({
-        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "FilResonance")",
-        R"("Controller 2 {curve=2, smooth=0, value=100, step=0}" -> "FilCutoff")",
-        R"("Controller 3 {curve=0, smooth=0, value=5, step=0.5}" -> "FilGain")",
+        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "FilterResonance {0, N=2}")",
+        R"("Controller 2 {curve=2, smooth=0, value=100, step=0}" -> "FilterCutoff {0, N=1}")",
+        R"("Controller 3 {curve=0, smooth=0, value=5, step=0.5}" -> "FilterGain {0, N=0}")",
+    }));
+}
+
+TEST_CASE("[Modulations] EQ CC connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        eq1_gain_oncc2=5 eq1_gain_stepcc2=0.5
+        eq2_freq_oncc3=300 eq2_freq_curvecc3=3
+        eq3_bw_oncc1=2 eq3_bw_smoothcc1=10
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createReferenceGraph({
+        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "EqBandwidth {0, N=2}")",
+        R"("Controller 2 {curve=0, smooth=0, value=5, step=0.5}" -> "EqGain {0, N=0}")",
+        R"("Controller 3 {curve=3, smooth=0, value=300, step=0}" -> "EqFrequency {0, N=1}")",
     }));
 }

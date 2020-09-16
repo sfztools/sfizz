@@ -579,7 +579,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
         }
         break;
-    case hash("cutoff&_oncc&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
+    case_any_ccN("cutoff&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
@@ -588,7 +588,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             processGenericCc(opcode, Default::filterCutoffModRange, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
         }
         break;
-    case hash("resonance&_oncc&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
+    case_any_ccN("resonance&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
@@ -642,7 +642,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].gain, Default::filterGainRange);
         }
         break;
-    case hash("fil&_gain_oncc&"): // also fil_gain_oncc&
+    case_any_ccN("fil&_gain"): // also fil_gain_oncc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
@@ -678,7 +678,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, equalizers[eqIndex].bandwidth, Default::eqBandwidthRange);
         }
         break;
-    case hash("eq&_bw_oncc&"): // also eq&_bwcc&
+    case_any_ccN("eq&_bw"): // also eq&_bwcc&
         {
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
@@ -695,7 +695,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, equalizers[eqIndex].frequency, Default::eqFrequencyRange);
         }
         break;
-    case hash("eq&_freq_oncc&"): // also eq&_freqcc&
+    case_any_ccN("eq&_freq"): // also eq&_freqcc&
         {
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
@@ -723,7 +723,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, equalizers[eqIndex].gain, Default::eqGainRange);
         }
         break;
-    case hash("eq&_gain_oncc&"): // also eq&_gaincc&
+    case_any_ccN("eq&_gain"): // also eq&_gaincc&
         {
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
