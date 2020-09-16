@@ -686,111 +686,93 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     // Performance parameters: EQ
     case hash("eq&_bw"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidth, Default::eqBandwidthRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].bandwidth, Default::eqBandwidthRange);
         }
         break;
     case hash("eq&_bw_oncc&"): // also eq&_bwcc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqNumber));
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidthCC[opcode.parameters.back()], Default::eqBandwidthModRange);
+            processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqIndex));
+            setValueFromOpcode(opcode, equalizers[eqIndex].bandwidthCC[opcode.parameters.back()], Default::eqBandwidthModRange);
         }
         break;
     case hash("eq&_freq"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequency, Default::eqFrequencyRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].frequency, Default::eqFrequencyRange);
         }
         break;
     case hash("eq&_freq_oncc&"): // also eq&_freqcc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqNumber));
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequencyCC[opcode.parameters.back()], Default::eqFrequencyModRange);
+            processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
+            setValueFromOpcode(opcode, equalizers[eqIndex].frequencyCC[opcode.parameters.back()], Default::eqFrequencyModRange);
         }
         break;
     case hash("eq&_vel&freq"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
+            const auto eqIndex = opcode.parameters.front() - 1;
             if (opcode.parameters[1] != 2)
                 return false; // was eqN_vel3freq or something else than eqN_vel2freq
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2frequency, Default::eqFrequencyModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].vel2frequency, Default::eqFrequencyModRange);
         }
         break;
     case hash("eq&_gain"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].gain, Default::eqGainRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].gain, Default::eqGainRange);
         }
         break;
     case hash("eq&_gain_oncc&"): // also eq&_gaincc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqNumber));
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].gainCC[opcode.parameters.back()], Default::eqGainModRange);
+            processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
+            setValueFromOpcode(opcode, equalizers[eqIndex].gainCC[opcode.parameters.back()], Default::eqGainModRange);
         }
         break;
     case hash("eq&_vel&gain"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
+            const auto eqIndex = opcode.parameters.front() - 1;
             if (opcode.parameters[1] != 2)
                 return false;  // was eqN_vel3gain or something else than eqN_vel2gain
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2gain, Default::eqGainModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].vel2gain, Default::eqGainModRange);
         }
         break;
     case hash("eq&_type"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
             absl::optional<EqType> ftype = FilterEq::typeFromName(opcode.value);
 
             if (ftype)
-                equalizers[eqNumber - 1].type = *ftype;
+                equalizers[eqIndex].type = *ftype;
             else {
-                equalizers[eqNumber - 1].type = EqType::kEqNone;
+                equalizers[eqIndex].type = EqType::kEqNone;
                 DBG("Unknown EQ type: " << opcode.value);
             }
         }
