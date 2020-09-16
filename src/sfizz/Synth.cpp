@@ -19,6 +19,7 @@
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/LFO.h"
 #include "modulations/sources/FlexEnvelope.h"
+#include "utility/XmlHelpers.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
 #include "absl/memory/memory.h"
@@ -1301,25 +1302,9 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
         }
     }
 
-    ///
-    struct string_writer : pugi::xml_writer {
-        std::string result;
-
-        string_writer()
-        {
-            result.reserve(8192);
-        }
-
-        void write(const void* data, size_t size) override
-        {
-            result.append(static_cast<const char*>(data), size);
-        }
-    };
-
-    ///
-    string_writer writer;
+    string_xml_writer writer;
     doc.save(writer);
-    return std::move(writer.result);
+    return std::move(writer.str());
 }
 
 const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept

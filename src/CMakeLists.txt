@@ -29,6 +29,7 @@ set (SFIZZ_HEADERS
     sfizz/Debug.h
     sfizz/utility/NumericId.h
     sfizz/utility/SpinMutex.h
+    sfizz/utility/XmlHelpers.h
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
     sfizz/modulations/ModKeyHash.h
