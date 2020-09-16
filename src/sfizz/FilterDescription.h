@@ -22,7 +22,7 @@ struct FilterDescription
     int veltrack { Default::filterVeltrack };
     int random { Default::filterRandom };
     FilterType type { FilterType::kFilterLpf2p };
-    CCMap<int> cutoffCC { Default::filterCutoffCC };
+    CCMap<float> cutoffCC { Default::filterCutoffCC };
     CCMap<float> resonanceCC { Default::filterResonanceCC };
     CCMap<float> gainCC { Default::filterGainCC };
 };
