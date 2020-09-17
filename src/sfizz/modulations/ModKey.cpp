@@ -88,17 +88,17 @@ std::string ModKey::toString() const
     case ModId::Volume:
         return absl::StrCat("Volume {", region_.number(), "}");
     case ModId::FilGain:
-        return absl::StrCat("FilterGain {", region_.number(), ", N=", params_.N, "}");
+        return absl::StrCat("FilterGain {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::FilCutoff:
-        return absl::StrCat("FilterCutoff {", region_.number(), ", N=", params_.N, "}");
+        return absl::StrCat("FilterCutoff {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::FilResonance:
-        return absl::StrCat("FilterResonance {", region_.number(), ", N=", params_.N, "}");
+        return absl::StrCat("FilterResonance {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::EqGain:
-        return absl::StrCat("EqGain {", region_.number(), ", N=", params_.N, "}");
+        return absl::StrCat("EqGain {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::EqFrequency:
-        return absl::StrCat("EqFrequency {", region_.number(), ", N=", params_.N, "}");
+        return absl::StrCat("EqFrequency {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::EqBandwidth:
-        return absl::StrCat("EqBandwidth {", region_.number(), ", N=", params_.N, "}");
+        return absl::StrCat("EqBandwidth {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};

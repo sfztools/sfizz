@@ -112,9 +112,9 @@ TEST_CASE("[Modulations] Filter CC connections")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createReferenceGraph({
-        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "FilterResonance {0, N=2}")",
-        R"("Controller 2 {curve=2, smooth=0, value=100, step=0}" -> "FilterCutoff {0, N=1}")",
-        R"("Controller 3 {curve=0, smooth=0, value=5, step=0.5}" -> "FilterGain {0, N=0}")",
+        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "FilterResonance {0, N=3}")",
+        R"("Controller 2 {curve=2, smooth=0, value=100, step=0}" -> "FilterCutoff {0, N=2}")",
+        R"("Controller 3 {curve=0, smooth=0, value=5, step=0.5}" -> "FilterGain {0, N=1}")",
     }));
 }
 
@@ -130,8 +130,104 @@ TEST_CASE("[Modulations] EQ CC connections")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createReferenceGraph({
-        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "EqBandwidth {0, N=2}")",
-        R"("Controller 2 {curve=0, smooth=0, value=5, step=0.5}" -> "EqGain {0, N=0}")",
-        R"("Controller 3 {curve=3, smooth=0, value=300, step=0}" -> "EqFrequency {0, N=1}")",
+        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "EqBandwidth {0, N=3}")",
+        R"("Controller 2 {curve=0, smooth=0, value=5, step=0.5}" -> "EqGain {0, N=1}")",
+        R"("Controller 3 {curve=3, smooth=0, value=300, step=0}" -> "EqFrequency {0, N=2}")",
+    }));
+}
+
+TEST_CASE("[Modulations] LFO Filter connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        lfo1_freq=0.1 lfo1_cutoff1=1
+        lfo2_freq=1 lfo2_cutoff=2
+        lfo3_freq=2 lfo3_resonance=3
+        lfo4_freq=0.5 lfo4_resonance1=4
+        lfo5_freq=0.5 lfo5_resonance2=5
+        lfo6_freq=3 lfo6_fil1_gain=-1
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createReferenceGraph({
+        R"("LFO 1 {0}" -> "FilterCutoff {0, N=1}")",
+        R"("LFO 2 {0}" -> "FilterCutoff {0, N=1}")",
+        R"("LFO 3 {0}" -> "FilterResonance {0, N=1}")",
+        R"("LFO 4 {0}" -> "FilterResonance {0, N=1}")",
+        R"("LFO 5 {0}" -> "FilterResonance {0, N=2}")",
+        R"("LFO 6 {0}" -> "FilterGain {0, N=1}")",
+    }));
+}
+
+TEST_CASE("[Modulations] EG Filter connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        eg1_time1=0.1 eg1_cutoff1=1
+        eg2_time1=1 eg2_cutoff=2
+        eg3_time1=2 eg3_resonance=3
+        eg4_time1=0.5 eg4_resonance1=4
+        eg5_time1=0.5 eg5_resonance2=5
+        eg6_time1=3 eg6_fil1_gain=-1
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createReferenceGraph({
+        R"("EG 1 {0}" -> "FilterCutoff {0, N=1}")",
+        R"("EG 2 {0}" -> "FilterCutoff {0, N=1}")",
+        R"("EG 3 {0}" -> "FilterResonance {0, N=1}")",
+        R"("EG 4 {0}" -> "FilterResonance {0, N=1}")",
+        R"("EG 5 {0}" -> "FilterResonance {0, N=2}")",
+        R"("EG 6 {0}" -> "FilterGain {0, N=1}")",
+    }));
+}
+
+TEST_CASE("[Modulations] LFO EQ connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        lfo1_freq=0.1 lfo1_eq1bw=1
+        lfo2_freq=1 lfo2_eq2freq=2
+        lfo3_freq=2 lfo3_eq3gain=3
+        lfo4_freq=0.5 lfo4_eq3bw=4
+        lfo5_freq=0.5 lfo5_eq2gain=5
+        lfo6_freq=3 lfo6_eq1freq=-1
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createReferenceGraph({
+        R"("LFO 1 {0}" -> "EqBandwidth {0, N=1}")",
+        R"("LFO 2 {0}" -> "EqFrequency {0, N=2}")",
+        R"("LFO 3 {0}" -> "EqGain {0, N=3}")",
+        R"("LFO 4 {0}" -> "EqBandwidth {0, N=3}")",
+        R"("LFO 5 {0}" -> "EqGain {0, N=2}")",
+        R"("LFO 6 {0}" -> "EqFrequency {0, N=1}")",
+    }));
+}
+
+TEST_CASE("[Modulations] EG EQ connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        eg1_freq=0.1 eg1_eq1bw=1
+        eg2_freq=1 eg2_eq2freq=2
+        eg3_freq=2 eg3_eq3gain=3
+        eg4_freq=0.5 eg4_eq3bw=4
+        eg5_freq=0.5 eg5_eq2gain=5
+        eg6_freq=3 eg6_eq1freq=-1
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createReferenceGraph({
+        R"("EG 1 {0}" -> "EqBandwidth {0, N=1}")",
+        R"("EG 2 {0}" -> "EqFrequency {0, N=2}")",
+        R"("EG 3 {0}" -> "EqGain {0, N=3}")",
+        R"("EG 4 {0}" -> "EqBandwidth {0, N=3}")",
+        R"("EG 5 {0}" -> "EqGain {0, N=2}")",
+        R"("EG 6 {0}" -> "EqFrequency {0, N=1}")",
     }));
 }

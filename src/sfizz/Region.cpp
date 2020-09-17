@@ -45,6 +45,23 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         case hash(x "_stepcc&"):   \
         case hash(x "_smoothcc&")
 
+    #define LFO_EG_filter_EQ_target(sourceKey, targetKey, range)                                        \
+        {                                                                                               \
+            const auto number = opcode.parameters.front();                                              \
+            if (number == 0)                                                                            \
+                return false;                                                                           \
+                                                                                                        \
+            const auto index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;        \
+            if (!extendIfNecessary(filters, index + 1, Default::numFilters))                            \
+                return false;                                                                           \
+                                                                                                        \
+            if (auto value = readOpcode(opcode.value, range)) {                                         \
+                const ModKey source = ModKey::createNXYZ(sourceKey, id, number - 1);                    \
+                const ModKey target = ModKey::createNXYZ(targetKey, id, index);                         \
+                getOrCreateConnection(source, target).sourceDepth = *value;                             \
+            }                                                                                           \
+        }
+
     // Sound source: sample playback
     case hash("sample"):
         {
@@ -1016,6 +1033,24 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             }
         }
         break;
+    case hash("lfo&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffModRange);
+        break;
+    case hash("lfo&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceModRange);
+        break;
+    case hash("lfo&_fil&_gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainModRange);
+        break;
+    case hash("lfo&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainModRange);
+        break;
+    case hash("lfo&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyModRange);
+        break;
+    case hash("lfo&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthModRange);
+        break;
 
     // Modulation: Flex EG (targets)
     case hash("eg&_amplitude"):
@@ -1089,6 +1124,24 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
+        break;
+    case hash("eg&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffModRange);
+        break;
+    case hash("eg&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceModRange);
+        break;
+    case hash("eg&_fil&_gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainModRange);
+        break;
+    case hash("eg&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainModRange);
+        break;
+    case hash("eg&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyModRange);
+        break;
+    case hash("eg&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthModRange);
         break;
 
     // Amplitude Envelope
@@ -1292,6 +1345,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         return false;
 
     #undef case_any_ccN
+    #undef LFO_EG_filter_EQ_target
     }
 
     return true;
