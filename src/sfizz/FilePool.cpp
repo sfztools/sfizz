@@ -374,7 +374,7 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
     FileData::Status currentStatus = data.data->status.load();
 
     unsigned spinCounter { 0 };
-    if (currentStatus == FileData::Status::Invalid) {
+    while (currentStatus == FileData::Status::Invalid) {
         // Spin until the state changes
         if (spinCounter > 1024) {
             DBG("[sfizz] " << data.id << " is stuck on Invalid? Leaving the load");
