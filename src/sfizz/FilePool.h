@@ -42,7 +42,8 @@
 #include "Logger.h"
 #include <chrono>
 #include <thread>
-#include <mutex>
+#include <future>
+#include "utility/SpinMutex.h"
 
 namespace sfz {
 using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
@@ -62,62 +63,104 @@ struct FileInformation {
 };
 
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
-struct FileDataHandle
+struct FileData
 {
-    FileAudioBufferPtr preloadedData;
-    FileInformation information;
-};
+    enum class Status { Invalid, Preloaded, Streaming, Done };
+    FileData() = default;
+    FileData(FileAudioBuffer preloaded, FileInformation info)
+    : preloadedData(std::move(preloaded)), information(std::move(info))
+    {
 
-struct FilePromise
-{
+    }
     AudioSpan<const float> getData()
     {
-        if (dataStatus == DataStatus::Ready)
-            return AudioSpan<const float>(fileData);
-        else if (availableFrames > preloadedData->getNumFrames())
+        if (availableFrames > preloadedData.getNumFrames())
             return AudioSpan<const float>(fileData).first(availableFrames);
         else
-            return AudioSpan<const float>(*preloadedData);
+            return AudioSpan<const float>(preloadedData);
     }
 
-    void reset()
+    FileData(const FileData& other) = default;
+    FileData& operator=(const FileData& other) = default;
+    FileData(FileData&& other)
     {
-        fileData.reset();
-        preloadedData.reset();
-        fileId = FileId {};
-        availableFrames = 0;
-        dataStatus = DataStatus::Wait;
-        oversamplingFactor = config::defaultOversamplingFactor;
-        sampleRate = config::defaultSampleRate;
+        ASSERT(other.readerCount == 0); // Probably should not be moving this...
+        information = std::move(other.information);
+        preloadedData = std::move(other.preloadedData);
+        fileData = std::move(other.fileData);
+        availableFrames = other.availableFrames.load();
+        lastViewerLeftAt = other.lastViewerLeftAt;
+        status = other.status.load();
     }
-
-    enum class DataStatus {
-        Wait = 0,
-        Ready,
-        Error,
-    };
-
-    bool waiting() const { return dataStatus == DataStatus::Wait; }
-
-    void sleepUntilComplete()
+    FileData& operator=(FileData&& other)
     {
-        while (waiting())
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        ASSERT(other.readerCount == 0); // Probably should not be moving this...
+        information = std::move(other.information);
+        preloadedData = std::move(other.preloadedData);
+        fileData = std::move(other.fileData);
+        availableFrames = other.availableFrames.load();
+        lastViewerLeftAt = other.lastViewerLeftAt;
+        status = other.status.load();
+        return *this;
     }
 
-    FileId fileId {};
-    FileAudioBufferPtr preloadedData {};
+    FileAudioBuffer preloadedData;
+    FileInformation information;
     FileAudioBuffer fileData {};
-    float sampleRate { config::defaultSampleRate };
-    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
+    std::atomic<Status> status { Status::Invalid };
     std::atomic<size_t> availableFrames { 0 };
-    std::atomic<DataStatus> dataStatus { DataStatus::Wait };
-    std::chrono::time_point<std::chrono::high_resolution_clock> creationTime;
+    std::atomic<int> readerCount { 0 };
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastViewerLeftAt;
 
-    LEAK_DETECTOR(FilePromise);
+    LEAK_DETECTOR(FileData);
 };
 
-using FilePromisePtr = std::shared_ptr<FilePromise>;
+
+class FileDataHolder {
+public:
+    FileDataHolder() = default;
+    FileDataHolder(const FileDataHolder&) = delete;
+    FileDataHolder& operator=(const FileDataHolder&) = delete;
+    FileDataHolder(FileDataHolder&& other)
+    {
+        this->data = other.data;
+        other.data = nullptr;
+    }
+    FileDataHolder& operator=(FileDataHolder&& other)
+    {
+        this->data = other.data;
+        other.data = nullptr;
+        return *this;
+    }
+    FileDataHolder(FileData* data) : data(data)
+    {
+        if (!data)
+            return;
+
+        data->readerCount += 1;
+    }
+    void reset()
+    {
+        if (!data)
+            return;
+
+        data->readerCount -= 1;
+        data->lastViewerLeftAt = std::chrono::high_resolution_clock::now();
+        data = nullptr;
+    }
+    ~FileDataHolder()
+    {
+        ASSERT(!data || data->readerCount > 0);
+        reset();
+    }
+    FileData& operator*() { return *data; }
+    FileData* operator->() { return data; }
+    explicit operator bool() const { return data != nullptr; }
+private:
+    FileData* data { nullptr };
+    LEAK_DETECTOR(FileDataHolder);
+};
+
 /**
  * @brief This is a singleton-designed class that holds all the preloaded data
  * as well as functions to request new file data and collect the file handles to
@@ -188,7 +231,7 @@ public:
      * @param fileId
      * @return A handle on the file data
      */
-    absl::optional<sfz::FileDataHandle> loadFile(const FileId& fileId) noexcept;
+    FileDataHolder loadFile(const FileId& fileId) noexcept;
 
     /**
      * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
@@ -214,19 +257,12 @@ public:
      */
     void clear();
     /**
-     * @brief Moves the filled promises to a linear storage, and checks
-     * said linear storage for promises that are not used anymore.
-     *
-     * This function has to be called on the audio thread.
-     */
-    void cleanupPromises() noexcept;
-    /**
-     * @brief Get a file promise
+     * @brief Get a handle on a file, which triggers background loading
      *
      * @param fileId the file to preload
-     * @return FilePromisePtr a file promise
+     * @return FileDataHolder a file data handle
      */
-    FilePromisePtr getFilePromise(const FileId& fileId) noexcept;
+    FileDataHolder getFilePromise(const FileId& fileId) noexcept;
     /**
      * @brief Change the preloading size. This will trigger a full
      * reload of all samples, so don't call it on the audio thread.
@@ -277,37 +313,51 @@ public:
      * @param loadInRam
      */
     void setRamLoading(bool loadInRam) noexcept;
+    /**
+     * @brief Prepares unused data to be freed on a background thread.
+     * This should be called regularly by the Synth, otherwise memory
+     * risk building up.
+     */
+    void triggerGarbageCollection() noexcept;
 private:
     Logger& logger;
     fs::path rootDirectory;
-    void loadingThread() noexcept;
-    void clearingThread();
-    void tryToClearPromises();
 
-    atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
-    atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
-    RTSemaphore semFilledPromiseQueueAvailable { config::maxVoices };
     bool loadInRam { config::loadInRam };
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
-    // Signals
-    volatile bool quitThread { false };
-    volatile bool emptyQueue { false };
-    RTSemaphore semEmptyQueueFinished;
-    std::atomic<int> threadsLoading { 0 };
-    RTSemaphore workerBarrier;
-    RTSemaphore semClearingRequest;
 
-    // File promises data structures along with their guards.
-    std::vector<FilePromisePtr> emptyPromises;
-    std::vector<FilePromisePtr> temporaryFilePromises;
-    std::vector<FilePromisePtr> promisesToClear;
-    SpinMutex promiseGuard;
+    // Signals
+    volatile bool dispatchFlag { true };
+    volatile bool garbageFlag { true };
+    volatile bool emptyQueueFlag { false };
+    RTSemaphore dispatchBarrier;
+    RTSemaphore semEmptyQueueFinished;
+    RTSemaphore semGarbageBarrier;
+
+    // Structures for the background loaders
+    struct QueuedFileData
+    {
+        FileId id;
+        FileData* data;
+        std::chrono::time_point<std::chrono::high_resolution_clock> queuedTime;
+    };
+    atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices> filesToLoad;
+    void dispatchingJob() noexcept;
+    void garbageJob() noexcept;
+    void loadingJob(QueuedFileData data) noexcept;
+    std::vector<std::future<void>> loadingJobs;
+    std::thread dispatchThread { &FilePool::dispatchingJob, this };
+    std::thread garbageThread { &FilePool::garbageJob, this };
+
+    SpinMutex lastUsedMutex;
+    std::vector<FileId> lastUsedFiles;
+    SpinMutex garbageMutex;
+    std::vector<FileAudioBuffer> garbageToCollect;
 
     // Preloaded data
-    absl::flat_hash_map<FileId, FileDataHandle> preloadedFiles;
-    absl::flat_hash_map<FileId, FileDataHandle> loadedFiles;
-    std::vector<std::thread> threadPool { };
+    absl::flat_hash_map<FileId, FileData> preloadedFiles;
+    absl::flat_hash_map<FileId, FileData> loadedFiles;
     LEAK_DETECTOR(FilePool);
 };
 }

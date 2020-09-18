@@ -95,13 +95,13 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
         setupOscillatorUnison();
     } else {
         currentPromise = resources.filePool.getFilePromise(region->sampleId);
-        if (currentPromise == nullptr) {
+        if (!currentPromise) {
             switchState(State::cleanMeUp);
             return;
         }
         updateLoopInformation();
-        speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
-        sourcePosition = region->getOffset(currentPromise->oversamplingFactor);
+        speedRatio = static_cast<float>(currentPromise->information.sampleRate / this->sampleRate);
+        sourcePosition = region->getOffset(resources.filePool.getOversamplingFactor());
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
@@ -545,7 +545,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     if (numSamples == 0)
         return;
 
-    if (currentPromise == nullptr) {
+    if (!currentPromise) {
         DBG("[Voice] Missing promise during fillWithData");
         return;
     }
@@ -647,17 +647,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     else {
         // cut short the voice at the instant of reaching end of sample
         const auto sampleEnd = min(
-            static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
+            static_cast<int>(currentPromise->information.end),
             static_cast<int>(source.getNumFrames())
         ) - 1;
         for (unsigned i = 0; i < numSamples; ++i) {
             if ((*indices)[i] >= sampleEnd) {
 #ifndef NDEBUG
                 // Check for underflow
-                if (source.getNumFrames() - 1 < region->trueSampleEnd(currentPromise->oversamplingFactor)) {
+                if (source.getNumFrames() - 1 < currentPromise->information.end) {
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
-                        << region->trueSampleEnd(currentPromise->oversamplingFactor)
+                        << currentPromise->information.end
                         << " for sample " << region->sampleId);
                 }
 #endif
@@ -1091,16 +1091,13 @@ void sfz::Voice::updateLoopInformation() noexcept
 
     if (!region->shouldLoop())
         return;
+    const auto& info = currentPromise->information;
+    const auto rate = info.sampleRate;
 
-    const auto factor = currentPromise->oversamplingFactor;
-    const auto rate = currentPromise->sampleRate;
-
-    loop.end =  static_cast<int>(region->loopEnd(factor));
-    loop.start = static_cast<int>(region->loopStart(factor));
+    loop.end = static_cast<int>(info.loopEnd);
+    loop.start = static_cast<int>(info.loopBegin);
     loop.size = loop.end + 1 - loop.start;
-    loop.xfSize = static_cast<int>(
-        lroundPositive(region->loopCrossfade * static_cast<int>(factor) * rate)
-    );
+    loop.xfSize = static_cast<int>(lroundPositive(region->loopCrossfade * rate));
     loop.xfOutStart = loop.end + 1 - loop.xfSize;
     loop.xfInStart = loop.start - loop.xfSize;
 }

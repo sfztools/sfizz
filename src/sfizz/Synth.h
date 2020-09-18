@@ -941,6 +941,8 @@ private:
 
     Duration dispatchDuration { 0 };
 
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection;
+
     Parser parser;
     fs::file_time_type modificationTime { };
 

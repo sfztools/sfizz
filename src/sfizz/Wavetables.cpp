@@ -525,10 +525,10 @@ bool WavetablePool::createFileWave(FilePool& filePool, const std::string& filena
     if (fileHandle->information.numChannels > 1)
         DBG("[sfizz] Only the first channel of " << filename << " will be used to create the wavetable");
 
-    auto audioData = fileHandle->preloadedData->getConstSpan(0);
+    auto audioData = fileHandle->preloadedData.getConstSpan(0);
 
     // an even size is required for FFT
-    static_assert(absl::remove_reference_t<decltype(*fileHandle->preloadedData)>::PaddingRight > 0,
+    static_assert(absl::remove_reference_t<decltype(fileHandle->preloadedData)>::PaddingRight > 0,
                   "Right padding is required on the audio file buffer");
     if (audioData.size() & 1)
         audioData = absl::MakeConstSpan(audioData.data(), audioData.size() + 1);

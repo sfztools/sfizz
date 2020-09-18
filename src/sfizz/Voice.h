@@ -527,7 +527,7 @@ private:
      */
     void updateLoopInformation() noexcept;
 
-    FilePromisePtr currentPromise { nullptr };
+    FileDataHolder currentPromise;
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };

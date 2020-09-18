@@ -840,6 +840,15 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (resources.synthConfig.freeWheeling)
         resources.filePool.waitForBackgroundLoading();
 
+    const auto now = std::chrono::high_resolution_clock::now();
+    const auto timeSinceLastCollection =
+        std::chrono::duration_cast<std::chrono::seconds>(now - lastGarbageCollection);
+
+    if (timeSinceLastCollection.count() > config::fileClearingPeriod) {
+        lastGarbageCollection = now;
+        resources.filePool.triggerGarbageCollection();
+    }
+
     const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
     if (!lock.owns_lock())
         return;
@@ -860,7 +869,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempMixSpan->fill(0.0f);
-        resources.filePool.cleanupPromises();
 
         // Ramp out whatever is in the buffer at this point; should only be killed voice data
         linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));

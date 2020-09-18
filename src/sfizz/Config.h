@@ -39,6 +39,7 @@ namespace config {
     constexpr bool loggingEnabled { false };
     constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
+    constexpr unsigned fileClearingPeriod { 5 }; // in seconds
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
     constexpr unsigned smoothingSteps { 512 };
