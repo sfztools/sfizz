@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "sfizz/simd/Common.h"
 #include "sfizz/SIMDHelpers.h"
 #include "sfizz/Panning.h"
 #include "catch2/catch.hpp"
@@ -12,7 +13,11 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <jsl/allocator>
 using namespace Catch::literals;
+
+template <class T, std::size_t A = sfz::config::defaultAlignment>
+using aligned_vector = std::vector<T, jsl::aligned_allocator<T, A>>;
 
 constexpr int smallBufferSize { 3 };
 constexpr int bigBufferSize { 4095 };
@@ -47,6 +52,40 @@ inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, 
         }
 
     return true;
+}
+
+TEST_CASE("[Helpers] willAlign, prevAligned and unaligned tests")
+{
+    aligned_vector<float, 32> array(16);
+    REQUIRE( !unaligned<16>(&array[0]) );
+    REQUIRE( !unaligned<16>(&array[4]) );
+    REQUIRE( !unaligned<32>(&array[8]) );
+    REQUIRE( unaligned<32>(&array[7]) );
+    REQUIRE( unaligned<32>(&array[4]) );
+    REQUIRE( unaligned<16>(&array[3]) );
+    REQUIRE( !unaligned<16>(&array[0], &array[4]) );
+    REQUIRE( !unaligned<16>(&array[0], &array[4], &array[8]) );
+    REQUIRE( unaligned<16>(&array[0], &array[3], &array[8]) );
+
+    REQUIRE( prevAligned<16>(&array[0]) == &array[0] );
+    REQUIRE( prevAligned<16>(&array[1]) == &array[0] );
+    REQUIRE( prevAligned<16>(&array[2]) == &array[0] );
+    REQUIRE( prevAligned<16>(&array[3]) == &array[0] );
+    REQUIRE( prevAligned<16>(&array[4]) == &array[4] );
+    REQUIRE( prevAligned<16>(&array[5]) == &array[4] );
+    REQUIRE( prevAligned<32>(&array[7]) == &array[0] );
+    REQUIRE( prevAligned<32>(&array[8]) == &array[8] );
+    REQUIRE( prevAligned<32>(&array[9]) == &array[8] );
+
+    REQUIRE( willAlign<16>(&array[0], &array[4]) );
+    REQUIRE( willAlign<16>(&array[5], &array[1]) );
+    REQUIRE( !willAlign<16>(&array[2], &array[1]) );
+    REQUIRE( willAlign<32>(&array[9], &array[1]) );
+    REQUIRE( willAlign<32>(&array[8], &array[0]) );
+
+    float* meanPointer = (float*)((uint8_t*)&array[1] + 1);
+    REQUIRE( !willAlign<16>(&array[0], meanPointer) );
+    REQUIRE( !willAlign<16>(&array[4], &array[0], meanPointer) );
 }
 
 TEST_CASE("[Helpers] Interleaved read")
@@ -834,62 +873,71 @@ TEST_CASE("[Helpers] Diff (SIMD vs Scalar)")
     REQUIRE(approxEqual<float>(outputScalar, outputSIMD));
 }
 
-TEST_CASE("[Helpers] Pan Scalar")
+template<unsigned N>
+void panTest(float leftValue, float rightValue, float panValue, float expectedLeft, float expectedRight)
 {
-    std::array<float, 1> leftValue { 1.0f };
-    std::array<float, 1> rightValue { 1.0f };
-    auto left = absl::MakeSpan(leftValue);
-    auto right = absl::MakeSpan(rightValue);
-    SECTION("Pan = 0")
-    {
-        std::array<float, 1> pan { 0.0f };
-        sfz::pan(pan, left, right);
-        REQUIRE(left[0] == Approx(0.70711f).margin(0.001f));
-        REQUIRE(right[0] == Approx(0.70711f).margin(0.001f));
-    }
-    SECTION("Pan = 1")
-    {
-        std::array<float, 1> pan { 1.0f };
-        sfz::pan(pan, left, right);
-        REQUIRE(left[0] == Approx(0.0f).margin(0.001f));
-        REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
-    }
-    SECTION("Pan = -1")
-    {
-        std::array<float, 1> pan { -1.0f };
-        sfz::pan(pan, left, right);
-        REQUIRE(left[0] == Approx(1.0f).margin(0.001f));
-        REQUIRE(right[0] == Approx(0.0f).margin(0.001f));
-    }
+    std::vector<float> leftChannel(N);
+    std::vector<float> rightChannel(N);
+    std::vector<float> pan(N);
+    std::vector<float> expectedLeftChannel(N);
+    std::vector<float> expectedRightChannel(N);
+    std::fill(leftChannel.begin(), leftChannel.end(), leftValue);
+    std::fill(expectedLeftChannel.begin(), expectedLeftChannel.end(), expectedLeft);
+    std::fill(rightChannel.begin(), rightChannel.end(), rightValue);
+    std::fill(expectedRightChannel.begin(), expectedRightChannel.end(), expectedRight);
+    std::fill(pan.begin(), pan.end(), panValue);
+    auto left = absl::MakeSpan(leftChannel);
+    auto right = absl::MakeSpan(rightChannel);
+    sfz::pan(pan, left, right);
+    REQUIRE_THAT( leftChannel, Catch::Approx(expectedLeftChannel).margin(0.001) );
+    REQUIRE_THAT( rightChannel, Catch::Approx(expectedRightChannel).margin(0.001) );
 }
 
-TEST_CASE("[Helpers] Width Scalar")
+template<unsigned N>
+void widthTest(float leftValue, float rightValue, float widthValue, float expectedLeft, float expectedRight)
 {
-    std::array<float, 1> leftValue { 1.0f };
-    std::array<float, 1> rightValue { 1.0f };
-    auto left = absl::MakeSpan(leftValue);
-    auto right = absl::MakeSpan(rightValue);
-    SECTION("width = 1")
-    {
-        std::array<float, 1> width { 1.0f };
-        sfz::width(width, left, right);
-        REQUIRE(left[0] == Approx(1.0f).margin(0.001f));
-        REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
-    }
-    SECTION("width = 0")
-    {
-        std::array<float, 1> width { 0.0f };
-        sfz::width(width, left, right);
-        REQUIRE(left[0] == Approx(1.414f).margin(0.001f));
-        REQUIRE(right[0] == Approx(1.414f).margin(0.001f));
-    }
-    SECTION("width = -1")
-    {
-        std::array<float, 1> width { -1.0f };
-        sfz::width(width, left, right);
-        REQUIRE(left[0] == Approx(1.0f).margin(0.001f));
-        REQUIRE(right[0] == Approx(1.0f).margin(0.001f));
-    }
+    std::vector<float> leftChannel(N);
+    std::vector<float> rightChannel(N);
+    std::vector<float> width(N);
+    std::vector<float> expectedLeftChannel(N);
+    std::vector<float> expectedRightChannel(N);
+    std::fill(leftChannel.begin(), leftChannel.end(), leftValue);
+    std::fill(expectedLeftChannel.begin(), expectedLeftChannel.end(), expectedLeft);
+    std::fill(rightChannel.begin(), rightChannel.end(), rightValue);
+    std::fill(expectedRightChannel.begin(), expectedRightChannel.end(), expectedRight);
+    std::fill(width.begin(), width.end(), widthValue);
+    auto left = absl::MakeSpan(leftChannel);
+    auto right = absl::MakeSpan(rightChannel);
+    sfz::width(width, left, right);
+    REQUIRE_THAT( leftChannel, Catch::Approx(expectedLeftChannel).margin(0.001) );
+    REQUIRE_THAT( rightChannel, Catch::Approx(expectedRightChannel).margin(0.001) );
+}
+
+TEST_CASE("[Helpers] Pan tests")
+{
+    // Testing different sizes to check that SIMD and unrolling works as expected
+    panTest<1>(1.0f, 1.0f, 0.0f, 0.70711f, 0.70711f);
+    panTest<1>(1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    panTest<1>(1.0f, 1.0f, -1.0f, 1.0f, 0.0f);
+    panTest<3>(1.0f, 1.0f, 0.0f, 0.70711f, 0.70711f);
+    panTest<3>(1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    panTest<3>(1.0f, 1.0f, -1.0f, 1.0f, 0.0f);
+    panTest<10>(1.0f, 1.0f, 0.0f, 0.70711f, 0.70711f);
+    panTest<10>(1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+    panTest<10>(1.0f, 1.0f, -1.0f, 1.0f, 0.0f);
+}
+
+TEST_CASE("[Helpers] Width tests")
+{
+    widthTest<1>(1.0f, 1.0f, 0.0f, 1.414f, 1.414f);
+    widthTest<1>(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    widthTest<1>(1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
+    widthTest<3>(1.0f, 1.0f, 0.0f, 1.414f, 1.414f);
+    widthTest<3>(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    widthTest<3>(1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
+    widthTest<10>(1.0f, 1.0f, 0.0f, 1.414f, 1.414f);
+    widthTest<10>(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    widthTest<10>(1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
 }
 
 TEST_CASE("[Helpers] clampAll")
