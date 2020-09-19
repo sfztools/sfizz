@@ -369,6 +369,7 @@ public:
      * @param normValue the normalized cc value, in domain 0 to 1
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
+private:
     /**
      * @brief Set the initial value of a controller and send it to the synth
      *
@@ -383,6 +384,7 @@ public:
      * @param normValue the normalized cc value, in domain 0 to 1
      */
     void initHdcc(int ccNumber, float normValue) noexcept;
+public:
     /**
      * @brief Get the initial value of a controller under the current instrument
      *
