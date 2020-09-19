@@ -338,9 +338,17 @@ private:
     // Structures for the background loaders
     struct QueuedFileData
     {
-        FileId id;
-        FileData* data;
-        std::chrono::time_point<std::chrono::high_resolution_clock> queuedTime;
+        using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+        QueuedFileData() = default;
+        QueuedFileData(FileId id, FileData* data, TimePoint queuedTime)
+        : id(id), data(data), queuedTime(queuedTime) {}
+        QueuedFileData(const QueuedFileData&) = default;
+        QueuedFileData& operator=(const QueuedFileData&) = default;
+        QueuedFileData(QueuedFileData&&) = default;
+        QueuedFileData& operator=(QueuedFileData&&) = default;
+        FileId id {};
+        FileData* data { nullptr };
+        TimePoint queuedTime {};
     };
     atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices> filesToLoad;
     void dispatchingJob() noexcept;
