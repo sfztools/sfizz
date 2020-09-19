@@ -9,6 +9,10 @@
 #include "AudioSpan.h"
 #include "AudioReader.h"
 #include "SIMDConfig.h"
+#include <jsl/allocator>
+
+template <class T, std::size_t A = sfz::config::defaultAlignment>
+using aligned_vector = std::vector<T, jsl::aligned_allocator<T, A>>;
 
 constexpr std::array<double, 12> coeffsStage2x {
     0.036681502163648017,
@@ -70,9 +74,9 @@ void sfz::Oversampler::stream(AudioSpan<float> input, AudioSpan<float> output, s
     const auto numFrames = input.getNumFrames();
     const auto numChannels = input.getNumChannels();
 
-    std::vector<Upsampler2x> upsampler2x;
-    std::vector<Upsampler4x> upsampler4x;
-    std::vector<Upsampler8x> upsampler8x;
+    aligned_vector<Upsampler2x> upsampler2x;
+    aligned_vector<Upsampler4x> upsampler4x;
+    aligned_vector<Upsampler8x> upsampler8x;
 
     switch(factor)
     {

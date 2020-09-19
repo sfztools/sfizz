@@ -76,6 +76,10 @@ endfunction()
 # The sndfile library
 add_library(sfizz-sndfile INTERFACE)
 
+# The jsl utility library for C++
+add_library(sfizz-jsl INTERFACE)
+target_include_directories(sfizz-jsl INTERFACE "external/jsl/include")
+
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     find_package(SndFile CONFIG REQUIRED)
     find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
