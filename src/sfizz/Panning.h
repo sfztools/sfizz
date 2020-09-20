@@ -6,12 +6,15 @@ namespace sfz
 {
 
 /**
- * @brief Lookup a value from the pan table
- *
- * @param pan
- * @return float
- */
+* @brief Lookup a value from the pan table
+*        No check is done on the range, needs to be capped
+*        between 0 and panSize.
+*
+* @param pan
+* @return float
+*/
 float panLookup(float pan);
+
 
 /**
  * @brief Pans a mono signal left or right

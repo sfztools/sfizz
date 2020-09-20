@@ -147,6 +147,12 @@ if (TARGET bm_resample)
 	add_dependencies(sfizz_benchmarks bm_resample)
 endif()
 
+if (SFIZZ_SYSTEM_PROCESSOR MATCHES "armv7l")
+    sfizz_add_benchmark(bm_pan_arm BM_pan_arm.cpp ../src/sfizz/Panning.cpp)
+    target_link_libraries(bm_pan_arm PRIVATE sfizz-jsl)
+    add_dependencies(sfizz_benchmarks bm_pan_arm)
+endif()
+
 configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample1.wav" COPYONLY)
 configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample2.wav" COPYONLY)
 configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample3.wav" COPYONLY)

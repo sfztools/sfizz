@@ -15,8 +15,8 @@
  */
 
 #include "Width.h"
-#include "Opcode.h"
 #include "Panning.h"
+#include "Opcode.h"
 #include "absl/memory/memory.h"
 
 namespace sfz {
