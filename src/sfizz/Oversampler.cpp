@@ -149,9 +149,9 @@ void sfz::Oversampler::stream(AudioReader& input, AudioSpan<float> output, std::
     const auto numFrames = static_cast<size_t>(input.frames());
     const auto numChannels = input.channels();
 
-    std::vector<Upsampler2x> upsampler2x;
-    std::vector<Upsampler4x> upsampler4x;
-    std::vector<Upsampler8x> upsampler8x;
+    aligned_vector<Upsampler2x> upsampler2x;
+    aligned_vector<Upsampler4x> upsampler4x;
+    aligned_vector<Upsampler8x> upsampler8x;
 
     switch(factor)
     {
