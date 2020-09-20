@@ -369,7 +369,30 @@ public:
      * @param normValue the normalized cc value, in domain 0 to 1
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
+private:
     /**
+     * @brief Set the initial value of a controller and send it to the synth
+     *
+     * @param ccNumber the cc number
+     * @param ccValue the cc value
+     */
+    void initCc(int ccNumber, uint8_t ccValue) noexcept;
+    /**
+     * @brief Set the initial value of a controller and send it to the synth
+     *
+     * @param ccNumber the cc number
+     * @param normValue the normalized cc value, in domain 0 to 1
+     */
+    void initHdcc(int ccNumber, float normValue) noexcept;
+public:
+    /**
+     * @brief Get the initial value of a controller under the current instrument
+     *
+     * @param ccNumber the cc number
+     * @return the initial value
+     */
+    float getHdccInit(int ccNumber);
+   /**
      * @brief Send a pitch bend event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -908,6 +931,9 @@ private:
         size_t maxFlexEGs { 0 };
     };
     SettingsPerVoice settingsPerVoice;
+
+    // Controller initial values
+    std::array<float, config::numCCs> ccInitialValues;
 
     Duration dispatchDuration { 0 };
 
