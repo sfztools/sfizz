@@ -11,6 +11,7 @@
 #include "NativeHelpers.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
+#include <ghc/fs_std.hpp>
 #include <array>
 #include <cstdarg>
 #include <cstdio>
@@ -30,6 +31,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     SharedPointer<CViewContainer> mainView_;
 
     std::string currentSfzFile_;
+    std::string currentScalaFile_;
 
     enum {
         kPanelGeneral,
@@ -226,6 +228,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::ScalaFile:
         {
             const std::string& value = v.to_string();
+            currentScalaFile_ = value;
             updateScalaFileLabel(value);
         }
         break;
@@ -663,6 +666,10 @@ void Editor::Impl::chooseSfzFile()
 
     fs->setTitle("Load SFZ file");
     fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+    if (!currentSfzFile_.empty()) {
+        std::string initialDir = fs::path(currentSfzFile_).parent_path().u8string() + '/';
+        fs->setInitialDirectory(initialDir.c_str());
+    }
 
     if (fs->runModal()) {
         UTF8StringPtr file = fs->getSelectedFile(0);
@@ -684,6 +691,10 @@ void Editor::Impl::chooseScalaFile()
 
     fs->setTitle("Load Scala file");
     fs->setDefaultExtension(CFileExtension("SCL", "scl"));
+    if (!currentScalaFile_.empty()) {
+        std::string initialDir = fs::path(currentScalaFile_).parent_path().u8string() + '/';
+        fs->setInitialDirectory(initialDir.c_str());
+    }
 
     if (fs->runModal()) {
         UTF8StringPtr file = fs->getSelectedFile(0);
@@ -695,6 +706,7 @@ void Editor::Impl::chooseScalaFile()
 void Editor::Impl::changeScalaFile(const std::string& filePath)
 {
     ctrl_->uiSendValue(EditId::ScalaFile, filePath);
+    currentScalaFile_ = filePath;
     updateScalaFileLabel(filePath);
 }
 
