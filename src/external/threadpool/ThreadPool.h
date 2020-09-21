@@ -29,7 +29,7 @@ private:
     // synchronization
     std::mutex queue_mutex;
     std::condition_variable condition;
-    bool stop;
+    volatile bool stop;
 };
 
 // the constructor just launches some amount of workers
