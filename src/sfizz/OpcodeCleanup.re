@@ -85,6 +85,7 @@ end_region_oncc:
     egV1 = "ampeg"|"fileg"|"pitcheg";
     eqV1 = "eq" number;
     lfoV2 = "lfo" number;
+    egV2 = "eg" number;
 
     (lfoV1) "_" ("depth"|"freq"|"fade") "cc" (number) END {
         opcode = absl::StrCat(group(1), "_", group(2), "_oncc", group(3));
@@ -102,7 +103,14 @@ end_region_oncc:
         opcode = absl::StrCat(group(1), "_", group(2), "1");
         goto end_region;
     }
-
+    (lfoV2) "_" ("cutoff"|"resonance") ("_" any)? END {
+        opcode = absl::StrCat(group(1), "_", group(2), "1", group(3));
+        goto end_region;
+    }
+    (egV2) "_" ("cutoff"|"resonance") ("_" any)? END {
+        opcode = absl::StrCat(group(1), "_", group(2), "1", group(3));
+        goto end_region;
+    }
     "loop" ("mode"|"start"|"end") END {
         opcode = absl::StrCat("loop_", group(1));
         goto end_region;

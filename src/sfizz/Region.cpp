@@ -45,6 +45,23 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         case hash(x "_stepcc&"):   \
         case hash(x "_smoothcc&")
 
+    #define LFO_EG_filter_EQ_target(sourceKey, targetKey, range)                                        \
+        {                                                                                               \
+            const auto number = opcode.parameters.front();                                              \
+            if (number == 0)                                                                            \
+                return false;                                                                           \
+                                                                                                        \
+            const auto index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;        \
+            if (!extendIfNecessary(filters, index + 1, Default::numFilters))                            \
+                return false;                                                                           \
+                                                                                                        \
+            if (auto value = readOpcode(opcode.value, range)) {                                         \
+                const ModKey source = ModKey::createNXYZ(sourceKey, id, number - 1);                    \
+                const ModKey target = ModKey::createNXYZ(targetKey, id, index);                         \
+                getOrCreateConnection(source, target).sourceDepth = *value;                             \
+            }                                                                                           \
+        }
+
     // Sound source: sample playback
     case hash("sample"):
         {
@@ -579,30 +596,22 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
         }
         break;
-    case hash("cutoff&_oncc&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
+    case_any_ccN("cutoff&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].cutoffCC[opcode.parameters.back()],
-                Default::filterCutoffModRange
-            );
+            processGenericCc(opcode, Default::filterCutoffModRange, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
         }
         break;
-    case hash("resonance&_oncc&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
+    case_any_ccN("resonance&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].resonanceCC[opcode.parameters.back()],
-                Default::filterResonanceModRange
-            );
+            processGenericCc(opcode, Default::filterResonanceModRange, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
         }
         break;
     case hash("fil&_keytrack"): // also fil_keytrack
@@ -650,17 +659,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].gain, Default::filterGainRange);
         }
         break;
-    case hash("fil&_gain_oncc&"): // also fil_gain_oncc&
+    case_any_ccN("fil&_gain"): // also fil_gain_oncc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].gainCC[opcode.parameters.back()],
-                Default::filterGainModRange
-            );
+            processGenericCc(opcode, Default::filterGainModRange, ModKey::createNXYZ(ModId::FilGain, id, filterIndex));
         }
         break;
     case hash("fil&_type"): // also fil_type, filtype
@@ -683,107 +688,90 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     // Performance parameters: EQ
     case hash("eq&_bw"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidth, Default::eqBandwidthRange);
-        }
-        break;
-    case hash("eq&_bw_oncc&"): // also eq&_bwcc&
-        {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidthCC[opcode.parameters.back()], Default::eqBandwidthModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].bandwidth, Default::eqBandwidthRange);
+        }
+        break;
+    case_any_ccN("eq&_bw"): // also eq&_bwcc&
+        {
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
+                return false;
+
+            processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqIndex));
         }
         break;
     case hash("eq&_freq"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequency, Default::eqFrequencyRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].frequency, Default::eqFrequencyRange);
         }
         break;
-    case hash("eq&_freq_oncc&"): // also eq&_freqcc&
+    case_any_ccN("eq&_freq"): // also eq&_freqcc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequencyCC[opcode.parameters.back()], Default::eqFrequencyModRange);
+            processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
         }
         break;
     case hash("eq&_vel&freq"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
+            const auto eqIndex = opcode.parameters.front() - 1;
             if (opcode.parameters[1] != 2)
                 return false; // was eqN_vel3freq or something else than eqN_vel2freq
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2frequency, Default::eqFrequencyModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].vel2frequency, Default::eqFrequencyModRange);
         }
         break;
     case hash("eq&_gain"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].gain, Default::eqGainRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].gain, Default::eqGainRange);
         }
         break;
-    case hash("eq&_gain_oncc&"): // also eq&_gaincc&
+    case_any_ccN("eq&_gain"): // also eq&_gaincc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].gainCC[opcode.parameters.back()], Default::eqGainModRange);
+            processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
         }
         break;
     case hash("eq&_vel&gain"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
+            const auto eqIndex = opcode.parameters.front() - 1;
             if (opcode.parameters[1] != 2)
                 return false;  // was eqN_vel3gain or something else than eqN_vel2gain
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2gain, Default::eqGainModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].vel2gain, Default::eqGainModRange);
         }
         break;
     case hash("eq&_type"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
             absl::optional<EqType> ftype = FilterEq::typeFromName(opcode.value);
 
             if (ftype)
-                equalizers[eqNumber - 1].type = *ftype;
+                equalizers[eqIndex].type = *ftype;
             else {
-                equalizers[eqNumber - 1].type = EqType::kEqNone;
+                equalizers[eqIndex].type = EqType::kEqNone;
                 DBG("Unknown EQ type: " << opcode.value);
             }
         }
@@ -1045,6 +1033,24 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             }
         }
         break;
+    case hash("lfo&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffModRange);
+        break;
+    case hash("lfo&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceModRange);
+        break;
+    case hash("lfo&_fil&_gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainModRange);
+        break;
+    case hash("lfo&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainModRange);
+        break;
+    case hash("lfo&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyModRange);
+        break;
+    case hash("lfo&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthModRange);
+        break;
 
     // Modulation: Flex EG (targets)
     case hash("eg&_amplitude"):
@@ -1118,6 +1124,24 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 getOrCreateConnection(source, target).sourceDepth = *value;
             }
         }
+        break;
+    case hash("eg&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffModRange);
+        break;
+    case hash("eg&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceModRange);
+        break;
+    case hash("eg&_fil&_gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainModRange);
+        break;
+    case hash("eg&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainModRange);
+        break;
+    case hash("eg&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyModRange);
+        break;
+    case hash("eg&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthModRange);
         break;
 
     // Amplitude Envelope
@@ -1321,6 +1345,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         return false;
 
     #undef case_any_ccN
+    #undef LFO_EG_filter_EQ_target
     }
 
     return true;

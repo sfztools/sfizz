@@ -87,6 +87,18 @@ std::string ModKey::toString() const
         return absl::StrCat("Pitch {", region_.number(), "}");
     case ModId::Volume:
         return absl::StrCat("Volume {", region_.number(), "}");
+    case ModId::FilGain:
+        return absl::StrCat("FilterGain {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::FilCutoff:
+        return absl::StrCat("FilterCutoff {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::FilResonance:
+        return absl::StrCat("FilterResonance {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EqGain:
+        return absl::StrCat("EqGain {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EqFrequency:
+        return absl::StrCat("EqFrequency {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EqBandwidth:
+        return absl::StrCat("EqBandwidth {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};

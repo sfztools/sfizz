@@ -156,11 +156,11 @@ namespace Default
     constexpr uint8_t filterKeycenter { 60 };
     constexpr int filterRandom { 0 };
     constexpr int filterVeltrack { 0 };
-    constexpr int filterCutoffCC { 0 };
+    constexpr float filterCutoffCC { 0 };
     constexpr float filterResonanceCC { 0 };
     constexpr float filterGainCC { 0 };
     constexpr Range<float> filterCutoffRange { 0.0f, 20000.0f };
-    constexpr Range<int> filterCutoffModRange { -9600, 9600 };
+    constexpr Range<float> filterCutoffModRange { -9600, 9600 };
     constexpr Range<float> filterGainRange { -96.0f, 96.0f };
     constexpr Range<float> filterGainModRange { -96.0f, 96.0f };
     constexpr Range<int> filterKeytrackRange { 0, 1200 };
