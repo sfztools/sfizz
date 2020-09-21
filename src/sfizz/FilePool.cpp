@@ -99,7 +99,7 @@ sfz::FilePool::FilePool(sfz::Logger& logger)
     : logger(logger)
 {
     loadingJobs.reserve(config::maxVoices);
-    loadingJobs.reserve(config::maxVoices);
+    lastUsedFiles.reserve(config::maxVoices);
     garbageToCollect.reserve(config::maxVoices);
 }
 
@@ -491,8 +491,6 @@ void sfz::FilePool::dispatchingJob() noexcept
 
 void sfz::FilePool::garbageJob() noexcept
 {
-    std::chrono::seconds counter { 0 }; // This avoids waiting to long on the thread
-    constexpr std::chrono::milliseconds timeAtom { 100 };
     while (garbageFlag) {
         semGarbageBarrier.wait();
         {
