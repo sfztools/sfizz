@@ -536,6 +536,9 @@ void sfz::Synth::finalizeSfzLoad()
             if (fileInformation->numChannels == 2)
                 region->hasStereoSample = true;
 
+            if (region->pitchKeycenterFromSample)
+                region->pitchKeycenter = fileInformation->rootKey;
+
             // TODO: adjust with LFO targets
             const auto maxOffset = [region]() {
                 uint64_t sumOffsetCC = region->offset + region->offsetRandom;

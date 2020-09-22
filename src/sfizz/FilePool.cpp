@@ -216,14 +216,15 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     returnedValue.numChannels = reader->channels();
 
     SF_INSTRUMENT instrumentInfo {};
+    bool haveInstrumentInfo = reader->getInstrument(&instrumentInfo);
 
     FileMetadataReader mdReader;
     bool mdReaderOpened = mdReader.open(file);
 
-    if (!reader->getInstrument(&instrumentInfo)) {
+    if (!haveInstrumentInfo) {
         // if no instrument, then try extracting from embedded RIFF chunks (flac)
         if (mdReaderOpened)
-            mdReader.extractRiffInstrument(instrumentInfo);
+            haveInstrumentInfo = mdReader.extractRiffInstrument(instrumentInfo);
     }
 
     if (mdReaderOpened) {
@@ -233,7 +234,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     }
 
     if (!fileId.isReverse()) {
-        if (instrumentInfo.loop_count > 0) {
+        if (haveInstrumentInfo && instrumentInfo.loop_count > 0) {
             returnedValue.hasLoop = true;
             returnedValue.loopBegin = instrumentInfo.loops[0].start;
             returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
@@ -242,6 +243,9 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
         // TODO loops ignored when reversed
         //   prehaps it can make use of SF_LOOP_BACKWARD?
     }
+
+    if (haveInstrumentInfo)
+        returnedValue.rootKey = clamp<int8_t>(instrumentInfo.basenote, 0, 127);
 
     return returnedValue;
 }
