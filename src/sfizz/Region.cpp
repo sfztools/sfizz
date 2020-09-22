@@ -147,6 +147,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         if (auto value = readBooleanFromOpcode(opcode))
             oscillatorEnabled = *value ? OscillatorEnabled::On : OscillatorEnabled::Off;
         break;
+    case hash("oscillator_mode"):
+        setValueFromOpcode(opcode, oscillatorMode, Default::oscillatorModeRange);
+        break;
     case hash("oscillator_multi"):
         setValueFromOpcode(opcode, oscillatorMulti, Default::oscillatorMultiRange);
         break;
@@ -155,6 +158,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case_any_ccN("oscillator_detune"):
         processGenericCc(opcode, Default::oscillatorDetuneCCRange, ModKey::createNXYZ(ModId::OscillatorDetune, id));
+        break;
+    case hash("oscillator_mod_depth"):
+        if (auto value = readOpcode(opcode.value, Default::oscillatorModDepthRange))
+            oscillatorModDepth = normalizePercents(*value);
+        break;
+    case_any_ccN("oscillator_mod_depth"):
+        processGenericCc(opcode, Default::oscillatorModDepthCCRange, ModKey::createNXYZ(ModId::OscillatorModDepth, id));
         break;
     case hash("oscillator_quality"):
         if (opcode.value == "-1")

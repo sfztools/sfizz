@@ -58,6 +58,8 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::OscillatorDetune:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::OscillatorModDepth:
+        return kModIsPerVoice|kModIsPercentMultiplicative;
 
         // unknown
     default:

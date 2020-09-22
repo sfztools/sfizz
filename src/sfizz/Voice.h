@@ -495,6 +495,7 @@ private:
     ModMatrix::TargetId widthTarget;
     ModMatrix::TargetId pitchTarget;
     ModMatrix::TargetId oscillatorDetuneTarget;
+    ModMatrix::TargetId oscillatorModDepthTarget;
 
     PowerFollower powerFollower;
 

@@ -302,8 +302,10 @@ struct Region {
     enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
     OscillatorEnabled oscillatorEnabled = OscillatorEnabled::Auto; // oscillator
     bool hasWavetableSample = false; // (set according to sample file)
+    int oscillatorMode = Default::oscillatorMode;
     int oscillatorMulti = Default::oscillatorMulti;
     float oscillatorDetune = Default::oscillatorDetune;
+    float oscillatorModDepth = Default::oscillatorModDepth;
     absl::optional<int> oscillatorQuality;
 
     // Instrument settings: voice lifecycle
