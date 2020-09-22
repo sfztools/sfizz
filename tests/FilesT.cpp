@@ -689,7 +689,7 @@ TEST_CASE("[Files] Key center from audio file")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/sample_keycenter.sfz", R"(
-        <group> pitch_keycenter=sample
+        <group> pitch_keycenter=sample oscillator=off
         <region> sample=root_key_38.wav
         <region> sample=root_key_62.wav
         <region> sample=root_key_38.flac
