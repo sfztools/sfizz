@@ -55,7 +55,7 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
     shouldRelease = false;
     freeRunning = (
         (this->sustain == 0.0f)
-        || (region.loopMode == SfzLoopMode::one_shot && (region.isGenerator() || region.oscillator))
+        || (region.loopMode == SfzLoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
     currentState = State::Delay;

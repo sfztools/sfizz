@@ -495,18 +495,25 @@ void sfz::Synth::finalizeSfzLoad()
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
 
-        if (!region->oscillator && !region->isGenerator()) {
+        absl::optional<FileInformation> fileInformation;
+
+        if (!region->isGenerator()) {
             if (!resources.filePool.checkSampleId(region->sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            const auto fileInformation = resources.filePool.getFileInformation(region->sampleId);
+            fileInformation = resources.filePool.getFileInformation(region->sampleId);
             if (!fileInformation) {
                 removeCurrentRegion();
                 continue;
             }
 
+            region->hasWavetableSample = fileInformation->wavetable ||
+                fileInformation->end < config::wavetableMaxFrames;
+        }
+
+        if (!region->isOscillator()) {
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
 
             if (fileInformation->hasLoop) {
@@ -539,12 +546,8 @@ void sfz::Synth::finalizeSfzLoad()
 
             if (!resources.filePool.preloadFile(region->sampleId, maxOffset))
                 removeCurrentRegion();
-        } else if (region->oscillator && !region->isGenerator()) {
-            if (!resources.filePool.checkSampleId(region->sampleId)) {
-                removeCurrentRegion();
-                continue;
-            }
-
+        }
+        else if (!region->isGenerator()) {
             if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId.filename()))) {
                 removeCurrentRegion();
                 continue;

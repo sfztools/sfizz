@@ -77,12 +77,27 @@ struct Region {
      */
     bool isGenerator() const noexcept { return sampleId.filename().size() > 0 ? sampleId.filename()[0] == '*' : false; }
     /**
+     * @brief Is an oscillator (generator or wavetable)?
+     *
+     * @return true
+     * @return false
+     */
+    bool isOscillator() const noexcept
+    {
+        if (isGenerator())
+            return true;
+        else if (oscillatorEnabled != OscillatorEnabled::Auto)
+            return oscillatorEnabled == OscillatorEnabled::On;
+        else
+            return hasWavetableSample;
+    }
+    /**
      * @brief Is stereo (has stereo sample or is unison oscillator)?
      *
      * @return true
      * @return false
      */
-    bool isStereo() const noexcept { return hasStereoSample || ((oscillator || isGenerator()) && oscillatorMulti >= 3); }
+    bool isStereo() const noexcept { return hasStereoSample || (isOscillator() && oscillatorMulti >= 3); }
     /**
      * @brief Is a looping region (at least potentially)?
      *
@@ -284,7 +299,9 @@ struct Region {
 
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase };
-    bool oscillator = false;
+    enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
+    OscillatorEnabled oscillatorEnabled = OscillatorEnabled::Auto; // oscillator
+    bool hasWavetableSample = false; // (set according to sample file)
     int oscillatorMulti = Default::oscillatorMulti;
     float oscillatorDetune = Default::oscillatorDetune;
     absl::optional<int> oscillatorQuality;

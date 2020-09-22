@@ -145,7 +145,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("oscillator"):
         if (auto value = readBooleanFromOpcode(opcode))
-            oscillator = *value;
+            oscillatorEnabled = *value ? OscillatorEnabled::On : OscillatorEnabled::Off;
         break;
     case hash("oscillator_multi"):
         setValueFromOpcode(opcode, oscillatorMulti, Default::oscillatorMultiRange);

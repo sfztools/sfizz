@@ -31,6 +31,7 @@
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
 #include "FileId.h"
+#include "FileMetadata.h"
 #include "SIMDHelpers.h"
 #include "utility/SpinMutex.h"
 #include "ghc/fs_std.hpp"
@@ -55,6 +56,7 @@ struct FileInformation {
     bool hasLoop { false };
     double sampleRate { config::defaultSampleRate };
     int numChannels { 0 };
+    absl::optional<WavetableInfo> wavetable;
 };
 
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
