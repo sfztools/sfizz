@@ -757,11 +757,15 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
                 break;
 
             case 1: // PM synthesis
-                return; // Note(jpc): not yet implemented
+                // Note(jpc): not implemented, just do FM instead
+                goto fm_synthesis;
                 break;
 
             case 2: // FM synthesis
-                return; // Note(jpc): not yet implemented
+            fm_synthesis:
+                fill(*detuneSpan, 1.0f);
+                multiplyAdd<float>(*modulatorSpan, *frequencies, *frequencies);
+                oscCar.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), buffer.getNumFrames());
                 break;
             }
 
