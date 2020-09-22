@@ -72,8 +72,8 @@ namespace Default
     constexpr Range<float> oscillatorDetuneRange { -9600, 9600 };
     constexpr Range<float> oscillatorDetuneCCRange { -9600, 9600 };
     constexpr float oscillatorModDepth { 0 };
-    constexpr Range<float> oscillatorModDepthRange { 0, 100 };
-    constexpr Range<float> oscillatorModDepthCCRange { 0, 100 };
+    constexpr Range<float> oscillatorModDepthRange { 0, 10000 }; // depth%, allowed to be >100 for FM
+    constexpr Range<float> oscillatorModDepthCCRange { 0, 10000 };
     constexpr int oscillatorQuality { 1 };
     constexpr Range<int> oscillatorQualityRange { 0, 3 };
 
