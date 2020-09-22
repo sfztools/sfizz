@@ -153,6 +153,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("oscillator_detune"):
         setValueFromOpcode(opcode, oscillatorDetune, Default::oscillatorDetuneRange);
         break;
+    case_any_ccN("oscillator_detune"):
+        processGenericCc(opcode, Default::oscillatorDetuneCCRange, ModKey::createNXYZ(ModId::OscillatorDetune, id));
+        break;
     case hash("oscillator_quality"):
         if (opcode.value == "-1")
             oscillatorQuality.reset();

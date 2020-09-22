@@ -60,7 +60,7 @@ void WavetableOscillator::processSingle(float frequency, float detuneRatio, floa
 }
 
 template <InterpolatorModel M>
-void WavetableOscillator::processModulatedSingle(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+void WavetableOscillator::processModulatedSingle(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes)
 {
     float phase = _phase;
     float sampleInterval = _sampleInterval;
@@ -70,7 +70,7 @@ void WavetableOscillator::processModulatedSingle(const float* frequencies, float
 
     for (unsigned i = 0; i < nframes; ++i) {
         float frequency = frequencies[i];
-        float phaseInc = frequency * (detuneRatio * sampleInterval);
+        float phaseInc = frequency * (detuneRatios[i] * sampleInterval);
         absl::Span<const float> table = multi.getTableForFrequency(frequency);
 
         float position = phase * tableSize;
@@ -111,7 +111,7 @@ void WavetableOscillator::processDual(float frequency, float detuneRatio, float*
 }
 
 template <InterpolatorModel M>
-void WavetableOscillator::processModulatedDual(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+void WavetableOscillator::processModulatedDual(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes)
 {
     float phase = _phase;
     float sampleInterval = _sampleInterval;
@@ -121,7 +121,7 @@ void WavetableOscillator::processModulatedDual(const float* frequencies, float d
 
     for (unsigned i = 0; i < nframes; ++i) {
         float frequency = frequencies[i];
-        float phaseInc = frequency * (detuneRatio * sampleInterval);
+        float phaseInc = frequency * (detuneRatios[i] * sampleInterval);
 
         WavetableMulti::DualTable dt = multi.getInterpolationPairForFrequency(frequency);
 
@@ -159,22 +159,22 @@ void WavetableOscillator::process(float frequency, float detuneRatio, float* out
     }
 }
 
-void WavetableOscillator::processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes)
+void WavetableOscillator::processModulated(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes)
 {
     int quality = clamp(_quality, 0, 3);
 
     switch (quality) {
     case 0:
-        processModulatedSingle<kInterpolatorNearest>(frequencies, detuneRatio, output, nframes);
+        processModulatedSingle<kInterpolatorNearest>(frequencies, detuneRatios, output, nframes);
         break;
     case 1:
-        processModulatedSingle<kInterpolatorLinear>(frequencies, detuneRatio, output, nframes);
+        processModulatedSingle<kInterpolatorLinear>(frequencies, detuneRatios, output, nframes);
         break;
     case 2:
-        processModulatedSingle<kInterpolatorBspline3>(frequencies, detuneRatio, output, nframes);
+        processModulatedSingle<kInterpolatorBspline3>(frequencies, detuneRatios, output, nframes);
         break;
     case 3:
-        processModulatedDual<kInterpolatorBspline3>(frequencies, detuneRatio, output, nframes);
+        processModulatedDual<kInterpolatorBspline3>(frequencies, detuneRatios, output, nframes);
         break;
     }
 }
