@@ -6,10 +6,14 @@
 
 #pragma once
 #include "ghc/fs_std.hpp"
-#include <sndfile.h>
 #include <array>
 #include <memory>
 #include <cstdio>
+#if defined(_WIN32)
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#include <windows.h>
+#endif
+#include <sndfile.h>
 
 namespace sfz {
 
