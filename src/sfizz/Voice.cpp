@@ -58,36 +58,30 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     if (delay < 0)
         delay = 0;
 
-    if (region->isGenerator()) {
+    if (region->isOscillator()) {
         const WavetableMulti* wave = nullptr;
-        switch (hash(region->sampleId.filename())) {
-        default:
-        case hash("*silence"):
-            break;
-        case hash("*sine"):
-            wave = resources.wavePool.getWaveSin();
-            break;
-        case hash("*triangle"): // fallthrough
-        case hash("*tri"):
-            wave = resources.wavePool.getWaveTriangle();
-            break;
-        case hash("*square"):
-            wave = resources.wavePool.getWaveSquare();
-            break;
-        case hash("*saw"):
-            wave = resources.wavePool.getWaveSaw();
-            break;
+        if (!region->isGenerator())
+            wave = resources.wavePool.getFileWave(region->sampleId.filename());
+        else {
+            switch (hash(region->sampleId.filename())) {
+            default:
+            case hash("*silence"):
+                break;
+            case hash("*sine"):
+                wave = resources.wavePool.getWaveSin();
+                break;
+            case hash("*triangle"): // fallthrough
+            case hash("*tri"):
+                wave = resources.wavePool.getWaveTriangle();
+                break;
+            case hash("*square"):
+                wave = resources.wavePool.getWaveSquare();
+                break;
+            case hash("*saw"):
+                wave = resources.wavePool.getWaveSaw();
+                break;
+            }
         }
-        const float phase = region->getPhase();
-        const int quality = region->oscillatorQuality.value_or(Default::oscillatorQuality);
-        for (WavetableOscillator& osc : waveOscillators) {
-            osc.setWavetable(wave);
-            osc.setPhase(phase);
-            osc.setQuality(quality);
-        }
-        setupOscillatorUnison();
-    } else if (region->oscillator) {
-        const WavetableMulti* wave = resources.wavePool.getFileWave(region->sampleId.filename());
         const float phase = region->getPhase();
         const int quality = region->oscillatorQuality.value_or(Default::oscillatorQuality);
         for (WavetableOscillator& osc : waveOscillators) {
@@ -276,7 +270,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Fill buffer with raw data
         ScopedTiming logger { dataDuration };
-        if (region->isGenerator() || region->oscillator)
+        if (region->isOscillator())
             fillWithGenerator(delayed_buffer);
         else
             fillWithData(delayed_buffer);

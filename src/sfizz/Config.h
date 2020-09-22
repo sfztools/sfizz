@@ -114,6 +114,11 @@ namespace config {
     static constexpr double amplitudeSaw = 0.8164965809277261; // sqrt(2)/sqrt(3)
     static constexpr double amplitudeSquare = 0.8164965809277261; // should have been sqrt(2)?
     /**
+       Frame count high limit, for automatically loading a sound file as wavetable.
+       Set to 3000 according to Cakewalk.
+     */
+    static constexpr unsigned wavetableMaxFrames = 3000;
+    /**
        Background file loading
      */
     static constexpr int backgroundLoaderPthreadPriority = 50; // expressed in %

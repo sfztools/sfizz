@@ -270,37 +270,90 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 {
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels_multi.sfz");
-    REQUIRE(synth.getNumRegions() == 6);
+    REQUIRE(synth.getNumRegions() == 10);
 
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "*sine");
-    REQUIRE(!synth.getRegionView(0)->isStereo());
-    REQUIRE(synth.getRegionView(0)->isGenerator());
-    REQUIRE(!synth.getRegionView(0)->oscillator);
+    int regionNumber = 0;
+    const Region* region = nullptr;
 
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "*sine");
-    REQUIRE(synth.getRegionView(1)->isStereo());
-    REQUIRE(synth.getRegionView(1)->isGenerator());
-    REQUIRE(!synth.getRegionView(1)->oscillator);
+    // generator only
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(!region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
 
-    REQUIRE(synth.getRegionView(2)->sampleId.filename() == "ramp_wave.wav");
-    REQUIRE(!synth.getRegionView(2)->isStereo());
-    REQUIRE(!synth.getRegionView(2)->isGenerator());
-    REQUIRE(synth.getRegionView(2)->oscillator);
+    // generator with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
 
-    REQUIRE(synth.getRegionView(3)->sampleId.filename() == "ramp_wave.wav");
-    REQUIRE(synth.getRegionView(3)->isStereo());
-    REQUIRE(!synth.getRegionView(3)->isGenerator());
-    REQUIRE(synth.getRegionView(3)->oscillator);
+    // explicit wavetable
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::On);
 
-    REQUIRE(synth.getRegionView(4)->sampleId.filename() == "*sine");
-    REQUIRE(!synth.getRegionView(4)->isStereo());
-    REQUIRE(synth.getRegionView(4)->isGenerator());
-    REQUIRE(!synth.getRegionView(4)->oscillator);
+    // explicit wavetable with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::On);
 
-    REQUIRE(synth.getRegionView(5)->sampleId.filename() == "*sine");
-    REQUIRE(!synth.getRegionView(5)->isStereo());
-    REQUIRE(synth.getRegionView(5)->isGenerator());
-    REQUIRE(!synth.getRegionView(5)->oscillator);
+    // explicit disabled wavetable
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Off);
+
+    // explicit disabled wavetable with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Off);
+
+    // implicit wavetable (sound file < 3000 frames)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+
+    // implicit non-wavetable (sound file >= 3000 frames)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "snare.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+
+    // generator with multi=1 (single)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(!region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+
+    // generator with multi=2 (ring modulation)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(!region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
 }
 
 TEST_CASE("[Files] sw_default")

@@ -25,7 +25,6 @@
 
 #include "FilePool.h"
 #include "AudioReader.h"
-#include "FileMetadata.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
@@ -218,11 +217,19 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
 
     SF_INSTRUMENT instrumentInfo {};
 
+    FileMetadataReader mdReader;
+    bool mdReaderOpened = mdReader.open(file);
+
     if (!reader->getInstrument(&instrumentInfo)) {
         // if no instrument, then try extracting from embedded RIFF chunks (flac)
-        FileMetadataReader mdReader;
-        if (mdReader.open(file))
+        if (mdReaderOpened)
             mdReader.extractRiffInstrument(instrumentInfo);
+    }
+
+    if (mdReaderOpened) {
+        WavetableInfo wt;
+        if (mdReader.extractWavetableInfo(wt))
+            returnedValue.wavetable = wt;
     }
 
     if (!fileId.isReverse()) {
