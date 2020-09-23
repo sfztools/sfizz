@@ -297,6 +297,18 @@ public:
      */
     void setMaxFlexEGsPerVoice(size_t numFlexEGs);
     /**
+     * @brief Set whether SFZv1 pitch EG is enabled on this voice
+     *
+     * @param havePitchEG
+     */
+    void setPitchEGEnabledPerVoice(bool havePitchEG);
+    /**
+     * @brief Set whether SFZv1 filter EG is enabled on this voice
+     *
+     * @param haveFilterEG
+     */
+    void setFilterEGEnabledPerVoice(bool haveFilterEG);
+    /**
      * @brief Release the voice after a given delay
      *
      * @param delay
@@ -323,6 +335,20 @@ public:
     Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
     Duration getLastFilterDuration() const noexcept { return filterDuration; }
     Duration getLastPanningDuration() const noexcept { return panningDuration; }
+
+    /**
+     * @brief Get the SFZv1 pitch EG, if existing
+     */
+    ADSREnvelope<float>* getPitchEG() { return egPitch.get(); }
+    /**
+     * @brief Get the SFZv1 filter EG, if existing
+     */
+    ADSREnvelope<float>* getFilterEG() { return egFilter.get(); }
+
+    /**
+     * @brief Get the trigger event
+     */
+    const TriggerEvent& getTriggerEvent() { return triggerEvent; }
 
 private:
     /**
@@ -462,6 +488,8 @@ private:
     std::vector<std::unique_ptr<FlexEnvelope>> flexEGs;
 
     ADSREnvelope<float> egAmplitude;
+    std::unique_ptr<ADSREnvelope<float>> egPitch;
+    std::unique_ptr<ADSREnvelope<float>> egFilter;
     float bendStepFactor { centsFactor(1) };
 
     WavetableOscillator waveOscillators[config::oscillatorsPerVoice];

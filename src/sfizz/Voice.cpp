@@ -903,6 +903,22 @@ void sfz::Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
     }
 }
 
+void sfz::Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
+{
+    if (havePitchEG)
+        egPitch.reset(new ADSREnvelope<float>);
+    else
+        egPitch.reset();
+}
+
+void sfz::Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
+{
+    if (haveFilterEG)
+        egFilter.reset(new ADSREnvelope<float>);
+    else
+        egFilter.reset();
+}
+
 void sfz::Voice::setupOscillatorUnison()
 {
     const int m = region->oscillatorMulti;

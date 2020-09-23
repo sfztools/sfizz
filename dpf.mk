@@ -65,6 +65,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModKey.cpp \
 	src/sfizz/modulations/ModKeyHash.cpp \
 	src/sfizz/modulations/ModMatrix.cpp \
+	src/sfizz/modulations/sources/ADSREnvelope.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
 	src/sfizz/modulations/sources/FlexEGDescription.cpp \
 	src/sfizz/modulations/sources/FlexEnvelope.cpp \

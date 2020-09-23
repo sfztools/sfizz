@@ -35,6 +35,7 @@ set (SFIZZ_HEADERS
     sfizz/modulations/ModKeyHash.h
     sfizz/modulations/ModMatrix.h
     sfizz/modulations/ModGenerator.h
+    sfizz/modulations/sources/ADSREnvelope.h
     sfizz/modulations/sources/Controller.h
     sfizz/modulations/sources/FlexEnvelope.h
     sfizz/modulations/sources/LFO.h
@@ -151,6 +152,7 @@ set (SFIZZ_SOURCES
     sfizz/modulations/ModMatrix.cpp
     sfizz/modulations/sources/Controller.cpp
     sfizz/modulations/sources/FlexEnvelope.cpp
+    sfizz/modulations/sources/ADSREnvelope.cpp
     sfizz/modulations/sources/LFO.cpp
     sfizz/utility/SpinMutex.cpp
     sfizz/effects/Nothing.cpp

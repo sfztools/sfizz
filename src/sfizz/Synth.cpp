@@ -19,6 +19,7 @@
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/LFO.h"
 #include "modulations/sources/FlexEnvelope.h"
+#include "modulations/sources/ADSREnvelope.h"
 #include "utility/XmlHelpers.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
@@ -49,6 +50,7 @@ sfz::Synth::Synth(int numVoices)
     genController.reset(new ControllerSource(resources));
     genLFO.reset(new LFOSource(*this));
     genFlexEnvelope.reset(new FlexEnvelopeSource(*this));
+    genADSREnvelope.reset(new ADSREnvelopeSource(*this));
 }
 
 sfz::Synth::~Synth()
@@ -489,6 +491,8 @@ void sfz::Synth::finalizeSfzLoad()
     size_t maxEQs { 0 };
     size_t maxLFOs { 0 };
     size_t maxFlexEGs { 0 };
+    bool havePitchEG { false };
+    bool haveFilterEG { false };
 
     FlexEGs::clearUnusedCurves();
 
@@ -613,6 +617,8 @@ void sfz::Synth::finalizeSfzLoad()
         maxEQs = max(maxEQs, region->equalizers.size());
         maxLFOs = max(maxLFOs, region->lfos.size());
         maxFlexEGs = max(maxFlexEGs, region->flexEGs.size());
+        havePitchEG = havePitchEG || region->pitchEG != absl::nullopt;
+        haveFilterEG = haveFilterEG || region->filterEG != absl::nullopt;
 
         ++currentRegionIndex;
     }
@@ -624,6 +630,8 @@ void sfz::Synth::finalizeSfzLoad()
     settingsPerVoice.maxEQs = maxEQs;
     settingsPerVoice.maxLFOs = maxLFOs;
     settingsPerVoice.maxFlexEGs = maxFlexEGs;
+    settingsPerVoice.havePitchEG = havePitchEG;
+    settingsPerVoice.haveFilterEG = haveFilterEG;
 
     applySettingsPerVoice();
 
@@ -1499,6 +1507,8 @@ void sfz::Synth::applySettingsPerVoice()
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
         voice->setMaxLFOsPerVoice(settingsPerVoice.maxLFOs);
         voice->setMaxFlexEGsPerVoice(settingsPerVoice.maxFlexEGs);
+        voice->setPitchEGEnabledPerVoice(settingsPerVoice.havePitchEG);
+        voice->setFilterEGEnabledPerVoice(settingsPerVoice.haveFilterEG);
     }
 }
 
@@ -1519,6 +1529,10 @@ void sfz::Synth::setupModMatrix()
                 break;
             case ModId::Envelope:
                 gen = genFlexEnvelope.get();
+                break;
+            case ModId::PitchEG:
+            case ModId::FilEG:
+                gen = genADSREnvelope.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");
