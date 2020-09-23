@@ -461,7 +461,7 @@ private:
     std::vector<std::unique_ptr<LFO>> lfos;
     std::vector<std::unique_ptr<FlexEnvelope>> flexEGs;
 
-    ADSREnvelope<float> egEnvelope;
+    ADSREnvelope<float> egAmplitude;
     float bendStepFactor { centsFactor(1) };
 
     WavetableOscillator waveOscillators[config::oscillatorsPerVoice];
