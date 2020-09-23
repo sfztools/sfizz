@@ -99,6 +99,8 @@ std::string ModKey::toString() const
         return absl::StrCat("EqFrequency {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::EqBandwidth:
         return absl::StrCat("EqBandwidth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::OscillatorDetune:
+        return absl::StrCat("OscillatorDetune {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};

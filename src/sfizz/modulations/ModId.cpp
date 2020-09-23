@@ -56,6 +56,8 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::EqBandwidth:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::OscillatorDetune:
+        return kModIsPerVoice|kModIsAdditive;
 
         // unknown
     default:

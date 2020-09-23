@@ -68,6 +68,7 @@ namespace Default
     constexpr Range<int> oscillatorMultiRange { 1, config::oscillatorsPerVoice };
     constexpr float oscillatorDetune { 0 };
     constexpr Range<float> oscillatorDetuneRange { -9600, 9600 };
+    constexpr Range<float> oscillatorDetuneCCRange { -9600, 9600 };
     constexpr int oscillatorQuality { 1 };
     constexpr Range<int> oscillatorQualityRange { 0, 3 };
 

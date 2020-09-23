@@ -71,20 +71,20 @@ public:
     /**
        Compute a cycle of the oscillator, with varying frequency.
      */
-    void processModulated(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
+    void processModulated(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes);
 
 private:
     // single-table interpolation
     template <InterpolatorModel M>
     void processSingle(float frequency, float detuneRatio, float* output, unsigned nframes);
     template <InterpolatorModel M>
-    void processModulatedSingle(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
+    void processModulatedSingle(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes);
 
     // dual-table interpolation
     template <InterpolatorModel M>
     void processDual(float frequency, float detuneRatio, float* output, unsigned nframes);
     template <InterpolatorModel M>
-    void processModulatedDual(const float* frequencies, float detuneRatio, float* output, unsigned nframes);
+    void processModulatedDual(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes);
 
 private:
     float _phase = 0.0f;

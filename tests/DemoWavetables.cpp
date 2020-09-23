@@ -58,6 +58,7 @@ private:
     float fSweepIncrement = 0.0;
 
     std::unique_ptr<float[]> fTmpFrequency;
+    std::unique_ptr<float[]> fTmpDetune;
 
     jack_client_u fClient;
     jack_port_t* fPorts[2] = {};
@@ -88,6 +89,7 @@ bool DemoApp::initSound()
 
     unsigned bufferSize = jack_get_buffer_size(client);
     fTmpFrequency.reset(new float[bufferSize]);
+    fTmpDetune.reset(new float[bufferSize]);
 
     fMulti[0] = sfz::WavetableMulti::createForHarmonicProfile(
         sfz::HarmonicProfile::getSine(), sfz::config::amplitudeSine, 2048);
@@ -188,8 +190,12 @@ int DemoApp::processAudio(jack_nframes_t nframes, void* cbdata)
     }
     self->fSweepCurrent = sweepCurrent;
 
+    // fill the detune value
+    float* detune = self->fTmpDetune.get();
+    std::fill(detune, detune + nframes, 1.0f);
+
     // compute oscillator
-    osc.processModulated(frequency, 1.0, left, nframes);
+    osc.processModulated(frequency, detune, left, nframes);
     std::memcpy(right, left, nframes * sizeof(float));
 
     return 0;

@@ -43,6 +43,7 @@ enum class ModId : int {
     EqGain,
     EqFrequency,
     EqBandwidth,
+    OscillatorDetune,
 
     _TargetsEnd,
     // [/targets] --------------------------------------------------------------
