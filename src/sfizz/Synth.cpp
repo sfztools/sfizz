@@ -154,10 +154,10 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     constexpr unsigned defaultSmoothness = 10;
     lastRegion->getOrCreateConnection(
         ModKey::createCC(7, 4, defaultSmoothness, 100, 0),
-        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id));
+        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 1.0f;
     lastRegion->getOrCreateConnection(
         ModKey::createCC(10, 1, defaultSmoothness, 100, 0),
-        ModKey::createNXYZ(ModId::Pan, lastRegion->id));
+        ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 1.0f;
 
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
