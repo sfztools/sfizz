@@ -661,8 +661,6 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     } else {
         const auto numFrames = buffer.getNumFrames();
 
-        buffer.fill(0.0f);
-
         auto frequencies = resources.bufferPool.getBuffer(numFrames);
         if (!frequencies)
             return;
