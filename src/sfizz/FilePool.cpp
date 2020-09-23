@@ -47,7 +47,7 @@
 #endif
 #include "threadpool/ThreadPool.h"
 using namespace std::placeholders;
-static ThreadPool threadPool { sfz::config::numBackgroundThreads };
+static ThreadPool threadPool { std::thread::hardware_concurrency() > 2 ? std::thread::hardware_concurrency() - 2 : 1 };
 
 void readBaseFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, uint32_t numFrames)
 {
