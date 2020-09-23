@@ -673,17 +673,27 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         if (!detuneSpan)
             return;
 
-        if (waveUnisonSize == 1) {
-            WavetableOscillator& osc = waveOscillators[0];
-            fill(*detuneSpan, 1.0f);
-            osc.processModulated(frequencies->data(), detuneSpan->data(), leftSpan.data(), buffer.getNumFrames());
-            copy<float>(leftSpan, rightSpan);
-        }
-        else {
-            buffer.fill(0.0f);
+        const int oscillatorMode = region->oscillatorMode;
+        const int oscillatorMulti = region->oscillatorMulti;
 
+        if (oscillatorMode <= 0 && oscillatorMulti < 2) {
+            // single oscillator
             auto tempSpan = resources.bufferPool.getBuffer(numFrames);
             if (!tempSpan)
+                return;
+
+            WavetableOscillator& osc = waveOscillators[0];
+            fill(*detuneSpan, 1.0f);
+            osc.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), buffer.getNumFrames());
+            copy<float>(*tempSpan, leftSpan);
+            copy<float>(*tempSpan, rightSpan);
+        }
+        else if (oscillatorMode <= 0 && oscillatorMulti >= 3) {
+            // unison oscillator
+            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
+            auto tempLeftSpan = resources.bufferPool.getBuffer(numFrames);
+            auto tempRightSpan = resources.bufferPool.getBuffer(numFrames);
+            if (!tempSpan || !tempLeftSpan || !tempRightSpan)
                 return;
 
             const float* detuneMod = resources.modMatrix.getModulation(oscillatorDetuneTarget);
@@ -697,9 +707,76 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
                     applyGain1(waveDetuneRatio[u], *detuneSpan);
                 }
                 osc.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), numFrames);
-                multiplyAdd1<float>(waveLeftGain[u], *tempSpan, leftSpan);
-                multiplyAdd1<float>(waveRightGain[u], *tempSpan, rightSpan);
+                if (u == 0) {
+                    applyGain1<float>(waveLeftGain[u], *tempSpan, *tempLeftSpan);
+                    applyGain1<float>(waveRightGain[u], *tempSpan, *tempRightSpan);
+                }
+                else {
+                    multiplyAdd1<float>(waveLeftGain[u], *tempSpan, *tempLeftSpan);
+                    multiplyAdd1<float>(waveRightGain[u], *tempSpan, *tempRightSpan);
+                }
             }
+
+            copy<float>(*tempLeftSpan, leftSpan);
+            copy<float>(*tempRightSpan, rightSpan);
+        }
+        else {
+            // modulated oscillator
+            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
+            if (!tempSpan)
+                return;
+
+            WavetableOscillator& oscCar = waveOscillators[0];
+            WavetableOscillator& oscMod = waveOscillators[1];
+
+            // compute the modulator
+            auto modulatorSpan = resources.bufferPool.getBuffer(numFrames);
+            if (!modulatorSpan)
+                return;
+
+            const float* detuneMod = resources.modMatrix.getModulation(oscillatorDetuneTarget);
+            if (!detuneMod)
+                fill(*detuneSpan, waveDetuneRatio[1]);
+            else {
+                for (size_t i = 0; i < numFrames; ++i)
+                    (*detuneSpan)[i] = centsFactor(detuneMod[i]);
+                applyGain1(waveDetuneRatio[1], *detuneSpan);
+            }
+
+            oscMod.processModulated(frequencies->data(), detuneSpan->data(), modulatorSpan->data(), numFrames);
+
+            // scale the modulator
+            const float oscillatorModDepth = region->oscillatorModDepth;
+            if (oscillatorModDepth != 1.0f)
+                applyGain1(oscillatorModDepth, *modulatorSpan);
+            const float* modDepthMod = resources.modMatrix.getModulation(oscillatorModDepthTarget);
+            if (modDepthMod)
+                multiplyMul1(0.01f, absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
+
+            // compute carrier×modulator
+            switch (region->oscillatorMode) {
+            case 0: // RM synthesis
+            default:
+                fill(*detuneSpan, 1.0f);
+                oscCar.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), buffer.getNumFrames());
+                applyGain<float>(*modulatorSpan, *tempSpan);
+                break;
+
+            case 1: // PM synthesis
+                // Note(jpc): not implemented, just do FM instead
+                goto fm_synthesis;
+                break;
+
+            case 2: // FM synthesis
+            fm_synthesis:
+                fill(*detuneSpan, 1.0f);
+                multiplyAdd<float>(*modulatorSpan, *frequencies, *frequencies);
+                oscCar.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), buffer.getNumFrames());
+                break;
+            }
+
+            copy<float>(*tempSpan, leftSpan);
+            copy<float>(*tempSpan, rightSpan);
         }
     }
 
@@ -828,16 +905,21 @@ void sfz::Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
 
 void sfz::Voice::setupOscillatorUnison()
 {
-    int m = region->oscillatorMulti;
-    float d = region->oscillatorDetune;
+    const int m = region->oscillatorMulti;
+    const float d = region->oscillatorDetune;
 
     // 3-9: unison mode, 1: normal/RM, 2: PM/FM
-    // TODO(jpc) RM/FM/PM synthesis
-    if (m < 3) {
+    if (m < 3 || region->oscillatorMode > 0) {
         waveUnisonSize = 1;
+        // carrier
         waveDetuneRatio[0] = 1.0;
         waveLeftGain[0] = 1.0;
         waveRightGain[0] = 1.0;
+        // modulator
+        const float modDepth = region->oscillatorModDepth;
+        waveDetuneRatio[1] = centsFactor(d);
+        waveLeftGain[1] = modDepth;
+        waveRightGain[1] = modDepth;
         return;
     }
 
@@ -856,7 +938,7 @@ void sfz::Voice::setupOscillatorUnison()
 
     // detune (ratio)
     for (int i = 0; i < m; ++i)
-        waveDetuneRatio[i] = std::exp2(detunes[i] * (0.01f / 12.0f));
+        waveDetuneRatio[i] = centsFactor(detunes[i]);
 
     // gains
     waveLeftGain[0] = 0.0;
@@ -935,4 +1017,5 @@ void sfz::Voice::saveModulationTargets(const Region* region) noexcept
     widthTarget = mm.findTarget(ModKey::createNXYZ(ModId::Width, region->getId()));
     pitchTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pitch, region->getId()));
     oscillatorDetuneTarget = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorDetune, region->getId()));
+    oscillatorModDepthTarget = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorModDepth, region->getId()));
 }

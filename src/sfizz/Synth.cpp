@@ -797,7 +797,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
-        tempSpan->fill(0.0f);
         tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
 

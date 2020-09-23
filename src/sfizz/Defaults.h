@@ -64,11 +64,16 @@ namespace Default
     // Wavetable oscillator
     constexpr float oscillatorPhase { 0.0 };
     constexpr Range<float> oscillatorPhaseRange { -1.0, 360.0 };
+    constexpr int oscillatorMode { 0 };
     constexpr int oscillatorMulti { 1 };
+    constexpr Range<int> oscillatorModeRange { 0, 2 };
     constexpr Range<int> oscillatorMultiRange { 1, config::oscillatorsPerVoice };
     constexpr float oscillatorDetune { 0 };
     constexpr Range<float> oscillatorDetuneRange { -9600, 9600 };
     constexpr Range<float> oscillatorDetuneCCRange { -9600, 9600 };
+    constexpr float oscillatorModDepth { 0 };
+    constexpr Range<float> oscillatorModDepthRange { 0, 10000 }; // depth%, allowed to be >100 for FM
+    constexpr Range<float> oscillatorModDepthCCRange { 0, 10000 };
     constexpr int oscillatorQuality { 1 };
     constexpr Range<int> oscillatorQualityRange { 0, 3 };
 

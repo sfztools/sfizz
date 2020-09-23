@@ -36,6 +36,14 @@ void WavetableOscillator::setPhase(float phase)
     _phase = phase;
 }
 
+static float incrementAndWrap(float phase, float inc)
+{
+    phase += inc;
+    phase -= static_cast<int>(phase);
+    phase += phase < 0.0f; // in case of negative frequencies
+    return phase;
+}
+
 template <InterpolatorModel M>
 void WavetableOscillator::processSingle(float frequency, float detuneRatio, float* output, unsigned nframes)
 {
@@ -52,8 +60,7 @@ void WavetableOscillator::processSingle(float frequency, float detuneRatio, floa
         float frac = position - index;
         output[i] = interpolate<M>(&table[index], frac);
 
-        phase += phaseInc;
-        phase -= static_cast<int>(phase);
+        phase = incrementAndWrap(phase, phaseInc);
     }
 
     _phase = phase;
@@ -78,8 +85,7 @@ void WavetableOscillator::processModulatedSingle(const float* frequencies, const
         float frac = position - index;
         output[i] = interpolate<M>(&table[index], frac);
 
-        phase += phaseInc;
-        phase -= static_cast<int>(phase);
+        phase = incrementAndWrap(phase, phaseInc);
     }
 
     _phase = phase;
@@ -103,8 +109,7 @@ void WavetableOscillator::processDual(float frequency, float detuneRatio, float*
             (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
             dt.delta * interpolate<M>(&dt.table2[index], frac);
 
-        phase += phaseInc;
-        phase -= static_cast<int>(phase);
+        phase = incrementAndWrap(phase, phaseInc);
     }
 
     _phase = phase;
@@ -132,8 +137,7 @@ void WavetableOscillator::processModulatedDual(const float* frequencies, const f
             (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
             dt.delta * interpolate<M>(&dt.table2[index], frac);
 
-        phase += phaseInc;
-        phase -= static_cast<int>(phase);
+        phase = incrementAndWrap(phase, phaseInc);
     }
 
     _phase = phase;
