@@ -50,6 +50,9 @@ struct Region {
 
         gainToEffect.reserve(5); // sufficient room for main and fx1-4
         gainToEffect.push_back(1.0); // contribute 100% into the main bus
+
+        // Default amplitude release
+        amplitudeEG.release = Default::ampegRelease;
     }
     Region(const Region&) = default;
     ~Region() = default;
