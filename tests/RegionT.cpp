@@ -1045,7 +1045,7 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.amplitudeEG.decay == 0.0f);
         REQUIRE(region.amplitudeEG.delay == 0.0f);
         REQUIRE(region.amplitudeEG.hold == 0.0f);
-        REQUIRE(region.amplitudeEG.release == 0.0f);
+        REQUIRE(region.amplitudeEG.release == 0.001f);
         REQUIRE(region.amplitudeEG.start == 0.0f);
         REQUIRE(region.amplitudeEG.sustain == 100.0f);
         REQUIRE(region.amplitudeEG.depth == 0);

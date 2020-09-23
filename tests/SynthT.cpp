@@ -1369,3 +1369,14 @@ TEST_CASE("[Synth] Initial values of CC")
     REQUIRE(synth.getHdccInit(111) == Approx(0.1234f));
     REQUIRE(synth.getHdccInit(112) == Approx(77.0f / 127));
 }
+
+TEST_CASE("[Synth] Default ampeg_release")
+{
+    sfz::Synth synth;
+
+    synth.loadSfzString(fs::current_path() / "default_release.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    REQUIRE(synth.getRegionView(0)->amplitudeEG.release > 0.0005f);
+}
