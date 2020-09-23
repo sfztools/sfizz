@@ -693,8 +693,9 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         else if (oscillatorMode <= 0 && oscillatorMulti >= 3) {
             // unison oscillator
             auto tempSpan = resources.bufferPool.getBuffer(numFrames);
-            auto temp2Span = resources.bufferPool.getBuffer(numFrames);
-            if (!tempSpan || !temp2Span)
+            auto tempLeftSpan = resources.bufferPool.getBuffer(numFrames);
+            auto tempRightSpan = resources.bufferPool.getBuffer(numFrames);
+            if (!tempSpan || !tempLeftSpan || !tempRightSpan)
                 return;
 
             const float* detuneMod = resources.modMatrix.getModulation(oscillatorDetuneTarget);
@@ -708,11 +709,18 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
                     applyGain1(waveDetuneRatio[u], *detuneSpan);
                 }
                 osc.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), numFrames);
-                multiplyAdd1<float>(waveLeftGain[u], *tempSpan, *temp2Span);
-                copy<float>(*temp2Span, leftSpan);
-                multiplyAdd1<float>(waveRightGain[u], *tempSpan, *temp2Span);
-                copy<float>(*temp2Span, rightSpan);
+                if (u == 0) {
+                    applyGain1<float>(waveLeftGain[u], *tempSpan, *tempLeftSpan);
+                    applyGain1<float>(waveRightGain[u], *tempSpan, *tempRightSpan);
+                }
+                else {
+                    multiplyAdd1<float>(waveLeftGain[u], *tempSpan, *tempLeftSpan);
+                    multiplyAdd1<float>(waveRightGain[u], *tempSpan, *tempRightSpan);
+                }
             }
+
+            copy<float>(*tempLeftSpan, leftSpan);
+            copy<float>(*tempRightSpan, rightSpan);
         }
         else {
             // modulated oscillator
