@@ -63,6 +63,8 @@ struct EGDescription {
     EGDescription(const EGDescription&) = default;
     EGDescription(EGDescription&&) = default;
     ~EGDescription() = default;
+    EGDescription& operator=(const EGDescription&) = default;
+    EGDescription& operator=(EGDescription&&) = default;
 
     float attack { Default::attack };
     float decay { Default::decay };
