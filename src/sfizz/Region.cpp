@@ -1186,6 +1186,58 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         parseEGopcode(opcode, amplitudeEG);
         break;
 
+    case hash("pitcheg_attack"):
+    case hash("pitcheg_decay"):
+    case hash("pitcheg_delay"):
+    case hash("pitcheg_hold"):
+    case hash("pitcheg_release"):
+    case hash("pitcheg_start"):
+    case hash("pitcheg_sustain"):
+    case hash("pitcheg_vel&attack"):
+    case hash("pitcheg_vel&decay"):
+    case hash("pitcheg_vel&delay"):
+    case hash("pitcheg_vel&hold"):
+    case hash("pitcheg_vel&release"):
+    case hash("pitcheg_vel&sustain"):
+    case hash("pitcheg_attack_oncc&"): // also pitcheg_attackcc&
+    case hash("pitcheg_decay_oncc&"): // also pitcheg_decaycc&
+    case hash("pitcheg_delay_oncc&"): // also pitcheg_delaycc&
+    case hash("pitcheg_hold_oncc&"): // also pitcheg_holdcc&
+    case hash("pitcheg_release_oncc&"): // also pitcheg_releasecc&
+    case hash("pitcheg_start_oncc&"): // also pitcheg_startcc&
+    case hash("pitcheg_sustain_oncc&"): // also pitcheg_sustaincc&
+        if (parseEGopcode(opcode, pitchEG))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::PitchEG, id),
+                ModKey::createNXYZ(ModId::Pitch, id));
+        break;
+
+    case hash("fileg_attack"):
+    case hash("fileg_decay"):
+    case hash("fileg_delay"):
+    case hash("fileg_hold"):
+    case hash("fileg_release"):
+    case hash("fileg_start"):
+    case hash("fileg_sustain"):
+    case hash("fileg_vel&attack"):
+    case hash("fileg_vel&decay"):
+    case hash("fileg_vel&delay"):
+    case hash("fileg_vel&hold"):
+    case hash("fileg_vel&release"):
+    case hash("fileg_vel&sustain"):
+    case hash("fileg_attack_oncc&"): // also fileg_attackcc&
+    case hash("fileg_decay_oncc&"): // also fileg_decaycc&
+    case hash("fileg_delay_oncc&"): // also fileg_delaycc&
+    case hash("fileg_hold_oncc&"): // also fileg_holdcc&
+    case hash("fileg_release_oncc&"): // also fileg_releasecc&
+    case hash("fileg_start_oncc&"): // also fileg_startcc&
+    case hash("fileg_sustain_oncc&"): // also fileg_sustaincc&
+        if (parseEGopcode(opcode, filterEG))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::FilEG, id),
+                ModKey::createNXYZ(ModId::FilCutoff, id));
+        break;
+
     // Flex envelopes
     case hash("eg&_dynamic"):
         {
@@ -1406,6 +1458,19 @@ bool sfz::Region::parseEGopcode(const Opcode& opcode, EGDescription& eg)
     return true;
 
     #undef case_any_eg
+}
+
+bool sfz::Region::parseEGopcode(const Opcode& opcode, absl::optional<EGDescription>& eg)
+{
+    bool create = eg == absl::nullopt;
+    if (create)
+        eg = EGDescription();
+
+    bool parsed = parseEGopcode(opcode, *eg);
+    if (!parsed && create)
+        eg = absl::nullopt;
+
+    return parsed;
 }
 
 bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, const ModKey& target)

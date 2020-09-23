@@ -1702,20 +1702,24 @@ void sfz::Synth::updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedC
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccAttack);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccRelease);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccDecay);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccDelay);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccHold);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccStart);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccSustain);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccAttack);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccRelease);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccDecay);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccDelay);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccHold);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccStart);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccSustain);
+    if (region.pitchEG) {
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDecay);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDelay);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccHold);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
+    }
+    if (region.filterEG) {
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccDecay);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccDelay);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccHold);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
+    }
     updateUsedCCsFromCCMap(usedCCs, region.ccConditions);
     updateUsedCCsFromCCMap(usedCCs, region.ccTriggers);
     updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCInRange);

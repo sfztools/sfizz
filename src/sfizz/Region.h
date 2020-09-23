@@ -267,6 +267,16 @@ struct Region {
      */
     bool parseEGopcode(const Opcode& opcode, EGDescription& eg);
     /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 EG:
+     * ampeg, pitcheg, fileg.
+     *
+     * @param opcode
+     * @param eg
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseEGopcode(const Opcode& opcode, absl::optional<EGDescription>& eg);
+    /**
      * @brief Process a generic CC opcode, and fill the modulation parameters.
      *
      * @param opcode
@@ -410,8 +420,8 @@ struct Region {
 
     // Envelopes
     EGDescription amplitudeEG;
-    EGDescription pitchEG;
-    EGDescription filterEG;
+    absl::optional<EGDescription> pitchEG;
+    absl::optional<EGDescription> filterEG;
 
     // Envelopes
     std::vector<FlexEGDescription> flexEGs;
@@ -431,7 +441,7 @@ struct Region {
     struct Connection {
         ModKey source;
         ModKey target;
-        float sourceDepth = 1.0f;
+        float sourceDepth = 0.0f;
     };
     std::vector<Connection> connections;
     Connection& getOrCreateConnection(const ModKey& source, const ModKey& target);
