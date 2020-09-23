@@ -231,6 +231,7 @@ namespace Default
 	constexpr float delayEG { 0 };
 	constexpr float hold { 0 };
 	constexpr float release { 0 };
+	constexpr float ampegRelease { 0.001 }; // Default release to avoid clicks
 	constexpr float vel2release { 0.0f };
 	constexpr float start { 0.0 };
 	constexpr float sustain { 100.0 };
