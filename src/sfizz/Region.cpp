@@ -1251,8 +1251,22 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = *value;
         break;
 
-        // TODO(jpc): pitcheg_vel2depth
-        // TODO(jpc): fileg_vel2depth
+    case hash("pitcheg_vel&depth"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        if (auto value = readOpcode(opcode.value, Default::pitchEgDepthRange))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::PitchEG, id),
+                ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = *value;
+        break;
+    case hash("fileg_vel&depth"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        if (auto value = readOpcode(opcode.value, Default::filterEgDepthRange))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::FilEG, id),
+                ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = *value;
+        break;
 
     // Flex envelopes
     case hash("eg&_dynamic"):

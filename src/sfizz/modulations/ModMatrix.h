@@ -92,9 +92,10 @@ public:
      * @param sourceId source of the connection
      * @param targetId target of the connection
      * @param sourceDepth amount which multiplies the source output
+     * @param velToDepth amount which full velocity adds to the source depth
      * @return true if the connection was successfully made, otherwise false
      */
-    bool connect(SourceId sourceId, TargetId targetId, float sourceDepth);
+    bool connect(SourceId sourceId, TargetId targetId, float sourceDepth, float velToDepth = 0.0f);
 
     /**
      * @brief Reinitialize modulation sources overall.
@@ -134,8 +135,9 @@ public:
      *
      * @param voiceId the identifier of the current voice
      * @param regionId the identifier of the region of the current voice
+     * @param triggerValue the velocity of the current voice
      */
-    void beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId);
+    void beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, float triggerValue);
 
     /**
      * @brief End modulation processing for a given voice.

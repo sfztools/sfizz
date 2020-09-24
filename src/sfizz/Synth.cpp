@@ -820,7 +820,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             if (voice->isFree())
                 continue;
 
-            mm.beginVoice(voice->getId(), voice->getRegion()->getId());
+            mm.beginVoice(voice->getId(), voice->getRegion()->getId(), voice->getTriggerEvent().value);
 
             activeVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);
@@ -1558,7 +1558,7 @@ void sfz::Synth::setupModMatrix()
                 continue;
             }
 
-            if (!mm.connect(source, target, conn.sourceDepth)) {
+            if (!mm.connect(source, target, conn.sourceDepth, conn.velToDepth)) {
                 DBG("[sfizz] Failed to connect modulation source and target");
                 ASSERTFALSE;
             }

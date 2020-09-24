@@ -442,6 +442,7 @@ struct Region {
         ModKey source;
         ModKey target;
         float sourceDepth = 0.0f;
+        float velToDepth = 0.0f;
     };
     std::vector<Connection> connections;
     Connection& getOrCreateConnection(const ModKey& source, const ModKey& target);
