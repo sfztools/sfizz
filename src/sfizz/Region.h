@@ -265,7 +265,7 @@ struct Region {
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool parseEGopcode(const Opcode& opcode, EGDescription& eg);
+    bool parseEGOpcode(const Opcode& opcode, EGDescription& eg);
     /**
      * @brief Parse a opcode which is specific to a particular SFZv1 EG:
      * ampeg, pitcheg, fileg.
@@ -275,7 +275,7 @@ struct Region {
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool parseEGopcode(const Opcode& opcode, absl::optional<EGDescription>& eg);
+    bool parseEGOpcode(const Opcode& opcode, absl::optional<EGDescription>& eg);
     /**
      * @brief Process a generic CC opcode, and fill the modulation parameters.
      *

@@ -1183,7 +1183,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("ampeg_release_oncc&"): // also ampeg_releasecc&
     case hash("ampeg_start_oncc&"): // also ampeg_startcc&
     case hash("ampeg_sustain_oncc&"): // also ampeg_sustaincc&
-        parseEGopcode(opcode, amplitudeEG);
+        parseEGOpcode(opcode, amplitudeEG);
         break;
 
     case hash("pitcheg_attack"):
@@ -1206,7 +1206,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("pitcheg_release_oncc&"): // also pitcheg_releasecc&
     case hash("pitcheg_start_oncc&"): // also pitcheg_startcc&
     case hash("pitcheg_sustain_oncc&"): // also pitcheg_sustaincc&
-        if (parseEGopcode(opcode, pitchEG))
+        if (parseEGOpcode(opcode, pitchEG))
             getOrCreateConnection(
                 ModKey::createNXYZ(ModId::PitchEG, id),
                 ModKey::createNXYZ(ModId::Pitch, id));
@@ -1232,7 +1232,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("fileg_release_oncc&"): // also fileg_releasecc&
     case hash("fileg_start_oncc&"): // also fileg_startcc&
     case hash("fileg_sustain_oncc&"): // also fileg_sustaincc&
-        if (parseEGopcode(opcode, filterEG))
+        if (parseEGOpcode(opcode, filterEG))
             getOrCreateConnection(
                 ModKey::createNXYZ(ModId::FilEG, id),
                 ModKey::createNXYZ(ModId::FilCutoff, id));
@@ -1352,7 +1352,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     return true;
 }
 
-bool sfz::Region::parseEGopcode(const Opcode& opcode, EGDescription& eg)
+bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
 {
     #define case_any_eg(param)                      \
         case hash("ampeg_" param):                  \
@@ -1476,13 +1476,13 @@ bool sfz::Region::parseEGopcode(const Opcode& opcode, EGDescription& eg)
     #undef case_any_eg
 }
 
-bool sfz::Region::parseEGopcode(const Opcode& opcode, absl::optional<EGDescription>& eg)
+bool sfz::Region::parseEGOpcode(const Opcode& opcode, absl::optional<EGDescription>& eg)
 {
     bool create = eg == absl::nullopt;
     if (create)
         eg = EGDescription();
 
-    bool parsed = parseEGopcode(opcode, *eg);
+    bool parsed = parseEGOpcode(opcode, *eg);
     if (!parsed && create)
         eg = absl::nullopt;
 
