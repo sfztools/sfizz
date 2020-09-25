@@ -1149,7 +1149,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("eg&_resonance&"):
         LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceModRange);
         break;
-    case hash("eg&_fil&_gain"):
+    case hash("eg&_fil&gain"):
         LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainModRange);
         break;
     case hash("eg&_eq&gain"):
