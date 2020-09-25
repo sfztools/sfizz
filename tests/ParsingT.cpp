@@ -673,14 +673,15 @@ TEST_CASE("[Parsing] Opcode value special character")
 R"(<region>
 sample=Alto-Flute-sus-C#4-PB-loop.wav
 <region>
-sample=foo=bar<quux.wav)");
+sample=foo=bar<group>)");
 
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
             {{"sample", "Alto-Flute-sus-C#4-PB-loop.wav"}},
-            {{"sample", "foo=bar<quux.wav"}},
+            {{"sample", "foo=bar"}},
+            {},
         };
         std::vector<std::string> expectedHeaders = {
-            "region", "region"
+            "region", "region", "group"
         };
         std::vector<sfz::Opcode> expectedOpcodes;
 

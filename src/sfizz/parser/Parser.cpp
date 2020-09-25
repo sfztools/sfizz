@@ -297,18 +297,20 @@ void Parser::processOpcode()
     for (size_t valueSize = valueRaw.size(); endPosition < valueSize;) {
         size_t i = endPosition + 1;
 
-        if (isSpaceChar(valueRaw[endPosition])) {
-            // check if the rest of the string is to consume or not
-            bool stop = false;
+        bool stop = false;
 
+        // if a "<" character is next, a header follows
+        if (valueRaw[endPosition] == '<')
+            stop = true;
+        // if space, check if the rest of the string is to consume or not
+        else if (isSpaceChar(valueRaw[endPosition])) {
             // consume space characters following
             while (i < valueSize && isSpaceChar(valueRaw[i]))
                 ++i;
-
             // if there aren't non-space characters following, do not extract
             if (i == valueSize)
                 stop = true;
-            // if a "=" or "<" character is next, a header or a directive follows
+            // if a "<" or "#" character is next, a header or a directive follows
             else if (valueRaw[i] == '<' || valueRaw[i] == '#')
                 stop = true;
             // if sequence of identifier chars and then "=", an opcode follows
@@ -319,10 +321,10 @@ void Parser::processOpcode()
                 if (i < valueSize && valueRaw[i] == '=')
                     stop = true;
             }
-
-            if (stop)
-                break;
         }
+
+        if (stop)
+            break;
 
         endPosition = i;
     }
