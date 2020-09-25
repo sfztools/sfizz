@@ -146,7 +146,7 @@ TEST_CASE("[Modulations] LFO Filter connections")
         lfo3_freq=2 lfo3_resonance=3
         lfo4_freq=0.5 lfo4_resonance1=4
         lfo5_freq=0.5 lfo5_resonance2=5
-        lfo6_freq=3 lfo6_fil1_gain=-1
+        lfo6_freq=3 lfo6_fil1gain=-1
     )");
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
@@ -170,7 +170,7 @@ TEST_CASE("[Modulations] EG Filter connections")
         eg3_time1=2 eg3_resonance=3
         eg4_time1=0.5 eg4_resonance1=4
         eg5_time1=0.5 eg5_resonance2=5
-        eg6_time1=3 eg6_fil1_gain=-1
+        eg6_time1=3 eg6_fil1gain=-1
     )");
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
