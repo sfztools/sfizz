@@ -38,6 +38,8 @@ public:
     CCMap(CCMap&&) = default;
     CCMap(const CCMap&) = default;
     ~CCMap() = default;
+    CCMap& operator=(CCMap&&) = default;
+    CCMap& operator=(const CCMap&) = default;
 
     /**
      * @brief Returns the held object at the index, or a default value if not present
@@ -105,7 +107,7 @@ private:
     // typename std::vector<std::pair<int, ValueType>>::iterator begin() { return container.begin(); }
     // typename std::vector<std::pair<int, ValueType>>::iterator end() { return container.end(); }
 
-    const ValueType defaultValue;
+    ValueType defaultValue;
     std::vector<CCData<ValueType>> container;
     LEAK_DETECTOR(CCMap);
 };

@@ -19,6 +19,7 @@
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/LFO.h"
 #include "modulations/sources/FlexEnvelope.h"
+#include "modulations/sources/ADSREnvelope.h"
 #include "utility/XmlHelpers.h"
 #include "pugixml.hpp"
 #include "absl/algorithm/container.h"
@@ -49,6 +50,7 @@ sfz::Synth::Synth(int numVoices)
     genController.reset(new ControllerSource(resources));
     genLFO.reset(new LFOSource(*this));
     genFlexEnvelope.reset(new FlexEnvelopeSource(*this));
+    genADSREnvelope.reset(new ADSREnvelopeSource(*this));
 }
 
 sfz::Synth::~Synth()
@@ -152,10 +154,10 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     constexpr unsigned defaultSmoothness = 10;
     lastRegion->getOrCreateConnection(
         ModKey::createCC(7, 4, defaultSmoothness, 100, 0),
-        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id));
+        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 1.0f;
     lastRegion->getOrCreateConnection(
         ModKey::createCC(10, 1, defaultSmoothness, 100, 0),
-        ModKey::createNXYZ(ModId::Pan, lastRegion->id));
+        ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 1.0f;
 
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
@@ -489,6 +491,8 @@ void sfz::Synth::finalizeSfzLoad()
     size_t maxEQs { 0 };
     size_t maxLFOs { 0 };
     size_t maxFlexEGs { 0 };
+    bool havePitchEG { false };
+    bool haveFilterEG { false };
 
     FlexEGs::clearUnusedCurves();
 
@@ -613,6 +617,8 @@ void sfz::Synth::finalizeSfzLoad()
         maxEQs = max(maxEQs, region->equalizers.size());
         maxLFOs = max(maxLFOs, region->lfos.size());
         maxFlexEGs = max(maxFlexEGs, region->flexEGs.size());
+        havePitchEG = havePitchEG || region->pitchEG != absl::nullopt;
+        haveFilterEG = haveFilterEG || region->filterEG != absl::nullopt;
 
         ++currentRegionIndex;
     }
@@ -624,6 +630,8 @@ void sfz::Synth::finalizeSfzLoad()
     settingsPerVoice.maxEQs = maxEQs;
     settingsPerVoice.maxLFOs = maxLFOs;
     settingsPerVoice.maxFlexEGs = maxFlexEGs;
+    settingsPerVoice.havePitchEG = havePitchEG;
+    settingsPerVoice.haveFilterEG = haveFilterEG;
 
     applySettingsPerVoice();
 
@@ -812,7 +820,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             if (voice->isFree())
                 continue;
 
-            mm.beginVoice(voice->getId(), voice->getRegion()->getId());
+            mm.beginVoice(voice->getId(), voice->getRegion()->getId(), voice->getTriggerEvent().value);
 
             activeVoices++;
             renderVoiceToOutputs(*voice, *tempSpan);
@@ -1499,6 +1507,8 @@ void sfz::Synth::applySettingsPerVoice()
         voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
         voice->setMaxLFOsPerVoice(settingsPerVoice.maxLFOs);
         voice->setMaxFlexEGsPerVoice(settingsPerVoice.maxFlexEGs);
+        voice->setPitchEGEnabledPerVoice(settingsPerVoice.havePitchEG);
+        voice->setFilterEGEnabledPerVoice(settingsPerVoice.haveFilterEG);
     }
 }
 
@@ -1519,6 +1529,10 @@ void sfz::Synth::setupModMatrix()
                 break;
             case ModId::Envelope:
                 gen = genFlexEnvelope.get();
+                break;
+            case ModId::PitchEG:
+            case ModId::FilEG:
+                gen = genADSREnvelope.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");
@@ -1544,7 +1558,7 @@ void sfz::Synth::setupModMatrix()
                 continue;
             }
 
-            if (!mm.connect(source, target, conn.sourceDepth)) {
+            if (!mm.connect(source, target, conn.sourceDepth, conn.velToDepth)) {
                 DBG("[sfizz] Failed to connect modulation source and target");
                 ASSERTFALSE;
             }
@@ -1702,20 +1716,24 @@ void sfz::Synth::updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedC
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccAttack);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccRelease);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccDecay);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccDelay);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccHold);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccStart);
-    updateUsedCCsFromCCMap(usedCCs, region.pitchEG.ccSustain);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccAttack);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccRelease);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccDecay);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccDelay);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccHold);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccStart);
-    updateUsedCCsFromCCMap(usedCCs, region.filterEG.ccSustain);
+    if (region.pitchEG) {
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDecay);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDelay);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccHold);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
+        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
+    }
+    if (region.filterEG) {
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccDecay);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccDelay);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccHold);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
+        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
+    }
     updateUsedCCsFromCCMap(usedCCs, region.ccConditions);
     updateUsedCCsFromCCMap(usedCCs, region.ccTriggers);
     updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCInRange);

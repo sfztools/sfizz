@@ -27,6 +27,8 @@ struct ModMatrix::Impl {
     NumericId<Voice> currentVoiceId_ {};
     NumericId<Region> currentRegionId_ {};
 
+    float currentVoiceTriggerValue_ {};
+
     struct Source {
         ModKey key;
         ModGenerator* gen {};
@@ -36,6 +38,7 @@ struct ModMatrix::Impl {
 
     struct ConnectionData {
         float sourceDepth_ {};
+        float velToDepth_ {};
     };
 
     struct Target {
@@ -190,7 +193,7 @@ ModMatrix::TargetId ModMatrix::findTarget(const ModKey& key) const
     return TargetId(it->second);
 }
 
-bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth)
+bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth, float velToDepth)
 {
     Impl& impl = *impl_;
     unsigned sourceIndex = sourceId.number();
@@ -202,6 +205,7 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth)
     Impl::Target& target = impl.targets_[targetIndex];
     Impl::ConnectionData& conn = target.connectedSources[sourceIndex];
     conn.sourceDepth_ = sourceDepth;
+    conn.velToDepth_ = velToDepth;
 
     return true;
 }
@@ -302,12 +306,14 @@ void ModMatrix::endCycle()
     impl.numFrames_ = 0;
 }
 
-void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId)
+void ModMatrix::beginVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, float triggerValue)
 {
     Impl& impl = *impl_;
 
     impl.currentVoiceId_ = voiceId;
     impl.currentRegionId_ = regionId;
+
+    impl.currentVoiceTriggerValue_ = triggerValue;
 
     ASSERT(regionId);
 
@@ -345,6 +351,8 @@ void ModMatrix::endVoice()
 
     impl.currentVoiceId_ = {};
     impl.currentRegionId_ = {};
+
+    impl.currentVoiceTriggerValue_ = 0.0f;
 }
 
 float* ModMatrix::getModulation(TargetId targetId)
@@ -354,6 +362,7 @@ float* ModMatrix::getModulation(TargetId targetId)
 
     Impl& impl = *impl_;
     const NumericId<Region> regionId = impl.currentRegionId_;
+    const float triggerValue = impl.currentVoiceTriggerValue_;
     const uint32_t targetIndex = targetId.number();
     Impl::Target &target = impl.targets_[targetIndex];
     const int targetFlags = target.key.flags();
@@ -381,7 +390,6 @@ float* ModMatrix::getModulation(TargetId targetId)
     // then add or multiply, depending on target flags
     while (sourcesPos != sourcesEnd) {
         Impl::Source &source = impl.sources_[sourcesPos->first];
-        const float sourceDepth = sourcesPos->second.sourceDepth_;
         const int sourceFlags = source.key.flags();
 
         // only accept per-voice sources of the same region
@@ -396,6 +404,12 @@ float* ModMatrix::getModulation(TargetId targetId)
             if (!source.bufferReady) {
                 source.gen->generate(source.key, impl.currentVoiceId_, sourceBuffer);
                 source.bufferReady = true;
+            }
+
+            float sourceDepth = sourcesPos->second.sourceDepth_;
+            if (sourceFlags & kModIsPerVoice) {
+                const float velToDepth = sourcesPos->second.velToDepth_;
+                sourceDepth += triggerValue * velToDepth;
             }
 
             if (isFirstSource) {

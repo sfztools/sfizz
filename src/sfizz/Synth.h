@@ -29,6 +29,7 @@ namespace sfz {
 class ControllerSource;
 class LFOSource;
 class FlexEnvelopeSource;
+class ADSREnvelopeSource;
 
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point
@@ -550,6 +551,7 @@ public:
      */
     void disableFreeWheeling() noexcept;
 
+    Resources& getResources() noexcept { return resources; }
     const Resources& getResources() const noexcept { return resources; }
 
     /**
@@ -922,6 +924,7 @@ private:
     std::unique_ptr<ControllerSource> genController;
     std::unique_ptr<LFOSource> genLFO;
     std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope;
+    std::unique_ptr<ADSREnvelopeSource> genADSREnvelope;
 
     // Settings per voice
     struct SettingsPerVoice {
@@ -929,6 +932,8 @@ private:
         size_t maxEQs { 0 };
         size_t maxLFOs { 0 };
         size_t maxFlexEGs { 0 };
+        bool havePitchEG { false };
+        bool haveFilterEG { false };
     };
     SettingsPerVoice settingsPerVoice;
 

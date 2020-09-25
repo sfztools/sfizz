@@ -130,7 +130,7 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     bendStepFactor = centsFactor(region->bendStep);
     bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
     bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
-    egEnvelope.reset(region->amplitudeEG, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
+    egAmplitude.reset(region->amplitudeEG, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
 
     resources.modMatrix.initVoice(id, region->getId(), delay);
     saveModulationTargets(region);
@@ -152,10 +152,10 @@ void sfz::Voice::release(int delay) noexcept
     if (state != State::playing)
         return;
 
-    if (egEnvelope.getRemainingDelay() > delay) {
+    if (egAmplitude.getRemainingDelay() > delay) {
         switchState(State::cleanMeUp);
     } else {
-        egEnvelope.startRelease(delay);
+        egAmplitude.startRelease(delay);
     }
 
     resources.modMatrix.releaseVoice(id, region->getId(), delay);
@@ -164,9 +164,9 @@ void sfz::Voice::release(int delay) noexcept
 void sfz::Voice::off(int delay) noexcept
 {
     if (region->offMode == SfzOffMode::fast) {
-        egEnvelope.setReleaseTime( Default::offTime );
+        egAmplitude.setReleaseTime( Default::offTime );
     } else if (region->offMode == SfzOffMode::time) {
-        egEnvelope.setReleaseTime(region->offTime);
+        egAmplitude.setReleaseTime(region->offTime);
     }
 
     release(delay);
@@ -286,7 +286,7 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         panStageMono(buffer);
     }
 
-    if (!egEnvelope.isSmoothing())
+    if (!egAmplitude.isSmoothing())
         switchState(State::cleanMeUp);
 
     powerFollower.process(buffer);
@@ -368,7 +368,7 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     ModMatrix& mm = resources.modMatrix;
 
     // AmpEG envelope
-    egEnvelope.getBlock(modulationSpan);
+    egAmplitude.getBlock(modulationSpan);
 
     // Amplitude envelope
     applyGain1<float>(baseGain, modulationSpan);
@@ -572,8 +572,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                         << " for sample " << region->sampleId);
                 }
 #endif
-                egEnvelope.setReleaseTime(0.0f);
-                egEnvelope.startRelease(i);
+                egAmplitude.setReleaseTime(0.0f);
+                egAmplitude.startRelease(i);
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
                 break;
@@ -853,7 +853,7 @@ float sfz::Voice::getAveragePower() const noexcept
 
 bool sfz::Voice::releasedOrFree() const noexcept
 {
-    return state != State::playing || egEnvelope.isReleased();
+    return state != State::playing || egAmplitude.isReleased();
 }
 
 uint32_t sfz::Voice::getSourcePosition() const noexcept
@@ -901,6 +901,22 @@ void sfz::Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
         eg->setSampleRate(sampleRate);
         flexEGs[i] = std::move(eg);
     }
+}
+
+void sfz::Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
+{
+    if (havePitchEG)
+        egPitch.reset(new ADSREnvelope<float>);
+    else
+        egPitch.reset();
+}
+
+void sfz::Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
+{
+    if (haveFilterEG)
+        egFilter.reset(new ADSREnvelope<float>);
+    else
+        egFilter.reset();
 }
 
 void sfz::Voice::setupOscillatorUnison()
