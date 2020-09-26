@@ -23,6 +23,7 @@ enum class ModId : int {
     Controller = _SourcesStart,
     Envelope,
     LFO,
+    AmpEG,
     PitchEG,
     FilEG,
 

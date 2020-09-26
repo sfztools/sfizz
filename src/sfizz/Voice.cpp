@@ -130,7 +130,6 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     bendStepFactor = centsFactor(region->bendStep);
     bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
     bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
-    egAmplitude.reset(region->amplitudeEG, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
 
     resources.modMatrix.initVoice(id, region->getId(), delay);
     saveModulationTargets(region);
@@ -154,8 +153,6 @@ void sfz::Voice::release(int delay) noexcept
 
     if (egAmplitude.getRemainingDelay() > delay) {
         switchState(State::cleanMeUp);
-    } else {
-        egAmplitude.startRelease(delay);
     }
 
     resources.modMatrix.releaseVoice(id, region->getId(), delay);
@@ -367,14 +364,14 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 
     ModMatrix& mm = resources.modMatrix;
 
-    // AmpEG envelope
-    egAmplitude.getBlock(modulationSpan);
-
     // Amplitude envelope
     applyGain1<float>(baseGain, modulationSpan);
     if (float* mod = mm.getModulation(amplitudeTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
-            modulationSpan[i] *= normalizePercents(mod[i]);
+            modulationSpan[i] = normalizePercents(mod[i]);
+    }
+    else {
+        ASSERTFALSE;
     }
 
     // Volume envelope

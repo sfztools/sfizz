@@ -159,6 +159,11 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
         ModKey::createCC(10, 1, defaultSmoothness, 100, 0),
         ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 1.0f;
 
+    // Create the amplitude envelope
+    lastRegion->getOrCreateConnection(
+        ModKey::createNXYZ(ModId::AmpEG, lastRegion->id),
+        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 100.0f;
+
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
@@ -1530,6 +1535,7 @@ void sfz::Synth::setupModMatrix()
             case ModId::Envelope:
                 gen = genFlexEnvelope.get();
                 break;
+            case ModId::AmpEG:
             case ModId::PitchEG:
             case ModId::FilEG:
                 gen = genADSREnvelope.get();

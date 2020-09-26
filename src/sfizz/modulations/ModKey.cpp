@@ -74,6 +74,8 @@ std::string ModKey::toString() const
         return absl::StrCat("EG ", 1 + params_.N, " {", region_.number(), "}");
     case ModId::LFO:
         return absl::StrCat("LFO ", 1 + params_.N, " {", region_.number(), "}");
+    case ModId::AmpEG:
+        return absl::StrCat("AmplitudeEG {", region_.number(), "}");
     case ModId::PitchEG:
         return absl::StrCat("PitchEG {", region_.number(), "}");
     case ModId::FilEG:
