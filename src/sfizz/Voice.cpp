@@ -380,14 +380,16 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 
     ModMatrix& mm = resources.modMatrix;
 
+    // Amplitude EG
+    absl::Span<const float> ampegOut(mm.getModulation(masterAmplitudeTarget), numSamples);
+    ASSERT(ampegOut.data());
+    copy(ampegOut, modulationSpan);
+
     // Amplitude envelope
     applyGain1<float>(baseGain, modulationSpan);
     if (float* mod = mm.getModulation(amplitudeTarget)) {
         for (size_t i = 0; i < numSamples; ++i)
-            modulationSpan[i] = normalizePercents(mod[i]);
-    }
-    else {
-        ASSERTFALSE;
+            modulationSpan[i] *= normalizePercents(mod[i]);
     }
 
     // Volume envelope
@@ -1050,6 +1052,7 @@ void sfz::Voice::resetSmoothers() noexcept
 void sfz::Voice::saveModulationTargets(const Region* region) noexcept
 {
     ModMatrix& mm = resources.modMatrix;
+    masterAmplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::MasterAmplitude, region->getId()));
     amplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Amplitude, region->getId()));
     volumeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Volume, region->getId()));
     panTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pan, region->getId()));

@@ -520,6 +520,7 @@ private:
     Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
 
+    ModMatrix::TargetId masterAmplitudeTarget;
     ModMatrix::TargetId amplitudeTarget;
     ModMatrix::TargetId volumeTarget;
     ModMatrix::TargetId panTarget;

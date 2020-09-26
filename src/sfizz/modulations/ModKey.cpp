@@ -81,6 +81,8 @@ std::string ModKey::toString() const
     case ModId::FilEG:
         return absl::StrCat("FilterEG {", region_.number(), "}");
 
+    case ModId::MasterAmplitude:
+        return absl::StrCat("MasterAmplitude {", region_.number(), "}");
     case ModId::Amplitude:
         return absl::StrCat("Amplitude {", region_.number(), "}");
     case ModId::Pan:

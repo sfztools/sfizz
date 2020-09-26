@@ -38,6 +38,8 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice;
 
         // targets
+    case ModId::MasterAmplitude:
+        return kModIsPerVoice|kModIsPercentMultiplicative;
     case ModId::Amplitude:
         return kModIsPerVoice|kModIsPercentMultiplicative;
     case ModId::Pan:
