@@ -159,11 +159,6 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
         ModKey::createCC(10, 1, defaultSmoothness, 100, 0),
         ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 1.0f;
 
-    // Create the amplitude envelope
-    lastRegion->getOrCreateConnection(
-        ModKey::createNXYZ(ModId::AmpEG, lastRegion->id),
-        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 100.0f;
-
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
@@ -181,6 +176,19 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     parseOpcodes(masterOpcodes);
     parseOpcodes(groupOpcodes);
     parseOpcodes(regionOpcodes);
+
+    // Create the amplitude envelope
+    if (!lastRegion->flexAmpEG) {
+        lastRegion->getOrCreateConnection(
+            ModKey::createNXYZ(ModId::AmpEG, lastRegion->id),
+            ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 100.0f;
+    }
+    else {
+        ModKey source = ModKey::createNXYZ(ModId::Envelope, lastRegion->id, *lastRegion->flexAmpEG);
+        ModKey target = ModKey::createNXYZ(ModId::Amplitude, lastRegion->id);
+        if (!lastRegion->getConnection(source, target))
+            lastRegion->getOrCreateConnection(source, target).sourceDepth = 100.0f;
+    }
 
     if (octaveOffset != 0 || noteOffset != 0)
         lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);

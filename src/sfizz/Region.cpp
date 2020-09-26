@@ -1162,6 +1162,28 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthModRange);
         break;
 
+    case hash("eg&_ampeg"):
+    {
+        const auto egNumber = opcode.parameters.front();
+        if (egNumber == 0)
+            return false;
+        if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+            return false;
+        if (auto value = readOpcode(opcode.value, Range<int> { 0, 1 })) {
+            FlexEGDescription& desc = flexEGs[egNumber - 1];
+            bool ampeg = *value != 0;
+            if (desc.ampeg != ampeg) {
+                desc.ampeg = ampeg;
+                flexAmpEG = absl::nullopt;
+                for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
+                    if (flexEGs[i].ampeg)
+                        flexAmpEG = static_cast<uint8_t>(i);
+                }
+            }
+        }
+        break;
+    }
+
     // Amplitude Envelope
     case hash("ampeg_attack"):
     case hash("ampeg_decay"):
@@ -1907,7 +1929,7 @@ float sfz::Region::getBendInCents(float bend) const noexcept
     return bend > 0.0f ? bend * static_cast<float>(bendUp) : -bend * static_cast<float>(bendDown);
 }
 
-sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source, const ModKey& target)
+sfz::Region::Connection* sfz::Region::getConnection(const ModKey& source, const ModKey& target)
 {
     auto pred = [&source, &target](const Connection& c)
     {
@@ -1915,8 +1937,13 @@ sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source
     };
 
     auto it = std::find_if(connections.begin(), connections.end(), pred);
-    if (it != connections.end())
-        return *it;
+    return (it == connections.end()) ? nullptr : &*it;
+}
+
+sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source, const ModKey& target)
+{
+    if (Connection* c = getConnection(source, target))
+        return *c;
 
     sfz::Region::Connection c;
     c.source = source;
