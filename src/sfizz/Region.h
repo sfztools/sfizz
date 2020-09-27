@@ -409,7 +409,7 @@ struct Region {
     uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter
     bool pitchKeycenterFromSample { false };
     int pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
-    int pitchRandom { Default::pitchRandom }; // pitch_random
+    float pitchRandom { Default::pitchRandom }; // pitch_random
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune

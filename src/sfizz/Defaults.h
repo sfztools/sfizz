@@ -199,8 +199,8 @@ namespace Default
 	constexpr uint8_t pitchKeycenter { 60 };
 	constexpr int pitchKeytrack { 100 };
 	constexpr Range<int> pitchKeytrackRange { -1200, 1200 };
-	constexpr int pitchRandom { 0 };
-	constexpr Range<int> pitchRandomRange { 0, 9600 };
+	constexpr float pitchRandom { 0 };
+	constexpr Range<float> pitchRandomRange { 0, 9600 };
 	constexpr int pitchVeltrack { 0 };
 	constexpr Range<int> pitchVeltrackRange { -9600, 9600 };
 	constexpr int transpose { 0 };
