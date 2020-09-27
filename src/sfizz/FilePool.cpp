@@ -180,7 +180,7 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
         DBG("Error extracting the new relative path for " << filename << " (Error code: " << ec.message() << ")");
         return false;
     }
-    DBG("Updating " << filename << " to " << newPath.native());
+    DBG("Updating " << filename << " to " << newPath);
     filename = newPath.string();
     return true;
 #endif
