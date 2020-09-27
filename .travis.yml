@@ -56,7 +56,6 @@ jobs:
         - dylibbundler
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    install: .travis/install_osx.sh
     script: .travis/script_osx.sh
     after_success: .travis/prepare_osx.sh
 #   before_cache:
