@@ -19,10 +19,14 @@ ScopedFTZ::ScopedFTZ()
     unsigned mask = _MM_DENORMALS_ZERO_MASK | _MM_FLUSH_ZERO_MASK;
     registerState = _mm_getcsr();
     _mm_setcsr((registerState & (~mask)) | mask);
-#elif SFIZZ_HAVE_NEON
+#elif SFIZZ_HAVE_NEON && SFIZZ_CPU_FAMILY_ARM
     intptr_t mask = (1 << 24);
     asm volatile("vmrs %0, fpscr" : "=r"(registerState));
-    asm volatile("vmsr fpscr, %0" : : "ri"((registerState & (~mask)) | mask));
+    asm volatile("vmsr fpscr, %0" : : "r"((registerState & (~mask)) | mask));
+#elif SFIZZ_HAVE_NEON && SFIZZ_CPU_FAMILY_AARCH64
+    intptr_t mask = (1 << 24);
+    asm volatile("mrs %0, fpcr" : "=r"(registerState));
+    asm volatile("msr fpcr, %0" : : "r"((registerState & (~mask)) | mask));
 #endif
 }
 
@@ -30,7 +34,9 @@ ScopedFTZ::~ScopedFTZ()
 {
 #if SFIZZ_HAVE_SSE
     _mm_setcsr(registerState);
-#elif SFIZZ_HAVE_NEON
-    asm volatile("vmrs %0, fpscr" : : "ri"(registerState));
+#elif SFIZZ_HAVE_NEON && SFIZZ_CPU_FAMILY_ARM
+    asm volatile("vmrs %0, fpscr" : : "r"(registerState));
+#elif SFIZZ_HAVE_NEON && SFIZZ_CPU_FAMILY_AARCH64
+    asm volatile("mrs %0, fpcr" : : "r"(registerState));
 #endif
 }
