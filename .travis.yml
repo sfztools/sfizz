@@ -6,8 +6,8 @@ cache:
   directories:
   - vst/download/
   # macOS Homebrew
-  - $HOME/Library/Caches/Homebrew
-  - /usr/local/Homebrew
+# - $HOME/Library/Caches/Homebrew
+# - /usr/local/Homebrew
 
 jobs:
   include:
@@ -46,6 +46,7 @@ jobs:
   - name: "macOS"
     stage: "Build"
     os: osx
+    osx_image: xcode11.3
     addons:
       homebrew:
         packages:
@@ -58,11 +59,11 @@ jobs:
     install: .travis/install_osx.sh
     script: .travis/script_osx.sh
     after_success: .travis/prepare_osx.sh
-    before_cache:
-      - brew cleanup
+#   before_cache:
+#     - brew cleanup
       # Credit https://discourse.brew.sh/t/best-practice-for-homebrew-on-travis-brew-update-is-5min-to-build-time/5215/9
       # Cache only .git files under "/usr/local/Homebrew" so "brew update" does not take 5min every build
-      - find /usr/local/Homebrew \! -regex ".+\.git.+" -delete
+#     - find /usr/local/Homebrew \! -regex ".+\.git.+" -delete
 
   - name: "MOD devices arm"
     env:
