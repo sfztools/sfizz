@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include <cstdint>
 
 /**
  * @brief Flush floating points to zero and disable denormals as an RAII helper.
@@ -16,5 +17,5 @@ public:
     ScopedFTZ();
     ~ScopedFTZ();
 private:
-    unsigned registerState;
+    uintptr_t registerState;
 };
