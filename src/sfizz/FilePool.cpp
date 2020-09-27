@@ -160,8 +160,13 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
         }
 
         auto searchPredicate = [&part](const fs::directory_entry &ent) -> bool {
+#if !defined(GHC_USE_WCHAR_T)
             return absl::EqualsIgnoreCase(
                 ent.path().filename().native(), part.native());
+#else
+            return absl::EqualsIgnoreCase(
+                ent.path().filename().u8string(), part.u8string());
+#endif
         };
 
         while (it != fs::directory_iterator{} && !searchPredicate(*it))
