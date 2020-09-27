@@ -26,6 +26,13 @@ SFIZZ_CPU_AARCH64 := 1
 SFIZZ_CPU_ARM_OR_AARCH64 := 1
 endif
 
+ifneq (,$(findstring linux,$(SFIZZ_MACHINE)))
+SFIZZ_OS_LINUX := 1
+endif
+ifneq (,$(findstring mingw,$(SFIZZ_MACHINE)))
+SFIZZ_OS_WINDOWS := 1
+endif
+
 ###
 
 SFIZZ_C_FLAGS = -I$(SFIZZ_DIR)/src
@@ -227,6 +234,10 @@ SFIZZ_SOURCES += \
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/numeric/int128.cc
 
+ifdef SFIZZ_OS_WINDOWS
+SFIZZ_LINK_FLAGS += -ldbghelp
+endif
+
 ### Spline dependency
 
 SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external/spline
@@ -263,5 +274,20 @@ SFIZZ_SOURCES += \
 	src/external/tunings/src/Tunings.cpp
 
 ### jsl dependency
+
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/jsl/include
+
+### math dependency
+
+ifdef SFIZZ_OS_LINUX
+SFIZZ_LINK_FLAGS += -lm
+endif
+
+### pthread dependency
+
+ifdef SFIZZ_OS_LINUX
+SFIZZ_C_FLAGS += -pthread
+SFIZZ_CXX_FLAGS += -pthread
+SFIZZ_LINK_FLAGS += -pthread
+endif

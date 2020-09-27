@@ -41,16 +41,6 @@ SFIZZ_LINK_FLAGS = $(SFIZZ_BUILD_DIR)/libsfizz.a
 SFIZZ_PKG_CONFIG ?= $(PKG_CONFIG)
 include $(SFIZZ_DIR)/common.mk
 
-ifeq ($(LINUX),true)
-SFIZZ_C_FLAGS += -pthread
-SFIZZ_CXX_FLAGS += -pthread
-SFIZZ_LINK_FLAGS += -pthread
-endif
-
-ifeq ($(LINUX),true)
-SFIZZ_LINK_FLAGS += -lm
-endif
-
 sfizz-all: sfizz-lib
 
 sfizz-lib: $(SFIZZ_BUILD_DIR)/libsfizz.a

@@ -47,16 +47,6 @@ include $(SFIZZ_DIR)/common.mk
 
 ###
 
-ifdef ARCH_LIN
-SFIZZ_C_FLAGS += -pthread
-SFIZZ_CXX_FLAGS += -pthread
-SFIZZ_LINK_FLAGS += -pthread
-endif
-
-ifdef ARCH_LIN
-SFIZZ_LINK_FLAGS += -lm
-endif
-
 SFIZZ_TARGET := $(SFIZZ_BUILD_DIR)/libsfizz.a
 
 ###
