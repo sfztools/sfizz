@@ -35,7 +35,7 @@
 #       define SFIZZ_DETECT_SSE2 0
 #       define SFIZZ_DETECT_AVX 0
 #   endif
-#   if defined(__ARM_NEON__)
+#   if defined(__ARM_NEON__) || defined(__ARM_NEON)
 #       define SFIZZ_DETECT_NEON 1
 #   else
 #       define SFIZZ_DETECT_NEON 0
