@@ -7,6 +7,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DSFIZZ_AU=ON \
       -DSFIZZ_TESTS=OFF \
       -DCMAKE_CXX_STANDARD=14 \
+      -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
       -DLV2PLUGIN_INSTALL_DIR=/Library/Audio/Plug-Ins/LV2 \
       -DVSTPLUGIN_INSTALL_DIR=/Library/Audio/Plug-Ins/VST3 \
       -DAUPLUGIN_INSTALL_DIR=/Library/Audio/Plug-Ins/Components \
