@@ -46,6 +46,13 @@ jobs:
   - name: "macOS"
     stage: "Build"
     os: osx
+    addons:
+      homebrew:
+        packages:
+        - cmake
+        - libsndfile
+        - jack
+        - dylibbundler
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     install: .travis/install_osx.sh
