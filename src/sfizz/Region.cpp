@@ -1714,7 +1714,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    std::uniform_int_distribution<int> pitchDistribution { -pitchRandom, pitchRandom };
+    fast_real_distribution<float> pitchDistribution { -pitchRandom, pitchRandom };
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose

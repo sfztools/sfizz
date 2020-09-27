@@ -20,7 +20,7 @@ struct FilterDescription
     int keytrack { Default::filterKeytrack };
     uint8_t keycenter { Default::filterKeycenter };
     int veltrack { Default::filterVeltrack };
-    int random { Default::filterRandom };
+    float random { Default::filterRandom };
     FilterType type { FilterType::kFilterLpf2p };
 };
 }

@@ -54,8 +54,6 @@ private:
     ModMatrix::TargetId cutoffTarget;
     ModMatrix::TargetId resonanceTarget;
     bool prepared { false };
-    using filterRandomDist = std::uniform_int_distribution<int>;
-    filterRandomDist dist { 0, sfz::Default::filterRandom };
 };
 
 }
