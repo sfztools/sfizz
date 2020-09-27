@@ -363,7 +363,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("seq_position"):
         setValueFromOpcode(opcode, sequencePosition, Default::sequenceRange);
-        sequenceSwitched = (opcode.value == "1");
+        sequenceSwitched = false;
         break;
     // Region logic: triggers
     case hash("trigger"):
@@ -1571,12 +1571,8 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     if (keyswitchRange.containsWithEnd(noteNumber)) {
-        if (keyswitch) {
-            if (*keyswitch == noteNumber)
-                keySwitched = true;
-            else
-                keySwitched = false;
-        }
+        if (keyswitch)
+            keySwitched =  (*keyswitch == noteNumber);
 
         if (keyswitchDown && *keyswitchDown == noteNumber)
             keySwitched = true;
@@ -1588,18 +1584,11 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
     if (keyOk) {
         // Sequence activation
-        sequenceCounter += 1;
-        if ((sequenceCounter % sequenceLength) == sequencePosition - 1)
-            sequenceSwitched = true;
-        else
-            sequenceSwitched = false;
+        sequenceSwitched =
+            ((sequenceCounter++ % sequenceLength) == sequencePosition - 1);
 
-        if (previousNote) {
-            if (*previousNote == noteNumber)
-                previousKeySwitched = true;
-            else
-                previousKeySwitched = false;
-        }
+        if (previousNote)
+            previousKeySwitched = (*previousNote == noteNumber);
     }
 
     if (!isSwitchedOn())
