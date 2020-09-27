@@ -133,7 +133,7 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
     if (fs::exists(path, ec))
         return true;
 
-#if WIN32
+#if defined(_WIN32)
     return false;
 #else
     fs::path oldPath = std::move(path);
