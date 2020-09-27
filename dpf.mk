@@ -37,13 +37,18 @@
 
 SFIZZ_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SFIZZ_BUILD_DIR := $(SFIZZ_DIR)/dpf-build
-
-SFIZZ_C_FLAGS = -I$(SFIZZ_DIR)/src
-SFIZZ_CXX_FLAGS = $(SFIZZ_C_FLAGS)
 SFIZZ_LINK_FLAGS = $(SFIZZ_BUILD_DIR)/libsfizz.a
+SFIZZ_PKG_CONFIG ?= $(PKG_CONFIG)
+include $(SFIZZ_DIR)/common.mk
 
 ifeq ($(LINUX),true)
+SFIZZ_C_FLAGS += -pthread
+SFIZZ_CXX_FLAGS += -pthread
 SFIZZ_LINK_FLAGS += -pthread
+endif
+
+ifeq ($(LINUX),true)
+SFIZZ_LINK_FLAGS += -lm
 endif
 
 sfizz-all: sfizz-lib
@@ -54,217 +59,6 @@ sfizz-clean:
 	rm -rf $(SFIZZ_BUILD_DIR)
 
 .PHONY: sfizz-all sfizz-lib sfizz-clean
-
-SFIZZ_SOURCES = \
-	src/sfizz/ADSREnvelope.cpp \
-	src/sfizz/AudioReader.cpp \
-	src/sfizz/Curve.cpp \
-	src/sfizz/effects/Apan.cpp \
-	src/sfizz/Effects.cpp \
-	src/sfizz/modulations/ModId.cpp \
-	src/sfizz/modulations/ModKey.cpp \
-	src/sfizz/modulations/ModKeyHash.cpp \
-	src/sfizz/modulations/ModMatrix.cpp \
-	src/sfizz/modulations/sources/ADSREnvelope.cpp \
-	src/sfizz/modulations/sources/Controller.cpp \
-	src/sfizz/modulations/sources/FlexEGDescription.cpp \
-	src/sfizz/modulations/sources/FlexEnvelope.cpp \
-	src/sfizz/modulations/sources/LFO.cpp \
-	src/sfizz/effects/Compressor.cpp \
-	src/sfizz/effects/Disto.cpp \
-	src/sfizz/effects/Eq.cpp \
-	src/sfizz/effects/Filter.cpp \
-	src/sfizz/effects/Fverb.cpp \
-	src/sfizz/effects/Gain.cpp \
-	src/sfizz/effects/Gate.cpp \
-	src/sfizz/effects/impl/ResonantArrayAVX.cpp \
-	src/sfizz/effects/impl/ResonantArray.cpp \
-	src/sfizz/effects/impl/ResonantArraySSE.cpp \
-	src/sfizz/effects/impl/ResonantStringAVX.cpp \
-	src/sfizz/effects/impl/ResonantString.cpp \
-	src/sfizz/effects/impl/ResonantStringSSE.cpp \
-	src/sfizz/effects/Limiter.cpp \
-	src/sfizz/effects/Lofi.cpp \
-	src/sfizz/effects/Nothing.cpp \
-	src/sfizz/effects/Rectify.cpp \
-	src/sfizz/effects/Strings.cpp \
-	src/sfizz/effects/Width.cpp \
-	src/sfizz/EQPool.cpp \
-	src/sfizz/FileId.cpp \
-	src/sfizz/FileMetadata.cpp \
-	src/sfizz/FilePool.cpp \
-	src/sfizz/FilterPool.cpp \
-	src/sfizz/FlexEnvelope.cpp \
-	src/sfizz/FloatEnvelopes.cpp \
-	src/sfizz/Logger.cpp \
-	src/sfizz/LFO.cpp \
-	src/sfizz/LFODescription.cpp \
-	src/sfizz/MidiState.cpp \
-	src/sfizz/OpcodeCleanup.cpp \
-	src/sfizz/Opcode.cpp \
-	src/sfizz/Oversampler.cpp \
-	src/sfizz/Panning.cpp \
-	src/sfizz/Parser.cpp \
-	src/sfizz/parser/Parser.cpp \
-	src/sfizz/parser/ParserPrivate.cpp \
-	src/sfizz/PowerFollower.cpp \
-	src/sfizz/Region.cpp \
-	src/sfizz/RTSemaphore.cpp \
-	src/sfizz/ScopedFTZ.cpp \
-	src/sfizz/sfizz.cpp \
-	src/sfizz/sfizz_wrapper.cpp \
-	src/sfizz/SfzFilter.cpp \
-	src/sfizz/SfzHelpers.cpp \
-	src/sfizz/SIMDHelpers.cpp \
-	src/sfizz/simd/HelpersSSE.cpp \
-	src/sfizz/simd/HelpersAVX.cpp \
-	src/sfizz/Synth.cpp \
-	src/sfizz/Tuning.cpp \
-	src/sfizz/utility/SpinMutex.cpp \
-	src/sfizz/Voice.cpp \
-	src/sfizz/Wavetables.cpp
-
-### Other internal
-
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/sfizz
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external
-
-# Sndfile dependency
-
-SFIZZ_C_FLAGS += $(shell $(PKG_CONFIG) --cflags sndfile)
-SFIZZ_LINK_FLAGS += $(shell $(PKG_CONFIG) --libs sndfile)
-
-### Abseil dependency
-
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/external/abseil-cpp
-# absl::base
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/cycleclock.cc \
-	external/abseil-cpp/absl/base/internal/spinlock.cc \
-	external/abseil-cpp/absl/base/internal/sysinfo.cc \
-	external/abseil-cpp/absl/base/internal/thread_identity.cc \
-	external/abseil-cpp/absl/base/internal/unscaledcycleclock.cc
-# absl::exponential_biased
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/exponential_biased.cc
-# absl::dynamic_annotations
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/dynamic_annotations.cc
-# absl::malloc_internal
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/low_level_alloc.cc
-# absl::raw_logging_internal
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/raw_logging.cc
-# absl::spinlock_wait
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/spinlock_wait.cc
-# absl::throw_delegate
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/throw_delegate.cc
-# absl::strings
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/strings/ascii.cc \
-	external/abseil-cpp/absl/strings/charconv.cc \
-	external/abseil-cpp/absl/strings/escaping.cc \
-	external/abseil-cpp/absl/strings/internal/charconv_bigint.cc \
-	external/abseil-cpp/absl/strings/internal/charconv_parse.cc \
-	external/abseil-cpp/absl/strings/internal/memutil.cc \
-	external/abseil-cpp/absl/strings/match.cc \
-	external/abseil-cpp/absl/strings/numbers.cc \
-	external/abseil-cpp/absl/strings/str_cat.cc \
-	external/abseil-cpp/absl/strings/str_replace.cc \
-	external/abseil-cpp/absl/strings/str_split.cc \
-	external/abseil-cpp/absl/strings/string_view.cc \
-	external/abseil-cpp/absl/strings/substitute.cc
-# absl::hashtablez_sampler
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/container/internal/hashtablez_sampler.cc \
-	external/abseil-cpp/absl/container/internal/hashtablez_sampler_force_weak_definition.cc
-# absl::raw_hash_set
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/container/internal/raw_hash_set.cc
-# absl::synchronization
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/synchronization/barrier.cc \
-	external/abseil-cpp/absl/synchronization/blocking_counter.cc \
-	external/abseil-cpp/absl/synchronization/internal/create_thread_identity.cc \
-	external/abseil-cpp/absl/synchronization/internal/per_thread_sem.cc \
-	external/abseil-cpp/absl/synchronization/internal/waiter.cc \
-	external/abseil-cpp/absl/synchronization/notification.cc \
-	external/abseil-cpp/absl/synchronization/mutex.cc
-# absl::graphcycles_internal
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/synchronization/internal/graphcycles.cc
-# absl::time
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/time/civil_time.cc \
-	external/abseil-cpp/absl/time/clock.cc \
-	external/abseil-cpp/absl/time/duration.cc \
-	external/abseil-cpp/absl/time/format.cc \
-	external/abseil-cpp/absl/time/time.cc
-# absl::time_zone
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_fixed.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_format.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_if.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_impl.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_info.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_libc.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_lookup.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/time_zone_posix.cc \
-	external/abseil-cpp/absl/time/internal/cctz/src/zone_info_source.cc
-# absl::stacktrace
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/debugging/stacktrace.cc
-# absl::symbolize
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/debugging/symbolize.cc
-# absl::demangle_internal
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/debugging/internal/demangle.cc
-# absl::debugging_internal
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/debugging/internal/address_is_readable.cc \
-	external/abseil-cpp/absl/debugging/internal/elf_mem_image.cc \
-	external/abseil-cpp/absl/debugging/internal/vdso_support.cc
-# absl::hash
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/hash/internal/hash.cc
-# absl::city
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/hash/internal/city.cc
-# absl::int128
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/numeric/int128.cc
-
-### Spline dependency
-
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external/spline
-SFIZZ_SOURCES += src/external/spline/spline/spline.cpp
-
-### Cpuid dependency
-
-SFIZZ_C_FLAGS += \
-	-I$(SFIZZ_DIR)/src/external/cpuid/src \
-	-I$(SFIZZ_DIR)/src/external/cpuid/platform/src
-SFIZZ_SOURCES += \
-	src/external/cpuid/src/cpuid/cpuinfo.cpp \
-	src/external/cpuid/src/cpuid/version.cpp
-
-### Pugixml dependency
-
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external/pugixml/src
-SFIZZ_SOURCES += src/external/pugixml/src/pugixml.cpp
-
-### Kissfft dependency
-
-SFIZZ_C_FLAGS += \
-	-I$(SFIZZ_DIR)/src/external/kiss_fft \
-	-I$(SFIZZ_DIR)/src/external/kiss_fft/tools
-SFIZZ_SOURCES += \
-	src/external/kiss_fft/kiss_fft.c \
-	src/external/kiss_fft/tools/kiss_fftr.c
 
 ###
 
