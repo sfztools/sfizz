@@ -29,6 +29,9 @@ endif
 ifneq (,$(findstring linux,$(SFIZZ_MACHINE)))
 SFIZZ_OS_LINUX := 1
 endif
+ifneq (,$(findstring apple,$(SFIZZ_MACHINE)))
+SFIZZ_OS_APPLE := 1
+endif
 ifneq (,$(findstring mingw,$(SFIZZ_MACHINE)))
 SFIZZ_OS_WINDOWS := 1
 endif
