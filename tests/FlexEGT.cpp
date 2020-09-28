@@ -9,6 +9,7 @@
 #include "sfizz/FlexEnvelope.h"
 #include "catch2/catch.hpp"
 #include "TestHelpers.h"
+#include <array>
 using namespace Catch::literals;
 using namespace sfz::literals;
 
@@ -260,4 +261,30 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test (with shapes)")
     envelope.release(15);
     envelope.process(absl::MakeSpan(output));
     REQUIRE( approxEqual<float>(output, expected, 0.01f) );
+}
+
+TEST_CASE("[FlexEG] Zero delay transitions")
+{
+    sfz::Synth synth;
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> sample=*sine
+        eg1_time1=0  eg1_level1=1
+        eg1_time2=1  eg1_level2=0
+        eg1_time3=1  eg1_level3=.5 eg1_sustain=3
+        eg1_time4=1  eg1_level4=1
+    )");
+    sfz::FlexEnvelope envelope;
+    REQUIRE(synth.getNumRegions() == 1);
+    REQUIRE(synth.getRegionView(0)->flexEGs.size() == 1);
+    envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
+    envelope.setSampleRate(10);
+    envelope.start(1);
+
+    std::array<float, 2> output;
+    envelope.process(absl::MakeSpan(output));
+    REQUIRE(output[0] == 0.0f);
+    REQUIRE(output[1] == Approx(0.9f).margin(0.01f));
+    // Note(jpc): 0.9 is because EG pre-increments the time counter, slope is
+    //            1 frame off into the future
 }
