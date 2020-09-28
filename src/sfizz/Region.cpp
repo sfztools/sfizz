@@ -654,7 +654,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].veltrack, Default::filterVeltrackRange);
         }
         break;
-    case hash("fil&_random"): // also fil_random
+    case hash("fil&_random"): // also fil_random, cutoff_random, cutoff&_random
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))

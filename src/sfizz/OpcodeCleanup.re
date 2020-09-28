@@ -76,6 +76,7 @@ end_region_oncc:
     //--------------------------------------------------------------------------
 
     if (scope == kOpcodeScopeRegion) {
+    again_region:
 
     YYCURSOR = opcode.c_str();
 
@@ -137,6 +138,11 @@ end_region_oncc:
         goto end_region;
     }
 
+    "gain_random" END {
+        opcode = "amp_random";
+        goto end_region;
+    }
+
     "gain" ("_" any)? END {
         opcode = absl::StrCat("volume", group(1));
         goto end_region;
@@ -153,6 +159,11 @@ end_region_oncc:
     "on_" ("hi"|"lo") "hdcc" (number) END {
         opcode = absl::StrCat("start_", group(1), "hdcc", group(2));
         goto end_region;
+    }
+
+    "cutoff" (number)? "_random" END {
+        opcode = absl::StrCat("fil", group(1), "_random");
+        goto again_region;
     }
 
     "fil_" (any) END {

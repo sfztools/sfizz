@@ -233,6 +233,11 @@ TEST_CASE("[Opcode] Normalization")
         {"cutoff_foobar", "cutoff1_foobar"},
         {"resonance", "resonance1"},
         {"resonance_foobar", "resonance1_foobar"},
+        // Cakewalk aliases
+        {"cutoff_random", "fil1_random"},
+        {"cutoff1_random", "fil1_random"},
+        {"cutoff2_random", "fil2_random"},
+        {"gain_random", "amp_random"},
     };
 
     for (auto pair : regionSpecific) {
