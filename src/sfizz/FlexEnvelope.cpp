@@ -144,6 +144,9 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
         const bool isReleased = isReleased_;
         while ((!stageSustained_ && currentTime_ >= stageTime_) ||
                (stageSustained_ && isReleased)) {
+            // If stage is of zero duration, immediate transition to level
+            if (!stageSustained_ && stageTime_ == 0)
+                currentLevel_ = stageTargetLevel_;
             if (!advanceToNextStage()) {
                 out.remove_prefix(frameIndex);
                 fill(out, 0.0f);
