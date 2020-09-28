@@ -1845,3 +1845,17 @@ TEST_CASE("[Region] Offsets with CCs")
     midiState.ccEvent(0, 4, 0);
     REQUIRE( region.getOffset() == 10 );
 }
+
+TEST_CASE("[Region] Pitch variation with veltrack")
+{
+    MidiState midiState;
+    Region region { 0, midiState };
+
+    REQUIRE(region.getBasePitchVariation(60.0, 0_norm) == 1.0);
+    REQUIRE(region.getBasePitchVariation(60.0, 64_norm) == 1.0);
+    REQUIRE(region.getBasePitchVariation(60.0, 127_norm) == 1.0);
+    region.parseOpcode({ "pitch_veltrack", "1200" });
+    REQUIRE(region.getBasePitchVariation(60.0, 0_norm) == 1.0);
+    REQUIRE(region.getBasePitchVariation(60.0, 64_norm) == Approx(centsFactor(600.0)).margin(0.01f));
+    REQUIRE(region.getBasePitchVariation(60.0, 127_norm) == Approx(centsFactor(1200.0)).margin(0.01f));
+}
