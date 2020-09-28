@@ -288,3 +288,72 @@ TEST_CASE("[FlexEG] Zero delay transitions")
     // Note(jpc): 0.9 is because EG pre-increments the time counter, slope is
     //            1 frame off into the future
 }
+
+TEST_CASE("[FlexEG] Early release")
+{
+    for (int i = 0; i < 3; ++i) {
+        sfz::Synth synth;
+
+        synth.loadSfzString(fs::current_path(), R"(
+        <region> sample=*sine
+        eg1_ampeg=1
+        eg1_time1=1.0  eg1_level1=1.0
+        eg1_time2=1.0  eg1_level2=1.0 eg1_sustain=2
+        eg1_time3=1.0  eg1_level3=0.0
+    )");
+        sfz::FlexEnvelope envelope;
+        REQUIRE(synth.getNumRegions() == 1);
+        REQUIRE(synth.getRegionView(0)->flexEGs.size() == 1);
+        envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
+        envelope.setSampleRate(100);
+
+        envelope.start(0);
+        switch (i) {
+        case 0:
+            // A normal release: up 1s, sustain 1s, down 1s
+            envelope.release(200);
+            break;
+        case 1:
+            // A fast release: up 1s, down 1s
+            envelope.release(100);
+            break;
+        case 2:
+            // A faster release: up 0.5s, down 0.5s
+            envelope.release(50);
+            break;
+        }
+
+        std::array<float, 400> output;
+        envelope.process(absl::MakeSpan(output));
+
+        // Theoretical output at 0.5s interval
+        const std::array<float, 7> ref0 {{ 0.0, 0.5, 1.0, 1.0, 1.0, 0.5, 0.0 }};
+        const std::array<float, 5> ref1 {{ 0.0, 0.5, 1.0, 0.5, 0.0 }};
+        const std::array<float, 3> ref2 {{ 0.0, 0.5, 0.25 }};
+
+        const float m = 0.015f;
+        switch (i) {
+        case 0:
+            REQUIRE(output[  0] == Approx(ref0[0]).margin(m));
+            REQUIRE(output[ 50] == Approx(ref0[1]).margin(m));
+            REQUIRE(output[100] == Approx(ref0[2]).margin(m));
+            REQUIRE(output[150] == Approx(ref0[3]).margin(m));
+            REQUIRE(output[200] == Approx(ref0[4]).margin(m));
+            REQUIRE(output[250] == Approx(ref0[5]).margin(m));
+            REQUIRE(output[300] == Approx(ref0[6]).margin(m));
+            break;
+        case 1:
+            REQUIRE(output[  0] == Approx(ref1[0]).margin(m));
+            REQUIRE(output[ 50] == Approx(ref1[1]).margin(m));
+            REQUIRE(output[100] == Approx(ref1[2]).margin(m));
+            REQUIRE(output[150] == Approx(ref1[3]).margin(m));
+            REQUIRE(output[200] == Approx(ref1[4]).margin(m));
+            break;
+        case 2:
+            REQUIRE(output[  0] == Approx(ref2[0]).margin(m));
+            REQUIRE(output[ 50] == Approx(ref2[1]).margin(m));
+            REQUIRE(output[100] == Approx(ref2[2]).margin(m));
+            break;
+        }
+    }
+}
