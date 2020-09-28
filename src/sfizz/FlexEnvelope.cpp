@@ -141,12 +141,24 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
         }
 
         // Perform stage transitions
-        const bool isReleased = isReleased_;
-        while ((!stageSustained_ && currentTime_ >= stageTime_) ||
-               (stageSustained_ && isReleased)) {
-            // If stage is of zero duration, immediate transition to level
-            if (!stageSustained_ && stageTime_ == 0)
+        if (isReleased_) {
+            // on release, fast forward past the sustain stage
+            const unsigned sustainStage = desc.sustain;
+            while (currentStageNumber_ <= sustainStage) {
+                if (!advanceToNextStage()) {
+                    out.remove_prefix(frameIndex);
+                    fill(out, 0.0f);
+                    return;
+                }
+            }
+        }
+        while (!stageSustained_ && currentTime_ >= stageTime_) {
+            // advance through completed timed stages
+            ASSERT(isReleased_ || !stageSustained_);
+            if (stageTime_ == 0) {
+                // if stage is of zero duration, immediate transition to level
                 currentLevel_ = stageTargetLevel_;
+            }
             if (!advanceToNextStage()) {
                 out.remove_prefix(frameIndex);
                 fill(out, 0.0f);
