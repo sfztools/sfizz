@@ -200,7 +200,7 @@ public:
      * @param channelIndex the channel
      * @return Type* the raw pointer to the channel
      */
-    Type* getChannel(size_t channelIndex)
+    Type* getChannel(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -231,7 +231,7 @@ public:
      * @param channelIndex the channel
      * @return absl::Span<Type>
      */
-    absl::Span<Type> getSpan(size_t channelIndex)
+    absl::Span<Type> getSpan(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -402,7 +402,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> first(size_type length)
+    AudioSpan<Type> first(size_type length) const
     {
         ASSERT(length <= numFrames);
         return { spans, numChannels, 0, length };
@@ -413,7 +413,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> last(size_type length)
+    AudioSpan<Type> last(size_type length) const
     {
         ASSERT(length <= numFrames);
         return { spans, numChannels, numFrames - length, length };
@@ -427,7 +427,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> subspan(size_type offset, size_type length)
+    AudioSpan<Type> subspan(size_type offset, size_type length) const
     {
         ASSERT(length + offset <= numFrames);
         return { spans, numChannels, offset, length };
@@ -440,7 +440,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> subspan(size_type offset)
+    AudioSpan<Type> subspan(size_type offset) const
     {
         ASSERT(offset <= numFrames);
         return { spans, numChannels, offset, numFrames - offset };
