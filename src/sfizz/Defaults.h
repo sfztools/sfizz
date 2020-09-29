@@ -54,6 +54,8 @@ namespace Default
 	constexpr Range<uint32_t> sampleCountRange { 0, std::numeric_limits<uint32_t>::max() };
 	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };
 	constexpr Range<uint32_t> loopRange { 0, std::numeric_limits<uint32_t>::max() };
+	constexpr float loopCrossfade { 1e-3 };
+	constexpr Range<float> loopCrossfadeRange { loopCrossfade, 1.0 };
 
     // common defaults
     constexpr Range<uint8_t> midi7Range { 0, 127 };

@@ -319,6 +319,7 @@ struct Region {
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<SfzLoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopRange }; //loopstart and loopend
+    float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase };
