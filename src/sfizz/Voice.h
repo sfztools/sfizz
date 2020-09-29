@@ -376,7 +376,7 @@ private:
      */
     template <InterpolatorModel M>
     static void fillInterpolated(
-        const AudioSpan<const float>& source, AudioSpan<float>& dest,
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs);
 
     /**

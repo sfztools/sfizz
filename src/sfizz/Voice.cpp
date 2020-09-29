@@ -615,7 +615,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
 template <sfz::InterpolatorModel M>
 void sfz::Voice::fillInterpolated(
-    const sfz::AudioSpan<const float>& source, sfz::AudioSpan<float>& dest,
+    const sfz::AudioSpan<const float>& source, const sfz::AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs)
 {
     auto ind = indices.data();
