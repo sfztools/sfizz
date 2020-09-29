@@ -549,12 +549,12 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
         const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
-        const auto offset = loopEnd - static_cast<int>(region->loopStart(currentPromise->oversamplingFactor)) + 1;
-        for (auto* index = indices->begin(); index < indices->end(); ++index) {
-            if (*index > loopEnd) {
-                const auto remainingElements = static_cast<size_t>(std::distance(index, indices->end()));
-                subtract1<int>(offset, { index, remainingElements });
-            }
+        const auto loopStart = static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
+        const auto loopSize = loopEnd + 1 - loopStart;
+        for (auto* it = indices->begin(), *end = indices->end(); it < end; ++it) {
+            auto index = *it;
+            *it = (index < loopEnd + 1) ? index :
+                (loopStart + (index - loopStart) % loopSize);
         }
     } else {
         const auto sampleEnd = min(
