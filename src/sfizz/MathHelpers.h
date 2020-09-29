@@ -139,6 +139,20 @@ constexpr T clamp(T v, T lo, T hi)
     return max(min(v, hi), lo);
 }
 
+/**
+ * @brief Compute the floating-point remainder (fmod)
+ *
+ * @tparam T
+ * @param x
+ * @param m
+ * @return T
+ */
+template <class T>
+inline constexpr T fastFmod(T x, T m)
+{
+    return x - m * static_cast<int>(x / m);
+}
+
 template <int Increment = 1, class T>
 inline CXX14_CONSTEXPR void incrementAll(T& only)
 {
