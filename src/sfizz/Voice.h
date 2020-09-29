@@ -374,10 +374,27 @@ private:
      * @param indices the integral parts of the source positions
      * @param coeffs the fractional parts of the source positions
      */
-    template <InterpolatorModel M>
+    template <InterpolatorModel M, bool Adding>
     static void fillInterpolated(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
-        absl::Span<const int> indices, absl::Span<const float> coeffs);
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains);
+
+    /**
+     * @brief Fill a destination with an interpolated source, selecting
+     *        interpolation type dynamically by quality level.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     * @param quality the quality level 1-10
+     */
+    template <bool Adding>
+    static void fillInterpolatedWithQuality(
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains, int quality);
 
     /**
      * @brief Compute the amplitude envelope, applied as a gain to a mono
