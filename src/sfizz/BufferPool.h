@@ -36,6 +36,7 @@ public:
         this->value = other.value;
         this->available = other.available;
         other.available = nullptr;
+        return *this;
     }
     SpanHolder(T&& value, int* available)
         : value(std::forward<T>(value))
