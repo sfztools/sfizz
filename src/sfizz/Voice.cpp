@@ -571,7 +571,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     if (isLooping) {
         loopStart = static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
         loopSize = loopEnd + 1 - loopStart;
-        loopXfadeSize = static_cast<int>(region->loopCrossfade * sampleRate + 0.5);
+        loopXfadeSize = static_cast<int>(lroundPositive(region->loopCrossfade * sampleRate));
         loopXfOutStart = loopEnd + 1 - loopXfadeSize;
         loopXfInStart = loopStart - loopXfadeSize;
         for (auto& buf : xfadeTemp) {
