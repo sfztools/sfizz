@@ -710,11 +710,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             // Crossfade Out
             //   -> fade out signal nearing the loop end
             {
-                // compute crossfade coeffs
-                for (unsigned i = 0; i < ptSize; ++i) {
-                    float pos = ptIndices[i] + ptCoeffs[i];
-                    xfCoeff[i] = (pos - loopXfOutStart) / loopXfadeSize;
-                }
                 // compute out curve
                 const Curve& xfOut = resources.curves.getCurve(6);
                 absl::Span<float> xfCurve = xfadeTemp[1]->first(ptSize);
