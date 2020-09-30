@@ -625,6 +625,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         //       computed along with index processing below
     }
 
+    // loop crossfade settings
+    constexpr bool loopXfadeUseCurves = false; // 0: linear, 1: use curves 5 & 6
+
     // index preprocessing for loops
     if (isLooping) {
         int oldIndex {};
@@ -711,10 +714,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             //   -> fade out signal nearing the loop end
             {
                 // compute out curve
-                const Curve& xfOut = resources.curves.getCurve(6);
                 absl::Span<float> xfCurve = xfadeTemp[1]->first(ptSize);
-                for (unsigned i = 0; i < ptSize; ++i)
-                    xfCurve[i] = xfOut.evalNormalized(xfCoeff[i]);
+                IF_CONSTEXPR (loopXfadeUseCurves) {
+                    const Curve& xfOut = resources.curves.getCurve(6);
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        xfCurve[i] = xfOut.evalNormalized(xfCoeff[i]);
+                }
+                else {
+                    // TODO(jpc) vectorize this
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        xfCurve[i] = clamp(1.0f - xfCoeff[i], 0.0f, 1.0f);
+                }
                 // apply out curve
                 if (0)
                     ptBuffer.applyGain(xfCurve);
@@ -752,10 +762,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                 AudioSpan<float> xfInBuffer = ptBuffer.subspan(applyOffset);
 
                 // compute in curve
-                const Curve& xfIn = resources.curves.getCurve(5);
                 absl::Span<float> xfCurve = xfadeTemp[1]->first(applySize);
-                for (unsigned i = 0; i < applySize; ++i)
-                    xfCurve[i] = xfIn.evalNormalized(xfInCoeff[i]);
+                IF_CONSTEXPR (loopXfadeUseCurves) {
+                    const Curve& xfIn = resources.curves.getCurve(5);
+                    for (unsigned i = 0; i < applySize; ++i)
+                        xfCurve[i] = xfIn.evalNormalized(xfInCoeff[i]);
+                }
+                else {
+                    // TODO(jpc) vectorize this
+                    for (unsigned i = 0; i < applySize; ++i)
+                        xfCurve[i] = clamp(xfInCoeff[i], 0.0f, 1.0f);
+                }
                 // apply in curve
                 fillInterpolatedWithQuality<true>(
                     source, xfInBuffer, xfInIndices, *coeffs, xfCurve, quality);
