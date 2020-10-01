@@ -397,6 +397,11 @@ private:
         absl::Span<const float> addingGains, int quality);
 
     /**
+     * @brief Get a S-shaped curve that is applicable to loop crossfading.
+     */
+    static const Curve& getSCurve();
+
+    /**
      * @brief Compute the amplitude envelope, applied as a gain to a mono
      * or stereo buffer
      *

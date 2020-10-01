@@ -34,6 +34,9 @@ sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
 
     gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
     xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
+
+    // prepare curves
+    getSCurve();
 }
 
 sfz::Voice::~Voice()
@@ -626,7 +629,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     // loop crossfade settings
-    constexpr bool loopXfadeUseCurves = false; // 0: linear, 1: use curves 5 & 6
+    constexpr int loopXfadeUseCurves = 2; // 0: linear
+                                          // 1: use curves 5 & 6
+                                          // 2: use S-shaped curve
 
     // index preprocessing for loops
     if (isLooping) {
@@ -715,12 +720,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             {
                 // compute out curve
                 absl::Span<float> xfCurve = xfadeTemp[1]->first(ptSize);
-                IF_CONSTEXPR (loopXfadeUseCurves) {
+                IF_CONSTEXPR (loopXfadeUseCurves == 2) {
+                    const Curve& xfIn = getSCurve();
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        xfCurve[i] = xfIn.evalNormalized(1.0f - xfCoeff[i]);
+                }
+                else IF_CONSTEXPR (loopXfadeUseCurves == 1) {
                     const Curve& xfOut = resources.curves.getCurve(6);
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = xfOut.evalNormalized(xfCoeff[i]);
                 }
-                else {
+                else IF_CONSTEXPR (loopXfadeUseCurves == 0) {
                     // TODO(jpc) vectorize this
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = clamp(1.0f - xfCoeff[i], 0.0f, 1.0f);
@@ -763,12 +773,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
                 // compute in curve
                 absl::Span<float> xfCurve = xfadeTemp[1]->first(applySize);
-                IF_CONSTEXPR (loopXfadeUseCurves) {
+                IF_CONSTEXPR (loopXfadeUseCurves == 2) {
+                    const Curve& xfIn = getSCurve();
+                    for (unsigned i = 0; i < applySize; ++i)
+                        xfCurve[i] = xfIn.evalNormalized(xfInCoeff[i]);
+                }
+                else IF_CONSTEXPR (loopXfadeUseCurves == 1) {
                     const Curve& xfIn = resources.curves.getCurve(5);
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = xfIn.evalNormalized(xfInCoeff[i]);
                 }
-                else {
+                else IF_CONSTEXPR (loopXfadeUseCurves == 0) {
                     // TODO(jpc) vectorize this
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = clamp(xfInCoeff[i], 0.0f, 1.0f);
@@ -863,6 +878,20 @@ void sfz::Voice::fillInterpolatedWithQuality(
         }
         break;
     }
+}
+
+const sfz::Curve& sfz::Voice::getSCurve()
+{
+    static const Curve curve = []() -> Curve {
+        constexpr unsigned N = Curve::NumValues;
+        float values[N];
+        for (unsigned i = 0; i < N; ++i) {
+            double x = i / static_cast<double>(N - 1);
+            values[i] = (1.0 - std::cos(M_PI * x)) * 0.5;
+        }
+        return Curve::buildFromPoints(values);
+    }();
+    return curve;
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
