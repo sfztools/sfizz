@@ -33,13 +33,13 @@ TEST_CASE("[Polyphony] Polyphony in hierarchy")
         <region> key=64 sample=*sine
     )");
     REQUIRE( synth.getRegionView(0)->polyphony == 2 );
-    REQUIRE( synth.getRegionSetView(1)->getPolyphonyLimit() == 2 );
+    REQUIRE( synth.getRegionSetView(0)->getPolyphonyLimit() == 2 );
     REQUIRE( synth.getRegionView(1)->polyphony == 2 );
-    REQUIRE( synth.getRegionSetView(2)->getPolyphonyLimit() == 3 );
-    REQUIRE( synth.getRegionSetView(2)->getRegions()[0]->polyphony == 3 );
-    REQUIRE( synth.getRegionSetView(3)->getPolyphonyLimit() == 4 );
-    REQUIRE( synth.getRegionSetView(3)->getRegions()[0]->polyphony == 5 );
-    REQUIRE( synth.getRegionSetView(3)->getRegions()[1]->polyphony == 4 );
+    REQUIRE( synth.getRegionSetView(1)->getPolyphonyLimit() == 3 );
+    REQUIRE( synth.getRegionSetView(1)->getRegions()[0]->polyphony == 3 );
+    REQUIRE( synth.getRegionSetView(2)->getPolyphonyLimit() == 4 );
+    REQUIRE( synth.getRegionSetView(2)->getRegions()[0]->polyphony == 5 );
+    REQUIRE( synth.getRegionSetView(2)->getRegions()[1]->polyphony == 4 );
 }
 
 TEST_CASE("[Polyphony] Polyphony groups")
