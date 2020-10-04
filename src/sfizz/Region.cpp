@@ -1169,11 +1169,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             return false;
         if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
             return false;
-        if (auto value = readOpcode(opcode.value, Range<int> { 0, 1 })) {
+        if (auto ampeg = readBooleanFromOpcode(opcode)) {
             FlexEGDescription& desc = flexEGs[egNumber - 1];
-            bool ampeg = *value != 0;
-            if (desc.ampeg != ampeg) {
-                desc.ampeg = ampeg;
+            if (desc.ampeg != *ampeg) {
+                desc.ampeg = *ampeg;
                 flexAmpEG = absl::nullopt;
                 for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
                     if (flexEGs[i].ampeg)
