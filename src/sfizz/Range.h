@@ -8,6 +8,7 @@
 #include "MathHelpers.h"
 #include <initializer_list>
 #include <type_traits>
+#include <limits>
 
 namespace sfz
 {
@@ -113,6 +114,17 @@ public:
         return Range<Other> {
             static_cast<Other>(_start),
             static_cast<Other>(_end),
+        };
+    }
+
+    /**
+     * @brief Construct a range which covers the whole numeric domain
+     */
+    static constexpr Range<Type> wholeRange() noexcept
+    {
+        return Range<Type> {
+            std::numeric_limits<Type>::min(),
+            std::numeric_limits<Type>::max(),
         };
     }
 

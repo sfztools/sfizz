@@ -210,16 +210,18 @@ absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueT
 
 absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
 {
-    switch (hash(opcode.value)) {
-    case hash("off"): // fallthrough
-    case hash("0"):
+    // Cakewalk-style booleans, case-insensitive
+    if (absl::EqualsIgnoreCase(opcode.value, "off"))
         return false;
-    case hash("on"):  // fallthrough
-    case hash("1"):
+    if (absl::EqualsIgnoreCase(opcode.value, "on"))
         return true;
-    default:
-        return {};
-    }
+
+    // ARIA-style booleans? (seen in egN_dynamic=1 for example)
+    // TODO check this
+    if (auto value = readOpcode(opcode.value, Range<int64_t>::wholeRange()))
+        return *value != 0;
+
+    return absl::nullopt;
 }
 
 template <class ValueType>
