@@ -925,7 +925,7 @@ TEST_CASE("[Region] Parsing opcodes")
             region.parseOpcode({ a.first, "-40" });
             REQUIRE(*a.second == 0_a);
             region.parseOpcode({ a.first, "140" });
-            REQUIRE(*a.second == 1.0_a);
+            REQUIRE(*a.second == 1.4_a);
         }
     }
 
@@ -1640,7 +1640,7 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "amplitude", "-40" });
         REQUIRE(region.amplitude == 0_a);
         region.parseOpcode({ "amplitude", "140" });
-        REQUIRE(region.amplitude == 1.0_a);
+        REQUIRE(region.amplitude == 1.4_a);
     }
 
     SECTION("amplitude_cc")
@@ -1667,7 +1667,7 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "amplitude_stepcc120", "24" });
         REQUIRE(view.at(120).step == 24.0_a);
         region.parseOpcode({ "amplitude_stepcc120", "15482" });
-        REQUIRE(view.at(120).step == 100.0_a);
+        REQUIRE(view.at(120).step == 15482.0_a);
         region.parseOpcode({ "amplitude_stepcc120", "-2" });
         REQUIRE(view.at(120).step == 0.0f);
     }
