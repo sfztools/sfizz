@@ -211,9 +211,11 @@ absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueT
 absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
 {
     switch (hash(opcode.value)) {
-    case hash("off"):
+    case hash("off"): // fallthrough
+    case hash("0"):
         return false;
-    case hash("on"):
+    case hash("on"):  // fallthrough
+    case hash("1"):
         return true;
     default:
         return {};
