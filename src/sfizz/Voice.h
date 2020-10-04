@@ -249,12 +249,6 @@ public:
      */
     float getAveragePower() const noexcept;
     /**
-     * @brief Get the position of the voice in the source, in samples
-     *
-     * @return uint32_t
-     */
-    uint32_t getSourcePosition() const noexcept;
-    /**
      * Returns the region that is currently playing. May be null if the voice is not active!
      *
      * @return

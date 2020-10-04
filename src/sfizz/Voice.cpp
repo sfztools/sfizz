@@ -97,6 +97,7 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
             return;
         }
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
+        sourcePosition = region->getOffset(currentPromise->oversamplingFactor);
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
@@ -123,7 +124,6 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
         equalizers[i].setup(*region, i, triggerEvent.value);
     }
 
-    sourcePosition = region->getOffset();
     triggerDelay = delay;
     initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
     baseFrequency = resources.tuning.getFrequencyOfKey(triggerEvent.number);
@@ -854,11 +854,6 @@ float sfz::Voice::getAveragePower() const noexcept
 bool sfz::Voice::releasedOrFree() const noexcept
 {
     return state != State::playing || egAmplitude.isReleased();
-}
-
-uint32_t sfz::Voice::getSourcePosition() const noexcept
-{
-    return sourcePosition;
 }
 
 void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
