@@ -77,20 +77,19 @@ void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
 
 void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
-    const auto newRegionSet = [&](RegionSet* parentSet) {
-        ASSERT(parentSet != nullptr);
-        sets.emplace_back(new RegionSet);
-        auto newSet = sets.back().get();
-        parentSet->addSubset(newSet);
-        newSet->setParent(parentSet);
-        currentSet = newSet;
+    const auto newRegionSet = [&](OpcodeScope level) {
+        auto parent = currentSet;
+        while (parent && parent->getLevel() >= level)
+            parent = parent->getParent();
+
+        sets.emplace_back(new RegionSet(parent, level));
+        currentSet = sets.back().get();
     };
 
     switch (hash(header)) {
     case hash("global"):
         globalOpcodes = members;
-        currentSet = sets.front().get();
-        lastHeader = OpcodeScope::kOpcodeScopeGlobal;
+        newRegionSet(OpcodeScope::kOpcodeScopeGlobal);
         groupOpcodes.clear();
         masterOpcodes.clear();
         handleGlobalOpcodes(members);
@@ -101,19 +100,14 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
         break;
     case hash("master"):
         masterOpcodes = members;
-        newRegionSet(sets.front().get());
+        newRegionSet(OpcodeScope::kOpcodeScopeMaster);
         groupOpcodes.clear();
-        lastHeader = OpcodeScope::kOpcodeScopeMaster;
         handleMasterOpcodes(members);
         numMasters++;
         break;
     case hash("group"):
         groupOpcodes = members;
-        if (lastHeader == OpcodeScope::kOpcodeScopeGroup)
-            newRegionSet(currentSet->getParent());
-        else
-            newRegionSet(currentSet);
-        lastHeader = OpcodeScope::kOpcodeScopeGroup;
+        newRegionSet(OpcodeScope::kOpcodeScopeGroup);
         handleGroupOpcodes(members, masterOpcodes);
         numGroups++;
         break;
@@ -145,8 +139,6 @@ void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& mes
 
 void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    ASSERT(currentSet != nullptr);
-
     int regionNumber = static_cast<int>(regions.size());
     auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
 
@@ -184,8 +176,10 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
         setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
 
-    lastRegion->parent = currentSet;
-    currentSet->addRegion(lastRegion.get());
+    if (currentSet != nullptr) {
+        lastRegion->parent = currentSet;
+        currentSet->addRegion(lastRegion.get());
+    }
 
     // Adapt the size of the delayed releases to avoid allocating later on
     lastRegion->delayedReleases.reserve(lastRegion->keyRange.length());
@@ -204,10 +198,8 @@ void sfz::Synth::clear()
     for (auto& list : ccActivationLists)
         list.clear();
 
-    lastHeader = OpcodeScope::kOpcodeScopeGlobal;
+    currentSet = nullptr;
     sets.clear();
-    sets.emplace_back(new RegionSet);
-    currentSet = sets.front().get();
     regions.clear();
     effectBuses.clear();
     effectBuses.emplace_back(new EffectBus);

@@ -8,6 +8,7 @@
 
 #include "Region.h"
 #include "Voice.h"
+#include "Opcode.h"
 #include "SwapAndPop.h"
 #include <vector>
 
@@ -16,6 +17,13 @@ namespace sfz
 
 class RegionSet {
 public:
+    RegionSet() = delete;
+    RegionSet(RegionSet* parentSet, OpcodeScope level)
+    : parent(parentSet), level(level)
+    {
+        if (parentSet != nullptr)
+            parentSet->addSubset(this);
+    }
     /**
      * @brief Set the polyphony limit for the set
      *
@@ -73,6 +81,13 @@ public:
      * @return RegionSet*
      */
     RegionSet* getParent() const noexcept { return parent; }
+
+    /**
+     * @brief Get the set level
+     *
+     * @return OpcodeScope
+     */
+    OpcodeScope getLevel() const noexcept { return level; }
     /**
      * @brief Set the parent set
      *
@@ -109,6 +124,7 @@ public:
     const std::vector<RegionSet*>& getSubsets() const noexcept { return subsets; }
 private:
     RegionSet* parent { nullptr };
+    OpcodeScope level { kOpcodeScopeGeneric };
     std::vector<Region*> regions;
     std::vector<RegionSet*> subsets;
     std::vector<Voice*> voices;

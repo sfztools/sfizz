@@ -43,7 +43,7 @@ enum OpcodeCategory {
  */
 enum OpcodeScope {
     //! unknown scope or other
-    kOpcodeScopeGeneric,
+    kOpcodeScopeGeneric = 0,
     //! global scope
     kOpcodeScopeGlobal,
     //! control scope

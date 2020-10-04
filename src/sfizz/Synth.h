@@ -817,8 +817,7 @@ private:
     std::vector<VoicePtr> voices;
 
     // These are more general "groups" than sfz and encapsulates the full hierarchy
-    RegionSet* currentSet;
-    OpcodeScope lastHeader { OpcodeScope::kOpcodeScopeGlobal };
+    RegionSet* currentSet { nullptr };
     std::vector<RegionSetPtr> sets;
 
     // These are the `group=` groups where you can off voices
