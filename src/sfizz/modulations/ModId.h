@@ -23,6 +23,7 @@ enum class ModId : int {
     Controller = _SourcesStart,
     Envelope,
     LFO,
+    AmpEG,
     PitchEG,
     FilEG,
 
@@ -33,7 +34,8 @@ enum class ModId : int {
     //--------------------------------------------------------------------------
     _TargetsStart = _SourcesEnd,
 
-    Amplitude = _TargetsStart,
+    MasterAmplitude = _TargetsStart,
+    Amplitude,
     Pan,
     Width,
     Position,

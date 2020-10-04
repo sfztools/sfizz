@@ -425,6 +425,7 @@ struct Region {
 
     // Envelopes
     std::vector<FlexEGDescription> flexEGs;
+    absl::optional<uint8_t> flexAmpEG; // egN_ampeg
 
     // LFOs
     std::vector<LFODescription> lfos;
@@ -445,6 +446,7 @@ struct Region {
         float velToDepth = 0.0f;
     };
     std::vector<Connection> connections;
+    Connection* getConnection(const ModKey& source, const ModKey& target);
     Connection& getOrCreateConnection(const ModKey& source, const ModKey& target);
 
     // Parent

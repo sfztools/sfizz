@@ -41,6 +41,21 @@ public:
     void release(unsigned releaseDelay);
 
     /**
+       Get the remaining delay samples
+     */
+    unsigned getRemainingDelay() const noexcept;
+
+    /**
+       Is the envelope released?
+    */
+    bool isReleased() const noexcept;
+
+    /**
+       Is the envelope finished?
+    */
+    bool isFinished() const noexcept;
+
+    /**
        Process a cycle of the generator.
      */
     void process(absl::Span<float> out);

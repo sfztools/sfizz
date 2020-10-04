@@ -67,10 +67,17 @@ const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth);
 unsigned numPlayingVoices(const sfz::Synth& synth);
 
 /**
- * @brief Create the dot graph representation from a list of strings
+ * @brief Create the default dot graph representation for standard regions
  *
  */
-std::string createReferenceGraph(std::vector<std::string> lines, int numRegions = 1);
+std::string createDefaultGraph(std::vector<std::string> lines, int numRegions = 1);
+
+/**
+ * @brief Create a dot graph with the specified lines.
+ * The lines are sorted.
+ *
+ */
+std::string createModulationDotGraph(std::vector<std::string> lines);
 
 template <class Type>
 inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)

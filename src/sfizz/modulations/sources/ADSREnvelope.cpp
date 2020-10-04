@@ -35,6 +35,11 @@ void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
     const EGDescription* desc = nullptr;
 
     switch (sourceKey.id()) {
+    case ModId::AmpEG:
+        eg = voice->getAmplitudeEG();
+        ASSERT(eg);
+        desc = &region->amplitudeEG;
+        break;
     case ModId::PitchEG:
         eg = voice->getPitchEG();
         ASSERT(eg);
@@ -69,6 +74,10 @@ void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
     ADSREnvelope<float>* eg = nullptr;
 
     switch (sourceKey.id()) {
+    case ModId::AmpEG:
+        eg = voice->getAmplitudeEG();
+        ASSERT(eg);
+        break;
     case ModId::PitchEG:
         eg = voice->getPitchEG();
         ASSERT(eg);
@@ -98,6 +107,10 @@ void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voic
     ADSREnvelope<float>* eg = nullptr;
 
     switch (sourceKey.id()) {
+    case ModId::AmpEG:
+        eg = voice->getAmplitudeEG();
+        ASSERT(eg);
+        break;
     case ModId::PitchEG:
         eg = voice->getPitchEG();
         ASSERT(eg);

@@ -331,6 +331,10 @@ public:
     Duration getLastPanningDuration() const noexcept { return panningDuration; }
 
     /**
+     * @brief Get the SFZv1 amplitude EG, if existing
+     */
+    ADSREnvelope<float>* getAmplitudeEG() { return &egAmplitude; }
+    /**
      * @brief Get the SFZv1 pitch EG, if existing
      */
     ADSREnvelope<float>* getPitchEG() { return egPitch.get(); }
@@ -510,6 +514,7 @@ private:
     Smoother xfadeSmoother;
     void resetSmoothers() noexcept;
 
+    ModMatrix::TargetId masterAmplitudeTarget;
     ModMatrix::TargetId amplitudeTarget;
     ModMatrix::TargetId volumeTarget;
     ModMatrix::TargetId panTarget;

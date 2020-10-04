@@ -104,6 +104,25 @@ void FlexEnvelope::release(unsigned releaseDelay)
     impl.currentFramesUntilRelease_ = releaseDelay;
 }
 
+unsigned FlexEnvelope::getRemainingDelay() const noexcept
+{
+    const Impl& impl = *impl_;
+    return static_cast<unsigned>(impl.delayFramesLeft_);
+}
+
+bool FlexEnvelope::isReleased() const noexcept
+{
+    const Impl& impl = *impl_;
+    return impl.isReleased_;
+}
+
+bool FlexEnvelope::isFinished() const noexcept
+{
+    const Impl& impl = *impl_;
+    const FlexEGDescription& desc = *impl.desc_;
+    return impl.currentStageNumber_ >= desc.points.size();
+}
+
 void FlexEnvelope::process(absl::Span<float> out)
 {
     Impl& impl = *impl_;

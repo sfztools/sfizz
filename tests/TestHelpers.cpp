@@ -69,9 +69,12 @@ unsigned numPlayingVoices(const sfz::Synth& synth)
     });
 }
 
-std::string createReferenceGraph(std::vector<std::string> lines, int numRegions)
+std::string createDefaultGraph(std::vector<std::string> lines, int numRegions)
 {
     for (int regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
+        lines.push_back(absl::StrCat(
+            R"("AmplitudeEG {)", regionIdx, R"(}" -> "MasterAmplitude {)", regionIdx, R"(}")"
+        ));
         lines.push_back(absl::StrCat(
             R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude {)",
             regionIdx,
@@ -84,6 +87,11 @@ std::string createReferenceGraph(std::vector<std::string> lines, int numRegions)
         ));
     }
 
+    return createModulationDotGraph(lines);
+};
+
+std::string createModulationDotGraph(std::vector<std::string> lines)
+{
     std::sort(lines.begin(), lines.end());
 
     std::string graph;
@@ -98,4 +106,4 @@ std::string createReferenceGraph(std::vector<std::string> lines, int numRegions)
     graph += "}\n";
 
     return graph;
-};
+}

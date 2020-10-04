@@ -130,7 +130,6 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     bendStepFactor = centsFactor(region->bendStep);
     bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
     bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
-    egAmplitude.reset(region->amplitudeEG, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
 
     resources.modMatrix.initVoice(id, region->getId(), delay);
     saveModulationTargets(region);
@@ -152,10 +151,13 @@ void sfz::Voice::release(int delay) noexcept
     if (state != State::playing)
         return;
 
-    if (egAmplitude.getRemainingDelay() > delay) {
-        switchState(State::cleanMeUp);
-    } else {
-        egAmplitude.startRelease(delay);
+    if (!region->flexAmpEG) {
+        if (egAmplitude.getRemainingDelay() > delay)
+            switchState(State::cleanMeUp);
+    }
+    else {
+        if (flexEGs[*region->flexAmpEG]->getRemainingDelay() > static_cast<unsigned>(delay))
+            switchState(State::cleanMeUp);
     }
 
     resources.modMatrix.releaseVoice(id, region->getId(), delay);
@@ -163,10 +165,15 @@ void sfz::Voice::release(int delay) noexcept
 
 void sfz::Voice::off(int delay) noexcept
 {
-    if (region->offMode == SfzOffMode::fast) {
-        egAmplitude.setReleaseTime( Default::offTime );
-    } else if (region->offMode == SfzOffMode::time) {
-        egAmplitude.setReleaseTime(region->offTime);
+    if (!region->flexAmpEG) {
+        if (region->offMode == SfzOffMode::fast) {
+            egAmplitude.setReleaseTime( Default::offTime );
+        } else if (region->offMode == SfzOffMode::time) {
+            egAmplitude.setReleaseTime(region->offTime);
+        }
+    }
+    else {
+        // TODO(jpc): Flex AmpEG
     }
 
     release(delay);
@@ -286,8 +293,14 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
         panStageMono(buffer);
     }
 
-    if (!egAmplitude.isSmoothing())
-        switchState(State::cleanMeUp);
+    if (!region->flexAmpEG) {
+        if (!egAmplitude.isSmoothing())
+            switchState(State::cleanMeUp);
+    }
+    else {
+        if (flexEGs[*region->flexAmpEG]->isFinished())
+            switchState(State::cleanMeUp);
+    }
 
     powerFollower.process(buffer);
 
@@ -367,8 +380,10 @@ void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 
     ModMatrix& mm = resources.modMatrix;
 
-    // AmpEG envelope
-    egAmplitude.getBlock(modulationSpan);
+    // Amplitude EG
+    absl::Span<const float> ampegOut(mm.getModulation(masterAmplitudeTarget), numSamples);
+    ASSERT(ampegOut.data());
+    copy(ampegOut, modulationSpan);
 
     // Amplitude envelope
     applyGain1<float>(baseGain, modulationSpan);
@@ -572,8 +587,14 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                         << " for sample " << region->sampleId);
                 }
 #endif
-                egAmplitude.setReleaseTime(0.0f);
-                egAmplitude.startRelease(i);
+                if (!region->flexAmpEG) {
+                    egAmplitude.setReleaseTime(0.0f);
+                    egAmplitude.startRelease(i);
+                }
+                else {
+                    // TODO(jpc): Flex AmpEG
+                    flexEGs[*region->flexAmpEG]->release(i);
+                }
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
                 break;
@@ -853,7 +874,12 @@ float sfz::Voice::getAveragePower() const noexcept
 
 bool sfz::Voice::releasedOrFree() const noexcept
 {
-    return state != State::playing || egAmplitude.isReleased();
+    if (state != State::playing)
+        return true;
+    if (!region->flexAmpEG)
+        return egAmplitude.isReleased();
+    else
+        return flexEGs[*region->flexAmpEG]->isReleased();
 }
 
 void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
@@ -1021,6 +1047,7 @@ void sfz::Voice::resetSmoothers() noexcept
 void sfz::Voice::saveModulationTargets(const Region* region) noexcept
 {
     ModMatrix& mm = resources.modMatrix;
+    masterAmplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::MasterAmplitude, region->getId()));
     amplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Amplitude, region->getId()));
     volumeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Volume, region->getId()));
     panTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pan, region->getId()));
