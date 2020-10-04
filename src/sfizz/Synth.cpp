@@ -1018,7 +1018,7 @@ void sfz::Synth::checkNotePolyphony(const Region* region, int delay, const Trigg
                 }
                 break;
             case SfzSelfMask::dontMask:
-                if (!selfMaskCandidate || selfMaskCandidate->getSourcePosition() < voice->getSourcePosition())
+                if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
                     selfMaskCandidate = voice;
                 break;
             }

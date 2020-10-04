@@ -856,11 +856,6 @@ bool sfz::Voice::releasedOrFree() const noexcept
     return state != State::playing || egAmplitude.isReleased();
 }
 
-uint32_t sfz::Voice::getSourcePosition() const noexcept
-{
-    return sourcePosition;
-}
-
 void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
 {
     if (numFilters == filters.size())
