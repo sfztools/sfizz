@@ -21,6 +21,8 @@ clients/sfzprint
 
 /vst/download/
 
+/editor/external/fluentui-system-icons/
+
 # gh-pages unstaged files:
 _api/
 _site/
