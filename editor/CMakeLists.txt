@@ -13,7 +13,7 @@ set(EDITOR_RESOURCES
     icon_white@2x.png
     knob48.png
     knob48@2x.png
-    Fonts/fluentui-system-regular-20.ttf
+    Fonts/sfizz-fluentui-system-r20.ttf
     Fonts/Roboto-Regular.ttf
     PARENT_SCOPE)
 

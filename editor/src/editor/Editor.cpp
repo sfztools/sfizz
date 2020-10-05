@@ -497,7 +497,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
-            btn->setFont(new CFontDesc("Fluent System Regular W20", fontsize));
+            btn->setFont(new CFontDesc("Sfizz Fluent System R20", fontsize));
             btn->setTextColor(theme->icon);
             btn->setHoverColor(theme->iconHighlight);
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
