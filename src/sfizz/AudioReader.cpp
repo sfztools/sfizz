@@ -333,12 +333,6 @@ AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, std::error_
     return createAudioReaderWithHandle(handle, reverse, ec);
 }
 
-AudioReaderPtr createAudioReaderWithFd(int fd, bool reverse, std::error_code* ec)
-{
-    SndfileHandle handle(fd, false);
-    return createAudioReaderWithHandle(handle, reverse, ec);
-}
-
 static AudioReaderPtr createExplicitAudioReaderWithHandle(SndfileHandle handle, AudioReaderType type, std::error_code* ec)
 {
     AudioReaderPtr reader;
@@ -375,12 +369,6 @@ AudioReaderPtr createExplicitAudioReader(const fs::path& path, AudioReaderType t
 #else
     SndfileHandle handle(path.c_str());
 #endif
-    return createExplicitAudioReaderWithHandle(handle, type, ec);
-}
-
-AudioReaderPtr createExplicitAudioReaderWithFd(int fd, AudioReaderType type, std::error_code* ec)
-{
-    SndfileHandle handle(fd, false);
     return createExplicitAudioReaderWithHandle(handle, type, ec);
 }
 
