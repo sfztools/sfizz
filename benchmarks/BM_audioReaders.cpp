@@ -13,6 +13,7 @@
 #include <system_error>
 #include <stdexcept>
 #include <cstdio>
+#include <cstdlib>
 #include <cmath>
 #ifndef _WIN32
 #include <sys/types.h>
@@ -22,42 +23,60 @@
 #endif
 
 ///
-struct AutoFD {
-    AutoFD() {}
-    ~AutoFD() { reset(); }
+struct TemporaryFile {
+    TemporaryFile();
+    ~TemporaryFile();
 
-    AutoFD(const AutoFD&) = delete;
-    AutoFD &operator=(const AutoFD&) = delete;
+    TemporaryFile(const TemporaryFile&) = delete;
+    TemporaryFile& operator=(const TemporaryFile&) = delete;
 
-    AutoFD(AutoFD&& other) : fd_(other.fd_) { other.fd_ = -1; }
-    AutoFD &operator=(AutoFD&& other)
-    {
-        if (this == &other) return *this;
-        reset(other.fd_);
-        other.fd_ = -1;
-        return *this;
-    }
+    TemporaryFile(TemporaryFile&&) = default;
+    TemporaryFile& operator=(TemporaryFile&&) = default;
 
-    explicit operator bool() const noexcept { return fd_ != -1; }
-    int get() const noexcept { return fd_; }
-
-    int release()
-    {
-        int fd = fd_;
-        fd_ = -1;
-        return fd;
-    }
-
-    void reset(int fd = -1) noexcept
-    {
-        if (fd_ == fd) return;
-        if (fd_ != -1) close(fd_);
-        fd_ = fd;
-    }
+    const fs::path& path() const { return path_; }
 
 private:
-    int fd_ = -1;
+    fs::path path_;
+    static fs::path createTemporaryFile();
 };
+
+TemporaryFile::TemporaryFile()
+    : path_(createTemporaryFile())
+{
+}
+
+TemporaryFile::~TemporaryFile()
+{
+    std::error_code ec;
+    fs::remove(path_, ec);
+}
+
+#if !defined(_WIN32)
+fs::path TemporaryFile::createTemporaryFile()
+{
+    char path[] = P_tmpdir "/sndXXXXXX";
+    int fd = mkstemp(path);
+    if (fd == -1)
+        throw std::runtime_error("Cannot create temporary file.");
+    close(fd);
+    return path;
+}
+#else
+fs::path TemporaryFile::createTemporaryFile()
+{
+    DWORD ret = GetTempPathW(0, buffer);
+    std::unique_ptr<WCHAR[]> path;
+    if (ret != 0) {
+        path.reset(new WCHAR[ret + 8]{});
+        ret = GetTempPathW(0, buffer);
+        if (ret != 0)
+            wcscat(path.get(), L"\\XXXXXX");
+    }
+    if (ret == 0 || !_wmktemp(path.get()))
+        throw std::runtime_error("Cannot create temporary file.");
+    return path.get();
+}
+#endif
 
 ///
 class AudioReaderFixture : public benchmark::Fixture {
@@ -71,20 +90,20 @@ public:
     {
     }
 
-    static AutoFD createAudioFile(int format);
+    static TemporaryFile createAudioFile(int format);
 
-    static AutoFD fileWav;
-    static AutoFD fileFlac;
-    static AutoFD fileOgg;
+    static TemporaryFile fileWav;
+    static TemporaryFile fileFlac;
+    static TemporaryFile fileOgg;
 
     std::vector<float> workBuffer;
 };
 
-AutoFD AudioReaderFixture::fileWav = createAudioFile(SF_FORMAT_WAV|SF_FORMAT_PCM_16);
-AutoFD AudioReaderFixture::fileFlac = createAudioFile(SF_FORMAT_FLAC|SF_FORMAT_PCM_16);
-AutoFD AudioReaderFixture::fileOgg = createAudioFile(SF_FORMAT_OGG|SF_FORMAT_VORBIS);
+TemporaryFile AudioReaderFixture::fileWav = createAudioFile(SF_FORMAT_WAV|SF_FORMAT_PCM_16);
+TemporaryFile AudioReaderFixture::fileFlac = createAudioFile(SF_FORMAT_FLAC|SF_FORMAT_PCM_16);
+TemporaryFile AudioReaderFixture::fileOgg = createAudioFile(SF_FORMAT_OGG|SF_FORMAT_VORBIS);
 
-AutoFD AudioReaderFixture::createAudioFile(int format)
+TemporaryFile AudioReaderFixture::createAudioFile(int format)
 {
     constexpr unsigned sampleRate = 44100;
     constexpr unsigned fileDuration = 10;
@@ -100,53 +119,38 @@ AutoFD AudioReaderFixture::createAudioFile(int format)
         phase -= static_cast<long>(phase);
     }
 
-    // create anonymous temp file
-    FILE* file = tmpfile();
-    if (!file)
-        throw std::system_error(errno, std::generic_category());
+    // create temp file
+    TemporaryFile temp;
+    fprintf(stderr, "* Temporary file: %s\n", temp.path().u8string().c_str());
 
-    // convert FILE to fd, for sndfile
-    AutoFD fd;
-    fd.reset(dup(fileno(file)));
-    if (!fd) {
-        fclose(file);
-        throw std::system_error(errno, std::generic_category());
-    }
-    fclose(file);
+    // write to file
+#if !defined(_WIN32)
+    SndfileHandle snd(temp.path().c_str(), SFM_WRITE, format, 2, sampleRate);
+#else
+    SndfileHandle snd(temp.path().wstring().c_str(), SFM_WRITE, format, 2, sampleRate);
+#endif
 
-    // write to fd
-    SndfileHandle snd(fd.get(), false, SFM_WRITE, format, 2, sampleRate);
     if (snd.error())
         throw std::runtime_error("cannot open sound file for writing");
     snd.writef(sndData.get(), fileFrames);
     snd = SndfileHandle();
 
-    return fd;
+    return temp;
 }
 
-static void rewindFd(int fd)
+static void doReaderBenchmark(const fs::path& path, std::vector<float> &buffer, sfz::AudioReaderType type)
 {
-#ifndef _WIN32
-    off_t off = lseek(fd, 0, SEEK_SET);
-#else
-    off_t off = _lseek(fd, 0, SEEK_SET);
-#endif
-    if (off == -1)
-        throw std::system_error(errno, std::generic_category());
-}
-
-static void doReaderBenchmark(int fd, std::vector<float> &buffer, sfz::AudioReaderType type)
-{
-    rewindFd(fd);
-    sfz::AudioReaderPtr reader = sfz::createExplicitAudioReaderWithFd(fd, type);
+    sfz::AudioReaderPtr reader = sfz::createExplicitAudioReader(path, type);
     while (reader->readNextBlock(buffer.data(), buffer.size() / 2) > 0);
 }
 
-static void doEntireRead(int fd)
+static void doEntireRead(const fs::path& path)
 {
-    rewindFd(fd);
-
-    SndfileHandle handle(fd, false);
+#if !defined(_WIN32)
+    SndfileHandle handle(path.c_str());
+#else
+    SndfileHandle handle(path.wstring().c_str());
+#endif
     if (handle.error())
         throw std::runtime_error("cannot open sound file for reading");
 
@@ -157,63 +161,63 @@ static void doEntireRead(int fd)
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireWav)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doEntireRead(fileWav.get());
+        doEntireRead(fileWav.path());
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardWav)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doReaderBenchmark(fileWav.get(), workBuffer, sfz::AudioReaderType::Forward);
+        doReaderBenchmark(fileWav.path(), workBuffer, sfz::AudioReaderType::Forward);
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseWav)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doReaderBenchmark(fileWav.get(), workBuffer, sfz::AudioReaderType::Reverse);
+        doReaderBenchmark(fileWav.path(), workBuffer, sfz::AudioReaderType::Reverse);
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireFlac)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doEntireRead(fileFlac.get());
+        doEntireRead(fileFlac.path());
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardFlac)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doReaderBenchmark(fileFlac.get(), workBuffer, sfz::AudioReaderType::Forward);
+        doReaderBenchmark(fileFlac.path(), workBuffer, sfz::AudioReaderType::Forward);
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseFlac)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doReaderBenchmark(fileFlac.get(), workBuffer, sfz::AudioReaderType::Reverse);
+        doReaderBenchmark(fileFlac.path(), workBuffer, sfz::AudioReaderType::Reverse);
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireOgg)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doEntireRead(fileOgg.get());
+        doEntireRead(fileOgg.path());
     }
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardOgg)(benchmark::State& state)
 {
     for (auto _ : state) {
-        doReaderBenchmark(fileOgg.get(), workBuffer, sfz::AudioReaderType::Forward);
+        doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Forward);
     }
 }
 
 //BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
 //{
 //    for (auto _ : state) {
-//        doReaderBenchmark(fileOgg.get(), workBuffer, sfz::AudioReaderType::Reverse);
+//        doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
 //    }
 //}
 
