@@ -166,17 +166,6 @@ jobs:
     install: sudo pip install git-archive-all
     script: git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
 
-  - name: "Generate documentation"
-    if: (tag IS present) AND (branch = master) AND (type = push)
-    addons:
-      apt:
-        packages:
-        - doxygen
-        - cmake
-        - libsndfile-dev
-    install: skip
-    script: .travis/update_dox.sh
-
   - name: "Discord Webhook"
     install: skip
     script: bash ${TRAVIS_BUILD_DIR}/.travis/discord_webhook.sh success
