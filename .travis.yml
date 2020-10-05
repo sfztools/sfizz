@@ -156,7 +156,7 @@ jobs:
 
   - stage: "Deploy"
     name: "Source packaging"
-    if: (tag IS present) AND (branch = master) AND (type = push)
+    if: (tag =~ /^v?[0-9]/) AND (type = push)
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
     addons:
