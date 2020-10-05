@@ -179,7 +179,7 @@ for sectiondef in root.iter("sectiondef"):
 
     definition["members"] = members
     definitions.append(definition)
-    
+
 data["definitions"] = definitions
 
 print(json.dumps(data, indent=2))
