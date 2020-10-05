@@ -496,6 +496,25 @@ private:
     int sourcePosition { 0 };
     int initialDelay { 0 };
     int age { 0 };
+    struct {
+        int start { 0 };
+        int end { 0 };
+        int size { 0 };
+        int xfSize { 0 };
+        int xfOutStart { 0 };
+        int xfInStart { 0 };
+    } loop;
+    /**
+     * @brief Reset the loop information
+     *
+     */
+    void resetLoopInformation() noexcept;
+    /**
+     * @brief Read the loop information data from the region.
+     * This requires that the region and promise is properly set.
+     *
+     */
+    void updateLoopInformation() noexcept;
 
     FilePromisePtr currentPromise { nullptr };
 

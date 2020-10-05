@@ -99,6 +99,7 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
             switchState(State::cleanMeUp);
             return;
         }
+        updateLoopInformation();
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
     }
 
@@ -558,26 +559,11 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     // calculate loop characteristics
-    bool isLooping = false;
-    int loopStart = 0;
-    int loopEnd = 0;
-    int loopSize = 0;
-    int loopXfadeSize = 0;
-    int loopXfOutStart = 0;
-    int loopXfInStart = 0; // Note: beware in case of negative index
+    const bool isLooping = region->shouldLoop()
+        && (static_cast<size_t>(loop.end) < source.getNumFrames());
     SpanHolder<absl::Span<float>> xfadeTemp[2];
     SpanHolder<absl::Span<int>> xfadeIndexTemp[1];
-    if (region->shouldLoop()) {
-        loopEnd = region->loopEnd(currentPromise->oversamplingFactor);
-        isLooping = static_cast<size_t>(loopEnd) < source.getNumFrames();
-    }
     if (isLooping) {
-        loopStart = static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
-        loopSize = loopEnd + 1 - loopStart;
-        loopXfadeSize = static_cast<int>(
-            lroundPositive(region->loopCrossfade * static_cast<int>(currentPromise->oversamplingFactor) * currentPromise->sampleRate));
-        loopXfOutStart = loopEnd + 1 - loopXfadeSize;
-        loopXfInStart = loopStart - loopXfadeSize;
         for (auto& buf : xfadeTemp) {
             buf = resources.bufferPool.getBuffer(numSamples);
             if (!buf)
@@ -642,12 +628,12 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             int index = (*indices)[i];
 
             // wrap indices post loop-entry around the loop segment
-            int wrappedIndex = (index <= loopEnd) ? index :
-                (loopStart + (index - loopStart) % loopSize);
+            int wrappedIndex = (index <= loop.end) ? index :
+                (loop.start + (index - loop.start) % loop.size);
             (*indices)[i] = wrappedIndex;
 
             // identify the partition this index is in
-            bool xfading = wrappedIndex >= loopStart && wrappedIndex >= loopXfOutStart;
+            bool xfading = wrappedIndex >= loop.start && wrappedIndex >= loop.xfOutStart;
             int partitionType = xfading ? kPartitionLoopXfade : kPartitionNormal;
             // if looping or entering a different type, start a new partition
             bool start = i == 0 || wrappedIndex < oldIndex || partitionType != oldPartitionType;
@@ -712,7 +698,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             // compute crossfade positions
             for (unsigned i = 0; i < ptSize; ++i) {
                 float pos = ptIndices[i] + ptCoeffs[i];
-                xfCurvePos[i] = (pos - loopXfOutStart) / loopXfadeSize;
+                xfCurvePos[i] = (pos - loop.xfOutStart) / loop.xfSize;
             }
 
             //----------------------------------------------------------------//
@@ -752,7 +738,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                 // compute indices of the crossfade input segment
                 absl::Span<int> xfInIndices = xfadeIndexTemp[0]->first(ptSize);
                 absl::c_copy(ptIndices, xfInIndices.begin());
-                subtract1(loopXfOutStart - loopXfInStart, xfInIndices);
+                subtract1(loop.xfOutStart - loop.xfInStart, xfInIndices);
 
                 // disregard the segment whose indices have been pushed
                 // into the negatives, take these virtually as zeroes.
@@ -1067,6 +1053,8 @@ void sfz::Voice::reset() noexcept
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
+    resetLoopInformation();
+
     powerFollower.clear();
 
     for (auto& filter : filters)
@@ -1076,6 +1064,37 @@ void sfz::Voice::reset() noexcept
         eq.reset();
 
     removeVoiceFromRing();
+}
+
+void sfz::Voice::resetLoopInformation() noexcept
+{
+    loop.start = 0;
+    loop.end = 0;
+    loop.size = 0;
+    loop.xfSize = 0;
+    loop.xfOutStart = 0;
+    loop.xfInStart = 0;
+}
+
+void sfz::Voice::updateLoopInformation() noexcept
+{
+    if (!region || !currentPromise)
+        return;
+
+    if (!region->shouldLoop())
+        return;
+
+    const auto factor = currentPromise->oversamplingFactor;
+    const auto rate = currentPromise->sampleRate;
+
+    loop.end =  static_cast<int>(region->loopEnd(factor));
+    loop.start = static_cast<int>(region->loopStart(factor));
+    loop.size = loop.end + 1 - loop.start;
+    loop.xfSize = static_cast<int>(
+        lroundPositive(region->loopCrossfade * static_cast<int>(factor) * rate)
+    );
+    loop.xfOutStart = loop.end + 1 - loop.xfSize;
+    loop.xfInStart = loop.start - loop.xfSize;
 }
 
 void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept
