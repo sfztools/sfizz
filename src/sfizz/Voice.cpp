@@ -561,20 +561,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     // calculate loop characteristics
     const bool isLooping = region->shouldLoop()
         && (static_cast<size_t>(loop.end) < source.getNumFrames());
-    SpanHolder<absl::Span<float>> xfadeTemp[2];
-    SpanHolder<absl::Span<int>> xfadeIndexTemp[1];
-    if (isLooping) {
-        for (auto& buf : xfadeTemp) {
-            buf = resources.bufferPool.getBuffer(numSamples);
-            if (!buf)
-                return;
-        }
-        for (auto& buf : xfadeIndexTemp) {
-            buf = resources.bufferPool.getIndexBuffer(numSamples);
-            if (!buf)
-                return;
-        }
-    }
 
     /*
                loop start             loop end
@@ -693,7 +679,13 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
 
         if (ptType == kPartitionLoopXfade) {
-            absl::Span<float> xfCurvePos = xfadeTemp[0]->first(ptSize);
+            auto xfTemp1 = resources.bufferPool.getBuffer(numSamples);
+            auto xfTemp2 = resources.bufferPool.getBuffer(numSamples);
+            auto xfIndicesTemp = resources.bufferPool.getIndexBuffer(numSamples);
+            if (!xfTemp1 || !xfTemp2 || !xfIndicesTemp)
+                return;
+
+            absl::Span<float> xfCurvePos = xfTemp1->first(ptSize);
 
             // compute crossfade positions
             for (unsigned i = 0; i < ptSize; ++i) {
@@ -706,7 +698,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             //   -> fade out signal nearing the loop end
             {
                 // compute out curve
-                absl::Span<float> xfCurve = xfadeTemp[1]->first(ptSize);
+                absl::Span<float> xfCurve = xfTemp2->first(ptSize);
                 IF_CONSTEXPR (loopXfadeUseCurves == 2) {
                     const Curve& xfIn = getSCurve();
                     for (unsigned i = 0; i < ptSize; ++i)
@@ -736,7 +728,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             //   -> fade in signal preceding the loop start
             {
                 // compute indices of the crossfade input segment
-                absl::Span<int> xfInIndices = xfadeIndexTemp[0]->first(ptSize);
+                absl::Span<int> xfInIndices = xfIndicesTemp->first(ptSize);
                 absl::c_copy(ptIndices, xfInIndices.begin());
                 subtract1(loop.xfOutStart - loop.xfInStart, xfInIndices);
 
@@ -756,7 +748,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                 AudioSpan<float> xfInBuffer = ptBuffer.subspan(applyOffset);
 
                 // compute in curve
-                absl::Span<float> xfCurve = xfadeTemp[1]->first(applySize);
+                absl::Span<float> xfCurve = xfTemp2->first(applySize);
                 IF_CONSTEXPR (loopXfadeUseCurves == 2) {
                     const Curve& xfIn = getSCurve();
                     for (unsigned i = 0; i < applySize; ++i)
