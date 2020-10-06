@@ -349,7 +349,6 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     // Update all the preloaded sizes
     for (auto& preloadedFile : preloadedFiles) {
         const auto maxOffset = preloadedFile.second.information.maxOffset;
-        const auto numFrames = preloadedFile.second.preloadedData.getNumFrames() / static_cast<int>(oversamplingFactor);
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
         preloadedFile.second.preloadedData = readFromFile(*reader, preloadSize + maxOffset, oversamplingFactor);
