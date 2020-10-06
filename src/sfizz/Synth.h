@@ -866,6 +866,13 @@ private:
     void checkSetPolyphony(const Region* region, int delay) noexcept;
 
     /**
+     * @brief Check the engine polyphony, fast releasing voices if necessary
+     *
+     * @param delay
+     */
+    void checkEnginePolyphony(int delay) noexcept;
+
+    /**
      * @brief Start a voice for a specific region.
      * This will do the needed polyphony checks and voice stealing.
      *

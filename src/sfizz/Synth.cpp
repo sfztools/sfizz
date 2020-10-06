@@ -71,6 +71,7 @@ void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
     if (state == Voice::State::idle) {
         auto voice = getVoiceById(id);
         RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
+        engineSet->removeVoice(voice);
         polyphonyGroups[voice->getRegion()->group].removeVoice(voice);
     }
 
@@ -744,7 +745,7 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     if (freeVoice != voices.end())
         return freeVoice->get();
 
-    DBG("Engine polyphony reached");
+    DBG("Engine hard polyphony reached");
     return {};
 }
 
@@ -972,6 +973,7 @@ void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& trigg
     checkRegionPolyphony(region, delay);
     checkGroupPolyphony(region, delay);
     checkSetPolyphony(region, delay);
+    checkEnginePolyphony(delay);
 
     Voice* selectedVoice = findFreeVoice();
     if (selectedVoice == nullptr)
@@ -980,6 +982,7 @@ void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& trigg
     ASSERT(selectedVoice->isFree());
     selectedVoice->startVoice(region, delay, triggerEvent);
     ring.addVoiceToRing(selectedVoice);
+    engineSet->registerVoice(selectedVoice);
     RegionSet::registerVoiceInHierarchy(region, selectedVoice);
     polyphonyGroups[region->group].registerVoice(selectedVoice);
 }
@@ -1105,6 +1108,19 @@ void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
         }
 
         parent = parent->getParent();
+    }
+}
+
+void sfz::Synth::checkEnginePolyphony(int delay) noexcept
+{
+    auto& activeVoices = engineSet->getActiveVoices();
+
+    if (activeVoices.size() >= static_cast<size_t>(numRequiredVoices)) {
+        tempPolyphonyArray.clear();
+        absl::c_copy_if(activeVoices,
+            std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
+        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
+        SisterVoiceRing::offAllSisters(voiceToSteal, delay, true);
     }
 }
 

@@ -167,11 +167,11 @@ void sfz::Voice::release(int delay) noexcept
     resources.modMatrix.releaseVoice(id, region->getId(), delay);
 }
 
-void sfz::Voice::off(int delay) noexcept
+void sfz::Voice::off(int delay, bool fast) noexcept
 {
     if (!region->flexAmpEG) {
-        if (region->offMode == SfzOffMode::fast) {
-            egAmplitude.setReleaseTime( Default::offTime );
+        if (region->offMode == SfzOffMode::fast || fast) {
+            egAmplitude.setReleaseTime(Default::offTime);
         } else if (region->offMode == SfzOffMode::time) {
             egAmplitude.setReleaseTime(region->offTime);
         }

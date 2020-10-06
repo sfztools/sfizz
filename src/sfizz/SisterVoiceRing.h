@@ -61,13 +61,14 @@ struct SisterVoiceRing {
      *
      * @param voice
      * @param delay
+     * @param fast whether to apply a fast release
      */
     template<class T,
         absl::enable_if_t<std::is_same<Voice, absl::remove_const_t<T>>::value, int> = 0>
-    static void offAllSisters(T* voice, int delay) {
+    static void offAllSisters(T* voice, int delay, bool fast = false) {
         if (voice != nullptr) {
             SisterVoiceRing::applyToRing(voice, [&] (Voice* v) {
-                v->off(delay);
+                v->off(delay, fast);
             });
         }
     }
