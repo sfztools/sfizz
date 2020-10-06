@@ -21,8 +21,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "sfizz/Synth.h"
-#include "sfizz/Macros.h"
+#include "sfizz.hpp"
 #include "MidiHelpers.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
@@ -47,9 +46,9 @@ static jack_client_t* client;
 
 int process(jack_nframes_t numFrames, void* arg)
 {
-    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
 
-    auto buffer = jack_port_get_buffer(midiInputPort, numFrames);
+    auto* buffer = jack_port_get_buffer(midiInputPort, numFrames);
     assert(buffer);
 
     auto numMidiEvents = jack_midi_get_event_count(buffer);
@@ -97,9 +96,11 @@ int process(jack_nframes_t numFrames, void* arg)
         }
     }
 
-    auto leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
-    auto rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
-    synth->renderBlock({ { leftOutput, rightOutput }, numFrames });
+    auto* leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
+    auto* rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
+
+    float* stereoOutput[] = { leftOutput, rightOutput };
+    synth->renderBlock(stereoOutput, numFrames);
 
     return 0;
 }
@@ -109,7 +110,7 @@ int sampleBlockChanged(jack_nframes_t nframes, void* arg)
     if (arg == nullptr)
         return 0;
 
-    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
     // DBG("Sample per block changed to " << nframes);
     synth->setSamplesPerBlock(nframes);
     return 0;
@@ -120,7 +121,7 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg)
     if (arg == nullptr)
         return 0;
 
-    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
     // DBG("Sample rate changed to " << nframes);
     synth->setSampleRate(nframes);
     return 0;
@@ -132,7 +133,7 @@ static void done(int sig)
 {
     std::cout << "Signal received" << '\n';
     shouldClose = true;
-    UNUSED(sig);
+    (void)sig;
     // if (client != nullptr)
 
     // exit(0);
@@ -163,11 +164,11 @@ int main(int argc, char** argv)
     std::cout << "- Oversampling: " << oversampling << '\n';
     std::cout << "- Preloaded Size: " << preload_size << '\n';
     const auto factor = [&]() {
-        if (oversampling == "x1") return sfz::Oversampling::x1;
-        if (oversampling == "x2") return sfz::Oversampling::x2;
-        if (oversampling == "x4") return sfz::Oversampling::x4;
-        if (oversampling == "x8") return sfz::Oversampling::x8;
-        return sfz::Oversampling::x1;
+        if (oversampling == "x1") return 1;
+        if (oversampling == "x2") return 2;
+        if (oversampling == "x4") return 4;
+        if (oversampling == "x8") return 8;
+        return 1;
     }();
 
     std::cout << "Positional arguments:";
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
-    sfz::Synth synth;
+    sfz::Sfizz synth;
     synth.setOversamplingFactor(factor);
     synth.setPreloadSize(preload_size);
     synth.loadSfzFile(filesToParse[0]);
@@ -186,6 +187,7 @@ int main(int argc, char** argv)
     std::cout << "\tRegions: " << synth.getNumRegions() << '\n';
     std::cout << "\tCurves: " << synth.getNumCurves() << '\n';
     std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
+#if 0 // not currently in public API
     std::cout << "==========" << '\n';
     std::cout << "Included files:" << '\n';
     for (auto& file : synth.getParser().getIncludedFiles())
@@ -194,6 +196,7 @@ int main(int argc, char** argv)
     std::cout << "Defines:" << '\n';
     for (auto& define : synth.getParser().getDefines())
         std::cout << '\t' << define.first << '=' << define.second << '\n';
+#endif
     std::cout << "==========" << '\n';
     std::cout << "Unknown opcodes:";
     for (auto& opcode : synth.getUnknownOpcodes())
