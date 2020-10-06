@@ -41,6 +41,7 @@ sfz::Synth::Synth(int numVoices)
     initializeSIMDDispatchers();
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    engineSet = absl::make_unique<RegionSet>(nullptr, OpcodeScope::kOpcodeScopeGeneric);
     parser.setListener(this);
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
@@ -387,6 +388,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             default:
                 DBG("Unsupported value for hint_stealing: " << member.value);
             }
+            break;
         default:
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.opcode);
@@ -742,23 +744,8 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     if (freeVoice != voices.end())
         return freeVoice->get();
 
-    // Engine polyphony reached
-    Voice* stolenVoice = stealer.steal(absl::MakeSpan(voiceViewArray));
-    if (stolenVoice == nullptr)
-        return {};
-
-    // Never kill age 0 voices
-    if (stolenVoice->getAge() == 0)
-        return {};
-
-
-    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-    SisterVoiceRing::applyToRing(stolenVoice, [&] (Voice* v) {
-        renderVoiceToOutputs(*v, *tempSpan);
-        v->reset();
-    });
-
-    return stolenVoice;
+    DBG("Engine polyphony reached");
+    return {};
 }
 
 int sfz::Synth::getNumActiveVoices(bool recompute) const noexcept
@@ -1511,7 +1498,7 @@ void sfz::Synth::setVolume(float volume) noexcept
 
 int sfz::Synth::getNumVoices() const noexcept
 {
-    return numVoices;
+    return numRequiredVoices;
 }
 
 void sfz::Synth::setNumVoices(int numVoices) noexcept
@@ -1520,7 +1507,7 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     // fast path
-    if (numVoices == this->numVoices)
+    if (numVoices == this->numRequiredVoices)
         return;
 
     resetVoices(numVoices);
@@ -1528,16 +1515,25 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
 
 void sfz::Synth::resetVoices(int numVoices)
 {
+    numActualVoices =
+        static_cast<int>(config::overflowVoiceMultiplier * numVoices);
+    numRequiredVoices = numVoices;
+
+    for (auto& set : sets)
+        set->removeAllVoices();
+    engineSet->removeAllVoices();
+    engineSet->setPolyphonyLimit(numRequiredVoices);
+
     voices.clear();
-    voices.reserve(numVoices);
+    voices.reserve(numActualVoices);
 
     voiceViewArray.clear();
-    voiceViewArray.reserve(numVoices);
+    voiceViewArray.reserve(numActualVoices);
 
     tempPolyphonyArray.clear();
-    tempPolyphonyArray.reserve(numVoices);
+    tempPolyphonyArray.reserve(numActualVoices);
 
-    for (int i = 0; i < numVoices; ++i) {
+    for (int i = 0; i < numActualVoices; ++i) {
         auto voice = absl::make_unique<Voice>(i, resources);
         voice->setStateListener(this);
         voiceViewArray.push_back(voice.get());
@@ -1548,8 +1544,6 @@ void sfz::Synth::resetVoices(int numVoices)
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
     }
-
-    this->numVoices = numVoices;
 
     applySettingsPerVoice();
 }

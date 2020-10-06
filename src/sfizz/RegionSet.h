@@ -122,6 +122,11 @@ public:
      * @return const std::vector<RegionSet*>&
      */
     const std::vector<RegionSet*>& getSubsets() const noexcept { return subsets; }
+
+    /**
+     * @brief Remove all voices from the set
+     */
+    void removeAllVoices() noexcept;
 private:
     RegionSet* parent { nullptr };
     OpcodeScope level { kOpcodeScopeGeneric };

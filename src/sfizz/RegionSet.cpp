@@ -53,3 +53,8 @@ unsigned sfz::RegionSet::numPlayingVoices() const noexcept
         return !v->releasedOrFree();
     });
 }
+
+void sfz::RegionSet::removeAllVoices() noexcept
+{
+    voices.clear();
+}

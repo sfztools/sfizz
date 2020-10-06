@@ -819,6 +819,9 @@ private:
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet { nullptr };
     std::vector<RegionSetPtr> sets;
+    // This region set holds the engine set of voices, which tries to respect the required
+    // engine polyphony
+    RegionSetPtr engineSet;
 
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups;
@@ -902,7 +905,8 @@ private:
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
-    int numVoices { config::numVoices };
+    int numRequiredVoices { config::numVoices };
+    int numActualVoices { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
     int activeVoices { 0 };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
