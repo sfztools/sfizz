@@ -76,7 +76,7 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
     const EventVector& events = ms.getCCEvents(p.cc);
 
     auto transformValue = [p, &curve](float x) {
-        return curve.evalNormalized(x) * p.value;
+        return curve.evalNormalized(x);
     };
 
     if (p.step > 0.0f)

@@ -145,11 +145,11 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     // Create default connections
     constexpr unsigned defaultSmoothness = 10;
     lastRegion->getOrCreateConnection(
-        ModKey::createCC(7, 4, defaultSmoothness, 100, 0),
-        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 1.0f;
+        ModKey::createCC(7, 4, defaultSmoothness, 0),
+        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 100.0f;
     lastRegion->getOrCreateConnection(
-        ModKey::createCC(10, 1, defaultSmoothness, 100, 0),
-        ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 1.0f;
+        ModKey::createCC(10, 1, defaultSmoothness, 0),
+        ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 100.0f;
 
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
@@ -1522,7 +1522,18 @@ void sfz::Synth::setupModMatrix()
         for (const Region::Connection& conn : region->connections) {
             ModGenerator* gen = nullptr;
 
-            switch (conn.source.id()) {
+            ModKey sourceKey = conn.source;
+            ModKey targetKey = conn.target;
+
+            // normalize the stepcc to 0-1
+            if (sourceKey.id() == ModId::Controller) {
+                ModKey::Parameters p = sourceKey.parameters();
+                p.step = (conn.sourceDepth == 0.0f) ? 0.0f :
+                    (p.step / conn.sourceDepth);
+                sourceKey = ModKey::createCC(p.cc, p.curve, p.smooth, p.step);
+            }
+
+            switch (sourceKey.id()) {
             case ModId::Controller:
                 gen = genController.get();
                 break;
@@ -1546,8 +1557,8 @@ void sfz::Synth::setupModMatrix()
             if (!gen)
                 continue;
 
-            ModMatrix::SourceId source = mm.registerSource(conn.source, *gen);
-            ModMatrix::TargetId target = mm.registerTarget(conn.target);
+            ModMatrix::SourceId source = mm.registerSource(sourceKey, *gen);
+            ModMatrix::TargetId target = mm.registerTarget(targetKey);
 
             ASSERT(source);
             if (!source) {

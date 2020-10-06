@@ -19,6 +19,7 @@ public:
     size_t size() const;
     bool empty() const;
     sfz::ModKey::Parameters at(int cc) const;
+    float valueAt(int cc) const;
 
 private:
     bool match(const sfz::Region::Connection& conn) const;

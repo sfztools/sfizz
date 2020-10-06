@@ -572,7 +572,7 @@ TEST_CASE("[Region] Parsing opcodes")
         const RegionCCView view(region, target);
         REQUIRE(view.empty());
         region.parseOpcode({ "pan_oncc45", "4.2" });
-        REQUIRE(view.at(45).value == 4.2_a);
+        REQUIRE(view.valueAt(45) == 4.2_a);
         region.parseOpcode({ "pan_curvecc17", "18" });
         REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "pan_curvecc17", "15482" });
@@ -612,7 +612,7 @@ TEST_CASE("[Region] Parsing opcodes")
         const RegionCCView view(region, target);
         REQUIRE(view.empty());
         region.parseOpcode({ "width_oncc45", "4.2" });
-        REQUIRE(view.at(45).value == 4.2_a);
+        REQUIRE(view.valueAt(45) == 4.2_a);
         region.parseOpcode({ "width_curvecc17", "18" });
         REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "width_curvecc17", "15482" });
@@ -652,7 +652,7 @@ TEST_CASE("[Region] Parsing opcodes")
         const RegionCCView view(region, target);
         REQUIRE(view.empty());
         region.parseOpcode({ "position_oncc45", "4.2" });
-        REQUIRE(view.at(45).value == 4.2_a);
+        REQUIRE(view.valueAt(45) == 4.2_a);
         region.parseOpcode({ "position_curvecc17", "18" });
         REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "position_curvecc17", "15482" });
@@ -1649,9 +1649,9 @@ TEST_CASE("[Region] Parsing opcodes")
         const RegionCCView view(region, target);
         REQUIRE(view.empty());
         region.parseOpcode({ "amplitude_cc1", "40" });
-        REQUIRE(view.at(1).value == 40.0_a);
+        REQUIRE(view.valueAt(1) == 40.0_a);
         region.parseOpcode({ "amplitude_oncc2", "30" });
-        REQUIRE(view.at(2).value == 30.0_a);
+        REQUIRE(view.valueAt(2) == 30.0_a);
         region.parseOpcode({ "amplitude_curvecc17", "18" });
         REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "amplitude_curvecc17", "15482" });
@@ -1678,11 +1678,11 @@ TEST_CASE("[Region] Parsing opcodes")
         const RegionCCView view(region, target);
         REQUIRE(view.empty());
         region.parseOpcode({ "gain_cc1", "40" });
-        REQUIRE(view.at(1).value == 40_a);
+        REQUIRE(view.valueAt(1) == 40_a);
         region.parseOpcode({ "volume_oncc2", "-76" });
-        REQUIRE(view.at(2).value == -76.0_a);
+        REQUIRE(view.valueAt(2) == -76.0_a);
         region.parseOpcode({ "gain_oncc4", "-1" });
-        REQUIRE(view.at(4).value == -1.0_a);
+        REQUIRE(view.valueAt(4) == -1.0_a);
         region.parseOpcode({ "volume_curvecc17", "18" });
         REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "volume_curvecc17", "15482" });
@@ -1709,11 +1709,11 @@ TEST_CASE("[Region] Parsing opcodes")
         const RegionCCView view(region, target);
         REQUIRE(view.empty());
         region.parseOpcode({ "pitch_cc1", "40" });
-        REQUIRE(view.at(1).value == 40.0);
+        REQUIRE(view.valueAt(1) == 40.0);
         region.parseOpcode({ "tune_oncc2", "-76" });
-        REQUIRE(view.at(2).value == -76.0);
+        REQUIRE(view.valueAt(2) == -76.0);
         region.parseOpcode({ "pitch_oncc4", "-1" });
-        REQUIRE(view.at(4).value == -1.0);
+        REQUIRE(view.valueAt(4) == -1.0);
         region.parseOpcode({ "tune_curvecc17", "18" });
         REQUIRE(view.at(17).curve == 18);
         region.parseOpcode({ "pitch_curvecc17", "15482" });
