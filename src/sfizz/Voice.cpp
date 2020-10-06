@@ -588,8 +588,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         partitionStarts = absl::MakeSpan(const_cast<int*>(starts), 1);
         partitionTypes = absl::MakeSpan(const_cast<int*>(types), 1);
         numPartitions = 1;
-    }
-    else {
+    } else {
         for (auto& buf : partitionBuffers) {
             buf = resources.bufferPool.getIndexBuffer(numSamples);
             if (!buf)
@@ -600,11 +599,6 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         // Note: partitions will be alternance of Normal/Xfade
         //       computed along with index processing below
     }
-
-    // loop crossfade settings
-    constexpr int loopXfadeUseCurves = 2; // 0: linear
-                                          // 1: use curves 5 & 6
-                                          // 2: use S-shaped curve
 
     // index preprocessing for loops
     if (isLooping) {
@@ -699,17 +693,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             {
                 // compute out curve
                 absl::Span<float> xfCurve = xfTemp2->first(ptSize);
-                IF_CONSTEXPR (loopXfadeUseCurves == 2) {
+                IF_CONSTEXPR (config::loopXfadeCurve == 2) {
                     const Curve& xfIn = getSCurve();
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = xfIn.evalNormalized(1.0f - xfCurvePos[i]);
                 }
-                else IF_CONSTEXPR (loopXfadeUseCurves == 1) {
+                else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
                     const Curve& xfOut = resources.curves.getCurve(6);
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = xfOut.evalNormalized(xfCurvePos[i]);
                 }
-                else IF_CONSTEXPR (loopXfadeUseCurves == 0) {
+                else IF_CONSTEXPR (config::loopXfadeCurve == 0) {
                     // TODO(jpc) vectorize this
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = clamp(1.0f - xfCurvePos[i], 0.0f, 1.0f);
@@ -749,17 +743,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
                 // compute in curve
                 absl::Span<float> xfCurve = xfTemp2->first(applySize);
-                IF_CONSTEXPR (loopXfadeUseCurves == 2) {
+                IF_CONSTEXPR (config::loopXfadeCurve == 2) {
                     const Curve& xfIn = getSCurve();
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
-                else IF_CONSTEXPR (loopXfadeUseCurves == 1) {
+                else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
                     const Curve& xfIn = resources.curves.getCurve(5);
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
-                else IF_CONSTEXPR (loopXfadeUseCurves == 0) {
+                else IF_CONSTEXPR (config::loopXfadeCurve == 0) {
                     // TODO(jpc) vectorize this
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = clamp(xfInCurvePos[i], 0.0f, 1.0f);

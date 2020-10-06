@@ -126,6 +126,10 @@ namespace config {
        @brief Ratio to target under which smoothing is considered as completed
      */
     static constexpr float smoothingShortcutThreshold = 5e-3;
+    // loop crossfade settings
+    static constexpr int loopXfadeCurve = 2;    // 0: linear
+                                                // 1: use curves 5 & 6
+                                                // 2: use S-shaped curve
 } // namespace config
 
 } // namespace sfz
