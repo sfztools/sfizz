@@ -69,8 +69,8 @@ namespace Default
     constexpr Range<int> oscillatorModeRange { 0, 2 };
     constexpr Range<int> oscillatorMultiRange { 1, config::oscillatorsPerVoice };
     constexpr float oscillatorDetune { 0 };
-    constexpr Range<float> oscillatorDetuneRange { -9600, 9600 };
-    constexpr Range<float> oscillatorDetuneCCRange { -9600, 9600 };
+    constexpr Range<float> oscillatorDetuneRange { -12000, 12000 };
+    constexpr Range<float> oscillatorDetuneCCRange { -12000, 12000 };
     constexpr float oscillatorModDepth { 0 };
     constexpr Range<float> oscillatorModDepthRange { 0, 10000 }; // depth%, allowed to be >100 for FM
     constexpr Range<float> oscillatorModDepthCCRange { 0, 10000 };
@@ -166,12 +166,12 @@ namespace Default
     constexpr float filterResonanceCC { 0 };
     constexpr float filterGainCC { 0 };
     constexpr Range<float> filterCutoffRange { 0.0f, 20000.0f };
-    constexpr Range<float> filterCutoffModRange { -9600, 9600 };
+    constexpr Range<float> filterCutoffModRange { -12000, 12000 };
     constexpr Range<float> filterGainRange { -96.0f, 96.0f };
     constexpr Range<float> filterGainModRange { -96.0f, 96.0f };
     constexpr Range<int> filterKeytrackRange { 0, 1200 };
-    constexpr Range<float> filterRandomRange { 0, 9600 };
-    constexpr Range<int> filterVeltrackRange { -9600, 9600 };
+    constexpr Range<float> filterRandomRange { 0, 12000 };
+    constexpr Range<int> filterVeltrackRange { -12000, 12000 };
     constexpr Range<float> filterResonanceRange { 0.0f, 96.0f };
     constexpr Range<float> filterResonanceModRange { 0.0f, 96.0f };
 
@@ -200,15 +200,15 @@ namespace Default
 	constexpr int pitchKeytrack { 100 };
 	constexpr Range<int> pitchKeytrackRange { -1200, 1200 };
 	constexpr float pitchRandom { 0 };
-	constexpr Range<float> pitchRandomRange { 0, 9600 };
+	constexpr Range<float> pitchRandomRange { 0, 12000 };
 	constexpr int pitchVeltrack { 0 };
-	constexpr Range<int> pitchVeltrackRange { -9600, 9600 };
+	constexpr Range<int> pitchVeltrackRange { -12000, 12000 };
 	constexpr int transpose { 0 };
 	constexpr Range<int> transposeRange { -127, 127 };
 	constexpr int tune { 0 };
-	constexpr Range<int> tuneRange { -9600, 9600 }; // ±100 in SFZv1, more in ARIA
-    constexpr Range<float> tuneCCRange { -9600, 9600 };
-    constexpr Range<int> bendBoundRange { -9600, 9600 };
+	constexpr Range<int> tuneRange { -12000, 12000 }; // ±100 in SFZv1, more in ARIA
+    constexpr Range<float> tuneCCRange { -12000, 12000 };
+    constexpr Range<int> bendBoundRange { -12000, 12000 };
     constexpr Range<int> bendStepRange { 1, 1200 };
     constexpr int bendUp { 200 }; // No range here because the bounds can be inverted
     constexpr int bendDown { -200 };

@@ -960,8 +960,8 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.pitchRandom == 40);
         region.parseOpcode({ "pitch_random", "-1" });
         REQUIRE(region.pitchRandom == 0);
-        region.parseOpcode({ "pitch_random", "10320" });
-        REQUIRE(region.pitchRandom == 9600);
+        region.parseOpcode({ "pitch_random", "12320" });
+        REQUIRE(region.pitchRandom == 12000);
     }
 
     SECTION("pitch_veltrack")
@@ -972,9 +972,9 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "pitch_veltrack", "-1" });
         REQUIRE(region.pitchVeltrack == -1);
         region.parseOpcode({ "pitch_veltrack", "13020" });
-        REQUIRE(region.pitchVeltrack == 9600);
+        REQUIRE(region.pitchVeltrack == 12000);
         region.parseOpcode({ "pitch_veltrack", "-13020" });
-        REQUIRE(region.pitchVeltrack == -9600);
+        REQUIRE(region.pitchVeltrack == -12000);
     }
 
     SECTION("transpose")
@@ -998,9 +998,9 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "tune", "-1" });
         REQUIRE(region.tune == -1);
         region.parseOpcode({ "tune", "15432" });
-        REQUIRE(region.tune == 9600);
+        REQUIRE(region.tune == 12000);
         region.parseOpcode({ "tune", "-15432" });
-        REQUIRE(region.tune == -9600);
+        REQUIRE(region.tune == -12000);
     }
 
     SECTION("bend_up, bend_down, bend_step, bend_smooth")
@@ -1012,18 +1012,18 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.bendUp == 400);
         region.parseOpcode({ "bend_up", "-200" });
         REQUIRE(region.bendUp == -200);
-        region.parseOpcode({ "bend_up", "9700" });
-        REQUIRE(region.bendUp == 9600);
-        region.parseOpcode({ "bend_up", "-9700" });
-        REQUIRE(region.bendUp == -9600);
+        region.parseOpcode({ "bend_up", "12700" });
+        REQUIRE(region.bendUp == 12000);
+        region.parseOpcode({ "bend_up", "-12700" });
+        REQUIRE(region.bendUp == -12000);
         region.parseOpcode({ "bend_down", "400" });
         REQUIRE(region.bendDown == 400);
         region.parseOpcode({ "bend_down", "-200" });
         REQUIRE(region.bendDown == -200);
-        region.parseOpcode({ "bend_down", "9700" });
-        REQUIRE(region.bendDown == 9600);
-        region.parseOpcode({ "bend_down", "-9700" });
-        REQUIRE(region.bendDown == -9600);
+        region.parseOpcode({ "bend_down", "12700" });
+        REQUIRE(region.bendDown == 12000);
+        region.parseOpcode({ "bend_down", "-12700" });
+        REQUIRE(region.bendDown == -12000);
         region.parseOpcode({ "bend_step", "400" });
         REQUIRE(region.bendStep == 400);
         region.parseOpcode({ "bend_step", "-200" });
@@ -1389,10 +1389,10 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.filters[0].veltrack == 50);
         region.parseOpcode({ "fil_veltrack", "-5" });
         REQUIRE(region.filters[0].veltrack == -5);
-        region.parseOpcode({ "fil_veltrack", "10000" });
-        REQUIRE(region.filters[0].veltrack == 9600);
-        region.parseOpcode({ "fil_veltrack", "-10000" });
-        REQUIRE(region.filters[0].veltrack == -9600);
+        region.parseOpcode({ "fil_veltrack", "13000" });
+        REQUIRE(region.filters[0].veltrack == 12000);
+        region.parseOpcode({ "fil_veltrack", "-13000" });
+        REQUIRE(region.filters[0].veltrack == -12000);
 
         REQUIRE(region.filters[0].keycenter == 60);
         region.parseOpcode({ "fil_keycenter", "50" });
@@ -1729,7 +1729,7 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "tune_stepcc120", "24" });
         REQUIRE(view.at(120).step == 24.0f);
         region.parseOpcode({ "pitch_stepcc120", "15482" });
-        REQUIRE(view.at(120).step == 9600.0f);
+        REQUIRE(view.at(120).step == 12000.0f);
         region.parseOpcode({ "tune_stepcc120", "-2" });
         REQUIRE(view.at(120).step == 0.0f);
     }
