@@ -315,17 +315,6 @@ midnam:update a lv2:Feature .
     lv2:maximum 256 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 12 ;
-    lv2:symbol "active_voices" ;
-    lv2:name "Active voices",
-      "Voix utilisées"@fr ;
-    pg:group <@LV2PLUGIN_URI@#status> ;
-    lv2:portProperty lv2:integer ;
-    lv2:default 0 ;
-    lv2:minimum 0 ;
-    lv2:maximum 256 ;
-  ] , [
-    a lv2:OutputPort, lv2:ControlPort ;
     lv2:index 13 ;
     lv2:symbol "num_curves" ;
     lv2:name "Number of curves",
