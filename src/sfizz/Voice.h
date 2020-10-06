@@ -385,10 +385,32 @@ private:
      * @param indices the integral parts of the source positions
      * @param coeffs the fractional parts of the source positions
      */
-    template <InterpolatorModel M>
+    template <InterpolatorModel M, bool Adding>
     static void fillInterpolated(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
-        absl::Span<const int> indices, absl::Span<const float> coeffs);
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains);
+
+    /**
+     * @brief Fill a destination with an interpolated source, selecting
+     *        interpolation type dynamically by quality level.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     * @param quality the quality level 1-10
+     */
+    template <bool Adding>
+    static void fillInterpolatedWithQuality(
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains, int quality);
+
+    /**
+     * @brief Get a S-shaped curve that is applicable to loop crossfading.
+     */
+    static const Curve& getSCurve();
 
     /**
      * @brief Compute the amplitude envelope, applied as a gain to a mono
@@ -485,6 +507,25 @@ private:
     int sourcePosition { 0 };
     int initialDelay { 0 };
     int age { 0 };
+    struct {
+        int start { 0 };
+        int end { 0 };
+        int size { 0 };
+        int xfSize { 0 };
+        int xfOutStart { 0 };
+        int xfInStart { 0 };
+    } loop;
+    /**
+     * @brief Reset the loop information
+     *
+     */
+    void resetLoopInformation() noexcept;
+    /**
+     * @brief Read the loop information data from the region.
+     * This requires that the region and promise is properly set.
+     *
+     */
+    void updateLoopInformation() noexcept;
 
     FilePromisePtr currentPromise { nullptr };
 

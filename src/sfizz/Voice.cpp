@@ -34,6 +34,9 @@ sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
 
     gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
     xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
+
+    // prepare curves
+    getSCurve();
 }
 
 sfz::Voice::~Voice()
@@ -96,6 +99,7 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
             switchState(State::cleanMeUp);
             return;
         }
+        updateLoopInformation();
         speedRatio = static_cast<float>(currentPromise->sampleRate / this->sampleRate);
         sourcePosition = region->getOffset(currentPromise->oversamplingFactor);
     }
@@ -548,35 +552,105 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
     auto source = currentPromise->getData();
 
-    auto jumps = resources.bufferPool.getBuffer(numSamples);
+    // calculate interpolation data
+    //   indices: integral position in the source audio
+    //   coeffs: fractional position normalized 0-1
     auto coeffs = resources.bufferPool.getBuffer(numSamples);
     auto indices = resources.bufferPool.getIndexBuffer(numSamples);
-    if (!jumps || !indices || !coeffs)
+    if (!indices || !coeffs)
         return;
+    {
+        auto jumps = resources.bufferPool.getBuffer(numSamples);
+        if (!jumps)
+            return;
 
-    fill(*jumps, pitchRatio * speedRatio);
-    pitchEnvelope(*jumps);
+        fill(*jumps, pitchRatio * speedRatio);
+        pitchEnvelope(*jumps);
 
-    jumps->front() += floatPositionOffset;
-    cumsum<float>(*jumps, *jumps);
-    sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
-    add1<int>(sourcePosition, *indices);
+        jumps->front() += floatPositionOffset;
+        cumsum<float>(*jumps, *jumps);
+        sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
+        add1<int>(sourcePosition, *indices);
+    }
 
-    if (region->shouldLoop() && region->loopEnd(currentPromise->oversamplingFactor) <= source.getNumFrames()) {
-        const auto loopEnd = static_cast<int>(region->loopEnd(currentPromise->oversamplingFactor));
-        const auto loopStart = static_cast<int>(region->loopStart(currentPromise->oversamplingFactor));
-        const auto loopSize = loopEnd + 1 - loopStart;
-        for (auto* it = indices->begin(), *end = indices->end(); it < end; ++it) {
-            auto index = *it;
-            *it = (index < loopEnd + 1) ? index :
-                (loopStart + (index - loopStart) % loopSize);
-        }
+    // calculate loop characteristics
+    const auto loop = this->loop;
+    const bool isLooping = region->shouldLoop()
+        && (static_cast<size_t>(loop.end) < source.getNumFrames());
+
+    /*
+               loop start             loop end
+                   v                      |
+                  /|---------------|\     |
+                /  |               |  \   |
+              /    |               |    \ v
+            /------|---------------|------\
+            ^                      ^
+        xfin start            xfout start
+            <------>               <------>
+           xfade size             xfade size
+     */
+
+    // loop crossfade partitioning
+    absl::Span<int> partitionStarts;
+    absl::Span<int> partitionTypes;
+    unsigned numPartitions = 0;
+    enum PartitionType { kPartitionNormal, kPartitionLoopXfade };
+
+    SpanHolder<absl::Span<int>> partitionBuffers[2];
+    if (!isLooping) {
+        static const int starts[1] = { 0 };
+        static const int types[1] = { kPartitionNormal };
+        partitionStarts = absl::MakeSpan(const_cast<int*>(starts), 1);
+        partitionTypes = absl::MakeSpan(const_cast<int*>(types), 1);
+        numPartitions = 1;
     } else {
+        for (auto& buf : partitionBuffers) {
+            buf = resources.bufferPool.getIndexBuffer(numSamples);
+            if (!buf)
+                return;
+        }
+        partitionStarts = *partitionBuffers[0];
+        partitionTypes = *partitionBuffers[1];
+        // Note: partitions will be alternance of Normal/Xfade
+        //       computed along with index processing below
+    }
+
+    // index preprocessing for loops
+    if (isLooping) {
+        int oldIndex {};
+        int oldPartitionType {};
+        for (unsigned i = 0; i < numSamples; ++i) {
+            int index = (*indices)[i];
+
+            // wrap indices post loop-entry around the loop segment
+            int wrappedIndex = (index <= loop.end) ? index :
+                (loop.start + (index - loop.start) % loop.size);
+            (*indices)[i] = wrappedIndex;
+
+            // identify the partition this index is in
+            bool xfading = wrappedIndex >= loop.start && wrappedIndex >= loop.xfOutStart;
+            int partitionType = xfading ? kPartitionLoopXfade : kPartitionNormal;
+            // if looping or entering a different type, start a new partition
+            bool start = i == 0 || wrappedIndex < oldIndex || partitionType != oldPartitionType;
+            if (start) {
+                partitionStarts[numPartitions] = i;
+                partitionTypes[numPartitions] = partitionType;
+                ++numPartitions;
+            }
+
+            oldIndex = wrappedIndex;
+            oldPartitionType = partitionType;
+        }
+    }
+    // index preprocessing for one-shots
+    else {
+        // cut short the voice at the instant of reaching end of sample
         const auto sampleEnd = min(
             static_cast<int>(region->trueSampleEnd(currentPromise->oversamplingFactor)),
             static_cast<int>(source.getNumFrames())
         ) - 1;
-        for (unsigned i = 0; i < indices->size(); ++i) {
+        for (unsigned i = 0; i < numSamples; ++i) {
             if ((*indices)[i] >= sampleEnd) {
 #ifndef NDEBUG
                 // Check for underflow
@@ -602,25 +676,115 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     }
 
+    // interpolation processing
     const int quality = getCurrentSampleQuality();
 
-    switch (quality) {
-    default:
-        if (quality > 2)
-            goto high; // TODO sinc, not implemented
-        // fall through
-    case 1:
-        fillInterpolated<kInterpolatorLinear>(source, buffer, *indices, *coeffs);
-        break;
-    case 2: high:
-#if 1
-        // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
-        fillInterpolated<kInterpolatorBspline3>(source, buffer, *indices, *coeffs);
-#else
-        // Hermite polynomial
-        fillInterpolated<kInterpolatorHermite3>(source, buffer, *indices, *coeffs);
-#endif
-        break;
+    for (unsigned ptNo = 0; ptNo < numPartitions; ++ptNo) {
+        // current partition
+        const int ptType = partitionTypes[ptNo];
+        const unsigned ptStart = partitionStarts[ptNo];
+        const unsigned ptNextStart = (ptNo + 1 < numPartitions) ? partitionStarts[ptNo + 1] : numSamples;
+        const unsigned ptSize = ptNextStart - ptStart;
+
+        // partition spans
+        AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
+        absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
+        absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+
+        fillInterpolatedWithQuality<false>(
+            source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
+
+        if (ptType == kPartitionLoopXfade) {
+            auto xfTemp1 = resources.bufferPool.getBuffer(numSamples);
+            auto xfTemp2 = resources.bufferPool.getBuffer(numSamples);
+            auto xfIndicesTemp = resources.bufferPool.getIndexBuffer(numSamples);
+            if (!xfTemp1 || !xfTemp2 || !xfIndicesTemp)
+                return;
+
+            absl::Span<float> xfCurvePos = xfTemp1->first(ptSize);
+
+            // compute crossfade positions
+            for (unsigned i = 0; i < ptSize; ++i) {
+                float pos = ptIndices[i] + ptCoeffs[i];
+                xfCurvePos[i] = (pos - loop.xfOutStart) / loop.xfSize;
+            }
+
+            //----------------------------------------------------------------//
+            // Crossfade Out
+            //   -> fade out signal nearing the loop end
+            {
+                // compute out curve
+                absl::Span<float> xfCurve = xfTemp2->first(ptSize);
+                IF_CONSTEXPR (config::loopXfadeCurve == 2) {
+                    const Curve& xfIn = getSCurve();
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        xfCurve[i] = xfIn.evalNormalized(1.0f - xfCurvePos[i]);
+                }
+                else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
+                    const Curve& xfOut = resources.curves.getCurve(6);
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        xfCurve[i] = xfOut.evalNormalized(xfCurvePos[i]);
+                }
+                else IF_CONSTEXPR (config::loopXfadeCurve == 0) {
+                    // TODO(jpc) vectorize this
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        xfCurve[i] = clamp(1.0f - xfCurvePos[i], 0.0f, 1.0f);
+                }
+                // apply out curve
+                // (scalar fallback: buffer and curve not aligned)
+                size_t numChannels = ptBuffer.getNumChannels();
+                for (size_t c = 0; c < numChannels; ++c) {
+                    absl::Span<float> channel = ptBuffer.getSpan(c);
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        channel[i] *= xfCurve[i];
+                }
+            }
+            //----------------------------------------------------------------//
+            // Crossfade In
+            //   -> fade in signal preceding the loop start
+            {
+                // compute indices of the crossfade input segment
+                absl::Span<int> xfInIndices = xfIndicesTemp->first(ptSize);
+                absl::c_copy(ptIndices, xfInIndices.begin());
+                subtract1(loop.xfOutStart - loop.xfInStart, xfInIndices);
+
+                // disregard the segment whose indices have been pushed
+                // into the negatives, take these virtually as zeroes.
+                unsigned applyOffset = 0;
+                while (applyOffset < ptSize && xfInIndices[applyOffset] < 0)
+                    ++applyOffset;
+                unsigned applySize = ptSize - applyOffset;
+
+                // offset the indices and coeffs
+                xfInIndices = xfInIndices.subspan(applyOffset);
+                absl::Span<const float> xfInCoeffs = ptCoeffs.subspan(applyOffset);
+                // offset the curve positions
+                absl::Span<float> xfInCurvePos = xfCurvePos.subspan(applyOffset);
+                // offset the output buffer
+                AudioSpan<float> xfInBuffer = ptBuffer.subspan(applyOffset);
+
+                // compute in curve
+                absl::Span<float> xfCurve = xfTemp2->first(applySize);
+                IF_CONSTEXPR (config::loopXfadeCurve == 2) {
+                    const Curve& xfIn = getSCurve();
+                    for (unsigned i = 0; i < applySize; ++i)
+                        xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
+                }
+                else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
+                    const Curve& xfIn = resources.curves.getCurve(5);
+                    for (unsigned i = 0; i < applySize; ++i)
+                        xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
+                }
+                else IF_CONSTEXPR (config::loopXfadeCurve == 0) {
+                    // TODO(jpc) vectorize this
+                    for (unsigned i = 0; i < applySize; ++i)
+                        xfCurve[i] = clamp(xfInCurvePos[i], 0.0f, 1.0f);
+                }
+                // apply in curve
+                fillInterpolatedWithQuality<true>(
+                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality);
+            }
+        }
     }
 
     sourcePosition = indices->back();
@@ -634,29 +798,92 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #endif
 }
 
-template <sfz::InterpolatorModel M>
+template <sfz::InterpolatorModel M, bool Adding>
 void sfz::Voice::fillInterpolated(
     const sfz::AudioSpan<const float>& source, const sfz::AudioSpan<float>& dest,
-    absl::Span<const int> indices, absl::Span<const float> coeffs)
+    absl::Span<const int> indices, absl::Span<const float> coeffs,
+    absl::Span<const float> addingGains)
 {
-    auto ind = indices.data();
-    auto coeff = coeffs.data();
+    auto* ind = indices.data();
+    auto* coeff = coeffs.data();
+    auto* addingGain = addingGains.data();
     auto leftSource = source.getConstSpan(0);
     auto left = dest.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            auto output = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            IF_CONSTEXPR(Adding) {
+                float g = *addingGain++;
+                *left += g * output;
+            }
+            else
+                *left = output;
             incrementAll(ind, left, coeff);
         }
     } else {
         auto right = dest.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
-            *left = sfz::interpolate<M>(&leftSource[*ind], *coeff);
-            *right = sfz::interpolate<M>(&rightSource[*ind], *coeff);
+            auto leftOutput = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            auto rightOutput = sfz::interpolate<M>(&rightSource[*ind], *coeff);
+            IF_CONSTEXPR(Adding) {
+                float g = *addingGain++;
+                *left += g * leftOutput;
+                *right += g * rightOutput;
+            }
+            else {
+                *left = leftOutput;
+                *right = rightOutput;
+            }
             incrementAll(ind, left, right, coeff);
         }
     }
+}
+
+template <bool Adding>
+void sfz::Voice::fillInterpolatedWithQuality(
+    const sfz::AudioSpan<const float>& source, const sfz::AudioSpan<float>& dest,
+    absl::Span<const int> indices, absl::Span<const float> coeffs,
+    absl::Span<const float> addingGains, int quality)
+{
+    switch (quality) {
+    default:
+        if (quality > 2)
+            goto high; // TODO sinc, not implemented
+        // fall through
+    case 1:
+        {
+            constexpr auto itp = kInterpolatorLinear;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 2: high:
+        {
+#if 1
+            // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
+            constexpr auto itp = kInterpolatorBspline3;
+#else
+            // Hermite polynomial
+            constexpr auto itp = kInterpolatorHermite3;
+#endif
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    }
+}
+
+const sfz::Curve& sfz::Voice::getSCurve()
+{
+    static const Curve curve = []() -> Curve {
+        constexpr unsigned N = Curve::NumValues;
+        float values[N];
+        for (unsigned i = 0; i < N; ++i) {
+            double x = i / static_cast<double>(N - 1);
+            values[i] = (1.0 - std::cos(M_PI * x)) * 0.5;
+        }
+        return Curve::buildFromPoints(values);
+    }();
+    return curve;
 }
 
 void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
@@ -834,6 +1061,8 @@ void sfz::Voice::reset() noexcept
     floatPositionOffset = 0.0f;
     noteIsOff = false;
 
+    resetLoopInformation();
+
     powerFollower.clear();
 
     for (auto& filter : filters)
@@ -843,6 +1072,37 @@ void sfz::Voice::reset() noexcept
         eq.reset();
 
     removeVoiceFromRing();
+}
+
+void sfz::Voice::resetLoopInformation() noexcept
+{
+    loop.start = 0;
+    loop.end = 0;
+    loop.size = 0;
+    loop.xfSize = 0;
+    loop.xfOutStart = 0;
+    loop.xfInStart = 0;
+}
+
+void sfz::Voice::updateLoopInformation() noexcept
+{
+    if (!region || !currentPromise)
+        return;
+
+    if (!region->shouldLoop())
+        return;
+
+    const auto factor = currentPromise->oversamplingFactor;
+    const auto rate = currentPromise->sampleRate;
+
+    loop.end =  static_cast<int>(region->loopEnd(factor));
+    loop.start = static_cast<int>(region->loopStart(factor));
+    loop.size = loop.end + 1 - loop.start;
+    loop.xfSize = static_cast<int>(
+        lroundPositive(region->loopCrossfade * static_cast<int>(factor) * rate)
+    );
+    loop.xfOutStart = loop.end + 1 - loop.xfSize;
+    loop.xfInStart = loop.start - loop.xfSize;
 }
 
 void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept

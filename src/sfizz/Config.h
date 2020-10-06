@@ -31,7 +31,7 @@ namespace config {
     constexpr int maxBlockSize { 8192 };
     constexpr int bufferPoolSize { 6 };
     constexpr int stereoBufferPoolSize { 4 };
-    constexpr int indexBufferPoolSize { 2 };
+    constexpr int indexBufferPoolSize { 4 };
     constexpr int preloadSize { 8192 };
     constexpr bool loadInRam { false };
     constexpr int loggerQueueSize { 256 };
@@ -127,6 +127,10 @@ namespace config {
        @brief Ratio to target under which smoothing is considered as completed
      */
     static constexpr float smoothingShortcutThreshold = 5e-3;
+    // loop crossfade settings
+    static constexpr int loopXfadeCurve = 2;    // 0: linear
+                                                // 1: use curves 5 & 6
+                                                // 2: use S-shaped curve
 } // namespace config
 
 } // namespace sfz

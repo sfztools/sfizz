@@ -138,6 +138,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("loop_start"): // also loopstart
         setRangeStartFromOpcode(opcode, loopRange, Default::loopRange);
         break;
+    case hash("loop_crossfade"):
+        setValueFromOpcode(opcode, loopCrossfade, Default::loopCrossfadeRange);
+        break;
 
     // Wavetable oscillator
     case hash("oscillator_phase"):

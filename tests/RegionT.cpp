@@ -174,6 +174,14 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.loopRange == Range<uint32_t>(0, 4294967295));
     }
 
+    SECTION("loop_crossfade")
+    {
+        region.parseOpcode({ "loop_crossfade", "0.5" });
+        REQUIRE(region.loopCrossfade == Approx(0.5f));
+        region.parseOpcode({ "loop_crossfade", "0" });
+        REQUIRE(region.loopCrossfade > 0);
+    }
+
     SECTION("group")
     {
         REQUIRE(region.group == 0);
