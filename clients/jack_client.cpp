@@ -127,7 +127,7 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg)
     return 0;
 }
 
-static bool shouldClose { false };
+static volatile sig_atomic_t shouldClose { false };
 
 static void done(int sig)
 {
