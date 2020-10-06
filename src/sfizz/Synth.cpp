@@ -1024,12 +1024,9 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 void sfz::Synth::checkRegionPolyphony(const Region* region, int delay) noexcept
 {
     tempPolyphonyArray.clear();
-
-    for (Voice* voice : voiceViewArray) {
-        if (voice->getRegion() == region && !voice->releasedOrFree()) {
-            tempPolyphonyArray.push_back(voice);
-        }
-    }
+    absl::c_copy_if(voiceViewArray,
+        std::back_inserter(tempPolyphonyArray),
+        [region](Voice* v) { return v->getRegion() == region && !v->releasedOrFree(); });
 
     if (tempPolyphonyArray.size() >= region->polyphony) {
         const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
@@ -1078,11 +1075,8 @@ void sfz::Synth::checkGroupPolyphony(const Region* region, int delay) noexcept
 {
     const auto& activeVoices = polyphonyGroups[region->group].getActiveVoices();
     tempPolyphonyArray.clear();
-    for (Voice* voice : activeVoices) {
-        if (!voice->releasedOrFree()) {
-            tempPolyphonyArray.push_back(voice);
-        }
-    }
+    absl::c_copy_if(activeVoices,
+        std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
 
     if (tempPolyphonyArray.size() >= polyphonyGroups[region->group].getPolyphonyLimit()) {
         const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
@@ -1096,11 +1090,8 @@ void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
     while (parent != nullptr) {
         const auto& activeVoices = parent->getActiveVoices();
         tempPolyphonyArray.clear();
-        for (Voice* voice : activeVoices) {
-            if (!voice->releasedOrFree()) {
-                tempPolyphonyArray.push_back(voice);
-            }
-        }
+        absl::c_copy_if(activeVoices,
+            std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
 
         if (tempPolyphonyArray.size() >= parent->getPolyphonyLimit()) {
             const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
