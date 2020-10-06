@@ -93,10 +93,10 @@ width_oncc425=29
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createDefaultGraph({
-        R"("Controller 20 {curve=3, smooth=0, value=59, step=0}" -> "Amplitude {0}")",
-        R"("Controller 42 {curve=0, smooth=32, value=71, step=0}" -> "Pitch {0}")",
-        R"("Controller 36 {curve=0, smooth=0, value=14.5, step=1.5}" -> "Pan {0}")",
-        R"("Controller 425 {curve=0, smooth=0, value=29, step=0}" -> "Width {0}")",
+        R"("Controller 20 {curve=3, smooth=0, step=0}" -> "Amplitude {0}")",
+        R"("Controller 42 {curve=0, smooth=32, step=0}" -> "Pitch {0}")",
+        R"("Controller 36 {curve=0, smooth=0, step=1.5}" -> "Pan {0}")",
+        R"("Controller 425 {curve=0, smooth=0, step=0}" -> "Width {0}")",
     }));
 }
 
@@ -112,9 +112,9 @@ TEST_CASE("[Modulations] Filter CC connections")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createDefaultGraph({
-        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "FilterResonance {0, N=3}")",
-        R"("Controller 2 {curve=2, smooth=0, value=100, step=0}" -> "FilterCutoff {0, N=2}")",
-        R"("Controller 3 {curve=0, smooth=0, value=5, step=0.5}" -> "FilterGain {0, N=1}")",
+        R"("Controller 1 {curve=0, smooth=10, step=0}" -> "FilterResonance {0, N=3}")",
+        R"("Controller 2 {curve=2, smooth=0, step=0}" -> "FilterCutoff {0, N=2}")",
+        R"("Controller 3 {curve=0, smooth=0, step=0.5}" -> "FilterGain {0, N=1}")",
     }));
 }
 
@@ -130,9 +130,9 @@ TEST_CASE("[Modulations] EQ CC connections")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createDefaultGraph({
-        R"("Controller 1 {curve=0, smooth=10, value=2, step=0}" -> "EqBandwidth {0, N=3}")",
-        R"("Controller 2 {curve=0, smooth=0, value=5, step=0.5}" -> "EqGain {0, N=1}")",
-        R"("Controller 3 {curve=3, smooth=0, value=300, step=0}" -> "EqFrequency {0, N=2}")",
+        R"("Controller 1 {curve=0, smooth=10, step=0}" -> "EqBandwidth {0, N=3}")",
+        R"("Controller 2 {curve=0, smooth=0, step=0.5}" -> "EqGain {0, N=1}")",
+        R"("Controller 3 {curve=3, smooth=0, step=0}" -> "EqFrequency {0, N=2}")",
     }));
 }
 
@@ -248,8 +248,8 @@ TEST_CASE("[Modulations] FlexEG Ampeg target")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
-        R"("Controller 10 {curve=1, smooth=10, value=100, step=0}" -> "Pan {0}")",
-  	    R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude {0}")",
+        R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("EG 1 {0}" -> "MasterAmplitude {0}")",
     }));
 }
@@ -272,8 +272,8 @@ TEST_CASE("[Modulations] FlexEG Ampeg target with 2 FlexEGs")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
-        R"("Controller 10 {curve=1, smooth=10, value=100, step=0}" -> "Pan {0}")",
-  	    R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude {0}")",
+        R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("EG 2 {0}" -> "MasterAmplitude {0}")",
     }));
 }
@@ -298,8 +298,8 @@ TEST_CASE("[Modulations] FlexEG Ampeg target with multiple EGs targeting ampeg")
 
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
-        R"("Controller 10 {curve=1, smooth=10, value=100, step=0}" -> "Pan {0}")",
-  	    R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude {0}")",
+        R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("EG 1 {0}" -> "MasterAmplitude {0}")",
     }));
 }

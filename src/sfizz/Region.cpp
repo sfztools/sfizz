@@ -1550,7 +1550,7 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, con
         else {
             connections.emplace_back();
             conn = &connections.back();
-            conn->source = ModKey::createCC(ccNumber, 0, 0, 0, 0);
+            conn->source = ModKey::createCC(ccNumber, 0, 0, 0);
             conn->target = target;
         }
 
@@ -1558,7 +1558,7 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, con
         ModKey::Parameters p = conn->source.parameters();
         switch (opcode.category) {
         case kOpcodeOnCcN:
-            setValueFromOpcode(opcode, p.value, range);
+            setValueFromOpcode(opcode, conn->sourceDepth, range);
             break;
         case kOpcodeCurveCcN:
             setValueFromOpcode(opcode, p.curve, Default::curveCCRange);

@@ -35,6 +35,18 @@ sfz::ModKey::Parameters RegionCCView::at(int cc) const
     throw std::out_of_range("Region CC");
 }
 
+float RegionCCView::valueAt(int cc) const
+{
+    for (const sfz::Region::Connection& conn : region_.connections) {
+        if (match(conn)) {
+            const sfz::ModKey::Parameters p = conn.source.parameters();
+            if (p.cc == cc)
+                return conn.sourceDepth;
+        }
+    }
+    throw std::out_of_range("Region CC");
+}
+
 bool RegionCCView::match(const sfz::Region::Connection& conn) const
 {
     return conn.source.id() == sfz::ModId::Controller && conn.target == target_;
@@ -76,12 +88,12 @@ std::string createDefaultGraph(std::vector<std::string> lines, int numRegions)
             R"("AmplitudeEG {)", regionIdx, R"(}" -> "MasterAmplitude {)", regionIdx, R"(}")"
         ));
         lines.push_back(absl::StrCat(
-            R"("Controller 7 {curve=4, smooth=10, value=100, step=0}" -> "Amplitude {)",
+            R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {)",
             regionIdx,
             R"(}")"
         ));
         lines.push_back(absl::StrCat(
-            R"("Controller 10 {curve=1, smooth=10, value=100, step=0}" -> "Pan {)",
+            R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {)",
             regionIdx,
             R"(}")"
         ));

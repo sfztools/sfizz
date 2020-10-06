@@ -20,7 +20,6 @@ size_t std::hash<sfz::ModKey>::operator()(const sfz::ModKey &key) const
         k = hashNumber(p.cc, k);
         k = hashNumber(p.curve, k);
         k = hashNumber(p.smooth, k);
-        k = hashNumber(p.value, k);
         k = hashNumber(p.step, k);
         break;
     default:

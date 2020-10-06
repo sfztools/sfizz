@@ -30,13 +30,12 @@ ModKey::Parameters& ModKey::Parameters::operator=(const Parameters& other) noexc
     return *this;
 }
 
-ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float value, float step)
+ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float step)
 {
     ModKey::Parameters p;
     p.cc = cc;
     p.curve = curve;
     p.smooth = smooth;
-    p.value = value;
     p.step = step;
     return ModKey(ModId::Controller, {}, p);
 }
@@ -69,7 +68,7 @@ std::string ModKey::toString() const
     case ModId::Controller:
         return absl::StrCat("Controller ", params_.cc,
             " {curve=", params_.curve, ", smooth=", params_.smooth,
-            ", value=", params_.value, ", step=", params_.step, "}");
+            ", step=", params_.step, "}");
     case ModId::Envelope:
         return absl::StrCat("EG ", 1 + params_.N, " {", region_.number(), "}");
     case ModId::LFO:
