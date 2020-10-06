@@ -707,12 +707,12 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
 
         if (ptType == kPartitionLoopXfade) {
-            absl::Span<float> xfCoeff = xfadeTemp[0]->first(ptSize);
+            absl::Span<float> xfCurvePos = xfadeTemp[0]->first(ptSize);
 
-            // compute crossfade coeffs
+            // compute crossfade positions
             for (unsigned i = 0; i < ptSize; ++i) {
                 float pos = ptIndices[i] + ptCoeffs[i];
-                xfCoeff[i] = (pos - loopXfOutStart) / loopXfadeSize;
+                xfCurvePos[i] = (pos - loopXfOutStart) / loopXfadeSize;
             }
 
             //----------------------------------------------------------------//
@@ -724,17 +724,17 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                 IF_CONSTEXPR (loopXfadeUseCurves == 2) {
                     const Curve& xfIn = getSCurve();
                     for (unsigned i = 0; i < ptSize; ++i)
-                        xfCurve[i] = xfIn.evalNormalized(1.0f - xfCoeff[i]);
+                        xfCurve[i] = xfIn.evalNormalized(1.0f - xfCurvePos[i]);
                 }
                 else IF_CONSTEXPR (loopXfadeUseCurves == 1) {
                     const Curve& xfOut = resources.curves.getCurve(6);
                     for (unsigned i = 0; i < ptSize; ++i)
-                        xfCurve[i] = xfOut.evalNormalized(xfCoeff[i]);
+                        xfCurve[i] = xfOut.evalNormalized(xfCurvePos[i]);
                 }
                 else IF_CONSTEXPR (loopXfadeUseCurves == 0) {
                     // TODO(jpc) vectorize this
                     for (unsigned i = 0; i < ptSize; ++i)
-                        xfCurve[i] = clamp(1.0f - xfCoeff[i], 0.0f, 1.0f);
+                        xfCurve[i] = clamp(1.0f - xfCurvePos[i], 0.0f, 1.0f);
                 }
                 // apply out curve
                 if (0)
@@ -765,10 +765,11 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                     ++applyOffset;
                 unsigned applySize = ptSize - applyOffset;
 
-                // offset the indices
+                // offset the indices and coeffs
                 xfInIndices = xfInIndices.subspan(applyOffset);
-                // offset the coeffs
-                absl::Span<float> xfInCoeff = xfCoeff.subspan(applyOffset);
+                absl::Span<const float> xfInCoeffs = ptCoeffs.subspan(applyOffset);
+                // offset the curve positions
+                absl::Span<float> xfInCurvePos = xfCurvePos.subspan(applyOffset);
                 // offset the output buffer
                 AudioSpan<float> xfInBuffer = ptBuffer.subspan(applyOffset);
 
@@ -777,21 +778,21 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                 IF_CONSTEXPR (loopXfadeUseCurves == 2) {
                     const Curve& xfIn = getSCurve();
                     for (unsigned i = 0; i < applySize; ++i)
-                        xfCurve[i] = xfIn.evalNormalized(xfInCoeff[i]);
+                        xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
                 else IF_CONSTEXPR (loopXfadeUseCurves == 1) {
                     const Curve& xfIn = resources.curves.getCurve(5);
                     for (unsigned i = 0; i < applySize; ++i)
-                        xfCurve[i] = xfIn.evalNormalized(xfInCoeff[i]);
+                        xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
                 else IF_CONSTEXPR (loopXfadeUseCurves == 0) {
                     // TODO(jpc) vectorize this
                     for (unsigned i = 0; i < applySize; ++i)
-                        xfCurve[i] = clamp(xfInCoeff[i], 0.0f, 1.0f);
+                        xfCurve[i] = clamp(xfInCurvePos[i], 0.0f, 1.0f);
                 }
                 // apply in curve
                 fillInterpolatedWithQuality<true>(
-                    source, xfInBuffer, xfInIndices, *coeffs, xfCurve, quality);
+                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality);
             }
         }
     }
