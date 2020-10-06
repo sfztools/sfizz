@@ -137,7 +137,7 @@ namespace config {
      * due to engine polyphony being reached.
      */
     static constexpr float overflowVoiceMultiplier { 1.5f };
-    static_assert(overflowVoiceMultiplier >= 1.0f);
+    static_assert(overflowVoiceMultiplier >= 1.0f, "This needs to add voices");
 } // namespace config
 
 } // namespace sfz
