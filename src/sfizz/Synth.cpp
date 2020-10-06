@@ -142,15 +142,6 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     int regionNumber = static_cast<int>(regions.size());
     auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
 
-    // Create default connections
-    constexpr unsigned defaultSmoothness = 10;
-    lastRegion->getOrCreateConnection(
-        ModKey::createCC(7, 4, defaultSmoothness, 0),
-        ModKey::createNXYZ(ModId::Amplitude, lastRegion->id)).sourceDepth = 100.0f;
-    lastRegion->getOrCreateConnection(
-        ModKey::createCC(10, 1, defaultSmoothness, 0),
-        ModKey::createNXYZ(ModId::Pan, lastRegion->id)).sourceDepth = 100.0f;
-
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
@@ -660,6 +651,33 @@ void sfz::Synth::finalizeSfzLoad()
     }
     DBG("Removing " << (regions.size() - currentRegionCount) << " out of " << regions.size() << " regions");
     regions.resize(currentRegionCount);
+
+    // collect all CCs used in regions, with matrix not yet connected
+    std::bitset<config::numCCs> usedCCs;
+    for (const RegionPtr& regionPtr : regions) {
+        const Region& region = *regionPtr;
+        updateUsedCCsFromRegion(usedCCs, region);
+        for (const Region::Connection& connection : region.connections) {
+            if (connection.source.id() == ModId::Controller)
+                usedCCs.set(connection.source.parameters().cc);
+        }
+    }
+    // connect default controllers, except if these CC are already used
+    for (const RegionPtr& regionPtr : regions) {
+        Region& region = *regionPtr;
+        constexpr unsigned defaultSmoothness = 10;
+        if (!usedCCs.test(7)) {
+            region.getOrCreateConnection(
+                ModKey::createCC(7, 4, defaultSmoothness, 0),
+                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 100.0f;
+        }
+        if (!usedCCs.test(10)) {
+            region.getOrCreateConnection(
+                ModKey::createCC(10, 1, defaultSmoothness, 0),
+                ModKey::createNXYZ(ModId::Pan, region.id)).sourceDepth = 100.0f;
+        }
+    }
+
     modificationTime = checkModificationTime();
 
     settingsPerVoice.maxFilters = maxFilters;
