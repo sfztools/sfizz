@@ -559,6 +559,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     // calculate loop characteristics
+    const auto loop = this->loop;
     const bool isLooping = region->shouldLoop()
         && (static_cast<size_t>(loop.end) < source.getNumFrames());
 
