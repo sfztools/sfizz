@@ -1522,7 +1522,18 @@ void sfz::Synth::setupModMatrix()
         for (const Region::Connection& conn : region->connections) {
             ModGenerator* gen = nullptr;
 
-            switch (conn.source.id()) {
+            ModKey sourceKey = conn.source;
+            ModKey targetKey = conn.target;
+
+            // normalize the stepcc to 0-1
+            if (sourceKey.id() == ModId::Controller) {
+                ModKey::Parameters p = sourceKey.parameters();
+                p.step = (conn.sourceDepth == 0.0f) ? 0.0f :
+                    (p.step / conn.sourceDepth);
+                sourceKey = ModKey::createCC(p.cc, p.curve, p.smooth, p.step);
+            }
+
+            switch (sourceKey.id()) {
             case ModId::Controller:
                 gen = genController.get();
                 break;
@@ -1546,8 +1557,8 @@ void sfz::Synth::setupModMatrix()
             if (!gen)
                 continue;
 
-            ModMatrix::SourceId source = mm.registerSource(conn.source, *gen);
-            ModMatrix::TargetId target = mm.registerTarget(conn.target);
+            ModMatrix::SourceId source = mm.registerSource(sourceKey, *gen);
+            ModMatrix::TargetId target = mm.registerTarget(targetKey);
 
             ASSERT(source);
             if (!source) {
