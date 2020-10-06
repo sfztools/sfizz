@@ -3,7 +3,10 @@
 [![Travis Build Status]](https://travis-ci.com/sfztools/sfizz)
 [![AppVeyor Build Status]](https://ci.appveyor.com/project/sfztools/sfizz)
 
-SFZ library and LV2 plugin, please check [our website] for more details.
+[![Discord Badge Image]](https://discord.gg/3ArE9Mw)
+
+SFZ parser and synth c++ library, providing AU / LV2 / VST3 plugins
+and JACK standalone client, please check [our website] for more details.
 
 ![Screenshot](screenshot.png)
 
@@ -64,3 +67,4 @@ The sfizz library also uses in some subprojects:
 [build from source]:     https://sfz.tools/sfizz/development/build/
 [AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
 [Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
+[Discord Badge Image]:   https://img.shields.io/discord/587748534321807416?label=discord&logo=discord
