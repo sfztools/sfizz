@@ -737,16 +737,12 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                         xfCurve[i] = clamp(1.0f - xfCurvePos[i], 0.0f, 1.0f);
                 }
                 // apply out curve
-                if (0)
-                    ptBuffer.applyGain(xfCurve);
-                else {
-                    // scalar fallback: buffer and curve not aligned
-                    size_t numChannels = ptBuffer.getNumChannels();
-                    for (size_t c = 0; c < numChannels; ++c) {
-                        absl::Span<float> channel = ptBuffer.getSpan(c);
-                        for (unsigned i = 0; i < ptSize; ++i)
-                            channel[i] *= xfCurve[i];
-                    }
+                // (scalar fallback: buffer and curve not aligned)
+                size_t numChannels = ptBuffer.getNumChannels();
+                for (size_t c = 0; c < numChannels; ++c) {
+                    absl::Span<float> channel = ptBuffer.getSpan(c);
+                    for (unsigned i = 0; i < ptSize; ++i)
+                        channel[i] *= xfCurve[i];
                 }
             }
             //----------------------------------------------------------------//
