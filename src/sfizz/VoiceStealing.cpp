@@ -10,7 +10,35 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
     if (voices.empty())
         return {};
 
-    // Start of the voice stealing algorithm
+    switch(stealingAlgorithm) {
+    case StealingAlgorithm::First:
+        return stealFirst(voices);
+    case StealingAlgorithm::EnvelopeAndAge:
+        return stealEnvelopeAndAge(voices);
+    case StealingAlgorithm::Oldest:
+    default:
+        return stealOldest(voices);
+    }
+}
+
+void sfz::VoiceStealing::setStealingAlgorithm(StealingAlgorithm algorithm) noexcept
+{
+    stealingAlgorithm = algorithm;
+}
+
+sfz::Voice* sfz::VoiceStealing::stealFirst(absl::Span<Voice*> voices) noexcept
+{
+    return voices.front();
+}
+
+sfz::Voice* sfz::VoiceStealing::stealOldest(absl::Span<Voice*> voices) noexcept
+{
+    absl::c_stable_sort(voices, voiceOrdering);
+    return voices.front();
+}
+
+sfz::Voice* sfz::VoiceStealing::stealEnvelopeAndAge(absl::Span<Voice*> voices) noexcept
+{
     absl::c_stable_sort(voices, voiceOrdering);
 
     const auto sumPower = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {

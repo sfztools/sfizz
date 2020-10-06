@@ -17,7 +17,25 @@ namespace sfz
 class VoiceStealing
 {
 public:
+    enum class StealingAlgorithm {
+        First,
+        Oldest,
+        EnvelopeAndAge
+    };
+
     VoiceStealing();
+    /**
+     * @brief Get the current stealing algorithm
+     *
+     * @return StealingAlgorithm
+     */
+    StealingAlgorithm getStealingAlgorithm() const noexcept { return stealingAlgorithm; }
+    /**
+     * @brief Set a default stealing algorithm
+     *
+     * @param algorithm
+     */
+    void setStealingAlgorithm(StealingAlgorithm algorithm) noexcept;
     /**
      * @brief Propose a voice to steal from a set of voices
      *
@@ -26,6 +44,11 @@ public:
      */
     Voice* steal(absl::Span<Voice*> voices) noexcept;
 private:
+    StealingAlgorithm stealingAlgorithm { StealingAlgorithm::Oldest };
+    Voice* stealFirst(absl::Span<Voice*> voices) noexcept;
+    Voice* stealOldest(absl::Span<Voice*> voices) noexcept;
+    Voice* stealEnvelopeAndAge(absl::Span<Voice*> voices) noexcept;
+
     struct VoiceScore
     {
         Voice* voice;

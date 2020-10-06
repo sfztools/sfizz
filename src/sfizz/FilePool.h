@@ -51,6 +51,7 @@ using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
     uint32_t end { Default::sampleEndRange.getEnd() };
+    uint32_t maxOffset { 0 };
     uint32_t loopBegin { Default::loopRange.getStart() };
     uint32_t loopEnd { Default::loopRange.getEnd() };
     bool hasLoop { false };
@@ -269,6 +270,13 @@ public:
      * for background sample file processing.
      */
     static void raiseCurrentThreadPriority() noexcept;
+    /**
+     * @brief Change whether all samples are loaded in ram.
+     * This will trigger a purge and reloading.
+     *
+     * @param loadInRam
+     */
+    void setRamLoading(bool loadInRam) noexcept;
 private:
     Logger& logger;
     fs::path rootDirectory;
@@ -279,6 +287,7 @@ private:
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> promiseQueue;
     atomic_queue::AtomicQueue2<FilePromisePtr, config::maxVoices> filledPromiseQueue;
     RTSemaphore semFilledPromiseQueueAvailable { config::maxVoices };
+    bool loadInRam { config::loadInRam };
     uint32_t preloadSize { config::preloadSize };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
     // Signals

@@ -869,7 +869,10 @@ void sfz::Voice::removeVoiceFromRing() noexcept
 
 float sfz::Voice::getAveragePower() const noexcept
 {
-    return powerFollower.getAveragePower();
+    if (followPower)
+        return powerFollower.getAveragePower();
+    else
+        return 0.0f;
 }
 
 bool sfz::Voice::releasedOrFree() const noexcept
@@ -1056,4 +1059,15 @@ void sfz::Voice::saveModulationTargets(const Region* region) noexcept
     pitchTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pitch, region->getId()));
     oscillatorDetuneTarget = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorDetune, region->getId()));
     oscillatorModDepthTarget = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorModDepth, region->getId()));
+}
+
+void sfz::Voice::enablePowerFollower() noexcept
+{
+    followPower = true;
+    powerFollower.clear();
+}
+
+void sfz::Voice::disablePowerFollower() noexcept
+{
+    followPower = false;
 }

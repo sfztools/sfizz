@@ -223,6 +223,9 @@ void sfz::Synth::clear()
     defaultSwitch = absl::nullopt;
     defaultPath = "";
     resources.midiState.reset();
+    resources.filePool.clear();
+    resources.filePool.setRamLoading(config::loadInRam);
+    stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
     ccLabels.clear();
     keyLabels.clear();
     keyswitchLabels.clear();
@@ -362,6 +365,37 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("octave_offset"):
             setValueFromOpcode(member, octaveOffset, Default::octaveOffsetRange);
             break;
+        case hash("hint_ram_based"):
+            if (member.value == "1")
+                resources.filePool.setRamLoading(true);
+            else if (member.value == "0")
+                resources.filePool.setRamLoading(false);
+            else
+                DBG("Unsupported value for hint_ram_based: " << member.value);
+            break;
+        case hash("hint_stealing"):
+            switch(hash(member.value)) {
+            case hash("first"):
+                for (auto& voice : voices)
+                    voice->disablePowerFollower();
+
+                stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::First);
+                break;
+            case hash("oldest"):
+                for (auto& voice : voices)
+                    voice->disablePowerFollower();
+
+                stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
+                break;
+            case hash("envelope_and_age"):
+                for (auto& voice : voices)
+                    voice->enablePowerFollower();
+
+                stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::EnvelopeAndAge);
+                break;
+            default:
+                DBG("Unsupported value for hint_stealing: " << member.value);
+            }
         default:
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.opcode);
