@@ -776,7 +776,7 @@ void sfz::Synth::garbageCollect() noexcept
 
 void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
-    ASSERT(samplesPerBlock < config::maxBlockSize);
+    ASSERT(samplesPerBlock <= config::maxBlockSize);
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
