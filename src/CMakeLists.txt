@@ -81,6 +81,7 @@ set (SFIZZ_HEADERS
     sfizz/MathHelpers.h
     sfizz/MidiState.h
     sfizz/ModifierHelpers.h
+    sfizz/ModulationSpan.h
     sfizz/OnePoleFilter.h
     sfizz/Oversampler.h
     sfizz/Panning.h

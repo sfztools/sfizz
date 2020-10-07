@@ -94,14 +94,15 @@ void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
     eg->startRelease(delay);
 }
 
-void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
+ModulationSpan ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     Synth& synth = *synth_;
 
     Voice* voice = synth.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
-        return;
+        fill(buffer, 0.0f);
+        return ModulationSpan(buffer, ModulationSpan::kInvariant);
     }
 
     ADSREnvelope<float>* eg = nullptr;
@@ -121,10 +122,12 @@ void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voic
         break;
     default:
         ASSERTFALSE;
-        return;
+        fill(buffer, 0.0f);
+        return ModulationSpan(buffer, ModulationSpan::kInvariant);
     }
 
     eg->getBlock(buffer);
+    return ModulationSpan(buffer);
 }
 
 } // namespace sfz

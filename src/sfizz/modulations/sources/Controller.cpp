@@ -65,7 +65,7 @@ void ControllerSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, u
     }
 }
 
-void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
+ModulationSpan ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     (void)voiceId;
 
@@ -79,6 +79,9 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
         return curve.evalNormalized(x);
     };
 
+    bool canShortcut = events.size() == 1;
+    bool didShortcut = false;
+
     if (p.step > 0.0f)
         linearEnvelope(events, buffer, transformValue, p.step);
     else
@@ -87,9 +90,13 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
     auto it = impl_->smoother_.find(sourceKey);
     if (it != impl_->smoother_.end()) {
         Smoother& s = it->second;
-        bool canShortcut = events.size() == 1;
-        s.process(buffer, buffer, canShortcut);
+        didShortcut = s.process(buffer, buffer, canShortcut);
     }
+    else {
+        didShortcut = canShortcut;
+    }
+
+    return ModulationSpan(buffer, didShortcut ? ModulationSpan::kInvariant : 0);
 }
 
 } // namespace sfz

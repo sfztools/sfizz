@@ -45,8 +45,9 @@ public:
      * @param canShortcut whether we can have a fast path if the filter is within
      *                    a reasonable range around the first value of the input
      *                    span.
+     * @return whether the process did shortcut.
      */
-    void process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut = false);
+    bool process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut = false);
 
     float current() const { return filter.current(); }
 private:

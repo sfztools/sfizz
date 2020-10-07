@@ -14,7 +14,7 @@ class LFOSource : public ModGenerator {
 public:
     explicit LFOSource(Synth &synth);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
-    void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
+    ModulationSpan generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
     Synth* synth_ = nullptr;

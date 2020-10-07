@@ -223,8 +223,9 @@ void LFO::processSteps(absl::Span<float> out)
     impl.subPhases_[nth] = phase;
 }
 
-void LFO::process(absl::Span<float> out)
+ModulationSpan LFO::process(absl::Span<float> out)
 {
+    ModulationSpan result(out);
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
     size_t numFrames = out.size();
@@ -236,13 +237,15 @@ void LFO::process(absl::Span<float> out)
         impl.delayFramesLeft_ -= skipFrames;
         out.remove_prefix(skipFrames);
         numFrames -= skipFrames;
+        if (numFrames == 0)
+            return ModulationSpan(*result, ModulationSpan::kInvariant);
     }
 
     unsigned subno = 0;
     const unsigned countSubs = desc.sub.size();
 
     if (countSubs < 1)
-        return;
+        return ModulationSpan(*result, ModulationSpan::kInvariant);
 
     if (desc.seq) {
         processSteps(out);
@@ -282,6 +285,8 @@ void LFO::process(absl::Span<float> out)
     }
 
     processFadeIn(out);
+
+    return result;
 }
 
 void LFO::processFadeIn(absl::Span<float> out)

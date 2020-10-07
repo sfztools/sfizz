@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "ModulationSpan.h"
 #include "utility/NumericId.h"
 #include <absl/types/span.h>
 #include <cstdint>
@@ -55,8 +56,9 @@ public:
      * @param sourceKey source key
      * @param voiceNum voice number if the generator is per-voice, otherwise undefined
      * @param buffer output buffer
+     * @return modulation span
      */
-    virtual void generate(const ModKey& sourceKey, NumericId<Voice> voiceNum, absl::Span<float> buffer) = 0;
+    virtual ModulationSpan generate(const ModKey& sourceKey, NumericId<Voice> voiceNum, absl::Span<float> buffer) = 0;
 
     /**
      * @brief Advance the generator by a number of frames

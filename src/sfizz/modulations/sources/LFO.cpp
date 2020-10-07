@@ -41,7 +41,7 @@ void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned
     lfo->start(delay);
 }
 
-void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
+ModulationSpan LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     Synth& synth = *synth_;
     const unsigned lfoIndex = sourceKey.parameters().N;
@@ -50,18 +50,18 @@ void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl
     if (!voice) {
         ASSERTFALSE;
         fill(buffer, 0.0f);
-        return;
+        return ModulationSpan(buffer, ModulationSpan::kInvariant);
     }
 
     const Region* region = voice->getRegion();
     if (lfoIndex >= region->lfos.size()) {
         ASSERTFALSE;
         fill(buffer, 0.0f);
-        return;
+        return ModulationSpan(buffer, ModulationSpan::kInvariant);
     }
 
     LFO* lfo = voice->getLFO(lfoIndex);
-    lfo->process(buffer);
+    return lfo->process(buffer);
 }
 
 } // namespace sfz

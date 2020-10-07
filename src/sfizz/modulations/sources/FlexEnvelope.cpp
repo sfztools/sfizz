@@ -62,7 +62,7 @@ void FlexEnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
     eg->release(delay);
 }
 
-void FlexEnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
+ModulationSpan FlexEnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     Synth& synth = *synth_;
     unsigned egIndex = sourceKey.parameters().N;
@@ -70,17 +70,19 @@ void FlexEnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voic
     Voice* voice = synth.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
-        return;
+        fill(buffer, 0.0f);
+        return ModulationSpan(buffer, ModulationSpan::kInvariant);
     }
 
     const Region* region = voice->getRegion();
     if (egIndex >= region->flexEGs.size()) {
         ASSERTFALSE;
-        return;
+        fill(buffer, 0.0f);
+        return ModulationSpan(buffer, ModulationSpan::kInvariant);
     }
 
     FlexEnvelope* eg = voice->getFlexEG(egIndex);
-    eg->process(buffer);
+    return eg->process(buffer);
 }
 
 } // namespace sfz

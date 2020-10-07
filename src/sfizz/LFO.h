@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "ModulationSpan.h"
 #include <absl/types/span.h>
 #include <memory>
 
@@ -74,7 +75,7 @@ public:
 
        TODO(jpc) frequency modulations
      */
-    void process(absl::Span<float> out);
+    ModulationSpan process(absl::Span<float> out);
 
 private:
     /**

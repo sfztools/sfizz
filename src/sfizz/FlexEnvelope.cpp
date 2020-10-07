@@ -47,7 +47,7 @@ struct FlexEnvelope::Impl {
     bool isReleased_ { false };
 
     //
-    void process(absl::Span<float> out);
+    ModulationSpan process(absl::Span<float> out);
     bool advanceToNextStage();
 };
 
@@ -123,14 +123,15 @@ bool FlexEnvelope::isFinished() const noexcept
     return impl.currentStageNumber_ >= desc.points.size();
 }
 
-void FlexEnvelope::process(absl::Span<float> out)
+ModulationSpan FlexEnvelope::process(absl::Span<float> out)
 {
     Impl& impl = *impl_;
-    impl.process(out);
+    return impl.process(out);
 }
 
-void FlexEnvelope::Impl::process(absl::Span<float> out)
+ModulationSpan FlexEnvelope::Impl::process(absl::Span<float> out)
 {
+    ModulationSpan result(out);
     const FlexEGDescription& desc = *desc_;
     size_t numFrames = out.size();
     const float samplePeriod = samplePeriod_;
@@ -147,7 +148,7 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
     // Envelope finished?
     if (currentStageNumber_ >= desc.points.size()) {
         fill(out, 0.0f);
-        return;
+        return ModulationSpan(*result, ModulationSpan::kInvariant);
     }
 
     size_t frameIndex = 0;
@@ -167,7 +168,7 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
                 if (!advanceToNextStage()) {
                     out.remove_prefix(frameIndex);
                     fill(out, 0.0f);
-                    return;
+                    return result;
                 }
             }
         }
@@ -181,7 +182,7 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
             if (!advanceToNextStage()) {
                 out.remove_prefix(frameIndex);
                 fill(out, 0.0f);
-                return;
+                return result;
             }
         }
 
@@ -215,6 +216,8 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
 
         currentTime_ = time;
     }
+
+    return result;
 }
 
 bool FlexEnvelope::Impl::advanceToNextStage()
