@@ -97,6 +97,11 @@ std::string createDefaultGraph(std::vector<std::string> lines, int numRegions)
             regionIdx,
             R"(}")"
         ));
+        lines.push_back(absl::StrCat(
+            R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {)",
+            regionIdx,
+            R"(}")"
+        ));
     }
 
     return createModulationDotGraph(lines);

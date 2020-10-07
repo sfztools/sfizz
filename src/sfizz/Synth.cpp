@@ -235,10 +235,12 @@ void sfz::Synth::clear()
     fill(absl::MakeSpan(ccInitialValues), 0.0f);
     initCc(7, 100);     // volume
     initHdcc(10, 0.5f); // pan
+    initHdcc(11, 1.0f); // expression
 
     // set default controller labels
     insertPairUniquely(ccLabels, 7, "Volume");
     insertPairUniquely(ccLabels, 10, "Pan");
+    insertPairUniquely(ccLabels, 11, "Expression");
 }
 
 void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
@@ -678,6 +680,11 @@ void sfz::Synth::finalizeSfzLoad()
             region.getOrCreateConnection(
                 ModKey::createCC(10, 1, defaultSmoothness, 0),
                 ModKey::createNXYZ(ModId::Pan, region.id)).sourceDepth = 100.0f;
+        }
+        if (!usedCCs.test(11)) {
+            region.getOrCreateConnection(
+                ModKey::createCC(11, 4, defaultSmoothness, 0),
+                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 100.0f;
         }
     }
 
