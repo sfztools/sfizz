@@ -674,7 +674,7 @@ public:
     }
 
 private:
-    std::array<uint32_t, N> seeds_ {};
+    std::array<uint32_t, N> seeds_ {{}};
     float mean_ { 0 };
     float gain_ { 0 };
 };

@@ -45,6 +45,9 @@
 #else
 #include <pthread.h>
 #endif
+#include "threadpool/ThreadPool.h"
+using namespace std::placeholders;
+static ThreadPool threadPool { std::thread::hardware_concurrency() > 2 ? std::thread::hardware_concurrency() - 2 : 1 };
 
 void readBaseFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, uint32_t numFrames)
 {
@@ -67,18 +70,18 @@ void readBaseFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, uint32
     }
 }
 
-std::unique_ptr<sfz::FileAudioBuffer> readFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampling factor)
+sfz::FileAudioBuffer readFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampling factor)
 {
-    auto baseBuffer = absl::make_unique<sfz::FileAudioBuffer>();
-    readBaseFile(reader, *baseBuffer, numFrames);
+    sfz::FileAudioBuffer baseBuffer;
+    readBaseFile(reader, baseBuffer, numFrames);
 
     if (factor == sfz::Oversampling::x1)
         return baseBuffer;
 
-    auto outputBuffer = absl::make_unique<sfz::FileAudioBuffer>(reader.channels(), numFrames * static_cast<int>(factor));
-    outputBuffer->clear();
+    sfz::FileAudioBuffer outputBuffer { reader.channels(), numFrames * static_cast<int>(factor) };
+    outputBuffer.clear();
     sfz::Oversampler oversampler { factor };
-    oversampler.stream(*baseBuffer, *outputBuffer);
+    oversampler.stream(baseBuffer, outputBuffer);
     return outputBuffer;
 }
 
@@ -93,37 +96,27 @@ void streamFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampl
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
-: logger(logger)
+    : logger(logger)
 {
-    FilePromise promise;
-    if (!promise.dataStatus.is_lock_free())
-        DBG("atomic<DataStatus> is not lock-free; could cause issues with locking");
-
-    for (int i = 0; i < config::numBackgroundThreads; ++i)
-        threadPool.emplace_back( &FilePool::loadingThread, this );
-
-    threadPool.emplace_back( &FilePool::clearingThread, this );
-
-    for (int i = 0; i < config::maxFilePromises; ++i)
-        emptyPromises.push_back(std::make_shared<FilePromise>());
+    loadingJobs.reserve(config::maxVoices);
+    lastUsedFiles.reserve(config::maxVoices);
+    garbageToCollect.reserve(config::maxVoices);
 }
 
 sfz::FilePool::~FilePool()
 {
-    quitThread = true;
-
     std::error_code ec;
 
-    for (unsigned i = 0; i < threadPool.size(); ++i) {
-        ec = std::error_code();
-        workerBarrier.post(ec);
-    }
+    garbageFlag = false;
+    semGarbageBarrier.post(ec);
+    garbageThread.join();
 
-    ec = std::error_code();
-    semClearingRequest.post(ec);
+    dispatchFlag = false;
+    dispatchBarrier.post(ec);
+    dispatchThread.join();
 
-    for (auto& thread: threadPool)
-        thread.join();
+    for (auto& job : loadingJobs)
+        job.wait();
 }
 
 bool sfz::FilePool::checkSample(std::string& filename) const noexcept
@@ -142,7 +135,7 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
     static const fs::path dot { "." };
     static const fs::path dotdot { ".." };
 
-    for (const fs::path &part : oldPath.relative_path()) {
+    for (const fs::path& part : oldPath.relative_path()) {
         if (part == dot || part == dotdot) {
             path /= part;
             continue;
@@ -153,7 +146,7 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
             continue;
         }
 
-        auto it = path.empty() ? fs::directory_iterator{ dot, ec } : fs::directory_iterator{ path, ec };
+        auto it = path.empty() ? fs::directory_iterator { dot, ec } : fs::directory_iterator { path, ec };
         if (ec) {
             DBG("Error creating a directory iterator for " << filename << " (Error code: " << ec.message() << ")");
             return false;
@@ -169,10 +162,10 @@ bool sfz::FilePool::checkSample(std::string& filename) const noexcept
 #endif
         };
 
-        while (it != fs::directory_iterator{} && !searchPredicate(*it))
+        while (it != fs::directory_iterator {} && !searchPredicate(*it))
             it.increment(ec);
 
-        if (it == fs::directory_iterator{}) {
+        if (it == fs::directory_iterator {}) {
             DBG("File not found, could not resolve " << filename);
             return false;
         }
@@ -275,22 +268,30 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
 
     const auto existingFile = preloadedFiles.find(fileId);
     if (existingFile != preloadedFiles.end()) {
-        if (framesToLoad > existingFile->second.preloadedData->getNumFrames()) {
+        if (framesToLoad > existingFile->second.preloadedData.getNumFrames()) {
             preloadedFiles[fileId].information.maxOffset = maxOffset;
             preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad, oversamplingFactor);
         }
     } else {
-        fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(reader->sampleRate());
-        FileDataHandle handle {
+        const auto factor = static_cast<double>(oversamplingFactor);
+        fileInformation->sampleRate = factor * static_cast<double>(reader->sampleRate());
+        fileInformation->end = static_cast<uint32_t>(factor * fileInformation->end);
+        fileInformation->loopBegin = static_cast<uint32_t>(factor * fileInformation->loopBegin);
+        fileInformation->loopEnd = static_cast<uint32_t>(factor * fileInformation->loopEnd);
+        auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
             readFromFile(*reader, framesToLoad, oversamplingFactor),
             *fileInformation
-        };
-        preloadedFiles.insert_or_assign(fileId, handle);
+        });
+
+        if (!insertedPair.second)
+            return false;
+
+        insertedPair.first->second.status = FileData::Status::Preloaded;
     }
     return true;
 }
 
-absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const FileId& fileId) noexcept
+sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
 {
     auto fileInformation = getFileInformation(fileId);
     if (!fileInformation)
@@ -299,54 +300,44 @@ absl::optional<sfz::FileDataHandle> sfz::FilePool::loadFile(const FileId& fileId
     const fs::path file { rootDirectory / fileId.filename() };
     AudioReaderPtr reader = createAudioReader(file, fileId.isReverse());
 
-    // FIXME: Large offsets will require large preloading; is this OK in practice? Apparently sforzando does the same
     const auto frames = static_cast<uint32_t>(reader->frames());
     const auto existingFile = loadedFiles.find(fileId);
     if (existingFile != loadedFiles.end()) {
-        return existingFile->second;
+        return { &existingFile->second };
     } else {
-        fileInformation->sampleRate = static_cast<float>(oversamplingFactor) * static_cast<float>(reader->sampleRate());
-        FileDataHandle handle {
+        const auto factor = static_cast<double>(oversamplingFactor);
+        fileInformation->sampleRate = factor * static_cast<double>(reader->sampleRate());
+        fileInformation->end = static_cast<uint32_t>(factor * fileInformation->end);
+        fileInformation->loopBegin = static_cast<uint32_t>(factor * fileInformation->loopBegin);
+        fileInformation->loopEnd = static_cast<uint32_t>(factor * fileInformation->loopEnd);
+        auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
             readFromFile(*reader, frames, oversamplingFactor),
             *fileInformation
-        };
-        loadedFiles.insert_or_assign(fileId, handle);
-        return handle;
+        });
+        insertedPair.first->second.status = FileData::Status::Preloaded;
+        ASSERT(insertedPair.second);
+        return { &insertedPair.first->second };
     }
 }
 
-sfz::FilePromisePtr sfz::FilePool::getFilePromise(const FileId& fileId) noexcept
+sfz::FileDataHolder sfz::FilePool::getFilePromise(const FileId& fileId) noexcept
 {
-    if (emptyPromises.empty()) {
-        DBG("[sfizz] No empty promises left to honor the one for " << fileId);
-        return {};
-    }
-
     const auto preloaded = preloadedFiles.find(fileId);
     if (preloaded == preloadedFiles.end()) {
         DBG("[sfizz] File not found in the preloaded files: " << fileId);
         return {};
     }
-
-    auto promise = emptyPromises.back();
-    promise->fileId = preloaded->first;
-    promise->preloadedData = preloaded->second.preloadedData;
-    promise->sampleRate = static_cast<float>(preloaded->second.information.sampleRate);
-    promise->oversamplingFactor = oversamplingFactor;
-    promise->creationTime = std::chrono::high_resolution_clock::now();
-
-    if (!promiseQueue.try_push(promise)) {
-        DBG("[sfizz] Could not enqueue the promise for " << fileId << " (queue capacity " << promiseQueue.capacity() << ")");
+    QueuedFileData queuedData { fileId, &preloaded->second, std::chrono::high_resolution_clock::now() };
+    if (!filesToLoad.try_push(queuedData)) {
+        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad.capacity() << ")");
         return {};
     }
 
     std::error_code ec;
-    workerBarrier.post(ec);
+    dispatchBarrier.post(ec);
     ASSERT(!ec);
 
-    emptyPromises.pop_back();
-
-    return promise;
+    return { &preloaded->second };
 }
 
 void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
@@ -364,112 +355,60 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     }
 }
 
-void sfz::FilePool::tryToClearPromises()
+void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
 {
-    const std::lock_guard<SpinMutex> promiseLock { promiseGuard };
+    raiseCurrentThreadPriority();
 
-    for (auto& promise: promisesToClear) {
-        if (promise->dataStatus != FilePromise::DataStatus::Wait)
-            promise->reset();
+    const auto loadStartTime = std::chrono::high_resolution_clock::now();
+    const auto waitDuration = loadStartTime - data.queuedTime;
+    const fs::path file { rootDirectory / data.id.filename() };
+    std::error_code readError;
+    AudioReaderPtr reader = createAudioReader(file, data.id.isReverse(), &readError);
+
+    if (readError) {
+        DBG("[sfizz] libsndfile errored for " << data.id << " with message " << readError.message());
+        return;
     }
-}
 
-void sfz::FilePool::clearingThread()
-{
-    raiseCurrentThreadPriority();
+    FileData::Status currentStatus = data.data->status.load();
 
-    RTSemaphore& request = semClearingRequest;
-    do {
-        request.wait();
-        if (quitThread)
+    unsigned spinCounter { 0 };
+    while (currentStatus == FileData::Status::Invalid) {
+        // Spin until the state changes
+        if (spinCounter > 1024) {
+            DBG("[sfizz] " << data.id << " is stuck on Invalid? Leaving the load");
             return;
-        tryToClearPromises();
-    } while (1);
-}
-
-void sfz::FilePool::loadingThread() noexcept
-{
-    raiseCurrentThreadPriority();
-
-    FilePromisePtr promise;
-    do {
-        workerBarrier.wait();
-
-        if (emptyQueue) {
-            while (promiseQueue.try_pop(promise)) {
-                // We're just dequeuing
-            }
-            emptyQueue = false;
-            semEmptyQueueFinished.post();
-            continue;
         }
 
-        if (quitThread)
-            return;
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+        currentStatus = data.data->status.load();
+        spinCounter += 1;
+    }
 
-        if (!promiseQueue.try_pop(promise)) {
-            continue;
-        }
+    // Already loading or loaded
+    if (currentStatus != FileData::Status::Preloaded)
+        return;
 
-        threadsLoading++;
-        const auto loadStartTime = std::chrono::high_resolution_clock::now();
-        const auto waitDuration = loadStartTime - promise->creationTime;
+    // Someone else got the token
+    if (!data.data->status.compare_exchange_strong(currentStatus, FileData::Status::Streaming))
+        return;
 
-        const fs::path file { rootDirectory / promise->fileId.filename() };
-        std::error_code readError;
-        AudioReaderPtr reader = createAudioReader(file, promise->fileId.isReverse(), &readError);
-        if (readError) {
-            DBG("[sfizz] libsndfile errored for " << promise->fileId << " with message " << readError.message());
-            promise->dataStatus = FilePromise::DataStatus::Error;
-            continue;
-        }
-        const auto frames = static_cast<uint32_t>(reader->frames());
-        streamFromFile(*reader, frames, oversamplingFactor, promise->fileData, &promise->availableFrames);
-        promise->dataStatus = FilePromise::DataStatus::Ready;
-        const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
-        logger.logFileTime(waitDuration, loadDuration, frames, promise->fileId.filename());
+    const auto frames = static_cast<uint32_t>(reader->frames());
+    streamFromFile(*reader, frames, oversamplingFactor, data.data->fileData, &data.data->availableFrames);
+    const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
+    logger.logFileTime(waitDuration, loadDuration, frames, data.id.filename());
 
-        threadsLoading--;
+    data.data->status = FileData::Status::Done;
 
-        semFilledPromiseQueueAvailable.wait();
-        filledPromiseQueue.push(promise);
-
-        promise.reset();
-    } while (1);
+    std::lock_guard<SpinMutex> guard { lastUsedMutex };
+    if (absl::c_find(lastUsedFiles, data.id) == lastUsedFiles.end())
+        lastUsedFiles.push_back(data.id);
 }
 
 void sfz::FilePool::clear()
 {
     emptyFileLoadingQueues();
     preloadedFiles.clear();
-    temporaryFilePromises.clear();
-    promisesToClear.clear();
-}
-
-void sfz::FilePool::cleanupPromises() noexcept
-{
-    const std::unique_lock<SpinMutex> lock { promiseGuard, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
-
-    // The garbage collection cleared the data from these so we can move them
-    // back to the empty queue
-    auto promiseWaiting = [](FilePromisePtr& p) { return p->waiting(); };
-    auto moveToEmpty = [&](FilePromisePtr& p) { return emptyPromises.push_back(p); };
-    swapAndPopAll(promisesToClear, promiseWaiting, moveToEmpty);
-
-    // Remove the promises from the filled queue and put them in a linear
-    // storage
-    FilePromisePtr promise;
-    while (filledPromiseQueue.try_pop(promise)) {
-        semFilledPromiseQueueAvailable.post();
-        temporaryFilePromises.push_back(promise);
-    }
-
-    auto promiseUsedOnce = [](FilePromisePtr& p) { return p.use_count() == 1; };
-    auto moveToClear = [&](FilePromisePtr& p) { return promisesToClear.push_back(p); };
-    if (swapAndPopAll(temporaryFilePromises, promiseUsedOnce, moveToClear) > 0)
-        semClearingRequest.post();
 }
 
 void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
@@ -485,10 +424,22 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
                     preloadedFile.second.information.maxOffset + preloadSize
                 );
         }();
+
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
         preloadedFile.second.preloadedData = readFromFile(*reader, framesToLoad, factor);
-        preloadedFile.second.information.sampleRate *= samplerateChange;
+        FileInformation& information = preloadedFile.second.information;
+        information.sampleRate *= samplerateChange;
+        information.end = static_cast<uint32_t>(samplerateChange * information.end);
+        information.loopBegin = static_cast<uint32_t>(samplerateChange * information.loopBegin);
+        information.loopEnd = static_cast<uint32_t>(samplerateChange * information.loopEnd);
+
+        if (preloadedFile.second.status == FileData::Status::Done) {
+            const auto realFrames =
+                preloadedFile.second.availableFrames.load() / static_cast<unsigned>(this->oversamplingFactor);
+            preloadedFile.second.fileData = readFromFile(*reader, realFrames, factor);
+            preloadedFile.second.availableFrames = realFrames * static_cast<unsigned>(factor);
+        }
     }
 
     this->oversamplingFactor = factor;
@@ -504,26 +455,69 @@ uint32_t sfz::FilePool::getPreloadSize() const noexcept
     return preloadSize;
 }
 
+template <typename R>
+bool is_ready(std::future<R> const& f)
+{
+    return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+}
+
+void sfz::FilePool::dispatchingJob() noexcept
+{
+    QueuedFileData queuedData;
+    while (dispatchFlag) {
+        dispatchBarrier.wait();
+
+        if (emptyQueueFlag) {
+            while (filesToLoad.try_pop(queuedData)) {
+                // pass
+            }
+            semEmptyQueueFinished.post();
+            emptyQueueFlag = false;
+            continue;
+        }
+
+        if (filesToLoad.try_pop(queuedData)) {
+            loadingJobs.push_back(
+                threadPool.enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+        }
+
+        // Clear finished jobs
+        swapAndPopAll(loadingJobs, [](std::future<void>& future) {
+            return future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+        });
+    }
+}
+
+void sfz::FilePool::garbageJob() noexcept
+{
+    while (garbageFlag) {
+        semGarbageBarrier.wait();
+        {
+            std::lock_guard<SpinMutex> guard { garbageMutex };
+            for (auto& g: garbageToCollect)
+                g.reset();
+
+            garbageToCollect.clear();
+        }
+    }
+}
+
 void sfz::FilePool::emptyFileLoadingQueues() noexcept
 {
-    emptyQueue = true;
-    workerBarrier.post();
-    semEmptyQueueFinished.wait();
+    ASSERT(dispatchFlag);
+    emptyQueueFlag = true;
+    std::error_code ec;
+    dispatchBarrier.post(ec);
+
+    if (!ec)
+        semEmptyQueueFinished.wait();
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
 {
-    // TODO: validate that this is enough, otherwise we will need an atomic count
-    // of the files we need to load still.
-    // Spinlocking on the size of the background queue
-    while (!promiseQueue.was_empty()){
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-    }
-
-    // Spinlocking on the threads possibly logging in the background
-    while (threadsLoading > 0) {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-    }
+    for (auto& job : loadingJobs)
+        job.wait();
+    loadingJobs.clear();
 }
 
 void sfz::FilePool::raiseCurrentThreadPriority() noexcept
@@ -548,8 +542,7 @@ void sfz::FilePool::raiseCurrentThreadPriority() noexcept
     policy = SCHED_RR;
     const int minprio = sched_get_priority_min(policy);
     const int maxprio = sched_get_priority_max(policy);
-    param.sched_priority = minprio +
-        config::backgroundLoaderPthreadPriority * (maxprio - minprio) / 100;
+    param.sched_priority = minprio + config::backgroundLoaderPthreadPriority * (maxprio - minprio) / 100;
 
     if (pthread_setschedparam(thread, policy, &param) != 0) {
         DBG("[sfizz] Cannot set current thread scheduling parameters");
@@ -578,4 +571,41 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
     } else {
         setPreloadSize(preloadSize);
     }
+}
+
+void sfz::FilePool::triggerGarbageCollection() noexcept
+{
+    const std::unique_lock<SpinMutex> lastUsedLock { lastUsedMutex, std::try_to_lock };
+    const std::unique_lock<SpinMutex> garbageLock { garbageMutex, std::try_to_lock };
+    if (!lastUsedLock.owns_lock() || !garbageLock.owns_lock())
+        return;
+
+    const auto now = std::chrono::high_resolution_clock::now();
+    swapAndPopAll(lastUsedFiles, [&](const FileId& id) {
+        if (garbageToCollect.size() == garbageToCollect.capacity())
+           return false;
+
+        auto& data = preloadedFiles[id];
+        if (data.status == FileData::Status::Preloaded)
+            return true;
+
+        if (data.status != FileData::Status::Done)
+            return false;
+
+        if (data.readerCount != 0)
+            return false;
+
+        const auto secondsIdle = std::chrono::duration_cast<std::chrono::seconds>(now - data.lastViewerLeftAt).count();
+        if (secondsIdle < config::fileClearingPeriod)
+            return false;
+
+        data.availableFrames = 0;
+        data.status = FileData::Status::Preloaded;
+        garbageToCollect.push_back(std::move(data.fileData));
+        return true;
+    });
+
+    std::error_code ec;
+    semGarbageBarrier.post(ec);
+    ASSERT(!ec);
 }
