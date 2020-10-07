@@ -80,8 +80,8 @@ struct FileData
             return AudioSpan<const float>(preloadedData);
     }
 
-    FileData(const FileData& other) = default;
-    FileData& operator=(const FileData& other) = default;
+    FileData(const FileData& other) = delete;
+    FileData& operator=(const FileData& other) = delete;
     FileData(FileData&& other)
     {
         ASSERT(other.readerCount == 0); // Probably should not be moving this...
