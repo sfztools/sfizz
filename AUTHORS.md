@@ -9,3 +9,4 @@ Contributors to `sfizz`, in chronologic order:
 - Jean-Pierre Cimalando (2020)
 - Tobiasz "unfa" Karoń (2020)
 - Kinwie (2020)
+- Atsushi Eno (2020)
