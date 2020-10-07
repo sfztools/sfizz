@@ -249,6 +249,7 @@ TEST_CASE("[Modulations] FlexEG Ampeg target")
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("EG 1 {0}" -> "MasterAmplitude {0}")",
     }));
@@ -273,6 +274,7 @@ TEST_CASE("[Modulations] FlexEG Ampeg target with 2 FlexEGs")
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("EG 2 {0}" -> "MasterAmplitude {0}")",
     }));
@@ -299,6 +301,7 @@ TEST_CASE("[Modulations] FlexEG Ampeg target with multiple EGs targeting ampeg")
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("EG 1 {0}" -> "MasterAmplitude {0}")",
     }));
@@ -316,6 +319,7 @@ TEST_CASE("[Modulations] Override the default volume controller")
     REQUIRE(graph == createModulationDotGraph({
         R"("AmplitudeEG {0}" -> "MasterAmplitude {0}")",
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
+        R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("Controller 7 {curve=0, smooth=0, step=0}" -> "Pitch {0}")",
     }));
 }
@@ -331,6 +335,7 @@ TEST_CASE("[Modulations] Override the default pan controller")
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("AmplitudeEG {0}" -> "MasterAmplitude {0}")",
+        R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
         R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
     }));
 }
