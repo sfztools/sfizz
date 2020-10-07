@@ -41,6 +41,7 @@ sfz::Synth::Synth(int numVoices)
     initializeSIMDDispatchers();
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    engineSet = absl::make_unique<RegionSet>(nullptr, OpcodeScope::kOpcodeScopeGeneric);
     parser.setListener(this);
     effectFactory.registerStandardEffectTypes();
     effectBuses.reserve(5); // sufficient room for main and fx1-4
@@ -70,6 +71,7 @@ void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
     if (state == Voice::State::idle) {
         auto voice = getVoiceById(id);
         RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
+        engineSet->removeVoice(voice);
         polyphonyGroups[voice->getRegion()->group].removeVoice(voice);
     }
 
@@ -387,6 +389,7 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             default:
                 DBG("Unsupported value for hint_stealing: " << member.value);
             }
+            break;
         default:
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.opcode);
@@ -742,23 +745,8 @@ sfz::Voice* sfz::Synth::findFreeVoice() noexcept
     if (freeVoice != voices.end())
         return freeVoice->get();
 
-    // Engine polyphony reached
-    Voice* stolenVoice = stealer.steal(absl::MakeSpan(voiceViewArray));
-    if (stolenVoice == nullptr)
-        return {};
-
-    // Never kill age 0 voices
-    if (stolenVoice->getAge() == 0)
-        return {};
-
-
-    auto tempSpan = resources.bufferPool.getStereoBuffer(samplesPerBlock);
-    SisterVoiceRing::applyToRing(stolenVoice, [&] (Voice* v) {
-        renderVoiceToOutputs(*v, *tempSpan);
-        v->reset();
-    });
-
-    return stolenVoice;
+    DBG("Engine hard polyphony reached");
+    return {};
 }
 
 int sfz::Synth::getNumActiveVoices(bool recompute) const noexcept
@@ -813,20 +801,6 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     }
 }
 
-void sfz::Synth::renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept
-{
-    const Region* region = voice.getRegion();
-    ASSERT(region != nullptr);
-
-    voice.renderBlock(tempSpan);
-    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-        if (auto& bus = effectBuses[i]) {
-            float addGain = region->getGainToEffectBus(i);
-            bus->addToInputs(tempSpan, addGain, tempSpan.getNumFrames());
-        }
-    }
-}
-
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
@@ -865,18 +839,18 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     ModMatrix& mm = resources.modMatrix;
     mm.beginCycle(numFrames);
 
+    { // Clear effect busses
+        ScopedTiming logger { callbackBreakdown.effects };
+        for (auto& bus : effectBuses) {
+            if (bus)
+                bus->clearInputs(numFrames);
+        }
+    }
+
     activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempMixSpan->fill(0.0f);
-
-        // Ramp out whatever is in the buffer at this point; should only be killed voice data
-        linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));
-        for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-            if (auto& bus = effectBuses[i]) {
-                bus->applyGain(rampSpan->data(), numFrames);
-            }
-        }
 
         for (auto& voice : voices) {
             if (voice->isFree())
@@ -885,7 +859,17 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             mm.beginVoice(voice->getId(), voice->getRegion()->getId(), voice->getTriggerEvent().value);
 
             activeVoices++;
-            renderVoiceToOutputs(*voice, *tempSpan);
+
+            const Region* region = voice->getRegion();
+            ASSERT(region != nullptr);
+
+            voice->renderBlock(*tempSpan);
+            for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+                if (auto& bus = effectBuses[i]) {
+                    float addGain = region->getGainToEffectBus(i);
+                    bus->addToInputs(*tempSpan, addGain, numFrames);
+                }
+            }
             callbackBreakdown.data += voice->getLastDataDuration();
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
             callbackBreakdown.filters += voice->getLastFilterDuration();
@@ -933,14 +917,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);
-
-    { // Clear for the next run
-        ScopedTiming logger { callbackBreakdown.effects };
-        for (auto& bus : effectBuses) {
-            if (bus)
-                bus->clearInputs(numFrames);
-        }
-    }
 
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
@@ -993,6 +969,7 @@ void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& trigg
     checkRegionPolyphony(region, delay);
     checkGroupPolyphony(region, delay);
     checkSetPolyphony(region, delay);
+    checkEnginePolyphony(delay);
 
     Voice* selectedVoice = findFreeVoice();
     if (selectedVoice == nullptr)
@@ -1001,6 +978,7 @@ void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& trigg
     ASSERT(selectedVoice->isFree());
     selectedVoice->startVoice(region, delay, triggerEvent);
     ring.addVoiceToRing(selectedVoice);
+    engineSet->registerVoice(selectedVoice);
     RegionSet::registerVoiceInHierarchy(region, selectedVoice);
     polyphonyGroups[region->group].registerVoice(selectedVoice);
 }
@@ -1042,12 +1020,9 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
 void sfz::Synth::checkRegionPolyphony(const Region* region, int delay) noexcept
 {
     tempPolyphonyArray.clear();
-
-    for (Voice* voice : voiceViewArray) {
-        if (voice->getRegion() == region && !voice->releasedOrFree()) {
-            tempPolyphonyArray.push_back(voice);
-        }
-    }
+    absl::c_copy_if(voiceViewArray,
+        std::back_inserter(tempPolyphonyArray),
+        [region](Voice* v) { return v->getRegion() == region && !v->releasedOrFree(); });
 
     if (tempPolyphonyArray.size() >= region->polyphony) {
         const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
@@ -1096,11 +1071,8 @@ void sfz::Synth::checkGroupPolyphony(const Region* region, int delay) noexcept
 {
     const auto& activeVoices = polyphonyGroups[region->group].getActiveVoices();
     tempPolyphonyArray.clear();
-    for (Voice* voice : activeVoices) {
-        if (!voice->releasedOrFree()) {
-            tempPolyphonyArray.push_back(voice);
-        }
-    }
+    absl::c_copy_if(activeVoices,
+        std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
 
     if (tempPolyphonyArray.size() >= polyphonyGroups[region->group].getPolyphonyLimit()) {
         const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
@@ -1114,11 +1086,8 @@ void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
     while (parent != nullptr) {
         const auto& activeVoices = parent->getActiveVoices();
         tempPolyphonyArray.clear();
-        for (Voice* voice : activeVoices) {
-            if (!voice->releasedOrFree()) {
-                tempPolyphonyArray.push_back(voice);
-            }
-        }
+        absl::c_copy_if(activeVoices,
+            std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
 
         if (tempPolyphonyArray.size() >= parent->getPolyphonyLimit()) {
             const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
@@ -1126,6 +1095,19 @@ void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
         }
 
         parent = parent->getParent();
+    }
+}
+
+void sfz::Synth::checkEnginePolyphony(int delay) noexcept
+{
+    auto& activeVoices = engineSet->getActiveVoices();
+
+    if (activeVoices.size() >= static_cast<size_t>(numRequiredVoices)) {
+        tempPolyphonyArray.clear();
+        absl::c_copy_if(activeVoices,
+            std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
+        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
+        SisterVoiceRing::offAllSisters(voiceToSteal, delay, true);
     }
 }
 
@@ -1519,7 +1501,7 @@ void sfz::Synth::setVolume(float volume) noexcept
 
 int sfz::Synth::getNumVoices() const noexcept
 {
-    return numVoices;
+    return numRequiredVoices;
 }
 
 void sfz::Synth::setNumVoices(int numVoices) noexcept
@@ -1528,7 +1510,7 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
     // fast path
-    if (numVoices == this->numVoices)
+    if (numVoices == this->numRequiredVoices)
         return;
 
     resetVoices(numVoices);
@@ -1536,16 +1518,25 @@ void sfz::Synth::setNumVoices(int numVoices) noexcept
 
 void sfz::Synth::resetVoices(int numVoices)
 {
+    numActualVoices =
+        static_cast<int>(config::overflowVoiceMultiplier * numVoices);
+    numRequiredVoices = numVoices;
+
+    for (auto& set : sets)
+        set->removeAllVoices();
+    engineSet->removeAllVoices();
+    engineSet->setPolyphonyLimit(numRequiredVoices);
+
     voices.clear();
-    voices.reserve(numVoices);
+    voices.reserve(numActualVoices);
 
     voiceViewArray.clear();
-    voiceViewArray.reserve(numVoices);
+    voiceViewArray.reserve(numActualVoices);
 
     tempPolyphonyArray.clear();
-    tempPolyphonyArray.reserve(numVoices);
+    tempPolyphonyArray.reserve(numActualVoices);
 
-    for (int i = 0; i < numVoices; ++i) {
+    for (int i = 0; i < numActualVoices; ++i) {
         auto voice = absl::make_unique<Voice>(i, resources);
         voice->setStateListener(this);
         voiceViewArray.push_back(voice.get());
@@ -1556,8 +1547,6 @@ void sfz::Synth::resetVoices(int numVoices)
         voice->setSampleRate(this->sampleRate);
         voice->setSamplesPerBlock(this->samplesPerBlock);
     }
-
-    this->numVoices = numVoices;
 
     applySettingsPerVoice();
 }

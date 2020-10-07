@@ -132,6 +132,13 @@ namespace config {
     static constexpr int loopXfadeCurve = 2;    // 0: linear
                                                 // 1: use curves 5 & 6
                                                 // 2: use S-shaped curve
+    /**
+     * @brief Overflow voices in the engine, relative to the required voices.
+     * These are additional voices that more or less hold the "dying" voices
+     * due to engine polyphony being reached.
+     */
+    static constexpr float overflowVoiceMultiplier { 1.5f };
+    static_assert(overflowVoiceMultiplier >= 1.0f, "This needs to add voices");
 } // namespace config
 
 } // namespace sfz

@@ -742,13 +742,10 @@ private:
     void setupModMatrix();
 
     /**
-     * @brief Render the voice to its designated outputs and effect busses.
+     * @brief Get the modification time of all included sfz files
      *
-     * @param voice
-     * @param tempSpan a temporary span used for rendering
+     * @return fs::file_time_type
      */
-    void renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept;
-
     fs::file_time_type checkModificationTime();
 
     /**
@@ -819,6 +816,9 @@ private:
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet { nullptr };
     std::vector<RegionSetPtr> sets;
+    // This region set holds the engine set of voices, which tries to respect the required
+    // engine polyphony
+    RegionSetPtr engineSet;
 
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups;
@@ -863,6 +863,13 @@ private:
     void checkSetPolyphony(const Region* region, int delay) noexcept;
 
     /**
+     * @brief Check the engine polyphony, fast releasing voices if necessary
+     *
+     * @param delay
+     */
+    void checkEnginePolyphony(int delay) noexcept;
+
+    /**
      * @brief Start a voice for a specific region.
      * This will do the needed polyphony checks and voice stealing.
      *
@@ -902,7 +909,8 @@ private:
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
-    int numVoices { config::numVoices };
+    int numRequiredVoices { config::numVoices };
+    int numActualVoices { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
     int activeVoices { 0 };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 

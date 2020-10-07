@@ -328,8 +328,9 @@ public:
      *      and set the envelopes if necessary.
      *
      * @param delay
+     * @param fast whether to apply a fast release regardless of the off mode
      */
-    void off(int delay) noexcept;
+    void off(int delay, bool fast = false) noexcept;
 
     /**
      * @brief gets the age of the Voice
