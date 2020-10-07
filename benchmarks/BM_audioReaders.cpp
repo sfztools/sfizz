@@ -146,16 +146,12 @@ static void doReaderBenchmark(const fs::path& path, std::vector<float> &buffer, 
 
 static void doEntireRead(const fs::path& path)
 {
-#if !defined(_WIN32)
-    SndfileHandle handle(path.c_str());
-#else
-    SndfileHandle handle(path.wstring().c_str());
-#endif
-    if (handle.error())
-        throw std::runtime_error("cannot open sound file for reading");
+    sfz::AudioReaderPtr reader = sfz::createAudioReader(path, false);
+    if (!reader)
+        return;
 
-    std::vector<float> buffer(static_cast<size_t>(2 * handle.frames()));
-    handle.read(buffer.data(), buffer.size());
+    std::vector<float> buffer(static_cast<size_t>(2 * reader->frames()));
+    reader->readNextBlock(buffer.data(), buffer.size());
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireWav)(benchmark::State& state)
