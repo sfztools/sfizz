@@ -742,13 +742,10 @@ private:
     void setupModMatrix();
 
     /**
-     * @brief Render the voice to its designated outputs and effect busses.
+     * @brief Get the modification time of all included sfz files
      *
-     * @param voice
-     * @param tempSpan a temporary span used for rendering
+     * @return fs::file_time_type
      */
-    void renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept;
-
     fs::file_time_type checkModificationTime();
 
     /**

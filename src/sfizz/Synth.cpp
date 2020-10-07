@@ -801,20 +801,6 @@ void sfz::Synth::setSampleRate(float sampleRate) noexcept
     }
 }
 
-void sfz::Synth::renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept
-{
-    const Region* region = voice.getRegion();
-    ASSERT(region != nullptr);
-
-    voice.renderBlock(tempSpan);
-    for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-        if (auto& bus = effectBuses[i]) {
-            float addGain = region->getGainToEffectBus(i);
-            bus->addToInputs(tempSpan, addGain, tempSpan.getNumFrames());
-        }
-    }
-}
-
 void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     ScopedFTZ ftz;
@@ -865,7 +851,17 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
             mm.beginVoice(voice->getId(), voice->getRegion()->getId(), voice->getTriggerEvent().value);
 
             activeVoices++;
-            renderVoiceToOutputs(*voice, *tempSpan);
+
+            const Region* region = voice->getRegion();
+            ASSERT(region != nullptr);
+
+            voice->renderBlock(*tempSpan);
+            for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
+                if (auto& bus = effectBuses[i]) {
+                    float addGain = region->getGainToEffectBus(i);
+                    bus->addToInputs(*tempSpan, addGain, numFrames);
+                }
+            }
             callbackBreakdown.data += voice->getLastDataDuration();
             callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
             callbackBreakdown.filters += voice->getLastFilterDuration();
