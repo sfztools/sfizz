@@ -26,6 +26,7 @@
 #pragma once
 #include "Config.h"
 #include "Debug.h"
+#include "Range.h"
 #include "MathHelpers.h"
 #include "simd/HelpersScalar.h"
 #include <absl/types/span.h>
@@ -718,6 +719,12 @@ template <class T>
 void clampAll(absl::Span<T> input, T low, T high) noexcept
 {
     clampAll<T>(input.data(), low, high, input.size());
+}
+
+template <class T>
+void clampAll(absl::Span<T> input, sfz::Range<T> range) noexcept
+{
+    clampAll<T>(input.data(), range.getStart(), range.getEnd(), input.size());
 }
 
 /**
