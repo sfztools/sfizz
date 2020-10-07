@@ -242,7 +242,7 @@ size_t FileMetadataReader::Impl::readRiffData(size_t index, void* buffer, size_t
     return fread(buffer, 1, count, stream);
 }
 
-bool FileMetadataReader::extractRiffInstrument(SF_INSTRUMENT& ins)
+bool FileMetadataReader::extractRiffInstrument(InstrumentInfo& ins)
 {
     const RiffChunkInfo* riff = riffChunkById(RiffChunkId{'s', 'm', 'p', 'l'});
     if (!riff)
@@ -278,16 +278,16 @@ bool FileMetadataReader::extractRiffInstrument(SF_INSTRUMENT& ins)
 
         switch (extractU32(loopOffset + 0x04)) {
         default:
-            ins.loops[i].mode = SF_LOOP_NONE;
+            ins.loops[i].mode = LoopNone;
             break;
         case 0:
-            ins.loops[i].mode = SF_LOOP_FORWARD;
+            ins.loops[i].mode = LoopForward;
             break;
         case 1:
-            ins.loops[i].mode = SF_LOOP_ALTERNATING;
+            ins.loops[i].mode = LoopAlternating;
             break;
         case 2:
-            ins.loops[i].mode = SF_LOOP_BACKWARD;
+            ins.loops[i].mode = LoopBackward;
             break;
         }
 

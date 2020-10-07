@@ -5,51 +5,60 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "AudioReader.h"
-#include <sndfile.hh>
+#include "FileMetadata.h"
+#include <st_audiofile.hpp>
+#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#include <sndfile.h>
+#endif
 #include <algorithm>
 
 namespace sfz {
 
 class BasicSndfileReader : public AudioReader {
 public:
-    explicit BasicSndfileReader(SndfileHandle handle) : handle_(handle) {}
+    explicit BasicSndfileReader(ST_AudioFile handle) : handle_(std::move(handle)) {}
     virtual ~BasicSndfileReader() {}
 
     int format() const override;
     int64_t frames() const override;
     unsigned channels() const override;
     unsigned sampleRate() const override;
-    bool getInstrument(SF_INSTRUMENT* instrument) override;
+    bool getInstrument(InstrumentInfo* instrument) override;
 
 protected:
-    SndfileHandle handle_;
+    ST_AudioFile handle_;
 };
 
 int BasicSndfileReader::format() const
 {
-    return handle_.format();
+    return handle_.get_type();
 }
 
 int64_t BasicSndfileReader::frames() const
 {
-    return handle_.frames();
+    return handle_.get_frame_count();
 }
 
 unsigned BasicSndfileReader::channels() const
 {
-    return handle_.channels();
+    return handle_.get_channels();
 }
 
 unsigned BasicSndfileReader::sampleRate() const
 {
-    return handle_.samplerate();
+    return handle_.get_sample_rate();
 }
 
-bool BasicSndfileReader::getInstrument(SF_INSTRUMENT* instrument)
+bool BasicSndfileReader::getInstrument(InstrumentInfo* instrument)
 {
-    if (handle_.command(SFC_GET_INSTRUMENT, instrument, sizeof(SF_INSTRUMENT)) == SF_FALSE)
-        return false;
-    return true;
+#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+    SNDFILE* sndfile = reinterpret_cast<SNDFILE*>(handle_.get_sndfile_handle());
+    if (sf_command(sndfile, SFC_GET_INSTRUMENT, &instrument, sizeof(instrument)) == SF_TRUE)
+        return true;
+#else
+    (void)instrument;
+#endif
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -59,13 +68,13 @@ bool BasicSndfileReader::getInstrument(SF_INSTRUMENT* instrument)
  */
 class ForwardReader : public BasicSndfileReader {
 public:
-    explicit ForwardReader(SndfileHandle handle);
+    explicit ForwardReader(ST_AudioFile handle);
     AudioReaderType type() const override;
     size_t readNextBlock(float* buffer, size_t frames) override;
 };
 
-ForwardReader::ForwardReader(SndfileHandle handle)
-    : BasicSndfileReader(handle)
+ForwardReader::ForwardReader(ST_AudioFile handle)
+    : BasicSndfileReader(std::move(handle))
 {
 }
 
@@ -76,7 +85,7 @@ AudioReaderType ForwardReader::type() const
 
 size_t ForwardReader::readNextBlock(float* buffer, size_t frames)
 {
-    sf_count_t readFrames = handle_.readf(buffer, frames);
+    uint64_t readFrames = handle_.read_f32(buffer, frames);
     if (frames <= 0)
         return 0;
 
@@ -93,7 +102,7 @@ struct AudioFrame {
 /**
  * @brief Reorder a sequence of frames in reverse
  */
-static void reverse_frames(float* data, sf_count_t frames, unsigned channels)
+static void reverse_frames(float* data, size_t frames, unsigned channels)
 {
     switch (channels) {
 
@@ -108,8 +117,8 @@ static void reverse_frames(float* data, sf_count_t frames, unsigned channels)
     SPECIALIZE_FOR(2);
 
     default:
-        for (sf_count_t i = 0; i < frames / 2; ++i) {
-            sf_count_t j = frames - 1 - i;
+        for (size_t i = 0; i < frames / 2; ++i) {
+            size_t j = frames - 1 - i;
             float* frame1 = &data[i * channels];
             float* frame2 = &data[j * channels];
             for (unsigned c = 0; c < channels; ++c)
@@ -128,18 +137,18 @@ static void reverse_frames(float* data, sf_count_t frames, unsigned channels)
  */
 class ReverseReader : public BasicSndfileReader {
 public:
-    explicit ReverseReader(SndfileHandle handle);
+    explicit ReverseReader(ST_AudioFile handle);
     AudioReaderType type() const override;
     size_t readNextBlock(float* buffer, size_t frames) override;
 
 private:
-    sf_count_t position_ {};
+    uint64_t position_ {};
 };
 
-ReverseReader::ReverseReader(SndfileHandle handle)
-    : BasicSndfileReader(handle)
+ReverseReader::ReverseReader(ST_AudioFile handle)
+    : BasicSndfileReader(std::move(handle))
 {
-    position_ = handle.seek(0, SEEK_END);
+    position_ = handle_.get_frame_count();
 }
 
 AudioReaderType ReverseReader::type() const
@@ -149,16 +158,16 @@ AudioReaderType ReverseReader::type() const
 
 size_t ReverseReader::readNextBlock(float* buffer, size_t frames)
 {
-    sf_count_t position = position_;
-    const unsigned channels = handle_.channels();
+    uint64_t position = position_;
+    const unsigned channels = handle_.get_channels();
 
-    const sf_count_t readFrames = std::min<sf_count_t>(frames, position);
+    const uint64_t readFrames = std::min<uint64_t>(frames, position);
     if (readFrames <= 0)
         return false;
 
     position -= readFrames;
-    if (handle_.seek(position, SEEK_SET) != position ||
-        handle_.readf(buffer, readFrames) != readFrames)
+    if (!handle_.seek(position) ||
+        handle_.read_f32(buffer, readFrames) != readFrames)
         return false;
 
     position_ = position;
@@ -173,7 +182,7 @@ size_t ReverseReader::readNextBlock(float* buffer, size_t frames)
  */
 class NoSeekReverseReader : public BasicSndfileReader {
 public:
-    explicit NoSeekReverseReader(SndfileHandle handle);
+    explicit NoSeekReverseReader(ST_AudioFile handle);
     AudioReaderType type() const override;
     size_t readNextBlock(float* buffer, size_t frames) override;
 
@@ -182,11 +191,11 @@ private:
 
 private:
     std::unique_ptr<float[]> fileBuffer_;
-    sf_count_t fileFramesLeft_ { 0 };
+    uint64_t fileFramesLeft_ { 0 };
 };
 
-NoSeekReverseReader::NoSeekReverseReader(SndfileHandle handle)
-    : BasicSndfileReader(handle)
+NoSeekReverseReader::NoSeekReverseReader(ST_AudioFile handle)
+    : BasicSndfileReader(std::move(handle))
 {
 }
 
@@ -203,9 +212,9 @@ size_t NoSeekReverseReader::readNextBlock(float* buffer, size_t frames)
         fileBuffer = fileBuffer_.get();
     }
 
-    const unsigned channels = handle_.channels();
-    const sf_count_t fileFramesLeft = fileFramesLeft_;
-    sf_count_t readFrames = std::min<sf_count_t>(frames, fileFramesLeft);
+    const unsigned channels = handle_.get_channels();
+    const uint64_t fileFramesLeft = fileFramesLeft_;
+    uint64_t readFrames = std::min<uint64_t>(frames, fileFramesLeft);
     if (readFrames <= 0)
         return 0;
 
@@ -220,15 +229,16 @@ size_t NoSeekReverseReader::readNextBlock(float* buffer, size_t frames)
 
 void NoSeekReverseReader::readWholeFile()
 {
-    const sf_count_t frames = handle_.frames();
-    const unsigned channels = handle_.channels();
+    const uint64_t frames = handle_.get_frame_count();
+    const unsigned channels = handle_.get_channels();
     float* fileBuffer = new float[channels * frames];
     fileBuffer_.reset(fileBuffer);
-    fileFramesLeft_ = handle_.readf(fileBuffer, frames);
+    fileFramesLeft_ = handle_.read_f32(fileBuffer, frames);
 }
 
 //------------------------------------------------------------------------------
 
+#if defined(ST_AUDIO_FILE_USE_SNDFILE)
 const std::error_category& sndfile_category()
 {
     class sndfile_category : public std::error_category {
@@ -248,6 +258,26 @@ const std::error_category& sndfile_category()
     static const sndfile_category cat;
     return cat;
 }
+#endif
+
+const std::error_category& undetailed_category()
+{
+    class undetailed_category : public std::error_category {
+    public:
+        const char* name() const noexcept override
+        {
+            return "undetailed";
+        }
+
+        std::string message(int condition) const override
+        {
+            return (condition == 0) ? "success" : "failure";
+        }
+    };
+
+    static const undetailed_category cat;
+    return cat;
+}
 
 //------------------------------------------------------------------------------
 
@@ -260,7 +290,7 @@ public:
     unsigned channels() const override { return 1; }
     unsigned sampleRate() const override { return 44100; }
     size_t readNextBlock(float*, size_t) override { return 0; }
-    bool getInstrument(SF_INSTRUMENT* ) override { return false; }
+    bool getInstrument(InstrumentInfo* ) override { return false; }
 
 private:
     AudioReaderType type_ {};
@@ -268,6 +298,7 @@ private:
 
 //------------------------------------------------------------------------------
 
+#if defined(ST_AUDIO_FILE_USE_SNDFILE)
 static bool formatHasFastSeeking(int format)
 {
     bool fast;
@@ -300,8 +331,9 @@ static bool formatHasFastSeeking(int format)
 
     return fast;
 }
+#endif
 
-static AudioReaderPtr createAudioReaderWithHandle(SndfileHandle handle, bool reverse, std::error_code* ec)
+static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, bool reverse, std::error_code* ec)
 {
     AudioReaderPtr reader;
 
@@ -310,30 +342,38 @@ static AudioReaderPtr createAudioReaderWithHandle(SndfileHandle handle, bool rev
 
     if (!handle) {
         if (ec)
-            *ec = std::error_code(handle.error(), sndfile_category());
+            *ec = std::error_code(1, undetailed_category());
         reader.reset(new DummyAudioReader(reverse ? AudioReaderType::Reverse : AudioReaderType::Forward));
     }
     else if (!reverse)
-        reader.reset(new ForwardReader(handle));
-    else if (formatHasFastSeeking(handle.format()))
-        reader.reset(new ReverseReader(handle));
-    else
-        reader.reset(new NoSeekReverseReader(handle));
+        reader.reset(new ForwardReader(std::move(handle)));
+    else {
+#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+        bool hasFastSeeking = formatHasFastSeeking(handle.get_sndfile_format());
+#else
+        bool hasFastSeeking = true;
+#endif
+        if (hasFastSeeking)
+            reader.reset(new ReverseReader(std::move(handle)));
+        else
+            reader.reset(new NoSeekReverseReader(std::move(handle)));
+    }
 
     return reader;
 }
 
 AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, std::error_code* ec)
 {
+    ST_AudioFile handle;
 #if defined(_WIN32)
-    SndfileHandle handle(path.wstring().c_str());
+    handle.open_file_w(path.wstring().c_str());
 #else
-    SndfileHandle handle(path.c_str());
+    handle.open_file(path.c_str());
 #endif
-    return createAudioReaderWithHandle(handle, reverse, ec);
+    return createAudioReaderWithHandle(std::move(handle), reverse, ec);
 }
 
-static AudioReaderPtr createExplicitAudioReaderWithHandle(SndfileHandle handle, AudioReaderType type, std::error_code* ec)
+static AudioReaderPtr createExplicitAudioReaderWithHandle(ST_AudioFile handle, AudioReaderType type, std::error_code* ec)
 {
     AudioReaderPtr reader;
 
@@ -342,19 +382,19 @@ static AudioReaderPtr createExplicitAudioReaderWithHandle(SndfileHandle handle, 
 
     if (!handle) {
         if (ec)
-            *ec = std::error_code(handle.error(), sndfile_category());
+            *ec = std::error_code(1, undetailed_category());
         reader.reset(new DummyAudioReader(type));
     }
     else {
         switch (type) {
         case AudioReaderType::Forward:
-            reader.reset(new ForwardReader(handle));
+            reader.reset(new ForwardReader(std::move(handle)));
             break;
         case AudioReaderType::Reverse:
-            reader.reset(new ReverseReader(handle));
+            reader.reset(new ReverseReader(std::move(handle)));
             break;
         case AudioReaderType::NoSeekReverse:
-            reader.reset(new NoSeekReverseReader(handle));
+            reader.reset(new NoSeekReverseReader(std::move(handle)));
             break;
         }
     }
@@ -364,12 +404,13 @@ static AudioReaderPtr createExplicitAudioReaderWithHandle(SndfileHandle handle, 
 
 AudioReaderPtr createExplicitAudioReader(const fs::path& path, AudioReaderType type, std::error_code* ec)
 {
+    ST_AudioFile handle;
 #if defined(_WIN32)
-    SndfileHandle handle(path.wstring().c_str());
+    handle.open_file_w(path.wstring().c_str());
 #else
-    SndfileHandle handle(path.c_str());
+    handle.open_file(path.c_str());
 #endif
-    return createExplicitAudioReaderWithHandle(handle, type, ec);
+    return createExplicitAudioReaderWithHandle(std::move(handle), type, ec);
 }
 
 } // namespace sfz

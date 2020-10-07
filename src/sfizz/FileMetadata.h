@@ -5,15 +5,13 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#include <sndfile.h>
+#endif
 #include "ghc/fs_std.hpp"
 #include <array>
 #include <memory>
 #include <cstdio>
-#if defined(_WIN32)
-#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
-#include <windows.h>
-#endif
-#include <sndfile.h>
 
 namespace sfz {
 
@@ -25,6 +23,44 @@ struct RiffChunkInfo {
     RiffChunkId id;
     uint32_t length;
 };
+
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+/**
+   @brief Loop mode, like SF_LOOP_*
+ */
+enum LoopMode {
+    LoopNone,
+    LoopForward,
+    LoopBackward,
+    LoopAlternating,
+};
+
+/**
+   @brief Instrument information, like SF_INSTRUMENT
+ */
+struct InstrumentInfo {
+    int gain;
+    int8_t basenote, detune;
+    int8_t velocity_lo, velocity_hi;
+    int8_t key_lo, key_hi;
+    int loop_count;
+    struct {
+        int mode;
+        uint32_t start;
+        uint32_t end;
+        uint32_t count;
+    } loops[16];
+};
+#else
+enum LoopMode {
+    LoopNone = SF_LOOP_NONE,
+    LoopForward = SF_LOOP_FORWARD,
+    LoopBackward = SF_LOOP_BACKWARD,
+    LoopAlternating = SF_LOOP_ALTERNATING,
+};
+
+struct InstrumentInfo : SF_INSTRUMENT {};
+#endif
 
 struct WavetableInfo {
     /**
@@ -79,7 +115,7 @@ public:
     /**
      * @brief Extract the RIFF 'smpl' data and convert it to sndfile instrument
      */
-    bool extractRiffInstrument(SF_INSTRUMENT& ins);
+    bool extractRiffInstrument(InstrumentInfo& ins);
 
     /**
      * @brief Extract the wavetable information from various relevant RIFF chunks
