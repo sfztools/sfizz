@@ -844,19 +844,19 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     ModMatrix& mm = resources.modMatrix;
     mm.beginCycle(numFrames);
 
+    { // Clear effect busses
+        ScopedTiming logger { callbackBreakdown.effects };
+        for (auto& bus : effectBuses) {
+            if (bus)
+                bus->clearInputs(numFrames);
+        }
+    }
+
     activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempMixSpan->fill(0.0f);
         resources.filePool.cleanupPromises();
-
-        // Ramp out whatever is in the buffer at this point; should only be killed voice data
-        linearRamp<float>(*rampSpan, 1.0f, -1.0f / static_cast<float>(numFrames));
-        for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-            if (auto& bus = effectBuses[i]) {
-                bus->applyGain(rampSpan->data(), numFrames);
-            }
-        }
 
         for (auto& voice : voices) {
             if (voice->isFree())
@@ -913,14 +913,6 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Reset the dispatch counter
     dispatchDuration = Duration(0);
-
-    { // Clear for the next run
-        ScopedTiming logger { callbackBreakdown.effects };
-        for (auto& bus : effectBuses) {
-            if (bus)
-                bus->clearInputs(numFrames);
-        }
-    }
 
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
