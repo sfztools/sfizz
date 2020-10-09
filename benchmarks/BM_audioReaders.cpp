@@ -210,12 +210,14 @@ BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardOgg)(benchmark::State& state)
     }
 }
 
-//BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
-//{
-//    for (auto _ : state) {
-//        doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
-//    }
-//}
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
+{
+   for (auto _ : state) {
+       doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
+   }
+}
+#endif
 
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardWav)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseWav)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
@@ -224,6 +226,8 @@ BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardFlac)->RangeMultiplier(2)->Range
 BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseFlac)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, EntireFlac)->Range(1, 1);
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
-//BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+#endif
 BENCHMARK_REGISTER_F(AudioReaderFixture, EntireOgg)->Range(1, 1);
 BENCHMARK_MAIN();
