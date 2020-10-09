@@ -28,127 +28,111 @@ enum {
     st_audio_file_null = -1,
 };
 
-st_audio_file* st_open_file(const char* filename)
+static st_audio_file* st_generic_open_file(const void* filename, int widepath)
 {
+#if !defined(_WIN32)
+    if (widepath)
+        return NULL;
+#endif
+
     st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
     if (!af)
         return NULL;
 
-    af->type = st_audio_file_null;
-
-    if (af->type == st_audio_file_null) {
+    // Try WAV
+    {
         af->wav = (drwav*)malloc(sizeof(drwav));
         if (!af->wav) {
             free(af);
             return NULL;
         }
-        if (!drwav_init_file(af->wav, filename, NULL))
+        drwav_bool32 ok =
+#if defined(_WIN32)
+            widepath ? drwav_init_file_w(af->wav, (const wchar_t*)filename, NULL) :
+#endif
+            drwav_init_file(af->wav, (const char*)filename, NULL);
+        if (!ok)
             free(af->wav);
-        else
+        else {
             af->type = st_audio_file_wav;
-    }
-
-    if (af->type == st_audio_file_null) {
-        af->flac = drflac_open_file(filename, NULL);
-        if (af->flac)
-            af->type = st_audio_file_flac;
-    }
-
-    if (af->type == st_audio_file_null) {
-        af->ogg = stb_vorbis_open_filename(filename, NULL, NULL);
-        if (af->ogg) {
-            if ((af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg)) == 0)
-                stb_vorbis_close(af->ogg);
-            else {
-                stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
-                af->cache.ogg.channels = info.channels;
-                af->cache.ogg.sample_rate = info.sample_rate;
-                af->type = st_audio_file_ogg;
-            }
+            return af;
         }
     }
 
+    // Try FLAC
+    {
+        af->flac =
+#if defined(_WIN32)
+            widepath ? drflac_open_file_w((const wchar_t*)filename, NULL) :
+#endif
+            drflac_open_file((const char*)filename, NULL);
+        if (af->flac) {
+            af->type = st_audio_file_flac;
+            return af;
+        }
+    }
+
+    // Try OGG
+    {
+        af->ogg =
+#if defined(_WIN32)
+            widepath ? stb_vorbis_open_filename_w((const wchar_t*)filename, NULL, NULL) :
+#endif
+            stb_vorbis_open_filename((const char*)filename, NULL, NULL);
+        if (af->ogg) {
+            af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg);
+            if (af->cache.ogg.frames == 0) {
+                stb_vorbis_close(af->ogg);
+                free(af);
+                return NULL;
+            }
+            stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
+            af->cache.ogg.channels = info.channels;
+            af->cache.ogg.sample_rate = info.sample_rate;
+            af->type = st_audio_file_ogg;
+            return af;
+        }
+    }
+
+    // Try MP3
     if (af->type == st_audio_file_null) {
         af->mp3 = (drmp3*)malloc(sizeof(drmp3));
         if (!af->mp3) {
             free(af);
             return NULL;
         }
-        if (!drmp3_init_file(af->mp3, filename, NULL) ||
-            (af->cache.mp3.frames = drmp3_get_pcm_frame_count(af->mp3)) == 0)
+        drmp3_bool32 ok =
+#if defined(_WIN32)
+            widepath ? drmp3_init_file_w(af->mp3, (const wchar_t*)filename, NULL) :
+#endif
+            drmp3_init_file(af->mp3, (const char*)filename, NULL);
+        if (!ok)
             free(af->mp3);
-        else
+        else {
+            af->cache.mp3.frames = drmp3_get_pcm_frame_count(af->mp3);
+            if (af->cache.mp3.frames == 0) {
+                free(af->mp3);
+                free(af);
+                return NULL;
+            }
             af->type = st_audio_file_mp3;
+            return af;
+        }
     }
 
-    if (af->type == st_audio_file_null) {
-        free(af);
-        af = NULL;
-    }
+    free(af);
+    return NULL;
+}
 
-    return af;
+st_audio_file* st_open_file(const char* filename)
+{
+    return st_generic_open_file(filename, 0);
 }
 
 #if defined(_WIN32)
 st_audio_file* st_open_file_w(const wchar_t* filename)
 {
-    st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
-    if (!af)
-        return NULL;
-
-    af->type = st_audio_file_null;
-
-    if (af->type == st_audio_file_null) {
-        af->wav = (drwav*)malloc(sizeof(drwav));
-        if (!af->wav) {
-            free(af);
-            return NULL;
-        }
-        if (!drwav_init_file_w(af->wav, filename, NULL))
-            free(af->wav);
-        else
-            af->type = st_audio_file_wav;
-    }
-
-    if (af->type == st_audio_file_null) {
-        af->flac = drflac_open_file_w(filename, NULL);
-        if (af->flac)
-            af->type = st_audio_file_flac;
-    }
-
-    if (af->type == st_audio_file_null) {
-        af->ogg = stb_vorbis_open_filename_w(filename, NULL, NULL);
-        if (af->ogg) {
-            if ((af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg)) == 0)
-                stb_vorbis_close(af->ogg);
-            else {
-                stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
-                af->cache.ogg.channels = info.channels;
-                af->cache.ogg.sample_rate = info.sample_rate;
-                af->type = st_audio_file_ogg;
-            }
-        }
-    }
-
-    if (af->type == st_audio_file_null) {
-        af->mp3 = (drmp3*)malloc(sizeof(drmp3));
-        if (!af->mp3) {
-            free(af);
-            return NULL;
-        }
-        if (!drmp3_init_file_w(af->mp3, filename, NULL) ||
-            (af->cache.mp3.frames = drmp3_get_pcm_frame_count(af->mp3)) == 0)
-            free(af->mp3);
-        else
-            af->type = st_audio_file_mp3;
-    }
-
-    if (af->type == st_audio_file_null) {
-        free(af);
-        af = NULL;
-    }
-
-    return af;
+    return st_generic_open_file(filename, 1);
 }
 #endif
 
