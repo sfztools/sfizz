@@ -14,7 +14,12 @@ struct st_audio_file {
     union {
         drwav *wav;
         drflac *flac;
+        drmp3 *mp3;
     };
+
+    union {
+        struct { uint64_t frames; } mp3;
+    } cache;
 };
 
 enum {
@@ -45,6 +50,19 @@ st_audio_file* st_open_file(const char* filename)
         af->flac = drflac_open_file(filename, NULL);
         if (af->flac)
             af->type = st_audio_file_flac;
+    }
+
+    if (af->type == st_audio_file_null) {
+        af->mp3 = (drmp3*)malloc(sizeof(drmp3));
+        if (!af->mp3) {
+            free(af);
+            return NULL;
+        }
+        if (!drmp3_init_file(af->mp3, filename, NULL) ||
+            (af->cache.mp3.frames = drmp3_get_pcm_frame_count(af->mp3)) == 0)
+            free(af->mp3);
+        else
+            af->type = st_audio_file_mp3;
     }
 
     if (af->type == st_audio_file_null) {
@@ -83,6 +101,19 @@ st_audio_file* st_open_file_w(const wchar_t* filename)
     }
 
     if (af->type == st_audio_file_null) {
+        af->mp3 = (drmp3*)malloc(sizeof(drmp3));
+        if (!af->mp3) {
+            free(af);
+            return NULL;
+        }
+        if (!drmp3_init_file_w(af->mp3, filename, NULL) ||
+            (af->cache.mp3.frames = drmp3_get_pcm_frame_count(af->mp3)) == 0)
+            free(af->mp3);
+        else
+            af->type = st_audio_file_mp3;
+    }
+
+    if (af->type == st_audio_file_null) {
         free(af);
         af = NULL;
     }
@@ -100,6 +131,10 @@ void st_close(st_audio_file* af)
         break;
     case st_audio_file_flac:
         drflac_close(af->flac);
+        break;
+    case st_audio_file_mp3:
+        drmp3_uninit(af->mp3);
+        free(af->mp3);
         break;
     }
 
@@ -122,6 +157,9 @@ uint32_t st_get_channels(st_audio_file* af)
     case st_audio_file_flac:
         channels = af->flac->channels;
         break;
+    case st_audio_file_mp3:
+        channels = af->mp3->channels;
+        break;
     }
 
     return channels;
@@ -137,6 +175,9 @@ float st_get_sample_rate(st_audio_file* af)
         break;
     case st_audio_file_flac:
         sample_rate = af->flac->sampleRate;
+        break;
+    case st_audio_file_mp3:
+        sample_rate = af->mp3->sampleRate;
         break;
     }
 
@@ -154,6 +195,9 @@ uint64_t st_get_frame_count(st_audio_file* af)
     case st_audio_file_flac:
         frames = af->flac->totalPCMFrameCount;
         break;
+    case st_audio_file_mp3:
+        frames = af->cache.mp3.frames;
+        break;
     }
 
     return frames;
@@ -170,6 +214,9 @@ bool st_seek(st_audio_file* af, uint64_t frame)
     case st_audio_file_flac:
         success = drflac_seek_to_pcm_frame(af->flac, frame);
         break;
+    case st_audio_file_mp3:
+        success = drmp3_seek_to_pcm_frame(af->mp3, frame);
+        break;
     }
 
     return success;
@@ -184,6 +231,9 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
     case st_audio_file_flac:
         count = drflac_read_pcm_frames_s16(af->flac, count, buffer);
         break;
+    case st_audio_file_mp3:
+        count = drmp3_read_pcm_frames_s16(af->mp3, count, buffer);
+        break;
     }
 
     return count;
@@ -197,6 +247,9 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
         break;
     case st_audio_file_flac:
         count = drflac_read_pcm_frames_f32(af->flac, count, buffer);
+        break;
+    case st_audio_file_mp3:
+        count = drmp3_read_pcm_frames_f32(af->mp3, count, buffer);
         break;
     }
 

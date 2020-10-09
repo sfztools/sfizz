@@ -24,6 +24,7 @@ typedef enum st_audio_file_type {
     st_audio_file_wav,
     st_audio_file_flac,
     st_audio_file_ogg,
+    st_audio_file_mp3,
     st_audio_file_other,
 } st_audio_file_type;
 
