@@ -23,3 +23,7 @@
 	path = external/st_audiofile/thirdparty/dr_libs
 	url = https://github.com/mackron/dr_libs.git
 	shallow = true
+[submodule "external/st_audiofile/thirdparty/stb_vorbis"]
+	path = external/st_audiofile/thirdparty/stb_vorbis
+	url = https://github.com/sfztools/stb_vorbis.git
+	shallow = true

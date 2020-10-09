@@ -8,3 +8,14 @@
 #include "dr_wav.h"
 #include "dr_flac.h"
 #include "dr_mp3.h"
+#if !defined(STB_VORBIS_HEADER_ONLY)
+#   define STB_VORBIS_HEADER_ONLY 1
+#elif STB_VORBIS_HEADER_ONLY == 0
+#   undef STB_VORBIS_HEADER_ONLY
+#endif
+#include "stb_vorbis.c"
+
+#if defined(_WIN32)
+#include <wchar.h>
+stb_vorbis* stb_vorbis_open_filename_w(const wchar_t* filename, int* error, const stb_vorbis_alloc* alloc);
+#endif

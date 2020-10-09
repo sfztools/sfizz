@@ -15,10 +15,12 @@ struct st_audio_file {
         drwav *wav;
         drflac *flac;
         drmp3 *mp3;
+        stb_vorbis* ogg;
     };
 
     union {
         struct { uint64_t frames; } mp3;
+        struct { uint32_t channels; float sample_rate; uint64_t frames; } ogg;
     } cache;
 };
 
@@ -50,6 +52,20 @@ st_audio_file* st_open_file(const char* filename)
         af->flac = drflac_open_file(filename, NULL);
         if (af->flac)
             af->type = st_audio_file_flac;
+    }
+
+    if (af->type == st_audio_file_null) {
+        af->ogg = stb_vorbis_open_filename(filename, NULL, NULL);
+        if (af->ogg) {
+            if ((af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg)) == 0)
+                stb_vorbis_close(af->ogg);
+            else {
+                stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
+                af->cache.ogg.channels = info.channels;
+                af->cache.ogg.sample_rate = info.sample_rate;
+                af->type = st_audio_file_ogg;
+            }
+        }
     }
 
     if (af->type == st_audio_file_null) {
@@ -101,6 +117,20 @@ st_audio_file* st_open_file_w(const wchar_t* filename)
     }
 
     if (af->type == st_audio_file_null) {
+        af->ogg = stb_vorbis_open_filename_w(filename, NULL, NULL);
+        if (af->ogg) {
+            if ((af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg)) == 0)
+                stb_vorbis_close(af->ogg);
+            else {
+                stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
+                af->cache.ogg.channels = info.channels;
+                af->cache.ogg.sample_rate = info.sample_rate;
+                af->type = st_audio_file_ogg;
+            }
+        }
+    }
+
+    if (af->type == st_audio_file_null) {
         af->mp3 = (drmp3*)malloc(sizeof(drmp3));
         if (!af->mp3) {
             free(af);
@@ -132,6 +162,9 @@ void st_close(st_audio_file* af)
     case st_audio_file_flac:
         drflac_close(af->flac);
         break;
+    case st_audio_file_ogg:
+        stb_vorbis_close(af->ogg);
+        break;
     case st_audio_file_mp3:
         drmp3_uninit(af->mp3);
         free(af->mp3);
@@ -157,6 +190,9 @@ uint32_t st_get_channels(st_audio_file* af)
     case st_audio_file_flac:
         channels = af->flac->channels;
         break;
+    case st_audio_file_ogg:
+        channels = af->cache.ogg.channels;
+        break;
     case st_audio_file_mp3:
         channels = af->mp3->channels;
         break;
@@ -175,6 +211,9 @@ float st_get_sample_rate(st_audio_file* af)
         break;
     case st_audio_file_flac:
         sample_rate = af->flac->sampleRate;
+        break;
+    case st_audio_file_ogg:
+        sample_rate = af->cache.ogg.sample_rate;
         break;
     case st_audio_file_mp3:
         sample_rate = af->mp3->sampleRate;
@@ -195,6 +234,9 @@ uint64_t st_get_frame_count(st_audio_file* af)
     case st_audio_file_flac:
         frames = af->flac->totalPCMFrameCount;
         break;
+    case st_audio_file_ogg:
+        frames = af->cache.ogg.frames;
+        break;
     case st_audio_file_mp3:
         frames = af->cache.mp3.frames;
         break;
@@ -214,6 +256,9 @@ bool st_seek(st_audio_file* af, uint64_t frame)
     case st_audio_file_flac:
         success = drflac_seek_to_pcm_frame(af->flac, frame);
         break;
+    case st_audio_file_ogg:
+        success = stb_vorbis_seek(af->ogg, (unsigned)frame) != 0;
+        break;
     case st_audio_file_mp3:
         success = drmp3_seek_to_pcm_frame(af->mp3, frame);
         break;
@@ -231,6 +276,11 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
     case st_audio_file_flac:
         count = drflac_read_pcm_frames_s16(af->flac, count, buffer);
         break;
+    case st_audio_file_ogg:
+        count = stb_vorbis_get_samples_short_interleaved(
+            af->ogg, af->cache.ogg.channels, buffer,
+            count * af->cache.ogg.channels);
+        break;
     case st_audio_file_mp3:
         count = drmp3_read_pcm_frames_s16(af->mp3, count, buffer);
         break;
@@ -247,6 +297,11 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
         break;
     case st_audio_file_flac:
         count = drflac_read_pcm_frames_f32(af->flac, count, buffer);
+        break;
+    case st_audio_file_ogg:
+        count = stb_vorbis_get_samples_float_interleaved(
+            af->ogg, af->cache.ogg.channels, buffer,
+            count * af->cache.ogg.channels);
         break;
     case st_audio_file_mp3:
         count = drmp3_read_pcm_frames_f32(af->mp3, count, buffer);

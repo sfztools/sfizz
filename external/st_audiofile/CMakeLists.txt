@@ -11,7 +11,8 @@ add_library(st_audiofile STATIC
     "src/st_audiofile_sndfile.c")
 target_include_directories(st_audiofile
     PUBLIC "src"
-    PUBLIC "thirdparty/dr_libs")
+    PUBLIC "thirdparty/dr_libs"
+    PUBLIC "thirdparty/stb_vorbis")
 
 add_executable(st_info
     "src/st_info.c")
