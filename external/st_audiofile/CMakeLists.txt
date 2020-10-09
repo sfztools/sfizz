@@ -23,7 +23,7 @@ if(ST_AUDIO_FILE_USE_SNDFILE)
         PUBLIC "ST_AUDIO_FILE_USE_SNDFILE=1")
     if(ST_AUDIO_FILE_EXTERNAL_SNDFILE)
         target_link_libraries(st_audiofile
-            PRIVATE "${ST_AUDIO_FILE_EXTERNAL_SNDFILE}")
+            PUBLIC "${ST_AUDIO_FILE_EXTERNAL_SNDFILE}")
     else()
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(Sndfile "sndfile" REQUIRED)
