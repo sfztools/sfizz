@@ -590,7 +590,7 @@ void Editor::Impl::createFrameContents()
     for (int log2value = 10; log2value <= 16; ++log2value) {
         int value = 1 << log2value;
         char text[256];
-        sprintf(text, "%lu kB", value / 1024 * sizeof(float));
+        sprintf(text, "%lu kB", static_cast<unsigned long>(value / 1024 * sizeof(float)));
         text[sizeof(text) - 1] = '\0';
         preloadSizeSlider_->addEntry(text, value);
     }
