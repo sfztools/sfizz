@@ -42,24 +42,7 @@ public:
     bool isTarget() const noexcept;
     std::string toString() const;
 
-    struct Parameters {
-        Parameters() noexcept;
-        Parameters(const Parameters& other) noexcept;
-        Parameters& operator=(const Parameters& other) noexcept;
-
-        Parameters(Parameters&&) = delete;
-        Parameters &operator=(Parameters&&) = delete;
-
-        bool operator==(const Parameters& other) const noexcept
-        {
-            return std::memcmp(this, &other, sizeof(*this)) == 0;
-        }
-
-        bool operator!=(const Parameters& other) const noexcept
-        {
-            return std::memcmp(this, &other, sizeof(*this)) != 0;
-        }
-
+    struct RawParameters {
         union {
             //! Parameters if this key identifies a CC source
             struct { uint16_t cc; uint8_t curve, smooth; float step; };
@@ -69,6 +52,28 @@ public:
             // !!! NOTE: NXYZ is expected to be stored in 0-indexed form
             //           eg. `lfo1_eq2` is N=0, X=1
         };
+    };
+
+    struct Parameters : RawParameters {
+        Parameters() noexcept;
+        Parameters(const Parameters& other) noexcept;
+        Parameters& operator=(const Parameters& other) noexcept;
+
+        Parameters(Parameters&&) = delete;
+        Parameters &operator=(Parameters&&) = delete;
+
+        bool operator==(const Parameters& other) const noexcept
+        {
+            return std::memcmp(
+                static_cast<const RawParameters*>(this),
+                static_cast<const RawParameters*>(&other),
+                sizeof(RawParameters)) == 0;
+        }
+
+        bool operator!=(const Parameters& other) const noexcept
+        {
+            return !operator==(other);
+        }
     };
 
 public:

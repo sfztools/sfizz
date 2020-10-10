@@ -15,18 +15,26 @@ ModKey::Parameters::Parameters() noexcept
     // zero-fill the structure
     //  1. this ensures that non-used values will be always 0
     //  2. this makes the object memcmp-comparable
-    std::memset(this, 0, sizeof(*this));
+    std::memset(
+        static_cast<RawParameters*>(this),
+        0, sizeof(RawParameters));
 }
 
 ModKey::Parameters::Parameters(const Parameters& other) noexcept
 {
-    std::memcpy(this, &other, sizeof(*this));
+    std::memcpy(
+        static_cast<RawParameters*>(this),
+        static_cast<const RawParameters*>(&other),
+        sizeof(RawParameters));
 }
 
 ModKey::Parameters& ModKey::Parameters::operator=(const Parameters& other) noexcept
 {
     if (this != &other)
-        std::memcpy(this, &other, sizeof(*this));
+        std::memcpy(
+            static_cast<RawParameters*>(this),
+            static_cast<const RawParameters*>(&other),
+            sizeof(RawParameters));
     return *this;
 }
 
