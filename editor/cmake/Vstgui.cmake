@@ -71,6 +71,7 @@ if(WIN32)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32openglview.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32optionmenu.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32support.cpp"
+        "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32resourcestream.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32textedit.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32factory.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/winfileselector.cpp"
