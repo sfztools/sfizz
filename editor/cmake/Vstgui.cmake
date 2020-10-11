@@ -55,6 +55,7 @@ add_library(sfizz-vstgui STATIC EXCLUDE_FROM_ALL
     "${VSTGUI_BASEDIR}/vstgui/lib/cvstguitimer.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/genericstringlistdatabrowsersource.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/genericoptionmenu.cpp"
+    "${VSTGUI_BASEDIR}/vstgui/lib/platform/platformfactory.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/vstguidebug.cpp")
 
 if(WIN32)
@@ -71,6 +72,7 @@ if(WIN32)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32optionmenu.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32support.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32textedit.cpp"
+        "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32factory.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/winfileselector.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/winstring.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/wintimer.cpp")
@@ -94,6 +96,7 @@ elseif(APPLE)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/cocoa/nsviewframe.mm"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/cocoa/nsviewoptionmenu.mm"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/macclipboard.mm"
+        "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/macfactory.mm"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/macfileselector.mm"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/macglobals.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/macstring.mm"
@@ -108,7 +111,9 @@ else()
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/cairofont.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/cairogradient.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/cairopath.cpp"
+        "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/linuxfactory.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/linuxstring.cpp"
+        "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/x11dragging.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/x11fileselector.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/x11frame.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/x11platform.cpp"
