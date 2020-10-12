@@ -183,20 +183,16 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::Volume:
         {
             const float value = v.to_float();
-            if (volumeSlider_) {
+            if (volumeSlider_)
                 volumeSlider_->setValue(value);
-                volumeSlider_->setDirty();
-            }
             updateVolumeLabel(value);
         }
         break;
     case EditId::Polyphony:
         {
             const int value = static_cast<int>(v.to_float());
-            if (numVoicesSlider_) {
+            if (numVoicesSlider_)
                 numVoicesSlider_->setValue(value);
-                numVoicesSlider_->setDirty();
-            }
             updateNumVoicesLabel(value);
         }
         break;
@@ -208,20 +204,16 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             for (int f = value; f > 1; f /= 2)
                 ++log2Value;
 
-            if (oversamplingSlider_) {
+            if (oversamplingSlider_)
                 oversamplingSlider_->setValue(log2Value);
-                oversamplingSlider_->setDirty();
-            }
             updateOversamplingLabel(log2Value);
         }
         break;
     case EditId::PreloadSize:
         {
             const int value = static_cast<int>(v.to_float());
-            if (preloadSizeSlider_) {
+            if (preloadSizeSlider_)
                 preloadSizeSlider_->setValue(value);
-                preloadSizeSlider_->setDirty();
-            }
             updatePreloadSizeLabel(value);
         }
         break;
@@ -235,34 +227,26 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::ScalaRootKey:
         {
             const int value = std::max(0, static_cast<int>(v.to_float()));
-            if (scalaRootKeySlider_) {
+            if (scalaRootKeySlider_)
                 scalaRootKeySlider_->setValue(value % 12);
-                scalaRootKeySlider_->setDirty();
-            }
-            if (scalaRootOctaveSlider_) {
+            if (scalaRootOctaveSlider_)
                 scalaRootOctaveSlider_->setValue(value / 12);
-                scalaRootOctaveSlider_->setDirty();
-            }
             updateScalaRootKeyLabel(value);
         }
         break;
     case EditId::TuningFrequency:
         {
             const float value = v.to_float();
-            if (tuningFrequencySlider_) {
+            if (tuningFrequencySlider_)
                 tuningFrequencySlider_->setValue(value);
-                tuningFrequencySlider_->setDirty();
-            }
             updateTuningFrequencyLabel(value);
         }
         break;
     case EditId::StretchTuning:
         {
             const float value = v.to_float();
-            if (stretchedTuningSlider_) {
+            if (stretchedTuningSlider_)
                 stretchedTuningSlider_->setValue(value);
-                stretchedTuningSlider_->setDirty();
-            }
             updateStretchedTuningLabel(value);
         }
         break;
@@ -746,7 +730,6 @@ void Editor::Impl::updateLabelWithFileName(CTextLabel* label, const std::string&
 
     std::string fileName = std::string(simplifiedFileName(filePath, removedSuffix, "<No file>"));
     label->setText(fileName.c_str());
-    label->setDirty();
 }
 
 void Editor::Impl::updateButtonWithFileName(CTextButton* button, const std::string& filePath, absl::string_view removedSuffix)
@@ -756,7 +739,6 @@ void Editor::Impl::updateButtonWithFileName(CTextButton* button, const std::stri
 
     std::string fileName = std::string(simplifiedFileName(filePath, removedSuffix, "<No file>"));
     button->setTitle(fileName.c_str());
-    button->setDirty();
 }
 
 void Editor::Impl::updateVolumeLabel(float volume)
@@ -769,7 +751,6 @@ void Editor::Impl::updateVolumeLabel(float volume)
     sprintf(text, "%.1f dB", volume);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
-    label->setDirty();
 }
 
 void Editor::Impl::updateNumVoicesLabel(int numVoices)
@@ -782,7 +763,6 @@ void Editor::Impl::updateNumVoicesLabel(int numVoices)
     sprintf(text, "%d", numVoices);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
-    label->setDirty();
 }
 
 void Editor::Impl::updateOversamplingLabel(int oversamplingLog2)
@@ -795,7 +775,6 @@ void Editor::Impl::updateOversamplingLabel(int oversamplingLog2)
     sprintf(text, "%dx", 1 << oversamplingLog2);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
-    label->setDirty();
 }
 
 void Editor::Impl::updatePreloadSizeLabel(int preloadSize)
@@ -808,7 +787,6 @@ void Editor::Impl::updatePreloadSizeLabel(int preloadSize)
     sprintf(text, "%d kB", static_cast<int>(std::round(preloadSize * (1.0 / 1024))));
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
-    label->setDirty();
 }
 
 void Editor::Impl::updateScalaRootKeyLabel(int rootKey)
@@ -837,7 +815,6 @@ void Editor::Impl::updateScalaRootKeyLabel(int rootKey)
     };
 
     label->setText(noteName(rootKey));
-    label->setDirty();
 }
 
 void Editor::Impl::updateTuningFrequencyLabel(float tuningFrequency)
@@ -850,7 +827,6 @@ void Editor::Impl::updateTuningFrequencyLabel(float tuningFrequency)
     sprintf(text, "%.1f", tuningFrequency);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
-    label->setDirty();
 }
 
 void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
@@ -863,7 +839,6 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     sprintf(text, "%.3f", stretchedTuning);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
-    label->setDirty();
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)
