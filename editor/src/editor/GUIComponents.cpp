@@ -24,13 +24,13 @@ SBoxContainer::SBoxContainer(const CRect& size)
 void SBoxContainer::setCornerRadius(CCoord radius)
 {
     cornerRadius_ = radius;
-    setDirty();
+    invalid();
 }
 
 void SBoxContainer::setBackgroundColor(const CColor& color)
 {
     backgroundColor_ = color;
-    setDirty();
+    invalid();
 }
 
 CColor SBoxContainer::getBackgroundColor() const
@@ -62,19 +62,19 @@ STitleContainer::STitleContainer(const CRect& size, UTF8StringPtr text)
 void STitleContainer::setTitleFont(CFontRef font)
 {
     titleFont_ = font;
-    setDirty();
+    invalid();
 }
 
 void STitleContainer::setTitleFontColor(CColor color)
 {
     titleFontColor_ = color;
-    setDirty();
+    invalid();
 }
 
 void STitleContainer::setTitleBackgroundColor(CColor color)
 {
     titleBackgroundColor_ = color;
-    setDirty();
+    invalid();
 }
 
 void STitleContainer::drawRect(CDrawContext* dc, const CRect& updateRect)
@@ -163,7 +163,7 @@ SPiano::SPiano(const CRect& bounds)
 void SPiano::setFont(CFontRef font)
 {
     font_ = font;
-    setDirty();
+    invalid();
 }
 
 void SPiano::clearKeyRanges()
@@ -450,14 +450,14 @@ void STextButton::draw(CDrawContext* context)
 CMouseEventResult STextButton::onMouseEntered (CPoint& where, const CButtonState& buttons)
 {
     hovered = true;
-    setDirty();
+    invalid();
     return CTextButton::onMouseEntered(where, buttons);
 }
 
 CMouseEventResult STextButton::onMouseExited (CPoint& where, const CButtonState& buttons)
 {
     hovered = false;
-    setDirty();
+    invalid();
     return CTextButton::onMouseExited(where, buttons);
 }
 
@@ -472,7 +472,7 @@ void SStyledKnob::setActiveTrackColor(const CColor& color)
     if (activeTrackColor_ == color)
         return;
     activeTrackColor_ = color;
-    setDirty();
+    invalid();
 }
 
 void SStyledKnob::setInactiveTrackColor(const CColor& color)
@@ -480,7 +480,7 @@ void SStyledKnob::setInactiveTrackColor(const CColor& color)
     if (inactiveTrackColor_ == color)
         return;
     inactiveTrackColor_ = color;
-    setDirty();
+    invalid();
 }
 
 void SStyledKnob::setLineIndicatorColor(const CColor& color)
@@ -488,7 +488,7 @@ void SStyledKnob::setLineIndicatorColor(const CColor& color)
     if (lineIndicatorColor_ == color)
         return;
     lineIndicatorColor_ = color;
-    setDirty();
+    invalid();
 }
 
 void SStyledKnob::draw(CDrawContext* dc)
