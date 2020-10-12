@@ -12,7 +12,7 @@ if [[ ${CROSS_COMPILE} == "mingw32" ]]; then
                                   -DSFIZZ_STATIC_DEPENDENCIES=ON \
                                   -DCMAKE_CXX_STANDARD=17 \
                                   ..
-  buildenv make -j$(nproc)
+  buildenv make -j2
 elif [[ ${CROSS_COMPILE} == "mingw64" ]]; then
   buildenv x86_64-w64-mingw32-cmake -DCMAKE_BUILD_TYPE=Release \
                                     -DENABLE_LTO=OFF \
@@ -21,5 +21,5 @@ elif [[ ${CROSS_COMPILE} == "mingw64" ]]; then
                                     -DSFIZZ_STATIC_DEPENDENCIES=ON \
                                     -DCMAKE_CXX_STANDARD=17 \
                                     ..
-  buildenv make -j$(nproc)
+  buildenv make -j2
 fi

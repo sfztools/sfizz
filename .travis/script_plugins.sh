@@ -11,4 +11,4 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DSFIZZ_STATIC_DEPENDENCIES=ON \
       -DCMAKE_CXX_STANDARD=17 \
       ..
-make -j$(nproc)
+make -j2
