@@ -127,19 +127,13 @@ target_include_directories(sfizz-vstgui PUBLIC "${VSTGUI_BASEDIR}")
 if(WIN32)
     if (NOT MSVC)
         # autolinked on MSVC with pragmas
-        find_library(OPENGL32_LIBRARY "opengl32")
-        find_library(D2D1_LIBRARY "d2d1")
-        find_library(DWRITE_LIBRARY "dwrite")
-        find_library(DWMAPI_LIBRARY "dwmapi")
-        find_library(WINDOWSCODECS_LIBRARY "windowscodecs")
-        find_library(SHLWAPI_LIBRARY "shlwapi")
         target_link_libraries(sfizz-vstgui PRIVATE
-            "${OPENGL32_LIBRARY}"
-            "${D2D1_LIBRARY}"
-            "${DWRITE_LIBRARY}"
-            "${DWMAPI_LIBRARY}"
-            "${WINDOWSCODECS_LIBRARY}"
-            "${SHLWAPI_LIBRARY}")
+            "opengl32"
+            "d2d1"
+            "dwrite"
+            "dwmapi"
+            "windowscodecs"
+            "shlwapi")
     endif()
 elseif(APPLE)
     target_link_libraries(sfizz-vstgui PRIVATE
