@@ -228,18 +228,6 @@ if (SFIZZ_RELEASE_ASSERTS)
 endif()
 sfizz_enable_fast_math(sfizz_static)
 
-if (NOT MSVC)
-    install (TARGETS sfizz_static
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        COMPONENT "development")
-
-    configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
-    install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-        COMPONENT "development")
-endif()
 if(WIN32)
     include(VSTConfig)
     configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
@@ -265,15 +253,19 @@ if (SFIZZ_SHARED)
         target_compile_definitions (sfizz_shared PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
     endif()
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz)
+    set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
     sfizz_enable_lto_if_needed(sfizz_shared)
     sfizz_enable_fast_math(sfizz_shared)
 
     if (NOT MSVC)
         install (TARGETS sfizz_shared
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            COMPONENT "runtime")
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "runtime"
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "runtime"
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "development"
+            PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT "development")
+        configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
+        install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+            COMPONENT "development")
     endif()
 endif()
