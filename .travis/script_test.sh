@@ -10,5 +10,5 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DSFIZZ_LV2=OFF \
       -DCMAKE_CXX_STANDARD=17 \
       ..
-make -j$(nproc) sfizz_tests
+make -j2 sfizz_tests
 tests/sfizz_tests
