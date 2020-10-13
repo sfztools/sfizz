@@ -11,8 +11,13 @@
 #include "NativeHelpers.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
+#include <absl/strings/ascii.h>
 #include <ghc/fs_std.hpp>
 #include <array>
+#include <algorithm>
+#include <functional>
+#include <type_traits>
+#include <system_error>
 #include <cstdarg>
 #include <cstdio>
 
@@ -46,6 +51,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     enum {
         kTagLoadSfzFile,
         kTagEditSfzFile,
+        kTagPreviousSfzFile,
+        kTagNextSfzFile,
         kTagSetVolume,
         kTagSetNumVoices,
         kTagSetOversampling,
@@ -101,8 +108,11 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     void chooseSfzFile();
     void changeSfzFile(const std::string& filePath);
+    void changeToNextSfzFile(long offset);
     void chooseScalaFile();
     void changeScalaFile(const std::string& filePath);
+
+    static bool scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames);
 
     static absl::string_view simplifiedFileName(absl::string_view path, absl::string_view removedSuffix, absl::string_view ifEmpty);
 
@@ -377,6 +387,8 @@ void Editor::Impl::createFrameContents()
         typedef STextButton HomeButton;
         typedef STextButton SettingsButton;
         typedef STextButton EditFileButton;
+        typedef STextButton PreviousFileButton;
+        typedef STextButton NextFileButton;
         typedef SPiano Piano;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
@@ -504,6 +516,12 @@ void Editor::Impl::createFrameContents()
         };
         auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue1a3", bounds, tag, fontsize);
+        };
+        auto createPreviousFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue0d9", bounds, tag, fontsize);
+        };
+        auto createNextFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue0da", bounds, tag, fontsize);
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             SPiano* piano = new SPiano(bounds);
@@ -669,6 +687,56 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     updateSfzFileLabel(filePath);
 }
 
+void Editor::Impl::changeToNextSfzFile(long offset)
+{
+    if (currentSfzFile_.empty())
+        return;
+
+    const fs::path filePath = fs::u8path(currentSfzFile_);
+    const fs::path dirPath = filePath.parent_path();
+
+    // extract file names of regular files from the sfz directory
+    std::vector<fs::path> fileNames;
+    fileNames.reserve(64);
+
+    auto fileFilter = [](const fs::path &name) -> bool {
+        std::string ext = name.extension().u8string();
+        absl::AsciiStrToLower(&ext);
+        return ext == ".sfz";
+    };
+
+    if (!scanDirectoryFiles(dirPath, fileFilter, fileNames))
+        return;
+
+    // sort file names
+    const size_t size = fileNames.size();
+    if (size == 0)
+        return;
+
+    std::sort(fileNames.begin(), fileNames.end());
+
+    // find our current position in the file name list
+    size_t currentIndex = 0;
+    const fs::path currentFileName = filePath.filename();
+
+    while (currentIndex + 1 < size && fileNames[currentIndex] < currentFileName)
+        ++currentIndex;
+
+    // advance to the next or previous item
+    typedef typename std::make_signed<size_t>::type signed_size_t;
+
+    size_t newIndex = static_cast<signed_size_t>(currentIndex) + offset;
+    if (static_cast<signed_size_t>(newIndex) < 0)
+        newIndex = static_cast<signed_size_t>(newIndex) %
+            static_cast<signed_size_t>(size) + size;
+    newIndex %= size;
+
+    if (newIndex != currentIndex) {
+        const fs::path newFilePath = dirPath / fileNames[newIndex];
+        changeSfzFile(newFilePath.u8string());
+    }
+}
+
 void Editor::Impl::chooseScalaFile()
 {
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
@@ -692,6 +760,39 @@ void Editor::Impl::changeScalaFile(const std::string& filePath)
     ctrl_->uiSendValue(EditId::ScalaFile, filePath);
     currentScalaFile_ = filePath;
     updateScalaFileLabel(filePath);
+}
+
+bool Editor::Impl::scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames)
+{
+    std::error_code ec;
+    fs::directory_iterator it { dirPath, ec };
+
+    if (ec)
+        return false;
+
+    fileNames.clear();
+
+    while (!ec && it != fs::directory_iterator()) {
+        const fs::directory_entry& ent = *it;
+
+        std::error_code fileEc;
+        const fs::file_status status = ent.status(fileEc);
+        if (fileEc)
+            continue;
+
+        if (status.type() == fs::file_type::regular) {
+            fs::path fileName = ent.path().filename();
+            if (!filter || filter(fileName))
+                fileNames.push_back(std::move(fileName));
+        }
+
+        it.increment(ec);
+    }
+
+    if (ec)
+        return false;
+
+    return true;
 }
 
 absl::string_view Editor::Impl::simplifiedFileName(absl::string_view path, absl::string_view removedSuffix, absl::string_view ifEmpty)
@@ -890,6 +991,20 @@ void Editor::Impl::valueChanged(CControl* ctl)
 
         if (!currentSfzFile_.empty())
             openFileInExternalEditor(currentSfzFile_.c_str());
+        break;
+
+    case kTagPreviousSfzFile:
+        if (value != 1)
+            break;
+
+        Call::later([this]() { changeToNextSfzFile(-1); });
+        break;
+
+    case kTagNextSfzFile:
+        if (value != 1)
+            break;
+
+        Call::later([this]() { changeToNextSfzFile(+1); });
         break;
 
     case kTagLoadScalaFile:
