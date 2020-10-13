@@ -11,7 +11,7 @@ widget_class mainView {open
     class Background
   }
   Fl_Group {} {
-    comment {theme=darkTheme}
+    comment {theme=darkTheme} open
     xywh {0 0 800 110}
     class LogicalGroup
   } {
@@ -45,16 +45,6 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        label {File:}
-        xywh {200 13 40 30} labelsize 16
-        class Label
-      }
-      Fl_Box {} {
-        label {KS:}
-        xywh {200 45 40 30} labelsize 16
-        class Label
-      }
-      Fl_Box {} {
         label {Separator 1}
         xywh {195 41 360 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
@@ -66,12 +56,12 @@ widget_class mainView {open
       }
       Fl_Box sfzFileLabel_ {
         label {DefaultInstrument.sfz}
-        xywh {265 12 230 30} labelsize 20
+        xywh {195 11 250 31} labelsize 20 align 20
         class Label
       }
       Fl_Box {} {
-        label {Key switch}
-        xywh {265 44 230 30} labelsize 20
+        label {Key switch:}
+        xywh {195 44 250 30} labelsize 20 align 20
         class Label
       }
       Fl_Box {} {
@@ -80,13 +70,23 @@ widget_class mainView {open
         class Label
       }
       Fl_Button {} {
+        comment {tag=kTagPreviousSfzFile} selected
+        xywh {455 14 25 25} labelsize 24
+        class PreviousFileButton
+      }
+      Fl_Button {} {
+        comment {tag=kTagNextSfzFile}
+        xywh {480 14 25 25} labelsize 24
+        class NextFileButton
+      }
+      Fl_Button {} {
         comment {tag=kTagLoadSfzFile}
-        xywh {500 14 25 25} labelsize 24
+        xywh {505 14 25 25} labelsize 24
         class LoadFileButton
       }
       Fl_Button {} {
         comment {tag=kTagEditSfzFile}
-        xywh {525 14 25 25} labelsize 24
+        xywh {530 14 25 25} labelsize 24
         class EditFileButton
       }
       Fl_Box infoVoicesLabel_ {
@@ -216,7 +216,7 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {selected
+  Fl_Group {subPanels_[kPanelSettings]} {
     xywh {5 109 790 286}
     class LogicalGroup
   } {
