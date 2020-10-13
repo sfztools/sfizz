@@ -452,6 +452,7 @@ void SActionMenu::setTitle(std::string title)
 void SActionMenu::setHoverColor(const CColor& color)
 {
     hoverColor_ = color;
+    invalid();
 }
 
 CMenuItem* SActionMenu::addEntry(CMenuItem* item, int32_t tag, int32_t index)
@@ -554,33 +555,46 @@ void SActionMenu::onItemClicked(int32_t index)
 }
 
 ///
-void STextButton::setHoverColor (const CColor& color)
+void STextButton::setHoverColor(const CColor& color)
 {
     hoverColor_ = color;
+    invalid();
+}
+
+void STextButton::setInactiveColor(const CColor& color)
+{
+    inactiveColor_ = color;
+    invalid();
+}
+
+void STextButton::setInactive(bool b)
+{
+    inactive_ = b;
+    invalid();
 }
 
 void STextButton::draw(CDrawContext* context)
 {
     CColor backupColor = textColor;
-    if (hovered) {
+    if (hovered_)
         textColor = hoverColor_; // textColor is protected
-    }
+    else if (inactive_)
+        textColor = inactiveColor_;
     CTextButton::draw(context);
-    if (hovered)
-        textColor = backupColor;
+    textColor = backupColor;
 }
 
 
 CMouseEventResult STextButton::onMouseEntered (CPoint& where, const CButtonState& buttons)
 {
-    hovered = true;
+    hovered_ = true;
     invalid();
     return CTextButton::onMouseEntered(where, buttons);
 }
 
 CMouseEventResult STextButton::onMouseExited (CPoint& where, const CButtonState& buttons)
 {
-    hovered = false;
+    hovered_ = false;
     invalid();
     return CTextButton::onMouseExited(where, buttons);
 }

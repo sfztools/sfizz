@@ -56,8 +56,9 @@ widget_class mainView {open
       }
       Fl_Box sfzFileLabel_ {
         label {DefaultInstrument.sfz}
+        comment {tag=kTagLoadSfzFile} selected
         xywh {195 11 250 31} labelsize 20 align 20
-        class Label
+        class ClickableLabel
       }
       Fl_Box {} {
         label {Key switch:}
@@ -80,7 +81,7 @@ widget_class mainView {open
         class NextFileButton
       }
       Fl_Button fileOperationsMenu_ {
-        comment {tag=kTagFileOperations} selected
+        comment {tag=kTagFileOperations}
         xywh {530 14 25 25} labelsize 24
         class ChevronDropDown
       }
