@@ -506,7 +506,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createCCButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             // return createGlyphButton(u8"\ue240", bounds, tag, fontsize);
-            return createGlyphButton(u8"\ue140", bounds, tag, fontsize);
+            return createGlyphButton(u8"\ue253", bounds, tag, fontsize);
         };
         auto createSettingsButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
