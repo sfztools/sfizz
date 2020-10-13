@@ -22,7 +22,7 @@ HLine* const view__9 = createHLine(CRect(10, 36, 370, 41), -1, "", kCenterText, 
 view__8->addView(view__9);
 HLine* const view__10 = createHLine(CRect(10, 68, 370, 73), -1, "", kCenterText, 14);
 view__8->addView(view__10);
-Label* const view__11 = createLabel(CRect(10, 6, 260, 37), -1, "DefaultInstrument.sfz", kLeftText, 20);
+ClickableLabel* const view__11 = createClickableLabel(CRect(10, 6, 260, 37), kTagLoadSfzFile, "DefaultInstrument.sfz", kLeftText, 20);
 sfzFileLabel_ = view__11;
 view__8->addView(view__11);
 Label* const view__12 = createLabel(CRect(10, 39, 260, 69), -1, "Key switch:", kLeftText, 20);

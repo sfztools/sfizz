@@ -203,12 +203,18 @@ public:
 
     CColor getHoverColor() const { return hoverColor_; }
     void setHoverColor(const CColor& color);
+    CColor getInactiveColor() const { return inactiveColor_; }
+    void setInactiveColor(const CColor& color);
+    bool isInactive() const { return inactive_; }
+    void setInactive(bool b);
     CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override;
     CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override;
     void draw(CDrawContext* context) override;
 private:
     CColor hoverColor_;
-    bool hovered { false };
+    bool hovered_ { false };
+    CColor inactiveColor_;
+    bool inactive_ { false };
 };
 
 ///

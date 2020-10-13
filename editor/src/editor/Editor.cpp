@@ -66,9 +66,9 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
 
-    CTextLabel* sfzFileLabel_ = nullptr;
+    STextButton* sfzFileLabel_ = nullptr;
     CTextLabel* scalaFileLabel_ = nullptr;
-    CTextButton* scalaFileButton_ = nullptr;
+    STextButton* scalaFileButton_ = nullptr;
     CControl *volumeSlider_ = nullptr;
     CTextLabel* volumeLabel_ = nullptr;
     SValueMenu *numVoicesSlider_ = nullptr;
@@ -122,7 +122,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateSfzFileLabel(const std::string& filePath);
     void updateScalaFileLabel(const std::string& filePath);
     static void updateLabelWithFileName(CTextLabel* label, const std::string& filePath, absl::string_view removedSuffix);
-    static void updateButtonWithFileName(CTextButton* button, const std::string& filePath, absl::string_view removedSuffix);
+    static void updateButtonWithFileName(STextButton* button, const std::string& filePath, absl::string_view removedSuffix);
+    static void updateSButtonWithFileName(STextButton* button, const std::string& filePath, absl::string_view removedSuffix);
     void updateVolumeLabel(float volume);
     void updateNumVoicesLabel(int numVoices);
     void updateOversamplingLabel(int oversamplingLog2);
@@ -329,6 +330,8 @@ void Editor::Impl::createFrameContents()
         struct Theme {
             CColor boxBackground;
             CColor text;
+            CColor inactiveText;
+            CColor highlightedText;
             CColor titleBoxText;
             CColor titleBoxBackground;
             CColor icon;
@@ -343,6 +346,8 @@ void Editor::Impl::createFrameContents()
         Theme lightTheme;
         lightTheme.boxBackground = { 0xba, 0xbd, 0xb6 };
         lightTheme.text = { 0x00, 0x00, 0x00 };
+        lightTheme.inactiveText = { 0xb2, 0xb2, 0xb2 };
+        lightTheme.highlightedText = { 0xfd, 0x98, 0x00 };
         lightTheme.titleBoxText = { 0xff, 0xff, 0xff };
         lightTheme.titleBoxBackground = { 0x2e, 0x34, 0x36 };
         lightTheme.icon = lightTheme.text;
@@ -355,6 +360,8 @@ void Editor::Impl::createFrameContents()
         Theme darkTheme;
         darkTheme.boxBackground = { 0x2e, 0x34, 0x36 };
         darkTheme.text = { 0xff, 0xff, 0xff };
+        darkTheme.inactiveText = { 0xb2, 0xb2, 0xb2 };
+        darkTheme.highlightedText = { 0xfd, 0x98, 0x00 };
         darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
         darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
         darkTheme.icon = darkTheme.text;
@@ -384,7 +391,8 @@ void Editor::Impl::createFrameContents()
 #if 0
         typedef CTextButton Button;
 #endif
-        typedef CTextButton ValueButton;
+        typedef STextButton ClickableLabel;
+        typedef STextButton ValueButton;
         typedef STextButton LoadFileButton;
         typedef STextButton CCButton;
         typedef STextButton HomeButton;
@@ -471,13 +479,31 @@ void Editor::Impl::createFrameContents()
             return button;
         };
 #endif
+        auto createClickableLabel = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+            STextButton* button = new STextButton(bounds, this, tag, label);
+            auto font = owned(new CFontDesc("Roboto", fontsize));
+            button->setFont(font);
+            button->setTextAlignment(align);
+            button->setTextColor(theme->text);
+            button->setInactiveColor(theme->inactiveText);
+            button->setHoverColor(theme->highlightedText);
+            button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
+            SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, CColor(0x00, 0x00, 0x00, 0x00), CColor(0x00, 0x00, 0x00, 0x00)));
+            button->setGradient(gradient);
+            button->setGradientHighlighted(gradient);
+            return button;
+        };
         auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
-            CTextButton* button = new CTextButton(bounds, this, tag, label);
+            STextButton* button = new STextButton(bounds, this, tag, label);
             auto font = owned(new CFontDesc("Roboto", fontsize));
             button->setFont(font);
             button->setTextAlignment(align);
             button->setTextColor(theme->valueText);
+            button->setInactiveColor(theme->inactiveText);
+            button->setHoverColor(theme->highlightedText);
             button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, theme->valueBackground, theme->valueBackground));
             button->setGradient(gradient);
             button->setGradientHighlighted(gradient);
@@ -501,6 +527,7 @@ void Editor::Impl::createFrameContents()
             btn->setTextColor(theme->icon);
             btn->setHoverColor(theme->iconHighlight);
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setGradient(nullptr);
             btn->setGradientHighlighted(nullptr);
             return btn;
@@ -834,7 +861,7 @@ absl::string_view Editor::Impl::simplifiedFileName(absl::string_view path, absl:
 
 void Editor::Impl::updateSfzFileLabel(const std::string& filePath)
 {
-    updateLabelWithFileName(sfzFileLabel_, filePath, ".sfz");
+    updateButtonWithFileName(sfzFileLabel_, filePath, ".sfz");
 }
 
 void Editor::Impl::updateScalaFileLabel(const std::string& filePath)
@@ -852,13 +879,20 @@ void Editor::Impl::updateLabelWithFileName(CTextLabel* label, const std::string&
     label->setText(fileName.c_str());
 }
 
-void Editor::Impl::updateButtonWithFileName(CTextButton* button, const std::string& filePath, absl::string_view removedSuffix)
+void Editor::Impl::updateButtonWithFileName(STextButton* button, const std::string& filePath, absl::string_view removedSuffix)
 {
     if (!button)
         return;
 
-    std::string fileName = std::string(simplifiedFileName(filePath, removedSuffix, "<No file>"));
-    button->setTitle(fileName.c_str());
+    std::string fileName = std::string(simplifiedFileName(filePath, removedSuffix, {}));
+    if (!fileName.empty()) {
+        button->setTitle(fileName.c_str());
+        button->setInactive(false);
+    }
+    else {
+        button->setTitle("No file");
+        button->setInactive(true);
+    }
 }
 
 void Editor::Impl::updateVolumeLabel(float volume)
