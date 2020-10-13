@@ -343,7 +343,7 @@ void Editor::Impl::createFrameContents()
         lightTheme.titleBoxText = { 0xff, 0xff, 0xff };
         lightTheme.titleBoxBackground = { 0x2e, 0x34, 0x36 };
         lightTheme.icon = lightTheme.text;
-        lightTheme.iconHighlight = { 0xa8, 0x62, 0x34 };
+        lightTheme.iconHighlight = { 0xfd, 0x98, 0x00 };
         lightTheme.valueText = { 0xff, 0xff, 0xff };
         lightTheme.valueBackground = { 0x2e, 0x34, 0x36 };
         lightTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
@@ -355,7 +355,7 @@ void Editor::Impl::createFrameContents()
         darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
         darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
         darkTheme.icon = darkTheme.text;
-        darkTheme.iconHighlight = { 0xa8, 0x62, 0x34 };
+        darkTheme.iconHighlight = { 0xfd, 0x98, 0x00 };
         darkTheme.valueText = { 0x2e, 0x34, 0x36 };
         darkTheme.valueBackground = { 0xff, 0xff, 0xff };
         darkTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
