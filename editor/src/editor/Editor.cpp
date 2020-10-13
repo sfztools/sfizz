@@ -53,6 +53,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagEditSfzFile,
         kTagPreviousSfzFile,
         kTagNextSfzFile,
+        kTagFileOperations,
         kTagSetVolume,
         kTagSetNumVoices,
         kTagSetOversampling,
@@ -92,6 +93,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* infoVoicesLabel_ = nullptr;
 
     CTextLabel* memoryLabel_ = nullptr;
+
+    SActionMenu* fileOperationsMenu_ = nullptr;
 
     void uiReceiveValue(EditId id, const EditValue& v) override;
 
@@ -390,6 +393,7 @@ void Editor::Impl::createFrameContents()
         typedef STextButton PreviousFileButton;
         typedef STextButton NextFileButton;
         typedef SPiano Piano;
+        typedef SActionMenu ChevronDropDown;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
@@ -527,6 +531,16 @@ void Editor::Impl::createFrameContents()
             SPiano* piano = new SPiano(bounds);
             return piano;
         };
+        auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
+            SActionMenu* menu = new SActionMenu(bounds, this);
+            menu->setTitle(u8"\ue0d7");
+            menu->setFont(new CFontDesc("Sfizz Fluent System R20", fontsize));
+            menu->setFontColor(theme->icon);
+            menu->setHoverColor(theme->iconHighlight);
+            menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            return menu;
+        };
         auto createBackground = [&background](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackground(background);
@@ -646,6 +660,11 @@ void Editor::Impl::createFrameContents()
             result = std::to_string(static_cast<int>(value) - 1);
             return true;
         });
+
+    if (SActionMenu* menu = fileOperationsMenu_) {
+        menu->addEntry("Load file", kTagLoadSfzFile);
+        menu->addEntry("Edit file", kTagEditSfzFile);
+    }
 
     ///
     CViewContainer* panel;

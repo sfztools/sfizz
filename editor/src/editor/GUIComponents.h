@@ -122,7 +122,7 @@ public:
     int32_t getNbEntries() const;
 
 protected:
-    CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons);
+    CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
 
 private:
     class MenuListener;
@@ -149,11 +149,59 @@ private:
 };
 
 ///
+class SActionMenu : public CParamDisplay {
+public:
+    explicit SActionMenu(const CRect& bounds, IControlListener* listener);
+    std::string getTitle() const { return title_; }
+    void setTitle(std::string title);
+    CColor getHoverColor() const { return hoverColor_; }
+    void setHoverColor(const CColor& color);
+    CMenuItem* addEntry(CMenuItem* item, int32_t tag, int32_t index = -1);
+    CMenuItem* addEntry(const UTF8String& title, int32_t tag, int32_t index = -1, int32_t itemFlags = CMenuItem::kNoFlags);
+    CMenuItem* addSeparator(int32_t index = -1);
+    int32_t getNbEntries() const;
+
+protected:
+    void draw(CDrawContext* dc) override;
+    CMouseEventResult onMouseEntered(CPoint& where, const CButtonState& buttons) override;
+    CMouseEventResult onMouseExited(CPoint& where, const CButtonState& buttons) override;
+    CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
+
+private:
+    std::string title_;
+    CColor hoverColor_;
+    bool hovered_ = false;
+
+    class MenuListener;
+
+    //
+    void onItemClicked(int32_t index);
+
+    //
+    CMenuItemList menuItems_;
+    std::vector<int32_t> menuItemTags_;
+    SharedPointer<MenuListener> menuListener_;
+
+    //
+    class MenuListener : public IControlListener, public NonAtomicReferenceCounted {
+    public:
+        explicit MenuListener(SActionMenu& menu) : menu_(menu) {}
+        void valueChanged(CControl* control) override
+        {
+            menu_.onItemClicked(static_cast<int32_t>(control->getValue()));
+        }
+    private:
+        SActionMenu& menu_;
+    };
+};
+
+///
 class STextButton: public CTextButton {
 public:
     STextButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
     : CTextButton(size, listener, tag, title) {}
 
+    CColor getHoverColor() const { return hoverColor_; }
     void setHoverColor(const CColor& color);
     CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override;
     CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override;

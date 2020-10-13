@@ -430,6 +430,130 @@ void SValueMenu::onItemClicked(int32_t index)
 }
 
 ///
+SActionMenu::SActionMenu(const CRect& bounds, IControlListener* listener)
+    : CParamDisplay(bounds), menuListener_(owned(new MenuListener(*this)))
+{
+    setListener(listener);
+
+    auto toString = [](float, std::string& result, CParamDisplay* display) {
+        result = static_cast<SActionMenu*>(display)->getTitle();
+        return true;
+    };
+
+    setValueToStringFunction2(toString);
+}
+
+void SActionMenu::setTitle(std::string title)
+{
+    title_ = std::move(title);
+    invalid();
+}
+
+void SActionMenu::setHoverColor(const CColor& color)
+{
+    hoverColor_ = color;
+}
+
+CMenuItem* SActionMenu::addEntry(CMenuItem* item, int32_t tag, int32_t index)
+{
+    if (index < 0 || index > getNbEntries()) {
+        menuItems_.emplace_back(owned(item));
+        menuItemTags_.emplace_back(tag);
+    }
+    else
+    {
+        menuItems_.insert(menuItems_.begin() + index, owned(item));
+        menuItemTags_.insert(menuItemTags_.begin() + index, tag);
+    }
+    return item;
+}
+
+CMenuItem* SActionMenu::addEntry(const UTF8String& title, int32_t tag, int32_t index, int32_t itemFlags)
+{
+    if (title == "-")
+        return addSeparator(index);
+    CMenuItem* item = new CMenuItem(title, nullptr, 0, nullptr, itemFlags);
+    return addEntry(item, tag, index);
+}
+
+CMenuItem* SActionMenu::addSeparator(int32_t index)
+{
+    CMenuItem* item = new CMenuItem("", nullptr, 0, nullptr, CMenuItem::kSeparator);
+    return addEntry(item, 0.0f, index);
+}
+
+int32_t SActionMenu::getNbEntries() const
+{
+    return static_cast<int32_t>(menuItems_.size());
+}
+
+void SActionMenu::draw(CDrawContext* dc)
+{
+    CColor backupColor = fontColor;
+    if (hovered_)
+        fontColor = hoverColor_;
+    CParamDisplay::draw(dc);
+    if (hovered_)
+        fontColor = backupColor;
+}
+
+CMouseEventResult SActionMenu::onMouseEntered(CPoint& where, const CButtonState& buttons)
+{
+    hovered_ = true;
+    invalid();
+    return CParamDisplay::onMouseEntered(where, buttons);
+}
+
+CMouseEventResult SActionMenu::onMouseExited(CPoint& where, const CButtonState& buttons)
+{
+    hovered_ = false;
+    invalid();
+    return CParamDisplay::onMouseExited(where, buttons);
+}
+
+CMouseEventResult SActionMenu::onMouseDown(CPoint& where, const CButtonState& buttons)
+{
+    (void)where;
+
+    if (buttons & (kLButton|kRButton|kApple)) {
+        CFrame* frame = getFrame();
+        CRect bounds = getViewSize();
+
+        CPoint frameWhere = bounds.getBottomLeft();
+        this->localToFrame(frameWhere);
+
+        auto self = shared(this);
+        frame->doAfterEventProcessing([self, frameWhere]() {
+            if (CFrame* frame = self->getFrame()) {
+                SharedPointer<COptionMenu> menu = owned(new COptionMenu(CRect(), self->menuListener_, -1, nullptr, nullptr, COptionMenu::kPopupStyle));
+                for (const SharedPointer<CMenuItem>& item : self->menuItems_) {
+                    menu->addEntry(item);
+                    item->remember(); // above call does not increment refcount
+                }
+                menu->setFont(self->getFont());
+                menu->setFontColor(self->getFontColor());
+                menu->setBackColor(self->getBackColor());
+                menu->popup(frame, frameWhere + CPoint(0.0, 1.0));
+            }
+        });
+        return kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+    }
+
+    return kMouseEventNotHandled;
+}
+
+void SActionMenu::onItemClicked(int32_t index)
+{
+    setTag(menuItemTags_[index]);
+    setValue(1.0f);
+    if (listener)
+        listener->valueChanged(this);
+    setValue(0.0f);
+    if (listener)
+        listener->valueChanged(this);
+}
+
+///
 void STextButton::setHoverColor (const CColor& color)
 {
     hoverColor_ = color;

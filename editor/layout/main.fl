@@ -70,24 +70,19 @@ widget_class mainView {open
         class Label
       }
       Fl_Button {} {
-        comment {tag=kTagPreviousSfzFile} selected
-        xywh {455 14 25 25} labelsize 24
+        comment {tag=kTagPreviousSfzFile}
+        xywh {480 14 25 25} labelsize 24
         class PreviousFileButton
       }
       Fl_Button {} {
         comment {tag=kTagNextSfzFile}
-        xywh {480 14 25 25} labelsize 24
+        xywh {505 14 25 25} labelsize 24
         class NextFileButton
       }
-      Fl_Button {} {
-        comment {tag=kTagLoadSfzFile}
-        xywh {505 14 25 25} labelsize 24
-        class LoadFileButton
-      }
-      Fl_Button {} {
-        comment {tag=kTagEditSfzFile}
+      Fl_Button fileOperationsMenu_ {
+        comment {tag=kTagFileOperations} selected
         xywh {530 14 25 25} labelsize 24
-        class EditFileButton
+        class ChevronDropDown
       }
       Fl_Box infoVoicesLabel_ {
         xywh {260 76 50 25} labelsize 12 align 16
