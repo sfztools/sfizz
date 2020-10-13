@@ -70,6 +70,16 @@ widget_class mainView {open
         class Label
       }
       Fl_Button {} {
+        comment {tag=kTagPreviousSfzFile} selected
+        xywh {455 14 25 25} labelsize 24
+        class PreviousFileButton
+      }
+      Fl_Button {} {
+        comment {tag=kTagNextSfzFile}
+        xywh {480 14 25 25} labelsize 24
+        class NextFileButton
+      }
+      Fl_Button {} {
         comment {tag=kTagLoadSfzFile}
         xywh {505 14 25 25} labelsize 24
         class LoadFileButton
@@ -100,16 +110,6 @@ widget_class mainView {open
       Fl_Box memoryLabel_ {
         xywh {500 76 50 25} labelsize 12 align 16
         class Label
-      }
-      Fl_Button {} {
-        comment {tag=kTagNextSfzFile}
-        xywh {480 14 25 25} labelsize 24
-        class NextFileButton
-      }
-      Fl_Button {} {
-        comment {tag=kTagPreviousSfzFile}
-        xywh {455 14 25 25} labelsize 24
-        class PreviousFileButton
       }
     }
     Fl_Group {} {open
@@ -216,7 +216,7 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {selected
+  Fl_Group {subPanels_[kPanelSettings]} {
     xywh {5 109 790 286}
     class LogicalGroup
   } {
