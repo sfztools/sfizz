@@ -83,36 +83,6 @@ private:
 };
 
 ///
-class SPiano : public CView {
-public:
-    explicit SPiano(const CRect& bounds);
-    CFontRef getFont() const { return font_; }
-    void setFont(CFontRef font);
-
-    void clearKeyRanges();
-    void addKeyRange(int start, int end);
-
-protected:
-    static CCoord getKeyWidth();
-    static CCoord getKeySwitchesHeight();
-    static CCoord getKeyRangesHeight();
-    CCoord getKeysHeight() const;
-    CCoord getOctavesHeight() const;
-
-    void getZoneDimensions(
-        CRect* pKeySwitches,
-        CRect* pKeyboard,
-        CRect* pKeyRanges,
-        CRect* pOctaves);
-
-    void draw(CDrawContext* dc) override;
-
-private:
-    SharedPointer<CFontDesc> font_;
-    std::bitset<128> keyInRange_;
-};
-
-///
 class SValueMenu : public CParamDisplay {
 public:
     explicit SValueMenu(const CRect& bounds, IControlListener* listener, int32_t tag);

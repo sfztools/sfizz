@@ -8,6 +8,7 @@
 #include "EditorController.h"
 #include "EditIds.h"
 #include "GUIComponents.h"
+#include "GUIPiano.h"
 #include "NativeHelpers.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
@@ -95,6 +96,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* memoryLabel_ = nullptr;
 
     SActionMenu* fileOperationsMenu_ = nullptr;
+
+    SPiano* piano_ = nullptr;
 
     void uiReceiveValue(EditId id, const EditValue& v) override;
 
@@ -554,8 +557,10 @@ void Editor::Impl::createFrameContents()
         auto createNextFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue0da", bounds, tag, fontsize);
         };
-        auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
+            auto font = owned(new CFontDesc("Roboto", fontsize));
+            piano->setFont(font);
             return piano;
         };
         auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
@@ -691,6 +696,23 @@ void Editor::Impl::createFrameContents()
     if (SActionMenu* menu = fileOperationsMenu_) {
         menu->addEntry("Load file", kTagLoadSfzFile);
         menu->addEntry("Edit file", kTagEditSfzFile);
+    }
+
+    if (SPiano* piano = piano_) {
+        piano->onKeyPressed = [this](unsigned key, float vel) {
+            uint8_t msg[3];
+            msg[0] = 0x90;
+            msg[1] = static_cast<uint8_t>(key);
+            msg[2] = static_cast<uint8_t>(std::max(1, static_cast<int>(vel * 127)));
+            ctrl_->uiSendMIDI(msg, sizeof(msg));
+        };
+        piano->onKeyReleased = [this](unsigned key, float vel) {
+            uint8_t msg[3];
+            msg[0] = 0x80;
+            msg[1] = static_cast<uint8_t>(key);
+            msg[2] = static_cast<uint8_t>(vel * 127);
+            ctrl_->uiSendMIDI(msg, sizeof(msg));
+        };
     }
 
     ///
