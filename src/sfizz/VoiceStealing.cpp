@@ -33,13 +33,13 @@ sfz::Voice* sfz::VoiceStealing::stealFirst(absl::Span<Voice*> voices) noexcept
 
 sfz::Voice* sfz::VoiceStealing::stealOldest(absl::Span<Voice*> voices) noexcept
 {
-    absl::c_stable_sort(voices, voiceOrdering);
+    absl::c_sort(voices, voiceOrdering);
     return voices.front();
 }
 
 sfz::Voice* sfz::VoiceStealing::stealEnvelopeAndAge(absl::Span<Voice*> voices) noexcept
 {
-    absl::c_stable_sort(voices, voiceOrdering);
+    absl::c_sort(voices, voiceOrdering);
 
     const auto sumPower = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {
         return sum + v->getAveragePower();
