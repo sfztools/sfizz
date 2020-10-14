@@ -1568,6 +1568,15 @@ void sfz::Synth::applySettingsPerVoice()
         voice->setPitchEGEnabledPerVoice(settingsPerVoice.havePitchEG);
         voice->setFilterEGEnabledPerVoice(settingsPerVoice.haveFilterEG);
     }
+
+    if (stealer.getStealingAlgorithm() ==
+        VoiceStealing::StealingAlgorithm::EnvelopeAndAge) {
+        for (auto& voice : voices)
+            voice->enablePowerFollower();
+    } else {
+        for (auto& voice : voices)
+            voice->disablePowerFollower();
+    }
 }
 
 void sfz::Synth::setupModMatrix()
