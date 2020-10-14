@@ -10,6 +10,7 @@
 #include "vstgui/lib/cgraphicspath.h"
 #include "utility/vstgui_after.h"
 #include <algorithm>
+#include <cmath>
 
 static constexpr CCoord keyoffs[12] = {0,    0.6, 1,   1.8, 2,    3,
                                        3.55, 4,   4.7, 5,   5.85, 6};
@@ -166,7 +167,7 @@ const SPiano::Dimensions& SPiano::getDimensions(bool forceUpdate) const
     Dimensions dim;
     dim.bounds = getViewSize();
     dim.paddedBounds = CRect(dim.bounds)
-        .extend(-innerPaddingX_, -innerPaddingY_);
+        .extend(-2 * innerPaddingX_, -2 * innerPaddingY_);
     CCoord keyHeight = std::floor(dim.paddedBounds.getHeight());
     CCoord fontHeight = font_ ? font_->getSize() : 0.0;
     keyHeight -= spacingY_ + fontHeight;
@@ -176,14 +177,14 @@ const SPiano::Dimensions& SPiano::getDimensions(bool forceUpdate) const
         dim.paddedBounds.getWidth() / octs_ / 7.0);
     dim.keyBounds.setWidth(dim.keyWidth * octs_ * 7.0);
     dim.keyBounds.offset(
-        0.5 * (dim.paddedBounds.getWidth() - dim.keyBounds.getWidth()), 0.0);
+        std::floor(0.5 * (dim.paddedBounds.getWidth() - dim.keyBounds.getWidth())), 0.0);
 
     if (!font_)
         dim.labelBounds = CRect();
     else
         dim.labelBounds = CRect(
-            dim.keyBounds.left, dim.keyBounds.bottom,
-            dim.keyBounds.right, dim.keyBounds.bottom + (spacingY_ + fontHeight));
+            dim.keyBounds.left, dim.keyBounds.bottom + spacingY_,
+            dim.keyBounds.right, dim.keyBounds.bottom + spacingY_ + fontHeight);
 
     dim_ = dim;
     return dim_;
