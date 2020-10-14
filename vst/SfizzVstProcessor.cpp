@@ -22,8 +22,10 @@ static const char defaultSfzText[] =
     "<region>sample=*sine" "\n"
     "ampeg_attack=0.02 ampeg_release=0.1" "\n";
 
+enum { kMidiEventMaximumSize = 4 };
+
 SfizzVstProcessor::SfizzVstProcessor()
-    : _fifoToWorker(64 * 1024)
+    : _fifoToWorker(64 * 1024), _fifoMidiFromUi(64 * 1024)
 {
     setControllerClass(SfizzVstController::cid);
 }
@@ -180,6 +182,8 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         synth.enableFreeWheeling();
     else
         synth.disableFreeWheeling();
+
+    processMidiFromUi();
 
     if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processControllerChanges(*pc);
@@ -373,6 +377,40 @@ void SfizzVstProcessor::processEvents(Vst::IEventList& events)
     }
 }
 
+void SfizzVstProcessor::processMidiFromUi()
+{
+    sfz::Sfizz& synth = *_synth;
+
+    for (uint32 size = 0; _fifoMidiFromUi.peek(size) &&
+             _fifoMidiFromUi.size_used() >= sizeof(size) + size; ) {
+        _fifoMidiFromUi.discard(sizeof(size));
+
+        if (size > kMidiEventMaximumSize) {
+            _fifoMidiFromUi.discard(size);
+            continue;
+        }
+
+        uint8_t data[kMidiEventMaximumSize] = {};
+        _fifoMidiFromUi.get(data, size);
+
+        // interpret the MIDI message
+        switch (data[0] & 0xf0) {
+        case 0x80:
+            synth.noteOff(0, data[1] & 0x7f, data[2] & 0x7f);
+            break;
+        case 0x90:
+            synth.noteOn(0, data[1] & 0x7f, data[2] & 0x7f);
+            break;
+        case 0xb0:
+            synth.cc(0, data[1] & 0x7f, data[2] & 0x7f);
+            break;
+        case 0xe0:
+            synth.pitchWheel(0, (data[2] << 7) + data[1] - 8192);
+            break;
+        }
+    }
+}
+
 int SfizzVstProcessor::convertVelocityFromFloat(float x)
 {
     return std::min(127, std::max(0, (int)(x * 127.0f)));
@@ -424,6 +462,17 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         reply->setMessageID("LoadedScala");
         reply->getAttributes()->setBinary("File", _state.scalaFile.data(), _state.scalaFile.size());
         sendMessage(reply);
+    }
+    else if (!std::strcmp(id, "MidiMessage")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("Data", data, size);
+        if (size < kMidiEventMaximumSize) {
+            if (_fifoMidiFromUi.size_free() >= sizeof(size) + size) {
+                _fifoMidiFromUi.put(size);
+                _fifoMidiFromUi.put(reinterpret_cast<const uint8_t*>(data), size);
+            }
+        }
     }
 
     return result;
