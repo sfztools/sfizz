@@ -40,7 +40,7 @@ protected:
     void uiSendValue(EditId id, const EditValue& v) override;
     void uiBeginSend(EditId id) override;
     void uiEndSend(EditId id) override;
-    void uiSendMIDI(const uint8_t* msg, uint32_t len) override;
+    void uiSendMIDI(const uint8_t* data, uint32_t len) override;
 
 private:
     void loadSfzFile(const std::string& filePath);

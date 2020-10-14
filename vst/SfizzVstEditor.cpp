@@ -176,10 +176,20 @@ void SfizzVstEditor::uiEndSend(EditId id)
         getController()->endEdit(pid);
 }
 
-void SfizzVstEditor::uiSendMIDI(const uint8_t* msg, uint32_t len)
+void SfizzVstEditor::uiSendMIDI(const uint8_t* data, uint32_t len)
 {
-    // TODO send MIDI...
-    
+    SfizzVstController* ctl = getController();
+
+    Steinberg::OPtr<Vst::IMessage> msg { ctl->allocateMessage() };
+    if (!msg) {
+        fprintf(stderr, "[Sfizz] UI could not allocate message\n");
+        return;
+    }
+
+    msg->setMessageID("MidiMessage");
+    Vst::IAttributeList* attr = msg->getAttributes();
+    attr->setBinary("Data", data, len);
+    ctl->sendMessage(msg);
 }
 
 ///

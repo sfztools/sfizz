@@ -56,7 +56,7 @@ widget_class mainView {open
       }
       Fl_Box sfzFileLabel_ {
         label {DefaultInstrument.sfz}
-        comment {tag=kTagLoadSfzFile} selected
+        comment {tag=kTagLoadSfzFile}
         xywh {195 11 250 31} labelsize 20 align 20
         class ClickableLabel
       }
@@ -138,7 +138,7 @@ widget_class mainView {open
     }
   }
   Fl_Group {subPanels_[kPanelGeneral]} {
-    xywh {5 110 791 285} hide
+    xywh {5 110 791 285}
     class LogicalGroup
   } {
     Fl_Group {} {open
@@ -212,8 +212,8 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {
-    xywh {5 109 790 286}
+  Fl_Group {subPanels_[kPanelSettings]} {open
+    xywh {5 109 790 286} hide
     class LogicalGroup
   } {
     Fl_Group {} {
@@ -305,8 +305,8 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Box {} {
-    xywh {5 400 790 70}
+  Fl_Box piano_ {selected
+    xywh {5 400 790 70} labelsize 12
     class Piano
   }
 }
