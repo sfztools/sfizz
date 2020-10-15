@@ -139,7 +139,7 @@ private:
 ReverseReader::ReverseReader(SndfileHandle handle)
     : BasicSndfileReader(handle)
 {
-    position_ = handle.seek(0, SF_SEEK_END);
+    position_ = handle.seek(0, SEEK_END);
 }
 
 AudioReaderType ReverseReader::type() const
