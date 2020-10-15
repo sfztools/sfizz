@@ -108,8 +108,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         "-Wno-unknown-pragmas"
         "-Wno-unused-function"
         "-Wno-unused-parameter"
-        "-Wno-unused-variable"
-        "-Wno-format")
+        "-Wno-unused-variable")
 endif()
 
 # To help debugging the link only
@@ -293,8 +292,7 @@ elseif(SFIZZ_AU)
             "-Wno-unknown-pragmas"
             "-Wno-unused-function"
             "-Wno-unused-parameter"
-            "-Wno-unused-variable"
-            "-Wno-format")
+            "-Wno-unused-variable")
     endif()
 
     # Installation
