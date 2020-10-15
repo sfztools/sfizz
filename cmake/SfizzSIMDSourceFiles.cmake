@@ -3,6 +3,7 @@ macro(sfizz_add_simd_sources SOURCES_VAR PREFIX)
 
     list (APPEND ${SOURCES_VAR}
         ${PREFIX}/sfizz/SIMDHelpers.cpp
+        ${PREFIX}/sfizz/simd/HelpersNEON.cpp
         ${PREFIX}/sfizz/simd/HelpersSSE.cpp
         ${PREFIX}/sfizz/simd/HelpersAVX.cpp)
 

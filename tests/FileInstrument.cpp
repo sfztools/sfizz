@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "sfizz/FileInstrument.h"
+#include "sfizz/FileMetadata.h"
 #include "absl/strings/string_view.h"
 #include <sndfile.hh>
 #include <cstdio>
@@ -49,13 +49,13 @@ static void usage(const char* argv0)
         stderr,
         "Usage: %s [-s|-f] <sound-file>\n"
         "    -s: extract the instrument using libsndfile\n"
-        "    -f: extract the instrument using FLAC metadata\n",
+        "    -f: extract the instrument using RIFF metadata\n",
         argv0);
 }
 
 enum FileMethod {
     kMethodSndfile,
-    kMethodFlac,
+    kMethodRiff,
 };
 
 int main(int argc, char *argv[])
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         if (flag == "-s")
             method = kMethodSndfile;
         else if (flag == "-f")
-            method = kMethodFlac;
+            method = kMethodRiff;
         else {
             usage(argv[0]);
             return 1;
@@ -85,8 +85,13 @@ int main(int argc, char *argv[])
 
     SF_INSTRUMENT ins {};
 
-    if (method == kMethodFlac) {
-        if (!sfz::FileInstruments::extractFromFlac(path, ins)) {
+    if (method == kMethodRiff) {
+        sfz::FileMetadataReader reader;
+        if (!reader.open(path)) {
+            fprintf(stderr, "Cannot open file\n");
+            return 1;
+        }
+        if (!reader.extractRiffInstrument(ins)) {
             fprintf(stderr, "Cannot get instrument\n");
             return 1;
         }

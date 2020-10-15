@@ -35,6 +35,7 @@ public:
     void processParameterChanges(Vst::IParameterChanges& pc);
     void processControllerChanges(Vst::IParameterChanges& pc);
     void processEvents(Vst::IEventList& events);
+    void processMidiFromUi();
     static int convertVelocityFromFloat(float x);
 
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
@@ -58,11 +59,21 @@ private:
     volatile bool _workRunning = false;
     Ring_Buffer _fifoToWorker;
     RTSemaphore _semaToWorker;
+    Ring_Buffer _fifoMidiFromUi;
     std::mutex _processMutex;
 
     // file modification periodic checker
     uint32 _fileChangeCounter = 0;
     uint32 _fileChangePeriod = 0;
+
+    // state notification periodic timer
+    uint32 _playStateChangeCounter = 0;
+    uint32 _playStateChangePeriod = 0;
+
+    // time info
+    int _timeSigNumerator = 0;
+    int _timeSigDenominator = 0;
+    void updateTimeInfo(const Vst::ProcessContext& context);
 
     // messaging
     struct RTMessage {

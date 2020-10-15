@@ -7,6 +7,7 @@
 #pragma once
 #include <absl/types/optional.h>
 #include <absl/strings/string_view.h>
+#include <absl/algorithm/container.h>
 //#include <string>
 #include <array>
 #include <cmath>
@@ -200,6 +201,34 @@ template <class Type>
 inline CXX14_CONSTEXPR Type vaGain(Type cutoff, Type sampleRate)
 {
     return std::tan(cutoff / sampleRate * pi<Type>());
+}
+
+/**
+ * @brief Insert an item uniquely into a vector of pairs.
+ *
+ * @param pairVector the vector of pairs
+ * @param key the unique key
+ * @param value the value
+ * @param replace whether to replace the value if the key is already present
+ * @return whether the item was inserted
+ */
+template <class P, class T, class U>
+bool insertPairUniquely(std::vector<P>& pairVector, const T& key, U value, bool replace = true)
+{
+    bool result = false;
+    auto it = absl::c_find_if(
+        pairVector, [&key](const P& pair) { return pair.first == key; });
+    if (it != pairVector.end()) {
+        if (replace) {
+            it->second = std::move(value);
+            result = true;
+        }
+    }
+    else {
+        pairVector.emplace_back(key, std::move(value));
+        result = true;
+    }
+    return result;
 }
 
 /**

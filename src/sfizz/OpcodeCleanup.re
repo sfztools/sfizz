@@ -76,6 +76,7 @@ end_region_oncc:
     //--------------------------------------------------------------------------
 
     if (scope == kOpcodeScopeRegion) {
+    again_region:
 
     YYCURSOR = opcode.c_str();
 
@@ -85,6 +86,7 @@ end_region_oncc:
     egV1 = "ampeg"|"fileg"|"pitcheg";
     eqV1 = "eq" number;
     lfoV2 = "lfo" number;
+    egV2 = "eg" number;
 
     (lfoV1) "_" ("depth"|"freq"|"fade") "cc" (number) END {
         opcode = absl::StrCat(group(1), "_", group(2), "_oncc", group(3));
@@ -102,7 +104,14 @@ end_region_oncc:
         opcode = absl::StrCat(group(1), "_", group(2), "1");
         goto end_region;
     }
-
+    (lfoV2) "_" ("cutoff"|"resonance") ("_" any)? END {
+        opcode = absl::StrCat(group(1), "_", group(2), "1", group(3));
+        goto end_region;
+    }
+    (egV2) "_" ("cutoff"|"resonance") ("_" any)? END {
+        opcode = absl::StrCat(group(1), "_", group(2), "1", group(3));
+        goto end_region;
+    }
     "loop" ("mode"|"start"|"end") END {
         opcode = absl::StrCat("loop_", group(1));
         goto end_region;
@@ -129,6 +138,11 @@ end_region_oncc:
         goto end_region;
     }
 
+    "gain_random" END {
+        opcode = "amp_random";
+        goto end_region;
+    }
+
     "gain" ("_" any)? END {
         opcode = absl::StrCat("volume", group(1));
         goto end_region;
@@ -145,6 +159,11 @@ end_region_oncc:
     "on_" ("hi"|"lo") "hdcc" (number) END {
         opcode = absl::StrCat("start_", group(1), "hdcc", group(2));
         goto end_region;
+    }
+
+    "cutoff" (number)? "_random" END {
+        opcode = absl::StrCat("fil", group(1), "_random");
+        goto again_region;
     }
 
     "fil_" (any) END {

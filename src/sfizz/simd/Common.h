@@ -24,11 +24,28 @@ T* prevAligned(const T* ptr)
 template<unsigned N, class T>
 bool unaligned(const T* ptr)
 {
-    return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask(N) )!= 0;
+    return (reinterpret_cast<uintptr_t>(ptr) & ByteAlignmentMask(N) ) != 0;
 }
 
 template<unsigned N, class T, class... Args>
 bool unaligned(const T* ptr1, Args... rest)
 {
     return unaligned<N>(ptr1) || unaligned<N>(rest...);
+}
+
+template<unsigned N, class T, class... Args>
+bool willAlign(const T* ptr1, const T* ptr2)
+{
+    const auto p1 = reinterpret_cast<uintptr_t>(ptr1);
+    const auto p2 = reinterpret_cast<uintptr_t>(ptr2);
+    return (
+        (p1 & ByteAlignmentMask(N)) == (p2 & ByteAlignmentMask(N))
+        && ((p1 & ByteAlignmentMask(sizeof(T))) == 0)
+    );
+}
+
+template<unsigned N, class T, class... Args>
+bool willAlign(const T* ptr1, const T* ptr2, Args... rest)
+{
+    return willAlign<N>(ptr1, ptr2) && willAlign<N>(ptr2, rest...);
 }

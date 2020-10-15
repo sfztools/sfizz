@@ -4,8 +4,11 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "TestHelpers.h"
 #include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
+#include "sfizz/modulations/ModId.h"
+#include "sfizz/modulations/ModKey.h"
 #include "catch2/catch.hpp"
 #include "ghc/fs_std.hpp"
 #if defined(__APPLE__)
@@ -267,37 +270,90 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 {
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels_multi.sfz");
-    REQUIRE(synth.getNumRegions() == 6);
+    REQUIRE(synth.getNumRegions() == 10);
 
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "*sine");
-    REQUIRE(!synth.getRegionView(0)->isStereo());
-    REQUIRE(synth.getRegionView(0)->isGenerator());
-    REQUIRE(!synth.getRegionView(0)->oscillator);
+    int regionNumber = 0;
+    const Region* region = nullptr;
 
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "*sine");
-    REQUIRE(synth.getRegionView(1)->isStereo());
-    REQUIRE(synth.getRegionView(1)->isGenerator());
-    REQUIRE(!synth.getRegionView(1)->oscillator);
+    // generator only
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(!region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
 
-    REQUIRE(synth.getRegionView(2)->sampleId.filename() == "ramp_wave.wav");
-    REQUIRE(!synth.getRegionView(2)->isStereo());
-    REQUIRE(!synth.getRegionView(2)->isGenerator());
-    REQUIRE(synth.getRegionView(2)->oscillator);
+    // generator with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
 
-    REQUIRE(synth.getRegionView(3)->sampleId.filename() == "ramp_wave.wav");
-    REQUIRE(synth.getRegionView(3)->isStereo());
-    REQUIRE(!synth.getRegionView(3)->isGenerator());
-    REQUIRE(synth.getRegionView(3)->oscillator);
+    // explicit wavetable
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::On);
 
-    REQUIRE(synth.getRegionView(4)->sampleId.filename() == "*sine");
-    REQUIRE(!synth.getRegionView(4)->isStereo());
-    REQUIRE(synth.getRegionView(4)->isGenerator());
-    REQUIRE(!synth.getRegionView(4)->oscillator);
+    // explicit wavetable with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::On);
 
-    REQUIRE(synth.getRegionView(5)->sampleId.filename() == "*sine");
-    REQUIRE(!synth.getRegionView(5)->isStereo());
-    REQUIRE(synth.getRegionView(5)->isGenerator());
-    REQUIRE(!synth.getRegionView(5)->oscillator);
+    // explicit disabled wavetable
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Off);
+
+    // explicit disabled wavetable with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Off);
+
+    // implicit wavetable (sound file < 3000 frames)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+
+    // implicit non-wavetable (sound file >= 3000 frames)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "snare.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+
+    // generator with multi=1 (single)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(!region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+
+    // generator with multi=2 (ring modulation)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(!region->isStereo());
+    REQUIRE(region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
 }
 
 TEST_CASE("[Files] sw_default")
@@ -356,9 +412,11 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
 
     REQUIRE( synth.getRegionView(1)->keyRange.getStart() == 57 );
     REQUIRE( synth.getRegionView(1)->keyRange.getEnd() == 57 );
-    REQUIRE(!synth.getRegionView(2)->modifiers[Mod::amplitude].empty());
-    REQUIRE(synth.getRegionView(2)->modifiers[Mod::amplitude].contains(10));
-    REQUIRE(synth.getRegionView(2)->modifiers[Mod::amplitude].getWithDefault(10).value == 34.0f);
+
+    const ModKey target = ModKey::createNXYZ(ModId::Amplitude, synth.getRegionView(2)->getId());
+    const RegionCCView view(*synth.getRegionView(2), target);
+    REQUIRE(!view.empty());
+    REQUIRE(view.valueAt(10) == 34.0f);
 }
 
 TEST_CASE("[Files] Specific bug: relative path with backslashes")
@@ -466,55 +524,6 @@ TEST_CASE("[Files] Note and octave offsets")
     REQUIRE( synth.getRegionView(6)->pitchKeycenter == 50 );
 }
 
-TEST_CASE("[Files] Off by with different delays")
-{
-    Synth synth;
-    synth.setSamplesPerBlock(256);
-    AudioBuffer<float> buffer(2, 256);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
-    REQUIRE( synth.getNumRegions() == 4 );
-    synth.noteOn(0, 63, 63);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
-    auto group1Voice = synth.getVoiceView(0);
-    REQUIRE( group1Voice->getRegion()->group == 1ul );
-    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
-    synth.noteOn(100, 64, 63);
-    synth.renderBlock(buffer);
-    REQUIRE(group1Voice->releasedOrFree());
-}
-
-TEST_CASE("[Files] Off by with the same delays")
-{
-    Synth synth;
-    synth.setSamplesPerBlock(256);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
-    REQUIRE( synth.getNumRegions() == 4 );
-    synth.noteOn(0, 63, 63);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
-    auto group1Voice = synth.getVoiceView(0);
-    REQUIRE( group1Voice->getRegion()->group == 1ul );
-    REQUIRE( group1Voice->getRegion()->offBy == 2ul );
-    synth.noteOn(0, 64, 63);
-    REQUIRE(!group1Voice->releasedOrFree());
-}
-
-TEST_CASE("[Files] Off by with the same notes at the same time")
-{
-    Synth synth;
-    synth.setSamplesPerBlock(256);
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_by.sfz");
-    REQUIRE( synth.getNumRegions() == 4 );
-    synth.noteOn(0, 65, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
-    synth.noteOn(0, 65, 63);
-    REQUIRE( synth.getNumActiveVoices() == 4 );
-    AudioBuffer<float> buffer { 2, 256 };
-    synth.renderBlock(buffer);
-    synth.noteOn(0, 65, 63);
-    synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
-}
-
 TEST_CASE("[Files] Off modes")
 {
     Synth synth;
@@ -522,7 +531,7 @@ TEST_CASE("[Files] Off modes")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
     synth.noteOn(0, 64, 63);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     const auto* fastVoice =
         synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
             synth.getVoiceView(0) :
@@ -532,10 +541,12 @@ TEST_CASE("[Files] Off modes")
             synth.getVoiceView(1) :
             synth.getVoiceView(0) ;
     synth.noteOn(100, 63, 63);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( numPlayingVoices(synth) == 1 );
     AudioBuffer<float> buffer { 2, 256 };
-    synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
+    for (unsigned i = 0; i < 10; ++i) // Not enough for the "normal" voice to die
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 2 );
     REQUIRE( fastVoice->isFree() );
     REQUIRE( !normalVoice->isFree() );
 }
@@ -554,6 +565,39 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
     REQUIRE(synth.getRegionView(0)->loopRange == Range<uint32_t> { 77554, 186581 });
     REQUIRE(synth.getRegionView(1)->loopRange == Range<uint32_t> { 77554, 186581 });
     REQUIRE(synth.getRegionView(2)->loopRange == Range<uint32_t> { 4, 124 });
+}
+
+TEST_CASE("[Files] Looped regions can start at 0")
+{
+    Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/loop_can_start_at_0.sfz", R"(
+    <region> sample=wavetable_with_loop_at_endings.wav
+    )");
+    REQUIRE( synth.getNumRegions() == 1 );
+    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(0)->loopRange == Range<uint32_t> { 0, synth.getRegionView(0)->sampleEnd } );
+}
+
+TEST_CASE("[Synth] Release triggers automatically sets the loop mode")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/triggers_setting_loops.sfz", R"(
+        <region> sample=kick.wav pitch_keycenter=69 loop_mode=loop_sustain trigger=release
+        <region> sample=kick.wav pitch_keycenter=69 loop_mode=loop_sustain trigger=release_key
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release loop_mode=loop_sustain
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release_key loop_mode=loop_sustain
+        <region> sample=looped_flute.wav pitch_keycenter=69 trigger=release_key
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release_key // These are normal and set to one_shot
+        <region> sample=kick.wav pitch_keycenter=69 trigger=release
+    )");
+    REQUIRE( synth.getNumRegions() == 7 );
+    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(1)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(2)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(3)->loopMode == SfzLoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(4)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(5)->loopMode == SfzLoopMode::one_shot );
+    REQUIRE( synth.getRegionView(6)->loopMode == SfzLoopMode::one_shot );
 }
 
 TEST_CASE("[Files] Case sentitiveness")
@@ -600,11 +644,9 @@ TEST_CASE("[Files] Labels")
     REQUIRE( keyLabels[0].second == "Cymbals" );
     REQUIRE( keyLabels[1].first == 65 );
     REQUIRE( keyLabels[1].second == "Crash" );
-    REQUIRE( ccLabels.size() == 2);
-    REQUIRE( ccLabels[0].first == 54 );
-    REQUIRE( ccLabels[0].second == "Gain" );
-    REQUIRE( ccLabels[1].first == 2 );
-    REQUIRE( ccLabels[1].second == "Other" );
+    REQUIRE( ccLabels.size() >= 2);
+    REQUIRE( absl::c_find(ccLabels, CCNamePair { 54, "Gain" }) != ccLabels.end() );
+    REQUIRE( absl::c_find(ccLabels, CCNamePair { 2, "Other" }) != ccLabels.end() );
     const std::string xmlMidnam = synth.exportMidnam();
     REQUIRE(xmlMidnam.find("<Note Number=\"12\" Name=\"Cymbals\" />") != xmlMidnam.npos);
     REQUIRE(xmlMidnam.find("<Note Number=\"65\" Name=\"Crash\" />") != xmlMidnam.npos);
@@ -620,4 +662,47 @@ TEST_CASE("[Files] Switch labels")
     REQUIRE(xmlMidnam.find("<Note Number=\"36\" Name=\"Sine\" />") != xmlMidnam.npos);
     REQUIRE(xmlMidnam.find("<Note Number=\"38\" Name=\"Triangle\" />") != xmlMidnam.npos);
     REQUIRE(xmlMidnam.find("<Note Number=\"40\" Name=\"Saw\" />") != xmlMidnam.npos);
+}
+
+TEST_CASE("[Files] Duplicate labels")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(
+        fs::current_path() / "tests/TestFiles/labels.sfz",
+        R"(<control> label_key60=Baz label_key60=Quux
+<control> label_cc20=Foo label_cc20=Bar
+<region> sample=*sine)");
+
+    auto keyLabels = synth.getKeyLabels();
+    auto ccLabels = synth.getCCLabels();
+    REQUIRE( keyLabels.size() == 1);
+    REQUIRE( keyLabels[0].first == 60 );
+    REQUIRE( keyLabels[0].second == "Quux" );
+    REQUIRE( ccLabels.size() >= 1);
+    REQUIRE( absl::c_find(ccLabels, CCNamePair { 20, "Bar" }) != ccLabels.end() );
+    const std::string xmlMidnam = synth.exportMidnam();
+    REQUIRE(xmlMidnam.find("<Note Number=\"60\" Name=\"Quux\" />") != xmlMidnam.npos);
+    REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"20\" Name=\"Bar\" />") != xmlMidnam.npos);
+}
+
+TEST_CASE("[Files] Key center from audio file")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sample_keycenter.sfz", R"(
+        <group> pitch_keycenter=sample oscillator=off
+        <region> sample=root_key_38.wav
+        <region> sample=root_key_62.wav
+        <region> sample=root_key_38.flac
+        <region> sample=root_key_62.flac
+        <region> pitch_keycenter=10 sample=root_key_62.flac
+        <region> key=10 sample=root_key_62.flac
+    )");
+
+    REQUIRE(synth.getNumRegions() == 6);
+    REQUIRE(synth.getRegionView(0)->pitchKeycenter == 38);
+    REQUIRE(synth.getRegionView(1)->pitchKeycenter == 62);
+    REQUIRE(synth.getRegionView(2)->pitchKeycenter == 38);
+    REQUIRE(synth.getRegionView(3)->pitchKeycenter == 62);
+    REQUIRE(synth.getRegionView(4)->pitchKeycenter == 10);
+    REQUIRE(synth.getRegionView(5)->pitchKeycenter == 62);
 }

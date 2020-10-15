@@ -139,6 +139,20 @@ constexpr T clamp(T v, T lo, T hi)
     return max(min(v, hi), lo);
 }
 
+/**
+ * @brief Compute the floating-point remainder (fmod)
+ *
+ * @tparam T
+ * @param x
+ * @param m
+ * @return T
+ */
+template <class T>
+inline constexpr T fastFmod(T x, T m)
+{
+    return x - m * static_cast<int>(x / m);
+}
+
 template <int Increment = 1, class T>
 inline CXX14_CONSTEXPR void incrementAll(T& only)
 {
@@ -272,6 +286,17 @@ template<class T, absl::enable_if_t<std::is_floating_point<T>::value, int> = 0 >
 constexpr long int lroundPositive(T value)
 {
     return static_cast<int>(0.5f + value); // NOLINT
+}
+
+/**
+   @brief Wrap a normalized phase into the domain [0;1[
+ */
+template <class T>
+static T wrapPhase(T phase)
+{
+    T wrapped = phase - static_cast<int>(phase);
+    wrapped += wrapped < 0;
+    return wrapped;
 }
 
 /**
@@ -660,7 +685,7 @@ public:
     }
 
 private:
-    std::array<uint32_t, N> seeds_ {};
+    std::array<uint32_t, N> seeds_ {{}};
     float mean_ { 0 };
     float gain_ { 0 };
 };

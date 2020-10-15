@@ -35,15 +35,15 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
             Steinberg::String("Preload size"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamScalaRootKey.createParameter(
+        kParamScalaRootKeyRange.createParameter(
             Steinberg::String("Scala root key"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamTuningFrequency.createParameter(
+        kParamTuningFrequencyRange.createParameter(
             Steinberg::String("Tuning frequency"), pid++, Steinberg::String("Hz"),
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamStretchedTuning.createParameter(
+        kParamStretchedTuningRange.createParameter(
             Steinberg::String("Stretched tuning"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
 
@@ -175,17 +175,17 @@ tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst:
     }
     case kPidScalaRootKey: {
         slotI32 = &_state.scalaRootKey;
-        value = kParamScalaRootKey.denormalize(normValue);
+        value = kParamScalaRootKeyRange.denormalize(normValue);
         break;
     }
     case kPidTuningFrequency: {
         slotF32 = &_state.tuningFrequency;
-        value = kParamTuningFrequency.denormalize(normValue);
+        value = kParamTuningFrequencyRange.denormalize(normValue);
         break;
     }
     case kPidStretchedTuning: {
         slotF32 = &_state.stretchedTuning;
-        value = kParamStretchedTuning.denormalize(normValue);
+        value = kParamStretchedTuningRange.denormalize(normValue);
         break;
     }
     }
@@ -244,9 +244,9 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
     setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
     setParamNormalized(kPidOversampling, kParamOversamplingRange.normalize(s.oversamplingLog2));
     setParamNormalized(kPidPreloadSize, kParamPreloadSizeRange.normalize(s.preloadSize));
-    setParamNormalized(kPidScalaRootKey, kParamScalaRootKey.normalize(s.scalaRootKey));
-    setParamNormalized(kPidTuningFrequency, kParamTuningFrequency.normalize(s.tuningFrequency));
-    setParamNormalized(kPidStretchedTuning, kParamStretchedTuning.normalize(s.stretchedTuning));
+    setParamNormalized(kPidScalaRootKey, kParamScalaRootKeyRange.normalize(s.scalaRootKey));
+    setParamNormalized(kPidTuningFrequency, kParamTuningFrequencyRange.normalize(s.tuningFrequency));
+    setParamNormalized(kPidStretchedTuning, kParamStretchedTuningRange.normalize(s.stretchedTuning));
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();
@@ -282,6 +282,16 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
             return result;
 
         _state.scalaFile.assign(static_cast<const char *>(data), size);
+    }
+    else if (!strcmp(id, "NotifiedPlayState")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("PlayState", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        _playState = *static_cast<const SfizzPlayState*>(data);
     }
 
     for (StateListener* listener : _stateListeners)

@@ -7,23 +7,53 @@ sfz::VoiceStealing::VoiceStealing()
 
 sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
 {
-    // Start of the voice stealing algorithm
+    if (voices.empty())
+        return {};
+
+    switch(stealingAlgorithm) {
+    case StealingAlgorithm::First:
+        return stealFirst(voices);
+    case StealingAlgorithm::EnvelopeAndAge:
+        return stealEnvelopeAndAge(voices);
+    case StealingAlgorithm::Oldest:
+    default:
+        return stealOldest(voices);
+    }
+}
+
+void sfz::VoiceStealing::setStealingAlgorithm(StealingAlgorithm algorithm) noexcept
+{
+    stealingAlgorithm = algorithm;
+}
+
+sfz::Voice* sfz::VoiceStealing::stealFirst(absl::Span<Voice*> voices) noexcept
+{
+    return voices.front();
+}
+
+sfz::Voice* sfz::VoiceStealing::stealOldest(absl::Span<Voice*> voices) noexcept
+{
+    absl::c_sort(voices, voiceOrdering);
+    return voices.front();
+}
+
+sfz::Voice* sfz::VoiceStealing::stealEnvelopeAndAge(absl::Span<Voice*> voices) noexcept
+{
     absl::c_sort(voices, voiceOrdering);
 
-    const auto sumEnvelope = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {
-        return sum + v->getAverageEnvelope();
+    const auto sumPower = absl::c_accumulate(voices, 0.0f, [](float sum, const Voice* v) {
+        return sum + v->getAveragePower();
     });
-    // We are checking the envelope to try and kill voices with relative low contribution
+    // We are checking the power to try and kill voices with relative low contribution
     // to the output compared to the rest.
-    const auto envThreshold = sumEnvelope
-        / static_cast<float>(voices.size()) * config::stealingEnvelopeCoeff;
+    const auto powerThreshold = sumPower
+        / static_cast<float>(voices.size()) * config::stealingPowerCoeff;
     // We are checking the age so that voices have the time to build up attack
     // This is not perfect because pad-type voices will take a long time to output
     // their sound, but it's reasonable for sounds with a quick attack and longer
     // release.
-    const auto ageThreshold = voices.front()->getAge() * config::stealingAgeCoeff;
-    // This needs to be positive
-    ASSERT(ageThreshold >= 0);
+    const auto ageThreshold =
+        static_cast<int>(voices.front()->getAge() * config::stealingAgeCoeff);
 
     Voice* returnedVoice = voices.front();
     unsigned idx = 0;
@@ -35,12 +65,12 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
             break;
         }
 
-        float maxEnvelope { 0.0f };
+        float maxPower { 0.0f };
         SisterVoiceRing::applyToRing(ref, [&](Voice* v) {
-            maxEnvelope = max(maxEnvelope, v->getAverageEnvelope());
+            maxPower = max(maxPower, v->getAveragePower());
         });
 
-        if (maxEnvelope < envThreshold) {
+        if (maxPower < powerThreshold) {
             returnedVoice = ref;
             break;
         }
@@ -49,5 +79,6 @@ sfz::Voice* sfz::VoiceStealing::steal(absl::Span<sfz::Voice*> voices) noexcept
         do { idx++; }
         while (idx < voices.size() && sisterVoices(ref, voices[idx]));
     }
+
     return returnedVoice;
 }

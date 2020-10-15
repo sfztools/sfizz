@@ -62,6 +62,15 @@ public:
     tresult store(IBStream* state) const;
 };
 
+struct SfizzPlayState {
+    uint32 curves;
+    uint32 masters;
+    uint32 groups;
+    uint32 regions;
+    uint32 preloadedSamples;
+    uint32 activeVoices;
+};
+
 struct SfizzParameterRange {
     float def = 0.0;
     float min = 0.0;
@@ -90,6 +99,6 @@ static constexpr SfizzParameterRange kParamVolumeRange(0.0, -60.0, +6.0);
 static constexpr SfizzParameterRange kParamNumVoicesRange(64.0, 1.0, 256.0);
 static constexpr SfizzParameterRange kParamOversamplingRange(0.0, 0.0, 3.0);
 static constexpr SfizzParameterRange kParamPreloadSizeRange(8192.0, 1024.0, 65536.0);
-static constexpr SfizzParameterRange kParamScalaRootKey(60.0, 0.0, 127.0);
-static constexpr SfizzParameterRange kParamTuningFrequency(440.0, 300.0, 500.0);
-static constexpr SfizzParameterRange kParamStretchedTuning(0.0, 0.0, 1.0);
+static constexpr SfizzParameterRange kParamScalaRootKeyRange(60.0, 0.0, 127.0);
+static constexpr SfizzParameterRange kParamTuningFrequencyRange(440.0, 300.0, 500.0);
+static constexpr SfizzParameterRange kParamStretchedTuningRange(0.0, 0.0, 1.0);

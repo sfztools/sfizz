@@ -11,22 +11,35 @@
 
 namespace sfz {
 
+template<class Type>
+Type ADSREnvelope<Type>::secondsToSamples (Type timeInSeconds) const noexcept
+{
+    return static_cast<int>(timeInSeconds * sampleRate);
+};
+
+template<class Type>
+Type ADSREnvelope<Type>::secondsToLinRate (Type timeInSeconds) const noexcept
+{
+    if (timeInSeconds == 0)
+        return 1.0f;
+
+    return 1 / (sampleRate * timeInSeconds);
+};
+
+template<class Type>
+Type ADSREnvelope<Type>::secondsToExpRate (Type timeInSeconds) const noexcept
+{
+    if (timeInSeconds == 0)
+        return 0.0f;
+
+    timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
+    return std::exp(-9.0 / (timeInSeconds * sampleRate));
+};
+
 template <class Type>
 void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
 {
-    auto secondsToSamples = [sampleRate](Type timeInSeconds) {
-        return static_cast<int>(timeInSeconds * sampleRate);
-    };
-
-    auto secondsToLinRate = [sampleRate](Type timeInSeconds) {
-        timeInSeconds = std::max<Type>(timeInSeconds, config::virtuallyZero);
-        return 1 / (sampleRate * timeInSeconds);
-    };
-
-    auto secondsToExpRate = [sampleRate](Type timeInSeconds) {
-        timeInSeconds = std::max<Type>(25e-3, timeInSeconds);
-        return std::exp(-8.0 / (timeInSeconds * sampleRate));
-    };
+    this->sampleRate = sampleRate;
 
     this->delay = delay + secondsToSamples(desc.getDelay(state, velocity));
     this->attackStep = secondsToLinRate(desc.getAttack(state, velocity));
@@ -35,14 +48,15 @@ void ADSREnvelope<Type>::reset(const EGDescription& desc, const Region& region, 
     this->hold = secondsToSamples(desc.getHold(state, velocity));
     this->peak = 1.0;
     this->sustain = normalizePercents(desc.getSustain(state, velocity));
-    this->sustain = max(this->sustain, config::virtuallyZero);
     this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
+    sustainThreshold = this->sustain + config::virtuallyZero;
     shouldRelease = false;
-    freeRunning = ((region.trigger == SfzTrigger::release)
-        || (region.trigger == SfzTrigger::release_key)
-        || (region.loopMode == SfzLoopMode::one_shot && (region.isGenerator() || region.oscillator)));
+    freeRunning = (
+        (this->sustain == 0.0f)
+        || (region.loopMode == SfzLoopMode::one_shot && region.isOscillator())
+    );
     currentValue = this->start;
     currentState = State::Delay;
 }
@@ -76,7 +90,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         // fallthrough
     case State::Decay:
         currentValue *= decayRate;
-        if (currentValue > sustain)
+        if (currentValue > sustainThreshold )
             return currentValue;
 
         currentState = State::Sustain;
@@ -88,7 +102,7 @@ Type ADSREnvelope<Type>::getNextValue() noexcept
         return currentValue;
     case State::Release:
         currentValue *= releaseRate;
-        if (currentValue > config::virtuallyZero)
+        if (currentValue > config::egReleaseThreshold)
             return currentValue;
 
         currentState = State::Done;
@@ -146,7 +160,7 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
         case State::Decay:
             while (count < size && (currentValue *= decayRate) > sustain)
                 output[count++] = currentValue;
-            if (currentValue <= sustain) {
+            if (currentValue <= sustainThreshold) {
                 currentValue = sustain;
                 currentState = State::Sustain;
             }
@@ -161,9 +175,9 @@ void ADSREnvelope<Type>::getBlock(absl::Span<Type> output) noexcept
             sfz::fill(output.first(count), currentValue);
             break;
         case State::Release:
-            while (count < size && (currentValue *= releaseRate) > config::virtuallyZero)
+            while (count < size && (currentValue *= releaseRate) > config::egReleaseThreshold)
                 output[count++] = currentValue;
-            if (currentValue <= config::virtuallyZero) {
+            if (currentValue <= config::egReleaseThreshold) {
                 currentValue = 0;
                 currentState = State::Done;
             }
@@ -208,13 +222,16 @@ int ADSREnvelope<Type>::getRemainingDelay() const noexcept
 }
 
 template <class Type>
-void ADSREnvelope<Type>::startRelease(int releaseDelay, bool fastRelease) noexcept
+void ADSREnvelope<Type>::startRelease(int releaseDelay) noexcept
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
+}
 
-    if (fastRelease)
-        this->releaseRate = 0;
+template <class Type>
+void ADSREnvelope<Type>::setReleaseTime(Type timeInSeconds) noexcept
+{
+    releaseRate = secondsToExpRate(timeInSeconds);
 }
 
 }

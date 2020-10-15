@@ -40,8 +40,33 @@ jobs:
     install: .travis/download_cmake.sh
     script: .travis/script_test.sh
 
-  - name: "Windows mingw32"
+  - name: "macOS"
     stage: "Build"
+    os: osx
+    osx_image: xcode11.3
+    addons:
+      homebrew:
+        packages:
+        - cmake
+        - libsndfile
+        - jack
+        - dylibbundler
+    env:
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
+    script: .travis/script_osx.sh
+    after_success: .travis/prepare_osx.sh
+
+  - name: "MOD devices arm"
+    env:
+    - CONTAINER=jpcima/mod-plugin-builder
+    - CROSS_COMPILE=moddevices-arm
+    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
+    before_install: .travis/before_install_moddevices.sh
+    install: .travis/install_moddevices.sh
+    script: .travis/script_moddevices.sh
+    after_success: .travis/prepare_tarball.sh
+
+  - name: "Windows mingw32"
     env:
     - CROSS_COMPILE=mingw32
     - CONTAINER=archlinux
@@ -92,6 +117,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=OFF
+    - ENABLE_LV2_UI=OFF
     addons:
       apt:
         packages:
@@ -107,6 +133,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=ON
+    - ENABLE_LV2_UI=ON
     addons:
       apt:
         packages:
@@ -127,28 +154,9 @@ jobs:
     script: .travis/script_plugins.sh
     after_success: .travis/prepare_tarball.sh
 
-  - name: "macOS"
-    os: osx
-    env:
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    install: .travis/install_osx.sh
-    script: .travis/script_osx.sh
-    after_success: .travis/prepare_osx.sh
-
-  - name: "MOD devices arm"
-    stage: "Build"
-    env:
-    - CONTAINER=jpcima/mod-plugin-builder
-    - CROSS_COMPILE=moddevices-arm
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
-    before_install: .travis/before_install_moddevices.sh
-    install: .travis/install_moddevices.sh
-    script: .travis/script_moddevices.sh
-    after_success: .travis/prepare_tarball.sh
-
   - stage: "Deploy"
     name: "Source packaging"
-    if: (tag IS present) AND (branch = master) AND (type = push)
+    if: (tag =~ /^v?[0-9]/) AND (type = push)
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
     addons:
@@ -157,17 +165,6 @@ jobs:
         - python-pip
     install: sudo pip install git-archive-all
     script: git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
-
-  - name: "Generate documentation"
-    if: (tag IS present) AND (branch = master) AND (type = push)
-    addons:
-      apt:
-        packages:
-        - doxygen
-        - cmake
-        - libsndfile-dev
-    install: skip
-    script: .travis/update_dox.sh
 
   - name: "Discord Webhook"
     install: skip

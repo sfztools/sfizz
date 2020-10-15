@@ -76,6 +76,8 @@ void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
         ccEvents.shrink_to_fit();
         ccEvents.reserve(samplesPerBlock);
     }
+    pitchEvents.shrink_to_fit();
+    pitchEvents.reserve(samplesPerBlock);
 }
 
 float sfz::MidiState::getNoteDuration(int noteNumber, int delay) const

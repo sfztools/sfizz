@@ -57,6 +57,23 @@ struct SisterVoiceRing {
     }
 
     /**
+     * @brief Off all sisters in a ring
+     *
+     * @param voice
+     * @param delay
+     * @param fast whether to apply a fast release
+     */
+    template<class T,
+        absl::enable_if_t<std::is_same<Voice, absl::remove_const_t<T>>::value, int> = 0>
+    static void offAllSisters(T* voice, int delay, bool fast = false) {
+        if (voice != nullptr) {
+            SisterVoiceRing::applyToRing(voice, [&] (Voice* v) {
+                v->off(delay, fast);
+            });
+        }
+    }
+
+    /**
      * @brief Check if a sister voice ring is well formed
      *
      * @param start
@@ -112,14 +129,6 @@ struct SisterVoiceRing {
  */
 class SisterVoiceRingBuilder {
 public:
-    ~SisterVoiceRingBuilder() noexcept {
-        if (lastStartedVoice != nullptr) {
-            ASSERT(firstStartedVoice);
-            lastStartedVoice->setNextSisterVoice(firstStartedVoice);
-            firstStartedVoice->setPreviousSisterVoice(lastStartedVoice);
-        }
-    }
-
     /**
      * @brief Add a voice to the sister ring
      *
@@ -128,6 +137,9 @@ public:
     void addVoiceToRing(Voice* voice) noexcept {
         if (firstStartedVoice == nullptr)
             firstStartedVoice = voice;
+
+        firstStartedVoice->setPreviousSisterVoice(voice);
+        voice->setNextSisterVoice(firstStartedVoice);
 
         if (lastStartedVoice != nullptr) {
             voice->setPreviousSisterVoice(lastStartedVoice);

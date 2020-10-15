@@ -8,4 +8,4 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DSFIZZ_TESTS=OFF \
       -DCMAKE_CXX_STANDARD=17 \
       ..
-make -j$(nproc)
+make -j2

@@ -15,7 +15,11 @@
 #include "effects/Apan.h"
 #include "effects/Lofi.h"
 #include "effects/Limiter.h"
+#include "effects/Compressor.h"
+#include "effects/Gate.h"
+#include "effects/Disto.h"
 #include "effects/Strings.h"
+#include "effects/Fverb.h"
 #include "effects/Rectify.h"
 #include "effects/Gain.h"
 #include "effects/Width.h"
@@ -31,7 +35,11 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("apan", fx::Apan::makeInstance);
     registerEffectType("lofi", fx::Lofi::makeInstance);
     registerEffectType("limiter", fx::Limiter::makeInstance);
+    registerEffectType("comp", fx::Compressor::makeInstance);
+    registerEffectType("gate", fx::Gate::makeInstance);
+    registerEffectType("disto", fx::Disto::makeInstance);
     registerEffectType("strings", fx::Strings::makeInstance);
+    registerEffectType("fverb", fx::Fverb::makeInstance);
 
     // extensions (book)
     registerEffectType("rectify", fx::Rectify::makeInstance);

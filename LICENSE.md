@@ -3,12 +3,7 @@ BSD 2-Clause License
 The code is copyrighted by their respective authors, as indicated by the
 source control mechanism.
 
-Contributors include:
-- Paul Ferrand (2019-) paul at ferrand dot cc
-- Andrea Zanellato (2019-)
-- Jean-Pierre Cimalando (2020-)
-- Michael Willis (2020-)
-- Alexander Mitchell (2020-)
+Please refer to AUTHORS.md for the list of contributors.
 
 All rights reserved.
 

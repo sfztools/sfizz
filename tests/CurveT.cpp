@@ -9,6 +9,7 @@
 #include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;
+using namespace sfz::literals;
 
 TEST_CASE("[Curve] Bipolar 0 to 1")
 {
@@ -242,3 +243,20 @@ TEST_CASE("[Curve] Default CurveSet")
     REQUIRE( curveSet.getCurve(6).evalNormalized(1.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(6).evalNormalized(0.3f) == Approx(0.837).margin(1e-3) );
 }
+
+TEST_CASE("[Curve] Build from points")
+{
+    std::array<float, sfz::Curve::NumValues> curvePoints;
+    float val = 0.0f;
+    float step = 1 / static_cast<float>(sfz::Curve::NumValues);
+    for (auto& x : curvePoints) {
+        x = val;
+        val += step;
+    }
+
+    sfz::Curve curve = sfz::Curve::buildFromPoints(curvePoints.data());
+    REQUIRE(curve.evalNormalized(0.0) == curvePoints[0]);
+    REQUIRE(curve.evalNormalized(1.0) == curvePoints[sfz::Curve::NumValues - 1]);
+    REQUIRE(curve.evalNormalized(63_norm) == curvePoints[63]);
+}
+

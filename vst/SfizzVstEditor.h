@@ -6,7 +6,9 @@
 
 #pragma once
 #include "SfizzVstController.h"
+#include "editor/EditorController.h"
 #include "public.sdk/source/vst/vstguieditor.h"
+class Editor;
 #if !defined(__APPLE__) && !defined(_WIN32)
 namespace VSTGUI { class RunLoop; }
 #endif
@@ -14,7 +16,7 @@ namespace VSTGUI { class RunLoop; }
 using namespace Steinberg;
 using namespace VSTGUI;
 
-class SfizzVstEditor : public Vst::VSTGUIEditor, public IControlListener, public SfizzVstController::StateListener {
+class SfizzVstEditor : public Vst::VSTGUIEditor, public SfizzVstController::StateListener, public EditorController {
 public:
     explicit SfizzVstEditor(void *controller);
     ~SfizzVstEditor();
@@ -27,89 +29,28 @@ public:
         return static_cast<SfizzVstController*>(Vst::VSTGUIEditor::getController());
     }
 
-    // IControlListener
-    void valueChanged(CControl* ctl) override;
-    void enterOrLeaveEdit(CControl* ctl, bool enter);
-    void controlBeginEdit(CControl* ctl) override;
-    void controlEndEdit(CControl* ctl) override;
-
     // VSTGUIEditor
     CMessageResult notify(CBaseObject* sender, const char* message) override;
 
     // SfizzVstController::StateListener
     void onStateChanged() override;
 
-private:
-    void chooseSfzFile();
-    void loadSfzFile(const std::string& filePath);
+protected:
+    // EditorController
+    void uiSendValue(EditId id, const EditValue& v) override;
+    void uiBeginSend(EditId id) override;
+    void uiEndSend(EditId id) override;
+    void uiSendMIDI(const uint8_t* data, uint32_t len) override;
 
-    void chooseScalaFile();
+private:
+    void loadSfzFile(const std::string& filePath);
     void loadScalaFile(const std::string& filePath);
 
-    void createFrameContents();
     void updateStateDisplay();
-    void updateSfzFileLabel(const std::string& filePath);
-    void updateScalaFileLabel(const std::string& filePath);
-    static void updateLabelWithFileName(CTextLabel* label, const std::string& filePath);
-    void updateVolumeLabel(float volume);
-    void updateNumVoicesLabel(int numVoices);
-    void updateOversamplingLabel(int oversamplingLog2);
-    void updatePreloadSizeLabel(int preloadSize);
-    void updateScalaRootKeyLabel(int rootKey);
-    void updateTuningFrequencyLabel(float tuningFrequency);
-    void updateStretchedTuningLabel(float stretchedTuning);
-    void setActivePanel(unsigned panelId);
 
-    template <class Control>
-    void adjustMinMaxToRangeParam(Control* c, Vst::ParamID id)
-    {
-        auto* p = static_cast<Vst::RangeParameter*>(getController()->getParameterObject(id));
-        c->setMin(p->getMin());
-        c->setMax(p->getMax());
-    }
+    Vst::ParamID parameterOfEditId(EditId id);
 
-    enum {
-        kPanelGeneral,
-        // kPanelControls,
-        kPanelSettings,
-        kPanelTuning,
-        kNumPanels,
-    };
-
-    unsigned _activePanel = 0;
-    CViewContainer* _subPanels[kNumPanels] = {};
-
-    enum {
-        kTagLoadSfzFile,
-        kTagSetVolume,
-        kTagSetNumVoices,
-        kTagSetOversampling,
-        kTagSetPreloadSize,
-        kTagLoadScalaFile,
-        kTagSetScalaRootKey,
-        kTagSetTuningFrequency,
-        kTagSetStretchedTuning,
-        kTagFirstChangePanel,
-        kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
-    };
-
-    CBitmap _logo;
-    CTextLabel* _sfzFileLabel = nullptr;
-    CTextLabel* _scalaFileLabel = nullptr;
-    CSliderBase *_volumeSlider = nullptr;
-    CTextLabel* _volumeLabel = nullptr;
-    CSliderBase *_numVoicesSlider = nullptr;
-    CTextLabel* _numVoicesLabel = nullptr;
-    CSliderBase *_oversamplingSlider = nullptr;
-    CTextLabel* _oversamplingLabel = nullptr;
-    CSliderBase *_preloadSizeSlider = nullptr;
-    CTextLabel* _preloadSizeLabel = nullptr;
-    CSliderBase *_scalaRootKeySlider = nullptr;
-    CTextLabel* _scalaRootKeyLabel = nullptr;
-    CSliderBase *_tuningFrequencySlider = nullptr;
-    CTextLabel* _tuningFrequencyLabel = nullptr;
-    CSliderBase *_stretchedTuningSlider = nullptr;
-    CTextLabel* _stretchedTuningLabel = nullptr;
+    std::unique_ptr<Editor> editor_;
 
 #if !defined(__APPLE__) && !defined(_WIN32)
     SharedPointer<RunLoop> _runLoop;

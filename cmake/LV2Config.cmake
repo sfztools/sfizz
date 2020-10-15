@@ -14,6 +14,22 @@ else()
     set (LV2PLUGIN_SPDX_LICENSE_ID "ISC")
 endif()
 
+if(SFIZZ_LV2_UI)
+    set(LV2PLUGIN_IF_ENABLE_UI "")
+else()
+    set(LV2PLUGIN_IF_ENABLE_UI "#")
+endif()
+
+if(WIN32)
+    set(LV2_UI_TYPE "WindowsUI")
+elseif(APPLE)
+    set(LV2_UI_TYPE "CocoaUI")
+elseif(HAIKU)
+    set(LV2_UI_TYPE "BeUI")
+else()
+    set(LV2_UI_TYPE "X11UI")
+endif()
+
 if (MSVC)
     set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lv2" CACHE STRING
     "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lv2}]")

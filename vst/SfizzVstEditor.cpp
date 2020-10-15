@@ -6,18 +6,18 @@
 
 #include "SfizzVstEditor.h"
 #include "SfizzVstState.h"
-#include "GUIComponents.h"
+#include "editor/Editor.h"
+#include "editor/EditIds.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "X11RunLoop.h"
 #endif
 
 using namespace VSTGUI;
 
-static ViewRect sfizzUiViewRect {0, 0, 482, 225};
+static ViewRect sfizzUiViewRect { 0, 0, Editor::viewWidth, Editor::viewHeight };
 
 SfizzVstEditor::SfizzVstEditor(void *controller)
-    : VSTGUIEditor(controller, &sfizzUiViewRect),
-      _logo("logo.png")
+    : VSTGUIEditor(controller, &sfizzUiViewRect)
 {
     getController()->addSfizzStateListener(this);
 }
@@ -45,13 +45,19 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     config = &x11config;
 #endif
 
-    createFrameContents();
+    Editor* editor = editor_.get();
+    if (!editor) {
+        editor = new Editor(*this);
+        editor_.reset(editor);
+    }
     updateStateDisplay();
 
     if (!frame->open(parent, platformType, config)) {
         fprintf(stderr, "[sfizz] error opening frame\n");
         return false;
     }
+
+    editor->open(*frame);
 
     return true;
 }
@@ -60,121 +66,16 @@ void PLUGIN_API SfizzVstEditor::close()
 {
     CFrame *frame = this->frame;
     if (frame) {
-        frame->removeAll();
+        if (editor_)
+            editor_->close();
         if (frame->getNbReference() != 1)
-            frame->forget ();
-        else {
+            frame->forget();
+        else
             frame->close();
-            this->frame = nullptr;
-        }
     }
 }
 
 ///
-void SfizzVstEditor::valueChanged(CControl* ctl)
-{
-    int32_t tag = ctl->getTag();
-    float value = ctl->getValue();
-    float valueNorm = ctl->getValueNormalized();
-    SfizzVstController* controller = getController();
-
-    switch (tag) {
-    case kTagLoadSfzFile:
-        if (value != 1)
-            break;
-
-        Call::later([this]() { chooseSfzFile(); });
-        break;
-
-    case kTagLoadScalaFile:
-        if (value != 1)
-            break;
-
-        Call::later([this]() { chooseScalaFile(); });
-        break;
-
-    case kTagSetVolume:
-        controller->setParamNormalized(kPidVolume, valueNorm);
-        controller->performEdit(kPidVolume, valueNorm);
-        updateVolumeLabel(value);
-        break;
-
-    case kTagSetNumVoices:
-        controller->setParamNormalized(kPidNumVoices, valueNorm);
-        controller->performEdit(kPidNumVoices, valueNorm);
-        updateNumVoicesLabel(static_cast<int>(value));
-        break;
-
-    case kTagSetOversampling:
-        controller->setParamNormalized(kPidOversampling, valueNorm);
-        controller->performEdit(kPidOversampling, valueNorm);
-        updateOversamplingLabel(static_cast<int>(value));
-        break;
-
-    case kTagSetPreloadSize:
-        controller->setParamNormalized(kPidPreloadSize, valueNorm);
-        controller->performEdit(kPidPreloadSize, valueNorm);
-        updatePreloadSizeLabel(static_cast<int>(value));
-        break;
-
-    case kTagSetScalaRootKey:
-        controller->setParamNormalized(kPidScalaRootKey, valueNorm);
-        controller->performEdit(kPidScalaRootKey, valueNorm);
-        updateScalaRootKeyLabel(static_cast<int>(value));
-        break;
-
-    case kTagSetTuningFrequency:
-        controller->setParamNormalized(kPidTuningFrequency, valueNorm);
-        controller->performEdit(kPidTuningFrequency, valueNorm);
-        updateTuningFrequencyLabel(value);
-        break;
-
-    case kTagSetStretchedTuning:
-        controller->setParamNormalized(kPidStretchedTuning, valueNorm);
-        controller->performEdit(kPidStretchedTuning, valueNorm);
-        updateStretchedTuningLabel(value);
-        break;
-
-    default:
-        if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel)
-            setActivePanel(tag - kTagFirstChangePanel);
-        break;
-    }
-}
-
-void SfizzVstEditor::enterOrLeaveEdit(CControl* ctl, bool enter)
-{
-    int32_t tag = ctl->getTag();
-    Vst::ParamID id;
-
-    switch (tag) {
-    case kTagSetVolume: id = kPidVolume; break;
-    case kTagSetNumVoices: id = kPidNumVoices; break;
-    case kTagSetOversampling: id = kPidOversampling; break;
-    case kTagSetPreloadSize: id = kPidPreloadSize; break;
-    case kTagSetScalaRootKey: id = kPidScalaRootKey; break;
-    case kTagSetTuningFrequency: id = kPidTuningFrequency; break;
-    case kTagSetStretchedTuning: id = kPidStretchedTuning; break;
-    default: return;
-    }
-
-    SfizzVstController* controller = getController();
-    if (enter)
-        controller->beginEdit(id);
-    else
-        controller->endEdit(id);
-}
-
-void SfizzVstEditor::controlBeginEdit(CControl* ctl)
-{
-    enterOrLeaveEdit(ctl, true);
-}
-
-void SfizzVstEditor::controlEndEdit(CControl* ctl)
-{
-    enterOrLeaveEdit(ctl, false);
-}
-
 CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
 {
     CMessageResult result = VSTGUIEditor::notify(sender, message);
@@ -205,20 +106,93 @@ void SfizzVstEditor::onStateChanged()
 }
 
 ///
-void SfizzVstEditor::chooseSfzFile()
+void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
 {
-    SharedPointer<CNewFileSelector> fs(CNewFileSelector::create(frame));
+    if (id == EditId::SfzFile)
+        loadSfzFile(v.to_string());
+    else if (id == EditId::ScalaFile)
+        loadScalaFile(v.to_string());
+    else {
+        SfizzVstController* ctrl = getController();
 
-    fs->setTitle("Load SFZ file");
-    fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+        auto normalizeAndSet = [ctrl](Vst::ParamID pid, const SfizzParameterRange& range, float value) {
+            float normValue = range.normalize(value);
+            ctrl->setParamNormalized(pid, normValue);
+            ctrl->performEdit(pid, normValue);
+        };
 
-    if (fs->runModal()) {
-        UTF8StringPtr file = fs->getSelectedFile(0);
-        if (file)
-            loadSfzFile(file);
+        switch (id) {
+        case EditId::Volume:
+            normalizeAndSet(kPidVolume, kParamVolumeRange, v.to_float());
+            break;
+        case EditId::Polyphony:
+            normalizeAndSet(kPidNumVoices, kParamNumVoicesRange, v.to_float());
+            break;
+        case EditId::Oversampling:
+            {
+                const int32 value = static_cast<int32>(v.to_float());
+
+                int32 log2Value = 0;
+                for (int32 f = value; f > 1; f /= 2)
+                    ++log2Value;
+
+                normalizeAndSet(kPidOversampling, kParamOversamplingRange, log2Value);
+            }
+            break;
+        case EditId::PreloadSize:
+            normalizeAndSet(kPidPreloadSize, kParamPreloadSizeRange, v.to_float());
+            break;
+        case EditId::ScalaRootKey:
+            normalizeAndSet(kPidScalaRootKey, kParamScalaRootKeyRange, v.to_float());
+            break;
+        case EditId::TuningFrequency:
+            normalizeAndSet(kPidTuningFrequency, kParamTuningFrequencyRange, v.to_float());
+            break;
+        case EditId::StretchTuning:
+            normalizeAndSet(kPidStretchedTuning, kParamStretchedTuningRange, v.to_float());
+            break;
+
+        case EditId::UIActivePanel:
+            ctrl->getSfizzUiState().activePanel = static_cast<int32>(v.to_float());
+            break;
+
+        default:
+            break;
+        }
     }
 }
 
+void SfizzVstEditor::uiBeginSend(EditId id)
+{
+    Vst::ParamID pid = parameterOfEditId(id);
+    if (pid != -1)
+        getController()->beginEdit(pid);
+}
+
+void SfizzVstEditor::uiEndSend(EditId id)
+{
+    Vst::ParamID pid = parameterOfEditId(id);
+    if (pid != -1)
+        getController()->endEdit(pid);
+}
+
+void SfizzVstEditor::uiSendMIDI(const uint8_t* data, uint32_t len)
+{
+    SfizzVstController* ctl = getController();
+
+    Steinberg::OPtr<Vst::IMessage> msg { ctl->allocateMessage() };
+    if (!msg) {
+        fprintf(stderr, "[Sfizz] UI could not allocate message\n");
+        return;
+    }
+
+    msg->setMessageID("MidiMessage");
+    Vst::IAttributeList* attr = msg->getAttributes();
+    attr->setBinary("Data", data, len);
+    ctl->sendMessage(msg);
+}
+
+///
 void SfizzVstEditor::loadSfzFile(const std::string& filePath)
 {
     SfizzVstController* ctl = getController();
@@ -233,22 +207,6 @@ void SfizzVstEditor::loadSfzFile(const std::string& filePath)
     Vst::IAttributeList* attr = msg->getAttributes();
     attr->setBinary("File", filePath.data(), filePath.size());
     ctl->sendMessage(msg);
-
-    updateSfzFileLabel(filePath);
-}
-
-void SfizzVstEditor::chooseScalaFile()
-{
-    SharedPointer<CNewFileSelector> fs(CNewFileSelector::create(frame));
-
-    fs->setTitle("Load Scala file");
-    fs->setDefaultExtension(CFileExtension("SCL", "scl"));
-
-    if (fs->runModal()) {
-        UTF8StringPtr file = fs->getSelectedFile(0);
-        if (file)
-            loadScalaFile(file);
-    }
 }
 
 void SfizzVstEditor::loadScalaFile(const std::string& filePath)
@@ -265,280 +223,6 @@ void SfizzVstEditor::loadScalaFile(const std::string& filePath)
     Vst::IAttributeList* attr = msg->getAttributes();
     attr->setBinary("File", filePath.data(), filePath.size());
     ctl->sendMessage(msg);
-
-    updateScalaFileLabel(filePath);
-}
-
-void SfizzVstEditor::createFrameContents()
-{
-    SfizzVstController* controller = getController();
-    const SfizzUiState& uiState = controller->getSfizzUiState();
-
-    CFrame* frame = this->frame;
-    CRect bounds = frame->getViewSize();
-
-    frame->setBackgroundColor(CColor(0xff, 0xff, 0xff));
-
-    CRect bottomRow = bounds;
-    bottomRow.top = bottomRow.bottom - 30;
-
-    CRect topRow = bounds;
-    topRow.bottom = topRow.top + 30;
-
-    CViewContainer* panel;
-    _activePanel = std::max(0, std::min(kNumPanels - 1, static_cast<int>(uiState.activePanel)));
-
-    CRect topLeftLabelBox = topRow;
-    topLeftLabelBox.right -= 20 * kNumPanels;
-
-    // general panel
-    {
-        panel = new CViewContainer(bounds);
-        frame->addView(panel);
-        panel->setTransparency(true);
-
-        CKickButton* sfizzButton = new CKickButton(bounds, this, kTagLoadSfzFile, &_logo);
-        panel->addView(sfizzButton);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "No file loaded");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-        _sfzFileLabel = topLeftLabel;
-
-        _subPanels[kPanelGeneral] = panel;
-    }
-
-    // settings panel
-    {
-        panel = new CViewContainer(bounds);
-        frame->addView(panel);
-        panel->setTransparency(true);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Settings");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-
-        CRect row = topRow;
-        row.top += 45.0;
-        row.bottom += 45.0;
-        row.left += 20.0;
-        row.right -= 20.0;
-
-        static const CCoord interRow = 35.0;
-        static const CCoord interColumn = 20.0;
-        static const int numColumns = 3;
-
-        auto nthColumn = [&row](int colIndex) -> CRect {
-            CRect div = row;
-            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
-            div.left = div.left + colIndex * (columnWidth + interColumn);
-            div.right = div.left + columnWidth;
-            return div;
-        };
-
-        CTextLabel* label;
-        SimpleSlider* slider;
-
-        label = new CTextLabel(nthColumn(0), "Volume");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetVolume);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidVolume);
-        _volumeSlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _volumeLabel = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Polyphony");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetNumVoices);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidNumVoices);
-        _numVoicesSlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _numVoicesLabel = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Oversampling");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetOversampling);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidOversampling);
-        _oversamplingSlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _oversamplingLabel = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Preload size");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetPreloadSize);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidPreloadSize);
-        _preloadSizeSlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _preloadSizeLabel = label;
-        panel->addView(label);
-
-        _subPanels[kPanelSettings] = panel;
-    }
-
-    // tuning panel
-    {
-        panel = new CViewContainer(bounds);
-        frame->addView(panel);
-        panel->setTransparency(true);
-
-        CTextLabel* topLeftLabel = new CTextLabel(topLeftLabelBox, "Tuning");
-        topLeftLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        topLeftLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(topLeftLabel);
-
-        CRect row = topRow;
-        row.top += 45.0;
-        row.bottom += 45.0;
-        row.left += 20.0;
-        row.right -= 20.0;
-
-        static const CCoord interRow = 35.0;
-        static const CCoord interColumn = 20.0;
-        static const int numColumns = 3;
-
-        auto nthColumn = [&row](int colIndex) -> CRect {
-            CRect div = row;
-            CCoord columnWidth = (div.right - div.left + interColumn) / numColumns - interColumn;
-            div.left = div.left + colIndex * (columnWidth + interColumn);
-            div.right = div.left + columnWidth;
-            return div;
-        };
-
-        CTextLabel* label;
-        SimpleSlider* slider;
-        CTextButton* textbutton;
-
-        label = new CTextLabel(nthColumn(0), "Scala file");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        textbutton = new CTextButton(nthColumn(1), this, kTagLoadScalaFile, "Choose");
-        panel->addView(textbutton);
-        label = new CTextLabel(nthColumn(2), "");
-        _scalaFileLabel = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Scala root key");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetScalaRootKey);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidScalaRootKey);
-        _scalaRootKeySlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _scalaRootKeyLabel = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Tuning frequency");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetTuningFrequency);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidTuningFrequency);
-        _tuningFrequencySlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _tuningFrequencyLabel = label;
-        panel->addView(label);
-
-        row.top += interRow;
-        row.bottom += interRow;
-
-        label = new CTextLabel(nthColumn(0), "Stretched tuning");
-        label->setFontColor(CColor(0x00, 0x00, 0x00));
-        label->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        label->setHoriAlign(kLeftText);
-        panel->addView(label);
-        slider = new SimpleSlider(nthColumn(1), this, kTagSetStretchedTuning);
-        panel->addView(slider);
-        adjustMinMaxToRangeParam(slider, kPidStretchedTuning);
-        _stretchedTuningSlider = slider;
-        label = new CTextLabel(nthColumn(2), "");
-        _stretchedTuningLabel = label;
-        panel->addView(label);
-
-        _subPanels[kPanelTuning] = panel;
-    }
-
-    // all panels
-    for (unsigned currentPanel = 0; currentPanel < kNumPanels; ++currentPanel) {
-        panel = _subPanels[currentPanel];
-
-        CTextLabel* descLabel = new CTextLabel(
-            bottomRow, "Paul Ferrand and the SFZ Tools work group");
-        descLabel->setFontColor(CColor(0x00, 0x00, 0x00));
-        descLabel->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-        panel->addView(descLabel);
-
-        for (unsigned i = 0; i < kNumPanels; ++i) {
-            CRect btnRect = topRow;
-            btnRect.left = topRow.right - (kNumPanels - i) * 50;
-            btnRect.right = btnRect.left + 50;
-
-            const char *text;
-            switch (i) {
-            case kPanelGeneral: text = "File"; break;
-            case kPanelSettings: text = "Setup"; break;
-            case kPanelTuning: text = "Tuning"; break;
-            default: text = "?"; break;
-            }
-
-            CTextButton* changePanelButton = new CTextButton(btnRect, this, kTagFirstChangePanel + i, text);
-            panel->addView(changePanelButton);
-
-            changePanelButton->setRoundRadius(0.0);
-        }
-
-        panel->setVisible(currentPanel == _activePanel);
-    }
 }
 
 void SfizzVstEditor::updateStateDisplay()
@@ -549,178 +233,41 @@ void SfizzVstEditor::updateStateDisplay()
     SfizzVstController* controller = getController();
     const SfizzVstState& state = controller->getSfizzState();
     const SfizzUiState& uiState = controller->getSfizzUiState();
+    const SfizzPlayState& playState = controller->getSfizzPlayState();
 
-    updateSfzFileLabel(state.sfzFile);
-    if (_volumeSlider)
-        _volumeSlider->setValue(state.volume);
-    updateVolumeLabel(state.volume);
-    if (_numVoicesSlider)
-        _numVoicesSlider->setValue(state.numVoices);
-    updateNumVoicesLabel(state.numVoices);
-    if (_oversamplingSlider)
-        _oversamplingSlider->setValue(state.oversamplingLog2);
-    updateOversamplingLabel(state.oversamplingLog2);
-    if (_preloadSizeSlider)
-        _preloadSizeSlider->setValue(state.preloadSize);
-    updatePreloadSizeLabel(state.preloadSize);
-    updateScalaFileLabel(state.scalaFile);
-    if (_scalaRootKeySlider)
-        _scalaRootKeySlider->setValue(state.scalaRootKey);
-    updateScalaRootKeyLabel(state.scalaRootKey);
-    if (_tuningFrequencySlider)
-        _tuningFrequencySlider->setValue(state.tuningFrequency);
-    updateTuningFrequencyLabel(state.tuningFrequency);
-    if (_stretchedTuningSlider)
-        _stretchedTuningSlider->setValue(state.stretchedTuning);
-    updateStretchedTuningLabel(state.stretchedTuning);
+    ///
+    uiReceiveValue(EditId::SfzFile, state.sfzFile);
+    uiReceiveValue(EditId::Volume, state.volume);
+    uiReceiveValue(EditId::Polyphony, state.numVoices);
+    uiReceiveValue(EditId::Oversampling, 1u << state.oversamplingLog2);
+    uiReceiveValue(EditId::PreloadSize, state.preloadSize);
+    uiReceiveValue(EditId::ScalaFile, state.scalaFile);
+    uiReceiveValue(EditId::ScalaRootKey, state.scalaRootKey);
+    uiReceiveValue(EditId::TuningFrequency, state.tuningFrequency);
+    uiReceiveValue(EditId::StretchTuning, state.stretchedTuning);
 
-    setActivePanel(uiState.activePanel);
+    ///
+    uiReceiveValue(EditId::UINumCurves, playState.curves);
+    uiReceiveValue(EditId::UINumMasters, playState.masters);
+    uiReceiveValue(EditId::UINumGroups, playState.groups);
+    uiReceiveValue(EditId::UINumRegions, playState.regions);
+    uiReceiveValue(EditId::UINumPreloadedSamples, playState.preloadedSamples);
+    uiReceiveValue(EditId::UINumActiveVoices, playState.activeVoices);
+
+    ///
+    uiReceiveValue(EditId::UIActivePanel, uiState.activePanel);
 }
 
-void SfizzVstEditor::updateSfzFileLabel(const std::string& filePath)
+Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
 {
-    updateLabelWithFileName(_sfzFileLabel, filePath);
-}
-
-void SfizzVstEditor::updateScalaFileLabel(const std::string& filePath)
-{
-    updateLabelWithFileName(_scalaFileLabel, filePath);
-}
-
-void SfizzVstEditor::updateLabelWithFileName(CTextLabel* label, const std::string& filePath)
-{
-    if (!label)
-        return;
-
-    std::string fileName;
-    if (filePath.empty())
-        fileName = "<No file>";
-    else {
-#if defined (_WIN32)
-        size_t pos = filePath.find_last_of("/\\");
-#else
-        size_t pos = filePath.rfind('/');
-#endif
-        fileName = (pos != filePath.npos) ?
-            filePath.substr(pos + 1) : filePath;
-    }
-    label->setText(fileName.c_str());
-}
-
-void SfizzVstEditor::updateVolumeLabel(float volume)
-{
-    CTextLabel* label = _volumeLabel;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%.1f dB", volume);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
-void SfizzVstEditor::updateNumVoicesLabel(int numVoices)
-{
-    CTextLabel* label = _numVoicesLabel;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%d", numVoices);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
-void SfizzVstEditor::updateOversamplingLabel(int oversamplingLog2)
-{
-    CTextLabel* label = _oversamplingLabel;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%dx", 1 << oversamplingLog2);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
-void SfizzVstEditor::updatePreloadSizeLabel(int preloadSize)
-{
-    CTextLabel* label = _preloadSizeLabel;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%.1f kB", preloadSize * (1.0 / 1024));
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
-void SfizzVstEditor::updateScalaRootKeyLabel(int rootKey)
-{
-    CTextLabel* label = _scalaRootKeyLabel;
-    if (!label)
-        return;
-
-    static const char *octNoteNames[12] = {
-        "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
-    };
-
-    auto noteName = [](int key) -> std::string
-    {
-        int octNum;
-        int octNoteNum;
-        if (key >= 0) {
-            octNum = key / 12 - 1;
-            octNoteNum = key % 12;
-        }
-        else {
-            octNum = -2 - (key + 1) / -12;
-            octNoteNum = (key % 12 + 12) % 12;
-        }
-        return std::string(octNoteNames[octNoteNum]) + std::to_string(octNum);
-    };
-
-    label->setText(noteName(rootKey));
-}
-
-void SfizzVstEditor::updateTuningFrequencyLabel(float tuningFrequency)
-{
-    CTextLabel* label = _tuningFrequencyLabel;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%.1f", tuningFrequency);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
-void SfizzVstEditor::updateStretchedTuningLabel(float stretchedTuning)
-{
-    CTextLabel* label = _stretchedTuningLabel;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%.3f", stretchedTuning);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
-
-void SfizzVstEditor::setActivePanel(unsigned panelId)
-{
-    panelId = std::max(0, std::min(kNumPanels - 1, static_cast<int>(panelId)));
-
-    getController()->getSfizzUiState().activePanel = panelId;
-
-    if (_activePanel != panelId) {
-        if (frame)
-            _subPanels[_activePanel]->setVisible(false);
-
-        _activePanel = panelId;
-
-        if (frame)
-            _subPanels[panelId]->setVisible(true);
+    switch (id) {
+    case EditId::Volume: return kPidVolume;
+    case EditId::Polyphony: return kPidNumVoices;
+    case EditId::Oversampling: return kPidOversampling;
+    case EditId::PreloadSize: return kPidPreloadSize;
+    case EditId::ScalaRootKey: return kPidScalaRootKey;
+    case EditId::TuningFrequency: return kPidTuningFrequency;
+    case EditId::StretchTuning: return kPidStretchedTuning;
+    default: return -1;
     }
 }

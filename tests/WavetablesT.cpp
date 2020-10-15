@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Wavetables.h"
+#include "sfizz/FileMetadata.h"
 #include "sfizz/MathHelpers.h"
 #include "catch2/catch.hpp"
 #include <algorithm>
@@ -12,45 +13,69 @@
 
 TEST_CASE("[Wavetables] Frequency ranges")
 {
-    int cur_oct = std::numeric_limits<int>::min();
-    int min_oct = std::numeric_limits<int>::max();
-    int max_oct = std::numeric_limits<int>::min();
+    int cur_index = std::numeric_limits<int>::min();
+    int min_index = std::numeric_limits<int>::max();
+    int max_index = std::numeric_limits<int>::min();
 
     for (int note = 0; note < 128; ++note) {
         double f = midiNoteFrequency(note);
 
-        int oct = sfz::WavetableRange::getOctaveForFrequency(f);
+        float fractionalIndex = sfz::MipmapRange::getExactIndexForFrequency(f);
+        int index = static_cast<int>(fractionalIndex);
 
-        REQUIRE(oct >= 0);
-        REQUIRE(oct < sfz::WavetableRange::countOctaves);
+        REQUIRE(index >= 0);
+        REQUIRE(static_cast<unsigned>(index) < sfz::MipmapRange::N);
 
-        REQUIRE(oct >= cur_oct);
-        cur_oct = oct;
+        float lerpFractionalIndex = sfz::MipmapRange::getIndexForFrequency(f);
+        int lerpIndex = static_cast<int>(lerpFractionalIndex);
 
-        min_oct = std::min(min_oct, oct);
-        max_oct = std::max(max_oct, oct);
+        // approximation should be equal or off by 1 table in worst cases
+        bool lerpIndexValid = (lerpIndex - index) == 0 || (lerpIndex - index) == -1;
+        REQUIRE(lerpIndexValid);
 
-        sfz::WavetableRange range = sfz::WavetableRange::getRangeForOctave(oct);
-        REQUIRE((f >= range.minFrequency || oct == 0));
-        REQUIRE((f <= range.maxFrequency || oct == sfz::WavetableRange::countOctaves - 1));
+        REQUIRE(index >= cur_index);
+        cur_index = index;
+
+        min_index = std::min(min_index, index);
+        max_index = std::max(max_index, index);
+
+        sfz::MipmapRange range = sfz::MipmapRange::getRangeForIndex(index);
+        REQUIRE((f >= range.minFrequency || index == 0));
+        REQUIRE((f <= range.maxFrequency || index == sfz::MipmapRange::N - 1));
     }
 
     // check ranges to be decently adjusted to the MIDI frequency range
-    REQUIRE(min_oct == 0);
-    REQUIRE(max_oct == sfz::WavetableRange::countOctaves - 1);
+    REQUIRE(min_index == 0);
+    REQUIRE(max_index == sfz::MipmapRange::N - 1);
 }
 
-TEST_CASE("[Wavetables] Octave number lookup")
+TEST_CASE("[Wavetables] Wavetable sound files: Surge")
 {
-    for (int note = 0; note < 128; ++note) {
-        double f = midiNoteFrequency(note);
+    sfz::FileMetadataReader reader;
+    sfz::WavetableInfo wt;
 
-        float ref = std::log2(f * sfz::WavetableRange::frequencyScaleFactor);
-        float oct = sfz::WavetableRange::getFractionalOctaveForFrequency(f);
+    REQUIRE(reader.open("tests/TestFiles/wavetables/surge.wav"));
+    REQUIRE(reader.extractWavetableInfo(wt));
 
-        ref = clamp<float>(ref, 0, sfz::WavetableRange::countOctaves - 1);
-        oct = clamp<float>(oct, 0, sfz::WavetableRange::countOctaves - 1);
+    REQUIRE(wt.tableSize == 256);
+}
 
-        REQUIRE(oct == Approx(ref).margin(0.03f));
-    }
+TEST_CASE("[Wavetables] Wavetable sound files: Clm")
+{
+    sfz::FileMetadataReader reader;
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open("tests/TestFiles/wavetables/clm.wav"));
+    REQUIRE(reader.extractWavetableInfo(wt));
+
+    REQUIRE(wt.tableSize == 256);
+}
+
+TEST_CASE("[Wavetables] Non-wavetable sound files")
+{
+    sfz::FileMetadataReader reader;
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open("tests/TestFiles/snare.wav"));
+    REQUIRE(!reader.extractWavetableInfo(wt));
 }

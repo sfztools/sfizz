@@ -12,8 +12,6 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <cstring>
 
-#pragma message("TODO: send tempo") // NOLINT
-
 template<class T>
 constexpr int fastRound(T x)
 {
@@ -24,8 +22,10 @@ static const char defaultSfzText[] =
     "<region>sample=*sine" "\n"
     "ampeg_attack=0.02 ampeg_release=0.1" "\n";
 
+enum { kMidiEventMaximumSize = 4 };
+
 SfizzVstProcessor::SfizzVstProcessor()
-    : _fifoToWorker(64 * 1024)
+    : _fifoToWorker(64 * 1024), _fifoMidiFromUi(64 * 1024)
 {
     setControllerClass(SfizzVstController::cid);
 }
@@ -54,6 +54,13 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth.reset(new sfz::Sfizz);
     _currentStretchedTuning = 0.0;
     loadSfzFileOrDefault(*_synth, {});
+
+    _synth->tempo(0, 0.5);
+    _timeSigNumerator = 4;
+    _timeSigDenominator = 4;
+    _synth->timeSignature(0, _timeSigNumerator, _timeSigDenominator);
+    _synth->timePosition(0, 0, 0);
+    _synth->playbackState(0, 0);
 
     return result;
 }
@@ -127,7 +134,8 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
 
-        _fileChangePeriod = static_cast<uint32>(processSetup.sampleRate);
+        _fileChangePeriod = static_cast<uint32>(1.0 * processSetup.sampleRate);
+        _playStateChangePeriod = static_cast<uint32>(50e-3 * processSetup.sampleRate);
 
         _workRunning = true;
         _worker = std::thread([this]() { doBackgroundWork(); });
@@ -142,6 +150,9 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
 tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 {
     sfz::Sfizz& synth = *_synth;
+
+    if (data.processContext)
+        updateTimeInfo(*data.processContext);
 
     if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processParameterChanges(*pc);
@@ -172,6 +183,8 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     else
         synth.disableFreeWheeling();
 
+    processMidiFromUi();
+
     if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processControllerChanges(*pc);
 
@@ -195,7 +208,44 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
             _semaToWorker.post();
     }
 
+    _playStateChangeCounter += numFrames;
+    if (_playStateChangeCounter > _playStateChangePeriod) {
+        _playStateChangeCounter %= _playStateChangePeriod;
+        SfizzPlayState playState;
+        playState.curves = synth.getNumCurves();
+        playState.masters = synth.getNumMasters();
+        playState.groups = synth.getNumGroups();
+        playState.regions = synth.getNumRegions();
+        playState.preloadedSamples = synth.getNumPreloadedSamples();
+        playState.activeVoices = synth.getNumActiveVoices();
+        if (writeWorkerMessage("NotifyPlayState", &playState, sizeof(playState)))
+            _semaToWorker.post();
+    }
+
     return kResultTrue;
+}
+
+void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
+{
+    sfz::Sfizz& synth = *_synth;
+
+    if (context.state & context.kTempoValid)
+        synth.tempo(0, 60.0f / context.tempo);
+
+    if (context.state & context.kTimeSigValid) {
+        _timeSigNumerator = context.timeSigNumerator;
+        _timeSigDenominator = context.timeSigDenominator;
+        synth.timeSignature(0, _timeSigNumerator, _timeSigDenominator);
+    }
+
+    if (context.state & context.kProjectTimeMusicValid) {
+        double beats = context.projectTimeMusic * 0.25 * _timeSigDenominator;
+        double bars = beats / _timeSigNumerator;
+        beats -= int(bars) * _timeSigNumerator;
+        synth.timePosition(0, int(bars), float(beats));
+    }
+
+    synth.playbackState(0, (context.state & context.kPlaying) != 0);
 }
 
 void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
@@ -243,15 +293,15 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             break;
         case kPidScalaRootKey:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.scalaRootKey = static_cast<int32>(kParamScalaRootKey.denormalize(value));
+                _state.scalaRootKey = static_cast<int32>(kParamScalaRootKeyRange.denormalize(value));
             break;
         case kPidTuningFrequency:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.tuningFrequency = kParamTuningFrequency.denormalize(value);
+                _state.tuningFrequency = kParamTuningFrequencyRange.denormalize(value);
             break;
         case kPidStretchedTuning:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.stretchedTuning = kParamStretchedTuning.denormalize(value);
+                _state.stretchedTuning = kParamStretchedTuningRange.denormalize(value);
             break;
         }
     }
@@ -327,6 +377,40 @@ void SfizzVstProcessor::processEvents(Vst::IEventList& events)
     }
 }
 
+void SfizzVstProcessor::processMidiFromUi()
+{
+    sfz::Sfizz& synth = *_synth;
+
+    for (uint32 size = 0; _fifoMidiFromUi.peek(size) &&
+             _fifoMidiFromUi.size_used() >= sizeof(size) + size; ) {
+        _fifoMidiFromUi.discard(sizeof(size));
+
+        if (size > kMidiEventMaximumSize) {
+            _fifoMidiFromUi.discard(size);
+            continue;
+        }
+
+        uint8_t data[kMidiEventMaximumSize] = {};
+        _fifoMidiFromUi.get(data, size);
+
+        // interpret the MIDI message
+        switch (data[0] & 0xf0) {
+        case 0x80:
+            synth.noteOff(0, data[1] & 0x7f, data[2] & 0x7f);
+            break;
+        case 0x90:
+            synth.noteOn(0, data[1] & 0x7f, data[2] & 0x7f);
+            break;
+        case 0xb0:
+            synth.cc(0, data[1] & 0x7f, data[2] & 0x7f);
+            break;
+        case 0xe0:
+            synth.pitchWheel(0, (data[2] << 7) + data[1] - 8192);
+            break;
+        }
+    }
+}
+
 int SfizzVstProcessor::convertVelocityFromFloat(float x)
 {
     return std::min(127, std::max(0, (int)(x * 127.0f)));
@@ -378,6 +462,17 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         reply->setMessageID("LoadedScala");
         reply->getAttributes()->setBinary("File", _state.scalaFile.data(), _state.scalaFile.size());
         sendMessage(reply);
+    }
+    else if (!std::strcmp(id, "MidiMessage")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("Data", data, size);
+        if (size < kMidiEventMaximumSize) {
+            if (_fifoMidiFromUi.size_free() >= sizeof(size) + size) {
+                _fifoMidiFromUi.put(size);
+                _fifoMidiFromUi.put(reinterpret_cast<const uint8_t*>(data), size);
+            }
+        }
     }
 
     return result;
@@ -433,6 +528,13 @@ void SfizzVstProcessor::doBackgroundWork()
                 fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
                 _synth->loadScalaFile(_state.scalaFile);
             }
+        }
+        else if (!std::strcmp(id, "NotifyPlayState")) {
+            SfizzPlayState playState = *msg->payload<SfizzPlayState>();
+            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
+            notification->setMessageID("NotifiedPlayState");
+            notification->getAttributes()->setBinary("PlayState", &playState, sizeof(playState));
+            sendMessage(notification);
         }
     }
 }

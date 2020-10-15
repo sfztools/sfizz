@@ -5,6 +5,8 @@ project(sfizz)
 
 set(SFIZZ_TEST_SOURCES
     RegionT.cpp
+    TestHelpers.h
+    TestHelpers.cpp
     ParsingT.cpp
     HelpersT.cpp
     HelpersT.cpp
@@ -24,6 +26,7 @@ set(SFIZZ_TEST_SOURCES
     # If we're tweaking the curves this kind of tests does not make sense
     # Use integration tests with comparison curves
     # ADSREnvelopeT.cpp
+    FlexEGT.cpp
     EventEnvelopesT.cpp
     MainT.cpp
     SynthT.cpp
@@ -35,11 +38,17 @@ set(SFIZZ_TEST_SOURCES
     SemaphoreT.cpp
     SwapAndPopT.cpp
     TuningT.cpp
+    ConcurrencyT.cpp
+    ModulationsT.cpp
+    LFOT.cpp
+    DataHelpers.h
+    DataHelpers.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::sfizz)
+target_link_libraries(sfizz_tests PRIVATE sfizz::sfizz sfizz-jsl)
 sfizz_enable_lto_if_needed(sfizz_tests)
+sfizz_enable_fast_math(sfizz_tests)
 # target_link_libraries(sfizz_tests PRIVATE absl::strings absl::str_format absl::flat_hash_map cnpy absl::span absl::algorithm)
 
 find_package(PkgConfig)
@@ -90,8 +99,14 @@ target_link_libraries(sfizz_plot_curve PRIVATE sfizz::sfizz)
 add_executable(sfizz_plot_wavetables PlotWavetables.cpp)
 target_link_libraries(sfizz_plot_wavetables PRIVATE sfizz::sfizz)
 
+add_executable(sfizz_plot_lfo PlotLFO.cpp)
+target_link_libraries(sfizz_plot_lfo PRIVATE sfizz::sfizz)
+
 add_executable(sfizz_file_instrument FileInstrument.cpp)
 target_link_libraries(sfizz_file_instrument PRIVATE sfizz::sfizz)
+
+add_executable(sfizz_file_wavetable FileWavetable.cpp)
+target_link_libraries(sfizz_file_wavetable PRIVATE sfizz::sfizz)
 
 add_executable(sfizz_tuning Tuning.cpp)
 target_link_libraries(sfizz_tuning PRIVATE sfizz::sfizz)

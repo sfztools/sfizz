@@ -6,7 +6,7 @@
 
 /**
   @file
-  @brief sfizz public C++ API
+  @brief sfizz public C++ API.
 */
 
 #pragma once
@@ -29,22 +29,23 @@ namespace sfz
 {
 class Synth;
 /**
- * @brief Main class
+ * @brief Main class.
  */
 class SFIZZ_EXPORTED_API Sfizz
 {
 public:
     /**
-     * @brief Construct a new Sfizz object. The synth by default is set at 48 kHz
-     * and a block size of 1024. You should change these values if they are not
-     * suited to your application.
+     * @brief Construct a new Sfizz object.
      *
+     * The synth by default is set at 48 kHz and a block size of 1024.
+     * You should change these values if they are not suited to your application.
      */
     Sfizz();
     ~Sfizz();
 
     /**
-     * @brief Processing mode
+     * @brief Processing mode.
+     * @since 0.4.0
      */
     enum ProcessMode {
         ProcessLive,
@@ -57,6 +58,7 @@ public:
      * This function will disable all callbacks so it is safe to call from a
      * UI thread for example, although it may generate a click. However it is
      * not reentrant, so you should not call it from concurrent threads.
+     * @since 0.2.0
      *
      * @param path The path to the file to load, as string.
      *
@@ -86,7 +88,8 @@ public:
      * @brief Sets the tuning from a Scala file loaded from the file system.
      * @since 0.4.0
      *
-     * @param  path   The path to the file in Scala format.
+     * @param path The path to the file in Scala format.
+     *
      * @return @true when tuning scale loaded OK,
      *         @false if some error occurred.
      */
@@ -96,7 +99,8 @@ public:
      * @brief Sets the tuning from a Scala file loaded from memory.
      * @since 0.4.0
      *
-     * @param  text   The contents of the file in Scala format.
+     * @param text The contents of the file in Scala format.
+     *
      * @return @true when tuning scale loaded OK,
      *         @false if some error occurred.
      */
@@ -136,6 +140,7 @@ public:
 
     /**
      * @brief Configure stretch tuning using a predefined parametric Railsback curve.
+     *
      * A ratio 1/2 is supposed to match the average piano; 0 disables (the default).
      * @since 0.4.0
      *
@@ -145,57 +150,68 @@ public:
 
     /**
      * @brief Return the current number of regions loaded.
+     * @since 0.2.0
      */
     int getNumRegions() const noexcept;
 
     /**
      * @brief Return the current number of groups loaded.
+     * @since 0.2.0
      */
     int getNumGroups() const noexcept;
 
     /**
      * @brief Return the current number of masters loaded.
+     * @since 0.2.0
      */
     int getNumMasters() const noexcept;
 
     /**
      * @brief Return the current number of curves loaded.
+     * @since 0.2.0
      */
     int getNumCurves() const noexcept;
 
     /**
      * @brief Return a list of unsupported opcodes, if any.
+     * @since 0.2.0
      */
     const std::vector<std::string>& getUnknownOpcodes() const noexcept;
 
     /**
      * @brief Return the number of preloaded samples in the synth.
+     * @since 0.2.0
      */
     size_t getNumPreloadedSamples() const noexcept;
 
     /**
-     * @brief Set the maximum size of the blocks for the callback. The actual
-     * size can be lower in each callback but should not be larger
+     * @brief Set the maximum size of the blocks for the callback.
+     *
+     * The actual size can be lower in each callback but should not be larger
      * than this value.
+     * @since 0.2.0
      *
      * @param samplesPerBlock The number of samples per block.
      */
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
 
     /**
-     * @brief Set the sample rate. If you do not call it it is initialized
-     * to sfz::config::defaultSampleRate.
+     * @brief Set the sample rate.
+     *
+     * If you do not call it it is initialized to `sfz::config::defaultSampleRate`.
+     * @since 0.2.0
      *
      * @param sampleRate The sample rate.
      */
     void setSampleRate(float sampleRate) noexcept;
 
     /**
-     * @brief Get the default resampling quality. This is the quality setting
-     * which the engine uses when the instrument does not use the
-     * opcode `sample_quality`. The engine uses distinct default quality
-     * settings for live mode and freewheeling mode, which both can be
-     * accessed by the means of this function.
+     * @brief Get the default resampling quality.
+     *
+     * This is the quality setting which the engine uses when the instrument
+     * does not use the opcode `sample_quality`. The engine uses distinct
+     * default quality settings for live mode and freewheeling mode,
+     * which both can be accessed by the means of this function.
      * @since 0.4.0
      *
      * @param[in] mode  The processing mode.
@@ -205,11 +221,12 @@ public:
     int getSampleQuality(ProcessMode mode);
 
     /**
-     * @brief Set the default resampling quality. This is the quality setting
-     * which the engine uses when the instrument does not use the
-     * opcode `sample_quality`. The engine uses distinct default quality
-     * settings for live mode and freewheeling mode, which both can be
-     * accessed by the means of this function.
+     * @brief Set the default resampling quality.
+     *
+     * This is the quality setting which the engine uses when the instrument
+     * does not use the opcode `sample_quality`. The engine uses distinct
+     * default quality settings for live mode and freewheeling mode,
+     * which both can be accessed by the means of this function.
      * @since 0.4.0
      *
      * @param[in] mode    The processing mode.
@@ -219,19 +236,23 @@ public:
 
     /**
      * @brief Return the current value for the volume, in dB.
+     * @since 0.2.0
      */
     float getVolume() const noexcept;
 
      /**
-     * @brief Set the value for the volume. This value will be
-     * clamped within sfz::default::volumeRange.
+     * @brief Set the value for the volume.
+     *
+     * This value will be clamped within `sfz::default::volumeRange`.
+     * @since 0.2.0
      *
      * @param volume The new volume.
      */
     void setVolume(float volume) noexcept;
 
     /**
-     * @brief Send a note on event to the synth
+     * @brief Send a note on event to the synth.
+     * @since 0.2.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -241,7 +262,8 @@ public:
     void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
 
     /**
-     * @brief Send a note off event to the synth
+     * @brief Send a note off event to the synth.
+     * @since 0.2.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -252,9 +274,10 @@ public:
 
     /**
      * @brief Send a CC event to the synth
+     * @since 0.2.0
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
      * @param ccNumber the cc number.
      * @param ccValue the cc value.
      */
@@ -264,8 +287,8 @@ public:
      * @brief Send a high precision CC event to the synth
      * @since 0.4.0
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
      * @param ccNumber the cc number.
      * @param normValue the normalized cc value, in domain 0 to 1.
      */
@@ -273,36 +296,69 @@ public:
 
     /**
      * @brief Send a pitch bend event to the synth
+     * @since 0.2.0
      *
      * @param delay the delay at which the event occurs; this should be lower
-     *              than the size of the block in the next call to
-     *              renderBlock().
+     *              than the size of the block in the next call to renderBlock().
      * @param pitch the pitch value centered between -8192 and 8192.
      */
     void pitchWheel(int delay, int pitch) noexcept;
 
     /**
      * @brief Send a aftertouch event to the synth. (CURRENTLY UNIMPLEMENTED)
+     * @since 0.2.0
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
      * @param aftertouch the aftertouch value.
      */
     void aftertouch(int delay, uint8_t aftertouch) noexcept;
 
     /**
-     * @brief Send a tempo event to the synth. (CURRENTLY UNIMPLEMENTED)
+     * @brief Send a tempo event to the synth.
+     * @since 0.2.0
      *
-     * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
-     * @param secondsPerQuarter the new period of the quarter note.
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param secondsPerBeat the new period of the beat.
      */
-    void tempo(int delay, float secondsPerQuarter) noexcept;
+    void tempo(int delay, float secondsPerBeat) noexcept;
 
     /**
-     * @brief Render an block of audio data in the buffer. This call will reset
-     * the synth in its waiting state for the next batch of events. The buffers must
-     * be float[numSamples][numOutputs * 2].
+     * @brief Send the time signature.
+     * @since 0.5.0
+     *
+     * @param delay       The delay.
+     * @param beatsPerBar The number of beats per bar, or time signature numerator.
+     * @param beatUnit    The note corresponding to one beat, or time signature denominator.
+     */
+    void timeSignature(int delay, int beatsPerBar, int beatUnit);
+
+    /**
+     * @brief Send the time position.
+     * @since 0.5.0
+     *
+     * @param delay   The delay.
+     * @param bar     The current bar.
+     * @param barBeat The fractional position of the current beat within the bar.
+     */
+    void timePosition(int delay, int bar, float barBeat);
+
+    /**
+     * @brief Send the playback state.
+     * @since 0.5.0
+     *
+     * @param delay         The delay.
+     * @param playbackState The playback state, 1 if playing, 0 if stopped.
+     */
+    void playbackState(int delay, int playbackState);
+
+    /**
+     * @brief Render an block of audio data in the buffer.
+     *
+     * This call will reset the synth in its waiting state for the next batch
+     * of events. The buffers must be float[numSamples][numOutputs * 2].
+     * @since 0.2.0
      *
      * @param buffers the buffers to write the next block into.
      * @param numFrames the number of stereo frames in the block.
@@ -312,20 +368,24 @@ public:
 
     /**
      * @brief Return the number of active voices.
+     * @since 0.2.0
      */
     int getNumActiveVoices() const noexcept;
 
     /**
      * @brief Return the total number of voices in the synth (the polyphony).
+     * @since 0.2.0
      */
     int getNumVoices() const noexcept;
 
     /**
      * @brief Change the number of voices (the polyphony).
+     *
      * This function takes a lock and disables the callback; prefer calling
      * it out of the RT thread. It can also take a long time to return.
      * If the new number of voices is the same as the current one, it will
      * release the lock immediately and exit.
+     * @since 0.2.0
      *
      * @param numVoices The number of voices.
      */
@@ -333,6 +393,7 @@ public:
 
     /**
      * @brief Set the oversampling factor to a new value.
+     *
      * It will kill all the voices, and trigger a reloading of every file in
      * the FilePool under the new oversampling.
      *
@@ -350,6 +411,7 @@ public:
      * it out of the RT thread. It can also take a long time to return.
      * If the new oversampling factor is the same as the current one, it will
      * release the lock immediately and exit.
+     * @since 0.2.0
      *
      * @param factor The oversampling factor.
      *
@@ -359,15 +421,18 @@ public:
 
     /**
      * @brief Return the current oversampling factor.
+     * @since 0.2.0
      */
     int getOversamplingFactor() const noexcept;
 
     /**
      * @brief Set the preloaded file size.
+     *
      * This function takes a lock and disables the callback; prefer calling
      * it out of the RT thread. It can also take a long time to return.
      * If the new preload size is the same as the current one, it will
      * release the lock immediately and exit.
+     * @since 0.2.0
      *
      * @param preloadSize  The preload size.
      */
@@ -375,30 +440,37 @@ public:
 
     /**
      * @brief Return the current preloaded file size.
+     * @since 0.2.0
      */
     uint32_t getPreloadSize() const noexcept;
 
     /**
      * @brief Return the number of allocated buffers.
+     * @since 0.2.0
      */
     int getAllocatedBuffers() const noexcept;
 
     /**
      * @brief Return the number of bytes allocated through the buffers.
+     * @since 0.2.0
      */
     int getAllocatedBytes() const noexcept;
 
     /**
-     * @brief Enable freewheeling on the synth. This will wait for background
-     * loaded files to finish loading before each render callback to ensure that
-     * there will be no dropouts.
+     * @brief Enable freewheeling on the synth.
+     *
+     * This will wait for background loaded files to finish loading
+     * before each render callback to ensure that there will be no dropouts.
+     * @since 0.2.0
      */
     void enableFreeWheeling() noexcept;
 
     /**
-     * @brief Disable freewheeling on the synth. You should disable freewheeling
-     * before live use of the plugin otherwise the audio thread will lock.
+     * @brief Disable freewheeling on the synth.
      *
+     * You should disable freewheeling before live use of the plugin
+     * otherwise the audio thread will lock.
+     * @since 0.2.0
      */
     void disableFreeWheeling() noexcept;
 
@@ -406,6 +478,7 @@ public:
      * @brief Check if the SFZ should be reloaded.
      *
      * Depending on the platform this can create file descriptors.
+     * @since 0.2.0
      *
      * @return @true if any included files (including the root file) have
      *         been modified since the sfz file was loaded, @false otherwise.
@@ -416,23 +489,27 @@ public:
      * @brief Check if the tuning (scala) file should be reloaded.
      *
      * Depending on the platform this can create file descriptors.
+     * @since 0.4.0
      *
-     * @return true if a scala file has been loaded and has changed
-     * @return false
+     * @return @true if a scala file has been loaded and has changed, @false otherwise.
      */
     bool shouldReloadScala();
 
     /**
-     * @brief Enable logging of timings to sidecar CSV files. This can produce
-     * many outputs so use with caution.
+     * @brief Enable logging of timings to sidecar CSV files.
+     * @since 0.3.0
+     *
+     * @note This can produce many outputs so use with caution.
      *
      * @param prefix the file prefix to use for logging.
      */
     void enableLogging() noexcept;
 
     /**
-     * @brief Enable logging of timings to sidecar CSV files. This can produce
-     * many outputs so use with caution.
+     * @brief Enable logging of timings to sidecar CSV files.
+     * @since 0.3.2
+     *
+     * @note This can produce many outputs so use with caution.
      *
      * @param prefix the file prefix to use for logging.
      */
@@ -440,52 +517,54 @@ public:
 
     /**
      * @brief Set the logging prefix.
+     * @since 0.3.2
      *
      * @param prefix
      */
     void setLoggingPrefix(const std::string& prefix) noexcept;
 
     /**
-     * @brief
-     *
+     * @brief Disable logging of timings to sidecar CSV files.
+     * @since 0.3.0
      */
     void disableLogging() noexcept;
 
     /**
      * @brief Shuts down the current processing, clear buffers and reset the voices.
+     * @since 0.3.2
      */
     void allSoundOff() noexcept;
 
     /**
-     * @brief Add external definitions prior to loading;
-     * Note that these do not get reset by loading or resetting the synth.
-     * You need to call clearExternalDefintions() to erase them.
+     * @brief Add external definitions prior to loading.
      * @since 0.4.0
      *
-     * @param id
-     * @param value
+     * @note These do not get reset by loading or resetting the synth.
+     * You need to call clearExternalDefintions() to erase them.
+     *
+     * @param id    The definition variable name.
+     * @param value The definition value.
      */
     void addExternalDefinition(const std::string& id, const std::string& value);
 
     /**
      * @brief Clears external definitions for the next file loading.
      * @since 0.4.0
-     *
      */
     void clearExternalDefinitions();
 
     /**
-     * @brief Get the key labels, if any
+     * @brief Get the key labels, if any.
      * @since 0.4.0
-     *
      */
     const std::vector<std::pair<uint8_t, std::string>>& getKeyLabels() const noexcept;
+
     /**
-     * @brief Get the CC labels, if any
+     * @brief Get the CC labels, if any.
      * @since 0.4.0
-     *
      */
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
+
 private:
     std::unique_ptr<sfz::Synth> synth;
 };

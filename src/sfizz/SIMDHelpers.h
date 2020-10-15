@@ -26,6 +26,7 @@
 #pragma once
 #include "Config.h"
 #include "Debug.h"
+#include "Range.h"
 #include "MathHelpers.h"
 #include "simd/HelpersScalar.h"
 #include <absl/types/span.h>
@@ -52,13 +53,17 @@ enum class SIMDOps {
     subtract1,
     multiplyAdd,
     multiplyAdd1,
+    multiplyMul,
+    multiplyMul1,
     copy,
     cumsum,
     diff,
     sfzInterpolationCast,
     mean,
-    meanSquared,
+    sumSquares,
     upsampling,
+    clampAll,
+    allWithin,
     _sentinel //
 };
 
@@ -174,13 +179,13 @@ inline void applyGain1(T gain, absl::Span<const T> input, absl::Span<T> output) 
  * @param size
  */
 template<class T>
-inline void applyGain1(float gain, float* array, unsigned size) noexcept
+inline void applyGain1(T gain, T* array, unsigned size) noexcept
 {
     applyGain1<T>(gain, array, array, size);
 }
 
 template<class T>
-inline void applyGain1(float gain, absl::Span<float> array) noexcept
+inline void applyGain1(T gain, absl::Span<T> array) noexcept
 {
     applyGain1<T>(gain, array.data(), array.data(), array.size());
 }
@@ -318,6 +323,56 @@ void multiplyAdd1(T gain, absl::Span<const T> input, absl::Span<T> output) noexc
 {
     CHECK_SPAN_SIZES(input, output);
     multiplyAdd1<T>(gain, input.data(), output.data(), minSpanSize(input, output));
+}
+
+/**
+ * @brief Applies a gain to the input and multiply the output with it
+ *
+ * @tparam T the underlying type
+ * @param gain
+ * @param input
+ * @param output
+ * @param size
+ */
+template <class T>
+void multiplyMul(const T* gain, const T* input, T* output, unsigned size) noexcept
+{
+    multiplyMulScalar(gain, input, output, size);
+}
+
+template <>
+void multiplyMul<float>(const float* gain, const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void multiplyMul(absl::Span<const T> gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(gain, input, output);
+    multiplyMul<T>(gain.data(), input.data(), output.data(), minSpanSize(gain, input, output));
+}
+
+/**
+ * @brief Applies a fixed gain to the input and multiply the output with it
+ *
+ * @tparam T the underlying type
+ * @param gain
+ * @param input
+ * @param output
+ * @param size
+ */
+template <class T>
+void multiplyMul1(T gain, const T* input, T* output, unsigned size) noexcept
+{
+    multiplyMul1Scalar(gain, input, output, size);
+}
+
+template <>
+void multiplyMul1<float>(float gain, const float* input, float* output, unsigned size) noexcept;
+
+template <class T>
+void multiplyMul1(T gain, absl::Span<const T> input, absl::Span<T> output) noexcept
+{
+    CHECK_SPAN_SIZES(input, output);
+    multiplyMul1<T>(gain, input.data(), output.data(), minSpanSize(input, output));
 }
 
 /**
@@ -513,7 +568,7 @@ T mean(absl::Span<const T> vector) noexcept
 }
 
 /**
- * @brief Computes the mean squared of a span
+ * @brief Computes the sum of squares of a span
  *
  * @tparam T the underlying type
  * @tparam SIMD use the SIMD version or the scalar version
@@ -521,13 +576,33 @@ T mean(absl::Span<const T> vector) noexcept
  * @return T
  */
 template <class T>
-T meanSquared(const T* vector, unsigned size) noexcept
+T sumSquares(const T* vector, unsigned size) noexcept
 {
-    meanSquaredScalar(vector, size);
+    return sumSquaresScalar(vector, size);
 }
 
 template <>
-float meanSquared<float>(const float* vector, unsigned size) noexcept;
+float sumSquares<float>(const float* vector, unsigned size) noexcept;
+
+template <class T>
+T sumSquares(absl::Span<const T> vector) noexcept
+{
+    return sumSquares(vector.data(), vector.size());
+}
+
+/**
+ * @brief Computes the mean squared of a span
+ *
+ * @tparam T the underlying type
+ * @param vector
+ * @return T
+ */
+template <class T>
+T meanSquared(const T* vector, unsigned size) noexcept
+{
+    T sum = sumSquares(vector, size);
+    return sum / size;
+}
 
 template <class T>
 T meanSquared(absl::Span<const T> vector) noexcept
@@ -620,6 +695,60 @@ void diff(absl::Span<const T> input, absl::Span<T> output) noexcept
 {
     CHECK_SPAN_SIZES(input, output);
     diff<T>(input.data(), output.data(), minSpanSize(input, output));
+}
+
+/**
+ * @brief Clamp a vector between a low and high bound
+ *
+ * @tparam T the underlying type
+ * @param input
+ * @param low
+ * @param high
+ * @param size
+ */
+template <class T>
+void clampAll(T* input, T low, T high, unsigned size) noexcept
+{
+    clampAllScalar(input, low, high, size);
+}
+
+template <>
+void clampAll<float>(float* input, float low, float high, unsigned size) noexcept;
+
+template <class T>
+void clampAll(absl::Span<T> input, T low, T high) noexcept
+{
+    clampAll<T>(input.data(), low, high, input.size());
+}
+
+template <class T>
+void clampAll(absl::Span<T> input, sfz::Range<T> range) noexcept
+{
+    clampAll<T>(input.data(), range.getStart(), range.getEnd(), input.size());
+}
+
+/**
+ * @brief Check that all values are within bounds (inclusive)
+ *
+ * @tparam T the underlying type
+ * @param input
+ * @param low
+ * @param high
+ * @param size
+ */
+template <class T>
+bool allWithin(const T* input, T low, T high, unsigned size) noexcept
+{
+    return allWithinScalar(input, low, high, size);
+}
+
+template <>
+bool allWithin<float>(const float* input, float low, float high, unsigned size) noexcept;
+
+template <class T>
+bool allWithin(absl::Span<const T> input, T low, T high) noexcept
+{
+    return allWithin<T>(input.data(), low, high, input.size());
 }
 
 } // namespace sfz

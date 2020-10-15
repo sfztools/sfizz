@@ -68,6 +68,22 @@ inline void multiplyAdd1Scalar(T gain, const T* input, T* output, unsigned size)
 }
 
 template <class T>
+inline void multiplyMulScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ *= (*gain++) * (*input++);
+}
+
+template <class T>
+inline void multiplyMul1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
+{
+    const auto sentinel = output + size;
+    while (output < sentinel)
+        *output++ *= gain * (*input++);
+}
+
+template <class T>
 T linearRampScalar(T* output, T start, T step, unsigned size) noexcept
 {
     const auto sentinel = output + size;
@@ -142,7 +158,7 @@ T meanScalar(const T* vector, unsigned size) noexcept
 }
 
 template <class T>
-T meanSquaredScalar(const T* vector, unsigned size) noexcept
+T sumSquaresScalar(const T* vector, unsigned size) noexcept
 {
     T result{ 0.0 };
     if (size == 0)
@@ -154,7 +170,7 @@ T meanSquaredScalar(const T* vector, unsigned size) noexcept
         vector++;
     }
 
-    return result / static_cast<T>(size);
+    return result;
 }
 
 template <class T>
@@ -185,4 +201,38 @@ void diffScalar(const T* input, T* output, unsigned size) noexcept
         *output = *input - *(input - 1);
         incrementAll(input, output);
     }
+}
+
+template <class T>
+void clampAllScalar(T* input, T low, T high, unsigned size ) noexcept
+{
+    if (size == 0)
+        return;
+
+    const auto sentinel = input + size;
+    while (input < sentinel) {
+        const float clampedAbove = *input > high ? high : *input;
+        *input = clampedAbove < low ? low : clampedAbove;
+        incrementAll(input);
+    }
+}
+
+template <class T>
+bool allWithinScalar(const T* input, T low, T high, unsigned size ) noexcept
+{
+    if (size == 0)
+        return true;
+
+    if (low > high)
+        std::swap(low, high);
+
+    const auto sentinel = input + size;
+    while (input < sentinel) {
+        if (*input < low || *input > high)
+            return false;
+
+        incrementAll(input);
+    }
+
+    return true;
 }

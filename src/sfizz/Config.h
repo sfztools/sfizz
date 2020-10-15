@@ -31,13 +31,15 @@ namespace config {
     constexpr int maxBlockSize { 8192 };
     constexpr int bufferPoolSize { 6 };
     constexpr int stereoBufferPoolSize { 4 };
-    constexpr int indexBufferPoolSize { 2 };
+    constexpr int indexBufferPoolSize { 4 };
     constexpr int preloadSize { 8192 };
+    constexpr bool loadInRam { false };
     constexpr int loggerQueueSize { 256 };
     constexpr int voiceLoggerQueueSize { 256 };
     constexpr bool loggingEnabled { false };
     constexpr size_t numChannels { 2 };
     constexpr int numBackgroundThreads { 4 };
+    constexpr unsigned fileClearingPeriod { 5 }; // in seconds
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
     constexpr unsigned smoothingSteps { 512 };
@@ -50,7 +52,6 @@ namespace config {
     constexpr int allNotesOffCC { 123 };
     constexpr int omniOffCC { 124 };
     constexpr int omniOnCC { 125 };
-    constexpr float halfCCThreshold { 0.5f };
     constexpr int centPerSemitone { 100 };
     constexpr float virtuallyZero { 0.001f };
     constexpr float fastReleaseDuration { 0.01f };
@@ -58,33 +59,42 @@ namespace config {
     constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
-    constexpr float filteredEnvelopeCutoff { 5 };
+    constexpr size_t powerFollowerStep { 512 };
+    constexpr float powerFollowerAttackTime { 5e-3f };
+    constexpr float powerFollowerReleaseTime { 200e-3f };
     constexpr uint16_t numCCs { 512 };
     constexpr int maxCurves { 256 };
     constexpr int chunkSize { 1024 };
     constexpr unsigned int defaultAlignment { 16 };
     constexpr int filtersInPool { maxVoices * 2 };
     constexpr int excessFileFrames { 8 };
+    constexpr int maxLFOSubs { 8 };
+    constexpr int maxLFOSteps { 128 };
     /**
      * @brief The threshold for age stealing.
      *        In percentage of the voice's max age.
      */
     constexpr float stealingAgeCoeff { 0.5f };
     /**
-     * @brief The threshold for envelope stealing.
-     *        In percentage of the sum of all envelopes.
+     * @brief The threshold for power stealing.
+     *        In percentage of the sum of all powers.
      */
-    constexpr float stealingEnvelopeCoeff { 0.5f };
+    constexpr float stealingPowerCoeff { 0.5f };
     constexpr int filtersPerVoice { 2 };
     constexpr int eqsPerVoice { 3 };
     constexpr int oscillatorsPerVoice { 9 };
-    constexpr float uniformNoiseBounds { 0.25f };
+    constexpr float uniformNoiseBounds { 1.0f };
     constexpr float noiseVariance { 0.25f };
     /**
        Minimum interval in frames between recomputations of coefficients of the
        modulated filter. The lower, the more CPU resources are consumed.
     */
     constexpr int filterControlInterval { 16 };
+    /**
+       Amplitude below which an exponential releasing envelope is considered as
+       finished.
+     */
+    constexpr float egReleaseThreshold = 1e-4;
     /**
        Default metadata for MIDIName documents
      */
@@ -96,14 +106,39 @@ namespace config {
     constexpr int maxEffectBuses { 256 };
     // Wavetable constants; amplitude values are matched to reference
     static constexpr unsigned tableSize = 1024;
-    static constexpr double amplitudeSine = 0.625;
-    static constexpr double amplitudeTriangle = 0.625;
-    static constexpr double amplitudeSaw = 0.515;
-    static constexpr double amplitudeSquare = 0.515;
+    static constexpr double tableRefSampleRate = 44100.0 * 1.1; // +10% aliasing permissivity
+    /**
+       Default wave amplitudes, adjusted for consistent RMS among all waves.
+       (except square curiously, but it's to match ARIA)
+     */
+    static constexpr double amplitudeSine = 1.0;
+    static constexpr double amplitudeTriangle = 1.0;
+    static constexpr double amplitudeSaw = 0.8164965809277261; // sqrt(2)/sqrt(3)
+    static constexpr double amplitudeSquare = 0.8164965809277261; // should have been sqrt(2)?
+    /**
+       Frame count high limit, for automatically loading a sound file as wavetable.
+       Set to 3000 according to Cakewalk.
+     */
+    static constexpr unsigned wavetableMaxFrames = 3000;
     /**
        Background file loading
      */
     static constexpr int backgroundLoaderPthreadPriority = 50; // expressed in %
+    /**
+       @brief Ratio to target under which smoothing is considered as completed
+     */
+    static constexpr float smoothingShortcutThreshold = 5e-3;
+    // loop crossfade settings
+    static constexpr int loopXfadeCurve = 2;    // 0: linear
+                                                // 1: use curves 5 & 6
+                                                // 2: use S-shaped curve
+    /**
+     * @brief Overflow voices in the engine, relative to the required voices.
+     * These are additional voices that more or less hold the "dying" voices
+     * due to engine polyphony being reached.
+     */
+    static constexpr float overflowVoiceMultiplier { 1.5f };
+    static_assert(overflowVoiceMultiplier >= 1.0f, "This needs to add voices");
 } // namespace config
 
 } // namespace sfz

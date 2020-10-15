@@ -47,4 +47,10 @@ It is the role of maintainers to best adapt the governance model to the evolutio
 3. Maintainers can be invited from regular contributors at any point in time; maintainers wishing to leave the governance of the project may inform the other maintainers.
 In both cases, updates to this document reflect the evolution of the governance team and rules.
 
+## License for the GOVERNANCE.md file
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided that this notice
+is preserved. This file is offered as-is, without any warranty.
+
 [Open-source Open Collective]: https://opencollective.com/sfztools

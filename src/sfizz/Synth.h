@@ -17,15 +17,20 @@
 #include "AudioSpan.h"
 #include "parser/Parser.h"
 #include "VoiceStealing.h"
-#include "absl/types/span.h"
+#include "utility/SpinMutex.h"
+#include <absl/types/span.h>
 #include <absl/types/optional.h>
+#include <absl/strings/string_view.h>
 #include <random>
-#include <mutex>
 #include <set>
-#include <string_view>
 #include <vector>
 
 namespace sfz {
+class ControllerSource;
+class LFOSource;
+class FlexEnvelopeSource;
+class ADSREnvelopeSource;
+
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point
  * of entry and in C the interface basically maps the functions of the class into
@@ -211,6 +216,17 @@ public:
      */
     const Voice* getVoiceById(NumericId<Voice> id) const noexcept;
     /**
+     * @brief Find the voice which is associated with the given identifier.
+     *
+     * @param id
+     * @return Voice*
+     */
+    Voice* getVoiceById(NumericId<Voice> id) noexcept
+    {
+        return const_cast<Voice*>(
+            const_cast<const Synth*>(this)->getVoiceById(id));
+    }
+    /**
      * @brief Get a raw view into a specific region. This is mostly used
      * for testing.
      *
@@ -354,7 +370,30 @@ public:
      * @param normValue the normalized cc value, in domain 0 to 1
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
+private:
     /**
+     * @brief Set the initial value of a controller and send it to the synth
+     *
+     * @param ccNumber the cc number
+     * @param ccValue the cc value
+     */
+    void initCc(int ccNumber, uint8_t ccValue) noexcept;
+    /**
+     * @brief Set the initial value of a controller and send it to the synth
+     *
+     * @param ccNumber the cc number
+     * @param normValue the normalized cc value, in domain 0 to 1
+     */
+    void initHdcc(int ccNumber, float normValue) noexcept;
+public:
+    /**
+     * @brief Get the initial value of a controller under the current instrument
+     *
+     * @param ccNumber the cc number
+     * @return the initial value
+     */
+    float getHdccInit(int ccNumber);
+   /**
      * @brief Send a pitch bend event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -380,6 +419,29 @@ public:
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
+     * @brief      Send the time signature.
+     *
+     * @param      delay                The delay.
+     * @param      beats_per_bar        The number of beats per bar, or time signature numerator.
+     * @param      beat_unit            The note corresponding to one beat, or time signature denominator.
+     */
+    void timeSignature(int delay, int beatsPerBar, int beatUnit);
+    /**
+     * @brief      Send the time position.
+     *
+     * @param      delay                The delay.
+     * @param      bar                  The current bar.
+     * @param      bar_beat             The fractional position of the current beat within the bar.
+     */
+    void timePosition(int delay, int bar, float barBeat);
+    /**
+     * @brief      Send the playback state.
+     *
+     * @param      delay                The delay.
+     * @param      playback_state       The playback state, 1 if playing, 0 if stopped.
+     */
+    void playbackState(int delay, int playbackState);
+    /**
      * @brief Render an block of audio data in the buffer. This call will reset
      * the synth in its waiting state for the next batch of events. The size of
      * the block is integrated in the AudioSpan object. You can build an
@@ -396,7 +458,7 @@ public:
      *
      * @return int
      */
-    int getNumActiveVoices() const noexcept;
+    int getNumActiveVoices(bool recompute = false) const noexcept;
     /**
      * @brief Get the total number of voices in the synth (the polyphony)
      *
@@ -489,6 +551,7 @@ public:
      */
     void disableFreeWheeling() noexcept;
 
+    Resources& getResources() noexcept { return resources; }
     const Resources& getResources() const noexcept { return resources; }
 
     /**
@@ -561,6 +624,13 @@ public:
      * @return const std::vector<NoteNamePair>&
      */
     const std::vector<CCNamePair>& getCCLabels() const noexcept { return ccLabels; }
+
+    /**
+     * @brief Get the used CCs
+     *
+     * @return const std::bitset<config::numCCs>&
+     */
+    std::bitset<config::numCCs> getUsedCCs() const noexcept;
 
 protected:
     /**
@@ -667,17 +737,52 @@ private:
     void applySettingsPerVoice();
 
     /**
-     * @brief Render the voice to its designated outputs and effect busses.
-     *
-     * @param voice
-     * @param tempSpan a temporary span used for rendering
+     * @brief Establish all connections of the modulation matrix.
      */
-    void renderVoiceToOutputs(Voice& voice, AudioSpan<float>& tempSpan) noexcept;
+    void setupModMatrix();
 
+    /**
+     * @brief Get the modification time of all included sfz files
+     *
+     * @return fs::file_time_type
+     */
     fs::file_time_type checkModificationTime();
 
+    /**
+     * @brief Check all regions and start voices for note on events
+     *
+     * @param delay
+     * @param noteNumber
+     * @param velocity
+     */
     void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
+     * @brief Check all regions and start voices for note off events
+     *
+     * @param delay
+     * @param noteNumber
+     * @param velocity
+     */
     void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
+     * @brief Check all regions and start voices for cc events
+     *
+     * @param delay
+     * @param ccNumber
+     * @param value
+     */
+    void ccDispatch(int delay, int ccNumber, float value) noexcept;
+
+    template<class T>
+    static void updateUsedCCsFromCCMap(std::bitset<sfz::config::numCCs>& usedCCs, const CCMap<T> map)
+    {
+        for (auto& mod : map)
+            usedCCs[mod.cc] = true;
+    }
+    static void updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedCCs, const Region& region);
+    static void updateUsedCCsFromModulations(std::bitset<sfz::config::numCCs>& usedCCs, const ModMatrix& mm);
 
     // Opcode memory; these are used to build regions, as a new region
     // will integrate opcodes from the group, master and global block
@@ -707,18 +812,92 @@ private:
     using RegionSetPtr = std::unique_ptr<RegionSet>;
     std::vector<RegionPtr> regions;
     std::vector<VoicePtr> voices;
+
     // These are more general "groups" than sfz and encapsulates the full hierarchy
-    RegionSet* currentSet;
-    OpcodeScope lastHeader { OpcodeScope::kOpcodeScopeGlobal };
+    RegionSet* currentSet { nullptr };
     std::vector<RegionSetPtr> sets;
+    // This region set holds the engine set of voices, which tries to respect the required
+    // engine polyphony
+    RegionSetPtr engineSet;
+
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups;
+
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
-    VoiceViewVector regionPolyphonyArray;
+    VoiceViewVector tempPolyphonyArray;
+    VoiceViewVector voiceViewArray;
     VoiceStealing stealer;
 
-    VoiceViewVector voiceViewArray;
+    /**
+     * @brief Check the region polyphony, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     */
+    void checkRegionPolyphony(const Region* region, int delay) noexcept;
+
+    /**
+     * @brief Check the note polyphony, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     * @param triggerEvent
+     */
+    void checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept;
+
+    /**
+     * @brief Check the group polyphony, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     */
+    void checkGroupPolyphony(const Region* region, int delay) noexcept;
+
+    /**
+     * @brief Check the region set polyphony at all levels, releasing voices if necessary
+     *
+     * @param region
+     * @param delay
+     */
+    void checkSetPolyphony(const Region* region, int delay) noexcept;
+
+    /**
+     * @brief Check the engine polyphony, fast releasing voices if necessary
+     *
+     * @param delay
+     */
+    void checkEnginePolyphony(int delay) noexcept;
+
+    /**
+     * @brief Start a voice for a specific region.
+     * This will do the needed polyphony checks and voice stealing.
+     *
+     * @param region
+     * @param delay
+     * @param triggerEvent
+     * @param ring
+     */
+    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Start all delayed release voices of the region if necessary
+     *
+     * @param region
+     * @param delay
+     * @param ring
+     */
+    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Check if a playing voice matches the release region
+     *
+     * @param releaseRegion
+     * @return true
+     * @return false
+     */
+    bool playingAttackVoice(const Region* releaseRegion) noexcept;
+
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
 
@@ -730,13 +909,15 @@ private:
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float sampleRate { config::defaultSampleRate };
     float volume { Default::globalVolume };
-    int numVoices { config::numVoices };
+    int numRequiredVoices { config::numVoices };
+    int numActualVoices { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
+    int activeVoices { 0 };
     Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
 
-    std::mutex callbackGuard;
+    SpinMutex callbackGuard;
 
     // Singletons passed as references to the voices
     Resources resources;
@@ -746,15 +927,29 @@ private:
     int noteOffset { 0 };
     int octaveOffset { 0 };
 
+    // Modulation source generators
+    std::unique_ptr<ControllerSource> genController;
+    std::unique_ptr<LFOSource> genLFO;
+    std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope;
+    std::unique_ptr<ADSREnvelopeSource> genADSREnvelope;
+
     // Settings per voice
     struct SettingsPerVoice {
         size_t maxFilters { 0 };
         size_t maxEQs { 0 };
-        ModifierArray<size_t> maxModifiers { 0 };
+        size_t maxLFOs { 0 };
+        size_t maxFlexEGs { 0 };
+        bool havePitchEG { false };
+        bool haveFilterEG { false };
     };
     SettingsPerVoice settingsPerVoice;
 
+    // Controller initial values
+    std::array<float, config::numCCs> ccInitialValues;
+
     Duration dispatchDuration { 0 };
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection;
 
     Parser parser;
     fs::file_time_type modificationTime { };

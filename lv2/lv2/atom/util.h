@@ -122,13 +122,13 @@ lv2_atom_sequence_next(const LV2_Atom_Event* i)
    @endcode
 */
 #define LV2_ATOM_SEQUENCE_FOREACH(seq, iter) \
-	for (LV2_Atom_Event* (iter) = lv2_atom_sequence_begin(&(seq)->body); \
+	for (LV2_Atom_Event* iter = lv2_atom_sequence_begin(&(seq)->body); \
 	     !lv2_atom_sequence_is_end(&(seq)->body, (seq)->atom.size, (iter)); \
 	     (iter) = lv2_atom_sequence_next(iter))
 
 /** Like LV2_ATOM_SEQUENCE_FOREACH but for a headerless sequence body. */
 #define LV2_ATOM_SEQUENCE_BODY_FOREACH(body, size, iter) \
-	for (LV2_Atom_Event* (iter) = lv2_atom_sequence_begin(body); \
+	for (LV2_Atom_Event* iter = lv2_atom_sequence_begin(body); \
 	     !lv2_atom_sequence_is_end(body, size, (iter)); \
 	     (iter) = lv2_atom_sequence_next(iter))
 
@@ -219,13 +219,13 @@ lv2_atom_tuple_next(const LV2_Atom* i)
    @endcode
 */
 #define LV2_ATOM_TUPLE_FOREACH(tuple, iter) \
-	for (LV2_Atom* (iter) = lv2_atom_tuple_begin(tuple); \
+	for (LV2_Atom* iter = lv2_atom_tuple_begin(tuple); \
 	     !lv2_atom_tuple_is_end(LV2_ATOM_BODY(tuple), (tuple)->atom.size, (iter)); \
 	     (iter) = lv2_atom_tuple_next(iter))
 
 /** Like LV2_ATOM_TUPLE_FOREACH but for a headerless tuple body. */
 #define LV2_ATOM_TUPLE_BODY_FOREACH(body, size, iter) \
-	for (LV2_Atom* (iter) = (LV2_Atom*)(body); \
+	for (LV2_Atom* iter = (LV2_Atom*)(body); \
 	     !lv2_atom_tuple_is_end(body, size, (iter)); \
 	     (iter) = lv2_atom_tuple_next(iter))
 
@@ -275,13 +275,13 @@ lv2_atom_object_next(const LV2_Atom_Property_Body* i)
    @endcode
 */
 #define LV2_ATOM_OBJECT_FOREACH(obj, iter) \
-	for (LV2_Atom_Property_Body* (iter) = lv2_atom_object_begin(&(obj)->body); \
+	for (LV2_Atom_Property_Body* iter = lv2_atom_object_begin(&(obj)->body); \
 	     !lv2_atom_object_is_end(&(obj)->body, (obj)->atom.size, (iter)); \
 	     (iter) = lv2_atom_object_next(iter))
 
 /** Like LV2_ATOM_OBJECT_FOREACH but for a headerless object body. */
 #define LV2_ATOM_OBJECT_BODY_FOREACH(body, size, iter) \
-	for (LV2_Atom_Property_Body* (iter) = lv2_atom_object_begin(body); \
+	for (LV2_Atom_Property_Body* iter = lv2_atom_object_begin(body); \
 	     !lv2_atom_object_is_end(body, size, (iter)); \
 	     (iter) = lv2_atom_object_next(iter))
 

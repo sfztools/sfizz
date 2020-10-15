@@ -233,6 +233,11 @@ TEST_CASE("[Opcode] Normalization")
         {"cutoff_foobar", "cutoff1_foobar"},
         {"resonance", "resonance1"},
         {"resonance_foobar", "resonance1_foobar"},
+        // Cakewalk aliases
+        {"cutoff_random", "fil1_random"},
+        {"cutoff1_random", "fil1_random"},
+        {"cutoff2_random", "fil2_random"},
+        {"gain_random", "amp_random"},
     };
 
     for (auto pair : regionSpecific) {
@@ -279,4 +284,15 @@ TEST_CASE("[Opcode] readOpcode")
     REQUIRE( sfz::readOpcode("50.25garbage", sfz::Range<int>(-20, 100)).value() == 50 );
     REQUIRE( !sfz::readOpcode("garbage50.25", sfz::Range<int>(-20, 100)) );
     REQUIRE( !sfz::readOpcode("garbage", sfz::Range<int>(-20, 100)) );
+}
+
+TEST_CASE("[Opcode] readBooleanFromOpcode")
+{
+    REQUIRE(sfz::readBooleanFromOpcode({"", "1"}) == true);
+    REQUIRE(sfz::readBooleanFromOpcode({"", "0"}) == false);
+    REQUIRE(sfz::readBooleanFromOpcode({"", "777"}) == true);
+    REQUIRE(sfz::readBooleanFromOpcode({"", "on"}) == true);
+    REQUIRE(sfz::readBooleanFromOpcode({"", "off"}) == false);
+    REQUIRE(sfz::readBooleanFromOpcode({"", "On"}) == true);
+    REQUIRE(sfz::readBooleanFromOpcode({"", "oFf"}) == false);
 }

@@ -17,7 +17,6 @@ set(VSTPLUGIN_SOURCES
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
-    GUIComponents.cpp
     VstPluginFactory.cpp
     X11RunLoop.cpp)
 
@@ -26,11 +25,7 @@ set(VSTPLUGIN_HEADERS
     SfizzVstController.h
     SfizzVstEditor.h
     SfizzVstState.h
-    GUIComponents.h
     X11RunLoop.h)
-
-set(VSTPLUGIN_RESOURCES
-    logo.png)
 
 add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     ${VSTPLUGIN_HEADERS}
@@ -40,7 +35,8 @@ if(WIN32)
     target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
-    PRIVATE ${PROJECT_NAME}::${PROJECT_NAME})
+    PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
+    PRIVATE sfizz_editor)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
@@ -72,26 +68,20 @@ endif()
 # Create the bundle (see "VST 3 Locations / Format")
 execute_process (
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
-foreach(res ${VSTPLUGIN_RESOURCES})
-    file (COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources/${res}"
-        DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
-endforeach()
+copy_editor_resources(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
+    "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 if(WIN32)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         SUFFIX ".vst3"
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-win")
-    foreach(config ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER "${config}" config)
-        set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
-            "LIBRARY_OUTPUT_DIRECTORY_${config}" "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-win")
-    endforeach()
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-win/$<0:>")
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/win/Plugin.ico"
         "${CMAKE_CURRENT_SOURCE_DIR}/win/desktop.ini"
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
 elseif(APPLE)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         SUFFIX ""
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/MacOS")
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/MacOS/$<0:>")
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mac/PkgInfo"
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents")
     set(SFIZZ_VST3_BUNDLE_EXECUTABLE "${PROJECT_NAME}")
@@ -102,7 +92,7 @@ elseif(APPLE)
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 else()
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux")
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux/$<0:>")
 endif()
 
 file(COPY "gpl-3.0.txt"
@@ -154,6 +144,7 @@ elseif(SFIZZ_AU)
         "${APPLE_COCOA_LIBRARY}"
         "${APPLE_CARBON_LIBRARY}"
         "${APPLE_AUDIOTOOLBOX_LIBRARY}"
+        "${APPLE_AUDIOUNIT_LIBRARY}"
         "${APPLE_COREAUDIO_LIBRARY}"
         "${APPLE_COREMIDI_LIBRARY}")
 
@@ -237,7 +228,7 @@ elseif(SFIZZ_AU)
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
     set_target_properties(${AUPLUGIN_PRJ_NAME} PROPERTIES
         SUFFIX ""
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS")
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/$<0:>")
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mac/PkgInfo"
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents")
     set(SFIZZ_AU_BUNDLE_EXECUTABLE "${PROJECT_NAME}")

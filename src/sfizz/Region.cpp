@@ -11,6 +11,7 @@
 #include "Opcode.h"
 #include "StringViewHelpers.h"
 #include "ModifierHelpers.h"
+#include "modulations/ModId.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_cat.h"
 #include "absl/algorithm/container.h"
@@ -43,6 +44,23 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         case hash(x "_curvecc&"):  \
         case hash(x "_stepcc&"):   \
         case hash(x "_smoothcc&")
+
+    #define LFO_EG_filter_EQ_target(sourceKey, targetKey, range)                                        \
+        {                                                                                               \
+            const auto number = opcode.parameters.front();                                              \
+            if (number == 0)                                                                            \
+                return false;                                                                           \
+                                                                                                        \
+            const auto index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;        \
+            if (!extendIfNecessary(filters, index + 1, Default::numFilters))                            \
+                return false;                                                                           \
+                                                                                                        \
+            if (auto value = readOpcode(opcode.value, range)) {                                         \
+                const ModKey source = ModKey::createNXYZ(sourceKey, id, number - 1);                    \
+                const ModKey target = ModKey::createNXYZ(targetKey, id, index);                         \
+                getOrCreateConnection(source, target).sourceDepth = *value;                             \
+            }                                                                                           \
+        }
 
     // Sound source: sample playback
     case hash("sample"):
@@ -111,7 +129,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             loopMode = SfzLoopMode::loop_sustain;
             break;
         default:
-            DBG("Unkown loop mode:" << std::string(opcode.value));
+            DBG("Unkown loop mode:" << opcode.value);
         }
         break;
     case hash("loop_end"): // also loopend
@@ -120,20 +138,37 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("loop_start"): // also loopstart
         setRangeStartFromOpcode(opcode, loopRange, Default::loopRange);
         break;
+    case hash("loop_crossfade"):
+        setValueFromOpcode(opcode, loopCrossfade, Default::loopCrossfadeRange);
+        break;
 
     // Wavetable oscillator
     case hash("oscillator_phase"):
-        setValueFromOpcode(opcode, oscillatorPhase, Default::oscillatorPhaseRange);
+        if (auto value = readOpcode(opcode.value, Default::oscillatorPhaseRange))
+            oscillatorPhase = (*value >= 0) ? wrapPhase(*value) : -1.0f;
         break;
     case hash("oscillator"):
         if (auto value = readBooleanFromOpcode(opcode))
-            oscillator = *value;
+            oscillatorEnabled = *value ? OscillatorEnabled::On : OscillatorEnabled::Off;
+        break;
+    case hash("oscillator_mode"):
+        setValueFromOpcode(opcode, oscillatorMode, Default::oscillatorModeRange);
         break;
     case hash("oscillator_multi"):
         setValueFromOpcode(opcode, oscillatorMulti, Default::oscillatorMultiRange);
         break;
     case hash("oscillator_detune"):
         setValueFromOpcode(opcode, oscillatorDetune, Default::oscillatorDetuneRange);
+        break;
+    case_any_ccN("oscillator_detune"):
+        processGenericCc(opcode, Default::oscillatorDetuneCCRange, ModKey::createNXYZ(ModId::OscillatorDetune, id));
+        break;
+    case hash("oscillator_mod_depth"):
+        if (auto value = readOpcode(opcode.value, Default::oscillatorModDepthRange))
+            oscillatorModDepth = normalizePercents(*value);
+        break;
+    case_any_ccN("oscillator_mod_depth"):
+        processGenericCc(opcode, Default::oscillatorModDepthCCRange, ModKey::createNXYZ(ModId::OscillatorModDepth, id));
         break;
     case hash("oscillator_quality"):
         if (opcode.value == "-1")
@@ -160,9 +195,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         case hash("normal"):
             offMode = SfzOffMode::normal;
             break;
+        case hash("time"):
+            offMode = SfzOffMode::time;
+            break;
         default:
-            DBG("Unkown off mode:" << std::string(opcode.value));
+            DBG("Unkown off mode:" << opcode.value);
         }
+        break;
+    case hash("off_time"):
+        offMode = SfzOffMode::time;
+        setValueFromOpcode(opcode, offTime, Default::egTimeRange);
         break;
     case hash("polyphony"):
         if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
@@ -181,7 +223,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             selfMask = SfzSelfMask::dontMask;
             break;
         default:
-            DBG("Unkown self mask value:" << std::string(opcode.value));
+            DBG("Unkown self mask value:" << opcode.value);
+        }
+        break;
+    case hash("rt_dead"):
+        if (opcode.value == "on") {
+            rtDead = true;
+        } else if (opcode.value == "off") {
+            rtDead = false;
+        } else {
+            DBG("Unkown rt_dead value:" << opcode.value);
         }
         break;
     // Region logic: key mapping
@@ -274,12 +325,17 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             velocityOverride = SfzVelocityOverride::previous;
             break;
         default:
-            DBG("Unknown velocity mode: " << std::string(opcode.value));
+            DBG("Unknown velocity mode: " << opcode.value);
         }
         break;
 
     case hash("sustain_cc"):
         setValueFromOpcode(opcode, sustainCC, Default::ccNumberRange);
+        break;
+    case hash("sustain_lo"):
+        if (auto value = readOpcode(opcode.value, Default::float7Range)) {
+            sustainThreshold = normalizeCC(*value);
+        }
         break;
     case hash("sustain_sw"):
         checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
@@ -311,7 +367,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("seq_position"):
         setValueFromOpcode(opcode, sequencePosition, Default::sequenceRange);
-        sequenceSwitched = (opcode.value == "1");
+        sequenceSwitched = false;
         break;
     // Region logic: triggers
     case hash("trigger"):
@@ -332,7 +388,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             trigger = SfzTrigger::release_key;
             break;
         default:
-            DBG("Unknown trigger mode: " << std::string(opcode.value));
+            DBG("Unknown trigger mode: " << opcode.value);
         }
         break;
     case hash("start_locc&"): // also on_locc&
@@ -373,35 +429,35 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, volume, Default::volumeRange);
         break;
     case_any_ccN("volume"): // also gain
-        processGenericCc(opcode, Default::volumeCCRange, &modifiers[Mod::volume]);
+        processGenericCc(opcode, Default::volumeCCRange, ModKey::createNXYZ(ModId::Volume, id));
         break;
     case hash("amplitude"):
         if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
             amplitude = normalizePercents(*value);
         break;
     case_any_ccN("amplitude"):
-        processGenericCc(opcode, Default::amplitudeRange, &modifiers[Mod::amplitude]);
+        processGenericCc(opcode, Default::amplitudeRange, ModKey::createNXYZ(ModId::Amplitude, id));
         break;
     case hash("pan"):
         if (auto value = readOpcode(opcode.value, Default::panRange))
             pan = normalizePercents(*value);
         break;
     case_any_ccN("pan"):
-        processGenericCc(opcode, Default::panCCRange, &modifiers[Mod::pan]);
+        processGenericCc(opcode, Default::panCCRange, ModKey::createNXYZ(ModId::Pan, id));
         break;
     case hash("position"):
         if (auto value = readOpcode(opcode.value, Default::positionRange))
             position = normalizePercents(*value);
         break;
     case_any_ccN("position"):
-        processGenericCc(opcode, Default::positionCCRange, &modifiers[Mod::position]);
+        processGenericCc(opcode, Default::positionCCRange, ModKey::createNXYZ(ModId::Position, id));
         break;
     case hash("width"):
         if (auto value = readOpcode(opcode.value, Default::widthRange))
             width = normalizePercents(*value);
         break;
     case_any_ccN("width"):
-        processGenericCc(opcode, Default::widthCCRange, &modifiers[Mod::width]);
+        processGenericCc(opcode, Default::widthCCRange, ModKey::createNXYZ(ModId::Width, id));
         break;
     case hash("amp_keycenter"):
         setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
@@ -410,7 +466,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, ampKeytrack, Default::ampKeytrackRange);
         break;
     case hash("amp_veltrack"):
-        setValueFromOpcode(opcode, ampVeltrack, Default::ampVeltrackRange);
+        if (auto value = readOpcode(opcode.value, Default::ampVeltrackRange))
+            ampVeltrack = normalizePercents(*value);
         break;
     case hash("amp_random"):
         setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
@@ -463,7 +520,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeKeyCurve = SfzCrossfadeCurve::gain;
             break;
         default:
-            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+            DBG("Unknown crossfade power curve: " << opcode.value);
         }
         break;
     case hash("xf_velcurve"):
@@ -475,7 +532,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeVelCurve = SfzCrossfadeCurve::gain;
             break;
         default:
-            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+            DBG("Unknown crossfade power curve: " << opcode.value);
         }
         break;
     case hash("xfin_locc&"):
@@ -511,11 +568,32 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeCCCurve = SfzCrossfadeCurve::gain;
             break;
         default:
-            DBG("Unknown crossfade power curve: " << std::string(opcode.value));
+            DBG("Unknown crossfade power curve: " << opcode.value);
         }
         break;
     case hash("rt_decay"):
         setValueFromOpcode(opcode, rtDecay, Default::rtDecayRange);
+        break;
+    case hash("global_amplitude"):
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            globalAmplitude = normalizePercents(*value);
+        break;
+    case hash("master_amplitude"):
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            masterAmplitude = normalizePercents(*value);
+        break;
+    case hash("group_amplitude"):
+        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
+            groupAmplitude = normalizePercents(*value);
+        break;
+    case hash("global_volume"):
+        setValueFromOpcode(opcode, globalVolume, Default::volumeRange);
+        break;
+    case hash("master_volume"):
+        setValueFromOpcode(opcode, masterVolume, Default::volumeRange);
+        break;
+    case hash("group_volume"):
+        setValueFromOpcode(opcode, groupVolume, Default::volumeRange);
         break;
 
     // Performance parameters: filters
@@ -535,30 +613,22 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
         }
         break;
-    case hash("cutoff&_oncc&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
+    case_any_ccN("cutoff&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].cutoffCC[opcode.parameters.back()],
-                Default::filterCutoffModRange
-            );
+            processGenericCc(opcode, Default::filterCutoffModRange, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
         }
         break;
-    case hash("resonance&_oncc&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
+    case_any_ccN("resonance&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].resonanceCC[opcode.parameters.back()],
-                Default::filterResonanceModRange
-            );
+            processGenericCc(opcode, Default::filterResonanceModRange, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
         }
         break;
     case hash("fil&_keytrack"): // also fil_keytrack
@@ -588,7 +658,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].veltrack, Default::filterVeltrackRange);
         }
         break;
-    case hash("fil&_random"): // also fil_random
+    case hash("fil&_random"): // also fil_random, cutoff_random, cutoff&_random
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
@@ -606,17 +676,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, filters[filterIndex].gain, Default::filterGainRange);
         }
         break;
-    case hash("fil&_gain_oncc&"): // also fil_gain_oncc&
+    case_any_ccN("fil&_gain"): // also fil_gain_oncc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            setValueFromOpcode(
-                opcode,
-                filters[filterIndex].gainCC[opcode.parameters.back()],
-                Default::filterGainModRange
-            );
+            processGenericCc(opcode, Default::filterGainModRange, ModKey::createNXYZ(ModId::FilGain, id, filterIndex));
         }
         break;
     case hash("fil&_type"): // also fil_type, filtype
@@ -631,7 +697,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 filters[filterIndex].type = *ftype;
             else {
                 filters[filterIndex].type = FilterType::kFilterNone;
-                DBG("Unknown filter type: " << std::string(opcode.value));
+                DBG("Unknown filter type: " << opcode.value);
             }
         }
         break;
@@ -639,115 +705,103 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     // Performance parameters: EQ
     case hash("eq&_bw"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidth, Default::eqBandwidthRange);
-        }
-        break;
-    case hash("eq&_bw_oncc&"): // also eq&_bwcc&
-        {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].bandwidthCC[opcode.parameters.back()], Default::eqBandwidthModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].bandwidth, Default::eqBandwidthRange);
+        }
+        break;
+    case_any_ccN("eq&_bw"): // also eq&_bwcc&
+        {
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
+                return false;
+
+            processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqIndex));
         }
         break;
     case hash("eq&_freq"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequency, Default::eqFrequencyRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].frequency, Default::eqFrequencyRange);
         }
         break;
-    case hash("eq&_freq_oncc&"): // also eq&_freqcc&
+    case_any_ccN("eq&_freq"): // also eq&_freqcc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].frequencyCC[opcode.parameters.back()], Default::eqFrequencyModRange);
+            processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
         }
         break;
     case hash("eq&_vel&freq"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
+            const auto eqIndex = opcode.parameters.front() - 1;
             if (opcode.parameters[1] != 2)
                 return false; // was eqN_vel3freq or something else than eqN_vel2freq
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2frequency, Default::eqFrequencyModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].vel2frequency, Default::eqFrequencyModRange);
         }
         break;
     case hash("eq&_gain"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
-                return false;
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].gain, Default::eqGainRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].gain, Default::eqGainRange);
         }
         break;
-    case hash("eq&_gain_oncc&"): // also eq&_gaincc&
+    case_any_ccN("eq&_gain"): // also eq&_gaincc&
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].gainCC[opcode.parameters.back()], Default::eqGainModRange);
+            processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
         }
         break;
     case hash("eq&_vel&gain"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
+            const auto eqIndex = opcode.parameters.front() - 1;
             if (opcode.parameters[1] != 2)
                 return false;  // was eqN_vel3gain or something else than eqN_vel2gain
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            setValueFromOpcode(opcode, equalizers[eqNumber - 1].vel2gain, Default::eqGainModRange);
+            setValueFromOpcode(opcode, equalizers[eqIndex].vel2gain, Default::eqGainModRange);
         }
         break;
     case hash("eq&_type"):
         {
-            const auto eqNumber = opcode.parameters.front();
-            if (eqNumber == 0)
-                return false;
-            if (!extendIfNecessary(equalizers, eqNumber, Default::numEQs))
+            const auto eqIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
             absl::optional<EqType> ftype = FilterEq::typeFromName(opcode.value);
 
             if (ftype)
-                equalizers[eqNumber - 1].type = *ftype;
+                equalizers[eqIndex].type = *ftype;
             else {
-                equalizers[eqNumber - 1].type = EqType::kEqNone;
-                DBG("Unknown EQ type: " << std::string(opcode.value));
+                equalizers[eqIndex].type = EqType::kEqNone;
+                DBG("Unknown EQ type: " << opcode.value);
             }
         }
         break;
 
     // Performance parameters: pitch
     case hash("pitch_keycenter"):
-        setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+        if (opcode.value == "sample")
+            pitchKeycenterFromSample = true;
+        else {
+            pitchKeycenterFromSample = false;
+            setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+        }
         break;
     case hash("pitch_keytrack"):
         setValueFromOpcode(opcode, pitchKeytrack, Default::pitchKeytrackRange);
@@ -765,7 +819,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, tune, Default::tuneRange);
         break;
     case_any_ccN("pitch"): // also tune
-        processGenericCc(opcode, Default::tuneCCRange, &modifiers[Mod::pitch]);
+        processGenericCc(opcode, Default::tuneCCRange, ModKey::createNXYZ(ModId::Pitch, id));
         break;
     case hash("bend_up"): // also bendup
         setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
@@ -780,113 +834,526 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         setValueFromOpcode(opcode, bendSmooth, Default::smoothCCRange);
         break;
 
+    // Modulation: LFO
+    case hash("lfo&_freq"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].freq, Default::lfoFreqRange);
+        }
+        break;
+    case hash("lfo&_phase"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoPhaseRange))
+                lfos[lfoNumber - 1].phase0 = wrapPhase(*value);
+        }
+        break;
+    case hash("lfo&_delay"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].delay, Default::lfoDelayRange);
+        }
+        break;
+    case hash("lfo&_fade"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].fade, Default::lfoFadeRange);
+        }
+        break;
+    case hash("lfo&_count"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].count, Default::lfoCountRange);
+        }
+        break;
+    case hash("lfo&_steps"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoStepsRange)) {
+                if (!lfos[lfoNumber - 1].seq)
+                    lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
+                lfos[lfoNumber - 1].seq->steps.resize(*value);
+            }
+        }
+        break;
+    case hash("lfo&_step&"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto stepNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || stepNumber == 0 || stepNumber > config::maxLFOSteps)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoStepXRange)) {
+                if (!lfos[lfoNumber - 1].seq)
+                    lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
+                if (!extendIfNecessary(lfos[lfoNumber - 1].seq->steps, stepNumber, Default::numLFOSteps))
+                    return false;
+                lfos[lfoNumber - 1].seq->steps[stepNumber - 1] = *value * 0.01f;
+            }
+        }
+        break;
+    case hash("lfo&_wave&"): // also lfo&_wave
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoWaveRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].wave = static_cast<LFOWave>(*value);
+            }
+        }
+        break;
+    case hash("lfo&_offset&"): // also lfo&_offset
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoOffsetRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].offset = *value;
+            }
+        }
+        break;
+    case hash("lfo&_ratio&"): // also lfo&_ratio
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoRatioRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].ratio = *value;
+            }
+        }
+        break;
+    case hash("lfo&_scale&"): // also lfo&_scale
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            const auto subNumber = opcode.parameters[1];
+            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::lfoScaleRange)) {
+                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                    return false;
+                lfos[lfoNumber - 1].sub[subNumber - 1].scale = *value;
+            }
+        }
+        break;
+
+    // Modulation: LFO (targets)
+    case hash("lfo&_amplitude"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_pan"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_width"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_position"): // sfizz extension
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_pitch"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_volume"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("lfo&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffModRange);
+        break;
+    case hash("lfo&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceModRange);
+        break;
+    case hash("lfo&_fil&gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainModRange);
+        break;
+    case hash("lfo&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainModRange);
+        break;
+    case hash("lfo&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyModRange);
+        break;
+    case hash("lfo&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthModRange);
+        break;
+
+    // Modulation: Flex EG (targets)
+    case hash("eg&_amplitude"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_pan"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_width"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_position"): // sfizz extension
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_pitch"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_volume"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+                const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
+    case hash("eg&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffModRange);
+        break;
+    case hash("eg&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceModRange);
+        break;
+    case hash("eg&_fil&gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainModRange);
+        break;
+    case hash("eg&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainModRange);
+        break;
+    case hash("eg&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyModRange);
+        break;
+    case hash("eg&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthModRange);
+        break;
+
+    case hash("eg&_ampeg"):
+    {
+        const auto egNumber = opcode.parameters.front();
+        if (egNumber == 0)
+            return false;
+        if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+            return false;
+        if (auto ampeg = readBooleanFromOpcode(opcode)) {
+            FlexEGDescription& desc = flexEGs[egNumber - 1];
+            if (desc.ampeg != *ampeg) {
+                desc.ampeg = *ampeg;
+                flexAmpEG = absl::nullopt;
+                for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
+                    if (flexEGs[i].ampeg)
+                        flexAmpEG = static_cast<uint8_t>(i);
+                }
+            }
+        }
+        break;
+    }
+
     // Amplitude Envelope
     case hash("ampeg_attack"):
-        setValueFromOpcode(opcode, amplitudeEG.attack, Default::egTimeRange);
-        break;
     case hash("ampeg_decay"):
-        setValueFromOpcode(opcode, amplitudeEG.decay, Default::egTimeRange);
-        break;
     case hash("ampeg_delay"):
-        setValueFromOpcode(opcode, amplitudeEG.delay, Default::egTimeRange);
-        break;
     case hash("ampeg_hold"):
-        setValueFromOpcode(opcode, amplitudeEG.hold, Default::egTimeRange);
-        break;
     case hash("ampeg_release"):
-        setValueFromOpcode(opcode, amplitudeEG.release, Default::egTimeRange);
-        break;
     case hash("ampeg_start"):
-        setValueFromOpcode(opcode, amplitudeEG.start, Default::egPercentRange);
-        break;
     case hash("ampeg_sustain"):
-        setValueFromOpcode(opcode, amplitudeEG.sustain, Default::egPercentRange);
-        break;
     case hash("ampeg_vel&attack"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2attack, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&decay"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2decay, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&delay"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2delay, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&hold"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2hold, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&release"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2release, Default::egOnCCTimeRange);
-        break;
     case hash("ampeg_vel&sustain"):
+    case hash("ampeg_attack_oncc&"): // also ampeg_attackcc&
+    case hash("ampeg_decay_oncc&"): // also ampeg_decaycc&
+    case hash("ampeg_delay_oncc&"): // also ampeg_delaycc&
+    case hash("ampeg_hold_oncc&"): // also ampeg_holdcc&
+    case hash("ampeg_release_oncc&"): // also ampeg_releasecc&
+    case hash("ampeg_start_oncc&"): // also ampeg_startcc&
+    case hash("ampeg_sustain_oncc&"): // also ampeg_sustaincc&
+        parseEGOpcode(opcode, amplitudeEG);
+        break;
+
+    case hash("pitcheg_attack"):
+    case hash("pitcheg_decay"):
+    case hash("pitcheg_delay"):
+    case hash("pitcheg_hold"):
+    case hash("pitcheg_release"):
+    case hash("pitcheg_start"):
+    case hash("pitcheg_sustain"):
+    case hash("pitcheg_vel&attack"):
+    case hash("pitcheg_vel&decay"):
+    case hash("pitcheg_vel&delay"):
+    case hash("pitcheg_vel&hold"):
+    case hash("pitcheg_vel&release"):
+    case hash("pitcheg_vel&sustain"):
+    case hash("pitcheg_attack_oncc&"): // also pitcheg_attackcc&
+    case hash("pitcheg_decay_oncc&"): // also pitcheg_decaycc&
+    case hash("pitcheg_delay_oncc&"): // also pitcheg_delaycc&
+    case hash("pitcheg_hold_oncc&"): // also pitcheg_holdcc&
+    case hash("pitcheg_release_oncc&"): // also pitcheg_releasecc&
+    case hash("pitcheg_start_oncc&"): // also pitcheg_startcc&
+    case hash("pitcheg_sustain_oncc&"): // also pitcheg_sustaincc&
+        if (parseEGOpcode(opcode, pitchEG))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::PitchEG, id),
+                ModKey::createNXYZ(ModId::Pitch, id));
+        break;
+
+    case hash("fileg_attack"):
+    case hash("fileg_decay"):
+    case hash("fileg_delay"):
+    case hash("fileg_hold"):
+    case hash("fileg_release"):
+    case hash("fileg_start"):
+    case hash("fileg_sustain"):
+    case hash("fileg_vel&attack"):
+    case hash("fileg_vel&decay"):
+    case hash("fileg_vel&delay"):
+    case hash("fileg_vel&hold"):
+    case hash("fileg_vel&release"):
+    case hash("fileg_vel&sustain"):
+    case hash("fileg_attack_oncc&"): // also fileg_attackcc&
+    case hash("fileg_decay_oncc&"): // also fileg_decaycc&
+    case hash("fileg_delay_oncc&"): // also fileg_delaycc&
+    case hash("fileg_hold_oncc&"): // also fileg_holdcc&
+    case hash("fileg_release_oncc&"): // also fileg_releasecc&
+    case hash("fileg_start_oncc&"): // also fileg_startcc&
+    case hash("fileg_sustain_oncc&"): // also fileg_sustaincc&
+        if (parseEGOpcode(opcode, filterEG))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::FilEG, id),
+                ModKey::createNXYZ(ModId::FilCutoff, id));
+        break;
+
+    case hash("pitcheg_depth"):
+        if (auto value = readOpcode(opcode.value, Default::pitchEgDepthRange))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::PitchEG, id),
+                ModKey::createNXYZ(ModId::Pitch, id)).sourceDepth = *value;
+        break;
+    case hash("fileg_depth"):
+        if (auto value = readOpcode(opcode.value, Default::filterEgDepthRange))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::FilEG, id),
+                ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = *value;
+        break;
+
+    case hash("pitcheg_vel&depth"):
         if (opcode.parameters.front() != 2)
             return false; // Was not vel2...
-        setValueFromOpcode(opcode, amplitudeEG.vel2sustain, Default::egOnCCPercentRange);
+        if (auto value = readOpcode(opcode.value, Default::pitchEgDepthRange))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::PitchEG, id),
+                ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = *value;
         break;
-    case hash("ampeg_attack_oncc&"): // also ampeg_attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            amplitudeEG.ccAttack[opcode.parameters.back()] = *value;
-
+    case hash("fileg_vel&depth"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        if (auto value = readOpcode(opcode.value, Default::filterEgDepthRange))
+            getOrCreateConnection(
+                ModKey::createNXYZ(ModId::FilEG, id),
+                ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = *value;
         break;
-    case hash("ampeg_decay_oncc&"): // also ampeg_decaycc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            amplitudeEG.ccDecay[opcode.parameters.back()] = *value;
-
+    // Flex envelopes
+    case hash("eg&_dynamic"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            setValueFromOpcode(opcode, eg.dynamic, Default::flexEGDynamicRange);
+        }
         break;
-    case hash("ampeg_delay_oncc&"): // also ampeg_delaycc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            amplitudeEG.ccDelay[opcode.parameters.back()] = *value;
-
+    case hash("eg&_sustain"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            setValueFromOpcode(opcode, eg.sustain, Default::flexEGSustainRange);
+        }
         break;
-    case hash("ampeg_hold_oncc&"): // also ampeg_holdcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            amplitudeEG.ccHold[opcode.parameters.back()] = *value;
-
+    case hash("eg&_time&"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            const auto pointNumber = opcode.parameters[1];
+            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+                return false;
+            setValueFromOpcode(opcode, eg.points[pointNumber].time, Default::flexEGPointTimeRange);
+        }
         break;
-    case hash("ampeg_release_oncc&"): // also ampeg_releasecc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            amplitudeEG.ccRelease[opcode.parameters.back()] = *value;
-
+    case hash("eg&_level&"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            const auto pointNumber = opcode.parameters[1];
+            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+                return false;
+            setValueFromOpcode(opcode, eg.points[pointNumber].level, Default::flexEGPointLevelRange);
+        }
         break;
-    case hash("ampeg_start_oncc&"): // also ampeg_startcc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-
-        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
-            amplitudeEG.ccStart[opcode.parameters.back()] = *value;
-
-        break;
-    case hash("ampeg_sustain_oncc&"): // also ampeg_sustaincc&
-        if (opcode.parameters.back() >= config::numCCs)
-            return false;
-
-        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
-            amplitudeEG.ccSustain[opcode.parameters.back()] = *value;
-
+    case hash("eg&_shape&"):
+        {
+            const auto egNumber = opcode.parameters.front();
+            if (egNumber == 0)
+                return false;
+            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
+                return false;
+            auto& eg = flexEGs[egNumber - 1];
+            const auto pointNumber = opcode.parameters[1];
+            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+                return false;
+            if (auto value = readOpcode(opcode.value, Default::flexEGPointShapeRange))
+                eg.points[pointNumber].setShape(*value);
+        }
         break;
 
     case hash("effect&"):
@@ -914,12 +1381,150 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         return false;
 
     #undef case_any_ccN
+    #undef LFO_EG_filter_EQ_target
     }
 
     return true;
 }
 
-bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCMap<Modifier> *ccMap)
+bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
+{
+    #define case_any_eg(param)                      \
+        case hash("ampeg_" param):                  \
+        case hash("pitcheg_" param):                \
+        case hash("fileg_" param)                   \
+
+    switch (opcode.lettersOnlyHash) {
+    case_any_eg("attack"):
+        setValueFromOpcode(opcode, eg.attack, Default::egTimeRange);
+        break;
+    case_any_eg("decay"):
+        setValueFromOpcode(opcode, eg.decay, Default::egTimeRange);
+        break;
+    case_any_eg("delay"):
+        setValueFromOpcode(opcode, eg.delay, Default::egTimeRange);
+        break;
+    case_any_eg("hold"):
+        setValueFromOpcode(opcode, eg.hold, Default::egTimeRange);
+        break;
+    case_any_eg("release"):
+        setValueFromOpcode(opcode, eg.release, Default::egTimeRange);
+        break;
+    case_any_eg("start"):
+        setValueFromOpcode(opcode, eg.start, Default::egPercentRange);
+        break;
+    case_any_eg("sustain"):
+        setValueFromOpcode(opcode, eg.sustain, Default::egPercentRange);
+        break;
+    case_any_eg("vel&attack"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, eg.vel2attack, Default::egOnCCTimeRange);
+        break;
+    case_any_eg("vel&decay"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, eg.vel2decay, Default::egOnCCTimeRange);
+        break;
+    case_any_eg("vel&delay"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, eg.vel2delay, Default::egOnCCTimeRange);
+        break;
+    case_any_eg("vel&hold"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, eg.vel2hold, Default::egOnCCTimeRange);
+        break;
+    case_any_eg("vel&release"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, eg.vel2release, Default::egOnCCTimeRange);
+        break;
+    case_any_eg("vel&sustain"):
+        if (opcode.parameters.front() != 2)
+            return false; // Was not vel2...
+        setValueFromOpcode(opcode, eg.vel2sustain, Default::egOnCCPercentRange);
+        break;
+    case_any_eg("attack_oncc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            eg.ccAttack[opcode.parameters.back()] = *value;
+
+        break;
+    case_any_eg("decay_oncc&"): // also decaycc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            eg.ccDecay[opcode.parameters.back()] = *value;
+
+        break;
+    case_any_eg("delay_oncc&"): // also delaycc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            eg.ccDelay[opcode.parameters.back()] = *value;
+
+        break;
+    case_any_eg("hold_oncc&"): // also holdcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            eg.ccHold[opcode.parameters.back()] = *value;
+
+        break;
+    case_any_eg("release_oncc&"): // also releasecc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
+            eg.ccRelease[opcode.parameters.back()] = *value;
+
+        break;
+    case_any_eg("start_oncc&"): // also startcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
+            eg.ccStart[opcode.parameters.back()] = *value;
+
+        break;
+    case_any_eg("sustain_oncc&"): // also sustaincc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
+            eg.ccSustain[opcode.parameters.back()] = *value;
+
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+
+    #undef case_any_eg
+}
+
+bool sfz::Region::parseEGOpcode(const Opcode& opcode, absl::optional<EGDescription>& eg)
+{
+    bool create = eg == absl::nullopt;
+    if (create)
+        eg = EGDescription();
+
+    bool parsed = parseEGOpcode(opcode, *eg);
+    if (!parsed && create)
+        eg = absl::nullopt;
+
+    return parsed;
+}
+
+bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, const ModKey& target)
 {
     if (!opcode.isAnyCcN())
         return false;
@@ -928,29 +1533,51 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, CCM
     if (ccNumber >= config::numCCs)
         return false;
 
-    if (ccMap) {
-        Modifier& modifier = (*ccMap)[ccNumber];
+    if (target) {
+        // search an existing connection of same CC number and target
+        // if it exists, modify, otherwise create
+        auto it = std::find_if(connections.begin(), connections.end(),
+            [ccNumber, &target](const Connection& x) -> bool
+            {
+                return x.source.id() == ModId::Controller &&
+                    x.source.parameters().cc == ccNumber &&
+                    x.target == target;
+            });
+
+        Connection *conn;
+        if (it != connections.end())
+            conn = &*it;
+        else {
+            connections.emplace_back();
+            conn = &connections.back();
+            conn->source = ModKey::createCC(ccNumber, 0, 0, 0);
+            conn->target = target;
+        }
+
+        //
+        ModKey::Parameters p = conn->source.parameters();
         switch (opcode.category) {
         case kOpcodeOnCcN:
-            setValueFromOpcode(opcode, modifier.value, range);
+            setValueFromOpcode(opcode, conn->sourceDepth, range);
             break;
         case kOpcodeCurveCcN:
-            setValueFromOpcode(opcode, modifier.curve, Default::curveCCRange);
+            setValueFromOpcode(opcode, p.curve, Default::curveCCRange);
             break;
         case kOpcodeStepCcN:
             {
                 const Range<float> stepCCRange { 0.0f, std::max(std::abs(range.getStart()), std::abs(range.getEnd())) };
-                setValueFromOpcode(opcode, modifier.step, stepCCRange);
+                setValueFromOpcode(opcode, p.step, stepCCRange);
             }
             break;
         case kOpcodeSmoothCcN:
-            setValueFromOpcode(opcode, modifier.smooth, Default::smoothCCRange);
+            setValueFromOpcode(opcode, p.smooth, Default::smoothCCRange);
             break;
         default:
             assert(false);
             break;
         }
-     }
+        conn->source = ModKey(ModId::Controller, {}, p);
+    }
 
     return true;
 }
@@ -965,12 +1592,8 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     if (keyswitchRange.containsWithEnd(noteNumber)) {
-        if (keyswitch) {
-            if (*keyswitch == noteNumber)
-                keySwitched = true;
-            else
-                keySwitched = false;
-        }
+        if (keyswitch)
+            keySwitched =  (*keyswitch == noteNumber);
 
         if (keyswitchDown && *keyswitchDown == noteNumber)
             keySwitched = true;
@@ -982,18 +1605,11 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
     if (keyOk) {
         // Sequence activation
-        sequenceCounter += 1;
-        if ((sequenceCounter % sequenceLength) == sequencePosition - 1)
-            sequenceSwitched = true;
-        else
-            sequenceSwitched = false;
+        sequenceSwitched =
+            ((sequenceCounter++ % sequenceLength) == sequencePosition - 1);
 
-        if (previousNote) {
-            if (*previousNote == noteNumber)
-                previousKeySwitched = true;
-            else
-                previousKeySwitched = false;
-        }
+        if (previousNote)
+            previousKeySwitched = (*previousNote == noteNumber);
     }
 
     if (!isSwitchedOn())
@@ -1026,24 +1642,37 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
             keySwitched = true;
     }
 
-    const bool keyOk = keyRange.containsWithEnd(noteNumber);
-
     if (!isSwitchedOn())
         return false;
 
     if (!triggerOnNote)
         return false;
 
+    // Prerequisites
+
+    const bool keyOk = keyRange.containsWithEnd(noteNumber);
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue);
-    bool releaseTrigger = (trigger == SfzTrigger::release_key);
+
+    if (!(velOk && keyOk && randOk))
+        return false;
+
+    // Release logic
+
+    if (trigger == SfzTrigger::release_key)
+        return true;
+
     if (trigger == SfzTrigger::release) {
-        if (midiState.getCCValue(sustainCC) < config::halfCCThreshold)
-            releaseTrigger = true;
-        else
-            noteIsOff = true;
+        if (midiState.getCCValue(sustainCC) < sustainThreshold)
+            return true;
+
+        // If we reach this part, we're storing the notes to delay their release on CC up
+        // This is handled by the Synth object
+
+        delayedReleases.emplace_back(noteNumber, midiState.getNoteVelocity(noteNumber));
     }
-    return keyOk && velOk && randOk && releaseTrigger;
+
+    return false;
 }
 
 bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
@@ -1056,11 +1685,6 @@ bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 
     if (!isSwitchedOn())
         return false;
-
-    if (sustainCC == ccNumber && ccValue < config::halfCCThreshold && noteIsOff) {
-        noteIsOff = false;
-        return true;
-    }
 
     if (!triggerOnCC)
         return false;
@@ -1100,11 +1724,11 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    std::uniform_int_distribution<int> pitchDistribution { -pitchRandom, pitchRandom };
+    fast_real_distribution<float> pitchDistribution { -pitchRandom, pitchRandom };
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += tune; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += static_cast<int>(velocity) * pitchVeltrack; // track velocity
+    pitchVariationInCents += velocity * pitchVeltrack; // track velocity
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
     return centsFactor(pitchVariationInCents);
 }
@@ -1113,6 +1737,9 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 {
     fast_real_distribution<float> volumeDistribution { -ampRandom, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
+    baseVolumedB += globalVolume;
+    baseVolumedB += masterVolume;
+    baseVolumedB += groupVolume;
     if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
         baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
@@ -1120,16 +1747,21 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 
 float sfz::Region::getBaseGain() const noexcept
 {
-    return amplitude;
+    float baseGain = amplitude;
+
+    baseGain *= globalAmplitude;
+    baseGain *= masterAmplitude;
+    baseGain *= groupAmplitude;
+
+    return baseGain;
 }
 
 float sfz::Region::getPhase() const noexcept
 {
     float phase;
-    if (oscillatorPhase >= 0) {
-        phase = oscillatorPhase * (1.0f / 360.0f);
-        phase -= static_cast<float>(static_cast<int>(phase));
-    } else {
+    if (oscillatorPhase >= 0)
+        phase = oscillatorPhase;
+    else {
         fast_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
         phase = phaseDist(Random::randomGenerator);
     }
@@ -1142,7 +1774,7 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
         finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
-    return Default::offsetCCRange.clamp(offset + offsetDistribution(Random::randomGenerator)) * static_cast<uint64_t>(factor);
+    return Default::offsetRange.clamp(finalOffset) * static_cast<uint64_t>(factor);
 }
 
 float sfz::Region::getDelay() const noexcept
@@ -1153,7 +1785,10 @@ float sfz::Region::getDelay() const noexcept
 
 uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept
 {
-    return min(sampleEnd, loopRange.getEnd()) * static_cast<uint32_t>(factor);
+    if (sampleEnd <= 0)
+        return 0;
+
+    return min(static_cast<uint32_t>(sampleEnd), loopRange.getEnd()) * static_cast<uint32_t>(factor);
 }
 
 uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
@@ -1213,19 +1848,14 @@ float sfz::Region::velocityCurve(float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    float gain { 1.0f };
-    if (velCurve) { // Custom velocity curve
-        return velCurve->evalNormalized(velocity);
-    } else { // Standard velocity curve
-        // FIXME: Maybe there's a prettier way to check the boundaries?
-        const float gaindB = [&]() {
-            if (ampVeltrack >= 0)
-                return velocity == 0.0f ? -90.0f : 40 * std::log(velocity) / std::log(10.0f);
-            else
-                return velocity == 1.0f ? -90.0f : 40 * std::log(1 - velocity) / std::log(10.0f);
-        }();
-        gain *= db2mag( gaindB * std::abs(ampVeltrack) / sfz::Default::ampVeltrackRange.getEnd());
-    }
+    float gain;
+    if (velCurve)
+        gain = velCurve->evalNormalized(velocity);
+    else
+        gain = velocity * velocity;
+
+    gain = std::fabs(ampVeltrack) * (1.0f - gain);
+    gain = (ampVeltrack < 0) ? gain : (1.0f - gain);
 
     return gain;
 }
@@ -1295,4 +1925,33 @@ float sfz::Region::getGainToEffectBus(unsigned number) const noexcept
 float sfz::Region::getBendInCents(float bend) const noexcept
 {
     return bend > 0.0f ? bend * static_cast<float>(bendUp) : -bend * static_cast<float>(bendDown);
+}
+
+sfz::Region::Connection* sfz::Region::getConnection(const ModKey& source, const ModKey& target)
+{
+    auto pred = [&source, &target](const Connection& c)
+    {
+        return c.source == source && c.target == target;
+    };
+
+    auto it = std::find_if(connections.begin(), connections.end(), pred);
+    return (it == connections.end()) ? nullptr : &*it;
+}
+
+sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source, const ModKey& target)
+{
+    if (Connection* c = getConnection(source, target))
+        return *c;
+
+    sfz::Region::Connection c;
+    c.source = source;
+    c.target = target;
+
+    connections.push_back(c);
+    return connections.back();
+}
+
+bool sfz::Region::disabled() const noexcept
+{
+    return (sampleEnd == 0);
 }

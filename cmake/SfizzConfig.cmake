@@ -17,6 +17,31 @@ if (WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
 endif()
 
+# Set macOS compatibility level
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+endif()
+
+# Do not define macros `min` and `max`
+if (WIN32)
+    add_compile_definitions(NOMINMAX)
+endif()
+
+# Find macOS system libraries
+if(APPLE)
+    find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
+    find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
+    find_library(APPLE_COCOA_LIBRARY "Cocoa")
+    find_library(APPLE_CARBON_LIBRARY "Carbon")
+    find_library(APPLE_OPENGL_LIBRARY "OpenGL")
+    find_library(APPLE_ACCELERATE_LIBRARY "Accelerate")
+    find_library(APPLE_QUARTZCORE_LIBRARY "QuartzCore")
+    find_library(APPLE_AUDIOTOOLBOX_LIBRARY "AudioToolbox")
+    find_library(APPLE_AUDIOUNIT_LIBRARY "AudioUnit")
+    find_library(APPLE_COREAUDIO_LIBRARY "CoreAudio")
+    find_library(APPLE_COREMIDI_LIBRARY "CoreMIDI")
+endif()
+
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
 # see https://gitlab.kitware.com/cmake/cmake/issues/15170
 
@@ -32,10 +57,15 @@ endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall)
     add_compile_options(-Wextra)
-    add_compile_options(-ffast-math)
-    add_compile_options(-fno-omit-frame-pointer) # For debugging purposes
+    add_compile_options(-Wno-multichar)
+    add_compile_options(-Werror=return-type)
     if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
         add_compile_options(-msse2)
+    elseif(SFIZZ_SYSTEM_PROCESSOR MATCHES "^(arm.*)$")
+        add_compile_options(-mfpu=neon)
+        if (NOT ANDROID)
+            add_compile_options(-mfloat-abi=hard)
+        endif()
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_STANDARD 17)
@@ -43,22 +73,34 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
+function(sfizz_enable_fast_math NAME)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options("${NAME}" PRIVATE "-ffast-math")
+    endif()
+endfunction()
+
+# The sndfile library
 add_library(sfizz-sndfile INTERFACE)
 
+# The jsl utility library for C++
+add_library(sfizz-jsl INTERFACE)
+target_include_directories(sfizz-jsl INTERFACE "external/jsl/include")
+
 if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    find_package(LibSndFile REQUIRED)
+    find_package(SndFile CONFIG REQUIRED)
     find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
     target_include_directories(sfizz-sndfile INTERFACE "${SNDFILE_INCLUDE_DIR}")
-    target_link_libraries(sfizz-sndfile INTERFACE sndfile-static)
+    target_link_libraries(sfizz-sndfile INTERFACE SndFile::sndfile)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(SNDFILE "sndfile" REQUIRED)
     target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
-    if (SFIZZ_STATIC_LIBSNDFILE)
+    if (SFIZZ_STATIC_DEPENDENCIES)
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
     else()
         target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
     endif()
+    link_directories(${SNDFILE_LIBRARY_DIRS})
 endif()
 
 
@@ -107,12 +149,13 @@ Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
 Build LV2 plug-in:             ${SFIZZ_LV2}
+Build LV2 user interface:      ${SFIZZ_LV2_UI}
 Build VST plug-in:             ${SFIZZ_VST}
 Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
-Statically link libsndfile:    ${SFIZZ_STATIC_LIBSNDFILE}
+Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
 Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
