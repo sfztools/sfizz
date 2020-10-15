@@ -289,6 +289,17 @@ constexpr long int lroundPositive(T value)
 }
 
 /**
+   @brief Wrap a normalized phase into the domain [0;1[
+ */
+template <class T>
+static T wrapPhase(T phase)
+{
+    T wrapped = phase - static_cast<int>(phase);
+    wrapped += wrapped < 0;
+    return wrapped;
+}
+
+/**
    @brief A fraction which is parameterized by integer type
  */
 template <class I>

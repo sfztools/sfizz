@@ -18,6 +18,6 @@ lfo6_wave=5
 lfo6_freq=2.0
 lfo7_wave=6
 lfo7_freq=1.0
-lfo7_phase=180
+lfo7_phase=0.5
 lfo8_wave=7
 lfo8_freq=2.0

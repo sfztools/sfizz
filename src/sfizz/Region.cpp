@@ -144,7 +144,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
 
     // Wavetable oscillator
     case hash("oscillator_phase"):
-        setValueFromOpcode(opcode, oscillatorPhase, Default::oscillatorPhaseRange);
+        if (auto value = readOpcode(opcode.value, Default::oscillatorPhaseRange))
+            oscillatorPhase = (*value >= 0) ? wrapPhase(*value) : -1.0f;
         break;
     case hash("oscillator"):
         if (auto value = readBooleanFromOpcode(opcode))
@@ -851,12 +852,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoPhaseRange)) {
-                float normalPhase = *value * (1.0 / 360.0);
-                normalPhase -= int(normalPhase);
-                normalPhase += (normalPhase < 0) ? 1 : 0;
-                lfos[lfoNumber - 1].phase0 = normalPhase;
-            }
+            if (auto value = readOpcode(opcode.value, Default::lfoPhaseRange))
+                lfos[lfoNumber - 1].phase0 = wrapPhase(*value);
         }
         break;
     case hash("lfo&_delay"):
@@ -1762,10 +1759,9 @@ float sfz::Region::getBaseGain() const noexcept
 float sfz::Region::getPhase() const noexcept
 {
     float phase;
-    if (oscillatorPhase >= 0) {
-        phase = oscillatorPhase * (1.0f / 360.0f);
-        phase -= static_cast<float>(static_cast<int>(phase));
-    } else {
+    if (oscillatorPhase >= 0)
+        phase = oscillatorPhase;
+    else {
         fast_real_distribution<float> phaseDist { 0.0001f, 0.9999f };
         phase = phaseDist(Random::randomGenerator);
     }

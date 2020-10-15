@@ -1595,14 +1595,14 @@ TEST_CASE("[Region] Parsing opcodes")
     SECTION("Wavetable phase")
     {
         REQUIRE(region.oscillatorPhase == 0.0f);
-        region.parseOpcode({ "oscillator_phase", "45" });
-        REQUIRE(region.oscillatorPhase == 45.0f);
-        region.parseOpcode({ "oscillator_phase", "45.32" });
-        REQUIRE(region.oscillatorPhase == 45.32_a);
+        region.parseOpcode({ "oscillator_phase", "0.25" });
+        REQUIRE(region.oscillatorPhase == 0.25f);
+        region.parseOpcode({ "oscillator_phase", "0.3" });
+        REQUIRE(region.oscillatorPhase == 0.3_a);
         region.parseOpcode({ "oscillator_phase", "-1" });
         REQUIRE(region.oscillatorPhase == -1.0f);
-        region.parseOpcode({ "oscillator_phase", "361" });
-        REQUIRE(region.oscillatorPhase == 360.0f);
+        region.parseOpcode({ "oscillator_phase", "1.1" });
+        REQUIRE(region.oscillatorPhase == 0.0f);
     }
 
     SECTION("Note polyphony")
