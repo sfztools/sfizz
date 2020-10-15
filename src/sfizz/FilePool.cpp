@@ -485,7 +485,7 @@ void sfz::FilePool::dispatchingJob() noexcept
 
         // Clear finished jobs
         swapAndPopAll(loadingJobs, [](std::future<void>& future) {
-            return future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+            return is_ready(future);
         });
     }
 }
