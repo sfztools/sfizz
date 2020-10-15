@@ -354,6 +354,7 @@ private:
     void dispatchingJob() noexcept;
     void garbageJob() noexcept;
     void loadingJob(QueuedFileData data) noexcept;
+    std::mutex loadingJobsMutex;
     std::vector<std::future<void>> loadingJobs;
     std::thread dispatchThread { &FilePool::dispatchingJob, this };
     std::thread garbageThread { &FilePool::garbageJob, this };

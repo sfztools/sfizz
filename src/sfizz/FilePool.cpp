@@ -476,6 +476,8 @@ void sfz::FilePool::dispatchingJob() noexcept
             continue;
         }
 
+        std::lock_guard<std::mutex> guard { loadingJobsMutex };
+        
         if (filesToLoad.try_pop(queuedData)) {
             loadingJobs.push_back(
                 threadPool.enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
@@ -483,7 +485,7 @@ void sfz::FilePool::dispatchingJob() noexcept
 
         // Clear finished jobs
         swapAndPopAll(loadingJobs, [](std::future<void>& future) {
-            return future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+            return is_ready(future);
         });
     }
 }
@@ -515,8 +517,11 @@ void sfz::FilePool::emptyFileLoadingQueues() noexcept
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
 {
+    std::lock_guard<std::mutex> guard { loadingJobsMutex };
+
     for (auto& job : loadingJobs)
         job.wait();
+
     loadingJobs.clear();
 }
 
