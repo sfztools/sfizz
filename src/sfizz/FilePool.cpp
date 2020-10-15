@@ -482,6 +482,7 @@ void sfz::FilePool::dispatchingJob() noexcept
         }
 
         // Clear finished jobs
+        std::lock_guard<SpinMutex> guard { loadingJobsMutex };
         swapAndPopAll(loadingJobs, [](std::future<void>& future) {
             return future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
         });
@@ -515,8 +516,11 @@ void sfz::FilePool::emptyFileLoadingQueues() noexcept
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
 {
+    std::lock_guard<SpinMutex> guard { loadingJobsMutex };
+
     for (auto& job : loadingJobs)
         job.wait();
+
     loadingJobs.clear();
 }
 
