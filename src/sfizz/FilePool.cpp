@@ -476,7 +476,7 @@ void sfz::FilePool::dispatchingJob() noexcept
             continue;
         }
 
-        std::lock_guard<SpinMutex> guard { loadingJobsMutex };
+        std::lock_guard<std::mutex> guard { loadingJobsMutex };
         
         if (filesToLoad.try_pop(queuedData)) {
             loadingJobs.push_back(
@@ -517,7 +517,7 @@ void sfz::FilePool::emptyFileLoadingQueues() noexcept
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
 {
-    std::lock_guard<SpinMutex> guard { loadingJobsMutex };
+    std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
     for (auto& job : loadingJobs)
         job.wait();
