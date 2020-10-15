@@ -89,11 +89,8 @@ namespace fx {
                     apan->_lfoFrequency = *value;
                 break;
             case hash("apan_phase"):
-                if (auto value = readOpcode(opc.value, Default::apanPhaseRange)) {
-                    float phase = *value / 360.0f;
-                    phase -= static_cast<int>(phase);
-                    apan->_lfoPhaseOffset = phase;
-                }
+                if (auto value = readOpcode(opc.value, Default::apanPhaseRange))
+                    apan->_lfoPhaseOffset = wrapPhase(*value);
                 break;
             case hash("apan_dry"):
                 if (auto value = readOpcode(opc.value, Default::apanLevelRange))

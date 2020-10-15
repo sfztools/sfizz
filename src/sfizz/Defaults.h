@@ -65,7 +65,7 @@ namespace Default
 
     // Wavetable oscillator
     constexpr float oscillatorPhase { 0.0 };
-    constexpr Range<float> oscillatorPhaseRange { -1.0, 360.0 };
+    constexpr Range<float> oscillatorPhaseRange { -1.0, 1.0 };
     constexpr int oscillatorMode { 0 };
     constexpr int oscillatorMulti { 1 };
     constexpr Range<int> oscillatorModeRange { 0, 2 };
@@ -222,7 +222,7 @@ namespace Default
     constexpr int numLFOSubs { 2 };
     constexpr int numLFOSteps { 8 };
     constexpr Range<float> lfoFreqRange { 0.0, 100.0 };
-    constexpr Range<float> lfoPhaseRange { 0.0, 360.0 };
+    constexpr Range<float> lfoPhaseRange { 0.0, 1.0 };
     constexpr Range<float> lfoDelayRange { 0.0, 30.0 };
     constexpr Range<float> lfoFadeRange { 0.0, 30.0 };
     constexpr Range<unsigned> lfoCountRange { 0, 1000 };
@@ -281,7 +281,7 @@ namespace Default
 
     constexpr Range<int> apanWaveformRange { 0, std::numeric_limits<int>::max() };
     constexpr Range<float> apanFrequencyRange { 0, std::numeric_limits<float>::max() };
-    constexpr Range<float> apanPhaseRange { 0.0, 360.0 };
+    constexpr Range<float> apanPhaseRange { 0.0, 1.0 };
     constexpr Range<float> apanLevelRange { 0.0, 100.0 };
 }
 }
