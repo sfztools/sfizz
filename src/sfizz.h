@@ -46,7 +46,7 @@ typedef enum {
 
 /**
  * @brief Processing mode
- * @since 0.4.1
+ * @since 0.5.0
  */
 typedef enum {
     SFIZZ_PROCESS_LIVE,
@@ -356,7 +356,7 @@ SFIZZ_EXPORTED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float 
 
 /**
  * @brief Send the time signature.
- * @since 0.4.1
+ * @since 0.5.0
  *
  * @param synth          The synth.
  * @param delay          The delay.
@@ -367,7 +367,7 @@ SFIZZ_EXPORTED_API void sfizz_send_time_signature(sfizz_synth_t* synth, int dela
 
 /**
  * @brief Send the time position.
- * @since 0.4.1
+ * @since 0.5.0
  *
  * @param synth     The synth.
  * @param delay     The delay.
@@ -378,7 +378,7 @@ SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay
 
 /**
  * @brief Send the playback state.
- * @since 0.4.1
+ * @since 0.5.0
  *
  * @param synth           The synth.
  * @param delay           The delay.

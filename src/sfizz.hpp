@@ -326,7 +326,7 @@ public:
 
     /**
      * @brief Send the time signature.
-     * @since 0.4.1
+     * @since 0.5.0
      *
      * @param delay       The delay.
      * @param beatsPerBar The number of beats per bar, or time signature numerator.
@@ -336,7 +336,7 @@ public:
 
     /**
      * @brief Send the time position.
-     * @since 0.4.1
+     * @since 0.5.0
      *
      * @param delay   The delay.
      * @param bar     The current bar.
@@ -346,7 +346,7 @@ public:
 
     /**
      * @brief Send the playback state.
-     * @since 0.4.1
+     * @since 0.5.0
      *
      * @param delay         The delay.
      * @param playbackState The playback state, 1 if playing, 0 if stopped.
