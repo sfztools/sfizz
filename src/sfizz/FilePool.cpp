@@ -477,7 +477,7 @@ void sfz::FilePool::dispatchingJob() noexcept
         }
 
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
-        
+
         if (filesToLoad.try_pop(queuedData)) {
             loadingJobs.push_back(
                 threadPool.enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
