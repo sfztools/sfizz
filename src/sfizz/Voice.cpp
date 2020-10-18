@@ -1092,10 +1092,11 @@ void sfz::Voice::updateLoopInformation() noexcept
     if (!region->shouldLoop())
         return;
     const auto& info = currentPromise->information;
+    const auto factor = resources.filePool.getOversamplingFactor();
     const auto rate = info.sampleRate;
 
-    loop.end = static_cast<int>(info.loopEnd);
-    loop.start = static_cast<int>(info.loopBegin);
+    loop.end = static_cast<int>(region->loopEnd(factor));
+    loop.start = static_cast<int>(region->loopStart(factor));
     loop.size = loop.end + 1 - loop.start;
     loop.xfSize = static_cast<int>(lroundPositive(region->loopCrossfade * rate));
     loop.xfOutStart = loop.end + 1 - loop.xfSize;
