@@ -464,9 +464,7 @@ bool is_ready(std::future<R> const& f)
 void sfz::FilePool::dispatchingJob() noexcept
 {
     QueuedFileData queuedData;
-    while (dispatchFlag) {
-        dispatchBarrier.wait();
-
+    while (dispatchBarrier.wait(), dispatchFlag) {
         if (emptyQueueFlag) {
             while (filesToLoad.try_pop(queuedData)) {
                 // pass
@@ -492,15 +490,12 @@ void sfz::FilePool::dispatchingJob() noexcept
 
 void sfz::FilePool::garbageJob() noexcept
 {
-    while (garbageFlag) {
-        semGarbageBarrier.wait();
-        {
-            std::lock_guard<SpinMutex> guard { garbageMutex };
-            for (auto& g: garbageToCollect)
-                g.reset();
+    while (semGarbageBarrier.wait(), garbageFlag) {
+        std::lock_guard<SpinMutex> guard { garbageMutex };
+        for (auto& g: garbageToCollect)
+            g.reset();
 
-            garbageToCollect.clear();
-        }
+        garbageToCollect.clear();
     }
 }
 
