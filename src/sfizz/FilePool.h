@@ -44,6 +44,7 @@
 #include <thread>
 #include <future>
 #include "utility/SpinMutex.h"
+class ThreadPool;
 
 namespace sfz {
 using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
@@ -363,6 +364,8 @@ private:
     std::vector<FileId> lastUsedFiles;
     SpinMutex garbageMutex;
     std::vector<FileAudioBuffer> garbageToCollect;
+
+    std::shared_ptr<ThreadPool> threadPool;
 
     // Preloaded data
     absl::flat_hash_map<FileId, FileData> preloadedFiles;
