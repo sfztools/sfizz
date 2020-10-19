@@ -47,7 +47,29 @@
 #endif
 #include "threadpool/ThreadPool.h"
 using namespace std::placeholders;
-static ThreadPool threadPool { std::thread::hardware_concurrency() > 2 ? std::thread::hardware_concurrency() - 2 : 1 };
+
+static std::weak_ptr<ThreadPool> globalThreadPoolWeakPtr;
+static std::mutex globalThreadPoolMutex;
+
+static std::shared_ptr<ThreadPool> globalThreadPool()
+{
+    std::shared_ptr<ThreadPool> threadPool;
+
+    threadPool = globalThreadPoolWeakPtr.lock();
+    if (threadPool)
+        return threadPool;
+
+    std::lock_guard<std::mutex> lock(globalThreadPoolMutex);
+    threadPool = globalThreadPoolWeakPtr.lock();
+    if (threadPool)
+        return threadPool;
+
+    unsigned numThreads = std::thread::hardware_concurrency();
+    numThreads = (numThreads > 2) ? (numThreads - 2) : 1;
+    threadPool.reset(new ThreadPool(numThreads));
+    globalThreadPoolWeakPtr = threadPool;
+    return threadPool;
+}
 
 void readBaseFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, uint32_t numFrames)
 {
@@ -96,7 +118,7 @@ void streamFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampl
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
-    : logger(logger)
+    : logger(logger), threadPool(globalThreadPool())
 {
     loadingJobs.reserve(config::maxVoices);
     lastUsedFiles.reserve(config::maxVoices);
@@ -478,7 +500,7 @@ void sfz::FilePool::dispatchingJob() noexcept
 
         if (filesToLoad.try_pop(queuedData)) {
             loadingJobs.push_back(
-                threadPool.enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+                threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
         }
 
         // Clear finished jobs
