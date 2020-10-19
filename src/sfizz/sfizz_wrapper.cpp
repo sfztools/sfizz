@@ -7,6 +7,7 @@
 #include "Config.h"
 #include "Macros.h"
 #include "Synth.h"
+#include "Messaging.h"
 #include "sfizz.h"
 #include <limits>
 
@@ -427,6 +428,38 @@ const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index)
         return NULL;
 
     return ccLabels[label_index].second.c_str();
+}
+
+sfizz_client_t* sfizz_create_client(void* data)
+{
+    return reinterpret_cast<sfizz_client_t*>(new sfz::Client(data));
+}
+
+void sfizz_delete_client(sfizz_client_t* client)
+{
+    delete reinterpret_cast<sfz::Client*>(client);
+}
+
+void* sfizz_get_client_data(sfizz_client_t* client)
+{
+    return reinterpret_cast<sfz::Client*>(client)->getClientData();
+}
+
+void sfizz_set_receive_callback(sfizz_client_t* client, sfizz_receive_t* receive)
+{
+    reinterpret_cast<sfz::Client*>(client)->setReceiveCallback(receive);
+}
+
+void sfizz_send_message(sfizz_synth_t* synth, sfizz_client_t* client, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    auto* self = reinterpret_cast<sfz::Synth*>(synth);
+    self->dispatchMessage(*reinterpret_cast<sfz::Client*>(client), delay, path, sig, args);
+}
+
+void sfizz_set_broadcast_callback(sfizz_synth_t* synth, sfizz_receive_t* broadcast, void* data)
+{
+    auto* self = reinterpret_cast<sfz::Synth*>(synth);
+    self->setBroadcastCallback(broadcast, data);
 }
 
 #ifdef __cplusplus

@@ -148,6 +148,7 @@ typedef struct
     LV2_URID sfizz_log_status_uri;
     LV2_URID sfizz_check_modification_uri;
     LV2_URID sfizz_active_voices_uri;
+    LV2_URID sfizz_osc_blob_uri;
     LV2_URID time_position_uri;
     LV2_URID time_bar_uri;
     LV2_URID time_bar_beat_uri;
@@ -158,6 +159,7 @@ typedef struct
 
     // Sfizz related data
     sfizz_synth_t *synth;
+    sfizz_client_t *client;
     bool expect_nominal_block_length;
     char sfz_file_path[MAX_PATH_SIZE];
     char scala_file_path[MAX_PATH_SIZE];
@@ -181,6 +183,9 @@ typedef struct
 
     // Paths
     char bundle_path[MAX_BUNDLE_PATH_SIZE];
+
+    // OSC
+    uint8_t osc_temp[OSC_TEMP_SIZE];
 } sfizz_plugin_t;
 
 enum
@@ -236,6 +241,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
+    self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
     self->time_bar_uri = map->map(map->handle, LV2_TIME__bar);
     self->time_bar_beat_uri = map->map(map->handle, LV2_TIME__barBeat);
@@ -423,6 +429,28 @@ sfizz_lv2_update_timeinfo(sfizz_plugin_t *self, int delay, int updates)
         sfizz_send_playback_state(self->synth, delay, self->speed > 0);
 }
 
+static void
+sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    (void)delay;
+
+    sfizz_plugin_t *self = (sfizz_plugin_t *)data;
+
+    // transmit to UI as OSC blob
+    uint8_t *osc_temp = self->osc_temp;
+    uint32_t osc_size = sfizz_prepare_message(osc_temp, OSC_TEMP_SIZE, path, sig, args);
+    if (osc_size > OSC_TEMP_SIZE)
+        return;
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(&self->forge, 0) &&
+        lv2_atom_forge_atom(&self->forge, osc_size, self->sfizz_osc_blob_uri) &&
+        lv2_atom_forge_raw(&self->forge, osc_temp, osc_size);
+    lv2_atom_forge_pad(&self->forge, osc_size);
+
+    (void)write_ok;
+}
+
 static LV2_Handle
 instantiate(const LV2_Descriptor *descriptor,
             double rate,
@@ -570,6 +598,9 @@ instantiate(const LV2_Descriptor *descriptor,
     }
 
     self->synth = sfizz_create_synth();
+    self->client = sfizz_create_client(self);
+    sfizz_set_broadcast_callback(self->synth, &sfizz_lv2_receive_message, self);
+    sfizz_set_receive_callback(self->client, &sfizz_lv2_receive_message);
 
     sfizz_lv2_get_default_sfz_path(instance, self->sfz_file_path, MAX_PATH_SIZE);
     sfizz_lv2_get_default_scala_path(instance, self->scala_file_path, MAX_PATH_SIZE);
@@ -586,6 +617,7 @@ static void
 cleanup(LV2_Handle instance)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    sfizz_delete_client(self->client);
     sfizz_free(self->synth);
     free(self);
 }
@@ -952,11 +984,21 @@ run(LV2_Handle instance, uint32_t sample_count)
                                     self->unmap->unmap(self->unmap->handle, obj->body.otype));
                 continue;
             }
-            // Got an atom that is a MIDI event
         }
         else if (ev->body.type == self->midi_event_uri)
         {
+            // Got an atom that is a MIDI event
             sfizz_lv2_process_midi_event(self, ev);
+        }
+        else if (ev->body.type == self->sfizz_osc_blob_uri)
+        {
+            // Got an atom that is a OSC event
+            const char *path;
+            const char *sig;
+            const sfizz_arg_t *args;
+            uint8_t buffer[1024];
+            if (sfizz_extract_message(LV2_ATOM_BODY_CONST(&ev->body), ev->body.size, buffer, sizeof(buffer), &path, &sig, &args) > 0)
+                sfizz_send_message(self->synth, self->client, (int)ev->time.frames, path, sig, args);
         }
     }
 

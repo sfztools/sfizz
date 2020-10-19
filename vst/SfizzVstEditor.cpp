@@ -16,15 +16,22 @@ using namespace VSTGUI;
 
 static ViewRect sfizzUiViewRect { 0, 0, Editor::viewWidth, Editor::viewHeight };
 
+enum {
+    kOscTempSize = 8192,
+};
+
 SfizzVstEditor::SfizzVstEditor(void *controller)
-    : VSTGUIEditor(controller, &sfizzUiViewRect)
+    : VSTGUIEditor(controller, &sfizzUiViewRect),
+      oscTemp_(new uint8_t[kOscTempSize])
 {
     getController()->addSfizzStateListener(this);
+    getController()->addSfizzMessageListener(this);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
 {
     getController()->removeSfizzStateListener(this);
+    getController()->removeSfizzMessageListener(this);
 }
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
@@ -103,6 +110,11 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
 void SfizzVstEditor::onStateChanged()
 {
     updateStateDisplay();
+}
+
+void SfizzVstEditor::onMessageReceived(const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    uiReceiveMessage(path, sig, args);
 }
 
 ///
@@ -190,6 +202,26 @@ void SfizzVstEditor::uiSendMIDI(const uint8_t* data, uint32_t len)
     Vst::IAttributeList* attr = msg->getAttributes();
     attr->setBinary("Data", data, len);
     ctl->sendMessage(msg);
+}
+
+void SfizzVstEditor::uiSendMessage(const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    SfizzVstController* ctl = getController();
+
+    Steinberg::OPtr<Vst::IMessage> msg { ctl->allocateMessage() };
+    if (!msg) {
+        fprintf(stderr, "[Sfizz] UI could not allocate message\n");
+        return;
+    }
+
+    uint8_t* oscTemp = oscTemp_.get();
+    uint32_t oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
+    if (oscSize <= kOscTempSize) {
+        msg->setMessageID("OscMessage");
+        Vst::IAttributeList* attr = msg->getAttributes();
+        attr->setBinary("Data", oscTemp, oscSize);
+        ctl->sendMessage(msg);
+    }
 }
 
 ///

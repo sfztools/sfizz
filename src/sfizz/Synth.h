@@ -8,6 +8,7 @@
 #include "AudioSpan.h"
 #include "LeakDetector.h"
 #include "Resources.h"
+#include "Messaging.h"
 #include "utility/NumericId.h"
 #include "parser/Parser.h"
 #include <ghc/fs_std.hpp>
@@ -584,6 +585,27 @@ public:
      * @return const std::bitset<config::numCCs>&
      */
     std::bitset<config::numCCs> getUsedCCs() const noexcept;
+
+    /**
+     * @brief Dispatch the incoming message to the synth engine
+     * @since 0.6.0
+     *
+     * @param client       The client sending the message.
+     * @param delay        The delay of the message in the block, in samples.
+     * @param path         The OSC address pattern.
+     * @param sig          The OSC type tag string.
+     * @param args         The OSC arguments, whose number and format is determined the type tag string.
+     */
+    void dispatchMessage(Client& client, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+
+    /**
+     * @brief Set the function which receives broadcast messages from the synth engine.
+     * @since 0.6.0
+     *
+     * @param broadcast    The pointer to the receiving function.
+     * @param data         The opaque data pointer which is passed to the receiver.
+     */
+    void setBroadcastCallback(sfizz_receive_t* broadcast, void* data);
 
 private:
     struct Impl;

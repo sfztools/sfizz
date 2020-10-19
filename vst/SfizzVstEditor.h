@@ -16,7 +16,10 @@ namespace VSTGUI { class RunLoop; }
 using namespace Steinberg;
 using namespace VSTGUI;
 
-class SfizzVstEditor : public Vst::VSTGUIEditor, public SfizzVstController::StateListener, public EditorController {
+class SfizzVstEditor : public Vst::VSTGUIEditor,
+                       public SfizzVstController::StateListener,
+                       public SfizzVstController::MessageListener,
+                       public EditorController {
 public:
     explicit SfizzVstEditor(void *controller);
     ~SfizzVstEditor();
@@ -35,12 +38,16 @@ public:
     // SfizzVstController::StateListener
     void onStateChanged() override;
 
+    // SfizzVstController::MessageListener
+    void onMessageReceived(const char* path, const char* sig, const sfizz_arg_t* args) override;
+
 protected:
     // EditorController
     void uiSendValue(EditId id, const EditValue& v) override;
     void uiBeginSend(EditId id) override;
     void uiEndSend(EditId id) override;
     void uiSendMIDI(const uint8_t* data, uint32_t len) override;
+    void uiSendMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
 
 private:
     void loadSfzFile(const std::string& filePath);
@@ -55,4 +62,7 @@ private:
 #if !defined(__APPLE__) && !defined(_WIN32)
     SharedPointer<RunLoop> _runLoop;
 #endif
+
+    // messaging
+    std::unique_ptr<uint8[]> oscTemp_;
 };

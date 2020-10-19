@@ -10,6 +10,7 @@
 */
 
 #pragma once
+#include "sfizz_message.h"
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -730,6 +731,79 @@ SFIZZ_EXPORTED_API int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label
  * @returns the label or @null if the index is out of bounds.
  */
 SFIZZ_EXPORTED_API const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @addtogroup Messaging
+ * @{
+ */
+
+/**
+ * @brief Client for communicating with the synth engine in either direction
+ * @since 0.6.0
+ */
+typedef struct sfizz_client_t sfizz_client_t;
+
+/**
+ * @brief Create a new messaging client
+ * @since 0.6.0
+ *
+ * @param data         The opaque data pointer which is passed to the receiver.
+ * @return             The new client.
+ */
+SFIZZ_EXPORTED_API sfizz_client_t* sfizz_create_client(void* data);
+
+/**
+ * @brief Destroy a messaging client
+ * @since 0.6.0
+ *
+ * @param client       The client.
+ */
+SFIZZ_EXPORTED_API void sfizz_delete_client(sfizz_client_t* client);
+
+/**
+ * @brief Get the client data
+ * @since 0.6.0
+ *
+ * @param client       The client.
+ * @return             The client data.
+ */
+SFIZZ_EXPORTED_API void* sfizz_get_client_data(sfizz_client_t* client);
+
+/**
+ * @brief Set the function which receives reply messages from the synth engine.
+ * @since 0.6.0
+ *
+ * @param client       The client.
+ * @param receive      The pointer to the receiving function.
+ */
+SFIZZ_EXPORTED_API void sfizz_set_receive_callback(sfizz_client_t* client, sfizz_receive_t* receive);
+
+/**
+ * @brief Send a message to the synth engine
+ * @since 0.6.0
+ *
+ * @param synth        The synth.
+ * @param client       The client sending the message.
+ * @param delay        The delay of the message in the block, in samples.
+ * @param path         The OSC address pattern.
+ * @param sig          The OSC type tag string.
+ * @param args         The OSC arguments, whose number and format is determined the type tag string.
+ */
+SFIZZ_EXPORTED_API void sfizz_send_message(sfizz_synth_t* synth, sfizz_client_t* client, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+
+/**
+ * @brief Set the function which receives broadcast messages from the synth engine.
+ * @since 0.6.0
+ *
+ * @param synth        The synth.
+ * @param broadcast    The pointer to the receiving function.
+ * @param data         The opaque data pointer which is passed to the receiver.
+ */
+SFIZZ_EXPORTED_API void sfizz_set_broadcast_callback(sfizz_synth_t* synth, sfizz_receive_t* broadcast, void* data);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }
