@@ -94,7 +94,7 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
         }
         setupOscillatorUnison();
     } else {
-        currentPromise = resources.filePool.getFilePromise(*region->sampleId);
+        currentPromise = resources.filePool.getFilePromise(region->sampleId);
         if (!currentPromise) {
             switchState(State::cleanMeUp);
             return;

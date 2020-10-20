@@ -342,9 +342,9 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
     }
 }
 
-sfz::FileDataHolder sfz::FilePool::getFilePromise(const FileId& fileId) noexcept
+sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>& fileId) noexcept
 {
-    const auto preloaded = preloadedFiles.find(fileId);
+    const auto preloaded = preloadedFiles.find(*fileId);
     if (preloaded == preloadedFiles.end()) {
         DBG("[sfizz] File not found in the preloaded files: " << fileId);
         return {};
@@ -381,14 +381,20 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
 {
     raiseCurrentThreadPriority();
 
+    std::shared_ptr<FileId> id = data.id.lock();
+    if (!id) {
+        // file ID was nulled, it means the region was deleted, ignore
+        return;
+    }
+
     const auto loadStartTime = std::chrono::high_resolution_clock::now();
     const auto waitDuration = loadStartTime - data.queuedTime;
-    const fs::path file { rootDirectory / data.id.filename() };
+    const fs::path file { rootDirectory / id->filename() };
     std::error_code readError;
-    AudioReaderPtr reader = createAudioReader(file, data.id.isReverse(), &readError);
+    AudioReaderPtr reader = createAudioReader(file, id->isReverse(), &readError);
 
     if (readError) {
-        DBG("[sfizz] libsndfile errored for " << data.id << " with message " << readError.message());
+        DBG("[sfizz] libsndfile errored for " << *id << " with message " << readError.message());
         return;
     }
 
@@ -398,7 +404,7 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
     while (currentStatus == FileData::Status::Invalid) {
         // Spin until the state changes
         if (spinCounter > 1024) {
-            DBG("[sfizz] " << data.id << " is stuck on Invalid? Leaving the load");
+            DBG("[sfizz] " << *id << " is stuck on Invalid? Leaving the load");
             return;
         }
 
@@ -418,13 +424,13 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
     const auto frames = static_cast<uint32_t>(reader->frames());
     streamFromFile(*reader, frames, oversamplingFactor, data.data->fileData, &data.data->availableFrames);
     const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
-    logger.logFileTime(waitDuration, loadDuration, frames, data.id.filename());
+    logger.logFileTime(waitDuration, loadDuration, frames, id->filename());
 
     data.data->status = FileData::Status::Done;
 
     std::lock_guard<SpinMutex> guard { lastUsedMutex };
-    if (absl::c_find(lastUsedFiles, data.id) == lastUsedFiles.end())
-        lastUsedFiles.push_back(data.id);
+    if (absl::c_find(lastUsedFiles, *id) == lastUsedFiles.end())
+        lastUsedFiles.push_back(*id);
 }
 
 void sfz::FilePool::clear()
@@ -487,20 +493,15 @@ void sfz::FilePool::dispatchingJob() noexcept
 {
     QueuedFileData queuedData;
     while (dispatchBarrier.wait(), dispatchFlag) {
-        if (emptyQueueFlag) {
-            while (filesToLoad.try_pop(queuedData)) {
-                // pass
-            }
-            semEmptyQueueFinished.post();
-            emptyQueueFlag = false;
-            continue;
-        }
-
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
         if (filesToLoad.try_pop(queuedData)) {
-            loadingJobs.push_back(
-                threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+            if (!queuedData.id.lock()) {
+                // file ID was nulled, it means the region was deleted, ignore
+            }
+            else
+                loadingJobs.push_back(
+                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
         }
 
         // Clear finished jobs
@@ -519,17 +520,6 @@ void sfz::FilePool::garbageJob() noexcept
 
         garbageToCollect.clear();
     }
-}
-
-void sfz::FilePool::emptyFileLoadingQueues() noexcept
-{
-    ASSERT(dispatchFlag);
-    emptyQueueFlag = true;
-    std::error_code ec;
-    dispatchBarrier.post(ec);
-
-    if (!ec)
-        semEmptyQueueFinished.wait();
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
