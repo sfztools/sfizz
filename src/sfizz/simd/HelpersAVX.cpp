@@ -18,7 +18,7 @@ constexpr unsigned ByteAlignment = TypeAlignment * sizeof(Type);
 
 void gain1AVX(float gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_AVX
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -38,7 +38,7 @@ void gain1AVX(float gain, const float* input, float* output, unsigned size) noex
 
 void gainAVX(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_AVX
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);

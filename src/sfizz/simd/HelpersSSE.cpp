@@ -19,7 +19,7 @@ constexpr unsigned ByteAlignment = TypeAlignment * sizeof(Type);
 
 void readInterleavedSSE(const float* input, float* outputLeft, float* outputRight, unsigned inputSize) noexcept
 {
-    const auto sentinel = input + inputSize - 1;
+    const auto* sentinel = input + inputSize - 1;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(input + inputSize - TypeAlignment);
@@ -56,7 +56,7 @@ void readInterleavedSSE(const float* input, float* outputLeft, float* outputRigh
 
 void writeInterleavedSSE(const float* inputLeft, const float* inputRight, float* output, unsigned outputSize) noexcept
 {
-    const auto sentinel = output + outputSize - 1;
+    const auto* sentinel = output + outputSize - 1;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(output + outputSize - TypeAlignment);
@@ -84,7 +84,7 @@ void writeInterleavedSSE(const float* inputLeft, const float* inputRight, float*
 
 void gain1SSE(float gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -104,7 +104,7 @@ void gain1SSE(float gain, const float* input, float* output, unsigned size) noex
 
 void gainSSE(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -123,7 +123,7 @@ void gainSSE(const float* gain, const float* input, float* output, unsigned size
 
 void divideSSE(const float* input, const float* divisor, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -142,7 +142,7 @@ void divideSSE(const float* input, const float* divisor, float* output, unsigned
 
 void multiplyAddSSE(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -163,7 +163,7 @@ void multiplyAddSSE(const float* gain, const float* input, float* output, unsign
 
 void multiplyAdd1SSE(float gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -185,7 +185,7 @@ void multiplyAdd1SSE(float gain, const float* input, float* output, unsigned siz
 
 void multiplyMulSSE(const float* gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -206,7 +206,7 @@ void multiplyMulSSE(const float* gain, const float* input, float* output, unsign
 
 void multiplyMul1SSE(float gain, const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -228,7 +228,7 @@ void multiplyMul1SSE(float gain, const float* input, float* output, unsigned siz
 
 float linearRampSSE(float* output, float start, float step, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -257,7 +257,7 @@ float linearRampSSE(float* output, float start, float step, unsigned size) noexc
 
 float multiplicativeRampSSE(float* output, float start, float step, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -286,7 +286,7 @@ float multiplicativeRampSSE(float* output, float start, float step, unsigned siz
 
 void addSSE(const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -305,7 +305,7 @@ void addSSE(const float* input, float* output, unsigned size) noexcept
 
 void add1SSE(float value, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -325,7 +325,7 @@ void add1SSE(float value, float* output, unsigned size) noexcept
 
 void subtractSSE(const float* input, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -344,7 +344,7 @@ void subtractSSE(const float* input, float* output, unsigned size) noexcept
 
 void subtract1SSE(float value, float* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -365,7 +365,7 @@ void subtract1SSE(float value, float* output, unsigned size) noexcept
 void copySSE(const float* input, float* output, unsigned size) noexcept
 {
     // The sentinel is the input here
-    const auto sentinel = input + size;
+    const auto* sentinel = input + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -383,7 +383,7 @@ void copySSE(const float* input, float* output, unsigned size) noexcept
 
 float meanSSE(const float* vector, unsigned size) noexcept
 {
-    const auto sentinel = vector + size;
+    const auto* sentinel = vector + size;
 
     float result { 0.0f };
     if (size == 0)
@@ -415,7 +415,7 @@ float meanSSE(const float* vector, unsigned size) noexcept
 
 float sumSquaresSSE(const float* vector, unsigned size) noexcept
 {
-    const auto sentinel = vector + size;
+    const auto* sentinel = vector + size;
 
     float result { 0.0f };
     if (size == 0)
@@ -455,7 +455,7 @@ void cumsumSSE(const float* input, float* output, unsigned size) noexcept
     if (size == 0)
         return;
 
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     *output++ = *input++;
 
 #if SFIZZ_HAVE_SSE2
@@ -488,7 +488,7 @@ void diffSSE(const float* input, float* output, unsigned size) noexcept
     if (size == 0)
         return;
 
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     *output++ = *input++;
 
 #if SFIZZ_HAVE_SSE2
@@ -521,7 +521,7 @@ void clampAllSSE(float* input, float low, float high, unsigned size) noexcept
     if (size == 0)
         return;
 
-    const auto sentinel = input + size;
+    const auto* sentinel = input + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
@@ -555,7 +555,7 @@ bool allWithinSSE(const float* input, float low, float high, unsigned size) noex
     if (low > high)
         std::swap(low, high);
 
-    const auto sentinel = input + size;
+    const auto* sentinel = input + size;
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);

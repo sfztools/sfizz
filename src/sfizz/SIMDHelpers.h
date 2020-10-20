@@ -663,10 +663,10 @@ void sfzInterpolationCast(absl::Span<const T> floatJumps, absl::Span<int> jumps,
     SFIZZ_CHECK(jumps.size() >= floatJumps.size());
     SFIZZ_CHECK(jumps.size() == coeffs.size());
 
-    auto floatJump = floatJumps.data();
-    auto jump = jumps.data();
-    auto coeff = coeffs.data();
-    const auto sentinel = floatJump + min(floatJumps.size(), jumps.size(), coeffs.size());
+    auto* floatJump = floatJumps.data();
+    auto* jump = jumps.data();
+    auto* coeff = coeffs.data();
+    const auto* sentinel = floatJump + min(floatJumps.size(), jumps.size(), coeffs.size());
 
     while (floatJump < sentinel)
         _internals::snippetSFZInterpolationCast(floatJump, jump, coeff);
