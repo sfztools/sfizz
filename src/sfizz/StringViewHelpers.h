@@ -56,7 +56,7 @@ constexpr uint64_t Fnv1aPrime = 0x01000193;
  */
 constexpr uint64_t hash(absl::string_view s, uint64_t h = Fnv1aBasis)
 {
-    return (s.length() == 0) ? h : hash( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime );
+    return (s.length() == 0) ? h : hash( { s.data() + 1, s.length() - 1 }, (h ^ static_cast<unsigned char>(s.front())) * Fnv1aPrime );
 }
 
 /**
@@ -73,7 +73,7 @@ constexpr uint64_t hashNoAmpersand(absl::string_view s, uint64_t h = Fnv1aBasis)
     return (s.length() == 0) ? h : (
         (s.front() == '&')
             ? hashNoAmpersand( { s.data() + 1, s.length() - 1 }, h )
-            : hashNoAmpersand( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime )
+            : hashNoAmpersand( { s.data() + 1, s.length() - 1 }, (h ^ static_cast<unsigned char>(s.front())) * Fnv1aPrime )
     );
 }
 
