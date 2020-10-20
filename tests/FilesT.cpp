@@ -23,7 +23,7 @@ TEST_CASE("[Files] Single region (regions_one.sfz)")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_one.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy.wav");
 }
 
 
@@ -32,9 +32,9 @@ TEST_CASE("[Files] Multiple regions (regions_many.sfz)")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_many.sfz");
     REQUIRE(synth.getNumRegions() == 3);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy.wav");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "dummy.1.wav");
-    REQUIRE(synth.getRegionView(2)->sampleId.filename() == "dummy.2.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "dummy.1.wav");
+    REQUIRE(synth.getRegionView(2)->sampleId->filename() == "dummy.2.wav");
 }
 
 TEST_CASE("[Files] Basic opcodes (regions_opcodes.sfz)")
@@ -58,8 +58,8 @@ TEST_CASE("[Files] (regions_bad.sfz)")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/regions_bad.sfz");
     REQUIRE(synth.getNumRegions() == 2);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy.wav");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "dummy.wav");
 }
 
 TEST_CASE("[Files] Local include")
@@ -67,7 +67,7 @@ TEST_CASE("[Files] Local include")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_local.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy.wav");
 }
 
 TEST_CASE("[Files] Multiple includes")
@@ -75,8 +75,8 @@ TEST_CASE("[Files] Multiple includes")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/multiple_includes.sfz");
     REQUIRE(synth.getNumRegions() == 2);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy.wav");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "dummy2.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "dummy2.wav");
 }
 
 TEST_CASE("[Files] Multiple includes with comments")
@@ -84,8 +84,8 @@ TEST_CASE("[Files] Multiple includes with comments")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/multiple_includes_with_comments.sfz");
     REQUIRE(synth.getNumRegions() == 2);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy.wav");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "dummy2.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "dummy2.wav");
 }
 
 TEST_CASE("[Files] Subdir include")
@@ -93,7 +93,7 @@ TEST_CASE("[Files] Subdir include")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_subdir.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy_subdir.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy_subdir.wav");
 }
 
 TEST_CASE("[Files] Subdir include Win")
@@ -101,7 +101,7 @@ TEST_CASE("[Files] Subdir include Win")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_subdir_win.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy_subdir.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy_subdir.wav");
 }
 
 TEST_CASE("[Files] Recursive include (with include guard)")
@@ -111,8 +111,8 @@ TEST_CASE("[Files] Recursive include (with include guard)")
     parser.setRecursiveIncludeGuardEnabled(true);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_recursive.sfz");
     REQUIRE(synth.getNumRegions() == 2);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy_recursive2.wav");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "dummy_recursive1.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy_recursive2.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "dummy_recursive1.wav");
 }
 
 TEST_CASE("[Files] Include loops (with include guard)")
@@ -122,8 +122,8 @@ TEST_CASE("[Files] Include loops (with include guard)")
     parser.setRecursiveIncludeGuardEnabled(true);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Includes/root_loop.sfz");
     REQUIRE(synth.getNumRegions() == 2);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy_loop2.wav");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "dummy_loop1.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy_loop2.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "dummy_loop1.wav");
 }
 
 TEST_CASE("[Files] Define test")
@@ -209,28 +209,28 @@ TEST_CASE("[Files] Full hierarchy with antislashes")
         Synth synth;
         synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy.sfz");
         REQUIRE(synth.getNumRegions() == 8);
-        REQUIRE(synth.getRegionView(0)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(1)->sampleId.filename() == "Regions/dummy.1.wav");
-        REQUIRE(synth.getRegionView(2)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(3)->sampleId.filename() == "Regions/dummy.1.wav");
-        REQUIRE(synth.getRegionView(4)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(5)->sampleId.filename() == "Regions/dummy.1.wav");
-        REQUIRE(synth.getRegionView(6)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(7)->sampleId.filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(0)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(1)->sampleId->filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(2)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(3)->sampleId->filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(4)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(5)->sampleId->filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(6)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(7)->sampleId->filename() == "Regions/dummy.1.wav");
     }
 
     {
         Synth synth;
         synth.loadSfzFile(fs::current_path() / "tests/TestFiles/basic_hierarchy_antislash.sfz");
         REQUIRE(synth.getNumRegions() == 8);
-        REQUIRE(synth.getRegionView(0)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(1)->sampleId.filename() == "Regions/dummy.1.wav");
-        REQUIRE(synth.getRegionView(2)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(3)->sampleId.filename() == "Regions/dummy.1.wav");
-        REQUIRE(synth.getRegionView(4)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(5)->sampleId.filename() == "Regions/dummy.1.wav");
-        REQUIRE(synth.getRegionView(6)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(7)->sampleId.filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(0)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(1)->sampleId->filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(2)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(3)->sampleId->filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(4)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(5)->sampleId->filename() == "Regions/dummy.1.wav");
+        REQUIRE(synth.getRegionView(6)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(7)->sampleId->filename() == "Regions/dummy.1.wav");
     }
 }
 
@@ -249,10 +249,10 @@ TEST_CASE("[Files] Pizz basic")
     REQUIRE(synth.getRegionView(1)->randRange == Range<float>(0.25, 0.5));
     REQUIRE(synth.getRegionView(2)->randRange == Range<float>(0.5, 0.75));
     REQUIRE(synth.getRegionView(3)->randRange == Range<float>(0.75, 1.0));
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == R"(../Samples/pizz/a0_vl4_rr1.wav)");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == R"(../Samples/pizz/a0_vl4_rr2.wav)");
-    REQUIRE(synth.getRegionView(2)->sampleId.filename() == R"(../Samples/pizz/a0_vl4_rr3.wav)");
-    REQUIRE(synth.getRegionView(3)->sampleId.filename() == R"(../Samples/pizz/a0_vl4_rr4.wav)");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr1.wav)");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr2.wav)");
+    REQUIRE(synth.getRegionView(2)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr3.wav)");
+    REQUIRE(synth.getRegionView(3)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr4.wav)");
 }
 
 TEST_CASE("[Files] Channels (channels.sfz)")
@@ -260,9 +260,9 @@ TEST_CASE("[Files] Channels (channels.sfz)")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels.sfz");
     REQUIRE(synth.getNumRegions() == 2);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == "mono_sample.wav");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == "mono_sample.wav");
     REQUIRE(!synth.getRegionView(0)->isStereo());
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == "stereo_sample.wav");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == "stereo_sample.wav");
     REQUIRE(synth.getRegionView(1)->isStereo());
 }
 
@@ -277,7 +277,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // generator only
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(region->sampleId->filename() == "*sine");
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -285,7 +285,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // generator with multi
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(region->sampleId->filename() == "*sine");
     REQUIRE(region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -293,7 +293,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // explicit wavetable
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -301,7 +301,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // explicit wavetable with multi
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
     REQUIRE(region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -309,7 +309,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // explicit disabled wavetable
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(!region->isOscillator());
@@ -317,7 +317,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // explicit disabled wavetable with multi
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(!region->isOscillator());
@@ -325,7 +325,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // implicit wavetable (sound file < 3000 frames)
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "ramp_wave.wav");
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -333,7 +333,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // implicit non-wavetable (sound file >= 3000 frames)
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "snare.wav");
+    REQUIRE(region->sampleId->filename() == "snare.wav");
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(!region->isOscillator());
@@ -341,7 +341,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // generator with multi=1 (single)
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(region->sampleId->filename() == "*sine");
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -349,7 +349,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 
     // generator with multi=2 (ring modulation)
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId.filename() == "*sine");
+    REQUIRE(region->sampleId->filename() == "*sine");
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
@@ -424,7 +424,7 @@ TEST_CASE("[Files] Specific bug: relative path with backslashes")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/SpecificBugs/win_backslashes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == R"(Xylo/Subfolder/closedhat.wav)");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == R"(Xylo/Subfolder/closedhat.wav)");
 }
 
 TEST_CASE("[Files] Default path")
@@ -432,10 +432,10 @@ TEST_CASE("[Files] Default path")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path.sfz");
     REQUIRE(synth.getNumRegions() == 4);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == R"(DefaultPath/SubPath1/sample1.wav)");
-    REQUIRE(synth.getRegionView(1)->sampleId.filename() == R"(DefaultPath/SubPath2/sample2.wav)");
-    REQUIRE(synth.getRegionView(2)->sampleId.filename() == R"(DefaultPath/SubPath1/sample1.wav)");
-    REQUIRE(synth.getRegionView(3)->sampleId.filename() == R"(DefaultPath/SubPath2/sample2.wav)");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == R"(DefaultPath/SubPath1/sample1.wav)");
+    REQUIRE(synth.getRegionView(1)->sampleId->filename() == R"(DefaultPath/SubPath2/sample2.wav)");
+    REQUIRE(synth.getRegionView(2)->sampleId->filename() == R"(DefaultPath/SubPath1/sample1.wav)");
+    REQUIRE(synth.getRegionView(3)->sampleId->filename() == R"(DefaultPath/SubPath2/sample2.wav)");
 }
 
 TEST_CASE("[Files] Default path reset when calling loadSfzFile again")
@@ -445,7 +445,7 @@ TEST_CASE("[Files] Default path reset when calling loadSfzFile again")
     REQUIRE(synth.getNumRegions() == 4);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path_reset.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == R"(DefaultPath/SubPath2/sample2.wav)");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == R"(DefaultPath/SubPath2/sample2.wav)");
 }
 
 TEST_CASE("[Files] Default path is ignored for generators")
@@ -453,7 +453,7 @@ TEST_CASE("[Files] Default path is ignored for generators")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path_generator.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->sampleId.filename() == R"(*sine)");
+    REQUIRE(synth.getRegionView(0)->sampleId->filename() == R"(*sine)");
 }
 
 TEST_CASE("[Files] Set CC applies properly")
@@ -616,10 +616,10 @@ TEST_CASE("[Files] Case sentitiveness")
         Synth synth;
         synth.loadSfzFile(sfzFilePath);
         REQUIRE(synth.getNumRegions() == 4);
-        REQUIRE(synth.getRegionView(0)->sampleId.filename() == "dummy1.wav");
-        REQUIRE(synth.getRegionView(1)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(2)->sampleId.filename() == "Regions/dummy.wav");
-        REQUIRE(synth.getRegionView(3)->sampleId.filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(0)->sampleId->filename() == "dummy1.wav");
+        REQUIRE(synth.getRegionView(1)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(2)->sampleId->filename() == "Regions/dummy.wav");
+        REQUIRE(synth.getRegionView(3)->sampleId->filename() == "Regions/dummy.wav");
     }
 }
 

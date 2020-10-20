@@ -23,18 +23,18 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("sample")
     {
-        REQUIRE(region.sampleId.filename() == "");
+        REQUIRE(region.sampleId->filename() == "");
         region.parseOpcode({ "sample", "dummy.wav" });
-        REQUIRE(region.sampleId.filename() == "dummy.wav");
+        REQUIRE(region.sampleId->filename() == "dummy.wav");
     }
 
     SECTION("direction")
     {
-        REQUIRE(!region.sampleId.isReverse());
+        REQUIRE(!region.sampleId->isReverse());
         region.parseOpcode({ "direction", "reverse" });
-        REQUIRE(region.sampleId.isReverse());
+        REQUIRE(region.sampleId->isReverse());
         region.parseOpcode({ "direction", "forward" });
-        REQUIRE(!region.sampleId.isReverse());
+        REQUIRE(!region.sampleId->isReverse());
     }
 
     SECTION("delay")

@@ -514,7 +514,7 @@ void sfz::Synth::finalizeSfzLoad()
     size_t currentRegionCount = regions.size();
 
     auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
-        DBG("Removing the region with sample " << regions[currentRegionIndex]->sampleId);
+        DBG("Removing the region with sample " << *regions[currentRegionIndex]->sampleId);
         regions.erase(regions.begin() + currentRegionIndex);
         --currentRegionCount;
     };
@@ -534,12 +534,12 @@ void sfz::Synth::finalizeSfzLoad()
         absl::optional<FileInformation> fileInformation;
 
         if (!region->isGenerator()) {
-            if (!resources.filePool.checkSampleId(region->sampleId)) {
+            if (!resources.filePool.checkSampleId(*region->sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            fileInformation = resources.filePool.getFileInformation(region->sampleId);
+            fileInformation = resources.filePool.getFileInformation(*region->sampleId);
             if (!fileInformation) {
                 removeCurrentRegion();
                 continue;
@@ -583,11 +583,11 @@ void sfz::Synth::finalizeSfzLoad()
                 return Default::offsetCCRange.clamp(sumOffsetCC);
             }();
 
-            if (!resources.filePool.preloadFile(region->sampleId, maxOffset))
+            if (!resources.filePool.preloadFile(*region->sampleId, maxOffset))
                 removeCurrentRegion();
         }
         else if (!region->isGenerator()) {
-            if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId.filename()))) {
+            if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId->filename()))) {
                 removeCurrentRegion();
                 continue;
             }

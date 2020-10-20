@@ -75,7 +75,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             else
                 filename = absl::StrCat(defaultPath, absl::StrReplaceAll(trimmedSample, { { "\\", "/" } }));
 
-            sampleId = FileId(std::move(filename), sampleId.isReverse());
+            *sampleId = FileId(std::move(filename), sampleId->isReverse());
         }
         break;
     case hash("sample_quality"):
@@ -88,7 +88,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
     case hash("direction"):
-        sampleId = sampleId.reversed(opcode.value == "reverse");
+        *sampleId = sampleId->reversed(opcode.value == "reverse");
         break;
     case hash("delay"):
         setValueFromOpcode(opcode, delay, Default::delayRange);
