@@ -263,7 +263,7 @@ public:
      * @param fileId the file to preload
      * @return FileDataHolder a file data handle
      */
-    FileDataHolder getFilePromise(const FileId& fileId) noexcept;
+    FileDataHolder getFilePromise(const std::shared_ptr<FileId>& fileId) noexcept;
     /**
      * @brief Change the preloading size. This will trigger a full
      * reload of all samples, so don't call it on the audio thread.
@@ -296,7 +296,11 @@ public:
      * method on the audio thread as it will spinlock.
      *
      */
-    void emptyFileLoadingQueues() noexcept;
+    void emptyFileLoadingQueues() noexcept
+    {
+        // nothing to do in this implementation,
+        // deleting the region and its sample ID take care of it
+    }
     /**
      * @brief Wait for the background loading to finish for all promises
      * in the queue.
@@ -331,9 +335,7 @@ private:
     // Signals
     volatile bool dispatchFlag { true };
     volatile bool garbageFlag { true };
-    volatile bool emptyQueueFlag { false };
     RTSemaphore dispatchBarrier;
-    RTSemaphore semEmptyQueueFinished;
     RTSemaphore semGarbageBarrier;
 
     // Structures for the background loaders
@@ -341,13 +343,13 @@ private:
     {
         using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
         QueuedFileData() = default;
-        QueuedFileData(FileId id, FileData* data, TimePoint queuedTime)
+        QueuedFileData(std::weak_ptr<FileId> id, FileData* data, TimePoint queuedTime)
         : id(id), data(data), queuedTime(queuedTime) {}
         QueuedFileData(const QueuedFileData&) = default;
         QueuedFileData& operator=(const QueuedFileData&) = default;
         QueuedFileData(QueuedFileData&&) = default;
         QueuedFileData& operator=(QueuedFileData&&) = default;
-        FileId id {};
+        std::weak_ptr<FileId> id;
         FileData* data { nullptr };
         TimePoint queuedTime {};
     };

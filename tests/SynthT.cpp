@@ -698,13 +698,13 @@ TEST_CASE("[Synth] Release (basic behavior with sample)")
     )");
     synth.noteOn(0, 62, 85);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*sine" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "*sine" );
     synth.noteOff(0, 62, 85);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "closedhat.wav" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "closedhat.wav" );
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "closedhat.wav" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "closedhat.wav" );
 }
 
 TEST_CASE("[Synth] Release key (basic behavior with sample)")
@@ -720,7 +720,7 @@ TEST_CASE("[Synth] Release key (basic behavior with sample)")
     REQUIRE( numPlayingVoices(synth) == 1 );
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "closedhat.wav" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "closedhat.wav" );
 }
 
 TEST_CASE("[Synth] Release key (pedal)")
@@ -1338,15 +1338,15 @@ TEST_CASE("[Synth] Off by with CC switches")
     )");
     synth.noteOn(0, 60, 85);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*saw" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "*saw" );
     synth.cc(0, 4, 127);
     synth.noteOn(0, 60, 85);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*triangle" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "*triangle" );
     synth.cc(0, 4, 0);
     synth.noteOn(0, 60, 85);
     REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId.filename() == "*saw" );
+    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "*saw" );
 }
 
 TEST_CASE("[Synth] Initial values of CC")
