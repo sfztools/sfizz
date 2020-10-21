@@ -496,7 +496,7 @@ void sfz::FilePool::dispatchingJob() noexcept
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
         if (filesToLoad.try_pop(queuedData)) {
-            if (!queuedData.id.lock()) {
+            if (queuedData.id.expired()) {
                 // file ID was nulled, it means the region was deleted, ignore
             }
             else
