@@ -435,7 +435,10 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
 
 void sfz::FilePool::clear()
 {
+    std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
     emptyFileLoadingQueues();
+    garbageToCollect.clear();
+    lastUsedFiles.clear();
     preloadedFiles.clear();
 }
 
@@ -593,7 +596,15 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
         if (garbageToCollect.size() == garbageToCollect.capacity())
            return false;
 
-        auto& data = preloadedFiles[id];
+        auto it = preloadedFiles.find(id);
+        if (it == preloadedFiles.end()) {
+            // Getting here means that the preloadedFiles got changed (probably cleared)
+            // while the lastUsedFiles were untouched.
+            ASSERTFALSE;
+            return true;
+        }
+
+        sfz::FileData& data = it->second;
         if (data.status == FileData::Status::Preloaded)
             return true;
 
