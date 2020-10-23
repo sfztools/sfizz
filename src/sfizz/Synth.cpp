@@ -192,8 +192,6 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
-
     // Clear the background queues before removing everyone
     resources.filePool.waitForBackgroundLoading();
 
@@ -473,9 +471,9 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
 
 bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
-    clear();
-
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+
+    clear();
 
     std::error_code ec;
     fs::path realFile = fs::canonical(file, ec);
@@ -494,9 +492,10 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
 bool sfz::Synth::loadSfzString(const fs::path& path, absl::string_view text)
 {
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+
     clear();
 
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
     parser.parseString(path, text);
     if (parser.getErrorCount() > 0)
         return false;
