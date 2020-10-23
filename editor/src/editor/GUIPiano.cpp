@@ -92,7 +92,7 @@ void SPiano::draw(CDrawContext* dc)
             CRect textRect(
                 rect.left, dim.labelBounds.top,
                 rect.right, dim.labelBounds.bottom);
-            dc->setFont(font_);
+            dc->setFont(font);
             dc->setFontColor(labelStroke_);
             std::string text = std::to_string(static_cast<int>(o) - 1);
             dc->drawString(text.c_str(), textRect, kCenterText);
