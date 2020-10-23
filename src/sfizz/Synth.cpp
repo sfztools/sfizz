@@ -194,6 +194,9 @@ void sfz::Synth::clear()
 {
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
 
+    // Clear the background queues before removing everyone
+    resources.filePool.waitForBackgroundLoading();
+
     for (auto& voice : voices)
         voice->reset();
     for (auto& list : noteActivationLists)
