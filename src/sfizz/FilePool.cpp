@@ -600,7 +600,6 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
         if (it == preloadedFiles.end()) {
             // Getting here means that the preloadedFiles got changed (probably cleared)
             // while the lastUsedFiles were untouched.
-            ASSERTFALSE;
             return true;
         }
 
