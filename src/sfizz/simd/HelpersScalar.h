@@ -10,7 +10,7 @@
 template<class T>
 inline void readInterleavedScalar(const T* input, T* outputLeft, T* outputRight, unsigned inputSize) noexcept
 {
-    const auto sentinel = input + inputSize - 1;
+    const auto* sentinel = input + inputSize - 1;
     while (input < sentinel) {
         *outputLeft++ = *input++;
         *outputRight++ = *input++;
@@ -20,7 +20,7 @@ inline void readInterleavedScalar(const T* input, T* outputLeft, T* outputRight,
 template<class T>
 inline void writeInterleavedScalar(const T* inputLeft, const T* inputRight, T* output, unsigned outputSize) noexcept
 {
-    const auto sentinel = output + outputSize - 1;
+    const auto* sentinel = output + outputSize - 1;
     while (output < sentinel) {
         *output++ = *inputLeft++;
         *output++ = *inputRight++;
@@ -30,7 +30,7 @@ inline void writeInterleavedScalar(const T* inputLeft, const T* inputRight, T* o
 template<class T>
 inline void gain1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ = gain * (*input++);
 }
@@ -38,7 +38,7 @@ inline void gain1Scalar(T gain, const T* input, T* output, unsigned size) noexce
 template<class T>
 inline void gainScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ = (*gain++) * (*input++);
 }
@@ -46,7 +46,7 @@ inline void gainScalar(const T* gain, const T* input, T* output, unsigned size) 
 template <class T>
 inline void divideScalar(const T* input, const T* divisor, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ = (*input++) / (*divisor++);
 }
@@ -54,7 +54,7 @@ inline void divideScalar(const T* input, const T* divisor, T* output, unsigned s
 template <class T>
 inline void multiplyAddScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ += (*gain++) * (*input++);
 }
@@ -62,7 +62,7 @@ inline void multiplyAddScalar(const T* gain, const T* input, T* output, unsigned
 template <class T>
 inline void multiplyAdd1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ += gain * (*input++);
 }
@@ -70,7 +70,7 @@ inline void multiplyAdd1Scalar(T gain, const T* input, T* output, unsigned size)
 template <class T>
 inline void multiplyMulScalar(const T* gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ *= (*gain++) * (*input++);
 }
@@ -78,7 +78,7 @@ inline void multiplyMulScalar(const T* gain, const T* input, T* output, unsigned
 template <class T>
 inline void multiplyMul1Scalar(T gain, const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ *= gain * (*input++);
 }
@@ -86,7 +86,7 @@ inline void multiplyMul1Scalar(T gain, const T* input, T* output, unsigned size)
 template <class T>
 T linearRampScalar(T* output, T start, T step, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel) {
         *output++ = start;
         start += step;
@@ -97,7 +97,7 @@ T linearRampScalar(T* output, T start, T step, unsigned size) noexcept
 template <class T>
 T multiplicativeRampScalar(T* output, T start, T step, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel) {
         *output++ = start;
         start *= step;
@@ -108,7 +108,7 @@ T multiplicativeRampScalar(T* output, T start, T step, unsigned size) noexcept
 template <class T>
 inline void addScalar(const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ += *input++;
 }
@@ -116,7 +116,7 @@ inline void addScalar(const T* input, T* output, unsigned size) noexcept
 template <class T>
 inline void add1Scalar(T value, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ += value;
 }
@@ -124,7 +124,7 @@ inline void add1Scalar(T value, T* output, unsigned size) noexcept
 template <class T>
 inline void subtractScalar(const T* input, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ -= *input++;
 }
@@ -132,7 +132,7 @@ inline void subtractScalar(const T* input, T* output, unsigned size) noexcept
 template <class T>
 inline void subtract1Scalar(T value, T* output, unsigned size) noexcept
 {
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
     while (output < sentinel)
         *output++ -= value;
 }
@@ -150,7 +150,7 @@ T meanScalar(const T* vector, unsigned size) noexcept
     if (size == 0)
         return result;
 
-    const auto sentinel = vector + size;
+    const auto* sentinel = vector + size;
     while (vector < sentinel)
         result += *vector++;
 
@@ -164,7 +164,7 @@ T sumSquaresScalar(const T* vector, unsigned size) noexcept
     if (size == 0)
         return result;
 
-    const auto sentinel = vector + size;
+    const auto* sentinel = vector + size;
     while (vector < sentinel) {
         result += (*vector) * (*vector);
         vector++;
@@ -179,7 +179,7 @@ void cumsumScalar(const T* input, T* output, unsigned size) noexcept
     if (size == 0)
         return;
 
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
     *output++ = *input++;
     while (output < sentinel) {
@@ -194,7 +194,7 @@ void diffScalar(const T* input, T* output, unsigned size) noexcept
     if (size == 0)
         return;
 
-    const auto sentinel = output + size;
+    const auto* sentinel = output + size;
 
     *output++ = *input++;
     while (output < sentinel) {
@@ -209,7 +209,7 @@ void clampAllScalar(T* input, T low, T high, unsigned size ) noexcept
     if (size == 0)
         return;
 
-    const auto sentinel = input + size;
+    const auto* sentinel = input + size;
     while (input < sentinel) {
         const float clampedAbove = *input > high ? high : *input;
         *input = clampedAbove < low ? low : clampedAbove;
@@ -226,7 +226,7 @@ bool allWithinScalar(const T* input, T low, T high, unsigned size ) noexcept
     if (low > high)
         std::swap(low, high);
 
-    const auto sentinel = input + size;
+    const auto* sentinel = input + size;
     while (input < sentinel) {
         if (*input < low || *input > high)
             return false;
