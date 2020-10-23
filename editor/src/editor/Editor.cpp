@@ -423,7 +423,7 @@ void Editor::Impl::createFrameContents()
             box->setBackgroundColor(theme->boxBackground);
             box->setTitleFontColor(theme->titleBoxText);
             box->setTitleBackgroundColor(theme->titleBoxBackground);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             box->setTitleFont(font);
             return box;
         };
@@ -436,7 +436,7 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
         };
@@ -463,7 +463,7 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
         };
@@ -476,7 +476,7 @@ void Editor::Impl::createFrameContents()
 #if 0
         auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextButton* button = new CTextButton(bounds, this, tag, label);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
             return button;
@@ -484,7 +484,7 @@ void Editor::Impl::createFrameContents()
 #endif
         auto createClickableLabel = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             STextButton* button = new STextButton(bounds, this, tag, label);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
             button->setTextColor(theme->text);
@@ -499,7 +499,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             STextButton* button = new STextButton(bounds, this, tag, label);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
             button->setTextColor(theme->valueText);
@@ -515,7 +515,7 @@ void Editor::Impl::createFrameContents()
         auto createValueMenu = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
             SValueMenu* vm = new SValueMenu(bounds, this, tag);
             vm->setHoriAlign(align);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             vm->setFont(font);
             vm->setFontColor(theme->valueText);
             vm->setBackColor(theme->valueBackground);
@@ -526,7 +526,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
-            btn->setFont(new CFontDesc("Sfizz Fluent System R20", fontsize));
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
             btn->setTextColor(theme->icon);
             btn->setHoverColor(theme->iconHighlight);
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -559,14 +559,14 @@ void Editor::Impl::createFrameContents()
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
-            auto font = owned(new CFontDesc("Roboto", fontsize));
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             piano->setFont(font);
             return piano;
         };
         auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
-            menu->setFont(new CFontDesc("Sfizz Fluent System R20", fontsize));
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
