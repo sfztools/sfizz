@@ -362,9 +362,8 @@ private:
     std::thread dispatchThread { &FilePool::dispatchingJob, this };
     std::thread garbageThread { &FilePool::garbageJob, this };
 
-    SpinMutex lastUsedMutex;
+    SpinMutex garbageAndLastUsedMutex;
     std::vector<FileId> lastUsedFiles;
-    SpinMutex garbageMutex;
     std::vector<FileAudioBuffer> garbageToCollect;
 
     std::shared_ptr<ThreadPool> threadPool;
