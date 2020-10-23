@@ -428,7 +428,7 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
 
     data.data->status = FileData::Status::Done;
 
-    std::lock_guard<SpinMutex> guard { lastUsedMutex };
+    std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
     if (absl::c_find(lastUsedFiles, *id) == lastUsedFiles.end())
         lastUsedFiles.push_back(*id);
 }
@@ -514,10 +514,7 @@ void sfz::FilePool::dispatchingJob() noexcept
 void sfz::FilePool::garbageJob() noexcept
 {
     while (semGarbageBarrier.wait(), garbageFlag) {
-        std::lock_guard<SpinMutex> guard { garbageMutex };
-        for (auto& g: garbageToCollect)
-            g.reset();
-
+        std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
         garbageToCollect.clear();
     }
 }
@@ -587,9 +584,8 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
 
 void sfz::FilePool::triggerGarbageCollection() noexcept
 {
-    const std::unique_lock<SpinMutex> lastUsedLock { lastUsedMutex, std::try_to_lock };
-    const std::unique_lock<SpinMutex> garbageLock { garbageMutex, std::try_to_lock };
-    if (!lastUsedLock.owns_lock() || !garbageLock.owns_lock())
+    const std::unique_lock<SpinMutex> guard { garbageAndLastUsedMutex, std::try_to_lock };
+    if (!guard.owns_lock())
         return;
 
     const auto now = std::chrono::high_resolution_clock::now();
