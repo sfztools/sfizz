@@ -194,11 +194,11 @@ else()
 endif()
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-    target_compile_definitions(sfizz-vstgui PRIVATE "DEVELOPMENT")
+    target_compile_definitions(sfizz-vstgui PUBLIC "DEVELOPMENT")
 endif()
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Release")
-    target_compile_definitions(sfizz-vstgui PRIVATE "RELEASE")
+    target_compile_definitions(sfizz-vstgui PUBLIC "RELEASE")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
