@@ -118,6 +118,26 @@ private:
     void uiTouch(EditId id, bool t);
 };
 
+#if defined(_WIN32)
+static bool fixBundlePath(std::string& path)
+{
+    // go up some directories until reaching the *.lv2 directory
+    bool valid = false;
+    while (!valid && !path.empty()) {
+        if (path.back() == '\\' || path.back() == '/')
+            path.pop_back();
+        else if (path.size() > 4 && !memcmp(".lv2", path.data() + path.size() - 4, 4))
+            valid = true;
+        else {
+            path.pop_back();
+            while (!path.empty() && path.back() != '\\' && path.back() != '/')
+                path.pop_back();
+        }
+    }
+    return valid;
+}
+#endif
+
 static LV2UI_Handle
 instantiate(const LV2UI_Descriptor *descriptor,
             const char *plugin_uri,
@@ -178,8 +198,16 @@ instantiate(const LV2UI_Descriptor *descriptor,
     //     name, and appending "Contents/Resources" (not overridable)
     // * on Windows, the folder is set programmatically
     // * on macOS, resource files are looked up using CFBundle APIs
+
 #if defined(_WIN32)
-    IWin32PlatformFrame::setResourceBasePath((std::string(bundle_path) + "\\Contents\\Resources\\").c_str());
+    // some hosts give us the DLL path instead of the bundle path,
+    // so we have to work around that.
+    std::string realBundlePath { bundle_path };
+    if (!fixBundlePath(realBundlePath))
+        return nullptr;
+
+    std::string resourcePath = realBundlePath + "\\Contents\\Resources\\";
+    IWin32PlatformFrame::setResourceBasePath(resourcePath.c_str());
 #endif
 
     // makes labels refresh correctly
