@@ -275,13 +275,6 @@ elseif(SFIZZ_AU)
             "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/auresource.r")
     endif()
 
-    # Copy VST3 in the bundle
-    add_custom_command(TARGET ${VSTPLUGIN_PRJ_NAME} POST_BUILD COMMAND
-        "${CMAKE_COMMAND}" "-E"
-        "copy_directory"
-        "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
-        "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3")
-
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(${AUPLUGIN_PRJ_NAME} PRIVATE
             "-Wno-extra"
@@ -299,6 +292,9 @@ elseif(SFIZZ_AU)
     if(AUPLUGIN_INSTALL_DIR)
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}"
             DESTINATION "${AUPLUGIN_INSTALL_DIR}"
+            COMPONENT "au")
+        install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/"
+            DESTINATION "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3"
             COMPONENT "au")
     endif()
 endif()
