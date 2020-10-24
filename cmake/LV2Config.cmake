@@ -30,10 +30,13 @@ else()
     set(LV2_UI_TYPE "X11UI")
 endif()
 
-if (MSVC)
+if (APPLE)
+    set (LV2PLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/LV2" CACHE STRING
+    "Install destination for LV2 bundle [default: $ENV{HOME}/Library/Audio/Plug-Ins/LV2]")
+elseif (MSVC)
     set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lv2" CACHE STRING
-    "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lv2}]")
+    "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lv2]")
 else()
     set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
-    "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/lv2}]")
+    "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/lv2]")
 endif()
