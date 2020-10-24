@@ -204,8 +204,10 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # higher C++ requirement on Windows
     set_property(TARGET sfizz-vstgui PROPERTY CXX_STANDARD 14)
-    # Windows 10 RS2 DDI for custom fonts
-    target_compile_definitions(sfizz-vstgui PRIVATE "NTDDI_VERSION=0x0A000003")
+    # disable custom fonts while dwrite3 API is unavailable in MinGW
+    if(MINGW)
+        target_compile_definitions(sfizz-vstgui PRIVATE "VSTGUI_WIN32_CUSTOMFONT_SUPPORT=0")
+    endif()
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
