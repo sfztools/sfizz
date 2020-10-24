@@ -118,8 +118,11 @@ endif()
 
 # Installation
 if (NOT MSVC)
-    install (DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
+    install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
         DESTINATION "${VSTPLUGIN_INSTALL_DIR}"
+        COMPONENT "vst")
+    bundle_dylibs(vst
+        "${VSTPLUGIN_INSTALL_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
         COMPONENT "vst")
 endif()
 
@@ -295,6 +298,12 @@ elseif(SFIZZ_AU)
             COMPONENT "au")
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/"
             DESTINATION "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3"
+            COMPONENT "au")
+        bundle_dylibs(au
+            "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
+            COMPONENT "au")
+        bundle_dylibs(au-vst
+            "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3/Contents/MacOS/sfizz"
             COMPONENT "au")
     endif()
 endif()

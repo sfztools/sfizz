@@ -56,7 +56,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     script: .travis/script_osx.sh
-    after_success: .travis/prepare_osx.sh
+    after_success: .travis/prepare_tarball.sh
 
   - name: "MOD devices arm"
     env:
