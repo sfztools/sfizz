@@ -15,18 +15,18 @@ buildenv make DESTDIR=${PWD}/${INSTALL_DIR} install
 
 # Bundle LV2 dependencies
 cd "${INSTALL_DIR}"/Library/Audio/Plug-Ins/LV2
-dylibbundler -od -b -x sfizz.lv2/Contents/Binary/sfizz.so -d sfizz.lv2/Contents/libs/ -p @loader_path/../libs/
-dylibbundler -od -b -x sfizz.lv2/Contents/Binary/sfizz_ui.so -d sfizz.lv2/Contents/libs/ -p @loader_path/../libs/
+dylibbundler -cd -of -b -x sfizz.lv2/Contents/Binary/sfizz.so -d sfizz.lv2/Contents/libs/ -p @loader_path/../libs/
+dylibbundler -cd -of -b -x sfizz.lv2/Contents/Binary/sfizz_ui.so -d sfizz.lv2/Contents/libs/ -p @loader_path/../libs/
 cd "${TRAVIS_BUILD_DIR}/build"
 
 # Bundle VST3 dependencies
 cd "${INSTALL_DIR}"/Library/Audio/Plug-Ins/VST3
-dylibbundler -od -b -x sfizz.vst3/Contents/MacOS/sfizz -d sfizz.vst3/Contents/libs/ -p @loader_path/../libs/
+dylibbundler -cd -of -b -x sfizz.vst3/Contents/MacOS/sfizz -d sfizz.vst3/Contents/libs/ -p @loader_path/../libs/
 cd "${TRAVIS_BUILD_DIR}/build"
 
 # Bundle AU dependencies
 cd "${INSTALL_DIR}"/Library/Audio/Plug-Ins/Components
-dylibbundler -od -b -x sfizz.component/Contents/Resources/plugin.vst3/Contents/MacOS/sfizz -d sfizz.component/Contents/Resources/plugin.vst3/Contents/libs/ -p @loader_path/../libs/
+dylibbundler -cd -of -b -x sfizz.component/Contents/Resources/plugin.vst3/Contents/MacOS/sfizz -d sfizz.component/Contents/Resources/plugin.vst3/Contents/libs/ -p @loader_path/../libs/
 cd "${TRAVIS_BUILD_DIR}/build"
 
 #
