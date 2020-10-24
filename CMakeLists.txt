@@ -38,6 +38,9 @@ include (SfizzConfig)
 # Don't use IPO in non Release builds
 include (CheckIPO)
 
+# Dylib bunder for macOS
+include (BundleDylibs)
+
 # Add Abseil
 add_subdirectory (external/abseil-cpp EXCLUDE_FROM_ALL)
 
