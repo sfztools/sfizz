@@ -192,7 +192,8 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void sfz::Synth::clear()
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    // Clear the background queues before removing everyone
+    resources.filePool.waitForBackgroundLoading();
 
     for (auto& voice : voices)
         voice->reset();
@@ -470,9 +471,9 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
 
 bool sfz::Synth::loadSfzFile(const fs::path& file)
 {
-    clear();
-
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+
+    clear();
 
     std::error_code ec;
     fs::path realFile = fs::canonical(file, ec);
@@ -491,9 +492,10 @@ bool sfz::Synth::loadSfzFile(const fs::path& file)
 
 bool sfz::Synth::loadSfzString(const fs::path& path, absl::string_view text)
 {
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+
     clear();
 
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
     parser.parseString(path, text);
     if (parser.getErrorCount() > 0)
         return false;
@@ -514,7 +516,7 @@ void sfz::Synth::finalizeSfzLoad()
     size_t currentRegionCount = regions.size();
 
     auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
-        DBG("Removing the region with sample " << regions[currentRegionIndex]->sampleId);
+        DBG("Removing the region with sample " << *regions[currentRegionIndex]->sampleId);
         regions.erase(regions.begin() + currentRegionIndex);
         --currentRegionCount;
     };
@@ -534,12 +536,12 @@ void sfz::Synth::finalizeSfzLoad()
         absl::optional<FileInformation> fileInformation;
 
         if (!region->isGenerator()) {
-            if (!resources.filePool.checkSampleId(region->sampleId)) {
+            if (!resources.filePool.checkSampleId(*region->sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            fileInformation = resources.filePool.getFileInformation(region->sampleId);
+            fileInformation = resources.filePool.getFileInformation(*region->sampleId);
             if (!fileInformation) {
                 removeCurrentRegion();
                 continue;
@@ -583,11 +585,11 @@ void sfz::Synth::finalizeSfzLoad()
                 return Default::offsetCCRange.clamp(sumOffsetCC);
             }();
 
-            if (!resources.filePool.preloadFile(region->sampleId, maxOffset))
+            if (!resources.filePool.preloadFile(*region->sampleId, maxOffset))
                 removeCurrentRegion();
         }
         else if (!region->isGenerator()) {
-            if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId.filename()))) {
+            if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId->filename()))) {
                 removeCurrentRegion();
                 continue;
             }

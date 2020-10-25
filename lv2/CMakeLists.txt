@@ -105,6 +105,12 @@ endif()
 
 # Installation
 if (NOT MSVC)
-    install (DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR}
+    install(DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR}
+        COMPONENT "lv2")
+    bundle_dylibs(lv2
+        "${LV2PLUGIN_INSTALL_DIR}/${PROJECT_NAME}.lv2/Contents/Binary/sfizz.so"
+        COMPONENT "lv2")
+    bundle_dylibs(lv2-ui
+        "${LV2PLUGIN_INSTALL_DIR}/${PROJECT_NAME}.lv2/Contents/Binary/sfizz_ui.so"
         COMPONENT "lv2")
 endif()

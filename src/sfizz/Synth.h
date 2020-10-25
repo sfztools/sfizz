@@ -683,6 +683,7 @@ private:
      * @brief Remove all regions, resets all voices and clears everything
      * to bring back the synth in its original state.
      *
+     * The callback mutex should be taken to call this function.
      */
     void clear();
 

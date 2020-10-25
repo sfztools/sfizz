@@ -47,7 +47,29 @@
 #endif
 #include "threadpool/ThreadPool.h"
 using namespace std::placeholders;
-static ThreadPool threadPool { std::thread::hardware_concurrency() > 2 ? std::thread::hardware_concurrency() - 2 : 1 };
+
+static std::weak_ptr<ThreadPool> globalThreadPoolWeakPtr;
+static std::mutex globalThreadPoolMutex;
+
+static std::shared_ptr<ThreadPool> globalThreadPool()
+{
+    std::shared_ptr<ThreadPool> threadPool;
+
+    threadPool = globalThreadPoolWeakPtr.lock();
+    if (threadPool)
+        return threadPool;
+
+    std::lock_guard<std::mutex> lock(globalThreadPoolMutex);
+    threadPool = globalThreadPoolWeakPtr.lock();
+    if (threadPool)
+        return threadPool;
+
+    unsigned numThreads = std::thread::hardware_concurrency();
+    numThreads = (numThreads > 2) ? (numThreads - 2) : 1;
+    threadPool.reset(new ThreadPool(numThreads));
+    globalThreadPoolWeakPtr = threadPool;
+    return threadPool;
+}
 
 void readBaseFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, uint32_t numFrames)
 {
@@ -96,7 +118,7 @@ void streamFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampl
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
-    : logger(logger)
+    : logger(logger), threadPool(globalThreadPool())
 {
     loadingJobs.reserve(config::maxVoices);
     lastUsedFiles.reserve(config::maxVoices);
@@ -320,9 +342,9 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
     }
 }
 
-sfz::FileDataHolder sfz::FilePool::getFilePromise(const FileId& fileId) noexcept
+sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>& fileId) noexcept
 {
-    const auto preloaded = preloadedFiles.find(fileId);
+    const auto preloaded = preloadedFiles.find(*fileId);
     if (preloaded == preloadedFiles.end()) {
         DBG("[sfizz] File not found in the preloaded files: " << fileId);
         return {};
@@ -359,14 +381,20 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
 {
     raiseCurrentThreadPriority();
 
+    std::shared_ptr<FileId> id = data.id.lock();
+    if (!id) {
+        // file ID was nulled, it means the region was deleted, ignore
+        return;
+    }
+
     const auto loadStartTime = std::chrono::high_resolution_clock::now();
     const auto waitDuration = loadStartTime - data.queuedTime;
-    const fs::path file { rootDirectory / data.id.filename() };
+    const fs::path file { rootDirectory / id->filename() };
     std::error_code readError;
-    AudioReaderPtr reader = createAudioReader(file, data.id.isReverse(), &readError);
+    AudioReaderPtr reader = createAudioReader(file, id->isReverse(), &readError);
 
     if (readError) {
-        DBG("[sfizz] libsndfile errored for " << data.id << " with message " << readError.message());
+        DBG("[sfizz] libsndfile errored for " << *id << " with message " << readError.message());
         return;
     }
 
@@ -376,7 +404,7 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
     while (currentStatus == FileData::Status::Invalid) {
         // Spin until the state changes
         if (spinCounter > 1024) {
-            DBG("[sfizz] " << data.id << " is stuck on Invalid? Leaving the load");
+            DBG("[sfizz] " << *id << " is stuck on Invalid? Leaving the load");
             return;
         }
 
@@ -396,18 +424,21 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
     const auto frames = static_cast<uint32_t>(reader->frames());
     streamFromFile(*reader, frames, oversamplingFactor, data.data->fileData, &data.data->availableFrames);
     const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
-    logger.logFileTime(waitDuration, loadDuration, frames, data.id.filename());
+    logger.logFileTime(waitDuration, loadDuration, frames, id->filename());
 
     data.data->status = FileData::Status::Done;
 
-    std::lock_guard<SpinMutex> guard { lastUsedMutex };
-    if (absl::c_find(lastUsedFiles, data.id) == lastUsedFiles.end())
-        lastUsedFiles.push_back(data.id);
+    std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
+    if (absl::c_find(lastUsedFiles, *id) == lastUsedFiles.end())
+        lastUsedFiles.push_back(*id);
 }
 
 void sfz::FilePool::clear()
 {
+    std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
     emptyFileLoadingQueues();
+    garbageToCollect.clear();
+    lastUsedFiles.clear();
     preloadedFiles.clear();
 }
 
@@ -464,23 +495,16 @@ bool is_ready(std::future<R> const& f)
 void sfz::FilePool::dispatchingJob() noexcept
 {
     QueuedFileData queuedData;
-    while (dispatchFlag) {
-        dispatchBarrier.wait();
-
-        if (emptyQueueFlag) {
-            while (filesToLoad.try_pop(queuedData)) {
-                // pass
-            }
-            semEmptyQueueFinished.post();
-            emptyQueueFlag = false;
-            continue;
-        }
-
+    while (dispatchBarrier.wait(), dispatchFlag) {
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
-        
+
         if (filesToLoad.try_pop(queuedData)) {
-            loadingJobs.push_back(
-                threadPool.enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+            if (queuedData.id.expired()) {
+                // file ID was nulled, it means the region was deleted, ignore
+            }
+            else
+                loadingJobs.push_back(
+                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
         }
 
         // Clear finished jobs
@@ -492,27 +516,10 @@ void sfz::FilePool::dispatchingJob() noexcept
 
 void sfz::FilePool::garbageJob() noexcept
 {
-    while (garbageFlag) {
-        semGarbageBarrier.wait();
-        {
-            std::lock_guard<SpinMutex> guard { garbageMutex };
-            for (auto& g: garbageToCollect)
-                g.reset();
-
-            garbageToCollect.clear();
-        }
+    while (semGarbageBarrier.wait(), garbageFlag) {
+        std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
+        garbageToCollect.clear();
     }
-}
-
-void sfz::FilePool::emptyFileLoadingQueues() noexcept
-{
-    ASSERT(dispatchFlag);
-    emptyQueueFlag = true;
-    std::error_code ec;
-    dispatchBarrier.post(ec);
-
-    if (!ec)
-        semEmptyQueueFinished.wait();
 }
 
 void sfz::FilePool::waitForBackgroundLoading() noexcept
@@ -580,9 +587,8 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
 
 void sfz::FilePool::triggerGarbageCollection() noexcept
 {
-    const std::unique_lock<SpinMutex> lastUsedLock { lastUsedMutex, std::try_to_lock };
-    const std::unique_lock<SpinMutex> garbageLock { garbageMutex, std::try_to_lock };
-    if (!lastUsedLock.owns_lock() || !garbageLock.owns_lock())
+    const std::unique_lock<SpinMutex> guard { garbageAndLastUsedMutex, std::try_to_lock };
+    if (!guard.owns_lock())
         return;
 
     const auto now = std::chrono::high_resolution_clock::now();
@@ -590,7 +596,14 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
         if (garbageToCollect.size() == garbageToCollect.capacity())
            return false;
 
-        auto& data = preloadedFiles[id];
+        auto it = preloadedFiles.find(id);
+        if (it == preloadedFiles.end()) {
+            // Getting here means that the preloadedFiles got changed (probably cleared)
+            // while the lastUsedFiles were untouched.
+            return true;
+        }
+
+        sfz::FileData& data = it->second;
         if (data.status == FileData::Status::Preloaded)
             return true;
 

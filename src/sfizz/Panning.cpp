@@ -49,10 +49,10 @@ inline void tickPan(const float* pan, float* leftBuffer, float* rightBuffer)
 
 void pan(const float* panEnvelope, float* leftBuffer, float* rightBuffer, unsigned size) noexcept
 {
-    const auto sentinel = panEnvelope + size;
+    const auto* sentinel = panEnvelope + size;
 
 #if SFIZZ_HAVE_NEON
-    const auto firstAligned = prevAligned<ByteAlignment>(panEnvelope + TypeAlignment - 1);
+    const auto* firstAligned = prevAligned<ByteAlignment>(panEnvelope + TypeAlignment - 1);
 
     if (willAlign<ByteAlignment>(panEnvelope, leftBuffer, rightBuffer) && (firstAligned < sentinel)) {
         while (panEnvelope < firstAligned) {
@@ -63,7 +63,7 @@ void pan(const float* panEnvelope, float* leftBuffer, float* rightBuffer, unsign
         uint32_t indices[TypeAlignment];
         float leftPan[TypeAlignment];
         float rightPan[TypeAlignment];
-        const auto lastAligned = prevAligned<ByteAlignment>(sentinel);
+        const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
         while (panEnvelope < lastAligned) {
             float32x4_t mmPan = vld1q_f32(panEnvelope);
             mmPan = vaddq_f32(mmPan, vdupq_n_f32(1.0f));
@@ -112,10 +112,10 @@ inline void tickWidth(const float* width, float* leftBuffer, float* rightBuffer)
 
 void width(const float* widthEnvelope, float* leftBuffer, float* rightBuffer, unsigned size) noexcept
 {
-    const auto sentinel = widthEnvelope + size;
+    const auto* sentinel = widthEnvelope + size;
 
 #if SFIZZ_HAVE_NEON
-    const auto firstAligned = prevAligned<ByteAlignment>(widthEnvelope + TypeAlignment  - 1);
+    const auto* firstAligned = prevAligned<ByteAlignment>(widthEnvelope + TypeAlignment  - 1);
 
     if (willAlign<ByteAlignment>(widthEnvelope, leftBuffer, rightBuffer) && firstAligned < sentinel) {
         while (widthEnvelope < firstAligned) {
@@ -126,7 +126,7 @@ void width(const float* widthEnvelope, float* leftBuffer, float* rightBuffer, un
         uint32_t indices[TypeAlignment];
         float coeff1[TypeAlignment];
         float coeff2[TypeAlignment];
-        const auto lastAligned = prevAligned<ByteAlignment>(sentinel);
+        const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
         while (widthEnvelope < lastAligned) {
             float32x4_t mmWidth = vld1q_f32(widthEnvelope);
             mmWidth = vaddq_f32(mmWidth, vdupq_n_f32(1.0f));

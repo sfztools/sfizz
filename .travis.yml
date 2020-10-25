@@ -31,7 +31,9 @@ jobs:
     script: .travis/script_test.sh
 
   - name: "Linux arm64 tests"
-    arch: arm64
+    arch: arm64-graviton2
+    group: edge
+    virt: lxd
     addons:
       apt:
         packages:
@@ -54,7 +56,7 @@ jobs:
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     script: .travis/script_osx.sh
-    after_success: .travis/prepare_osx.sh
+    after_success: .travis/prepare_tarball.sh
 
   - name: "MOD devices arm"
     env:
@@ -100,7 +102,9 @@ jobs:
     after_success: .travis/prepare_tarball.sh
 
   - name: "Linux arm64 library"
-    arch: arm64
+    arch: arm64-graviton2
+    group: edge
+    virt: lxd
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     addons:
@@ -113,7 +117,9 @@ jobs:
     after_success: .travis/prepare_tarball.sh
 
   - name: "Linux arm64 static plugins"
-    arch: arm64
+    arch: arm64-graviton2
+    group: edge
+    virt: lxd
     env:
     - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
     - ENABLE_VST_PLUGIN=OFF

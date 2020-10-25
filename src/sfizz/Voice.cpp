@@ -64,9 +64,9 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
     if (region->isOscillator()) {
         const WavetableMulti* wave = nullptr;
         if (!region->isGenerator())
-            wave = resources.wavePool.getFileWave(region->sampleId.filename());
+            wave = resources.wavePool.getFileWave(region->sampleId->filename());
         else {
-            switch (hash(region->sampleId.filename())) {
+            switch (hash(region->sampleId->filename())) {
             default:
             case hash("*silence"):
                 break;
@@ -658,7 +658,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                     DBG("[sfizz] Underflow: source available samples "
                         << source.getNumFrames() << "/"
                         << currentPromise->information.end
-                        << " for sample " << region->sampleId);
+                        << " for sample " << *region->sampleId);
                 }
 #endif
                 if (!region->flexAmpEG) {
@@ -891,13 +891,13 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
-    if (region->sampleId.filename() == "*noise") {
+    if (region->sampleId->filename() == "*noise") {
         auto gen = [&]() {
             return uniformNoiseDist(Random::randomGenerator);
         };
         absl::c_generate(leftSpan, gen);
         absl::c_generate(rightSpan, gen);
-    } else if (region->sampleId.filename() == "*gnoise") {
+    } else if (region->sampleId->filename() == "*gnoise") {
         // You need to wrap in a lambda, otherwise generate will
         // make a copy of the gaussian distribution *along with its state*
         // leading to periodic behavior....
@@ -1092,10 +1092,11 @@ void sfz::Voice::updateLoopInformation() noexcept
     if (!region->shouldLoop())
         return;
     const auto& info = currentPromise->information;
+    const auto factor = resources.filePool.getOversamplingFactor();
     const auto rate = info.sampleRate;
 
-    loop.end = static_cast<int>(info.loopEnd);
-    loop.start = static_cast<int>(info.loopBegin);
+    loop.end = static_cast<int>(region->loopEnd(factor));
+    loop.start = static_cast<int>(region->loopStart(factor));
     loop.size = loop.end + 1 - loop.start;
     loop.xfSize = static_cast<int>(lroundPositive(region->loopCrossfade * rate));
     loop.xfOutStart = loop.end + 1 - loop.xfSize;

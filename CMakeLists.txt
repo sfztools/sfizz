@@ -8,7 +8,7 @@ else()
     endif()
 endif()
 
-project (sfizz VERSION 0.5.0 LANGUAGES CXX C)
+project (sfizz VERSION 0.5.1 LANGUAGES CXX C)
 set (PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 
 # External configuration CMake scripts
@@ -37,6 +37,9 @@ include (SfizzConfig)
 
 # Don't use IPO in non Release builds
 include (CheckIPO)
+
+# Dylib bunder for macOS
+include (BundleDylibs)
 
 # Add Abseil
 add_subdirectory (external/abseil-cpp EXCLUDE_FROM_ALL)

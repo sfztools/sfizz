@@ -78,7 +78,7 @@ struct Region {
      * @return true
      * @return false
      */
-    bool isGenerator() const noexcept { return sampleId.filename().size() > 0 ? sampleId.filename()[0] == '*' : false; }
+    bool isGenerator() const noexcept { return sampleId->filename().size() > 0 ? sampleId->filename()[0] == '*' : false; }
     /**
      * @brief Is an oscillator (generator or wavetable)?
      *
@@ -308,7 +308,7 @@ struct Region {
     const NumericId<Region> id;
 
     // Sound source: sample playback
-    FileId sampleId {}; // Sample
+    std::shared_ptr<FileId> sampleId { new FileId }; // Sample
     absl::optional<int> sampleQuality {};
     float delay { Default::delay }; // delay
     float delayRandom { Default::delayRandom }; // delay_random

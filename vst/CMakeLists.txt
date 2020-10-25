@@ -118,8 +118,11 @@ endif()
 
 # Installation
 if (NOT MSVC)
-    install (DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
+    install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
         DESTINATION "${VSTPLUGIN_INSTALL_DIR}"
+        COMPONENT "vst")
+    bundle_dylibs(vst
+        "${VSTPLUGIN_INSTALL_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
         COMPONENT "vst")
 endif()
 
@@ -252,7 +255,7 @@ elseif(SFIZZ_AU)
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}")
 
     # Add the resource fork
-    if (FALSE) # optional, disabled because broken on CI
+    if (TRUE)
         execute_process(COMMAND "xcrun" "--find" "Rez"
             OUTPUT_VARIABLE OSX_REZ_COMMAND OUTPUT_STRIP_TRAILING_WHITESPACE)
         file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -275,13 +278,6 @@ elseif(SFIZZ_AU)
             "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/auresource.r")
     endif()
 
-    # Copy VST3 in the bundle
-    add_custom_command(TARGET ${VSTPLUGIN_PRJ_NAME} POST_BUILD COMMAND
-        "${CMAKE_COMMAND}" "-E"
-        "copy_directory"
-        "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
-        "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3")
-
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(${AUPLUGIN_PRJ_NAME} PRIVATE
             "-Wno-extra"
@@ -299,6 +295,15 @@ elseif(SFIZZ_AU)
     if(AUPLUGIN_INSTALL_DIR)
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}"
             DESTINATION "${AUPLUGIN_INSTALL_DIR}"
+            COMPONENT "au")
+        install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/"
+            DESTINATION "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3"
+            COMPONENT "au")
+        bundle_dylibs(au
+            "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
+            COMPONENT "au")
+        bundle_dylibs(au-vst
+            "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3/Contents/MacOS/sfizz"
             COMPONENT "au")
     endif()
 endif()
