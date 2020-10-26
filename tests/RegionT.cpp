@@ -339,23 +339,6 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(region.ccConditions[125] == sfz::Range<float>(0.0f, 1.0f));
     }
 
-    SECTION("sw_lokey, sw_hikey")
-    {
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(0, 127));
-        region.parseOpcode({ "sw_lokey", "4" });
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(4, 127));
-        region.parseOpcode({ "sw_lokey", "128" });
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(127, 127));
-        region.parseOpcode({ "sw_lokey", "0" });
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(0, 127));
-        region.parseOpcode({ "sw_hikey", "39" });
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(0, 39));
-        region.parseOpcode({ "sw_hikey", "135" });
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(0, 127));
-        region.parseOpcode({ "sw_hikey", "-1" });
-        REQUIRE(region.keyswitchRange == Range<uint8_t>(0, 0));
-    }
-
     SECTION("sw_label")
     {
         REQUIRE(!region.keyswitchLabel);

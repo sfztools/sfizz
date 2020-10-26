@@ -177,6 +177,25 @@ constexpr float normalizeBend(float bendValue)
     return clamp(bendValue, -8191.0f, 8191.0f) / 8191.0f;
 }
 
+/**
+ * @brief Offset a key and clamp it to a reasonable range
+ *
+ * @param key
+ * @param offset
+ * @param range
+ * @return uint8_t
+ */
+inline CXX14_CONSTEXPR uint8_t offsetAndClampKey(uint8_t key, int offset, sfz::Range<uint8_t> range)
+{
+    const int offsetKey { key + offset };
+    if (offsetKey > std::numeric_limits<uint8_t>::max())
+        return range.getEnd();
+    if (offsetKey < std::numeric_limits<uint8_t>::min())
+        return range.getStart();
+
+    return range.clamp(static_cast<uint8_t>(offsetKey));
+}
+
 namespace literals {
     inline float operator""_norm(unsigned long long int value)
     {

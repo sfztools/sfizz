@@ -292,8 +292,6 @@ struct Region {
     uint32_t loopStart(Oversampling factor = Oversampling::x1) const noexcept;
     uint32_t loopEnd(Oversampling factor = Oversampling::x1) const noexcept;
 
-    bool hasKeyswitches() const noexcept { return keyswitchDown || keyswitchUp || keyswitch || previousNote; }
-
     /**
      * @brief Get the gain this region contributes into the input of the Nth
      *        effect bus
@@ -349,7 +347,6 @@ struct Region {
     // Region logic: MIDI conditions
     Range<float> bendRange { Default::bendValueRange }; // hibend and lobend
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
-    Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
     absl::optional<std::string> keyswitchLabel {};
     absl::optional<uint8_t> keyswitchUp {}; // sw_up
@@ -455,7 +452,7 @@ struct Region {
 
     // Started notes
     std::vector<std::pair<int, float>> delayedReleases;
-private:
+
     const MidiState& midiState;
     bool keySwitched { true };
     bool previousKeySwitched { true };
