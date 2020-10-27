@@ -362,6 +362,48 @@ TEST_CASE("[Region] Parsing opcodes")
         REQUIRE(*region.lastKeyswitch == 0);
     }
 
+    SECTION("sw_lolast/hilast")
+    {
+        REQUIRE(!region.lastKeyswitchRange);
+        region.parseOpcode({ "sw_lolast", "4" });
+        REQUIRE(region.lastKeyswitchRange);
+        REQUIRE(*region.lastKeyswitchRange == Range<uint8_t>(4, 4));
+        region.parseOpcode({ "sw_hilast", "128" });
+        REQUIRE(*region.lastKeyswitchRange == Range<uint8_t>(4, 127));
+        region.parseOpcode({ "sw_hilast", "63" });
+        REQUIRE(*region.lastKeyswitchRange == Range<uint8_t>(4, 63));
+        region.parseOpcode({ "sw_lolast", "64" });
+        REQUIRE(*region.lastKeyswitchRange == Range<uint8_t>(64, 64));
+        region.parseOpcode({ "sw_lolast", "-1" });
+        REQUIRE(*region.lastKeyswitchRange == Range<uint8_t>(0, 64));
+    }
+
+    SECTION("sw_hilast disables sw_last")
+    {
+        REQUIRE(!region.lastKeyswitchRange);
+        REQUIRE(!region.lastKeyswitch);
+        region.parseOpcode({ "sw_last", "4" });
+        REQUIRE(region.lastKeyswitch);
+        region.parseOpcode({ "sw_hilast", "63" });
+        REQUIRE(region.lastKeyswitchRange);
+        REQUIRE(!region.lastKeyswitch);
+        region.parseOpcode({ "sw_last", "4" });
+        REQUIRE(!region.lastKeyswitch);
+    }
+
+    SECTION("sw_lolast disables sw_last")
+    {
+        REQUIRE(!region.lastKeyswitchRange);
+        REQUIRE(!region.lastKeyswitch);
+        region.parseOpcode({ "sw_last", "4" });
+        REQUIRE(region.lastKeyswitch);
+        region.parseOpcode({ "sw_lolast", "63" });
+        REQUIRE(region.lastKeyswitchRange);
+        REQUIRE(!region.lastKeyswitch);
+        region.parseOpcode({ "sw_last", "4" });
+        REQUIRE(!region.lastKeyswitch);
+    }
+
     SECTION("sw_up")
     {
         REQUIRE(!region.upKeyswitch);

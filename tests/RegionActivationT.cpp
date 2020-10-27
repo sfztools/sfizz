@@ -402,7 +402,6 @@ TEST_CASE("[Keyswitches] sw_previous in range")
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
 }
 
-
 TEST_CASE("[Keyswitches] sw_previous out of range")
 {
     // The behavior is the same in this case, regardless of the keyrange
@@ -424,4 +423,67 @@ TEST_CASE("[Keyswitches] sw_previous out of range")
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 61, 64);
     REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] sw_lolast and sw_hilast")
+{
+    // The behavior is the same in this case, regardless of the keyrange
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sw_lolast=57 sw_hilast=59 key=70 sample=*saw
+        <region> sw_lolast=60 sw_hilast=62 key=72 sample=*sine
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 57, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 58, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 61, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 59, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 62, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] sw_lolast and sw_hilast with sw_last")
+{
+    // The behavior is the same in this case, regardless of the keyrange
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sw_last=40 sw_lolast=57 sw_hilast=59 key=70 sample=*saw
+        <region> sw_lolast=60 sw_hilast=62 sw_last=41 key=72 sample=*sine
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 40, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 41, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 57, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 41, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 40, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
 }

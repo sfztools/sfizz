@@ -348,6 +348,7 @@ struct Region {
     Range<float> bendRange { Default::bendValueRange }; // hibend and lobend
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
     absl::optional<uint8_t> lastKeyswitch {}; // sw_last
+    absl::optional<Range<uint8_t>> lastKeyswitchRange {}; // sw_last
     absl::optional<std::string> keyswitchLabel {};
     absl::optional<uint8_t> upKeyswitch {}; // sw_up
     absl::optional<uint8_t> downKeyswitch {}; // sw_down

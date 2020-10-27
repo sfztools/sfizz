@@ -296,8 +296,32 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sw_hikey"):
         break;
     case hash("sw_last"):
-        setValueFromOpcode(opcode, lastKeyswitch, Default::keyRange);
-        keySwitched = false;
+        if (!lastKeyswitchRange) {
+            setValueFromOpcode(opcode, lastKeyswitch, Default::keyRange);
+            keySwitched = false;
+        }
+        break;
+    case hash("sw_lolast"):
+        if (auto value = readOpcode(opcode.value, Default::keyRange)) {
+            if (!lastKeyswitchRange)
+                lastKeyswitchRange.emplace(*value, *value);
+            else
+                lastKeyswitchRange->setStart(*value);
+
+            keySwitched = false;
+            lastKeyswitch = absl::nullopt;
+        }
+        break;
+    case hash("sw_hilast"):
+        if (auto value = readOpcode(opcode.value, Default::keyRange)) {
+            if (!lastKeyswitchRange)
+                lastKeyswitchRange.emplace(*value, *value);
+            else
+                lastKeyswitchRange->setEnd(*value);
+
+            keySwitched = false;
+            lastKeyswitch = absl::nullopt;
+        }
         break;
     case hash("sw_label"):
         keyswitchLabel = opcode.value;

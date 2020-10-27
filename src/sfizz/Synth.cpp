@@ -178,6 +178,12 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (lastRegion->lastKeyswitch)
         lastKeyswitchLists[*lastRegion->lastKeyswitch].push_back(lastRegion.get());
 
+    if (lastRegion->lastKeyswitchRange) {
+        auto& range = *lastRegion->lastKeyswitchRange;
+        for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
+            lastKeyswitchLists[note].push_back(lastRegion.get());
+    }
+
     if (lastRegion->upKeyswitch)
         upKeyswitchLists[*lastRegion->upKeyswitch].push_back(lastRegion.get());
 
