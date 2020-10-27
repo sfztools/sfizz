@@ -177,7 +177,7 @@ TEST_CASE("Region activation", "Region tests")
     }
 }
 
-TEST_CASE("[Keyswitches] Normal keyswitch range")
+TEST_CASE("[Keyswitches] Normal lastKeyswitch range")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
@@ -196,7 +196,7 @@ TEST_CASE("[Keyswitches] Normal keyswitch range")
     REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
-TEST_CASE("[Keyswitches] No keyswitch range")
+TEST_CASE("[Keyswitches] No lastKeyswitch range")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
@@ -219,7 +219,7 @@ TEST_CASE("[Keyswitches] No keyswitch range")
     REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
-TEST_CASE("[Keyswitches] Out of keyswitch range")
+TEST_CASE("[Keyswitches] Out of lastKeyswitch range")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
@@ -238,7 +238,7 @@ TEST_CASE("[Keyswitches] Out of keyswitch range")
     REQUIRE(synth.getNumActiveVoices(true) == 2);
 }
 
-TEST_CASE("[Keyswitches] Overlapping key and keyswitch range")
+TEST_CASE("[Keyswitches] Overlapping key and lastKeyswitch range")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(

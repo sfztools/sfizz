@@ -350,58 +350,58 @@ TEST_CASE("[Region] Parsing opcodes")
 
     SECTION("sw_last")
     {
-        REQUIRE(!region.keyswitch);
+        REQUIRE(!region.lastKeyswitch);
         region.parseOpcode({ "sw_last", "4" });
-        REQUIRE(region.keyswitch);
-        REQUIRE(*region.keyswitch == 4);
+        REQUIRE(region.lastKeyswitch);
+        REQUIRE(*region.lastKeyswitch == 4);
         region.parseOpcode({ "sw_last", "128" });
-        REQUIRE(region.keyswitch);
-        REQUIRE(*region.keyswitch == 127);
+        REQUIRE(region.lastKeyswitch);
+        REQUIRE(*region.lastKeyswitch == 127);
         region.parseOpcode({ "sw_last", "-1" });
-        REQUIRE(region.keyswitch);
-        REQUIRE(*region.keyswitch == 0);
+        REQUIRE(region.lastKeyswitch);
+        REQUIRE(*region.lastKeyswitch == 0);
     }
 
     SECTION("sw_up")
     {
-        REQUIRE(!region.keyswitchUp);
+        REQUIRE(!region.upKeyswitch);
         region.parseOpcode({ "sw_up", "4" });
-        REQUIRE(region.keyswitchUp);
-        REQUIRE(*region.keyswitchUp == 4);
+        REQUIRE(region.upKeyswitch);
+        REQUIRE(*region.upKeyswitch == 4);
         region.parseOpcode({ "sw_up", "128" });
-        REQUIRE(region.keyswitchUp);
-        REQUIRE(*region.keyswitchUp == 127);
+        REQUIRE(region.upKeyswitch);
+        REQUIRE(*region.upKeyswitch == 127);
         region.parseOpcode({ "sw_up", "-1" });
-        REQUIRE(region.keyswitchUp);
-        REQUIRE(*region.keyswitchUp == 0);
+        REQUIRE(region.upKeyswitch);
+        REQUIRE(*region.upKeyswitch == 0);
     }
 
     SECTION("sw_down")
     {
-        REQUIRE(!region.keyswitchDown);
+        REQUIRE(!region.downKeyswitch);
         region.parseOpcode({ "sw_down", "4" });
-        REQUIRE(region.keyswitchDown);
-        REQUIRE(*region.keyswitchDown == 4);
+        REQUIRE(region.downKeyswitch);
+        REQUIRE(*region.downKeyswitch == 4);
         region.parseOpcode({ "sw_down", "128" });
-        REQUIRE(region.keyswitchDown);
-        REQUIRE(*region.keyswitchDown == 127);
+        REQUIRE(region.downKeyswitch);
+        REQUIRE(*region.downKeyswitch == 127);
         region.parseOpcode({ "sw_down", "-1" });
-        REQUIRE(region.keyswitchDown);
-        REQUIRE(*region.keyswitchDown == 0);
+        REQUIRE(region.downKeyswitch);
+        REQUIRE(*region.downKeyswitch == 0);
     }
 
     SECTION("sw_previous")
     {
-        REQUIRE(!region.previousNote);
+        REQUIRE(!region.previousKeyswitch);
         region.parseOpcode({ "sw_previous", "4" });
-        REQUIRE(region.previousNote);
-        REQUIRE(*region.previousNote == 4);
+        REQUIRE(region.previousKeyswitch);
+        REQUIRE(*region.previousKeyswitch == 4);
         region.parseOpcode({ "sw_previous", "128" });
-        REQUIRE(region.previousNote);
-        REQUIRE(*region.previousNote == 127);
+        REQUIRE(region.previousKeyswitch);
+        REQUIRE(*region.previousKeyswitch == 127);
         region.parseOpcode({ "sw_previous", "-1" });
-        REQUIRE(region.previousNote);
-        REQUIRE(*region.previousNote == 0);
+        REQUIRE(region.previousKeyswitch);
+        REQUIRE(*region.previousKeyswitch == 0);
     }
 
     SECTION("sw_vel")

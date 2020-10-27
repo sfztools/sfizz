@@ -347,11 +347,11 @@ struct Region {
     // Region logic: MIDI conditions
     Range<float> bendRange { Default::bendValueRange }; // hibend and lobend
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
-    absl::optional<uint8_t> keyswitch {}; // sw_last
+    absl::optional<uint8_t> lastKeyswitch {}; // sw_last
     absl::optional<std::string> keyswitchLabel {};
-    absl::optional<uint8_t> keyswitchUp {}; // sw_up
-    absl::optional<uint8_t> keyswitchDown {}; // sw_down
-    absl::optional<uint8_t> previousNote {}; // sw_previous
+    absl::optional<uint8_t> upKeyswitch {}; // sw_up
+    absl::optional<uint8_t> downKeyswitch {}; // sw_down
+    absl::optional<uint8_t> previousKeyswitch {}; // sw_previous
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw

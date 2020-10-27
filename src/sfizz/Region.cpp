@@ -296,21 +296,21 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sw_hikey"):
         break;
     case hash("sw_last"):
-        setValueFromOpcode(opcode, keyswitch, Default::keyRange);
+        setValueFromOpcode(opcode, lastKeyswitch, Default::keyRange);
         keySwitched = false;
         break;
     case hash("sw_label"):
         keyswitchLabel = opcode.value;
         break;
     case hash("sw_down"):
-        setValueFromOpcode(opcode, keyswitchDown, Default::keyRange);
+        setValueFromOpcode(opcode, downKeyswitch, Default::keyRange);
         keySwitched = false;
         break;
     case hash("sw_up"):
-        setValueFromOpcode(opcode, keyswitchUp, Default::keyRange);
+        setValueFromOpcode(opcode, upKeyswitch, Default::keyRange);
         break;
     case hash("sw_previous"):
-        setValueFromOpcode(opcode, previousNote, Default::keyRange);
+        setValueFromOpcode(opcode, previousKeyswitch, Default::keyRange);
         previousKeySwitched = false;
         break;
     case hash("sw_vel"):
@@ -1844,14 +1844,14 @@ void sfz::Region::offsetAllKeys(int offset) noexcept
     pitchKeycenter = offsetAndClampKey(pitchKeycenter, offset, Default::keyRange);
 
     // Offset key switches
-    if (keyswitchUp)
-        keyswitchUp = offsetAndClampKey(*keyswitchUp, offset, Default::keyRange);
-    if (keyswitch)
-        keyswitch = offsetAndClampKey(*keyswitch, offset, Default::keyRange);
-    if (keyswitchDown)
-        keyswitchDown = offsetAndClampKey(*keyswitchDown, offset, Default::keyRange);
-    if (previousNote)
-        previousNote = offsetAndClampKey(*previousNote, offset, Default::keyRange);
+    if (upKeyswitch)
+        upKeyswitch = offsetAndClampKey(*upKeyswitch, offset, Default::keyRange);
+    if (lastKeyswitch)
+        lastKeyswitch = offsetAndClampKey(*lastKeyswitch, offset, Default::keyRange);
+    if (downKeyswitch)
+        downKeyswitch = offsetAndClampKey(*downKeyswitch, offset, Default::keyRange);
+    if (previousKeyswitch)
+        previousKeyswitch = offsetAndClampKey(*previousKeyswitch, offset, Default::keyRange);
 
     // Offset crossfade ranges
     if (crossfadeKeyInRange != Default::crossfadeKeyInRange) {

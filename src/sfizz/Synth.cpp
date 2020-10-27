@@ -175,16 +175,16 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (octaveOffset != 0 || noteOffset != 0)
         lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
 
-    if (lastRegion->keyswitch)
-        lastKeyswitchLists[*lastRegion->keyswitch].push_back(lastRegion.get());
+    if (lastRegion->lastKeyswitch)
+        lastKeyswitchLists[*lastRegion->lastKeyswitch].push_back(lastRegion.get());
 
-    if (lastRegion->keyswitchUp)
-        upKeyswitchLists[*lastRegion->keyswitchUp].push_back(lastRegion.get());
+    if (lastRegion->upKeyswitch)
+        upKeyswitchLists[*lastRegion->upKeyswitch].push_back(lastRegion.get());
 
-    if (lastRegion->keyswitchDown)
-        downKeyswitchLists[*lastRegion->keyswitchDown].push_back(lastRegion.get());
+    if (lastRegion->downKeyswitch)
+        downKeyswitchLists[*lastRegion->downKeyswitch].push_back(lastRegion.get());
 
-    if (lastRegion->previousNote)
+    if (lastRegion->previousKeyswitch)
         previousKeyswitchLists.push_back(lastRegion.get());
 
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
@@ -614,12 +614,12 @@ void sfz::Synth::finalizeSfzLoad()
             }
         }
 
-        if (region->keyswitch) {
+        if (region->lastKeyswitch) {
             if (currentSwitch)
-                region->keySwitched = (*currentSwitch == *region->keyswitch);
+                region->keySwitched = (*currentSwitch == *region->lastKeyswitch);
 
             if (region->keyswitchLabel)
-                insertPairUniquely(keyswitchLabels, *region->keyswitch, *region->keyswitchLabel);
+                insertPairUniquely(keyswitchLabels, *region->lastKeyswitch, *region->keyswitchLabel);
         }
 
         // Some regions had group number but no "group-level" opcodes handled the polyphony
@@ -1184,7 +1184,7 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     }
 
     for (auto& region : previousKeyswitchLists)
-        region->previousKeySwitched = (*region->previousNote == noteNumber);
+        region->previousKeySwitched = (*region->previousKeyswitch == noteNumber);
 }
 
 void sfz::Synth::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept

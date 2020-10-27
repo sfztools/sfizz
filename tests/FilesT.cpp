@@ -463,14 +463,14 @@ TEST_CASE("[Files] Note and octave offsets")
     REQUIRE(synth.getRegionView(2)->crossfadeKeyOutRange == Range<uint8_t>(45, 49));
 
     REQUIRE(synth.getRegionView(3)->keyRange == Range<uint8_t>(62, 62));
-    REQUIRE( synth.getRegionView(3)->keyswitch );
-    REQUIRE( *synth.getRegionView(3)->keyswitch == 24 );
-    REQUIRE( synth.getRegionView(3)->keyswitchUp );
-    REQUIRE( *synth.getRegionView(3)->keyswitchUp == 24 );
-    REQUIRE( synth.getRegionView(3)->keyswitchDown );
-    REQUIRE( *synth.getRegionView(3)->keyswitchDown == 24 );
-    REQUIRE( synth.getRegionView(3)->previousNote );
-    REQUIRE( *synth.getRegionView(3)->previousNote == 61 );
+    REQUIRE( synth.getRegionView(3)->lastKeyswitch );
+    REQUIRE( *synth.getRegionView(3)->lastKeyswitch == 24 );
+    REQUIRE( synth.getRegionView(3)->upKeyswitch );
+    REQUIRE( *synth.getRegionView(3)->upKeyswitch == 24 );
+    REQUIRE( synth.getRegionView(3)->downKeyswitch );
+    REQUIRE( *synth.getRegionView(3)->downKeyswitch == 24 );
+    REQUIRE( synth.getRegionView(3)->previousKeyswitch );
+    REQUIRE( *synth.getRegionView(3)->previousKeyswitch == 61 );
 
     REQUIRE(synth.getRegionView(4)->keyRange == Range<uint8_t>(76, 76));
     REQUIRE( synth.getRegionView(4)->pitchKeycenter == 76 );
