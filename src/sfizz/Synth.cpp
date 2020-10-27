@@ -628,6 +628,17 @@ void sfz::Synth::finalizeSfzLoad()
                 insertPairUniquely(keyswitchLabels, *region->lastKeyswitch, *region->keyswitchLabel);
         }
 
+        if (region->lastKeyswitchRange) {
+            auto& range = *region->lastKeyswitchRange;
+            if (currentSwitch)
+                region->keySwitched = range.containsWithEnd(*currentSwitch);
+
+            if (region->keyswitchLabel) {
+                for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
+                    insertPairUniquely(keyswitchLabels, note, *region->keyswitchLabel);
+            }
+        }
+
         // Some regions had group number but no "group-level" opcodes handled the polyphony
         while (polyphonyGroups.size() <= region->group) {
             polyphonyGroups.emplace_back();
@@ -1176,7 +1187,6 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
         region->keySwitched = true;
 
     for (auto& region : noteActivationLists[noteNumber]) {
-
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             for (auto& voice : voices) {
                 if (voice->checkOffGroup(region, delay, noteNumber)) {
