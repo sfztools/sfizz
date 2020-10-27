@@ -255,7 +255,7 @@ elseif(SFIZZ_AU)
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}")
 
     # Add the resource fork
-    if (TRUE)
+    if (FALSE)
         execute_process(COMMAND "xcrun" "--find" "Rez"
             OUTPUT_VARIABLE OSX_REZ_COMMAND OUTPUT_STRIP_TRAILING_WHITESPACE)
         file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")

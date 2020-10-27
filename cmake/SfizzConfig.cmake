@@ -40,6 +40,11 @@ if(APPLE)
     find_library(APPLE_AUDIOUNIT_LIBRARY "AudioUnit")
     find_library(APPLE_COREAUDIO_LIBRARY "CoreAudio")
     find_library(APPLE_COREMIDI_LIBRARY "CoreMIDI")
+    # See https://stackoverflow.com/a/54103956
+    # and https://stackoverflow.com/a/21692023
+    # Apparently this is not needed in Travis CI using addons
+    # but it is in Appveyor instead
+    list (APPEND CMAKE_PREFIX_PATH /usr/local)
 endif()
 
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...

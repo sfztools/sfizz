@@ -1,0 +1,83 @@
+version: build-{build}
+configuration: Release
+
+environment:
+  matrix:
+  - job_name: macOS Mojave
+    appveyor_build_worker_image: macos-mojave
+    INSTALL_DIR: sfizz-$(APPVEYOR_REPO_TAG_NAME)-macos
+
+  - job_name: Windows x86
+    appveyor_build_worker_image: Visual Studio 2019
+    platform: x86
+    VCPKG_TRIPLET: x86-windows-static
+    PATH: C:\Program Files (x86)\Inno Setup 6;%PATH%
+
+  - job_name: Windows x64
+    appveyor_build_worker_image: Visual Studio 2019
+    platform: x64
+    VCPKG_TRIPLET: x64-windows-static
+    PATH: C:\Program Files (x86)\Inno Setup 6;%PATH%
+
+matrix:
+  allow_failures:
+  - platform: x86
+  - platform: x64
+
+for:
+- matrix:
+    only:
+    - job_name: macOS Mojave
+  init:
+  - system_profiler SPSoftwareDataType
+  - cmake --version
+  - gcc -v
+  install:
+  - brew install jack
+  - brew install dylibbundler
+  before_build:
+  - chmod +x ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/before_build.sh
+  - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/before_build.sh
+  build_script: cd build && make -j2
+  after_build:
+  - chmod +x ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh
+  - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh
+  test: off
+  artifacts:
+  - name: macOS Tarball
+    path: "sfizz-*.tar.gz"
+
+- matrix:
+    only:
+    - job_name: Windows x86
+  cache: c:\tools\vcpkg\installed\ -> appveyor.yml
+  install:      call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\install.cmd
+  before_build: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\before_build.cmd
+  build_script: cmake --build . --config Release -j2
+  after_build:  call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\after_build.cmd
+  artifacts:
+  - name: x86 Setup
+    path: "sfizz-*.exe"
+
+- matrix:
+    only:
+    - job_name: Windows x64
+  cache: c:\tools\vcpkg\installed\ -> appveyor.yml
+  install:      call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\install.cmd
+  before_build: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\before_build.cmd
+  build_script: cmake --build . --config Release -j2
+  after_build:  call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\after_build.cmd
+  artifacts:
+  - name: x64 Setup
+    path: "sfizz-*.exe"
+
+deploy:
+- provider: GitHub
+  auth_token:
+    secure: xOugGAynvnZdc0DXaL3rlgMf4CICFLkdO8JxoRfLQMKJhkj/kZ4d8h7NCFneDzXG
+  artifact: macOS Tarball,x86 Setup,x64 Setup
+  draft: false
+  prerelease: false
+  force_update: true
+  on:
+    APPVEYOR_REPO_TAG: true
