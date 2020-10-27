@@ -114,27 +114,6 @@ TEST_CASE("Region activation", "Region tests")
         REQUIRE(!region.isSwitchedOn());
     }
 
-    SECTION("Keyswitches: sw_previous")
-    {
-        region.parseOpcode({ "sw_previous", "40" });
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        region.registerNoteOff(41, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(41, 0_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-    }
-
     SECTION("Sequences: length 2, default position")
     {
         region.parseOpcode({ "seq_length", "2" });
@@ -395,4 +374,54 @@ TEST_CASE("[Keyswitches] sw_default and playing with switches")
     REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
     REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
     REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+}
+
+TEST_CASE("[Keyswitches] sw_previous in range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sample=*saw sw_previous=60 lokey=50 hikey=70
+    )");
+    // Note: sforzando seems to activate by default if sw_previous is indeed 60,
+    // but not any other value. As it does not seem really useful at this point
+    // the test assumes that sw_previous regions are disabled by default
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+}
+
+
+TEST_CASE("[Keyswitches] sw_previous out of range")
+{
+    // The behavior is the same in this case, regardless of the keyrange
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sample=*saw sw_previous=60 lokey=50 hikey=55
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 61, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
 }

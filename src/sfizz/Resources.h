@@ -33,8 +33,6 @@ struct Resources
     absl::optional<StretchTuning> stretch;
     ModMatrix modMatrix;
 
-    std::vector<uint8_t> keyswitches;
-
     void setSampleRate(float samplerate)
     {
         midiState.setSampleRate(samplerate);
@@ -56,7 +54,6 @@ struct Resources
         logger.clear();
         midiState.reset();
         modMatrix.clear();
-        keyswitches.clear();
     }
 };
 }

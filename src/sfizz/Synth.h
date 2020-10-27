@@ -803,8 +803,8 @@ private:
     std::vector<NoteNamePair> keyLabels;
     std::vector<NoteNamePair> keyswitchLabels;
 
-    // Default active switch if multiple keyswitchable regions are present
-    absl::optional<uint8_t> defaultSwitch;
+    // Set as sw_default if present in the file
+    absl::optional<uint8_t> currentSwitch;
     std::vector<std::string> unknownOpcodes;
     using RegionViewVector = std::vector<Region*>;
     using VoiceViewVector = std::vector<Voice*>;
@@ -899,6 +899,10 @@ private:
      */
     bool playingAttackVoice(const Region* releaseRegion) noexcept;
 
+    std::array<RegionViewVector, 128> lastKeyswitchLists;
+    std::array<RegionViewVector, 128> downKeyswitchLists;
+    std::array<RegionViewVector, 128> upKeyswitchLists;
+    RegionViewVector previousKeyswitchLists;
     std::array<RegionViewVector, 128> noteActivationLists;
     std::array<RegionViewVector, config::numCCs> ccActivationLists;
 

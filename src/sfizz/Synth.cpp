@@ -175,11 +175,17 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (octaveOffset != 0 || noteOffset != 0)
         lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
 
-    if (lastRegion->keyswitch) {
-        auto it = absl::c_find(resources.keyswitches, *lastRegion->keyswitch);
-        if (it == resources.keyswitches.end())
-            resources.keyswitches.push_back(*lastRegion->keyswitch);
-    }
+    if (lastRegion->keyswitch)
+        lastKeyswitchLists[*lastRegion->keyswitch].push_back(lastRegion.get());
+
+    if (lastRegion->keyswitchUp)
+        upKeyswitchLists[*lastRegion->keyswitchUp].push_back(lastRegion.get());
+
+    if (lastRegion->keyswitchDown)
+        downKeyswitchLists[*lastRegion->keyswitchDown].push_back(lastRegion.get());
+
+    if (lastRegion->previousNote)
+        previousKeyswitchLists.push_back(lastRegion.get());
 
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
     if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
@@ -203,10 +209,17 @@ void sfz::Synth::clear()
 
     for (auto& voice : voices)
         voice->reset();
+    for (auto& list : lastKeyswitchLists)
+        list.clear();
+    for (auto& list : downKeyswitchLists)
+        list.clear();
+    for (auto& list : upKeyswitchLists)
+        list.clear();
     for (auto& list : noteActivationLists)
         list.clear();
     for (auto& list : ccActivationLists)
         list.clear();
+    previousKeyswitchLists.clear();
 
     currentSet = nullptr;
     sets.clear();
@@ -220,7 +233,7 @@ void sfz::Synth::clear()
     resources.clear();
     numGroups = 0;
     numMasters = 0;
-    defaultSwitch = absl::nullopt;
+    currentSwitch = absl::nullopt;
     defaultPath = "";
     resources.midiState.reset();
     resources.filePool.clear();
@@ -262,7 +275,7 @@ void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
                 currentSet->setPolyphonyLimit(*value);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, defaultSwitch, Default::keyRange);
+            setValueFromOpcode(member, currentSwitch, Default::keyRange);
             break;
         }
     }
@@ -280,7 +293,7 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
                 currentSet->setPolyphonyLimit(*value);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, defaultSwitch, Default::keyRange);
+            setValueFromOpcode(member, currentSwitch, Default::keyRange);
             break;
         case hash("volume"):
             // FIXME : Probably best not to mess with this and let the host control the volume
@@ -306,7 +319,7 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             setValueFromOpcode(member, maxPolyphony, Default::polyphonyRange);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, defaultSwitch, Default::keyRange);
+            setValueFromOpcode(member, currentSwitch, Default::keyRange);
             break;
         }
     };
@@ -535,7 +548,6 @@ void sfz::Synth::finalizeSfzLoad()
     bool haveFilterEG { false };
 
     FlexEGs::clearUnusedCurves();
-    absl::c_sort(resources.keyswitches);
 
     while (currentRegionIndex < currentRegionCount) {
         auto region = regions[currentRegionIndex].get();
@@ -603,8 +615,8 @@ void sfz::Synth::finalizeSfzLoad()
         }
 
         if (region->keyswitch) {
-            if (defaultSwitch)
-                region->keySwitched = (*defaultSwitch == *region->keyswitch);
+            if (currentSwitch)
+                region->keySwitched = (*currentSwitch == *region->keyswitch);
 
             if (region->keyswitchLabel)
                 insertPairUniquely(keyswitchLabels, *region->keyswitch, *region->keyswitchLabel);
@@ -617,15 +629,7 @@ void sfz::Synth::finalizeSfzLoad()
         }
 
         for (auto note = 0; note < 128; note++) {
-            bool noteIsKeyswitch = (absl::c_binary_search(resources.keyswitches, note));
-
-            if (
-                region->keyRange.containsWithEnd(note)
-                || (region->keyswitch && noteIsKeyswitch)
-                || (region->keyswitchDown && *region->keyswitchDown == note)
-                || (region->keyswitchUp && *region->keyswitchUp == note)
-                || (region->previousNote && *region->previousNote == note)
-            )
+            if (region->keyRange.containsWithEnd(note))
                 noteActivationLists[note].push_back(region);
         }
 
@@ -1032,6 +1036,12 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::NoteOff, noteNumber, velocity };
 
+    for (auto& region : upKeyswitchLists[noteNumber])
+        region->keySwitched = true;
+
+    for (auto& region : downKeyswitchLists[noteNumber])
+        region->keySwitched = false;
+
     for (auto& region : noteActivationLists[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
             if (region->trigger == SfzTrigger::release && !region->rtDead && !playingAttackVoice(region))
@@ -1142,11 +1152,24 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
 
-    bool noteIsKeyswitch = absl::c_binary_search(resources.keyswitches, noteNumber);
+    if (!lastKeyswitchLists[noteNumber].empty()) {
+        if (currentSwitch && *currentSwitch != noteNumber) {
+            for (auto& region : lastKeyswitchLists[*currentSwitch])
+                region->keySwitched = false;
+        }
+        currentSwitch = noteNumber;
+    }
+
+    for (auto& region : lastKeyswitchLists[noteNumber])
+        region->keySwitched = true;
+
+    for (auto& region : upKeyswitchLists[noteNumber])
+        region->keySwitched = false;
+
+    for (auto& region : downKeyswitchLists[noteNumber])
+        region->keySwitched = true;
 
     for (auto& region : noteActivationLists[noteNumber]) {
-        if (noteIsKeyswitch && region->keyswitch)
-            region->keySwitched = (*region->keyswitch == noteNumber);
 
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
             for (auto& voice : voices) {
@@ -1159,6 +1182,9 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
             startVoice(region, delay, triggerEvent, ring);
         }
     }
+
+    for (auto& region : previousKeyswitchLists)
+        region->previousKeySwitched = (*region->previousNote == noteNumber);
 }
 
 void sfz::Synth::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept

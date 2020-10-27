@@ -1588,29 +1588,17 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    if (keyswitchDown && *keyswitchDown == noteNumber)
-        keySwitched = true;
-
-    if (keyswitchUp && *keyswitchUp == noteNumber)
-        keySwitched = false;
-
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
     if (keyOk) {
         // Sequence activation
         sequenceSwitched =
             ((sequenceCounter++ % sequenceLength) == sequencePosition - 1);
-
-        if (previousNote)
-            previousKeySwitched = (*previousNote == noteNumber);
     }
 
     if (!isSwitchedOn())
         return false;
 
     if (!triggerOnNote)
-        return false;
-
-    if (previousNote && !(previousKeySwitched && noteNumber != *previousNote))
         return false;
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
@@ -1625,12 +1613,6 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
 bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    if (keyswitchDown && *keyswitchDown == noteNumber)
-        keySwitched = false;
-
-    if (keyswitchUp && *keyswitchUp == noteNumber)
-        keySwitched = true;
 
     if (!isSwitchedOn())
         return false;
