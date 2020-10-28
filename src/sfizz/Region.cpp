@@ -1390,11 +1390,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         gainToEffect[effectNumber] = *value / 100;
         break;
     }
+    case hash("sw_default"):
+        setValueFromOpcode(opcode, defaultSwitch, Default::keyRange);
+        break;
 
     // Ignored opcodes
     case hash("hichan"):
     case hash("lochan"):
-    case hash("sw_default"):
     case hash("ampeg_depth"):
     case hash("ampeg_vel&depth"):
         break;

@@ -193,6 +193,9 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
     if (lastRegion->previousKeyswitch)
         previousKeyswitchLists.push_back(lastRegion.get());
 
+    if (lastRegion->defaultSwitch)
+        currentSwitch = *lastRegion->defaultSwitch;
+
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
     if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
         setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
