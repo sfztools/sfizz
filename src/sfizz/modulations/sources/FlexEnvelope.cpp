@@ -38,6 +38,12 @@ void FlexEnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
 
     FlexEnvelope* eg = voice->getFlexEG(egIndex);
     eg->configure(&region->flexEGs[egIndex]);
+    bool freeRunning = (
+        (region->loopMode == SfzLoopMode::one_shot && region->isOscillator())
+    );
+    if (freeRunning && region->flexAmpEG && egIndex == *region->flexAmpEG)
+        eg->setFreeRunning(true);
+
     eg->start(delay);
 }
 

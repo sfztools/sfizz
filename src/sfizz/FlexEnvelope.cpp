@@ -45,6 +45,7 @@ struct FlexEnvelope::Impl {
     float currentTime_ { 0.0 };
     absl::optional<size_t> currentFramesUntilRelease_ { absl::nullopt };
     bool isReleased_ { false };
+    bool freeRunning_ { false };
 
     //
     void process(absl::Span<float> out);
@@ -70,6 +71,15 @@ void FlexEnvelope::configure(const FlexEGDescription* desc)
 {
     Impl& impl = *impl_;
     impl.desc_ = desc;
+
+    //
+    impl.freeRunning_ = false;
+    impl.isReleased_ = false;
+
+    //
+    impl.currentStageNumber_ = 0;
+    impl.currentLevel_ = 0.0;
+    impl.currentTime_ = 0.0;
 }
 
 void FlexEnvelope::start(unsigned triggerDelay)
@@ -90,12 +100,12 @@ void FlexEnvelope::start(unsigned triggerDelay)
     impl.stageSustained_ = desc.sustain == 0;
     impl.stageCurve_ = &point.curve();
     impl.currentFramesUntilRelease_ = absl::nullopt;
-    impl.isReleased_ = false;
+}
 
-    //
-    impl.currentStageNumber_ = 0;
-    impl.currentLevel_ = 0.0;
-    impl.currentTime_ = 0.0;
+void FlexEnvelope::setFreeRunning(bool freeRunning)
+{
+    Impl& impl = *impl_;
+    impl.freeRunning_ = freeRunning;
 }
 
 void FlexEnvelope::release(unsigned releaseDelay)
@@ -134,7 +144,6 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
     const FlexEGDescription& desc = *desc_;
     size_t numFrames = out.size();
     const float samplePeriod = samplePeriod_;
-
     // Skip the initial delay, for frame-accurate trigger
     size_t skipFrames = std::min(numFrames, delayFramesLeft_);
     if (skipFrames > 0) {
@@ -171,9 +180,9 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
                 }
             }
         }
-        while (!stageSustained_ && currentTime_ >= stageTime_) {
+        while ((!stageSustained_ || freeRunning_) && currentTime_ >= stageTime_) {
             // advance through completed timed stages
-            ASSERT(isReleased_ || !stageSustained_);
+            ASSERT(isReleased_ || !stageSustained_ || freeRunning_);
             if (stageTime_ == 0) {
                 // if stage is of zero duration, immediate transition to level
                 currentLevel_ = stageTargetLevel_;
