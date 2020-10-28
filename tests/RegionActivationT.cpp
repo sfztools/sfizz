@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Region.h"
+#include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
@@ -113,104 +114,6 @@ TEST_CASE("Region activation", "Region tests")
         REQUIRE(!region.isSwitchedOn());
     }
 
-    // TODO: add keyswitches
-    SECTION("Keyswitches: sw_last")
-    {
-        region.parseOpcode({ "sw_last", "40" });
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(41, 0_norm, 0.5f);
-    }
-
-    SECTION("Keyswitches: sw_last with non-default keyswitch range")
-    {
-        region.parseOpcode({ "sw_lokey", "30" });
-        region.parseOpcode({ "sw_hikey", "50" });
-        region.parseOpcode({ "sw_last", "40" });
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(60, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(60, 0_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(60, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(60, 0_norm, 0.5f);
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(41, 0_norm, 0.5f);
-    }
-
-    SECTION("Keyswitches: sw_down with non-default keyswitch range")
-    {
-        region.parseOpcode({ "sw_lokey", "30" });
-        region.parseOpcode({ "sw_hikey", "50" });
-        region.parseOpcode({ "sw_down", "40" });
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(60, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(60, 0_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(60, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(60, 0_norm, 0.5f);
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(41, 0_norm, 0.5f);
-    }
-
-    SECTION("Keyswitches: sw_up with non-default keyswitch range")
-    {
-        region.parseOpcode({ "sw_lokey", "30" });
-        region.parseOpcode({ "sw_hikey", "50" });
-        region.parseOpcode({ "sw_up", "40" });
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        region.registerNoteOff(41, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-    }
-
-    SECTION("Keyswitches: sw_previous")
-    {
-        region.parseOpcode({ "sw_previous", "40" });
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        region.registerNoteOff(41, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(41, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(41, 0_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-    }
-
     SECTION("Sequences: length 2, default position")
     {
         region.parseOpcode({ "seq_length", "2" });
@@ -272,4 +175,325 @@ TEST_CASE("Region activation", "Region tests")
         region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(!region.isSwitchedOn());
     }
+}
+
+TEST_CASE("[Keyswitches] Normal lastKeyswitch range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=40 sw_hikey=42 sw_default=40
+        <region> sw_last=40 key=60 sample=*sine
+        <region> sw_last=41 key=62 sample=*saw
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 41, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+}
+
+TEST_CASE("[Keyswitches] No lastKeyswitch range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <region> sw_last=40 key=60 sample=*sine
+        <region> sw_last=41 key=62 sample=*saw
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 41, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+}
+
+TEST_CASE("[Keyswitches] Out of lastKeyswitch range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=40 sw_hikey=42 sw_default=40
+        <region> sw_last=40 key=60 sample=*sine
+        <region> sw_last=43 key=62 sample=*saw
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 43, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+}
+
+TEST_CASE("[Keyswitches] Overlapping key and lastKeyswitch range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=1 sw_hikey=127 sw_default=40
+        <region> sw_last=40 key=60 sample=*sine
+        <region> sw_last=41 key=62 sample=*saw
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 41, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    synth.noteOn(0, 43, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    synth.noteOn(0, 62, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 3);
+}
+
+TEST_CASE("[Keyswitches] sw_down, in range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=1 sw_hikey=127 sw_default=40
+        <region> sw_down=40 key=60 sample=*sine
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOff(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+}
+
+TEST_CASE("[Keyswitches] sw_down, out of range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=1 sw_hikey=10 sw_default=40
+        <region> sw_down=40 key=60 sample=*sine
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOff(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+}
+
+TEST_CASE("[Keyswitches] sw_up, in range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=1 sw_hikey=127 sw_default=40
+        <region> sw_up=40 key=60 sample=*sine
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOff(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+}
+
+TEST_CASE("[Keyswitches] sw_up, out of range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+        <global> sw_lokey=1 sw_hikey=127 sw_default=40
+        <region> sw_up=40 key=60 sample=*sine
+    )");
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOn(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    synth.noteOff(0, 40, 64);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+}
+
+TEST_CASE("[Keyswitches] sw_default")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_default.sfz", R"(
+        <global> sw_lokey=30 sw_hikey=50 sw_default=40
+        <region> sw_last=41 key=51 sample=*sine
+        <region> sw_last=40 key=52 sample=*sine
+        <region> sw_last=41 key=53 sample=*sine
+        <region> sw_last=40 key=54 sample=*sine
+    )");
+    REQUIRE( synth.getNumRegions() == 4 );
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+}
+
+TEST_CASE("[Keyswitches] sw_default and playing with switches")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_default.sfz", R"(
+        <global> sw_lokey=30 sw_hikey=50 sw_default=40
+        <region> sw_last=41 key=51 sample=*sine
+        <region> sw_last=40 key=52 sample=*sine
+        <region> sw_last=41 key=53 sample=*sine
+        <region> sw_last=40 key=54 sample=*sine
+    )");
+    REQUIRE( synth.getNumRegions() == 4 );
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+    synth.noteOn(0, 41, 64);
+    synth.noteOff(0, 41, 0);
+    REQUIRE( synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(3)->isSwitchedOn() );
+    synth.noteOn(0, 40, 64);
+    synth.noteOff(0, 40, 64);
+    REQUIRE( !synth.getRegionView(0)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(1)->isSwitchedOn() );
+    REQUIRE( !synth.getRegionView(2)->isSwitchedOn() );
+    REQUIRE( synth.getRegionView(3)->isSwitchedOn() );
+}
+
+TEST_CASE("[Keyswitches] sw_previous in range")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sample=*saw sw_previous=60 lokey=50 hikey=70
+    )");
+    // Note: sforzando seems to activate by default if sw_previous is indeed 60,
+    // but not any other value. As it does not seem really useful at this point
+    // the test assumes that sw_previous regions are disabled by default
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] sw_previous out of range")
+{
+    // The behavior is the same in this case, regardless of the keyrange
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sample=*saw sw_previous=60 lokey=50 hikey=55
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    synth.noteOn(0, 61, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] sw_lolast and sw_hilast")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sw_lolast=57 sw_hilast=59 key=70 sample=*saw
+        <region> sw_lolast=60 sw_hilast=62 key=72 sample=*sine
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 51, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 57, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 58, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 61, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 59, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 62, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] sw_lolast and sw_hilast with sw_last")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <region> sw_last=40 sw_lolast=57 sw_hilast=59 key=70 sample=*saw
+        <region> sw_lolast=60 sw_hilast=62 sw_last=41 key=72 sample=*sine
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 40, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 41, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 57, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 41, 64);
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 60, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    synth.noteOn(0, 40, 64);
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] sw_lolast and sw_hilast with sw_default")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <global> sw_default=58
+        <region> sw_lolast=57 sw_hilast=59 key=70 sample=*saw
+        <region> sw_lolast=60 sw_hilast=62 key=72 sample=*sine
+    )");
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
 }

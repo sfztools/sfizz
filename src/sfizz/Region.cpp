@@ -292,28 +292,49 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         if (auto value = readOpcode(opcode.value, Default::normalizedRange))
             ccConditions[opcode.parameters.back()].setEnd(*value);
         break;
-    case hash("sw_lokey"):
-        setRangeStartFromOpcode(opcode, keyswitchRange, Default::keyRange);
-        break;
+    case hash("sw_lokey"): // fallthrough
     case hash("sw_hikey"):
-        setRangeEndFromOpcode(opcode, keyswitchRange, Default::keyRange);
         break;
     case hash("sw_last"):
-        setValueFromOpcode(opcode, keyswitch, Default::keyRange);
-        keySwitched = false;
+        if (!lastKeyswitchRange) {
+            setValueFromOpcode(opcode, lastKeyswitch, Default::keyRange);
+            keySwitched = false;
+        }
+        break;
+    case hash("sw_lolast"):
+        if (auto value = readOpcode(opcode.value, Default::keyRange)) {
+            if (!lastKeyswitchRange)
+                lastKeyswitchRange.emplace(*value, *value);
+            else
+                lastKeyswitchRange->setStart(*value);
+
+            keySwitched = false;
+            lastKeyswitch = absl::nullopt;
+        }
+        break;
+    case hash("sw_hilast"):
+        if (auto value = readOpcode(opcode.value, Default::keyRange)) {
+            if (!lastKeyswitchRange)
+                lastKeyswitchRange.emplace(*value, *value);
+            else
+                lastKeyswitchRange->setEnd(*value);
+
+            keySwitched = false;
+            lastKeyswitch = absl::nullopt;
+        }
         break;
     case hash("sw_label"):
         keyswitchLabel = opcode.value;
         break;
     case hash("sw_down"):
-        setValueFromOpcode(opcode, keyswitchDown, Default::keyRange);
+        setValueFromOpcode(opcode, downKeyswitch, Default::keyRange);
         keySwitched = false;
         break;
     case hash("sw_up"):
-        setValueFromOpcode(opcode, keyswitchUp, Default::keyRange);
+        setValueFromOpcode(opcode, upKeyswitch, Default::keyRange);
         break;
     case hash("sw_previous"):
-        setValueFromOpcode(opcode, previousNote, Default::keyRange);
+        setValueFromOpcode(opcode, previousKeyswitch, Default::keyRange);
         previousKeySwitched = false;
         break;
     case hash("sw_vel"):
@@ -1591,34 +1612,17 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    if (keyswitchRange.containsWithEnd(noteNumber)) {
-        if (keyswitch)
-            keySwitched =  (*keyswitch == noteNumber);
-
-        if (keyswitchDown && *keyswitchDown == noteNumber)
-            keySwitched = true;
-
-        if (keyswitchUp && *keyswitchUp == noteNumber)
-            keySwitched = false;
-    }
-
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
     if (keyOk) {
         // Sequence activation
         sequenceSwitched =
             ((sequenceCounter++ % sequenceLength) == sequencePosition - 1);
-
-        if (previousNote)
-            previousKeySwitched = (*previousNote == noteNumber);
     }
 
     if (!isSwitchedOn())
         return false;
 
     if (!triggerOnNote)
-        return false;
-
-    if (previousNote && !(previousKeySwitched && noteNumber != *previousNote))
         return false;
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
@@ -1633,14 +1637,6 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
 bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    if (keyswitchRange.containsWithEnd(noteNumber)) {
-        if (keyswitchDown && *keyswitchDown == noteNumber)
-            keySwitched = false;
-
-        if (keyswitchUp && *keyswitchUp == noteNumber)
-            keySwitched = true;
-    }
 
     if (!isSwitchedOn())
         return false;
@@ -1860,57 +1856,40 @@ float sfz::Region::velocityCurve(float velocity) const noexcept
     return gain;
 }
 
-uint8_t offsetAndClamp(uint8_t key, int offset, sfz::Range<uint8_t> range)
-{
-    const int offsetKey { key + offset };
-    if (offsetKey > std::numeric_limits<uint8_t>::max())
-        return range.getEnd();
-    if (offsetKey < std::numeric_limits<uint8_t>::min())
-        return range.getStart();
-
-    return range.clamp(static_cast<uint8_t>(offsetKey));
-}
-
 void sfz::Region::offsetAllKeys(int offset) noexcept
 {
     // Offset key range
     if (keyRange != Default::keyRange) {
         const auto start = keyRange.getStart();
         const auto end = keyRange.getEnd();
-        keyRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
-        keyRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+        keyRange.setStart(offsetAndClampKey(start, offset, Default::keyRange));
+        keyRange.setEnd(offsetAndClampKey(end, offset, Default::keyRange));
     }
-    pitchKeycenter = offsetAndClamp(pitchKeycenter, offset, Default::keyRange);
+    pitchKeycenter = offsetAndClampKey(pitchKeycenter, offset, Default::keyRange);
 
     // Offset key switches
-    if (keyswitchRange != Default::keyRange) {
-        const auto start = keyswitchRange.getStart();
-        const auto end = keyswitchRange.getEnd();
-        keyswitchRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
-        keyswitchRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
-    }
-    if (keyswitchUp)
-        keyswitchUp = offsetAndClamp(*keyswitchUp, offset, Default::keyRange);
-    if (keyswitch)
-        keyswitch = offsetAndClamp(*keyswitch, offset, Default::keyRange);
-    if (keyswitchDown)
-        keyswitchDown = offsetAndClamp(*keyswitchDown, offset, Default::keyRange);
-    if (previousNote)
-        previousNote = offsetAndClamp(*previousNote, offset, Default::keyRange);
+    if (upKeyswitch)
+        upKeyswitch = offsetAndClampKey(*upKeyswitch, offset, Default::keyRange);
+    if (lastKeyswitch)
+        lastKeyswitch = offsetAndClampKey(*lastKeyswitch, offset, Default::keyRange);
+    if (downKeyswitch)
+        downKeyswitch = offsetAndClampKey(*downKeyswitch, offset, Default::keyRange);
+    if (previousKeyswitch)
+        previousKeyswitch = offsetAndClampKey(*previousKeyswitch, offset, Default::keyRange);
 
     // Offset crossfade ranges
     if (crossfadeKeyInRange != Default::crossfadeKeyInRange) {
         const auto start = crossfadeKeyInRange.getStart();
         const auto end = crossfadeKeyInRange.getEnd();
-        crossfadeKeyInRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
-        crossfadeKeyInRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+        crossfadeKeyInRange.setStart(offsetAndClampKey(start, offset, Default::keyRange));
+        crossfadeKeyInRange.setEnd(offsetAndClampKey(end, offset, Default::keyRange));
     }
 
     if (crossfadeKeyOutRange != Default::crossfadeKeyOutRange) {
         const auto start = crossfadeKeyOutRange.getStart();
         const auto end = crossfadeKeyOutRange.getEnd();
-        crossfadeKeyOutRange.setStart(offsetAndClamp(start, offset, Default::keyRange));
-        crossfadeKeyOutRange.setEnd(offsetAndClamp(end, offset, Default::keyRange));
+        crossfadeKeyOutRange.setStart(offsetAndClampKey(start, offset, Default::keyRange));
+        crossfadeKeyOutRange.setEnd(offsetAndClampKey(end, offset, Default::keyRange));
     }
 }
 

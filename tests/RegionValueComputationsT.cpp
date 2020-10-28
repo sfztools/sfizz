@@ -7,7 +7,6 @@
 #include "sfizz/Defaults.h"
 #include "sfizz/Region.h"
 #include "sfizz/SfzHelpers.h"
-#include "sfizz/MidiState.h"
 #include "catch2/catch.hpp"
 #include <chrono>
 #include <thread>
