@@ -497,3 +497,33 @@ TEST_CASE("[Keyswitches] sw_lolast and sw_hilast with sw_default")
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
     REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
 }
+
+TEST_CASE("[Keyswitches] Multiple sw_default")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <global> sw_default=60
+        <region> sw_last=60 key=70 sample=*saw
+        <group> sw_default=58
+        <region> sw_last=59 key=72 sample=*saw
+        <master> sw_default=59
+        <region> sw_last=62 key=73 sample=*saw
+    )");
+    REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
+    // Only the last one is taken into account
+    REQUIRE(synth.getRegionView(1)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(2)->isSwitchedOn());
+}
+
+TEST_CASE("[Keyswitches] Multiple sw_default, in region")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        <global> sw_default=60
+        <region> sw_last=58 key=70 sample=*saw
+        <region> sw_default=58 sw_last=59 key=72 sample=*saw
+    )");
+    REQUIRE(synth.getRegionView(0)->isSwitchedOn());
+    REQUIRE(!synth.getRegionView(1)->isSwitchedOn());
+}
+

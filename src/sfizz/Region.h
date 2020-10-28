@@ -353,6 +353,7 @@ struct Region {
     absl::optional<uint8_t> upKeyswitch {}; // sw_up
     absl::optional<uint8_t> downKeyswitch {}; // sw_down
     absl::optional<uint8_t> previousKeyswitch {}; // sw_previous
+    absl::optional<uint8_t> defaultSwitch {};
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
