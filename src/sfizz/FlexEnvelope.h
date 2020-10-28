@@ -31,6 +31,13 @@ public:
     void configure(const FlexEGDescription* desc);
 
     /**
+     * @brief Set the EG to be freeRunning or not
+     *
+     * @param freeRunning
+     */
+    void setFreeRunning(bool freeRunning);
+
+    /**
        Start processing an EG as a region is triggered.
      */
     void start(unsigned triggerDelay);

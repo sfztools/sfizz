@@ -6,6 +6,7 @@
 
 
 #include "sfizz/Synth.h"
+#include "sfizz/AudioBuffer.h"
 #include "sfizz/FlexEnvelope.h"
 #include "catch2/catch.hpp"
 #include "TestHelpers.h"
@@ -356,4 +357,62 @@ TEST_CASE("[FlexEG] Early release")
             break;
         }
     }
+}
+
+TEST_CASE("[FlexEG] Free-running flex AmpEG (no sustain)")
+{
+    sfz::Synth synth;
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> sample=*noise
+            key=60
+            loop_mode=one_shot
+            eg1_ampeg=1
+            eg1_time1=0    eg1_level1=1
+            eg1_time2=0.03 eg1_level2=0.6
+            eg1_time3=0.06 eg1_level3=0.3
+            eg1_time4=0.12 eg1_level4=0.1
+            eg1_time5=0.3  eg1_level5=0
+        <region> sample=*noise
+            key=62
+            loop_mode=one_shot
+            eg1_ampeg=1
+            eg1_time1=0    eg1_level1=1
+            eg1_time2=0.03 eg1_level2=0.6
+            eg1_time3=0.06 eg1_level3=0.3
+            eg1_time4=0.12 eg1_level4=0.1
+            eg1_time5=0.3  eg1_level5=0 eg1_sustain=5
+        <region> sample=*noise
+            key=64
+            eg1_ampeg=1
+            eg1_time1=0    eg1_level1=1
+            eg1_time2=0.03 eg1_level2=0.6
+            eg1_time3=0.06 eg1_level3=0.3
+            eg1_time4=0.12 eg1_level4=0.1
+            eg1_time5=0.3  eg1_level5=0 eg1_sustain=5
+    )");
+    synth.noteOn(0, 60, 0);
+    sfz::AudioBuffer<float> buffer { 2, 256 };
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    for (unsigned i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+
+    synth.noteOn(0, 62, 0);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    for (unsigned i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+
+    synth.noteOn(0, 64, 0);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    for (unsigned i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    synth.noteOff(0, 64, 0); // the release stage is 0 duration
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices(true) == 0 );
 }
