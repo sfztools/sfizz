@@ -12,20 +12,21 @@
 static const char* modeString(int mode, const char* valueFallback = nullptr)
 {
     switch (mode) {
-    case SF_LOOP_NONE:
+    case sfz::LoopNone:
         return "none";
-    case SF_LOOP_FORWARD:
+    case sfz::LoopForward:
         return "forward";
-    case SF_LOOP_BACKWARD:
+    case sfz::LoopBackward:
         return "backward";
-    case SF_LOOP_ALTERNATING:
+    case sfz::LoopAlternating:
         return "alternating";
     default:
         return valueFallback;
     }
 }
 
-static void printInstrument(const SF_INSTRUMENT& ins)
+template <class Instrument>
+static void printInstrument(const Instrument& ins)
 {
     printf("Gain: %d\n", ins.gain);
     printf("Base note: %d\n", ins.basenote);
@@ -34,7 +35,7 @@ static void printInstrument(const SF_INSTRUMENT& ins)
     printf("Key: %d:%d\n", ins.key_lo, ins.key_hi);
     printf("Loop count: %d\n", ins.loop_count);
 
-    for (int i = 0; i < ins.loop_count; ++i) {
+    for (unsigned i = 0, n = ins.loop_count; i < n; ++i) {
         printf("\nLoop %d:\n", i + 1);
         printf("\tMode: %s\n", modeString(ins.loops[i].mode, "(unknown)"));
         printf("\tStart: %u\n", ins.loops[i].start);
@@ -83,18 +84,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    SF_INSTRUMENT ins {};
-
     if (method == kMethodRiff) {
         sfz::FileMetadataReader reader;
         if (!reader.open(path)) {
             fprintf(stderr, "Cannot open file\n");
             return 1;
         }
+        sfz::InstrumentInfo ins {};
         if (!reader.extractRiffInstrument(ins)) {
             fprintf(stderr, "Cannot get instrument\n");
             return 1;
         }
+        printInstrument(ins);
     }
     else {
         SndfileHandle sndFile(path);
@@ -102,13 +103,13 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Cannot open file\n");
             return 1;
         }
+        SF_INSTRUMENT ins {};
         if (sndFile.command(SFC_GET_INSTRUMENT, &ins, sizeof(ins)) != 1) {
             fprintf(stderr, "Cannot get instrument\n");
             return 1;
         }
+        printInstrument(ins);
     }
-
-    printInstrument(ins);
 
     return 0;
 }

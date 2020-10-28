@@ -79,30 +79,40 @@ function(sfizz_enable_fast_math NAME)
     endif()
 endfunction()
 
-# The sndfile library
-add_library(sfizz-sndfile INTERFACE)
-
 # The jsl utility library for C++
 add_library(sfizz-jsl INTERFACE)
 target_include_directories(sfizz-jsl INTERFACE "external/jsl/include")
 
-if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    find_package(SndFile CONFIG REQUIRED)
-    find_path(SNDFILE_INCLUDE_DIR sndfile.hh)
-    target_include_directories(sfizz-sndfile INTERFACE "${SNDFILE_INCLUDE_DIR}")
-    target_link_libraries(sfizz-sndfile INTERFACE SndFile::sndfile)
-else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SNDFILE "sndfile" REQUIRED)
-    target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
-    if (SFIZZ_STATIC_DEPENDENCIES)
-        target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
+# The sndfile library
+if (SFIZZ_USE_SNDFILE OR SFIZZ_TESTS OR SFIZZ_BENCHMARKS OR SFIZZ_RENDER)
+    add_library(sfizz-sndfile INTERFACE)
+    if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        find_package(SndFile CONFIG REQUIRED)
+        find_path(SNDFILE_INCLUDE_DIR "sndfile.hh")
+        target_include_directories(sfizz-sndfile INTERFACE "${SNDFILE_INCLUDE_DIR}")
+        target_link_libraries(sfizz-sndfile INTERFACE SndFile::sndfile)
     else()
-        target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(SNDFILE "sndfile" REQUIRED)
+        target_include_directories(sfizz-sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
+        if (SFIZZ_STATIC_DEPENDENCIES)
+            target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
+        else()
+            target_link_libraries(sfizz-sndfile INTERFACE ${SNDFILE_LIBRARIES})
+        endif()
+        link_directories(${SNDFILE_LIBRARY_DIRS})
     endif()
-    link_directories(${SNDFILE_LIBRARY_DIRS})
 endif()
 
+# The st_audiofile library
+if (SFIZZ_USE_SNDFILE)
+    set(ST_AUDIO_FILE_USE_SNDFILE ON CACHE BOOL "" FORCE)
+    set(ST_AUDIO_FILE_EXTERNAL_SNDFILE "sfizz-sndfile" CACHE STRING ""  FORCE)
+else()
+    set(ST_AUDIO_FILE_USE_SNDFILE OFF CACHE BOOL "" FORCE)
+    set(ST_AUDIO_FILE_EXTERNAL_SNDFILE "" CACHE STRING ""  FORCE)
+endif()
+add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 
 # If we build with Clang, optionally use libc++. Enabled by default on Apple OS.
 cmake_dependent_option(USE_LIBCPP "Use libc++ with clang" "${APPLE}"
@@ -154,6 +164,7 @@ Build VST plug-in:             ${SFIZZ_VST}
 Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
+Use sndfile:                   ${SFIZZ_USE_SNDFILE}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
 Link libatomic:                ${SFIZZ_LINK_LIBATOMIC}

@@ -146,16 +146,12 @@ static void doReaderBenchmark(const fs::path& path, std::vector<float> &buffer, 
 
 static void doEntireRead(const fs::path& path)
 {
-#if !defined(_WIN32)
-    SndfileHandle handle(path.c_str());
-#else
-    SndfileHandle handle(path.wstring().c_str());
-#endif
-    if (handle.error())
-        throw std::runtime_error("cannot open sound file for reading");
+    sfz::AudioReaderPtr reader = sfz::createAudioReader(path, false);
+    if (!reader)
+        return;
 
-    std::vector<float> buffer(static_cast<size_t>(2 * handle.frames()));
-    handle.read(buffer.data(), buffer.size());
+    std::vector<float> buffer(static_cast<size_t>(2 * reader->frames()));
+    reader->readNextBlock(buffer.data(), buffer.size());
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireWav)(benchmark::State& state)
@@ -214,12 +210,14 @@ BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardOgg)(benchmark::State& state)
     }
 }
 
-//BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
-//{
-//    for (auto _ : state) {
-//        doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
-//    }
-//}
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
+{
+   for (auto _ : state) {
+       doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
+   }
+}
+#endif
 
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardWav)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseWav)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
@@ -228,6 +226,8 @@ BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardFlac)->RangeMultiplier(2)->Range
 BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseFlac)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, EntireFlac)->Range(1, 1);
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
-//BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+#endif
 BENCHMARK_REGISTER_F(AudioReaderFixture, EntireOgg)->Range(1, 1);
 BENCHMARK_MAIN();

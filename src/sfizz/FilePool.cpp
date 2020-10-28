@@ -39,7 +39,6 @@
 #include <memory>
 #include <thread>
 #include <system_error>
-#include <sndfile.hh>
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -235,7 +234,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     returnedValue.sampleRate = static_cast<double>(reader->sampleRate());
     returnedValue.numChannels = reader->channels();
 
-    SF_INSTRUMENT instrumentInfo {};
+    InstrumentInfo instrumentInfo {};
     bool haveInstrumentInfo = reader->getInstrument(&instrumentInfo);
 
     FileMetadataReader mdReader;

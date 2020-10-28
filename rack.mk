@@ -29,6 +29,7 @@
 #
 #        SFIZZ_RACK_PLUGIN_DIR = <the root directory of the Rack plugin>
 #        SFIZZ_PKG_CONFIG = <a custom pkg-config command>
+#        SFIZZ_USE_SNDFILE = <0 disabled, 1 enabled (default)>
 #        SFIZZ_SNDFILE_C_FLAGS = <compiler flags of sndfile for C>
 #        SFIZZ_SNDFILE_CXX_FLAGS = <compiler flags of sndfile for C++>
 #        SFIZZ_SNDFILE_LINK_FLAGS = <linker flags of sndfile>

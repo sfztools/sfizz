@@ -4,6 +4,10 @@ ifndef SFIZZ_DIR
 $(error sfizz: The source directory must be set before including)
 endif
 
+### Options
+
+SFIZZ_USE_SNDFILE ?= 1
+
 ###
 
 SFIZZ_MACHINE := $(shell $(CC) -dumpmachine)
@@ -125,13 +129,32 @@ SFIZZ_PKG_CONFIG ?= pkg-config
 
 # Sndfile dependency
 
+ifeq ($(SFIZZ_USE_SNDFILE),1)
 SFIZZ_SNDFILE_C_FLAGS ?= $(shell $(SFIZZ_PKG_CONFIG) --cflags sndfile)
 SFIZZ_SNDFILE_CXX_FLAGS ?= $(SFIZZ_SNDFILE_C_FLAGS)
 SFIZZ_SNDFILE_LINK_FLAGS ?= $(shell $(SFIZZ_PKG_CONFIG) --libs sndfile)
+endif
 
-SFIZZ_C_FLAGS += $(SFIZZ_SNDFILE_C_FLAGS)
-SFIZZ_CXX_FLAGS += $(SFIZZ_SNDFILE_CXX_FLAGS)
+# st_audiofile dependency
+
+SFIZZ_SOURCES += \
+	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile.c \
+	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile_common.c \
+	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile_libs.c \
+	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile_sndfile.c
+
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/src \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs
+SFIZZ_CXX_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/src \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs
+
+ifeq ($(SFIZZ_USE_SNDFILE),1)
+SFIZZ_C_FLAGS += $(SFIZZ_SNDFILE_C_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
+SFIZZ_CXX_FLAGS += $(SFIZZ_SNDFILE_CXX_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
 SFIZZ_LINK_FLAGS += $(SFIZZ_SNDFILE_LINK_FLAGS)
+endif
 
 ### Abseil dependency
 
