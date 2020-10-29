@@ -7,6 +7,9 @@
 #include "NativeHelpers.h"
 #import <Foundation/Foundation.h>
 #include <stdexcept>
+#if !__has_feature(objc_arc)
+#error This source file requires ARC
+#endif
 
 #if defined(__APPLE__)
 const fs::path& getUserDocumentsDirectory()

@@ -17,6 +17,8 @@ set(VSTPLUGIN_SOURCES
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
+    SfizzFileScan.cpp
+    SfizzForeignPaths.cpp
     VstPluginFactory.cpp
     X11RunLoop.cpp
     NativeHelpers.cpp)
@@ -26,11 +28,18 @@ set(VSTPLUGIN_HEADERS
     SfizzVstController.h
     SfizzVstEditor.h
     SfizzVstState.h
+    SfizzFileScan.h
+    SfizzForeignPaths.h
     X11RunLoop.h
     NativeHelpers.h)
 
 if(APPLE)
-    list(APPEND VSTPLUGIN_SOURCES NativeHelpers.mm)
+    set(VSTPLUGIN_MAC_SOURCES
+        SfizzForeignPaths.mm
+        NativeHelpers.mm)
+    list(APPEND VSTPLUGIN_SOURCES ${VSTPLUGIN_MAC_SOURCES})
+    set_property(SOURCE ${VSTPLUGIN_MAC_SOURCES} APPEND_STRING
+      PROPERTY COMPILE_FLAGS " -fobjc-arc")
 endif()
 
 add_library(${VSTPLUGIN_PRJ_NAME} MODULE

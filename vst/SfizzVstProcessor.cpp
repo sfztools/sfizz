@@ -7,9 +7,11 @@
 #include "SfizzVstProcessor.h"
 #include "SfizzVstController.h"
 #include "SfizzVstState.h"
+#include "SfizzFileScan.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include <ghc/fs_std.hpp>
 #include <cstring>
 
 template<class T>
@@ -28,6 +30,8 @@ SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(64 * 1024), _fifoMidiFromUi(64 * 1024)
 {
     setControllerClass(SfizzVstController::cid);
+
+    SfizzPaths::createSfzDefaultPaths();
 }
 
 SfizzVstProcessor::~SfizzVstProcessor()
@@ -83,6 +87,29 @@ tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
     if (r != kResultTrue)
         return r;
 
+    // check the files to really exist, otherwise search them
+    for (std::string* statePath : { &s.sfzFile, &s.scalaFile }) {
+        if (statePath->empty())
+            continue;
+
+        fs::path pathOrig = fs::u8path(*statePath);
+        std::error_code ec;
+        if (fs::is_regular_file(pathOrig, ec))
+            continue;
+
+        fprintf(stderr, "[Sfizz] searching for missing file: %s\n", pathOrig.filename().u8string().c_str());
+
+        SfzFileScan& fileScan = SfzFileScan::getInstance();
+        fs::path pathFound;
+        if (!fileScan.locateRealFile(pathOrig, pathFound))
+            fprintf(stderr, "[Sfizz] file not found: %s\n", pathOrig.filename().u8string().c_str());
+        else {
+            fprintf(stderr, "[Sfizz] file found: %s\n", pathFound.filename().u8string().c_str());
+            *statePath = pathFound.u8string();
+        }
+    }
+
+    //
     std::lock_guard<std::mutex> lock(_processMutex);
     _state = s;
 
