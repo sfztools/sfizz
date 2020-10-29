@@ -19,11 +19,6 @@ environment:
     VCPKG_TRIPLET: x64-windows-static
     PATH: C:\Program Files (x86)\Inno Setup 6;%PATH%
 
-matrix:
-  allow_failures:
-  - platform: x86
-  - platform: x64
-
 for:
 - matrix:
     only:
