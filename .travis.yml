@@ -134,7 +134,8 @@ jobs:
     script: .travis/script_plugins.sh
     after_success: .travis/prepare_tarball.sh
 
-  - name: "Source packaging"
+  - stage: "Deploy"
+    name: "Source packaging"
     if: (tag =~ /^v?[0-9]/) AND (type = push)
     env:
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
