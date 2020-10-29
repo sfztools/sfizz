@@ -1,4 +1,4 @@
-build*
+build*/*
 docs
 .vscode
 perf.data
@@ -23,17 +23,6 @@ clients/sfzprint
 
 /editor/external/fluentui-system-icons/
 
-# gh-pages unstaged files:
-_api/
-_site/
-.bundle/
-api/
-assets/
-node_modules/
-.jekyll-cache
-.jekyll-metadata
-.sass-cache
-*.lock
 *.sublime-*
 *.code-*
 .kak.tags.namecache

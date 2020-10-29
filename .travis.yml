@@ -9,7 +9,6 @@ cache:
 jobs:
   include:
   - name: "clang-tidy checks"
-    stage: "Tests"
     addons:
       apt:
         packages:
@@ -20,17 +19,26 @@ jobs:
     install: .travis/download_vst_sdk.sh
     script: scripts/run_clang_tidy.sh
 
-  - name: "Linux amd64 tests"
+  - name: "Linux amd64 test and build"
     arch: amd64
     addons:
       apt:
         packages:
         - libjack-jackd2-dev
         - libsndfile1-dev
+        - libcairo2-dev
+        - libfontconfig1-dev
+        - libx11-xcb-dev
+        - libxcb-util-dev
+        - libxcb-cursor-dev
+        - libxcb-xkb-dev
+        - libxkbcommon-dev
+        - libxkbcommon-x11-dev
+        - libxcb-keysyms1-dev
     install: .travis/download_cmake.sh
-    script: .travis/script_test.sh
+    script: .travis/script_test_and_build.sh
 
-  - name: "Linux arm64 tests"
+  - name: "Linux arm64 test and build"
     arch: arm64-graviton2
     group: edge
     virt: lxd
@@ -39,30 +47,24 @@ jobs:
         packages:
         - libjack-jackd2-dev
         - libsndfile1-dev
+        - libcairo2-dev
+        - libfontconfig1-dev
+        - libx11-xcb-dev
+        - libxcb-util-dev
+        - libxcb-cursor-dev
+        - libxcb-xkb-dev
+        - libxkbcommon-dev
+        - libxkbcommon-x11-dev
+        - libxcb-keysyms1-dev
     install: .travis/download_cmake.sh
-    script: .travis/script_test.sh
-
-  - name: "macOS"
-    stage: "Build"
-    os: osx
-    osx_image: xcode11.3
-    addons:
-      homebrew:
-        packages:
-        - cmake
-        - libsndfile
-        - jack
-        - dylibbundler
-    env:
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    script: .travis/script_osx.sh
-    after_success: .travis/prepare_tarball.sh
+    script: .travis/script_test_and_build.sh
 
   - name: "MOD devices arm"
     env:
     - CONTAINER=jpcima/mod-plugin-builder
     - CROSS_COMPILE=moddevices-arm
     - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
+    - DEPLOY_BUILD=true
     before_install: .travis/before_install_moddevices.sh
     install: .travis/install_moddevices.sh
     script: .travis/script_moddevices.sh
@@ -86,34 +88,6 @@ jobs:
     before_install: .travis/before_install_mingw.sh
     install: .travis/install_mingw.sh
     script: .travis/script_mingw.sh
-    after_success: .travis/prepare_tarball.sh
-
-  - name: "Linux amd64 library"
-    arch: amd64
-    env:
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    addons:
-      apt:
-        packages:
-        - libjack-jackd2-dev
-        - libsndfile1-dev
-    install: .travis/download_cmake.sh
-    script: .travis/script_library.sh
-    after_success: .travis/prepare_tarball.sh
-
-  - name: "Linux arm64 library"
-    arch: arm64-graviton2
-    group: edge
-    virt: lxd
-    env:
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    addons:
-      apt:
-        packages:
-        - libjack-jackd2-dev
-        - libsndfile1-dev
-    install: .travis/download_cmake.sh
-    script: .travis/script_library.sh
     after_success: .travis/prepare_tarball.sh
 
   - name: "Linux arm64 static plugins"
