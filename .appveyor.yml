@@ -48,7 +48,7 @@ for:
   cache: c:\tools\vcpkg\installed\ -> appveyor.yml
   install:      call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\install.cmd
   before_build: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\before_build.cmd
-  build_script: cmake --build . --config Release -j2
+  build_script: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\build.cmd
   after_build:  call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\after_build.cmd
   artifacts:
   - name: x86 Setup
@@ -60,7 +60,7 @@ for:
   cache: c:\tools\vcpkg\installed\ -> appveyor.yml
   install:      call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\install.cmd
   before_build: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\before_build.cmd
-  build_script: cmake --build . --config Release -j2
+  build_script: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\build.cmd
   after_build:  call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\after_build.cmd
   artifacts:
   - name: x64 Setup
