@@ -59,8 +59,10 @@ void SfzFileScan::refreshScan(bool force)
 
     for (const fs::path& dirPath : SfizzPaths::sfzDefaultPaths()) {
         std::error_code ec;
+        const fs::directory_options dirOpts =
+            fs::directory_options::skip_permission_denied;
 
-        for (fs::recursive_directory_iterator it(dirPath, ec);
+        for (fs::recursive_directory_iterator it(dirPath, dirOpts, ec);
              !ec && it != fs::recursive_directory_iterator();
              it.increment(ec))
         {
