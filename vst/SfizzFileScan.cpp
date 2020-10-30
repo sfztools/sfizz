@@ -155,7 +155,8 @@ const fs::path& SfzFileScan::electBestMatch(const fs::path& path, absl::Span<con
         auto it1 = p1.end();
         auto it2 = p2.end();
 
-        while (it1-- != p1.begin() && it2-- != p2.begin()) {
+        bool matching = true;
+        while (matching && it1-- != p1.begin() && it2-- != p2.begin()) {
             const fs::path& c1 = *it1;
             const fs::path& c2 = *it2;
             if (c1 == c2) {
@@ -164,6 +165,8 @@ const fs::path& SfzFileScan::electBestMatch(const fs::path& path, absl::Span<con
             }
             else if (SfzFileScanImpl::asciiCaseEqual(c1.native(), c2.native()))
                 score.components += 1;
+            else
+                matching = false;
         }
     }
 
