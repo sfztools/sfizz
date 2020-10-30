@@ -37,8 +37,8 @@ public:
     ~Voice();
     Voice(const Voice& other) = delete;
     Voice& operator=(const Voice& other) = delete;
-    Voice(Voice&& other);
-    Voice& operator=(Voice&& other);
+    Voice(Voice&& other) noexcept;
+    Voice& operator=(Voice&& other) noexcept;
 
     /**
      * @brief Get the unique identifier of this voice in a synth

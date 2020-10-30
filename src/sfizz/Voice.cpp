@@ -266,8 +266,7 @@ Voice::~Voice()
 
 }
 
-Voice::Voice(Voice&& other) {
-    ASSERT(other.impl_);
+Voice::Voice(Voice&& other) noexcept {
     impl_ = std::move(other.impl_);
 
     if (other.nextSisterVoice_ != &other) {
@@ -287,8 +286,7 @@ Voice::Voice(Voice&& other) {
     }
 }
 
-Voice& Voice::operator=(Voice&& other) {
-    ASSERT(other.impl_);
+Voice& Voice::operator=(Voice&& other) noexcept {
     impl_ = std::move(other.impl_);
 
     if (other.nextSisterVoice_ != &other) {
