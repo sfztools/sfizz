@@ -57,6 +57,8 @@ void SfzFileScan::refreshScan(bool force)
     if (!force && !isExpired())
         return;
 
+    file_index_.clear();
+
     for (const fs::path& dirPath : SfizzPaths::sfzDefaultPaths()) {
         std::error_code ec;
         const fs::directory_options dirOpts =
