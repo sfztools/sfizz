@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "FileTrie.h"
+#include <iostream>
 #include <stdexcept>
 #include <cassert>
 
@@ -35,6 +36,15 @@ fs::path FileTrie::pathFromEntry(size_t index) const
     }
 
     return path;
+}
+
+std::ostream& operator<<(std::ostream& os, const FileTrie& trie)
+{
+    os << '{' << '\n';
+    for (size_t i = 0, n = trie.size(); i < n; ++i)
+        os << '\t' << i << ':' << ' ' << trie[i] << ',' << '\n';
+    os << '}';
+    return os;
 }
 
 //------------------------------------------------------------------------------

@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <iosfwd>
 #include <cstddef>
 
 class FileTrie {
@@ -32,6 +33,8 @@ private:
 
     friend class FileTrieBuilder;
 };
+
+std::ostream& operator<<(std::ostream& os, const FileTrie& trie);
 
 //------------------------------------------------------------------------------
 class FileTrieBuilder {
