@@ -8,6 +8,7 @@
 #include "SfizzForeignPaths.h"
 #include "NativeHelpers.h"
 #include <absl/strings/ascii.h>
+#include <absl/algorithm/container.h>
 #include <vector>
 #include <memory>
 
@@ -182,14 +183,18 @@ absl::Span<const fs::path> sfzDefaultPaths()
     static const auto paths = []() -> std::vector<fs::path> {
         std::vector<fs::path> paths;
         paths.reserve(8);
+        auto addPath = [&paths](const fs::path& newPath) {
+            if (absl::c_find(paths, newPath) == paths.end())
+                paths.push_back(newPath);
+        };
 
-        paths.push_back(getUserDocumentsDirectory() / "SFZ instruments");
+        addPath(getUserDocumentsDirectory() / "SFZ instruments");
 
         for (const fs::path& foreign : {
                 getAriaPathSetting("user_files_dir"),
                 getAriaPathSetting("Converted_path") })
             if (!foreign.empty() && foreign.is_absolute())
-                paths.push_back(foreign);
+                addPath(foreign);
 
         paths.shrink_to_fit();
         return paths;
