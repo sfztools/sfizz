@@ -134,10 +134,8 @@ const fs::path& SfzFileScan::electBestMatch(const fs::path& path, absl::Span<con
         return candidates.front();
 
     struct Score {
-        size_t index = 0;
         size_t components = 0;
         size_t exact = 0;
-        explicit Score(size_t index) noexcept : index(index) {}
         bool operator<(const Score& other) const noexcept
         {
             return (components != other.components) ?
@@ -149,7 +147,7 @@ const fs::path& SfzFileScan::electBestMatch(const fs::path& path, absl::Span<con
     scores.reserve(candidates.size());
 
     for (size_t i = 0, n = candidates.size(); i < n; ++i) {
-        scores.emplace_back(i);
+        scores.emplace_back();
         Score& score = scores.back();
 
         const fs::path& p1 = path;
@@ -169,9 +167,13 @@ const fs::path& SfzFileScan::electBestMatch(const fs::path& path, absl::Span<con
         }
     }
 
-    std::stable_sort(scores.begin(), scores.end());
+    size_t best = 0;
+    for (size_t i = 1, n = scores.size(); i < n; ++i) {
+        if (scores[best] < scores[i])
+            best = i;
+    }
 
-    return candidates[scores[0].index];
+    return candidates[best];
 }
 
 //------------------------------------------------------------------------------
