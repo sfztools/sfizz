@@ -14,6 +14,9 @@
 using namespace Catch::literals;
 using namespace sfz::literals;
 
+// Need these for the introspection of Synth
+#include "sfizz/Effects.h"
+
 constexpr int blockSize { 256 };
 
 TEST_CASE("[Synth] Play and check active voices")
@@ -1357,17 +1360,17 @@ TEST_CASE("[Synth] Initial values of CC")
         <region> sample=*sine
     )");
 
-    REQUIRE(synth.getHdccInit(111) == 0.0f);
-    REQUIRE(synth.getHdccInit(7) == Approx(100.0f / 127)); // default volume
-    REQUIRE(synth.getHdccInit(10) == 0.5f); // default pan
+    REQUIRE(synth.getHdcc(111) == 0.0f);
+    REQUIRE(synth.getHdcc(7) == Approx(100.0f / 127)); // default volume
+    REQUIRE(synth.getHdcc(10) == 0.5f); // default pan
 
     synth.loadSfzString(fs::current_path() / "init_cc.sfz", R"(
         <control> set_hdcc111=0.1234 set_cc112=77
         <region> sample=*sine
     )");
 
-    REQUIRE(synth.getHdccInit(111) == Approx(0.1234f));
-    REQUIRE(synth.getHdccInit(112) == Approx(77.0f / 127));
+    REQUIRE(synth.getHdcc(111) == Approx(0.1234f));
+    REQUIRE(synth.getHdcc(112) == Approx(77.0f / 127));
 }
 
 TEST_CASE("[Synth] Default ampeg_release")

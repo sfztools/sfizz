@@ -6,19 +6,22 @@
 
 #pragma once
 #include "../ModGenerator.h"
+#include "../../VoiceList.h"
+#include "../../MidiState.h"
 
 namespace sfz {
 class Synth;
 
 class ADSREnvelopeSource : public ModGenerator {
 public:
-    explicit ADSREnvelopeSource(Synth &synth);
+    explicit ADSREnvelopeSource(VoiceList &synth, MidiState& state);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
-    Synth* synth_ = nullptr;
+    VoiceList& voiceList_;
+    MidiState& midiState_;
 };
 
 } // namespace sfz

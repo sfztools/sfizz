@@ -10,6 +10,10 @@
 #include <absl/algorithm/container.h>
 #include "catch2/catch.hpp"
 
+// Need these for the introspection of Synth
+#include "sfizz/PolyphonyGroup.h"
+#include "sfizz/RegionSet.h"
+
 using namespace Catch::literals;
 using namespace sfz::literals;
 
