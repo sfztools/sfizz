@@ -52,10 +52,10 @@ st_audio_file* st_open_file_w(const wchar_t* filename)
 
 void st_close(st_audio_file* af)
 {
-    if (af->snd) {
+    if (af->snd)
         sf_close(af->snd);
-        af->snd = NULL;
-    }
+
+    free(af);
 }
 
 int st_get_type(st_audio_file* af)
