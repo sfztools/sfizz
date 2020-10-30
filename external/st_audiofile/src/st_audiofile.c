@@ -155,7 +155,7 @@ void st_close(st_audio_file* af)
         break;
     }
 
-    af->type = st_audio_file_null;
+    free(af);
 }
 
 int st_get_type(st_audio_file* af)
