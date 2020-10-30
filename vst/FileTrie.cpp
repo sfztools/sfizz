@@ -27,12 +27,12 @@ fs::path FileTrie::operator[](size_t index) const
 fs::path FileTrie::pathFromEntry(size_t index) const
 {
     const Entry* currentEntry = &entries_[index];
-    fs::path path { currentEntry->name };
+    fs::path path = fs::u8path(currentEntry->name);
 
     size_t currentIndex;
     while ((currentIndex = currentEntry->parent) != npos) {
         currentEntry = &entries_[currentIndex];
-        path = fs::path { currentEntry->name } / path;
+        path = fs::u8path(currentEntry->name) / path;
     }
 
     return path;
