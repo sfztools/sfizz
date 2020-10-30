@@ -1361,8 +1361,17 @@ TEST_CASE("[Synth] Initial values of CC")
     )");
 
     REQUIRE(synth.getHdcc(111) == 0.0f);
+    REQUIRE(synth.getDefaultHdcc(111) == 0.0f);
     REQUIRE(synth.getHdcc(7) == Approx(100.0f / 127)); // default volume
+    REQUIRE(synth.getDefaultHdcc(7) == Approx(100.0f / 127));
     REQUIRE(synth.getHdcc(10) == 0.5f); // default pan
+    REQUIRE(synth.getDefaultHdcc(10) == 0.5f);
+    REQUIRE(synth.getHdcc(11) == 1.0f); // default expression
+    REQUIRE(synth.getDefaultHdcc(11) == 1.0f);
+
+    synth.hdcc(0, 10, 0.7f);
+    REQUIRE(synth.getHdcc(10) == 0.7f);
+    REQUIRE(synth.getDefaultHdcc(10) == 0.5f);
 
     synth.loadSfzString(fs::current_path() / "init_cc.sfz", R"(
         <control> set_hdcc111=0.1234 set_cc112=77
@@ -1370,7 +1379,9 @@ TEST_CASE("[Synth] Initial values of CC")
     )");
 
     REQUIRE(synth.getHdcc(111) == Approx(0.1234f));
+    REQUIRE(synth.getDefaultHdcc(111) == Approx(0.1234f));
     REQUIRE(synth.getHdcc(112) == Approx(77.0f / 127));
+    REQUIRE(synth.getDefaultHdcc(112) == Approx(77.0f / 127));
 }
 
 TEST_CASE("[Synth] Default ampeg_release")

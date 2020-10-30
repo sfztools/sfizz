@@ -278,6 +278,14 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
     static void updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
     static void updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
 
+    /**
+     * @brief Set the default value for a CC
+     *
+     * @param ccNumber
+     * @param value
+     */
+    void setDefaultHdcc(int ccNumber, float value);
+
     int numGroups_ { 0 };
     int numMasters_ { 0 };
 
@@ -374,6 +382,8 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
 
     Parser parser_;
     fs::file_time_type modificationTime_ { };
+
+    std::array<float, config::numCCs> defaultCCValues_;
 };
 
 Synth::Synth()
@@ -609,9 +619,11 @@ void Synth::Impl::clear()
     modificationTime_ = fs::file_time_type::min();
 
     // set default controllers
-    resources_.midiState.ccEvent(0, 7, normalizeCC(100)); // volume
-    resources_.midiState.ccEvent(0, 10, 0.5f);            // pan
-    resources_.midiState.ccEvent(0, 11, 1.0f);            // expression
+    resources_.midiState.resetAllControllers(0);
+    fill(absl::MakeSpan(defaultCCValues_), 0.0f);
+    setDefaultHdcc(7, normalizeCC(100));
+    setDefaultHdcc(10, 0.5f);
+    setDefaultHdcc(11, 1.0f);
 
     // set default controller labels
     insertPairUniquely(ccLabels_, 7, "Volume");
@@ -706,16 +718,14 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::midi7Range);
                 if (ccValue)
-                    resources_.midiState.ccEvent(
-                        0, member.parameters.back(), normalizeCC(*ccValue));
+                    setDefaultHdcc(member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
         case hash("set_hdcc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::normalizedRange);
                 if (ccValue)
-                    resources_.midiState.ccEvent(
-                        0, member.parameters.back(), *ccValue);
+                    setDefaultHdcc(member.parameters.back(), *ccValue);
             }
             break;
         case hash("label_cc&"):
@@ -1632,12 +1642,28 @@ void Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     impl.ccDispatch(delay, ccNumber, normValue);
 }
 
+void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
+{
+    ASSERT(ccNumber >= 0);
+    ASSERT(ccNumber < config::numCCs);
+    defaultCCValues_[ccNumber] = value;
+    resources_.midiState.ccEvent(0, ccNumber, value);
+}
+
 float Synth::getHdcc(int ccNumber)
 {
     ASSERT(ccNumber >= 0);
     ASSERT(ccNumber < config::numCCs);
     Impl& impl = *impl_;
     return impl.resources_.midiState.getCCValue(ccNumber);
+}
+
+float Synth::getDefaultHdcc(int ccNumber)
+{
+    ASSERT(ccNumber >= 0);
+    ASSERT(ccNumber < config::numCCs);
+    Impl& impl = *impl_;
+    return impl.defaultCCValues_[ccNumber];
 }
 
 void Synth::pitchWheel(int delay, int pitch) noexcept

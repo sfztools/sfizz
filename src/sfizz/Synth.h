@@ -344,6 +344,13 @@ public:
      * @return the current value
      */
     float getHdcc(int ccNumber);
+    /**
+     * @brief Get the default value of a controller under the current instrument
+     *
+     * @param ccNumber the cc number
+     * @return the default value
+     */
+    float getDefaultHdcc(int ccNumber);
    /**
      * @brief Send a pitch bend event to the synth
      *
