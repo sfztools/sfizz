@@ -11,12 +11,11 @@
 #error This source file requires ARC
 #endif
 
-#if defined(__APPLE__)
 const fs::path& getUserDocumentsDirectory()
 {
     static const fs::path directory = []() -> fs::path {
-        NSFileManager *fm = [NSFileManager defaultManager];
-        NSArray<NSURL *> *urls = [fm URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask];
+        NSFileManager* fm = [NSFileManager defaultManager];
+        NSArray<NSURL*>* urls = [fm URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask];
         for (NSUInteger i = 0, n = [urls count]; i < n; ++i) {
             NSURL *url = [urls objectAtIndex:i];
             if ([url isFileURL])
@@ -26,4 +25,3 @@ const fs::path& getUserDocumentsDirectory()
     }();
     return directory;
 }
-#endif

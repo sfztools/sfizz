@@ -29,7 +29,7 @@ const fs::path& getUserDocumentsDirectory()
 const fs::path& getUserDocumentsDirectory()
 {
     static const fs::path directory = []() -> fs::path {
-        const gchar *path = g_get_user_special_dir(G_USER_DIRECTORY_DOCUMENTS);
+        const gchar* path = g_get_user_special_dir(G_USER_DIRECTORY_DOCUMENTS);
         if (!path)
             throw std::runtime_error("Cannot get the document directory.");
         return fs::path(path);
