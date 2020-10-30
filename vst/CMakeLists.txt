@@ -21,7 +21,8 @@ set(VSTPLUGIN_SOURCES
     SfizzForeignPaths.cpp
     VstPluginFactory.cpp
     X11RunLoop.cpp
-    NativeHelpers.cpp)
+    NativeHelpers.cpp
+    FileTrie.cpp)
 
 set(VSTPLUGIN_HEADERS
     SfizzVstProcessor.h
@@ -31,7 +32,8 @@ set(VSTPLUGIN_HEADERS
     SfizzFileScan.h
     SfizzForeignPaths.h
     X11RunLoop.h
-    NativeHelpers.h)
+    NativeHelpers.h
+    FileTrie.h)
 
 if(APPLE)
     set(VSTPLUGIN_MAC_SOURCES

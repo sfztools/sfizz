@@ -34,13 +34,13 @@ bool SfzFileScan::locateRealFile(const fs::path& pathOrig, fs::path& pathFound)
     if (it == file_index_.end())
         return false;
 
-    std::list<std::string> candidateStrings = it->second;
-    lock.unlock();
-
+    const std::list<size_t>& candidateIndices = it->second;
     std::vector<fs::path> candidates;
-    candidates.reserve(candidateStrings.size());
-    for (const std::string& str : candidateStrings)
-        candidates.push_back(fs::u8path(str));
+    candidates.reserve(candidateIndices.size());
+    for (const size_t index : candidateIndices)
+        candidates.push_back(file_trie_[index]);
+
+    lock.unlock();
 
     pathFound = electBestMatch(pathOrig, candidates);
     return true;
@@ -57,7 +57,10 @@ void SfzFileScan::refreshScan(bool force)
     if (!force && !isExpired())
         return;
 
+    file_trie_.clear();
     file_index_.clear();
+
+    FileTrieBuilder builder;
 
     for (const fs::path& dirPath : SfizzPaths::sfzDefaultPaths()) {
         std::error_code ec;
@@ -71,11 +74,14 @@ void SfzFileScan::refreshScan(bool force)
             const fs::directory_entry& ent = *it;
             const fs::path& filePath = ent.path();
             std::error_code ec;
-            if (ent.is_regular_file(ec) /*&& pathIsSfz(filePath)*/)
-                file_index_[keyOf(filePath.filename())].push_back(filePath.u8string());
+            if (ent.is_regular_file(ec) /*&& pathIsSfz(filePath)*/) {
+                size_t fileIndex = builder.addFile(filePath);
+                file_index_[keyOf(filePath.filename())].push_back(fileIndex);
+            }
         }
     }
 
+    file_trie_ = builder.build();
     completion_time_ = clock::now();
 }
 
