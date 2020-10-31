@@ -254,15 +254,6 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
     void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
-     * @brief Check if a playing voice matches the release region
-     *
-     * @param releaseRegion
-     * @return true
-     * @return false
-     */
-    bool playingAttackVoice(const Region* releaseRegion) noexcept;
-
-    /**
      * @brief Finalize SFZ loading, following a successful execution of the
      *        parsing step.
      */
@@ -1401,24 +1392,6 @@ void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& trig
     polyphonyGroups_[region->group].registerVoice(selectedVoice);
 }
 
-bool Synth::Impl::playingAttackVoice(const Region* releaseRegion) noexcept
-{
-    const auto compatibleVoice = [releaseRegion](const Voice* v) -> bool {
-        const TriggerEvent& event = v->getTriggerEvent();
-        return (
-            !v->isFree()
-            && event.type == TriggerEventType::NoteOn
-            && releaseRegion->keyRange.containsWithEnd(event.number)
-            && releaseRegion->velocityRange.containsWithEnd(event.value)
-        );
-    };
-
-    if (absl::c_find_if(voiceViewArray_, compatibleVoice) == voiceViewArray_.end())
-        return false;
-    else
-        return true;
-}
-
 void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
@@ -1433,7 +1406,7 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
 
     for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == SfzTrigger::release && !region->rtDead && !playingAttackVoice(region))
+            if (region->trigger == SfzTrigger::release && !region->rtDead && !voiceList_.playingAttackVoice(region))
                 continue;
 
             startVoice(region, delay, triggerEvent, ring);
@@ -1577,7 +1550,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 
 void Synth::Impl::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead && !playingAttackVoice(region)) {
+    if (!region->rtDead && !voiceList_.playingAttackVoice(region)) {
         region->delayedReleases.clear();
         return;
     }
