@@ -416,7 +416,7 @@ public:
      *
      * @return int
      */
-    int getNumActiveVoices(bool recompute = false) const noexcept;
+    int getNumActiveVoices() const noexcept;
     /**
      * @brief Get the total number of voices in the synth (the polyphony)
      *

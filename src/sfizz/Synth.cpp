@@ -1069,19 +1069,10 @@ Voice* Synth::Impl::findFreeVoice() noexcept
     return {};
 }
 
-int Synth::getNumActiveVoices(bool recompute) const noexcept
+int Synth::getNumActiveVoices() const noexcept
 {
     Impl& impl = *impl_;
-    if (!recompute)
-        return impl.activeVoices_;
-
-    int active { 0 };
-    for (auto& voice: impl.voiceList_) {
-        if (!voice.isFree())
-            active++;
-    }
-
-    return active;
+    return static_cast<int>(impl.voiceList_.getNumActiveVoices());
 }
 
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept

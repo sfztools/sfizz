@@ -28,11 +28,11 @@ TEST_CASE("[Synth] Play and check active voices")
 
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
     // Render for a while
     for (int i = 0; i < 200; ++i)
         synth.renderBlock(buffer);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
 }
 
 TEST_CASE("[Synth] All sound off")
@@ -41,9 +41,9 @@ TEST_CASE("[Synth] All sound off")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
     synth.allSoundOff();
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
 }
 
 TEST_CASE("[Synth] Change the number of voice while playing")
@@ -56,9 +56,9 @@ TEST_CASE("[Synth] Change the number of voice while playing")
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
     synth.renderBlock(buffer);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
     synth.setNumVoices(8);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     REQUIRE(synth.getNumVoices() == 8);
 }
 
@@ -136,15 +136,15 @@ TEST_CASE("[Synth] All notes offs/all sounds off")
     )");
     synth.noteOn(0, 60, 63);
     synth.noteOn(0, 62, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.cc(0, 120, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     synth.noteOn(0, 62, 63);
     synth.noteOn(0, 60, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.cc(0, 123, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 }
 
 TEST_CASE("[Synth] Reset all controllers")
@@ -570,14 +570,14 @@ TEST_CASE("[Synth] sample quality")
 
     // default sample quality
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQuality);
     synth.allSoundOff();
 
     // default sample quality, freewheeling
     synth.enableFreeWheeling();
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQualityInFreewheelingMode);
     synth.allSoundOff();
     synth.disableFreeWheeling();
@@ -585,7 +585,7 @@ TEST_CASE("[Synth] sample quality")
     // user-defined sample quality
     synth.setSampleQuality(sfz::Synth::ProcessLive, 3);
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 3);
     synth.allSoundOff();
 
@@ -593,21 +593,21 @@ TEST_CASE("[Synth] sample quality")
     synth.enableFreeWheeling();
     synth.setSampleQuality(sfz::Synth::ProcessFreewheeling, 8);
     synth.noteOn(0, 60, 100);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 8);
     synth.allSoundOff();
     synth.disableFreeWheeling();
 
     // region sample quality
     synth.noteOn(0, 61, 100);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
     synth.allSoundOff();
 
     // region sample quality, freewheeling
     synth.enableFreeWheeling();
     synth.noteOn(0, 61, 100);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == 5);
     synth.allSoundOff();
     synth.disableFreeWheeling();
@@ -630,7 +630,7 @@ TEST_CASE("[Synth] Sister voices")
     REQUIRE( synth.getVoiceView(0)->getNextSisterVoice() == synth.getVoiceView(0) );
     REQUIRE( synth.getVoiceView(0)->getPreviousSisterVoice() == synth.getVoiceView(0) );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(1)) == 2 );
     REQUIRE( synth.getVoiceView(1)->getNextSisterVoice() == synth.getVoiceView(2) );
     REQUIRE( synth.getVoiceView(1)->getPreviousSisterVoice() == synth.getVoiceView(2) );
@@ -638,7 +638,7 @@ TEST_CASE("[Synth] Sister voices")
     REQUIRE( synth.getVoiceView(2)->getNextSisterVoice() == synth.getVoiceView(1) );
     REQUIRE( synth.getVoiceView(2)->getPreviousSisterVoice() == synth.getVoiceView(1) );
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 6 );
+    REQUIRE( synth.getNumActiveVoices() == 6 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(3)) == 3 );
     REQUIRE( synth.getVoiceView(3)->getNextSisterVoice() == synth.getVoiceView(4) );
     REQUIRE( synth.getVoiceView(3)->getPreviousSisterVoice() == synth.getVoiceView(5) );
@@ -678,15 +678,15 @@ TEST_CASE("[Synth] Sisters and off-by")
         <group> group=2 <region> key=63 sample=*saw
     )");
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 2 );
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     for (unsigned i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( sfz::SisterVoiceRing::countSisterVoices(synth.getVoiceView(0)) == 1 );
 }
 
@@ -750,9 +750,9 @@ TEST_CASE("[Synth] Release")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
 }
 
 TEST_CASE("[Synth] Release (pedal was already down)")
@@ -765,9 +765,9 @@ TEST_CASE("[Synth] Release (pedal was already down)")
     synth.cc(0, 64, 127);
     synth.noteOn(0, 62, 85);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
 }
 
 
@@ -780,12 +780,12 @@ TEST_CASE("[Synth] Release samples don't play unless there is another playing re
     )");
     synth.noteOn(0, 62, 85);
     synth.noteOff(0, 62, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.cc(0, 64, 127);
     synth.noteOn(0, 62, 85);
     synth.noteOff(0, 62, 0);
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 }
 
 TEST_CASE("[Synth] Release key (Different sustain CC)")
@@ -798,7 +798,7 @@ TEST_CASE("[Synth] Release key (Different sustain CC)")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 54, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] Release (Different sustain CC)")
@@ -812,9 +812,9 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 54, 127);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.cc(0, 54, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
 }
 
 TEST_CASE("[Synth] Sustain threshold default")
@@ -826,7 +826,7 @@ TEST_CASE("[Synth] Sustain threshold default")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 1);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 }
 
 TEST_CASE("[Synth] Sustain threshold")
@@ -840,15 +840,15 @@ TEST_CASE("[Synth] Sustain threshold")
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 1);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.noteOn(0, 62, 85);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 4 );
+    REQUIRE( synth.getNumActiveVoices() == 4 );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 5 );
+    REQUIRE( synth.getNumActiveVoices() == 5 );
     synth.cc(0, 64, 64);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 5 );
+    REQUIRE( synth.getNumActiveVoices() == 5 );
 }
 
 TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
@@ -864,7 +864,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
     synth.noteOff(0, 64, 0);
     synth.noteOff(0, 63, 2);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( synth.getNumActiveVoices() == 3 );
 
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm};
     std::vector<float> actualVelocities;
@@ -890,9 +890,9 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
     synth.noteOff(0, 64, 0);
     synth.noteOff(0, 63, 2);
     synth.noteOff(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 6 );
+    REQUIRE( synth.getNumActiveVoices() == 6 );
 
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm, 34_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
@@ -920,9 +920,9 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
     synth.noteOff(2, 64, 0);
     synth.noteOff(2, 63, 2);
     synth.noteOff(2, 62, 3);
-    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     synth.cc(3, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 6 );
+    REQUIRE( synth.getNumActiveVoices() == 6 );
 
     std::vector<float> requiredVelocities { 34_norm, 78_norm, 85_norm, 34_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
@@ -948,9 +948,9 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
     synth.noteOff(0, 62, 0);
     synth.noteOn(0, 62, 78);
     synth.noteOff(0, 62, 2);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 4 );
+    REQUIRE( synth.getNumActiveVoices() == 4 );
 
     std::vector<float> requiredVelocities { 78_norm, 85_norm, 78_norm, 85_norm };
     std::vector<float> actualVelocities;
@@ -974,25 +974,25 @@ TEST_CASE("[Synth] No release sample after the main sample stopped sounding by d
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
     )");
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i) {
         synth.renderBlock(buffer);
     }
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOff(0, 62, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 127);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i) {
         synth.renderBlock(buffer);
     }
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOff(0, 62, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
 }
@@ -1009,25 +1009,25 @@ TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the a
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
     )");
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i) {
         synth.renderBlock(buffer);
     }
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOff(0, 62, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     synth.noteOn(0, 62, 85);
     synth.cc(0, 64, 127);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i) {
         synth.renderBlock(buffer);
     }
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOff(0, 62, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.cc(0, 64, 0);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
 }
@@ -1041,9 +1041,9 @@ TEST_CASE("[Synth] sw_default works at a global level")
         <region> sw_last=37 key=63 sample=*sine
     )");
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] sw_default works at a master level")
@@ -1055,9 +1055,9 @@ TEST_CASE("[Synth] sw_default works at a master level")
         <region> sw_last=37 key=63 sample=*sine
     )");
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] sw_default works at a group level")
@@ -1069,9 +1069,9 @@ TEST_CASE("[Synth] sw_default works at a group level")
         <region> sw_last=37 key=63 sample=*sine
     )");
     synth.noteOn(0, 63, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] Used CCs")
@@ -1169,10 +1169,10 @@ TEST_CASE("[Synth] Activate also on the sustain CC")
         <region> locc64=64 key=53 sample=*sine
     )");
     synth.noteOn(0, 53, 127);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.cc(1, 64, 127);
     synth.noteOn(2, 53, 127);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] Trigger also on the sustain CC")
@@ -1182,7 +1182,7 @@ TEST_CASE("[Synth] Trigger also on the sustain CC")
         <region> on_locc64=64 sample=*sine
     )");
     synth.cc(0, 64, 127);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] end=-1 voices are immediately killed after triggering but they kill other voices")
@@ -1197,11 +1197,11 @@ TEST_CASE("[Synth] end=-1 voices are immediately killed after triggering but the
         <region> key=63 end=-1 sample=*saw group=2
     )");
     synth.noteOn(0, 60, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 61, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     REQUIRE( numPlayingVoices(synth) == 1 );
     synth.noteOn(1, 63, 85);
     synth.renderBlock(buffer);
@@ -1220,11 +1220,11 @@ TEST_CASE("[Synth] end=0 voices are immediately killed after triggering but they
         <region> key=63 end=0 sample=*saw group=2
     )");
     synth.noteOn(0, 60, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 61, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 62, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     REQUIRE( numPlayingVoices(synth) == 1 );
     synth.noteOn(1, 63, 85);
     synth.renderBlock(buffer);
@@ -1242,19 +1242,19 @@ TEST_CASE("[Synth] ampeg_sustain = 0 puts the ampeg envelope in free-running mod
     )");
 
     synth.noteOn(0, 60, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
     synth.noteOn(0, 61, 85);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     // Render a bit; this does not kill the voice
     for (unsigned i = 0; i < 5; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     // Render about half a second
     for (unsigned i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 }
 
 TEST_CASE("[Synth] Off by standard")

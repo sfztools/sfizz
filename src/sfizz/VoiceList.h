@@ -155,6 +155,11 @@ struct VoiceList : public Voice::StateListener
         checkEnginePolyphony(delay);
     }
 
+    unsigned getNumActiveVoices() const
+    {
+        return activeVoices_.size();
+    }
+
 private:
     std::vector<Voice> list_;
     std::vector<Voice*> activeVoices_;

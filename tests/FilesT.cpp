@@ -489,7 +489,7 @@ TEST_CASE("[Files] Off modes")
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
     synth.noteOn(0, 64, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     const auto* fastVoice =
         synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
             synth.getVoiceView(0) :
@@ -499,12 +499,12 @@ TEST_CASE("[Files] Off modes")
             synth.getVoiceView(1) :
             synth.getVoiceView(0) ;
     synth.noteOn(100, 63, 63);
-    REQUIRE( synth.getNumActiveVoices(true) == 3 );
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 1 );
     AudioBuffer<float> buffer { 2, 256 };
     for (unsigned i = 0; i < 10; ++i) // Not enough for the "normal" voice to die
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 2 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( fastVoice->isFree() );
     REQUIRE( !normalVoice->isFree() );
 }
