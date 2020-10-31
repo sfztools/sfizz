@@ -14,8 +14,8 @@
 
 namespace sfz {
 
-FlexEnvelopeSource::FlexEnvelopeSource(VoiceList& list)
-    : voiceList_(list)
+FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
 }
 
@@ -23,7 +23,7 @@ void FlexEnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
 {
     unsigned egIndex = sourceKey.parameters().N;
 
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -50,7 +50,7 @@ void FlexEnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
 {
     unsigned egIndex = sourceKey.parameters().N;
 
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -70,7 +70,7 @@ void FlexEnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voic
 {
     unsigned egIndex = sourceKey.parameters().N;
 
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;

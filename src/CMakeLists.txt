@@ -109,6 +109,7 @@ set (SFIZZ_HEADERS
     sfizz/SynthConfig.h
     sfizz/Tuning.h
     sfizz/Voice.h
+    sfizz/VoiceManager.h
     sfizz/VoiceStealing.h
     sfizz/Wavetables.h
     sfizz.h
@@ -137,6 +138,7 @@ set (SFIZZ_SOURCES
     sfizz/Tuning.cpp
     sfizz/RegionSet.cpp
     sfizz/PolyphonyGroup.cpp
+    sfizz/VoiceManager.cpp
     sfizz/VoiceStealing.cpp
     sfizz/RTSemaphore.cpp
     sfizz/Panning.cpp

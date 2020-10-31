@@ -15,14 +15,14 @@
 
 namespace sfz {
 
-ADSREnvelopeSource::ADSREnvelopeSource(VoiceList& list, MidiState& state)
-    : voiceList_(list), midiState_(state)
+ADSREnvelopeSource::ADSREnvelopeSource(VoiceManager& manager, MidiState& state)
+    : voiceManager_(manager), midiState_(state)
 {
 }
 
 void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -60,7 +60,7 @@ void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
 
 void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -91,7 +91,7 @@ void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
 
 void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;

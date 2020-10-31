@@ -14,8 +14,8 @@
 
 namespace sfz {
 
-LFOSource::LFOSource(VoiceList& list)
-    : voiceList_(list)
+LFOSource::LFOSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
 }
 
@@ -23,7 +23,7 @@ void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned
 {
     unsigned lfoIndex = sourceKey.parameters().N;
 
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -44,7 +44,7 @@ void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl
 {
     const unsigned lfoIndex = sourceKey.parameters().N;
 
-    Voice* voice = voiceList_.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         fill(buffer, 0.0f);

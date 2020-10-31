@@ -30,7 +30,7 @@
 #include "TriggerEvent.h"
 #include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
-#include "VoiceList.h"
+#include "VoiceManager.h"
 #include <absl/types/optional.h>
 #include <absl/types/span.h>
 #include <algorithm>
@@ -236,7 +236,7 @@ struct Synth::Impl: public Parser::Listener {
     using RegionPtr = std::unique_ptr<Region>;
     using RegionSetPtr = std::unique_ptr<RegionSet>;
     std::vector<RegionPtr> regions_;
-    VoiceList voiceList_;
+    VoiceManager voiceManager_;
 
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet_ { nullptr };
@@ -327,16 +327,16 @@ Synth::Impl::Impl()
 
     // modulation sources
     genController_.reset(new ControllerSource(resources_));
-    genLFO_.reset(new LFOSource(voiceList_));
-    genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceList_));
-    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceList_, resources_.midiState));
+    genLFO_.reset(new LFOSource(voiceManager_));
+    genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
+    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
 }
 
 Synth::Impl::~Impl()
 {
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
 
-    voiceList_.reset();
+    voiceManager_.reset();
     resources_.filePool.emptyFileLoadingQueues();
 }
 
@@ -461,10 +461,10 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
     if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices) {
-        voiceList_.setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+        voiceManager_.setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
     } else {
         // Just check that there are enough polyphony groups
-        voiceList_.ensureNumPolyphonyGroups(lastRegion->group);
+        voiceManager_.ensureNumPolyphonyGroups(lastRegion->group);
     }
 
     if (currentSet_ != nullptr) {
@@ -483,7 +483,7 @@ void Synth::Impl::clear()
     // Clear the background queues before removing everyone
     resources_.filePool.waitForBackgroundLoading();
 
-    voiceList_.reset();
+    voiceManager_.reset();
     for (auto& list : lastKeyswitchLists_)
         list.clear();
     for (auto& list : downKeyswitchLists_)
@@ -603,12 +603,12 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
         parseOpcode(member);
 
     if (groupIdx && maxPolyphony) {
-        voiceList_.setGroupPolyphony(*groupIdx, *maxPolyphony);
+        voiceManager_.setGroupPolyphony(*groupIdx, *maxPolyphony);
     } else if (maxPolyphony) {
         ASSERT(currentSet_ != nullptr);
         currentSet_->setPolyphonyLimit(*maxPolyphony);
     } else if (groupIdx) {
-        voiceList_.ensureNumPolyphonyGroups(*groupIdx);
+        voiceManager_.ensureNumPolyphonyGroups(*groupIdx);
     }
 }
 
@@ -663,13 +663,13 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
-                voiceList_.setStealingAlgorithm(StealingAlgorithm::First);
+                voiceManager_.setStealingAlgorithm(StealingAlgorithm::First);
                 break;
             case hash("oldest"):
-                voiceList_.setStealingAlgorithm(StealingAlgorithm::Oldest);
+                voiceManager_.setStealingAlgorithm(StealingAlgorithm::Oldest);
                 break;
             case hash("envelope_and_age"):
-                voiceList_.setStealingAlgorithm(StealingAlgorithm::EnvelopeAndAge);
+                voiceManager_.setStealingAlgorithm(StealingAlgorithm::EnvelopeAndAge);
                 break;
             default:
                 DBG("Unsupported value for hint_stealing: " << member.value);
@@ -1045,7 +1045,7 @@ void Synth::loadStretchTuningByRatio(float ratio)
 int Synth::getNumActiveVoices() const noexcept
 {
     Impl& impl = *impl_;
-    return static_cast<int>(impl.voiceList_.getNumActiveVoices());
+    return static_cast<int>(impl.voiceManager_.getNumActiveVoices());
 }
 
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -1056,7 +1056,7 @@ void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     impl.samplesPerBlock_ = samplesPerBlock;
-    for (auto& voice : impl.voiceList_)
+    for (auto& voice : impl.voiceManager_)
         voice.setSamplesPerBlock(samplesPerBlock);
 
     impl.resources_.setSamplesPerBlock(samplesPerBlock);
@@ -1073,7 +1073,7 @@ void Synth::setSampleRate(float sampleRate) noexcept
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     impl.sampleRate_ = sampleRate;
-    for (auto& voice : impl.voiceList_)
+    for (auto& voice : impl.voiceManager_)
         voice.setSampleRate(sampleRate);
 
     impl.resources_.setSampleRate(sampleRate);
@@ -1136,7 +1136,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempMixSpan->fill(0.0f);
 
-        for (auto& voice : impl.voiceList_) {
+        for (auto& voice : impl.voiceManager_) {
             if (voice.isFree())
                 continue;
 
@@ -1243,7 +1243,7 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     // auto replacedVelocity = (velocity == 0 ? getNoteVelocity(noteNumber) : velocity);
     const auto replacedVelocity = impl.resources_.midiState.getNoteVelocity(noteNumber);
 
-    for (auto& voice : impl.voiceList_)
+    for (auto& voice : impl.voiceManager_)
         voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
     impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
@@ -1251,8 +1251,8 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 
 void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
 {
-    voiceList_.checkPolyphony(region, delay, triggerEvent);
-    Voice* selectedVoice = voiceList_.findFreeVoice();
+    voiceManager_.checkPolyphony(region, delay, triggerEvent);
+    Voice* selectedVoice = voiceManager_.findFreeVoice();
     if (selectedVoice == nullptr)
         return;
 
@@ -1275,7 +1275,7 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
 
     for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == SfzTrigger::release && !region->rtDead && !voiceList_.playingAttackVoice(region))
+            if (region->trigger == SfzTrigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
                 continue;
 
             startVoice(region, delay, triggerEvent, ring);
@@ -1308,7 +1308,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 
     for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            for (auto& voice : voiceList_) {
+            for (auto& voice : voiceManager_) {
                 if (voice.checkOffGroup(region, delay, noteNumber)) {
                     const TriggerEvent& event = voice.getTriggerEvent();
                     noteOffDispatch(delay, event.number, event.value);
@@ -1325,7 +1325,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 
 void Synth::Impl::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead && !voiceList_.playingAttackVoice(region)) {
+    if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
         region->delayedReleases.clear();
         return;
     }
@@ -1377,13 +1377,13 @@ void Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
     }
 
     if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
-        for (auto& voice : impl.voiceList_)
+        for (auto& voice : impl.voiceManager_)
             voice.reset();
         impl.resources_.midiState.allNotesOff(delay);
         return;
     }
 
-    for (auto& voice : impl.voiceList_)
+    for (auto& voice : impl.voiceManager_)
         voice.registerCC(delay, ccNumber, normValue);
 
     impl.ccDispatch(delay, ccNumber, normValue);
@@ -1427,7 +1427,7 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
         region->registerPitchWheel(normalizedPitch);
     }
 
-    for (auto& voice : impl.voiceList_) {
+    for (auto& voice : impl.voiceManager_) {
         voice.registerPitchWheel(delay, normalizedPitch);
     }
 }
@@ -1614,7 +1614,7 @@ const RegionSet* Synth::getRegionSetView(int idx) const noexcept
 const PolyphonyGroup* Synth::getPolyphonyGroupView(int idx) const noexcept
 {
     Impl& impl = *impl_;
-    return impl.voiceList_.getPolyphonyGroupView(idx);
+    return impl.voiceManager_.getPolyphonyGroupView(idx);
 }
 
 const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
@@ -1638,13 +1638,13 @@ const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
 const Voice* Synth::getVoiceView(int idx) const noexcept
 {
     Impl& impl = *impl_;
-    return idx < impl.numVoices_ ? &impl.voiceList_[idx] : nullptr;
+    return idx < impl.numVoices_ ? &impl.voiceManager_[idx] : nullptr;
 }
 
 unsigned Synth::getNumPolyphonyGroups() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.voiceList_.getNumPolyphonyGroups();
+    return impl.voiceManager_.getNumPolyphonyGroups();
 }
 
 const std::vector<std::string>& Synth::getUnknownOpcodes() const noexcept
@@ -1730,9 +1730,9 @@ void Synth::Impl::resetVoices(int numVoices)
     engineSet_->removeAllVoices();
     engineSet_->setPolyphonyLimit(numVoices_);
 
-    voiceList_.requireNumVoices(numVoices_, resources_);
+    voiceManager_.requireNumVoices(numVoices_, resources_);
 
-    for (auto& voice : voiceList_) {
+    for (auto& voice : voiceManager_) {
         voice.setSampleRate(this->sampleRate_);
         voice.setSamplesPerBlock(this->samplesPerBlock_);
     }
@@ -1742,7 +1742,7 @@ void Synth::Impl::resetVoices(int numVoices)
 
 void Synth::Impl::applySettingsPerVoice()
 {
-    for (auto& voice : voiceList_) {
+    for (auto& voice : voiceManager_) {
         voice.setMaxFiltersPerVoice(settingsPerVoice_.maxFilters);
         voice.setMaxEQsPerVoice(settingsPerVoice_.maxEQs);
         voice.setMaxLFOsPerVoice(settingsPerVoice_.maxLFOs);
@@ -1829,7 +1829,7 @@ void Synth::setOversamplingFactor(Oversampling factor) noexcept
     if (factor == impl.oversamplingFactor_)
         return;
 
-    for (auto& voice : impl.voiceList_)
+    for (auto& voice : impl.voiceManager_)
         voice.reset();
 
     impl.resources_.filePool.emptyFileLoadingQueues();
@@ -1886,7 +1886,7 @@ void Synth::Impl::resetAllControllers(int delay) noexcept
     if (!lock.owns_lock())
         return;
 
-    for (auto& voice : voiceList_) {
+    for (auto& voice : voiceManager_) {
         voice.registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)
             voice.registerCC(delay, cc, 0.0f);
@@ -1945,7 +1945,7 @@ void Synth::allSoundOff() noexcept
     Impl& impl = *impl_;
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    for (auto& voice : impl.voiceList_)
+    for (auto& voice : impl.voiceManager_)
         voice.reset();
     for (auto& effectBus : impl.effectBuses_)
         effectBus->clear();

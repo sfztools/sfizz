@@ -115,6 +115,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/Tuning.cpp \
 	src/sfizz/utility/SpinMutex.cpp \
 	src/sfizz/Voice.cpp \
+	src/sfizz/VoiceManager.cpp \
 	src/sfizz/VoiceStealing.cpp \
 	src/sfizz/Wavetables.cpp
 
