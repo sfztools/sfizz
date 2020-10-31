@@ -113,9 +113,19 @@ public:
     size_t readRiffData(size_t index, void* buffer, size_t count);
 
     /**
+     * @brief Extract the instrument data and convert it to sndfile instrument
+     */
+    bool extractInstrument(InstrumentInfo& ins);
+
+    /**
      * @brief Extract the RIFF 'smpl' data and convert it to sndfile instrument
      */
     bool extractRiffInstrument(InstrumentInfo& ins);
+
+    /**
+     * @brief Extract the AIFF 'INST' data and convert it to sndfile instrument
+     */
+    bool extractAiffInstrument(InstrumentInfo& ins);
 
     /**
      * @brief Extract the wavetable information from various relevant RIFF chunks
