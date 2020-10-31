@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Voice.h"
+#include "Resources.h"
 #include "Config.h"
 #include "Region.h"
 #include "SisterVoiceRing.h"
@@ -183,10 +184,28 @@ struct VoiceList : public Voice::StateListener
         return {};
     }
 
+    void requireNumVoices(int numVoices, Resources& resources)
+    {
+        numActualVoices_ =
+            static_cast<int>(config::overflowVoiceMultiplier * numVoices);
+        numRequiredVoices_ = numVoices;
+
+        clear();
+        list_.reserve(numActualVoices_);
+        activeVoices_.reserve(numActualVoices_);
+
+        for (int i = 0; i < numActualVoices_; ++i) {
+            list_.emplace_back(i, resources);
+            Voice& lastVoice = list_.back();
+            lastVoice.setStateListener(this);
+        }
+    }
+
 private:
+    int numRequiredVoices_ { config::numVoices };
+    int numActualVoices_ { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
     std::vector<Voice> list_;
     std::vector<Voice*> activeVoices_;
-    std::vector<Voice*> temp_;
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups_;
     std::unique_ptr<VoiceStealer> stealer_ { absl::make_unique<OldestStealer>() };
@@ -285,9 +304,8 @@ private:
      */
     void checkEnginePolyphony(int delay) noexcept
     {
-        // TODO (paul): should have the "required" vs "actual" number of voices here
         Voice* candidate = stealer_->checkPolyphony(
-            absl::MakeSpan(activeVoices_), list_.size());
+            absl::MakeSpan(activeVoices_), numRequiredVoices_);
         SisterVoiceRing::offAllSisters(candidate, delay);
     }
 
@@ -299,12 +317,6 @@ public:
     typename decltype(list_)::const_iterator cend() const { return list_.cend(); }
     typename decltype(list_)::reference operator[] (size_t n) { return list_[n]; }
     typename decltype(list_)::const_reference operator[] (size_t n) const { return list_[n]; }
-    typename decltype(list_)::reference back() { return list_.back(); }
-    typename decltype(list_)::const_reference back() const { return list_.back(); }
-    size_t size() const { return list_.size(); }
-    void reserve(size_t n) { list_.reserve(n); }
-    template< class... Args >
-    void emplace_back(Args&&... args) { list_.emplace_back(std::forward<Args>(args)...); }
 };
 
 } // namespace sfz

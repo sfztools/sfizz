@@ -245,11 +245,6 @@ struct Synth::Impl: public Parser::Listener {
     // engine polyphony
     RegionSetPtr engineSet_;
 
-    // Views to speed up iteration over the regions and voices when events
-    // occur in the audio callback
-    VoiceViewVector tempPolyphonyArray_;
-    VoiceViewVector voiceViewArray_;
-
     std::array<RegionViewVector, 128> lastKeyswitchLists_;
     std::array<RegionViewVector, 128> downKeyswitchLists_;
     std::array<RegionViewVector, 128> upKeyswitchLists_;
@@ -265,8 +260,7 @@ struct Synth::Impl: public Parser::Listener {
     int samplesPerBlock_ { config::defaultSamplesPerBlock };
     float sampleRate_ { config::defaultSampleRate };
     float volume_ { Default::globalVolume };
-    int numRequiredVoices_ { config::numVoices };
-    int numActualVoices_ { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
+    int numVoices_ { config::numVoices };
     int activeVoices_ { 0 };
     Oversampling oversamplingFactor_ { config::defaultOversamplingFactor };
 
@@ -1644,7 +1638,7 @@ const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
 const Voice* Synth::getVoiceView(int idx) const noexcept
 {
     Impl& impl = *impl_;
-    return (size_t)idx < impl.voiceList_.size() ? &impl.voiceList_[idx] : nullptr;
+    return idx < impl.numVoices_ ? &impl.voiceList_[idx] : nullptr;
 }
 
 unsigned Synth::getNumPolyphonyGroups() const noexcept
@@ -1711,7 +1705,7 @@ void Synth::setVolume(float volume) noexcept
 int Synth::getNumVoices() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.numRequiredVoices_;
+    return impl.numVoices_;
 }
 
 void Synth::setNumVoices(int numVoices) noexcept
@@ -1721,7 +1715,7 @@ void Synth::setNumVoices(int numVoices) noexcept
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
-    if (numVoices == impl.numRequiredVoices_)
+    if (numVoices == impl.numVoices_)
         return;
 
     impl.resetVoices(numVoices);
@@ -1729,31 +1723,18 @@ void Synth::setNumVoices(int numVoices) noexcept
 
 void Synth::Impl::resetVoices(int numVoices)
 {
-    numActualVoices_ =
-        static_cast<int>(config::overflowVoiceMultiplier * numVoices);
-    numRequiredVoices_ = numVoices;
+    numVoices_ = numVoices;
 
     for (auto& set : sets_)
         set->removeAllVoices();
     engineSet_->removeAllVoices();
-    engineSet_->setPolyphonyLimit(numRequiredVoices_);
+    engineSet_->setPolyphonyLimit(numVoices_);
 
-    voiceList_.clear();
-    voiceList_.reserve(numActualVoices_);
+    voiceList_.requireNumVoices(numVoices_, resources_);
 
-    voiceViewArray_.clear();
-    voiceViewArray_.reserve(numActualVoices_);
-
-    tempPolyphonyArray_.clear();
-    tempPolyphonyArray_.reserve(numActualVoices_);
-
-    for (int i = 0; i < numActualVoices_; ++i) {
-        voiceList_.emplace_back(i, resources_);
-        Voice& lastVoice = voiceList_.back();
-        lastVoice.setSampleRate(this->sampleRate_);
-        lastVoice.setSamplesPerBlock(this->samplesPerBlock_);
-        lastVoice.setStateListener(&voiceList_);
-        voiceViewArray_.push_back(&lastVoice);
+    for (auto& voice : voiceList_) {
+        voice.setSampleRate(this->sampleRate_);
+        voice.setSamplesPerBlock(this->samplesPerBlock_);
     }
 
     applySettingsPerVoice();
