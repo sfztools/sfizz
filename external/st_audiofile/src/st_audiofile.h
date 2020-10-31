@@ -23,6 +23,7 @@ typedef struct st_audio_file st_audio_file;
 typedef enum st_audio_file_type {
     st_audio_file_wav,
     st_audio_file_flac,
+    st_audio_file_aiff,
     st_audio_file_ogg,
     st_audio_file_mp3,
     st_audio_file_other,
