@@ -16,7 +16,7 @@
 
 namespace sfz {
 
-struct VoiceManager : public Voice::StateListener
+struct VoiceManager final : public Voice::StateListener
 {
     /**
      * @brief The voice callback which is called during a change of state.

@@ -50,14 +50,14 @@ Voice* FirstStealer::checkRegionPolyphony(const Region* region, absl::Span<Voice
     ASSERT(region);
     return genericPolyphonyCheck(candidates, region->polyphony,
         [=](const Voice* v) { return (!ignoreVoice(v) && v->getRegion() == region); },
-        [=](const Voice* v, const Voice* c) { return c == nullptr; });
+        [=](const Voice*, const Voice* c) { return c == nullptr; });
 }
 
 Voice* FirstStealer::checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony)
 {
     return genericPolyphonyCheck(candidates, maxPolyphony,
         [=](const Voice* v) { return (!ignoreVoice(v)); },
-        [=](const Voice* v, const Voice* c) { return c == nullptr; });
+        [=](const Voice*, const Voice* c) { return c == nullptr; });
 }
 
 Voice* OldestStealer::checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates)

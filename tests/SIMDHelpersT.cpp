@@ -19,7 +19,6 @@ using namespace Catch::literals;
 template <class T, std::size_t A = sfz::config::defaultAlignment>
 using aligned_vector = std::vector<T, jsl::aligned_allocator<T, A>>;
 
-constexpr int smallBufferSize { 3 };
 constexpr int bigBufferSize { 4095 };
 constexpr int medBufferSize { 127 };
 constexpr float fillValue { 1.3f };

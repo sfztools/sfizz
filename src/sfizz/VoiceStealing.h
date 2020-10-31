@@ -25,6 +25,7 @@ enum class StealingAlgorithm {
 class VoiceStealer
 {
 public:
+    virtual ~VoiceStealer() {}
     /**
      * @brief Check that the region polyphony is respected.
      *
@@ -43,21 +44,21 @@ public:
     virtual Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) = 0;
 };
 
-class FirstStealer : public VoiceStealer
+class FirstStealer final : public VoiceStealer
 {
 public:
     Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
     Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
 };
 
-class OldestStealer : public VoiceStealer
+class OldestStealer final : public VoiceStealer
 {
 public:
     Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
     Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
 };
 
-class EnvelopeAndAgeStealer : public VoiceStealer
+class EnvelopeAndAgeStealer final : public VoiceStealer
 {
 public:
     EnvelopeAndAgeStealer();

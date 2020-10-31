@@ -41,7 +41,7 @@
 
 namespace sfz {
 
-struct Synth::Impl: public Parser::Listener {
+struct Synth::Impl final: public Parser::Listener {
     Impl();
     ~Impl();
 
@@ -241,9 +241,6 @@ struct Synth::Impl: public Parser::Listener {
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet_ { nullptr };
     std::vector<RegionSetPtr> sets_;
-    // This region set holds the engine set of voices, which tries to respect the required
-    // engine polyphony
-    RegionSetPtr engineSet_;
 
     std::array<RegionViewVector, 128> lastKeyswitchLists_;
     std::array<RegionViewVector, 128> downKeyswitchLists_;
@@ -261,7 +258,6 @@ struct Synth::Impl: public Parser::Listener {
     float sampleRate_ { config::defaultSampleRate };
     float volume_ { Default::globalVolume };
     int numVoices_ { config::numVoices };
-    int activeVoices_ { 0 };
     Oversampling oversamplingFactor_ { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes
@@ -319,7 +315,6 @@ Synth::Impl::Impl()
     initializeSIMDDispatchers();
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
-    engineSet_ = absl::make_unique<RegionSet>(nullptr, OpcodeScope::kOpcodeScopeGeneric);
     parser_.setListener(this);
     effectFactory_.registerStandardEffectTypes();
     effectBuses_.reserve(5); // sufficient room for main and fx1-4
@@ -1131,7 +1126,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         }
     }
 
-    impl.activeVoices_ = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempMixSpan->fill(0.0f);
@@ -1141,8 +1135,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
                 continue;
 
             mm.beginVoice(voice.getId(), voice.getRegion()->getId(), voice.getTriggerEvent().value);
-
-            impl.activeVoices_++;
 
             const Region* region = voice.getRegion();
             ASSERT(region != nullptr);
@@ -1197,7 +1189,8 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     callbackBreakdown.dispatch = impl.dispatchDuration_;
-    impl.resources_.logger.logCallbackTime(callbackBreakdown, impl.activeVoices_, numFrames);
+    impl.resources_.logger.logCallbackTime(
+        callbackBreakdown, impl.voiceManager_.getNumActiveVoices(), numFrames);
 
     // Reset the dispatch counter
     impl.dispatchDuration_ = Duration(0);
@@ -1727,8 +1720,6 @@ void Synth::Impl::resetVoices(int numVoices)
 
     for (auto& set : sets_)
         set->removeAllVoices();
-    engineSet_->removeAllVoices();
-    engineSet_->setPolyphonyLimit(numVoices_);
 
     voiceManager_.requireNumVoices(numVoices_, resources_);
 
