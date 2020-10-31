@@ -171,14 +171,6 @@ struct Synth::Impl: public Parser::Listener {
     void ccDispatch(int delay, int ccNumber, float value) noexcept;
 
     /**
-     * @brief Find a voice that is not currently playing
-     *
-     * @return Voice*
-     */
-
-    Voice* findFreeVoice() noexcept;
-
-    /**
      * @brief Start a voice for a specific region.
      * This will do the needed polyphony checks and voice stealing.
      *
@@ -1056,19 +1048,6 @@ void Synth::loadStretchTuningByRatio(float ratio)
         impl.resources_.stretch.reset();
 }
 
-Voice* Synth::Impl::findFreeVoice() noexcept
-{
-    auto freeVoice = absl::c_find_if(voiceList_, [](const Voice& voice) {
-        return voice.isFree();
-    });
-
-    if (freeVoice != voiceList_.end())
-        return &*freeVoice;
-
-    DBG("Engine hard polyphony reached");
-    return {};
-}
-
 int Synth::getNumActiveVoices() const noexcept
 {
     Impl& impl = *impl_;
@@ -1279,7 +1258,7 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
 {
     voiceList_.checkPolyphony(region, delay, triggerEvent);
-    Voice* selectedVoice = findFreeVoice();
+    Voice* selectedVoice = voiceList_.findFreeVoice();
     if (selectedVoice == nullptr)
         return;
 

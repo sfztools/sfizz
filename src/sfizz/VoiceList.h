@@ -155,9 +155,32 @@ struct VoiceList : public Voice::StateListener
         checkEnginePolyphony(delay);
     }
 
+    /**
+     * @brief Get the number of active voices
+     *
+     * @return unsigned
+     */
     unsigned getNumActiveVoices() const
     {
         return activeVoices_.size();
+    }
+
+    /**
+     * @brief Find a voice that is not currently playing
+     *
+     * @return Voice*
+     */
+    Voice* findFreeVoice() noexcept
+    {
+        auto freeVoice = absl::c_find_if(list_, [](const Voice& voice) {
+            return voice.isFree();
+        });
+
+        if (freeVoice != list_.end())
+            return &*freeVoice;
+
+        DBG("Engine hard polyphony reached");
+        return {};
     }
 
 private:
