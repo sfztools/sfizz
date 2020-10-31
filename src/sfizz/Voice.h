@@ -53,7 +53,7 @@ public:
 
     class StateListener {
     public:
-        virtual void onVoiceStateChanged(NumericId<Voice> /*id*/, State /*state*/) {}
+        virtual void onVoiceStateChanging(NumericId<Voice> /*id*/, State /*state*/) {}
     };
 
     /**

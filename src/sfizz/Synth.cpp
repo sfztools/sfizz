@@ -31,7 +31,6 @@
 #include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
 #include "VoiceList.h"
-#include "VoiceStealing.h"
 #include <absl/types/optional.h>
 #include <absl/types/span.h>
 #include <algorithm>
@@ -42,14 +41,9 @@
 
 namespace sfz {
 
-struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
+struct Synth::Impl: public Parser::Listener {
     Impl();
     ~Impl();
-
-    /**
-     * @brief The voice callback which is called during a change of state.
-     */
-    void onVoiceStateChanged(NumericId<Voice> idNumber, Voice::State state) final;
 
     /**
      * @brief The parser callback; this is called by the parent object each time
@@ -70,15 +64,6 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
      * @brief The parser callback when a warning occurs.
      */
     void onParseWarning(const SourceRange& range, const std::string& message) final;
-
-
-    /**
-     * @brief change the group maximum polyphony
-     *
-     * @param groupIdx the group index
-     * @param polyphone the max polyphony
-     */
-    void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
 
     /**
      * @brief Reset all CCs; to be used on CC 121
@@ -194,46 +179,6 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
     Voice* findFreeVoice() noexcept;
 
     /**
-     * @brief Check the region polyphony, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkRegionPolyphony(const Region* region, int delay) noexcept;
-
-    /**
-     * @brief Check the note polyphony, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     * @param triggerEvent
-     */
-    void checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept;
-
-    /**
-     * @brief Check the group polyphony, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkGroupPolyphony(const Region* region, int delay) noexcept;
-
-    /**
-     * @brief Check the region set polyphony at all levels, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkSetPolyphony(const Region* region, int delay) noexcept;
-
-    /**
-     * @brief Check the engine polyphony, fast releasing voices if necessary
-     *
-     * @param delay
-     */
-    void checkEnginePolyphony(int delay) noexcept;
-
-    /**
      * @brief Start a voice for a specific region.
      * This will do the needed polyphony checks and voice stealing.
      *
@@ -308,14 +253,10 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
     // engine polyphony
     RegionSetPtr engineSet_;
 
-    // These are the `group=` groups where you can off voices
-    std::vector<PolyphonyGroup> polyphonyGroups_;
-
     // Views to speed up iteration over the regions and voices when events
     // occur in the audio callback
     VoiceViewVector tempPolyphonyArray_;
     VoiceViewVector voiceViewArray_;
-    VoiceStealing stealer_;
 
     std::array<RegionViewVector, 128> lastKeyswitchLists_;
     std::array<RegionViewVector, 128> downKeyswitchLists_;
@@ -411,19 +352,6 @@ Synth::Impl::~Impl()
 
     voiceList_.reset();
     resources_.filePool.emptyFileLoadingQueues();
-}
-
-void Synth::Impl::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
-{
-    (void)id;
-    (void)state;
-    if (state == Voice::State::idle) {
-        auto voice = voiceList_.getVoiceById(id);
-        RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
-        engineSet_->removeVoice(voice);
-        polyphonyGroups_[voice->getRegion()->group].removeVoice(voice);
-    }
-
 }
 
 void Synth::Impl::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
@@ -546,8 +474,12 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
         currentSwitch_ = *lastRegion->defaultSwitch;
 
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
-    if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
-        setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+    if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices) {
+        voiceList_.setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+    } else {
+        // Just check that there are enough polyphony groups
+        voiceList_.ensureNumPolyphonyGroups(lastRegion->group);
+    }
 
     if (currentSet_ != nullptr) {
         lastRegion->parent = currentSet_;
@@ -595,7 +527,6 @@ void Synth::Impl::clear()
     resources_.midiState.reset();
     resources_.filePool.clear();
     resources_.filePool.setRamLoading(config::loadInRam);
-    stealer_.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
     ccLabels_.clear();
     keyLabels_.clear();
     keyswitchLabels_.clear();
@@ -603,9 +534,6 @@ void Synth::Impl::clear()
     masterOpcodes_.clear();
     groupOpcodes_.clear();
     unknownOpcodes_.clear();
-    polyphonyGroups_.clear();
-    polyphonyGroups_.emplace_back();
-    polyphonyGroups_.back().setPolyphonyLimit(config::maxVoices);
     modificationTime_ = fs::file_time_type::min();
 
     // set default controllers
@@ -689,12 +617,12 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
         parseOpcode(member);
 
     if (groupIdx && maxPolyphony) {
-        setGroupPolyphony(*groupIdx, *maxPolyphony);
+        voiceList_.setGroupPolyphony(*groupIdx, *maxPolyphony);
     } else if (maxPolyphony) {
         ASSERT(currentSet_ != nullptr);
         currentSet_->setPolyphonyLimit(*maxPolyphony);
-    } else if (groupIdx && *groupIdx > polyphonyGroups_.size()) {
-        setGroupPolyphony(*groupIdx, config::maxVoices);
+    } else if (groupIdx) {
+        voiceList_.ensureNumPolyphonyGroups(*groupIdx);
     }
 }
 
@@ -749,22 +677,13 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
-                for (auto& voice : voiceList_)
-                    voice.disablePowerFollower();
-
-                stealer_.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::First);
+                voiceList_.setStealingAlgorithm(StealingAlgorithm::First);
                 break;
             case hash("oldest"):
-                for (auto& voice : voiceList_)
-                    voice.disablePowerFollower();
-
-                stealer_.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
+                voiceList_.setStealingAlgorithm(StealingAlgorithm::Oldest);
                 break;
             case hash("envelope_and_age"):
-                for (auto& voice : voiceList_)
-                    voice.enablePowerFollower();
-
-                stealer_.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::EnvelopeAndAge);
+                voiceList_.setStealingAlgorithm(StealingAlgorithm::EnvelopeAndAge);
                 break;
             default:
                 DBG("Unsupported value for hint_stealing: " << member.value);
@@ -991,12 +910,6 @@ void Synth::Impl::finalizeSfzLoad()
                 for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
                     insertPairUniquely(keyswitchLabels_, note, *region->keyswitchLabel);
             }
-        }
-
-        // Some regions had group number but no "group-level" opcodes handled the polyphony
-        while (polyphonyGroups_.size() <= region->group) {
-            polyphonyGroups_.emplace_back();
-            polyphonyGroups_.back().setPolyphonyLimit(config::maxVoices);
         }
 
         for (auto note = 0; note < 128; note++) {
@@ -1374,12 +1287,7 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 
 void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
 {
-    checkNotePolyphony(region, delay, triggerEvent);
-    checkRegionPolyphony(region, delay);
-    checkGroupPolyphony(region, delay);
-    checkSetPolyphony(region, delay);
-    checkEnginePolyphony(delay);
-
+    voiceList_.checkPolyphony(region, delay, triggerEvent);
     Voice* selectedVoice = findFreeVoice();
     if (selectedVoice == nullptr)
         return;
@@ -1387,9 +1295,6 @@ void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& trig
     ASSERT(selectedVoice->isFree());
     selectedVoice->startVoice(region, delay, triggerEvent);
     ring.addVoiceToRing(selectedVoice);
-    engineSet_->registerVoice(selectedVoice);
-    RegionSet::registerVoiceInHierarchy(region, selectedVoice);
-    polyphonyGroups_[region->group].registerVoice(selectedVoice);
 }
 
 void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
@@ -1411,100 +1316,6 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
 
             startVoice(region, delay, triggerEvent, ring);
         }
-    }
-}
-
-void Synth::Impl::checkRegionPolyphony(const Region* region, int delay) noexcept
-{
-    tempPolyphonyArray_.clear();
-    absl::c_copy_if(voiceViewArray_,
-        std::back_inserter(tempPolyphonyArray_),
-        [region](Voice* v) { return v->getRegion() == region && !v->releasedOrFree(); });
-
-    if (tempPolyphonyArray_.size() >= region->polyphony) {
-        const auto voiceToSteal = stealer_.steal(absl::MakeSpan(tempPolyphonyArray_));
-        SisterVoiceRing::offAllSisters(voiceToSteal, delay);
-    }
-}
-
-void Synth::Impl::checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept
-{
-    if (!region->notePolyphony)
-        return;
-
-    unsigned notePolyphonyCounter { 0 };
-    Voice* selfMaskCandidate { nullptr };
-
-    for (Voice* voice : voiceViewArray_) {
-        const TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        const bool skipVoice = (triggerEvent.type == TriggerEventType::NoteOn && voice->releasedOrFree()) || voice->isFree();
-        if (!skipVoice
-            && voice->getRegion()->group == region->group
-            && voiceTriggerEvent.number == triggerEvent.number
-            && voiceTriggerEvent.type == triggerEvent.type) {
-            notePolyphonyCounter += 1;
-            switch (region->selfMask) {
-            case SfzSelfMask::mask:
-                if (voiceTriggerEvent.value <= triggerEvent.value) {
-                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
-                        selfMaskCandidate = voice;
-                    }
-                }
-                break;
-            case SfzSelfMask::dontMask:
-                if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
-                    selfMaskCandidate = voice;
-                break;
-            }
-        }
-    }
-
-    if (notePolyphonyCounter >= *region->notePolyphony && selfMaskCandidate) {
-        SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
-    }
-}
-
-void Synth::Impl::checkGroupPolyphony(const Region* region, int delay) noexcept
-{
-    const auto& activeVoices = polyphonyGroups_[region->group].getActiveVoices();
-    tempPolyphonyArray_.clear();
-    absl::c_copy_if(activeVoices,
-        std::back_inserter(tempPolyphonyArray_), [](Voice* v) { return !v->releasedOrFree(); });
-
-    if (tempPolyphonyArray_.size() >= polyphonyGroups_[region->group].getPolyphonyLimit()) {
-        const auto voiceToSteal = stealer_.steal(absl::MakeSpan(tempPolyphonyArray_));
-        SisterVoiceRing::offAllSisters(voiceToSteal, delay);
-    }
-}
-
-void Synth::Impl::checkSetPolyphony(const Region* region, int delay) noexcept
-{
-    auto parent = region->parent;
-    while (parent != nullptr) {
-        const auto& activeVoices = parent->getActiveVoices();
-        tempPolyphonyArray_.clear();
-        absl::c_copy_if(activeVoices,
-            std::back_inserter(tempPolyphonyArray_), [](Voice* v) { return !v->releasedOrFree(); });
-
-        if (tempPolyphonyArray_.size() >= parent->getPolyphonyLimit()) {
-            const auto voiceToSteal = stealer_.steal(absl::MakeSpan(tempPolyphonyArray_));
-            SisterVoiceRing::offAllSisters(voiceToSteal, delay);
-        }
-
-        parent = parent->getParent();
-    }
-}
-
-void Synth::Impl::checkEnginePolyphony(int delay) noexcept
-{
-    auto& activeVoices = engineSet_->getActiveVoices();
-
-    if (activeVoices.size() >= static_cast<size_t>(numRequiredVoices_)) {
-        tempPolyphonyArray_.clear();
-        absl::c_copy_if(activeVoices,
-            std::back_inserter(tempPolyphonyArray_), [](Voice* v) { return !v->releasedOrFree(); });
-        const auto voiceToSteal = stealer_.steal(absl::MakeSpan(tempPolyphonyArray_));
-        SisterVoiceRing::offAllSisters(voiceToSteal, delay, true);
     }
 }
 
@@ -1839,7 +1650,7 @@ const RegionSet* Synth::getRegionSetView(int idx) const noexcept
 const PolyphonyGroup* Synth::getPolyphonyGroupView(int idx) const noexcept
 {
     Impl& impl = *impl_;
-    return (size_t)idx < impl.polyphonyGroups_.size() ? &impl.polyphonyGroups_[idx] : nullptr;
+    return impl.voiceList_.getPolyphonyGroupView(idx);
 }
 
 const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
@@ -1869,7 +1680,7 @@ const Voice* Synth::getVoiceView(int idx) const noexcept
 unsigned Synth::getNumPolyphonyGroups() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.polyphonyGroups_.size();
+    return impl.voiceList_.getNumPolyphonyGroups();
 }
 
 const std::vector<std::string>& Synth::getUnknownOpcodes() const noexcept
@@ -1971,7 +1782,7 @@ void Synth::Impl::resetVoices(int numVoices)
         Voice& lastVoice = voiceList_.back();
         lastVoice.setSampleRate(this->sampleRate_);
         lastVoice.setSamplesPerBlock(this->samplesPerBlock_);
-        lastVoice.setStateListener(this);
+        lastVoice.setStateListener(&voiceList_);
         voiceViewArray_.push_back(&lastVoice);
     }
 
@@ -1987,15 +1798,6 @@ void Synth::Impl::applySettingsPerVoice()
         voice.setMaxFlexEGsPerVoice(settingsPerVoice_.maxFlexEGs);
         voice.setPitchEGEnabledPerVoice(settingsPerVoice_.havePitchEG);
         voice.setFilterEGEnabledPerVoice(settingsPerVoice_.haveFilterEG);
-    }
-
-    if (stealer_.getStealingAlgorithm() ==
-        VoiceStealing::StealingAlgorithm::EnvelopeAndAge) {
-        for (auto& voice : voiceList_)
-            voice.enablePowerFollower();
-    } else {
-        for (auto& voice : voiceList_)
-            voice.disablePowerFollower();
     }
 }
 
@@ -2076,7 +1878,8 @@ void Synth::setOversamplingFactor(Oversampling factor) noexcept
     if (factor == impl.oversamplingFactor_)
         return;
 
-    impl.voiceList_.reset();
+    for (auto& voice : impl.voiceList_)
+        voice.reset();
 
     impl.resources_.filePool.emptyFileLoadingQueues();
     impl.resources_.filePool.setOversamplingFactor(factor);
@@ -2191,17 +1994,10 @@ void Synth::allSoundOff() noexcept
     Impl& impl = *impl_;
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    impl.voiceList_.reset();
+    for (auto& voice : impl.voiceList_)
+        voice.reset();
     for (auto& effectBus : impl.effectBuses_)
         effectBus->clear();
-}
-
-void Synth::Impl::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
-{
-    while (polyphonyGroups_.size() <= groupIdx)
-        polyphonyGroups_.emplace_back();
-
-    polyphonyGroups_[groupIdx].setPolyphonyLimit(polyphony);
 }
 
 std::bitset<config::numCCs> Synth::getUsedCCs() const noexcept

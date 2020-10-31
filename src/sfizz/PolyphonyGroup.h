@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "Config.h"
 #include "Region.h"
 #include "Voice.h"
 #include "SwapAndPop.h"

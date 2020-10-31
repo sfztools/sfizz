@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Config.h"
+#include "Region.h"
 #include "Voice.h"
 #include "SisterVoiceRing.h"
 #include <vector>
@@ -14,64 +15,56 @@
 
 namespace sfz
 {
-class VoiceStealing
+
+enum class StealingAlgorithm {
+    First,
+    Oldest,
+    EnvelopeAndAge
+};
+
+class VoiceStealer
 {
 public:
-    enum class StealingAlgorithm {
-        First,
-        Oldest,
-        EnvelopeAndAge
-    };
-
-    VoiceStealing();
     /**
-     * @brief Get the current stealing algorithm
+     * @brief Check that the region polyphony is respected.
      *
-     * @return StealingAlgorithm
+     * @param region
+     * @param candidates
+     * @return Voice* a non-null voice if the region polyphony is not respected
      */
-    StealingAlgorithm getStealingAlgorithm() const noexcept { return stealingAlgorithm; }
+    virtual Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) = 0;
     /**
-     * @brief Set a default stealing algorithm
+     * @brief Check that then polyphony is respected.
      *
-     * @param algorithm
+     * @param region
+     * @param candidates
+     * @return Voice* a non-null voice if the region polyphony is not respected
      */
-    void setStealingAlgorithm(StealingAlgorithm algorithm) noexcept;
-    /**
-     * @brief Propose a voice to steal from a set of voices
-     *
-     * @param voices
-     * @return Voice*
-     */
-    Voice* steal(absl::Span<Voice*> voices) noexcept;
-private:
-    StealingAlgorithm stealingAlgorithm { StealingAlgorithm::Oldest };
-    Voice* stealFirst(absl::Span<Voice*> voices) noexcept;
-    Voice* stealOldest(absl::Span<Voice*> voices) noexcept;
-    Voice* stealEnvelopeAndAge(absl::Span<Voice*> voices) noexcept;
-
-    struct VoiceScore
-    {
-        Voice* voice;
-        double score;
-    };
-
-    struct VoiceScoreComparator
-    {
-        bool operator()(const VoiceScore& voiceScore, const double& score)
-        {
-            return (voiceScore.score < score);
-        }
-
-        bool operator()(const double& score, const VoiceScore& voiceScore)
-        {
-            return (score < voiceScore.score);
-        }
-
-        bool operator()(const VoiceScore& lhs, const VoiceScore& rhs)
-        {
-            return (lhs.score < rhs.score);
-        }
-    };
-    std::vector<VoiceScore> voiceScores;
+    virtual Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) = 0;
 };
+
+class FirstStealer : public VoiceStealer
+{
+public:
+    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
+    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
+};
+
+class OldestStealer : public VoiceStealer
+{
+public:
+    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
+    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
+};
+
+class EnvelopeAndAgeStealer : public VoiceStealer
+{
+public:
+    EnvelopeAndAgeStealer();
+    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
+    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
+private:
+    std::vector<Voice*> temp_;
+};
+
 }

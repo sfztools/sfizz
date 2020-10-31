@@ -1582,7 +1582,7 @@ void Voice::Impl::switchState(State s)
     if (s != state_) {
         state_ = s;
         if (stateListener_)
-            stateListener_->onVoiceStateChanged(id_, s);
+            stateListener_->onVoiceStateChanging(id_, s);
     }
 }
 
