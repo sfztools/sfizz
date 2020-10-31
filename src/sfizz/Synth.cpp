@@ -366,15 +366,14 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
     std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
 
     // Settings per voice
-    struct SettingsPerVoice {
+    struct {
         size_t maxFilters { 0 };
         size_t maxEQs { 0 };
         size_t maxLFOs { 0 };
         size_t maxFlexEGs { 0 };
         bool havePitchEG { false };
         bool haveFilterEG { false };
-    };
-    SettingsPerVoice settingsPerVoice_;
+    } settingsPerVoice_;
 
     Duration dispatchDuration_ { 0 };
 
@@ -619,7 +618,7 @@ void Synth::Impl::clear()
     modificationTime_ = fs::file_time_type::min();
 
     // set default controllers
-    resources_.midiState.resetAllControllers(0);
+    // midistate is reset above
     fill(absl::MakeSpan(defaultCCValues_), 0.0f);
     setDefaultHdcc(7, normalizeCC(100));
     setDefaultHdcc(10, 0.5f);
