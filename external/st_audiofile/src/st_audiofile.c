@@ -24,10 +24,6 @@ struct st_audio_file {
     } cache;
 };
 
-enum {
-    st_audio_file_null = -1,
-};
-
 static st_audio_file* st_generic_open_file(const void* filename, int widepath)
 {
 #if !defined(_WIN32)
@@ -95,7 +91,7 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
     }
 
     // Try MP3
-    if (af->type == st_audio_file_null) {
+    {
         af->mp3 = (drmp3*)malloc(sizeof(drmp3));
         if (!af->mp3) {
             free(af);
