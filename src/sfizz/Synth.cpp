@@ -377,7 +377,7 @@ struct Synth::Impl : public Voice::StateListener, public Parser::Listener {
 };
 
 Synth::Synth()
-: impl_(new Impl)
+: impl_(new Impl) // NOLINT: (paul) I don't get why clang-tidy complains here
 {
 }
 
