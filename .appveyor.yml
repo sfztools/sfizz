@@ -33,7 +33,9 @@ for:
   before_build:
   - chmod +x ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/before_build.sh
   - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/before_build.sh
-  build_script: cd build && make -j2
+  build_script:
+  - cd build && make -j2
+  - tests/sfizz_tests
   after_build:
   - chmod +x ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh
   - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh
