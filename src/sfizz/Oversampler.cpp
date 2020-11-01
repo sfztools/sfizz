@@ -143,7 +143,7 @@ void sfz::Oversampler::stream(AudioSpan<float> input, AudioSpan<float> output, s
 
 void sfz::Oversampler::stream(AudioReader& input, AudioSpan<float> output, std::atomic<size_t>* framesReady)
 {
-    ASSERT(output.getNumFrames() >= input.frames() * static_cast<int>(factor));
+    ASSERT(output.getNumFrames() >= static_cast<size_t>(input.frames() * static_cast<int>(factor)));
     ASSERT(output.getNumChannels() == input.channels());
 
     const auto numFrames = static_cast<size_t>(input.frames());

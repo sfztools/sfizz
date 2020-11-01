@@ -7,117 +7,376 @@
 #include "Synth.h"
 #include "Config.h"
 #include "Debug.h"
+#include "Effects.h"
 #include "Macros.h"
-#include "MidiState.h"
-#include "TriggerEvent.h"
-#include "ModifierHelpers.h"
-#include "ScopedFTZ.h"
-#include "StringViewHelpers.h"
-#include "modulations/ModMatrix.h"
-#include "modulations/ModKey.h"
 #include "modulations/ModId.h"
-#include "modulations/sources/Controller.h"
-#include "modulations/sources/LFO.h"
-#include "modulations/sources/FlexEnvelope.h"
+#include "modulations/ModKey.h"
+#include "modulations/ModMatrix.h"
 #include "modulations/sources/ADSREnvelope.h"
-#include "utility/XmlHelpers.h"
+#include "modulations/sources/Controller.h"
+#include "modulations/sources/FlexEnvelope.h"
+#include "modulations/sources/LFO.h"
+#include "PolyphonyGroup.h"
 #include "pugixml.hpp"
-#include "absl/algorithm/container.h"
-#include "absl/memory/memory.h"
-#include "absl/strings/str_replace.h"
+#include "Region.h"
+#include "RegionSet.h"
+#include "Resources.h"
+#include "ScopedFTZ.h"
 #include "SisterVoiceRing.h"
+#include "StringViewHelpers.h"
+#include "TriggerEvent.h"
+#include "utility/SpinMutex.h"
+#include "utility/XmlHelpers.h"
+#include "Voice.h"
+#include "VoiceManager.h"
+#include <absl/algorithm/container.h>
+#include <absl/memory/memory.h>
+#include <absl/strings/str_replace.h>
+#include <absl/types/optional.h>
+#include <absl/types/span.h>
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <random>
 #include <utility>
 
-sfz::Synth::Synth()
-    : Synth(config::numVoices)
+namespace sfz {
+
+struct Synth::Impl final: public Parser::Listener {
+    Impl();
+    ~Impl();
+
+    /**
+     * @brief The parser callback; this is called by the parent object each time
+     * a new region, group, master, global, curve or control set of opcodes
+     * appears in the parser
+     *
+     * @param header the header for the set of opcodes
+     * @param members the opcode members
+     */
+    void onParseFullBlock(const std::string& header, const std::vector<Opcode>& members) final;
+
+    /**
+     * @brief The parser callback when an error occurs.
+     */
+    void onParseError(const SourceRange& range, const std::string& message) final;
+
+    /**
+     * @brief The parser callback when a warning occurs.
+     */
+    void onParseWarning(const SourceRange& range, const std::string& message) final;
+
+    /**
+     * @brief Reset all CCs; to be used on CC 121
+     *
+     * @param delay the delay for the controller reset
+     *
+     */
+    void resetAllControllers(int delay) noexcept;
+
+    /**
+     * @brief Remove all regions, resets all voices and clears everything
+     * to bring back the synth in its original state.
+     *
+     * The callback mutex should be taken to call this function.
+     */
+    void clear();
+
+    /**
+     * @brief Helper function to dispatch <global> opcodes
+     *
+     * @param members the opcodes of the <global> block
+     */
+    void handleGlobalOpcodes(const std::vector<Opcode>& members);
+    /**
+     * @brief Helper function to dispatch <master> opcodes
+     *
+     * @param members the opcodes of the <master> block
+     */
+    void handleMasterOpcodes(const std::vector<Opcode>& members);
+    /**
+     * @brief Helper function to dispatch <group> opcodes
+     *
+     * @param members the opcodes of the <group> block
+     */
+    void handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers);
+    /**
+     * @brief Helper function to dispatch <control> opcodes
+     *
+     * @param members the opcodes of the <control> block
+     */
+    void handleControlOpcodes(const std::vector<Opcode>& members);
+    /**
+     * @brief Helper function to dispatch <effect> opcodes
+     *
+     * @param members the opcodes of the <effect> block
+     */
+    void handleEffectOpcodes(const std::vector<Opcode>& members);
+    /**
+     * @brief Helper function to merge all the currently active opcodes
+     * as set by the successive callbacks and create a new region to store
+     * in the synth.
+     *
+     * @param regionOpcodes the opcodes that are specific to the region
+     */
+    void buildRegion(const std::vector<Opcode>& regionOpcodes);
+    /**
+     * @brief Resets and possibly changes the number of voices (polyphony) in
+     * the synth.
+     *
+     * @param numVoices
+     */
+    void resetVoices(int numVoices);
+    /**
+     * @brief Make the stored settings take effect in all the voices
+     */
+    void applySettingsPerVoice();
+
+    /**
+     * @brief Establish all connections of the modulation matrix.
+     */
+    void setupModMatrix();
+
+    /**
+     * @brief Get the modification time of all included sfz files
+     *
+     * @return fs::file_time_type
+     */
+    fs::file_time_type checkModificationTime();
+
+    /**
+     * @brief Check all regions and start voices for note on events
+     *
+     * @param delay
+     * @param noteNumber
+     * @param velocity
+     */
+    void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
+     * @brief Check all regions and start voices for note off events
+     *
+     * @param delay
+     * @param noteNumber
+     * @param velocity
+     */
+    void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
+     * @brief Check all regions and start voices for cc events
+     *
+     * @param delay
+     * @param ccNumber
+     * @param value
+     */
+    void ccDispatch(int delay, int ccNumber, float value) noexcept;
+
+    /**
+     * @brief Start a voice for a specific region.
+     * This will do the needed polyphony checks and voice stealing.
+     *
+     * @param region
+     * @param delay
+     * @param triggerEvent
+     * @param ring
+     */
+    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Start all delayed release voices of the region if necessary
+     *
+     * @param region
+     * @param delay
+     * @param ring
+     */
+    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Finalize SFZ loading, following a successful execution of the
+     *        parsing step.
+     */
+    void finalizeSfzLoad();
+
+    template<class T>
+    static void updateUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
+    {
+        for (auto& mod : map)
+            usedCCs[mod.cc] = true;
+    }
+
+    static void updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
+    static void updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
+
+    /**
+     * @brief Set the default value for a CC
+     *
+     * @param ccNumber
+     * @param value
+     */
+    void setDefaultHdcc(int ccNumber, float value);
+
+    int numGroups_ { 0 };
+    int numMasters_ { 0 };
+
+    // Opcode memory; these are used to build regions, as a new region
+    // will integrate opcodes from the group, master and global block
+    std::vector<Opcode> globalOpcodes_;
+    std::vector<Opcode> masterOpcodes_;
+    std::vector<Opcode> groupOpcodes_;
+
+    // Names for the CC and notes as set by label_cc and label_key
+    std::vector<CCNamePair> ccLabels_;
+    std::vector<NoteNamePair> keyLabels_;
+    std::vector<NoteNamePair> keyswitchLabels_;
+
+    // Set as sw_default if present in the file
+    absl::optional<uint8_t> currentSwitch_;
+    std::vector<std::string> unknownOpcodes_;
+    using RegionViewVector = std::vector<Region*>;
+    using VoiceViewVector = std::vector<Voice*>;
+    using RegionPtr = std::unique_ptr<Region>;
+    using RegionSetPtr = std::unique_ptr<RegionSet>;
+    std::vector<RegionPtr> regions_;
+    VoiceManager voiceManager_;
+
+    // These are more general "groups" than sfz and encapsulates the full hierarchy
+    RegionSet* currentSet_ { nullptr };
+    std::vector<RegionSetPtr> sets_;
+
+    std::array<RegionViewVector, 128> lastKeyswitchLists_;
+    std::array<RegionViewVector, 128> downKeyswitchLists_;
+    std::array<RegionViewVector, 128> upKeyswitchLists_;
+    RegionViewVector previousKeyswitchLists_;
+    std::array<RegionViewVector, 128> noteActivationLists_;
+    std::array<RegionViewVector, config::numCCs> ccActivationLists_;
+
+    // Effect factory and buses
+    EffectFactory effectFactory_;
+    typedef std::unique_ptr<EffectBus> EffectBusPtr;
+    std::vector<EffectBusPtr> effectBuses_; // 0 is "main", 1-N are "fx1"-"fxN"
+
+    int samplesPerBlock_ { config::defaultSamplesPerBlock };
+    float sampleRate_ { config::defaultSampleRate };
+    float volume_ { Default::globalVolume };
+    int numVoices_ { config::numVoices };
+    Oversampling oversamplingFactor_ { config::defaultOversamplingFactor };
+
+    // Distribution used to generate random value for the *rand opcodes
+    std::uniform_real_distribution<float> randNoteDistribution_ { 0, 1 };
+
+    SpinMutex callbackGuard_;
+
+    // Singletons passed as references to the voices
+    Resources resources_;
+
+    // Control opcodes
+    std::string defaultPath_ { "" };
+    int noteOffset_ { 0 };
+    int octaveOffset_ { 0 };
+
+    // Modulation source generators
+    std::unique_ptr<ControllerSource> genController_;
+    std::unique_ptr<LFOSource> genLFO_;
+    std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope_;
+    std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
+
+    // Settings per voice
+    struct {
+        size_t maxFilters { 0 };
+        size_t maxEQs { 0 };
+        size_t maxLFOs { 0 };
+        size_t maxFlexEGs { 0 };
+        bool havePitchEG { false };
+        bool haveFilterEG { false };
+    } settingsPerVoice_;
+
+    Duration dispatchDuration_ { 0 };
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_;
+
+    Parser parser_;
+    fs::file_time_type modificationTime_ { };
+
+    std::array<float, config::numCCs> defaultCCValues_;
+};
+
+Synth::Synth()
+: impl_(new Impl) // NOLINT: (paul) I don't get why clang-tidy complains here
 {
 }
 
-sfz::Synth::Synth(int numVoices)
+// Need to define the dtor after Impl has been defined
+Synth::~Synth()
+{
+
+}
+
+Synth::Impl::Impl()
 {
     initializeSIMDDispatchers();
 
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
-    engineSet = absl::make_unique<RegionSet>(nullptr, OpcodeScope::kOpcodeScopeGeneric);
-    parser.setListener(this);
-    effectFactory.registerStandardEffectTypes();
-    effectBuses.reserve(5); // sufficient room for main and fx1-4
-    resetVoices(numVoices);
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
+    parser_.setListener(this);
+    effectFactory_.registerStandardEffectTypes();
+    effectBuses_.reserve(5); // sufficient room for main and fx1-4
+    resetVoices(config::numVoices);
 
     // modulation sources
-    genController.reset(new ControllerSource(resources));
-    genLFO.reset(new LFOSource(*this));
-    genFlexEnvelope.reset(new FlexEnvelopeSource(*this));
-    genADSREnvelope.reset(new ADSREnvelopeSource(*this));
+    genController_.reset(new ControllerSource(resources_));
+    genLFO_.reset(new LFOSource(voiceManager_));
+    genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
+    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
 }
 
-sfz::Synth::~Synth()
+Synth::Impl::~Impl()
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
 
-    for (auto& voice : voices)
-        voice->reset();
-
-    resources.filePool.emptyFileLoadingQueues();
+    voiceManager_.reset();
+    resources_.filePool.emptyFileLoadingQueues();
 }
 
-void sfz::Synth::onVoiceStateChanged(NumericId<Voice> id, Voice::State state)
-{
-    (void)id;
-    (void)state;
-    if (state == Voice::State::idle) {
-        auto voice = getVoiceById(id);
-        RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
-        engineSet->removeVoice(voice);
-        polyphonyGroups[voice->getRegion()->group].removeVoice(voice);
-    }
-
-}
-
-void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
+void Synth::Impl::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
 {
     const auto newRegionSet = [&](OpcodeScope level) {
-        auto parent = currentSet;
+        auto parent = currentSet_;
         while (parent && parent->getLevel() >= level)
             parent = parent->getParent();
 
-        sets.emplace_back(new RegionSet(parent, level));
-        currentSet = sets.back().get();
+        sets_.emplace_back(new RegionSet(parent, level));
+        currentSet_ = sets_.back().get();
     };
 
     switch (hash(header)) {
     case hash("global"):
-        globalOpcodes = members;
+        globalOpcodes_ = members;
         newRegionSet(OpcodeScope::kOpcodeScopeGlobal);
-        groupOpcodes.clear();
-        masterOpcodes.clear();
+        groupOpcodes_.clear();
+        masterOpcodes_.clear();
         handleGlobalOpcodes(members);
         break;
     case hash("control"):
-        defaultPath = ""; // Always reset on a new control header
+        defaultPath_ = ""; // Always reset on a new control header
         handleControlOpcodes(members);
         break;
     case hash("master"):
-        masterOpcodes = members;
+        masterOpcodes_ = members;
         newRegionSet(OpcodeScope::kOpcodeScopeMaster);
-        groupOpcodes.clear();
+        groupOpcodes_.clear();
         handleMasterOpcodes(members);
-        numMasters++;
+        numMasters_++;
         break;
     case hash("group"):
-        groupOpcodes = members;
+        groupOpcodes_ = members;
         newRegionSet(OpcodeScope::kOpcodeScopeGroup);
-        handleGroupOpcodes(members, masterOpcodes);
-        numGroups++;
+        handleGroupOpcodes(members, masterOpcodes_);
+        numGroups_++;
         break;
     case hash("region"):
         buildRegion(members);
         break;
     case hash("curve"):
-        resources.curves.addCurveFromHeader(members);
+        resources_.curves.addCurveFromHeader(members);
         break;
     case hash("effect"):
         handleEffectOpcodes(members);
@@ -127,39 +386,39 @@ void sfz::Synth::onParseFullBlock(const std::string& header, const std::vector<O
     }
 }
 
-void sfz::Synth::onParseError(const SourceRange& range, const std::string& message)
+void Synth::Impl::onParseError(const SourceRange& range, const std::string& message)
 {
-    const auto relativePath = range.start.filePath->lexically_relative(parser.originalDirectory());
+    const auto relativePath = range.start.filePath->lexically_relative(parser_.originalDirectory());
     std::cerr << "Parse error in " << relativePath << " at line " << range.start.lineNumber + 1 << ": " << message << '\n';
 }
 
-void sfz::Synth::onParseWarning(const SourceRange& range, const std::string& message)
+void Synth::Impl::onParseWarning(const SourceRange& range, const std::string& message)
 {
-    const auto relativePath = range.start.filePath->lexically_relative(parser.originalDirectory());
+    const auto relativePath = range.start.filePath->lexically_relative(parser_.originalDirectory());
     std::cerr << "Parse warning in " << relativePath << " at line " << range.start.lineNumber + 1 << ": " << message << '\n';
 }
 
-void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
+void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    int regionNumber = static_cast<int>(regions.size());
-    auto lastRegion = absl::make_unique<Region>(regionNumber, resources.midiState, defaultPath);
+    int regionNumber = static_cast<int>(regions_.size());
+    auto lastRegion = absl::make_unique<Region>(regionNumber, resources_.midiState, defaultPath_);
 
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
-            const auto unknown = absl::c_find_if(unknownOpcodes, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
-            if (unknown != unknownOpcodes.end()) {
+            const auto unknown = absl::c_find_if(unknownOpcodes_, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
+            if (unknown != unknownOpcodes_.end()) {
                 continue;
             }
 
             if (!lastRegion->parseOpcode(opcode))
-                unknownOpcodes.emplace_back(opcode.opcode);
+                unknownOpcodes_.emplace_back(opcode.opcode);
         }
     };
 
-    parseOpcodes(globalOpcodes);
-    parseOpcodes(masterOpcodes);
-    parseOpcodes(groupOpcodes);
+    parseOpcodes(globalOpcodes_);
+    parseOpcodes(masterOpcodes_);
+    parseOpcodes(groupOpcodes_);
     parseOpcodes(regionOpcodes);
 
     // Create the amplitude envelope
@@ -172,137 +431,137 @@ void sfz::Synth::buildRegion(const std::vector<Opcode>& regionOpcodes)
             ModKey::createNXYZ(ModId::Envelope, lastRegion->id, *lastRegion->flexAmpEG),
             ModKey::createNXYZ(ModId::MasterAmplitude, lastRegion->id)).sourceDepth = 1.0f;
 
-    if (octaveOffset != 0 || noteOffset != 0)
-        lastRegion->offsetAllKeys(octaveOffset * 12 + noteOffset);
+    if (octaveOffset_ != 0 || noteOffset_ != 0)
+        lastRegion->offsetAllKeys(octaveOffset_ * 12 + noteOffset_);
 
     if (lastRegion->lastKeyswitch)
-        lastKeyswitchLists[*lastRegion->lastKeyswitch].push_back(lastRegion.get());
+        lastKeyswitchLists_[*lastRegion->lastKeyswitch].push_back(lastRegion.get());
 
     if (lastRegion->lastKeyswitchRange) {
         auto& range = *lastRegion->lastKeyswitchRange;
         for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
-            lastKeyswitchLists[note].push_back(lastRegion.get());
+            lastKeyswitchLists_[note].push_back(lastRegion.get());
     }
 
     if (lastRegion->upKeyswitch)
-        upKeyswitchLists[*lastRegion->upKeyswitch].push_back(lastRegion.get());
+        upKeyswitchLists_[*lastRegion->upKeyswitch].push_back(lastRegion.get());
 
     if (lastRegion->downKeyswitch)
-        downKeyswitchLists[*lastRegion->downKeyswitch].push_back(lastRegion.get());
+        downKeyswitchLists_[*lastRegion->downKeyswitch].push_back(lastRegion.get());
 
     if (lastRegion->previousKeyswitch)
-        previousKeyswitchLists.push_back(lastRegion.get());
+        previousKeyswitchLists_.push_back(lastRegion.get());
 
     if (lastRegion->defaultSwitch)
-        currentSwitch = *lastRegion->defaultSwitch;
+        currentSwitch_ = *lastRegion->defaultSwitch;
 
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
-    if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices)
-        setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+    if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices) {
+        voiceManager_.setGroupPolyphony(lastRegion->group, lastRegion->polyphony);
+    } else {
+        // Just check that there are enough polyphony groups
+        voiceManager_.ensureNumPolyphonyGroups(lastRegion->group);
+    }
 
-    if (currentSet != nullptr) {
-        lastRegion->parent = currentSet;
-        currentSet->addRegion(lastRegion.get());
+    if (currentSet_ != nullptr) {
+        lastRegion->parent = currentSet_;
+        currentSet_->addRegion(lastRegion.get());
     }
 
     // Adapt the size of the delayed releases to avoid allocating later on
     lastRegion->delayedReleases.reserve(lastRegion->keyRange.length());
 
-    regions.push_back(std::move(lastRegion));
+    regions_.push_back(std::move(lastRegion));
 }
 
-void sfz::Synth::clear()
+void Synth::Impl::clear()
 {
     // Clear the background queues before removing everyone
-    resources.filePool.waitForBackgroundLoading();
+    resources_.filePool.waitForBackgroundLoading();
 
-    for (auto& voice : voices)
-        voice->reset();
-    for (auto& list : lastKeyswitchLists)
+    voiceManager_.reset();
+    for (auto& list : lastKeyswitchLists_)
         list.clear();
-    for (auto& list : downKeyswitchLists)
+    for (auto& list : downKeyswitchLists_)
         list.clear();
-    for (auto& list : upKeyswitchLists)
+    for (auto& list : upKeyswitchLists_)
         list.clear();
-    for (auto& list : noteActivationLists)
+    for (auto& list : noteActivationLists_)
         list.clear();
-    for (auto& list : ccActivationLists)
+    for (auto& list : ccActivationLists_)
         list.clear();
-    previousKeyswitchLists.clear();
+    previousKeyswitchLists_.clear();
 
-    currentSet = nullptr;
-    sets.clear();
-    regions.clear();
-    effectBuses.clear();
-    effectBuses.emplace_back(new EffectBus);
-    effectBuses[0]->setGainToMain(1.0);
-    effectBuses[0]->setSamplesPerBlock(samplesPerBlock);
-    effectBuses[0]->setSampleRate(sampleRate);
-    effectBuses[0]->clearInputs(samplesPerBlock);
-    resources.clear();
-    numGroups = 0;
-    numMasters = 0;
-    currentSwitch = absl::nullopt;
-    defaultPath = "";
-    resources.midiState.reset();
-    resources.filePool.clear();
-    resources.filePool.setRamLoading(config::loadInRam);
-    stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
-    ccLabels.clear();
-    keyLabels.clear();
-    keyswitchLabels.clear();
-    globalOpcodes.clear();
-    masterOpcodes.clear();
-    groupOpcodes.clear();
-    unknownOpcodes.clear();
-    polyphonyGroups.clear();
-    polyphonyGroups.emplace_back();
-    polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
-    modificationTime = fs::file_time_type::min();
+    currentSet_ = nullptr;
+    sets_.clear();
+    regions_.clear();
+    effectBuses_.clear();
+    effectBuses_.emplace_back(new EffectBus);
+    effectBuses_[0]->setGainToMain(1.0);
+    effectBuses_[0]->setSamplesPerBlock(samplesPerBlock_);
+    effectBuses_[0]->setSampleRate(sampleRate_);
+    effectBuses_[0]->clearInputs(samplesPerBlock_);
+    resources_.clear();
+    numGroups_ = 0;
+    numMasters_ = 0;
+    currentSwitch_ = absl::nullopt;
+    defaultPath_ = "";
+    resources_.midiState.reset();
+    resources_.filePool.clear();
+    resources_.filePool.setRamLoading(config::loadInRam);
+    ccLabels_.clear();
+    keyLabels_.clear();
+    keyswitchLabels_.clear();
+    globalOpcodes_.clear();
+    masterOpcodes_.clear();
+    groupOpcodes_.clear();
+    unknownOpcodes_.clear();
+    modificationTime_ = fs::file_time_type::min();
 
     // set default controllers
-    fill(absl::MakeSpan(ccInitialValues), 0.0f);
-    initCc(7, 100);     // volume
-    initHdcc(10, 0.5f); // pan
-    initHdcc(11, 1.0f); // expression
+    // midistate is reset above
+    fill(absl::MakeSpan(defaultCCValues_), 0.0f);
+    setDefaultHdcc(7, normalizeCC(100));
+    setDefaultHdcc(10, 0.5f);
+    setDefaultHdcc(11, 1.0f);
 
     // set default controller labels
-    insertPairUniquely(ccLabels, 7, "Volume");
-    insertPairUniquely(ccLabels, 10, "Pan");
-    insertPairUniquely(ccLabels, 11, "Expression");
+    insertPairUniquely(ccLabels_, 7, "Volume");
+    insertPairUniquely(ccLabels_, 10, "Pan");
+    insertPairUniquely(ccLabels_, 11, "Expression");
 }
 
-void sfz::Synth::handleMasterOpcodes(const std::vector<Opcode>& members)
+void Synth::Impl::handleMasterOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeMaster);
 
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
-            ASSERT(currentSet != nullptr);
+            ASSERT(currentSet_ != nullptr);
             if (auto value = readOpcode(member.value, Default::polyphonyRange))
-                currentSet->setPolyphonyLimit(*value);
+                currentSet_->setPolyphonyLimit(*value);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, currentSwitch, Default::keyRange);
+            setValueFromOpcode(member, currentSwitch_, Default::keyRange);
             break;
         }
     }
 }
 
-void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
+void Synth::Impl::handleGlobalOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeGlobal);
 
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
-            ASSERT(currentSet != nullptr);
+            ASSERT(currentSet_ != nullptr);
             if (auto value = readOpcode(member.value, Default::polyphonyRange))
-                currentSet->setPolyphonyLimit(*value);
+                currentSet_->setPolyphonyLimit(*value);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, currentSwitch, Default::keyRange);
+            setValueFromOpcode(member, currentSwitch_, Default::keyRange);
             break;
         case hash("volume"):
             // FIXME : Probably best not to mess with this and let the host control the volume
@@ -312,7 +571,7 @@ void sfz::Synth::handleGlobalOpcodes(const std::vector<Opcode>& members)
     }
 }
 
-void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
+void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
 {
     absl::optional<unsigned> groupIdx;
     absl::optional<unsigned> maxPolyphony;
@@ -328,7 +587,7 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
             setValueFromOpcode(member, maxPolyphony, Default::polyphonyRange);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, currentSwitch, Default::keyRange);
+            setValueFromOpcode(member, currentSwitch_, Default::keyRange);
             break;
         }
     };
@@ -340,16 +599,16 @@ void sfz::Synth::handleGroupOpcodes(const std::vector<Opcode>& members, const st
         parseOpcode(member);
 
     if (groupIdx && maxPolyphony) {
-        setGroupPolyphony(*groupIdx, *maxPolyphony);
+        voiceManager_.setGroupPolyphony(*groupIdx, *maxPolyphony);
     } else if (maxPolyphony) {
-        ASSERT(currentSet != nullptr);
-        currentSet->setPolyphonyLimit(*maxPolyphony);
-    } else if (groupIdx && *groupIdx > polyphonyGroups.size()) {
-        setGroupPolyphony(*groupIdx, config::maxVoices);
+        ASSERT(currentSet_ != nullptr);
+        currentSet_->setPolyphonyLimit(*maxPolyphony);
+    } else if (groupIdx) {
+        voiceManager_.ensureNumPolyphonyGroups(*groupIdx);
     }
 }
 
-void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
+void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 {
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
@@ -359,63 +618,54 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::midi7Range);
                 if (ccValue)
-                    initCc(member.parameters.back(), *ccValue);
+                    setDefaultHdcc(member.parameters.back(), normalizeCC(*ccValue));
             }
             break;
         case hash("set_hdcc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
                 const auto ccValue = readOpcode(member.value, Default::normalizedRange);
                 if (ccValue)
-                    initHdcc(member.parameters.back(), *ccValue);
+                    setDefaultHdcc(member.parameters.back(), *ccValue);
             }
             break;
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                insertPairUniquely(ccLabels, member.parameters.back(), std::string(member.value));
+                insertPairUniquely(ccLabels_, member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
             if (member.parameters.back() <= Default::keyRange.getEnd()) {
                 const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
-                insertPairUniquely(keyLabels, noteNumber, std::string(member.value));
+                insertPairUniquely(keyLabels_, noteNumber, std::string(member.value));
             }
             break;
         case hash("default_path"):
-            defaultPath = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
-            DBG("Changing default sample path to " << defaultPath);
+            defaultPath_ = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
+            DBG("Changing default sample path to " << defaultPath_);
             break;
         case hash("note_offset"):
-            setValueFromOpcode(member, noteOffset, Default::noteOffsetRange);
+            setValueFromOpcode(member, noteOffset_, Default::noteOffsetRange);
             break;
         case hash("octave_offset"):
-            setValueFromOpcode(member, octaveOffset, Default::octaveOffsetRange);
+            setValueFromOpcode(member, octaveOffset_, Default::octaveOffsetRange);
             break;
         case hash("hint_ram_based"):
             if (member.value == "1")
-                resources.filePool.setRamLoading(true);
+                resources_.filePool.setRamLoading(true);
             else if (member.value == "0")
-                resources.filePool.setRamLoading(false);
+                resources_.filePool.setRamLoading(false);
             else
                 DBG("Unsupported value for hint_ram_based: " << member.value);
             break;
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
-                for (auto& voice : voices)
-                    voice->disablePowerFollower();
-
-                stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::First);
+                voiceManager_.setStealingAlgorithm(StealingAlgorithm::First);
                 break;
             case hash("oldest"):
-                for (auto& voice : voices)
-                    voice->disablePowerFollower();
-
-                stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::Oldest);
+                voiceManager_.setStealingAlgorithm(StealingAlgorithm::Oldest);
                 break;
             case hash("envelope_and_age"):
-                for (auto& voice : voices)
-                    voice->enablePowerFollower();
-
-                stealer.setStealingAlgorithm(VoiceStealing::StealingAlgorithm::EnvelopeAndAge);
+                voiceManager_.setStealingAlgorithm(StealingAlgorithm::EnvelopeAndAge);
                 break;
             default:
                 DBG("Unsupported value for hint_stealing: " << member.value);
@@ -428,19 +678,19 @@ void sfz::Synth::handleControlOpcodes(const std::vector<Opcode>& members)
     }
 }
 
-void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
+void Synth::Impl::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
 {
     absl::string_view busName = "main";
 
     auto getOrCreateBus = [this](unsigned index) -> EffectBus& {
-        if (index + 1 > effectBuses.size())
-            effectBuses.resize(index + 1);
-        EffectBusPtr& bus = effectBuses[index];
+        if (index + 1 > effectBuses_.size())
+            effectBuses_.resize(index + 1);
+        EffectBusPtr& bus = effectBuses_[index];
         if (!bus) {
             bus.reset(new EffectBus);
-            bus->setSampleRate(sampleRate);
-            bus->setSamplesPerBlock(samplesPerBlock);
-            bus->clearInputs(samplesPerBlock);
+            bus->setSampleRate(sampleRate_);
+            bus->setSamplesPerBlock(samplesPerBlock_);
+            bus->clearInputs(samplesPerBlock_);
         }
         return *bus;
     };
@@ -491,61 +741,63 @@ void sfz::Synth::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
 
     // create the effect and add it
     EffectBus& bus = getOrCreateBus(busIndex);
-    auto fx = effectFactory.makeEffect(members);
-    fx->setSampleRate(sampleRate);
-    fx->setSamplesPerBlock(samplesPerBlock);
+    auto fx = effectFactory_.makeEffect(members);
+    fx->setSampleRate(sampleRate_);
+    fx->setSamplesPerBlock(samplesPerBlock_);
     bus.addEffect(std::move(fx));
 }
 
-bool sfz::Synth::loadSfzFile(const fs::path& file)
+bool Synth::loadSfzFile(const fs::path& file)
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    clear();
+    impl.clear();
 
     std::error_code ec;
     fs::path realFile = fs::canonical(file, ec);
 
-    parser.parseFile(ec ? file : realFile);
-    if (parser.getErrorCount() > 0)
+    impl.parser_.parseFile(ec ? file : realFile);
+    if (impl.parser_.getErrorCount() > 0)
         return false;
 
-    if (regions.empty())
+    if (impl.regions_.empty())
         return false;
 
-    finalizeSfzLoad();
+    impl.finalizeSfzLoad();
 
     return true;
 }
 
-bool sfz::Synth::loadSfzString(const fs::path& path, absl::string_view text)
+bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    clear();
+    impl.clear();
 
-    parser.parseString(path, text);
-    if (parser.getErrorCount() > 0)
+    impl.parser_.parseString(path, text);
+    if (impl.parser_.getErrorCount() > 0)
         return false;
 
-    if (regions.empty())
+    if (impl.regions_.empty())
         return false;
 
-    finalizeSfzLoad();
+    impl.finalizeSfzLoad();
 
     return true;
 }
 
-void sfz::Synth::finalizeSfzLoad()
+void Synth::Impl::finalizeSfzLoad()
 {
-    resources.filePool.setRootDirectory(parser.originalDirectory());
+    resources_.filePool.setRootDirectory(parser_.originalDirectory());
 
     size_t currentRegionIndex = 0;
-    size_t currentRegionCount = regions.size();
+    size_t currentRegionCount = regions_.size();
 
     auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
-        DBG("Removing the region with sample " << *regions[currentRegionIndex]->sampleId);
-        regions.erase(regions.begin() + currentRegionIndex);
+        DBG("Removing the region with sample " << *regions_[currentRegionIndex]->sampleId);
+        regions_.erase(regions_.begin() + currentRegionIndex);
         --currentRegionCount;
     };
 
@@ -559,17 +811,17 @@ void sfz::Synth::finalizeSfzLoad()
     FlexEGs::clearUnusedCurves();
 
     while (currentRegionIndex < currentRegionCount) {
-        auto region = regions[currentRegionIndex].get();
+        auto region = regions_[currentRegionIndex].get();
 
         absl::optional<FileInformation> fileInformation;
 
         if (!region->isGenerator()) {
-            if (!resources.filePool.checkSampleId(*region->sampleId)) {
+            if (!resources_.filePool.checkSampleId(*region->sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            fileInformation = resources.filePool.getFileInformation(*region->sampleId);
+            fileInformation = resources_.filePool.getFileInformation(*region->sampleId);
             if (!fileInformation) {
                 removeCurrentRegion();
                 continue;
@@ -613,56 +865,50 @@ void sfz::Synth::finalizeSfzLoad()
                 return Default::offsetCCRange.clamp(sumOffsetCC);
             }();
 
-            if (!resources.filePool.preloadFile(*region->sampleId, maxOffset))
+            if (!resources_.filePool.preloadFile(*region->sampleId, maxOffset))
                 removeCurrentRegion();
         }
         else if (!region->isGenerator()) {
-            if (!resources.wavePool.createFileWave(resources.filePool, std::string(region->sampleId->filename()))) {
+            if (!resources_.wavePool.createFileWave(resources_.filePool, std::string(region->sampleId->filename()))) {
                 removeCurrentRegion();
                 continue;
             }
         }
 
         if (region->lastKeyswitch) {
-            if (currentSwitch)
-                region->keySwitched = (*currentSwitch == *region->lastKeyswitch);
+            if (currentSwitch_)
+                region->keySwitched = (*currentSwitch_ == *region->lastKeyswitch);
 
             if (region->keyswitchLabel)
-                insertPairUniquely(keyswitchLabels, *region->lastKeyswitch, *region->keyswitchLabel);
+                insertPairUniquely(keyswitchLabels_, *region->lastKeyswitch, *region->keyswitchLabel);
         }
 
         if (region->lastKeyswitchRange) {
             auto& range = *region->lastKeyswitchRange;
-            if (currentSwitch)
-                region->keySwitched = range.containsWithEnd(*currentSwitch);
+            if (currentSwitch_)
+                region->keySwitched = range.containsWithEnd(*currentSwitch_);
 
             if (region->keyswitchLabel) {
                 for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
-                    insertPairUniquely(keyswitchLabels, note, *region->keyswitchLabel);
+                    insertPairUniquely(keyswitchLabels_, note, *region->keyswitchLabel);
             }
-        }
-
-        // Some regions had group number but no "group-level" opcodes handled the polyphony
-        while (polyphonyGroups.size() <= region->group) {
-            polyphonyGroups.emplace_back();
-            polyphonyGroups.back().setPolyphonyLimit(config::maxVoices);
         }
 
         for (auto note = 0; note < 128; note++) {
             if (region->keyRange.containsWithEnd(note))
-                noteActivationLists[note].push_back(region);
+                noteActivationLists_[note].push_back(region);
         }
 
         for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc)
                 || region->ccConditions.contains(cc)
                 || (cc == region->sustainCC && region->trigger == SfzTrigger::release))
-                ccActivationLists[cc].push_back(region);
+                ccActivationLists_[cc].push_back(region);
         }
 
         // Defaults
         for (int cc = 0; cc < config::numCCs; cc++) {
-            region->registerCC(cc, resources.midiState.getCCValue(cc));
+            region->registerCC(cc, resources_.midiState.getCCValue(cc));
         }
 
 
@@ -696,12 +942,12 @@ void sfz::Synth::finalizeSfzLoad()
 
         ++currentRegionIndex;
     }
-    DBG("Removing " << (regions.size() - currentRegionCount) << " out of " << regions.size() << " regions");
-    regions.resize(currentRegionCount);
+    DBG("Removing " << (regions_.size() - currentRegionCount) << " out of " << regions_.size() << " regions");
+    regions_.resize(currentRegionCount);
 
     // collect all CCs used in regions, with matrix not yet connected
     std::bitset<config::numCCs> usedCCs;
-    for (const RegionPtr& regionPtr : regions) {
+    for (const RegionPtr& regionPtr : regions_) {
         const Region& region = *regionPtr;
         updateUsedCCsFromRegion(usedCCs, region);
         for (const Region::Connection& connection : region.connections) {
@@ -710,7 +956,7 @@ void sfz::Synth::finalizeSfzLoad()
         }
     }
     // connect default controllers, except if these CC are already used
-    for (const RegionPtr& regionPtr : regions) {
+    for (const RegionPtr& regionPtr : regions_) {
         Region& region = *regionPtr;
         constexpr unsigned defaultSmoothness = 10;
         if (!usedCCs.test(7)) {
@@ -730,128 +976,113 @@ void sfz::Synth::finalizeSfzLoad()
         }
     }
 
-    modificationTime = checkModificationTime();
+    modificationTime_ = checkModificationTime();
 
-    settingsPerVoice.maxFilters = maxFilters;
-    settingsPerVoice.maxEQs = maxEQs;
-    settingsPerVoice.maxLFOs = maxLFOs;
-    settingsPerVoice.maxFlexEGs = maxFlexEGs;
-    settingsPerVoice.havePitchEG = havePitchEG;
-    settingsPerVoice.haveFilterEG = haveFilterEG;
+    settingsPerVoice_.maxFilters = maxFilters;
+    settingsPerVoice_.maxEQs = maxEQs;
+    settingsPerVoice_.maxLFOs = maxLFOs;
+    settingsPerVoice_.maxFlexEGs = maxFlexEGs;
+    settingsPerVoice_.havePitchEG = havePitchEG;
+    settingsPerVoice_.haveFilterEG = haveFilterEG;
 
     applySettingsPerVoice();
 
     setupModMatrix();
 }
 
-bool sfz::Synth::loadScalaFile(const fs::path& path)
+bool Synth::loadScalaFile(const fs::path& path)
 {
-    return resources.tuning.loadScalaFile(path);
+    Impl& impl = *impl_;
+    return impl.resources_.tuning.loadScalaFile(path);
 }
 
-bool sfz::Synth::loadScalaString(const std::string& text)
+bool Synth::loadScalaString(const std::string& text)
 {
-    return resources.tuning.loadScalaString(text);
+    Impl& impl = *impl_;
+    return impl.resources_.tuning.loadScalaString(text);
 }
 
-void sfz::Synth::setScalaRootKey(int rootKey)
+void Synth::setScalaRootKey(int rootKey)
 {
-    resources.tuning.setScalaRootKey(rootKey);
+    Impl& impl = *impl_;
+    impl.resources_.tuning.setScalaRootKey(rootKey);
 }
 
-int sfz::Synth::getScalaRootKey() const
+int Synth::getScalaRootKey() const
 {
-    return resources.tuning.getScalaRootKey();
+    Impl& impl = *impl_;
+    return impl.resources_.tuning.getScalaRootKey();
 }
 
-void sfz::Synth::setTuningFrequency(float frequency)
+void Synth::setTuningFrequency(float frequency)
 {
-    resources.tuning.setTuningFrequency(frequency);
+    Impl& impl = *impl_;
+    impl.resources_.tuning.setTuningFrequency(frequency);
 }
 
-float sfz::Synth::getTuningFrequency() const
+float Synth::getTuningFrequency() const
 {
-    return resources.tuning.getTuningFrequency();
+    Impl& impl = *impl_;
+    return impl.resources_.tuning.getTuningFrequency();
 }
 
-void sfz::Synth::loadStretchTuningByRatio(float ratio)
+void Synth::loadStretchTuningByRatio(float ratio)
 {
+    Impl& impl = *impl_;
     SFIZZ_CHECK(ratio >= 0.0f && ratio <= 1.0f);
     ratio = clamp(ratio, 0.0f, 1.0f);
 
     if (ratio > 0.0f)
-        resources.stretch = StretchTuning::createRailsbackFromRatio(ratio);
+        impl.resources_.stretch = StretchTuning::createRailsbackFromRatio(ratio);
     else
-        resources.stretch.reset();
+        impl.resources_.stretch.reset();
 }
 
-sfz::Voice* sfz::Synth::findFreeVoice() noexcept
+int Synth::getNumActiveVoices() const noexcept
 {
-    auto freeVoice = absl::c_find_if(voices, [](const std::unique_ptr<Voice>& voice) {
-        return voice->isFree();
-    });
-
-    if (freeVoice != voices.end())
-        return freeVoice->get();
-
-    DBG("Engine hard polyphony reached");
-    return {};
+    Impl& impl = *impl_;
+    return static_cast<int>(impl.voiceManager_.getNumActiveVoices());
 }
 
-int sfz::Synth::getNumActiveVoices(bool recompute) const noexcept
+void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
-    if (!recompute)
-        return activeVoices;
-
-    int active { 0 };
-    for (auto& voice: voices) {
-        if (!voice->isFree())
-            active++;
-    }
-
-    return active;
-}
-
-void sfz::Synth::garbageCollect() noexcept
-{
-}
-
-void sfz::Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
-{
+    Impl& impl = *impl_;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
 
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    this->samplesPerBlock = samplesPerBlock;
-    for (auto& voice : voices)
-        voice->setSamplesPerBlock(samplesPerBlock);
+    impl.samplesPerBlock_ = samplesPerBlock;
+    for (auto& voice : impl.voiceManager_)
+        voice.setSamplesPerBlock(samplesPerBlock);
 
-    resources.setSamplesPerBlock(samplesPerBlock);
+    impl.resources_.setSamplesPerBlock(samplesPerBlock);
 
-    for (auto& bus : effectBuses) {
+    for (auto& bus : impl.effectBuses_) {
         if (bus)
             bus->setSamplesPerBlock(samplesPerBlock);
     }
 }
 
-void sfz::Synth::setSampleRate(float sampleRate) noexcept
+void Synth::setSampleRate(float sampleRate) noexcept
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    this->sampleRate = sampleRate;
-    for (auto& voice : voices)
-        voice->setSampleRate(sampleRate);
+    impl.sampleRate_ = sampleRate;
+    for (auto& voice : impl.voiceManager_)
+        voice.setSampleRate(sampleRate);
 
-    resources.setSampleRate(sampleRate);
+    impl.resources_.setSampleRate(sampleRate);
 
-    for (auto& bus : effectBuses) {
+    for (auto& bus : impl.effectBuses_) {
         if (bus)
             bus->setSampleRate(sampleRate);
     }
 }
 
-void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
+void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
+    Impl& impl = *impl_;
     ScopedFTZ ftz;
     CallbackBreakdown callbackBreakdown;
 
@@ -860,74 +1091,71 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         buffer.fill(0.0f);
     }
 
-    if (resources.synthConfig.freeWheeling)
-        resources.filePool.waitForBackgroundLoading();
+    if (impl.resources_.synthConfig.freeWheeling)
+        impl.resources_.filePool.waitForBackgroundLoading();
 
     const auto now = std::chrono::high_resolution_clock::now();
     const auto timeSinceLastCollection =
-        std::chrono::duration_cast<std::chrono::seconds>(now - lastGarbageCollection);
+        std::chrono::duration_cast<std::chrono::seconds>(now - impl.lastGarbageCollection_);
 
     if (timeSinceLastCollection.count() > config::fileClearingPeriod) {
-        lastGarbageCollection = now;
-        resources.filePool.triggerGarbageCollection();
+        impl.lastGarbageCollection_ = now;
+        impl.resources_.filePool.triggerGarbageCollection();
     }
 
-    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
     size_t numFrames = buffer.getNumFrames();
-    auto tempSpan = resources.bufferPool.getStereoBuffer(numFrames);
-    auto tempMixSpan = resources.bufferPool.getStereoBuffer(numFrames);
-    auto rampSpan = resources.bufferPool.getBuffer(numFrames);
+    auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
+    auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
+    auto rampSpan = impl.resources_.bufferPool.getBuffer(numFrames);
     if (!tempSpan || !tempMixSpan || !rampSpan) {
         DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
         return;
     }
 
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = impl.resources_.modMatrix;
     mm.beginCycle(numFrames);
 
     { // Clear effect busses
         ScopedTiming logger { callbackBreakdown.effects };
-        for (auto& bus : effectBuses) {
+        for (auto& bus : impl.effectBuses_) {
             if (bus)
                 bus->clearInputs(numFrames);
         }
     }
 
-    activeVoices = 0;
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
         tempMixSpan->fill(0.0f);
 
-        for (auto& voice : voices) {
-            if (voice->isFree())
+        for (auto& voice : impl.voiceManager_) {
+            if (voice.isFree())
                 continue;
 
-            mm.beginVoice(voice->getId(), voice->getRegion()->getId(), voice->getTriggerEvent().value);
+            mm.beginVoice(voice.getId(), voice.getRegion()->getId(), voice.getTriggerEvent().value);
 
-            activeVoices++;
-
-            const Region* region = voice->getRegion();
+            const Region* region = voice.getRegion();
             ASSERT(region != nullptr);
 
-            voice->renderBlock(*tempSpan);
-            for (size_t i = 0, n = effectBuses.size(); i < n; ++i) {
-                if (auto& bus = effectBuses[i]) {
+            voice.renderBlock(*tempSpan);
+            for (size_t i = 0, n = impl.effectBuses_.size(); i < n; ++i) {
+                if (auto& bus = impl.effectBuses_[i]) {
                     float addGain = region->getGainToEffectBus(i);
                     bus->addToInputs(*tempSpan, addGain, numFrames);
                 }
             }
-            callbackBreakdown.data += voice->getLastDataDuration();
-            callbackBreakdown.amplitude += voice->getLastAmplitudeDuration();
-            callbackBreakdown.filters += voice->getLastFilterDuration();
-            callbackBreakdown.panning += voice->getLastPanningDuration();
+            callbackBreakdown.data += voice.getLastDataDuration();
+            callbackBreakdown.amplitude += voice.getLastAmplitudeDuration();
+            callbackBreakdown.filters += voice.getLastFilterDuration();
+            callbackBreakdown.panning += voice.getLastPanningDuration();
 
             mm.endVoice();
 
-            if (voice->toBeCleanedUp())
-                voice->reset();
+            if (voice.toBeCleanedUp())
+                voice.reset();
         }
     }
 
@@ -936,7 +1164,7 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
         //    without any <effect>, the signal is just going to flow through it.
         ScopedTiming logger { callbackBreakdown.effects, ScopedTiming::Operation::addToDuration };
 
-        for (auto& bus : effectBuses) {
+        for (auto& bus : impl.effectBuses_) {
             if (bus) {
                 bus->process(numFrames);
                 bus->mixOutputsTo(buffer, *tempMixSpan, numFrames);
@@ -951,21 +1179,22 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     buffer.add(*tempMixSpan);
 
     // Apply the master volume
-    buffer.applyGain(db2mag(volume));
+    buffer.applyGain(db2mag(impl.volume_));
 
     // Perform any remaining modulators
     mm.endCycle();
 
     { // Clear events and advance midi time
-        ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-        resources.midiState.advanceTime(buffer.getNumFrames());
+        ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+        impl.resources_.midiState.advanceTime(buffer.getNumFrames());
     }
 
-    callbackBreakdown.dispatch = dispatchDuration;
-    resources.logger.logCallbackTime(callbackBreakdown, activeVoices, numFrames);
+    callbackBreakdown.dispatch = impl.dispatchDuration_;
+    impl.resources_.logger.logCallbackTime(
+        callbackBreakdown, impl.voiceManager_.getNumActiveVoices(), numFrames);
 
     // Reset the dispatch counter
-    dispatchDuration = Duration(0);
+    impl.dispatchDuration_ = Duration(0);
 
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
@@ -973,98 +1202,74 @@ void sfz::Synth::renderBlock(AudioSpan<float> buffer) noexcept
     SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 }
 
-void sfz::Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
+void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
+    Impl& impl = *impl_;
     const auto normalizedVelocity = normalizeVelocity(velocity);
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+    impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 
-    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
-    noteOnDispatch(delay, noteNumber, normalizedVelocity);
+    impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
 
-void sfz::Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
+void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     UNUSED(velocity);
+    Impl& impl = *impl_;
     const auto normalizedVelocity = normalizeVelocity(velocity);
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
-    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
-    // auto replacedVelocity = (velocity == 0 ? sfz::getNoteVelocity(noteNumber) : velocity);
-    const auto replacedVelocity = resources.midiState.getNoteVelocity(noteNumber);
+    // auto replacedVelocity = (velocity == 0 ? getNoteVelocity(noteNumber) : velocity);
+    const auto replacedVelocity = impl.resources_.midiState.getNoteVelocity(noteNumber);
 
-    for (auto& voice : voices)
-        voice->registerNoteOff(delay, noteNumber, replacedVelocity);
+    for (auto& voice : impl.voiceManager_)
+        voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
-    noteOffDispatch(delay, noteNumber, replacedVelocity);
+    impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
 }
 
-void sfz::Synth::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
 {
-    checkNotePolyphony(region, delay, triggerEvent);
-    checkRegionPolyphony(region, delay);
-    checkGroupPolyphony(region, delay);
-    checkSetPolyphony(region, delay);
-    checkEnginePolyphony(delay);
-
-    Voice* selectedVoice = findFreeVoice();
+    voiceManager_.checkPolyphony(region, delay, triggerEvent);
+    Voice* selectedVoice = voiceManager_.findFreeVoice();
     if (selectedVoice == nullptr)
         return;
 
     ASSERT(selectedVoice->isFree());
     selectedVoice->startVoice(region, delay, triggerEvent);
     ring.addVoiceToRing(selectedVoice);
-    engineSet->registerVoice(selectedVoice);
-    RegionSet::registerVoiceInHierarchy(region, selectedVoice);
-    polyphonyGroups[region->group].registerVoice(selectedVoice);
 }
 
-bool sfz::Synth::playingAttackVoice(const Region* releaseRegion) noexcept
+void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
-    const auto compatibleVoice = [releaseRegion](const Voice* v) -> bool {
-        const sfz::TriggerEvent& event = v->getTriggerEvent();
-        return (
-            !v->isFree()
-            && event.type == sfz::TriggerEventType::NoteOn
-            && releaseRegion->keyRange.containsWithEnd(event.number)
-            && releaseRegion->velocityRange.containsWithEnd(event.value)
-        );
-    };
-
-    if (absl::c_find_if(voiceViewArray, compatibleVoice) == voiceViewArray.end())
-        return false;
-    else
-        return true;
-}
-
-void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
-{
-    const auto randValue = randNoteDistribution(Random::randomGenerator);
+    const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::NoteOff, noteNumber, velocity };
 
-    for (auto& region : upKeyswitchLists[noteNumber])
+    for (auto& region : upKeyswitchLists_[noteNumber])
         region->keySwitched = true;
 
-    for (auto& region : downKeyswitchLists[noteNumber])
+    for (auto& region : downKeyswitchLists_[noteNumber])
         region->keySwitched = false;
 
-    for (auto& region : noteActivationLists[noteNumber]) {
+    for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == SfzTrigger::release && !region->rtDead && !playingAttackVoice(region))
+            if (region->trigger == SfzTrigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
                 continue;
 
             startVoice(region, delay, triggerEvent, ring);
@@ -1072,128 +1277,34 @@ void sfz::Synth::noteOffDispatch(int delay, int noteNumber, float velocity) noex
     }
 }
 
-void sfz::Synth::checkRegionPolyphony(const Region* region, int delay) noexcept
+void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
 {
-    tempPolyphonyArray.clear();
-    absl::c_copy_if(voiceViewArray,
-        std::back_inserter(tempPolyphonyArray),
-        [region](Voice* v) { return v->getRegion() == region && !v->releasedOrFree(); });
-
-    if (tempPolyphonyArray.size() >= region->polyphony) {
-        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
-        SisterVoiceRing::offAllSisters(voiceToSteal, delay);
-    }
-}
-
-void sfz::Synth::checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept
-{
-    if (!region->notePolyphony)
-        return;
-
-    unsigned notePolyphonyCounter { 0 };
-    Voice* selfMaskCandidate { nullptr };
-
-    for (Voice* voice : voiceViewArray) {
-        const sfz::TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        const bool skipVoice = (triggerEvent.type == TriggerEventType::NoteOn && voice->releasedOrFree()) || voice->isFree();
-        if (!skipVoice
-            && voice->getRegion()->group == region->group
-            && voiceTriggerEvent.number == triggerEvent.number
-            && voiceTriggerEvent.type == triggerEvent.type) {
-            notePolyphonyCounter += 1;
-            switch (region->selfMask) {
-            case SfzSelfMask::mask:
-                if (voiceTriggerEvent.value <= triggerEvent.value) {
-                    if (!selfMaskCandidate || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
-                        selfMaskCandidate = voice;
-                    }
-                }
-                break;
-            case SfzSelfMask::dontMask:
-                if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
-                    selfMaskCandidate = voice;
-                break;
-            }
-        }
-    }
-
-    if (notePolyphonyCounter >= *region->notePolyphony && selfMaskCandidate) {
-        SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
-    }
-}
-
-void sfz::Synth::checkGroupPolyphony(const Region* region, int delay) noexcept
-{
-    const auto& activeVoices = polyphonyGroups[region->group].getActiveVoices();
-    tempPolyphonyArray.clear();
-    absl::c_copy_if(activeVoices,
-        std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
-
-    if (tempPolyphonyArray.size() >= polyphonyGroups[region->group].getPolyphonyLimit()) {
-        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
-        SisterVoiceRing::offAllSisters(voiceToSteal, delay);
-    }
-}
-
-void sfz::Synth::checkSetPolyphony(const Region* region, int delay) noexcept
-{
-    auto parent = region->parent;
-    while (parent != nullptr) {
-        const auto& activeVoices = parent->getActiveVoices();
-        tempPolyphonyArray.clear();
-        absl::c_copy_if(activeVoices,
-            std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
-
-        if (tempPolyphonyArray.size() >= parent->getPolyphonyLimit()) {
-            const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
-            SisterVoiceRing::offAllSisters(voiceToSteal, delay);
-        }
-
-        parent = parent->getParent();
-    }
-}
-
-void sfz::Synth::checkEnginePolyphony(int delay) noexcept
-{
-    auto& activeVoices = engineSet->getActiveVoices();
-
-    if (activeVoices.size() >= static_cast<size_t>(numRequiredVoices)) {
-        tempPolyphonyArray.clear();
-        absl::c_copy_if(activeVoices,
-            std::back_inserter(tempPolyphonyArray), [](Voice* v) { return !v->releasedOrFree(); });
-        const auto voiceToSteal = stealer.steal(absl::MakeSpan(tempPolyphonyArray));
-        SisterVoiceRing::offAllSisters(voiceToSteal, delay, true);
-    }
-}
-
-void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
-{
-    const auto randValue = randNoteDistribution(Random::randomGenerator);
+    const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
 
-    if (!lastKeyswitchLists[noteNumber].empty()) {
-        if (currentSwitch && *currentSwitch != noteNumber) {
-            for (auto& region : lastKeyswitchLists[*currentSwitch])
+    if (!lastKeyswitchLists_[noteNumber].empty()) {
+        if (currentSwitch_ && *currentSwitch_ != noteNumber) {
+            for (auto& region : lastKeyswitchLists_[*currentSwitch_])
                 region->keySwitched = false;
         }
-        currentSwitch = noteNumber;
+        currentSwitch_ = noteNumber;
     }
 
-    for (auto& region : lastKeyswitchLists[noteNumber])
+    for (auto& region : lastKeyswitchLists_[noteNumber])
         region->keySwitched = true;
 
-    for (auto& region : upKeyswitchLists[noteNumber])
+    for (auto& region : upKeyswitchLists_[noteNumber])
         region->keySwitched = false;
 
-    for (auto& region : downKeyswitchLists[noteNumber])
+    for (auto& region : downKeyswitchLists_[noteNumber])
         region->keySwitched = true;
 
-    for (auto& region : noteActivationLists[noteNumber]) {
+    for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            for (auto& voice : voices) {
-                if (voice->checkOffGroup(region, delay, noteNumber)) {
-                    const TriggerEvent& event = voice->getTriggerEvent();
+            for (auto& voice : voiceManager_) {
+                if (voice.checkOffGroup(region, delay, noteNumber)) {
+                    const TriggerEvent& event = voice.getTriggerEvent();
                     noteOffDispatch(delay, event.number, event.value);
                 }
             }
@@ -1202,13 +1313,13 @@ void sfz::Synth::noteOnDispatch(int delay, int noteNumber, float velocity) noexc
         }
     }
 
-    for (auto& region : previousKeyswitchLists)
+    for (auto& region : previousKeyswitchLists_)
         region->previousKeySwitched = (*region->previousKeyswitch == noteNumber);
 }
 
-void sfz::Synth::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead && !playingAttackVoice(region)) {
+    if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
         region->delayedReleases.clear();
         return;
     }
@@ -1222,17 +1333,17 @@ void sfz::Synth::startDelayedReleaseVoices(Region* region, int delay, SisterVoic
 }
 
 
-void sfz::Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
+void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
     const auto normalizedCC = normalizeCC(ccValue);
     hdcc(delay, ccNumber, normalizedCC);
 }
 
-void sfz::Synth::ccDispatch(int delay, int ccNumber, float value) noexcept
+void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
 {
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
-    for (auto& region : ccActivationLists[ccNumber]) {
+    for (auto& region : ccActivationLists_[ccNumber]) {
         if (ccNumber == region->sustainCC)
             startDelayedReleaseVoices(region, delay, ring);
 
@@ -1241,125 +1352,140 @@ void sfz::Synth::ccDispatch(int delay, int ccNumber, float value) noexcept
     }
 }
 
-void sfz::Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
+void Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.ccEvent(delay, ccNumber, normValue);
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+    impl.resources_.midiState.ccEvent(delay, ccNumber, normValue);
 
-    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
     if (ccNumber == config::resetCC) {
-        resetAllControllers(delay);
+        impl.resetAllControllers(delay);
         return;
     }
 
     if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
-        for (auto& voice : voices)
-            voice->reset();
-        resources.midiState.allNotesOff(delay);
+        for (auto& voice : impl.voiceManager_)
+            voice.reset();
+        impl.resources_.midiState.allNotesOff(delay);
         return;
     }
 
-    for (auto& voice : voices)
-        voice->registerCC(delay, ccNumber, normValue);
+    for (auto& voice : impl.voiceManager_)
+        voice.registerCC(delay, ccNumber, normValue);
 
-    ccDispatch(delay, ccNumber, normValue);
+    impl.ccDispatch(delay, ccNumber, normValue);
 }
 
-void sfz::Synth::initCc(int ccNumber, uint8_t ccValue) noexcept
-{
-    const float normValue = normalizeCC(ccValue);
-    initHdcc(ccNumber, normValue);
-}
-
-void sfz::Synth::initHdcc(int ccNumber, float normValue) noexcept
+void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
 {
     ASSERT(ccNumber >= 0);
     ASSERT(ccNumber < config::numCCs);
-    ccInitialValues[ccNumber] = normValue;
-    resources.midiState.ccEvent(0, ccNumber, normValue);
+    defaultCCValues_[ccNumber] = value;
+    resources_.midiState.ccEvent(0, ccNumber, value);
 }
 
-float sfz::Synth::getHdccInit(int ccNumber)
+float Synth::getHdcc(int ccNumber)
 {
     ASSERT(ccNumber >= 0);
     ASSERT(ccNumber < config::numCCs);
-    return ccInitialValues[ccNumber];
+    Impl& impl = *impl_;
+    return impl.resources_.midiState.getCCValue(ccNumber);
 }
 
-void sfz::Synth::pitchWheel(int delay, int pitch) noexcept
+float Synth::getDefaultHdcc(int ccNumber)
+{
+    ASSERT(ccNumber >= 0);
+    ASSERT(ccNumber < config::numCCs);
+    Impl& impl = *impl_;
+    return impl.defaultCCValues_[ccNumber];
+}
+
+void Synth::pitchWheel(int delay, int pitch) noexcept
 {
     ASSERT(pitch <= 8192);
     ASSERT(pitch >= -8192);
+    Impl& impl = *impl_;
     const auto normalizedPitch = normalizeBend(float(pitch));
 
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
-    resources.midiState.pitchBendEvent(delay, normalizedPitch);
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+    impl.resources_.midiState.pitchBendEvent(delay, normalizedPitch);
 
-    for (auto& region : regions) {
+    for (auto& region : impl.regions_) {
         region->registerPitchWheel(normalizedPitch);
     }
 
-    for (auto& voice : voices) {
-        voice->registerPitchWheel(delay, normalizedPitch);
+    for (auto& voice : impl.voiceManager_) {
+        voice.registerPitchWheel(delay, normalizedPitch);
     }
 }
-void sfz::Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
+void Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
 {
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 }
-void sfz::Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
+void Synth::tempo(int /* delay */, float /* secondsPerQuarter */) noexcept
 {
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 }
-void sfz::Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
+void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
 {
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     (void)delay;
     (void)beatsPerBar;
     (void)beatUnit;
 }
-void sfz::Synth::timePosition(int delay, int bar, float barBeat)
+void Synth::timePosition(int delay, int bar, float barBeat)
 {
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     (void)delay;
     (void)bar;
     (void)barBeat;
 }
-void sfz::Synth::playbackState(int delay, int playbackState)
+void Synth::playbackState(int delay, int playbackState)
 {
-    ScopedTiming logger { dispatchDuration, ScopedTiming::Operation::addToDuration };
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     (void)delay;
     (void)playbackState;
 }
 
-int sfz::Synth::getNumRegions() const noexcept
+int Synth::getNumRegions() const noexcept
 {
-    return static_cast<int>(regions.size());
+    Impl& impl = *impl_;
+    return static_cast<int>(impl.regions_.size());
 }
-int sfz::Synth::getNumGroups() const noexcept
+int Synth::getNumGroups() const noexcept
 {
-    return numGroups;
+    Impl& impl = *impl_;
+    return impl.numGroups_;
 }
-int sfz::Synth::getNumMasters() const noexcept
+int Synth::getNumMasters() const noexcept
 {
-    return numMasters;
+    Impl& impl = *impl_;
+    return impl.numMasters_;
 }
-int sfz::Synth::getNumCurves() const noexcept
+int Synth::getNumCurves() const noexcept
 {
-    return static_cast<int>(resources.curves.getNumCurves());
+    Impl& impl = *impl_;
+    return static_cast<int>(impl.resources_.curves.getNumCurves());
 }
 
-std::string sfz::Synth::exportMidnam(absl::string_view model) const
+std::string Synth::exportMidnam(absl::string_view model) const
 {
+    Impl& impl = *impl_;
     pugi::xml_document doc;
     absl::string_view manufacturer = config::midnamManufacturer;
 
@@ -1421,7 +1547,7 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
 
         pugi::xml_node cns = device.append_child("ControlNameList");
         cns.append_attribute("Name").set_value("Controls");
-        for (const auto& pair : ccLabels) {
+        for (const auto& pair : impl.ccLabels_) {
             anonymousCCs.set(pair.first, false);
             if (pair.first < 128) {
                 pugi::xml_node cn = cns.append_child("Control");
@@ -1444,12 +1570,12 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     {
         pugi::xml_node nnl = device.append_child("NoteNameList");
         nnl.append_attribute("Name").set_value("Notes");
-        for (const auto& pair : keyswitchLabels) {
+        for (const auto& pair : impl.keyswitchLabels_) {
             pugi::xml_node nn = nnl.append_child("Note");
             nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             nn.append_attribute("Name").set_value(pair.second.c_str());
         }
-        for (const auto& pair : keyLabels) {
+        for (const auto& pair : impl.keyLabels_) {
             pugi::xml_node nn = nnl.append_child("Note");
             nn.append_attribute("Number").set_value(std::to_string(pair.first).c_str());
             nn.append_attribute("Name").set_value(pair.second.c_str());
@@ -1461,29 +1587,34 @@ std::string sfz::Synth::exportMidnam(absl::string_view model) const
     return std::move(writer.str());
 }
 
-const sfz::Region* sfz::Synth::getRegionView(int idx) const noexcept
+const Region* Synth::getRegionView(int idx) const noexcept
 {
-    return (size_t)idx < regions.size() ? regions[idx].get() : nullptr;
+    Impl& impl = *impl_;
+    return (size_t)idx < impl.regions_.size() ? impl.regions_[idx].get() : nullptr;
 }
 
-const sfz::EffectBus* sfz::Synth::getEffectBusView(int idx) const noexcept
+const EffectBus* Synth::getEffectBusView(int idx) const noexcept
 {
-    return (size_t)idx < effectBuses.size() ? effectBuses[idx].get() : nullptr;
+    Impl& impl = *impl_;
+    return (size_t)idx < impl.effectBuses_.size() ? impl.effectBuses_[idx].get() : nullptr;
 }
 
-const sfz::RegionSet* sfz::Synth::getRegionSetView(int idx) const noexcept
+const RegionSet* Synth::getRegionSetView(int idx) const noexcept
 {
-    return (size_t)idx < sets.size() ? sets[idx].get() : nullptr;
+    Impl& impl = *impl_;
+    return (size_t)idx < impl.sets_.size() ? impl.sets_[idx].get() : nullptr;
 }
 
-const sfz::PolyphonyGroup* sfz::Synth::getPolyphonyGroupView(int idx) const noexcept
+const PolyphonyGroup* Synth::getPolyphonyGroupView(int idx) const noexcept
 {
-    return (size_t)idx < polyphonyGroups.size() ? &polyphonyGroups[idx] : nullptr;
+    Impl& impl = *impl_;
+    return impl.voiceManager_.getPolyphonyGroupView(idx);
 }
 
-const sfz::Region* sfz::Synth::getRegionById(NumericId<Region> id) const noexcept
+const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
 {
-    const size_t size = regions.size();
+    Impl& impl = *impl_;
+    const size_t size = impl.regions_.size();
 
     if (size == 0 || !id.valid())
         return nullptr;
@@ -1492,72 +1623,61 @@ const sfz::Region* sfz::Synth::getRegionById(NumericId<Region> id) const noexcep
     size_t index = static_cast<size_t>(id.number());
     index = std::min(index, size - 1);
 
-    while (index > 0 && regions[index]->getId().number() > id.number())
+    while (index > 0 && impl.regions_[index]->getId().number() > id.number())
         --index;
 
-    return (regions[index]->getId() == id) ? regions[index].get() : nullptr;
+    return (impl.regions_[index]->getId() == id) ? impl.regions_[index].get() : nullptr;
 }
 
-const sfz::Voice* sfz::Synth::getVoiceById(NumericId<Voice> id) const noexcept
+const Voice* Synth::getVoiceView(int idx) const noexcept
 {
-    const size_t size = voices.size();
-
-    if (size == 0 || !id.valid())
-        return nullptr;
-
-    // search a sequence of ordered identifiers with potential gaps
-    size_t index = static_cast<size_t>(id.number());
-    index = std::min(index, size - 1);
-
-    while (index > 0 && voices[index]->getId().number() > id.number())
-        --index;
-
-    return (voices[index]->getId() == id) ? voices[index].get() : nullptr;
+    Impl& impl = *impl_;
+    return idx < impl.numVoices_ ? &impl.voiceManager_[idx] : nullptr;
 }
 
-const sfz::Voice* sfz::Synth::getVoiceView(int idx) const noexcept
+unsigned Synth::getNumPolyphonyGroups() const noexcept
 {
-    return (size_t)idx < voices.size() ? voices[idx].get() : nullptr;
+    Impl& impl = *impl_;
+    return impl.voiceManager_.getNumPolyphonyGroups();
 }
 
-unsigned sfz::Synth::getNumPolyphonyGroups() const noexcept
+const std::vector<std::string>& Synth::getUnknownOpcodes() const noexcept
 {
-    return polyphonyGroups.size();
+    Impl& impl = *impl_;
+    return impl.unknownOpcodes_;
+}
+size_t Synth::getNumPreloadedSamples() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.resources_.filePool.getNumPreloadedSamples();
 }
 
-const std::vector<std::string>& sfz::Synth::getUnknownOpcodes() const noexcept
+int Synth::getSampleQuality(ProcessMode mode)
 {
-    return unknownOpcodes;
-}
-size_t sfz::Synth::getNumPreloadedSamples() const noexcept
-{
-    return resources.filePool.getNumPreloadedSamples();
-}
-
-int sfz::Synth::getSampleQuality(ProcessMode mode)
-{
+    Impl& impl = *impl_;
     switch (mode) {
     case ProcessLive:
-        return resources.synthConfig.liveSampleQuality;
+        return impl.resources_.synthConfig.liveSampleQuality;
     case ProcessFreewheeling:
-        return resources.synthConfig.freeWheelingSampleQuality;
+        return impl.resources_.synthConfig.freeWheelingSampleQuality;
     default:
         SFIZZ_CHECK(false);
         return 0;
     }
 }
 
-void sfz::Synth::setSampleQuality(ProcessMode mode, int quality)
+void Synth::setSampleQuality(ProcessMode mode, int quality)
 {
     SFIZZ_CHECK(quality >= 1 && quality <= 10);
+    Impl& impl = *impl_;
     quality = clamp(quality, 1, 10);
 
     switch (mode) {
     case ProcessLive:
-        resources.synthConfig.liveSampleQuality = quality;
+        impl.resources_.synthConfig.liveSampleQuality = quality;
         break;
     case ProcessFreewheeling:
-        resources.synthConfig.freeWheelingSampleQuality = quality;
+        impl.resources_.synthConfig.freeWheelingSampleQuality = quality;
         break;
     default:
         SFIZZ_CHECK(false);
@@ -1565,93 +1685,70 @@ void sfz::Synth::setSampleQuality(ProcessMode mode, int quality)
     }
 }
 
-float sfz::Synth::getVolume() const noexcept
+float Synth::getVolume() const noexcept
 {
-    return volume;
+    Impl& impl = *impl_;
+    return impl.volume_;
 }
-void sfz::Synth::setVolume(float volume) noexcept
+void Synth::setVolume(float volume) noexcept
 {
-    this->volume = Default::volumeRange.clamp(volume);
-}
-
-int sfz::Synth::getNumVoices() const noexcept
-{
-    return numRequiredVoices;
+    Impl& impl = *impl_;
+    impl.volume_ = Default::volumeRange.clamp(volume);
 }
 
-void sfz::Synth::setNumVoices(int numVoices) noexcept
+int Synth::getNumVoices() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.numVoices_;
+}
+
+void Synth::setNumVoices(int numVoices) noexcept
 {
     ASSERT(numVoices > 0);
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
-    if (numVoices == this->numRequiredVoices)
+    if (numVoices == impl.numVoices_)
         return;
 
-    resetVoices(numVoices);
+    impl.resetVoices(numVoices);
 }
 
-void sfz::Synth::resetVoices(int numVoices)
+void Synth::Impl::resetVoices(int numVoices)
 {
-    numActualVoices =
-        static_cast<int>(config::overflowVoiceMultiplier * numVoices);
-    numRequiredVoices = numVoices;
+    numVoices_ = numVoices;
 
-    for (auto& set : sets)
+    for (auto& set : sets_)
         set->removeAllVoices();
-    engineSet->removeAllVoices();
-    engineSet->setPolyphonyLimit(numRequiredVoices);
 
-    voices.clear();
-    voices.reserve(numActualVoices);
+    voiceManager_.requireNumVoices(numVoices_, resources_);
 
-    voiceViewArray.clear();
-    voiceViewArray.reserve(numActualVoices);
-
-    tempPolyphonyArray.clear();
-    tempPolyphonyArray.reserve(numActualVoices);
-
-    for (int i = 0; i < numActualVoices; ++i) {
-        auto voice = absl::make_unique<Voice>(i, resources);
-        voice->setStateListener(this);
-        voiceViewArray.push_back(voice.get());
-        voices.emplace_back(std::move(voice));
-    }
-
-    for (auto& voice : voices) {
-        voice->setSampleRate(this->sampleRate);
-        voice->setSamplesPerBlock(this->samplesPerBlock);
+    for (auto& voice : voiceManager_) {
+        voice.setSampleRate(this->sampleRate_);
+        voice.setSamplesPerBlock(this->samplesPerBlock_);
     }
 
     applySettingsPerVoice();
 }
 
-void sfz::Synth::applySettingsPerVoice()
+void Synth::Impl::applySettingsPerVoice()
 {
-    for (auto& voice : voices) {
-        voice->setMaxFiltersPerVoice(settingsPerVoice.maxFilters);
-        voice->setMaxEQsPerVoice(settingsPerVoice.maxEQs);
-        voice->setMaxLFOsPerVoice(settingsPerVoice.maxLFOs);
-        voice->setMaxFlexEGsPerVoice(settingsPerVoice.maxFlexEGs);
-        voice->setPitchEGEnabledPerVoice(settingsPerVoice.havePitchEG);
-        voice->setFilterEGEnabledPerVoice(settingsPerVoice.haveFilterEG);
-    }
-
-    if (stealer.getStealingAlgorithm() ==
-        VoiceStealing::StealingAlgorithm::EnvelopeAndAge) {
-        for (auto& voice : voices)
-            voice->enablePowerFollower();
-    } else {
-        for (auto& voice : voices)
-            voice->disablePowerFollower();
+    for (auto& voice : voiceManager_) {
+        voice.setMaxFiltersPerVoice(settingsPerVoice_.maxFilters);
+        voice.setMaxEQsPerVoice(settingsPerVoice_.maxEQs);
+        voice.setMaxLFOsPerVoice(settingsPerVoice_.maxLFOs);
+        voice.setMaxFlexEGsPerVoice(settingsPerVoice_.maxFlexEGs);
+        voice.setPitchEGEnabledPerVoice(settingsPerVoice_.havePitchEG);
+        voice.setFilterEGEnabledPerVoice(settingsPerVoice_.haveFilterEG);
     }
 }
 
-void sfz::Synth::setupModMatrix()
+void Synth::Impl::setupModMatrix()
 {
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = resources_.modMatrix;
 
-    for (const RegionPtr& region : regions) {
+    for (const RegionPtr& region : regions_) {
         for (const Region::Connection& conn : region->connections) {
             ModGenerator* gen = nullptr;
 
@@ -1668,18 +1765,18 @@ void sfz::Synth::setupModMatrix()
 
             switch (sourceKey.id()) {
             case ModId::Controller:
-                gen = genController.get();
+                gen = genController_.get();
                 break;
             case ModId::LFO:
-                gen = genLFO.get();
+                gen = genLFO_.get();
                 break;
             case ModId::Envelope:
-                gen = genFlexEnvelope.get();
+                gen = genFlexEnvelope_.get();
                 break;
             case ModId::AmpEG:
             case ModId::PitchEG:
             case ModId::FilEG:
-                gen = genADSREnvelope.get();
+                gen = genADSREnvelope_.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");
@@ -1715,84 +1812,88 @@ void sfz::Synth::setupModMatrix()
     mm.init();
 }
 
-void sfz::Synth::setOversamplingFactor(sfz::Oversampling factor) noexcept
+void Synth::setOversamplingFactor(Oversampling factor) noexcept
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
-    if (factor == oversamplingFactor)
+    if (factor == impl.oversamplingFactor_)
         return;
 
-    for (auto& voice : voices) {
+    for (auto& voice : impl.voiceManager_)
+        voice.reset();
 
-        voice->reset();
-    }
-
-    resources.filePool.emptyFileLoadingQueues();
-    resources.filePool.setOversamplingFactor(factor);
-    oversamplingFactor = factor;
+    impl.resources_.filePool.emptyFileLoadingQueues();
+    impl.resources_.filePool.setOversamplingFactor(factor);
+    impl.oversamplingFactor_ = factor;
 }
 
-sfz::Oversampling sfz::Synth::getOversamplingFactor() const noexcept
+Oversampling Synth::getOversamplingFactor() const noexcept
 {
-    return oversamplingFactor;
+    Impl& impl = *impl_;
+    return impl.oversamplingFactor_;
 }
 
-void sfz::Synth::setPreloadSize(uint32_t preloadSize) noexcept
+void Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
-    if (preloadSize == resources.filePool.getPreloadSize())
+    if (preloadSize == impl.resources_.filePool.getPreloadSize())
         return;
 
-    resources.filePool.setPreloadSize(preloadSize);
+    impl.resources_.filePool.setPreloadSize(preloadSize);
 }
 
-uint32_t sfz::Synth::getPreloadSize() const noexcept
+uint32_t Synth::getPreloadSize() const noexcept
 {
-    return resources.filePool.getPreloadSize();
+    Impl& impl = *impl_;
+    return impl.resources_.filePool.getPreloadSize();
 }
 
-void sfz::Synth::enableFreeWheeling() noexcept
+void Synth::enableFreeWheeling() noexcept
 {
-    if (!resources.synthConfig.freeWheeling) {
-        resources.synthConfig.freeWheeling = true;
+    Impl& impl = *impl_;
+    if (!impl.resources_.synthConfig.freeWheeling) {
+        impl.resources_.synthConfig.freeWheeling = true;
         DBG("Enabling freewheeling");
     }
 }
-void sfz::Synth::disableFreeWheeling() noexcept
+void Synth::disableFreeWheeling() noexcept
 {
-    if (resources.synthConfig.freeWheeling) {
-        resources.synthConfig.freeWheeling = false;
+    Impl& impl = *impl_;
+    if (impl.resources_.synthConfig.freeWheeling) {
+        impl.resources_.synthConfig.freeWheeling = false;
         DBG("Disabling freewheeling");
     }
 }
 
-void sfz::Synth::resetAllControllers(int delay) noexcept
+void Synth::Impl::resetAllControllers(int delay) noexcept
 {
-    resources.midiState.resetAllControllers(delay);
+    resources_.midiState.resetAllControllers(delay);
 
-    const std::unique_lock<SpinMutex> lock { callbackGuard, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard_, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
-    for (auto& voice : voices) {
-        voice->registerPitchWheel(delay, 0);
+    for (auto& voice : voiceManager_) {
+        voice.registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)
-            voice->registerCC(delay, cc, 0.0f);
+            voice.registerCC(delay, cc, 0.0f);
     }
 
-    for (auto& region : regions) {
+    for (auto& region : regions_) {
         for (int cc = 0; cc < config::numCCs; ++cc)
             region->registerCC(cc, 0.0f);
     }
 }
 
-fs::file_time_type sfz::Synth::checkModificationTime()
+fs::file_time_type Synth::Impl::checkModificationTime()
 {
-    auto returnedTime = modificationTime;
-    for (const auto& file : parser.getIncludedFiles()) {
+    auto returnedTime = modificationTime_;
+    for (const auto& file : parser_.getIncludedFiles()) {
         std::error_code ec;
         const auto fileTime = fs::last_write_time(file, ec);
         if (!ec && returnedTime < fileTime)
@@ -1801,59 +1902,58 @@ fs::file_time_type sfz::Synth::checkModificationTime()
     return returnedTime;
 }
 
-bool sfz::Synth::shouldReloadFile()
+bool Synth::shouldReloadFile()
 {
-    return (checkModificationTime() > modificationTime);
+    Impl& impl = *impl_;
+    return (impl.checkModificationTime() > impl.modificationTime_);
 }
 
-bool sfz::Synth::shouldReloadScala()
+bool Synth::shouldReloadScala()
 {
-    return resources.tuning.shouldReloadScala();
+    Impl& impl = *impl_;
+    return impl.resources_.tuning.shouldReloadScala();
 }
 
-void sfz::Synth::enableLogging(absl::string_view prefix) noexcept
+void Synth::enableLogging(absl::string_view prefix) noexcept
 {
-    resources.logger.enableLogging(prefix);
+    Impl& impl = *impl_;
+    impl.resources_.logger.enableLogging(prefix);
 }
 
-void sfz::Synth::setLoggingPrefix(absl::string_view prefix) noexcept
+void Synth::setLoggingPrefix(absl::string_view prefix) noexcept
 {
-    resources.logger.setPrefix(prefix);
+    Impl& impl = *impl_;
+    impl.resources_.logger.setPrefix(prefix);
 }
 
-void sfz::Synth::disableLogging() noexcept
+void Synth::disableLogging() noexcept
 {
-    resources.logger.disableLogging();
+    Impl& impl = *impl_;
+    impl.resources_.logger.disableLogging();
 }
 
-void sfz::Synth::allSoundOff() noexcept
+void Synth::allSoundOff() noexcept
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard };
+    Impl& impl = *impl_;
+    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
-    for (auto& voice : voices)
-        voice->reset();
-    for (auto& effectBus : effectBuses)
+    for (auto& voice : impl.voiceManager_)
+        voice.reset();
+    for (auto& effectBus : impl.effectBuses_)
         effectBus->clear();
 }
 
-void sfz::Synth::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
+std::bitset<config::numCCs> Synth::getUsedCCs() const noexcept
 {
-    while (polyphonyGroups.size() <= groupIdx)
-        polyphonyGroups.emplace_back();
-
-    polyphonyGroups[groupIdx].setPolyphonyLimit(polyphony);
-}
-
-std::bitset<sfz::config::numCCs> sfz::Synth::getUsedCCs() const noexcept
-{
-    std::bitset<sfz::config::numCCs> used;
-    for (const RegionPtr& region : regions)
-        updateUsedCCsFromRegion(used, *region);
-    updateUsedCCsFromModulations(used, resources.modMatrix);
+    Impl& impl = *impl_;
+    std::bitset<config::numCCs> used;
+    for (const Impl::RegionPtr& region : impl.regions_)
+        impl.updateUsedCCsFromRegion(used, *region);
+    impl.updateUsedCCsFromModulations(used, impl.resources_.modMatrix);
     return used;
 }
 
-void sfz::Synth::updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedCCs, const Region& region)
+void Synth::Impl::updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region)
 {
     updateUsedCCsFromCCMap(usedCCs, region.offsetCC);
     updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
@@ -1887,11 +1987,11 @@ void sfz::Synth::updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedC
     updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCOutRange);
 }
 
-void sfz::Synth::updateUsedCCsFromModulations(std::bitset<sfz::config::numCCs>& usedCCs, const ModMatrix& mm)
+void Synth::Impl::updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm)
 {
     class CCSourceCollector : public ModMatrix::KeyVisitor {
     public:
-        explicit CCSourceCollector(std::bitset<sfz::config::numCCs>& used)
+        explicit CCSourceCollector(std::bitset<config::numCCs>& used)
             : used_(used)
         {
         }
@@ -1902,9 +2002,47 @@ void sfz::Synth::updateUsedCCsFromModulations(std::bitset<sfz::config::numCCs>& 
                 used_.set(key.parameters().cc);
             return true;
         }
-        std::bitset<sfz::config::numCCs>& used_;
+        std::bitset<config::numCCs>& used_;
     };
 
     CCSourceCollector vtor(usedCCs);
     mm.visitSources(vtor);
 }
+
+Parser& Synth::getParser() noexcept
+{
+    Impl& impl = *impl_;
+    return impl.parser_;
+}
+
+const Parser& Synth::getParser() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.parser_;
+}
+
+const std::vector<NoteNamePair>& Synth::getKeyLabels() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.keyLabels_;
+}
+
+const std::vector<CCNamePair>& Synth::getCCLabels() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.ccLabels_;
+}
+
+Resources& Synth::getResources() noexcept
+{
+    Impl& impl = *impl_;
+    return impl.resources_;
+}
+
+const Resources& Synth::getResources() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.resources_;
+}
+
+} // namespace sfz

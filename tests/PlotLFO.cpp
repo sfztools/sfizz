@@ -17,6 +17,7 @@
 
 #include "sfizz/Synth.h"
 #include "sfizz/LFO.h"
+#include "sfizz/Region.h"
 #include "sfizz/LFODescription.h"
 #include "sfizz/MathHelpers.h"
 #include "cxxopts.hpp"

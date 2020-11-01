@@ -6,18 +6,18 @@
 
 #pragma once
 #include "../ModGenerator.h"
-
+#include "../../VoiceManager.h"
 namespace sfz {
 class Synth;
 
 class LFOSource : public ModGenerator {
 public:
-    explicit LFOSource(Synth &synth);
+    explicit LFOSource(VoiceManager &manager);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
-    Synth* synth_ = nullptr;
+    VoiceManager& voiceManager_;
 };
 
 } // namespace sfz

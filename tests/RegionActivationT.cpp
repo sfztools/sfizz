@@ -186,14 +186,14 @@ TEST_CASE("[Keyswitches] Normal lastKeyswitch range")
         <region> sw_last=41 key=62 sample=*saw
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 41, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
 }
 
 TEST_CASE("[Keyswitches] No lastKeyswitch range")
@@ -204,19 +204,19 @@ TEST_CASE("[Keyswitches] No lastKeyswitch range")
         <region> sw_last=41 key=62 sample=*saw
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 41, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
 }
 
 TEST_CASE("[Keyswitches] Out of lastKeyswitch range")
@@ -228,14 +228,14 @@ TEST_CASE("[Keyswitches] Out of lastKeyswitch range")
         <region> sw_last=43 key=62 sample=*saw
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 43, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
 }
 
 TEST_CASE("[Keyswitches] Overlapping key and lastKeyswitch range")
@@ -247,19 +247,19 @@ TEST_CASE("[Keyswitches] Overlapping key and lastKeyswitch range")
         <region> sw_last=41 key=62 sample=*saw
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 41, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
     synth.noteOn(0, 43, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
     synth.noteOn(0, 62, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 3);
+    REQUIRE(synth.getNumActiveVoices() == 3);
 }
 
 TEST_CASE("[Keyswitches] sw_down, in range")
@@ -270,13 +270,13 @@ TEST_CASE("[Keyswitches] sw_down, in range")
         <region> sw_down=40 key=60 sample=*sine
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOff(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
 }
 
 TEST_CASE("[Keyswitches] sw_down, out of range")
@@ -287,13 +287,13 @@ TEST_CASE("[Keyswitches] sw_down, out of range")
         <region> sw_down=40 key=60 sample=*sine
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOff(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
 }
 
 TEST_CASE("[Keyswitches] sw_up, in range")
@@ -304,13 +304,13 @@ TEST_CASE("[Keyswitches] sw_up, in range")
         <region> sw_up=40 key=60 sample=*sine
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOff(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
 }
 
 TEST_CASE("[Keyswitches] sw_up, out of range")
@@ -321,13 +321,13 @@ TEST_CASE("[Keyswitches] sw_up, out of range")
         <region> sw_up=40 key=60 sample=*sine
     )");
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOn(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     synth.noteOff(0, 40, 64);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
 }
 
 TEST_CASE("[Keyswitches] sw_default")
@@ -387,18 +387,18 @@ TEST_CASE("[Keyswitches] sw_previous in range")
     // the test assumes that sw_previous regions are disabled by default
     REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 51, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 51, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 2);
+    REQUIRE(synth.getNumActiveVoices() == 2);
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
 }
 
@@ -411,15 +411,15 @@ TEST_CASE("[Keyswitches] sw_previous out of range")
     )");
     REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 51, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 0);
+    REQUIRE(synth.getNumActiveVoices() == 0);
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 51, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(!synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 60, 64);
-    REQUIRE(synth.getNumActiveVoices(true) == 1);
+    REQUIRE(synth.getNumActiveVoices() == 1);
     REQUIRE(synth.getRegionView(0)->isSwitchedOn());
     synth.noteOn(0, 61, 64);
     REQUIRE(!synth.getRegionView(0)->isSwitchedOn());

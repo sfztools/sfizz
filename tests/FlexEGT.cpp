@@ -394,25 +394,25 @@ TEST_CASE("[FlexEG] Free-running flex AmpEG (no sustain)")
     synth.noteOn(0, 60, 0);
     sfz::AudioBuffer<float> buffer { 2, 256 };
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     synth.noteOn(0, 62, 0);
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 
     synth.noteOn(0, 64, 0);
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     for (unsigned i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.noteOff(0, 64, 0); // the release stage is 0 duration
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices(true) == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 0 );
 }

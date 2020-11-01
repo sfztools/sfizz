@@ -7,6 +7,7 @@
 #include "DataHelpers.h"
 #include "sfizz/Synth.h"
 #include "sfizz/LFO.h"
+#include "sfizz/Region.h"
 #include "catch2/catch.hpp"
 
 static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRate, size_t numFrames)

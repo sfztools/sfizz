@@ -14,17 +14,16 @@
 
 namespace sfz {
 
-LFOSource::LFOSource(Synth &synth)
-    : synth_(&synth)
+LFOSource::LFOSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
 }
 
 void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Synth& synth = *synth_;
     unsigned lfoIndex = sourceKey.parameters().N;
 
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -43,10 +42,9 @@ void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned
 
 void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
-    Synth& synth = *synth_;
     const unsigned lfoIndex = sourceKey.parameters().N;
 
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         fill(buffer, 0.0f);

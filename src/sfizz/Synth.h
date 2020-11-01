@@ -5,31 +5,26 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "Resources.h"
-#include "Parser.h"
-#include "Voice.h"
-#include "Region.h"
-#include "RegionSet.h"
-#include "PolyphonyGroup.h"
-#include "Effects.h"
-#include "LeakDetector.h"
-#include "MidiState.h"
 #include "AudioSpan.h"
+#include "LeakDetector.h"
+#include "Resources.h"
+#include "utility/NumericId.h"
 #include "parser/Parser.h"
-#include "VoiceStealing.h"
-#include "utility/SpinMutex.h"
-#include <absl/types/span.h>
-#include <absl/types/optional.h>
+#include <ghc/fs_std.hpp>
 #include <absl/strings/string_view.h>
-#include <random>
-#include <set>
+#include <memory>
+#include <bitset>
+#include <string>
 #include <vector>
 
 namespace sfz {
-class ControllerSource;
-class LFOSource;
-class FlexEnvelopeSource;
-class ADSREnvelopeSource;
+
+// Forward declarations for the introspection methods
+class RegionSet;
+class PolyphonyGroup;
+class EffectBus;
+class Region;
+class Voice;
 
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point
@@ -68,11 +63,10 @@ class ADSREnvelopeSource;
  * The jack_client.cpp file contains examples of the most classical usage of the
  * synth and can be used as a reference.
  */
-class Synth final : public Voice::StateListener, public Parser::Listener {
+class Synth final {
 public:
     /**
-     * @brief Construct a new Synth object with no voices. If you want sound
-     * you will need to call setNumVoices() before playing.
+     * @brief Construct a new Synth object with a default number of voices.
      *
      */
     Synth();
@@ -80,13 +74,10 @@ public:
      * @brief Destructor
      */
     ~Synth();
-    /**
-     * @brief Construct a new Synth object with a specified number of voices.
-     *
-     * @param numVoices
-     */
-    Synth(int numVoices);
-
+    Synth(const Synth& other) = delete;
+    Synth& operator=(const Synth& other) = delete;
+    Synth(Synth&& other) = delete;
+    Synth& operator=(Synth&& other) = delete;
     /**
      * @brief Processing mode
      */
@@ -122,11 +113,6 @@ public:
      *         @true otherwise.
      */
     bool loadSfzString(const fs::path& path, absl::string_view text);
-    /**
-     * @brief Finalize SFZ loading, following a successful execution of the
-     *        parsing step.
-     */
-    void finalizeSfzLoad();
     /**
      * @brief Sets the tuning from a Scala file loaded from the file system.
      *
@@ -209,24 +195,6 @@ public:
      */
     const Region* getRegionById(NumericId<Region> id) const noexcept;
     /**
-     * @brief Find the voice which is associated with the given identifier.
-     *
-     * @param id
-     * @return const Voice*
-     */
-    const Voice* getVoiceById(NumericId<Voice> id) const noexcept;
-    /**
-     * @brief Find the voice which is associated with the given identifier.
-     *
-     * @param id
-     * @return Voice*
-     */
-    Voice* getVoiceById(NumericId<Voice> id) noexcept
-    {
-        return const_cast<Voice*>(
-            const_cast<const Synth*>(this)->getVoiceById(id));
-    }
-    /**
      * @brief Get a raw view into a specific region. This is mostly used
      * for testing.
      *
@@ -245,6 +213,7 @@ public:
     /**
      * @brief Get a raw view into a specific effect bus. This is mostly used
      * for testing.
+     * You'll need to include "Effects.h" to resolve the forward declaration.
      *
      * @param idx
      * @return const EffectBus*
@@ -253,6 +222,7 @@ public:
     /**
      * @brief Get a raw view into a specific set of regions. This is mostly used
      * for testing.
+     * You'll need to include "RegionSet.h" to resolve the forward declaration.
      *
      * @param idx
      * @return const RegionSet*
@@ -261,6 +231,7 @@ public:
     /**
      * @brief Get a raw view into a specific polyphony group. This is mostly used
      * for testing.
+     * You'll need to include "PolyphonyGroup.h" to resolve the forward declaration.
      *
      * @param idx
      * @return const PolyphonyGroup*
@@ -370,29 +341,20 @@ public:
      * @param normValue the normalized cc value, in domain 0 to 1
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
-private:
     /**
-     * @brief Set the initial value of a controller and send it to the synth
+     * @brief Get the current value of a controller under the current instrument
      *
      * @param ccNumber the cc number
-     * @param ccValue the cc value
+     * @return the current value
      */
-    void initCc(int ccNumber, uint8_t ccValue) noexcept;
+    float getHdcc(int ccNumber);
     /**
-     * @brief Set the initial value of a controller and send it to the synth
+     * @brief Get the default value of a controller under the current instrument
      *
      * @param ccNumber the cc number
-     * @param normValue the normalized cc value, in domain 0 to 1
+     * @return the default value
      */
-    void initHdcc(int ccNumber, float normValue) noexcept;
-public:
-    /**
-     * @brief Get the initial value of a controller under the current instrument
-     *
-     * @param ccNumber the cc number
-     * @return the initial value
-     */
-    float getHdccInit(int ccNumber);
+    float getDefaultHdcc(int ccNumber);
    /**
      * @brief Send a pitch bend event to the synth
      *
@@ -458,7 +420,7 @@ public:
      *
      * @return int
      */
-    int getNumActiveVoices(bool recompute = false) const noexcept;
+    int getNumActiveVoices() const noexcept;
     /**
      * @brief Get the total number of voices in the synth (the polyphony)
      *
@@ -475,15 +437,6 @@ public:
      * @param numVoices
      */
     void setNumVoices(int numVoices) noexcept;
-    /**
-     * @brief Trigger a garbage collection, which removes the samples that are
-     * loaded by the FilePool after being requested by the voices. This does
-     * not concern the preloaded samples, only the samples loaded to be played
-     * fully. This function is run regularly in a background thread so normally
-     * you should not need to call it explicitely.
-     *
-     */
-    void garbageCollect() noexcept;
 
     /**
      * @brief Set the oversampling factor to a new value.
@@ -551,8 +504,8 @@ public:
      */
     void disableFreeWheeling() noexcept;
 
-    Resources& getResources() noexcept { return resources; }
-    const Resources& getResources() const noexcept { return resources; }
+    Resources& getResources() noexcept;
+    const Resources& getResources() const noexcept;
 
     /**
      * @brief Check if the SFZ should be reloaded.
@@ -604,26 +557,26 @@ public:
      *
      * @return     A reference to the parser.
      */
-    Parser& getParser() noexcept { return parser; }
+    Parser& getParser() noexcept;
     /**
      * @brief      Get the parser.
      *
      * @return     A reference to the parser.
      */
-    const Parser& getParser() const noexcept { return parser; }
+    const Parser& getParser() const noexcept;
 
     /**
      * @brief Get the key labels, if any
      *
      * @return const std::vector<NoteNamePair>&
      */
-    const std::vector<NoteNamePair>& getKeyLabels() const noexcept { return keyLabels; }
+    const std::vector<NoteNamePair>& getKeyLabels() const noexcept;
     /**
      * @brief Get the CC labels, if any
      *
      * @return const std::vector<NoteNamePair>&
      */
-    const std::vector<CCNamePair>& getCCLabels() const noexcept { return ccLabels; }
+    const std::vector<CCNamePair>& getCCLabels() const noexcept;
 
     /**
      * @brief Get the used CCs
@@ -632,332 +585,9 @@ public:
      */
     std::bitset<config::numCCs> getUsedCCs() const noexcept;
 
-protected:
-    /**
-     * @brief The voice callback which is called during a change of state.
-     */
-    void onVoiceStateChanged(NumericId<Voice> idNumber, Voice::State state) override;
-
-protected:
-    /**
-     * @brief The parser callback; this is called by the parent object each time
-     * a new region, group, master, global, curve or control set of opcodes
-     * appears in the parser
-     *
-     * @param header the header for the set of opcodes
-     * @param members the opcode members
-     */
-    void onParseFullBlock(const std::string& header, const std::vector<Opcode>& members) override;
-
-    /**
-     * @brief The parser callback when an error occurs.
-     */
-    void onParseError(const SourceRange& range, const std::string& message) override;
-
-    /**
-     * @brief The parser callback when a warning occurs.
-     */
-    void onParseWarning(const SourceRange& range, const std::string& message) override;
-
 private:
-    /**
-     * @brief change the group maximum polyphony
-     *
-     * @param groupIdx the group index
-     * @param polyphone the max polyphony
-     */
-    void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
-
-    /**
-     * @brief Reset all CCs; to be used on CC 121
-     *
-     * @param delay the delay for the controller reset
-     *
-     */
-    void resetAllControllers(int delay) noexcept;
-
-    int numGroups { 0 };
-    int numMasters { 0 };
-
-    /**
-     * @brief Remove all regions, resets all voices and clears everything
-     * to bring back the synth in its original state.
-     *
-     * The callback mutex should be taken to call this function.
-     */
-    void clear();
-
-    /**
-     * @brief Helper function to dispatch <global> opcodes
-     *
-     * @param members the opcodes of the <global> block
-     */
-    void handleGlobalOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to dispatch <master> opcodes
-     *
-     * @param members the opcodes of the <master> block
-     */
-    void handleMasterOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to dispatch <group> opcodes
-     *
-     * @param members the opcodes of the <group> block
-     */
-    void handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers);
-    /**
-     * @brief Helper function to dispatch <control> opcodes
-     *
-     * @param members the opcodes of the <control> block
-     */
-    void handleControlOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to dispatch <effect> opcodes
-     *
-     * @param members the opcodes of the <effect> block
-     */
-    void handleEffectOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to merge all the currently active opcodes
-     * as set by the successive callbacks and create a new region to store
-     * in the synth.
-     *
-     * @param regionOpcodes the opcodes that are specific to the region
-     */
-    void buildRegion(const std::vector<Opcode>& regionOpcodes);
-    /**
-     * @brief Resets and possibly changes the number of voices (polyphony) in
-     * the synth.
-     *
-     * @param numVoices
-     */
-    void resetVoices(int numVoices);
-    /**
-     * @brief Make the stored settings take effect in all the voices
-     */
-    void applySettingsPerVoice();
-
-    /**
-     * @brief Establish all connections of the modulation matrix.
-     */
-    void setupModMatrix();
-
-    /**
-     * @brief Get the modification time of all included sfz files
-     *
-     * @return fs::file_time_type
-     */
-    fs::file_time_type checkModificationTime();
-
-    /**
-     * @brief Check all regions and start voices for note on events
-     *
-     * @param delay
-     * @param noteNumber
-     * @param velocity
-     */
-    void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
-
-    /**
-     * @brief Check all regions and start voices for note off events
-     *
-     * @param delay
-     * @param noteNumber
-     * @param velocity
-     */
-    void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
-
-    /**
-     * @brief Check all regions and start voices for cc events
-     *
-     * @param delay
-     * @param ccNumber
-     * @param value
-     */
-    void ccDispatch(int delay, int ccNumber, float value) noexcept;
-
-    template<class T>
-    static void updateUsedCCsFromCCMap(std::bitset<sfz::config::numCCs>& usedCCs, const CCMap<T> map)
-    {
-        for (auto& mod : map)
-            usedCCs[mod.cc] = true;
-    }
-    static void updateUsedCCsFromRegion(std::bitset<sfz::config::numCCs>& usedCCs, const Region& region);
-    static void updateUsedCCsFromModulations(std::bitset<sfz::config::numCCs>& usedCCs, const ModMatrix& mm);
-
-    // Opcode memory; these are used to build regions, as a new region
-    // will integrate opcodes from the group, master and global block
-    std::vector<Opcode> globalOpcodes;
-    std::vector<Opcode> masterOpcodes;
-    std::vector<Opcode> groupOpcodes;
-
-    /**
-     * @brief Find a voice that is not currently playing
-     *
-     * @return Voice*
-     */
-    Voice* findFreeVoice() noexcept;
-
-    // Names for the CC and notes as set by label_cc and label_key
-    std::vector<CCNamePair> ccLabels;
-    std::vector<NoteNamePair> keyLabels;
-    std::vector<NoteNamePair> keyswitchLabels;
-
-    // Set as sw_default if present in the file
-    absl::optional<uint8_t> currentSwitch;
-    std::vector<std::string> unknownOpcodes;
-    using RegionViewVector = std::vector<Region*>;
-    using VoiceViewVector = std::vector<Voice*>;
-    using VoicePtr = std::unique_ptr<Voice>;
-    using RegionPtr = std::unique_ptr<Region>;
-    using RegionSetPtr = std::unique_ptr<RegionSet>;
-    std::vector<RegionPtr> regions;
-    std::vector<VoicePtr> voices;
-
-    // These are more general "groups" than sfz and encapsulates the full hierarchy
-    RegionSet* currentSet { nullptr };
-    std::vector<RegionSetPtr> sets;
-    // This region set holds the engine set of voices, which tries to respect the required
-    // engine polyphony
-    RegionSetPtr engineSet;
-
-    // These are the `group=` groups where you can off voices
-    std::vector<PolyphonyGroup> polyphonyGroups;
-
-    // Views to speed up iteration over the regions and voices when events
-    // occur in the audio callback
-    VoiceViewVector tempPolyphonyArray;
-    VoiceViewVector voiceViewArray;
-    VoiceStealing stealer;
-
-    /**
-     * @brief Check the region polyphony, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkRegionPolyphony(const Region* region, int delay) noexcept;
-
-    /**
-     * @brief Check the note polyphony, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     * @param triggerEvent
-     */
-    void checkNotePolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept;
-
-    /**
-     * @brief Check the group polyphony, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkGroupPolyphony(const Region* region, int delay) noexcept;
-
-    /**
-     * @brief Check the region set polyphony at all levels, releasing voices if necessary
-     *
-     * @param region
-     * @param delay
-     */
-    void checkSetPolyphony(const Region* region, int delay) noexcept;
-
-    /**
-     * @brief Check the engine polyphony, fast releasing voices if necessary
-     *
-     * @param delay
-     */
-    void checkEnginePolyphony(int delay) noexcept;
-
-    /**
-     * @brief Start a voice for a specific region.
-     * This will do the needed polyphony checks and voice stealing.
-     *
-     * @param region
-     * @param delay
-     * @param triggerEvent
-     * @param ring
-     */
-    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
-
-    /**
-     * @brief Start all delayed release voices of the region if necessary
-     *
-     * @param region
-     * @param delay
-     * @param ring
-     */
-    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
-
-    /**
-     * @brief Check if a playing voice matches the release region
-     *
-     * @param releaseRegion
-     * @return true
-     * @return false
-     */
-    bool playingAttackVoice(const Region* releaseRegion) noexcept;
-
-    std::array<RegionViewVector, 128> lastKeyswitchLists;
-    std::array<RegionViewVector, 128> downKeyswitchLists;
-    std::array<RegionViewVector, 128> upKeyswitchLists;
-    RegionViewVector previousKeyswitchLists;
-    std::array<RegionViewVector, 128> noteActivationLists;
-    std::array<RegionViewVector, config::numCCs> ccActivationLists;
-
-    // Effect factory and buses
-    EffectFactory effectFactory;
-    typedef std::unique_ptr<EffectBus> EffectBusPtr;
-    std::vector<EffectBusPtr> effectBuses; // 0 is "main", 1-N are "fx1"-"fxN"
-
-    int samplesPerBlock { config::defaultSamplesPerBlock };
-    float sampleRate { config::defaultSampleRate };
-    float volume { Default::globalVolume };
-    int numRequiredVoices { config::numVoices };
-    int numActualVoices { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
-    int activeVoices { 0 };
-    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
-
-    // Distribution used to generate random value for the *rand opcodes
-    std::uniform_real_distribution<float> randNoteDistribution { 0, 1 };
-
-    SpinMutex callbackGuard;
-
-    // Singletons passed as references to the voices
-    Resources resources;
-
-    // Control opcodes
-    std::string defaultPath { "" };
-    int noteOffset { 0 };
-    int octaveOffset { 0 };
-
-    // Modulation source generators
-    std::unique_ptr<ControllerSource> genController;
-    std::unique_ptr<LFOSource> genLFO;
-    std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope;
-    std::unique_ptr<ADSREnvelopeSource> genADSREnvelope;
-
-    // Settings per voice
-    struct SettingsPerVoice {
-        size_t maxFilters { 0 };
-        size_t maxEQs { 0 };
-        size_t maxLFOs { 0 };
-        size_t maxFlexEGs { 0 };
-        bool havePitchEG { false };
-        bool haveFilterEG { false };
-    };
-    SettingsPerVoice settingsPerVoice;
-
-    // Controller initial values
-    std::array<float, config::numCCs> ccInitialValues;
-
-    Duration dispatchDuration { 0 };
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection;
-
-    Parser parser;
-    fs::file_time_type modificationTime { };
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 
     LEAK_DETECTOR(Synth);
 };
