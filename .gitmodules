@@ -27,3 +27,6 @@
 	path = external/st_audiofile/thirdparty/stb_vorbis
 	url = https://github.com/sfztools/stb_vorbis.git
 	shallow = true
+[submodule "external/st_audiofile/thirdparty/libaiff"]
+	path = external/st_audiofile/thirdparty/libaiff
+	url = https://github.com/sfztools/libaiff.git

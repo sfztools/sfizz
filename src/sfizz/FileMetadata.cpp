@@ -39,6 +39,18 @@ static uint32_t u32be(const uint8_t *bytes)
     return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
 }
 
+#if 0
+static uint16_t u16le(const uint8_t *bytes)
+{
+    return bytes[0] | (bytes[1] << 8);
+}
+#endif
+
+static uint16_t u16be(const uint8_t *bytes)
+{
+    return (bytes[0] << 8) | bytes[1];
+}
+
 static bool fread_u32le(FILE* stream, uint32_t& value)
 {
     uint8_t bytes[4];
@@ -57,14 +69,38 @@ static bool fread_u32be(FILE* stream, uint32_t& value)
     return true;
 }
 
+#if 0
+static bool fread_u16le(FILE* stream, uint16_t& value)
+{
+    uint8_t bytes[2];
+    if (fread(bytes, 2, 1, stream) != 1)
+        return false;
+    value = u16le(bytes);
+    return true;
+}
+#endif
+
+static bool fread_u16be(FILE* stream, uint16_t& value)
+{
+    uint8_t bytes[2];
+    if (fread(bytes, 2, 1, stream) != 1)
+        return false;
+    value = u16be(bytes);
+    return true;
+}
+
 //------------------------------------------------------------------------------
 
 struct FileMetadataReader::Impl {
     FILE_u stream_;
     std::vector<RiffChunkInfo> riffChunks_;
 
+    enum class ChunkType { None, Riff, Aiff };
+    ChunkType chunkType_ = ChunkType::None;
+
     bool openFlac();
     bool openRiff();
+    bool openAiff();
 
     bool extractClmWavetable(WavetableInfo &wt);
     bool extractSurgeWavetable(WavetableInfo &wt);
@@ -108,12 +144,21 @@ bool FileMetadataReader::open(const fs::path& path)
             close();
             return false;
         }
+        impl_->chunkType_ = Impl::ChunkType::Riff;
     }
     else if (count >= 4 && !memcmp(magic, "RIFF", 4)) {
         if (!impl_->openRiff()) {
             close();
             return false;
         }
+        impl_->chunkType_ = Impl::ChunkType::Riff;
+    }
+    else if (count >= 4 && !memcmp(magic, "FORM", 4)) {
+        if (!impl_->openAiff()) {
+            close();
+            return false;
+        }
+        impl_->chunkType_ = Impl::ChunkType::Aiff;
     }
 
     return true;
@@ -193,6 +238,46 @@ bool FileMetadataReader::Impl::openRiff()
     return true;
 }
 
+bool FileMetadataReader::Impl::openAiff()
+{
+    FILE* stream = stream_.get();
+
+    rewind(stream);
+
+    char formId[4];
+    uint32_t formSize;
+    if (fread(formId, 4, 1, stream) != 1 || memcmp(formId, "FORM", 4) ||
+        !fread_u32be(stream, formSize))
+    {
+        return false;
+    }
+
+    char aiffId[4];
+    if (fread(aiffId, 4, 1, stream) != 1 ||
+        (memcmp(aiffId, "AIFF", 4) && memcmp(aiffId, "AIFC", 4)))
+    {
+        return false;
+    }
+
+    std::vector<RiffChunkInfo>& riffChunks = riffChunks_;
+
+    char riffId[4];
+    uint32_t riffChunkSize;
+    while (fread(riffId, 4, 1, stream) == 1 && fread_u32be(stream, riffChunkSize)) {
+        RiffChunkInfo info;
+        info.index = riffChunks.size();
+        info.fileOffset = ftell(stream);
+        memcpy(info.id.data(), riffId, 4);
+        info.length = riffChunkSize;
+        riffChunks.push_back(info);
+
+        if (fseek(stream, riffChunkSize + (riffChunkSize & 1), SEEK_CUR) != 0)
+            return false;
+    }
+
+    return true;
+}
+
 size_t FileMetadataReader::riffChunkCount() const
 {
     return impl_->riffChunks_.size();
@@ -242,8 +327,22 @@ size_t FileMetadataReader::Impl::readRiffData(size_t index, void* buffer, size_t
     return fread(buffer, 1, count, stream);
 }
 
+bool FileMetadataReader::extractInstrument(InstrumentInfo& ins)
+{
+    if (extractRiffInstrument(ins))
+        return true;
+
+    if (extractAiffInstrument(ins))
+        return true;
+
+    return false;
+}
+
 bool FileMetadataReader::extractRiffInstrument(InstrumentInfo& ins)
 {
+    if (impl_->chunkType_ != Impl::ChunkType::Riff)
+        return false;
+
     const RiffChunkInfo* riff = riffChunkById(RiffChunkId{'s', 'm', 'p', 'l'});
     if (!riff)
         return false;
@@ -295,6 +394,109 @@ bool FileMetadataReader::extractRiffInstrument(InstrumentInfo& ins)
         ins.loops[i].end = extractU32(loopOffset + 0x0c) + 1;
         ins.loops[i].count = extractU32(loopOffset + 0x14);
     }
+
+    return true;
+}
+
+bool FileMetadataReader::extractAiffInstrument(InstrumentInfo& ins)
+{
+    if (impl_->chunkType_ != Impl::ChunkType::Aiff)
+        return false;
+
+    const RiffChunkInfo* instChunk = riffChunkById(RiffChunkId{'I', 'N', 'S', 'T'});
+    if (!instChunk)
+        return false;
+
+    const RiffChunkInfo* markChunk = riffChunkById(RiffChunkId{'M', 'A', 'R', 'K'});
+
+    uint8_t insData[20];
+    uint32_t length = readRiffData(instChunk->index, insData, sizeof(insData));
+    if (length != 20)
+        return false;
+
+    //
+    std::map<uint16_t, uint32_t> markers;
+    if (markChunk) {
+        FILE* stream = impl_->stream_.get();
+        if (fseek(stream, markChunk->fileOffset, SEEK_SET) != 0)
+            return false;
+
+        uint16_t numMarkers;
+        if (!fread_u16be(stream, numMarkers))
+            return false;
+
+        for (uint32_t i = 0; i < numMarkers; ++i) {
+            uint16_t id;
+            uint32_t position;
+            uint8_t size;
+            char name[256];
+
+            if (!fread_u16be(stream, id) || !fread_u32be(stream, position) || fread(&size, 1, 1, stream) != 1 || fread(name, size, 1, stream) != 1)
+                return false;
+            name[size] = '\0';
+
+            if (i + 1 < numMarkers && ((~size) & 1)) {
+                if (fseek(stream, 1, SEEK_CUR) != 0)
+                    return false;
+            }
+
+            markers[id] = position;
+        }
+    }
+
+    //
+    ins.basenote = insData[0];
+    ins.detune = insData[1];
+    ins.key_lo = insData[2];
+    ins.key_hi = insData[3];
+    ins.velocity_lo = insData[4];
+    ins.velocity_hi = insData[5];
+    ins.gain = (insData[6] << 8) | insData[7];
+
+    uint32_t loopCount = 0;
+    for (uint32_t loopIndex = 0; loopIndex < 2; ++loopIndex) {
+        const uint32_t loopOffset = 8 + loopIndex * 6;
+
+        int mode;
+        switch ((insData[loopOffset] << 8) | insData[loopOffset + 1]) {
+        default:
+            mode = LoopNone;
+            break;
+        case 1:
+            mode = LoopForward;
+            break;
+        case 2:
+            mode = LoopBackward;
+            break;
+        }
+
+        if (mode == LoopNone)
+            break;
+
+        const uint16_t startId = (insData[loopOffset + 2] << 8) | insData[loopOffset + 3];
+        const uint16_t endId = (insData[loopOffset + 4] << 8) | insData[loopOffset + 5];
+
+        //
+        uint32_t startPos = 0;
+        uint32_t endPos = 0;
+
+        auto startIt = markers.find(startId);
+        auto endIt = markers.find(endId);
+        if (startIt != markers.end())
+            startPos = startIt->second;
+        if (endIt != markers.end())
+            endPos = endIt->second;
+
+        //
+        ins.loops[loopIndex].mode = mode;
+        ins.loops[loopIndex].start = startPos;
+        ins.loops[loopIndex].end = endPos;
+        ins.loops[loopIndex].count = 0;
+
+        ++loopCount;
+    }
+
+    ins.loop_count = loopCount;
 
     return true;
 }

@@ -69,6 +69,9 @@ int st_get_type(st_audio_file* af)
     case SF_FORMAT_FLAC:
         type = st_audio_file_flac;
         break;
+    case SF_FORMAT_AIFF:
+        type = st_audio_file_aiff;
+        break;
     case SF_FORMAT_OGG:
         type = st_audio_file_ogg;
         break;

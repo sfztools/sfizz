@@ -14,11 +14,13 @@ struct st_audio_file {
     union {
         drwav *wav;
         drflac *flac;
+        AIFF_Ref aiff;
         drmp3 *mp3;
         stb_vorbis* ogg;
     };
 
     union {
+        struct { uint32_t channels; float sample_rate; uint64_t frames; } aiff;
         struct { uint64_t frames; } mp3;
         struct { uint32_t channels; float sample_rate; uint64_t frames; } ogg;
     } cache;
@@ -64,6 +66,30 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
             drflac_open_file((const char*)filename, NULL);
         if (af->flac) {
             af->type = st_audio_file_flac;
+            return af;
+        }
+    }
+
+    // Try AIFF
+    {
+        af->aiff =
+#if defined(_WIN32)
+            widepath ? AIFF_OpenFileW((const wchar_t*)filename, F_RDONLY) :
+#endif
+            AIFF_OpenFile((const char*)filename, F_RDONLY);
+        if (af->aiff) {
+            int channels;
+            double sample_rate;
+            uint64_t frames;
+            if (AIFF_GetAudioFormat(af->aiff, &frames, &channels, &sample_rate, NULL, NULL) == -1) {
+                AIFF_CloseFile(af->aiff);
+                free(af);
+                return NULL;
+            }
+            af->cache.aiff.channels = (uint32_t)channels;
+            af->cache.aiff.sample_rate = (float)sample_rate;
+            af->cache.aiff.frames = frames;
+            af->type = st_audio_file_aiff;
             return af;
         }
     }
@@ -142,6 +168,9 @@ void st_close(st_audio_file* af)
     case st_audio_file_flac:
         drflac_close(af->flac);
         break;
+    case st_audio_file_aiff:
+        AIFF_CloseFile(af->aiff);
+        break;
     case st_audio_file_ogg:
         stb_vorbis_close(af->ogg);
         break;
@@ -170,6 +199,9 @@ uint32_t st_get_channels(st_audio_file* af)
     case st_audio_file_flac:
         channels = af->flac->channels;
         break;
+    case st_audio_file_aiff:
+        channels = af->cache.aiff.channels;
+        break;
     case st_audio_file_ogg:
         channels = af->cache.ogg.channels;
         break;
@@ -191,6 +223,9 @@ float st_get_sample_rate(st_audio_file* af)
         break;
     case st_audio_file_flac:
         sample_rate = af->flac->sampleRate;
+        break;
+    case st_audio_file_aiff:
+        sample_rate = af->cache.aiff.sample_rate;
         break;
     case st_audio_file_ogg:
         sample_rate = af->cache.ogg.sample_rate;
@@ -214,6 +249,9 @@ uint64_t st_get_frame_count(st_audio_file* af)
     case st_audio_file_flac:
         frames = af->flac->totalPCMFrameCount;
         break;
+    case st_audio_file_aiff:
+        frames = af->cache.aiff.frames;
+        break;
     case st_audio_file_ogg:
         frames = af->cache.ogg.frames;
         break;
@@ -236,6 +274,9 @@ bool st_seek(st_audio_file* af, uint64_t frame)
     case st_audio_file_flac:
         success = drflac_seek_to_pcm_frame(af->flac, frame);
         break;
+    case st_audio_file_aiff:
+        success = AIFF_Seek(af->aiff, frame) != -1;
+        break;
     case st_audio_file_ogg:
         success = stb_vorbis_seek(af->ogg, (unsigned)frame) != 0;
         break;
@@ -255,6 +296,13 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
         break;
     case st_audio_file_flac:
         count = drflac_read_pcm_frames_s16(af->flac, count, buffer);
+        break;
+    case st_audio_file_aiff:
+        {
+            uint32_t channels = af->cache.aiff.channels;
+            unsigned samples = AIFF_ReadSamples16Bit(af->aiff, buffer, (unsigned)(channels * count));
+            count = ((int)samples != -1) ? (samples / channels) : 0;
+        }
         break;
     case st_audio_file_ogg:
         count = stb_vorbis_get_samples_short_interleaved(
@@ -277,6 +325,13 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
         break;
     case st_audio_file_flac:
         count = drflac_read_pcm_frames_f32(af->flac, count, buffer);
+        break;
+    case st_audio_file_aiff:
+        {
+            uint32_t channels = af->cache.aiff.channels;
+            unsigned samples = AIFF_ReadSamplesFloat(af->aiff, buffer, (unsigned)(channels * count));
+            count = ((int)samples != -1) ? (samples / channels) : 0;
+        }
         break;
     case st_audio_file_ogg:
         count = stb_vorbis_get_samples_float_interleaved(

@@ -23,6 +23,9 @@ const char* st_type_string(int type)
     case st_audio_file_flac:
         type_string = "FLAC";
         break;
+    case st_audio_file_aiff:
+        type_string = "AIFF";
+        break;
     case st_audio_file_ogg:
         type_string = "OGG";
         break;

@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
             return 1;
         }
         sfz::InstrumentInfo ins {};
-        if (!reader.extractRiffInstrument(ins)) {
+        if (!reader.extractInstrument(ins)) {
             fprintf(stderr, "Cannot get instrument\n");
             return 1;
         }

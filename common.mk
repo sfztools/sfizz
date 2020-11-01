@@ -156,6 +156,17 @@ SFIZZ_CXX_FLAGS += $(SFIZZ_SNDFILE_CXX_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
 SFIZZ_LINK_FLAGS += $(SFIZZ_SNDFILE_LINK_FLAGS)
 endif
 
+# libaiff dependency
+
+ifneq ($(SFIZZ_USE_SNDFILE),1)
+SFIZZ_SOURCES += \
+	$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff/libaiff.all.c
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
+SFIZZ_CXX_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
+endif
+
 ### Abseil dependency
 
 SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/external/abseil-cpp

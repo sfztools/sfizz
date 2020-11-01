@@ -243,7 +243,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     if (!haveInstrumentInfo) {
         // if no instrument, then try extracting from embedded RIFF chunks (flac)
         if (mdReaderOpened)
-            haveInstrumentInfo = mdReader.extractRiffInstrument(instrumentInfo);
+            haveInstrumentInfo = mdReader.extractInstrument(instrumentInfo);
     }
 
     if (mdReaderOpened) {

@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
 #define DR_WAV_IMPLEMENTATION
 #define DR_FLAC_IMPLEMENTATION
 #define DR_MP3_IMPLEMENTATION
@@ -27,3 +28,5 @@ stb_vorbis* stb_vorbis_open_filename_w(const wchar_t* filename, int* error, cons
    return NULL;
 }
 #endif
+
+#endif // !defined(ST_AUDIO_FILE_USE_SNDFILE)
