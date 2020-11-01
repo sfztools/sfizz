@@ -25,11 +25,12 @@ THE SOFTWARE.
 #ifndef CXXOPTS_HPP_INCLUDED
 #define CXXOPTS_HPP_INCLUDED
 
-#include <cstring>
 #include <cctype>
+#include <cstring>
 #include <exception>
 #include <iostream>
 #include <limits>
+#include <list>
 #include <map>
 #include <memory>
 #include <regex>
@@ -37,6 +38,7 @@ THE SOFTWARE.
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #ifdef __cpp_lib_optional
@@ -44,12 +46,18 @@ THE SOFTWARE.
 #define CXXOPTS_HAS_OPTIONAL
 #endif
 
+#if __cplusplus >= 201603L
+#define CXXOPTS_NODISCARD [[nodiscard]]
+#else
+#define CXXOPTS_NODISCARD
+#endif
+
 #ifndef CXXOPTS_VECTOR_DELIMITER
 #define CXXOPTS_VECTOR_DELIMITER ','
 #endif
 
-#define CXXOPTS__VERSION_MAJOR 2
-#define CXXOPTS__VERSION_MINOR 2
+#define CXXOPTS__VERSION_MAJOR 3
+#define CXXOPTS__VERSION_MINOR 0
 #define CXXOPTS__VERSION_PATCH 0
 
 namespace cxxopts
@@ -61,7 +69,7 @@ namespace cxxopts
     CXXOPTS__VERSION_MINOR,
     CXXOPTS__VERSION_PATCH
   };
-}
+} // namespace cxxopts
 
 //when we ask cxxopts to use Unicode, help strings are processed using ICU,
 //which results in the correct lengths being computed for strings when they
@@ -139,9 +147,9 @@ namespace cxxopts
 
   inline
   String&
-  stringAppend(String& s, int n, UChar32 c)
+  stringAppend(String& s, size_t n, UChar32 c)
   {
-    for (int i = 0; i != n; ++i)
+    for (size_t i = 0; i != n; ++i)
     {
       s.append(c);
     }
@@ -227,9 +235,9 @@ namespace cxxopts
 
   inline
   String&
-  stringAppend(String&s, String a)
+  stringAppend(String&s, const String& a)
   {
-    return s.append(std::move(a));
+    return s.append(a);
   }
 
   inline
@@ -259,7 +267,7 @@ namespace cxxopts
   {
     return s.empty();
   }
-}
+} // namespace cxxopts
 
 //ifdef CXXOPTS_USE_UNICODE
 #endif
@@ -275,8 +283,15 @@ namespace cxxopts
     const std::string LQUOTE("‘");
     const std::string RQUOTE("’");
 #endif
-  }
+  } // namespace
 
+#if defined(__GNUC__)
+// GNU GCC with -Weffc++ will issue a warning regarding the upcoming class, we want to silence it:
+// warning: base class 'class std::enable_shared_from_this<cxxopts::Value>' has accessible non-virtual destructor
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic push
+// This will be ignored under other compilers like LLVM clang.
+#endif
   class Value : public std::enable_shared_from_this<Value>
   {
     public:
@@ -320,17 +335,20 @@ namespace cxxopts
     virtual bool
     is_boolean() const = 0;
   };
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
   class OptionException : public std::exception
   {
     public:
-    OptionException(const std::string& message)
-    : m_message(message)
+    explicit OptionException(std::string  message)
+    : m_message(std::move(message))
     {
     }
 
-    virtual const char*
-    what() const noexcept
+    CXXOPTS_NODISCARD
+    const char*
+    what() const noexcept override
     {
       return m_message.c_str();
     }
@@ -343,7 +361,7 @@ namespace cxxopts
   {
     public:
 
-    OptionSpecException(const std::string& message)
+    explicit OptionSpecException(const std::string& message)
     : OptionException(message)
     {
     }
@@ -352,7 +370,7 @@ namespace cxxopts
   class OptionParseException : public OptionException
   {
     public:
-    OptionParseException(const std::string& message)
+    explicit OptionParseException(const std::string& message)
     : OptionException(message)
     {
     }
@@ -361,7 +379,7 @@ namespace cxxopts
   class option_exists_error : public OptionSpecException
   {
     public:
-    option_exists_error(const std::string& option)
+    explicit option_exists_error(const std::string& option)
     : OptionSpecException("Option " + LQUOTE + option + RQUOTE + " already exists")
     {
     }
@@ -370,7 +388,7 @@ namespace cxxopts
   class invalid_option_format_error : public OptionSpecException
   {
     public:
-    invalid_option_format_error(const std::string& format)
+    explicit invalid_option_format_error(const std::string& format)
     : OptionSpecException("Invalid option format " + LQUOTE + format + RQUOTE)
     {
     }
@@ -378,7 +396,7 @@ namespace cxxopts
 
   class option_syntax_exception : public OptionParseException {
     public:
-    option_syntax_exception(const std::string& text)
+    explicit option_syntax_exception(const std::string& text)
     : OptionParseException("Argument " + LQUOTE + text + RQUOTE +
         " starts with a - but has incorrect syntax")
     {
@@ -388,7 +406,7 @@ namespace cxxopts
   class option_not_exists_exception : public OptionParseException
   {
     public:
-    option_not_exists_exception(const std::string& option)
+    explicit option_not_exists_exception(const std::string& option)
     : OptionParseException("Option " + LQUOTE + option + RQUOTE + " does not exist")
     {
     }
@@ -397,7 +415,7 @@ namespace cxxopts
   class missing_argument_exception : public OptionParseException
   {
     public:
-    missing_argument_exception(const std::string& option)
+    explicit missing_argument_exception(const std::string& option)
     : OptionParseException(
         "Option " + LQUOTE + option + RQUOTE + " is missing an argument"
       )
@@ -408,7 +426,7 @@ namespace cxxopts
   class option_requires_argument_exception : public OptionParseException
   {
     public:
-    option_requires_argument_exception(const std::string& option)
+    explicit option_requires_argument_exception(const std::string& option)
     : OptionParseException(
         "Option " + LQUOTE + option + RQUOTE + " requires an argument"
       )
@@ -436,8 +454,20 @@ namespace cxxopts
   class option_not_present_exception : public OptionParseException
   {
     public:
-    option_not_present_exception(const std::string& option)
+    explicit option_not_present_exception(const std::string& option)
     : OptionParseException("Option " + LQUOTE + option + RQUOTE + " not present")
+    {
+    }
+  };
+
+  class option_has_no_value_exception : public OptionException
+  {
+    public:
+    explicit option_has_no_value_exception(const std::string& option)
+    : OptionException(
+        option.empty() ?
+        ("Option " + LQUOTE + option + RQUOTE + " has no value") :
+        "Option has no value")
     {
     }
   };
@@ -445,7 +475,7 @@ namespace cxxopts
   class argument_incorrect_type : public OptionParseException
   {
     public:
-    argument_incorrect_type
+    explicit argument_incorrect_type
     (
       const std::string& arg
     )
@@ -459,13 +489,32 @@ namespace cxxopts
   class option_required_exception : public OptionParseException
   {
     public:
-    option_required_exception(const std::string& option)
+    explicit option_required_exception(const std::string& option)
     : OptionParseException(
         "Option " + LQUOTE + option + RQUOTE + " is required but not present"
       )
     {
     }
   };
+
+  template <typename T>
+  void throw_or_mimic(const std::string& text)
+  {
+    static_assert(std::is_base_of<std::exception, T>::value,
+                  "throw_or_mimic only works on std::exception and "
+                  "deriving classes");
+
+#ifndef CXXOPTS_NO_EXCEPTIONS
+    // If CXXOPTS_NO_EXCEPTIONS is not defined, just throw
+    throw T{text};
+#else
+    // Otherwise manually instantiate the exception, print what() to stderr,
+    // and exit
+    T exception{text};
+    std::cerr << exception.what() << std::endl;
+    std::exit(EXIT_FAILURE);
+#endif
+  }
 
   namespace values
   {
@@ -477,7 +526,7 @@ namespace cxxopts
         ("(t|T)(rue)?|1");
       std::basic_regex<char> falsy_pattern
         ("(f|F)(alse)?|0");
-    }
+    } // namespace
 
     namespace detail
     {
@@ -495,14 +544,14 @@ namespace cxxopts
           {
             if (u > static_cast<U>((std::numeric_limits<T>::min)()))
             {
-              throw argument_incorrect_type(text);
+              throw_or_mimic<argument_incorrect_type>(text);
             }
           }
           else
           {
             if (u > static_cast<U>((std::numeric_limits<T>::max)()))
             {
-              throw argument_incorrect_type(text);
+              throw_or_mimic<argument_incorrect_type>(text);
             }
           }
         }
@@ -522,23 +571,23 @@ namespace cxxopts
       {
         SignedCheck<T, std::numeric_limits<T>::is_signed>()(negative, value, text);
       }
-    }
+    } // namespace detail
 
     template <typename R, typename T>
-    R
-    checked_negate(T&& t, const std::string&, std::true_type)
+    void
+    checked_negate(R& r, T&& t, const std::string&, std::true_type)
     {
       // if we got to here, then `t` is a positive number that fits into
       // `R`. So to avoid MSVC C4146, we first cast it to `R`.
       // See https://github.com/jarro2783/cxxopts/issues/62 for more details.
-      return -static_cast<R>(t-1)-1;
+      r = static_cast<R>(-static_cast<R>(t-1)-1);
     }
 
     template <typename R, typename T>
-    T
-    checked_negate(T&&, const std::string& text, std::false_type)
+    void
+    checked_negate(R&, T&&, const std::string& text, std::false_type)
     {
-      throw argument_incorrect_type(text);
+      throw_or_mimic<argument_incorrect_type>(text);
     }
 
     template <typename T>
@@ -550,7 +599,7 @@ namespace cxxopts
 
       if (match.length() == 0)
       {
-        throw argument_incorrect_type(text);
+        throw_or_mimic<argument_incorrect_type>(text);
       }
 
       if (match.length(4) > 0)
@@ -587,13 +636,13 @@ namespace cxxopts
         }
         else
         {
-          throw argument_incorrect_type(text);
+          throw_or_mimic<argument_incorrect_type>(text);
         }
 
-        US next = result * base + digit;
+        const US next = static_cast<US>(result * base + digit);
         if (result > next)
         {
-          throw argument_incorrect_type(text);
+          throw_or_mimic<argument_incorrect_type>(text);
         }
 
         result = next;
@@ -603,9 +652,7 @@ namespace cxxopts
 
       if (negative)
       {
-        value = checked_negate<T>(result,
-          text,
-          std::integral_constant<bool, is_signed>());
+        checked_negate<T>(value, result, text, std::integral_constant<bool, is_signed>());
       }
       else
       {
@@ -619,7 +666,7 @@ namespace cxxopts
       std::stringstream in(text);
       in >> value;
       if (!in) {
-        throw argument_incorrect_type(text);
+        throw_or_mimic<argument_incorrect_type>(text);
       }
     }
 
@@ -699,7 +746,7 @@ namespace cxxopts
         return;
       }
 
-      throw argument_incorrect_type(text);
+      throw_or_mimic<argument_incorrect_type>(text);
     }
 
     inline
@@ -724,7 +771,7 @@ namespace cxxopts
     {
       std::stringstream in(text);
       std::string token;
-      while(in.eof() == false && std::getline(in, token, CXXOPTS_VECTOR_DELIMITER)) {
+      while(!in.eof() && std::getline(in, token, CXXOPTS_VECTOR_DELIMITER)) {
         T v;
         parse_value(token, v);
         value.emplace_back(std::move(v));
@@ -741,6 +788,17 @@ namespace cxxopts
       value = std::move(result);
     }
 #endif
+
+    inline
+    void parse_value(const std::string& text, char& c)
+    {
+      if (text.length() != 1)
+      {
+        throw_or_mimic<argument_incorrect_type>(text);
+      }
+
+      c = text[0];
+    }
 
     template <typename T>
     struct type_is_container
@@ -766,12 +824,14 @@ namespace cxxopts
       {
       }
 
-      abstract_value(T* t)
+      explicit abstract_value(T* t)
       : m_store(t)
       {
       }
 
-      virtual ~abstract_value() = default;
+      ~abstract_value() override = default;
+
+      abstract_value& operator=(const abstract_value&) = default;
 
       abstract_value(const abstract_value& rhs)
       {
@@ -792,37 +852,37 @@ namespace cxxopts
       }
 
       void
-      parse(const std::string& text) const
+      parse(const std::string& text) const override
       {
         parse_value(text, *m_store);
       }
 
       bool
-      is_container() const
+      is_container() const override
       {
         return type_is_container<T>::value;
       }
 
       void
-      parse() const
+      parse() const override
       {
         parse_value(m_default_value, *m_store);
       }
 
       bool
-      has_default() const
+      has_default() const override
       {
         return m_default;
       }
 
       bool
-      has_implicit() const
+      has_implicit() const override
       {
         return m_implicit;
       }
 
       std::shared_ptr<Value>
-      default_value(const std::string& value)
+      default_value(const std::string& value) override
       {
         m_default = true;
         m_default_value = value;
@@ -830,7 +890,7 @@ namespace cxxopts
       }
 
       std::shared_ptr<Value>
-      implicit_value(const std::string& value)
+      implicit_value(const std::string& value) override
       {
         m_implicit = true;
         m_implicit_value = value;
@@ -838,26 +898,26 @@ namespace cxxopts
       }
 
       std::shared_ptr<Value>
-      no_implicit_value()
+      no_implicit_value() override
       {
         m_implicit = false;
         return shared_from_this();
       }
 
       std::string
-      get_default_value() const
+      get_default_value() const override
       {
         return m_default_value;
       }
 
       std::string
-      get_implicit_value() const
+      get_implicit_value() const override
       {
         return m_implicit_value;
       }
 
       bool
-      is_boolean() const
+      is_boolean() const override
       {
         return std::is_same<T, bool>::value;
       }
@@ -869,21 +929,18 @@ namespace cxxopts
         {
           return *m_result;
         }
-        else
-        {
-          return *m_store;
-        }
+        return *m_store;
       }
 
       protected:
-      std::shared_ptr<T> m_result;
-      T* m_store;
+      std::shared_ptr<T> m_result{};
+      T* m_store{};
 
       bool m_default = false;
       bool m_implicit = false;
 
-      std::string m_default_value;
-      std::string m_implicit_value;
+      std::string m_default_value{};
+      std::string m_implicit_value{};
     };
 
     template <typename T>
@@ -892,8 +949,9 @@ namespace cxxopts
       public:
       using abstract_value<T>::abstract_value;
 
+      CXXOPTS_NODISCARD
       std::shared_ptr<Value>
-      clone() const
+      clone() const override
       {
         return std::make_shared<standard_value<T>>(*this);
       }
@@ -903,21 +961,21 @@ namespace cxxopts
     class standard_value<bool> : public abstract_value<bool>
     {
       public:
-      ~standard_value() = default;
+      ~standard_value() override = default;
 
       standard_value()
       {
         set_default_and_implicit();
       }
 
-      standard_value(bool* b)
+      explicit standard_value(bool* b)
       : abstract_value(b)
       {
         set_default_and_implicit();
       }
 
       std::shared_ptr<Value>
-      clone() const
+      clone() const override
       {
         return std::make_shared<standard_value<bool>>(*this);
       }
@@ -933,7 +991,7 @@ namespace cxxopts
         m_implicit_value = "true";
       }
     };
-  }
+  } // namespace values
 
   template <typename T>
   std::shared_ptr<Value>
@@ -956,17 +1014,18 @@ namespace cxxopts
     public:
     OptionDetails
     (
-      const std::string& short_,
-      const std::string& long_,
-      const String& desc,
+      std::string short_,
+      std::string long_,
+      String desc,
       std::shared_ptr<const Value> val
     )
-    : m_short(short_)
-    , m_long(long_)
-    , m_desc(desc)
-    , m_value(val)
+    : m_short(std::move(short_))
+    , m_long(std::move(long_))
+    , m_desc(std::move(desc))
+    , m_value(std::move(val))
     , m_count(0)
     {
+      m_hash = std::hash<std::string>{}(m_long + m_short);
     }
 
     OptionDetails(const OptionDetails& rhs)
@@ -978,40 +1037,54 @@ namespace cxxopts
 
     OptionDetails(OptionDetails&& rhs) = default;
 
+    CXXOPTS_NODISCARD
     const String&
     description() const
     {
       return m_desc;
     }
 
-    const Value& value() const {
+    CXXOPTS_NODISCARD
+    const Value&
+    value() const {
         return *m_value;
     }
 
+    CXXOPTS_NODISCARD
     std::shared_ptr<Value>
     make_storage() const
     {
       return m_value->clone();
     }
 
+    CXXOPTS_NODISCARD
     const std::string&
     short_name() const
     {
       return m_short;
     }
 
+    CXXOPTS_NODISCARD
     const std::string&
     long_name() const
     {
       return m_long;
     }
 
+    size_t
+    hash() const
+    {
+      return m_hash;
+    }
+
     private:
-    std::string m_short;
-    std::string m_long;
-    String m_desc;
-    std::shared_ptr<const Value> m_value;
+    std::string m_short{};
+    std::string m_long{};
+    String m_desc{};
+    std::shared_ptr<const Value> m_value{};
     int m_count;
+
+    size_t m_hash{};
   };
 
   struct HelpOptionDetails
@@ -1030,9 +1103,9 @@ namespace cxxopts
 
   struct HelpGroupDetails
   {
-    std::string name;
-    std::string description;
-    std::vector<HelpOptionDetails> options;
+    std::string name{};
+    std::string description{};
+    std::vector<HelpOptionDetails> options{};
   };
 
   class OptionValue
@@ -1041,26 +1114,38 @@ namespace cxxopts
     void
     parse
     (
-      std::shared_ptr<const OptionDetails> details,
+      const std::shared_ptr<const OptionDetails>& details,
       const std::string& text
     )
     {
       ensure_value(details);
       ++m_count;
       m_value->parse(text);
+      m_long_name = &details->long_name();
     }
 
     void
-    parse_default(std::shared_ptr<const OptionDetails> details)
+    parse_default(const std::shared_ptr<const OptionDetails>& details)
     {
       ensure_value(details);
+      m_default = true;
+      m_long_name = &details->long_name();
       m_value->parse();
     }
 
+    CXXOPTS_NODISCARD
     size_t
-    count() const
+    count() const noexcept
     {
       return m_count;
+    }
+
+    // TODO: maybe default options should count towards the number of arguments
+    CXXOPTS_NODISCARD
+    bool
+    has_default() const noexcept
+    {
+      return m_default;
     }
 
     template <typename T>
@@ -1068,7 +1153,8 @@ namespace cxxopts
     as() const
     {
       if (m_value == nullptr) {
-        throw std::domain_error("No value");
+          throw_or_mimic<option_has_no_value_exception>(
+              m_long_name == nullptr ? "" : *m_long_name);
       }
 
 #ifdef CXXOPTS_NO_RTTI
@@ -1080,7 +1166,7 @@ namespace cxxopts
 
     private:
     void
-    ensure_value(std::shared_ptr<const OptionDetails> details)
+    ensure_value(const std::shared_ptr<const OptionDetails>& details)
     {
       if (m_value == nullptr)
       {
@@ -1088,8 +1174,13 @@ namespace cxxopts
       }
     }
 
-    std::shared_ptr<Value> m_value;
+
+    const std::string* m_long_name = nullptr;
+    // Holding this pointer is safe, since OptionValue's only exist in key-value pairs,
+    // where the key has the string we point to.
+    std::shared_ptr<Value> m_value{};
     size_t m_count = 0;
+    bool m_default = false;
   };
 
   class KeyValue
@@ -1101,15 +1192,15 @@ namespace cxxopts
     {
     }
 
-    const
-    std::string&
+    CXXOPTS_NODISCARD
+    const std::string&
     key() const
     {
       return m_key;
     }
 
-    const
-    std::string&
+    CXXOPTS_NODISCARD
+    const std::string&
     value() const
     {
       return m_value;
@@ -1129,45 +1220,65 @@ namespace cxxopts
     std::string m_value;
   };
 
+  using ParsedHashMap = std::unordered_map<size_t, OptionValue>;
+  using NameHashMap = std::unordered_map<std::string, size_t>;
+
   class ParseResult
   {
     public:
 
-    ParseResult(
-      const std::shared_ptr<
-        std::unordered_map<std::string, std::shared_ptr<OptionDetails>>
-      >,
-      std::vector<std::string>,
-      bool allow_unrecognised,
-      int&, char**&);
+    ParseResult() {}
+     
+    ParseResult(const ParseResult&) = default;
+
+    ParseResult(NameHashMap&& keys, ParsedHashMap&& values, std::vector<KeyValue> sequential, std::vector<std::string>&& unmatched_args)
+    : m_keys(std::move(keys))
+    , m_values(std::move(values))
+    , m_sequential(std::move(sequential))
+    , m_unmatched(std::move(unmatched_args))
+    {
+    }
+
+    ParseResult& operator=(ParseResult&&) = default;
+    ParseResult& operator=(const ParseResult&) = default;
 
     size_t
     count(const std::string& o) const
     {
-      auto iter = m_options->find(o);
-      if (iter == m_options->end())
+      auto iter = m_keys.find(o);
+      if (iter == m_keys.end())
       {
         return 0;
       }
 
-      auto riter = m_results.find(iter->second);
+      auto viter = m_values.find(iter->second);
 
-      return riter->second.count();
+      if (viter == m_values.end())
+      {
+        return 0;
+      }
+
+      return viter->second.count();
     }
 
     const OptionValue&
     operator[](const std::string& option) const
     {
-      auto iter = m_options->find(option);
+      auto iter = m_keys.find(option);
 
-      if (iter == m_options->end())
+      if (iter == m_keys.end())
       {
-        throw option_not_present_exception(option);
+        throw_or_mimic<option_not_present_exception>(option);
       }
 
-      auto riter = m_results.find(iter->second);
+      auto viter = m_values.find(iter->second);
 
-      return riter->second;
+      if (viter == m_values.end())
+      {
+        throw_or_mimic<option_not_present_exception>(option);
+      }
+
+      return viter->second;
     }
 
     const std::vector<KeyValue>&
@@ -1176,58 +1287,104 @@ namespace cxxopts
       return m_sequential;
     }
 
+    const std::vector<std::string>&
+    unmatched() const
+    {
+      return m_unmatched;
+    }
+
     private:
+    NameHashMap m_keys{};
+    ParsedHashMap m_values{};
+    std::vector<KeyValue> m_sequential{};
+    std::vector<std::string> m_unmatched{};
+  };
 
-    void
-    parse(int& argc, char**& argv);
+  struct Option
+  {
+    Option
+    (
+      std::string opts,
+      std::string desc,
+      std::shared_ptr<const Value>  value = ::cxxopts::value<bool>(),
+      std::string arg_help = ""
+    )
+    : opts_(std::move(opts))
+    , desc_(std::move(desc))
+    , value_(std::move(value))
+    , arg_help_(std::move(arg_help))
+    {
+    }
 
-    void
-    add_to_option(const std::string& option, const std::string& arg);
+    std::string opts_;
+    std::string desc_;
+    std::shared_ptr<const Value> value_;
+    std::string arg_help_;
+  };
+
+  using OptionMap = std::unordered_map<std::string, std::shared_ptr<OptionDetails>>;
+  using PositionalList = std::vector<std::string>;
+  using PositionalListIterator = PositionalList::const_iterator;
+
+  class OptionParser
+  {
+    public:
+    OptionParser(const OptionMap& options, const PositionalList& positional, bool allow_unrecognised)
+    : m_options(options)
+    , m_positional(positional)
+    , m_allow_unrecognised(allow_unrecognised)
+    {
+    }
+
+    ParseResult
+    parse(int argc, const char* const* argv);
 
     bool
-    consume_positional(std::string a);
-
-    void
-    parse_option
-    (
-      std::shared_ptr<OptionDetails> value,
-      const std::string& name,
-      const std::string& arg = ""
-    );
-
-    void
-    parse_default(std::shared_ptr<OptionDetails> details);
+    consume_positional(const std::string& a, PositionalListIterator& next);
 
     void
     checked_parse_arg
     (
       int argc,
-      char* argv[],
+      const char* const* argv,
       int& current,
-      std::shared_ptr<OptionDetails> value,
+      const std::shared_ptr<OptionDetails>& value,
       const std::string& name
     );
 
-    const std::shared_ptr<
-      std::unordered_map<std::string, std::shared_ptr<OptionDetails>>
-    > m_options;
-    std::vector<std::string> m_positional;
-    std::vector<std::string>::iterator m_next_positional;
-    std::unordered_set<std::string> m_positional_set;
-    std::unordered_map<std::shared_ptr<OptionDetails>, OptionValue> m_results;
+    void
+    add_to_option(OptionMap::const_iterator iter, const std::string& option, const std::string& arg);
 
+    void
+    parse_option
+    (
+      const std::shared_ptr<OptionDetails>& value,
+      const std::string& name,
+      const std::string& arg = ""
+    );
+
+    void
+    parse_default(const std::shared_ptr<OptionDetails>& details);
+
+    private:
+
+    void finalise_aliases();
+
+    const OptionMap& m_options;
+    const PositionalList& m_positional;
+
+    std::vector<KeyValue> m_sequential{};
     bool m_allow_unrecognised;
 
-    std::vector<KeyValue> m_sequential;
+    ParsedHashMap m_parsed{};
+    NameHashMap m_keys{};
   };
 
   class Options
   {
-    typedef std::unordered_map<std::string, std::shared_ptr<OptionDetails>>
-      OptionMap;
     public:
 
-    Options(std::string program, std::string help_string = "")
+    explicit Options(std::string program, std::string help_string = "")
     : m_program(std::move(program))
     , m_help_string(toLocalString(std::move(help_string)))
     , m_custom_help("[OPTION...]")
@@ -1235,7 +1392,6 @@ namespace cxxopts
     , m_show_positional(false)
     , m_allow_unrecognised(false)
     , m_options(std::make_shared<OptionMap>())
-    , m_next_positional(m_positional.end())
     {
     }
 
@@ -1268,10 +1424,24 @@ namespace cxxopts
     }
 
     ParseResult
-    parse(int& argc, char**& argv);
+    parse(int argc, const char* const* argv);
 
     OptionAdder
     add_options(std::string group = "");
+
+    void
+    add_options
+    (
+      const std::string& group,
+      std::initializer_list<Option> options
+    );
+
+    void
+    add_option
+    (
+      const std::string& group,
+      const Option& option
+    );
 
     void
     add_option
@@ -1280,7 +1450,7 @@ namespace cxxopts
       const std::string& s,
       const std::string& l,
       std::string desc,
-      std::shared_ptr<const Value> value,
+      const std::shared_ptr<const Value>& value,
       std::string arg_help
     );
 
@@ -1303,7 +1473,7 @@ namespace cxxopts
     std::string
     help(const std::vector<std::string>& groups = {}) const;
 
-    const std::vector<std::string>
+    std::vector<std::string>
     groups() const;
 
     const HelpGroupDetails&
@@ -1315,7 +1485,7 @@ namespace cxxopts
     add_one_option
     (
       const std::string& option,
-      std::shared_ptr<OptionDetails> details
+      const std::shared_ptr<OptionDetails>& details
     );
 
     String
@@ -1331,20 +1501,22 @@ namespace cxxopts
     void
     generate_all_groups_help(String& result) const;
 
-    std::string m_program;
-    String m_help_string;
-    std::string m_custom_help;
-    std::string m_positional_help;
+    std::string m_program{};
+    String m_help_string{};
+    std::string m_custom_help{};
+    std::string m_positional_help{};
     bool m_show_positional;
     bool m_allow_unrecognised;
 
     std::shared_ptr<OptionMap> m_options;
-    std::vector<std::string> m_positional;
-    std::vector<std::string>::iterator m_next_positional;
-    std::unordered_set<std::string> m_positional_set;
+    std::vector<std::string> m_positional{};
+    std::unordered_set<std::string> m_positional_set{};
 
     //mapping from groups to help options
-    std::map<std::string, HelpGroupDetails> m_help;
+    std::map<std::string, HelpGroupDetails> m_help{};
+
+    std::list<OptionDetails> m_option_list{};
+    std::unordered_map<std::string, decltype(m_option_list)::iterator> m_option_map{};
   };
 
   class OptionAdder
@@ -1361,7 +1533,7 @@ namespace cxxopts
     (
       const std::string& opts,
       const std::string& desc,
-      std::shared_ptr<const Value> value
+      const std::shared_ptr<const Value>& value
         = ::cxxopts::value<bool>(),
       std::string arg_help = ""
     );
@@ -1388,26 +1560,30 @@ namespace cxxopts
       const HelpOptionDetails& o
     )
     {
-      auto& s = o.s;
-      auto& l = o.l;
+      const auto& s = o.s;
+      const auto& l = o.l;
 
       String result = "  ";
 
-      if (s.size() > 0)
+      if (!s.empty())
       {
-        result += "-" + toLocalString(s) + ",";
+        result += "-" + toLocalString(s);
+        if (!l.empty())
+        {
+          result += ",";
+        }
       }
       else
       {
         result += "   ";
       }
 
-      if (l.size() > 0)
+      if (!l.empty())
       {
         result += " --" + toLocalString(l);
       }
 
-      auto arg = o.arg_help.size() > 0 ? toLocalString(o.arg_help) : "arg";
+      auto arg = !o.arg_help.empty() ? toLocalString(o.arg_help) : "arg";
 
       if (!o.is_boolean)
       {
@@ -1436,7 +1612,14 @@ namespace cxxopts
 
       if (o.has_default && (!o.is_boolean || o.default_value != "false"))
       {
-        desc += toLocalString(" (default: " + o.default_value + ")");
+        if(!o.default_value.empty())
+        {
+          desc += toLocalString(" (default: " + o.default_value + ")");
+        }
+        else
+        {
+          desc += toLocalString(" (default: \"\")");
+        }
       }
 
       String result;
@@ -1475,6 +1658,7 @@ namespace cxxopts
             stringAppend(result, "\n");
             stringAppend(result, start, ' ');
             startLine = lastSpace + 1;
+            lastSpace = startLine;
           }
           size = 0;
         }
@@ -1491,24 +1675,21 @@ namespace cxxopts
 
       return result;
     }
-  }
+  } // namespace
 
 inline
-ParseResult::ParseResult
+void
+Options::add_options
 (
-  const std::shared_ptr<
-    std::unordered_map<std::string, std::shared_ptr<OptionDetails>>
-  > options,
-  std::vector<std::string> positional,
-  bool allow_unrecognised,
-  int& argc, char**& argv
+  const std::string &group,
+  std::initializer_list<Option> options
 )
-: m_options(options)
-, m_positional(std::move(positional))
-, m_next_positional(m_positional.begin())
-, m_allow_unrecognised(allow_unrecognised)
 {
-  parse(argc, argv);
+ OptionAdder option_adder(*this, group);
+ for (const auto &option: options)
+ {
+   option_adder(option.opts_, option.desc_, option.value_, option.arg_help_);
+ }
 }
 
 inline
@@ -1524,7 +1705,7 @@ OptionAdder::operator()
 (
   const std::string& opts,
   const std::string& desc,
-  std::shared_ptr<const Value> value,
+  const std::shared_ptr<const Value>& value,
   std::string arg_help
 )
 {
@@ -1533,7 +1714,7 @@ OptionAdder::operator()
 
   if (result.empty())
   {
-    throw invalid_option_format_error(opts);
+    throw_or_mimic<invalid_option_format_error>(opts);
   }
 
   const auto& short_match = result[2];
@@ -1541,10 +1722,10 @@ OptionAdder::operator()
 
   if (!short_match.length() && !long_match.length())
   {
-    throw invalid_option_format_error(opts);
+    throw_or_mimic<invalid_option_format_error>(opts);
   } else if (long_match.length() == 1 && short_match.length())
   {
-    throw invalid_option_format_error(opts);
+    throw_or_mimic<invalid_option_format_error>(opts);
   }
 
   auto option_names = []
@@ -1557,10 +1738,7 @@ OptionAdder::operator()
     {
       return std::make_tuple(long_.str(), short_.str());
     }
-    else
-    {
-      return std::make_tuple(short_.str(), long_.str());
-    }
+    return std::make_tuple(short_.str(), long_.str());
   }(short_match, long_match);
 
   m_options.add_option
@@ -1578,21 +1756,24 @@ OptionAdder::operator()
 
 inline
 void
-ParseResult::parse_default(std::shared_ptr<OptionDetails> details)
+OptionParser::parse_default(const std::shared_ptr<OptionDetails>& details)
 {
-  m_results[details].parse_default(details);
+  // TODO: remove the duplicate code here
+  auto& store = m_parsed[details->hash()];
+  store.parse_default(details);
 }
 
 inline
 void
-ParseResult::parse_option
+OptionParser::parse_option
 (
-  std::shared_ptr<OptionDetails> value,
+  const std::shared_ptr<OptionDetails>& value,
   const std::string& /*name*/,
   const std::string& arg
 )
 {
-  auto& result = m_results[value];
+  auto hash = value->hash();
+  auto& result = m_parsed[hash];
   result.parse(value, arg);
 
   m_sequential.emplace_back(value->long_name(), arg);
@@ -1600,12 +1781,12 @@ ParseResult::parse_option
 
 inline
 void
-ParseResult::checked_parse_arg
+OptionParser::checked_parse_arg
 (
   int argc,
-  char* argv[],
+  const char* const* argv,
   int& current,
-  std::shared_ptr<OptionDetails> value,
+  const std::shared_ptr<OptionDetails>& value,
   const std::string& name
 )
 {
@@ -1617,7 +1798,7 @@ ParseResult::checked_parse_arg
     }
     else
     {
-      throw missing_argument_exception(name);
+      throw_or_mimic<missing_argument_exception>(name);
     }
   }
   else
@@ -1636,52 +1817,36 @@ ParseResult::checked_parse_arg
 
 inline
 void
-ParseResult::add_to_option(const std::string& option, const std::string& arg)
+OptionParser::add_to_option(OptionMap::const_iterator iter, const std::string& option, const std::string& arg)
 {
-  auto iter = m_options->find(option);
-
-  if (iter == m_options->end())
-  {
-    throw option_not_exists_exception(option);
-  }
-
   parse_option(iter->second, option, arg);
 }
 
 inline
 bool
-ParseResult::consume_positional(std::string a)
+OptionParser::consume_positional(const std::string& a, PositionalListIterator& next)
 {
-  while (m_next_positional != m_positional.end())
+  while (next != m_positional.end())
   {
-    auto iter = m_options->find(*m_next_positional);
-    if (iter != m_options->end())
+    auto iter = m_options.find(*next);
+    if (iter != m_options.end())
     {
-      auto& result = m_results[iter->second];
+      auto& result = m_parsed[iter->second->hash()];
       if (!iter->second->value().is_container())
       {
         if (result.count() == 0)
         {
-          add_to_option(*m_next_positional, a);
-          ++m_next_positional;
+          add_to_option(iter, *next, a);
+          ++next;
           return true;
         }
-        else
-        {
-          ++m_next_positional;
-          continue;
-        }
+        ++next;
+        continue;
       }
-      else
-      {
-        add_to_option(*m_next_positional, a);
-        return true;
-      }
+      add_to_option(iter, *next, a);
+      return true;
     }
-    else
-    {
-      throw option_not_exists_exception(*m_next_positional);
-    }
+    throw_or_mimic<option_not_exists_exception>(*next);
   }
 
   return false;
@@ -1699,7 +1864,6 @@ void
 Options::parse_positional(std::vector<std::string> options)
 {
   m_positional = std::move(options);
-  m_next_positional = m_positional.begin();
 
   m_positional_set.insert(m_positional.begin(), m_positional.end());
 }
@@ -1708,26 +1872,26 @@ inline
 void
 Options::parse_positional(std::initializer_list<std::string> options)
 {
-  parse_positional(std::vector<std::string>(std::move(options)));
+  parse_positional(std::vector<std::string>(options));
 }
 
 inline
 ParseResult
-Options::parse(int& argc, char**& argv)
+Options::parse(int argc, const char* const* argv)
 {
-  ParseResult result(m_options, m_positional, m_allow_unrecognised, argc, argv);
-  return result;
+  OptionParser parser(*m_options, m_positional, m_allow_unrecognised);
+
+  return parser.parse(argc, argv);
 }
 
-inline
-void
-ParseResult::parse(int& argc, char**& argv)
+inline ParseResult
+OptionParser::parse(int argc, const char* const* argv)
 {
   int current = 1;
-
-  int nextKeep = 1;
-
   bool consume_remaining = false;
+  PositionalListIterator next_positional = m_positional.begin();
+
+  std::vector<std::string> unmatched;
 
   while (current != argc)
   {
@@ -1748,19 +1912,18 @@ ParseResult::parse(int& argc, char**& argv)
       // but if it starts with a `-`, then it's an error
       if (argv[current][0] == '-' && argv[current][1] != '\0') {
         if (!m_allow_unrecognised) {
-          throw option_syntax_exception(argv[current]);
+          throw_or_mimic<option_syntax_exception>(argv[current]);
         }
       }
 
       //if true is returned here then it was consumed, otherwise it is
       //ignored
-      if (consume_positional(argv[current]))
+      if (consume_positional(argv[current], next_positional))
       {
       }
       else
       {
-        argv[nextKeep] = argv[current];
-        ++nextKeep;
+        unmatched.push_back(argv[current]);
       }
       //if we return from here then it was parsed successfully, so continue
     }
@@ -1774,19 +1937,16 @@ ParseResult::parse(int& argc, char**& argv)
         for (std::size_t i = 0; i != s.size(); ++i)
         {
           std::string name(1, s[i]);
-          auto iter = m_options->find(name);
+          auto iter = m_options.find(name);
 
-          if (iter == m_options->end())
+          if (iter == m_options.end())
           {
             if (m_allow_unrecognised)
             {
               continue;
             }
-            else
-            {
-              //error
-              throw option_not_exists_exception(name);
-            }
+            //error
+            throw_or_mimic<option_not_exists_exception>(name);
           }
 
           auto value = iter->second;
@@ -1803,7 +1963,7 @@ ParseResult::parse(int& argc, char**& argv)
           else
           {
             //error
-            throw option_requires_argument_exception(name);
+            throw_or_mimic<option_requires_argument_exception>(name);
           }
         }
       }
@@ -1811,23 +1971,19 @@ ParseResult::parse(int& argc, char**& argv)
       {
         const std::string& name = result[1];
 
-        auto iter = m_options->find(name);
+        auto iter = m_options.find(name);
 
-        if (iter == m_options->end())
+        if (iter == m_options.end())
         {
           if (m_allow_unrecognised)
           {
             // keep unrecognised options in argument list, skip to next argument
-            argv[nextKeep] = argv[current];
-            ++nextKeep;
+            unmatched.push_back(argv[current]);
             ++current;
             continue;
           }
-          else
-          {
-            //error
-            throw option_not_exists_exception(name);
-          }
+          //error
+          throw_or_mimic<option_not_exists_exception>(name);
         }
 
         auto opt = iter->second;
@@ -1851,14 +2007,14 @@ ParseResult::parse(int& argc, char**& argv)
     ++current;
   }
 
-  for (auto& opt : *m_options)
+  for (auto& opt : m_options)
   {
     auto& detail = opt.second;
-    auto& value = detail->value();
+    const auto& value = detail->value();
 
-    auto& store = m_results[detail];
+    auto& store = m_parsed[detail->hash()];
 
-    if(!store.count() && value.has_default()){
+    if(value.has_default() && !store.count() && !store.has_default()){
       parse_default(detail);
     }
   }
@@ -1867,7 +2023,7 @@ ParseResult::parse(int& argc, char**& argv)
   {
     while (current < argc)
     {
-      if (!consume_positional(argv[current])) {
+      if (!consume_positional(argv[current], next_positional)) {
         break;
       }
       ++current;
@@ -1875,14 +2031,41 @@ ParseResult::parse(int& argc, char**& argv)
 
     //adjust argv for any that couldn't be swallowed
     while (current != argc) {
-      argv[nextKeep] = argv[current];
-      ++nextKeep;
+      unmatched.push_back(argv[current]);
       ++current;
     }
   }
 
-  argc = nextKeep;
+  finalise_aliases();
 
+  ParseResult parsed(std::move(m_keys), std::move(m_parsed), std::move(m_sequential), std::move(unmatched));
+  return parsed;
+}
+
+inline
+void
+OptionParser::finalise_aliases()
+{
+  for (auto& option: m_options)
+  {
+    auto& detail = *option.second;
+    auto hash = detail.hash();
+    m_keys[detail.short_name()] = hash;
+    m_keys[detail.long_name()] = hash;
+
+    m_parsed.emplace(hash, OptionValue());
+  }
+}
+
+inline
+void
+Options::add_option
+(
+  const std::string& group,
+  const Option& option
+)
+{
+    add_options(group, {option});
 }
 
 inline
@@ -1893,22 +2076,27 @@ Options::add_option
   const std::string& s,
   const std::string& l,
   std::string desc,
-  std::shared_ptr<const Value> value,
+  const std::shared_ptr<const Value>& value,
   std::string arg_help
 )
 {
   auto stringDesc = toLocalString(std::move(desc));
   auto option = std::make_shared<OptionDetails>(s, l, stringDesc, value);
 
-  if (s.size() > 0)
+  if (!s.empty())
   {
     add_one_option(s, option);
   }
 
-  if (l.size() > 0)
+  if (!l.empty())
   {
     add_one_option(l, option);
   }
+
+  m_option_list.push_front(*option.get());
+  auto iter = m_option_list.begin();
+  m_option_map[s] = iter;
+  m_option_map[l] = iter;
 
   //add the help details
   auto& options = m_help[group];
@@ -1926,14 +2114,14 @@ void
 Options::add_one_option
 (
   const std::string& option,
-  std::shared_ptr<OptionDetails> details
+  const std::shared_ptr<OptionDetails>& details
 )
 {
   auto in = m_options->emplace(option, details);
 
   if (!in.second)
   {
-    throw option_exists_error(option);
+    throw_or_mimic<option_exists_error>(option);
   }
 }
 
@@ -1941,7 +2129,7 @@ inline
 String
 Options::help_one_group(const std::string& g) const
 {
-  typedef std::vector<std::pair<String, String>> OptionHelp;
+  using OptionHelp = std::vector<std::pair<String, String>>;
 
   auto group = m_help.find(g);
   if (group == m_help.end())
@@ -2040,7 +2228,7 @@ Options::generate_all_groups_help(String& result) const
   std::vector<std::string> all_groups;
   all_groups.reserve(m_help.size());
 
-  for (auto& group : m_help)
+  for (const auto& group : m_help)
   {
     all_groups.push_back(group.first);
   }
@@ -2055,13 +2243,13 @@ Options::help(const std::vector<std::string>& help_groups) const
   String result = m_help_string + "\nUsage:\n  " +
     toLocalString(m_program) + " " + toLocalString(m_custom_help);
 
-  if (m_positional.size() > 0 && m_positional_help.size() > 0) {
+  if (!m_positional.empty() && !m_positional_help.empty()) {
     result += " " + toLocalString(m_positional_help);
   }
 
   result += "\n\n";
 
-  if (help_groups.size() == 0)
+  if (help_groups.empty())
   {
     generate_all_groups_help(result);
   }
@@ -2074,7 +2262,7 @@ Options::help(const std::vector<std::string>& help_groups) const
 }
 
 inline
-const std::vector<std::string>
+std::vector<std::string>
 Options::groups() const
 {
   std::vector<std::string> g;
@@ -2099,6 +2287,6 @@ Options::group_help(const std::string& group) const
   return m_help.at(group);
 }
 
-}
+} // namespace cxxopts
 
 #endif //CXXOPTS_HPP_INCLUDED
