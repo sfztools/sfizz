@@ -231,7 +231,7 @@ bool FileMetadataReader::Impl::openRiff()
         info.length = riffChunkSize;
         riffChunks.push_back(info);
 
-        if (fseek(stream, riffChunkSize, SEEK_CUR) != 0)
+        if (fseek(stream, riffChunkSize + (riffChunkSize & 1), SEEK_CUR) != 0)
             return false;
     }
 
