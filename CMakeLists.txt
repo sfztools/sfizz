@@ -27,6 +27,7 @@ option (SFIZZ_VST               "Enable VST plug-in build [default: OFF]" OFF)
 option (SFIZZ_AU                "Enable AU plug-in build [default: OFF]" OFF)
 option (SFIZZ_BENCHMARKS        "Enable benchmarks build [default: OFF]" OFF)
 option (SFIZZ_TESTS             "Enable tests build [default: OFF]" OFF)
+option (SFIZZ_DEMOS             "Enable feature demos build [default: OFF]" OFF)
 option (SFIZZ_DEVTOOLS          "Enable developer tools build [default: OFF]" OFF)
 option (SFIZZ_SHARED            "Enable shared library build [default: ON]" ON)
 option (SFIZZ_USE_SNDFILE       "Enable use of the sndfile library [default: ON]" ON)
@@ -73,6 +74,10 @@ endif()
 
 if (SFIZZ_TESTS)
     add_subdirectory (tests)
+endif()
+
+if (SFIZZ_DEMOS)
+    add_subdirectory (demos)
 endif()
 
 if (SFIZZ_DEVTOOLS)

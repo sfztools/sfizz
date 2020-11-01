@@ -88,8 +88,12 @@ endfunction()
 add_library(sfizz-jsl INTERFACE)
 target_include_directories(sfizz-jsl INTERFACE "external/jsl/include")
 
+# The cxxopts library
+add_library(sfizz-cxxopts INTERFACE)
+target_include_directories(sfizz-cxxopts INTERFACE "external/cxxopts")
+
 # The sndfile library
-if (SFIZZ_USE_SNDFILE OR SFIZZ_TESTS OR SFIZZ_BENCHMARKS OR SFIZZ_RENDER)
+if (SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_BENCHMARKS OR SFIZZ_RENDER)
     add_library(sfizz-sndfile INTERFACE)
     if (SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         find_package(SndFile CONFIG REQUIRED)
