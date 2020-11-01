@@ -23,7 +23,7 @@ namespace sfz {
 class RegionSet;
 class PolyphonyGroup;
 class EffectBus;
-class Region;
+struct Region;
 class Voice;
 
 /**
