@@ -4,15 +4,13 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "absl/algorithm/container.h"
-#include "absl/types/span.h"
+#include "Voice.h"
 #include "AudioBuffer.h"
 #include "Config.h"
 #include "Defaults.h"
 #include "EQPool.h"
 #include "FilterPool.h"
 #include "FlexEnvelope.h"
-#include "HistoricalBuffer.h"
 #include "Interpolators.h"
 #include "LFO.h"
 #include "Macros.h"
@@ -27,7 +25,8 @@
 #include "SfzHelpers.h"
 #include "SIMDHelpers.h"
 #include "Smoothers.h"
-#include "Voice.h"
+#include <absl/algorithm/container.h>
+#include <absl/types/span.h>
 #include <random>
 
 namespace sfz {

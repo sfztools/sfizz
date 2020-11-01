@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "Voice.h"
-#include "Resources.h"
 #include "Config.h"
-#include "Region.h"
 #include "PolyphonyGroup.h"
+#include "Region.h"
+#include "Resources.h"
+#include "Voice.h"
 #include "VoiceStealing.h"
 #include <vector>
 

@@ -6,6 +6,7 @@
 
 #include "TestHelpers.h"
 #include "sfizz/Synth.h"
+#include "sfizz/Voice.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/modulations/ModId.h"
 #include "sfizz/modulations/ModKey.h"

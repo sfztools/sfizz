@@ -4,14 +4,11 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "absl/algorithm/container.h"
-#include "absl/memory/memory.h"
-#include "absl/strings/str_replace.h"
+#include "Synth.h"
 #include "Config.h"
 #include "Debug.h"
 #include "Effects.h"
 #include "Macros.h"
-#include "ModifierHelpers.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -21,16 +18,20 @@
 #include "modulations/sources/LFO.h"
 #include "PolyphonyGroup.h"
 #include "pugixml.hpp"
+#include "Region.h"
 #include "RegionSet.h"
 #include "Resources.h"
 #include "ScopedFTZ.h"
 #include "SisterVoiceRing.h"
 #include "StringViewHelpers.h"
-#include "Synth.h"
 #include "TriggerEvent.h"
 #include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
+#include "Voice.h"
 #include "VoiceManager.h"
+#include <absl/algorithm/container.h>
+#include <absl/memory/memory.h>
+#include <absl/strings/str_replace.h>
 #include <absl/types/optional.h>
 #include <absl/types/span.h>
 #include <algorithm>

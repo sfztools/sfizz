@@ -5,14 +5,16 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "Region.h"
-#include "Voice.h"
-#include "LeakDetector.h"
 #include "AudioSpan.h"
+#include "LeakDetector.h"
+#include "Resources.h"
+#include "utility/NumericId.h"
 #include "parser/Parser.h"
+#include <ghc/fs_std.hpp>
 #include <absl/strings/string_view.h>
 #include <memory>
-#include <set>
+#include <bitset>
+#include <string>
 #include <vector>
 
 namespace sfz {
@@ -21,6 +23,8 @@ namespace sfz {
 class RegionSet;
 class PolyphonyGroup;
 class EffectBus;
+class Region;
+class Voice;
 
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point

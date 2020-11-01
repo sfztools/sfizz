@@ -7,6 +7,7 @@
 #pragma once
 #include "sfizz/Synth.h"
 #include "sfizz/Region.h"
+#include "sfizz/Voice.h"
 #include "sfizz/modulations/ModKey.h"
 
 class RegionCCView {
