@@ -17,15 +17,32 @@ set(VSTPLUGIN_SOURCES
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
+    SfizzFileScan.cpp
+    SfizzForeignPaths.cpp
     VstPluginFactory.cpp
-    X11RunLoop.cpp)
+    X11RunLoop.cpp
+    NativeHelpers.cpp
+    FileTrie.cpp)
 
 set(VSTPLUGIN_HEADERS
     SfizzVstProcessor.h
     SfizzVstController.h
     SfizzVstEditor.h
     SfizzVstState.h
-    X11RunLoop.h)
+    SfizzFileScan.h
+    SfizzForeignPaths.h
+    X11RunLoop.h
+    NativeHelpers.h
+    FileTrie.h)
+
+if(APPLE)
+    set(VSTPLUGIN_MAC_SOURCES
+        SfizzForeignPaths.mm
+        NativeHelpers.mm)
+    list(APPEND VSTPLUGIN_SOURCES ${VSTPLUGIN_MAC_SOURCES})
+    set_property(SOURCE ${VSTPLUGIN_MAC_SOURCES} APPEND_STRING
+      PROPERTY COMPILE_FLAGS " -fobjc-arc")
+endif()
 
 add_library(${VSTPLUGIN_PRJ_NAME} MODULE
     ${VSTPLUGIN_HEADERS}
@@ -63,6 +80,16 @@ endif()
 sfizz_enable_lto_if_needed (${VSTPLUGIN_PRJ_NAME})
 if (MINGW)
     set_target_properties (${VSTPLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
+endif()
+
+# Link system dependencies
+if(WIN32)
+elseif(APPLE)
+    target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE ${APPLE_FOUNDATION_LIBRARY})
+else()
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    target_include_directories(${VSTPLUGIN_PRJ_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
+    target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE ${GLIB_LIBRARIES})
 endif()
 
 # Create the bundle (see "VST 3 Locations / Format")
