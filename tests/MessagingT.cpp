@@ -45,7 +45,7 @@ TEST_CASE("[Messaging] OSC message creation")
         REQUIRE(sfizz_extract_message(actual, sizeof(actual), buffer, sizeof(buffer), &path2, &sig2, &args2) > 0);
         REQUIRE(!strcmp(path, path2));
         REQUIRE(!strcmp(sig, sig2));
-        REQUIRE(args[0].f == 440.0f);
+        REQUIRE(args2[0].f == 440.0f);
     }
 
     {
@@ -86,10 +86,10 @@ TEST_CASE("[Messaging] OSC message creation")
         REQUIRE(sfizz_extract_message(actual, sizeof(actual), buffer, sizeof(buffer), &path2, &sig2, &args2) > 0);
         REQUIRE(!strcmp(path, path2));
         REQUIRE(!strcmp(sig, sig2));
-        REQUIRE(args[0].i == 1000);
-        REQUIRE(args[1].i == -1);
-        REQUIRE(!strcmp(args[2].s, "hello"));
-        REQUIRE(args[3].f == 1.234f);
-        REQUIRE(args[4].f == 5.678f);
+        REQUIRE(args2[0].i == 1000);
+        REQUIRE(args2[1].i == -1);
+        REQUIRE(!strcmp(args2[2].s, "hello"));
+        REQUIRE(args2[3].f == 1.234f);
+        REQUIRE(args2[4].f == 5.678f);
     }
 }
