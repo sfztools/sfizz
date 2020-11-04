@@ -53,7 +53,8 @@ bool BasicSndfileReader::getInstrument(InstrumentInfo* instrument)
 {
 #if defined(SFIZZ_USE_SNDFILE)
     SNDFILE* sndfile = reinterpret_cast<SNDFILE*>(handle_.get_sndfile_handle());
-    if (sf_command(sndfile, SFC_GET_INSTRUMENT, &instrument, sizeof(instrument)) == SF_TRUE)
+    SF_INSTRUMENT* sfins = instrument;
+    if (sf_command(sndfile, SFC_GET_INSTRUMENT, sfins, sizeof(SF_INSTRUMENT)) == SF_TRUE)
         return true;
 #else
     (void)instrument;
