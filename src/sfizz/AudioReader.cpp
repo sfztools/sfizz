@@ -7,7 +7,7 @@
 #include "AudioReader.h"
 #include "FileMetadata.h"
 #include <st_audiofile.hpp>
-#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(SFIZZ_USE_SNDFILE)
 #include <sndfile.h>
 #endif
 #include <algorithm>
@@ -51,9 +51,10 @@ unsigned BasicSndfileReader::sampleRate() const
 
 bool BasicSndfileReader::getInstrument(InstrumentInfo* instrument)
 {
-#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(SFIZZ_USE_SNDFILE)
     SNDFILE* sndfile = reinterpret_cast<SNDFILE*>(handle_.get_sndfile_handle());
-    if (sf_command(sndfile, SFC_GET_INSTRUMENT, &instrument, sizeof(instrument)) == SF_TRUE)
+    SF_INSTRUMENT* sfins = instrument;
+    if (sf_command(sndfile, SFC_GET_INSTRUMENT, sfins, sizeof(SF_INSTRUMENT)) == SF_TRUE)
         return true;
 #else
     (void)instrument;
@@ -238,7 +239,7 @@ void NoSeekReverseReader::readWholeFile()
 
 //------------------------------------------------------------------------------
 
-#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(SFIZZ_USE_SNDFILE)
 const std::error_category& sndfile_category()
 {
     class sndfile_category : public std::error_category {
@@ -298,7 +299,7 @@ private:
 
 //------------------------------------------------------------------------------
 
-#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(SFIZZ_USE_SNDFILE)
 static bool formatHasFastSeeking(int format)
 {
     bool fast;
@@ -348,7 +349,7 @@ static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, bool reve
     else if (!reverse)
         reader.reset(new ForwardReader(std::move(handle)));
     else {
-#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(SFIZZ_USE_SNDFILE)
         bool hasFastSeeking = formatHasFastSeeking(handle.get_sndfile_format());
 #else
         bool hasFastSeeking = true;
