@@ -6,6 +6,10 @@
 
 #pragma once
 #if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(_WIN32)
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#include <windows.h>
+#endif
 #include <sndfile.h>
 #endif
 #include <stdint.h>
