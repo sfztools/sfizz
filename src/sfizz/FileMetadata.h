@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#if defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if defined(SFIZZ_USE_SNDFILE)
 #include <sndfile.h>
 #endif
 #include "ghc/fs_std.hpp"
@@ -24,7 +24,7 @@ struct RiffChunkInfo {
     uint32_t length;
 };
 
-#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+#if !defined(SFIZZ_USE_SNDFILE)
 /**
    @brief Loop mode, like SF_LOOP_*
  */
