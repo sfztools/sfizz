@@ -447,7 +447,20 @@ TEST_CASE("[Files] Set RealCC applies properly")
 TEST_CASE("[Files] Note and octave offsets")
 {
     Synth synth;
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/note_offset.sfz");
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/note_offset.sfz", R"(
+        <control> note_offset=1
+        <region> key=63 sample=*sine
+        <region> lokey=50 hikey=55 pitch_keycenter=50 sample=*sine
+        <region> lokey=40 hikey=44 pitch_keycenter=40 xfin_lokey=36 xfin_hikey=40 xfout_lokey=44 xfout_hikey=48 sample=*sine
+        <control> note_offset=-1
+        <region> key=63 sw_lokey=24 sw_hikey=28 sw_last=25 sw_up=25 sw_down=25 sw_previous=62 sample=*sine
+        <control> note_offset=1 octave_offset=1
+        <region> key=63 sample=*sine
+        <control> note_offset=-1 octave_offset=-1
+        <region> key=63 sample=*sine
+        <control> // Check that this does not reset either note or octave offset
+        <region> key=63 sample=*sine
+    )");
     REQUIRE( synth.getNumRegions() == 7 );
 
     REQUIRE(synth.getRegionView(0)->keyRange == Range<uint8_t>(64, 64));

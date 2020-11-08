@@ -81,27 +81,27 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("apan_waveform"):
-                if (auto value = readOpcode(opc.value, Default::apanWaveformRange))
+                if (auto value = opc.read(Default::apanWaveform))
                     apan->_lfoWave = *value;
                 break;
             case hash("apan_freq"):
-                if (auto value = readOpcode(opc.value, Default::apanFrequencyRange))
+                if (auto value = opc.read(Default::apanFrequency))
                     apan->_lfoFrequency = *value;
                 break;
             case hash("apan_phase"):
-                if (auto value = readOpcode(opc.value, Default::apanPhaseRange))
+                if (auto value = opc.read(Default::apanPhase))
                     apan->_lfoPhaseOffset = wrapPhase(*value);
                 break;
             case hash("apan_dry"):
-                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
+                if (auto value = opc.read(Default::apanLevel))
                     apan->_dry = *value / 100.0f;
                 break;
             case hash("apan_wet"):
-                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
+                if (auto value = opc.read(Default::apanLevel))
                     apan->_wet = *value / 100.0f;
                 break;
             case hash("apan_depth"):
-                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
+                if (auto value = opc.read(Default::apanLevel))
                     apan->_depth = *value / 100.0f;
                 break;
             }

@@ -38,6 +38,7 @@ sfizz_add_benchmark(bm_mapVsArray BM_mapVsArray.cpp)
 sfizz_add_benchmark(bm_random BM_random.cpp)
 sfizz_add_benchmark(bm_clamp BM_clamp.cpp)
 sfizz_add_benchmark(bm_allWithin BM_allWithin.cpp)
+sfizz_add_benchmark(bm_opcodeSpec BM_opcodeSpec.cpp BM_opcodeSpec_def.cpp)
 
 sfizz_add_benchmark(bm_logger BM_logger.cpp)
 sfizz_add_benchmark(bm_smoothers BM_smoothers.cpp)

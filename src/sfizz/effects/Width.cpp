@@ -69,7 +69,8 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("width"):
-                setValueFromOpcode(opc, width->_width, {-100.0f, 100.0f});
+                if (auto value = opc.read(Default::width))
+                    width->_width = *value;
                 break;
             }
         }

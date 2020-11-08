@@ -370,7 +370,8 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
             }
         }
         const float phase = region->getPhase();
-        const int quality = region->oscillatorQuality.value_or(Default::oscillatorQuality);
+        const int quality =
+            region->oscillatorQuality.value_or(Default::oscillatorQuality.value);
         for (WavetableOscillator& osc : impl.waveOscillators_) {
             osc.setWavetable(wave);
             osc.setPhase(phase);
@@ -464,7 +465,7 @@ void Voice::off(int delay, bool fast) noexcept
     Impl& impl = *impl_;
     if (!impl.region_->flexAmpEG) {
         if (impl.region_->offMode == SfzOffMode::fast || fast) {
-            impl.egAmplitude_.setReleaseTime(Default::offTime);
+            impl.egAmplitude_.setReleaseTime(Default::offTime.value);
         } else if (impl.region_->offMode == SfzOffMode::time) {
             impl.egAmplitude_.setReleaseTime(impl.region_->offTime);
         }
@@ -1652,7 +1653,7 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
         return centsFactor(region_->getBendInCents(bend));
     };
 
-    if (region_->bendStep > 1)
+    if (region_->bendStep > 1.0f)
         pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor_);
     else
         pitchBendEnvelope(events, *bends, bendLambda);

@@ -13,8 +13,8 @@ struct SynthConfig
 {
     bool freeWheeling { false };
 
-    int liveSampleQuality { sfz::Default::sampleQuality };
-    int freeWheelingSampleQuality { sfz::Default::sampleQualityInFreewheelingMode };
+    int liveSampleQuality { Default::sampleQuality.value };
+    int freeWheelingSampleQuality { Default::freewheelingQuality };
 
     int currentSampleQuality() const noexcept
     {

@@ -21,7 +21,7 @@ Curve Curve::buildCurveFromHeader(
 {
     Curve curve;
     bool fillStatus[NumValues] = {};
-    const Range<float> fullRange { -HUGE_VALF, +HUGE_VALF };
+    const OpcodeSpec<float> fullRange {0.0f, Range<float>(-HUGE_VALF, +HUGE_VALF), 0 };
 
     auto setPoint = [&curve, &fillStatus](int i, float x) {
         curve._points[i] = x;
@@ -40,7 +40,7 @@ Curve Curve::buildCurveFromHeader(
         if (index >= NumValues)
             continue;
 
-        auto valueOpt = readOpcode<float>(opc.value, fullRange);
+        auto valueOpt = opc.read(fullRange);
         if (!valueOpt)
             continue;
 
@@ -268,7 +268,7 @@ void CurveSet::addCurveFromHeader(absl::Span<const Opcode> members)
     Curve::Interpolator itp = Curve::Interpolator::Linear;
 
     if (const Opcode* opc = findOpcode(hash("curve_index"))) {
-        if (auto opt = readOpcode<int>(opc->value, {0, 255}))
+        if (auto opt = opc->read(Default::curveCC))
             curveIndex = *opt;
         else
             DBG("Invalid value for curve index: " << opc->value);

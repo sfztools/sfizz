@@ -18,21 +18,21 @@ namespace FlexEGs {
 };
 
 struct FlexEGPoint {
-    float time { Default::flexEGPointTime }; // duration until next step (s)
-    float level { Default::flexEGPointLevel }; // normalized amplitude
+    float time { Default::flexEGPointTime.value }; // duration until next step (s)
+    float level { Default::flexEGPointLevel.value }; // normalized amplitude
 
     void setShape(float shape);
     float shape() const noexcept { return shape_; }
     const Curve& curve() const;
 
 private:
-    float shape_ { Default::flexEGPointShape }; // 0: linear, positive: exp, negative: log
+    float shape_ { Default::flexEGPointShape.value }; // 0: linear, positive: exp, negative: log
     std::shared_ptr<Curve> shapeCurve_;
 };
 
 struct FlexEGDescription {
-    int dynamic { Default::flexEGDynamic }; // whether parameters can be modulated while EG runs
-    int sustain { Default::flexEGSustain }; // index of the sustain point (default to 0 in ARIA)
+    int dynamic { Default::flexEGDynamic.value }; // whether parameters can be modulated while EG runs
+    int sustain { Default::flexEGSustain.value }; // index of the sustain point (default to 0 in ARIA)
     std::vector<FlexEGPoint> points;
     // ARIA
     bool ampeg = false; // replaces the SFZv1 AmpEG (lowest with this bit wins)

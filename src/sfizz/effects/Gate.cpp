@@ -166,25 +166,25 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("gate_attack"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
+                if (auto value = opc.read(Default::gateAttack)) {
                     for (size_t c = 0; c < 2; ++c)
                         impl.set_Attack(c, *value);
                 }
                 break;
             case hash("gate_hold"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
+                if (auto value = opc.read(Default::gateHold)) {
                     for (size_t c = 0; c < 2; ++c)
                         impl.set_Hold(c, *value);
                 }
                 break;
             case hash("gate_release"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
+                if (auto value = opc.read(Default::gateRelease)) {
                     for (size_t c = 0; c < 2; ++c)
                         impl.set_Release(c, *value);
                 }
                 break;
             case hash("gate_threshold"):
-                if (auto value = readOpcode<float>(opc.value, {-100.0, 0.0})) {
+                if (auto value = opc.read(Default::gateThreshold)) {
                     for (size_t c = 0; c < 2; ++c)
                         impl.set_Threshold(c, *value);
                 }

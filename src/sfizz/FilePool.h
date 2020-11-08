@@ -51,10 +51,10 @@ using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
 using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
-    uint32_t end { Default::sampleEndRange.getEnd() };
+    uint32_t end { Default::sampleEnd.value };
     uint32_t maxOffset { 0 };
-    uint32_t loopBegin { Default::loopRange.getStart() };
-    uint32_t loopEnd { Default::loopRange.getEnd() };
+    uint32_t loopBegin { Default::loopRange.bounds.getStart() };
+    uint32_t loopEnd { Default::loopRange.bounds.getEnd() };
     bool hasLoop { false };
     double sampleRate { config::defaultSampleRate };
     int numChannels { 0 };

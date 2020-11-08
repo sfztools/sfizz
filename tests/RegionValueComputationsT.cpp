@@ -299,15 +299,15 @@ TEST_CASE("[Region] rt_decay")
     region.parseOpcode({ "rt_decay", "10" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume - 1.0f).margin(0.1) );
+    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume.value - 1.0f).margin(0.1) );
     region.parseOpcode({ "rt_decay", "20" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume - 2.0f).margin(0.1) );
+    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume.value - 2.0f).margin(0.1) );
     region.parseOpcode({ "trigger", "attack" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume).margin(0.1) );
+    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume.value).margin(0.1) );
 }
 
 TEST_CASE("[Region] Base delay")

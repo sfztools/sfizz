@@ -70,13 +70,16 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("eq_freq"):
-                setValueFromOpcode(opc, desc.frequency, Default::eqFrequencyRange);
+                if (auto value = opc.read(Default::eqFrequency))
+                    desc.frequency = *value;
                 break;
             case hash("eq_bw"):
-                setValueFromOpcode(opc, desc.bandwidth, Default::eqBandwidthRange);
+                if (auto value = opc.read(Default::eqBandwidth))
+                    desc.bandwidth = *value;
                 break;
             case hash("eq_gain"):
-                setValueFromOpcode(opc, desc.gain, Default::eqGainRange);
+                if (auto value = opc.read(Default::eqGain))
+                    desc.gain = *value;
                 break;
             case hash("eq_type"):
                 {

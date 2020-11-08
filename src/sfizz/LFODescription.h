@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Defaults.h"
 #include <absl/types/optional.h>
 #include <vector>
 
@@ -27,17 +28,17 @@ struct LFODescription {
     LFODescription();
     ~LFODescription();
     static const LFODescription& getDefault();
-    float freq = 0; // lfoN_freq
-    float beats = 0; // lfoN_beats
-    float phase0 = 0; // lfoN_phase
-    float delay = 0; // lfoN_delay
-    float fade = 0; // lfoN_fade
-    unsigned count = 0; // lfoN_count
+    float freq  { Default::lfoFreq.value }; // lfoN_freq
+    float beats { Default::lfoBeats.value }; // lfoN_beats
+    float phase0 { Default::lfoPhase.value }; // lfoN_phase
+    float delay { Default::lfoDelay.value }; // lfoN_delay
+    float fade { Default::lfoFade.value }; // lfoN_fade
+    unsigned count { Default::lfoCount.value }; // lfoN_count
     struct Sub {
-        LFOWave wave = LFOWave::Triangle; // lfoN_wave[X]
-        float offset = 0; // lfoN_offset[X]
-        float ratio = 1; // lfoN_ratio[X]
-        float scale = 1; // lfoN_scale[X]
+        LFOWave wave { static_cast<LFOWave>(Default::lfoWave.value) }; // lfoN_wave[X]
+        float offset { Default::lfoOffset.value }; // lfoN_offset[X]
+        float ratio { Default::lfoRatio.value }; // lfoN_ratio[X]
+        float scale { Default::lfoScale.value }; // lfoN_scale[X]
     };
     struct StepSequence {
         std::vector<float> steps {}; // lfoN_stepX - normalized to unity

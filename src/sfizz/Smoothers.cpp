@@ -5,6 +5,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Smoothers.h"
+#include "Config.h"
+#include "MathHelpers.h"
+#include "SfzHelpers.h"
+#include "SIMDHelpers.h"
 
 namespace sfz {
 
@@ -16,7 +20,7 @@ void Smoother::setSmoothing(uint8_t smoothValue, float sampleRate)
 {
     smoothing = (smoothValue > 0);
     if (smoothing) {
-        filter.setGain(std::tan(1.0f / (2 * Default::smoothTauPerStep * smoothValue * sampleRate)));
+        filter.setGain(std::tan(1.0f / (2 * config::smoothTauPerStep * smoothValue * sampleRate)));
     }
 }
 

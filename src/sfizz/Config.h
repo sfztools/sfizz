@@ -150,6 +150,10 @@ namespace config {
             (int(polyphony * config::overflowVoiceMultiplier) < int(config::maxVoices)) ?
             int(polyphony * config::overflowVoiceMultiplier) : int(config::maxVoices);
     }
+    /**
+     * @brief The smoothing time constant per "smooth" steps
+     */
+    constexpr float smoothTauPerStep { 3e-3 };
 } // namespace config
 
 } // namespace sfz

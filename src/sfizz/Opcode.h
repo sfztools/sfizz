@@ -101,6 +101,9 @@ struct Opcode {
             category == kOpcodeStepCcN || category == kOpcodeSmoothCcN;
     }
 
+    template <class T>
+    absl::optional<T> read(OpcodeSpec<T> spec) const;
+
 private:
     static OpcodeCategory identifyCategory(absl::string_view name);
     LEAK_DETECTOR(Opcode);
@@ -115,94 +118,9 @@ private:
 absl::optional<uint8_t> readNoteValue(absl::string_view value);
 
 /**
- * @brief Read a value from the sfz file and cast it to the destination parameter along
- * with a proper clamping into range if needed. This particular template version acts on
- * integral target types, but can accept floats as an input.
- *
- * @tparam ValueType the target casting type
- * @param value the string value to be read and stored
- * @param validRange the range of admitted values
- * @return absl::optional<ValueType> the cast value, or null
- */
-template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int> = 0>
-absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange);
-
-/**
- * @brief Read a value from the sfz file and cast it to the destination parameter along
- * with a proper clamping into range if needed. This particular template version acts on
- * floating types.
- *
- * @tparam ValueType the target casting type
- * @param value the string value to be read and stored
- * @param validRange the range of admitted values
- * @return absl::optional<ValueType> the cast value, or null
- */
-template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int> = 0>
-absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange);
-
-/**
  * @brief Read a boolean value from the sfz file and cast it to the destination parameter.
  */
 absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode);
-
-/**
- * @brief Set a target parameter from an opcode value, with possibly a textual note rather
- * than a number
- *
- * @tparam ValueType
- * @param opcode the source opcode
- * @param target the value to update
- * @param validRange the range of admitted values used to clamp the opcode
- */
-template <class ValueType>
-void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Range<ValueType>& validRange);
-
-/**
- * @brief Set a target parameter from an opcode value, with possibly a textual note rather
- * than a number
- *
- * @tparam ValueType
- * @param opcode the source opcode
- * @param target the value to update
- * @param validRange the range of admitted values used to clamp the opcode
- */
-template <class ValueType>
-void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& target, const Range<ValueType>& validRange);
-
-/**
- * @brief Set a target end of a range from an opcode value, with possibly a textual note rather
- * than a number
- *
- * @tparam ValueType
- * @param opcode the source opcode
- * @param target the value to update
- * @param validRange the range of admitted values used to clamp the opcode
- */
-template <class ValueType>
-void setRangeEndFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange);
-
-/**
- * @brief Set a target beginning of a range from an opcode value, with possibly a textual note rather
- * than a number
- *
- * @tparam ValueType
- * @param opcode the source opcode
- * @param target the value to update
- * @param validRange the range of admitted values used to clamp the opcode
- */
-template <class ValueType>
-void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange);
-
-/**
- * @brief Set a CC modulation parameter from an opcode value.
- *
- * @tparam ValueType
- * @param opcode the source opcode
- * @param target the new CC modulation parameter
- * @param validRange the range of admitted values used to clamp the opcode
- */
-template <class ValueType>
-void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange);
 
 }
 

@@ -37,15 +37,15 @@ namespace fx {
 struct Disto::Impl {
     enum { maxStages = 4 };
 
-    float _samplePeriod = 1.0 / config::defaultSampleRate;
-    float _tone = 100.0;
-    float _depth = 0.0;
-    float _dry = 0.0;
-    float _wet = 0.0;
-    unsigned _numStages = 1;
+    float _samplePeriod { 1.0f / config::defaultSampleRate };
+    float _tone { Default::distoTone.value };
+    float _depth { Default::distoDepth.value };
+    float _dry { Default::effect.value };
+    float _wet { Default::effect.value };
+    unsigned _numStages = { Default::distoStages.value };
 
     float _toneLpfMem[EffectChannels] = {};
-    faustDisto _stages[EffectChannels][maxStages];
+    faustDisto _stages[EffectChannels][Default::maxDistoStages];
 
     hiir::Upsampler2xFpu<12> _up2x[EffectChannels];
     hiir::Upsampler2xFpu<4> _up4x[EffectChannels];
@@ -205,20 +205,23 @@ std::unique_ptr<Effect> Disto::makeInstance(absl::Span<const Opcode> members)
     for (const Opcode& opc : members) {
         switch (opc.lettersOnlyHash) {
         case hash("disto_tone"):
-            setValueFromOpcode(opc, impl._tone, {0.0f, 100.0f});
+            if (auto value = opc.read(Default::distoTone))
+                impl._tone = *value;
             break;
         case hash("disto_depth"):
-            setValueFromOpcode(opc, impl._depth, {0.0f, 100.0f});
+            if (auto value = opc.read(Default::distoDepth))
+                impl._depth = *value;
             break;
         case hash("disto_stages"):
-            setValueFromOpcode(opc, impl._numStages, {1, Impl::maxStages});
+            if (auto value = opc.read(Default::distoStages))
+                impl._numStages = *value;
             break;
         case hash("disto_dry"):
-            if (auto value = readOpcode<float>(opc.value, {0.0f, 100.0f}))
+            if (auto value = opc.read(Default::effect))
                 impl._dry = *value * 0.01f;
             break;
         case hash("disto_wet"):
-            if (auto value = readOpcode<float>(opc.value, {0.0f, 100.0f}))
+            if (auto value = opc.read(Default::effect))
                 impl._wet = *value * 0.01f;
             break;
         }
