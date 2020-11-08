@@ -303,6 +303,24 @@ struct Region {
      */
     bool disabled() const noexcept;
 
+    /**
+     * @brief Extract the source depth modifier for a given cc and id.
+     *
+     * @param cc
+     * @param id
+     * @return absl::optional<float>
+     */
+    absl::optional<float> ccModDepth(int cc, ModId id) const noexcept;
+
+    /**
+     * @brief Extract the parameters for a given modulation cc and id.
+     *
+     * @param cc
+     * @param id
+     * @return float
+     */
+    absl::optional<ModKey::Parameters> ccModParameters(int cc, ModId id) const noexcept;
+
     const NumericId<Region> id;
 
     // Sound source: sample playback
@@ -412,7 +430,7 @@ struct Region {
     float pitchRandom { Default::pitchRandom }; // pitch_random
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
-    int tune { Default::tune }; // tune
+    float tune { Default::tune }; // tune
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };

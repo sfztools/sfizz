@@ -1936,3 +1936,31 @@ bool sfz::Region::disabled() const noexcept
 {
     return (sampleEnd == 0);
 }
+
+absl::optional<float> sfz::Region::ccModDepth(int cc, ModId id) const noexcept
+{
+    const ModKey target = ModKey::createNXYZ(id, getId());
+    for (const sfz::Region::Connection& conn : connections) {
+        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
+            auto p = conn.source.parameters();
+            if (p.cc == cc)
+                return conn.sourceDepth;
+        }
+    }
+
+    return {};
+}
+
+absl::optional<sfz::ModKey::Parameters> sfz::Region::ccModParameters(int cc, ModId id) const noexcept
+{
+    const ModKey target = ModKey::createNXYZ(id, getId());
+    for (const sfz::Region::Connection& conn : connections) {
+        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
+            auto p = conn.source.parameters();
+            if (p.cc == cc)
+                return p;
+        }
+    }
+
+    return {};
+}

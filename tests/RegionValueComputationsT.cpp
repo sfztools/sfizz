@@ -6,17 +6,20 @@
 
 #include "sfizz/Defaults.h"
 #include "sfizz/Region.h"
+#include "sfizz/MidiState.h"
 #include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 #include <chrono>
 #include <thread>
 using namespace Catch::literals;
 using namespace sfz::literals;
+using namespace sfz;
 constexpr int numRandomTests { 64 };
+
 TEST_CASE("[Region] Crossfade in on key")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
     region.parseOpcode({ "xfin_hikey", "3" });
@@ -27,8 +30,8 @@ TEST_CASE("[Region] Crossfade in on key")
 
 TEST_CASE("[Region] Crossfade in on key - 2")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
     region.parseOpcode({ "xfin_hikey", "5" });
@@ -42,8 +45,8 @@ TEST_CASE("[Region] Crossfade in on key - 2")
 
 TEST_CASE("[Region] Crossfade in on key - gain")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
     region.parseOpcode({ "xfin_hikey", "5" });
@@ -57,8 +60,8 @@ TEST_CASE("[Region] Crossfade in on key - gain")
 
 TEST_CASE("[Region] Crossfade out on key")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lokey", "51" });
     region.parseOpcode({ "xfout_hikey", "55" });
@@ -73,8 +76,8 @@ TEST_CASE("[Region] Crossfade out on key")
 
 TEST_CASE("[Region] Crossfade out on key - gain")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lokey", "51" });
     region.parseOpcode({ "xfout_hikey", "55" });
@@ -90,8 +93,8 @@ TEST_CASE("[Region] Crossfade out on key - gain")
 
 TEST_CASE("[Region] Crossfade in on velocity")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lovel", "20" });
     region.parseOpcode({ "xfin_hivel", "24" });
@@ -107,8 +110,8 @@ TEST_CASE("[Region] Crossfade in on velocity")
 
 TEST_CASE("[Region] Crossfade in on vel - gain")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lovel", "20" });
     region.parseOpcode({ "xfin_hivel", "24" });
@@ -125,8 +128,8 @@ TEST_CASE("[Region] Crossfade in on vel - gain")
 
 TEST_CASE("[Region] Crossfade out on vel")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lovel", "51" });
     region.parseOpcode({ "xfout_hivel", "55" });
@@ -142,8 +145,8 @@ TEST_CASE("[Region] Crossfade out on vel")
 
 TEST_CASE("[Region] Crossfade out on vel - gain")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lovel", "51" });
     region.parseOpcode({ "xfout_hivel", "55" });
@@ -160,8 +163,8 @@ TEST_CASE("[Region] Crossfade out on vel - gain")
 
 TEST_CASE("[Region] Crossfade in on CC")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_locc24", "20" });
     region.parseOpcode({ "xfin_hicc24", "24" });
@@ -184,8 +187,8 @@ TEST_CASE("[Region] Crossfade in on CC")
 
 TEST_CASE("[Region] Crossfade in on CC - gain")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_locc24", "20" });
     region.parseOpcode({ "xfin_hicc24", "24" });
@@ -208,8 +211,8 @@ TEST_CASE("[Region] Crossfade in on CC - gain")
 }
 TEST_CASE("[Region] Crossfade out on CC")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_locc24", "20" });
     region.parseOpcode({ "xfout_hicc24", "24" });
@@ -232,8 +235,8 @@ TEST_CASE("[Region] Crossfade out on CC")
 
 TEST_CASE("[Region] Crossfade out on CC - gain")
 {
-	sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+	MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_locc24", "20" });
     region.parseOpcode({ "xfout_hicc24", "24" });
@@ -257,8 +260,8 @@ TEST_CASE("[Region] Crossfade out on CC - gain")
 
 TEST_CASE("[Region] Velocity bug for extreme values - veltrack at 0")
 {
-    sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+    MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "amp_veltrack", "0" });
     REQUIRE(region.getNoteGain(64, 127_norm) == 1.0_a);
@@ -268,8 +271,8 @@ TEST_CASE("[Region] Velocity bug for extreme values - veltrack at 0")
 
 TEST_CASE("[Region] Velocity bug for extreme values - positive veltrack")
 {
-    sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+    MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "amp_veltrack", "100" });
     REQUIRE(region.getNoteGain(64, 127_norm) == 1.0_a);
@@ -278,8 +281,8 @@ TEST_CASE("[Region] Velocity bug for extreme values - positive veltrack")
 
 TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
 {
-    sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+    MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "amp_veltrack", "-100" });
     REQUIRE(region.getNoteGain(64, 127_norm) == Approx(0.0).margin(0.0001));
@@ -288,29 +291,29 @@ TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
 
 TEST_CASE("[Region] rt_decay")
 {
-    sfz::MidiState midiState;
+    MidiState midiState;
     midiState.setSampleRate(1000);
-    sfz::Region region { 0, midiState };
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "trigger", "release" });
     region.parseOpcode({ "rt_decay", "10" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 1.0f).margin(0.1) );
+    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume - 1.0f).margin(0.1) );
     region.parseOpcode({ "rt_decay", "20" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume - 2.0f).margin(0.1) );
+    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume - 2.0f).margin(0.1) );
     region.parseOpcode({ "trigger", "attack" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( region.getBaseVolumedB(64) == Approx(sfz::Default::volume).margin(0.1) );
+    REQUIRE( region.getBaseVolumedB(64) == Approx(Default::volume).margin(0.1) );
 }
 
 TEST_CASE("[Region] Base delay")
 {
-    sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+    MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "delay", "10" });
     REQUIRE( region.getDelay() == 10.0f );
@@ -322,3 +325,36 @@ TEST_CASE("[Region] Base delay")
         REQUIRE( (delay >= 10.0 && delay <= 20.0) );
     }
 }
+
+TEST_CASE("[Region] Offsets with CCs")
+{
+    MidiState midiState;
+    Region region { 0, midiState };
+
+    region.parseOpcode({ "offset_cc4", "255" });
+    region.parseOpcode({ "offset", "10" });
+    REQUIRE( region.getOffset() == 10 );
+    midiState.ccEvent(0, 4, 127_norm);
+    REQUIRE( region.getOffset() == 265 );
+    midiState.ccEvent(0, 4, 100_norm);
+    REQUIRE( region.getOffset() == 210 );
+    midiState.ccEvent(0, 4, 10_norm);
+    REQUIRE( region.getOffset() == 30 );
+    midiState.ccEvent(0, 4, 0);
+    REQUIRE( region.getOffset() == 10 );
+}
+
+TEST_CASE("[Region] Pitch variation with veltrack")
+{
+    MidiState midiState;
+    Region region { 0, midiState };
+
+    REQUIRE(region.getBasePitchVariation(60.0, 0_norm) == 1.0);
+    REQUIRE(region.getBasePitchVariation(60.0, 64_norm) == 1.0);
+    REQUIRE(region.getBasePitchVariation(60.0, 127_norm) == 1.0);
+    region.parseOpcode({ "pitch_veltrack", "1200" });
+    REQUIRE(region.getBasePitchVariation(60.0, 0_norm) == 1.0);
+    REQUIRE(region.getBasePitchVariation(60.0, 64_norm) == Approx(centsFactor(600.0)).margin(0.01f));
+    REQUIRE(region.getBasePitchVariation(60.0, 127_norm) == Approx(centsFactor(1200.0)).margin(0.01f));
+}
+
