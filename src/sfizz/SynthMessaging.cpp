@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Synth.h"
+#include "SynthPrivate.h"
 #include "StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
