@@ -72,7 +72,7 @@ static uint64_t hashMessagePath(const char* path, const char* sig)
                 ++path;
         }
     }
-    h = hashByte(',');
+    h = hashByte(',', h);
     while (unsigned char c = *sig++)
         h = hashByte(c, h);
     return h;
