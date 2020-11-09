@@ -4,31 +4,23 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Synth.h"
+#include "SynthPrivate.h"
 #include "Config.h"
 #include "Debug.h"
-#include "Effects.h"
 #include "Macros.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
-#include "modulations/sources/ADSREnvelope.h"
-#include "modulations/sources/Controller.h"
-#include "modulations/sources/FlexEnvelope.h"
-#include "modulations/sources/LFO.h"
 #include "PolyphonyGroup.h"
 #include "pugixml.hpp"
 #include "Region.h"
 #include "RegionSet.h"
 #include "Resources.h"
 #include "ScopedFTZ.h"
-#include "SisterVoiceRing.h"
 #include "StringViewHelpers.h"
-#include "TriggerEvent.h"
 #include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
-#include "VoiceManager.h"
 #include <absl/algorithm/container.h>
 #include <absl/memory/memory.h>
 #include <absl/strings/str_replace.h>
@@ -41,268 +33,6 @@
 #include <utility>
 
 namespace sfz {
-
-struct Synth::Impl final: public Parser::Listener {
-    Impl();
-    ~Impl();
-
-    /**
-     * @brief The parser callback; this is called by the parent object each time
-     * a new region, group, master, global, curve or control set of opcodes
-     * appears in the parser
-     *
-     * @param header the header for the set of opcodes
-     * @param members the opcode members
-     */
-    void onParseFullBlock(const std::string& header, const std::vector<Opcode>& members) final;
-
-    /**
-     * @brief The parser callback when an error occurs.
-     */
-    void onParseError(const SourceRange& range, const std::string& message) final;
-
-    /**
-     * @brief The parser callback when a warning occurs.
-     */
-    void onParseWarning(const SourceRange& range, const std::string& message) final;
-
-    /**
-     * @brief Reset all CCs; to be used on CC 121
-     *
-     * @param delay the delay for the controller reset
-     *
-     */
-    void resetAllControllers(int delay) noexcept;
-
-    /**
-     * @brief Remove all regions, resets all voices and clears everything
-     * to bring back the synth in its original state.
-     *
-     * The callback mutex should be taken to call this function.
-     */
-    void clear();
-
-    /**
-     * @brief Helper function to dispatch <global> opcodes
-     *
-     * @param members the opcodes of the <global> block
-     */
-    void handleGlobalOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to dispatch <master> opcodes
-     *
-     * @param members the opcodes of the <master> block
-     */
-    void handleMasterOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to dispatch <group> opcodes
-     *
-     * @param members the opcodes of the <group> block
-     */
-    void handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers);
-    /**
-     * @brief Helper function to dispatch <control> opcodes
-     *
-     * @param members the opcodes of the <control> block
-     */
-    void handleControlOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to dispatch <effect> opcodes
-     *
-     * @param members the opcodes of the <effect> block
-     */
-    void handleEffectOpcodes(const std::vector<Opcode>& members);
-    /**
-     * @brief Helper function to merge all the currently active opcodes
-     * as set by the successive callbacks and create a new region to store
-     * in the synth.
-     *
-     * @param regionOpcodes the opcodes that are specific to the region
-     */
-    void buildRegion(const std::vector<Opcode>& regionOpcodes);
-    /**
-     * @brief Resets and possibly changes the number of voices (polyphony) in
-     * the synth.
-     *
-     * @param numVoices
-     */
-    void resetVoices(int numVoices);
-    /**
-     * @brief Make the stored settings take effect in all the voices
-     */
-    void applySettingsPerVoice();
-
-    /**
-     * @brief Establish all connections of the modulation matrix.
-     */
-    void setupModMatrix();
-
-    /**
-     * @brief Get the modification time of all included sfz files
-     *
-     * @return fs::file_time_type
-     */
-    fs::file_time_type checkModificationTime();
-
-    /**
-     * @brief Check all regions and start voices for note on events
-     *
-     * @param delay
-     * @param noteNumber
-     * @param velocity
-     */
-    void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
-
-    /**
-     * @brief Check all regions and start voices for note off events
-     *
-     * @param delay
-     * @param noteNumber
-     * @param velocity
-     */
-    void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
-
-    /**
-     * @brief Check all regions and start voices for cc events
-     *
-     * @param delay
-     * @param ccNumber
-     * @param value
-     */
-    void ccDispatch(int delay, int ccNumber, float value) noexcept;
-
-    /**
-     * @brief Start a voice for a specific region.
-     * This will do the needed polyphony checks and voice stealing.
-     *
-     * @param region
-     * @param delay
-     * @param triggerEvent
-     * @param ring
-     */
-    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
-
-    /**
-     * @brief Start all delayed release voices of the region if necessary
-     *
-     * @param region
-     * @param delay
-     * @param ring
-     */
-    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
-
-    /**
-     * @brief Finalize SFZ loading, following a successful execution of the
-     *        parsing step.
-     */
-    void finalizeSfzLoad();
-
-    template<class T>
-    static void updateUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
-    {
-        for (auto& mod : map)
-            usedCCs[mod.cc] = true;
-    }
-
-    static void updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
-    static void updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
-
-    /**
-     * @brief Set the default value for a CC
-     *
-     * @param ccNumber
-     * @param value
-     */
-    void setDefaultHdcc(int ccNumber, float value);
-
-    int numGroups_ { 0 };
-    int numMasters_ { 0 };
-
-    // Opcode memory; these are used to build regions, as a new region
-    // will integrate opcodes from the group, master and global block
-    std::vector<Opcode> globalOpcodes_;
-    std::vector<Opcode> masterOpcodes_;
-    std::vector<Opcode> groupOpcodes_;
-
-    // Names for the CC and notes as set by label_cc and label_key
-    std::vector<CCNamePair> ccLabels_;
-    std::vector<NoteNamePair> keyLabels_;
-    std::vector<NoteNamePair> keyswitchLabels_;
-
-    // Set as sw_default if present in the file
-    absl::optional<uint8_t> currentSwitch_;
-    std::vector<std::string> unknownOpcodes_;
-    using RegionViewVector = std::vector<Region*>;
-    using VoiceViewVector = std::vector<Voice*>;
-    using RegionPtr = std::unique_ptr<Region>;
-    using RegionSetPtr = std::unique_ptr<RegionSet>;
-    std::vector<RegionPtr> regions_;
-    VoiceManager voiceManager_;
-
-    // These are more general "groups" than sfz and encapsulates the full hierarchy
-    RegionSet* currentSet_ { nullptr };
-    std::vector<RegionSetPtr> sets_;
-
-    std::array<RegionViewVector, 128> lastKeyswitchLists_;
-    std::array<RegionViewVector, 128> downKeyswitchLists_;
-    std::array<RegionViewVector, 128> upKeyswitchLists_;
-    RegionViewVector previousKeyswitchLists_;
-    std::array<RegionViewVector, 128> noteActivationLists_;
-    std::array<RegionViewVector, config::numCCs> ccActivationLists_;
-
-    // Effect factory and buses
-    EffectFactory effectFactory_;
-    typedef std::unique_ptr<EffectBus> EffectBusPtr;
-    std::vector<EffectBusPtr> effectBuses_; // 0 is "main", 1-N are "fx1"-"fxN"
-
-    int samplesPerBlock_ { config::defaultSamplesPerBlock };
-    float sampleRate_ { config::defaultSampleRate };
-    float volume_ { Default::globalVolume };
-    int numVoices_ { config::numVoices };
-    Oversampling oversamplingFactor_ { config::defaultOversamplingFactor };
-
-    // Distribution used to generate random value for the *rand opcodes
-    std::uniform_real_distribution<float> randNoteDistribution_ { 0, 1 };
-
-    SpinMutex callbackGuard_;
-
-    // Singletons passed as references to the voices
-    Resources resources_;
-
-    // Control opcodes
-    std::string defaultPath_ { "" };
-    int noteOffset_ { 0 };
-    int octaveOffset_ { 0 };
-
-    // Modulation source generators
-    std::unique_ptr<ControllerSource> genController_;
-    std::unique_ptr<LFOSource> genLFO_;
-    std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope_;
-    std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
-
-    // Settings per voice
-    struct {
-        size_t maxFilters { 0 };
-        size_t maxEQs { 0 };
-        size_t maxLFOs { 0 };
-        size_t maxFlexEGs { 0 };
-        bool havePitchEG { false };
-        bool haveFilterEG { false };
-    } settingsPerVoice_;
-
-    Duration dispatchDuration_ { 0 };
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_;
-
-    Parser parser_;
-    fs::file_time_type modificationTime_ { };
-
-    std::array<float, config::numCCs> defaultCCValues_;
-
-    // Messaging
-    sfizz_receive_t* broadcastReceiver = nullptr;
-    void* broadcastData = nullptr;
-};
 
 Synth::Synth()
 : impl_(new Impl) // NOLINT: (paul) I don't get why clang-tidy complains here

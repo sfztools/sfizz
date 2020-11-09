@@ -107,6 +107,7 @@ set (SFIZZ_HEADERS
     sfizz/SwapAndPop.h
     sfizz/Synth.h
     sfizz/SynthConfig.h
+    sfizz/SynthPrivate.h
     sfizz/Tuning.h
     sfizz/Voice.h
     sfizz/VoiceManager.h
