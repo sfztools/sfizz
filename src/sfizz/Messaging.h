@@ -6,8 +6,13 @@
 
 #pragma once
 #include "sfizz_message.h"
+#include <type_traits>
 
 namespace sfz {
+
+template <char Tag> struct OscDataTraits;
+template <char Tag> using OscType = typename OscDataTraits<Tag>::type;
+template <char Tag> using OscDecayedType = typename std::decay<OscType<Tag>>::type;
 
 class Client {
 public:
@@ -17,15 +22,18 @@ public:
     bool canReceive() const { return receive_ != nullptr; }
     void receive(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
+    template <char... Sig>
+    void receive(int delay, const char* path, OscDecayedType<Sig>... values);
+
+private:
+    template <char Tag>
+    sfizz_arg_t make_arg(OscDecayedType<Tag> value);
+
 private:
     void* data_ = nullptr;
     sfizz_receive_t* receive_ = nullptr;
 };
 
-inline void Client::receive(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
-{
-    if (receive_)
-        receive_(data_, delay, path, sig, args);
-}
-
 } // namespace sfz
+
+#include "Messaging.hpp"
