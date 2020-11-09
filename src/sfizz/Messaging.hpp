@@ -21,10 +21,12 @@ inline void Client::receive(int delay, const char* path, const char* sig, const 
 template <char... Sig>
 inline void Client::receive(int delay, const char* path, OscDecayedType<Sig>... values)
 {
-    constexpr size_t size = sizeof...(Sig);
-    char sig[size + 1] { Sig..., '\0' };
-    sfizz_arg_t args[size] { OscDataTraits<Sig>::make_arg(values)... };
-    receive(delay, path, sig, args);
+    if (receive_) {
+        constexpr size_t size = sizeof...(Sig);
+        char sig[size + 1] { Sig..., '\0' };
+        sfizz_arg_t args[size] { OscDataTraits<Sig>::make_arg(values)... };
+        receive_(data_, delay, path, sig, args);
+    }
 }
 
 ///
