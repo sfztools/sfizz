@@ -35,7 +35,7 @@ public:
     void processParameterChanges(Vst::IParameterChanges& pc);
     void processControllerChanges(Vst::IParameterChanges& pc);
     void processEvents(Vst::IEventList& events);
-    void processMidiFromUi();
+    void processMessagesFromUi();
     static int convertVelocityFromFloat(float x);
 
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
@@ -51,6 +51,11 @@ private:
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
 
+    // client
+    sfz::ClientPtr _client;
+    std::unique_ptr<uint8_t[]> _oscTemp;
+    void receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+
     // misc
     static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);
 
@@ -59,7 +64,7 @@ private:
     volatile bool _workRunning = false;
     Ring_Buffer _fifoToWorker;
     RTSemaphore _semaToWorker;
-    Ring_Buffer _fifoMidiFromUi;
+    Ring_Buffer _fifoMessageFromUi;
     std::mutex _processMutex;
 
     // file modification periodic checker
@@ -95,6 +100,9 @@ private:
     // reader
     RTMessagePtr readWorkerMessage();
     bool discardWorkerMessage();
+
+    // generic
+    static bool writeMessage(Ring_Buffer& fifo, const char* type, const void* data, uintptr_t size);
 };
 
 //------------------------------------------------------------------------------

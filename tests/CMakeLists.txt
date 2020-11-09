@@ -41,6 +41,7 @@ set(SFIZZ_TEST_SOURCES
     ConcurrencyT.cpp
     ModulationsT.cpp
     LFOT.cpp
+    MessagingT.cpp
     DataHelpers.h
     DataHelpers.cpp
 )

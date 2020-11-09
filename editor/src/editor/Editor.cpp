@@ -100,6 +100,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     SPiano* piano_ = nullptr;
 
     void uiReceiveValue(EditId id, const EditValue& v) override;
+    void uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
 
     void createFrameContents();
 
@@ -316,6 +317,11 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         }
         break;
     }
+}
+
+void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    // TODO handle the message...
 }
 
 void Editor::Impl::createFrameContents()

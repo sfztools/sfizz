@@ -7,6 +7,8 @@
 #pragma once
 
 #define MAX_PATH_SIZE 1024
+#define ATOM_TEMP_SIZE 8192
+#define OSC_TEMP_SIZE 8192
 
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
 #define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
@@ -19,6 +21,8 @@
 // These ones are just for the worker
 #define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
 #define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
+// OSC atoms
+#define SFIZZ__OSCBlob SFIZZ_URI ":" "OSCBlob"
 
 enum
 {

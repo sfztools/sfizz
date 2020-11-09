@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Synth.h"
+#include "Messaging.h"
 #include "sfizz.hpp"
 #include "absl/memory/memory.h"
 
@@ -304,4 +305,34 @@ const std::vector<std::pair<uint8_t, std::string>>& sfz::Sfizz::getKeyLabels() c
 const std::vector<std::pair<uint16_t, std::string>>& sfz::Sfizz::getCCLabels() const noexcept
 {
     return synth->getCCLabels();
+}
+
+void sfz::Sfizz::ClientDeleter::operator()(Client *client) const noexcept
+{
+    delete client;
+}
+
+auto sfz::Sfizz::createClient(void* data) -> ClientPtr
+{
+    return ClientPtr(new Client(data));
+}
+
+void* sfz::Sfizz::getClientData(Client& client)
+{
+    return client.getClientData();
+}
+
+void sfz::Sfizz::setReceiveCallback(Client& client, sfizz_receive_t* receive)
+{
+    client.setReceiveCallback(receive);
+}
+
+void sfz::Sfizz::sendMessage(Client& client, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    synth->dispatchMessage(client, delay, path, sig, args);
+}
+
+void sfz::Sfizz::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
+{
+    synth->setBroadcastCallback(broadcast, data);
 }

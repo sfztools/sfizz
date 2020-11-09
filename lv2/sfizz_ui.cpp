@@ -107,12 +107,17 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID patch_value_uri;
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
+    LV2_URID sfizz_osc_blob_uri;
+
+    uint8_t osc_temp[OSC_TEMP_SIZE];
+    alignas(LV2_Atom) uint8_t atom_temp[ATOM_TEMP_SIZE];
 
 protected:
     void uiSendValue(EditId id, const EditValue& v) override;
     void uiBeginSend(EditId id) override;
     void uiEndSend(EditId id) override;
     void uiSendMIDI(const uint8_t* msg, uint32_t len) override;
+    void uiSendMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
 
 private:
     void uiTouch(EditId id, bool t);
@@ -192,6 +197,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->patch_value_uri = map->map(map->handle, LV2_PATCH__value);
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
+    self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path
@@ -335,6 +341,14 @@ port_event(LV2UI_Handle ui,
                 }
             }
         }
+        else if (atom->type == self->sfizz_osc_blob_uri) {
+            const char *path;
+            const char *sig;
+            const sfizz_arg_t *args;
+            uint8_t buffer[1024];
+            if (sfizz_extract_message(LV2_ATOM_BODY_CONST(atom), atom->size, buffer, sizeof(buffer), &path, &sig, &args) > 0)
+                self->uiReceiveMessage(path, sig, args);
+        }
     }
 
     (void)buffer_size;
@@ -422,9 +436,8 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
     auto sendPath = [this](LV2_URID property, const std::string& value) {
         LV2_Atom_Forge *forge = &atom_forge;
         LV2_Atom_Forge_Frame frame;
-        alignas(LV2_Atom) uint8_t buffer[MAX_PATH_SIZE + 512];
-        auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
-        lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+        auto *atom = reinterpret_cast<const LV2_Atom *>(atom_temp);
+        lv2_atom_forge_set_buffer(forge, atom_temp, sizeof(atom_temp));
         if (lv2_atom_forge_object(forge, &frame, 0, patch_set_uri) &&
             lv2_atom_forge_key(forge, patch_property_uri) &&
             lv2_atom_forge_urid(forge, property) &&
@@ -514,11 +527,29 @@ void sfizz_ui_t::uiTouch(EditId id, bool t)
 void sfizz_ui_t::uiSendMIDI(const uint8_t* msg, uint32_t len)
 {
     LV2_Atom_Forge *forge = &atom_forge;
-    alignas(LV2_Atom) uint8_t buffer[512];
-    auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
-    lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
+    auto *atom = reinterpret_cast<const LV2_Atom *>(atom_temp);
+    lv2_atom_forge_set_buffer(forge, atom_temp, sizeof(atom_temp));
     if (lv2_atom_forge_atom(forge, len, midi_event_uri) &&
         lv2_atom_forge_write(forge, msg, len))
+    {
+        write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+    }
+}
+
+void sfizz_ui_t::uiSendMessage(const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    uint8_t *osc_temp = this->osc_temp;
+    uint32_t osc_size = sfizz_prepare_message(osc_temp, OSC_TEMP_SIZE, path, sig, args);
+
+    if (osc_size > OSC_TEMP_SIZE)
+        return;
+
+    LV2_Atom_Forge *forge = &atom_forge;
+    auto *atom = reinterpret_cast<const LV2_Atom *>(atom_temp);
+    lv2_atom_forge_set_buffer(forge, atom_temp, sizeof(atom_temp));
+
+    if (lv2_atom_forge_atom(forge, osc_size, sfizz_osc_blob_uri) &&
+        lv2_atom_forge_raw(forge, osc_temp, osc_size))
     {
         write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
     }

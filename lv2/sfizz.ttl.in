@@ -11,6 +11,7 @@
 @prefix pprop:   <http://lv2plug.in/ns/ext/port-props#> .
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rsz:     <http://lv2plug.in/ns/ext/resize-port#> .
 @prefix state:   <http://lv2plug.in/ns/ext/state#> .
 @prefix time:    <http://lv2plug.in/ns/ext/time#> .
 @prefix ui:      <http://lv2plug.in/ns/extensions/ui#> .
@@ -92,21 +93,23 @@ midnam:update a lv2:Feature .
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
-    atom:supports patch:Message, midi:MidiEvent, time:Position ;
+    atom:supports patch:Message, midi:MidiEvent, time:Position, <@LV2PLUGIN_URI@:OSCBlob> ;
     lv2:designation lv2:control ;
     lv2:index 0 ;
     lv2:symbol "control" ;
     lv2:name "Control",
       "Contrôle"@fr ;
+    rsz:minimumSize 65536 ;
   ] , [
     a lv2:OutputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
-    atom:supports patch:Message ;
+    atom:supports patch:Message, <@LV2PLUGIN_URI@:OSCBlob> ;
     lv2:designation lv2:control ;
     lv2:index 1 ;
     lv2:symbol "notify" ;
     lv2:name "Notify",
       "Notification"@fr ;
+    rsz:minimumSize 65536 ;
   ] , [
     a lv2:AudioPort, lv2:OutputPort ;
     lv2:index 2 ;

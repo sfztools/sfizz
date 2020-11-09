@@ -89,6 +89,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/Logger.cpp \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \
+	src/sfizz/Messaging.cpp \
 	src/sfizz/MidiState.cpp \
 	src/sfizz/OpcodeCleanup.cpp \
 	src/sfizz/Opcode.cpp \
@@ -112,6 +113,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/simd/HelpersAVX.cpp \
 	src/sfizz/Smoothers.cpp \
 	src/sfizz/Synth.cpp \
+	src/sfizz/SynthMessaging.cpp \
 	src/sfizz/Tuning.cpp \
 	src/sfizz/utility/SpinMutex.cpp \
 	src/sfizz/Voice.cpp \

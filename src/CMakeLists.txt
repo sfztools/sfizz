@@ -148,6 +148,7 @@ set (SFIZZ_SOURCES
     sfizz/PowerFollower.cpp
     sfizz/FlexEGDescription.cpp
     sfizz/FlexEnvelope.cpp
+    sfizz/SynthMessaging.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
@@ -206,12 +207,27 @@ set (SFIZZ_PARSER_SOURCES
 set (SFIZZ_PARSER_OTHER sfizz/OpcodeCleanup.re)
 source_group ("Other Files" FILES ${SFIZZ_PARSER_OTHER})
 
+# Sfizz parser library
 add_library (sfizz_parser STATIC)
 target_sources (sfizz_parser PRIVATE
     ${SFIZZ_PARSER_HEADERS} ${SFIZZ_PARSER_SOURCES} ${SFIZZ_PARSER_OTHER})
 target_include_directories (sfizz_parser PUBLIC sfizz)
 target_include_directories (sfizz_parser PUBLIC external)
 target_link_libraries (sfizz_parser PUBLIC absl::strings PRIVATE absl::flat_hash_map)
+
+# OSC messaging library
+set (SFIZZ_MESSAGING_HEADERS
+    sfizz/Messaging.h
+    sfizz_message.h)
+
+set (SFIZZ_MESSAGING_SOURCES
+    sfizz/Messaging.cpp)
+
+add_library (sfizz_messaging STATIC)
+target_sources (sfizz_messaging PRIVATE
+    ${SFIZZ_MESSAGING_HEADERS} ${SFIZZ_MESSAGING_SOURCES})
+target_include_directories (sfizz_messaging PUBLIC ".")
+target_link_libraries (sfizz_messaging PUBLIC absl::strings)
 
 # Sfizz static library
 add_library(sfizz_static STATIC)
@@ -220,8 +236,8 @@ target_sources(sfizz_static PRIVATE
 target_include_directories (sfizz_static PUBLIC .)
 target_include_directories (sfizz_static PUBLIC external)
 target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
-target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads st_audiofile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-jsl sfizz-atomic)
-set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
+target_link_libraries (sfizz_static PRIVATE sfizz_parser sfizz_messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-jsl sfizz-atomic)
+set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
 if(SFIZZ_USE_SNDFILE)
     target_compile_definitions (sfizz_static PUBLIC SFIZZ_USE_SNDFILE=1)
     target_link_libraries (sfizz_static PUBLIC st_audiofile)
@@ -251,7 +267,7 @@ if (SFIZZ_SHARED)
         ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories (sfizz_shared PRIVATE .)
     target_include_directories (sfizz_shared PRIVATE external)
-    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads st_audiofile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-jsl sfizz-atomic)
+    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser sfizz_messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-jsl sfizz-atomic)
     if(SFIZZ_USE_SNDFILE)
         target_compile_definitions (sfizz_shared PUBLIC SFIZZ_USE_SNDFILE=1)
         target_link_libraries (sfizz_shared PUBLIC st_audiofile)
@@ -263,7 +279,7 @@ if (SFIZZ_SHARED)
         target_compile_definitions (sfizz_shared PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
     endif()
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
+    set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
     sfizz_enable_lto_if_needed(sfizz_shared)
     sfizz_enable_fast_math(sfizz_shared)
 

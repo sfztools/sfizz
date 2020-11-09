@@ -298,6 +298,10 @@ struct Synth::Impl final: public Parser::Listener {
     fs::file_time_type modificationTime_ { };
 
     std::array<float, config::numCCs> defaultCCValues_;
+
+    // Messaging
+    sfizz_receive_t* broadcastReceiver = nullptr;
+    void* broadcastData = nullptr;
 };
 
 Synth::Synth()
@@ -1951,6 +1955,13 @@ std::bitset<config::numCCs> Synth::getUsedCCs() const noexcept
         impl.updateUsedCCsFromRegion(used, *region);
     impl.updateUsedCCsFromModulations(used, impl.resources_.modMatrix);
     return used;
+}
+
+void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
+{
+    Impl& impl = *impl_;
+    impl.broadcastReceiver = broadcast;
+    impl.broadcastData = data;
 }
 
 void Synth::Impl::updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region)

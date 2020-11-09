@@ -293,6 +293,24 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
 
         _playState = *static_cast<const SfizzPlayState*>(data);
     }
+    else if (!strcmp(id, "ReceivedMessage")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("Message", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        const char* path;
+        const char* sig;
+        const sfizz_arg_t* args;
+        uint8_t buffer[1024];
+
+        if (sfizz_extract_message(data, size, buffer, sizeof(buffer), &path, &sig, &args) > 0) {
+            for (MessageListener* listener : _messageListeners)
+                listener->onMessageReceived(path, sig, args);
+        }
+    }
 
     for (StateListener* listener : _stateListeners)
         listener->onStateChanged();
@@ -310,6 +328,18 @@ void SfizzVstController::removeSfizzStateListener(StateListener* listener)
     auto it = std::find(_stateListeners.begin(), _stateListeners.end(), listener);
     if (it != _stateListeners.end())
         _stateListeners.erase(it);
+}
+
+void SfizzVstController::addSfizzMessageListener(MessageListener* listener)
+{
+    _messageListeners.push_back(listener);
+}
+
+void SfizzVstController::removeSfizzMessageListener(MessageListener* listener)
+{
+    auto it = std::find(_messageListeners.begin(), _messageListeners.end(), listener);
+    if (it != _messageListeners.end())
+        _messageListeners.erase(it);
 }
 
 FUnknown* SfizzVstController::createInstance(void*)

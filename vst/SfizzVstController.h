@@ -9,6 +9,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
+#include <sfizz_message.h>
 class SfizzVstState;
 
 using namespace Steinberg;
@@ -49,6 +50,9 @@ public:
     struct StateListener {
         virtual void onStateChanged() = 0;
     };
+    struct MessageListener {
+        virtual void onMessageReceived(const char* path, const char* sig, const sfizz_arg_t* args) = 0;
+    };
 
     const SfizzVstState& getSfizzState() const { return _state; }
     SfizzVstState& getSfizzState() { return _state; }
@@ -62,6 +66,9 @@ public:
     void addSfizzStateListener(StateListener* listener);
     void removeSfizzStateListener(StateListener* listener);
 
+    void addSfizzMessageListener(MessageListener* listener);
+    void removeSfizzMessageListener(MessageListener* listener);
+
     ///
     static FUnknown* createInstance(void*);
 
@@ -72,4 +79,5 @@ private:
     SfizzUiState _uiState;
     SfizzPlayState _playState {};
     std::vector<StateListener*> _stateListeners;
+    std::vector<MessageListener*> _messageListeners;
 };

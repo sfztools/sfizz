@@ -10,6 +10,7 @@
 */
 
 #pragma once
+#include "sfizz_message.h"
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,6 +29,7 @@
 namespace sfz
 {
 class Synth;
+class Client;
 /**
  * @brief Main class.
  */
@@ -565,7 +567,75 @@ public:
      */
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
 
+    /**
+     * @addtogroup Messaging
+     * @{
+     */
+
+private:
+    struct ClientDeleter {
+        void operator()(Client *client) const noexcept;
+    };
+
+public:
+    using ClientPtr = std::unique_ptr<Client, ClientDeleter>;
+
+    /**
+     * @brief Create a new messaging client
+     * @since 0.6.0
+     *
+     * @param data         The opaque data pointer which is passed to the receiver.
+     * @return             The new client.
+     */
+    static ClientPtr createClient(void* data);
+
+    /**
+     * @brief Get the client data
+     * @since 0.6.0
+     *
+     * @param client       The client.
+     * @return             The client data.
+     */
+    static void* getClientData(Client& client);
+
+    /**
+     * @brief Set the function which receives reply messages from the synth engine.
+     * @since 0.6.0
+     *
+     * @param client       The client.
+     * @param receive      The pointer to the receiving function.
+     */
+    static void setReceiveCallback(Client& client, sfizz_receive_t* receive);
+
+    /**
+     * @brief Send a message to the synth engine
+     * @since 0.6.0
+     *
+     * @param client       The client sending the message.
+     * @param delay        The delay of the message in the block, in samples.
+     * @param path         The OSC address pattern.
+     * @param sig          The OSC type tag string.
+     * @param args         The OSC arguments, whose number and format is determined the type tag string.
+     */
+    void sendMessage(Client& client, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+
+    /**
+     * @brief Set the function which receives broadcast messages from the synth engine.
+     * @since 0.6.0
+     *
+     * @param broadcast    The pointer to the receiving function.
+     * @param data         The opaque data pointer which is passed to the receiver.
+     */
+    void setBroadcastCallback(sfizz_receive_t* broadcast, void* data);
+
+    /**
+     * @}
+     */
+
 private:
     std::unique_ptr<sfz::Synth> synth;
 };
+
+using ClientPtr = Sfizz::ClientPtr;
+
 }

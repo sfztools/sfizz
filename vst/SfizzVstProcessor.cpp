@@ -24,10 +24,17 @@ static const char defaultSfzText[] =
     "<region>sample=*sine" "\n"
     "ampeg_attack=0.02 ampeg_release=0.1" "\n";
 
-enum { kMidiEventMaximumSize = 4 };
+enum {
+    kMidiEventMaximumSize = 4,
+    kOscTempSize = 8192,
+};
+
+static const char* kRingIdMidi = "Mid";
+static const char* kRingIdOsc = "Osc";
 
 SfizzVstProcessor::SfizzVstProcessor()
-    : _fifoToWorker(64 * 1024), _fifoMidiFromUi(64 * 1024)
+    : _fifoToWorker(64 * 1024), _fifoMessageFromUi(64 * 1024),
+      _oscTemp(new uint8_t[kOscTempSize])
 {
     setControllerClass(SfizzVstController::cid);
 
@@ -56,6 +63,16 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
 
     fprintf(stderr, "[sfizz] new synth\n");
     _synth.reset(new sfz::Sfizz);
+
+    auto onMessage = +[](void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+        {
+            auto *self = reinterpret_cast<SfizzVstProcessor*>(data);
+            self->receiveMessage(delay, path, sig, args);
+        };
+    _client = _synth->createClient(this);
+    _synth->setReceiveCallback(*_client, onMessage);
+    _synth->setBroadcastCallback(onMessage, this);
+
     _currentStretchedTuning = 0.0;
     loadSfzFileOrDefault(*_synth, {});
 
@@ -210,7 +227,7 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     else
         synth.disableFreeWheeling();
 
-    processMidiFromUi();
+    processMessagesFromUi();
 
     if (Vst::IParameterChanges* pc = data.inputParameterChanges)
         processControllerChanges(*pc);
@@ -404,36 +421,61 @@ void SfizzVstProcessor::processEvents(Vst::IEventList& events)
     }
 }
 
-void SfizzVstProcessor::processMidiFromUi()
+void SfizzVstProcessor::processMessagesFromUi()
 {
     sfz::Sfizz& synth = *_synth;
+    sfz::Client& client = *_client;
+    Ring_Buffer& fifo = _fifoMessageFromUi;
+    RTMessage header;
 
-    for (uint32 size = 0; _fifoMidiFromUi.peek(size) &&
-             _fifoMidiFromUi.size_used() >= sizeof(size) + size; ) {
-        _fifoMidiFromUi.discard(sizeof(size));
+    while (fifo.peek(header) && fifo.size_used() >= sizeof(header) + header.size) {
+        fifo.discard(sizeof(header));
 
-        if (size > kMidiEventMaximumSize) {
-            _fifoMidiFromUi.discard(size);
-            continue;
+        if (header.type == kRingIdMidi) {
+            if (header.size > kMidiEventMaximumSize) {
+                fifo.discard(header.size);
+                continue;
+            }
+
+            uint8_t data[kMidiEventMaximumSize] = {};
+            fifo.get(data, header.size);
+
+            // interpret the MIDI message
+            switch (data[0] & 0xf0) {
+            case 0x80:
+                synth.noteOff(0, data[1] & 0x7f, data[2] & 0x7f);
+                break;
+            case 0x90:
+                synth.noteOn(0, data[1] & 0x7f, data[2] & 0x7f);
+                break;
+            case 0xb0:
+                synth.cc(0, data[1] & 0x7f, data[2] & 0x7f);
+                break;
+            case 0xe0:
+                synth.pitchWheel(0, (data[2] << 7) + data[1] - 8192);
+                break;
+            }
         }
+        else if (header.type == kRingIdOsc) {
+            uint8_t* oscTemp = _oscTemp.get();
 
-        uint8_t data[kMidiEventMaximumSize] = {};
-        _fifoMidiFromUi.get(data, size);
+            if (header.size > kOscTempSize) {
+                fifo.discard(header.size);
+                continue;
+            }
 
-        // interpret the MIDI message
-        switch (data[0] & 0xf0) {
-        case 0x80:
-            synth.noteOff(0, data[1] & 0x7f, data[2] & 0x7f);
-            break;
-        case 0x90:
-            synth.noteOn(0, data[1] & 0x7f, data[2] & 0x7f);
-            break;
-        case 0xb0:
-            synth.cc(0, data[1] & 0x7f, data[2] & 0x7f);
-            break;
-        case 0xe0:
-            synth.pitchWheel(0, (data[2] << 7) + data[1] - 8192);
-            break;
+            fifo.get(oscTemp, header.size);
+
+            const char* path;
+            const char* sig;
+            const sfizz_arg_t* args;
+            uint8_t buffer[1024];
+            if (sfizz_extract_message(oscTemp, header.size, buffer, sizeof(buffer), &path, &sig, &args) > 0)
+                synth.sendMessage(client, 0, path, sig, args);
+        }
+        else {
+            assert(false);
+            return;
         }
     }
 }
@@ -494,12 +536,14 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         const void* data = nullptr;
         uint32 size = 0;
         result = attr->getBinary("Data", data, size);
-        if (size < kMidiEventMaximumSize) {
-            if (_fifoMidiFromUi.size_free() >= sizeof(size) + size) {
-                _fifoMidiFromUi.put(size);
-                _fifoMidiFromUi.put(reinterpret_cast<const uint8_t*>(data), size);
-            }
-        }
+        if (size < kMidiEventMaximumSize)
+            writeMessage(_fifoMessageFromUi, kRingIdMidi, data, size);
+    }
+    else if (!std::strcmp(id, "OscMessage")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("Data", data, size);
+        writeMessage(_fifoMessageFromUi, kRingIdOsc, data, size);
     }
 
     return result;
@@ -508,6 +552,14 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 FUnknown* SfizzVstProcessor::createInstance(void*)
 {
     return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessor);
+}
+
+void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    uint8_t* oscTemp = _oscTemp.get();
+    uint32_t oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
+    if (oscSize <= kOscTempSize)
+        writeWorkerMessage("ReceiveMessage", oscTemp, oscSize);
 }
 
 void SfizzVstProcessor::loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath)
@@ -563,6 +615,12 @@ void SfizzVstProcessor::doBackgroundWork()
             notification->getAttributes()->setBinary("PlayState", &playState, sizeof(playState));
             sendMessage(notification);
         }
+        else if (!std::strcmp(id, "ReceiveMessage")) {
+            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
+            notification->setMessageID("ReceivedMessage");
+            notification->getAttributes()->setBinary("Message", msg->payload<uint8_t>(), msg->size);
+            sendMessage(notification);
+        }
     }
 }
 
@@ -585,16 +643,7 @@ void SfizzVstProcessor::stopBackgroundWork()
 
 bool SfizzVstProcessor::writeWorkerMessage(const char* type, const void* data, uintptr_t size)
 {
-    RTMessage header;
-    header.type = type;
-    header.size = size;
-
-    if (_fifoToWorker.size_free() < sizeof(header) + size)
-        return false;
-
-    _fifoToWorker.put(header);
-    _fifoToWorker.put(static_cast<const uint8*>(data), size);
-    return true;
+    return writeMessage(_fifoToWorker, type, data, size);
 }
 
 SfizzVstProcessor::RTMessagePtr SfizzVstProcessor::readWorkerMessage()
@@ -628,6 +677,20 @@ bool SfizzVstProcessor::discardWorkerMessage()
         return false;
 
     _fifoToWorker.discard(sizeof(header) + header.size);
+    return true;
+}
+
+bool SfizzVstProcessor::writeMessage(Ring_Buffer& fifo, const char* type, const void* data, uintptr_t size)
+{
+    RTMessage header;
+    header.type = type;
+    header.size = size;
+
+    if (fifo.size_free() < sizeof(header) + size)
+        return false;
+
+    fifo.put(header);
+    fifo.put(static_cast<const uint8*>(data), size);
     return true;
 }
 
