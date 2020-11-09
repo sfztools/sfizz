@@ -6,6 +6,7 @@
 
 #pragma once
 #include "Messaging.h"
+#include <type_traits>
 #include <cstddef>
 #include <cstring>
 
@@ -30,30 +31,33 @@ inline void Client::receive(int delay, const char* path, OscDecayedType<Sig>... 
 }
 
 ///
-#define OSC_SCALAR_TRAITS(tag, member)                  \
-    template <> struct OscDataTraits<tag> {             \
-        typedef decltype(sfizz_arg_t::member) type;     \
-        static_assert(std::is_scalar<type>::value, ""); \
-        static inline sfizz_arg_t make_arg(type v) {    \
-            sfizz_arg_t a; a.member = v; return a;      \
-        }                                               \
+#define OSC_SCALAR_TRAITS(tag, member)                          \
+    template <> struct OscDataTraits<tag> {                     \
+        typedef decltype(sfizz_arg_t::member) type;             \
+        typedef type decayed_type;                              \
+        static_assert(std::is_scalar<type>::value, "");         \
+        static inline sfizz_arg_t make_arg(decayed_type v) {    \
+            sfizz_arg_t a; a.member = v; return a;              \
+        }                                                       \
     }
-#define OSC_BYTEARRAY_TRAITS(tag, member)               \
-    template <> struct OscDataTraits<tag> {             \
-        typedef decltype(sfizz_arg_t::member) type;     \
-        static_assert(std::is_array<type>::value, ""); \
-        static inline sfizz_arg_t make_arg(type v) {    \
-            sfizz_arg_t a;                              \
-            std::memcpy(a.member, v, sizeof(a.member)); \
-            return a;                                   \
-        }                                               \
+#define OSC_BYTEARRAY_TRAITS(tag, member)                               \
+    template <> struct OscDataTraits<tag> {                             \
+        typedef decltype(sfizz_arg_t::member) type;                     \
+        static_assert(std::is_array<type>::value, "");                  \
+        typedef const typename std::remove_all_extents<type>::type* decayed_type; \
+        static inline sfizz_arg_t make_arg(decayed_type v) {            \
+            sfizz_arg_t a;                                              \
+            std::memcpy(a.member, v, sizeof(a.member));                 \
+            return a;                                                   \
+        }                                                               \
     }
-#define OSC_VOID_TRAITS(tag)                            \
-    template <> struct OscDataTraits<tag> {             \
-        typedef struct Nothing {} type;                 \
-        static inline sfizz_arg_t make_arg(type v) {    \
-            sfizz_arg_t a; (void)v; return a;           \
-        }                                               \
+#define OSC_VOID_TRAITS(tag)                                    \
+    template <> struct OscDataTraits<tag> {                     \
+        typedef struct Nothing {} type;                         \
+        typedef type decayed_type;                              \
+        static inline sfizz_arg_t make_arg(decayed_type v) {    \
+            sfizz_arg_t a; (void)v; return a;                   \
+        }                                                       \
     }
 
 OSC_SCALAR_TRAITS('i', i);

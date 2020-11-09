@@ -6,13 +6,12 @@
 
 #pragma once
 #include "sfizz_message.h"
-#include <type_traits>
 
 namespace sfz {
 
 template <char Tag> struct OscDataTraits;
 template <char Tag> using OscType = typename OscDataTraits<Tag>::type;
-template <char Tag> using OscDecayedType = typename std::decay<OscType<Tag>>::type;
+template <char Tag> using OscDecayedType = typename OscDataTraits<Tag>::decayed_type;
 
 class Client {
 public:

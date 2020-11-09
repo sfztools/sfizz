@@ -93,3 +93,33 @@ TEST_CASE("[Messaging] OSC message creation")
         REQUIRE(args2[4].f == 5.678f);
     }
 }
+
+TEST_CASE("[Messaging] Type-safe client API")
+{
+    sfz::Client client(nullptr);
+
+    static const int32_t i = 777;
+    static const int64_t h = 0x100000000LL;
+    static const float f = 3.14f;
+    static const double d = 6.28;
+    static const uint8_t m[4] = {0x90, 0x40, 0xFF};
+    static const sfizz_blob_t b { reinterpret_cast<const uint8_t*>("MyBinaryString"), 14 };
+    static const char s[] = "Hello, World!";
+
+    client.setReceiveCallback(+[](void*, int, const char* path, const char* sig, const sfizz_arg_t* args) {
+        REQUIRE(!strcmp(path, "/test"));
+        REQUIRE(!strcmp(sig, "imhfdsbTFNI"));
+        unsigned index = 0;
+        REQUIRE(args[index++].i == i);
+        REQUIRE(!memcmp(args[index++].m, m, 4));
+        REQUIRE(args[index++].h == h);
+        REQUIRE(args[index++].f == f);
+        REQUIRE(args[index++].d == d);
+        REQUIRE(!strcmp(args[index++].s, s));
+        REQUIRE(args[index  ].b->data == b.data);
+        REQUIRE(args[index++].b->size == b.size);
+    });
+
+    client.receive<'i', 'm', 'h', 'f', 'd', 's', 'b', 'T', 'F', 'N', 'I'>(
+        0, "/test", i, m, h, f, d, s, &b, {}, {}, {}, {});
+}
