@@ -168,14 +168,14 @@ struct Synth::Impl final: public Parser::Listener {
     void finalizeSfzLoad();
 
     template<class T>
-    static void updateUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
+    static void collectUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
     {
         for (auto& mod : map)
             usedCCs[mod.cc] = true;
     }
 
-    static void updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
-    static void updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
+    static void collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
+    static void collectUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
 
     /**
      * @brief Set the default value for a CC
