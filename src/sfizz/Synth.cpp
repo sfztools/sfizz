@@ -683,7 +683,7 @@ void Synth::Impl::finalizeSfzLoad()
     std::bitset<config::numCCs> usedCCs;
     for (const RegionPtr& regionPtr : regions_) {
         const Region& region = *regionPtr;
-        updateUsedCCsFromRegion(usedCCs, region);
+        collectUsedCCsFromRegion(usedCCs, region);
         for (const Region::Connection& connection : region.connections) {
             if (connection.source.id() == ModId::Controller)
                 usedCCs.set(connection.source.parameters().cc);
@@ -722,6 +722,9 @@ void Synth::Impl::finalizeSfzLoad()
     applySettingsPerVoice();
 
     setupModMatrix();
+
+    // cache the set of used CCs for future access
+    currentUsedCCs_ = collectAllUsedCCs();
 }
 
 bool Synth::loadScalaFile(const fs::path& path)
@@ -1677,14 +1680,10 @@ void Synth::allSoundOff() noexcept
         effectBus->clear();
 }
 
-std::bitset<config::numCCs> Synth::getUsedCCs() const noexcept
+const std::bitset<config::numCCs>& Synth::getUsedCCs() const noexcept
 {
     Impl& impl = *impl_;
-    std::bitset<config::numCCs> used;
-    for (const Impl::RegionPtr& region : impl.regions_)
-        impl.updateUsedCCsFromRegion(used, *region);
-    impl.updateUsedCCsFromModulations(used, impl.resources_.modMatrix);
-    return used;
+    return impl.currentUsedCCs_;
 }
 
 void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
@@ -1694,41 +1693,41 @@ void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
     impl.broadcastData = data;
 }
 
-void Synth::Impl::updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region)
+void Synth::Impl::collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region)
 {
-    updateUsedCCsFromCCMap(usedCCs, region.offsetCC);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccRelease);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDecay);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDelay);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
-    updateUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
+    collectUsedCCsFromCCMap(usedCCs, region.offsetCC);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccRelease);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDecay);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDelay);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
+    collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
     if (region.pitchEG) {
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDecay);
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDelay);
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccHold);
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
-        updateUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDecay);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccDelay);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccHold);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
+        collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
     }
     if (region.filterEG) {
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccDecay);
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccDelay);
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccHold);
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
-        updateUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccDecay);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccDelay);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccHold);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
+        collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
     }
-    updateUsedCCsFromCCMap(usedCCs, region.ccConditions);
-    updateUsedCCsFromCCMap(usedCCs, region.ccTriggers);
-    updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCInRange);
-    updateUsedCCsFromCCMap(usedCCs, region.crossfadeCCOutRange);
+    collectUsedCCsFromCCMap(usedCCs, region.ccConditions);
+    collectUsedCCsFromCCMap(usedCCs, region.ccTriggers);
+    collectUsedCCsFromCCMap(usedCCs, region.crossfadeCCInRange);
+    collectUsedCCsFromCCMap(usedCCs, region.crossfadeCCOutRange);
 }
 
-void Synth::Impl::updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm)
+void Synth::Impl::collectUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm)
 {
     class CCSourceCollector : public ModMatrix::KeyVisitor {
     public:
@@ -1748,6 +1747,15 @@ void Synth::Impl::updateUsedCCsFromModulations(std::bitset<config::numCCs>& used
 
     CCSourceCollector vtor(usedCCs);
     mm.visitSources(vtor);
+}
+
+std::bitset<config::numCCs> Synth::Impl::collectAllUsedCCs()
+{
+    std::bitset<config::numCCs> used;
+    for (const Impl::RegionPtr& region : regions_)
+        collectUsedCCsFromRegion(used, *region);
+    collectUsedCCsFromModulations(used, resources_.modMatrix);
+    return used;
 }
 
 Parser& Synth::getParser() noexcept

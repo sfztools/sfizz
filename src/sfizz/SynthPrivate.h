@@ -168,14 +168,16 @@ struct Synth::Impl final: public Parser::Listener {
     void finalizeSfzLoad();
 
     template<class T>
-    static void updateUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
+    static void collectUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
     {
         for (auto& mod : map)
             usedCCs[mod.cc] = true;
     }
 
-    static void updateUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
-    static void updateUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
+    static void collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
+    static void collectUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
+
+    std::bitset<config::numCCs> collectAllUsedCCs();
 
     /**
      * @brief Set the default value for a CC
@@ -268,6 +270,7 @@ struct Synth::Impl final: public Parser::Listener {
     fs::file_time_type modificationTime_ { };
 
     std::array<float, config::numCCs> defaultCCValues_;
+    std::bitset<config::numCCs> currentUsedCCs_;
 
     // Messaging
     sfizz_receive_t* broadcastReceiver = nullptr;
