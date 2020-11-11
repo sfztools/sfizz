@@ -584,7 +584,7 @@ public:
      *
      * @return const std::bitset<config::numCCs>&
      */
-    std::bitset<config::numCCs> getUsedCCs() const noexcept;
+    const std::bitset<config::numCCs>& getUsedCCs() const noexcept;
 
     /**
      * @brief Dispatch the incoming message to the synth engine

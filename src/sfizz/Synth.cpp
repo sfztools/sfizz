@@ -722,6 +722,9 @@ void Synth::Impl::finalizeSfzLoad()
     applySettingsPerVoice();
 
     setupModMatrix();
+
+    // cache the set of used CCs for future access
+    currentUsedCCs_ = collectAllUsedCCs();
 }
 
 bool Synth::loadScalaFile(const fs::path& path)
@@ -1677,14 +1680,10 @@ void Synth::allSoundOff() noexcept
         effectBus->clear();
 }
 
-std::bitset<config::numCCs> Synth::getUsedCCs() const noexcept
+const std::bitset<config::numCCs>& Synth::getUsedCCs() const noexcept
 {
     Impl& impl = *impl_;
-    std::bitset<config::numCCs> used;
-    for (const Impl::RegionPtr& region : impl.regions_)
-        impl.collectUsedCCsFromRegion(used, *region);
-    impl.collectUsedCCsFromModulations(used, impl.resources_.modMatrix);
-    return used;
+    return impl.currentUsedCCs_;
 }
 
 void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
@@ -1748,6 +1747,15 @@ void Synth::Impl::collectUsedCCsFromModulations(std::bitset<config::numCCs>& use
 
     CCSourceCollector vtor(usedCCs);
     mm.visitSources(vtor);
+}
+
+std::bitset<config::numCCs> Synth::Impl::collectAllUsedCCs()
+{
+    std::bitset<config::numCCs> used;
+    for (const Impl::RegionPtr& region : regions_)
+        collectUsedCCsFromRegion(used, *region);
+    collectUsedCCsFromModulations(used, resources_.modMatrix);
+    return used;
 }
 
 Parser& Synth::getParser() noexcept
