@@ -146,6 +146,11 @@ void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_
     auto* self = reinterpret_cast<sfz::Synth*>(synth);
     self->hdcc(delay, cc_number, norm_value);
 }
+void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value)
+{
+    auto* self = reinterpret_cast<sfz::Synth*>(synth);
+    self->automateHdcc(delay, cc_number, norm_value);
+}
 void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch)
 {
     auto* self = reinterpret_cast<sfz::Synth*>(synth);
