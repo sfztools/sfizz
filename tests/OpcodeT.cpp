@@ -212,6 +212,7 @@ TEST_CASE("[Opcode] Normalization")
         {"offmode", "off_mode"},
         {"bendup", "bend_up"},
         {"benddown", "bend_down"},
+        {"bendstep", "bend_step"},
         {"filtype", "fil1_type"},
         {"fil21type", "fil21_type"},
         // ARIA aliases

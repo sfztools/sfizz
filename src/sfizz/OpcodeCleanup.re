@@ -120,7 +120,7 @@ end_region_oncc:
         opcode = absl::StrCat("off_", group(1));
         goto end_region;
     }
-    "bend" ("up"|"down") END {
+    "bend" ("up"|"down"|"step") END {
         opcode = absl::StrCat("bend_", group(1));
         goto end_region;
     }
