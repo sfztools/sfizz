@@ -13,7 +13,7 @@ function(bundle_dylibs NAME PATH)
         return()
     endif()
 
-    set(_relative_libdir "../libs")
+    set(_relative_libdir "../Frameworks")
 
     get_filename_component(_dir "${PATH}" DIRECTORY)
     set(_dir "${_dir}/${_relative_libdir}")
