@@ -123,8 +123,15 @@ else()
         LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux/$<0:>")
 endif()
 
-file(COPY "gpl-3.0.txt"
-    DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
+# Copy the license
+if(APPLE)
+    # on macOS, files are not permitted at the bundle root, during code signing
+    file(COPY "gpl-3.0.txt"
+        DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/SharedSupport/License")
+else()
+    file(COPY "gpl-3.0.txt"
+        DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
+endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${VSTPLUGIN_PRJ_NAME} PRIVATE
@@ -280,7 +287,7 @@ elseif(SFIZZ_AU)
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
 
     file(COPY "gpl-3.0.txt"
-        DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}")
+        DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/SharedSupport/License")
 
     # Add the resource fork
     if (FALSE)
