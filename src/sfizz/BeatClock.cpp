@@ -210,7 +210,7 @@ void BeatClock::calculatePhase(float beatPeriod, float* phaseOut)
 {
     const unsigned numFrames = currentCycleFrames_;
 
-    if (beatPeriod == 0.0f) {
+    if (beatPeriod <= 0.0f) {
         fill(absl::MakeSpan(phaseOut, numFrames), 0.0f);
         return;
     }
@@ -236,7 +236,7 @@ void BeatClock::calculatePhaseModulated(const float* beatPeriodData, float* phas
         float beatPosition = std::max(0.0f, beatPositionData[i]);
         float phase = beatPosition / beatPeriod;
         phase -= static_cast<int>(phase);
-        phaseOut[i] = (beatPeriod != 0.0f) ? phase : 0.0f;
+        phaseOut[i] = (beatPeriod > 0.0f) ? phase : 0.0f;
     }
 }
 
