@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "utility/NumericId.h"
 #include <absl/types/span.h>
 #include <memory>
 
@@ -52,9 +53,12 @@ struct LFODescription;
 class LFO {
 public:
     explicit LFO(
+        NumericId<LFO> id,
         BufferPool& bufferPool,
         BeatClock* beatClock = nullptr);
     ~LFO();
+
+    NumericId<LFO> getId() const noexcept;
 
     /**
        Sets the sample rate.

@@ -18,14 +18,16 @@
 namespace sfz {
 
 struct LFO::Impl {
-    explicit Impl(BufferPool& bufferPool, BeatClock* beatClock)
-        : bufferPool_(bufferPool),
+    explicit Impl(NumericId<LFO> id, BufferPool& bufferPool, BeatClock* beatClock)
+        : id_(id),
+          bufferPool_(bufferPool),
           beatClock_(beatClock),
           sampleRate_(config::defaultSampleRate),
           desc_(&LFODescription::getDefault())
     {
     }
 
+    NumericId<LFO> id_;
     BufferPool& bufferPool_;
     BeatClock* beatClock_ = nullptr;
     float sampleRate_ = 0;
@@ -41,13 +43,18 @@ struct LFO::Impl {
     std::array<int, config::maxLFOSubs> sampleHoldState_ {{}};
 };
 
-LFO::LFO(BufferPool& bufferPool, BeatClock* beatClock)
-    : impl_(new Impl(bufferPool, beatClock))
+LFO::LFO(NumericId<LFO> id, BufferPool& bufferPool, BeatClock* beatClock)
+    : impl_(new Impl(id, bufferPool, beatClock))
 {
 }
 
 LFO::~LFO()
 {
+}
+
+NumericId<LFO> LFO::getId() const noexcept
+{
+    return impl_->id_;
 }
 
 void LFO::setSampleRate(double sampleRate)
