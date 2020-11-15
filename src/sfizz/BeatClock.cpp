@@ -199,6 +199,40 @@ void BeatClock::fillBufferUpTo(unsigned delay)
     mustApplyHostPos_ = mustApplyHostPos;
 }
 
+void BeatClock::calculatePhase(float beatPeriod, float* phaseOut)
+{
+    const unsigned numFrames = currentCycleFrames_;
+
+    if (beatPeriod == 0.0f) {
+        fill(absl::MakeSpan(phaseOut, numFrames), 0.0f);
+        return;
+    }
+
+    const float invBeatPeriod = 1.0f / beatPeriod;
+    const float* beatPositionData = getRunningBeatPosition().data();
+
+    for (unsigned i = 0; i < numFrames; ++i) {
+        float beatPosition = std::max(0.0f, beatPositionData[i]);
+        float phase = beatPosition * invBeatPeriod;
+        phase -= static_cast<int>(phase);
+        phaseOut[i] = phase;
+    }
+}
+
+void BeatClock::calculatePhaseModulated(const float* beatPeriodData, float* phaseOut)
+{
+    const unsigned numFrames = currentCycleFrames_;
+    const float* beatPositionData = getRunningBeatPosition().data();
+
+    for (unsigned i = 0; i < numFrames; ++i) {
+        float beatPeriod = beatPeriodData[i];
+        float beatPosition = std::max(0.0f, beatPositionData[i]);
+        float phase = beatPosition / beatPeriod;
+        phase -= static_cast<int>(phase);
+        phaseOut[i] = (beatPeriod != 0.0f) ? phase : 0.0f;
+    }
+}
+
 } // namespace sfz
 
 std::ostream& operator<<(std::ostream& os, const sfz::BBT& pos)

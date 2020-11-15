@@ -130,6 +130,16 @@ public:
      * @brief Get the time signature numerator for each frame of the current cycle.
      */
     absl::Span<const int> getRunningBeatsPerBar();
+    /**
+     * @brief Create a normalized phase signal for LFO which completes a
+     *        period every N-th beat.
+     */
+    void calculatePhase(float beatPeriod, float* phaseOut);
+    /**
+     * @brief Create a normalized phase signal for LFO which completes a
+     *        period every N-th beat, where N can vary over time.
+     */
+    void calculatePhaseModulated(const float* beatPeriodData, float* phaseOut);
 
 private:
     void fillBufferUpTo(unsigned delay);
