@@ -1478,7 +1478,7 @@ void Voice::setMaxLFOsPerVoice(size_t numLFOs)
     impl.lfos_.resize(numLFOs);
 
     for (size_t i = 0; i < numLFOs; ++i) {
-        auto lfo = absl::make_unique<LFO>();
+        auto lfo = absl::make_unique<LFO>(impl.resources_.bufferPool);
         lfo->setSampleRate(impl.sampleRate_);
         impl.lfos_[i] = std::move(lfo);
     }

@@ -9,6 +9,7 @@
 #include <memory>
 
 namespace sfz {
+class BufferPool;
 
 enum class LFOWave : int;
 struct LFODescription;
@@ -49,7 +50,7 @@ struct LFODescription;
 
 class LFO {
 public:
-    LFO();
+    explicit LFO(BufferPool& bufferPool);
     ~LFO();
 
     /**
@@ -91,23 +92,28 @@ private:
        on wave type inside the frame loop.
      */
     template <LFOWave W>
-    void processWave(unsigned nth, absl::Span<float> out);
+    void processWave(unsigned nth, absl::Span<float> out, const float* phaseIn);
 
     /**
        Process a sample-and-hold subwaveform, adding to the buffer.
      */
     template <LFOWave W>
-    void processSH(unsigned nth, absl::Span<float> out);
+    void processSH(unsigned nth, absl::Span<float> out, const float* phaseIn);
 
     /**
        Process the step sequencer, adding to the buffer.
      */
-    void processSteps(absl::Span<float> out);
+    void processSteps(absl::Span<float> out, const float* phaseIn);
 
     /**
        Process the fade in gain, and apply it to the buffer.
      */
     void processFadeIn(absl::Span<float> out);
+
+    /**
+       Generate the phase of the N-th generator
+     */
+    void generatePhase(unsigned nth, absl::Span<float> phases);
 
 private:
     struct Impl;

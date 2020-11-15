@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
+#include "AudioSpan.h"
 #include <array>
 #include <memory>
 #include <functional>

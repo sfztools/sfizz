@@ -6,6 +6,7 @@
 
 #include "LFO.h"
 #include "LFODescription.h"
+#include "BufferPool.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "Config.h"
@@ -16,6 +17,14 @@
 namespace sfz {
 
 struct LFO::Impl {
+    explicit Impl(BufferPool& bufferPool)
+        : bufferPool_(bufferPool),
+          sampleRate_(config::defaultSampleRate),
+          desc_(&LFODescription::getDefault())
+    {
+    }
+
+    BufferPool& bufferPool_;
     float sampleRate_ = 0;
 
     // control
@@ -26,13 +35,12 @@ struct LFO::Impl {
     float fadePosition_ = 0;
     std::array<float, config::maxLFOSubs> subPhases_ {{}};
     std::array<float, config::maxLFOSubs> sampleHoldMem_ {{}};
+    std::array<int, config::maxLFOSubs> sampleHoldState_ {{}};
 };
 
-LFO::LFO()
-    : impl_(new Impl)
+LFO::LFO(BufferPool& bufferPool)
+    : impl_(new Impl(bufferPool))
 {
-    impl_->sampleRate_ = config::defaultSampleRate;
-    impl_->desc_ = &LFODescription::getDefault();
 }
 
 LFO::~LFO()
@@ -55,8 +63,9 @@ void LFO::start(unsigned triggerDelay)
     const LFODescription& desc = *impl.desc_;
     const float sampleRate = impl.sampleRate_;
 
-    impl.subPhases_.fill(desc.phase0);
+    impl.subPhases_.fill(0.0f);
     impl.sampleHoldMem_.fill(0.0f);
+    impl.sampleHoldState_.fill(0);
 
     const float delay = desc.delay;
     size_t delayFrames = (delay > 0) ? static_cast<size_t>(std::ceil(sampleRate * delay)) : 0u;
@@ -118,75 +127,57 @@ inline float LFO::eval<LFOWave::Saw>(float phase)
 }
 
 template <LFOWave W>
-void LFO::processWave(unsigned nth, absl::Span<float> out)
+void LFO::processWave(unsigned nth, absl::Span<float> out, const float* phaseIn)
 {
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
     const LFODescription::Sub& sub = desc.sub[nth];
     const size_t numFrames = out.size();
 
-    const float samplePeriod = 1.0f / impl.sampleRate_;
-    const float baseFreq = desc.freq;
     const float offset = sub.offset;
-    const float ratio = sub.ratio;
     const float scale = sub.scale;
-    float phase = impl.subPhases_[nth];
 
     for (size_t i = 0; i < numFrames; ++i) {
+        float phase = phaseIn[i];
         out[i] += offset + scale * eval<W>(phase);
-
-        // TODO(jpc) lfoN_count: number of repetitions
-
-        float incrPhase = ratio * samplePeriod * baseFreq;
-        phase += incrPhase;
-        int numWraps = (int)phase;
-        phase -= numWraps;
     }
-
-    impl.subPhases_[nth] = phase;
 }
 
 template <LFOWave W>
-void LFO::processSH(unsigned nth, absl::Span<float> out)
+void LFO::processSH(unsigned nth, absl::Span<float> out, const float* phaseIn)
 {
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
     const LFODescription::Sub& sub = desc.sub[nth];
     const size_t numFrames = out.size();
 
-    const float samplePeriod = 1.0f / impl.sampleRate_;
-    const float baseFreq = desc.freq;
     const float offset = sub.offset;
-    const float ratio = sub.ratio;
     const float scale = sub.scale;
     float sampleHoldValue = impl.sampleHoldMem_[nth];
-    float phase = impl.subPhases_[nth];
+    int sampleHoldState = impl.sampleHoldState_[nth];
 
     for (size_t i = 0; i < numFrames; ++i) {
         out[i] += offset + scale * sampleHoldValue;
 
         // TODO(jpc) lfoN_count: number of repetitions
 
-        float incrPhase = ratio * samplePeriod * baseFreq;
+        float phase = phaseIn[i];
+
+        int oldState = sampleHoldState;
+        sampleHoldState = phase > 0.5f;
 
         // value updates twice every period
-        bool updateValue = (int)(phase * 2.0) != (int)((phase + incrPhase) * 2.0);
-
-        phase += incrPhase;
-        int numWraps = (int)phase;
-        phase -= numWraps;
-
-        if (updateValue) {
+        if (sampleHoldState != oldState) {
             std::uniform_real_distribution<float> dist(-1.0f, +1.0f);
             sampleHoldValue = dist(Random::randomGenerator);
         }
     }
 
-    impl.subPhases_[nth] = phase;
     impl.sampleHoldMem_[nth] = sampleHoldValue;
+    impl.sampleHoldState_[nth] = sampleHoldState;
 }
 
-void LFO::processSteps(absl::Span<float> out)
+void LFO::processSteps(absl::Span<float> out, const float* phaseIn)
 {
     unsigned nth = 0;
     Impl& impl = *impl_;
@@ -201,26 +192,14 @@ void LFO::processSteps(absl::Span<float> out)
     if (numSteps <= 0)
         return;
 
-    const float samplePeriod = 1.0f / impl.sampleRate_;
-    const float baseFreq = desc.freq;
     const float offset = sub.offset;
-    const float ratio = sub.ratio;
     const float scale = sub.scale;
-    float phase = impl.subPhases_[nth];
 
     for (size_t i = 0; i < numFrames; ++i) {
+        float phase = phaseIn[i];
         float step = steps[static_cast<int>(phase * numSteps)];
         out[i] += offset + scale * step;
-
-        // TODO(jpc) lfoN_count: number of repetitions
-
-        float incrPhase = ratio * samplePeriod * baseFreq;
-        phase += incrPhase;
-        int numWraps = (int)phase;
-        phase -= numWraps;
     }
-
-    impl.subPhases_[nth] = phase;
 }
 
 void LFO::process(absl::Span<float> out)
@@ -244,39 +223,50 @@ void LFO::process(absl::Span<float> out)
     if (countSubs < 1)
         return;
 
+    auto phasesTemp = impl.bufferPool_.getBuffer(numFrames);
+    if (!phasesTemp) {
+        ASSERTFALSE;
+        fill(out, 0.0f);
+        return;
+    }
+
+    absl::Span<float> phases = *phasesTemp;
+
     if (desc.seq) {
-        processSteps(out);
+        generatePhase(0, phases);
+        processSteps(out, phases.data());
         ++subno;
     }
 
     for (; subno < countSubs; ++subno) {
+        generatePhase(subno, phases);
         switch (desc.sub[subno].wave) {
         case LFOWave::Triangle:
-            processWave<LFOWave::Triangle>(subno, out);
+            processWave<LFOWave::Triangle>(subno, out, phases.data());
             break;
         case LFOWave::Sine:
-            processWave<LFOWave::Sine>(subno, out);
+            processWave<LFOWave::Sine>(subno, out, phases.data());
             break;
         case LFOWave::Pulse75:
-            processWave<LFOWave::Pulse75>(subno, out);
+            processWave<LFOWave::Pulse75>(subno, out, phases.data());
             break;
         case LFOWave::Square:
-            processWave<LFOWave::Square>(subno, out);
+            processWave<LFOWave::Square>(subno, out, phases.data());
             break;
         case LFOWave::Pulse25:
-            processWave<LFOWave::Pulse25>(subno, out);
+            processWave<LFOWave::Pulse25>(subno, out, phases.data());
             break;
         case LFOWave::Pulse12_5:
-            processWave<LFOWave::Pulse12_5>(subno, out);
+            processWave<LFOWave::Pulse12_5>(subno, out, phases.data());
             break;
         case LFOWave::Ramp:
-            processWave<LFOWave::Ramp>(subno, out);
+            processWave<LFOWave::Ramp>(subno, out, phases.data());
             break;
         case LFOWave::Saw:
-            processWave<LFOWave::Saw>(subno, out);
+            processWave<LFOWave::Saw>(subno, out, phases.data());
             break;
         case LFOWave::RandomSH:
-            processSH<LFOWave::RandomSH>(subno, out);
+            processSH<LFOWave::RandomSH>(subno, out, phases.data());
             break;
         }
     }
@@ -304,6 +294,34 @@ void LFO::processFadeIn(absl::Span<float> out)
     }
 
     impl.fadePosition_ = fadePosition;
+}
+
+void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
+{
+    Impl& impl = *impl_;
+    const LFODescription& desc = *impl.desc_;
+    const LFODescription::Sub& sub = desc.sub[nth];
+    const float samplePeriod = 1.0f / impl.sampleRate_;
+    const float baseFreq = desc.freq;
+    const float phaseOffset = desc.phase0;
+    const float ratio = sub.ratio;
+    float phase = impl.subPhases_[nth];
+
+    for (size_t i = 0, n = phases.size(); i < n; ++i) {
+        float withOffset = phase + phaseOffset;
+        withOffset -= (int)withOffset;
+
+        phases[i] = withOffset;
+
+        // TODO(jpc) lfoN_count: number of repetitions
+
+        float incr = ratio * samplePeriod * baseFreq;
+        phase += incr;
+        int numWraps = (int)phase;
+        phase -= numWraps;
+    }
+
+    impl.subPhases_[nth] = phase;
 }
 
 } // namespace sfz

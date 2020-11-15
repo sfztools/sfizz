@@ -13,6 +13,7 @@
 static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRate, size_t numFrames)
 {
     sfz::Synth synth;
+    sfz::Resources& resources = synth.getResources();
 
     if (!synth.loadSfzFile(sfzPath))
         return false;
@@ -22,23 +23,25 @@ static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRat
 
     const std::vector<sfz::LFODescription>& desc = synth.getRegionView(0)->lfos;
     size_t numLfos = desc.size();
-    std::vector<sfz::LFO> lfos(numLfos);
+    std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].setSampleRate(sampleRate);
-        lfos[l].configure(&desc[l]);
+        sfz::LFO* lfo = new sfz::LFO(resources.bufferPool);
+        lfos[l].reset(lfo);
+        lfo->setSampleRate(sampleRate);
+        lfo->configure(&desc[l]);
     }
 
     std::vector<float> outputMemory(numLfos * numFrames);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].start(0);
+        lfos[l]->start(0);
     }
 
     std::vector<absl::Span<float>> lfoOutputs(numLfos);
     for (size_t l = 0; l < numLfos; ++l) {
         lfoOutputs[l] = absl::MakeSpan(&outputMemory[l * numFrames], numFrames);
-        lfos[l].process(lfoOutputs[l]);
+        lfos[l]->process(lfoOutputs[l]);
     }
 
     dp.rows = numFrames;
