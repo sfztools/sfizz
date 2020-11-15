@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "BeatClock.h"
+#include "SIMDHelpers.h"
 #include "Config.h"
 #include "Debug.h"
 #include <iostream>
@@ -161,18 +162,18 @@ void BeatClock::fillBufferUpTo(unsigned delay)
     int *beatNumberData = runningBeatNumber_.data();
     float *beatNumberPosition = runningBeatPosition_.data();
     int *beatsPerBarData = runningBeatsPerBar_.data();
-    unsigned fill = currentCycleFill_;
+    unsigned fillIdx = currentCycleFill_;
 
     const TimeSignature sig = timeSig_;
-    for (unsigned i = fill; i < delay; ++i)
+    for (unsigned i = fillIdx; i < delay; ++i)
         beatsPerBarData[i] = sig.beatsPerBar;
 
     if (!isPlaying_) {
-        for (; fill < delay; ++fill) {
-            beatNumberData[fill] = 0;
-            beatNumberPosition[fill] = 0;
+        if (fillIdx < delay) {
+            fill(absl::MakeSpan(&beatNumberData[fillIdx], delay - fillIdx), 0);
+            fill(absl::MakeSpan(&beatNumberPosition[fillIdx], delay - fillIdx), 0.0f);
         }
-        currentCycleFill_ = fill;
+        currentCycleFill_ = fillIdx;
         return;
     }
 
@@ -182,18 +183,18 @@ void BeatClock::fillBufferUpTo(unsigned delay)
     const BBT hostPos = lastHostPos_;
     bool mustApplyHostPos = mustApplyHostPos_;
 
-    for (; fill < delay; ++fill) {
+    for (; fillIdx < delay; ++fillIdx) {
         clientPos = BBT::fromBeats(sig, clientPos.toBeats(sig) + beatsPerFrame);
         clientPos = mustApplyHostPos ? hostPos : clientPos;
         mustApplyHostPos = false;
 
         // quantization to nearest for prevention of rounding errors
         double beats = clientPos.toBeats(sig);
-        beatNumberData[fill] = dequantize<int>(quantize(beats));
-        beatNumberPosition[fill] = static_cast<float>(beats);
+        beatNumberData[fillIdx] = dequantize<int>(quantize(beats));
+        beatNumberPosition[fillIdx] = static_cast<float>(beats);
     }
 
-    currentCycleFill_ = fill;
+    currentCycleFill_ = fillIdx;
     lastClientPos_ = clientPos;
     mustApplyHostPos_ = mustApplyHostPos;
 }
