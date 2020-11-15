@@ -925,7 +925,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     constexpr bool metronomeEnabled = false;
     if (metronomeEnabled) {
         impl.resources_.metronome.processAdding(
-            bc.getRunningBeat().data(), bc.getRunningBeatsPerBar().data(),
+            bc.getRunningBeatNumber().data(), bc.getRunningBeatsPerBar().data(),
             buffer.getChannel(0), buffer.getChannel(1), numFrames);
     }
 

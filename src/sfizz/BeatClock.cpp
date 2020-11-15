@@ -64,12 +64,6 @@ T BeatClock::dequantize(qbeats_t qbeats)
 }
 
 ///
-BeatClock::BeatClock()
-{
-    setSampleRate(config::defaultSampleRate);
-    setSamplesPerBlock(config::defaultSamplesPerBlock);
-}
-
 void BeatClock::clear()
 {
     beatsPerSecond_ = 2.0;
@@ -99,7 +93,8 @@ void BeatClock::setSampleRate(double sampleRate)
 
 void BeatClock::setSamplesPerBlock(unsigned samplesPerBlock)
 {
-    runningBeat_.resize(samplesPerBlock);
+    runningBeatNumber_.resize(samplesPerBlock);
+    runningBeatPosition_.resize(samplesPerBlock);
     runningBeatsPerBar_.resize(samplesPerBlock);
 }
 
@@ -147,11 +142,11 @@ void BeatClock::setPlaying(unsigned delay, bool playing)
     isPlaying_ = playing;
 }
 
-absl::Span<const int> BeatClock::getRunningBeat()
+absl::Span<const int> BeatClock::getRunningBeatNumber()
 {
     fillBufferUpTo(currentCycleFrames_);
 
-    return absl::MakeConstSpan(runningBeat_.data(), currentCycleFrames_);
+    return absl::MakeConstSpan(runningBeatNumber_.data(), currentCycleFrames_);
 }
 
 absl::Span<const int> BeatClock::getRunningBeatsPerBar()
@@ -163,7 +158,8 @@ absl::Span<const int> BeatClock::getRunningBeatsPerBar()
 
 void BeatClock::fillBufferUpTo(unsigned delay)
 {
-    int *beatData = runningBeat_.data();
+    int *beatNumberData = runningBeatNumber_.data();
+    float *beatNumberPosition = runningBeatPosition_.data();
     int *beatsPerBarData = runningBeatsPerBar_.data();
     unsigned fill = currentCycleFill_;
 
@@ -172,8 +168,10 @@ void BeatClock::fillBufferUpTo(unsigned delay)
         beatsPerBarData[i] = sig.beatsPerBar;
 
     if (!isPlaying_) {
-        for (; fill < delay; ++fill)
-            beatData[fill] = 0;
+        for (; fill < delay; ++fill) {
+            beatNumberData[fill] = 0;
+            beatNumberPosition[fill] = 0;
+        }
         currentCycleFill_ = fill;
         return;
     }
@@ -190,7 +188,9 @@ void BeatClock::fillBufferUpTo(unsigned delay)
         mustApplyHostPos = false;
 
         // quantization to nearest for prevention of rounding errors
-        beatData[fill] = dequantize<int>(quantize(clientPos.toBeats(sig)));
+        double beats = clientPos.toBeats(sig);
+        beatNumberData[fill] = dequantize<int>(quantize(beats));
+        beatNumberPosition[fill] = static_cast<float>(beats);
     }
 
     currentCycleFill_ = fill;

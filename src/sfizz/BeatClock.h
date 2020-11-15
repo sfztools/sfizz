@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Buffer.h"
 #include <absl/types/span.h>
 #include <vector>
 #include <iosfwd>
@@ -73,8 +74,6 @@ struct BBT {
 
 class BeatClock {
 public:
-    BeatClock();
-
     /**
      * @brief Set the sample rate.
      */
@@ -113,8 +112,20 @@ public:
     void setPlaying(unsigned delay, bool playing);
     /**
      * @brief Get the beat number for each frame of the current cycle.
+     *
+     * This signal is quantized to a fixed resolution, such that it never
+     * suffers 1-off errors due to imprecision in the host time position.
      */
-    absl::Span<const int> getRunningBeat();
+    absl::Span<const int> getRunningBeatNumber();
+    /**
+     * @brief Get the beat position for each frame of the current cycle.
+     *
+     * This is a fractional equivalent of the beat number, however the beat
+     * boundaries can be traversed erratically due to approximation errors.
+     * If you need to perform work on exact beat transitions, prefer
+     * `getRunningBeatNumber` instead.
+     */
+    absl::Span<const float> getRunningBeatPosition();
     /**
      * @brief Get the time signature numerator for each frame of the current cycle.
      */
@@ -124,7 +135,7 @@ private:
     void fillBufferUpTo(unsigned delay);
 
 private:
-    double samplePeriod_ = 0;
+    double samplePeriod_ { 1.0 / config::defaultSampleRate };
 
     // quantization
     typedef int64_t qbeats_t;
@@ -150,8 +161,9 @@ private:
     // plugin-side counter
     BBT lastClientPos_;
 
-    std::vector<int> runningBeat_;
-    std::vector<int> runningBeatsPerBar_;
+    Buffer<int> runningBeatNumber_ { config::defaultSamplesPerBlock };
+    Buffer<float> runningBeatPosition_ { config::defaultSamplesPerBlock };
+    Buffer<int> runningBeatsPerBar_ { config::defaultSamplesPerBlock };
 };
 
 } // namespace sfz
