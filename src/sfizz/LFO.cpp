@@ -330,15 +330,21 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region
 
     // TODO(jpc) lfoN_count: number of repetitions
 
+    // modulations
+    const float* beatsMod = nullptr;
+    const float* freqMod = nullptr;
+    if (modMatrix && id && regionId) {
+        // Note(jpc) we might switch between beats and frequency, if host
+        //           switches play state on and off; continually generate both.
+        ModKey beatsKey = ModKey::createNXYZ(ModId::LFOBeats, regionId, id.number());
+        ModKey freqKey = ModKey::createNXYZ(ModId::LFOFrequency, regionId, id.number());
+        beatsMod = modMatrix->getModulationByKey(beatsKey);
+        freqMod = modMatrix->getModulationByKey(freqKey);
+    }
+
     if (beatClock && beatClock->isPlaying() && beats > 0) {
         // generate using the beat clock
         float beatRatio = (ratio > 0) ? (1.0f / ratio) : 0.0f;
-
-        const float* beatsMod = nullptr;
-        if (modMatrix && id && regionId) {
-            ModKey beatsKey = ModKey::createNXYZ(ModId::LFOBeats, regionId, id.number());
-            beatsMod = modMatrix->getModulationByKey(beatsKey);
-        }
 
         if (!beatsMod)
             beatClock->calculatePhase(beats * beatRatio, phases.data());
@@ -358,12 +364,6 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region
     }
     else {
         // generate using the frequency
-        const float* freqMod = nullptr;
-        if (modMatrix && id && regionId) {
-            ModKey freqKey = ModKey::createNXYZ(ModId::LFOFrequency, regionId, id.number());
-            freqMod = modMatrix->getModulationByKey(freqKey);
-        }
-
         if (!freqMod) {
             for (size_t i = 0; i < numFrames; ++i) {
                 phases[i] = phase;
