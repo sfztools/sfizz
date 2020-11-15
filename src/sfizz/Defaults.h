@@ -222,6 +222,7 @@ namespace Default
     constexpr int numLFOSubs { 2 };
     constexpr int numLFOSteps { 8 };
     constexpr Range<float> lfoFreqRange { 0.0, 100.0 };
+    constexpr Range<float> lfoBeatsRange { 0.0, 1000.0 };
     constexpr Range<float> lfoPhaseRange { 0.0, 1.0 };
     constexpr Range<float> lfoDelayRange { 0.0, 30.0 };
     constexpr Range<float> lfoFadeRange { 0.0, 30.0 };

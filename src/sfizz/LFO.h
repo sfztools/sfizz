@@ -10,6 +10,7 @@
 
 namespace sfz {
 class BufferPool;
+class BeatClock;
 
 enum class LFOWave : int;
 struct LFODescription;
@@ -50,7 +51,9 @@ struct LFODescription;
 
 class LFO {
 public:
-    explicit LFO(BufferPool& bufferPool);
+    explicit LFO(
+        BufferPool& bufferPool,
+        BeatClock* beatClock = nullptr);
     ~LFO();
 
     /**

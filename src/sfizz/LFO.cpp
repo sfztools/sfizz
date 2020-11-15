@@ -6,6 +6,7 @@
 
 #include "LFO.h"
 #include "LFODescription.h"
+#include "BeatClock.h"
 #include "BufferPool.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
@@ -17,14 +18,16 @@
 namespace sfz {
 
 struct LFO::Impl {
-    explicit Impl(BufferPool& bufferPool)
+    explicit Impl(BufferPool& bufferPool, BeatClock* beatClock)
         : bufferPool_(bufferPool),
+          beatClock_(beatClock),
           sampleRate_(config::defaultSampleRate),
           desc_(&LFODescription::getDefault())
     {
     }
 
     BufferPool& bufferPool_;
+    BeatClock* beatClock_ = nullptr;
     float sampleRate_ = 0;
 
     // control
@@ -38,8 +41,8 @@ struct LFO::Impl {
     std::array<int, config::maxLFOSubs> sampleHoldState_ {{}};
 };
 
-LFO::LFO(BufferPool& bufferPool)
-    : impl_(new Impl(bufferPool))
+LFO::LFO(BufferPool& bufferPool, BeatClock* beatClock)
+    : impl_(new Impl(bufferPool, beatClock))
 {
 }
 
@@ -299,26 +302,46 @@ void LFO::processFadeIn(absl::Span<float> out)
 void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
 {
     Impl& impl = *impl_;
+    BeatClock* beatClock = impl.beatClock_;
     const LFODescription& desc = *impl.desc_;
     const LFODescription::Sub& sub = desc.sub[nth];
     const float samplePeriod = 1.0f / impl.sampleRate_;
     const float baseFreq = desc.freq;
+    const float beats = desc.beats;
     const float phaseOffset = desc.phase0;
     const float ratio = sub.ratio;
     float phase = impl.subPhases_[nth];
+    const size_t numFrames = phases.size();
 
-    for (size_t i = 0, n = phases.size(); i < n; ++i) {
-        float withOffset = phase + phaseOffset;
-        withOffset -= (int)withOffset;
+    if (beatClock && beatClock->isPlaying() && beats > 0) {
+        // generate using the beat clock
+        float beatRatio = (ratio > 0) ? (1.0f / ratio) : 0.0f;
+        beatClock->calculatePhase(beats * beatRatio, phases.data());
 
-        phases[i] = withOffset;
+        for (size_t i = 0; i < numFrames; ++i) {
+            float withOffset = phase + phaseOffset;
+            withOffset -= (int)withOffset;
 
-        // TODO(jpc) lfoN_count: number of repetitions
+            phases[i] = withOffset;
 
-        float incr = ratio * samplePeriod * baseFreq;
-        phase += incr;
-        int numWraps = (int)phase;
-        phase -= numWraps;
+            // TODO(jpc) lfoN_count: number of repetitions
+        }
+    }
+    else {
+        // generate using the frequency
+        for (size_t i = 0; i < numFrames; ++i) {
+            float withOffset = phase + phaseOffset;
+            withOffset -= (int)withOffset;
+
+            phases[i] = withOffset;
+
+            // TODO(jpc) lfoN_count: number of repetitions
+
+            float incr = ratio * samplePeriod * baseFreq;
+            phase += incr;
+            int numWraps = (int)phase;
+            phase -= numWraps;
+        }
     }
 
     impl.subPhases_[nth] = phase;

@@ -866,6 +866,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, lfos[lfoNumber - 1].freq, Default::lfoFreqRange);
         }
         break;
+    case hash("lfo&_beats"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].beats, Default::lfoBeatsRange);
+        }
+        break;
     case hash("lfo&_phase"):
         {
             const auto lfoNumber = opcode.parameters.front();

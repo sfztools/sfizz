@@ -1475,10 +1475,12 @@ void Voice::setMaxEQsPerVoice(size_t numFilters)
 void Voice::setMaxLFOsPerVoice(size_t numLFOs)
 {
     Impl& impl = *impl_;
+    Resources& resources = impl.resources_;
+
     impl.lfos_.resize(numLFOs);
 
     for (size_t i = 0; i < numLFOs; ++i) {
-        auto lfo = absl::make_unique<LFO>(impl.resources_.bufferPool);
+        auto lfo = absl::make_unique<LFO>(resources.bufferPool, &resources.beatClock);
         lfo->setSampleRate(impl.sampleRate_);
         impl.lfos_[i] = std::move(lfo);
     }
