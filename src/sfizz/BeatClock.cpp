@@ -150,6 +150,13 @@ absl::Span<const int> BeatClock::getRunningBeatNumber()
     return absl::MakeConstSpan(runningBeatNumber_.data(), currentCycleFrames_);
 }
 
+absl::Span<const float> BeatClock::getRunningBeatPosition()
+{
+    fillBufferUpTo(currentCycleFrames_);
+
+    return absl::MakeConstSpan(runningBeatPosition_.data(), currentCycleFrames_);
+}
+
 absl::Span<const int> BeatClock::getRunningBeatsPerBar()
 {
     fillBufferUpTo(currentCycleFrames_);
