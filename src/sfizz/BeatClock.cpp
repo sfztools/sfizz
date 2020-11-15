@@ -191,25 +191,6 @@ void BeatClock::fillBufferUpTo(unsigned delay)
 
         // quantization to nearest for prevention of rounding errors
         beatData[fill] = dequantize<int>(quantize(clientPos.toBeats(sig)));
-
-#if 0
-        BBT oldClientPos = clientPos;
-
-        // quantization to nearest for prevention of rounding errors
-        qbeats_t oldQbeats = quantize(oldClientPos.toBeats(sig));
-        qbeats_t qbeats = quantize(clientPos.toBeats(sig));
-
-        int oldBeatNumber = dequantize<int>(oldQbeats);
-        int beatNumber = dequantize<int>(qbeats);
-
-        int beatIncrement = std::max(0, beatNumber - oldBeatNumber);
-        int beatDistanceToNextBar = sig.beatsPerBar - (oldBeatNumber % sig.beatsPerBar);
-        int barIncrement = (beatIncrement < beatDistanceToNextBar) ? 0 :
-            (1 + (beatIncrement - beatDistanceToNextBar) / sig.beatsPerBar);
-
-        beatData[fill] = beatIncrement;
-        barData[fill] = barIncrement;
-#endif
     }
 
     currentCycleFill_ = fill;
