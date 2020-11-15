@@ -12,6 +12,8 @@
 namespace sfz {
 class BufferPool;
 class BeatClock;
+class ModMatrix;
+struct Region;
 
 enum class LFOWave : int;
 struct LFODescription;
@@ -55,7 +57,8 @@ public:
     explicit LFO(
         NumericId<LFO> id,
         BufferPool& bufferPool,
-        BeatClock* beatClock = nullptr);
+        BeatClock* beatClock = nullptr,
+        ModMatrix* modMatrix = nullptr);
     ~LFO();
 
     NumericId<LFO> getId() const noexcept;
@@ -82,7 +85,7 @@ public:
 
        TODO(jpc) frequency modulations
      */
-    void process(absl::Span<float> out);
+    void process(absl::Span<float> out, NumericId<Region> regionId = {});
 
 private:
     /**
@@ -120,7 +123,7 @@ private:
     /**
        Generate the phase of the N-th generator
      */
-    void generatePhase(unsigned nth, absl::Span<float> phases);
+    void generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region> regionId);
 
 private:
     struct Impl;

@@ -118,6 +118,10 @@ std::string ModKey::toString() const
         return absl::StrCat("OscillatorDetune {", region_.number(), ", N=", 1 + params_.N, "}");
    case ModId::OscillatorModDepth:
         return absl::StrCat("OscillatorModDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOFrequency:
+        return absl::StrCat("LFOFrequency {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOBeats:
+        return absl::StrCat("LFOBeats {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};
