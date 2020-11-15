@@ -111,6 +111,10 @@ public:
      */
     void setPlaying(unsigned delay, bool playing);
     /**
+     * Check whether the clock is currently ticking.
+     */
+    bool isPlaying() const noexcept { return isPlaying_; }
+    /**
      * @brief Get the beat number for each frame of the current cycle.
      *
      * This signal is quantized to a fixed resolution, such that it never
