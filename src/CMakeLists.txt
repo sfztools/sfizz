@@ -219,6 +219,7 @@ target_link_libraries (sfizz_parser PUBLIC absl::strings PRIVATE absl::flat_hash
 # OSC messaging library
 set (SFIZZ_MESSAGING_HEADERS
     sfizz/Messaging.h
+    sfizz/Messaging.hpp
     sfizz_message.h)
 
 set (SFIZZ_MESSAGING_SOURCES
