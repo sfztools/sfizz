@@ -272,7 +272,7 @@ namespace Default
     // ***** SFZ v2 ********
     constexpr int sampleQuality { 1 };
     constexpr int sampleQualityInFreewheelingMode { 10 }; // for future use, possibly excessive
-    constexpr Range<int> sampleQualityRange { 1, 10 }; // sample_quality
+    constexpr Range<int> sampleQualityRange { 0, 10 }; // sample_quality
 
 	constexpr bool checkSustain { true }; // sustain_sw
 	constexpr bool checkSostenuto { true }; // sostenuto_sw

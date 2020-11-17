@@ -184,6 +184,7 @@ struct Voice::Impl
 
     float speedRatio_ { 1.0 };
     float pitchRatio_ { 1.0 };
+    int OSFactor { 1 };
     float baseVolumedB_ { 0.0 };
     float baseGain_ { 1.0 };
     float baseFrequency_ { 440.0 };
@@ -560,6 +561,7 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
+    impl.OSFactor = OSFactor;
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -567,19 +569,24 @@ void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
     Impl& impl = *impl_;
     impl.samplesPerBlock_ = samplesPerBlock;
     impl.powerFollower_.setSamplesPerBlock(samplesPerBlock);
+    impl.OSFactor = OSFactor;
 }
 
 void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 {
     Impl& impl = *impl_;
-    ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);
+    ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_ * OSFactor);
     buffer.fill(0.0f);
 
     if (impl.region_ == nullptr)
         return;
 
-    const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
-    auto delayed_buffer = buffer.subspan(delay);
+    AudioBuffer<float> interBuffer(buffer.getNumChannels(), buffer.getNumFrames() * OSFactor);
+    AudioSpan<float> downsampled_buffer(interBuffer);
+    downsampled_buffer.fill(0.0f);
+
+    const auto delay = min(static_cast<size_t>(impl.initialDelay_), downsampled_buffer.getNumFrames());
+    auto delayed_buffer = downsampled_buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
     { // Fill buffer with raw data
@@ -589,6 +596,18 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
         else
             impl.fillWithData(delayed_buffer);
     }
+
+    for (size_t i = 0; i < buffer.getNumChannels(); ++i)
+{
+    for (size_t j = 0; j < buffer.getNumFrames(); ++j)
+{
+    buffer[i][j] = downsampled_buffer[i][j * OSFactor];
+    if (OSFactor > 1)
+    	for (size_t k = 1; k < OSFactor; ++k)
+         	buffer[i][j] += downsampled_buffer[i][j * OSFactor + OSFactor];
+    buffer[i][j] /= OSFactor;
+}
+}
 
     if (impl.region_->isStereo()) {
         impl.ampStageStereo(buffer);
@@ -992,6 +1011,9 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         // partition spans
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
+        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / OSFactor)
+            for (unsigned i = ptStart; i < ptSize - 1; ++i)
+		coeffs->data()[i] = std::pow(coeffs->data()[i], 1 / std::max(0.0f, std::min(1.0f, pitchRatio_ * speedRatio_ * OSFactor)));
         absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 
         fillInterpolatedWithQuality<false>(
@@ -1648,7 +1670,7 @@ void Voice::disablePowerFollower() noexcept
 float Voice::getSampleRate() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.sampleRate_;
+    return impl.sampleRate_ / OSFactor;
 }
 
 int Voice::getSamplesPerBlock() const noexcept

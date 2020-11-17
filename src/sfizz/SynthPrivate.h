@@ -229,6 +229,7 @@ struct Synth::Impl final: public Parser::Listener {
 
     int samplesPerBlock_ { config::defaultSamplesPerBlock };
     float sampleRate_ { config::defaultSampleRate };
+    int OSFactor { 1 };
     float volume_ { Default::globalVolume };
     int numVoices_ { config::numVoices };
     Oversampling oversamplingFactor_ { config::defaultOversamplingFactor };
