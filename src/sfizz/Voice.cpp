@@ -28,6 +28,7 @@
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <random>
+#include "SFZFilter.h"
 
 namespace sfz {
 
@@ -560,6 +561,10 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
+    downsampleFilter.setType(FilterType::kFilterLpf4p);
+    downsampleFilter.setChannels(2);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48 * sampleRate / impl.resources_.synthConfig.OSFactor, 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -593,6 +598,9 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
         else
             impl.fillWithData(delayed_buffer);
     }
+
+	if (impl.resources_.synthConfig.OSFactor > 1)
+	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48 * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor, 0.0, 0.0, downsampled_buffer.getNumFrames());
 
     for (size_t i = 0; i < buffer.getNumChannels(); ++i)
 {
@@ -1008,9 +1016,9 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         // partition spans
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
-        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.375 / resources_.synthConfig.OSFactor)
+        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
             for (unsigned i = ptStart; i < ptSize - 1; ++i)
-		coeffs->data()[i] = std::pow(coeffs->data()[i], 0.375 / (pitchRatio_ * speedRatio_));
+		coeffs->data()[i] = std::pow(coeffs->data()[i], 1 / (pitchRatio_ * speedRatio_));
         absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 
         fillInterpolatedWithQuality<false>(
@@ -1400,7 +1408,7 @@ void Voice::reset() noexcept
 
     for (auto& eq : impl.equalizers_)
         eq.reset();
-
+    downsampleFilter.clear();
     removeVoiceFromRing();
 }
 

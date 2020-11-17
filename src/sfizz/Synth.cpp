@@ -791,7 +791,7 @@ void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
-    samplesPerBlock *= 8;
+    samplesPerBlock *= 64;
 
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 

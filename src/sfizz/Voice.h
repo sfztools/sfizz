@@ -13,6 +13,7 @@
 #include "LeakDetector.h"
 #include "utility/NumericId.h"
 #include <memory>
+#include "SFZFilter.h"
 
 namespace sfz {
 enum InterpolatorModel : int;
@@ -351,7 +352,7 @@ public:
      * @brief Get the trigger event
      */
     const TriggerEvent& getTriggerEvent();
-
+    sfz::Filter downsampleFilter;
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
