@@ -20,5 +20,7 @@ struct SynthConfig
     {
         return freeWheeling ? freeWheelingSampleQuality : liveSampleQuality;
     }
+
+    int OSFactor { 1 };
 };
 }

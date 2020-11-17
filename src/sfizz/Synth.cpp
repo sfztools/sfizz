@@ -48,7 +48,6 @@ Synth::~Synth()
 Synth::Impl::Impl()
 {
     initializeSIMDDispatchers();
-    int OSFactor = 1;
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
     parser_.setListener(this);
@@ -408,10 +407,8 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("hint_min_samplerate"):
 	    {
-            if (std::stoi(member.value) > this->sampleRate_)
-		this->OSFactor = std::stoi(member.value) / this->sampleRate_;
-            else
-                DBG("Unsupported value for hint_min_samplerate: " << member.value);
+		resources_.synthConfig.OSFactor = std::max(1, int(stoi(member.value) / sampleRate_));
+		resetVoices(numVoices_);
 	    }
             break;
         default:
@@ -794,7 +791,7 @@ void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
-    samplesPerBlock = samplesPerBlock * impl.OSFactor;
+    samplesPerBlock *= 8;
 
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
@@ -817,7 +814,7 @@ void Synth::setSampleRate(float sampleRate) noexcept
 
     impl.sampleRate_ = sampleRate;
     for (auto& voice : impl.voiceManager_)
-        voice.setSampleRate(sampleRate * impl.OSFactor);
+        voice.setSampleRate(sampleRate * impl.resources_.synthConfig.OSFactor);
 
     impl.resources_.setSampleRate(sampleRate);
 
@@ -1472,9 +1469,8 @@ void Synth::Impl::resetVoices(int numVoices)
     voiceManager_.requireNumVoices(numVoices_, resources_);
 
     for (auto& voice : voiceManager_) {
-        voice.setSampleRate(this->sampleRate_ * this->OSFactor);
-        voice.setSamplesPerBlock(this->samplesPerBlock_ * this->OSFactor);
-        voice.OSFactor = this->OSFactor;
+        voice.setSampleRate(sampleRate_ * resources_.synthConfig.OSFactor);
+        voice.setSamplesPerBlock(samplesPerBlock_ * resources_.synthConfig.OSFactor);
     }
 
     applySettingsPerVoice();

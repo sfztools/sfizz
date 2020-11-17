@@ -88,7 +88,6 @@ public:
      *
      * @return float
      */
-    int OSFactor = 1;
     float getSampleRate() const noexcept;
     /**
      * @brief Get the expected block size.
