@@ -59,8 +59,8 @@ public:
         Parameters(const Parameters& other) noexcept;
         Parameters& operator=(const Parameters& other) noexcept;
 
-        Parameters(Parameters&&) = delete;
-        Parameters &operator=(Parameters&&) = delete;
+        Parameters(Parameters&&) noexcept;
+        Parameters &operator=(Parameters&&) noexcept;
 
         bool operator==(const Parameters& other) const noexcept
         {

@@ -38,6 +38,24 @@ ModKey::Parameters& ModKey::Parameters::operator=(const Parameters& other) noexc
     return *this;
 }
 
+ModKey::Parameters::Parameters(Parameters&& other) noexcept
+{
+    std::memcpy(
+        static_cast<RawParameters*>(this),
+        static_cast<const RawParameters*>(&other),
+        sizeof(RawParameters));
+}
+
+ModKey::Parameters& ModKey::Parameters::operator=(Parameters&& other) noexcept
+{
+    if (this != &other)
+        std::memcpy(
+            static_cast<RawParameters*>(this),
+            static_cast<const RawParameters*>(&other),
+            sizeof(RawParameters));
+    return *this;
+}
+
 ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float step)
 {
     ModKey::Parameters p;
