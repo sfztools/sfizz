@@ -45,14 +45,17 @@ public:
      */
     void getBlock(absl::Span<Type> output) noexcept;
     /**
+     * @brief Set the release time for the envelope
+     *
+     * @param timeInSeconds
+     */
+    void setReleaseTime(Type timeInSeconds) noexcept;
+    /**
      * @brief Start the envelope release after a delay.
      *
      * @param releaseDelay the delay before releasing in samples
-     * @param fastRelease whether the release should be fast (i.e. 0 or so) or
-     *                    follow the release duration that was set when
-     *                    initializing the envelope
      */
-    void startRelease(int releaseDelay, bool fastRelease = false) noexcept;
+    void startRelease(int releaseDelay) noexcept;
     /**
      * @brief Is the envelope smoothing?
      *
@@ -75,6 +78,11 @@ public:
     int getRemainingDelay() const noexcept;
 
 private:
+    float sampleRate { config::defaultSampleRate };
+    Type secondsToSamples (Type timeInSeconds) const noexcept;
+    Type secondsToLinRate (Type timeInSeconds) const noexcept;
+    Type secondsToExpRate (Type timeInSeconds) const noexcept;
+
     enum class State {
         Delay,
         Attack,
@@ -94,6 +102,7 @@ private:
     Type start { 0 };
     Type peak { 0 };
     Type sustain { 0 };
+    Type sustainThreshold { config::virtuallyZero };
     int releaseDelay { 0 };
     bool shouldRelease { false };
     bool freeRunning { false };

@@ -20,7 +20,7 @@ constexpr float sampleRate { 48000.0f };
 
 class FilterFixture : public benchmark::Fixture {
 public:
-    void SetUp(const ::benchmark::State& state) {
+    void SetUp(const ::benchmark::State& /* state */) {
         inputLeft = std::vector<float>(blockSize);
         inputRight = std::vector<float>(blockSize);
         outputLeft = std::vector<float>(blockSize);

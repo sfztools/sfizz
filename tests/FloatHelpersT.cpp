@@ -7,6 +7,7 @@
 #include "catch2/catch.hpp"
 #include "sfizz/MathHelpers.h"
 #include <cmath>
+#include <limits>
 
 TEST_CASE("[FloatMath] Fast ilog2 (float)")
 {
@@ -50,4 +51,20 @@ TEST_CASE("[FloatMath] Break apart and reconstruct (double)")
 
         REQUIRE(fp_from_parts<double>(sgn, ex, mant.num) == f);
     }
+}
+
+TEST_CASE("[FloatMath] Nan/Inf checker")
+{
+    REQUIRE(fp_naninf(std::numeric_limits<double>::quiet_NaN()));
+    REQUIRE(fp_naninf(std::numeric_limits<float>::quiet_NaN()));
+    REQUIRE(fp_naninf(std::numeric_limits<double>::infinity()));
+    REQUIRE(fp_naninf(std::numeric_limits<float>::infinity()));
+    REQUIRE(fp_naninf(-std::numeric_limits<double>::infinity()));
+    REQUIRE(fp_naninf(-std::numeric_limits<float>::infinity()));
+    REQUIRE(!fp_naninf(0.0f));
+    REQUIRE(!fp_naninf(0.0));
+    REQUIRE(!fp_naninf(1.0f));
+    REQUIRE(!fp_naninf(1.0));
+    REQUIRE(!fp_naninf(-1.0f));
+    REQUIRE(!fp_naninf(-1.0));
 }

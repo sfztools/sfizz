@@ -1,0 +1,10 @@
+<region> sample=*sine
+<region> sample=*sine oscillator_multi=3
+<region> sample=ramp_wave.wav oscillator=on
+<region> sample=ramp_wave.wav oscillator=on oscillator_multi=3
+<region> sample=ramp_wave.wav oscillator=off
+<region> sample=ramp_wave.wav oscillator=off oscillator_multi=3
+<region> sample=ramp_wave.wav
+<region> sample=snare.wav
+<region> sample=*sine oscillator_multi=1
+<region> sample=*sine oscillator_multi=2

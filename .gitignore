@@ -19,6 +19,10 @@ compile_commands.json
 clients/sfizz_jack
 clients/sfzprint
 
+/vst/download/
+
+/editor/external/fluentui-system-icons/
+
 # gh-pages unstaged files:
 _api/
 _site/
@@ -32,3 +36,5 @@ node_modules/
 *.lock
 *.sublime-*
 *.code-*
+.kak.tags.namecache
+.clangd

@@ -148,8 +148,8 @@ public:
      * @tparam Alignment the alignment block size for the platform
      * @param audioBuffer the source AudioBuffer.
      */
-    template <class U, size_t N, unsigned int Alignment, typename = typename std::enable_if<N <= MaxChannels>::type, typename = typename std::enable_if<std::is_const<U>::value, int>::type>
-    AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
+    template <class U, size_t N, unsigned int Alignment, size_t PaddingLeft, size_t PaddingRight, typename = typename std::enable_if<N <= MaxChannels>::type, typename = typename std::enable_if<std::is_const<U>::value, int>::type>
+    AudioSpan(AudioBuffer<U, N, Alignment, PaddingLeft, PaddingRight>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
     {
@@ -169,8 +169,8 @@ public:
      * @tparam Alignment the alignment block size for the platform
      * @param audioBuffer the source AudioBuffer.
      */
-    template <class U, size_t N, unsigned int Alignment, typename = std::enable_if<N <= MaxChannels>>
-    AudioSpan(AudioBuffer<U, N, Alignment>& audioBuffer)
+    template <class U, size_t N, unsigned int Alignment, size_t PaddingLeft, size_t PaddingRight, typename = std::enable_if<N <= MaxChannels>>
+    AudioSpan(AudioBuffer<U, N, Alignment, PaddingLeft, PaddingRight>& audioBuffer)
         : numFrames(audioBuffer.getNumFrames())
         , numChannels(audioBuffer.getNumChannels())
     {
@@ -200,7 +200,7 @@ public:
      * @param channelIndex the channel
      * @return Type* the raw pointer to the channel
      */
-    Type* getChannel(size_t channelIndex)
+    Type* getChannel(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -231,7 +231,7 @@ public:
      * @param channelIndex the channel
      * @return absl::Span<Type>
      */
-    absl::Span<Type> getSpan(size_t channelIndex)
+    absl::Span<Type> getSpan(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -246,7 +246,7 @@ public:
      * @param channelIndex the channel
      * @return absl::Span<const Type>
      */
-    absl::Span<const Type> getConstSpan(size_t channelIndex)
+    absl::Span<const Type> getConstSpan(size_t channelIndex) const
     {
         ASSERT(channelIndex < numChannels);
         if (channelIndex < numChannels)
@@ -279,7 +279,7 @@ public:
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         for (size_t i = 0; i < numChannels; ++i)
-            sfz::fill<Type>(getSpan(i), value);
+            sfz::fill(getSpan(i), value);
     }
 
     /**
@@ -303,7 +303,7 @@ public:
     {
         static_assert(!std::is_const<Type>::value, "Can't allow mutating operations on const AudioSpans");
         for (size_t i = 0; i < numChannels; ++i)
-            sfz::applyGain<Type>(gain, getSpan(i));
+            sfz::applyGain1<Type>(gain, getSpan(i));
     }
 
     /**
@@ -382,7 +382,7 @@ public:
      *
      * @returns size_type the number of frames in the AudioSpan
      */
-    size_type getNumFrames()
+    size_type getNumFrames() const
     {
         return numFrames;
     }
@@ -392,7 +392,7 @@ public:
      *
      * @returns size_type the number of channels in the AudioSpan
      */
-    size_t getNumChannels()
+    size_t getNumChannels() const
     {
         return numChannels;
     }
@@ -402,7 +402,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> first(size_type length)
+    AudioSpan<Type> first(size_type length) const
     {
         ASSERT(length <= numFrames);
         return { spans, numChannels, 0, length };
@@ -413,7 +413,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> last(size_type length)
+    AudioSpan<Type> last(size_type length) const
     {
         ASSERT(length <= numFrames);
         return { spans, numChannels, numFrames - length, length };
@@ -427,7 +427,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> subspan(size_type offset, size_type length)
+    AudioSpan<Type> subspan(size_type offset, size_type length) const
     {
         ASSERT(length + offset <= numFrames);
         return { spans, numChannels, offset, length };
@@ -440,7 +440,7 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> subspan(size_type offset)
+    AudioSpan<Type> subspan(size_type offset) const
     {
         ASSERT(offset <= numFrames);
         return { spans, numChannels, offset, numFrames - offset };

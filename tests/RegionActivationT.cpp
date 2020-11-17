@@ -13,7 +13,7 @@ using namespace sfz::literals;
 TEST_CASE("Region activation", "Region tests")
 {
     sfz::MidiState midiState;
-    sfz::Region region { midiState };
+    sfz::Region region { 0, midiState };
 
     region.parseOpcode({ "sample", "*sine" });
     SECTION("Basic state")
@@ -216,10 +216,6 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "seq_length", "2" });
         region.parseOpcode({ "seq_position", "1" });
         region.parseOpcode({ "key", "40" });
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(40, 64_norm, 0.5f);
         REQUIRE(region.isSwitchedOn());
@@ -229,6 +225,10 @@ TEST_CASE("Region activation", "Region tests")
         REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(!region.isSwitchedOn());
+        region.registerNoteOn(40, 64_norm, 0.5f);
+        REQUIRE(region.isSwitchedOn());
+        region.registerNoteOff(40, 0_norm, 0.5f);
+        REQUIRE(region.isSwitchedOn());
     }
     SECTION("Sequences: length 2, position 2")
     {
@@ -237,10 +237,6 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "key", "40" });
         REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
         REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(!region.isSwitchedOn());
@@ -248,6 +244,10 @@ TEST_CASE("Region activation", "Region tests")
         REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(region.isSwitchedOn());
+        region.registerNoteOn(40, 64_norm, 0.5f);
+        REQUIRE(!region.isSwitchedOn());
+        region.registerNoteOff(40, 0_norm, 0.5f);
+        REQUIRE(!region.isSwitchedOn());
     }
     SECTION("Sequences: length 3, position 2")
     {
@@ -256,6 +256,10 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "key", "40" });
         REQUIRE(!region.isSwitchedOn());
         region.registerNoteOn(40, 64_norm, 0.5f);
+        REQUIRE(!region.isSwitchedOn());
+        region.registerNoteOff(40, 0_norm, 0.5f);
+        REQUIRE(!region.isSwitchedOn());
+        region.registerNoteOn(40, 64_norm, 0.5f);
         REQUIRE(region.isSwitchedOn());
         region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(region.isSwitchedOn());
@@ -267,9 +271,5 @@ TEST_CASE("Region activation", "Region tests")
         REQUIRE(!region.isSwitchedOn());
         region.registerNoteOff(40, 0_norm, 0.5f);
         REQUIRE(!region.isSwitchedOn());
-        region.registerNoteOn(40, 64_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
-        region.registerNoteOff(40, 0_norm, 0.5f);
-        REQUIRE(region.isSwitchedOn());
     }
 }

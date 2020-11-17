@@ -15,7 +15,11 @@
 #include "effects/Apan.h"
 #include "effects/Lofi.h"
 #include "effects/Limiter.h"
+#include "effects/Compressor.h"
+#include "effects/Gate.h"
+#include "effects/Disto.h"
 #include "effects/Strings.h"
+#include "effects/Fverb.h"
 #include "effects/Rectify.h"
 #include "effects/Gain.h"
 #include "effects/Width.h"
@@ -31,7 +35,11 @@ void EffectFactory::registerStandardEffectTypes()
     registerEffectType("apan", fx::Apan::makeInstance);
     registerEffectType("lofi", fx::Lofi::makeInstance);
     registerEffectType("limiter", fx::Limiter::makeInstance);
+    registerEffectType("comp", fx::Compressor::makeInstance);
+    registerEffectType("gate", fx::Gate::makeInstance);
+    registerEffectType("disto", fx::Disto::makeInstance);
     registerEffectType("strings", fx::Strings::makeInstance);
+    registerEffectType("fverb", fx::Fverb::makeInstance);
 
     // extensions (book)
     registerEffectType("rectify", fx::Rectify::makeInstance);
@@ -105,7 +113,18 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         absl::Span<const float> addIn { addInput[c], nframes };
-        sfz::multiplyAdd(addGain, addIn, _inputs.getSpan(c));
+        sfz::multiplyAdd1(addGain, addIn, _inputs.getSpan(c).first(nframes));
+    }
+}
+
+void EffectBus::applyGain(const float* gain, unsigned nframes)
+{
+    if (!gain)
+        return;
+
+    absl::Span<const float> gainSpan { gain, nframes };
+    for (unsigned c = 0; c < EffectChannels; ++c) {
+        sfz::applyGain<float>(gainSpan, _inputs.getSpan(c).first(nframes));
     }
 }
 
@@ -142,9 +161,9 @@ void EffectBus::mixOutputsTo(float* const mainOutput[], float* const mixOutput[]
     const float gainToMix = _gainToMix;
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
-        auto fxOut = _outputs.getConstSpan(c);
-        sfz::multiplyAdd(gainToMain, fxOut, absl::Span<float>(mainOutput[c], nframes));
-        sfz::multiplyAdd(gainToMix, fxOut, absl::Span<float>(mixOutput[c], nframes));
+        auto fxOut = _outputs.getConstSpan(c).first(nframes);
+        sfz::multiplyAdd1(gainToMain, fxOut, absl::Span<float>(mainOutput[c], nframes));
+        sfz::multiplyAdd1(gainToMix, fxOut, absl::Span<float>(mixOutput[c], nframes));
     }
 }
 

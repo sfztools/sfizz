@@ -6,7 +6,7 @@
 
 #pragma once
 #include "SfizzVstState.h"
-#include "RTSemaphore.h"
+#include "sfizz/RTSemaphore.h"
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <sfizz.hpp>
@@ -35,6 +35,7 @@ public:
     void processParameterChanges(Vst::IParameterChanges& pc);
     void processControllerChanges(Vst::IParameterChanges& pc);
     void processEvents(Vst::IEventList& events);
+    void processMidiFromUi();
     static int convertVelocityFromFloat(float x);
 
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
@@ -48,17 +49,31 @@ private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
     SfizzVstState _state;
+    float _currentStretchedTuning = 0;
+
+    // misc
+    static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);
 
     // worker and thread sync
     std::thread _worker;
     volatile bool _workRunning = false;
     Ring_Buffer _fifoToWorker;
     RTSemaphore _semaToWorker;
+    Ring_Buffer _fifoMidiFromUi;
     std::mutex _processMutex;
 
     // file modification periodic checker
     uint32 _fileChangeCounter = 0;
     uint32 _fileChangePeriod = 0;
+
+    // state notification periodic timer
+    uint32 _playStateChangeCounter = 0;
+    uint32 _playStateChangePeriod = 0;
+
+    // time info
+    int _timeSigNumerator = 0;
+    int _timeSigDenominator = 0;
+    void updateTimeInfo(const Vst::ProcessContext& context);
 
     // messaging
     struct RTMessage {

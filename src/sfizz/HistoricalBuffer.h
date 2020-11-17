@@ -35,8 +35,9 @@ public:
 	void resize(size_t size)
 	{
 		buffer.resize(size);
-		fill<ValueType>(absl::MakeSpan(buffer), 0.0);
+		fill(absl::MakeSpan(buffer), ValueType { 0 });
 		index = 0;
+        validMean = false;
 	}
 
     /**
@@ -46,6 +47,7 @@ public:
      */
 	void push(ValueType value)
 	{
+        validMean = false;
 		if (size > 0) {
 			buffer[index] = value;
 			if (++index == size)
@@ -60,11 +62,18 @@ public:
      */
 	ValueType getAverage() const
 	{
-		return mean<ValueType>(buffer);
+        if (!validMean) {
+            mean = sfz::mean<ValueType>(buffer);
+            validMean = true;
+        }
+
+		return mean;
 	}
 private:
 	Buffer<ValueType> buffer;
 	size_t size { 0 };
 	size_t index { 0 };
+    mutable bool validMean { true };
+    mutable ValueType mean { 0.0 };
 };
 }

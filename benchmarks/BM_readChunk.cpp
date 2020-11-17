@@ -61,7 +61,7 @@ BENCHMARK_DEFINE_F(FileFixture, JustRead)(benchmark::State& state) {
     {
         sfz::Buffer<float> buffer { numFrames * sndfile.channels() };
         sndfile.readf(buffer.data(), numFrames);
-        sfz::readInterleaved<float>(buffer, output->getSpan(0), output->getSpan(1));
+        sfz::readInterleaved(buffer, output->getSpan(0), output->getSpan(1));
     }
 }
 
@@ -75,7 +75,7 @@ BENCHMARK_DEFINE_F(FileFixture, AllocInside)(benchmark::State& state) {
         {
             sfz::Buffer<float> buffer { chunkSize * sndfile.channels() };
             auto read = sndfile.readf(buffer.data(), chunkSize);
-            sfz::readInterleaved<float>(
+            sfz::readInterleaved(
                 absl::MakeSpan(buffer).first(read),
                 output->getSpan(0).subspan(framesRead),
                 output->getSpan(1).subspan(framesRead)
@@ -95,7 +95,7 @@ BENCHMARK_DEFINE_F(FileFixture, AllocOutside)(benchmark::State& state) {
         while(framesRead < numFrames)
         {
             auto read = sndfile.readf(buffer.data(), chunkSize);
-            sfz::readInterleaved<float>(
+            sfz::readInterleaved(
                 absl::MakeSpan(buffer).first(read),
                 output->getSpan(0).subspan(framesRead),
                 output->getSpan(1).subspan(framesRead)
@@ -124,7 +124,7 @@ BENCHMARK_DEFINE_F(FileFixture, DrWavChunked)(benchmark::State& state) {
         while(framesRead < numFrames)
         {
             auto read = drwav_read_pcm_frames_f32(&wav, chunkSize, buffer.data());
-            sfz::readInterleaved<float>(
+            sfz::readInterleaved(
                 absl::MakeSpan(buffer).first(read),
                 output->getSpan(0).subspan(framesRead),
                 output->getSpan(1).subspan(framesRead)

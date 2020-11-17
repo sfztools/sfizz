@@ -103,8 +103,8 @@ namespace fx {
 
         // mix down the stereo signal to create the resonator excitation source
         absl::Span<float> resInput = _tempBuffer.getSpan(0).first(nframes);
-        sfz::applyGain<float>(M_SQRT1_2, inputL, resInput);
-        sfz::multiplyAdd<float>(M_SQRT1_2, inputR, resInput);
+        sfz::applyGain1<float>(M_SQRT1_2, inputL, resInput);
+        sfz::multiplyAdd1<float>(M_SQRT1_2, inputR, resInput);
 
         // generate the strings summed into a common buffer
         absl::Span<float> resOutput = _tempBuffer.getSpan(1).first(nframes);
@@ -126,20 +126,21 @@ namespace fx {
 
     std::unique_ptr<Effect> Strings::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Strings>();
+        Strings* strings = new Strings;
+        std::unique_ptr<Effect> fx { strings };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("strings_number"):
-                setValueFromOpcode(opc, fx->_numStrings, {0, MaximumNumStrings});
+                setValueFromOpcode(opc, strings->_numStrings, {0, MaximumNumStrings});
                 break;
             case hash("strings_wet"):
-                setValueFromOpcode(opc, fx->_wet, {0.0f, 100.0f});
+                setValueFromOpcode(opc, strings->_wet, {0.0f, 100.0f});
                 break;
             }
         }
 
-        return CXX11_MOVE(fx);
+        return fx;
     }
 
 } // namespace fx

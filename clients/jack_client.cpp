@@ -21,8 +21,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "sfizz/Synth.h"
-#include "sfizz/Macros.h"
+#include "sfizz.hpp"
+#include "MidiHelpers.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
 #include <absl/types/span.h>
@@ -44,38 +44,11 @@ static jack_port_t* outputPort1;
 static jack_port_t* outputPort2;
 static jack_client_t* client;
 
-namespace midi {
-constexpr uint8_t statusMask { 0b11110000 };
-constexpr uint8_t channelMask { 0b00001111 };
-constexpr uint8_t noteOff { 0x80 };
-constexpr uint8_t noteOn { 0x90 };
-constexpr uint8_t polyphonicPressure { 0xA0 };
-constexpr uint8_t controlChange { 0xB0 };
-constexpr uint8_t programChange { 0xC0 };
-constexpr uint8_t channelPressure { 0xD0 };
-constexpr uint8_t pitchBend { 0xE0 };
-constexpr uint8_t systemMessage { 0xF0 };
-
-constexpr uint8_t status(uint8_t midiStatusByte)
-{
-    return midiStatusByte & statusMask;
-}
-constexpr uint8_t channel(uint8_t midiStatusByte)
-{
-    return midiStatusByte & channelMask;
-}
-
-constexpr int buildAndCenterPitch(uint8_t firstByte, uint8_t secondByte)
-{
-    return (int)(((unsigned int)secondByte << 7) + (unsigned int)firstByte) - 8192;
-}
-}
-
 int process(jack_nframes_t numFrames, void* arg)
 {
-    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
 
-    auto buffer = jack_port_get_buffer(midiInputPort, numFrames);
+    auto* buffer = jack_port_get_buffer(midiInputPort, numFrames);
     assert(buffer);
 
     auto numMidiEvents = jack_midi_get_event_count(buffer);
@@ -90,11 +63,13 @@ int process(jack_nframes_t numFrames, void* arg)
             continue;
 
         switch (midi::status(event.buffer[0])) {
-        case midi::noteOff:
+        case midi::noteOff: noteoff:
             // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
             synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
+            if (event.buffer[2] == 0)
+                goto noteoff;
             // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
             synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
@@ -121,9 +96,11 @@ int process(jack_nframes_t numFrames, void* arg)
         }
     }
 
-    auto leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
-    auto rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
-    synth->renderBlock({ { leftOutput, rightOutput }, numFrames });
+    auto* leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
+    auto* rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
+
+    float* stereoOutput[] = { leftOutput, rightOutput };
+    synth->renderBlock(stereoOutput, numFrames);
 
     return 0;
 }
@@ -133,7 +110,7 @@ int sampleBlockChanged(jack_nframes_t nframes, void* arg)
     if (arg == nullptr)
         return 0;
 
-    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
     // DBG("Sample per block changed to " << nframes);
     synth->setSamplesPerBlock(nframes);
     return 0;
@@ -144,19 +121,19 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg)
     if (arg == nullptr)
         return 0;
 
-    auto synth = reinterpret_cast<sfz::Synth*>(arg);
+    auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
     // DBG("Sample rate changed to " << nframes);
     synth->setSampleRate(nframes);
     return 0;
 }
 
-static bool shouldClose { false };
+static volatile sig_atomic_t shouldClose { false };
 
 static void done(int sig)
 {
     std::cout << "Signal received" << '\n';
     shouldClose = true;
-    UNUSED(sig);
+    (void)sig;
     // if (client != nullptr)
 
     // exit(0);
@@ -165,6 +142,7 @@ static void done(int sig)
 ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
 ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
 int main(int argc, char** argv)
 {
@@ -179,17 +157,18 @@ int main(int argc, char** argv)
     const std::string clientName = absl::GetFlag(FLAGS_client_name);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+    const bool verboseState = absl::GetFlag(FLAGS_state);
 
     std::cout << "Flags" << '\n';
     std::cout << "- Client name: " << clientName << '\n';
     std::cout << "- Oversampling: " << oversampling << '\n';
     std::cout << "- Preloaded Size: " << preload_size << '\n';
     const auto factor = [&]() {
-        if (oversampling == "x1") return sfz::Oversampling::x1;
-        if (oversampling == "x2") return sfz::Oversampling::x2;
-        if (oversampling == "x4") return sfz::Oversampling::x4;
-        if (oversampling == "x8") return sfz::Oversampling::x8;
-        return sfz::Oversampling::x1;
+        if (oversampling == "x1") return 1;
+        if (oversampling == "x2") return 2;
+        if (oversampling == "x4") return 4;
+        if (oversampling == "x8") return 8;
+        return 1;
     }();
 
     std::cout << "Positional arguments:";
@@ -197,7 +176,7 @@ int main(int argc, char** argv)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
-    sfz::Synth synth;
+    sfz::Sfizz synth;
     synth.setOversamplingFactor(factor);
     synth.setPreloadSize(preload_size);
     synth.loadSfzFile(filesToParse[0]);
@@ -208,6 +187,7 @@ int main(int argc, char** argv)
     std::cout << "\tRegions: " << synth.getNumRegions() << '\n';
     std::cout << "\tCurves: " << synth.getNumCurves() << '\n';
     std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
+#if 0 // not currently in public API
     std::cout << "==========" << '\n';
     std::cout << "Included files:" << '\n';
     for (auto& file : synth.getParser().getIncludedFiles())
@@ -216,6 +196,7 @@ int main(int argc, char** argv)
     std::cout << "Defines:" << '\n';
     for (auto& define : synth.getParser().getDefines())
         std::cout << '\t' << define.first << '=' << define.second << '\n';
+#endif
     std::cout << "==========" << '\n';
     std::cout << "Unknown opcodes:";
     for (auto& opcode : synth.getUnknownOpcodes())
@@ -285,11 +266,14 @@ int main(int argc, char** argv)
     signal(SIGQUIT, done);
 
     while (!shouldClose){
+        if (verboseState) {
+            std::cout << "Active voices: " << synth.getNumActiveVoices() << '\n';
 #ifndef NDEBUG
         std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
         std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
 #endif
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     std::cout << "Closing..." << '\n';

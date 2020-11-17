@@ -137,6 +137,11 @@ public:
     void addToInputs(const float* const addInput[], float addGain, unsigned nframes);
 
     /**
+       @brief Apply a gain to the inputs
+     */
+    void applyGain(const float* gain, unsigned nframes);
+
+    /**
        @brief Initializes all effects in the bus with the given sample rate.
      */
     void setSampleRate(double sampleRate);

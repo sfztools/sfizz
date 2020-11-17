@@ -8,6 +8,7 @@
 #include "MathHelpers.h"
 #include <initializer_list>
 #include <type_traits>
+#include <limits>
 
 namespace sfz
 {
@@ -28,8 +29,8 @@ public:
     {
 
     }
-    Type getStart() const noexcept { return _start; }
-    Type getEnd() const noexcept { return _end; }
+    constexpr Type getStart() const noexcept { return _start; }
+    constexpr Type getEnd() const noexcept { return _end; }
     /**
      * @brief Get the range as an std::pair of the endpoints
      *
@@ -100,6 +101,31 @@ public:
             _end = value;
         else
             _start = value;
+    }
+
+    /**
+     * @brief Convert the range to a different value type
+     *
+     * @return Range<Other>
+     */
+    template <class Other>
+    Range<Other> to() const noexcept
+    {
+        return Range<Other> {
+            static_cast<Other>(_start),
+            static_cast<Other>(_end),
+        };
+    }
+
+    /**
+     * @brief Construct a range which covers the whole numeric domain
+     */
+    static constexpr Range<Type> wholeRange() noexcept
+    {
+        return Range<Type> {
+            std::numeric_limits<Type>::min(),
+            std::numeric_limits<Type>::max(),
+        };
     }
 
 private:

@@ -22,6 +22,9 @@ enum {
     kPidNumVoices,
     kPidOversampling,
     kPidPreloadSize,
+    kPidScalaRootKey,
+    kPidTuningFrequency,
+    kPidStretchedTuning,
     kPidMidiAftertouch,
     kPidMidiPitchBend,
     kPidMidiCC0,
@@ -31,15 +34,19 @@ enum {
 
 class SfizzVstState {
 public:
-    SfizzVstState() { sfzFile.reserve(8192); }
+    SfizzVstState() { sfzFile.reserve(8192); scalaFile.reserve(8192); }
 
     std::string sfzFile;
     float volume = 0;
     int32 numVoices = 64;
     int32 oversamplingLog2 = 0;
     int32 preloadSize = 8192;
+    std::string scalaFile;
+    int32 scalaRootKey = 60;
+    float tuningFrequency = 440.0;
+    float stretchedTuning = 0.0;
 
-    static constexpr uint64 currentStateVersion = 0;
+    static constexpr uint64 currentStateVersion = 1;
 
     tresult load(IBStream* state);
     tresult store(IBStream* state) const;
@@ -53,6 +60,15 @@ public:
 
     tresult load(IBStream* state);
     tresult store(IBStream* state) const;
+};
+
+struct SfizzPlayState {
+    uint32 curves;
+    uint32 masters;
+    uint32 groups;
+    uint32 regions;
+    uint32 preloadedSamples;
+    uint32 activeVoices;
 };
 
 struct SfizzParameterRange {
@@ -83,3 +99,6 @@ static constexpr SfizzParameterRange kParamVolumeRange(0.0, -60.0, +6.0);
 static constexpr SfizzParameterRange kParamNumVoicesRange(64.0, 1.0, 256.0);
 static constexpr SfizzParameterRange kParamOversamplingRange(0.0, 0.0, 3.0);
 static constexpr SfizzParameterRange kParamPreloadSizeRange(8192.0, 1024.0, 65536.0);
+static constexpr SfizzParameterRange kParamScalaRootKeyRange(60.0, 0.0, 127.0);
+static constexpr SfizzParameterRange kParamTuningFrequencyRange(440.0, 300.0, 500.0);
+static constexpr SfizzParameterRange kParamStretchedTuningRange(0.0, 0.0, 1.0);

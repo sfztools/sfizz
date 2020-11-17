@@ -22,7 +22,7 @@ public:
     input = std::vector<float>(state.range(0));
     output = std::vector<float>(state.range(0));
     std::generate(input.begin(), input.end(), [&]() { return dist(gen); });
-    sfz::cumsum<float, false>(input, absl::MakeSpan(input));
+    sfz::cumsum<float>(input, absl::MakeSpan(input));
   }
 
   void TearDown(const ::benchmark::State& /* state */) {
@@ -37,28 +37,32 @@ public:
 BENCHMARK_DEFINE_F(DiffArray, Diff_Scalar)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::diff<float, false>(input, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::diff, false);
+        sfz::diff<float>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(DiffArray, Diff_SIMD)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::diff<float, true>(input, absl::MakeSpan(output));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::diff, true);
+        sfz::diff<float>(input, absl::MakeSpan(output));
     }
 }
 
 BENCHMARK_DEFINE_F(DiffArray, Diff_Scalar_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::diff<float, false>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::diff, false);
+        sfz::diff<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 
 BENCHMARK_DEFINE_F(DiffArray, Diff_SIMD_Unaligned)(benchmark::State& state) {
     for (auto _ : state)
     {
-        sfz::diff<float, true>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
+        sfz::setSIMDOpStatus<float>(sfz::SIMDOps::diff, true);
+        sfz::diff<float>(absl::MakeSpan(input).subspan(1), absl::MakeSpan(output).subspan(1));
     }
 }
 

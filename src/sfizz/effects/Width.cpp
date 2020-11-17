@@ -15,8 +15,8 @@
  */
 
 #include "Width.h"
+#include "Panning.h"
 #include "Opcode.h"
-#include "SIMDHelpers.h"
 #include "absl/memory/memory.h"
 
 namespace sfz {
@@ -53,8 +53,8 @@ namespace fx {
             const float r = input2[i];
 
             const float w = clamp((widths[i] + 100.0f) * 0.005f, 0.0f, 1.0f);
-            const float coeff1 = _internals::panLookup(w);
-            const float coeff2 = _internals::panLookup(1.0f - w);
+            const float coeff1 = panLookup(w);
+            const float coeff2 = panLookup(1.0f - w);
 
             output1[i] = l * coeff2 + r * coeff1;
             output2[i] = l * coeff1 + r * coeff2;
@@ -63,17 +63,18 @@ namespace fx {
 
     std::unique_ptr<Effect> Width::makeInstance(absl::Span<const Opcode> members)
     {
-        auto fx = absl::make_unique<Width>();
+        Width* width = new Width;
+        std::unique_ptr<Effect> fx { width };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("width"):
-                setValueFromOpcode(opc, fx->_width, {-100.0f, 100.0f});
+                setValueFromOpcode(opc, width->_width, {-100.0f, 100.0f});
                 break;
             }
         }
 
-        return CXX11_MOVE(fx);
+        return fx;
     }
 
 } // namespace fx

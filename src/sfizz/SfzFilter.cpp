@@ -6,7 +6,7 @@
 
 #include "Config.h"
 #include "SfzFilter.h"
-#include "SfzFilterImpls.cxx"
+#include "SfzFilterImpls.hpp"
 #include "StringViewHelpers.h"
 #include <cstring>
 #include "SIMDHelpers.h"

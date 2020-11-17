@@ -8,8 +8,10 @@
 #include "Config.h"
 #include "LeakDetector.h"
 #include "Buffer.h"
+#include "MathHelpers.h"
 #include <absl/types/span.h>
 #include <absl/container/flat_hash_map.h>
+#include <array>
 #include <memory>
 #include <complex>
 
@@ -17,6 +19,8 @@ namespace sfz {
 class FilePool;
 
 class WavetableMulti;
+
+enum InterpolatorModel : int;
 
 /**
    An oscillator based on wavetables
@@ -45,27 +49,48 @@ public:
     void setPhase(float phase);
 
     /**
+       Set the quality of this oscillator. (cf. `oscillator_quality`)
+
+       0: nearest
+       1: linear
+       2: high
+       3: dual-high
+     */
+    void setQuality(int q) { _quality = q; }
+
+    /**
+       Get the quality of this oscillator. (cf. `oscillator_quality`)
+    */
+    int quality() const { return _quality; }
+
+    /**
        Compute a cycle of the oscillator, with constant frequency.
      */
-    void process(float frequency, float* output, unsigned nframes);
+    void process(float frequency, float detuneRatio, float* output, unsigned nframes);
 
     /**
        Compute a cycle of the oscillator, with varying frequency.
      */
-    void processModulated(const float* frequencies, float* output, unsigned nframes);
+    void processModulated(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes);
 
 private:
-    /**
-       Interpolate a value from a part of table, with delta in 0 to 1 excluded.
-       There are `TableExtra` elements available for reading.
-       (cf. WavetableMulti)
-     */
-    static float interpolate(const float* x, float delta);
+    // single-table interpolation
+    template <InterpolatorModel M>
+    void processSingle(float frequency, float detuneRatio, float* output, unsigned nframes);
+    template <InterpolatorModel M>
+    void processModulatedSingle(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes);
+
+    // dual-table interpolation
+    template <InterpolatorModel M>
+    void processDual(float frequency, float detuneRatio, float* output, unsigned nframes);
+    template <InterpolatorModel M>
+    void processModulatedDual(const float* frequencies, const float* detuneRatios, float* output, unsigned nframes);
 
 private:
     float _phase = 0.0f;
     float _sampleInterval = 0.0f;
     const WavetableMulti* _multi = nullptr;
+    int _quality = 1;
     LEAK_DETECTOR(WavetableOscillator);
 };
 
@@ -98,35 +123,42 @@ public:
 };
 
 /**
-   A helper to select ranges of a multi-sampled oscillator, according to the
+   A helper to select ranges of a mip-mapped wave, according to the
    frequency of an oscillator.
 
    The ranges are identified by octave numbers; not octaves in a musical sense,
    but as logarithmic divisions of the frequency range.
  */
-class WavetableRange {
+class MipmapRange {
 public:
     float minFrequency = 0;
     float maxFrequency = 0;
 
-    static constexpr unsigned countOctaves = 10;
-    static constexpr float frequencyScaleFactor = 0.05;
+    // number of tables in the mipmap
+    static constexpr unsigned N = 24;
+    // start frequency of the first table in the mipmap
+    static constexpr float F1 = 20.0;
+    // start frequency of the last table in the mipmap
+    static constexpr float FN = 12000.0;
 
-    static unsigned getOctaveForFrequency(float f);
-    static WavetableRange getRangeForOctave(int o);
-    static WavetableRange getRangeForFrequency(float f);
+    static float getIndexForFrequency(float f);
+    static float getExactIndexForFrequency(float f);
+    static MipmapRange getRangeForIndex(int o);
+    static MipmapRange getRangeForFrequency(float f);
 
-    // Note: using the frequency factor 0.05, octaves are as follows:
-    //     octave 0: 20 Hz - 40 Hz
-    //     octave 1: 40 Hz - 80 Hz
-    //     octave 2: 80 Hz - 160 Hz
-    //     octave 3: 160 Hz - 320 Hz
-    //     octave 4: 320 Hz - 640 Hz
-    //     octave 5: 640 Hz - 1280 Hz
-    //     octave 6: 1280 Hz - 2560 Hz
-    //     octave 7: 2560 Hz - 5120 Hz
-    //     octave 8: 5120 Hz - 10240 Hz
-    //     octave 9: 10240 Hz - 20480 Hz
+    // the frequency mapping of the mipmap is defined by formula:
+    //     T(f) = log(k*f)/log(b)
+    // - T is the table number, converted to index by rounding down
+    // - f is the oscillation frequency
+    // - k and b are adjustment parameters according to constant parameters
+    //     k = 1/F1
+    //     b = exp(log(FN/F1)/(N-1))
+
+    static const float K;
+    static const float LogB;
+
+    static const std::array<float, 1024> FrequencyToIndex;
+    static const std::array<float, N + 1> IndexToStartFrequency;
 };
 
 /**
@@ -139,7 +171,7 @@ public:
     unsigned tableSize() const { return _tableSize; }
 
     // number of tables in the multisample
-    static constexpr unsigned numTables() { return WavetableRange::countOctaves; }
+    static constexpr unsigned numTables() { return MipmapRange::N; }
 
     // get the N-th table in the multisample
     absl::Span<const float> getTable(unsigned index) const
@@ -150,14 +182,41 @@ public:
     // get the table which is adequate for a given playback frequency
     absl::Span<const float> getTableForFrequency(float freq) const
     {
-        return getTable(WavetableRange::getOctaveForFrequency(freq));
+        return getTable(MipmapRange::getIndexForFrequency(freq));
+    }
+
+    // adjacent tables with interpolation factor between them
+    struct DualTable {
+        const float* table1;
+        const float* table2;
+        float delta;
+    };
+
+    // get the pair of tables at the fractional multisample position (range checked)
+    DualTable getInterpolationPair(float position) const
+    {
+        DualTable dt;
+        int index = static_cast<int>(position);
+        dt.delta = position - index;
+        dt.table1 = getTablePointer(clamp<int>(index, 0, MipmapRange::N - 1));
+        dt.table2 = getTablePointer(clamp<int>(index + 1, 0, MipmapRange::N - 1));
+        return dt;
+    }
+
+    // get the pair of tables for the given playback frequency (range checked)
+    DualTable getInterpolationPairForFrequency(float freq) const
+    {
+        float position = MipmapRange::getIndexForFrequency(freq);
+        return getInterpolationPair(position);
     }
 
     // create a multisample according to a given harmonic profile
     // the reference sample rate is the minimum value accepted by the DSP
     // system (most defavorable wrt. aliasing)
     static WavetableMulti createForHarmonicProfile(
-        const HarmonicProfile& hp, double amplitude, unsigned tableSize = config::tableSize, double refSampleRate = 44100.0);
+        const HarmonicProfile& hp, double amplitude,
+        unsigned tableSize = config::tableSize,
+        double refSampleRate = config::tableRefSampleRate);
 
     // get a tiny silent wavetable with null content for use with oscillators
     static const WavetableMulti* getSilenceWavetable();
@@ -166,7 +225,7 @@ private:
     // get a pointer to the beginning of the N-th table
     const float* getTablePointer(unsigned index) const
     {
-        return _multiData.data() + index * (_tableSize + _tableExtra);
+        return _multiData.data() + index * (_tableSize + 2 * _tableExtra) + _tableExtra;
     }
 
     // allocate the internal data for tables of the given size

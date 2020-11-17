@@ -19,7 +19,7 @@
 
 class FileFixture : public benchmark::Fixture {
 public:
-    void SetUp(const ::benchmark::State& state) {
+    void SetUp(const ::benchmark::State& /* state */) {
         filePath1 = getPath() / "sample1.flac";
         filePath2 = getPath() / "sample2.flac";
         filePath3 = getPath() / "sample3.flac";

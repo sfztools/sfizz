@@ -44,15 +44,20 @@ public:
     tresult PLUGIN_API setState(IBStream* state) override;
     tresult PLUGIN_API getState(IBStream* state) override;
     tresult PLUGIN_API setComponentState(IBStream* state) override;
+    tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
     struct StateListener {
         virtual void onStateChanged() = 0;
     };
 
     const SfizzVstState& getSfizzState() const { return _state; }
+    SfizzVstState& getSfizzState() { return _state; }
 
     const SfizzUiState& getSfizzUiState() const { return _uiState; }
     SfizzUiState& getSfizzUiState() { return _uiState; }
+
+    const SfizzPlayState& getSfizzPlayState() const { return _playState; }
+    SfizzPlayState& getSfizzPlayState() { return _playState; }
 
     void addSfizzStateListener(StateListener* listener);
     void removeSfizzStateListener(StateListener* listener);
@@ -65,5 +70,6 @@ public:
 private:
     SfizzVstState _state;
     SfizzUiState _uiState;
+    SfizzPlayState _playState {};
     std::vector<StateListener*> _stateListeners;
 };

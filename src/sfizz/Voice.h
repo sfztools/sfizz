@@ -5,22 +5,29 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "TriggerEvent.h"
 #include "Config.h"
 #include "ADSREnvelope.h"
 #include "HistoricalBuffer.h"
 #include "Region.h"
 #include "AudioBuffer.h"
-#include "MidiState.h"
-#include "Wavetables.h"
 #include "Resources.h"
+#include "FilterPool.h"
+#include "EQPool.h"
+#include "Smoothers.h"
 #include "AudioSpan.h"
 #include "LeakDetector.h"
-#include <absl/types/span.h>
-#include <atomic>
+#include "OnePoleFilter.h"
+#include "PowerFollower.h"
+#include "utility/NumericId.h"
+#include "absl/types/span.h"
 #include <memory>
 #include <random>
 
 namespace sfz {
+enum InterpolatorModel : int;
+class LFO;
+class FlexEnvelope;
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -33,14 +40,42 @@ public:
     /**
      * @brief Construct a new voice with the midistate singleton
      *
+     * @param voiceNumber
      * @param midiState
      */
-    Voice(Resources& resources);
-    enum class TriggerType {
-        NoteOn,
-        NoteOff,
-        CC
+    Voice(int voiceNumber, Resources& resources);
+
+    ~Voice();
+
+    /**
+     * @brief Get the unique identifier of this voice in a synth
+     */
+    NumericId<Voice> getId() const noexcept
+    {
+        return id;
+    }
+
+    enum class State {
+        idle,
+        playing,
+        cleanMeUp,
     };
+
+    class StateListener {
+    public:
+        virtual void onVoiceStateChanged(NumericId<Voice> /*id*/, State /*state*/) {}
+    };
+
+    /**
+     * @brief Return true if the voice is to be cleaned up (zombie state)
+     */
+    bool toBeCleanedUp() const { return state == State::cleanMeUp; }
+
+    /**
+     * @brief Sets the listener which is called when the voice state changes.
+     */
+    void setStateListener(StateListener *l) noexcept { stateListener = l; }
+
     /**
      * @brief Change the sample rate of the voice. This is used to compute all
      * pitch related transformations so it needs to be propagated from the synth
@@ -76,11 +111,16 @@ public:
      *
      * @param region
      * @param delay
-     * @param number
-     * @param value
-     * @param triggerType
+     * @param evebt
      */
-    void startVoice(Region* region, int delay, int number, float value, TriggerType triggerType) noexcept;
+    void startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
+
+    /**
+     * @brief Get the sample quality determined by the active region.
+     *
+     * @return int
+     */
+    int getCurrentSampleQuality() const noexcept;
 
     /**
      * @brief Register a note-off event; this may trigger a release.
@@ -126,11 +166,12 @@ public:
      * This will trigger the release if true.
      *
      * @param delay
+     * @param noteNumber
      * @param group
      * @return true
      * @return false
      */
-    bool checkOffGroup(int delay, uint32_t group) noexcept;
+    bool checkOffGroup(const Region* other, int delay, int noteNumber) noexcept;
 
     /**
      * @brief Render a block of data for this voice into the span
@@ -147,30 +188,18 @@ public:
      */
     bool isFree() const noexcept;
     /**
-     * @brief Can the voice be "stolen" and reused (i.e. is it releasing)
+     * @brief Can the voice be reused (i.e. is it releasing or free)
      *
      * @return true
      * @return false
      */
-    bool canBeStolen() const noexcept;
+    bool releasedOrFree() const noexcept;
     /**
-     * @brief Get the number that triggered the voice (note number or cc number)
+     * @brief Get the event that triggered the voice
      *
      * @return int
      */
-    int getTriggerNumber() const noexcept;
-    /**
-     * @brief Get the value that triggered the voice (note velocity or cc value)
-     *
-     * @return float
-     */
-    float getTriggerValue() const noexcept;
-    /**
-     * @brief Get the type of trigger
-     *
-     * @return TriggerType
-     */
-    TriggerType getTriggerType() const noexcept;
+    const TriggerEvent& getTriggerEvent() const noexcept { return triggerEvent; }
 
     /**
      * @brief Reset the voice to its initial values
@@ -179,24 +208,77 @@ public:
     void reset() noexcept;
 
     /**
+     * @brief Set the next voice in the "sister voice" ring
+     * The sister voices are voices that started on the same event.
+     * This has to be set by the synth. A voice will remove itself from
+     * the ring upon reset.
+     *
+     * @param voice
+     */
+    void setNextSisterVoice(Voice* voice) noexcept;
+
+    /**
+     * @brief Set the previous voice in the "sister voice" ring
+     * The sister voices are voices that started on the same event.
+     * This has to be set by the synth. A voice will remove itself from
+     * the ring upon reset.
+     *
+     * @param voice
+     */
+    void setPreviousSisterVoice(Voice* voice) noexcept;
+
+    /**
+     * @brief Get the next sister voice in the ring
+     *
+     * @return Voice*
+     */
+    Voice* getNextSisterVoice() const noexcept { return nextSisterVoice; };
+
+    /**
+     * @brief Get the previous sister voice in the ring
+     *
+     * @return Voice*
+     */
+    Voice* getPreviousSisterVoice() const noexcept { return previousSisterVoice; };
+
+    /**
      * @brief Get the mean squared power of the last rendered block. This is used
      * to determine which voice to steal if there are too many notes flying around.
      *
      * @return float
      */
-    float getMeanSquaredAverage() const noexcept;
+    float getAveragePower() const noexcept;
+
     /**
-     * @brief Get the position of the voice in the source, in samples
+     * @brief Enable the power follower
      *
-     * @return uint32_t
      */
-    uint32_t getSourcePosition() const noexcept;
+
+    void enablePowerFollower() noexcept;
+    /**
+     * @brief Disable the power follower
+     *
+     */
+    void disablePowerFollower() noexcept;
+
     /**
      * Returns the region that is currently playing. May be null if the voice is not active!
      *
      * @return
      */
     const Region* getRegion() const noexcept { return region; }
+    /**
+     * @brief Get the LFO designated by the given index
+     *
+     * @param index
+     */
+    LFO* getLFO(size_t index) { return lfos[index].get(); }
+    /**
+     * @brief Get the Flex EG designated by the given index
+     *
+     * @param index
+     */
+    FlexEnvelope* getFlexEG(size_t index) { return flexEGs[index].get(); }
     /**
      * @brief Set the max number of filters per voice
      *
@@ -206,21 +288,79 @@ public:
     /**
      * @brief Set the max number of EQs per voice
      *
-     * @param numFilters
+     * @param numEQs
      */
     void setMaxEQsPerVoice(size_t numEQs);
+    /**
+     * @brief Set the max number of LFOs per voice
+     *
+     * @param numLFOs
+     */
+    void setMaxLFOsPerVoice(size_t numLFOs);
+    /**
+     * @brief Set the max number of Flex EGs per voice
+     *
+     * @param numFlexEGs
+     */
+    void setMaxFlexEGsPerVoice(size_t numFlexEGs);
+    /**
+     * @brief Set whether SFZv1 pitch EG is enabled on this voice
+     *
+     * @param havePitchEG
+     */
+    void setPitchEGEnabledPerVoice(bool havePitchEG);
+    /**
+     * @brief Set whether SFZv1 filter EG is enabled on this voice
+     *
+     * @param haveFilterEG
+     */
+    void setFilterEGEnabledPerVoice(bool haveFilterEG);
     /**
      * @brief Release the voice after a given delay
      *
      * @param delay
      * @param fastRelease whether to do a normal release or cut the voice abruptly
      */
-    void release(int delay, bool fastRelease = false) noexcept;
+    void release(int delay) noexcept;
+
+    /**
+     * @brief Off the voice (steal). This will respect the off mode of the region
+     *      and set the envelopes if necessary.
+     *
+     * @param delay
+     * @param fast whether to apply a fast release regardless of the off mode
+     */
+    void off(int delay, bool fast = false) noexcept;
+
+    /**
+     * @brief gets the age of the Voice
+     *
+     * @return
+     */
+    int getAge() const noexcept { return age; }
 
     Duration getLastDataDuration() const noexcept { return dataDuration; }
     Duration getLastAmplitudeDuration() const noexcept { return amplitudeDuration; }
     Duration getLastFilterDuration() const noexcept { return filterDuration; }
     Duration getLastPanningDuration() const noexcept { return panningDuration; }
+
+    /**
+     * @brief Get the SFZv1 amplitude EG, if existing
+     */
+    ADSREnvelope<float>* getAmplitudeEG() { return &egAmplitude; }
+    /**
+     * @brief Get the SFZv1 pitch EG, if existing
+     */
+    ADSREnvelope<float>* getPitchEG() { return egPitch.get(); }
+    /**
+     * @brief Get the SFZv1 filter EG, if existing
+     */
+    ADSREnvelope<float>* getFilterEG() { return egFilter.get(); }
+
+    /**
+     * @brief Get the trigger event
+     */
+    const TriggerEvent& getTriggerEvent() { return triggerEvent; }
 
 private:
     /**
@@ -237,64 +377,252 @@ private:
      * @param buffer
      */
     void fillWithGenerator(AudioSpan<float> buffer) noexcept;
+
+    /**
+     * @brief Fill a destination with an interpolated source.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     */
+    template <InterpolatorModel M, bool Adding>
+    static void fillInterpolated(
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains);
+
+    /**
+     * @brief Fill a destination with an interpolated source, selecting
+     *        interpolation type dynamically by quality level.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     * @param quality the quality level 1-10
+     */
+    template <bool Adding>
+    static void fillInterpolatedWithQuality(
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains, int quality);
+
+    /**
+     * @brief Get a S-shaped curve that is applicable to loop crossfading.
+     */
+    static const Curve& getSCurve();
+
+    /**
+     * @brief Compute the amplitude envelope, applied as a gain to a mono
+     * or stereo buffer
+     *
+     * @param modulationSpan
+     */
     void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
+
+    /**
+     * @brief Apply the crossfade envelope to a span.
+     *
+     * @param modulationSpan
+     */
+    void applyCrossfades(absl::Span<float> modulationSpan) noexcept;
+    void resetCrossfades() noexcept;
+
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void ampStageMono(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a stereo source
+     *
+     * @param buffer
+     */
     void ampStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void panStageMono(AudioSpan<float> buffer) noexcept;
     void panStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
     void filterStageMono(AudioSpan<float> buffer) noexcept;
     void filterStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Compute the pitch envelope. This envelope is meant to multiply
+     * the frequency parameter for each sample (which translates to floating
+     * point intervals for sample-based voices, or phases for generators)
+     *
+     * @param pitchSpan
+     */
+    void pitchEnvelope(absl::Span<float> pitchSpan) noexcept;
+
+    /**
+     * @brief Remove the voice from the sister ring
+     *
+     */
+    void removeVoiceFromRing() noexcept;
+
+    /**
+     * @brief Initialize frequency and gain coefficients for the oscillators.
+     */
+    void setupOscillatorUnison();
+    void updateChannelPowers(AudioSpan<float> buffer);
+
+    /**
+     * @brief Modify the voice state and notify any listeners.
+     */
+    void switchState(State s);
+
+    /**
+     * @brief Save the modulation targets to avoid recomputing them in every callback.
+     * Must be called during startVoice() ideally.
+     */
+    void saveModulationTargets(const Region* region) noexcept;
+
+    const NumericId<Voice> id;
+    StateListener* stateListener = nullptr;
 
     Region* region { nullptr };
 
-    enum class State {
-        idle,
-        playing
-    };
     State state { State::idle };
     bool noteIsOff { false };
 
-    TriggerType triggerType;
-    int triggerNumber;
-    float triggerValue;
+    TriggerEvent triggerEvent;
     absl::optional<int> triggerDelay;
 
     float speedRatio { 1.0 };
     float pitchRatio { 1.0 };
-    float baseVolumedB{ 0.0 };
+    float baseVolumedB { 0.0 };
     float baseGain { 1.0 };
     float baseFrequency { 440.0 };
-    float phase { 0.0f };
 
     float floatPositionOffset { 0.0f };
     int sourcePosition { 0 };
     int initialDelay { 0 };
+    int age { 0 };
+    struct {
+        int start { 0 };
+        int end { 0 };
+        int size { 0 };
+        int xfSize { 0 };
+        int xfOutStart { 0 };
+        int xfInStart { 0 };
+    } loop;
+    /**
+     * @brief Reset the loop information
+     *
+     */
+    void resetLoopInformation() noexcept;
+    /**
+     * @brief Read the loop information data from the region.
+     * This requires that the region and promise is properly set.
+     *
+     */
+    void updateLoopInformation() noexcept;
 
-    FilePromisePtr currentPromise { nullptr };
+    FileDataHolder currentPromise;
 
     int samplesPerBlock { config::defaultSamplesPerBlock };
-    int minEnvelopeDelay { config::defaultSamplesPerBlock / 2 };
     float sampleRate { config::defaultSampleRate };
 
     Resources& resources;
 
-    std::vector<FilterHolderPtr> filters;
-    std::vector<EQHolderPtr> equalizers;
+    std::vector<FilterHolder> filters;
+    std::vector<EQHolder> equalizers;
+    std::vector<std::unique_ptr<LFO>> lfos;
+    std::vector<std::unique_ptr<FlexEnvelope>> flexEGs;
 
-    ADSREnvelope<float> egEnvelope;
+    ADSREnvelope<float> egAmplitude;
+    std::unique_ptr<ADSREnvelope<float>> egPitch;
+    std::unique_ptr<ADSREnvelope<float>> egFilter;
     float bendStepFactor { centsFactor(1) };
 
-    WavetableOscillator waveOscillator;
+    WavetableOscillator waveOscillators[config::oscillatorsPerVoice];
+
+    // unison of oscillators
+    unsigned waveUnisonSize { 0 };
+    float waveDetuneRatio[config::oscillatorsPerVoice] {};
+    float waveLeftGain[config::oscillatorsPerVoice] {};
+    float waveRightGain[config::oscillatorsPerVoice] {};
 
     Duration dataDuration;
     Duration amplitudeDuration;
     Duration panningDuration;
     Duration filterDuration;
 
-    std::normal_distribution<float> noiseDist { 0, config::noiseVariance };
+    Voice* nextSisterVoice { this };
+    Voice* previousSisterVoice { this };
 
-    HistoricalBuffer<float> powerHistory { config::powerHistoryLength };
+    fast_real_distribution<float> uniformNoiseDist { -config::uniformNoiseBounds, config::uniformNoiseBounds };
+    fast_gaussian_generator<float> gaussianNoiseDist { 0.0f, config::noiseVariance };
+
+    Smoother gainSmoother;
+    Smoother bendSmoother;
+    Smoother xfadeSmoother;
+    void resetSmoothers() noexcept;
+
+    ModMatrix::TargetId masterAmplitudeTarget;
+    ModMatrix::TargetId amplitudeTarget;
+    ModMatrix::TargetId volumeTarget;
+    ModMatrix::TargetId panTarget;
+    ModMatrix::TargetId positionTarget;
+    ModMatrix::TargetId widthTarget;
+    ModMatrix::TargetId pitchTarget;
+    ModMatrix::TargetId oscillatorDetuneTarget;
+    ModMatrix::TargetId oscillatorModDepthTarget;
+
+    bool followPower { false };
+    PowerFollower powerFollower;
+
     LEAK_DETECTOR(Voice);
 };
+
+inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
+{
+    if (lhs->getAge() != rhs->getAge())
+        return false;
+
+    const TriggerEvent& lhsTrigger = lhs->getTriggerEvent();
+    const TriggerEvent& rhsTrigger = rhs->getTriggerEvent();
+
+    if (lhsTrigger.number != rhsTrigger.number)
+        return false;
+
+    if (lhsTrigger.value != rhsTrigger.value)
+        return false;
+
+    if (lhsTrigger.type != rhsTrigger.type)
+        return false;
+
+    return true;
+}
+
+inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
+{
+    if (lhs->getAge() != rhs->getAge())
+        return lhs->getAge() > rhs->getAge();
+
+    const TriggerEvent& lhsTrigger = lhs->getTriggerEvent();
+    const TriggerEvent& rhsTrigger = rhs->getTriggerEvent();
+
+    if (lhsTrigger.number != rhsTrigger.number)
+        return lhsTrigger.number < rhsTrigger.number;
+
+    if (lhsTrigger.value != rhsTrigger.value)
+        return lhsTrigger.value < rhsTrigger.value;
+
+    if (lhsTrigger.type != rhsTrigger.type)
+        return lhsTrigger.type > rhsTrigger.type;
+
+    return false;
+}
 
 } // namespace sfz

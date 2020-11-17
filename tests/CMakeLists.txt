@@ -5,6 +5,8 @@ project(sfizz)
 
 set(SFIZZ_TEST_SOURCES
     RegionT.cpp
+    TestHelpers.h
+    TestHelpers.cpp
     ParsingT.cpp
     HelpersT.cpp
     HelpersT.cpp
@@ -16,24 +18,37 @@ set(SFIZZ_TEST_SOURCES
     SIMDHelpersT.cpp
     FilesT.cpp
     MidiStateT.cpp
-    OnePoleFilterT.cpp
+    InterpolatorsT.cpp
+    SmoothersT.cpp
+    PolyphonyT.cpp
     RegionActivationT.cpp
     RegionValueComputationsT.cpp
     # If we're tweaking the curves this kind of tests does not make sense
     # Use integration tests with comparison curves
     # ADSREnvelopeT.cpp
+    FlexEGT.cpp
     EventEnvelopesT.cpp
     MainT.cpp
     SynthT.cpp
     CurveT.cpp
     RegionTriggersT.cpp
     FloatHelpersT.cpp
+    RandomHelpersT.cpp
     WavetablesT.cpp
+    SemaphoreT.cpp
+    SwapAndPopT.cpp
+    TuningT.cpp
+    ConcurrencyT.cpp
+    ModulationsT.cpp
+    LFOT.cpp
+    DataHelpers.h
+    DataHelpers.cpp
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::sfizz)
+target_link_libraries(sfizz_tests PRIVATE sfizz::sfizz sfizz-jsl)
 sfizz_enable_lto_if_needed(sfizz_tests)
+sfizz_enable_fast_math(sfizz_tests)
 # target_link_libraries(sfizz_tests PRIVATE absl::strings absl::str_format absl::flat_hash_map cnpy absl::span absl::algorithm)
 
 find_package(PkgConfig)
@@ -48,6 +63,11 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     target_link_libraries(sfizz_demo_filters PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
     set_target_properties(sfizz_demo_filters PROPERTIES AUTOUIC ON)
 
+    add_executable(sfizz_demo_smooth DemoSmooth.cpp)
+    target_include_directories(sfizz_demo_smooth PRIVATE ${JACK_INCLUDE_DIRS})
+    target_link_libraries(sfizz_demo_smooth PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
+    set_target_properties(sfizz_demo_smooth PROPERTIES AUTOUIC ON)
+
     add_executable(sfizz_demo_stereo DemoStereo.cpp)
     target_include_directories(sfizz_demo_stereo PRIVATE ${JACK_INCLUDE_DIRS})
     target_link_libraries(sfizz_demo_stereo PRIVATE sfizz::sfizz Qt5::Widgets ${JACK_LIBRARIES})
@@ -61,6 +81,10 @@ if(JACK_FOUND AND TARGET Qt5::Widgets)
     add_executable(sfizz_demo_parser DemoParser.cpp)
     target_link_libraries(sfizz_demo_parser PRIVATE sfizz_parser Qt5::Widgets)
     set_target_properties(sfizz_demo_parser PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_stretch_tuning DemoStretchTuning.cpp)
+    target_link_libraries(sfizz_demo_stretch_tuning PRIVATE sfizz::sfizz Qt5::Widgets)
+    set_target_properties(sfizz_demo_stretch_tuning PROPERTIES AUTOUIC ON)
 endif()
 
 add_executable(eq_apply EQ.cpp)
@@ -74,5 +98,17 @@ target_link_libraries(sfizz_plot_curve PRIVATE sfizz::sfizz)
 
 add_executable(sfizz_plot_wavetables PlotWavetables.cpp)
 target_link_libraries(sfizz_plot_wavetables PRIVATE sfizz::sfizz)
+
+add_executable(sfizz_plot_lfo PlotLFO.cpp)
+target_link_libraries(sfizz_plot_lfo PRIVATE sfizz::sfizz)
+
+add_executable(sfizz_file_instrument FileInstrument.cpp)
+target_link_libraries(sfizz_file_instrument PRIVATE sfizz::sfizz)
+
+add_executable(sfizz_file_wavetable FileWavetable.cpp)
+target_link_libraries(sfizz_file_wavetable PRIVATE sfizz::sfizz)
+
+add_executable(sfizz_tuning Tuning.cpp)
+target_link_libraries(sfizz_tuning PRIVATE sfizz::sfizz)
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)

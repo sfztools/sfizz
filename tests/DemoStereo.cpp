@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "sfizz/SIMDHelpers.h"
+#include "sfizz/Panning.h"
 #include "ui_DemoStereo.h"
 #include <QApplication>
 #include <QMainWindow>
@@ -160,8 +160,8 @@ int DemoApp::processAudio(jack_nframes_t nframes, void *cbdata)
     std::fill(positionEnvelope.begin(), positionEnvelope.end(), self->fPan * 0.01f);
 
     using namespace sfz;
-    width<float>(widthEnvelope, leftBuffer, rightBuffer);
-    pan<float>(positionEnvelope, leftBuffer, rightBuffer);
+    width(widthEnvelope, leftBuffer, rightBuffer);
+    pan(positionEnvelope, leftBuffer, rightBuffer);
     return 0;
 }
 

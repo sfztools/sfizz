@@ -6,22 +6,30 @@
 
 #pragma once
 #include "CCMap.h"
+#include "Curve.h"
 #include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
+#include "FlexEGDescription.h"
 #include "EQDescription.h"
 #include "FilterDescription.h"
+#include "LFODescription.h"
 #include "Opcode.h"
 #include "AudioBuffer.h"
 #include "MidiState.h"
-#include "absl/strings/str_cat.h"
+#include "FileId.h"
+#include "utility/NumericId.h"
+#include "modulations/ModKey.h"
+#include "absl/types/optional.h"
+#include "absl/strings/string_view.h"
 #include <bitset>
-#include <absl/types/optional.h>
-#include <random>
 #include <string>
 #include <vector>
 
 namespace sfz {
+
+class RegionSet;
+
 /**
  * @brief Regions are the basic building blocks for the SFZ parsing and handling code.
  * All SFZ files are made of regions that are activated when a key is pressed or a CC
@@ -35,16 +43,27 @@ namespace sfz {
  *
  */
 struct Region {
-    Region(const MidiState& midiState, absl::string_view defaultPath = "")
-    : midiState(midiState), defaultPath(std::move(defaultPath))
+    Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath = "")
+    : id{regionNumber}, midiState(midiState), defaultPath(std::move(defaultPath))
     {
         ccSwitched.set();
 
         gainToEffect.reserve(5); // sufficient room for main and fx1-4
         gainToEffect.push_back(1.0); // contribute 100% into the main bus
+
+        // Default amplitude release
+        amplitudeEG.release = Default::ampegRelease;
     }
     Region(const Region&) = default;
     ~Region() = default;
+
+    /**
+     * @brief Get the number which identifies this region
+     */
+    NumericId<Region> getId() const noexcept
+    {
+        return id;
+    }
 
     /**
      * @brief Triggers on release?
@@ -59,7 +78,29 @@ struct Region {
      * @return true
      * @return false
      */
-    bool isGenerator() const noexcept { return sample.size() > 0 ? sample[0] == '*' : false; }
+    bool isGenerator() const noexcept { return sampleId->filename().size() > 0 ? sampleId->filename()[0] == '*' : false; }
+    /**
+     * @brief Is an oscillator (generator or wavetable)?
+     *
+     * @return true
+     * @return false
+     */
+    bool isOscillator() const noexcept
+    {
+        if (isGenerator())
+            return true;
+        else if (oscillatorEnabled != OscillatorEnabled::Auto)
+            return oscillatorEnabled == OscillatorEnabled::On;
+        else
+            return hasWavetableSample;
+    }
+    /**
+     * @brief Is stereo (has stereo sample or is unison oscillator)?
+     *
+     * @return true
+     * @return false
+     */
+    bool isStereo() const noexcept { return hasStereoSample || (isOscillator() && oscillatorMulti >= 3); }
     /**
      * @brief Is a looping region (at least potentially)?
      *
@@ -135,7 +176,7 @@ struct Region {
      * @param velocity
      * @return float
      */
-    float getBasePitchVariation(int noteNumber, float velocity) const noexcept;
+    float getBasePitchVariation(float noteNumber, float velocity) const noexcept;
     /**
      * @brief Get the note-related gain of the region depending on which note has been
      * pressed and at which velocity.
@@ -180,11 +221,19 @@ struct Region {
      */
     float velocityCurve(float velocity) const noexcept;
     /**
+     * @brief Get the detuning in cents for a given bend value between -1 and 1
+     *
+     * @param bend
+     * @return float
+     */
+    float getBendInCents(float bend) const noexcept;
+
+    /**
      * @brief Get the region offset in samples
      *
      * @return uint32_t
      */
-    uint32_t getOffset(Oversampling factor = Oversampling::x1) const noexcept;
+    uint64_t getOffset(Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Get the region delay in seconds
      *
@@ -207,6 +256,36 @@ struct Region {
      * @return false
      */
     bool parseOpcode(const Opcode& opcode);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 EG:
+     * ampeg, pitcheg, fileg.
+     *
+     * @param opcode
+     * @param eg
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseEGOpcode(const Opcode& opcode, EGDescription& eg);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 EG:
+     * ampeg, pitcheg, fileg.
+     *
+     * @param opcode
+     * @param eg
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseEGOpcode(const Opcode& opcode, absl::optional<EGDescription>& eg);
+    /**
+     * @brief Process a generic CC opcode, and fill the modulation parameters.
+     *
+     * @param opcode
+     * @param range
+     * @param target
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool processGenericCc(const Opcode& opcode, Range<float> range, const ModKey& target);
 
     void offsetAllKeys(int offset) noexcept;
 
@@ -221,27 +300,47 @@ struct Region {
      */
     float getGainToEffectBus(unsigned number) const noexcept;
 
+    /**
+     * @brief Check if a region is disabled, if its sample end is weakly negative for example.
+     */
+    bool disabled() const noexcept;
+
+    const NumericId<Region> id;
+
     // Sound source: sample playback
-    std::string sample {}; // Sample
+    std::shared_ptr<FileId> sampleId { new FileId }; // Sample
+    absl::optional<int> sampleQuality {};
     float delay { Default::delay }; // delay
     float delayRandom { Default::delayRandom }; // delay_random
-    uint32_t offset { Default::offset }; // offset
-    uint32_t offsetRandom { Default::offsetRandom }; // offset_random
+    int64_t offset { Default::offset }; // offset
+    int64_t offsetRandom { Default::offsetRandom }; // offset_random
+    CCMap<int64_t> offsetCC { Default::offset };
     uint32_t sampleEnd { Default::sampleEndRange.getEnd() }; // end
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<SfzLoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopRange }; //loopstart and loopend
+    float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase };
-    bool oscillator = false;
+    enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
+    OscillatorEnabled oscillatorEnabled = OscillatorEnabled::Auto; // oscillator
+    bool hasWavetableSample = false; // (set according to sample file)
+    int oscillatorMode = Default::oscillatorMode;
+    int oscillatorMulti = Default::oscillatorMulti;
+    float oscillatorDetune = Default::oscillatorDetune;
+    float oscillatorModDepth = Default::oscillatorModDepth;
+    absl::optional<int> oscillatorQuality;
 
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
     SfzOffMode offMode { Default::offMode }; // off_mode
-    absl::optional<uint32_t> notePolyphony {};
+    float offTime { Default::offTime }; // off_mode
+    absl::optional<uint32_t> notePolyphony {}; // note_polyphony
+    unsigned polyphony { config::maxVoices }; // polyphony
     SfzSelfMask selfMask { Default::selfMask };
+    bool rtDead { Default::rtDead };
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::keyRange }; //lokey, hikey and key
@@ -252,12 +351,15 @@ struct Region {
     CCMap<Range<float>> ccConditions { Default::ccValueRange };
     Range<uint8_t> keyswitchRange { Default::keyRange }; // sw_hikey and sw_lokey
     absl::optional<uint8_t> keyswitch {}; // sw_last
+    absl::optional<std::string> keyswitchLabel {};
     absl::optional<uint8_t> keyswitchUp {}; // sw_up
     absl::optional<uint8_t> keyswitchDown {}; // sw_down
     absl::optional<uint8_t> previousNote {}; // sw_previous
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
+    uint16_t sustainCC { Default::sustainCC }; // sustain_cc
+    float sustainThreshold { Default::sustainThreshold }; // sustain_cc
 
     // Region logic: internal conditions
     Range<uint8_t> aftertouchRange { Default::aftertouchRange }; // hichanaft and lochanaft
@@ -276,15 +378,11 @@ struct Region {
     float pan { normalizePercents(Default::pan) }; // pan
     float width { normalizePercents(Default::width) }; // width
     float position { normalizePercents(Default::position) }; // position
-    CCMap<float> volumeCC { Default::zeroModifier }; // volume_oncc
-    CCMap<float> amplitudeCC { Default::zeroModifier }; // amplitude_oncc
-    CCMap<float> panCC { Default::zeroModifier }; // pan_oncc
-    CCMap<float> widthCC { Default::zeroModifier }; // width_oncc
-    CCMap<float> positionCC { Default::zeroModifier }; // position_oncc
     uint8_t ampKeycenter { Default::ampKeycenter }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
-    float ampVeltrack { Default::ampVeltrack }; // amp_keytrack
-    std::vector<std::pair<float, float>> velocityPoints; // amp_velcurve_N
+    float ampVeltrack { normalizePercents(Default::ampVeltrack) }; // amp_keytrack
+    std::vector<std::pair<uint8_t, float>> velocityPoints; // amp_velcurve_N
+    absl::optional<Curve> velCurve {};
     float ampRandom { Default::ampRandom }; // amp_random
     Range<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
@@ -297,32 +395,66 @@ struct Region {
     CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
 
+    float globalAmplitude { 1.0 }; // global_amplitude
+    float masterAmplitude { 1.0 }; // master_amplitude
+    float groupAmplitude { 1.0 }; // group_amplitude
+    float globalVolume { 0.0 }; // global_volume
+    float masterVolume { 0.0 }; // master_volume
+    float groupVolume { 0.0 }; // group_volume
+
     // Filters and EQs
     std::vector<EQDescription> equalizers;
     std::vector<FilterDescription> filters;
 
     // Performance parameters: pitch
     uint8_t pitchKeycenter { Default::pitchKeycenter }; // pitch_keycenter
+    bool pitchKeycenterFromSample { false };
     int pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
-    int pitchRandom { Default::pitchRandom }; // pitch_random
+    float pitchRandom { Default::pitchRandom }; // pitch_random
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
     int tune { Default::tune }; // tune
-    CCMap<int> tuneCC { Default::tune };
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };
+    uint8_t bendSmooth { Default::bendSmooth };
 
     // Envelopes
     EGDescription amplitudeEG;
-    EGDescription pitchEG;
-    EGDescription filterEG;
+    absl::optional<EGDescription> pitchEG;
+    absl::optional<EGDescription> filterEG;
 
-    bool isStereo { false };
+    // Envelopes
+    std::vector<FlexEGDescription> flexEGs;
+    absl::optional<uint8_t> flexAmpEG; // egN_ampeg
+
+    // LFOs
+    std::vector<LFODescription> lfos;
+
+    bool hasStereoSample { false };
 
     // Effects
     std::vector<float> gainToEffect;
 
+    bool triggerOnCC { false }; // whether the region triggers on CC events or note events
+    bool triggerOnNote { true };
+
+    // Modulation matrix connections
+    struct Connection {
+        ModKey source;
+        ModKey target;
+        float sourceDepth = 0.0f;
+        float velToDepth = 0.0f;
+    };
+    std::vector<Connection> connections;
+    Connection* getConnection(const ModKey& source, const ModKey& target);
+    Connection& getOrCreateConnection(const ModKey& source, const ModKey& target);
+
+    // Parent
+    RegionSet* parent { nullptr };
+
+    // Started notes
+    std::vector<std::pair<int, float>> delayedReleases;
 private:
     const MidiState& midiState;
     bool keySwitched { true };
@@ -332,7 +464,6 @@ private:
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
     std::bitset<config::numCCs> ccSwitched;
-    bool triggerOnCC { false };
     absl::string_view defaultPath { "" };
 
     int sequenceCounter { 0 };

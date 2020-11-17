@@ -12,6 +12,7 @@
 
 #pragma once
 #include "absl/strings/string_view.h"
+#include <cstdint>
 
 /**
  * @brief Removes the whitespace on a string_view in place
@@ -46,6 +47,18 @@ constexpr uint64_t Fnv1aBasis = 0x811C9DC5;
 constexpr uint64_t Fnv1aPrime = 0x01000193;
 
 /**
+ * @brief Hash a single byte.
+ *
+ * @param s the input string to be hashed
+ * @param h the hashing seed to use
+ * @return uint64_t
+ */
+constexpr uint64_t hashByte(uint8_t byte, uint64_t h = Fnv1aBasis)
+{
+    return (h ^ byte) * Fnv1aPrime;
+}
+
+/**
  * @brief Compile-time hashing function to be used mostly with switch/case statements.
  *
  * See e.g. the Region.cpp file
@@ -56,7 +69,7 @@ constexpr uint64_t Fnv1aPrime = 0x01000193;
  */
 constexpr uint64_t hash(absl::string_view s, uint64_t h = Fnv1aBasis)
 {
-    return (s.length() == 0) ? h : hash( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime );
+    return (s.length() == 0) ? h : hash({ s.data() + 1, s.length() - 1 }, hashByte(s.front(), h));
 }
 
 /**
@@ -73,6 +86,18 @@ constexpr uint64_t hashNoAmpersand(absl::string_view s, uint64_t h = Fnv1aBasis)
     return (s.length() == 0) ? h : (
         (s.front() == '&')
             ? hashNoAmpersand( { s.data() + 1, s.length() - 1 }, h )
-            : hashNoAmpersand( { s.data() + 1, s.length() - 1 }, (h ^ s.front()) * Fnv1aPrime )
+            : hashNoAmpersand( { s.data() + 1, s.length() - 1 }, hashByte(s.front(), h) )
     );
+}
+
+/**
+ * @brief Run-time hashing function for numbers, useful for example to
+ *        create hash functions for keys which depend on numeric values.
+ */
+template <class Int>
+uint64_t hashNumber(Int i, uint64_t h = Fnv1aBasis)
+{
+    static_assert(std::is_arithmetic<Int>::value,
+                  "The hashed object must be of arithmetic type");
+    return hash(absl::string_view(reinterpret_cast<const char*>(&i), sizeof(i)), h);
 }

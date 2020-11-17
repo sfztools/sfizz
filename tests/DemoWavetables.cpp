@@ -36,6 +36,7 @@ private:
 
 private:
     void valueChangedWave(int value);
+    void valueChangedQuality(int value);
     void buttonClickedPlaySweep();
 
 private:
@@ -46,6 +47,7 @@ private:
     sfz::WavetableOscillator fOsc;
     unsigned fWavePlaying = 0;
     std::atomic<int> fNewWavePending { -1 };
+    std::atomic<int> fNewQualityPending { -1 };
     std::atomic<bool> fStartNewSweep { false };
 
     static constexpr float sweepMin = 0.0;
@@ -56,6 +58,7 @@ private:
     float fSweepIncrement = 0.0;
 
     std::unique_ptr<float[]> fTmpFrequency;
+    std::unique_ptr<float[]> fTmpDetune;
 
     jack_client_u fClient;
     jack_port_t* fPorts[2] = {};
@@ -86,15 +89,16 @@ bool DemoApp::initSound()
 
     unsigned bufferSize = jack_get_buffer_size(client);
     fTmpFrequency.reset(new float[bufferSize]);
+    fTmpDetune.reset(new float[bufferSize]);
 
     fMulti[0] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getSine(), 1.0, 2048);
+        sfz::HarmonicProfile::getSine(), sfz::config::amplitudeSine, 2048);
     fMulti[1] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getTriangle(), 1.0, 2048);
+        sfz::HarmonicProfile::getTriangle(), sfz::config::amplitudeTriangle, 2048);
     fMulti[2] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getSaw(), 1.0, 2048);
+        sfz::HarmonicProfile::getSaw(), sfz::config::amplitudeSaw, 2048);
     fMulti[3] = sfz::WavetableMulti::createForHarmonicProfile(
-        sfz::HarmonicProfile::getSquare(), 1.0, 2048);
+        sfz::HarmonicProfile::getSquare(), sfz::config::amplitudeSquare, 2048);
 
     fClient.reset(client);
 
@@ -128,9 +132,20 @@ void DemoApp::initWindow()
     fUi.valWave->addItem(tr("3 - Saw"));
     fUi.valWave->addItem(tr("4 - Square"));
 
+    fUi.valQuality->addItem(tr("1 - Nearest"));
+    fUi.valQuality->addItem(tr("2 - Linear"));
+    fUi.valQuality->addItem(tr("3 - High"));
+    fUi.valQuality->addItem(tr("4 - Dual-High"));
+
+    fUi.valQuality->setCurrentIndex(fOsc.quality());
+
     connect(
         fUi.valWave, QOverload<int>::of(&QComboBox::currentIndexChanged),
         this, [this](int index) { valueChangedWave(index); });
+
+    connect(
+        fUi.valQuality, QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this, [this](int index) { valueChangedQuality(index); });
 
     connect(
         fUi.btnPlaySweep, &QPushButton::clicked,
@@ -152,6 +167,10 @@ int DemoApp::processAudio(jack_nframes_t nframes, void* cbdata)
     if (newWave != -1)
         self->fWavePlaying = newWave;
 
+    int newQuality = self->fNewQualityPending.exchange(-1);
+    if (newQuality != -1)
+        osc.setQuality(newQuality);
+
     osc.setWavetable(&self->fMulti[self->fWavePlaying]);
 
     float* left = reinterpret_cast<float*>(
@@ -171,8 +190,12 @@ int DemoApp::processAudio(jack_nframes_t nframes, void* cbdata)
     }
     self->fSweepCurrent = sweepCurrent;
 
+    // fill the detune value
+    float* detune = self->fTmpDetune.get();
+    std::fill(detune, detune + nframes, 1.0f);
+
     // compute oscillator
-    osc.processModulated(frequency, left, nframes);
+    osc.processModulated(frequency, detune, left, nframes);
     std::memcpy(right, left, nframes * sizeof(float));
 
     return 0;
@@ -181,6 +204,11 @@ int DemoApp::processAudio(jack_nframes_t nframes, void* cbdata)
 void DemoApp::valueChangedWave(int value)
 {
     fNewWavePending.store(value);
+}
+
+void DemoApp::valueChangedQuality(int value)
+{
+    fNewQualityPending.store(value);
 }
 
 void DemoApp::buttonClickedPlaySweep()

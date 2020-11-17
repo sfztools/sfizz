@@ -9,6 +9,7 @@
 #include "catch2/catch.hpp"
 #include <algorithm>
 using namespace Catch::literals;
+using namespace sfz::literals;
 
 TEST_CASE("[Curve] Bipolar 0 to 1")
 {
@@ -33,7 +34,7 @@ TEST_CASE("[Curve] Bipolar -1 to 1")
     REQUIRE( curve.evalCC7(85) == Approx(0.3386).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == -1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(-0.402).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(-0.4).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] Bipolar 1 to 0")
@@ -59,7 +60,7 @@ TEST_CASE("[Curve] Bipolar 1 to -1")
     REQUIRE( curve.evalCC7(85) == Approx(-0.3386).margin(1e-3) );
     REQUIRE( curve.evalNormalized(0.0f) == 1.0f );
     REQUIRE( curve.evalNormalized(1.0f) == -1.0f );
-    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.402).margin(1e-3) );
+    REQUIRE( curve.evalNormalized(0.3f) == Approx(0.4).margin(1e-3) );
 }
 
 TEST_CASE("[Curve] x**2")
@@ -199,6 +200,17 @@ TEST_CASE("[Curve] Add curves to CurveSet")
     REQUIRE( curveSet.getCurve(4).evalCC7(0) == 1.0f );
 }
 
+TEST_CASE("[Curve] Add bad indices")
+{
+    sfz::CurveSet curveSet;
+    curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), -2);
+    REQUIRE( curveSet.getNumCurves() == 0 );
+    curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), 256);
+    REQUIRE( curveSet.getNumCurves() == 0 );
+    curveSet.addCurve(sfz::Curve::buildPredefinedCurve(0), 512);
+    REQUIRE( curveSet.getNumCurves() == 0 );
+}
+
 TEST_CASE("[Curve] Default CurveSet")
 {
     auto curveSet = sfz::CurveSet::createPredefined();
@@ -209,7 +221,7 @@ TEST_CASE("[Curve] Default CurveSet")
 
     REQUIRE( curveSet.getCurve(1).evalNormalized(0.0f) == -1.0f );
     REQUIRE( curveSet.getCurve(1).evalNormalized(1.0f) == 1.0f );
-    REQUIRE( curveSet.getCurve(1).evalNormalized(0.3f) == Approx(-0.402).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(1).evalNormalized(0.3f) == Approx(-0.4).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(2).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(2).evalNormalized(1.0f) == 0.0f );
@@ -217,7 +229,7 @@ TEST_CASE("[Curve] Default CurveSet")
 
     REQUIRE( curveSet.getCurve(3).evalNormalized(0.0f) == 1.0f );
     REQUIRE( curveSet.getCurve(3).evalNormalized(1.0f) == -1.0f );
-    REQUIRE( curveSet.getCurve(3).evalNormalized(0.3f) == Approx(0.402).margin(1e-3) );
+    REQUIRE( curveSet.getCurve(3).evalNormalized(0.3f) == Approx(0.4).margin(1e-3) );
 
     REQUIRE( curveSet.getCurve(4).evalNormalized(0.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(4).evalNormalized(1.0f) == 1.0f );
@@ -231,3 +243,20 @@ TEST_CASE("[Curve] Default CurveSet")
     REQUIRE( curveSet.getCurve(6).evalNormalized(1.0f) == 0.0f );
     REQUIRE( curveSet.getCurve(6).evalNormalized(0.3f) == Approx(0.837).margin(1e-3) );
 }
+
+TEST_CASE("[Curve] Build from points")
+{
+    std::array<float, sfz::Curve::NumValues> curvePoints;
+    float val = 0.0f;
+    float step = 1 / static_cast<float>(sfz::Curve::NumValues);
+    for (auto& x : curvePoints) {
+        x = val;
+        val += step;
+    }
+
+    sfz::Curve curve = sfz::Curve::buildFromPoints(curvePoints.data());
+    REQUIRE(curve.evalNormalized(0.0) == curvePoints[0]);
+    REQUIRE(curve.evalNormalized(1.0) == curvePoints[sfz::Curve::NumValues - 1]);
+    REQUIRE(curve.evalNormalized(63_norm) == curvePoints[63]);
+}
+
