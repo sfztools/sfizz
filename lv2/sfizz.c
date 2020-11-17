@@ -1430,7 +1430,7 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_scala_file_uri)
     {
         const char *scala_file_path = LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_lv2_load_scala_file(self->synth, scala_file_path)) {
+        if (sfizz_lv2_load_scala_file(self, scala_file_path)) {
             lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", scala_file_path);
         } else {
             lv2_log_error(&self->logger,
