@@ -1091,33 +1091,46 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
 
 void Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 {
+    Impl& impl = *impl_;
+    impl.performHdcc(delay, ccNumber, normValue, true);
+}
+
+void Synth::automateHdcc(int delay, int ccNumber, float normValue) noexcept
+{
+    Impl& impl = *impl_;
+    impl.performHdcc(delay, ccNumber, normValue, false);
+}
+
+void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asMidi) noexcept
+{
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
-    Impl& impl = *impl_;
-    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.midiState.ccEvent(delay, ccNumber, normValue);
+    ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
+    resources_.midiState.ccEvent(delay, ccNumber, normValue);
 
-    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
+    const std::unique_lock<SpinMutex> lock { callbackGuard_, std::try_to_lock };
     if (!lock.owns_lock())
         return;
 
-    if (ccNumber == config::resetCC) {
-        impl.resetAllControllers(delay);
-        return;
+    if (asMidi) {
+        if (ccNumber == config::resetCC) {
+            resetAllControllers(delay);
+            return;
+        }
+
+        if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
+            for (auto& voice : voiceManager_)
+                voice.reset();
+            resources_.midiState.allNotesOff(delay);
+            return;
+        }
     }
 
-    if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
-        for (auto& voice : impl.voiceManager_)
-            voice.reset();
-        impl.resources_.midiState.allNotesOff(delay);
-        return;
-    }
-
-    for (auto& voice : impl.voiceManager_)
+    for (auto& voice : voiceManager_)
         voice.registerCC(delay, ccNumber, normValue);
 
-    impl.ccDispatch(delay, ccNumber, normValue);
+    ccDispatch(delay, ccNumber, normValue);
 }
 
 void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
