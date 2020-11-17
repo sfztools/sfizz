@@ -1493,7 +1493,7 @@ work(LV2_Handle instance,
             lv2_log_note(&self->logger,
                         "[sfizz] Scala file %s seems to have been updated, reloading\n",
                         self->scala_file_path);
-            if (sfizz_lv2_load_scala_file(self->synth, self->scala_file_path)) {
+            if (sfizz_lv2_load_scala_file(self, self->scala_file_path)) {
                 lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", self->scala_file_path);
             } else {
                 lv2_log_error(&self->logger,
