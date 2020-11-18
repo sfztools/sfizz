@@ -174,7 +174,7 @@ namespace Default
     constexpr Range<int> filterKeytrackRange { 0, 1200 };
     constexpr Range<float> filterRandomRange { 0, 12000 };
     constexpr Range<int> filterVeltrackRange { -12000, 12000 };
-    constexpr Range<float> filterResonanceRange { 0.0f, 96.0f };
+    constexpr Range<float> filterResonanceRange { -3.0f, 96.0f };
     constexpr Range<float> filterResonanceModRange { 0.0f, 96.0f };
 
     // Performance parameters: EQ

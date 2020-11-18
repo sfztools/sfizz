@@ -1017,7 +1017,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
         if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
-            for (unsigned i = ptStart; i < ptSize - 1; ++i)
+            for (unsigned i = 0; i < ptSize - 1; ++i)
 		coeffs->data()[i] = std::pow(coeffs->data()[i], 1 / (pitchRatio_ * speedRatio_));
         absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 
