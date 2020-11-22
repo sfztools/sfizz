@@ -34,7 +34,7 @@ bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapac
 }
 
 sfz::Region::Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath)
-: id{regionNumber}, midiState(midiState), defaultPath(std::move(defaultPath))
+: id{regionNumber}, midiState(midiState), defaultPath(defaultPath)
 {
     ccSwitched.set();
 
