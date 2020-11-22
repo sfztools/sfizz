@@ -242,6 +242,7 @@ elseif(SFIZZ_AU)
         "${VST3SDK_BASEDIR}/pluginterfaces/base/coreiids.cpp"
         "${VST3SDK_BASEDIR}/pluginterfaces/base/funknown.cpp"
         "${VST3SDK_BASEDIR}/pluginterfaces/base/ustring.cpp"
+        "${VST3SDK_BASEDIR}/public.sdk/source/common/commoniids.cpp"
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstinitiids.cpp")
 
     # Add VST hosting classes
