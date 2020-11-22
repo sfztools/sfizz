@@ -9,11 +9,11 @@
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/pluginterfaces"]
 	path = vst/external/VST_SDK/VST3_SDK/pluginterfaces
-	url = https://github.com/sfztools/vst3_pluginterfaces.git
+	url = https://github.com/steinbergmedia/vst3_pluginterfaces.git
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/public.sdk"]
 	path = vst/external/VST_SDK/VST3_SDK/public.sdk
-	url = https://github.com/sfztools/vst3_public_sdk.git
+	url = https://github.com/steinbergmedia/vst3_public_sdk.git
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/vstgui4"]
 	path = editor/external/vstgui4
