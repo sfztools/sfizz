@@ -13,6 +13,7 @@
 #include "vstgui/lib/controls/ctextlabel.h"
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/coptionmenu.h"
+#include "vstgui/lib/controls/icontrollistener.h"
 #include "vstgui/lib/cviewcontainer.h"
 #include "vstgui/lib/ccolor.h"
 #include "vstgui/lib/dragging.h"
