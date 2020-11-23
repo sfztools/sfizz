@@ -544,7 +544,7 @@ void Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void Voice::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
-    impl.sampleRate_ = sampleRate;
+    impl.sampleRate_ = sampleRate * impl.resources_.synthConfig.OSFactor;
     impl.gainSmoother_.setSmoothing(config::gainSmoothing, sampleRate);
     impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, sampleRate);
 
@@ -561,10 +561,10 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
-    downsampleFilter.setType(FilterType::kFilterLpf4p);
+    downsampleFilter.setType(FilterType::kFilterLpf6p);
     downsampleFilter.setChannels(2);
-    downsampleFilter.init(sampleRate);
-    downsampleFilter.prepare(0.48 * sampleRate / impl.resources_.synthConfig.OSFactor, 0.0, 0.0);
+    downsampleFilter.init(sampleRate * impl.resources_.synthConfig.OSFactor);
+    downsampleFilter.prepare(0.47 * sampleRate, 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept

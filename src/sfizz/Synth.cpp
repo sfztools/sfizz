@@ -814,7 +814,7 @@ void Synth::setSampleRate(float sampleRate) noexcept
 
     impl.sampleRate_ = sampleRate;
     for (auto& voice : impl.voiceManager_)
-        voice.setSampleRate(sampleRate * impl.resources_.synthConfig.OSFactor);
+        voice.setSampleRate(sampleRate);
 
     impl.resources_.setSampleRate(sampleRate);
 
@@ -1469,8 +1469,8 @@ void Synth::Impl::resetVoices(int numVoices)
     voiceManager_.requireNumVoices(numVoices_, resources_);
 
     for (auto& voice : voiceManager_) {
-        voice.setSampleRate(sampleRate_ * resources_.synthConfig.OSFactor);
-        voice.setSamplesPerBlock(samplesPerBlock_ * resources_.synthConfig.OSFactor);
+        voice.setSampleRate(sampleRate_);
+        voice.setSamplesPerBlock(samplesPerBlock_);
     }
 
     applySettingsPerVoice();
