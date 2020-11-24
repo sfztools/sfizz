@@ -18,12 +18,14 @@ static ViewRect sfizzUiViewRect { 0, 0, Editor::viewWidth, Editor::viewHeight };
 
 enum {
     kOscTempSize = 8192,
+    kOscQueueSize = 65536,
 };
 
 SfizzVstEditor::SfizzVstEditor(SfizzVstController* controller)
     : VSTGUIEditor(controller, &sfizzUiViewRect),
       oscTemp_(new uint8_t[kOscTempSize])
 {
+    oscQueue_.reserve(kOscQueueSize);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
@@ -57,6 +59,8 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     mustRedisplayState_ = true;
     mustRedisplayUiState_ = true;
     mustRedisplayPlayState_ = true;
+    flushOscQueue();
+
     updateStateDisplay();
 
     if (!frame->open(parent, platformType, config)) {
@@ -81,6 +85,8 @@ void PLUGIN_API SfizzVstEditor::close()
             frame->close();
         this->frame = nullptr;
     }
+
+    flushOscQueue();
 }
 
 ///
@@ -105,8 +111,10 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
     }
 #endif
 
-    if (message == CVSTGUITimer::kMsgTimer)
+    if (message == CVSTGUITimer::kMsgTimer) {
+        processOscQueue();
         updateStateDisplay();
+    }
 
     return result;
 }
@@ -140,13 +148,44 @@ SfizzUiState SfizzVstEditor::getCurrentUiState() const
 
 void SfizzVstEditor::receiveMessage(const void* data, uint32_t size)
 {
+    if (!frame) {
+        // only accumulate if message processing is active
+        return;
+    }
+
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+    std::copy(
+        reinterpret_cast<const uint8_t*>(data),
+        reinterpret_cast<const uint8_t*>(data) + size,
+        std::back_inserter(oscQueue_));
+}
+
+void SfizzVstEditor::processOscQueue()
+{
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+
+    const uint8_t* oscData = oscQueue_.data();
+    size_t oscSize = oscQueue_.size();
+
     const char* path;
     const char* sig;
     const sfizz_arg_t* args;
     uint8_t buffer[1024];
 
-    if (sfizz_extract_message(data, size, buffer, sizeof(buffer), &path, &sig, &args) > 0)
+    uint32_t msgSize;
+    while ((msgSize = sfizz_extract_message(oscData, oscSize, buffer, sizeof(buffer), &path, &sig, &args)) > 0) {
         uiReceiveMessage(path, sig, args);
+        oscData += msgSize;
+        oscSize -= msgSize;
+    }
+
+    oscQueue_.clear();
+}
+
+void SfizzVstEditor::flushOscQueue()
+{
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+    oscQueue_.clear();
 }
 
 ///

@@ -41,6 +41,10 @@ public:
     SfizzUiState getCurrentUiState() const;
     void receiveMessage(const void* data, uint32_t size);
 
+private:
+    void processOscQueue();
+    void flushOscQueue();
+
 protected:
     // EditorController
     void uiSendValue(EditId id, const EditValue& v) override;
@@ -75,4 +79,5 @@ private:
     volatile bool mustRedisplayState_ = false;
     volatile bool mustRedisplayUiState_ = false;
     volatile bool mustRedisplayPlayState_ = false;
+    std::vector<uint8_t> oscQueue_;
 };
