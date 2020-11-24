@@ -12,6 +12,7 @@
 #endif
 #include <sndfile.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct st_audio_file {
     SNDFILE* snd;
@@ -23,6 +24,8 @@ st_audio_file* st_open_file(const char* filename)
     st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
     if (!af)
         return NULL;
+
+    memset(&af->info, 0, sizeof(SF_INFO));
 
     af->snd = sf_open(filename, SFM_READ, &af->info);
     if (!af->snd) {
