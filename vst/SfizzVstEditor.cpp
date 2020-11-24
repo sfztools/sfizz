@@ -53,6 +53,10 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         editor = new Editor(*this);
         editor_.reset(editor);
     }
+
+    mustRedisplayState_ = true;
+    mustRedisplayUiState_ = true;
+    mustRedisplayPlayState_ = true;
     updateStateDisplay();
 
     if (!frame->open(parent, platformType, config)) {
