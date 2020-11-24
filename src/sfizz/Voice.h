@@ -13,7 +13,6 @@
 #include "LeakDetector.h"
 #include "utility/NumericId.h"
 #include <memory>
-#include "SFZFilter.h"
 
 namespace sfz {
 enum InterpolatorModel : int;

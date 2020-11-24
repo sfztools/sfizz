@@ -28,7 +28,6 @@
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <random>
-#include "SFZFilter.h"
 
 namespace sfz {
 
@@ -577,7 +576,7 @@ void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 {
     Impl& impl = *impl_;
-    ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_ * impl.resources_.synthConfig.OSFactor);
+    ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);
     buffer.fill(0.0f);
 
     if (impl.region_ == nullptr)
@@ -608,7 +607,7 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 {
     buffer[i][j] = downsampled_buffer[i][j * impl.resources_.synthConfig.OSFactor];
     if (impl.resources_.synthConfig.OSFactor > 1)
-    for (size_t k = 1; k < impl.resources_.synthConfig.OSFactor; ++k)
+    for (int k = 1; k < impl.resources_.synthConfig.OSFactor; ++k)
          buffer[i][j] += downsampled_buffer[i][j * impl.resources_.synthConfig.OSFactor + k];
     buffer[i][j] /= impl.resources_.synthConfig.OSFactor;
 }

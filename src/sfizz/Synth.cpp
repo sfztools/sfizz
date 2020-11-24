@@ -344,6 +344,7 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
 
 void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 {
+    bool overSampled = false;
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
 
@@ -407,14 +408,27 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("hint_min_samplerate"):
 	    {
-		resources_.synthConfig.OSFactor = std::max(1, int(stoi(member.value) / sampleRate_));
-		resetVoices(numVoices_);
+		if (int(stoi(member.value) / sampleRate_) > 1)
+			overSampled = true;
+		resources_.synthConfig.OSFactor = std::min(128, std::max(1, int(stoi(member.value) / sampleRate_)));
+    		for (auto& voice : voiceManager_) {
+        		voice.setSampleRate(sampleRate_);
+        		voice.setSamplesPerBlock(samplesPerBlock_);
+    		}
 	    }
             break;
         default:
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.opcode);
         }
+    }
+    if (overSampled == false)
+    {
+		resources_.synthConfig.OSFactor = 1;
+    		for (auto& voice : voiceManager_) {
+        		voice.setSampleRate(sampleRate_);
+        		voice.setSamplesPerBlock(samplesPerBlock_);
+    		}
     }
 }
 
@@ -790,8 +804,8 @@ int Synth::getNumActiveVoices() const noexcept
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
+    samplesPerBlock *= 128;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
-    samplesPerBlock *= 64;
 
     const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
