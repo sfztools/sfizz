@@ -79,6 +79,7 @@ void PLUGIN_API SfizzVstEditor::close()
             frame->forget();
         else
             frame->close();
+        this->frame = nullptr;
     }
 }
 
