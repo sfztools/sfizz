@@ -1394,3 +1394,32 @@ TEST_CASE("[Synth] Default ampeg_release")
 
     REQUIRE(synth.getRegionView(0)->amplitudeEG.release > 0.0005f);
 }
+
+TEST_CASE("[Synth] Send CC vs. Automate CC")
+{
+    {
+        sfz::Synth synth;
+
+        synth.loadSfzString(fs::current_path() / "send_cc.sfz", R"(
+            <region> sample=*sine
+        )");
+
+        synth.noteOn(0, 60, 100);
+        synth.hdcc(1, 120, 0.0f);
+
+        REQUIRE(synth.getNumActiveVoices() == 0);
+   }
+
+    {
+        sfz::Synth synth;
+
+        synth.loadSfzString(fs::current_path() / "automate_cc.sfz", R"(
+            <region> sample=*sine
+        )");
+
+        synth.noteOn(0, 60, 100);
+        synth.automateHdcc(1, 120, 0.0f);
+
+        REQUIRE(synth.getNumActiveVoices() == 1);
+   }
+}

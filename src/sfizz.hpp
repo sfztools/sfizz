@@ -297,6 +297,21 @@ public:
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
 
     /**
+     * @brief Send a high precision CC automation to the synth
+     *
+     * This updates the CC value known to the synth, but without performing
+     * additional MIDI-specific interpretations. (eg. the CC 120 and up)
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param ccNumber the cc number.
+     * @param normValue the normalized cc value, in domain 0 to 1.
+     */
+    void automateHdcc(int delay, int ccNumber, float normValue) noexcept;
+
+    /**
      * @brief Send a pitch bend event to the synth
      * @since 0.2.0
      *

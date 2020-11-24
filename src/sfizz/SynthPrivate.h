@@ -180,6 +180,16 @@ struct Synth::Impl final: public Parser::Listener {
     std::bitset<config::numCCs> collectAllUsedCCs();
 
     /**
+     * @brief Perform a CC event
+     *
+     * @param delay      The delay
+     * @param ccNumber   The CC number
+     * @param normValue  The normalized value
+     * @param asMidi     Whether to process as a MIDI event
+     */
+    void performHdcc(int delay, int ccNumber, float normValue, bool asMidi) noexcept;
+
+    /**
      * @brief Set the default value for a CC
      *
      * @param ccNumber
