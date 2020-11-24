@@ -20,18 +20,14 @@ enum {
     kOscTempSize = 8192,
 };
 
-SfizzVstEditor::SfizzVstEditor(void *controller)
+SfizzVstEditor::SfizzVstEditor(SfizzVstController* controller)
     : VSTGUIEditor(controller, &sfizzUiViewRect),
       oscTemp_(new uint8_t[kOscTempSize])
 {
-    getController()->addSfizzStateListener(this);
-    getController()->addSfizzMessageListener(this);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
 {
-    getController()->removeSfizzStateListener(this);
-    getController()->removeSfizzMessageListener(this);
 }
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
@@ -105,17 +101,48 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
     }
 #endif
 
+    if (message == CVSTGUITimer::kMsgTimer)
+        updateStateDisplay();
+
     return result;
 }
 
-void SfizzVstEditor::onStateChanged()
+void SfizzVstEditor::updateState(const SfizzVstState& state)
 {
-    updateStateDisplay();
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+    state_ = state;
+    mustRedisplayState_ = true;
 }
 
-void SfizzVstEditor::onMessageReceived(const char* path, const char* sig, const sfizz_arg_t* args)
+void SfizzVstEditor::updateUiState(const SfizzUiState& uiState)
 {
-    uiReceiveMessage(path, sig, args);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+    uiState_ = uiState;
+    mustRedisplayUiState_ = true;
+}
+
+void SfizzVstEditor::updatePlayState(const SfizzPlayState& playState)
+{
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+    playState_ = playState;
+    mustRedisplayPlayState_ = true;
+}
+
+SfizzUiState SfizzVstEditor::getCurrentUiState() const
+{
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+    return uiState_;
+}
+
+void SfizzVstEditor::receiveMessage(const void* data, uint32_t size)
+{
+    const char* path;
+    const char* sig;
+    const sfizz_arg_t* args;
+    uint8_t buffer[1024];
+
+    if (sfizz_extract_message(data, size, buffer, sizeof(buffer), &path, &sig, &args) > 0)
+        uiReceiveMessage(path, sig, args);
 }
 
 ///
@@ -166,7 +193,7 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             break;
 
         case EditId::UIActivePanel:
-            ctrl->getSfizzUiState().activePanel = static_cast<int32>(v.to_float());
+            uiState_.activePanel = static_cast<int32>(v.to_float());
             break;
 
         default:
@@ -263,32 +290,41 @@ void SfizzVstEditor::updateStateDisplay()
     if (!frame)
         return;
 
-    SfizzVstController* controller = getController();
-    const SfizzVstState& state = controller->getSfizzState();
-    const SfizzUiState& uiState = controller->getSfizzUiState();
-    const SfizzPlayState& playState = controller->getSfizzPlayState();
+    if (!(mustRedisplayState_ || mustRedisplayUiState_ || mustRedisplayPlayState_))
+        return;
+
+    std::lock_guard<std::recursive_mutex> lock(stateMutex_);
 
     ///
-    uiReceiveValue(EditId::SfzFile, state.sfzFile);
-    uiReceiveValue(EditId::Volume, state.volume);
-    uiReceiveValue(EditId::Polyphony, state.numVoices);
-    uiReceiveValue(EditId::Oversampling, 1u << state.oversamplingLog2);
-    uiReceiveValue(EditId::PreloadSize, state.preloadSize);
-    uiReceiveValue(EditId::ScalaFile, state.scalaFile);
-    uiReceiveValue(EditId::ScalaRootKey, state.scalaRootKey);
-    uiReceiveValue(EditId::TuningFrequency, state.tuningFrequency);
-    uiReceiveValue(EditId::StretchTuning, state.stretchedTuning);
+    if (mustRedisplayState_) {
+        uiReceiveValue(EditId::SfzFile, state_.sfzFile);
+        uiReceiveValue(EditId::Volume, state_.volume);
+        uiReceiveValue(EditId::Polyphony, state_.numVoices);
+        uiReceiveValue(EditId::Oversampling, 1u << state_.oversamplingLog2);
+        uiReceiveValue(EditId::PreloadSize, state_.preloadSize);
+        uiReceiveValue(EditId::ScalaFile, state_.scalaFile);
+        uiReceiveValue(EditId::ScalaRootKey, state_.scalaRootKey);
+        uiReceiveValue(EditId::TuningFrequency, state_.tuningFrequency);
+        uiReceiveValue(EditId::StretchTuning, state_.stretchedTuning);
+        mustRedisplayState_ = false;
+    }
 
     ///
-    uiReceiveValue(EditId::UINumCurves, playState.curves);
-    uiReceiveValue(EditId::UINumMasters, playState.masters);
-    uiReceiveValue(EditId::UINumGroups, playState.groups);
-    uiReceiveValue(EditId::UINumRegions, playState.regions);
-    uiReceiveValue(EditId::UINumPreloadedSamples, playState.preloadedSamples);
-    uiReceiveValue(EditId::UINumActiveVoices, playState.activeVoices);
+    if (mustRedisplayUiState_) {
+        uiReceiveValue(EditId::UIActivePanel, uiState_.activePanel);
+        mustRedisplayUiState_ = false;
+    }
 
     ///
-    uiReceiveValue(EditId::UIActivePanel, uiState.activePanel);
+    if (mustRedisplayPlayState_) {
+        uiReceiveValue(EditId::UINumCurves, playState_.curves);
+        uiReceiveValue(EditId::UINumMasters, playState_.masters);
+        uiReceiveValue(EditId::UINumGroups, playState_.groups);
+        uiReceiveValue(EditId::UINumRegions, playState_.regions);
+        uiReceiveValue(EditId::UINumPreloadedSamples, playState_.preloadedSamples);
+        uiReceiveValue(EditId::UINumActiveVoices, playState_.activeVoices);
+        mustRedisplayPlayState_ = false;
+    }
 }
 
 Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)

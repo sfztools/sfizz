@@ -11,6 +11,7 @@
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include <sfizz_message.h>
 class SfizzVstState;
+class SfizzVstEditor;
 
 using namespace Steinberg;
 using namespace VSTGUI;
@@ -47,28 +48,6 @@ public:
     tresult PLUGIN_API setComponentState(IBStream* state) override;
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
-    struct StateListener {
-        virtual void onStateChanged() = 0;
-    };
-    struct MessageListener {
-        virtual void onMessageReceived(const char* path, const char* sig, const sfizz_arg_t* args) = 0;
-    };
-
-    const SfizzVstState& getSfizzState() const { return _state; }
-    SfizzVstState& getSfizzState() { return _state; }
-
-    const SfizzUiState& getSfizzUiState() const { return _uiState; }
-    SfizzUiState& getSfizzUiState() { return _uiState; }
-
-    const SfizzPlayState& getSfizzPlayState() const { return _playState; }
-    SfizzPlayState& getSfizzPlayState() { return _playState; }
-
-    void addSfizzStateListener(StateListener* listener);
-    void removeSfizzStateListener(StateListener* listener);
-
-    void addSfizzMessageListener(MessageListener* listener);
-    void removeSfizzMessageListener(MessageListener* listener);
-
     ///
     static FUnknown* createInstance(void*);
 
@@ -78,6 +57,5 @@ private:
     SfizzVstState _state;
     SfizzUiState _uiState;
     SfizzPlayState _playState {};
-    std::vector<StateListener*> _stateListeners;
-    std::vector<MessageListener*> _messageListeners;
+    Steinberg::IPtr<SfizzVstEditor> _editor;
 };
