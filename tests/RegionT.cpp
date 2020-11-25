@@ -1413,7 +1413,7 @@ TEST_CASE("[Region] Parsing opcodes")
         region.parseOpcode({ "resonance", "5" });
         REQUIRE(region.filters[0].resonance == 5.0f);
         region.parseOpcode({ "resonance", "-5" });
-        REQUIRE(region.filters[0].resonance == 0.0f);
+        REQUIRE(region.filters[0].resonance == -3.0f);
         region.parseOpcode({ "resonance", "500" });
         REQUIRE(region.filters[0].resonance == 96.0f);
 
