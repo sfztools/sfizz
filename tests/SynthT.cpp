@@ -69,26 +69,26 @@ TEST_CASE("[Synth] Check that the sample per block and sample rate are actually 
     synth.setSampleRate(96000);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
-        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 256 * synth.resources_.synthConfig.OSFactor );
+        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 256 * synth.getResources().synthConfig.OSFactor );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 96000.0f );
     }
     synth.setNumVoices(8);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
-        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 256 * synth.resources_.synthConfig.OSFactor );
+        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 256 * synth.getResources().synthConfig.OSFactor );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 96000.0f );
     }
     synth.setSamplesPerBlock(128);
     synth.setSampleRate(48000);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
-        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 128 * synth.resources_.synthConfig.OSFactor );
+        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 128 * synth.getResources().synthConfig.OSFactor );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 48000.0f );
     }
     synth.setNumVoices(64);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
-        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 128 * synth.resources_.synthConfig.OSFactor );
+        REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 128 * synth.getResources().synthConfig.OSFactor );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 48000.0f );
     }
 }
