@@ -1496,8 +1496,8 @@ void Synth::Impl::resetVoices(int numVoices)
     voiceManager_.requireNumVoices(numVoices_, resources_);
 
     for (auto& voice : voiceManager_) {
-        voice.setSampleRate(sampleRate_);
-        voice.setSamplesPerBlock(samplesPerBlock_);
+        voice.setSampleRate(this->sampleRate_);
+        voice.setSamplesPerBlock(this->samplesPerBlock_);
     }
 
     applySettingsPerVoice();
