@@ -1015,10 +1015,11 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         // partition spans
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
+        absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+
         if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
             for (unsigned i = 0; i < ptSize - 1; ++i)
-		coeffs->data()[i] = std::pow(coeffs->data()[i], 1 / (pitchRatio_ * speedRatio_));
-        absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+		ptCoeffs.data()[i] = std::pow(ptCoeffs.data()[i], 1 / (pitchRatio_ * speedRatio_));
 
         fillInterpolatedWithQuality<false>(
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
