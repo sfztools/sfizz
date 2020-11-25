@@ -1019,7 +1019,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
         if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
             for (unsigned i = 0; i < ptSize - 1; ++i)
-		ptCoeffs.data()[i] = std::pow(ptCoeffs.data()[i], 1 / (pitchRatio_ * speedRatio_));
+		ptCoeffs[i] = std::pow(ptCoeffs[i], 1 / (pitchRatio_ * speedRatio_));
 
         fillInterpolatedWithQuality<false>(
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
