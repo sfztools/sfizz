@@ -81,6 +81,8 @@ endif()
 function(sfizz_enable_fast_math NAME)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options("${NAME}" PRIVATE "-ffast-math")
+    elseif(MSVC)
+        target_compile_options("${NAME}" PRIVATE "/fp:fast")
     endif()
 endfunction()
 
