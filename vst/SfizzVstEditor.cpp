@@ -18,20 +18,17 @@ static ViewRect sfizzUiViewRect { 0, 0, Editor::viewWidth, Editor::viewHeight };
 
 enum {
     kOscTempSize = 8192,
+    kOscQueueSize = 65536,
 };
 
-SfizzVstEditor::SfizzVstEditor(void *controller)
+SfizzVstEditor::SfizzVstEditor(SfizzVstController* controller)
     : VSTGUIEditor(controller, &sfizzUiViewRect),
       oscTemp_(new uint8_t[kOscTempSize])
 {
-    getController()->addSfizzStateListener(this);
-    getController()->addSfizzMessageListener(this);
 }
 
 SfizzVstEditor::~SfizzVstEditor()
 {
-    getController()->removeSfizzStateListener(this);
-    getController()->removeSfizzMessageListener(this);
 }
 
 bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& platformType)
@@ -57,6 +54,16 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         editor = new Editor(*this);
         editor_.reset(editor);
     }
+
+    withStateLock([this]() {
+        mustRedisplayState_ = true;
+        mustRedisplayUiState_ = true;
+        mustRedisplayPlayState_ = true;
+        OscByteVec* queue = new OscByteVec;
+        oscQueue_.reset(queue);
+        queue->reserve(kOscQueueSize);
+    });
+
     updateStateDisplay();
 
     if (!frame->open(parent, platformType, config)) {
@@ -81,6 +88,10 @@ void PLUGIN_API SfizzVstEditor::close()
             frame->close();
         this->frame = nullptr;
     }
+
+    withStateLock([this]() {
+        oscQueue_.reset();
+    });
 }
 
 ///
@@ -105,17 +116,83 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
     }
 #endif
 
+    if (message == CVSTGUITimer::kMsgTimer) {
+        processOscQueue();
+        updateStateDisplay();
+    }
+
     return result;
 }
 
-void SfizzVstEditor::onStateChanged()
+void SfizzVstEditor::updateState(const SfizzVstState& state)
 {
-    updateStateDisplay();
+    withStateLock([this, &state]() {
+        state_ = state;
+        mustRedisplayState_ = true;
+    });
 }
 
-void SfizzVstEditor::onMessageReceived(const char* path, const char* sig, const sfizz_arg_t* args)
+void SfizzVstEditor::updateUiState(const SfizzUiState& uiState)
 {
-    uiReceiveMessage(path, sig, args);
+    withStateLock([this, &uiState]() {
+        uiState_ = uiState;
+        mustRedisplayUiState_ = true;
+    });
+}
+
+void SfizzVstEditor::updatePlayState(const SfizzPlayState& playState)
+{
+    withStateLock([this, &playState]() {
+        playState_ = playState;
+        mustRedisplayPlayState_ = true;
+    });
+}
+
+SfizzUiState SfizzVstEditor::getCurrentUiState() const
+{
+    SfizzUiState uiState;
+    withStateLock([this, &uiState]() {
+        uiState = uiState_;
+    });
+    return uiState;
+}
+
+void SfizzVstEditor::receiveMessage(const void* data, uint32_t size)
+{
+    // Note: may be called from non-UI thread (Reaper)
+
+    withStateLock([this, data, size]() {
+        if (OscByteVec* queue = oscQueue_.get()) {
+            const uint8_t* bytes = reinterpret_cast<const uint8_t*>(data);
+            std::copy(bytes, bytes + size, std::back_inserter(*queue));
+        }
+    });
+}
+
+void SfizzVstEditor::processOscQueue()
+{
+    withStateLock([this]() {
+        OscByteVec* queue = oscQueue_.get();
+        if (!queue)
+            return;
+
+        const uint8_t* oscData = queue->data();
+        size_t oscSize = queue->size();
+
+        const char* path;
+        const char* sig;
+        const sfizz_arg_t* args;
+        uint8_t buffer[1024];
+
+        uint32_t msgSize;
+        while ((msgSize = sfizz_extract_message(oscData, oscSize, buffer, sizeof(buffer), &path, &sig, &args)) > 0) {
+            uiReceiveMessage(path, sig, args);
+            oscData += msgSize;
+            oscSize -= msgSize;
+        }
+
+        queue->clear();
+    });
 }
 
 ///
@@ -166,7 +243,7 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             break;
 
         case EditId::UIActivePanel:
-            ctrl->getSfizzUiState().activePanel = static_cast<int32>(v.to_float());
+            uiState_.activePanel = static_cast<int32>(v.to_float());
             break;
 
         default:
@@ -263,32 +340,37 @@ void SfizzVstEditor::updateStateDisplay()
     if (!frame)
         return;
 
-    SfizzVstController* controller = getController();
-    const SfizzVstState& state = controller->getSfizzState();
-    const SfizzUiState& uiState = controller->getSfizzUiState();
-    const SfizzPlayState& playState = controller->getSfizzPlayState();
+    withStateLock([this]() {
+        if (mustRedisplayState_) {
+            uiReceiveValue(EditId::SfzFile, state_.sfzFile);
+            uiReceiveValue(EditId::Volume, state_.volume);
+            uiReceiveValue(EditId::Polyphony, state_.numVoices);
+            uiReceiveValue(EditId::Oversampling, 1u << state_.oversamplingLog2);
+            uiReceiveValue(EditId::PreloadSize, state_.preloadSize);
+            uiReceiveValue(EditId::ScalaFile, state_.scalaFile);
+            uiReceiveValue(EditId::ScalaRootKey, state_.scalaRootKey);
+            uiReceiveValue(EditId::TuningFrequency, state_.tuningFrequency);
+            uiReceiveValue(EditId::StretchTuning, state_.stretchedTuning);
+            mustRedisplayState_ = false;
+        }
 
-    ///
-    uiReceiveValue(EditId::SfzFile, state.sfzFile);
-    uiReceiveValue(EditId::Volume, state.volume);
-    uiReceiveValue(EditId::Polyphony, state.numVoices);
-    uiReceiveValue(EditId::Oversampling, 1u << state.oversamplingLog2);
-    uiReceiveValue(EditId::PreloadSize, state.preloadSize);
-    uiReceiveValue(EditId::ScalaFile, state.scalaFile);
-    uiReceiveValue(EditId::ScalaRootKey, state.scalaRootKey);
-    uiReceiveValue(EditId::TuningFrequency, state.tuningFrequency);
-    uiReceiveValue(EditId::StretchTuning, state.stretchedTuning);
+        ///
+        if (mustRedisplayUiState_) {
+            uiReceiveValue(EditId::UIActivePanel, uiState_.activePanel);
+            mustRedisplayUiState_ = false;
+        }
 
-    ///
-    uiReceiveValue(EditId::UINumCurves, playState.curves);
-    uiReceiveValue(EditId::UINumMasters, playState.masters);
-    uiReceiveValue(EditId::UINumGroups, playState.groups);
-    uiReceiveValue(EditId::UINumRegions, playState.regions);
-    uiReceiveValue(EditId::UINumPreloadedSamples, playState.preloadedSamples);
-    uiReceiveValue(EditId::UINumActiveVoices, playState.activeVoices);
-
-    ///
-    uiReceiveValue(EditId::UIActivePanel, uiState.activePanel);
+        ///
+        if (mustRedisplayPlayState_) {
+            uiReceiveValue(EditId::UINumCurves, playState_.curves);
+            uiReceiveValue(EditId::UINumMasters, playState_.masters);
+            uiReceiveValue(EditId::UINumGroups, playState_.groups);
+            uiReceiveValue(EditId::UINumRegions, playState_.regions);
+            uiReceiveValue(EditId::UINumPreloadedSamples, playState_.preloadedSamples);
+            uiReceiveValue(EditId::UINumActiveVoices, playState_.activeVoices);
+            mustRedisplayPlayState_ = false;
+        }
+    });
 }
 
 Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
