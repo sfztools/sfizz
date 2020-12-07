@@ -140,16 +140,20 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
         return nullptr;
 
     if (_editor) {
-        _uiState = _editor->getCurrentUiState();
+        withStateLock([this]() {
+            _uiState = _editor->getCurrentUiState();
+        });
         _editor.reset();
     }
 
     SfizzVstEditor* editor = new SfizzVstEditor(this);
     _editor = Steinberg::owned(editor);
 
-    editor->updateState(_state);
-    editor->updateUiState(_uiState);
-    editor->updatePlayState(_playState);
+    withStateLock([this, editor]() {
+        editor->updateState(_state);
+        editor->updateUiState(_uiState);
+        editor->updatePlayState(_playState);
+    });
 
     editor->remember();
     return editor;
@@ -204,52 +208,60 @@ tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst:
     }
 
     if (slotF32 && *slotF32 != value) {
-        *slotF32 = value;
-        if (SfizzVstEditor* editor = _editor)
-            editor->updateState(_state);
+        withStateLock([this, slotF32, value]() {
+            *slotF32 = value;
+            if (SfizzVstEditor* editor = _editor)
+                editor->updateState(_state);
+        });
     }
     else if (slotI32 && *slotI32 != (int32)value) {
-        *slotI32 = (int32)value;
-        if (SfizzVstEditor* editor = _editor)
-            editor->updateState(_state);
+        withStateLock([this, slotI32, value]() {
+            *slotI32 = (int32)value;
+            if (SfizzVstEditor* editor = _editor)
+                editor->updateState(_state);
+        });
     }
 
     return kResultTrue;
 }
 
-tresult PLUGIN_API SfizzVstController::setState(IBStream* state)
+tresult PLUGIN_API SfizzVstController::setState(IBStream* stream)
 {
     SfizzUiState s;
 
-    tresult r = s.load(state);
+    tresult r = s.load(stream);
     if (r != kResultTrue)
         return r;
 
-    _uiState = s;
-
-    if (SfizzVstEditor* editor = _editor)
-        editor->updateUiState(_uiState);
+    withStateLock([this, &s]() {
+        _uiState = s;
+        if (SfizzVstEditor* editor = _editor)
+            editor->updateUiState(_uiState);
+    });
 
     return kResultTrue;
 }
 
-tresult PLUGIN_API SfizzVstController::getState(IBStream* state)
+tresult PLUGIN_API SfizzVstController::getState(IBStream* stream)
 {
-    if (_editor)
-        _uiState = _editor->getCurrentUiState();
+    tresult result;
 
-    return _uiState.store(state);
+    withStateLock([this, stream, &result]() {
+        if (_editor)
+            _uiState = _editor->getCurrentUiState();
+        result = _uiState.store(stream);
+    });
+
+    return result;
 }
 
-tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
+tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* stream)
 {
     SfizzVstState s;
 
-    tresult r = s.load(state);
+    tresult r = s.load(stream);
     if (r != kResultTrue)
         return r;
-
-    _state = s;
 
     setParamNormalized(kPidVolume, kParamVolumeRange.normalize(s.volume));
     setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
@@ -259,14 +271,19 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* state)
     setParamNormalized(kPidTuningFrequency, kParamTuningFrequencyRange.normalize(s.tuningFrequency));
     setParamNormalized(kPidStretchedTuning, kParamStretchedTuningRange.normalize(s.stretchedTuning));
 
-    if (SfizzVstEditor* editor = _editor)
-        editor->updateState(_state);
+    withStateLock([this, &s]() {
+        _state = s;
+        if (SfizzVstEditor* editor = _editor)
+            editor->updateState(_state);
+    });
 
     return kResultTrue;
 }
 
 tresult SfizzVstController::notify(Vst::IMessage* message)
 {
+    // Note: may be called from any thread (Reaper)
+
     tresult result = SfizzVstControllerNoUi::notify(message);
     if (result != kResultFalse)
         return result;
@@ -282,10 +299,11 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        _state.sfzFile.assign(static_cast<const char *>(data), size);
-
-        if (SfizzVstEditor* editor = _editor)
-            editor->updateState(_state);
+        withStateLock([this, data, size]() {
+            _state.sfzFile.assign(static_cast<const char *>(data), size);
+            if (SfizzVstEditor* editor = _editor)
+                editor->updateState(_state);
+        });
     }
     else if (!strcmp(id, "LoadedScala")) {
         const void* data = nullptr;
@@ -295,10 +313,11 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        _state.scalaFile.assign(static_cast<const char *>(data), size);
-
-        if (SfizzVstEditor* editor = _editor)
-            editor->updateState(_state);
+        withStateLock([this, data, size]() {
+            _state.scalaFile.assign(static_cast<const char *>(data), size);
+            if (SfizzVstEditor* editor = _editor)
+                editor->updateState(_state);
+        });
     }
     else if (!strcmp(id, "NotifiedPlayState")) {
         const void* data = nullptr;
@@ -308,10 +327,11 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        _playState = *static_cast<const SfizzPlayState*>(data);
-
-        if (SfizzVstEditor* editor = _editor)
-            editor->updatePlayState(_playState);
+        withStateLock([this, data]() {
+            _playState = *static_cast<const SfizzPlayState*>(data);
+            if (SfizzVstEditor* editor = _editor)
+                editor->updatePlayState(_playState);
+        });
     }
     else if (!strcmp(id, "ReceivedMessage")) {
         const void* data = nullptr;

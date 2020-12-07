@@ -10,6 +10,7 @@
 #include "public.sdk/source/vst/vstparameters.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include <sfizz_message.h>
+#include <mutex>
 class SfizzVstState;
 class SfizzVstEditor;
 
@@ -43,9 +44,9 @@ public:
     IPlugView* PLUGIN_API createView(FIDString name) override;
 
     tresult PLUGIN_API setParamNormalized(Vst::ParamID tag, Vst::ParamValue value) override;
-    tresult PLUGIN_API setState(IBStream* state) override;
-    tresult PLUGIN_API getState(IBStream* state) override;
-    tresult PLUGIN_API setComponentState(IBStream* state) override;
+    tresult PLUGIN_API setState(IBStream* stream) override;
+    tresult PLUGIN_API getState(IBStream* stream) override;
+    tresult PLUGIN_API setComponentState(IBStream* stream) override;
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
     ///
@@ -54,8 +55,16 @@ public:
     static FUID cid;
 
 private:
-    SfizzVstState _state;
-    SfizzUiState _uiState;
+    template <class F> void withStateLock(F&& fn) const
+    {
+        std::lock_guard<std::mutex> lock(_stateMutex);
+        fn();
+    }
+
+private:
+    mutable std::mutex _stateMutex; // for R/W the state data
+    SfizzVstState _state {};
+    SfizzUiState _uiState {}; // updated on UI open/close/state-request
     SfizzPlayState _playState {};
     Steinberg::IPtr<SfizzVstEditor> _editor;
 };

@@ -43,7 +43,12 @@ public:
 
 private:
     void processOscQueue();
-    void flushOscQueue();
+
+    template <class F> void withStateLock(F&& fn) const
+    {
+        std::lock_guard<std::recursive_mutex> lock(stateMutex_);
+        fn();
+    }
 
 protected:
     // EditorController
@@ -72,12 +77,13 @@ private:
 
     // editor state
     // note: might be updated from a non-UI thread
-    mutable std::recursive_mutex stateMutex_;
-    SfizzVstState state_;
-    SfizzUiState uiState_;
-    SfizzPlayState playState_;
+    mutable std::recursive_mutex stateMutex_;  // for R/W the state data, and OSC queue
+    SfizzVstState state_ {};
+    SfizzUiState uiState_ {};
+    SfizzPlayState playState_ {};
     volatile bool mustRedisplayState_ = false;
     volatile bool mustRedisplayUiState_ = false;
     volatile bool mustRedisplayPlayState_ = false;
-    std::vector<uint8_t> oscQueue_;
+    typedef std::vector<uint8_t> OscByteVec;
+    std::unique_ptr<OscByteVec> oscQueue_;
 };
