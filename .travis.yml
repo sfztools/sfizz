@@ -8,36 +8,6 @@ cache:
 
 jobs:
   include:
-  - name: "clang-tidy checks"
-    addons:
-      apt:
-        packages:
-        - clang-tidy
-        - wget
-        - unzip
-        - libsndfile-dev
-    install: .travis/download_vst_sdk.sh
-    script: scripts/run_clang_tidy.sh
-
-  - name: "Linux amd64 test and build"
-    arch: amd64
-    addons:
-      apt:
-        packages:
-        - libjack-jackd2-dev
-        - libsndfile1-dev
-        - libcairo2-dev
-        - libfontconfig1-dev
-        - libx11-xcb-dev
-        - libxcb-util-dev
-        - libxcb-cursor-dev
-        - libxcb-xkb-dev
-        - libxkbcommon-dev
-        - libxkbcommon-x11-dev
-        - libxcb-keysyms1-dev
-    install: .travis/download_cmake.sh
-    script: .travis/script_test_and_build.sh
-
   - name: "Linux arm64 test and build"
     arch: arm64-graviton2
     group: edge
@@ -59,37 +29,6 @@ jobs:
     install: .travis/download_cmake.sh
     script: .travis/script_test_and_build.sh
 
-  - name: "MOD devices arm"
-    env:
-    - CONTAINER=jpcima/mod-plugin-builder
-    - CROSS_COMPILE=moddevices-arm
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-moddevices"
-    - DEPLOY_BUILD=true
-    before_install: .travis/before_install_moddevices.sh
-    install: .travis/install_moddevices.sh
-    script: .travis/script_moddevices.sh
-    after_success: .travis/prepare_tarball.sh
-
-  - name: "Windows mingw32"
-    env:
-    - CROSS_COMPILE=mingw32
-    - CONTAINER=archlinux
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw32"
-    before_install: .travis/before_install_mingw.sh
-    install: .travis/install_mingw.sh
-    script: .travis/script_mingw.sh
-    after_success: .travis/prepare_tarball.sh
-
-  - name: "Windows mingw64"
-    env:
-    - CROSS_COMPILE=mingw64
-    - CONTAINER=archlinux
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-mingw64"
-    before_install: .travis/before_install_mingw.sh
-    install: .travis/install_mingw.sh
-    script: .travis/script_mingw.sh
-    after_success: .travis/prepare_tarball.sh
-
   - name: "Linux arm64 static plugins"
     arch: arm64-graviton2
     group: edge
@@ -108,43 +47,6 @@ jobs:
     - .travis/download_static_libs.sh
     script: .travis/script_plugins.sh
     after_success: .travis/prepare_tarball.sh
-
-  - name: "Linux amd64 static plugins"
-    env:
-    - INSTALL_DIR="sfizz-plugins-${TRAVIS_BRANCH}-${TRAVIS_OS_NAME}-${TRAVIS_CPU_ARCH}"
-    - ENABLE_VST_PLUGIN=ON
-    - ENABLE_LV2_UI=ON
-    addons:
-      apt:
-        packages:
-        - libjack-jackd2-dev
-        - libsndfile1-dev
-        - libcairo2-dev
-        - libfontconfig1-dev
-        - libx11-xcb-dev
-        - libxcb-util-dev
-        - libxcb-cursor-dev
-        - libxcb-xkb-dev
-        - libxkbcommon-dev
-        - libxkbcommon-x11-dev
-        - libxcb-keysyms1-dev
-    install:
-    - .travis/download_cmake.sh
-    - .travis/download_static_libs.sh
-    script: .travis/script_plugins.sh
-    after_success: .travis/prepare_tarball.sh
-
-  - stage: "Deploy"
-    name: "Source packaging"
-    if: (tag =~ /^v?[0-9]/) AND (type = push)
-    env:
-    - INSTALL_DIR="sfizz-${TRAVIS_BRANCH}-src"
-    addons:
-      apt:
-        packages:
-        - python-pip
-    install: sudo pip install git-archive-all
-    script: git-archive-all --prefix="sfizz-${TRAVIS_BRANCH}/" -9 "${INSTALL_DIR}.tar.gz"
 
   - name: "Discord Webhook"
     install: skip
