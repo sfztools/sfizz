@@ -558,8 +558,10 @@ void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* 
 {
     uint8_t* oscTemp = _oscTemp.get();
     uint32_t oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
-    if (oscSize <= kOscTempSize)
-        writeWorkerMessage("ReceiveMessage", oscTemp, oscSize);
+    if (oscSize <= kOscTempSize) {
+        if (writeWorkerMessage("ReceiveMessage", oscTemp, oscSize))
+            _semaToWorker.post();
+    }
 }
 
 void SfizzVstProcessor::loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath)
