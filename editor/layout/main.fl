@@ -11,7 +11,7 @@ widget_class mainView {open
     class Background
   }
   Fl_Group {} {
-    comment {theme=darkTheme} open
+    comment {theme=darkTheme}
     xywh {0 0 800 110}
     class LogicalGroup
   } {
@@ -138,7 +138,7 @@ widget_class mainView {open
     }
   }
   Fl_Group {subPanels_[kPanelGeneral]} {
-    xywh {5 110 791 285}
+    xywh {5 110 791 285} hide
     class LogicalGroup
   } {
     Fl_Group {} {open
@@ -213,7 +213,7 @@ widget_class mainView {open
     }
   }
   Fl_Group {subPanels_[kPanelSettings]} {open
-    xywh {5 109 790 286} hide
+    xywh {5 109 790 316}
     class LogicalGroup
   } {
     Fl_Group {} {
@@ -304,8 +304,25 @@ widget_class mainView {open
         class ValueMenu
       }
     }
+    Fl_Group userFilesGroup_ {
+      label Files open selected
+      xywh {620 270 139 100} box ROUNDED_BOX labelsize 12 align 17
+      class TitleGroup
+    } {
+      Fl_Box {} {
+        label {User SFZ folder}
+        xywh {640 290 100 25} labelsize 12
+        class ValueLabel
+      }
+      Fl_Button userFilesDirButton_ {
+        label DefaultPath
+        comment {tag=kTagChooseUserFilesDir}
+        xywh {640 330 100 25} labelsize 12
+        class ValueButton
+      }
+    }
   }
-  Fl_Box piano_ {selected
+  Fl_Box piano_ {
     xywh {5 400 790 70} labelsize 12
     class Piano
   }

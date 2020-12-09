@@ -6,6 +6,7 @@
 
 #include "SfizzVstEditor.h"
 #include "SfizzVstState.h"
+#include "SfizzFileScan.h"
 #include "editor/Editor.h"
 #include "editor/EditIds.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
@@ -72,6 +73,10 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     }
 
     editor->open(*frame);
+
+    absl::optional<fs::path> userFilesDir = SfizzPaths::getSfzConfigDefaultPath();
+    uiReceiveValue(EditId::CanEditUserFilesDir, 1);
+    uiReceiveValue(EditId::UserFilesDir, userFilesDir.value_or(fs::path()).u8string());
 
     return true;
 }
@@ -240,6 +245,10 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             break;
         case EditId::StretchTuning:
             normalizeAndSet(kPidStretchedTuning, kParamStretchedTuningRange, v.to_float());
+            break;
+
+        case EditId::UserFilesDir:
+            SfizzPaths::setSfzConfigDefaultPath(fs::u8path(v.to_string()));
             break;
 
         case EditId::UIActivePanel:
