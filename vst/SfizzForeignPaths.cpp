@@ -15,8 +15,6 @@ fs::path getAriaPathSetting(const char* name)
 {
     fs::path path;
 
-    HKEY key = 0;
-
     std::unique_ptr<WCHAR[]> nameW;
     unsigned nameSize = MultiByteToWideChar(CP_UTF8, 0, name, -1, nullptr, 0);
     if (nameSize == 0)
@@ -27,17 +25,22 @@ fs::path getAriaPathSetting(const char* name)
 
     const WCHAR ariaKeyPath[] = L"Software\\Plogue Art et Technologie, Inc\\Aria";
 
-    if (RegOpenKeyExW(HKEY_CURRENT_USER, ariaKeyPath, 0, KEY_QUERY_VALUE, &key) == ERROR_SUCCESS) {
-        WCHAR valueBuffer[32768 + 1];
-        DWORD valueSize = sizeof(valueBuffer) - sizeof(WCHAR);
-        if (RegQueryValueExW(key, nameW.get(), nullptr, nullptr, reinterpret_cast<LPBYTE>(valueBuffer), &valueSize) == ERROR_SUCCESS) {
-            valueBuffer[32768] = L'\0';
-            path = fs::path(valueBuffer);
-        }
-        RegCloseKey(key);
-    }
+    HKEY key = nullptr;
+    LSTATUS status = RegOpenKeyExW(HKEY_CURRENT_USER, ariaKeyPath, 0, KEY_QUERY_VALUE, &key);
+    if (status != ERROR_SUCCESS)
+        return {};
 
-    return path;
+    WCHAR valueW[32768];
+    DWORD valueSize = sizeof(valueW);
+    DWORD valueType;
+    status = RegQueryValueExW(
+        key, nameW.get(), nullptr,
+        &valueType, reinterpret_cast<LPBYTE>(valueW), &valueSize);
+    RegCloseKey(key);
+    if (status != ERROR_SUCCESS || (valueType != REG_SZ && valueType != REG_EXPAND_SZ))
+        return {};
+
+    return fs::path(valueW);
 }
 #elif defined(__APPLE__)
     // implementation in SfizzForeignPaths.mm
