@@ -38,7 +38,18 @@ SfizzVstProcessor::SfizzVstProcessor()
 {
     setControllerClass(SfizzVstController::cid);
 
-    SfizzPaths::createSfzDefaultPaths();
+    // ensure the SFZ path exists:
+    // the one specified in the configuration, otherwise the fallback
+    absl::optional<fs::path> configDefaultPath = SfizzPaths::getSfzConfigDefaultPath();
+    if (configDefaultPath) {
+        std::error_code ec;
+        fs::create_directory(*configDefaultPath, ec);
+    }
+    else {
+        fs::path fallbackDefaultPath = SfizzPaths::getSfzFallbackDefaultPath();
+        std::error_code ec;
+        fs::create_directory(fallbackDefaultPath, ec);
+    }
 }
 
 SfizzVstProcessor::~SfizzVstProcessor()
