@@ -239,6 +239,10 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->editor.reset(editor);
     editor->open(*uiFrame);
 
+    // user files dir is not relevant to LV2 (not yet?)
+    // LV2 has its own path management mechanism
+    self->uiReceiveValue(EditId::CanEditUserFilesDir, 0);
+
     *widget = reinterpret_cast<LV2UI_Widget>(uiFrame->getPlatformFrame()->getPlatformRepresentation());
 
     if (self->resize)

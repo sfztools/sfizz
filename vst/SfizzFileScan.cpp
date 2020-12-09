@@ -6,10 +6,10 @@
 
 #include "SfizzFileScan.h"
 #include "SfizzForeignPaths.h"
+#include "SfizzSettings.h"
 #include "NativeHelpers.h"
 #include <absl/strings/ascii.h>
 #include <absl/algorithm/container.h>
-#include <vector>
 #include <memory>
 
 // wait at least this much before refreshing the file rescan
@@ -31,7 +31,7 @@ bool SfzFileScan::locateRealFile(const fs::path& pathOrig, fs::path& pathFound)
     std::unique_lock<std::mutex> lock { mutex };
     refreshScan();
 
-    auto it = file_index_.find(keyOf(pathOrig));
+    auto it = file_index_.find(keyOf(pathOrig.filename()));
     if (it == file_index_.end())
         return false;
 
@@ -63,7 +63,7 @@ void SfzFileScan::refreshScan(bool force)
 
     FileTrieBuilder builder;
 
-    for (const fs::path& dirPath : SfizzPaths::sfzDefaultPaths()) {
+    for (const fs::path& dirPath : SfizzPaths::getSfzSearchPaths()) {
         std::error_code ec;
         const fs::directory_options dirOpts =
             fs::directory_options::skip_permission_denied;
@@ -183,36 +183,52 @@ const fs::path& SfzFileScan::electBestMatch(const fs::path& path, absl::Span<con
 
 namespace SfizzPaths {
 
-absl::Span<const fs::path> sfzDefaultPaths()
+std::vector<fs::path> getSfzSearchPaths()
 {
-    static const auto paths = []() -> std::vector<fs::path> {
-        std::vector<fs::path> paths;
-        paths.reserve(8);
-        auto addPath = [&paths](const fs::path& newPath) {
-            if (absl::c_find(paths, newPath) == paths.end())
-                paths.push_back(newPath);
-        };
+    std::vector<fs::path> paths;
+    paths.reserve(8);
+    auto addPath = [&paths](const fs::path& newPath) {
+        if (absl::c_find(paths, newPath) == paths.end())
+            paths.push_back(newPath);
+    };
 
-        addPath(getUserDocumentsDirectory() / "SFZ instruments");
+    absl::optional<fs::path> configDefaultPath = getSfzConfigDefaultPath();
+    fs::path fallbackDefaultPath = getSfzFallbackDefaultPath();
 
-        for (const fs::path& foreign : {
-                getAriaPathSetting("user_files_dir"),
-                getAriaPathSetting("Converted_path") })
-            if (!foreign.empty() && foreign.is_absolute())
-                addPath(foreign);
+    if (configDefaultPath)
+        addPath(*configDefaultPath);
+    addPath(fallbackDefaultPath);
 
-        paths.shrink_to_fit();
-        return paths;
-    }();
+    for (const fs::path& foreign : {
+            getAriaPathSetting("user_files_dir"),
+            getAriaPathSetting("Converted_path") })
+        if (!foreign.empty() && foreign.is_absolute())
+            addPath(foreign);
+
+    paths.shrink_to_fit();
     return paths;
 }
 
-void createSfzDefaultPaths()
+absl::optional<fs::path> getSfzConfigDefaultPath()
 {
-    for (const fs::path& path : sfzDefaultPaths()) {
-        std::error_code ec;
-        fs::create_directory(path, ec);
-    }
+    SfizzSettings settings;
+    fs::path path = fs::u8path(settings.load_or("user_files_dir", {}));
+    if (path.empty() || !path.is_absolute())
+        return {};
+    return std::move(path);
+}
+
+void setSfzConfigDefaultPath(const fs::path& path)
+{
+    if (path.empty() || !path.is_absolute())
+        return;
+    SfizzSettings settings;
+    settings.store("user_files_dir", path.u8string());
+}
+
+fs::path getSfzFallbackDefaultPath()
+{
+    return getUserDocumentsDirectory() / "SFZ instruments";
 }
 
 } // namespace SfizzPaths

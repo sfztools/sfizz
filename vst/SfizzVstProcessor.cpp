@@ -38,7 +38,18 @@ SfizzVstProcessor::SfizzVstProcessor()
 {
     setControllerClass(SfizzVstController::cid);
 
-    SfizzPaths::createSfzDefaultPaths();
+    // ensure the SFZ path exists:
+    // the one specified in the configuration, otherwise the fallback
+    absl::optional<fs::path> configDefaultPath = SfizzPaths::getSfzConfigDefaultPath();
+    if (configDefaultPath) {
+        std::error_code ec;
+        fs::create_directory(*configDefaultPath, ec);
+    }
+    else {
+        fs::path fallbackDefaultPath = SfizzPaths::getSfzFallbackDefaultPath();
+        std::error_code ec;
+        fs::create_directory(fallbackDefaultPath, ec);
+    }
 }
 
 SfizzVstProcessor::~SfizzVstProcessor()
@@ -121,7 +132,7 @@ tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
         if (!fileScan.locateRealFile(pathOrig, pathFound))
             fprintf(stderr, "[Sfizz] file not found: %s\n", pathOrig.filename().u8string().c_str());
         else {
-            fprintf(stderr, "[Sfizz] file found: %s\n", pathFound.filename().u8string().c_str());
+            fprintf(stderr, "[Sfizz] file found: %s\n", pathFound.u8string().c_str());
             *statePath = pathFound.u8string();
         }
     }

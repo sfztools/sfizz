@@ -10,6 +10,7 @@
 #include <absl/types/optional.h>
 #include <ghc/fs_std.hpp>
 #include <string>
+#include <vector>
 #include <list>
 #include <unordered_map>
 #include <mutex>
@@ -35,6 +36,8 @@ private:
 };
 
 namespace SfizzPaths {
-absl::Span<const fs::path> sfzDefaultPaths();
-void createSfzDefaultPaths();
+std::vector<fs::path> getSfzSearchPaths();
+absl::optional<fs::path> getSfzConfigDefaultPath();
+void setSfzConfigDefaultPath(const fs::path& path);
+fs::path getSfzFallbackDefaultPath();
 } // namespace SfizzPaths
