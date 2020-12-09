@@ -132,7 +132,7 @@ tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
         if (!fileScan.locateRealFile(pathOrig, pathFound))
             fprintf(stderr, "[Sfizz] file not found: %s\n", pathOrig.filename().u8string().c_str());
         else {
-            fprintf(stderr, "[Sfizz] file found: %s\n", pathFound.filename().u8string().c_str());
+            fprintf(stderr, "[Sfizz] file found: %s\n", pathFound.u8string().c_str());
             *statePath = pathFound.u8string();
         }
     }
