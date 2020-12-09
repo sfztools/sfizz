@@ -19,6 +19,7 @@ set(VSTPLUGIN_SOURCES
     SfizzVstState.cpp
     SfizzFileScan.cpp
     SfizzForeignPaths.cpp
+    SfizzSettings.cpp
     VstPluginFactory.cpp
     X11RunLoop.cpp
     NativeHelpers.cpp
@@ -31,6 +32,7 @@ set(VSTPLUGIN_HEADERS
     SfizzVstState.h
     SfizzFileScan.h
     SfizzForeignPaths.h
+    SfizzSettings.h
     X11RunLoop.h
     NativeHelpers.h
     FileTrie.h)
@@ -38,6 +40,7 @@ set(VSTPLUGIN_HEADERS
 if(APPLE)
     set(VSTPLUGIN_MAC_SOURCES
         SfizzForeignPaths.mm
+        SfizzSettings.mm
         NativeHelpers.mm)
     list(APPEND VSTPLUGIN_SOURCES ${VSTPLUGIN_MAC_SOURCES})
     set_property(SOURCE ${VSTPLUGIN_MAC_SOURCES} APPEND_STRING
@@ -53,7 +56,8 @@ if(WIN32)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
-    PRIVATE sfizz_editor)
+    PRIVATE sfizz_editor
+    PRIVATE sfizz-pugixml)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
