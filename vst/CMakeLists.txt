@@ -35,7 +35,8 @@ set(VSTPLUGIN_HEADERS
     SfizzSettings.h
     X11RunLoop.h
     NativeHelpers.h
-    FileTrie.h)
+    FileTrie.h
+    WeakPtr.h)
 
 if(APPLE)
     set(VSTPLUGIN_MAC_SOURCES

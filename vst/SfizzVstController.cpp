@@ -143,7 +143,6 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
         withStateLock([this]() {
             _uiState = _editor->getCurrentUiState();
         });
-        _editor.reset();
     }
 
     SfizzVstEditor* editor = new SfizzVstEditor(this);
