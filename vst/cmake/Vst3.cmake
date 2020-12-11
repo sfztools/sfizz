@@ -10,7 +10,7 @@ function(plugin_add_vst3sdk NAME)
         "${VST3SDK_BASEDIR}/base/source/fobject.cpp"
         "${VST3SDK_BASEDIR}/base/source/fstreamer.cpp"
         "${VST3SDK_BASEDIR}/base/source/fstring.cpp"
-        # "${VST3SDK_BASEDIR}/base/source/timer.cpp"
+        "${VST3SDK_BASEDIR}/base/source/timer.cpp"
         "${VST3SDK_BASEDIR}/base/source/updatehandler.cpp"
         "${VST3SDK_BASEDIR}/base/thread/source/fcondition.cpp"
         "${VST3SDK_BASEDIR}/base/thread/source/flock.cpp"

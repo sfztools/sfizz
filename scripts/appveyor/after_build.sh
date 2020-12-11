@@ -15,8 +15,6 @@ else
   # code-sign AudioUnit and dylibs
   codesign --sign "${CODESIGN_IDENTITY}" --deep --keychain build.keychain --force --verbose \
            "${INSTALL_DIR}"/Library/Audio/Plug-Ins/Components/sfizz.component
-  codesign --sign "${CODESIGN_IDENTITY}" --deep --keychain build.keychain --force --verbose \
-           "${INSTALL_DIR}"/Library/Audio/Plug-Ins/Components/sfizz.component/Contents/Resources/plugin.vst3
   # code-sign LV2 and dylibs (note: manual, LV2 are not real bundles)
   codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
            "${INSTALL_DIR}"/Library/Audio/Plug-Ins/LV2/sfizz.lv2/Contents/Binary/*.so
