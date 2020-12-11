@@ -7,6 +7,7 @@
 #pragma once
 #include "SfizzVstController.h"
 #include "editor/EditorController.h"
+#include "WeakPtr.h"
 #include "public.sdk/source/vst/vstguieditor.h"
 #include <mutex>
 class Editor;
@@ -18,8 +19,11 @@ using namespace Steinberg;
 using namespace VSTGUI;
 
 class SfizzVstEditor : public Vst::VSTGUIEditor,
-                       public EditorController {
+                       public EditorController,
+                       public Weakable<SfizzVstEditor> {
 public:
+    using Self = SfizzVstEditor;
+
     explicit SfizzVstEditor(SfizzVstController* controller);
     ~SfizzVstEditor();
 
@@ -40,6 +44,10 @@ public:
     void updatePlayState(const SfizzPlayState& playState);
     SfizzUiState getCurrentUiState() const;
     void receiveMessage(const void* data, uint32_t size);
+
+    void remember() override { SfizzVstEditor::addRef(); }
+    void forget() override { SfizzVstEditor::release(); }
+    WEAKABLE_REFCOUNT_METHODS(SfizzVstEditor)
 
 private:
     void processOscQueue();
