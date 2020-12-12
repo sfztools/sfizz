@@ -13,6 +13,8 @@
 #include "Wavetables.h"
 #include "Curve.h"
 #include "Tuning.h"
+#include "BeatClock.h"
+#include "Metronome.h"
 #include "modulations/ModMatrix.h"
 #include "absl/types/optional.h"
 
@@ -32,11 +34,15 @@ struct Resources
     Tuning tuning;
     absl::optional<StretchTuning> stretch;
     ModMatrix modMatrix;
+    BeatClock beatClock;
+    Metronome metronome;
 
     void setSampleRate(float samplerate)
     {
         midiState.setSampleRate(samplerate);
         modMatrix.setSampleRate(samplerate);
+        beatClock.setSampleRate(samplerate);
+        metronome.init(samplerate);
     }
 
     void setSamplesPerBlock(int samplesPerBlock)
@@ -44,6 +50,7 @@ struct Resources
         bufferPool.setBufferSize(samplesPerBlock);
         midiState.setSamplesPerBlock(samplesPerBlock);
         modMatrix.setSamplesPerBlock(samplesPerBlock);
+        beatClock.setSamplesPerBlock(samplesPerBlock);
     }
 
     void clear()
@@ -54,6 +61,8 @@ struct Resources
         logger.clear();
         midiState.reset();
         modMatrix.clear();
+        beatClock.clear();
+        metronome.clear();
     }
 };
 }

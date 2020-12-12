@@ -48,6 +48,7 @@ SFIZZ_CXX_FLAGS = $(SFIZZ_C_FLAGS)
 SFIZZ_SOURCES = \
 	src/sfizz/ADSREnvelope.cpp \
 	src/sfizz/AudioReader.cpp \
+	src/sfizz/BeatClock.cpp \
 	src/sfizz/Curve.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
@@ -90,6 +91,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \
 	src/sfizz/Messaging.cpp \
+	src/sfizz/Metronome.cpp \
 	src/sfizz/MidiState.cpp \
 	src/sfizz/OpcodeCleanup.cpp \
 	src/sfizz/Opcode.cpp \

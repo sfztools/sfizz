@@ -866,6 +866,36 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             setValueFromOpcode(opcode, lfos[lfoNumber - 1].freq, Default::lfoFreqRange);
         }
         break;
+    case_any_ccN("lfo&_freq"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            processGenericCc(opcode, Default::lfoFreqModRange, ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber - 1));
+        }
+        break;
+    case hash("lfo&_beats"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            setValueFromOpcode(opcode, lfos[lfoNumber - 1].beats, Default::lfoBeatsRange);
+        }
+        break;
+    case_any_ccN("lfo&_beats"):
+        {
+            const auto lfoNumber = opcode.parameters.front();
+            if (lfoNumber == 0)
+                return false;
+            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
+                return false;
+            processGenericCc(opcode, Default::lfoBeatsModRange, ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber - 1));
+        }
+        break;
     case hash("lfo&_phase"):
         {
             const auto lfoNumber = opcode.parameters.front();

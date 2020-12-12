@@ -171,7 +171,7 @@ void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_ba
     auto* self = reinterpret_cast<sfz::Synth*>(synth);
     self->timeSignature(delay, beats_per_bar, beat_unit);
 }
-void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, float bar_beat)
+void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, double bar_beat)
 {
     auto* self = reinterpret_cast<sfz::Synth*>(synth);
     self->timePosition(delay, bar, bar_beat);
