@@ -18,7 +18,7 @@ constexpr int numRandomTests { 64 };
 
 TEST_CASE("[Region] Crossfade in on key")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
@@ -30,7 +30,7 @@ TEST_CASE("[Region] Crossfade in on key")
 
 TEST_CASE("[Region] Crossfade in on key - 2")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
@@ -45,7 +45,7 @@ TEST_CASE("[Region] Crossfade in on key - 2")
 
 TEST_CASE("[Region] Crossfade in on key - gain")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
@@ -60,7 +60,7 @@ TEST_CASE("[Region] Crossfade in on key - gain")
 
 TEST_CASE("[Region] Crossfade out on key")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lokey", "51" });
@@ -76,7 +76,7 @@ TEST_CASE("[Region] Crossfade out on key")
 
 TEST_CASE("[Region] Crossfade out on key - gain")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lokey", "51" });
@@ -93,7 +93,7 @@ TEST_CASE("[Region] Crossfade out on key - gain")
 
 TEST_CASE("[Region] Crossfade in on velocity")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lovel", "20" });
@@ -110,7 +110,7 @@ TEST_CASE("[Region] Crossfade in on velocity")
 
 TEST_CASE("[Region] Crossfade in on vel - gain")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lovel", "20" });
@@ -128,7 +128,7 @@ TEST_CASE("[Region] Crossfade in on vel - gain")
 
 TEST_CASE("[Region] Crossfade out on vel")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lovel", "51" });
@@ -145,7 +145,7 @@ TEST_CASE("[Region] Crossfade out on vel")
 
 TEST_CASE("[Region] Crossfade out on vel - gain")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lovel", "51" });
@@ -163,7 +163,7 @@ TEST_CASE("[Region] Crossfade out on vel - gain")
 
 TEST_CASE("[Region] Crossfade in on CC")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_locc24", "20" });
@@ -187,7 +187,7 @@ TEST_CASE("[Region] Crossfade in on CC")
 
 TEST_CASE("[Region] Crossfade in on CC - gain")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_locc24", "20" });
@@ -211,7 +211,7 @@ TEST_CASE("[Region] Crossfade in on CC - gain")
 }
 TEST_CASE("[Region] Crossfade out on CC")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_locc24", "20" });
@@ -235,7 +235,7 @@ TEST_CASE("[Region] Crossfade out on CC")
 
 TEST_CASE("[Region] Crossfade out on CC - gain")
 {
-	MidiState midiState;
+    MidiState midiState;
     Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_locc24", "20" });
