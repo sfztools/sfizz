@@ -9,6 +9,8 @@
 #include <absl/strings/ascii.h>
 #include <cstring>
 
+// TODO: `ccModDepth` and `ccModParameters` are O(N), need better implementation
+
 namespace sfz {
 static constexpr unsigned maxIndices = 8;
 
