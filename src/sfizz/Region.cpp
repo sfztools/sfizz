@@ -759,11 +759,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
         }
         break;
-    case hash("eq&_vel&freq"):
+    case hash("eq&_veltofreq"): // also eq&_vel2freq
         {
             const auto eqIndex = opcode.parameters.front() - 1;
-            if (opcode.parameters[1] != 2)
-                return false; // was eqN_vel3freq or something else than eqN_vel2freq
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
@@ -787,11 +785,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
         }
         break;
-    case hash("eq&_vel&gain"):
+    case hash("eq&_veltogain"): // also eq&_vel2gain
         {
             const auto eqIndex = opcode.parameters.front() - 1;
-            if (opcode.parameters[1] != 2)
-                return false;  // was eqN_vel3gain or something else than eqN_vel2gain
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
@@ -1242,12 +1238,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("ampeg_release"):
     case hash("ampeg_start"):
     case hash("ampeg_sustain"):
-    case hash("ampeg_vel&attack"):
-    case hash("ampeg_vel&decay"):
-    case hash("ampeg_vel&delay"):
-    case hash("ampeg_vel&hold"):
-    case hash("ampeg_vel&release"):
-    case hash("ampeg_vel&sustain"):
+    case hash("ampeg_veltoattack"): // also ampeg_vel2attack
+    case hash("ampeg_veltodecay"): // also ampeg_vel2decay
+    case hash("ampeg_veltodelay"): // also ampeg_vel2delay
+    case hash("ampeg_veltohold"): // also ampeg_vel2hold
+    case hash("ampeg_veltorelease"): // also ampeg_vel2release
+    case hash("ampeg_veltosustain"): // also ampeg_vel2sustain
     case hash("ampeg_attack_oncc&"): // also ampeg_attackcc&
     case hash("ampeg_decay_oncc&"): // also ampeg_decaycc&
     case hash("ampeg_delay_oncc&"): // also ampeg_delaycc&
@@ -1265,12 +1261,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("pitcheg_release"):
     case hash("pitcheg_start"):
     case hash("pitcheg_sustain"):
-    case hash("pitcheg_vel&attack"):
-    case hash("pitcheg_vel&decay"):
-    case hash("pitcheg_vel&delay"):
-    case hash("pitcheg_vel&hold"):
-    case hash("pitcheg_vel&release"):
-    case hash("pitcheg_vel&sustain"):
+    case hash("pitcheg_veltoattack"): // also pitcheg_vel2attack
+    case hash("pitcheg_veltodecay"): // also pitcheg_vel2decay
+    case hash("pitcheg_veltodelay"): // also pitcheg_vel2delay
+    case hash("pitcheg_veltohold"): // also pitcheg_vel2hold
+    case hash("pitcheg_veltorelease"): // also pitcheg_vel2release
+    case hash("pitcheg_veltosustain"): // also pitcheg_vel2sustain
     case hash("pitcheg_attack_oncc&"): // also pitcheg_attackcc&
     case hash("pitcheg_decay_oncc&"): // also pitcheg_decaycc&
     case hash("pitcheg_delay_oncc&"): // also pitcheg_delaycc&
@@ -1291,12 +1287,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("fileg_release"):
     case hash("fileg_start"):
     case hash("fileg_sustain"):
-    case hash("fileg_vel&attack"):
-    case hash("fileg_vel&decay"):
-    case hash("fileg_vel&delay"):
-    case hash("fileg_vel&hold"):
-    case hash("fileg_vel&release"):
-    case hash("fileg_vel&sustain"):
+    case hash("fileg_veltoattack"): // also fileg_vel2attack
+    case hash("fileg_veltodecay"): // also fileg_vel2decay
+    case hash("fileg_veltodelay"): // also fileg_vel2delay
+    case hash("fileg_veltohold"): // also fileg_vel2hold
+    case hash("fileg_veltorelease"): // also fileg_vel2release
+    case hash("fileg_veltosustain"): // also fileg_vel2sustain
     case hash("fileg_attack_oncc&"): // also fileg_attackcc&
     case hash("fileg_decay_oncc&"): // also fileg_decaycc&
     case hash("fileg_delay_oncc&"): // also fileg_delaycc&
@@ -1323,17 +1319,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = *value;
         break;
 
-    case hash("pitcheg_vel&depth"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case hash("pitcheg_veltodepth"): // also pitcheg_vel2depth
         if (auto value = readOpcode(opcode.value, Default::pitchEgDepthRange))
             getOrCreateConnection(
                 ModKey::createNXYZ(ModId::PitchEG, id),
                 ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = *value;
         break;
-    case hash("fileg_vel&depth"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case hash("fileg_veltodepth"): // also fileg_vel2depth
         if (auto value = readOpcode(opcode.value, Default::filterEgDepthRange))
             getOrCreateConnection(
                 ModKey::createNXYZ(ModId::FilEG, id),
@@ -1428,7 +1420,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("hichan"):
     case hash("lochan"):
     case hash("ampeg_depth"):
-    case hash("ampeg_vel&depth"):
+    case hash("ampeg_veltodepth"): // also ampeg_vel2depth
         break;
     default:
         return false;
@@ -1469,34 +1461,22 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case_any_eg("sustain"):
         setValueFromOpcode(opcode, eg.sustain, Default::egPercentRange);
         break;
-    case_any_eg("vel&attack"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case_any_eg("veltoattack"): // also vel2attack
         setValueFromOpcode(opcode, eg.vel2attack, Default::egOnCCTimeRange);
         break;
-    case_any_eg("vel&decay"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case_any_eg("veltodecay"): // also vel2decay
         setValueFromOpcode(opcode, eg.vel2decay, Default::egOnCCTimeRange);
         break;
-    case_any_eg("vel&delay"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case_any_eg("veltodelay"): // also vel2delay
         setValueFromOpcode(opcode, eg.vel2delay, Default::egOnCCTimeRange);
         break;
-    case_any_eg("vel&hold"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case_any_eg("veltohold"): // also vel2hold
         setValueFromOpcode(opcode, eg.vel2hold, Default::egOnCCTimeRange);
         break;
-    case_any_eg("vel&release"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case_any_eg("veltorelease"): // also vel2release
         setValueFromOpcode(opcode, eg.vel2release, Default::egOnCCTimeRange);
         break;
-    case_any_eg("vel&sustain"):
-        if (opcode.parameters.front() != 2)
-            return false; // Was not vel2...
+    case_any_eg("veltosustain"): // also vel2sustain
         setValueFromOpcode(opcode, eg.vel2sustain, Default::egOnCCPercentRange);
         break;
     case_any_eg("attack_oncc&"): // also attackcc&
