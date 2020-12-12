@@ -1932,35 +1932,37 @@ sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source
     return connections.back();
 }
 
+sfz::Region::Connection* sfz::Region::getConnectionFromCC(int sourceCC, const ModKey& target)
+{
+    for (sfz::Region::Connection& conn : connections) {
+        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
+            auto p = conn.source.parameters();
+            if (p.cc == sourceCC)
+                return &conn;
+        }
+    }
+    return nullptr;
+}
+
 bool sfz::Region::disabled() const noexcept
 {
     return (sampleEnd == 0);
 }
 
-absl::optional<float> sfz::Region::ccModDepth(int cc, ModId id) const noexcept
+absl::optional<float> sfz::Region::ccModDepth(int cc, ModId id, uint8_t N, uint8_t X, uint8_t Y, uint8_t Z) const noexcept
 {
-    const ModKey target = ModKey::createNXYZ(id, getId());
-    for (const sfz::Region::Connection& conn : connections) {
-        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
-            auto p = conn.source.parameters();
-            if (p.cc == cc)
-                return conn.sourceDepth;
-        }
-    }
-
-    return {};
+    const ModKey target = ModKey::createNXYZ(id, getId(), N, X, Y, Z);
+    const Connection *conn = const_cast<Region*>(this)->getConnectionFromCC(cc, target);
+    if (!conn)
+        return {};
+    return conn->sourceDepth;
 }
 
-absl::optional<sfz::ModKey::Parameters> sfz::Region::ccModParameters(int cc, ModId id) const noexcept
+absl::optional<sfz::ModKey::Parameters> sfz::Region::ccModParameters(int cc, ModId id, uint8_t N, uint8_t X, uint8_t Y, uint8_t Z) const noexcept
 {
-    const ModKey target = ModKey::createNXYZ(id, getId());
-    for (const sfz::Region::Connection& conn : connections) {
-        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
-            auto p = conn.source.parameters();
-            if (p.cc == cc)
-                return p;
-        }
-    }
-
-    return {};
+    const ModKey target = ModKey::createNXYZ(id, getId(), N, X, Y, Z);
+    const Connection *conn = const_cast<Region*>(this)->getConnectionFromCC(cc, target);
+    if (!conn)
+        return {};
+    return conn->source.parameters();
 }
