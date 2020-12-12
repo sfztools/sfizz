@@ -207,8 +207,8 @@ namespace Default
 	constexpr Range<int> pitchVeltrackRange { -12000, 12000 };
 	constexpr int transpose { 0 };
 	constexpr Range<int> transposeRange { -127, 127 };
-	constexpr int tune { 0 };
-	constexpr Range<int> tuneRange { -12000, 12000 }; // ±100 in SFZv1, more in ARIA
+	constexpr float tune { 0 };
+	constexpr Range<float> tuneRange { -12000, 12000 }; // ±100 in SFZv1, more in ARIA
     constexpr Range<float> tuneCCRange { -12000, 12000 };
     constexpr Range<int> bendBoundRange { -12000, 12000 };
     constexpr Range<int> bendStepRange { 1, 1200 };

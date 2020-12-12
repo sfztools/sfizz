@@ -4,7 +4,8 @@
 project(sfizz)
 
 set(SFIZZ_TEST_SOURCES
-    RegionT.cpp
+    DirectRegionT.cpp
+    RegionValuesT.cpp
     TestHelpers.h
     TestHelpers.cpp
     ParsingT.cpp

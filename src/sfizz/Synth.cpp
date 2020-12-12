@@ -676,7 +676,10 @@ void Synth::Impl::finalizeSfzLoad()
 
         ++currentRegionIndex;
     }
-    DBG("Removing " << (regions_.size() - currentRegionCount) << " out of " << regions_.size() << " regions");
+    if (currentRegionCount < regions_.size()) {
+        DBG("Removing " << (regions_.size() - currentRegionCount)
+            << " out of " << regions_.size() << " regions");
+    }
     regions_.resize(currentRegionCount);
 
     // collect all CCs used in regions, with matrix not yet connected

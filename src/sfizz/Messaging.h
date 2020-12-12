@@ -27,8 +27,6 @@ public:
 private:
     template <char Tag>
     sfizz_arg_t make_arg(OscDecayedType<Tag> value);
-
-private:
     void* data_ = nullptr;
     sfizz_receive_t* receive_ = nullptr;
 };

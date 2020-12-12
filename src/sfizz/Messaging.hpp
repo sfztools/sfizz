@@ -56,7 +56,7 @@ inline void Client::receive(int delay, const char* path, OscDecayedType<Sig>... 
         typedef struct Nothing {} type;                         \
         typedef type decayed_type;                              \
         static inline sfizz_arg_t make_arg(decayed_type v) {    \
-            sfizz_arg_t a; (void)v; return a;                   \
+            sfizz_arg_t a {}; (void)v; return a;                   \
         }                                                       \
     }
 
