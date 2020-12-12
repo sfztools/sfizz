@@ -63,6 +63,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
+        kTagChooseUserFilesDir,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -85,6 +86,9 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
+
+    STitleContainer* userFilesGroup_ = nullptr;
+    STextButton* userFilesDirButton_ = nullptr;
 
     CTextLabel* infoCurvesLabel_ = nullptr;
     CTextLabel* infoMastersLabel_ = nullptr;
@@ -118,6 +122,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void changeToNextSfzFile(long offset);
     void chooseScalaFile();
     void changeScalaFile(const std::string& filePath);
+    void chooseUserFilesDir();
 
     static bool scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames);
 
@@ -125,6 +130,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     void updateSfzFileLabel(const std::string& filePath);
     void updateScalaFileLabel(const std::string& filePath);
+    void updateUserFilesDirLabel(const std::string& filePath);
     static void updateLabelWithFileName(CTextLabel* label, const std::string& filePath, absl::string_view removedSuffix);
     static void updateButtonWithFileName(STextButton* button, const std::string& filePath, absl::string_view removedSuffix);
     static void updateSButtonWithFileName(STextButton* button, const std::string& filePath, absl::string_view removedSuffix);
@@ -268,6 +274,17 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateStretchedTuningLabel(value);
         }
         break;
+    case EditId::CanEditUserFilesDir:
+        {
+            if (STitleContainer* group = userFilesGroup_)
+                group->setVisible(v.to_float());
+            break;
+        }
+    case EditId::UserFilesDir:
+        {
+            updateUserFilesDirLabel(v.to_string());
+            break;
+        }
     case EditId::UINumCurves:
         {
             const int value = static_cast<int>(v.to_float());
@@ -836,6 +853,22 @@ void Editor::Impl::changeScalaFile(const std::string& filePath)
     updateScalaFileLabel(filePath);
 }
 
+void Editor::Impl::chooseUserFilesDir()
+{
+    SharedPointer<CNewFileSelector> fs = owned(
+        CNewFileSelector::create(frame_, CNewFileSelector::kSelectDirectory));
+
+    fs->setTitle("Set user files directory");
+
+    if (fs->runModal()) {
+        UTF8StringPtr dir = fs->getSelectedFile(0);
+        if (dir) {
+            updateUserFilesDirLabel(dir);
+            ctrl_->uiSendValue(EditId::UserFilesDir, std::string(dir));
+        }
+    }
+}
+
 bool Editor::Impl::scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames)
 {
     std::error_code ec;
@@ -896,6 +929,11 @@ void Editor::Impl::updateScalaFileLabel(const std::string& filePath)
 {
     updateLabelWithFileName(scalaFileLabel_, filePath, ".scl");
     updateButtonWithFileName(scalaFileButton_, filePath, ".scl");
+}
+
+void Editor::Impl::updateUserFilesDirLabel(const std::string& filePath)
+{
+    updateButtonWithFileName(userFilesDirButton_, filePath, {});
 }
 
 void Editor::Impl::updateLabelWithFileName(CTextLabel* label, const std::string& filePath, absl::string_view removedSuffix)
@@ -1135,6 +1173,13 @@ void Editor::Impl::valueChanged(CControl* ctl)
     case kTagSetStretchedTuning:
         ctrl.uiSendValue(EditId::StretchTuning, value);
         updateStretchedTuningLabel(value);
+        break;
+
+    case kTagChooseUserFilesDir:
+        if (value != 1)
+            break;
+
+        Call::later([this]() { chooseUserFilesDir(); });
         break;
 
     default:

@@ -9,6 +9,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
+#include "WeakPtr.h"
 #include <sfizz_message.h>
 #include <mutex>
 class SfizzVstState;
@@ -66,5 +67,5 @@ private:
     SfizzVstState _state {};
     SfizzUiState _uiState {}; // updated on UI open/close/state-request
     SfizzPlayState _playState {};
-    Steinberg::IPtr<SfizzVstEditor> _editor;
+    WeakPtr<SfizzVstEditor> _editor;
 };

@@ -6,6 +6,7 @@
 
 #include "NativeHelpers.h"
 #include <stdexcept>
+#include <cstdlib>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -30,9 +31,14 @@ const fs::path& getUserDocumentsDirectory()
 {
     static const fs::path directory = []() -> fs::path {
         const gchar* path = g_get_user_special_dir(G_USER_DIRECTORY_DOCUMENTS);
-        if (!path)
+        if (path)
+            return fs::path(path);
+        else {
+            const char* home = getenv("HOME");
+            if (home && home[0] == '/')
+                return fs::path(home) / "Documents";
             throw std::runtime_error("Cannot get the document directory.");
-        return fs::path(path);
+        }
     }();
     return directory;
 }

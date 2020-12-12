@@ -2,6 +2,8 @@ set (VSTPLUGIN_PRJ_NAME "${PROJECT_NAME}_vst3")
 set (VSTPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.vst3")
 
 set (VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
+#set (AUWRAPPER_BASEDIR "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper")
+set (AUWRAPPER_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/sfzt_auwrapper")
 
 # VST plugin specific settings
 include (VSTConfig)
@@ -19,6 +21,7 @@ set(VSTPLUGIN_SOURCES
     SfizzVstState.cpp
     SfizzFileScan.cpp
     SfizzForeignPaths.cpp
+    SfizzSettings.cpp
     VstPluginFactory.cpp
     X11RunLoop.cpp
     NativeHelpers.cpp
@@ -31,13 +34,16 @@ set(VSTPLUGIN_HEADERS
     SfizzVstState.h
     SfizzFileScan.h
     SfizzForeignPaths.h
+    SfizzSettings.h
     X11RunLoop.h
     NativeHelpers.h
-    FileTrie.h)
+    FileTrie.h
+    WeakPtr.h)
 
 if(APPLE)
     set(VSTPLUGIN_MAC_SOURCES
         SfizzForeignPaths.mm
+        SfizzSettings.mm
         NativeHelpers.mm)
     list(APPEND VSTPLUGIN_SOURCES ${VSTPLUGIN_MAC_SOURCES})
     set_property(SOURCE ${VSTPLUGIN_MAC_SOURCES} APPEND_STRING
@@ -53,7 +59,8 @@ if(WIN32)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
-    PRIVATE sfizz_editor)
+    PRIVATE sfizz_editor
+    PRIVATE sfizz-pugixml)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
@@ -67,11 +74,13 @@ plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
 set (RINGBUFFER_HEADERS
     "external/ring_buffer/ring_buffer/ring_buffer.h"
     "external/ring_buffer/ring_buffer/ring_buffer.tcc")
-source_group ("Header Files" FILES ${RINGBUFFER_HEADERS})
-target_include_directories(${VSTPLUGIN_PRJ_NAME} PRIVATE "external/ring_buffer")
-target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE
+add_library(sfizz_ring_buffer STATIC
     "external/ring_buffer/ring_buffer/ring_buffer.cpp"
     ${RINGBUFFER_HEADERS})
+source_group ("Header Files" FILES ${RINGBUFFER_HEADERS})
+target_include_directories(sfizz_ring_buffer INTERFACE "external/ring_buffer")
+
+target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE sfizz_ring_buffer)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
@@ -170,11 +179,13 @@ elseif(SFIZZ_AU)
     set(AUPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.component")
 
     add_library(${AUPLUGIN_PRJ_NAME} MODULE
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/aucarbonview.mm"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/aucocoaview.mm"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/ausdk.mm"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/auwrapper.mm"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/NSDataIBStream.mm")
+        "${AUWRAPPER_BASEDIR}/aucarbonview.mm"
+        "${AUWRAPPER_BASEDIR}/aucocoaview.mm"
+        "${AUWRAPPER_BASEDIR}/ausdk.mm"
+        "${AUWRAPPER_BASEDIR}/auwrapper.mm"
+        "${AUWRAPPER_BASEDIR}/NSDataIBStream.mm"
+        ${VSTPLUGIN_HEADERS}
+        ${VSTPLUGIN_SOURCES})
     target_include_directories(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${VST3SDK_BASEDIR}")
     target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE
@@ -186,9 +197,18 @@ elseif(SFIZZ_AU)
         "${APPLE_COREAUDIO_LIBRARY}"
         "${APPLE_COREMIDI_LIBRARY}")
 
+    target_link_libraries(${AUPLUGIN_PRJ_NAME}
+        PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
+        PRIVATE sfizz_editor
+        PRIVATE sfizz-pugixml)
+    target_include_directories(${AUPLUGIN_PRJ_NAME}
+        PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
     set_target_properties(${AUPLUGIN_PRJ_NAME} PROPERTIES
         OUTPUT_NAME "${PROJECT_NAME}"
         PREFIX "")
+
+    plugin_add_vst3sdk(${AUPLUGIN_PRJ_NAME})
+    plugin_add_vstgui(${AUPLUGIN_PRJ_NAME})
 
     # Get Core Audio utility classes if missing
     set(CA_UTILITY_BASEDIR
@@ -225,26 +245,6 @@ elseif(SFIZZ_AU)
         "${CA_UTILITY_BASEDIR}/CoreAudio/AudioUnits/AUPublic/Utility"
         "${CA_UTILITY_BASEDIR}/CoreAudio/PublicUtility")
 
-    # Add VST base classes
-    target_sources(${AUPLUGIN_PRJ_NAME} PRIVATE
-        "${VST3SDK_BASEDIR}/base/source/baseiids.cpp"
-        "${VST3SDK_BASEDIR}/base/source/fbuffer.cpp"
-        "${VST3SDK_BASEDIR}/base/source/fdebug.cpp"
-        "${VST3SDK_BASEDIR}/base/source/fdynlib.cpp"
-        "${VST3SDK_BASEDIR}/base/source/fobject.cpp"
-        "${VST3SDK_BASEDIR}/base/source/fstreamer.cpp"
-        "${VST3SDK_BASEDIR}/base/source/fstring.cpp"
-        "${VST3SDK_BASEDIR}/base/source/timer.cpp"
-        "${VST3SDK_BASEDIR}/base/source/updatehandler.cpp"
-        "${VST3SDK_BASEDIR}/base/thread/source/fcondition.cpp"
-        "${VST3SDK_BASEDIR}/base/thread/source/flock.cpp"
-        "${VST3SDK_BASEDIR}/pluginterfaces/base/conststringtable.cpp"
-        "${VST3SDK_BASEDIR}/pluginterfaces/base/coreiids.cpp"
-        "${VST3SDK_BASEDIR}/pluginterfaces/base/funknown.cpp"
-        "${VST3SDK_BASEDIR}/pluginterfaces/base/ustring.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/common/commoniids.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstinitiids.cpp")
-
     # Add VST hosting classes
     target_sources(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/eventlist.cpp"
@@ -252,6 +252,9 @@ elseif(SFIZZ_AU)
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/parameterchanges.cpp"
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/processdata.cpp")
+
+    # Add the ring buffer
+    target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE sfizz_ring_buffer)
 
     # Add generated source
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -265,6 +268,9 @@ elseif(SFIZZ_AU)
     # Create the bundle
     execute_process(
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
+    copy_editor_resources(
+        "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
+        "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
     set_target_properties(${AUPLUGIN_PRJ_NAME} PROPERTIES
         SUFFIX ""
         LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/$<0:>")
@@ -311,7 +317,7 @@ elseif(SFIZZ_AU)
             "-I" "${CMAKE_CURRENT_BINARY_DIR}/include" # generated audiounitconfig.h
             "-o" "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/${PROJECT_NAME}.rsrc"
             "-useDF"
-            "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper/auresource.r")
+            "${AUWRAPPER_BASEDIR}/auresource.r")
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -332,14 +338,8 @@ elseif(SFIZZ_AU)
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}"
             DESTINATION "${AUPLUGIN_INSTALL_DIR}"
             COMPONENT "au")
-        install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/"
-            DESTINATION "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3"
-            COMPONENT "au")
         bundle_dylibs(au
             "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
-            COMPONENT "au")
-        bundle_dylibs(au-vst
-            "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources/plugin.vst3/Contents/MacOS/sfizz"
             COMPONENT "au")
     endif()
 endif()
