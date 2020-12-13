@@ -40,5 +40,4 @@ fi
 
 set -x
 
-brew install jack
-brew install dylibbundler
+brew install libsndfile dylibbundler fileicon create-dmg
