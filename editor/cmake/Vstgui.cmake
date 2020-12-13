@@ -213,7 +213,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(sfizz-vstgui PRIVATE
+    gw_target_warn(sfizz-vstgui PRIVATE
         "-Wno-deprecated-copy"
         "-Wno-deprecated-declarations"
         "-Wno-extra"

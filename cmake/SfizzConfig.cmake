@@ -1,5 +1,6 @@
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
+include(GNUWarnings)
 
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard to be used")
 set(CMAKE_C_STANDARD 99 CACHE STRING "C standard to be used")
@@ -61,10 +62,7 @@ endif()
 
 # Add required flags for the builds
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-Wall)
-    add_compile_options(-Wextra)
-    add_compile_options(-Wno-multichar)
-    add_compile_options(-Werror=return-type)
+    gw_warn(-Wall -Wextra -Wno-multichar -Werror=return-type)
     if (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
         add_compile_options(-msse2)
     elseif(SFIZZ_SYSTEM_PROCESSOR MATCHES "^(arm.*)$")
