@@ -28,19 +28,33 @@ else
     codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
              "${INSTALL_DIR}"/sfizz.lv2/Contents/Frameworks/*.dylib
   fi
-  if ls "${INSTALL_DIR}"/usr/local/bin/* &> /dev/null; then
-    codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
-      "${INSTALL_DIR}"/usr/local/bin/*
-  fi
-  if ls "${INSTALL_DIR}"/usr/local/lib/*.dylib &> /dev/null; then
-    codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
-      "${INSTALL_DIR}"/usr/local/lib/*.dylib
-  fi
 fi
 
-# Need the flag --skip-jenkins to prevent CI hanging
-# https://github.com/create-dmg/create-dmg/issues/72
-create-dmg --skip-jenkins "${INSTALL_DIR}.dmg" ${INSTALL_DIR}
+# Create the DMG
+cat > sfizz-dmg.json << EOF
+{
+  "title": "sfizz",
+  "background": "${APPVEYOR_BUILD_FOLDER}/mac/dmg-back.png",
+  "window": {
+      "size": { "width": 500, "height": 500 }
+  },
+  "contents": [
+    { "x": 100, "y": 50, "type": "file", "path": "${INSTALL_DIR}/sfizz.vst3" },
+    { "x": 250, "y": 50, "type": "file", "path": "${INSTALL_DIR}/sfizz.component" },
+    { "x": 400, "y": 50, "type": "file", "path": "${INSTALL_DIR}/sfizz.lv2" },
+    { "x": 100, "y": 400, "type": "link", "path": "/Library/Audio/Plug-Ins/VST3" },
+    { "x": 250, "y": 400, "type": "link", "path": "/Library/Audio/Plug-Ins/Components" },
+    { "x": 400, "y": 400, "type": "link", "path": "/Library/Audio/Plug-Ins/LV2" }
+  ]
+}
+EOF
+~/node_modules/appdmg/bin/appdmg.js sfizz-dmg.json "${INSTALL_DIR}.dmg"
+
+# Code-sign the DMG
+if test ! -z "${CODESIGN_PASSWORD}"; then
+  security unlock-keychain -p dummypasswd build.keychain
+  codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose "${INSTALL_DIR}.dmg"
+fi
 
 # Only release a tarball if there is a tag
 if [[ ${APPVEYOR_REPO_TAG} ]]; then
