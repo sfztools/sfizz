@@ -239,6 +239,16 @@ TEST_CASE("[Opcode] Normalization")
         {"cutoff1_random", "fil1_random"},
         {"cutoff2_random", "fil2_random"},
         {"gain_random", "amp_random"},
+        // Internal transformations
+        {"ampeg_vel2delay", "ampeg_veltodelay"},
+        {"fileg_vel2attack", "fileg_veltoattack"},
+        {"pitcheg_vel2decay", "pitcheg_veltodecay"},
+        {"ampeg_vel2hold", "ampeg_veltohold"},
+        {"fileg_vel2sustain", "fileg_veltosustain"},
+        {"pitcheg_vel2release", "pitcheg_veltorelease"},
+        {"fileg_vel2depth", "fileg_veltodepth"},
+        {"eq21_vel2freq", "eq21_veltofreq"},
+        {"eq22_vel2gain", "eq22_veltogain"},
     };
 
     for (auto pair : regionSpecific) {
