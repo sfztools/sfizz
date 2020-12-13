@@ -4,10 +4,13 @@ set -ex
 make DESTDIR=${PWD}/${INSTALL_DIR} install
 
 # Set bundle icons
-bundle_icns=/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/KEXT.icns
-for bundle in sfizz.vst3 sfizz.component sfizz.lv2; do
-  fileicon set "${INSTALL_DIR}"/"$bundle" "$bundle_icns"
-done
+# Note: disabled, rejected by the code-sign step
+if false; then
+  bundle_icns=/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/KEXT.icns
+  for bundle in sfizz.vst3 sfizz.component sfizz.lv2; do
+    fileicon set "${INSTALL_DIR}"/"$bundle" "$bundle_icns"
+  done
+fi
 
 # Perform code-signing
 if test -z "${CODESIGN_PASSWORD}"; then
