@@ -141,7 +141,7 @@ else()
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(${VSTPLUGIN_PRJ_NAME} PRIVATE
+    gw_target_warn(${VSTPLUGIN_PRJ_NAME} PRIVATE
         "-Wno-extra"
         "-Wno-multichar"
         "-Wno-reorder"
@@ -317,7 +317,7 @@ elseif(SFIZZ_AU)
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(${AUPLUGIN_PRJ_NAME} PRIVATE
+        gw_target_warn(${AUPLUGIN_PRJ_NAME} PRIVATE
             "-Wno-extra"
             "-Wno-multichar"
             "-Wno-reorder"
