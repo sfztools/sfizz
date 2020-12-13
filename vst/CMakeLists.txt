@@ -125,8 +125,6 @@ elseif(APPLE)
     set(SFIZZ_VST3_BUNDLE_VERSION "${PROJECT_VERSION}")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.vst3.plist"
         "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Info.plist" @ONLY)
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mac/Plugin.icns"
-        DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 else()
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/${VST3_PACKAGE_ARCHITECTURE}-linux/$<0:>")
@@ -290,8 +288,6 @@ elseif(SFIZZ_AU)
         OUTPUT_STRIP_TRAILING_WHITESPACE)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.au.plist"
         "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Info.plist" @ONLY)
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/mac/Plugin.icns"
-        DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
 
     file(COPY "gpl-3.0.txt"
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/SharedSupport/License")
