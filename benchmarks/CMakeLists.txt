@@ -1,23 +1,8 @@
-# Check SIMD
-include(SfizzSIMDSourceFiles)
-set(BENCHMARK_SIMD_SOURCES)
-sfizz_add_simd_sources(BENCHMARK_SIMD_SOURCES "../src")
-find_package(benchmark CONFIG REQUIRED)
-
-add_library(bm_simd STATIC ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_simd PRIVATE absl::span sfizz::cpuid)
-add_library(bm_ftz STATIC ../src/sfizz/ScopedFTZ.cpp)
-
 macro(sfizz_add_benchmark TARGET)
     add_executable("${TARGET}" ${ARGN})
     target_link_libraries("${TARGET}"
-        PRIVATE sfizz::filesystem absl::span absl::algorithm
-        PRIVATE benchmark::benchmark benchmark::benchmark_main
-        PRIVATE bm_simd bm_ftz)
-    if(LIBATOMIC_FOUND)
-        target_link_libraries("${TARGET}" PRIVATE atomic)
-    endif()
-    target_include_directories("${TARGET}" PRIVATE ../src/sfizz)
+        PRIVATE sfizz::internal sfizz::filesystem absl::span absl::algorithm
+        PRIVATE benchmark::benchmark benchmark::benchmark_main)
     sfizz_enable_fast_math("${TARGET}")
 endmacro()
 
@@ -30,7 +15,6 @@ sfizz_add_benchmark(bm_gain BM_gain.cpp)
 sfizz_add_benchmark(bm_divide BM_divide.cpp)
 sfizz_add_benchmark(bm_ramp BM_ramp.cpp)
 sfizz_add_benchmark(bm_ADSR BM_ADSR.cpp)
-target_link_libraries(bm_ADSR PRIVATE sfizz::internal)
 
 sfizz_add_benchmark(bm_add BM_add.cpp)
 sfizz_add_benchmark(bm_multiplyAdd BM_multiplyAdd.cpp)
@@ -52,15 +36,12 @@ sfizz_add_benchmark(bm_clamp BM_clamp.cpp)
 sfizz_add_benchmark(bm_allWithin BM_allWithin.cpp)
 
 sfizz_add_benchmark(bm_logger BM_logger.cpp)
-target_link_libraries(bm_logger PRIVATE sfizz::internal)
 sfizz_add_benchmark(bm_smoothers BM_smoothers.cpp)
-target_link_libraries(bm_smoothers PRIVATE sfizz::internal)
 sfizz_add_benchmark(bm_powerFollower BM_powerFollower.cpp)
-target_link_libraries(bm_powerFollower PRIVATE sfizz::internal)
 
 if(TARGET sfizz::samplerate)
 sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resample PRIVATE sfizz::samplerate sfizz::sndfile sfizz::cpuid sfizz::hiir)
+target_link_libraries(bm_resample PRIVATE sfizz::samplerate sfizz::sndfile sfizz::hiir)
 endif()
 
 sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
@@ -90,13 +71,7 @@ target_link_libraries(bm_filterModulation PRIVATE sfizz::sndfile)
 sfizz_add_benchmark(bm_filterStereoMono BM_filterStereoMono.cpp ../src/sfizz/SfzFilter.cpp)
 target_link_libraries(bm_filterStereoMono PRIVATE sfizz::sndfile)
 
-sfizz_add_benchmark(bm_stringResonator BM_stringResonator.cpp
-    ../src/sfizz/effects/impl/ResonantArray.cpp
-    ../src/sfizz/effects/impl/ResonantArraySSE.cpp
-    ../src/sfizz/effects/impl/ResonantArrayAVX.cpp
-    ../src/sfizz/effects/impl/ResonantString.cpp
-    ../src/sfizz/effects/impl/ResonantStringSSE.cpp
-    ../src/sfizz/effects/impl/ResonantStringAVX.cpp)
+sfizz_add_benchmark(bm_stringResonator BM_stringResonator.cpp)
 target_link_libraries(bm_stringResonator PRIVATE sfizz::sndfile)
 
 add_custom_target(sfizz_benchmarks)

@@ -188,3 +188,8 @@ if(NOT TARGET sfizz::samplerate)
         target_link_libraries(sfizz_samplerate INTERFACE "${SAMPLERATE_LIBRARY}")
     endif()
 endif()
+
+# The benchmark library
+if(SFIZZ_BENCHMARKS)
+    find_package(benchmark CONFIG REQUIRED)
+endif()
