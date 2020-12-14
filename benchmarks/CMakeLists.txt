@@ -20,19 +20,18 @@ endif()
 
 add_library(bm_simd STATIC ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_simd PRIVATE absl::span sfizz::cpuid)
-target_include_directories(bm_simd PRIVATE ../src/external)
 add_library(bm_ftz STATIC ../src/sfizz/ScopedFTZ.cpp)
 
 macro(sfizz_add_benchmark TARGET)
     add_executable("${TARGET}" ${ARGN})
     target_link_libraries("${TARGET}"
-        PRIVATE absl::span absl::algorithm
+        PRIVATE sfizz::filesystem absl::span absl::algorithm
         PRIVATE benchmark::benchmark benchmark::benchmark_main
         PRIVATE bm_simd bm_ftz)
     if(LIBATOMIC_FOUND)
         target_link_libraries("${TARGET}" PRIVATE atomic)
     endif()
-    target_include_directories("${TARGET}" PRIVATE ../src/sfizz ../src/external)
+    target_include_directories("${TARGET}" PRIVATE ../src/sfizz)
     sfizz_enable_fast_math("${TARGET}")
 endmacro()
 
@@ -75,7 +74,7 @@ target_link_libraries(bm_powerFollower PRIVATE sfizz::sfizz)
 
 if(TARGET sfizz::samplerate)
 sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resample PRIVATE sfizz::samplerate sfizz::sndfile sfizz::cpuid)
+target_link_libraries(bm_resample PRIVATE sfizz::samplerate sfizz::sndfile sfizz::cpuid sfizz::hiir)
 endif()
 
 sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
@@ -95,7 +94,7 @@ sfizz_add_benchmark(bm_readChunkFlac BM_readChunkFlac.cpp)
 target_link_libraries(bm_readChunkFlac PRIVATE sfizz::sndfile)
 
 sfizz_add_benchmark(bm_resampleChunk BM_resampleChunk.cpp)
-target_link_libraries(bm_resampleChunk PRIVATE sfizz::sndfile)
+target_link_libraries(bm_resampleChunk PRIVATE sfizz::sndfile sfizz::hiir)
 
 sfizz_add_benchmark(bm_interpolators BM_interpolators.cpp)
 

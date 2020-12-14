@@ -69,7 +69,7 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_include_directories(sfizz_editor PRIVATE "../src/external") # ghc::filesystem
+target_link_libraries(sfizz_editor PRIVATE sfizz::filesystem)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)
