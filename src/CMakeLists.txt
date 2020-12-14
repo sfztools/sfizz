@@ -1,8 +1,5 @@
 include(GNUInstallDirs)
 
-add_subdirectory(external/kiss_fft)
-add_subdirectory(external/cpuid)
-
 set(FAUST_FILES
     sfizz/dsp/filters/filters_modulable.dsp
     sfizz/dsp/filters/rbj_filters.dsp
@@ -242,7 +239,7 @@ target_link_libraries(sfizz_messaging PUBLIC absl::strings)
 add_library(sfizz_internal STATIC)
 add_library(sfizz::internal ALIAS sfizz_internal)
 target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES})
-target_include_directories(sfizz_internal PUBLIC .)
+target_include_directories(sfizz_internal PUBLIC "." "sfizz")
 target_link_libraries(sfizz_internal
     PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue
     PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cpuid sfizz::threadpool sfizz::jsl sfizz::atomic)
@@ -254,7 +251,7 @@ if(WIN32)
     target_compile_definitions(sfizz_internal PRIVATE _USE_MATH_DEFINES)
 endif()
 if(SFIZZ_RELEASE_ASSERTS)
-    target_compile_definitions(sfizz_internal PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+    target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
 sfizz_enable_fast_math(sfizz_internal)
 

@@ -1,32 +1,22 @@
-find_package(PkgConfig)
-if(PKGCONFIG_FOUND)
-    pkg_check_modules(JACK "jack")
+if(TARGET Qt5::Widgets AND TARGET sfizz::jack)
+    add_executable(sfizz_demo_filters DemoFilters.cpp)
+    target_link_libraries(sfizz_demo_filters PRIVATE sfizz::internal sfizz::jack Qt5::Widgets)
+    set_target_properties(sfizz_demo_filters PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_smooth DemoSmooth.cpp)
+    target_link_libraries(sfizz_demo_smooth PRIVATE sfizz::internal sfizz::jack Qt5::Widgets)
+    set_target_properties(sfizz_demo_smooth PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_stereo DemoStereo.cpp)
+    target_link_libraries(sfizz_demo_stereo PRIVATE sfizz::internal sfizz::jack Qt5::Widgets)
+    set_target_properties(sfizz_demo_stereo PROPERTIES AUTOUIC ON)
+
+    add_executable(sfizz_demo_wavetables DemoWavetables.cpp)
+    target_link_libraries(sfizz_demo_wavetables PRIVATE sfizz::internal sfizz::jack Qt5::Widgets)
+    set_target_properties(sfizz_demo_wavetables PROPERTIES AUTOUIC ON)
 endif()
-find_package(Qt5 COMPONENTS Widgets)
 
 if(TARGET Qt5::Widgets)
-    if(JACK_FOUND)
-        add_executable(sfizz_demo_filters DemoFilters.cpp)
-        target_include_directories(sfizz_demo_filters PRIVATE ${JACK_INCLUDE_DIRS})
-        target_link_libraries(sfizz_demo_filters PRIVATE sfizz::internal Qt5::Widgets ${JACK_LIBRARIES})
-        set_target_properties(sfizz_demo_filters PROPERTIES AUTOUIC ON)
-
-        add_executable(sfizz_demo_smooth DemoSmooth.cpp)
-        target_include_directories(sfizz_demo_smooth PRIVATE ${JACK_INCLUDE_DIRS})
-        target_link_libraries(sfizz_demo_smooth PRIVATE sfizz::internal Qt5::Widgets ${JACK_LIBRARIES})
-        set_target_properties(sfizz_demo_smooth PROPERTIES AUTOUIC ON)
-
-        add_executable(sfizz_demo_stereo DemoStereo.cpp)
-        target_include_directories(sfizz_demo_stereo PRIVATE ${JACK_INCLUDE_DIRS})
-        target_link_libraries(sfizz_demo_stereo PRIVATE sfizz::internal Qt5::Widgets ${JACK_LIBRARIES})
-        set_target_properties(sfizz_demo_stereo PROPERTIES AUTOUIC ON)
-
-        add_executable(sfizz_demo_wavetables DemoWavetables.cpp)
-        target_include_directories(sfizz_demo_wavetables PRIVATE ${JACK_INCLUDE_DIRS})
-        target_link_libraries(sfizz_demo_wavetables PRIVATE sfizz::internal Qt5::Widgets ${JACK_LIBRARIES})
-        set_target_properties(sfizz_demo_wavetables PROPERTIES AUTOUIC ON)
-    endif()
-
     add_executable(sfizz_demo_parser DemoParser.cpp)
     target_link_libraries(sfizz_demo_parser PRIVATE sfizz::parser Qt5::Widgets)
     set_target_properties(sfizz_demo_parser PROPERTIES AUTOUIC ON)

@@ -36,6 +36,7 @@ option (SFIZZ_STATIC_DEPENDENCIES "Link dependencies statically [default: OFF]" 
 option (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds [default: OFF]" OFF)
 
 include (SfizzConfig)
+include (SfizzDeps)
 
 # Don't use IPO in non Release builds
 include (CheckIPO)

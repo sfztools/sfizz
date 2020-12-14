@@ -1,8 +1,6 @@
 ###############################
 # Test application
 
-project(sfizz)
-
 set(SFIZZ_TEST_SOURCES
     DirectRegionT.cpp
     RegionValuesT.cpp
