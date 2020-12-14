@@ -244,7 +244,7 @@ void Synth::Impl::clear()
     resources_.midiState.reset();
     resources_.filePool.clear();
     resources_.filePool.setRamLoading(config::loadInRam);
-    ccLabels_.clear();
+    clearCCLabels();
     keyLabels_.clear();
     keyswitchLabels_.clear();
     globalOpcodes_.clear();
@@ -261,9 +261,9 @@ void Synth::Impl::clear()
     setDefaultHdcc(11, 1.0f);
 
     // set default controller labels
-    insertPairUniquely(ccLabels_, 7, "Volume");
-    insertPairUniquely(ccLabels_, 10, "Pan");
-    insertPairUniquely(ccLabels_, 11, "Expression");
+    setCCLabel(7, "Volume");
+    setCCLabel(10, "Pan");
+    setCCLabel(11, "Expression");
 }
 
 void Synth::Impl::handleMasterOpcodes(const std::vector<Opcode>& members)
@@ -365,7 +365,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                insertPairUniquely(ccLabels_, member.parameters.back(), std::string(member.value));
+                setCCLabel(member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
             if (member.parameters.back() <= Default::keyRange.getEnd()) {
@@ -1792,6 +1792,30 @@ std::bitset<config::numCCs> Synth::Impl::collectAllUsedCCs()
         collectUsedCCsFromRegion(used, *region);
     collectUsedCCsFromModulations(used, resources_.modMatrix);
     return used;
+}
+
+const std::string* Synth::Impl::getCCLabel(int ccNumber)
+{
+    auto it = ccLabelsMap_.find(ccNumber);
+    return (it == ccLabelsMap_.end()) ? nullptr : &ccLabels_[it->second].second;
+}
+
+void Synth::Impl::setCCLabel(int ccNumber, std::string name)
+{
+    auto it = ccLabelsMap_.find(ccNumber);
+    if (it != ccLabelsMap_.end())
+        ccLabels_[it->second].second = std::move(name);
+    else {
+        size_t index = ccLabels_.size();
+        ccLabels_.emplace_back(ccNumber, std::move(name));
+        ccLabelsMap_[ccNumber] = index;
+    }
+}
+
+void Synth::Impl::clearCCLabels()
+{
+    ccLabels_.clear();
+    ccLabelsMap_.clear();
 }
 
 Parser& Synth::getParser() noexcept

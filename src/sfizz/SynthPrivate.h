@@ -179,6 +179,10 @@ struct Synth::Impl final: public Parser::Listener {
 
     std::bitset<config::numCCs> collectAllUsedCCs();
 
+    const std::string* getCCLabel(int ccNumber);
+    void setCCLabel(int ccNumber, std::string name);
+    void clearCCLabels();
+
     /**
      * @brief Perform a CC event
      *
@@ -208,6 +212,7 @@ struct Synth::Impl final: public Parser::Listener {
 
     // Names for the CC and notes as set by label_cc and label_key
     std::vector<CCNamePair> ccLabels_;
+    std::map<int, size_t> ccLabelsMap_;
     std::vector<NoteNamePair> keyLabels_;
     std::vector<NoteNamePair> keyswitchLabels_;
 

@@ -36,6 +36,47 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive(delay, "/hello", "", nullptr);
         } break;
 
+        //----------------------------------------------------------------------
+
+        MATCH("/cc/slots", "") {
+            uint8_t data[(config::numCCs + 7) / 8] = {};
+
+            const std::bitset<config::numCCs>& ccs = impl.currentUsedCCs_;
+            for (unsigned i = 0; i < config::numCCs; ++i)
+                data[i / 8] |= ccs.test(i) << (i % 8);
+
+            sfizz_blob_t blob { data, sizeof(data) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/cc&/default", "") {
+            if (indices[0] >= config::numCCs)
+                break;
+            client.receive<'f'>(delay, path, impl.defaultCCValues_[indices[0]]);
+        } break;
+
+        MATCH("/cc&/value", "") {
+            if (indices[0] >= config::numCCs)
+                break;
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.midiState.getCCValue(indices[0]));
+        } break;
+
+        MATCH("/cc&/value", "f") {
+            if (indices[0] >= config::numCCs)
+                break;
+            impl.resources_.midiState.ccEvent(delay, indices[0], args[0].f);
+        } break;
+
+        MATCH("/cc&/label", "") {
+            if (indices[0] >= config::numCCs)
+                break;
+            const std::string* label = impl.getCCLabel(indices[0]);
+            client.receive<'s'>(delay, path, label ? label->c_str() : "");
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/region&/delay", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.delay);
