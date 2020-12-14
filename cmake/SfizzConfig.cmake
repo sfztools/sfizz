@@ -158,6 +158,14 @@ add_library(sfizz_hiir INTERFACE)
 add_library(sfizz::hiir ALIAS sfizz_hiir)
 target_include_directories(sfizz_hiir INTERFACE "src/external/hiir")
 
+add_library(sfizz_threadpool INTERFACE)
+add_library(sfizz::threadpool ALIAS sfizz_threadpool)
+target_include_directories(sfizz_threadpool INTERFACE "external/threadpool")
+
+add_library(sfizz_atomic_queue INTERFACE)
+add_library(sfizz::atomic_queue ALIAS sfizz_atomic_queue)
+target_include_directories(sfizz_atomic_queue INTERFACE "external/atomic_queue/include")
+
 add_library(sfizz_filesystem INTERFACE)
 add_library(sfizz::filesystem ALIAS sfizz_filesystem)
 target_include_directories(sfizz_filesystem INTERFACE "external/filesystem/include")

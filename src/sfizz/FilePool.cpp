@@ -32,6 +32,7 @@
 #include "Config.h"
 #include "Debug.h"
 #include "Oversampler.h"
+#include <ThreadPool.h>
 #include "absl/types/span.h"
 #include "absl/strings/match.h"
 #include "absl/memory/memory.h"
@@ -44,7 +45,6 @@
 #else
 #include <pthread.h>
 #endif
-#include "threadpool/ThreadPool.h"
 using namespace std::placeholders;
 
 static std::weak_ptr<ThreadPool> globalThreadPoolWeakPtr;

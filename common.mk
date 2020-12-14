@@ -178,6 +178,14 @@ endif
 
 SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/src/external/hiir
 
+# threadpool dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/threadpool
+
+# atomic_queue dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/atomic_queue/include
+
 # ghc::filesystem dependency
 
 SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/filesystem/include

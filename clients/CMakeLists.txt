@@ -22,7 +22,7 @@ if(SFIZZ_RENDER)
     target_compile_definitions(sfizz_fmidi PUBLIC "FMIDI_STATIC=1" "FMIDI_DISABLE_DESCRIBE_API=1")
 
     add_executable(sfizz_render MidiHelpers.h sfizz_render.cpp)
-    target_link_libraries(sfizz_render PRIVATE sfizz::sfizz sfizz::fmidi sfizz::sndfile sfizz::cxxopts)
+    target_link_libraries(sfizz_render PRIVATE sfizz::internal sfizz::fmidi sfizz::sndfile sfizz::cxxopts)
     sfizz_enable_lto_if_needed(sfizz_render)
     install(TARGETS sfizz_render DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "render" OPTIONAL)
 endif()
