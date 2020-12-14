@@ -4,18 +4,6 @@ set(BENCHMARK_SIMD_SOURCES)
 sfizz_add_simd_sources(BENCHMARK_SIMD_SOURCES "../src")
 find_package(benchmark CONFIG REQUIRED)
 
-# Check libsamplerate
-find_library(SAMPLERATE_LIBRARY "samplerate")
-find_path(SAMPLERATE_INCLUDE_DIR "samplerate.h")
-message(STATUS "Checking samplerate library: ${SAMPLERATE_LIBRARY}")
-message(STATUS "Checking samplerate includes: ${SAMPLERATE_INCLUDE_DIR}")
-if(SAMPLERATE_LIBRARY AND SAMPLERATE_INCLUDE_DIR)
-    add_library(sfizz_samplerate INTERFACE)
-    add_library(sfizz::samplerate ALIAS sfizz_samplerate)
-    target_include_directories(sfizz_samplerate INTERFACE "${SAMPLERATE_INCLUDE_DIR}")
-    target_link_libraries(sfizz_samplerate INTERFACE "${SAMPLERATE_LIBRARY}")
-endif()
-
 add_library(bm_simd STATIC ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_simd PRIVATE absl::span sfizz::cpuid)
 add_library(bm_ftz STATIC ../src/sfizz/ScopedFTZ.cpp)
