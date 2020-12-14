@@ -9,6 +9,7 @@
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
 #include "modulations/sources/LFO.h"
+#include "utility/BitArray.h"
 
 namespace sfz {
 
@@ -168,16 +169,16 @@ struct Synth::Impl final: public Parser::Listener {
     void finalizeSfzLoad();
 
     template<class T>
-    static void collectUsedCCsFromCCMap(std::bitset<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
+    static void collectUsedCCsFromCCMap(BitArray<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
     {
         for (auto& mod : map)
-            usedCCs[mod.cc] = true;
+            usedCCs.set(mod.cc);
     }
 
-    static void collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region);
-    static void collectUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm);
+    static void collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, const Region& region);
+    static void collectUsedCCsFromModulations(BitArray<config::numCCs>& usedCCs, const ModMatrix& mm);
 
-    std::bitset<config::numCCs> collectAllUsedCCs();
+    BitArray<config::numCCs> collectAllUsedCCs();
 
     const std::string* getCCLabel(int ccNumber);
     void setCCLabel(int ccNumber, std::string name);
@@ -283,7 +284,7 @@ struct Synth::Impl final: public Parser::Listener {
     absl::optional<fs::file_time_type> modificationTime_ { };
 
     std::array<float, config::numCCs> defaultCCValues_;
-    std::bitset<config::numCCs> currentUsedCCs_;
+    BitArray<config::numCCs> currentUsedCCs_;
 
     // Messaging
     sfizz_receive_t* broadcastReceiver = nullptr;

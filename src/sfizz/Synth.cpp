@@ -696,7 +696,7 @@ void Synth::Impl::finalizeSfzLoad()
     regions_.resize(currentRegionCount);
 
     // collect all CCs used in regions, with matrix not yet connected
-    std::bitset<config::numCCs> usedCCs;
+    BitArray<config::numCCs> usedCCs;
     for (const RegionPtr& regionPtr : regions_) {
         const Region& region = *regionPtr;
         collectUsedCCsFromRegion(usedCCs, region);
@@ -1328,8 +1328,8 @@ std::string Synth::exportMidnam(absl::string_view model) const
             }
         }
 
-        for (unsigned i = 0, n = std::min<unsigned>(128, anonymousCCs.size()); i < n; ++i) {
-            if (anonymousCCs[i]) {
+        for (unsigned i = 0, n = std::min<unsigned>(128, anonymousCCs.bit_size()); i < n; ++i) {
+            if (anonymousCCs.test(i)) {
                 pugi::xml_node cn = cns.append_child("Control");
                 cn.append_attribute("Type").set_value("7bit");
                 cn.append_attribute("Number").set_value(std::to_string(i).c_str());
@@ -1716,7 +1716,7 @@ void Synth::allSoundOff() noexcept
         effectBus->clear();
 }
 
-const std::bitset<config::numCCs>& Synth::getUsedCCs() const noexcept
+const BitArray<config::numCCs>& Synth::getUsedCCs() const noexcept
 {
     Impl& impl = *impl_;
     return impl.currentUsedCCs_;
@@ -1729,7 +1729,7 @@ void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
     impl.broadcastData = data;
 }
 
-void Synth::Impl::collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region)
+void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, const Region& region)
 {
     collectUsedCCsFromCCMap(usedCCs, region.offsetCC);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
@@ -1763,11 +1763,11 @@ void Synth::Impl::collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs,
     collectUsedCCsFromCCMap(usedCCs, region.crossfadeCCOutRange);
 }
 
-void Synth::Impl::collectUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm)
+void Synth::Impl::collectUsedCCsFromModulations(BitArray<config::numCCs>& usedCCs, const ModMatrix& mm)
 {
     class CCSourceCollector : public ModMatrix::KeyVisitor {
     public:
-        explicit CCSourceCollector(std::bitset<config::numCCs>& used)
+        explicit CCSourceCollector(BitArray<config::numCCs>& used)
             : used_(used)
         {
         }
@@ -1778,16 +1778,16 @@ void Synth::Impl::collectUsedCCsFromModulations(std::bitset<config::numCCs>& use
                 used_.set(key.parameters().cc);
             return true;
         }
-        std::bitset<config::numCCs>& used_;
+        BitArray<config::numCCs>& used_;
     };
 
     CCSourceCollector vtor(usedCCs);
     mm.visitSources(vtor);
 }
 
-std::bitset<config::numCCs> Synth::Impl::collectAllUsedCCs()
+BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
 {
-    std::bitset<config::numCCs> used;
+    BitArray<config::numCCs> used;
     for (const Impl::RegionPtr& region : regions_)
         collectUsedCCsFromRegion(used, *region);
     collectUsedCCsFromModulations(used, resources_.modMatrix);

@@ -39,13 +39,8 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         //----------------------------------------------------------------------
 
         MATCH("/cc/slots", "") {
-            uint8_t data[(config::numCCs + 7) / 8] = {};
-
-            const std::bitset<config::numCCs>& ccs = impl.currentUsedCCs_;
-            for (unsigned i = 0; i < config::numCCs; ++i)
-                data[i / 8] |= ccs.test(i) << (i % 8);
-
-            sfizz_blob_t blob { data, sizeof(data) };
+            const BitArray<config::numCCs>& ccs = impl.currentUsedCCs_;
+            sfizz_blob_t blob { ccs.data(), static_cast<uint32_t>(ccs.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
         } break;
 
