@@ -154,6 +154,14 @@ add_library(sfizz_tunings STATIC "src/external/tunings/src/Tunings.cpp")
 add_library(sfizz::tunings ALIAS sfizz_tunings)
 target_include_directories(sfizz_tunings PUBLIC "src/external/tunings/include")
 
+add_library(sfizz_hiir INTERFACE)
+add_library(sfizz::hiir ALIAS sfizz_hiir)
+target_include_directories(sfizz_hiir INTERFACE "src/external/hiir")
+
+add_library(sfizz_filesystem INTERFACE)
+add_library(sfizz::filesystem ALIAS sfizz_filesystem)
+target_include_directories(sfizz_filesystem INTERFACE "external/filesystem/include")
+
 add_library(sfizz_atomic INTERFACE)
 add_library(sfizz::atomic ALIAS sfizz_atomic)
 if(UNIX AND NOT APPLE)
