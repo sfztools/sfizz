@@ -2,11 +2,12 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-project(sfizz-kissfft VERSION "1.3.0" LANGUAGES C)
+project(sfizz_kissfft VERSION "1.3.0" LANGUAGES C)
 
-add_library(sfizz-kissfft STATIC
+add_library(sfizz_kissfft STATIC
     kiss_fft.c
     tools/kiss_fftr.c)
-target_include_directories(sfizz-kissfft
+add_library(sfizz::kissfft ALIAS sfizz_kissfft)
+target_include_directories(sfizz_kissfft
     PUBLIC "."
     PUBLIC "tools")

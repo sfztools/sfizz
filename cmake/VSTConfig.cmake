@@ -1,22 +1,22 @@
-set (VSTPLUGIN_NAME            "sfizz")
-set (VSTPLUGIN_VENDOR          "Paul Ferrand")
-set (VSTPLUGIN_URL             "http://sfztools.github.io/sfizz")
-set (VSTPLUGIN_EMAIL           "paul@ferrand.cc")
+set(VSTPLUGIN_NAME            "sfizz")
+set(VSTPLUGIN_VENDOR          "Paul Ferrand")
+set(VSTPLUGIN_URL             "http://sfztools.github.io/sfizz")
+set(VSTPLUGIN_EMAIL           "paul@ferrand.cc")
 
-if (APPLE)
-    set (VSTPLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3" CACHE STRING
+if(APPLE)
+    set(VSTPLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3" CACHE STRING
     "Install destination for VST bundle [default: $ENV{HOME}/Library/Audio/Plug-Ins/VST3]")
-    set (AUPLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/Components" CACHE STRING
+    set(AUPLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/Components" CACHE STRING
     "Install destination for AudioUnit bundle [default: $ENV{HOME}/Library/Audio/Plug-Ins/Components]")
-elseif (MSVC)
-    set (VSTPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/vst3" CACHE STRING
+elseif(MSVC)
+    set(VSTPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/vst3" CACHE STRING
     "Install destination for VST bundle [default: ${CMAKE_INSTALL_PREFIX}/vst3]")
 else()
-    set (VSTPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/vst3" CACHE STRING
+    set(VSTPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/vst3" CACHE STRING
     "Install destination for VST bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/vst3]")
 endif()
 
-if (NOT VST3_SYSTEM_PROCESSOR)
+if(NOT VST3_SYSTEM_PROCESSOR)
     set(VST3_SYSTEM_PROCESSOR "${SFIZZ_SYSTEM_PROCESSOR}")
 endif()
 

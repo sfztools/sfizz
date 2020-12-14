@@ -1,17 +1,17 @@
 # Configuration for this plugin
 # TODO: generate version from git
-set (LV2PLUGIN_VERSION_MINOR   6)
-set (LV2PLUGIN_VERSION_MICRO   0)
-set (LV2PLUGIN_NAME            "sfizz")
-set (LV2PLUGIN_COMMENT         "SFZ sampler")
-set (LV2PLUGIN_URI             "http://sfztools.github.io/sfizz")
-set (LV2PLUGIN_REPOSITORY      "https://github.com/sfztools/sfizz")
-set (LV2PLUGIN_AUTHOR          "SFZTools")
-set (LV2PLUGIN_EMAIL           "paul@ferrand.cc")
-if (SFIZZ_USE_VCPKG)
-    set (LV2PLUGIN_SPDX_LICENSE_ID "LGPL-3.0-only")
+set(LV2PLUGIN_VERSION_MINOR   6)
+set(LV2PLUGIN_VERSION_MICRO   0)
+set(LV2PLUGIN_NAME            "sfizz")
+set(LV2PLUGIN_COMMENT         "SFZ sampler")
+set(LV2PLUGIN_URI             "http://sfztools.github.io/sfizz")
+set(LV2PLUGIN_REPOSITORY      "https://github.com/sfztools/sfizz")
+set(LV2PLUGIN_AUTHOR          "SFZTools")
+set(LV2PLUGIN_EMAIL           "paul@ferrand.cc")
+if(SFIZZ_USE_VCPKG)
+    set(LV2PLUGIN_SPDX_LICENSE_ID "LGPL-3.0-only")
 else()
-    set (LV2PLUGIN_SPDX_LICENSE_ID "ISC")
+    set(LV2PLUGIN_SPDX_LICENSE_ID "ISC")
 endif()
 
 if(SFIZZ_LV2_UI)
@@ -30,13 +30,13 @@ else()
     set(LV2_UI_TYPE "X11UI")
 endif()
 
-if (APPLE)
-    set (LV2PLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/LV2" CACHE STRING
+if(APPLE)
+    set(LV2PLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/LV2" CACHE STRING
     "Install destination for LV2 bundle [default: $ENV{HOME}/Library/Audio/Plug-Ins/LV2]")
-elseif (MSVC)
-    set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lv2" CACHE STRING
+elseif(MSVC)
+    set(LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lv2" CACHE STRING
     "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lv2]")
 else()
-    set (LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
+    set(LV2PLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/lv2" CACHE STRING
     "Install destination for LV2 bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/lv2]")
 endif()

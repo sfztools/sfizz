@@ -63,7 +63,7 @@ endfunction()
 
 # --- VSTGUI ---
 function(plugin_add_vstgui NAME)
-    target_link_libraries("${NAME}" PRIVATE sfizz-vstgui)
+    target_link_libraries("${NAME}" PRIVATE sfizz::vstgui)
     target_sources("${NAME}" PRIVATE "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstguieditor.cpp")
     target_compile_definitions("${NAME}" PRIVATE "SMTG_MODULE_IS_BUNDLE=1")
 endfunction()
