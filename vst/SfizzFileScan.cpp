@@ -199,6 +199,9 @@ std::vector<fs::path> getSfzSearchPaths()
         addPath(*configDefaultPath);
     addPath(fallbackDefaultPath);
 
+    for (const fs::path& path : getEnvironmentSfzPaths())
+        addPath(path);
+
     for (const fs::path& foreign : {
             getAriaPathSetting("user_files_dir"),
             getAriaPathSetting("Converted_path") })
@@ -229,6 +232,52 @@ void setSfzConfigDefaultPath(const fs::path& path)
 fs::path getSfzFallbackDefaultPath()
 {
     return getUserDocumentsDirectory() / "SFZ instruments";
+}
+
+std::vector<fs::path> getEnvironmentSfzPaths()
+{
+    std::vector<fs::path> paths;
+
+#if defined(_WIN32)
+    std::unique_ptr<WCHAR[]> buf;
+
+    DWORD bufsize = GetEnvironmentVariableW(L"SFZ_PATH", nullptr, 0);
+    if (bufsize == 0)
+        return {};
+
+    buf.reset(new WCHAR[bufsize]);
+    if (GetEnvironmentVariableW(L"SFZ_PATH", buf.get(), bufsize) != bufsize - 1)
+        return {};
+
+    paths.reserve(8);
+
+    const WCHAR* env = buf.get();
+    while (*env) {
+        const WCHAR* endp;
+        for (endp = env; *endp && *endp != L';'; ++endp);
+        fs::path path = fs::path(env, endp);
+        if (!path.empty() && path.is_absolute())
+            paths.push_back(std::move(path));
+        env = *endp ? (endp + 1) : endp;
+    }
+#else
+    const char* env = getenv("SFZ_PATH");
+    if (!env)
+        return {};
+
+    paths.reserve(8);
+
+    while (*env) {
+        const char* endp;
+        for (endp = env; *endp != ':' && *endp != '\0'; ++endp);
+        fs::path path = fs::u8path(env, endp);
+        if (!path.empty() && path.is_absolute())
+            paths.push_back(std::move(path));
+        env = *endp ? (endp + 1) : endp;
+    }
+#endif
+
+    return paths;
 }
 
 } // namespace SfizzPaths
