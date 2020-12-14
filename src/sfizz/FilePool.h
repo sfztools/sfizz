@@ -342,13 +342,9 @@ private:
     struct QueuedFileData
     {
         using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
-        QueuedFileData() = default;
-        QueuedFileData(std::weak_ptr<FileId> id, FileData* data, TimePoint queuedTime)
+        QueuedFileData() noexcept {}
+        QueuedFileData(std::weak_ptr<FileId> id, FileData* data, TimePoint queuedTime) noexcept
         : id(id), data(data), queuedTime(queuedTime) {}
-        QueuedFileData(const QueuedFileData&) = default;
-        QueuedFileData& operator=(const QueuedFileData&) = default;
-        QueuedFileData(QueuedFileData&&) = default;
-        QueuedFileData& operator=(QueuedFileData&&) = default;
         std::weak_ptr<FileId> id;
         FileData* data { nullptr };
         TimePoint queuedTime {};
