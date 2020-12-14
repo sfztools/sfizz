@@ -59,7 +59,7 @@ if(WIN32)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
-    PRIVATE sfizz_editor
+    PRIVATE sfizz::editor
     PRIVATE sfizz::pugixml sfizz::filesystem)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
@@ -197,7 +197,7 @@ elseif(SFIZZ_AU)
 
     target_link_libraries(${AUPLUGIN_PRJ_NAME}
         PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
-        PRIVATE sfizz_editor
+        PRIVATE sfizz::editor
         PRIVATE sfizz::pugixml sfizz::filesystem)
     target_include_directories(${AUPLUGIN_PRJ_NAME}
         PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
