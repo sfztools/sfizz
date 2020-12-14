@@ -1,14 +1,14 @@
-set (VSTPLUGIN_PRJ_NAME "${PROJECT_NAME}_vst3")
-set (VSTPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.vst3")
+set(VSTPLUGIN_PRJ_NAME "${PROJECT_NAME}_vst3")
+set(VSTPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.vst3")
 
-set (VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
-#set (AUWRAPPER_BASEDIR "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper")
-set (AUWRAPPER_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/sfzt_auwrapper")
+set(VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
+#set(AUWRAPPER_BASEDIR "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper")
+set(AUWRAPPER_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/sfzt_auwrapper")
 
 # VST plugin specific settings
-include (VSTConfig)
+include(VSTConfig)
 
-configure_file (VstPluginDefs.h.in "${CMAKE_CURRENT_BINARY_DIR}/VstPluginDefs.h")
+configure_file(VstPluginDefs.h.in "${CMAKE_CURRENT_BINARY_DIR}/VstPluginDefs.h")
 
 # Build VST3 SDK
 include("cmake/Vst3.cmake")
@@ -71,24 +71,24 @@ plugin_add_vst3sdk(${VSTPLUGIN_PRJ_NAME})
 plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
 
 # Add the ring buffer
-set (RINGBUFFER_HEADERS
+set(RINGBUFFER_HEADERS
     "external/ring_buffer/ring_buffer/ring_buffer.h"
     "external/ring_buffer/ring_buffer/ring_buffer.tcc")
 add_library(sfizz_ring_buffer STATIC
     "external/ring_buffer/ring_buffer/ring_buffer.cpp"
     ${RINGBUFFER_HEADERS})
-source_group ("Header Files" FILES ${RINGBUFFER_HEADERS})
+source_group("Header Files" FILES ${RINGBUFFER_HEADERS})
 target_include_directories(sfizz_ring_buffer INTERFACE "external/ring_buffer")
 
 target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE sfizz_ring_buffer)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/vst3.version")
 endif()
-sfizz_enable_lto_if_needed (${VSTPLUGIN_PRJ_NAME})
-if (MINGW)
-    set_target_properties (${VSTPLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
+sfizz_enable_lto_if_needed(${VSTPLUGIN_PRJ_NAME})
+if(MINGW)
+    set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
 endif()
 
 # Link system dependencies
@@ -102,8 +102,8 @@ else()
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE ${GLIB_LIBRARIES})
 endif()
 
-# Create the bundle (see "VST 3 Locations / Format")
-execute_process (
+# Create the bundle(see "VST 3 Locations / Format")
+execute_process(
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
 copy_editor_resources(
     "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
@@ -140,7 +140,7 @@ else()
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     gw_target_warn(${VSTPLUGIN_PRJ_NAME} PRIVATE
         "-Wno-extra"
         "-Wno-multichar"
@@ -154,12 +154,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 # To help debugging the link only
-if (FALSE)
+if(FALSE)
     target_link_options(${VSTPLUGIN_PRJ_NAME} PRIVATE "-Wl,-no-undefined")
 endif()
 
 # Installation
-if (NOT MSVC)
+if(NOT MSVC)
     install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
         DESTINATION "${VSTPLUGIN_INSTALL_DIR}"
         COMPONENT "vst")
@@ -261,7 +261,7 @@ elseif(SFIZZ_AU)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/aucocoaclassprefix.h"
         "#define SMTG_AU_NAMESPACE SMTGAUCocoa${SFIZZ_AU_CLASS_PREFIX_NUMBER}_")
 
-    sfizz_enable_lto_if_needed (${AUPLUGIN_PRJ_NAME})
+    sfizz_enable_lto_if_needed(${AUPLUGIN_PRJ_NAME})
 
     # Create the bundle
     execute_process(
@@ -293,7 +293,7 @@ elseif(SFIZZ_AU)
         DESTINATION "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/SharedSupport/License")
 
     # Add the resource fork
-    if (FALSE)
+    if(FALSE)
         execute_process(COMMAND "xcrun" "--find" "Rez"
             OUTPUT_VARIABLE OSX_REZ_COMMAND OUTPUT_STRIP_TRAILING_WHITESPACE)
         file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -316,7 +316,7 @@ elseif(SFIZZ_AU)
             "${AUWRAPPER_BASEDIR}/auresource.r")
     endif()
 
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         gw_target_warn(${AUPLUGIN_PRJ_NAME} PRIVATE
             "-Wno-extra"
             "-Wno-multichar"

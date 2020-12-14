@@ -1,7 +1,7 @@
 project(sfizz)
 
 # Check SIMD
-include (SfizzSIMDSourceFiles)
+include(SfizzSIMDSourceFiles)
 set(BENCHMARK_SIMD_SOURCES)
 sfizz_add_simd_sources(BENCHMARK_SIMD_SOURCES "../src")
 find_package(benchmark CONFIG REQUIRED)
@@ -23,16 +23,16 @@ target_include_directories(bm_simd PRIVATE ../src/external)
 add_library(bm_ftz STATIC ../src/sfizz/ScopedFTZ.cpp)
 
 macro(sfizz_add_benchmark TARGET)
-	add_executable("${TARGET}" ${ARGN})
-	target_link_libraries("${TARGET}"
-		PRIVATE absl::span absl::algorithm
-		PRIVATE benchmark::benchmark benchmark::benchmark_main
+    add_executable("${TARGET}" ${ARGN})
+    target_link_libraries("${TARGET}"
+        PRIVATE absl::span absl::algorithm
+        PRIVATE benchmark::benchmark benchmark::benchmark_main
         PRIVATE bm_simd bm_ftz)
-    if (LIBATOMIC_FOUND)
-        target_link_libraries ("${TARGET}" PRIVATE atomic)
+    if(LIBATOMIC_FOUND)
+        target_link_libraries("${TARGET}" PRIVATE atomic)
     endif()
-	target_include_directories("${TARGET}" PRIVATE ../src/sfizz ../src/external)
-	sfizz_enable_fast_math("${TARGET}")
+    target_include_directories("${TARGET}" PRIVATE ../src/sfizz ../src/external)
+    sfizz_enable_fast_math("${TARGET}")
 endmacro()
 
 sfizz_add_benchmark(bm_opf_high_vs_low BM_OPF_high_vs_low.cpp)
@@ -72,7 +72,7 @@ target_link_libraries(bm_smoothers PRIVATE sfizz::sfizz)
 sfizz_add_benchmark(bm_powerFollower BM_powerFollower.cpp)
 target_link_libraries(bm_powerFollower PRIVATE sfizz::sfizz)
 
-if (TARGET sfizz-samplerate)
+if(TARGET sfizz-samplerate)
 sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
 target_link_libraries(bm_resample PRIVATE sfizz-samplerate sfizz-sndfile sfizz-cpuid)
 endif()
@@ -115,39 +115,38 @@ target_link_libraries(bm_stringResonator PRIVATE sfizz-sndfile)
 
 add_custom_target(sfizz_benchmarks)
 add_dependencies(sfizz_benchmarks
-	bm_opf_high_vs_low
-	bm_write
-	bm_clock
-	bm_pointerIterationOrOffsets
-	bm_read
-	bm_mean
-	bm_meanSquared
-	bm_cumsum
-	bm_diff
-	bm_mathfuns
-	bm_gain
-	bm_divide
-	bm_ramp
-	bm_ADSR
-	bm_add
-	bm_logger
-	bm_subtract
-	bm_multiplyAdd
-	bm_readChunk
-	bm_resampleChunk
-	bm_envelopes
-	bm_wavfile
-	bm_flacfile
-	bm_filterModulation
-	bm_filterStereoMono
-	bm_stringResonator
-)
+    bm_opf_high_vs_low
+    bm_write
+    bm_clock
+    bm_pointerIterationOrOffsets
+    bm_read
+    bm_mean
+    bm_meanSquared
+    bm_cumsum
+    bm_diff
+    bm_mathfuns
+    bm_gain
+    bm_divide
+    bm_ramp
+    bm_ADSR
+    bm_add
+    bm_logger
+    bm_subtract
+    bm_multiplyAdd
+    bm_readChunk
+    bm_resampleChunk
+    bm_envelopes
+    bm_wavfile
+    bm_flacfile
+    bm_filterModulation
+    bm_filterStereoMono
+    bm_stringResonator)
 
-if (TARGET bm_resample)
-	add_dependencies(sfizz_benchmarks bm_resample)
+if(TARGET bm_resample)
+    add_dependencies(sfizz_benchmarks bm_resample)
 endif()
 
-if (SFIZZ_SYSTEM_PROCESSOR MATCHES "armv7l")
+if(SFIZZ_SYSTEM_PROCESSOR MATCHES "armv7l")
     sfizz_add_benchmark(bm_pan_arm BM_pan_arm.cpp ../src/sfizz/Panning.cpp)
     target_link_libraries(bm_pan_arm PRIVATE sfizz-jsl)
     add_dependencies(sfizz_benchmarks bm_pan_arm)
