@@ -37,10 +37,10 @@ if(TARGET Qt5::Widgets)
 endif()
 
 add_executable(eq_apply EQ.cpp)
-target_link_libraries(eq_apply PRIVATE sfizz::sfizz sfizz::sndfile sfizz::cxxopts)
+target_link_libraries(eq_apply PRIVATE sfizz::sfizz sfizz::sndfile sfizz::cxxopts sfizz::filesystem)
 
 add_executable(filter_apply Filter.cpp)
-target_link_libraries(filter_apply PRIVATE sfizz::sfizz sfizz::sndfile sfizz::cxxopts)
+target_link_libraries(filter_apply PRIVATE sfizz::sfizz sfizz::sndfile sfizz::cxxopts sfizz::filesystem)
 
 add_executable(sfizz_plot_curve PlotCurve.cpp)
 target_link_libraries(sfizz_plot_curve PRIVATE sfizz::sfizz)

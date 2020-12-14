@@ -214,11 +214,13 @@ source_group("Other Files" FILES ${SFIZZ_PARSER_OTHER})
 
 # Sfizz parser library
 add_library(sfizz_parser STATIC)
+add_library(sfizz::parser ALIAS sfizz_parser)
 target_sources(sfizz_parser PRIVATE
     ${SFIZZ_PARSER_HEADERS} ${SFIZZ_PARSER_SOURCES} ${SFIZZ_PARSER_OTHER})
 target_include_directories(sfizz_parser PUBLIC sfizz)
-target_include_directories(sfizz_parser PUBLIC external)
-target_link_libraries(sfizz_parser PUBLIC absl::strings PRIVATE absl::flat_hash_map)
+target_link_libraries(sfizz_parser
+    PUBLIC sfizz::filesystem absl::strings
+    PRIVATE absl::flat_hash_map)
 
 # OSC messaging library
 set(SFIZZ_MESSAGING_HEADERS
@@ -230,6 +232,7 @@ set(SFIZZ_MESSAGING_SOURCES
     sfizz/Messaging.cpp)
 
 add_library(sfizz_messaging STATIC)
+add_library(sfizz::messaging ALIAS sfizz_messaging)
 target_sources(sfizz_messaging PRIVATE
     ${SFIZZ_MESSAGING_HEADERS} ${SFIZZ_MESSAGING_SOURCES})
 target_include_directories(sfizz_messaging PUBLIC ".")
@@ -237,12 +240,13 @@ target_link_libraries(sfizz_messaging PUBLIC absl::strings)
 
 # Sfizz static library
 add_library(sfizz_static STATIC)
+add_library(sfizz::static ALIAS sfizz_static)
 target_sources(sfizz_static PRIVATE
     ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
 target_include_directories(sfizz_static PUBLIC .)
 target_include_directories(sfizz_static PUBLIC external)
-target_link_libraries(sfizz_static PUBLIC absl::strings absl::span)
-target_link_libraries(sfizz_static PRIVATE sfizz_parser sfizz_messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cpuid sfizz::jsl sfizz::atomic)
+target_link_libraries(sfizz_static PUBLIC absl::strings absl::span sfizz::filesystem)
+target_link_libraries(sfizz_static PRIVATE sfizz_parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cpuid sfizz::jsl sfizz::atomic)
 set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
 if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_static PUBLIC SFIZZ_USE_SNDFILE=1)
@@ -263,17 +267,17 @@ endif()
 
 configure_file(${PROJECT_SOURCE_DIR}/scripts/doxygen/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)
 
-add_library(sfizz::parser ALIAS sfizz_parser)
 add_library(sfizz::sfizz ALIAS sfizz_static)
 
 # Shared library and installation target
 if(SFIZZ_SHARED)
     add_library(sfizz_shared SHARED)
+    add_library(sfizz::shared ALIAS sfizz_shared)
     target_sources(sfizz_shared PRIVATE
         ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     target_include_directories(sfizz_shared PRIVATE .)
     target_include_directories(sfizz_shared PRIVATE external)
-    target_link_libraries(sfizz_shared PRIVATE absl::strings absl::span sfizz_parser sfizz_messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cpuid sfizz::jsl sfizz::atomic)
+    target_link_libraries(sfizz_shared PRIVATE absl::strings absl::span sfizz_parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cpuid sfizz::jsl sfizz::filesystem sfizz::atomic)
     if(SFIZZ_USE_SNDFILE)
         target_compile_definitions(sfizz_shared PUBLIC SFIZZ_USE_SNDFILE=1)
         target_link_libraries(sfizz_shared PUBLIC st_audiofile)

@@ -29,7 +29,7 @@ if(SFIZZ_LV2_UI)
         ${PROJECT_NAME}_ui.cpp
         vstgui_helpers.h
         vstgui_helpers.cpp)
-    target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui sfizz_editor sfizz::vstgui)
+    target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui sfizz::editor sfizz::vstgui)
 endif()
 
 # Explicitely strip all symbols on Linux but lv2_descriptor()

@@ -126,7 +126,6 @@ SFIZZ_SOURCES = \
 ### Other internal
 
 SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/sfizz
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external
 
 # Pkg-config dependency
 
@@ -174,6 +173,14 @@ SFIZZ_C_FLAGS += \
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
 endif
+
+# hiir dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/src/external/hiir
+
+# ghc::filesystem dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/filesystem/include
 
 ### Abseil dependency
 
