@@ -1,8 +1,5 @@
 include(GNUInstallDirs)
 
-add_subdirectory(external/kiss_fft)
-add_subdirectory(external/cpuid)
-
 set(FAUST_FILES
     sfizz/dsp/filters/filters_modulable.dsp
     sfizz/dsp/filters/rbj_filters.dsp
