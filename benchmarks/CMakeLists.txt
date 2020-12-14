@@ -1,5 +1,3 @@
-project(sfizz)
-
 # Check SIMD
 include(SfizzSIMDSourceFiles)
 set(BENCHMARK_SIMD_SOURCES)
