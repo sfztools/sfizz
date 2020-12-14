@@ -55,15 +55,13 @@ struct GetIndexShuffleBits<false, array_size, elements_per_cache_line> {
 // the element within the cache line) with the next N bits (which are the index of the cache line)
 // of the element index.
 template<int BITS>
-constexpr unsigned remap_index_with_mix(unsigned index, unsigned mix)
-{
+constexpr unsigned remap_index_with_mix(unsigned index, unsigned mix) {
     return index ^ mix ^ (mix << BITS);
 }
 
 template<int BITS>
 constexpr unsigned remap_index(unsigned index) noexcept {
-    return remap_index_with_mix<BITS>(
-        index, (index ^ (index >> BITS)) & ((1u << BITS) - 1));
+    return remap_index_with_mix<BITS>(index, (index ^ (index >> BITS)) & ((1u << BITS) - 1));
 }
 
 template<>
@@ -133,7 +131,7 @@ protected:
 
     // The special member functions are not thread-safe.
 
-    AtomicQueueCommon() = default;
+    AtomicQueueCommon() noexcept = default;
 
     AtomicQueueCommon(AtomicQueueCommon const& b) noexcept
         : head_(b.head_.load(X))
@@ -213,7 +211,7 @@ protected:
         else {
             for(;;) {
                 unsigned char expected = STORED;
-                if(ATOMIC_QUEUE_LIKELY(state.compare_exchange_strong(expected, LOADING, X, X))) {
+                if(ATOMIC_QUEUE_LIKELY(state.compare_exchange_strong(expected, LOADING, A, X))) {
                     T element{std::move(q_element)};
                     state.store(EMPTY, R);
                     return element;
@@ -238,7 +236,7 @@ protected:
         else {
             for(;;) {
                 unsigned char expected = EMPTY;
-                if(ATOMIC_QUEUE_LIKELY(state.compare_exchange_strong(expected, STORING, X, X))) {
+                if(ATOMIC_QUEUE_LIKELY(state.compare_exchange_strong(expected, STORING, A, X))) {
                     q_element = std::forward<U>(element);
                     state.store(STORED, R);
                     return;
@@ -318,11 +316,16 @@ public:
     }
 
     bool was_empty() const noexcept {
-        return static_cast<int>(head_.load(X) - tail_.load(X)) <= 0;
+        return !was_size();
     }
 
     bool was_full() const noexcept {
-        return static_cast<int>(head_.load(X) - tail_.load(X)) >= static_cast<int>(static_cast<Derived const&>(*this).size_);
+        return was_size() >= static_cast<int>(static_cast<Derived const&>(*this).size_);
+    }
+
+    unsigned was_size() const noexcept {
+        // tail_ can be greater than head_ because of consumers doing pop, rather that try_pop, when the queue is empty.
+        return std::max(static_cast<int>(head_.load(X) - tail_.load(X)), 0);
     }
 
     unsigned capacity() const noexcept {
@@ -400,7 +403,7 @@ class AtomicQueue2 : public AtomicQueueCommon<AtomicQueue2<T, SIZE, MINIMIZE_CON
 public:
     using value_type = T;
 
-    AtomicQueue2() = default;
+    AtomicQueue2() noexcept = default;
     AtomicQueue2(AtomicQueue2 const&) = delete;
     AtomicQueue2& operator=(AtomicQueue2 const&) = delete;
 };
