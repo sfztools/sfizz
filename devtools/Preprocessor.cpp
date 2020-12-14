@@ -13,8 +13,8 @@
  */
 
 #include "parser/Parser.h"
-#include "../tests/cxxopts.hpp"
-#include "absl/strings/string_view.h"
+#include <cxxopts.hpp>
+#include <absl/strings/string_view.h>
 #include <iostream>
 
 class MyParserListener : public sfz::Parser::Listener {
