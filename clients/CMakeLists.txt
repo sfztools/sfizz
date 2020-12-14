@@ -14,14 +14,15 @@ if(SFIZZ_JACK)
 endif()
 
 if(SFIZZ_RENDER)
-    add_library(sfizz-fmidi STATIC
+    add_library(sfizz_fmidi STATIC
         "external/fmidi/sources/fmidi/fmidi.h"
         "external/fmidi/sources/fmidi/fmidi_mini.cpp")
-    target_include_directories(sfizz-fmidi PUBLIC "external/fmidi/sources")
-    target_compile_definitions(sfizz-fmidi PUBLIC "FMIDI_STATIC=1" "FMIDI_DISABLE_DESCRIBE_API=1")
+    add_library(sfizz::fmidi ALIAS sfizz_fmidi)
+    target_include_directories(sfizz_fmidi PUBLIC "external/fmidi/sources")
+    target_compile_definitions(sfizz_fmidi PUBLIC "FMIDI_STATIC=1" "FMIDI_DISABLE_DESCRIBE_API=1")
 
     add_executable(sfizz_render MidiHelpers.h sfizz_render.cpp)
-    target_link_libraries(sfizz_render PRIVATE sfizz::sfizz sfizz-fmidi sfizz-sndfile sfizz-cxxopts)
+    target_link_libraries(sfizz_render PRIVATE sfizz::sfizz sfizz::fmidi sfizz::sndfile sfizz::cxxopts)
     sfizz_enable_lto_if_needed(sfizz_render)
     install(TARGETS sfizz_render DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "render" OPTIONAL)
 endif()

@@ -60,7 +60,7 @@ endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
     PRIVATE sfizz_editor
-    PRIVATE sfizz-pugixml)
+    PRIVATE sfizz::pugixml)
 target_include_directories(${VSTPLUGIN_PRJ_NAME}
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
@@ -198,7 +198,7 @@ elseif(SFIZZ_AU)
     target_link_libraries(${AUPLUGIN_PRJ_NAME}
         PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
         PRIVATE sfizz_editor
-        PRIVATE sfizz-pugixml)
+        PRIVATE sfizz::pugixml)
     target_include_directories(${AUPLUGIN_PRJ_NAME}
         PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
     set_target_properties(${AUPLUGIN_PRJ_NAME} PROPERTIES
