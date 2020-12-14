@@ -238,60 +238,42 @@ target_sources(sfizz_messaging PRIVATE
 target_include_directories(sfizz_messaging PUBLIC ".")
 target_link_libraries(sfizz_messaging PUBLIC absl::strings)
 
-# Sfizz static library
-add_library(sfizz_static STATIC)
-add_library(sfizz::static ALIAS sfizz_static)
-target_sources(sfizz_static PRIVATE
-    ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
-target_include_directories(sfizz_static PUBLIC .)
-target_include_directories(sfizz_static PUBLIC external)
-target_link_libraries(sfizz_static PUBLIC absl::strings absl::span sfizz::filesystem)
-target_link_libraries(sfizz_static PRIVATE sfizz_parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cpuid sfizz::jsl sfizz::atomic)
-set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+# Sfizz internals (use this for testing)
+add_library(sfizz_internal STATIC)
+add_library(sfizz::internal ALIAS sfizz_internal)
+target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES})
+target_include_directories(sfizz_internal PUBLIC .)
+target_link_libraries(sfizz_internal
+    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue
+    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cpuid sfizz::threadpool sfizz::jsl sfizz::atomic)
 if(SFIZZ_USE_SNDFILE)
-    target_compile_definitions(sfizz_static PUBLIC SFIZZ_USE_SNDFILE=1)
-    target_link_libraries(sfizz_static PUBLIC st_audiofile)
+    target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
+    target_link_libraries(sfizz_internal PUBLIC st_audiofile)
 endif()
 if(WIN32)
-    target_compile_definitions(sfizz_static PRIVATE _USE_MATH_DEFINES)
+    target_compile_definitions(sfizz_internal PRIVATE _USE_MATH_DEFINES)
 endif()
 if(SFIZZ_RELEASE_ASSERTS)
-    target_compile_definitions(sfizz_static PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+    target_compile_definitions(sfizz_internal PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
-sfizz_enable_fast_math(sfizz_static)
+sfizz_enable_fast_math(sfizz_internal)
 
-if(WIN32)
-    include(VSTConfig)
-    configure_file(${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
-endif()
-
-configure_file(${PROJECT_SOURCE_DIR}/scripts/doxygen/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)
-
-add_library(sfizz::sfizz ALIAS sfizz_static)
+# Sfizz static library
+add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+add_library(sfizz::static ALIAS sfizz_static)
+target_include_directories(sfizz_static PUBLIC .)
+target_link_libraries(sfizz_static PRIVATE sfizz::internal)
+set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
 
 # Shared library and installation target
 if(SFIZZ_SHARED)
-    add_library(sfizz_shared SHARED)
+    add_library(sfizz_shared SHARED sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
     add_library(sfizz::shared ALIAS sfizz_shared)
-    target_sources(sfizz_shared PRIVATE
-        ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
-    target_include_directories(sfizz_shared PRIVATE .)
-    target_include_directories(sfizz_shared PRIVATE external)
-    target_link_libraries(sfizz_shared PRIVATE absl::strings absl::span sfizz_parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cpuid sfizz::jsl sfizz::filesystem sfizz::atomic)
-    if(SFIZZ_USE_SNDFILE)
-        target_compile_definitions(sfizz_shared PUBLIC SFIZZ_USE_SNDFILE=1)
-        target_link_libraries(sfizz_shared PUBLIC st_audiofile)
-    endif()
-    if(WIN32)
-        target_compile_definitions(sfizz_shared PRIVATE _USE_MATH_DEFINES)
-    endif()
-    if(SFIZZ_RELEASE_ASSERTS)
-        target_compile_definitions(sfizz_shared PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
-    endif()
+    target_include_directories(sfizz_shared PUBLIC .)
+    target_link_libraries(sfizz_shared PRIVATE sfizz::internal)
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties(sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+    set_target_properties(sfizz_shared PROPERTIES SOVERSION "${PROJECT_VERSION_MAJOR}" OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
     sfizz_enable_lto_if_needed(sfizz_shared)
-    sfizz_enable_fast_math(sfizz_shared)
 
     if(NOT MSVC)
         install(TARGETS sfizz_shared
@@ -305,3 +287,15 @@ if(SFIZZ_SHARED)
             COMPONENT "development")
     endif()
 endif()
+
+# Generic library alias
+add_library(sfizz::sfizz ALIAS sfizz_static)
+
+# Windows installer
+if(WIN32)
+    include(VSTConfig)
+    configure_file(${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
+endif()
+
+# Doxygen
+configure_file(${PROJECT_SOURCE_DIR}/scripts/doxygen/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)
