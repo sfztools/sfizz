@@ -13,9 +13,17 @@
  */
 
 #include "parser/Parser.h"
+#include <pugixml.hpp>
 #include <cxxopts.hpp>
 #include <absl/strings/string_view.h>
 #include <iostream>
+
+namespace {
+    enum Mode { OutputSFZ, OutputXML };
+    Mode g_mode = OutputSFZ;
+
+    pugi::xml_document g_xml_doc;
+}
 
 class MyParserListener : public sfz::Parser::Listener {
 public:
@@ -27,10 +35,20 @@ public:
 protected:
     void onParseFullBlock(const std::string& header, const std::vector<sfz::Opcode>& opcodes) override
     {
-        std::cout << '\n';
-        std::cout << '<' << header << '>' << '\n';
-        for (const sfz::Opcode& opc : opcodes)
-            std::cout << opc.opcode << '=' << opc.value << '\n';
+        if (g_mode == OutputSFZ) {
+            std::cout << '\n';
+            std::cout << '<' << header << '>' << '\n';
+            for (const sfz::Opcode& opc : opcodes)
+                std::cout << opc.opcode << '=' << opc.value << '\n';
+        }
+        else if (g_mode == OutputXML) {
+            pugi::xml_node block_node = g_xml_doc.append_child(header.c_str());
+            for (const sfz::Opcode& opc : opcodes) {
+                pugi::xml_node opcode_node = block_node.append_child("opcode");
+                opcode_node.append_attribute("name").set_value(opc.opcode.c_str());
+                opcode_node.append_attribute("value").set_value(opc.value.c_str());
+            }
+        }
     }
 
     void onParseError(const sfz::SourceRange& range, const std::string& message) override
@@ -58,6 +76,7 @@ int main(int argc, char *argv[])
     options.add_options()
         ("D,define", "Add external definition", cxxopts::value<std::vector<std::string>>())
         ("i,input", "Input SFZ file", cxxopts::value<std::string>())
+        ("m,mode", "Mode of operation (sfz, xml)", cxxopts::value<std::string>())
         ("h,help", "Print usage");
 
     options.parse_positional({"input"});
@@ -79,6 +98,18 @@ int main(int argc, char *argv[])
     if (!result.count("input")) {
         std::cerr << "Please indicate the SFZ file path.\n";
         return 1;
+    }
+
+    if (result.count("mode")) {
+        const std::string& modeString = result["mode"].as<std::string>();
+        if (modeString == "sfz")
+            g_mode = OutputSFZ;
+        else if (modeString == "xml")
+            g_mode = OutputXML;
+        else {
+            std::cerr << "Unknown mode of operation: " << modeString << "\n";
+            return 1;
+        }
     }
 
     const fs::path sfzFilePath { result["input"].as<std::string>() };
@@ -105,6 +136,9 @@ int main(int argc, char *argv[])
 
     if (parser.getErrorCount() > 0)
         return 1;
+
+    if (g_mode == OutputXML)
+        g_xml_doc.save(std::cout);
 
     return 0;
 }

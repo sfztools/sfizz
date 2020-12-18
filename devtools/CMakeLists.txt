@@ -9,4 +9,4 @@ if(TARGET sfizz::jack AND TARGET Qt5::Widgets)
 endif()
 
 add_executable(sfizz_preprocessor Preprocessor.cpp)
-target_link_libraries(sfizz_preprocessor PRIVATE sfizz::parser sfizz::cxxopts)
+target_link_libraries(sfizz_preprocessor PRIVATE sfizz::parser sfizz::pugixml sfizz::cxxopts)
