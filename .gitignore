@@ -11,7 +11,7 @@ CMakeFiles/
 cmake_install.cmake
 compile_commands.json
 *.a
-*.txt.user
+*.user*
 *.autosave
 /Doxyfile
 .DS_Store
