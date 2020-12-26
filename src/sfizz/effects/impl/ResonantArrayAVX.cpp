@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ResonantArrayAVX.h"
+#include "ResonantStringAVXInline.h"
 #include "Config.h"
 #include <cstring>
 
@@ -82,7 +83,29 @@ void ResonantArrayAVX::process(const float *inPtr, float *outPtr, unsigned numFr
     __m256* outputs8 = reinterpret_cast<__m256*>(_workBuffer.data());
     std::memset(outputs8, 0, numFrames * sizeof(__m256));
 
-    for (unsigned p = 0; p < numStringPacks; ++p) {
+    unsigned p = 0;
+    for (; p + 7 < numStringPacks; p += 8) {
+        ResonantStringAVX& rs = reinterpret_cast<ResonantStringAVX&>(stringPacks[p]);
+        for (unsigned i = 0; i < numFrames; ++i) {
+            __m256 o1 = rs.process(_mm256_broadcast_ss(&inPtr[i]));
+            __m256 o2 = rs.process(_mm256_broadcast_ss(&inPtr[i + 1]));
+            __m256 o3 = rs.process(_mm256_broadcast_ss(&inPtr[i + 2]));
+            __m256 o4 = rs.process(_mm256_broadcast_ss(&inPtr[i + 3]));
+            __m256 o5 = rs.process(_mm256_broadcast_ss(&inPtr[i + 4]));
+            __m256 o6 = rs.process(_mm256_broadcast_ss(&inPtr[i + 5]));
+            __m256 o7 = rs.process(_mm256_broadcast_ss(&inPtr[i + 6]));
+            __m256 o8 = rs.process(_mm256_broadcast_ss(&inPtr[i + 7]));
+            __m256 output8 = outputs8[i];
+            o1 = _mm256_add_ps(o1, o2);
+            o2 = _mm256_add_ps(o3, o4);
+            o3 = _mm256_add_ps(o5, o6);
+            o4 = _mm256_add_ps(o7, o8);
+            o1 = _mm256_add_ps(o1, o2);
+            o2 = _mm256_add_ps(o3, o4);
+            outputs8[i] = _mm256_add_ps(o1, _mm256_add_ps(output8, o2));
+        }
+    }
+    for (; p < numStringPacks; ++p) {
         ResonantStringAVX& rs = reinterpret_cast<ResonantStringAVX&>(stringPacks[p]);
         for (unsigned i = 0; i < numFrames; ++i)
             outputs8[i] = _mm256_add_ps(

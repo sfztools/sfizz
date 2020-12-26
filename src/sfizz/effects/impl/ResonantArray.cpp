@@ -6,6 +6,7 @@
 
 #include "ResonantArray.h"
 #include "ResonantString.h"
+#include "ResonantStringInline.h"
 #include "SIMDHelpers.h"
 
 namespace sfz {

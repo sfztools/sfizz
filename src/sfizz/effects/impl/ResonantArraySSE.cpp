@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "ResonantArraySSE.h"
+#include "ResonantStringSSEInline.h"
 #include "Config.h"
 #include <cstring>
 
@@ -82,7 +83,29 @@ void ResonantArraySSE::process(const float *inPtr, float *outPtr, unsigned numFr
     __m128* outputs4 = reinterpret_cast<__m128*>(_workBuffer.data());
     std::memset(outputs4, 0, numFrames * sizeof(__m128));
 
-    for (unsigned p = 0; p < numStringPacks; ++p) {
+    unsigned p = 0;
+    for (; p + 7 < numStringPacks; p += 8) {
+        ResonantStringSSE& rs = reinterpret_cast<ResonantStringSSE&>(stringPacks[p]);
+        for (unsigned i = 0; i < numFrames; ++i) {
+            __m128 o1 = rs.process(_mm_load1_ps(&inPtr[i]));
+            __m128 o2 = rs.process(_mm_load1_ps(&inPtr[i + 1]));
+            __m128 o3 = rs.process(_mm_load1_ps(&inPtr[i + 2]));
+            __m128 o4 = rs.process(_mm_load1_ps(&inPtr[i + 3]));
+            __m128 o5 = rs.process(_mm_load1_ps(&inPtr[i + 4]));
+            __m128 o6 = rs.process(_mm_load1_ps(&inPtr[i + 5]));
+            __m128 o7 = rs.process(_mm_load1_ps(&inPtr[i + 6]));
+            __m128 o8 = rs.process(_mm_load1_ps(&inPtr[i + 7]));
+            __m128 output4 = outputs4[i];
+            o1 = _mm_add_ps(o1, o2);
+            o2 = _mm_add_ps(o3, o4);
+            o3 = _mm_add_ps(o5, o6);
+            o4 = _mm_add_ps(o7, o8);
+            o1 = _mm_add_ps(o1, o2);
+            o2 = _mm_add_ps(o3, o4);
+            outputs4[i] = _mm_add_ps(o1, _mm_add_ps(output4, o2));
+        }
+    }
+    for (; p < numStringPacks; ++p) {
         ResonantStringSSE& rs = stringPacks[p];
         for (unsigned i = 0; i < numFrames; ++i)
             outputs4[i] = _mm_add_ps(
