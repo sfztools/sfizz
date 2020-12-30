@@ -163,8 +163,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             oscillatorPhase = (*value >= 0) ? wrapPhase(*value) : -1.0f;
         break;
     case hash("oscillator"):
-        if (auto value = readBooleanFromOpcode(opcode))
-            oscillatorEnabled = *value ? OscillatorEnabled::On : OscillatorEnabled::Off;
+        oscillatorEnabled = opcode.read(Default::oscillator).value_or(oscillatorEnabled);
         break;
     case hash("oscillator_mode"):
         oscillatorMode = opcode.read(Default::oscillatorMode).value_or(oscillatorMode);
@@ -243,13 +242,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
     case hash("rt_dead"):
-        if (opcode.value == "on") {
-            rtDead = true;
-        } else if (opcode.value == "off") {
-            rtDead = false;
-        } else {
-            DBG("Unkown rt_dead value:" << opcode.value);
-        }
+        rtDead = opcode.read(Default::rtDead).value_or(rtDead);
         break;
     // Region logic: key mapping
     case hash("lokey"):
@@ -387,10 +380,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             sustainThreshold = normalizeCC(*value);
         break;
     case hash("sustain_sw"):
-        checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
+        checkSustain = opcode.read(Default::checkSustain).value_or(checkSustain);
         break;
     case hash("sostenuto_sw"):
-        checkSostenuto = readBooleanFromOpcode(opcode).value_or(Default::checkSostenuto);
+        checkSostenuto = opcode.read(Default::checkSostenuto).value_or(checkSostenuto);
         break;
     // Region logic: internal conditions
     case hash("lochanaft"):
@@ -1263,7 +1256,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             return false;
         if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
             return false;
-        if (auto ampeg = readBooleanFromOpcode(opcode)) {
+        if (auto ampeg = opcode.read(Default::flexEGAmpeg)) {
             FlexEGDescription& desc = flexEGs[egNumber - 1];
             if (desc.ampeg != *ampeg) {
                 desc.ampeg = *ampeg;

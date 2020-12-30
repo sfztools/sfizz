@@ -2347,7 +2347,7 @@ TEST_CASE("[Values] Sustain switch")
         "/region0/sustain_sw,T : {  }",
         "/region1/sustain_sw,F : {  }",
         "/region2/sustain_sw,T : {  }",
-        "/region3/sustain_sw,T : {  }",
+        "/region3/sustain_sw,F : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2373,7 +2373,7 @@ TEST_CASE("[Values] Sostenuto switch")
         "/region0/sostenuto_sw,T : {  }",
         "/region1/sostenuto_sw,F : {  }",
         "/region2/sostenuto_sw,T : {  }",
-        "/region3/sostenuto_sw,T : {  }",
+        "/region3/sostenuto_sw,F : {  }",
     };
     REQUIRE(messageList == expected);
 }

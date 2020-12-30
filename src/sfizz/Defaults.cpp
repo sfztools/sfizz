@@ -14,6 +14,7 @@ extern const OpcodeSpec<uint32_t> sampleEnd { uint32_t_max, Range<uint32_t>(0, u
 extern const OpcodeSpec<uint32_t> sampleCount { 0, Range<uint32_t>(0, uint32_t_max), 0 };
 extern const OpcodeSpec<uint32_t> loopRange { 0, Range<uint32_t>(0, uint32_t_max), 0 };
 extern const OpcodeSpec<float> loopCrossfade { 1e-3, Range<float>(1e-3, 1.0f), kEnforceLowerBound | kEnforceUpperBound };
+extern const OpcodeSpec<OscillatorEnabled> oscillator { OscillatorEnabled::Auto, Range<OscillatorEnabled>(OscillatorEnabled::Auto, OscillatorEnabled::On), 0 };
 extern const OpcodeSpec<float> oscillatorPhase { 0.0f, Range<float>(0.0f, 1.0f), 0 };
 extern const OpcodeSpec<int> oscillatorMode { 0, Range<int>(0, 2), kIgnoreOOB };
 extern const OpcodeSpec<int> oscillatorMulti { 1, Range<int>(1, config::oscillatorsPerVoice), kIgnoreOOB };
@@ -37,6 +38,8 @@ extern const OpcodeSpec<uint8_t> smoothCC { 0, Range<uint8_t>(0, 100), kIgnoreOO
 extern const OpcodeSpec<uint8_t> curveCC { 0, Range<uint8_t>(0, 255), kIgnoreOOB };
 extern const OpcodeSpec<uint8_t> sustainCC { 64, Range<uint8_t>(0, 127), kIgnoreOOB };
 extern const OpcodeSpec<float> sustainThreshold { 0.0039f, Range<float>(0.0f, 1.0f), kIgnoreOOB };
+extern const OpcodeSpec<bool> checkSustain { true, Range<bool>(0, 1), 0 };
+extern const OpcodeSpec<bool> checkSostenuto { true, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> bpm { 0.0f, Range<float>(0.0f, 500.0f), kEnforceLowerBound };
 extern const OpcodeSpec<uint8_t> sequence { 1, Range<uint8_t>(1, 100), kIgnoreOOB };
 extern const OpcodeSpec<float> volume { 0.0f, Range<float>(-144.0f, 48.0f), 0 };
@@ -57,6 +60,7 @@ extern const OpcodeSpec<float> ampKeytrack { 0.0f, Range<float>(-96.0f, 12.0f), 
 extern const OpcodeSpec<float> ampVeltrack { 100.0f, Range<float>(-100.0f, 100.0f), kIgnoreOOB };
 extern const OpcodeSpec<float> ampVelcurve { 0.0f, Range<float>(0.0f, 1.0f), kEnforceLowerBound | kEnforceUpperBound };
 extern const OpcodeSpec<float> ampRandom { 0.0f, Range<float>(0.0f, 24.0f), kEnforceLowerBound };
+extern const OpcodeSpec<bool> rtDead { false, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> rtDecay { 0.0f, Range<float>(0.0f, 200.0f), kEnforceLowerBound };
 extern const OpcodeSpec<float> filterCutoff { 0.0f, Range<float>(0.0f, 20000.0f), kEnforceLowerBound | kEnforceUpperBound };
 extern const OpcodeSpec<float> filterCutoffMod { 0.0f, Range<float>(-12000.0f, 12000.0f), kEnforceLowerBound };
@@ -105,6 +109,7 @@ extern const OpcodeSpec<float> egPercent { 0.0f, Range<float>(0.0f, 100.0f), kEn
 extern const OpcodeSpec<float> egPercentMod { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
 extern const OpcodeSpec<float> egDepth { 0.0f, Range<float>(-12000.0f, 12000.0f), 0 };
 extern const OpcodeSpec<float> egVel2Depth { 0.0f, Range<float>(-12000.0f, 12000.0f), 0 };
+extern const OpcodeSpec<bool> flexEGAmpeg { false, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<int> flexEGDynamic { 0, Range<int>(0, 1), kIgnoreOOB };
 extern const OpcodeSpec<int> flexEGSustain { 0, Range<int>(0, 100), kIgnoreOOB };
 extern const OpcodeSpec<float> flexEGPointTime { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
@@ -123,6 +128,7 @@ extern const OpcodeSpec<float> distoDepth { 0.0f, Range<float>(0.0f, 100.0f), kE
 extern const OpcodeSpec<unsigned> distoStages { 1, Range<unsigned>(1, maxDistoStages), kEnforceLowerBound };
 extern const OpcodeSpec<float> compAttack { 0.005f, Range<float>(0.0f, 10.0f), kEnforceLowerBound };
 extern const OpcodeSpec<float> compRelease { 0.05f, Range<float>(0.0f, 10.0f), kEnforceLowerBound };
+extern const OpcodeSpec<bool> compSTLink { false, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> compThreshold { 0.0f, Range<float>(-100.0f, 0.0f), kIgnoreOOB };
 extern const OpcodeSpec<float> compRatio { 1.0f, Range<float>(1.0f, 50.0f), kIgnoreOOB };
 extern const OpcodeSpec<float> compGain { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
@@ -130,6 +136,7 @@ extern const OpcodeSpec<float> fverbSize { 0.0f, Range<float>(0.0f, 100.0f), kEn
 extern const OpcodeSpec<float> fverbPredelay { 0.0f, Range<float>(0.0f, 10.0f), kEnforceLowerBound };
 extern const OpcodeSpec<float> fverbTone { 100.0f, Range<float>(0.0f, 100.0f), kIgnoreOOB };
 extern const OpcodeSpec<float> fverbDamp { 0.0f, Range<float>(0.0f, 100.0f), kIgnoreOOB };
+extern const OpcodeSpec<bool> gateSTLink { false, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> gateAttack { 0.005f, Range<float>(0.0f, 10.0f), kEnforceLowerBound };
 extern const OpcodeSpec<float> gateRelease { 0.05f, Range<float>(0.0f, 10.0f), kEnforceLowerBound };
 extern const OpcodeSpec<float> gateHold { 0.0f, Range<float>(0.0f, 10.0f), kEnforceLowerBound };

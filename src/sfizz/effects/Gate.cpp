@@ -34,7 +34,7 @@ namespace fx {
 
     struct Gate::Impl {
         faustGate _gate[2];
-        bool _stlink = false;
+        bool _stlink { Default::gateSTLink.value };
         float _inputGain = 1.0;
         AudioBuffer<float, 2> _tempBuffer2x { 2, _oversampling * config::defaultSamplesPerBlock };
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
@@ -190,9 +190,7 @@ namespace fx {
                 }
                 break;
             case hash("gate_stlink"):
-                if (auto value = readBooleanFromOpcode(opc))
-                    impl._stlink = *value;
-                break;
+                impl._stlink = opc.read(Default::gateSTLink).value_or(impl._stlink);
             }
         }
 

@@ -29,15 +29,17 @@
 #include <limits>
 #include <cstdint>
 
-enum class SfzTrigger { attack, release, release_key, first, legato };
-enum class SfzLoopMode { no_loop, one_shot, loop_continuous, loop_sustain };
-enum class SfzOffMode { fast, normal, time };
-enum class SfzVelocityOverride { current, previous };
-enum class SfzCrossfadeCurve { gain, power };
-enum class SfzSelfMask { mask, dontMask };
+enum class SfzTrigger { attack = 0, release, release_key, first, legato };
+enum class SfzLoopMode { no_loop = 0, one_shot, loop_continuous, loop_sustain };
+enum class SfzOffMode { fast = 0, normal, time };
+enum class SfzVelocityOverride { current = 0, previous };
+enum class SfzCrossfadeCurve { gain = 0, power };
+enum class SfzSelfMask { mask = 0, dontMask };
 
 namespace sfz
 {
+
+enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
 
 enum OpcodeFlags : int {
     kIgnoreOOB = 1,
@@ -66,6 +68,7 @@ namespace Default
     extern const OpcodeSpec<uint32_t> loopRange;
     extern const OpcodeSpec<float> loopCrossfade;
     extern const OpcodeSpec<float> oscillatorPhase;
+    extern const OpcodeSpec<OscillatorEnabled> oscillator;
     extern const OpcodeSpec<int> oscillatorMode;
     extern const OpcodeSpec<int> oscillatorMulti;
     extern const OpcodeSpec<float> oscillatorDetune;
@@ -87,6 +90,8 @@ namespace Default
     extern const OpcodeSpec<uint8_t> curveCC;
     extern const OpcodeSpec<uint8_t> smoothCC;
     extern const OpcodeSpec<uint8_t> sustainCC;
+    extern const OpcodeSpec<bool> checkSustain;
+    extern const OpcodeSpec<bool> checkSostenuto;
     extern const OpcodeSpec<float> sustainThreshold;
     extern const OpcodeSpec<float> bpm;
     extern const OpcodeSpec<uint8_t> sequence;
@@ -108,6 +113,7 @@ namespace Default
     extern const OpcodeSpec<float> ampVeltrack;
     extern const OpcodeSpec<float> ampVelcurve;
     extern const OpcodeSpec<float> ampRandom;
+    extern const OpcodeSpec<bool> rtDead;
     extern const OpcodeSpec<float> rtDecay;
     extern const OpcodeSpec<float> filterCutoff;
     extern const OpcodeSpec<float> filterCutoffMod;
@@ -156,6 +162,7 @@ namespace Default
     extern const OpcodeSpec<float> egPercentMod;
     extern const OpcodeSpec<float> egDepth;
     extern const OpcodeSpec<float> egVel2Depth;
+    extern const OpcodeSpec<bool> flexEGAmpeg;
     extern const OpcodeSpec<int> flexEGDynamic;
     extern const OpcodeSpec<int> flexEGSustain;
     extern const OpcodeSpec<float> flexEGPointTime;
@@ -175,6 +182,7 @@ namespace Default
     extern const OpcodeSpec<float> compAttack;
     extern const OpcodeSpec<float> compRelease;
     extern const OpcodeSpec<float> compThreshold;
+    extern const OpcodeSpec<bool> compSTLink;
     extern const OpcodeSpec<float> compRatio;
     extern const OpcodeSpec<float> compGain;
     extern const OpcodeSpec<float> fverbSize;
@@ -183,17 +191,13 @@ namespace Default
     extern const OpcodeSpec<float> fverbDamp;
     extern const OpcodeSpec<float> gateAttack;
     extern const OpcodeSpec<float> gateRelease;
+    extern const OpcodeSpec<bool> gateSTLink;
     extern const OpcodeSpec<float> gateHold;
     extern const OpcodeSpec<float> gateThreshold;
     extern const OpcodeSpec<float> lofiBitred;
     extern const OpcodeSpec<float> lofiDecim;
     extern const OpcodeSpec<float> rectify;
     extern const OpcodeSpec<unsigned> stringsNumber;
-
-    // Boolean default values
-    constexpr bool rtDead { false };
-    constexpr bool checkSustain { true }; // sustain_sw
-    constexpr bool checkSostenuto { true }; // sostenuto_sw
 
     // Default/max count for objects
     constexpr int numEQs { 3 };

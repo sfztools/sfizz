@@ -282,7 +282,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 
     // generator with multi
     region = synth.getRegionView(regionNumber++);
@@ -290,7 +290,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 
     // explicit wavetable
     region = synth.getRegionView(regionNumber++);
@@ -298,7 +298,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::On);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::On);
 
     // explicit wavetable with multi
     region = synth.getRegionView(regionNumber++);
@@ -306,7 +306,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::On);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::On);
 
     // explicit disabled wavetable
     region = synth.getRegionView(regionNumber++);
@@ -314,7 +314,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(!region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Off);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Off);
 
     // explicit disabled wavetable with multi
     region = synth.getRegionView(regionNumber++);
@@ -322,7 +322,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(!region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Off);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Off);
 
     // implicit wavetable (sound file < 3000 frames)
     region = synth.getRegionView(regionNumber++);
@@ -330,7 +330,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 
     // implicit non-wavetable (sound file >= 3000 frames)
     region = synth.getRegionView(regionNumber++);
@@ -338,7 +338,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(!region->isGenerator());
     REQUIRE(!region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 
     // generator with multi=1 (single)
     region = synth.getRegionView(regionNumber++);
@@ -346,7 +346,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 
     // generator with multi=2 (ring modulation)
     region = synth.getRegionView(regionNumber++);
@@ -354,7 +354,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
-    REQUIRE(region->oscillatorEnabled == Region::OscillatorEnabled::Auto);
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 }
 
 TEST_CASE("[Files] wrong (overlapping) replacement for defines")

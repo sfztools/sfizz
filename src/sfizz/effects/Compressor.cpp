@@ -31,7 +31,7 @@ namespace fx {
 
     struct Compressor::Impl {
         faustCompressor _compressor[2];
-        bool _stlink = false;
+        bool _stlink { Default::compSTLink.value };
         float _inputGain { Default::compGain.value };
         AudioBuffer<float, 2> _tempBuffer2x { 2, _oversampling * config::defaultSamplesPerBlock };
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
@@ -191,8 +191,7 @@ namespace fx {
                     impl._inputGain = db2mag(*value);
                 break;
             case hash("comp_stlink"):
-                if (auto value = readBooleanFromOpcode(opc))
-                    impl._stlink = *value;
+                impl._stlink = opc.read(Default::compSTLink).value_or(impl._stlink);
                 break;
             }
         }

@@ -332,8 +332,7 @@ struct Region {
 
     // Wavetable oscillator
     float oscillatorPhase { Default::oscillatorPhase.value };
-    enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
-    OscillatorEnabled oscillatorEnabled { OscillatorEnabled::Auto }; // oscillator
+    OscillatorEnabled oscillatorEnabled { Default::oscillator.value }; // oscillator
     bool hasWavetableSample { false }; // (set according to sample file)
     int oscillatorMode { Default::oscillatorMode.value };
     int oscillatorMulti { Default::oscillatorMulti.value };
@@ -349,7 +348,7 @@ struct Region {
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony
     uint32_t polyphony { config::maxVoices }; // polyphony
     SfzSelfMask selfMask { Default::selfMask };
-    bool rtDead { Default::rtDead };
+    bool rtDead { Default::rtDead.value };
 
     // Region logic: key mapping
     Range<uint8_t> keyRange { Default::key.bounds }; //lokey, hikey and key
@@ -366,8 +365,8 @@ struct Region {
     absl::optional<uint8_t> previousKeyswitch {}; // sw_previous
     absl::optional<uint8_t> defaultSwitch {};
     SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
-    bool checkSustain { Default::checkSustain }; // sustain_sw
-    bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
+    bool checkSustain { Default::checkSustain.value }; // sustain_sw
+    bool checkSostenuto { Default::checkSostenuto.value }; // sostenuto_sw
     uint16_t sustainCC { Default::sustainCC.value }; // sustain_cc
     float sustainThreshold { Default::sustainThreshold.value }; // sustain_cc
 

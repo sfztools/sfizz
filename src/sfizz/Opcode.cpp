@@ -294,6 +294,22 @@ absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
     return absl::nullopt;
 }
 
+template <>
+absl::optional<OscillatorEnabled> Opcode::read(OpcodeSpec<OscillatorEnabled>) const
+{
+    auto v = readBooleanFromOpcode(*this);
+    if (!v)
+        return absl::nullopt;
+
+    return *v ? OscillatorEnabled::On : OscillatorEnabled::Off;
+}
+
+template <>
+absl::optional<bool> Opcode::read(OpcodeSpec<bool>) const
+{
+    return readBooleanFromOpcode(*this);
+}
+
 } // namespace sfz
 
 std::ostream &operator<<(std::ostream &os, const sfz::Opcode &opcode)
