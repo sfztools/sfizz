@@ -464,9 +464,9 @@ void Voice::off(int delay, bool fast) noexcept
 {
     Impl& impl = *impl_;
     if (!impl.region_->flexAmpEG) {
-        if (impl.region_->offMode == SfzOffMode::fast || fast) {
+        if (impl.region_->offMode == OffMode::fast || fast) {
             impl.egAmplitude_.setReleaseTime(Default::offTime.value);
-        } else if (impl.region_->offMode == SfzOffMode::time) {
+        } else if (impl.region_->offMode == OffMode::time) {
             impl.egAmplitude_.setReleaseTime(impl.region_->offTime);
         }
     }
@@ -492,7 +492,7 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
     if (impl.triggerEvent_.number == noteNumber && impl.triggerEvent_.type == TriggerEventType::NoteOn) {
         impl.noteIsOff_ = true;
 
-        if (impl.region_->loopMode == SfzLoopMode::one_shot)
+        if (impl.region_->loopMode == LoopMode::one_shot)
             return;
 
         if (!impl.region_->checkSustain

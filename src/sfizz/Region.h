@@ -61,7 +61,7 @@ struct Region {
      * @return true
      * @return false
      */
-    bool isRelease() const noexcept { return trigger == SfzTrigger::release || trigger == SfzTrigger::release_key; }
+    bool isRelease() const noexcept { return trigger == Trigger::release || trigger == Trigger::release_key; }
     /**
      * @brief Is a generator (*sine or *silence mostly)?
      *
@@ -97,7 +97,7 @@ struct Region {
      * @return true
      * @return false
      */
-    bool shouldLoop() const noexcept { return (loopMode == SfzLoopMode::loop_continuous || loopMode == SfzLoopMode::loop_sustain); }
+    bool shouldLoop() const noexcept { return (loopMode == LoopMode::loop_continuous || loopMode == LoopMode::loop_sustain); }
     /**
      * @brief Given the current midi state, is the region switched on?
      *
@@ -326,7 +326,7 @@ struct Region {
     CCMap<int64_t> offsetCC { Default::offsetMod.value };
     uint32_t sampleEnd { Default::sampleEnd.value }; // end
     absl::optional<uint32_t> sampleCount {}; // count
-    absl::optional<SfzLoopMode> loopMode {}; // loopmode
+    absl::optional<LoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopRange.bounds }; //loopstart and loopend
     float loopCrossfade { Default::loopCrossfade.value }; // loop_crossfade
 
@@ -343,11 +343,11 @@ struct Region {
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group.value }; // group
     absl::optional<uint32_t> offBy {}; // off_by
-    SfzOffMode offMode { Default::offMode.value }; // off_mode
+    OffMode offMode { Default::offMode.value }; // off_mode
     float offTime { Default::offTime.value }; // off_mode
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony
     uint32_t polyphony { config::maxVoices }; // polyphony
-    SfzSelfMask selfMask { Default::selfMask.value };
+    SelfMask selfMask { Default::selfMask.value };
     bool rtDead { Default::rtDead.value };
 
     // Region logic: key mapping
@@ -364,7 +364,7 @@ struct Region {
     absl::optional<uint8_t> downKeyswitch {}; // sw_down
     absl::optional<uint8_t> previousKeyswitch {}; // sw_previous
     absl::optional<uint8_t> defaultSwitch {};
-    SfzVelocityOverride velocityOverride { Default::velocityOverride.value }; // sw_vel
+    VelocityOverride velocityOverride { Default::velocityOverride.value }; // sw_vel
     bool checkSustain { Default::checkSustain.value }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto.value }; // sostenuto_sw
     uint16_t sustainCC { Default::sustainCC.value }; // sustain_cc
@@ -378,7 +378,7 @@ struct Region {
     uint8_t sequencePosition { Default::sequence.value }; // seq_position
 
     // Region logic: triggers
-    SfzTrigger trigger { Default::trigger.value }; // trigger
+    Trigger trigger { Default::trigger.value }; // trigger
     CCMap<Range<float>> ccTriggers { Default::normalized.bounds }; // on_loccN on_hiccN
 
     // Performance parameters: amplifier
@@ -397,9 +397,9 @@ struct Region {
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
     Range<float> crossfadeVelInRange { Default::crossfadeVelInRange };
     Range<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
-    SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeCurve.value };
-    SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeCurve.value };
-    SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCurve.value };
+    CrossfadeCurve crossfadeKeyCurve { Default::crossfadeCurve.value };
+    CrossfadeCurve crossfadeVelCurve { Default::crossfadeCurve.value };
+    CrossfadeCurve crossfadeCCCurve { Default::crossfadeCurve.value };
     CCMap<Range<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
     CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay.value }; // rt_decay

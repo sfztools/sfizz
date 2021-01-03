@@ -305,14 +305,14 @@ absl::optional<OscillatorEnabled> Opcode::read(OpcodeSpec<OscillatorEnabled>) co
 }
 
 template <>
-absl::optional<SfzTrigger> Opcode::read(OpcodeSpec<SfzTrigger>) const
+absl::optional<Trigger> Opcode::read(OpcodeSpec<Trigger>) const
 {
     switch (hash(value)) {
-    case hash("attack"): return SfzTrigger::attack;
-    case hash("first"): return SfzTrigger::first;
-    case hash("legato"): return SfzTrigger::legato;
-    case hash("release"): return SfzTrigger::release;
-    case hash("release_key"): return SfzTrigger::release_key;
+    case hash("attack"): return Trigger::attack;
+    case hash("first"): return Trigger::first;
+    case hash("legato"): return Trigger::legato;
+    case hash("release"): return Trigger::release;
+    case hash("release_key"): return Trigger::release_key;
     }
 
     DBG("Unknown trigger value: " << value);
@@ -320,11 +320,11 @@ absl::optional<SfzTrigger> Opcode::read(OpcodeSpec<SfzTrigger>) const
 }
 
 template <>
-absl::optional<SfzCrossfadeCurve> Opcode::read(OpcodeSpec<SfzCrossfadeCurve>) const
+absl::optional<CrossfadeCurve> Opcode::read(OpcodeSpec<CrossfadeCurve>) const
 {
     switch (hash(value)) {
-    case hash("power"): return SfzCrossfadeCurve::power;
-    case hash("gain"): return SfzCrossfadeCurve::gain;
+    case hash("power"): return CrossfadeCurve::power;
+    case hash("gain"): return CrossfadeCurve::gain;
     }
 
     DBG("Unknown crossfade power curve: " << value);
@@ -332,12 +332,12 @@ absl::optional<SfzCrossfadeCurve> Opcode::read(OpcodeSpec<SfzCrossfadeCurve>) co
 }
 
 template <>
-absl::optional<SfzOffMode> Opcode::read(OpcodeSpec<SfzOffMode>) const
+absl::optional<OffMode> Opcode::read(OpcodeSpec<OffMode>) const
 {
     switch (hash(value)) {
-    case hash("fast"): return SfzOffMode::fast;
-    case hash("normal"): return SfzOffMode::normal;
-    case hash("time"): return SfzOffMode::time;
+    case hash("fast"): return OffMode::fast;
+    case hash("normal"): return OffMode::normal;
+    case hash("time"): return OffMode::time;
     }
 
     DBG("Unknown off mode: " << value);
@@ -391,11 +391,11 @@ absl::optional<EqType> Opcode::read(OpcodeSpec<EqType>) const
 }
 
 template <>
-absl::optional<SfzVelocityOverride> Opcode::read(OpcodeSpec<SfzVelocityOverride>) const
+absl::optional<VelocityOverride> Opcode::read(OpcodeSpec<VelocityOverride>) const
 {
     switch (hash(value)) {
-    case hash("current"): return SfzVelocityOverride::current;
-    case hash("previous"): return SfzVelocityOverride::previous;
+    case hash("current"): return VelocityOverride::current;
+    case hash("previous"): return VelocityOverride::previous;
     }
 
     DBG("Unknown velocity override: " << value);
@@ -403,12 +403,12 @@ absl::optional<SfzVelocityOverride> Opcode::read(OpcodeSpec<SfzVelocityOverride>
 }
 
 template <>
-absl::optional<SfzSelfMask> Opcode::read(OpcodeSpec<SfzSelfMask>) const
+absl::optional<SelfMask> Opcode::read(OpcodeSpec<SelfMask>) const
 {
     switch (hash(value)) {
     case hash("on"):
-    case hash("mask"): return SfzSelfMask::mask;
-    case hash("off"): return SfzSelfMask::dontMask;
+    case hash("mask"): return SelfMask::mask;
+    case hash("off"): return SelfMask::dontMask;
     }
 
     DBG("Unknown velocity override: " << value);

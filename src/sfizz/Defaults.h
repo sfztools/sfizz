@@ -30,16 +30,16 @@
 #include <limits>
 #include <cstdint>
 
-enum class SfzTrigger { attack = 0, release, release_key, first, legato };
-enum class SfzLoopMode { no_loop = 0, one_shot, loop_continuous, loop_sustain };
-enum class SfzOffMode { fast = 0, normal, time };
-enum class SfzVelocityOverride { current = 0, previous };
-enum class SfzCrossfadeCurve { gain = 0, power };
-enum class SfzSelfMask { mask = 0, dontMask };
 
 namespace sfz
 {
 
+enum class Trigger { attack = 0, release, release_key, first, legato };
+enum class LoopMode { no_loop = 0, one_shot, loop_continuous, loop_sustain };
+enum class OffMode { fast = 0, normal, time };
+enum class VelocityOverride { current = 0, previous };
+enum class CrossfadeCurve { gain = 0, power };
+enum class SelfMask { mask = 0, dontMask };
 enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
 
 enum OpcodeFlags : int {
@@ -199,11 +199,11 @@ namespace Default
     extern const OpcodeSpec<float> lofiDecim;
     extern const OpcodeSpec<float> rectify;
     extern const OpcodeSpec<unsigned> stringsNumber;
-    extern const OpcodeSpec<SfzTrigger> trigger;
-    extern const OpcodeSpec<SfzOffMode> offMode;
-    extern const OpcodeSpec<SfzCrossfadeCurve> crossfadeCurve;
-    extern const OpcodeSpec<SfzVelocityOverride> velocityOverride;
-    extern const OpcodeSpec<SfzSelfMask> selfMask;
+    extern const OpcodeSpec<Trigger> trigger;
+    extern const OpcodeSpec<OffMode> offMode;
+    extern const OpcodeSpec<CrossfadeCurve> crossfadeCurve;
+    extern const OpcodeSpec<VelocityOverride> velocityOverride;
+    extern const OpcodeSpec<SelfMask> selfMask;
     extern const OpcodeSpec<FilterType> filter;
     extern const OpcodeSpec<EqType> eq;
 

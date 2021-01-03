@@ -198,7 +198,7 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
             && voiceTriggerEvent.type == triggerEvent.type) {
             notePolyphonyCounter += 1;
             switch (region->selfMask) {
-            case SfzSelfMask::mask:
+            case SelfMask::mask:
                 if (voiceTriggerEvent.value <= triggerEvent.value) {
                     if (!selfMaskCandidate
                         || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
@@ -206,7 +206,7 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
                     }
                 }
                 break;
-            case SfzSelfMask::dontMask:
+            case SelfMask::dontMask:
                 if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
                     selfMaskCandidate = voice;
                 break;

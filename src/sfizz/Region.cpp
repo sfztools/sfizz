@@ -130,16 +130,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("loop_mode"): // also loopmode
         switch (hash(opcode.value)) {
         case hash("no_loop"):
-            loopMode = SfzLoopMode::no_loop;
+            loopMode = LoopMode::no_loop;
             break;
         case hash("one_shot"):
-            loopMode = SfzLoopMode::one_shot;
+            loopMode = LoopMode::one_shot;
             break;
         case hash("loop_continuous"):
-            loopMode = SfzLoopMode::loop_continuous;
+            loopMode = LoopMode::loop_continuous;
             break;
         case hash("loop_sustain"):
-            loopMode = SfzLoopMode::loop_sustain;
+            loopMode = LoopMode::loop_sustain;
             break;
         default:
             DBG("Unkown loop mode:" << opcode.value);
@@ -207,7 +207,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
          offMode = opcode.read(Default::offMode).value_or(offMode);
         break;
     case hash("off_time"):
-        offMode = SfzOffMode::time;
+        offMode = OffMode::time;
         offTime = opcode.read(Default::offTime).value_or(offTime);
         break;
     case hash("polyphony"):
@@ -220,10 +220,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("note_selfmask"):
         switch (hash(opcode.value)) {
         case hash("on"):
-            selfMask = SfzSelfMask::mask;
+            selfMask = SelfMask::mask;
             break;
         case hash("off"):
-            selfMask = SfzSelfMask::dontMask;
+            selfMask = SelfMask::dontMask;
             break;
         default:
             DBG("Unkown self mask value:" << opcode.value);
@@ -1608,9 +1608,9 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
-    const bool firstLegatoNote = (trigger == SfzTrigger::first && midiState.getActiveNotes() == 1);
-    const bool attackTrigger = (trigger == SfzTrigger::attack);
-    const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && midiState.getActiveNotes() > 1);
+    const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
+    const bool attackTrigger = (trigger == Trigger::attack);
+    const bool notFirstLegatoNote = (trigger == Trigger::legato && midiState.getActiveNotes() > 1);
 
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
@@ -1636,10 +1636,10 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
 
     // Release logic
 
-    if (trigger == SfzTrigger::release_key)
+    if (trigger == Trigger::release_key)
         return true;
 
-    if (trigger == SfzTrigger::release) {
+    if (trigger == Trigger::release) {
         if (midiState.getCCValue(sustainCC) < sustainThreshold)
             return true;
 
@@ -1717,7 +1717,7 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
     baseVolumedB += globalVolume;
     baseVolumedB += masterVolume;
     baseVolumedB += groupVolume;
-    if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
+    if (trigger == Trigger::release || trigger == Trigger::release_key)
         baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
 }

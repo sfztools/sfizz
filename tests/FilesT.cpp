@@ -51,7 +51,7 @@ TEST_CASE("[Files] Underscore opcodes (underscore_opcodes.sfz)")
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/Regions/underscore_opcodes.sfz");
     REQUIRE(synth.getNumRegions() == 1);
-    REQUIRE(synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain);
+    REQUIRE(synth.getRegionView(0)->loopMode == LoopMode::loop_sustain);
 }
 
 TEST_CASE("[Files] (regions_bad.sfz)")
@@ -505,11 +505,11 @@ TEST_CASE("[Files] Off modes")
     synth.noteOn(0, 64, 63);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     const auto* fastVoice =
-        synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
+        synth.getVoiceView(0)->getRegion()->offMode == OffMode::fast ?
             synth.getVoiceView(0) :
             synth.getVoiceView(1) ;
     const auto* normalVoice =
-        synth.getVoiceView(0)->getRegion()->offMode == SfzOffMode::fast ?
+        synth.getVoiceView(0)->getRegion()->offMode == OffMode::fast ?
             synth.getVoiceView(1) :
             synth.getVoiceView(0) ;
     synth.noteOn(100, 63, 63);
@@ -530,9 +530,9 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
     synth.setSampleRate(44100);
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/looped_regions.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
-    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_continuous );
-    REQUIRE( synth.getRegionView(1)->loopMode == SfzLoopMode::no_loop );
-    REQUIRE( synth.getRegionView(2)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(0)->loopMode == LoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(1)->loopMode == LoopMode::no_loop );
+    REQUIRE( synth.getRegionView(2)->loopMode == LoopMode::loop_continuous );
 
     REQUIRE(synth.getRegionView(0)->loopRange == Range<uint32_t> { 77554, 186581 });
     REQUIRE(synth.getRegionView(1)->loopRange == Range<uint32_t> { 77554, 186581 });
@@ -546,7 +546,7 @@ TEST_CASE("[Files] Looped regions can start at 0")
     <region> sample=wavetable_with_loop_at_endings.wav
     )");
     REQUIRE( synth.getNumRegions() == 1 );
-    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(0)->loopMode == LoopMode::loop_continuous );
     REQUIRE( synth.getRegionView(0)->loopRange == Range<uint32_t> { 0, synth.getRegionView(0)->sampleEnd } );
 }
 
@@ -563,13 +563,13 @@ TEST_CASE("[Synth] Release triggers automatically sets the loop mode")
         <region> sample=kick.wav pitch_keycenter=69 trigger=release
     )");
     REQUIRE( synth.getNumRegions() == 7 );
-    REQUIRE( synth.getRegionView(0)->loopMode == SfzLoopMode::loop_sustain );
-    REQUIRE( synth.getRegionView(1)->loopMode == SfzLoopMode::loop_sustain );
-    REQUIRE( synth.getRegionView(2)->loopMode == SfzLoopMode::loop_sustain );
-    REQUIRE( synth.getRegionView(3)->loopMode == SfzLoopMode::loop_sustain );
-    REQUIRE( synth.getRegionView(4)->loopMode == SfzLoopMode::loop_continuous );
-    REQUIRE( synth.getRegionView(5)->loopMode == SfzLoopMode::one_shot );
-    REQUIRE( synth.getRegionView(6)->loopMode == SfzLoopMode::one_shot );
+    REQUIRE( synth.getRegionView(0)->loopMode == LoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(1)->loopMode == LoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(2)->loopMode == LoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(3)->loopMode == LoopMode::loop_sustain );
+    REQUIRE( synth.getRegionView(4)->loopMode == LoopMode::loop_continuous );
+    REQUIRE( synth.getRegionView(5)->loopMode == LoopMode::one_shot );
+    REQUIRE( synth.getRegionView(6)->loopMode == LoopMode::one_shot );
 }
 
 TEST_CASE("[Files] Case sentitiveness")

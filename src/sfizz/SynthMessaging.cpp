@@ -167,16 +167,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
 
             switch (*region.loopMode) {
-            case SfzLoopMode::no_loop:
+            case LoopMode::no_loop:
                 client.receive<'s'>(delay, path, "no_loop");
                 break;
-            case SfzLoopMode::loop_continuous:
+            case LoopMode::loop_continuous:
                 client.receive<'s'>(delay, path, "loop_continuous");
                 break;
-            case SfzLoopMode::loop_sustain:
+            case LoopMode::loop_sustain:
                 client.receive<'s'>(delay, path, "loop_sustain");
                 break;
-            case SfzLoopMode::one_shot:
+            case LoopMode::one_shot:
                 client.receive<'s'>(delay, path, "one_shot");
                 break;
             }
@@ -204,13 +204,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/off_mode", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.offMode) {
-            case SfzOffMode::time:
+            case OffMode::time:
                 client.receive<'s'>(delay, path, "time");
                 break;
-            case SfzOffMode::normal:
+            case OffMode::normal:
                 client.receive<'s'>(delay, path, "normal");
                 break;
-            case SfzOffMode::fast:
+            case OffMode::fast:
                 client.receive<'s'>(delay, path, "fast");
                 break;
             }
@@ -313,10 +313,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/sw_vel", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.velocityOverride) {
-            case SfzVelocityOverride::current:
+            case VelocityOverride::current:
                 client.receive<'s'>(delay, path, "current");
                 break;
-            case SfzVelocityOverride::previous:
+            case VelocityOverride::previous:
                 client.receive<'s'>(delay, path, "previous");
                 break;
             }
@@ -359,19 +359,19 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/trigger", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.trigger) {
-            case SfzTrigger::attack:
+            case Trigger::attack:
                 client.receive<'s'>(delay, path, "attack");
                 break;
-            case SfzTrigger::first:
+            case Trigger::first:
                 client.receive<'s'>(delay, path, "first");
                 break;
-            case SfzTrigger::release:
+            case Trigger::release:
                 client.receive<'s'>(delay, path, "release");
                 break;
-            case SfzTrigger::release_key:
+            case Trigger::release_key:
                 client.receive<'s'>(delay, path, "release_key");
                 break;
-            case SfzTrigger::legato:
+            case Trigger::legato:
                 client.receive<'s'>(delay, path, "legato");
                 break;
             }
@@ -696,10 +696,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/xf_keycurve", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.crossfadeKeyCurve) {
-            case SfzCrossfadeCurve::gain:
+            case CrossfadeCurve::gain:
                 client.receive<'s'>(delay, path, "gain");
                 break;
-            case SfzCrossfadeCurve::power:
+            case CrossfadeCurve::power:
                 client.receive<'s'>(delay, path, "power");
                 break;
             }
@@ -708,10 +708,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/xf_velcurve", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.crossfadeVelCurve) {
-            case SfzCrossfadeCurve::gain:
+            case CrossfadeCurve::gain:
                 client.receive<'s'>(delay, path, "gain");
                 break;
-            case SfzCrossfadeCurve::power:
+            case CrossfadeCurve::power:
                 client.receive<'s'>(delay, path, "power");
                 break;
             }
@@ -720,10 +720,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/xf_cccurve", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.crossfadeCCCurve) {
-            case SfzCrossfadeCurve::gain:
+            case CrossfadeCurve::gain:
                 client.receive<'s'>(delay, path, "gain");
                 break;
-            case SfzCrossfadeCurve::power:
+            case CrossfadeCurve::power:
                 client.receive<'s'>(delay, path, "power");
                 break;
             }
@@ -945,10 +945,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/note_selfmask", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch(region.selfMask) {
-            case SfzSelfMask::mask:
+            case SelfMask::mask:
                 client.receive(delay, path, "T", nullptr);
                 break;
-            case SfzSelfMask::dontMask:
+            case SelfMask::dontMask:
                 client.receive(delay, path, "F", nullptr);
                 break;
             }

@@ -596,11 +596,11 @@ void Synth::Impl::finalizeSfzLoad()
                     region->loopRange.setEnd(fileInformation->loopEnd);
 
                 if (!region->loopMode)
-                    region->loopMode = SfzLoopMode::loop_continuous;
+                    region->loopMode = LoopMode::loop_continuous;
             }
 
             if (region->isRelease() && !region->loopMode)
-                region->loopMode = SfzLoopMode::one_shot;
+                region->loopMode = LoopMode::one_shot;
 
             if (region->loopRange.getEnd() == Default::loopRange.bounds.getEnd())
                 region->loopRange.setEnd(region->sampleEnd);
@@ -656,7 +656,7 @@ void Synth::Impl::finalizeSfzLoad()
         for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc)
                 || region->ccConditions.contains(cc)
-                || (cc == region->sustainCC && region->trigger == SfzTrigger::release))
+                || (cc == region->sustainCC && region->trigger == Trigger::release))
                 ccActivationLists_[cc].push_back(region);
         }
 
@@ -1052,7 +1052,7 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
 
     for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == SfzTrigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
+            if (region->trigger == Trigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
                 continue;
 
             startVoice(region, delay, triggerEvent, ring);

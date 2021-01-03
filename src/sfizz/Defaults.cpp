@@ -145,11 +145,11 @@ extern const OpcodeSpec<float> lofiBitred { 0.0f, Range<float>(0.0f, 100.0f), kI
 extern const OpcodeSpec<float> lofiDecim { 0.0f, Range<float>(0.0f, 100.0f), kIgnoreOOB };
 extern const OpcodeSpec<float> rectify { 0.0f, Range<float>(0.0f, 100.0f), kIgnoreOOB };
 extern const OpcodeSpec<unsigned> stringsNumber { maxStrings, Range<unsigned>(0, maxStrings), kEnforceLowerBound };
-extern const OpcodeSpec<SfzTrigger> trigger { SfzTrigger::attack, Range<SfzTrigger>(SfzTrigger::attack, SfzTrigger::release_key), 0};
-extern const OpcodeSpec<SfzCrossfadeCurve> crossfadeCurve { SfzCrossfadeCurve::power, Range<SfzCrossfadeCurve>(SfzCrossfadeCurve::gain, SfzCrossfadeCurve::power), 0};
-extern const OpcodeSpec<SfzOffMode> offMode { SfzOffMode::fast, Range<SfzOffMode>(SfzOffMode::fast, SfzOffMode::time), 0};
-extern const OpcodeSpec<SfzVelocityOverride> velocityOverride { SfzVelocityOverride::current, Range<SfzVelocityOverride>(SfzVelocityOverride::current, SfzVelocityOverride::previous), 0};
-extern const OpcodeSpec<SfzSelfMask> selfMask { SfzSelfMask::mask, Range<SfzSelfMask>(SfzSelfMask::mask, SfzSelfMask::dontMask), 0};
+extern const OpcodeSpec<Trigger> trigger { Trigger::attack, Range<Trigger>(Trigger::attack, Trigger::release_key), 0};
+extern const OpcodeSpec<CrossfadeCurve> crossfadeCurve { CrossfadeCurve::power, Range<CrossfadeCurve>(CrossfadeCurve::gain, CrossfadeCurve::power), 0};
+extern const OpcodeSpec<OffMode> offMode { OffMode::fast, Range<OffMode>(OffMode::fast, OffMode::time), 0};
+extern const OpcodeSpec<VelocityOverride> velocityOverride { VelocityOverride::current, Range<VelocityOverride>(VelocityOverride::current, VelocityOverride::previous), 0};
+extern const OpcodeSpec<SelfMask> selfMask { SelfMask::mask, Range<SelfMask>(SelfMask::mask, SelfMask::dontMask), 0};
 extern const OpcodeSpec<FilterType> filter { FilterType::kFilterNone, Range<FilterType>(FilterType::kFilterNone, FilterType::kFilterPeq), 0};
 extern const OpcodeSpec<EqType> eq { EqType::kEqNone, Range<EqType>(EqType::kEqNone, EqType::kEqHighShelf), 0};
 } // namespace Default
