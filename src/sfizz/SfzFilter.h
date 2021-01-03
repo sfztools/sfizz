@@ -84,11 +84,6 @@ public:
      */
     void setType(FilterType type);
 
-    /**
-       Get the filter type associated with the given name.
-     */
-    static absl::optional<FilterType> typeFromName(absl::string_view name);
-
 private:
     struct Impl;
     std::unique_ptr<Impl> P;
@@ -193,11 +188,6 @@ public:
        Set the type of filter.
      */
     void setType(EqType type);
-
-    /**
-       Get the filter type associated with the given name.
-     */
-    static absl::optional<EqType> typeFromName(absl::string_view name);
 
 private:
     struct Impl;

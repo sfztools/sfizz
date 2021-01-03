@@ -81,13 +81,7 @@ namespace fx {
                 break;
             case hash("filter_type"):
                 {
-                    absl::optional<FilterType> ftype = sfz::Filter::typeFromName(opc.value);
-                    if (ftype)
-                        desc.type = *ftype;
-                    else {
-                        desc.type = FilterType::kFilterNone;
-                        DBG("Unknown filter type: " << std::string(opc.value));
-                    }
+                    desc.type = opc.read(Default::filter).value_or(desc.type);
                     break;
                 }
             // extension

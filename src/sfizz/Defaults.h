@@ -26,6 +26,7 @@
 #pragma once
 #include "Range.h"
 #include "Config.h"
+#include "SfzFilter.h"
 #include <limits>
 #include <cstdint>
 
@@ -198,6 +199,13 @@ namespace Default
     extern const OpcodeSpec<float> lofiDecim;
     extern const OpcodeSpec<float> rectify;
     extern const OpcodeSpec<unsigned> stringsNumber;
+    extern const OpcodeSpec<SfzTrigger> trigger;
+    extern const OpcodeSpec<SfzOffMode> offMode;
+    extern const OpcodeSpec<SfzCrossfadeCurve> crossfadeCurve;
+    extern const OpcodeSpec<SfzVelocityOverride> velocityOverride;
+    extern const OpcodeSpec<SfzSelfMask> selfMask;
+    extern const OpcodeSpec<FilterType> filter;
+    extern const OpcodeSpec<EqType> eq;
 
     // Default/max count for objects
     constexpr int numEQs { 3 };
@@ -209,15 +217,6 @@ namespace Default
     constexpr int numLFOSteps { 8 };
     constexpr int maxDistoStages { 4 };
     constexpr unsigned maxStrings { 88 };
-
-    // Default values for enums
-    constexpr SfzTrigger trigger { SfzTrigger::attack };
-    constexpr SfzOffMode offMode { SfzOffMode::fast };
-    constexpr SfzVelocityOverride velocityOverride { SfzVelocityOverride::current };
-    constexpr SfzSelfMask selfMask { SfzSelfMask::mask };
-    constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
-    constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
-    constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
 
     // Default values for ranges
     constexpr Range<uint8_t> crossfadeKeyInRange { 0, 0 };

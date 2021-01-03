@@ -204,19 +204,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             offBy = *value;
         break;
     case hash("off_mode"): // also offmode
-        switch (hash(opcode.value)) {
-        case hash("fast"):
-            offMode = SfzOffMode::fast;
-            break;
-        case hash("normal"):
-            offMode = SfzOffMode::normal;
-            break;
-        case hash("time"):
-            offMode = SfzOffMode::time;
-            break;
-        default:
-            DBG("Unkown off mode:" << opcode.value);
-        }
+         offMode = opcode.read(Default::offMode).value_or(offMode);
         break;
     case hash("off_time"):
         offMode = SfzOffMode::time;
@@ -360,16 +348,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
     case hash("sw_vel"):
-        switch (hash(opcode.value)) {
-        case hash("current"):
-            velocityOverride = SfzVelocityOverride::current;
-            break;
-        case hash("previous"):
-            velocityOverride = SfzVelocityOverride::previous;
-            break;
-        default:
-            DBG("Unknown velocity mode: " << opcode.value);
-        }
+        velocityOverride =
+            opcode.read(Default::velocityOverride).value_or(velocityOverride);
         break;
 
     case hash("sustain_cc"):
@@ -419,25 +399,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     // Region logic: triggers
     case hash("trigger"):
-        switch (hash(opcode.value)) {
-        case hash("attack"):
-            trigger = SfzTrigger::attack;
-            break;
-        case hash("first"):
-            trigger = SfzTrigger::first;
-            break;
-        case hash("legato"):
-            trigger = SfzTrigger::legato;
-            break;
-        case hash("release"):
-            trigger = SfzTrigger::release;
-            break;
-        case hash("release_key"):
-            trigger = SfzTrigger::release_key;
-            break;
-        default:
-            DBG("Unknown trigger mode: " << opcode.value);
-        }
+        trigger = opcode.read(Default::trigger).value_or(trigger);
         break;
     case hash("start_locc&"): // also on_locc&
         if (opcode.parameters.back() >= config::numCCs)
@@ -564,28 +526,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeVelOutRange.setEnd(normalizeVelocity(*value));
         break;
     case hash("xf_keycurve"):
-        switch (hash(opcode.value)) {
-        case hash("power"):
-            crossfadeKeyCurve = SfzCrossfadeCurve::power;
-            break;
-        case hash("gain"):
-            crossfadeKeyCurve = SfzCrossfadeCurve::gain;
-            break;
-        default:
-            DBG("Unknown crossfade power curve: " << opcode.value);
-        }
+        crossfadeKeyCurve = opcode.read(Default::crossfadeCurve).value_or(crossfadeKeyCurve);
         break;
     case hash("xf_velcurve"):
-        switch (hash(opcode.value)) {
-        case hash("power"):
-            crossfadeVelCurve = SfzCrossfadeCurve::power;
-            break;
-        case hash("gain"):
-            crossfadeVelCurve = SfzCrossfadeCurve::gain;
-            break;
-        default:
-            DBG("Unknown crossfade power curve: " << opcode.value);
-        }
+        crossfadeVelCurve = opcode.read(Default::crossfadeCurve).value_or(crossfadeVelCurve);
         break;
     case hash("xfin_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
@@ -612,16 +556,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             crossfadeCCOutRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
         break;
     case hash("xf_cccurve"):
-        switch (hash(opcode.value)) {
-        case hash("power"):
-            crossfadeCCCurve = SfzCrossfadeCurve::power;
-            break;
-        case hash("gain"):
-            crossfadeCCCurve = SfzCrossfadeCurve::gain;
-            break;
-        default:
-            DBG("Unknown crossfade power curve: " << opcode.value);
-        }
+        crossfadeCCCurve = opcode.read(Default::crossfadeCurve).value_or(crossfadeCCCurve);
         break;
     case hash("rt_decay"):
         rtDecay = opcode.read(Default::rtDecay).value_or(rtDecay);
@@ -745,14 +680,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            absl::optional<FilterType> ftype = Filter::typeFromName(opcode.value);
-
-            if (ftype)
-                filters[filterIndex].type = *ftype;
-            else {
-                filters[filterIndex].type = FilterType::kFilterNone;
-                DBG("Unknown filter type: " << opcode.value);
-            }
+            filters[filterIndex].type =
+                opcode.read(Default::filter).value_or(filters[filterIndex].type);
         }
         break;
 
@@ -835,15 +764,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            absl::optional<EqType> ftype = FilterEq::typeFromName(opcode.value);
+            equalizers[eqIndex].type =
+                opcode.read(Default::eq).value_or(equalizers[eqIndex].type);
 
-            if (ftype)
-                equalizers[eqIndex].type = *ftype;
-            else {
-                equalizers[eqIndex].type = EqType::kEqNone;
-                DBG("Unknown EQ type: " << opcode.value);
-            }
-        }
+       }
         break;
 
     // Performance parameters: pitch

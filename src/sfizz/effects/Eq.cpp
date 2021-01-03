@@ -83,13 +83,7 @@ namespace fx {
                 break;
             case hash("eq_type"):
                 {
-                    absl::optional<EqType> ftype = sfz::FilterEq::typeFromName(opc.value);
-                    if (ftype)
-                        desc.type = *ftype;
-                    else {
-                        desc.type = EqType::kEqNone;
-                        DBG("Unknown EQ type: " << std::string(opc.value));
-                    }
+                    desc.type = opc.read(Default::eq).value_or(desc.type);
                     break;
                 }
             }

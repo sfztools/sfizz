@@ -204,39 +204,6 @@ void Filter::setType(FilterType type)
     }
 }
 
-absl::optional<FilterType> Filter::typeFromName(absl::string_view name)
-{
-    absl::optional<FilterType> ftype;
-
-    switch (hash(name)) {
-    case hash("lpf_1p"): ftype = kFilterLpf1p; break;
-    case hash("hpf_1p"): ftype = kFilterHpf1p; break;
-    case hash("lpf_2p"): ftype = kFilterLpf2p; break;
-    case hash("hpf_2p"): ftype = kFilterHpf2p; break;
-    case hash("bpf_2p"): ftype = kFilterBpf2p; break;
-    case hash("brf_2p"): ftype = kFilterBrf2p; break;
-    case hash("bpf_1p"): ftype = kFilterBpf1p; break;
-    case hash("brf_1p"): ftype = kFilterBrf1p; break;
-    case hash("apf_1p"): ftype = kFilterApf1p; break;
-    case hash("lpf_2p_sv"): ftype = kFilterLpf2pSv; break;
-    case hash("hpf_2p_sv"): ftype = kFilterHpf2pSv; break;
-    case hash("bpf_2p_sv"): ftype = kFilterBpf2pSv; break;
-    case hash("brf_2p_sv"): ftype = kFilterBrf2pSv; break;
-    case hash("lpf_4p"): ftype = kFilterLpf4p; break;
-    case hash("hpf_4p"): ftype = kFilterHpf4p; break;
-    case hash("lpf_6p"): ftype = kFilterLpf6p; break;
-    case hash("hpf_6p"): ftype = kFilterHpf6p; break;
-    case hash("pink"): ftype = kFilterPink; break;
-    case hash("lsh"): ftype = kFilterLsh; break;
-    case hash("hsh"): ftype = kFilterHsh; break;
-    case hash("bpk_2p"): //fallthrough
-    case hash("pkf_2p"): //fallthrough
-    case hash("peq"): ftype = kFilterPeq; break;
-    }
-
-    return ftype;
-}
-
 sfzFilterDsp *Filter::Impl::getDsp(unsigned channels, FilterType type)
 {
     switch (idDsp(channels, type)) {
@@ -442,19 +409,6 @@ void FilterEq::setType(EqType type)
         P->fType = type;
         clear();
     }
-}
-
-absl::optional<EqType> FilterEq::typeFromName(absl::string_view name)
-{
-    absl::optional<EqType> ftype;
-
-    switch (hash(name)) {
-    case hash("peak"): ftype = kEqPeak; break;
-    case hash("lshelf"): ftype = kEqLowShelf; break;
-    case hash("hshelf"): ftype = kEqHighShelf; break;
-    }
-
-    return ftype;
 }
 
 sfzFilterDsp *FilterEq::Impl::getDsp(unsigned channels, EqType type)

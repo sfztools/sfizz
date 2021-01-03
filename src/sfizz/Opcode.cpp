@@ -305,6 +305,117 @@ absl::optional<OscillatorEnabled> Opcode::read(OpcodeSpec<OscillatorEnabled>) co
 }
 
 template <>
+absl::optional<SfzTrigger> Opcode::read(OpcodeSpec<SfzTrigger>) const
+{
+    switch (hash(value)) {
+    case hash("attack"): return SfzTrigger::attack;
+    case hash("first"): return SfzTrigger::first;
+    case hash("legato"): return SfzTrigger::legato;
+    case hash("release"): return SfzTrigger::release;
+    case hash("release_key"): return SfzTrigger::release_key;
+    }
+
+    DBG("Unknown trigger value: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<SfzCrossfadeCurve> Opcode::read(OpcodeSpec<SfzCrossfadeCurve>) const
+{
+    switch (hash(value)) {
+    case hash("power"): return SfzCrossfadeCurve::power;
+    case hash("gain"): return SfzCrossfadeCurve::gain;
+    }
+
+    DBG("Unknown crossfade power curve: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<SfzOffMode> Opcode::read(OpcodeSpec<SfzOffMode>) const
+{
+    switch (hash(value)) {
+    case hash("fast"): return SfzOffMode::fast;
+    case hash("normal"): return SfzOffMode::normal;
+    case hash("time"): return SfzOffMode::time;
+    }
+
+    DBG("Unknown off mode: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<FilterType> Opcode::read(OpcodeSpec<FilterType>) const
+{
+    switch (hash(value)) {
+    case hash("lpf_1p"): return kFilterLpf1p;
+    case hash("hpf_1p"): return kFilterHpf1p;
+    case hash("lpf_2p"): return kFilterLpf2p;
+    case hash("hpf_2p"): return kFilterHpf2p;
+    case hash("bpf_2p"): return kFilterBpf2p;
+    case hash("brf_2p"): return kFilterBrf2p;
+    case hash("bpf_1p"): return kFilterBpf1p;
+    case hash("brf_1p"): return kFilterBrf1p;
+    case hash("apf_1p"): return kFilterApf1p;
+    case hash("lpf_2p_sv"): return kFilterLpf2pSv;
+    case hash("hpf_2p_sv"): return kFilterHpf2pSv;
+    case hash("bpf_2p_sv"): return kFilterBpf2pSv;
+    case hash("brf_2p_sv"): return kFilterBrf2pSv;
+    case hash("lpf_4p"): return kFilterLpf4p;
+    case hash("hpf_4p"): return kFilterHpf4p;
+    case hash("lpf_6p"): return kFilterLpf6p;
+    case hash("hpf_6p"): return kFilterHpf6p;
+    case hash("pink"): return kFilterPink;
+    case hash("lsh"): return kFilterLsh;
+    case hash("hsh"): return kFilterHsh;
+    case hash("bpk_2p"): //fallthrough
+    case hash("pkf_2p"): //fallthrough
+    case hash("peq"): return kFilterPeq;
+    }
+
+    DBG("Unknown filter type: " << value);
+    return kFilterNone;
+}
+
+template <>
+absl::optional<EqType> Opcode::read(OpcodeSpec<EqType>) const
+{
+    switch (hash(value)) {
+    case hash("peak"): return kEqPeak;
+    case hash("lshelf"): return kEqLowShelf;
+    case hash("hshelf"): return kEqHighShelf;
+    }
+
+    DBG("Unknown EQ type: " << value);
+    return kEqNone;
+}
+
+template <>
+absl::optional<SfzVelocityOverride> Opcode::read(OpcodeSpec<SfzVelocityOverride>) const
+{
+    switch (hash(value)) {
+    case hash("current"): return SfzVelocityOverride::current;
+    case hash("previous"): return SfzVelocityOverride::previous;
+    }
+
+    DBG("Unknown velocity override: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<SfzSelfMask> Opcode::read(OpcodeSpec<SfzSelfMask>) const
+{
+    switch (hash(value)) {
+    case hash("on"):
+    case hash("mask"): return SfzSelfMask::mask;
+    case hash("off"): return SfzSelfMask::dontMask;
+    }
+
+    DBG("Unknown velocity override: " << value);
+    return absl::nullopt;
+}
+
+template <>
 absl::optional<bool> Opcode::read(OpcodeSpec<bool>) const
 {
     return readBooleanFromOpcode(*this);

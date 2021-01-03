@@ -343,11 +343,11 @@ struct Region {
     // Instrument settings: voice lifecycle
     uint32_t group { Default::group.value }; // group
     absl::optional<uint32_t> offBy {}; // off_by
-    SfzOffMode offMode { Default::offMode }; // off_mode
+    SfzOffMode offMode { Default::offMode.value }; // off_mode
     float offTime { Default::offTime.value }; // off_mode
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony
     uint32_t polyphony { config::maxVoices }; // polyphony
-    SfzSelfMask selfMask { Default::selfMask };
+    SfzSelfMask selfMask { Default::selfMask.value };
     bool rtDead { Default::rtDead.value };
 
     // Region logic: key mapping
@@ -364,7 +364,7 @@ struct Region {
     absl::optional<uint8_t> downKeyswitch {}; // sw_down
     absl::optional<uint8_t> previousKeyswitch {}; // sw_previous
     absl::optional<uint8_t> defaultSwitch {};
-    SfzVelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
+    SfzVelocityOverride velocityOverride { Default::velocityOverride.value }; // sw_vel
     bool checkSustain { Default::checkSustain.value }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto.value }; // sostenuto_sw
     uint16_t sustainCC { Default::sustainCC.value }; // sustain_cc
@@ -378,7 +378,7 @@ struct Region {
     uint8_t sequencePosition { Default::sequence.value }; // seq_position
 
     // Region logic: triggers
-    SfzTrigger trigger { Default::trigger }; // trigger
+    SfzTrigger trigger { Default::trigger.value }; // trigger
     CCMap<Range<float>> ccTriggers { Default::normalized.bounds }; // on_loccN on_hiccN
 
     // Performance parameters: amplifier
@@ -397,9 +397,9 @@ struct Region {
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
     Range<float> crossfadeVelInRange { Default::crossfadeVelInRange };
     Range<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
-    SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeKeyCurve };
-    SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeVelCurve };
-    SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCCCurve };
+    SfzCrossfadeCurve crossfadeKeyCurve { Default::crossfadeCurve.value };
+    SfzCrossfadeCurve crossfadeVelCurve { Default::crossfadeCurve.value };
+    SfzCrossfadeCurve crossfadeCCCurve { Default::crossfadeCurve.value };
     CCMap<Range<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
     CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay.value }; // rt_decay
