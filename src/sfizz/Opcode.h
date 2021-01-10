@@ -102,7 +102,7 @@ struct Opcode {
     }
 
     template <class T>
-    absl::optional<T> read(OpcodeSpec<T> spec) const;
+    T read(OpcodeSpec<T> spec) const;
 
 private:
     static OpcodeCategory identifyCategory(absl::string_view name);

@@ -179,8 +179,8 @@ private:
     std::vector<std::unique_ptr<Effect>> _effects;
     AudioBuffer<float> _inputs { EffectChannels, config::defaultSamplesPerBlock };
     AudioBuffer<float> _outputs { EffectChannels, config::defaultSamplesPerBlock };
-    float _gainToMain { Default::effect.value };
-    float _gainToMix { Default::effect.value };
+    float _gainToMain { Default::effect };
+    float _gainToMix { Default::effect };
 };
 
 } // namespace sfz

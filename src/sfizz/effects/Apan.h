@@ -52,12 +52,12 @@ namespace fx {
         sfz::Buffer<float> _lfoOutRight { config::defaultSamplesPerBlock };
 
         // Controls
-        float _dry { Default::apanLevel.value };
-        float _wet { Default::apanLevel.value };
-        float _depth { Default::apanLevel.value };
-        int _lfoWave { Default::apanWaveform.value };
-        float _lfoFrequency { Default::apanFrequency.value };
-        float _lfoPhaseOffset { Default::apanPhase.value };
+        float _dry { Default::apanLevel };
+        float _wet { Default::apanLevel };
+        float _depth { Default::apanLevel };
+        int _lfoWave { Default::apanWaveform };
+        float _lfoFrequency { Default::apanFrequency };
+        float _lfoPhaseOffset { Default::apanPhase };
 
         // State
         float _lfoPhase { 0.0f };

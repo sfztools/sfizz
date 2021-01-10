@@ -319,44 +319,44 @@ struct Region {
     // Sound source: sample playback
     std::shared_ptr<FileId> sampleId { new FileId }; // Sample
     absl::optional<int> sampleQuality {};
-    float delay { Default::delay.value }; // delay
-    float delayRandom { Default::delayRandom.value }; // delay_random
-    int64_t offset { Default::offset.value }; // offset
-    int64_t offsetRandom { Default::offsetRandom.value }; // offset_random
-    CCMap<int64_t> offsetCC { Default::offsetMod.value };
-    uint32_t sampleEnd { Default::sampleEnd.value }; // end
-    absl::optional<uint32_t> sampleCount {}; // count
+    float delay { Default::delay }; // delay
+    float delayRandom { Default::delayRandom }; // delay_random
+    int64_t offset { Default::offset }; // offset
+    int64_t offsetRandom { Default::offsetRandom }; // offset_random
+    CCMap<int64_t> offsetCC { Default::offsetMod };
+    uint32_t sampleEnd { Default::sampleEnd }; // end
+    uint32_t sampleCount { Default::sampleCount }; // count
     absl::optional<LoopMode> loopMode {}; // loopmode
-    Range<uint32_t> loopRange { Default::loopRange.bounds }; //loopstart and loopend
-    float loopCrossfade { Default::loopCrossfade.value }; // loop_crossfade
+    Range<uint32_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 
     // Wavetable oscillator
-    float oscillatorPhase { Default::oscillatorPhase.value };
-    OscillatorEnabled oscillatorEnabled { Default::oscillator.value }; // oscillator
+    float oscillatorPhase { Default::oscillatorPhase };
+    OscillatorEnabled oscillatorEnabled { Default::oscillator }; // oscillator
     bool hasWavetableSample { false }; // (set according to sample file)
-    int oscillatorMode { Default::oscillatorMode.value };
-    int oscillatorMulti { Default::oscillatorMulti.value };
-    float oscillatorDetune { Default::oscillatorDetune.value };
-    float oscillatorModDepth { Default::oscillatorModDepth.value };
+    int oscillatorMode { Default::oscillatorMode };
+    int oscillatorMulti { Default::oscillatorMulti };
+    float oscillatorDetune { Default::oscillatorDetune };
+    float oscillatorModDepth { Default::oscillatorModDepth };
     absl::optional<int> oscillatorQuality;
 
     // Instrument settings: voice lifecycle
-    uint32_t group { Default::group.value }; // group
+    uint32_t group { Default::group }; // group
     absl::optional<uint32_t> offBy {}; // off_by
-    OffMode offMode { Default::offMode.value }; // off_mode
-    float offTime { Default::offTime.value }; // off_mode
+    OffMode offMode { Default::offMode }; // off_mode
+    float offTime { Default::offTime }; // off_mode
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony
     uint32_t polyphony { config::maxVoices }; // polyphony
-    SelfMask selfMask { Default::selfMask.value };
-    bool rtDead { Default::rtDead.value };
+    SelfMask selfMask { Default::selfMask };
+    bool rtDead { Default::rtDead };
 
     // Region logic: key mapping
-    Range<uint8_t> keyRange { Default::key.bounds }; //lokey, hikey and key
-    Range<float> velocityRange { Default::normalized.bounds }; // hivel and lovel
+    Range<uint8_t> keyRange { Default::loKey, Default::hiKey }; //lokey, hikey and key
+    Range<float> velocityRange { Default::loVel, Default::hiVel }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<float> bendRange { Default::bipolar.bounds }; // hibend and lobend
-    CCMap<Range<float>> ccConditions { Default::normalized.bounds };
+    Range<float> bendRange { Default::loBend, Default::hiBend }; // hibend and lobend
+    CCMap<Range<float>> ccConditions {{ Default::loCC, Default::hiCC }};
     absl::optional<uint8_t> lastKeyswitch {}; // sw_last
     absl::optional<Range<uint8_t>> lastKeyswitchRange {}; // sw_last
     absl::optional<std::string> keyswitchLabel {};
@@ -364,45 +364,45 @@ struct Region {
     absl::optional<uint8_t> downKeyswitch {}; // sw_down
     absl::optional<uint8_t> previousKeyswitch {}; // sw_previous
     absl::optional<uint8_t> defaultSwitch {};
-    VelocityOverride velocityOverride { Default::velocityOverride.value }; // sw_vel
-    bool checkSustain { Default::checkSustain.value }; // sustain_sw
-    bool checkSostenuto { Default::checkSostenuto.value }; // sostenuto_sw
-    uint16_t sustainCC { Default::sustainCC.value }; // sustain_cc
-    float sustainThreshold { Default::sustainThreshold.value }; // sustain_cc
+    VelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
+    bool checkSustain { Default::checkSustain }; // sustain_sw
+    bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
+    uint16_t sustainCC { Default::sustainCC }; // sustain_cc
+    float sustainThreshold { Default::sustainThreshold }; // sustain_cc
 
     // Region logic: internal conditions
-    Range<uint8_t> aftertouchRange { Default::midi7.bounds }; // hichanaft and lochanaft
-    Range<float> bpmRange { Default::bpm.bounds }; // hibpm and lobpm
-    Range<float> randRange { Default::normalized.bounds }; // hirand and lorand
-    uint8_t sequenceLength { Default::sequence.value }; // seq_length
-    uint8_t sequencePosition { Default::sequence.value }; // seq_position
+    Range<uint8_t> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
+    Range<float> bpmRange { Default::loBPM, Default::hiBPM }; // hibpm and lobpm
+    Range<float> randRange { Default::loNormalized, Default::hiNormalized }; // hirand and lorand
+    uint8_t sequenceLength { Default::sequence }; // seq_length
+    uint8_t sequencePosition { Default::sequence }; // seq_position
 
     // Region logic: triggers
-    Trigger trigger { Default::trigger.value }; // trigger
-    CCMap<Range<float>> ccTriggers { Default::normalized.bounds }; // on_loccN on_hiccN
+    Trigger trigger { Default::trigger }; // trigger
+    CCMap<Range<float>> ccTriggers {{ Default::loCC, Default::hiCC }}; // on_loccN on_hiccN
 
     // Performance parameters: amplifier
-    float volume { Default::volume.value }; // volume
-    float amplitude { normalizePercents(Default::amplitude.value) }; // amplitude
-    float pan { normalizePercents(Default::pan.value) }; // pan
-    float width { normalizePercents(Default::width.value) }; // width
-    float position { normalizePercents(Default::position.value) }; // position
-    uint8_t ampKeycenter { Default::key.value }; // amp_keycenter
-    float ampKeytrack { Default::ampKeytrack.value }; // amp_keytrack
-    float ampVeltrack { normalizePercents(Default::ampVeltrack.value) }; // amp_veltrack
+    float volume { Default::volume }; // volume
+    float amplitude { normalizePercents(Default::amplitude) }; // amplitude
+    float pan { normalizePercents(Default::pan) }; // pan
+    float width { normalizePercents(Default::width) }; // width
+    float position { normalizePercents(Default::position) }; // position
+    uint8_t ampKeycenter { Default::key }; // amp_keycenter
+    float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
+    float ampVeltrack { normalizePercents(Default::ampVeltrack) }; // amp_veltrack
     std::vector<std::pair<uint8_t, float>> velocityPoints; // amp_velcurve_N
     absl::optional<Curve> velCurve {};
-    float ampRandom { Default::ampRandom.value }; // amp_random
+    float ampRandom { Default::ampRandom }; // amp_random
     Range<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
     Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
     Range<float> crossfadeVelInRange { Default::crossfadeVelInRange };
     Range<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
-    CrossfadeCurve crossfadeKeyCurve { Default::crossfadeCurve.value };
-    CrossfadeCurve crossfadeVelCurve { Default::crossfadeCurve.value };
-    CrossfadeCurve crossfadeCCCurve { Default::crossfadeCurve.value };
+    CrossfadeCurve crossfadeKeyCurve { Default::crossfadeCurve };
+    CrossfadeCurve crossfadeVelCurve { Default::crossfadeCurve };
+    CrossfadeCurve crossfadeCCCurve { Default::crossfadeCurve };
     CCMap<Range<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
     CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
-    float rtDecay { Default::rtDecay.value }; // rt_decay
+    float rtDecay { Default::rtDecay }; // rt_decay
 
     float globalAmplitude { 1.0 }; // global_amplitude
     float masterAmplitude { 1.0 }; // master_amplitude
@@ -416,17 +416,17 @@ struct Region {
     std::vector<FilterDescription> filters;
 
     // Performance parameters: pitch
-    uint8_t pitchKeycenter { Default::key.value }; // pitch_keycenter
+    uint8_t pitchKeycenter { Default::key }; // pitch_keycenter
     bool pitchKeycenterFromSample { false };
-    int pitchKeytrack { Default::pitchKeytrack.value }; // pitch_keytrack
-    float pitchRandom { Default::pitchRandom.value }; // pitch_random
-    int pitchVeltrack { Default::pitchVeltrack.value }; // pitch_veltrack
-    int transpose { Default::transpose.value }; // transpose
-    float pitch { Default::pitch.value }; // tune
-    float bendUp { Default::bendUp.value };
-    float bendDown { Default::bendDown.value };
-    float bendStep { Default::bendStep.value };
-    uint8_t bendSmooth { Default::smoothCC.value };
+    int pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
+    float pitchRandom { Default::pitchRandom }; // pitch_random
+    int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
+    int transpose { Default::transpose }; // transpose
+    float pitch { Default::pitch }; // tune
+    float bendUp { Default::bendUp };
+    float bendDown { Default::bendDown };
+    float bendStep { Default::bendStep };
+    uint8_t bendSmooth { Default::smoothCC };
 
     // Envelopes
     EGDescription amplitudeEG;

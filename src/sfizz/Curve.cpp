@@ -40,11 +40,7 @@ Curve Curve::buildCurveFromHeader(
         if (index >= NumValues)
             continue;
 
-        auto valueOpt = opc.read(fullRange);
-        if (!valueOpt)
-            continue;
-
-        setPoint(static_cast<int>(index), *valueOpt);
+        setPoint(static_cast<int>(index), opc.read(fullRange));
     }
 
     curve.fill(itp, fillStatus);
@@ -267,12 +263,8 @@ void CurveSet::addCurveFromHeader(absl::Span<const Opcode> members)
     int curveIndex = -1;
     Curve::Interpolator itp = Curve::Interpolator::Linear;
 
-    if (const Opcode* opc = findOpcode(hash("curve_index"))) {
-        if (auto opt = opc->read(Default::curveCC))
-            curveIndex = *opt;
-        else
-            DBG("Invalid value for curve index: " << opc->value);
-    }
+    if (const Opcode* opc = findOpcode(hash("curve_index")))
+        curveIndex = opc->read(Default::curveCC);
 
 #if 0 // potential sfizz extension
     if (const Opcode* opc = findOpcode(hash("sfizz:curve_interpolator"))) {

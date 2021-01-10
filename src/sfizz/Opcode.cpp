@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Opcode.h"
+#include "LFODescription.h"
 #include "StringViewHelpers.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
@@ -141,30 +142,22 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
 
-        if (spec.flags & kIgnoreOOB)
-            return {};
-    }
-
-    if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
+        return {};
+    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
 
-        if (spec.flags & kIgnoreOOB)
-            return {};
+        return {};
     }
 
-    T castValue = static_cast<T>(returnedValue);
-    if ((castValue != returnedValue) & kIgnoreOOB)
-        return {};
-
-    return castValue;
+    return returnedValue;
 }
 
 #define INSTANTIATE_FOR_INTEGRAL(T)                             \
     template <>                                                 \
-    absl::optional<T> Opcode::read(OpcodeSpec<T> spec) const    \
+    T Opcode::read(OpcodeSpec<T> spec) const    \
     {                                                           \
-        return readInt_<T>(spec, value);                               \
+        return readInt_<T>(spec, value).value_or(spec.defaultValue);                               \
     }
 
 INSTANTIATE_FOR_INTEGRAL(uint8_t)
@@ -198,30 +191,37 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
     if (!absl::SimpleAtof(v, &returnedValue))
         return absl::nullopt;
 
-    if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
+    if (spec.flags & kWrapPhase)
+        returnedValue = wrapPhase(returnedValue);
+    else if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
 
-        if (spec.flags & kIgnoreOOB)
-            return {};
-    }
-
-    if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
+        return {};
+    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
 
-        if (spec.flags & kIgnoreOOB)
-            return {};
+        return {};
     }
+
+    if (spec.flags & kNormalizeMidi)
+        returnedValue = normalize7Bits(returnedValue);
+    else if (spec.flags & kNormalizePercent)
+        returnedValue = normalizePercents(returnedValue);
+    else if (spec.flags & kNormalizeBend)
+        returnedValue = normalizeBend(returnedValue);
+    else if (spec.flags & kDb2Mag)
+        returnedValue = db2mag(returnedValue);
 
     return returnedValue;
 }
 
 #define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
     template <>                                                 \
-    absl::optional<T> Opcode::read(OpcodeSpec<T> spec) const    \
+    T Opcode::read(OpcodeSpec<T> spec) const    \
     {                                                           \
-        return readFloat_<T>(spec, value);                             \
+        return readFloat_<T>(spec, value).value_or(spec.defaultValue);                             \
     }
 
 INSTANTIATE_FOR_FLOATING_POINT(float)
@@ -288,24 +288,21 @@ absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
     // ARIA-style booleans? (seen in egN_dynamic=1 for example)
     // TODO check this
     const OpcodeSpec<int64_t> fullInt64 { 0, Range<int64_t>::wholeRange(), 0 };
-    if (auto value = opcode.read(fullInt64))
-        return *value != 0;
-
-    return absl::nullopt;
+    return opcode.read(fullInt64);
 }
 
 template <>
-absl::optional<OscillatorEnabled> Opcode::read(OpcodeSpec<OscillatorEnabled>) const
+OscillatorEnabled Opcode::read(OpcodeSpec<OscillatorEnabled> spec) const
 {
     auto v = readBooleanFromOpcode(*this);
     if (!v)
-        return absl::nullopt;
+        return spec.defaultValue;
 
     return *v ? OscillatorEnabled::On : OscillatorEnabled::Off;
 }
 
 template <>
-absl::optional<Trigger> Opcode::read(OpcodeSpec<Trigger>) const
+Trigger Opcode::read(OpcodeSpec<Trigger> spec) const
 {
     switch (hash(value)) {
     case hash("attack"): return Trigger::attack;
@@ -316,11 +313,11 @@ absl::optional<Trigger> Opcode::read(OpcodeSpec<Trigger>) const
     }
 
     DBG("Unknown trigger value: " << value);
-    return absl::nullopt;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<CrossfadeCurve> Opcode::read(OpcodeSpec<CrossfadeCurve>) const
+CrossfadeCurve Opcode::read(OpcodeSpec<CrossfadeCurve> spec) const
 {
     switch (hash(value)) {
     case hash("power"): return CrossfadeCurve::power;
@@ -328,11 +325,11 @@ absl::optional<CrossfadeCurve> Opcode::read(OpcodeSpec<CrossfadeCurve>) const
     }
 
     DBG("Unknown crossfade power curve: " << value);
-    return absl::nullopt;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<OffMode> Opcode::read(OpcodeSpec<OffMode>) const
+OffMode Opcode::read(OpcodeSpec<OffMode> spec) const
 {
     switch (hash(value)) {
     case hash("fast"): return OffMode::fast;
@@ -341,11 +338,11 @@ absl::optional<OffMode> Opcode::read(OpcodeSpec<OffMode>) const
     }
 
     DBG("Unknown off mode: " << value);
-    return absl::nullopt;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<FilterType> Opcode::read(OpcodeSpec<FilterType>) const
+FilterType Opcode::read(OpcodeSpec<FilterType> spec) const
 {
     switch (hash(value)) {
     case hash("lpf_1p"): return kFilterLpf1p;
@@ -374,11 +371,11 @@ absl::optional<FilterType> Opcode::read(OpcodeSpec<FilterType>) const
     }
 
     DBG("Unknown filter type: " << value);
-    return kFilterNone;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<EqType> Opcode::read(OpcodeSpec<EqType>) const
+EqType Opcode::read(OpcodeSpec<EqType> spec) const
 {
     switch (hash(value)) {
     case hash("peak"): return kEqPeak;
@@ -387,11 +384,11 @@ absl::optional<EqType> Opcode::read(OpcodeSpec<EqType>) const
     }
 
     DBG("Unknown EQ type: " << value);
-    return kEqNone;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<VelocityOverride> Opcode::read(OpcodeSpec<VelocityOverride>) const
+VelocityOverride Opcode::read(OpcodeSpec<VelocityOverride> spec) const
 {
     switch (hash(value)) {
     case hash("current"): return VelocityOverride::current;
@@ -399,11 +396,11 @@ absl::optional<VelocityOverride> Opcode::read(OpcodeSpec<VelocityOverride>) cons
     }
 
     DBG("Unknown velocity override: " << value);
-    return absl::nullopt;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<SelfMask> Opcode::read(OpcodeSpec<SelfMask>) const
+SelfMask Opcode::read(OpcodeSpec<SelfMask> spec) const
 {
     switch (hash(value)) {
     case hash("on"):
@@ -412,13 +409,25 @@ absl::optional<SelfMask> Opcode::read(OpcodeSpec<SelfMask>) const
     }
 
     DBG("Unknown velocity override: " << value);
-    return absl::nullopt;
+    return spec.defaultValue;
 }
 
 template <>
-absl::optional<bool> Opcode::read(OpcodeSpec<bool>) const
+bool Opcode::read(OpcodeSpec<bool> spec) const
 {
-    return readBooleanFromOpcode(*this);
+    return readBooleanFromOpcode(*this).value_or(spec.defaultValue);
+}
+
+template <>
+LFOWave Opcode::read(OpcodeSpec<LFOWave> spec) const
+{
+    const OpcodeSpec<int> intSpec {
+        static_cast<int>(spec.defaultValue),
+        Range<int>(static_cast<int>(spec.bounds.getStart()), static_cast<int>(spec.bounds.getEnd())),
+        0
+    };
+    int value = read(intSpec);
+    return static_cast<LFOWave>(value);
 }
 
 } // namespace sfz

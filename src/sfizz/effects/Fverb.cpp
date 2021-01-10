@@ -180,13 +180,13 @@ namespace fx {
         std::unique_ptr<Effect> fx { reverb };
 
         const Impl::Profile* profile = &Impl::largeHall;
-        float dry { Default::effect.value };
-        float wet { Default::effect.value };
-        float input { Default::effect.value };
-        float size { Default::fverbSize.value };
-        float predelay { Default::fverbPredelay.value };
-        float tone { Default::fverbTone.value };
-        float damp { Default::fverbDamp.value };
+        float dry { Default::effect };
+        float wet { Default::effect };
+        float input { Default::effect };
+        float size { Default::fverbSize };
+        float predelay { Default::fverbPredelay };
+        float tone { Default::fverbTone };
+        float damp { Default::fverbDamp };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
@@ -212,25 +212,25 @@ namespace fx {
                 break;
             case hash("reverb_dry"):
 
-                dry = opc.read(Default::effect).value_or(dry);
+                dry = opc.read(Default::effect);
                 break;
             case hash("reverb_wet"):
-                wet = opc.read(Default::effect).value_or(wet);
+                wet = opc.read(Default::effect);
                 break;
             case hash("reverb_input"):
-                input = opc.read(Default::effect).value_or(input);
+                input = opc.read(Default::effect);
                 break;
             case hash("reverb_size"):
-                size = opc.read(Default::fverbSize).value_or(size);
+                size = opc.read(Default::fverbSize);
                 break;
             case hash("reverb_predelay"):
-                predelay = opc.read(Default::fverbPredelay).value_or(predelay);
+                predelay = opc.read(Default::fverbPredelay);
                 break;
             case hash("reverb_tone"):
-                tone = opc.read(Default::fverbTone).value_or(tone);
+                tone = opc.read(Default::fverbTone);
                 break;
             case hash("reverb_damp"):
-                damp = opc.read(Default::fverbDamp).value_or(damp);
+                damp = opc.read(Default::fverbDamp);
                 break;
             }
         }

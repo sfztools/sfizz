@@ -34,7 +34,7 @@ namespace fx {
 
     struct Gate::Impl {
         faustGate _gate[2];
-        bool _stlink { Default::gateSTLink.value };
+        bool _stlink { Default::gateSTLink };
         float _inputGain = 1.0;
         AudioBuffer<float, 2> _tempBuffer2x { 2, _oversampling * config::defaultSamplesPerBlock };
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
@@ -166,31 +166,35 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("gate_attack"):
-                if (auto value = opc.read(Default::gateAttack)) {
+                {
+                    auto value = opc.read(Default::gateAttack);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Attack(c, *value);
+                        impl.set_Attack(c, value);
                 }
                 break;
             case hash("gate_hold"):
-                if (auto value = opc.read(Default::gateHold)) {
+                {
+                    auto value = opc.read(Default::gateHold);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Hold(c, *value);
+                        impl.set_Hold(c, value);
                 }
                 break;
             case hash("gate_release"):
-                if (auto value = opc.read(Default::gateRelease)) {
+                {
+                    auto value = opc.read(Default::gateRelease);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Release(c, *value);
+                        impl.set_Release(c, value);
                 }
                 break;
             case hash("gate_threshold"):
-                if (auto value = opc.read(Default::gateThreshold)) {
+                {
+                    auto value = opc.read(Default::gateThreshold);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Threshold(c, *value);
+                        impl.set_Threshold(c, value);
                 }
                 break;
             case hash("gate_stlink"):
-                impl._stlink = opc.read(Default::gateSTLink).value_or(impl._stlink);
+                impl._stlink = opc.read(Default::gateSTLink);
             }
         }
 

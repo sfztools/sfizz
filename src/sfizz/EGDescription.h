@@ -66,21 +66,21 @@ struct EGDescription {
     EGDescription& operator=(const EGDescription&) = default;
     EGDescription& operator=(EGDescription&&) = default;
 
-    float attack { Default::egTime.value };
-    float decay { Default::egTime.value };
-    float delay { Default::egTime.value };
-    float hold { Default::egTime.value };
-    float release { Default::egTime.value };
+    float attack { Default::egTime };
+    float decay { Default::egTime };
+    float delay { Default::egTime };
+    float hold { Default::egTime };
+    float release { Default::egTime };
     float start { Default::egPercent.bounds.getStart() };
     float sustain { Default::egPercent.bounds.getEnd() };
-    float depth { Default::egDepth.value };
-    float vel2attack { Default::egTimeMod.value };
-    float vel2decay { Default::egTimeMod.value };
-    float vel2delay { Default::egTimeMod.value };
-    float vel2hold { Default::egTimeMod.value };
-    float vel2release { Default::egPercentMod.value };
-    float vel2sustain { Default::egPercentMod.value };
-    float vel2depth { Default::egVel2Depth.value };
+    float depth { Default::egDepth };
+    float vel2attack { Default::egTimeMod };
+    float vel2decay { Default::egTimeMod };
+    float vel2delay { Default::egTimeMod };
+    float vel2hold { Default::egTimeMod };
+    float vel2release { Default::egPercentMod };
+    float vel2sustain { Default::egPercentMod };
+    float vel2depth { Default::egVel2Depth };
 
     CCMap<float> ccAttack;
     CCMap<float> ccDecay;

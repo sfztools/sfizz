@@ -144,11 +144,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/region&/count", "") {
             GET_REGION_OR_BREAK(indices[0])
-            if (!region.sampleCount) {
-                client.receive<'N'>(delay, path, {});
-            } else {
-                client.receive<'h'>(delay, path, *region.sampleCount);
-            }
+            client.receive<'h'>(delay, path, region.sampleCount);
         } break;
 
         MATCH("/region&/loop_range", "") {

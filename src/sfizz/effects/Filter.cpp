@@ -72,22 +72,17 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("filter_cutoff"):
-                if (auto value = opc.read(Default::filterCutoff))
-                    desc.cutoff = *value;
+                desc.cutoff = opc.read(Default::filterCutoff);
                 break;
             case hash("filter_resonance"):
-                if (auto value = opc.read(Default::filterResonance))
-                    desc.resonance = *value;
+                desc.resonance = opc.read(Default::filterResonance);
                 break;
             case hash("filter_type"):
-                {
-                    desc.type = opc.read(Default::filter).value_or(desc.type);
-                    break;
-                }
+                desc.type = opc.read(Default::filter);
+                break;
             // extension
             case hash("sfizz:filter_gain"):
-                if (auto value = opc.read(Default::filterGain))
-                    desc.gain = *value;
+                desc.gain = opc.read(Default::filterGain);
                 break;
             }
         }

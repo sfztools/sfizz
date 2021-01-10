@@ -95,8 +95,7 @@ namespace fx {
                     rectify->_full = false;
                 break;
             case hash("rectify"):
-                if (auto value = opc.read(Default::rectify))
-                    rectify->_amount = *value;
+                rectify->_amount = opc.read(Default::rectify);
                 break;
             }
         }

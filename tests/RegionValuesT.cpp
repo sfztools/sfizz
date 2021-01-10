@@ -248,9 +248,9 @@ TEST_CASE("[Values] Count")
     synth.dispatchMessage(client, 0, "/region1/count", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/count", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/count,N : {  }",
+        "/region0/count,h : { 1 }",
         "/region1/count,h : { 2 }",
-        "/region2/count,N : {  }",
+        "/region2/count,h : { 1 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -453,7 +453,7 @@ TEST_CASE("[Values] Off time")
     std::vector<std::string> expected {
         "/region0/off_time,f : { 0.006 }",
         "/region1/off_time,f : { 0.1 }",
-        "/region2/off_time,f : { 0 }",
+        "/region2/off_time,f : { 0.006 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -747,7 +747,7 @@ TEST_CASE("[Values] Upswitch")
         "/region2/sw_up,N : {  }",
         "/region3/sw_up,N : {  }",
         "/region4/sw_up,i : { 60 }",
-        "/region5/sw_up,i : { 64 }",
+        "/region5/sw_up,i : { 60 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -778,7 +778,7 @@ TEST_CASE("[Values] Downswitch")
         "/region2/sw_down,N : {  }",
         "/region3/sw_down,N : {  }",
         "/region4/sw_down,i : { 60 }",
-        "/region5/sw_down,i : { 64 }",
+        "/region5/sw_down,i : { 60 }",
     };
     REQUIRE(messageList == expected);
 }

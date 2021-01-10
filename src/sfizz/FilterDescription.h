@@ -14,13 +14,13 @@ namespace sfz
 {
 struct FilterDescription
 {
-    float cutoff { Default::filterCutoff.value };
-    float resonance { Default::filterCutoff.value };
-    float gain { Default::filterGain.value };
-    int keytrack { Default::filterKeytrack.value };
-    uint8_t keycenter { Default::key.value };
-    int veltrack { Default::filterVeltrack.value };
-    float random { Default::filterRandom.value };
+    float cutoff { Default::filterCutoff };
+    float resonance { Default::filterCutoff };
+    float gain { Default::filterGain };
+    int keytrack { Default::filterKeytrack };
+    uint8_t keycenter { Default::key };
+    int veltrack { Default::filterVeltrack };
+    float random { Default::filterRandom };
     FilterType type { FilterType::kFilterLpf2p };
 };
 }

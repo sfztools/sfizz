@@ -22,7 +22,7 @@ public:
      * @param noteNumber    the triggering note number
      * @param velocity      the triggering note velocity/value
      */
-    void setup(const Region& region, unsigned filterId, int noteNumber = static_cast<int>(Default::key.value), float velocity = 0);
+    void setup(const Region& region, unsigned filterId, int noteNumber = static_cast<int>(Default::key), float velocity = 0);
     /**
      * @brief Process a block of stereo inputs
      *
@@ -45,9 +45,9 @@ private:
     Resources& resources;
     const FilterDescription* description;
     std::unique_ptr<Filter> filter;
-    float baseCutoff { Default::filterCutoff.value };
-    float baseResonance { Default::filterResonance.value };
-    float baseGain { Default::filterGain.value };
+    float baseCutoff { Default::filterCutoff };
+    float baseResonance { Default::filterResonance };
+    float baseGain { Default::filterGain };
     ModMatrix::TargetId gainTarget;
     ModMatrix::TargetId cutoffTarget;
     ModMatrix::TargetId resonanceTarget;

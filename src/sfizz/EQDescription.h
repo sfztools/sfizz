@@ -14,11 +14,11 @@ namespace sfz
 {
 struct EQDescription
 {
-    float bandwidth { Default::eqBandwidth.value };
-    float frequency { Default::eqFrequency.value };
-    float gain { Default::eqGain.value };
-    float vel2frequency { Default::eqVel2Frequency.value };
-    float vel2gain { Default::eqVel2Gain.value };
+    float bandwidth { Default::eqBandwidth };
+    float frequency { Default::eqFrequency };
+    float gain { Default::eqGain };
+    float vel2frequency { Default::eqVel2Frequency };
+    float vel2gain { Default::eqVel2Gain };
     EqType type { EqType::kEqPeak };
 };
 }

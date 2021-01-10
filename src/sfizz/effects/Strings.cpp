@@ -132,12 +132,10 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("strings_number"):
-                if (auto value = opc.read(Default::stringsNumber))
-                    strings->_numStrings = *value;
+                strings->_numStrings = opc.read(Default::stringsNumber);
                 break;
             case hash("strings_wet"):
-                if (auto value = opc.read(Default::effect))
-                    strings->_wet = *value;
+                strings->_wet = opc.read(Default::effect);
                 break;
             }
         }

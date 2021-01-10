@@ -52,7 +52,7 @@ namespace fx {
         enum { MaximumNumStrings = 88 };
 
         unsigned _numStrings { Default::maxStrings };
-        float _wet { Default::effect.value };
+        float _wet { Default::effect };
 
         std::unique_ptr<ResonantArray> _stringsArray;
 

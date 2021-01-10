@@ -38,11 +38,11 @@ struct Disto::Impl {
     enum { maxStages = 4 };
 
     float _samplePeriod { 1.0f / config::defaultSampleRate };
-    float _tone { Default::distoTone.value };
-    float _depth { Default::distoDepth.value };
-    float _dry { Default::effect.value };
-    float _wet { Default::effect.value };
-    unsigned _numStages = { Default::distoStages.value };
+    float _tone { Default::distoTone };
+    float _depth { Default::distoDepth };
+    float _dry { Default::effect };
+    float _wet { Default::effect };
+    unsigned _numStages = { Default::distoStages };
 
     float _toneLpfMem[EffectChannels] = {};
     faustDisto _stages[EffectChannels][Default::maxDistoStages];
@@ -205,24 +205,19 @@ std::unique_ptr<Effect> Disto::makeInstance(absl::Span<const Opcode> members)
     for (const Opcode& opc : members) {
         switch (opc.lettersOnlyHash) {
         case hash("disto_tone"):
-            if (auto value = opc.read(Default::distoTone))
-                impl._tone = *value;
+            impl._tone = opc.read(Default::distoTone);
             break;
         case hash("disto_depth"):
-            if (auto value = opc.read(Default::distoDepth))
-                impl._depth = *value;
+            impl._depth = opc.read(Default::distoDepth);
             break;
         case hash("disto_stages"):
-            if (auto value = opc.read(Default::distoStages))
-                impl._numStages = *value;
+            impl._numStages = opc.read(Default::distoStages);
             break;
         case hash("disto_dry"):
-            if (auto value = opc.read(Default::effect))
-                impl._dry = *value * 0.01f;
+            impl._dry = opc.read(Default::effect);
             break;
         case hash("disto_wet"):
-            if (auto value = opc.read(Default::effect))
-                impl._wet = *value * 0.01f;
+            impl._wet = opc.read(Default::effect);
             break;
         }
     }

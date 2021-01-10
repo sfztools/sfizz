@@ -13,7 +13,7 @@ struct SynthConfig
 {
     bool freeWheeling { false };
 
-    int liveSampleQuality { Default::sampleQuality.value };
+    int liveSampleQuality { Default::sampleQuality };
     int freeWheelingSampleQuality { Default::freewheelingQuality };
 
     int currentSampleQuality() const noexcept

@@ -317,8 +317,8 @@ TEST_CASE("[Opcode] opcode read (uint8_t)")
     SECTION("Ignore")
     {
         Opcode opcode { "", "110" };
-        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), kIgnoreOOB };
-        REQUIRE( !opcode.read(spec) );
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == spec.defaultValue );
     }
 
     SECTION("Clamp upper")
@@ -345,21 +345,21 @@ TEST_CASE("[Opcode] opcode read (uint8_t)")
     SECTION("Text after")
     {
         Opcode opcode { "", "10garbage" };
-        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(20, 100), kEnforceLowerBound };
-        REQUIRE( opcode.read(spec) == 20 );
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 10 );
     }
 
     SECTION("Text before")
     {
         Opcode opcode { "", "garbage10" };
-        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(20, 100), 0 };
-        REQUIRE( !opcode.read(spec) );
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == spec.defaultValue );
     }
 
     SECTION("Can be note")
     {
         Opcode opcode { "", "c4" };
-        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(20, 100), kCanBeNote };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), kCanBeNote };
         REQUIRE( opcode.read(spec) == 60 );
     }
 }
@@ -387,13 +387,6 @@ TEST_CASE("[Opcode] opcode read (int)")
         REQUIRE( opcode.read(spec) == -16);
     }
 
-    SECTION("Ignore")
-    {
-        Opcode opcode { "", "110" };
-        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), kIgnoreOOB };
-        REQUIRE( !opcode.read(spec) );
-    }
-
     SECTION("Clamp upper")
     {
         Opcode opcode { "", "110" };
@@ -418,7 +411,7 @@ TEST_CASE("[Opcode] opcode read (int)")
     SECTION("Text after")
     {
         Opcode opcode { "", "10garbage" };
-        OpcodeSpec<int> spec { 0, Range<int>(20, 100), kEnforceLowerBound };
+        OpcodeSpec<int> spec { 0, Range<int>(20, 100), 0 };
         REQUIRE( opcode.read(spec) == 20 );
     }
 
@@ -464,8 +457,8 @@ TEST_CASE("[Opcode] opcode read (float)")
     SECTION("Ignore")
     {
         Opcode opcode { "", "110" };
-        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), kIgnoreOOB };
-        REQUIRE( !opcode.read(spec) );
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
+        REQUIRE( opcode.read(spec) == spec.defaultValue );
     }
 
     SECTION("Clamp upper")

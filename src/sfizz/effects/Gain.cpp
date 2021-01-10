@@ -62,8 +62,7 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("gain"):
-                if (auto value = opc.read(Default::volume))
-                    gain->_gain = *value;
+                gain->_gain = opc.read(Default::volume);
                 break;
             }
         }
