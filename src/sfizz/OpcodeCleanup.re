@@ -96,8 +96,16 @@ end_region_oncc:
         opcode = absl::StrCat(group(1), "_", group(2), "_oncc", group(3));
         goto end_region;
     }
+    (egV1) "_vel2" (any) END {
+        opcode = absl::StrCat(group(1), "_velto", group(2));
+        goto end_region;
+    }
     (eqV1) "_" ("bw"|"freq"|"gain") "cc" (number) END {
         opcode = absl::StrCat(group(1), "_", group(2), "_oncc", group(3));
+        goto end_region;
+    }
+    (eqV1) "_vel2" (any) END {
+        opcode = absl::StrCat(group(1), "_velto", group(2));
         goto end_region;
     }
     (lfoV2) "_" ("wave"|"offset"|"ratio"|"scale") END {

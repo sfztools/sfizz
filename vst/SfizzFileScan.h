@@ -40,4 +40,5 @@ std::vector<fs::path> getSfzSearchPaths();
 absl::optional<fs::path> getSfzConfigDefaultPath();
 void setSfzConfigDefaultPath(const fs::path& path);
 fs::path getSfzFallbackDefaultPath();
+std::vector<fs::path> getEnvironmentSfzPaths();
 } // namespace SfizzPaths

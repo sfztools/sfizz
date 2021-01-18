@@ -48,6 +48,7 @@ SFIZZ_CXX_FLAGS = $(SFIZZ_C_FLAGS)
 SFIZZ_SOURCES = \
 	src/sfizz/ADSREnvelope.cpp \
 	src/sfizz/AudioReader.cpp \
+	src/sfizz/BeatClock.cpp \
 	src/sfizz/Curve.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
@@ -90,6 +91,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \
 	src/sfizz/Messaging.cpp \
+	src/sfizz/Metronome.cpp \
 	src/sfizz/MidiState.cpp \
 	src/sfizz/OpcodeCleanup.cpp \
 	src/sfizz/Opcode.cpp \
@@ -124,7 +126,6 @@ SFIZZ_SOURCES = \
 ### Other internal
 
 SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/sfizz
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external
 
 # Pkg-config dependency
 
@@ -172,6 +173,22 @@ SFIZZ_C_FLAGS += \
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
 endif
+
+# hiir dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/src/external/hiir
+
+# threadpool dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/threadpool
+
+# atomic_queue dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/atomic_queue/include
+
+# ghc::filesystem dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/filesystem/include
 
 ### Abseil dependency
 

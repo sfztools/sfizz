@@ -303,6 +303,27 @@ struct Region {
      */
     bool disabled() const noexcept;
 
+    /**
+     * @brief Extract the source depth of the unique connection identified
+     *        by a given CC and NXYZ target.
+     *
+     * @param cc  the CC number of the modulation source
+     * @param id  the ID of the modulation target, which must be regional
+     * @return absl::optional<float>
+     */
+    absl::optional<float> ccModDepth(int cc, ModId id, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0) const noexcept;
+
+    /**
+     * @brief Extract the source parameters of the unique connection identified
+     *        by a given CC and NXYZ target.
+     *
+     * @param cc the CC number of the modulation source
+     * @param cc  the CC number of the modulation source
+     * @param id  the ID of the modulation target, which must be regional
+     * @return absl::optional<ModKey::Parameters>
+     */
+    absl::optional<ModKey::Parameters> ccModParameters(int cc, ModId id, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0) const noexcept;
+
     const NumericId<Region> id;
 
     // Sound source: sample playback
@@ -412,7 +433,7 @@ struct Region {
     float pitchRandom { Default::pitchRandom }; // pitch_random
     int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
     int transpose { Default::transpose }; // transpose
-    int tune { Default::tune }; // tune
+    float tune { Default::tune }; // tune
     int bendUp { Default::bendUp };
     int bendDown { Default::bendDown };
     int bendStep { Default::bendStep };
@@ -448,6 +469,7 @@ struct Region {
     std::vector<Connection> connections;
     Connection* getConnection(const ModKey& source, const ModKey& target);
     Connection& getOrCreateConnection(const ModKey& source, const ModKey& target);
+    Connection* getConnectionFromCC(int sourceCC, const ModKey& target);
 
     // Parent
     RegionSet* parent { nullptr };

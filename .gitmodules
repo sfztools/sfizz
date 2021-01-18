@@ -30,6 +30,12 @@
 [submodule "external/st_audiofile/thirdparty/libaiff"]
 	path = external/st_audiofile/thirdparty/libaiff
 	url = https://github.com/sfztools/libaiff.git
+	shallow = true
 [submodule "vst/external/sfzt_auwrapper"]
 	path = vst/external/sfzt_auwrapper
 	url = https://github.com/sfztools/sfzt_auwrapper.git
+	shallow = true
+[submodule "external/filesystem"]
+	path = external/filesystem
+	url = https://github.com/gulrak/filesystem.git
+	shallow = true

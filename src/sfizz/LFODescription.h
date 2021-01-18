@@ -28,6 +28,7 @@ struct LFODescription {
     ~LFODescription();
     static const LFODescription& getDefault();
     float freq = 0; // lfoN_freq
+    float beats = 0; // lfoN_beats
     float phase0 = 0; // lfoN_phase
     float delay = 0; // lfoN_delay
     float fade = 0; // lfoN_fade

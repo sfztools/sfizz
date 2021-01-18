@@ -207,8 +207,8 @@ namespace Default
 	constexpr Range<int> pitchVeltrackRange { -12000, 12000 };
 	constexpr int transpose { 0 };
 	constexpr Range<int> transposeRange { -127, 127 };
-	constexpr int tune { 0 };
-	constexpr Range<int> tuneRange { -12000, 12000 }; // ±100 in SFZv1, more in ARIA
+	constexpr float tune { 0 };
+	constexpr Range<float> tuneRange { -12000, 12000 }; // ±100 in SFZv1, more in ARIA
     constexpr Range<float> tuneCCRange { -12000, 12000 };
     constexpr Range<int> bendBoundRange { -12000, 12000 };
     constexpr Range<int> bendStepRange { 1, 1200 };
@@ -222,6 +222,9 @@ namespace Default
     constexpr int numLFOSubs { 2 };
     constexpr int numLFOSteps { 8 };
     constexpr Range<float> lfoFreqRange { 0.0, 100.0 };
+    constexpr Range<float> lfoFreqModRange { -100.0, 100.0 };
+    constexpr Range<float> lfoBeatsRange { 0.0, 1000.0 };
+    constexpr Range<float> lfoBeatsModRange { -1000.0, 1000.0 };
     constexpr Range<float> lfoPhaseRange { 0.0, 1.0 };
     constexpr Range<float> lfoDelayRange { 0.0, 30.0 };
     constexpr Range<float> lfoFadeRange { 0.0, 30.0 };

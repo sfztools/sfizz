@@ -41,9 +41,10 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/layout/main.hpp
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h)
+add_library(sfizz::editor ALIAS sfizz_editor)
 target_include_directories(sfizz_editor PUBLIC "src")
-target_link_libraries(sfizz_editor PUBLIC sfizz_messaging)
-target_link_libraries(sfizz_editor PRIVATE sfizz-vstgui)
+target_link_libraries(sfizz_editor PUBLIC sfizz::messaging)
+target_link_libraries(sfizz_editor PRIVATE sfizz::vstgui)
 target_link_libraries(sfizz_editor PUBLIC absl::strings)
 if(APPLE)
     find_library(APPLE_APPKIT_LIBRARY "AppKit")
@@ -69,7 +70,7 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_include_directories(sfizz_editor PRIVATE "../src/external") # ghc::filesystem
+target_link_libraries(sfizz_editor PRIVATE sfizz::filesystem)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)

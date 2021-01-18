@@ -1,4 +1,4 @@
-add_library(sfizz-vstgui STATIC EXCLUDE_FROM_ALL
+add_library(sfizz_vstgui STATIC EXCLUDE_FROM_ALL
     "${VSTGUI_BASEDIR}/vstgui/lib/animation/animations.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/animation/animator.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/animation/timingfunctions.cpp"
@@ -58,8 +58,10 @@ add_library(sfizz-vstgui STATIC EXCLUDE_FROM_ALL
     "${VSTGUI_BASEDIR}/vstgui/lib/platform/platformfactory.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/vstguidebug.cpp")
 
+add_library(sfizz::vstgui ALIAS sfizz_vstgui)
+
 if(WIN32)
-    target_sources(sfizz-vstgui PRIVATE
+    target_sources(sfizz_vstgui PRIVATE
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/fileresourceinputstream.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dbitmap.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2ddrawcontext.cpp"
@@ -78,7 +80,7 @@ if(WIN32)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/winstring.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/wintimer.cpp")
 elseif(APPLE)
-    target_sources(sfizz-vstgui PRIVATE
+    target_sources(sfizz_vstgui PRIVATE
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/fileresourceinputstream.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/genericoptionmenu.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/generictextedit.cpp"
@@ -104,7 +106,7 @@ elseif(APPLE)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/mactimer.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/quartzgraphicspath.cpp")
 else()
-    target_sources(sfizz-vstgui PRIVATE
+    target_sources(sfizz_vstgui PRIVATE
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/fileresourceinputstream.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/common/generictextedit.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/cairobitmap.cpp"
@@ -122,12 +124,12 @@ else()
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/linux/x11utils.cpp")
 endif()
 
-target_include_directories(sfizz-vstgui PUBLIC "${VSTGUI_BASEDIR}")
+target_include_directories(sfizz_vstgui PUBLIC "${VSTGUI_BASEDIR}")
 
 if(WIN32)
     if (NOT MSVC)
         # autolinked on MSVC with pragmas
-        target_link_libraries(sfizz-vstgui PRIVATE
+        target_link_libraries(sfizz_vstgui PRIVATE
             "opengl32"
             "d2d1"
             "dwrite"
@@ -136,7 +138,7 @@ if(WIN32)
             "shlwapi")
     endif()
 elseif(APPLE)
-    target_link_libraries(sfizz-vstgui PRIVATE
+    target_link_libraries(sfizz_vstgui PRIVATE
         "${APPLE_COREFOUNDATION_LIBRARY}"
         "${APPLE_FOUNDATION_LIBRARY}"
         "${APPLE_COCOA_LIBRARY}"
@@ -161,7 +163,7 @@ else()
     pkg_check_modules(CAIRO REQUIRED cairo)
     pkg_check_modules(FONTCONFIG REQUIRED fontconfig)
     pkg_check_modules(GLIB REQUIRED glib-2.0)
-    target_include_directories(sfizz-vstgui PRIVATE
+    target_include_directories(sfizz_vstgui PRIVATE
         ${X11_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
         ${LIBXCB_INCLUDE_DIRS}
@@ -174,7 +176,7 @@ else()
         ${CAIRO_INCLUDE_DIRS}
         ${FONTCONFIG_INCLUDE_DIRS}
         ${GLIB_INCLUDE_DIRS})
-    target_link_libraries(sfizz-vstgui  PRIVATE
+    target_link_libraries(sfizz_vstgui  PRIVATE
         ${X11_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${LIBXCB_LIBRARIES}
@@ -189,31 +191,31 @@ else()
         ${GLIB_LIBRARIES})
     find_library(DL_LIBRARY "dl")
     if(DL_LIBRARY)
-        target_link_libraries(sfizz-vstgui PRIVATE "${DL_LIBRARY}")
+        target_link_libraries(sfizz_vstgui PRIVATE "${DL_LIBRARY}")
     endif()
 endif()
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-    target_compile_definitions(sfizz-vstgui PUBLIC "DEVELOPMENT")
+    target_compile_definitions(sfizz_vstgui PUBLIC "DEVELOPMENT")
 endif()
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Release")
-    target_compile_definitions(sfizz-vstgui PUBLIC "RELEASE")
+    target_compile_definitions(sfizz_vstgui PUBLIC "RELEASE")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # higher C++ requirement on Windows
-    set_property(TARGET sfizz-vstgui PROPERTY CXX_STANDARD 14)
+    set_property(TARGET sfizz_vstgui PROPERTY CXX_STANDARD 14)
     # Windows 10 RS2 DDI for custom fonts
-    target_compile_definitions(sfizz-vstgui PRIVATE "NTDDI_VERSION=0x0A000003")
+    target_compile_definitions(sfizz_vstgui PRIVATE "NTDDI_VERSION=0x0A000003")
     # disable custom fonts while dwrite3 API is unavailable in MinGW
     if(MINGW)
-        target_compile_definitions(sfizz-vstgui PRIVATE "VSTGUI_WIN32_CUSTOMFONT_SUPPORT=0")
+        target_compile_definitions(sfizz_vstgui PRIVATE "VSTGUI_WIN32_CUSTOMFONT_SUPPORT=0")
     endif()
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(sfizz-vstgui PRIVATE
+    gw_target_warn(sfizz_vstgui PRIVATE
         "-Wno-deprecated-copy"
         "-Wno-deprecated-declarations"
         "-Wno-extra"

@@ -108,25 +108,30 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    sfz::BufferPool bufferPool;
+
     size_t numLfos = desc.size();
-    std::vector<sfz::LFO> lfos(numLfos);
+    std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].setSampleRate(sampleRate);
-        lfos[l].configure(&desc[l]);
+        const NumericId<sfz::LFO> id { static_cast<int>(l) };
+        sfz::LFO* lfo = new sfz::LFO(id, bufferPool);
+        lfos[l].reset(lfo);
+        lfo->setSampleRate(sampleRate);
+        lfo->configure(&desc[l]);
     }
 
     size_t numFrames = (size_t)std::ceil(sampleRate * duration);
     std::vector<float> outputMemory(numLfos * numFrames);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].start(0);
+        lfos[l]->start(0);
     }
 
     std::vector<absl::Span<float>> lfoOutputs(numLfos);
     for (size_t l = 0; l < numLfos; ++l) {
         lfoOutputs[l] = absl::MakeSpan(&outputMemory[l * numFrames], numFrames);
-        lfos[l].process(lfoOutputs[l]);
+        lfos[l]->process(lfoOutputs[l]);
     }
 
     if (saveFlac) {

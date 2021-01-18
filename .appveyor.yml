@@ -50,8 +50,8 @@ for:
   - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh
   test: off
   artifacts:
-  - name: macOS Tarball
-    path: "sfizz-*.tar.gz"
+  - name: macOS DMG
+    path: "sfizz-*.dmg"
 
 - matrix:
     only:
@@ -81,7 +81,7 @@ deploy:
 - provider: GitHub
   auth_token:
     secure: xOugGAynvnZdc0DXaL3rlgMf4CICFLkdO8JxoRfLQMKJhkj/kZ4d8h7NCFneDzXG
-  artifact: macOS Tarball,x86 Setup,x64 Setup
+  artifact: macOS DMG,x86 Setup,x64 Setup
   draft: false
   prerelease: false
   force_update: true

@@ -1,10 +1,9 @@
 ###############################
 # Test application
 
-project(sfizz)
-
 set(SFIZZ_TEST_SOURCES
-    RegionT.cpp
+    DirectRegionT.cpp
+    RegionValuesT.cpp
     TestHelpers.h
     TestHelpers.cpp
     ParsingT.cpp
@@ -47,9 +46,8 @@ set(SFIZZ_TEST_SOURCES
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::sfizz sfizz-jsl)
+target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::jsl)
 sfizz_enable_lto_if_needed(sfizz_tests)
 sfizz_enable_fast_math(sfizz_tests)
-# target_link_libraries(sfizz_tests PRIVATE absl::strings absl::str_format absl::flat_hash_map cnpy absl::span absl::algorithm)
 
 file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)

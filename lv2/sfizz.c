@@ -175,11 +175,11 @@ typedef struct
 
     // Timing data
     int bar;
-    float bar_beat;
+    double bar_beat;
     int beats_per_bar;
     int beat_unit;
-    float bpm_tempo;
-    float speed;
+    double bpm_tempo;
+    double speed;
 
     // Paths
     char bundle_path[MAX_BUNDLE_PATH_SIZE];

@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
+#include "AudioSpan.h"
 #include <array>
 #include <memory>
 #include <functional>
@@ -144,9 +145,9 @@ public:
 #ifndef NDEBUG
     ~BufferPool()
     {
-        DBG("Max buffers used: " << maxBuffersUsed);
-        DBG("Max index buffers used: " << maxIndexBuffersUsed);
-        DBG("Max stereo buffers used: " << maxStereoBuffersUsed);
+        // DBG("Max buffers used: " << maxBuffersUsed);
+        // DBG("Max index buffers used: " << maxIndexBuffersUsed);
+        // DBG("Max stereo buffers used: " << maxStereoBuffersUsed);
     }
 #endif
 

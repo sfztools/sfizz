@@ -392,7 +392,7 @@ SFIZZ_EXPORTED_API void sfizz_send_time_signature(sfizz_synth_t* synth, int dela
  * @param bar       The current bar.
  * @param bar_beat  The fractional position of the current beat within the bar.
  */
-SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, float bar_beat);
+SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, double bar_beat);
 
 /**
  * @brief Send the playback state.
