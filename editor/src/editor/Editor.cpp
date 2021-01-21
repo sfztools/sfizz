@@ -636,6 +636,7 @@ void Editor::Impl::createFrameContents()
             static_cast<int>(EditRange::get(EditId::ScalaRootKey).def) / 12);
     }
     adjustMinMaxToEditRange(tuningFrequencySlider_, EditId::TuningFrequency);
+    tuningFrequencySlider_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
     adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})

@@ -35,5 +35,6 @@ struct EditRange {
     constexpr EditRange() = default;
     constexpr EditRange(float def, float min, float max)
         : def(def), min(min), max(max) {}
+    float extent() const noexcept { return max - min; }
     static EditRange get(EditId id);
 };
