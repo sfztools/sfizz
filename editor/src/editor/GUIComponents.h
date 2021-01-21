@@ -94,6 +94,7 @@ public:
 
 protected:
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
+    bool onWheel(const CPoint& where, const CMouseWheelAxis& axis, const float& distance, const CButtonState& buttons) override;
 
 private:
     class MenuListener;
