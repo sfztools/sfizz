@@ -160,6 +160,7 @@ SValueMenu::SValueMenu(const CRect& bounds, IControlListener* listener, int32_t 
 {
     setListener(listener);
     setTag(tag);
+    setWheelInc(0.0f);
 }
 
 CMenuItem* SValueMenu::addEntry(CMenuItem* item, float value, int32_t index)
@@ -226,12 +227,34 @@ CMouseEventResult SValueMenu::onMouseDown(CPoint& where, const CButtonState& but
     return kMouseEventNotHandled;
 }
 
+bool SValueMenu::onWheel(const CPoint& where, const CMouseWheelAxis& axis, const float& distance, const CButtonState& buttons)
+{
+    (void)where;
+    (void)buttons;
+
+    if (axis != kMouseWheelAxisY)
+        return false;
+
+    float wheelInc = getWheelInc();
+    if (wheelInc != 0) {
+        float oldValue = getValue();
+        setValueNormalized(getValueNormalized() + distance * wheelInc);
+        if (getValue() != oldValue) {
+            valueChanged();
+            invalid();
+        }
+    }
+    return true;
+}
+
 void SValueMenu::onItemClicked(int32_t index)
 {
     float oldValue = getValue();
     setValue(menuItemValues_[index]);
-    if (getValue() != oldValue)
+    if (getValue() != oldValue) {
         valueChanged();
+        invalid();
+    }
 }
 
 ///

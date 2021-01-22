@@ -1195,11 +1195,11 @@ void Voice::Impl::fillInterpolatedWithQuality(
         break;
     case 2: high:
         {
-#if 1
+#if 0
             // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
             constexpr auto itp = kInterpolatorBspline3;
 #else
-            // Hermite polynomial
+            // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
