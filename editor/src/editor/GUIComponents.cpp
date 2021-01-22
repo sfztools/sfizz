@@ -239,8 +239,10 @@ bool SValueMenu::onWheel(const CPoint& where, const CMouseWheelAxis& axis, const
     if (wheelInc != 0) {
         float oldValue = getValue();
         setValueNormalized(getValueNormalized() + distance * wheelInc);
-        if (getValue() != oldValue)
+        if (getValue() != oldValue) {
             valueChanged();
+            invalid();
+        }
     }
     return true;
 }
@@ -249,8 +251,10 @@ void SValueMenu::onItemClicked(int32_t index)
 {
     float oldValue = getValue();
     setValue(menuItemValues_[index]);
-    if (getValue() != oldValue)
+    if (getValue() != oldValue) {
         valueChanged();
+        invalid();
+    }
 }
 
 ///
