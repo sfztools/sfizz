@@ -62,7 +62,7 @@ struct Voice::Impl
     static void fillInterpolated(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs,
-        absl::Span<const float> addingGains);
+        absl::Span<const float> addingGains, float mod);
 
     /**
      * @brief Fill a destination with an interpolated source, selecting
@@ -78,7 +78,7 @@ struct Voice::Impl
     static void fillInterpolatedWithQuality(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs,
-        absl::Span<const float> addingGains, int quality);
+        absl::Span<const float> addingGains, int quality, float mod);
 
     /**
      * @brief Get a S-shaped curve that is applicable to loop crossfading.
@@ -1017,12 +1017,13 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
         absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 
+	float mod = 1.0;
+
         if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
-            for (unsigned i = 0; i < ptSize - 1; ++i)
-		ptCoeffs[i] = std::pow(ptCoeffs[i], 1 / (pitchRatio_ * speedRatio_));
+            mod = 0.5 / (pitchRatio_ * speedRatio_);
 
         fillInterpolatedWithQuality<false>(
-            source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
+            source, ptBuffer, ptIndices, ptCoeffs, {}, quality, mod);
 
         if (ptType == kPartitionLoopXfade) {
             auto xfTemp1 = resources_.bufferPool.getBuffer(numSamples);
@@ -1112,7 +1113,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                 }
                 // apply in curve
                 fillInterpolatedWithQuality<true>(
-                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality);
+                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality, mod);
             }
         }
     }
@@ -1132,7 +1133,7 @@ template <InterpolatorModel M, bool Adding>
 void Voice::Impl::fillInterpolated(
     const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
-    absl::Span<const float> addingGains)
+    absl::Span<const float> addingGains, float mod)
 {
     auto* ind = indices.data();
     auto* coeff = coeffs.data();
@@ -1141,7 +1142,7 @@ void Voice::Impl::fillInterpolated(
     auto left = dest.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            auto output = interpolate<M>(&leftSource[*ind], *coeff);
+            auto output = interpolate<M>(&leftSource[*ind], *coeff, mod);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * output;
@@ -1154,8 +1155,8 @@ void Voice::Impl::fillInterpolated(
         auto right = dest.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
-            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff);
-            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff);
+            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff, mod);
+            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff, mod);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * leftOutput;
@@ -1174,7 +1175,7 @@ template <bool Adding>
 void Voice::Impl::fillInterpolatedWithQuality(
     const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
-    absl::Span<const float> addingGains, int quality)
+    absl::Span<const float> addingGains, int quality, float mod)
 {
     switch (quality) {
     default:
@@ -1183,14 +1184,14 @@ void Voice::Impl::fillInterpolatedWithQuality(
         // fall through
     case 0:
         {
-            constexpr auto itp = kInterpolatorLinear;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            constexpr auto itp = kInterpolatorLoFi;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 1:
         {
             constexpr auto itp = kInterpolatorLinear;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 2: high:
@@ -1202,7 +1203,7 @@ void Voice::Impl::fillInterpolatedWithQuality(
             // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     }

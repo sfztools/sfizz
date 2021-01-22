@@ -58,7 +58,7 @@ void WavetableOscillator::processSingle(float frequency, float detuneRatio, floa
         float position = phase * tableSize;
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
-        output[i] = interpolate<M>(&table[index], frac);
+        output[i] = interpolate<M>(&table[index], frac, 1.0);
 
         phase = incrementAndWrap(phase, phaseInc);
     }
@@ -83,7 +83,7 @@ void WavetableOscillator::processModulatedSingle(const float* frequencies, const
         float position = phase * tableSize;
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
-        output[i] = interpolate<M>(&table[index], frac);
+        output[i] = interpolate<M>(&table[index], frac, 1.0);
 
         phase = incrementAndWrap(phase, phaseInc);
     }
@@ -106,8 +106,8 @@ void WavetableOscillator::processDual(float frequency, float detuneRatio, float*
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
         output[i] =
-            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
-            dt.delta * interpolate<M>(&dt.table2[index], frac);
+            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac, 1.0) +
+            dt.delta * interpolate<M>(&dt.table2[index], frac, 1.0);
 
         phase = incrementAndWrap(phase, phaseInc);
     }
@@ -134,8 +134,8 @@ void WavetableOscillator::processModulatedDual(const float* frequencies, const f
         unsigned index = static_cast<unsigned>(position);
         float frac = position - index;
         output[i] =
-            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac) +
-            dt.delta * interpolate<M>(&dt.table2[index], frac);
+            (1 - dt.delta) * interpolate<M>(&dt.table1[index], frac, 1.0) +
+            dt.delta * interpolate<M>(&dt.table2[index], frac, 1.0);
 
         phase = incrementAndWrap(phase, phaseInc);
     }

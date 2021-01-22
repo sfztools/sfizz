@@ -14,9 +14,9 @@ template <InterpolatorModel M, class R>
 class Interpolator;
 
 template <InterpolatorModel M, class R>
-inline R interpolate(const R* values, R coeff)
+inline R interpolate(const R* values, R coeff, float mod)
 {
-    return Interpolator<M, R>::process(values, coeff);
+    return Interpolator<M, R>::process(values, coeff, mod);
 }
 
 //------------------------------------------------------------------------------
@@ -26,9 +26,22 @@ template <class R>
 class Interpolator<kInterpolatorNearest, R>
 {
 public:
-    static inline R process(const R* values, R coeff)
+    static inline R process(const R* values, R coeff, float mod)
     {
         return values[coeff > static_cast<R>(0.5)];
+    }
+};
+
+//------------------------------------------------------------------------------
+// Lo-Fi
+
+template <class R>
+class Interpolator<kInterpolatorLoFi, R>
+{
+public:
+    static inline R process(const R* values, R coeff, float mod)
+    {
+        return (values[0] * (static_cast<R>(1.0) - std::pow(coeff, mod)) + values[1] * std::pow(coeff, mod));
     }
 };
 
@@ -39,7 +52,7 @@ template <class R>
 class Interpolator<kInterpolatorLinear, R>
 {
 public:
-    static inline R process(const R* values, R coeff)
+    static inline R process(const R* values, R coeff, float mod)
     {
         return values[0] * (static_cast<R>(1.0) - coeff) + values[1] * coeff;
     }
@@ -53,7 +66,7 @@ template <>
 class Interpolator<kInterpolatorHermite3, float>
 {
 public:
-    static inline float process(const float* values, float coeff)
+    static inline float process(const float* values, float coeff, float mod)
     {
         __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
         __m128 h = hermite3x4(x);
@@ -78,7 +91,7 @@ template <class R>
 class Interpolator<kInterpolatorHermite3, R>
 {
 public:
-    static inline R process(const R* values, R coeff)
+    static inline R process(const R* values, R coeff, float mod)
     {
         R y = 0;
         for (int i = -1; i < 3; ++i) {
@@ -97,7 +110,7 @@ template <>
 class Interpolator<kInterpolatorBspline3, float>
 {
 public:
-    static inline float process(const float* values, float coeff)
+    static inline float process(const float* values, float coeff, float mod)
     {
         __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
         __m128 h = bspline3x4(x);
@@ -122,7 +135,7 @@ template <class R>
 class Interpolator<kInterpolatorBspline3, R>
 {
 public:
-    static inline R process(const R* values, R coeff)
+    static inline R process(const R* values, R coeff, float mod)
     {
         R y = 0;
         for (int i = -1; i < 3; ++i) {
