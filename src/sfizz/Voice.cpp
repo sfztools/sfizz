@@ -1685,7 +1685,7 @@ void Voice::disablePowerFollower() noexcept
 float Voice::getSampleRate() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.sampleRate_ / impl.resources_.synthConfig.OSFactor;
+    return impl.sampleRate_;
 }
 
 int Voice::getSamplesPerBlock() const noexcept

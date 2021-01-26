@@ -878,7 +878,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     ModMatrix& mm = impl.resources_.modMatrix;
-    mm.beginCycle(numFrames);
+    mm.beginCycle(numFrames * impl.resources_.synthConfig.OSFactor);
 
     BeatClock& bc = impl.resources_.beatClock;
     bc.beginCycle(numFrames);
