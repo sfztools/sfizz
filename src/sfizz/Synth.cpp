@@ -492,8 +492,11 @@ bool Synth::loadSfzFile(const fs::path& file)
     fs::path realFile = fs::canonical(file, ec);
 
     impl.parser_.parseFile(ec ? file : realFile);
-    if (impl.parser_.getErrorCount() > 0)
-        return false;
+    // permissive parsing for compatibility
+    if (false) {
+        if (impl.parser_.getErrorCount() > 0)
+            return false;
+    }
 
     if (impl.regions_.empty())
         return false;
@@ -511,8 +514,11 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
     impl.clear();
 
     impl.parser_.parseString(path, text);
-    if (impl.parser_.getErrorCount() > 0)
-        return false;
+    // permissive parsing for compatibility
+    if (false) {
+        if (impl.parser_.getErrorCount() > 0)
+            return false;
+    }
 
     if (impl.regions_.empty())
         return false;
