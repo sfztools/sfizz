@@ -1,5 +1,9 @@
 macro(sfizz_add_benchmark TARGET)
+    if (NOT TARGET sfizz_benchmarks)
+        add_custom_target(sfizz_benchmarks)
+    endif()
     add_executable("${TARGET}" ${ARGN})
+    add_dependencies(sfizz_benchmarks "${TARGET}")
     target_link_libraries("${TARGET}"
         PRIVATE sfizz::internal sfizz::filesystem absl::span absl::algorithm
         PRIVATE benchmark::benchmark benchmark::benchmark_main)
@@ -74,43 +78,9 @@ target_link_libraries(bm_filterStereoMono PRIVATE sfizz::sndfile)
 sfizz_add_benchmark(bm_stringResonator BM_stringResonator.cpp)
 target_link_libraries(bm_stringResonator PRIVATE sfizz::sndfile)
 
-add_custom_target(sfizz_benchmarks)
-add_dependencies(sfizz_benchmarks
-    bm_opf_high_vs_low
-    bm_write
-    bm_clock
-    bm_pointerIterationOrOffsets
-    bm_read
-    bm_mean
-    bm_meanSquared
-    bm_cumsum
-    bm_diff
-    bm_mathfuns
-    bm_gain
-    bm_divide
-    bm_ramp
-    bm_ADSR
-    bm_add
-    bm_logger
-    bm_subtract
-    bm_multiplyAdd
-    bm_readChunk
-    bm_resampleChunk
-    bm_envelopes
-    bm_wavfile
-    bm_flacfile
-    bm_filterModulation
-    bm_filterStereoMono
-    bm_stringResonator)
-
-if(TARGET bm_resample)
-    add_dependencies(sfizz_benchmarks bm_resample)
-endif()
-
 if(SFIZZ_SYSTEM_PROCESSOR MATCHES "armv7l")
     sfizz_add_benchmark(bm_pan_arm BM_pan_arm.cpp ../src/sfizz/Panning.cpp)
     target_link_libraries(bm_pan_arm PRIVATE sfizz::jsl)
-    add_dependencies(sfizz_benchmarks bm_pan_arm)
 endif()
 
 configure_file("sample.wav" "${CMAKE_BINARY_DIR}/benchmarks/sample1.wav" COPYONLY)
