@@ -5,8 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "SIMDConfig.h"
 #include <absl/types/span.h>
 #include <memory>
+#if SFIZZ_HAVE_SSE2
+#include <xmmintrin.h>
+#endif
 
 namespace sfz {
 
@@ -26,6 +30,11 @@ public:
     // interpolate f(x), where x must be in domain [-Points/2:+Points/2]
     float getUnchecked(float x) const noexcept;
 
+#if SFIZZ_HAVE_SSE2
+    // interpolate f(x), 4 values at once
+    __m128 getUncheckedX4(__m128 x) const noexcept;
+#endif
+
     // calculate exact f(x), where x must be in domain [-Points/2:+Points/2]
     double getExact(double x) const noexcept;
 
@@ -35,8 +44,8 @@ public:
 protected:
     void fillTable() noexcept;
 
-    // allows interpolating f(Points/2), provided for safety
-    enum { TableExtra = 1 };
+    // allows interpolating f(Points/2), and SSE, provided for safety
+    enum { TableExtra = 4 };
 
 private:
     double beta_ {};

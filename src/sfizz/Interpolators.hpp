@@ -190,7 +190,7 @@ class SincInterpolator;
 
 //------------------------------------------------------------------------------
 // Windowed sinc any order, SSE specialization
-#if SFIZZ_HAVE_SSE
+#if SFIZZ_HAVE_SSE2
 template <size_t Points>
 class SincInterpolator<float, Points>
 {
@@ -201,15 +201,18 @@ public:
     {
         const auto &ws = *SincInterpolatorTraits<Points>::windowedSinc;
 
-        int j0 = 1 - int(Points) / 2;
+        constexpr int j0 = 1 - int(Points) / 2;
+        float x0 = j0 - coeff;
 
-        __m128 h[Points / 4];
-        for (int i = 0; i < int(Points); ++i)
-            reinterpret_cast<float*>(h)[i] = ws.getUnchecked(j0 - coeff + i);
-
-        __m128 y = _mm_mul_ps(h[0], _mm_loadu_ps(&values[j0]));
-        for (int i = 1; i < int(Points / 4); ++i)
-            y = _mm_add_ps(y, _mm_mul_ps(h[i], _mm_loadu_ps(&values[j0 + 4 * i])));
+        __m128 y = _mm_set1_ps(0.0f);
+        __m128 x = _mm_add_ps(_mm_set1_ps(x0), _mm_setr_ps(0, 1, 2, 3));
+        size_t i = 0;
+        do {
+            __m128 h = ws.getUncheckedX4(x);
+            y = _mm_add_ps(y, _mm_mul_ps(h, _mm_loadu_ps(&values[j0 + i])));
+            x = _mm_add_ps(x, _mm_set1_ps(4.0f));
+            i += 4;
+        } while (i < Points);
 
         // sum 4 to 1
         __m128 xmm0 = y;
