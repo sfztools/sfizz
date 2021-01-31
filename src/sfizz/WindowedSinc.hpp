@@ -6,6 +6,7 @@
 
 #pragma once
 #include "WindowedSinc.h"
+#include <cstdint>
 
 namespace sfz {
 
@@ -28,7 +29,7 @@ inline float AbstractWindowedSinc<T>::getUnchecked(float x) const noexcept
     size_t tableSize = static_cast<const T*>(this)->getTableSize();
 
     float ix = (x + points / 2.0f) * ((tableSize - 1) / points);
-    int i0 = static_cast<int>(ix);
+    intptr_t i0 = static_cast<intptr_t>(ix);
     float mu = ix - i0;
     float y0 = table[i0];
     float dy = table[i0 + 1] - y0;
