@@ -112,6 +112,8 @@ set(SFIZZ_HEADERS
     sfizz/VoiceManager.h
     sfizz/VoiceStealing.h
     sfizz/Wavetables.h
+    sfizz/WindowedSinc.h
+    sfizz/WindowedSinc.hpp
     sfizz.h
     sfizz.hpp)
 
@@ -151,6 +153,8 @@ set(SFIZZ_SOURCES
     sfizz/BeatClock.cpp
     sfizz/Metronome.cpp
     sfizz/SynthMessaging.cpp
+    sfizz/WindowedSinc.cpp
+    sfizz/Interpolators.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp

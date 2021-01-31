@@ -1149,18 +1149,20 @@ void Voice::Impl::fillInterpolatedWithQuality(
     absl::Span<const int> indices, absl::Span<const float> coeffs,
     absl::Span<const float> addingGains, int quality)
 {
-    switch (quality) {
-    default:
-        if (quality > 2)
-            goto high; // TODO sinc, not implemented
-        // fall through
+    switch (clamp(quality, 0, 10)) {
+    case 0:
+        {
+            constexpr auto itp = kInterpolatorNearest;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
     case 1:
         {
             constexpr auto itp = kInterpolatorLinear;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
         }
         break;
-    case 2: high:
+    case 2:
         {
 #if 0
             // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
@@ -1169,6 +1171,54 @@ void Voice::Impl::fillInterpolatedWithQuality(
             // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 3:
+        {
+            constexpr auto itp = kInterpolatorSinc8;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 4:
+        {
+            constexpr auto itp = kInterpolatorSinc12;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 5:
+        {
+            constexpr auto itp = kInterpolatorSinc16;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 6:
+        {
+            constexpr auto itp = kInterpolatorSinc24;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 7:
+        {
+            constexpr auto itp = kInterpolatorSinc36;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 8:
+        {
+            constexpr auto itp = kInterpolatorSinc48;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 9:
+        {
+            constexpr auto itp = kInterpolatorSinc60;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 10:
+        {
+            constexpr auto itp = kInterpolatorSinc72;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
         }
         break;
