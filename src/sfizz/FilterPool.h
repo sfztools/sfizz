@@ -3,10 +3,8 @@
 #include "Region.h"
 #include "Resources.h"
 #include "Defaults.h"
-#include "utility/SpinMutex.h"
 #include <vector>
 #include <memory>
-#include <mutex>
 
 namespace sfz
 {

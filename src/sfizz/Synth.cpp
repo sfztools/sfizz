@@ -21,6 +21,7 @@
 #include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
+#include "Interpolators.h"
 #include <absl/algorithm/container.h>
 #include <absl/memory/memory.h>
 #include <absl/strings/str_replace.h>
@@ -33,6 +34,9 @@
 #include <utility>
 
 namespace sfz {
+
+// unless set to permissive, the loader rejects sfz files with errors
+static constexpr bool loaderParsesPermissively = true;
 
 Synth::Synth()
 : impl_(new Impl) // NOLINT: (paul) I don't get why clang-tidy complains here
@@ -48,6 +52,7 @@ Synth::~Synth()
 Synth::Impl::Impl()
 {
     initializeSIMDDispatchers();
+    initializeInterpolators();
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
     parser_.setListener(this);
@@ -250,7 +255,7 @@ void Synth::Impl::clear()
     masterOpcodes_.clear();
     groupOpcodes_.clear();
     unknownOpcodes_.clear();
-    modificationTime_ = fs::file_time_type::min();
+    modificationTime_ = absl::nullopt;
 
     // set default controllers
     // midistate is reset above
@@ -511,15 +516,22 @@ bool Synth::loadSfzFile(const fs::path& file)
     std::error_code ec;
     fs::path realFile = fs::canonical(file, ec);
 
-    impl.parser_.parseFile(ec ? file : realFile);
-    if (impl.parser_.getErrorCount() > 0)
-        return false;
+    bool success = true;
+    Parser& parser = impl.parser_;
+    parser.parseFile(ec ? file : realFile);
 
-    if (impl.regions_.empty())
+    // permissive parsing for compatibility
+    if (!loaderParsesPermissively)
+        success = parser.getErrorCount() == 0;
+
+    success = success && !impl.regions_.empty();
+
+    if (!success) {
+        parser.clear();
         return false;
+    }
 
     impl.finalizeSfzLoad();
-
     return true;
 }
 
@@ -530,15 +542,22 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 
     impl.clear();
 
-    impl.parser_.parseString(path, text);
-    if (impl.parser_.getErrorCount() > 0)
-        return false;
+    bool success = true;
+    Parser& parser = impl.parser_;
+    parser.parseString(path, text);
 
-    if (impl.regions_.empty())
+    // permissive parsing for compatibility
+    if (!loaderParsesPermissively)
+        success = parser.getErrorCount() == 0;
+
+    success = success && !impl.regions_.empty();
+
+    if (!success) {
+        parser.clear();
         return false;
+    }
 
     impl.finalizeSfzLoad();
-
     return true;
 }
 
@@ -822,6 +841,12 @@ void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
         if (bus)
             bus->setSamplesPerBlock(samplesPerBlock);
     }
+}
+
+int Synth::getSamplesPerBlock() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.samplesPerBlock_;
 }
 
 void Synth::setSampleRate(float sampleRate) noexcept
@@ -1675,22 +1700,33 @@ void Synth::Impl::resetAllControllers(int delay) noexcept
     }
 }
 
-fs::file_time_type Synth::Impl::checkModificationTime()
+absl::optional<fs::file_time_type> Synth::Impl::checkModificationTime() const
 {
-    auto returnedTime = modificationTime_;
+    absl::optional<fs::file_time_type> resultTime;
     for (const auto& file : parser_.getIncludedFiles()) {
         std::error_code ec;
         const auto fileTime = fs::last_write_time(file, ec);
-        if (!ec && returnedTime < fileTime)
-            returnedTime = fileTime;
+        if (!ec) {
+            if (!resultTime || fileTime > *resultTime)
+                resultTime = fileTime;
+        }
     }
-    return returnedTime;
+    return resultTime;
 }
 
 bool Synth::shouldReloadFile()
 {
     Impl& impl = *impl_;
-    return (impl.checkModificationTime() > impl.modificationTime_);
+
+    absl::optional<fs::file_time_type> then = impl.modificationTime_;
+    if (!then) // file not loaded or failed
+        return false;
+
+    absl::optional<fs::file_time_type> now = impl.checkModificationTime();
+    if (!now) // file not currently existing
+        return false;
+
+    return *now > *then;
 }
 
 bool Synth::shouldReloadScala()

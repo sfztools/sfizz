@@ -6,7 +6,6 @@ mkdir -p build/${INSTALL_DIR} && cd build
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DSFIZZ_VST=ON \
       -DSFIZZ_AU=ON \
-      -DSFIZZ_JACK=OFF \
       -DSFIZZ_RENDER=OFF \
       -DSFIZZ_SHARED=OFF \
       -DSFIZZ_TESTS=ON \

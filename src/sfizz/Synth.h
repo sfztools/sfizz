@@ -271,6 +271,12 @@ public:
      */
     void setSamplesPerBlock(int samplesPerBlock) noexcept;
     /**
+     * @brief Get the maximum size of the blocks for the callback. The actual
+     * size can be lower in each callback but should not be larger
+     * than this value.
+     */
+    int getSamplesPerBlock() const noexcept;
+    /**
      * @brief Set the sample rate. If you do not call it it is initialized
      * to sfz::config::defaultSampleRate.
      *

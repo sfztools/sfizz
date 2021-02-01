@@ -10,11 +10,12 @@
 #include <type_traits>
 #include <cstring>
 
-#ifdef __cplusplus
+// ensure that `sfizz_arg_t` has the same storage characteristics as `int64_t`
+// Note(jpc) alignment checks fail on old gcc i386
 static_assert(
-    sizeof(sfizz_arg_t) == sizeof(int64_t) && alignof(sfizz_arg_t) == 8,
+    sizeof(sfizz_arg_t) == sizeof(int64_t) /* &&
+    alignof(sfizz_arg_t) == alignof(int64_t) */,
     "The ABI stability check has failed.");
-#endif
 
 template <class T>
 static T paddingSize(T count, unsigned align) {

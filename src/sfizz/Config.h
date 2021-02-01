@@ -67,7 +67,7 @@ namespace config {
     constexpr int chunkSize { 1024 };
     constexpr unsigned int defaultAlignment { 16 };
     constexpr int filtersInPool { maxVoices * 2 };
-    constexpr int excessFileFrames { 8 };
+    constexpr int excessFileFrames { 64 };
     constexpr int maxLFOSubs { 8 };
     constexpr int maxLFOSteps { 128 };
     /**

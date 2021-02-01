@@ -16,7 +16,7 @@ using namespace Catch::literals;
 
 TEST_CASE("[ADSREnvelope] Basic state")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     std::array<float, 5> output;
     std::array<float, 5> expected { 0.0, 0.0, 0.0, 0.0, 0.0 };
     envelope.getBlock(absl::MakeSpan(output));
@@ -29,7 +29,7 @@ TEST_CASE("[ADSREnvelope] Basic state")
 
 TEST_CASE("[ADSREnvelope] Attack")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -48,7 +48,7 @@ TEST_CASE("[ADSREnvelope] Attack")
 
 TEST_CASE("[ADSREnvelope] Attack again")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.03f;
@@ -67,7 +67,7 @@ TEST_CASE("[ADSREnvelope] Attack again")
 
 TEST_CASE("[ADSREnvelope] Release")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -89,7 +89,7 @@ TEST_CASE("[ADSREnvelope] Release")
 
 TEST_CASE("[ADSREnvelope] Delay")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -111,7 +111,7 @@ TEST_CASE("[ADSREnvelope] Delay")
 
 TEST_CASE("[ADSREnvelope] Lower sustain")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -132,7 +132,7 @@ TEST_CASE("[ADSREnvelope] Lower sustain")
 
 TEST_CASE("[ADSREnvelope] Decay")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -154,7 +154,7 @@ TEST_CASE("[ADSREnvelope] Decay")
 
 TEST_CASE("[ADSREnvelope] Hold")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -177,7 +177,7 @@ TEST_CASE("[ADSREnvelope] Hold")
 
 TEST_CASE("[ADSREnvelope] Hold with release")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;
@@ -202,7 +202,7 @@ TEST_CASE("[ADSREnvelope] Hold with release")
 
 TEST_CASE("[ADSREnvelope] Hold with release 2")
 {
-    sfz::ADSREnvelope<float> envelope;
+    sfz::ADSREnvelope envelope;
     sfz::MidiState state;
     sfz::Region region { state };
     region.amplitudeEG.attack = 0.02f;

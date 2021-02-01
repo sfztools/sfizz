@@ -96,6 +96,12 @@ target_include_directories(sfizz_kissfft
     PUBLIC "src/external/kiss_fft"
     PUBLIC "src/external/kiss_fft/tools")
 
+# The cephes library
+add_library(sfizz_cephes STATIC
+    "external/cephes/src/chbevl.c"
+    "external/cephes/src/i0.c")
+add_library(sfizz::cephes ALIAS sfizz_cephes)
+
 # The cpuid library
 add_library(sfizz_cpuid STATIC
     "src/external/cpuid/src/cpuid/cpuinfo.cpp"

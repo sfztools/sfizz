@@ -11,6 +11,10 @@ namespace sfz {
 namespace fx {
 namespace lfo {
 
+    // Pulse and Square levels
+    static constexpr float loPulse = 0.0f; // 0 in ARIA, -1 in Cakewalk
+    static constexpr float hiPulse = 1.0f;
+
     template <>
     inline float evaluateAtPhase<kTriangle>(float phase)
     {
@@ -24,31 +28,31 @@ namespace lfo {
     inline float evaluateAtPhase<kSine>(float phase)
     {
         float x = phase + phase - 1;
-        return 4 * x * (1 - std::fabs(x));
+        return -4 * x * (1 - std::fabs(x));
     }
 
     template <>
     inline float evaluateAtPhase<kPulse75>(float phase)
     {
-        return (phase < 0.75f) ? +1.0f : -1.0f;
+        return (phase < 0.75f) ? hiPulse : loPulse;
     }
 
     template <>
     inline float evaluateAtPhase<kSquare>(float phase)
     {
-        return (phase < 0.5f) ? +1.0f : -1.0f;
+        return (phase < 0.5f) ? hiPulse : loPulse;
     }
 
     template <>
     inline float evaluateAtPhase<kPulse25>(float phase)
     {
-        return (phase < 0.25f) ? +1.0f : -1.0f;
+        return (phase < 0.25f) ? hiPulse : loPulse;
     }
 
     template <>
     inline float evaluateAtPhase<kPulse12_5>(float phase)
     {
-        return (phase < 0.125f) ? +1.0f : -1.0f;
+        return (phase < 0.125f) ? hiPulse : loPulse;
     }
 
     template <>

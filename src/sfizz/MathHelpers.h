@@ -25,6 +25,13 @@
 #include <xmmintrin.h>
 #endif
 
+#if __cplusplus >= 201703L
+static double i0(double x) { return std::cyl_bessel_i(0.0, x); }
+#else
+// external Bessel function from cephes
+extern "C" double i0(double x);
+#endif
+
 template <class T>
 constexpr T max(T op1, T op2)
 {
@@ -463,6 +470,54 @@ bool isReasonableAudio(absl::Span<Type> span)
             return false;
 
     return true;
+}
+
+/**
+ * @brief Compute the Kaiser window
+ *
+ * @param b Kaiser parameter beta
+ * @param window Span of real which receives the window
+ */
+template <class T>
+void kaiserWindow(double b, absl::Span<T> window)
+{
+    double i0b = i0(b);
+    for (size_t i = 0, n = window.size(); i < n; ++i) {
+        double x = i / static_cast<double>(n - 1);
+        double t = x + x - 1.0;
+        window[i] = static_cast<T>(i0(b * std::sqrt(1.0 - t * t)) / i0b);
+    }
+}
+
+/**
+ * @brief Compute a single point of the Kaiser window
+ * This is less efficient than calculating the whole window at once.
+ *
+ * @param b Kaiser parameter beta
+ * @param x Point to evaluate, normalized in 0 to 1
+ */
+inline double kaiserWindowSinglePoint(double b, double x)
+{
+    double t = x + x - 1.0;
+    return i0(b * std::sqrt(1.0 - t * t)) / i0(b);
+}
+
+/**
+ * @brief Compute the cardinal sine
+ */
+template <class T>
+T sinc(T x)
+{
+    return (x == T(0)) ? T(1) : (std::sin(x) / x);
+}
+
+/**
+ * @brief Compute the normalized cardinal sine
+ */
+template <class T>
+T normalizedSinc(T x)
+{
+    return sinc(pi<T>() * x);
 }
 
 /**
