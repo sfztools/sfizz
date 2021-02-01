@@ -108,7 +108,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    constexpr size_t bufferSize = 1024;
     sfz::BufferPool bufferPool;
+    bufferPool.setBufferSize(bufferSize);
 
     size_t numLfos = desc.size();
     std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
@@ -131,7 +133,10 @@ int main(int argc, char* argv[])
     std::vector<absl::Span<float>> lfoOutputs(numLfos);
     for (size_t l = 0; l < numLfos; ++l) {
         lfoOutputs[l] = absl::MakeSpan(&outputMemory[l * numFrames], numFrames);
-        lfos[l]->process(lfoOutputs[l]);
+        for (size_t i = 0, currentFrames; i < numFrames; i += currentFrames) {
+            currentFrames = std::min(numFrames - i, bufferSize);
+            lfos[l]->process(lfoOutputs[l].subspan(i, currentFrames));
+        }
     }
 
     if (saveFlac) {
