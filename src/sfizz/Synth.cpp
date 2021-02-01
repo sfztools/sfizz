@@ -811,6 +811,12 @@ void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     }
 }
 
+int Synth::getSamplesPerBlock() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.samplesPerBlock_;
+}
+
 void Synth::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
