@@ -22,25 +22,25 @@ add_library(${LV2PLUGIN_PRJ_NAME} MODULE
     ${PROJECT_NAME}.c
     atomic_compat.h
     ${LV2PLUGIN_TTL_SRC_FILES})
-target_link_libraries(${LV2PLUGIN_PRJ_NAME} ${PROJECT_NAME}::${PROJECT_NAME})
+target_link_libraries(${LV2PLUGIN_PRJ_NAME} PRIVATE sfizz::sfizz sfizz::spin_mutex)
 
 if(SFIZZ_LV2_UI)
     add_library(${LV2PLUGIN_PRJ_NAME}_ui MODULE
         ${PROJECT_NAME}_ui.cpp
         vstgui_helpers.h
         vstgui_helpers.cpp)
-    target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui sfizz::editor sfizz::vstgui)
+    target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE sfizz::editor sfizz::vstgui)
 endif()
 
 # Explicitely strip all symbols on Linux but lv2_descriptor()
 # MacOS linker does not support this apparently https://bugs.webkit.org/show_bug.cgi?id=144555
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     file(COPY lv2.version DESTINATION ${CMAKE_BINARY_DIR}/lv2)
-    target_link_libraries(${LV2PLUGIN_PRJ_NAME} "-Wl,--version-script=lv2.version")
+    target_link_libraries(${LV2PLUGIN_PRJ_NAME} PRIVATE "-Wl,--version-script=lv2.version")
     # target_link_libraries(${LV2PLUGIN_PRJ_NAME} "-Wl,-u,lv2_descriptor")
     if(SFIZZ_LV2_UI)
         file(COPY lv2ui.version DESTINATION ${CMAKE_BINARY_DIR}/lv2)
-        target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui "-Wl,--version-script=lv2ui.version")
+        target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "-Wl,--version-script=lv2ui.version")
         # target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui "-Wl,-u,lv2ui_descriptor")
     endif()
 endif()

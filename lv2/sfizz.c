@@ -53,6 +53,8 @@
 
 #include <ardour/lv2_extensions.h>
 
+#include <spin_mutex.h>
+
 #include <math.h>
 #include <sfizz.h>
 #include <stdbool.h>
@@ -160,6 +162,7 @@ typedef struct
     // Sfizz related data
     sfizz_synth_t *synth;
     sfizz_client_t *client;
+    spin_mutex_t *synth_mutex;
     bool expect_nominal_block_length;
     char sfz_file_path[MAX_PATH_SIZE];
     char scala_file_path[MAX_PATH_SIZE];
@@ -599,6 +602,7 @@ instantiate(const LV2_Descriptor *descriptor,
 
     self->synth = sfizz_create_synth();
     self->client = sfizz_create_client(self);
+    self->synth_mutex = spin_mutex_create();
     sfizz_set_broadcast_callback(self->synth, &sfizz_lv2_receive_message, self);
     sfizz_set_receive_callback(self->client, &sfizz_lv2_receive_message);
 
@@ -617,6 +621,7 @@ static void
 cleanup(LV2_Handle instance)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
     free(self);
@@ -876,8 +881,14 @@ static void
 run(LV2_Handle instance, uint32_t sample_count)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    if (!self->control_port || !self->notify_port)
+    assert(self->control_port && self->notify_port);
+
+    if (!spin_mutex_trylock(self->synth_mutex))
+    {
+        for (int channel = 0; channel < 2; ++channel)
+            memset(self->output_buffers[channel], 0, sample_count * sizeof(float));
         return;
+    }
 
     // Set up forge to write directly to notify output port.
     const size_t notify_capacity = self->notify_port->atom.size;
@@ -1048,6 +1059,8 @@ run(LV2_Handle instance, uint32_t sample_count)
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
 
+    spin_mutex_unlock(self->synth_mutex);
+
     if (self->midnam && atomic_exchange(&self->must_update_midnam, 0))
     {
         self->midnam->update(self->midnam->handle);
@@ -1099,7 +1112,9 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
         if (opt->key == self->sample_rate_uri)
         {
             sfizz_lv2_parse_sample_rate(self, opt);
+            spin_mutex_lock(self->synth_mutex);
             sfizz_set_sample_rate(self->synth, self->sample_rate);
+            spin_mutex_unlock(self->synth_mutex);
         }
         else if (!self->expect_nominal_block_length && opt->key == self->max_block_length_uri)
         {
@@ -1109,7 +1124,9 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
                 continue;
             }
             self->max_block_size = *(int *)opt->value;
+            spin_mutex_lock(self->synth_mutex);
             sfizz_set_samples_per_block(self->synth, self->max_block_size);
+            spin_mutex_unlock(self->synth_mutex);
         }
         else if (opt->key == self->nominal_block_length_uri)
         {
@@ -1119,7 +1136,9 @@ lv2_set_options(LV2_Handle instance, const LV2_Options_Option *options)
                 continue;
             }
             self->max_block_size = *(int *)opt->value;
+            spin_mutex_lock(self->synth_mutex);
             sfizz_set_samples_per_block(self->synth, self->max_block_size);
+            spin_mutex_unlock(self->synth_mutex);
         }
     }
     return LV2_OPTIONS_SUCCESS;
@@ -1263,6 +1282,7 @@ restore(LV2_Handle instance,
     }
 
     // Sync the parameters to the synth
+    spin_mutex_lock(self->synth_mutex);
 
     // Load an empty file to remove the default sine, and then the new file.
     sfizz_load_string(self->synth, "empty.sfz", "");
@@ -1298,6 +1318,8 @@ restore(LV2_Handle instance,
 
     lv2_log_note(&self->logger, "[sfizz] Restoring the oversampling to %d\n", self->oversampling);
     sfizz_set_oversampling_factor(self->synth, self->oversampling);
+
+    spin_mutex_unlock(self->synth_mutex);
 
     return status;
 }
@@ -1419,7 +1441,12 @@ work(LV2_Handle instance,
     if (atom->type == self->sfizz_sfz_file_uri)
     {
         const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
-        if (!sfizz_lv2_load_file(self, sfz_file_path)) {
+
+        spin_mutex_lock(self->synth_mutex);
+        bool success = sfizz_lv2_load_file(self, sfz_file_path);
+        spin_mutex_unlock(self->synth_mutex);
+
+        if (!success) {
             lv2_log_error(&self->logger,
                 "[sfizz] Error with %s; no file should be loaded\n", sfz_file_path);
         }
@@ -1430,7 +1457,12 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_scala_file_uri)
     {
         const char *scala_file_path = LV2_ATOM_BODY_CONST(atom);
-        if (sfizz_lv2_load_scala_file(self, scala_file_path)) {
+
+        spin_mutex_lock(self->synth_mutex);
+        bool success = sfizz_lv2_load_scala_file(self, scala_file_path);
+        spin_mutex_unlock(self->synth_mutex);
+
+        if (success) {
             lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", scala_file_path);
         } else {
             lv2_log_error(&self->logger,
@@ -1443,7 +1475,11 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_num_voices_uri)
     {
         const int num_voices = *(const int *)LV2_ATOM_BODY_CONST(atom);
+
+        spin_mutex_lock(self->synth_mutex);
         sfizz_set_num_voices(self->synth, num_voices);
+        spin_mutex_unlock(self->synth_mutex);
+
         if (sfizz_get_num_voices(self->synth) == num_voices) {
             lv2_log_note(&self->logger, "[sfizz] Number of voices changed to: %d\n", num_voices);
         } else {
@@ -1453,7 +1489,11 @@ work(LV2_Handle instance,
     else if (atom->type == self->sfizz_preload_size_uri)
     {
         const unsigned int preload_size = *(const unsigned int *)LV2_ATOM_BODY_CONST(atom);
+
+        spin_mutex_lock(self->synth_mutex);
         sfizz_set_preload_size(self->synth, preload_size);
+        spin_mutex_unlock(self->synth_mutex);
+
         if (sfizz_get_preload_size(self->synth) == preload_size) {
             lv2_log_note(&self->logger, "[sfizz] Preload size changed to: %d\n", preload_size);
         } else {
@@ -1464,7 +1504,11 @@ work(LV2_Handle instance,
     {
         const sfizz_oversampling_factor_t oversampling =
             *(const sfizz_oversampling_factor_t *)LV2_ATOM_BODY_CONST(atom);
+
+        spin_mutex_lock(self->synth_mutex);
         sfizz_set_oversampling_factor(self->synth, oversampling);
+        spin_mutex_unlock(self->synth_mutex);
+
         if (sfizz_get_oversampling_factor(self->synth) == oversampling) {
             lv2_log_note(&self->logger, "[sfizz] Oversampling changed to: %d\n", oversampling);
         } else {
@@ -1482,7 +1526,12 @@ work(LV2_Handle instance,
             lv2_log_note(&self->logger,
                         "[sfizz] File %s seems to have been updated, reloading\n",
                         self->sfz_file_path);
-            if (!sfizz_lv2_load_file(self, self->sfz_file_path)) {
+
+            spin_mutex_lock(self->synth_mutex);
+            bool success = sfizz_lv2_load_file(self, self->sfz_file_path);
+            spin_mutex_unlock(self->synth_mutex);
+
+            if (!success) {
                 lv2_log_error(&self->logger,
                     "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
@@ -1493,7 +1542,12 @@ work(LV2_Handle instance,
             lv2_log_note(&self->logger,
                         "[sfizz] Scala file %s seems to have been updated, reloading\n",
                         self->scala_file_path);
-            if (sfizz_lv2_load_scala_file(self, self->scala_file_path)) {
+
+            spin_mutex_lock(self->synth_mutex);
+            bool success = sfizz_lv2_load_scala_file(self, self->scala_file_path);
+            spin_mutex_unlock(self->synth_mutex);
+
+            if (success) {
                 lv2_log_note(&self->logger, "[sfizz] Scala file loaded: %s\n", self->scala_file_path);
             } else {
                 lv2_log_error(&self->logger,
