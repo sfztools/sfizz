@@ -13,6 +13,11 @@
 
 class Interpolators : public benchmark::Fixture {
 public:
+    Interpolators()
+    {
+        sfz::initializeInterpolators();
+    }
+
     void SetUp(const ::benchmark::State& state)
     {
         std::random_device rd { };
@@ -55,33 +60,27 @@ static void doInterpolation(absl::Span<const float> input, absl::Span<float> out
     }
 }
 
-BENCHMARK_DEFINE_F(Interpolators, Linear)(benchmark::State& state)
-{
-    ScopedFTZ ftz;
+#define ADD_INTERPOLATOR_BENCHMARK(Type)                                \
+    BENCHMARK_DEFINE_F(Interpolators, Type)(benchmark::State& state)    \
+    {                                                                   \
+        ScopedFTZ ftz;                                                  \
+        for (auto _ : state) {                                          \
+            absl::Span<float> span = absl::MakeSpan(output);            \
+            doInterpolation<sfz::kInterpolator##Type>(input, span);     \
+        }                                                               \
+    }                                                                   \
+    BENCHMARK_REGISTER_F(Interpolators, Type)                           \
+        ->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
 
-    for (auto _ : state) {
-        doInterpolation<sfz::kInterpolatorLinear>(input, absl::MakeSpan(output));
-    }
-}
-
-BENCHMARK_DEFINE_F(Interpolators, Hermite3)(benchmark::State& state)
-{
-    ScopedFTZ ftz;
-
-    for (auto _ : state) {
-        doInterpolation<sfz::kInterpolatorHermite3>(input, absl::MakeSpan(output));
-    }
-}
-
-BENCHMARK_DEFINE_F(Interpolators, Bspline3)(benchmark::State& state)
-{
-    ScopedFTZ ftz;
-
-    for (auto _ : state) {
-        doInterpolation<sfz::kInterpolatorBspline3>(input, absl::MakeSpan(output));
-    }
-}
-
-BENCHMARK_REGISTER_F(Interpolators, Linear)->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
-BENCHMARK_REGISTER_F(Interpolators, Hermite3)->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
-BENCHMARK_REGISTER_F(Interpolators, Bspline3)->RangeMultiplier(4)->Range(1 << 4, 1 << 12);
+ADD_INTERPOLATOR_BENCHMARK(Nearest)
+ADD_INTERPOLATOR_BENCHMARK(Linear)
+ADD_INTERPOLATOR_BENCHMARK(Hermite3)
+ADD_INTERPOLATOR_BENCHMARK(Bspline3)
+ADD_INTERPOLATOR_BENCHMARK(Sinc8)
+ADD_INTERPOLATOR_BENCHMARK(Sinc12)
+ADD_INTERPOLATOR_BENCHMARK(Sinc16)
+ADD_INTERPOLATOR_BENCHMARK(Sinc24)
+ADD_INTERPOLATOR_BENCHMARK(Sinc36)
+ADD_INTERPOLATOR_BENCHMARK(Sinc48)
+ADD_INTERPOLATOR_BENCHMARK(Sinc60)
+ADD_INTERPOLATOR_BENCHMARK(Sinc72)

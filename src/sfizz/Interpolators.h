@@ -17,7 +17,35 @@ enum InterpolatorModel : int {
     kInterpolatorHermite3,
     // a B-spline 3rd order interpolator
     kInterpolatorBspline3,
+    // a windowed-sinc 8-point interpolator
+    kInterpolatorSinc8,
+    // a windowed-sinc 12-point interpolator
+    kInterpolatorSinc12,
+    // a windowed-sinc 16-point interpolator
+    kInterpolatorSinc16,
+    // a windowed-sinc 24-point interpolator
+    kInterpolatorSinc24,
+    // a windowed-sinc 36-point interpolator
+    kInterpolatorSinc36,
+    // a windowed-sinc 48-point interpolator
+    kInterpolatorSinc48,
+    // a windowed-sinc 60-point interpolator
+    kInterpolatorSinc60,
+    // a windowed-sinc 72-point interpolator
+    kInterpolatorSinc72,
 };
+
+/**
+ * @brief Initialize interpolators
+ *
+ * This precomputes windowed-sinc tables globally.
+ * It needs to be called at least once, before using the windowed-sinc models.
+ *
+ * These are not computed at static initialization time, to prevent slowing down
+ * an audio plugin library scan (eg. VST). The static-local-variable method is
+ * avoided also, because we don't want this overhead on a frame-by-frame basis.
+ */
+void initializeInterpolators();
 
 /**
  * @brief Interpolate from a vector of values

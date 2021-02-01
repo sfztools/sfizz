@@ -21,6 +21,7 @@
 #include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
+#include "Interpolators.h"
 #include <absl/algorithm/container.h>
 #include <absl/memory/memory.h>
 #include <absl/strings/str_replace.h>
@@ -48,6 +49,7 @@ Synth::~Synth()
 Synth::Impl::Impl()
 {
     initializeSIMDDispatchers();
+    initializeInterpolators();
 
     const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
     parser_.setListener(this);

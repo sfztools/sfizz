@@ -70,3 +70,60 @@ TEST_CASE("[Interpolators] Squares")
             == Approx(expected).margin(1e-2));
     }
 }
+
+template <class WS>
+static std::pair<double, double> windowedSincError(WS& ws, double step = 0.1, bool verbose = false)
+{
+    size_t points = ws.getNumPoints();
+    double x1 = points / -2.0;
+    double x2 = points / +2.0;
+    double maxAbsErr = 0.0;
+    double meanAbsErr = 0.0;
+    //double meanSquareErr = 0.0;
+
+    double x;
+    size_t n;
+    for (n = 0; (x = x1 + n * step) < x2; ++n) {
+        double val = ws.getUnchecked(x);
+        double ref = ws.getExact(x);
+        double absErr = std::fabs(val - ref);
+        maxAbsErr = std::max(maxAbsErr, absErr);
+        meanAbsErr += absErr;
+        //meanSquareErr += absErr * absErr;
+    }
+    meanAbsErr /= n;
+    //meanSquareErr /= n;
+
+    if (verbose) {
+        std::cerr << "MaxAbsErr=" << maxAbsErr
+                  << " MeanAbsErr=" << meanAbsErr
+                  //<< " MeanSquareErr=" << meanSquareErr
+                  << " with Points=" << points
+                  << " TableSize=" << ws.getTableSize()
+                  << "\n";
+    }
+
+    return { maxAbsErr, meanAbsErr };
+}
+
+TEST_CASE("[Interpolators] Windowed sinc precision")
+{
+    sfz::initializeInterpolators();
+
+    double maxAbsTolerance = 5e-2;
+    double meanAbsTolerance = 1e-3;
+
+    auto Check = [=](std::pair<double, double> maxAndMeanErr) {
+        REQUIRE(maxAndMeanErr.first < maxAbsTolerance);
+        REQUIRE(maxAndMeanErr.second < meanAbsTolerance);
+    };
+
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<8>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<12>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<16>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<24>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<36>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<48>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<60>::windowedSinc));
+    Check(windowedSincError(*sfz::SincInterpolatorTraits<72>::windowedSinc));
+}

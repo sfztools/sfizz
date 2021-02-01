@@ -87,6 +87,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/FlexEGDescription.cpp \
 	src/sfizz/FlexEnvelope.cpp \
 	src/sfizz/FloatEnvelopes.cpp \
+	src/sfizz/Interpolators.cpp \
 	src/sfizz/Logger.cpp \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \
@@ -121,7 +122,8 @@ SFIZZ_SOURCES = \
 	src/sfizz/Voice.cpp \
 	src/sfizz/VoiceManager.cpp \
 	src/sfizz/VoiceStealing.cpp \
-	src/sfizz/Wavetables.cpp
+	src/sfizz/Wavetables.cpp \
+	src/sfizz/WindowedSinc.cpp
 
 ### Other internal
 
