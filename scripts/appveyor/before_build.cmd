@@ -6,7 +6,6 @@ if %platform%==x86 set RELEASE_ARCH=Win32
 if %platform%==x64 set RELEASE_ARCH=x64
 
 cmake .. -G"Visual Studio 16 2019" -A"%RELEASE_ARCH%"^
- -DSFIZZ_JACK=OFF^
  -DSFIZZ_BENCHMARKS=OFF^
  -DSFIZZ_TESTS=ON^
  -DSFIZZ_LV2=ON^
