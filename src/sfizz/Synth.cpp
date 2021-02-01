@@ -54,7 +54,6 @@ Synth::Impl::Impl()
     initializeSIMDDispatchers();
     initializeInterpolators();
 
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
     parser_.setListener(this);
     effectFactory_.registerStandardEffectTypes();
     effectBuses_.reserve(5); // sufficient room for main and fx1-4
@@ -69,8 +68,6 @@ Synth::Impl::Impl()
 
 Synth::Impl::~Impl()
 {
-    const std::lock_guard<SpinMutex> disableCallback { callbackGuard_ };
-
     voiceManager_.reset();
     resources_.filePool.emptyFileLoadingQueues();
 }
