@@ -131,7 +131,7 @@ set(SFIZZ_SOURCES
     sfizz/MidiState.cpp
     sfizz/SfzHelpers.cpp
     sfizz/Oversampler.cpp
-    sfizz/FloatEnvelopes.cpp
+    sfizz/ADSREnvelope.cpp
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
     sfizz/Curve.cpp

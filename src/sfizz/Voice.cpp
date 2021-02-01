@@ -213,9 +213,9 @@ struct Voice::Impl
     std::vector<std::unique_ptr<LFO>> lfos_;
     std::vector<std::unique_ptr<FlexEnvelope>> flexEGs_;
 
-    ADSREnvelope<float> egAmplitude_;
-    std::unique_ptr<ADSREnvelope<float>> egPitch_;
-    std::unique_ptr<ADSREnvelope<float>> egFilter_;
+    ADSREnvelope egAmplitude_;
+    std::unique_ptr<ADSREnvelope> egPitch_;
+    std::unique_ptr<ADSREnvelope> egFilter_;
     float bendStepFactor_ { centsFactor(1) };
 
     WavetableOscillator waveOscillators_[config::oscillatorsPerVoice];
@@ -1553,7 +1553,7 @@ void Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
 {
     Impl& impl = *impl_;
     if (havePitchEG)
-        impl.egPitch_.reset(new ADSREnvelope<float>);
+        impl.egPitch_.reset(new ADSREnvelope);
     else
         impl.egPitch_.reset();
 }
@@ -1562,7 +1562,7 @@ void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
 {
     Impl& impl = *impl_;
     if (haveFilterEG)
-        impl.egFilter_.reset(new ADSREnvelope<float>);
+        impl.egFilter_.reset(new ADSREnvelope);
     else
         impl.egFilter_.reset();
 }
@@ -1782,19 +1782,19 @@ Duration Voice::getLastPanningDuration() const noexcept
     return impl.panningDuration_;
 }
 
-ADSREnvelope<float>* Voice::getAmplitudeEG()
+ADSREnvelope* Voice::getAmplitudeEG()
 {
     Impl& impl = *impl_;
     return &impl.egAmplitude_;
 }
 
-ADSREnvelope<float>* Voice::getPitchEG()
+ADSREnvelope* Voice::getPitchEG()
 {
     Impl& impl = *impl_;
     return impl.egPitch_.get();
 }
 
-ADSREnvelope<float>* Voice::getFilterEG()
+ADSREnvelope* Voice::getFilterEG()
 {
     Impl& impl = *impl_;
     return impl.egFilter_.get();

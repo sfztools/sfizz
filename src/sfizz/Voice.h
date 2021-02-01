@@ -337,15 +337,15 @@ public:
     /**
      * @brief Get the SFZv1 amplitude EG, if existing
      */
-    ADSREnvelope<float>* getAmplitudeEG();
+    ADSREnvelope* getAmplitudeEG();
     /**
      * @brief Get the SFZv1 pitch EG, if existing
      */
-    ADSREnvelope<float>* getPitchEG();
+    ADSREnvelope* getPitchEG();
     /**
      * @brief Get the SFZv1 filter EG, if existing
      */
-    ADSREnvelope<float>* getFilterEG();
+    ADSREnvelope* getFilterEG();
 
     /**
      * @brief Get the trigger event
