@@ -199,6 +199,7 @@ elseif(SFIZZ_AU)
     target_link_libraries(${AUPLUGIN_PRJ_NAME}
         PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
         PRIVATE sfizz::editor
+        PRIVATE sfizz::spin_mutex
         PRIVATE sfizz::pugixml sfizz::filesystem)
     target_include_directories(${AUPLUGIN_PRJ_NAME}
         PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
