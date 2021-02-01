@@ -110,9 +110,9 @@ struct Synth::Impl final: public Parser::Listener {
     /**
      * @brief Get the modification time of all included sfz files
      *
-     * @return fs::file_time_type
+     * @return absl::optional<fs::file_time_type>
      */
-    fs::file_time_type checkModificationTime();
+    absl::optional<fs::file_time_type> checkModificationTime() const;
 
     /**
      * @brief Check all regions and start voices for note on events
@@ -277,7 +277,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_;
 
     Parser parser_;
-    fs::file_time_type modificationTime_ { };
+    absl::optional<fs::file_time_type> modificationTime_ { };
 
     std::array<float, config::numCCs> defaultCCValues_;
     std::bitset<config::numCCs> currentUsedCCs_;
