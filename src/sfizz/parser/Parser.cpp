@@ -19,7 +19,7 @@ Parser::~Parser()
 {
 }
 
-void Parser::reset()
+void Parser::clear()
 {
     _pathsIncluded.clear();
     _currentDefinitions = _externalDefinitions;
@@ -51,7 +51,7 @@ void Parser::parseString(const fs::path& path, absl::string_view sfzView)
 
 void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader)
 {
-    reset();
+    clear();
 
     if (_listener)
         _listener->onParseBegin();

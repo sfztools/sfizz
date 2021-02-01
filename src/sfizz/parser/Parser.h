@@ -27,6 +27,8 @@ public:
     Parser();
     ~Parser();
 
+    void clear();
+
     void addExternalDefinition(absl::string_view id, absl::string_view value);
     void clearExternalDefinitions();
 
@@ -71,7 +73,6 @@ private:
     void processDirective();
     void processHeader();
     void processOpcode();
-    void reset();
 
     // errors and warnings
     void emitError(const SourceRange& range, const std::string& message);
