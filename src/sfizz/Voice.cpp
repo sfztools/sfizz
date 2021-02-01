@@ -544,25 +544,25 @@ void Voice::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
     impl.sampleRate_ = sampleRate * impl.resources_.synthConfig.OSFactor;
-    impl.gainSmoother_.setSmoothing(config::gainSmoothing, sampleRate);
-    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, sampleRate);
+    impl.gainSmoother_.setSmoothing(config::gainSmoothing, impl.sampleRate_);
+    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, impl.sampleRate_);
 
     for (WavetableOscillator& osc : impl.waveOscillators_)
         osc.init(sampleRate);
 
     for (auto& lfo : impl.lfos_)
-        lfo->setSampleRate(sampleRate);
+        lfo->setSampleRate(impl.sampleRate_);
 
     for (auto& filter : impl.filters_)
-        filter.setSampleRate(sampleRate);
+        filter.setSampleRate(impl.sampleRate_);
 
     for (auto& eq : impl.equalizers_)
-        eq.setSampleRate(sampleRate);
+        eq.setSampleRate(impl.sampleRate_);
 
-    impl.powerFollower_.setSampleRate(sampleRate);
+    impl.powerFollower_.setSampleRate(impl.sampleRate_);
     downsampleFilter.setType(FilterType::kFilterLpf6p);
     downsampleFilter.setChannels(2);
-    downsampleFilter.init(sampleRate * impl.resources_.synthConfig.OSFactor);
+    downsampleFilter.init(impl.sampleRate_);
     downsampleFilter.prepare(0.47 * sampleRate, 0.0, 0.0);
 }
 
