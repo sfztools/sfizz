@@ -29,7 +29,7 @@ void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
     }
 
     const Region* region = voice->getRegion();
-    ADSREnvelope<float>* eg = nullptr;
+    ADSREnvelope* eg = nullptr;
     const EGDescription* desc = nullptr;
 
     switch (sourceKey.id()) {
@@ -66,7 +66,7 @@ void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
         return;
     }
 
-    ADSREnvelope<float>* eg = nullptr;
+    ADSREnvelope* eg = nullptr;
 
     switch (sourceKey.id()) {
     case ModId::AmpEG:
@@ -97,7 +97,7 @@ void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voic
         return;
     }
 
-    ADSREnvelope<float>* eg = nullptr;
+    ADSREnvelope* eg = nullptr;
 
     switch (sourceKey.id()) {
     case ModId::AmpEG:
