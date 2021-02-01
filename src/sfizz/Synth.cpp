@@ -18,7 +18,6 @@
 #include "Resources.h"
 #include "ScopedFTZ.h"
 #include "StringViewHelpers.h"
-#include "utility/SpinMutex.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
 #include "Interpolators.h"
@@ -486,7 +485,6 @@ void Synth::Impl::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
 bool Synth::loadSfzFile(const fs::path& file)
 {
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     impl.clear();
 
@@ -515,7 +513,6 @@ bool Synth::loadSfzFile(const fs::path& file)
 bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 {
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     impl.clear();
 
@@ -805,8 +802,6 @@ void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
     Impl& impl = *impl_;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
 
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
-
     impl.samplesPerBlock_ = samplesPerBlock;
     for (auto& voice : impl.voiceManager_)
         voice.setSamplesPerBlock(samplesPerBlock);
@@ -828,7 +823,6 @@ int Synth::getSamplesPerBlock() const noexcept
 void Synth::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     impl.sampleRate_ = sampleRate;
     for (auto& voice : impl.voiceManager_)
@@ -864,10 +858,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         impl.lastGarbageCollection_ = now;
         impl.resources_.filePool.triggerGarbageCollection();
     }
-
-    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
 
     size_t numFrames = buffer.getNumFrames();
     auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
@@ -986,11 +976,6 @@ void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
-
-    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
-
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
 
@@ -1003,10 +988,6 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
-
-    const std::unique_lock<SpinMutex> lock { impl.callbackGuard_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -1147,10 +1128,6 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
 
     ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
     resources_.midiState.ccEvent(delay, ccNumber, normValue);
-
-    const std::unique_lock<SpinMutex> lock { callbackGuard_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
 
     if (asMidi) {
         if (ccNumber == config::resetCC) {
@@ -1492,7 +1469,6 @@ void Synth::setNumVoices(int numVoices) noexcept
 {
     ASSERT(numVoices > 0);
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
     if (numVoices == impl.numVoices_)
@@ -1601,7 +1577,6 @@ void Synth::Impl::setupModMatrix()
 void Synth::setOversamplingFactor(Oversampling factor) noexcept
 {
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
     if (factor == impl.oversamplingFactor_)
@@ -1624,7 +1599,6 @@ Oversampling Synth::getOversamplingFactor() const noexcept
 void Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
 
     // fast path
     if (preloadSize == impl.resources_.filePool.getPreloadSize())
@@ -1659,10 +1633,6 @@ void Synth::disableFreeWheeling() noexcept
 void Synth::Impl::resetAllControllers(int delay) noexcept
 {
     resources_.midiState.resetAllControllers(delay);
-
-    const std::unique_lock<SpinMutex> lock { callbackGuard_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
 
     for (auto& voice : voiceManager_) {
         voice.registerPitchWheel(delay, 0);
@@ -1732,8 +1702,6 @@ void Synth::disableLogging() noexcept
 void Synth::allSoundOff() noexcept
 {
     Impl& impl = *impl_;
-    const std::lock_guard<SpinMutex> disableCallback { impl.callbackGuard_ };
-
     for (auto& voice : impl.voiceManager_)
         voice.reset();
     for (auto& effectBus : impl.effectBuses_)
