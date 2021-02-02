@@ -138,7 +138,7 @@ tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
     }
 
     //
-    std::lock_guard<std::mutex> lock(_processMutex);
+    std::lock_guard<SpinMutex> lock(_processMutex);
     _state = s;
 
     syncStateToSynth();
@@ -148,7 +148,7 @@ tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
 
 tresult PLUGIN_API SfizzVstProcessor::getState(IBStream* stream)
 {
-    std::lock_guard<std::mutex> lock(_processMutex);
+    std::lock_guard<SpinMutex> lock(_processMutex);
     return _state.store(stream);
 }
 
@@ -224,7 +224,7 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     for (unsigned c = 0; c < numChannels; ++c)
         outputs[c] = data.outputs[0].channelBuffers32[c];
 
-    std::unique_lock<std::mutex> lock(_processMutex, std::try_to_lock);
+    std::unique_lock<SpinMutex> lock(_processMutex, std::try_to_lock);
 
     if (!lock.owns_lock()) {
         for (unsigned c = 0; c < numChannels; ++c)
@@ -515,7 +515,7 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        std::unique_lock<std::mutex> lock(_processMutex);
+        std::unique_lock<SpinMutex> lock(_processMutex);
         _state.sfzFile.assign(static_cast<const char *>(data), size);
         loadSfzFileOrDefault(*_synth, _state.sfzFile);
         lock.unlock();
@@ -533,7 +533,7 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        std::unique_lock<std::mutex> lock(_processMutex);
+        std::unique_lock<SpinMutex> lock(_processMutex);
         _state.scalaFile.assign(static_cast<const char *>(data), size);
         _synth->loadScalaFile(_state.scalaFile);
         lock.unlock();
@@ -601,23 +601,28 @@ void SfizzVstProcessor::doBackgroundWork()
 
         if (!std::strcmp(id, "SetNumVoices")) {
             int32 value = *msg->payload<int32>();
+            std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setNumVoices(value);
         }
         else if (!std::strcmp(id, "SetOversampling")) {
             int32 value = *msg->payload<int32>();
+            std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setOversamplingFactor(1 << value);
         }
         else if (!std::strcmp(id, "SetPreloadSize")) {
             int32 value = *msg->payload<int32>();
+            std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setPreloadSize(value);
         }
         else if (!std::strcmp(id, "CheckShouldReload")) {
             if (_synth->shouldReloadFile()) {
                 fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
+                std::lock_guard<SpinMutex> lock(_processMutex);
                 loadSfzFileOrDefault(*_synth, _state.sfzFile);
             }
             else if (_synth->shouldReloadScala()) {
                 fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
+                std::lock_guard<SpinMutex> lock(_processMutex);
                 _synth->loadScalaFile(_state.scalaFile);
             }
         }

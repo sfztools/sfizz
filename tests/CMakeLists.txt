@@ -46,7 +46,7 @@ set(SFIZZ_TEST_SOURCES
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::jsl)
+target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::spin_mutex sfizz::jsl)
 sfizz_enable_lto_if_needed(sfizz_tests)
 sfizz_enable_fast_math(sfizz_tests)
 

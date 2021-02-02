@@ -117,7 +117,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/Synth.cpp \
 	src/sfizz/SynthMessaging.cpp \
 	src/sfizz/Tuning.cpp \
-	src/sfizz/utility/SpinMutex.cpp \
+	src/sfizz/utility/spin_mutex/SpinMutex.cpp \
 	src/sfizz/Voice.cpp \
 	src/sfizz/VoiceManager.cpp \
 	src/sfizz/VoiceStealing.cpp \
@@ -126,7 +126,9 @@ SFIZZ_SOURCES = \
 
 ### Other internal
 
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/sfizz
+SFIZZ_C_FLAGS += \
+    -I$(SFIZZ_DIR)/src/sfizz \
+    -I$(SFIZZ_DIR)/src/sfizz/utility/spin_mutex
 
 # Pkg-config dependency
 

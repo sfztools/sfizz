@@ -10,8 +10,8 @@
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <sfizz.hpp>
+#include <SpinMutex.h>
 #include <thread>
-#include <mutex>
 #include <memory>
 #include <cstdlib>
 
@@ -65,7 +65,7 @@ private:
     Ring_Buffer _fifoToWorker;
     RTSemaphore _semaToWorker;
     Ring_Buffer _fifoMessageFromUi;
-    std::mutex _processMutex;
+    SpinMutex _processMutex;
 
     // file modification periodic checker
     uint32 _fileChangeCounter = 0;

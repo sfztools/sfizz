@@ -26,7 +26,6 @@ set(SFIZZ_HEADERS
     sfizz/Curve.h
     sfizz/Debug.h
     sfizz/utility/NumericId.h
-    sfizz/utility/SpinMutex.h
     sfizz/utility/XmlHelpers.h
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
@@ -163,7 +162,6 @@ set(SFIZZ_SOURCES
     sfizz/modulations/sources/FlexEnvelope.cpp
     sfizz/modulations/sources/ADSREnvelope.cpp
     sfizz/modulations/sources/LFO.cpp
-    sfizz/utility/SpinMutex.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
     sfizz/effects/Eq.cpp
@@ -239,13 +237,23 @@ target_sources(sfizz_messaging PRIVATE
 target_include_directories(sfizz_messaging PUBLIC ".")
 target_link_libraries(sfizz_messaging PUBLIC absl::strings)
 
+# Sfizz spinlock mutex
+add_library(sfizz_spin_mutex STATIC
+    sfizz/utility/spin_mutex/spin_mutex.h
+    sfizz/utility/spin_mutex/spin_mutex.cpp
+    sfizz/utility/spin_mutex/SpinMutex.h
+    sfizz/utility/spin_mutex/SpinMutex.cpp)
+target_include_directories(sfizz_spin_mutex PUBLIC sfizz/utility/spin_mutex)
+target_link_libraries(sfizz_spin_mutex PRIVATE sfizz::atomic_queue)
+add_library(sfizz::spin_mutex ALIAS sfizz_spin_mutex)
+
 # Sfizz internals (use this for testing)
 add_library(sfizz_internal STATIC)
 add_library(sfizz::internal ALIAS sfizz_internal)
 target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES})
 target_include_directories(sfizz_internal PUBLIC "." "sfizz")
 target_link_libraries(sfizz_internal
-    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue
+    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex
     PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::jsl sfizz::atomic)
 if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
