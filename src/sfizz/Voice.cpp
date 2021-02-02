@@ -213,9 +213,9 @@ struct Voice::Impl
     std::vector<std::unique_ptr<LFO>> lfos_;
     std::vector<std::unique_ptr<FlexEnvelope>> flexEGs_;
 
-    ADSREnvelope<float> egAmplitude_;
-    std::unique_ptr<ADSREnvelope<float>> egPitch_;
-    std::unique_ptr<ADSREnvelope<float>> egFilter_;
+    ADSREnvelope egAmplitude_;
+    std::unique_ptr<ADSREnvelope> egPitch_;
+    std::unique_ptr<ADSREnvelope> egFilter_;
     float bendStepFactor_ { centsFactor(1) };
 
     WavetableOscillator waveOscillators_[config::oscillatorsPerVoice];
@@ -581,7 +581,6 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     if (impl.region_ == nullptr)
         return;
-
     AudioBuffer<float> interBuffer(buffer.getNumChannels(), buffer.getNumFrames() * impl.resources_.synthConfig.OSFactor);
     AudioSpan<float> downsampled_buffer(interBuffer);
     downsampled_buffer.fill(0.0f);
@@ -1177,11 +1176,7 @@ void Voice::Impl::fillInterpolatedWithQuality(
     absl::Span<const int> indices, absl::Span<const float> coeffs,
     absl::Span<const float> addingGains, int quality, float mod)
 {
-    switch (quality) {
-    default:
-        if (quality > 2)
-            goto high; // TODO sinc, not implemented
-        // fall through
+    switch (clamp(quality, 0, 10)) {
     case 0:
         {
             constexpr auto itp = kInterpolatorLoFi;
@@ -1194,7 +1189,7 @@ void Voice::Impl::fillInterpolatedWithQuality(
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
-    case 2: high:
+    case 2:
         {
 #if 0
             // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
@@ -1203,6 +1198,54 @@ void Voice::Impl::fillInterpolatedWithQuality(
             // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 3:
+        {
+            constexpr auto itp = kInterpolatorSinc8;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 4:
+        {
+            constexpr auto itp = kInterpolatorSinc12;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 5:
+        {
+            constexpr auto itp = kInterpolatorSinc16;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 6:
+        {
+            constexpr auto itp = kInterpolatorSinc24;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 7:
+        {
+            constexpr auto itp = kInterpolatorSinc36;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 8:
+        {
+            constexpr auto itp = kInterpolatorSinc48;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 9:
+        {
+            constexpr auto itp = kInterpolatorSinc60;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 10:
+        {
+            constexpr auto itp = kInterpolatorSinc72;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
@@ -1410,6 +1453,7 @@ void Voice::reset() noexcept
     for (auto& eq : impl.equalizers_)
         eq.reset();
     downsampleFilter.clear();
+
     removeVoiceFromRing();
 }
 
@@ -1537,7 +1581,7 @@ void Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
 {
     Impl& impl = *impl_;
     if (havePitchEG)
-        impl.egPitch_.reset(new ADSREnvelope<float>);
+        impl.egPitch_.reset(new ADSREnvelope);
     else
         impl.egPitch_.reset();
 }
@@ -1546,7 +1590,7 @@ void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
 {
     Impl& impl = *impl_;
     if (haveFilterEG)
-        impl.egFilter_.reset(new ADSREnvelope<float>);
+        impl.egFilter_.reset(new ADSREnvelope);
     else
         impl.egFilter_.reset();
 }
@@ -1766,19 +1810,19 @@ Duration Voice::getLastPanningDuration() const noexcept
     return impl.panningDuration_;
 }
 
-ADSREnvelope<float>* Voice::getAmplitudeEG()
+ADSREnvelope* Voice::getAmplitudeEG()
 {
     Impl& impl = *impl_;
     return &impl.egAmplitude_;
 }
 
-ADSREnvelope<float>* Voice::getPitchEG()
+ADSREnvelope* Voice::getPitchEG()
 {
     Impl& impl = *impl_;
     return impl.egPitch_.get();
 }
 
-ADSREnvelope<float>* Voice::getFilterEG()
+ADSREnvelope* Voice::getFilterEG()
 {
     Impl& impl = *impl_;
     return impl.egFilter_.get();
