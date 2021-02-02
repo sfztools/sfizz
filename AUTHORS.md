@@ -10,3 +10,4 @@ Contributors to `sfizz`, in chronologic order:
 - Tobiasz "unfa" Karoń (2020)
 - Kinwie (2020)
 - Atsushi Eno (2020)
+- Dominique Würtz (2021)
