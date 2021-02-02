@@ -18,12 +18,7 @@ namespace sfz
 class RegionSet {
 public:
     RegionSet() = delete;
-    RegionSet(RegionSet* parentSet, OpcodeScope level)
-    : parent(parentSet), level(level)
-    {
-        if (parentSet != nullptr)
-            parentSet->addSubset(this);
-    }
+    RegionSet(RegionSet* parentSet, OpcodeScope level);
     /**
      * @brief Set the polyphony limit for the set
      *

@@ -133,7 +133,7 @@ struct VoiceManager final : public Voice::StateListener
 
 private:
     int numRequiredVoices_ { config::numVoices };
-    int numActualVoices_ { static_cast<int>(config::numVoices * config::overflowVoiceMultiplier) };
+    int getNumEffectiveVoices() const noexcept { return config::calculateActualVoices(numRequiredVoices_); }
     std::vector<Voice> list_;
     std::vector<Voice*> activeVoices_;
     // These are the `group=` groups where you can off voices

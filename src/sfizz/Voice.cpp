@@ -1645,7 +1645,7 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
     if (!bends)
         return;
 
-    const auto events = resources_.midiState.getPitchEvents();
+    const EventVector& events = resources_.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
         return centsFactor(region_->getBendInCents(bend));
     };

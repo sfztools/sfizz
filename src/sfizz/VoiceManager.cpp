@@ -159,15 +159,14 @@ Voice* VoiceManager::findFreeVoice() noexcept
 
 void VoiceManager::requireNumVoices(int numVoices, Resources& resources)
 {
-    numActualVoices_ =
-        static_cast<int>(config::overflowVoiceMultiplier * numVoices);
     numRequiredVoices_ = numVoices;
+    const int numEffectiveVoices = getNumEffectiveVoices();
 
     clear();
-    list_.reserve(numActualVoices_);
-    activeVoices_.reserve(numActualVoices_);
+    list_.reserve(numEffectiveVoices);
+    activeVoices_.reserve(numEffectiveVoices);
 
-    for (int i = 0; i < numActualVoices_; ++i) {
+    for (int i = 0; i < numEffectiveVoices; ++i) {
         list_.emplace_back(i, resources);
         Voice& lastVoice = list_.back();
         lastVoice.setStateListener(this);
