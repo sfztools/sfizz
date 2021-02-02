@@ -16,6 +16,8 @@ namespace sfz
 {
 class PolyphonyGroup {
 public:
+    PolyphonyGroup();
+
     /**
      * @brief Set the polyphony limit for this polyphony group.
      *

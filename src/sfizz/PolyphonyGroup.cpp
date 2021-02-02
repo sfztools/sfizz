@@ -1,9 +1,13 @@
 #include "PolyphonyGroup.h"
 
+sfz::PolyphonyGroup::PolyphonyGroup()
+{
+    voices.reserve(config::maxVoices);
+}
+
 void sfz::PolyphonyGroup::setPolyphonyLimit(unsigned limit) noexcept
 {
     polyphonyLimit = limit;
-    voices.reserve(limit);
 }
 
 void sfz::PolyphonyGroup::registerVoice(Voice* voice) noexcept
