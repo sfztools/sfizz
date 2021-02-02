@@ -794,7 +794,15 @@ void Synth::loadStretchTuningByRatio(float ratio)
 int Synth::getNumActiveVoices() const noexcept
 {
     Impl& impl = *impl_;
-    return static_cast<int>(impl.voiceManager_.getNumActiveVoices());
+
+    int activeVoices = static_cast<int>(impl.voiceManager_.getNumActiveVoices());
+
+    // do not count overflow voices which are over limit
+    int resultVoices = activeVoices;
+    if (config::overflowVoiceMultiplier > 1)
+        resultVoices = std::min(impl.numVoices_, activeVoices);
+
+    return resultVoices;
 }
 
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
