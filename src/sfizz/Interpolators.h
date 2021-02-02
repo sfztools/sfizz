@@ -11,7 +11,7 @@ namespace sfz {
 enum InterpolatorModel : int {
     // a nearest interpolator
     kInterpolatorNearest,
-    // a nearest interpolator
+    // a lo-fi interpolator
     kInterpolatorLoFi,
     // a linear interpolator
     kInterpolatorLinear,

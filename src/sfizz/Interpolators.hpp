@@ -210,7 +210,7 @@ class SincInterpolator<float, Points>
 public:
     static_assert(Points % 4 == 0, "Windowed sinc must be multiple of 4");
 
-    static inline float process(const float* values, float coeff)
+    static inline float process(const float* values, float coeff, float mod)
     {
         const auto &ws = *SincInterpolatorTraits<Points>::windowedSinc;
 
@@ -246,7 +246,7 @@ template <class R, size_t Points>
 class SincInterpolator
 {
 public:
-    static inline R process(const R* values, R coeff)
+    static inline R process(const R* values, R coeff, float mod)
     {
         const auto &ws = *SincInterpolatorTraits<Points>::windowedSinc;
 
