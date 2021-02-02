@@ -32,7 +32,7 @@ clang-tidy \
   vst/SfizzVstState.cpp \
   -- -Iexternal/abseil-cpp -Iexternal/jsl/include -Iexternal/filesystem/include -Isrc/external/hiir -Isrc/external/pugixml/src \
      -Iexternal/st_audiofile/src -Iexternal/st_audiofile/thirdparty/dr_libs \
-      -Isrc/sfizz -Isrc -Isrc/external/spline -Isrc/external/cpuid/src \
+      -Isrc/sfizz -Isrc -Isrc/sfizz/utility/spin_mutex -Isrc/external/spline -Isrc/external/cpuid/src \
       -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -Ivst/external/ring_buffer \
       -Ieditor/src \
       -DNDEBUG -std=c++17
