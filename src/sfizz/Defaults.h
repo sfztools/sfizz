@@ -77,7 +77,7 @@ struct OpcodeSpec
     template<class U=T>
     typename std::enable_if<std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
     {
-        constexpr auto needsOperation {
+        constexpr int needsOperation {
             kNormalizePercent |
             kNormalizeMidi |
             kNormalizeBend |
