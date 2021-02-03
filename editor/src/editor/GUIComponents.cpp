@@ -544,10 +544,10 @@ void SControlsPanel::setControlUsed(uint32_t index, bool used)
 
             // create controls etc...
             CCoord knobWidth = 48.0;
-            CCoord knobHeight = 72.0;
+            CCoord knobHeight = knobWidth;
             CCoord labelWidth = 96.0;
             CCoord labelHeight = 24.0;
-            CCoord verticalPadding = -12.0;
+            CCoord verticalPadding = 0.0;
 
             CCoord totalWidth = std::max(knobWidth, labelWidth);
             CCoord knobX = (totalWidth - knobWidth) / 2.0;
@@ -653,7 +653,7 @@ void SControlsPanel::updateLayout()
 
     int numColumns {};
     const CCoord horizontalPadding = 24.0;
-    const CCoord verticalPadding = 5.0;
+    const CCoord verticalPadding = 18.0;
 
     int currentRow = 0;
     int currentColumn = 0;
