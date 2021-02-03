@@ -106,6 +106,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     SPiano* piano_ = nullptr;
 
+    SControlsPanel* controlsPanel_ = nullptr;
+
     void uiReceiveValue(EditId id, const EditValue& v) override;
     void uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
 
@@ -155,6 +157,11 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
     void updateCCLabel(unsigned cc, const char* label);
+
+    // edition of CC by UI
+    void performCCValueChange(unsigned cc, float value);
+    void performCCBeginEdit(unsigned cc);
+    void performCCEndEdit(unsigned cc);
 
     void setActivePanel(unsigned panelId);
 
@@ -533,6 +540,7 @@ void Editor::Impl::createFrameContents()
         typedef STextButton NextFileButton;
         typedef SPiano Piano;
         typedef SActionMenu ChevronDropDown;
+        typedef SControlsPanel ControlsPanel;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
@@ -706,6 +714,10 @@ void Editor::Impl::createFrameContents()
             container->setBackground(background);
             return container;
         };
+        auto createControlsPanel = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            auto* panel = new SControlsPanel(bounds);
+            return panel;
+        };
 
         #include "layout/main.hpp"
 
@@ -841,6 +853,18 @@ void Editor::Impl::createFrameContents()
             msg[1] = static_cast<uint8_t>(key);
             msg[2] = static_cast<uint8_t>(vel * 127);
             ctrl_->uiSendMIDI(msg, sizeof(msg));
+        };
+    }
+
+    if (SControlsPanel* panel = controlsPanel_) {
+        panel->ValueChangeFunction = [this](uint32_t cc, float value) {
+            performCCValueChange(cc, value);
+        };
+        panel->BeginEditFunction = [this](uint32_t cc) {
+            performCCBeginEdit(cc);
+        };
+        panel->EndEditFunction = [this](uint32_t cc) {
+            performCCEndEdit(cc);
         };
     }
 
@@ -1169,20 +1193,41 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
 
 void Editor::Impl::updateCCUsed(unsigned cc, bool used)
 {
-    // TODO
-    fprintf(stderr, "CC%u used: %d\n", cc, used);
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlUsed(cc, used);
 }
 
 void Editor::Impl::updateCCValue(unsigned cc, float value)
 {
-    // TODO
-    fprintf(stderr, "CC%u value: %f\n", cc, value);
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlValue(cc, value);
 }
 
 void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
 {
-    // TODO
-    fprintf(stderr, "CC%u label: %s\n", cc, label);
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlLabelText(cc, label);
+}
+
+void Editor::Impl::performCCValueChange(unsigned cc, float value)
+{
+    // TODO(jpc) CC as parameters and automation
+
+    char pathBuf[256];
+    sprintf(pathBuf, "/cc%u/value", cc);
+    sfizz_arg_t args[1];
+    args[0].f = value;
+    sendQueuedOSC(pathBuf, "f", args);
+}
+
+void Editor::Impl::performCCBeginEdit(unsigned cc)
+{
+    // TODO(jpc) CC as parameters and automation
+}
+
+void Editor::Impl::performCCEndEdit(unsigned cc)
+{
+    // TODO(jpc) CC as parameters and automation
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)

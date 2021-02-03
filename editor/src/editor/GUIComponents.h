@@ -6,6 +6,9 @@
 
 #pragma once
 #include <bitset>
+#include <vector>
+#include <memory>
+#include <functional>
 
 #include "utility/vstgui_before.h"
 #include "vstgui/lib/controls/cslider.h"
@@ -13,8 +16,10 @@
 #include "vstgui/lib/controls/ctextlabel.h"
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/coptionmenu.h"
+#include "vstgui/lib/controls/cscrollbar.h"
 #include "vstgui/lib/controls/icontrollistener.h"
 #include "vstgui/lib/cviewcontainer.h"
+#include "vstgui/lib/cscrollview.h"
 #include "vstgui/lib/ccolor.h"
 #include "vstgui/lib/dragging.h"
 #include "utility/vstgui_after.h"
@@ -209,4 +214,57 @@ private:
     CColor activeTrackColor_;
     CColor inactiveTrackColor_;
     CColor lineIndicatorColor_;
+};
+
+///
+class SControlsPanel : public CScrollView {
+public:
+    explicit SControlsPanel(const CRect& size);
+
+    void setControlUsed(uint32_t index, bool used);
+    void setControlValue(uint32_t index, float value);
+    void setControlLabelText(uint32_t index, UTF8StringPtr text);
+
+    std::function<void(uint32_t, float)> ValueChangeFunction;
+    std::function<void(uint32_t)> BeginEditFunction;
+    std::function<void(uint32_t)> EndEditFunction;
+
+protected:
+    void recalculateSubViews() override;
+
+private:
+    void updateLayout();
+
+private:
+    struct ControlSlot {
+        SharedPointer<CControl> knob;
+        SharedPointer<CTextLabel> label;
+        SharedPointer<CViewContainer> box;
+    };
+
+    class ControlSlotListener : public IControlListener {
+    public:
+        explicit ControlSlotListener(SControlsPanel* panel) : panel_(panel) {}
+        void valueChanged(CControl* pControl) override;
+        void controlBeginEdit(CControl* pControl) override;
+        void controlEndEdit(CControl* pControl) override;
+
+    private:
+        SControlsPanel* panel_ = nullptr;
+    };
+
+    std::vector<std::unique_ptr<ControlSlot>> slots_;
+    std::unique_ptr<ControlSlotListener> listener_;
+};
+
+///
+class SPlaceHolder : public CView {
+public:
+    explicit SPlaceHolder(const CRect& size, const CColor& color = {0xff, 0x00, 0x00, 0xff});
+
+protected:
+    void draw(CDrawContext* dc) override;
+
+private:
+    CColor color_;
 };
