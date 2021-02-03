@@ -235,6 +235,7 @@ protected:
 
 private:
     void updateLayout();
+    static std::string getDefaultLabelText(uint32_t index);
 
 private:
     struct ControlSlot {

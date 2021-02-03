@@ -570,7 +570,7 @@ void SControlsPanel::setControlUsed(uint32_t index, bool used)
             label->setStyle(CTextLabel::kRoundRectStyle);
             label->setRoundRectRadius(5.0);
             label->setBackColor(CColor(0x2e, 0x34, 0x36));
-            label->setText(("CC " + std::to_string(index)).c_str());
+            label->setText(getDefaultLabelText(index));
             knob->setActiveTrackColor(CColor(0x00, 0xb6, 0x2a));
             knob->setInactiveTrackColor(CColor(0x30, 0x30, 0x30));
             knob->setLineIndicatorColor(CColor(0x00, 0x00, 0x00));
@@ -589,6 +589,11 @@ void SControlsPanel::setControlUsed(uint32_t index, bool used)
 
     if (changed)
         updateLayout();
+}
+
+std::string SControlsPanel::getDefaultLabelText(uint32_t index)
+{
+    return "CC " + std::to_string(index);
 }
 
 void SControlsPanel::setControlValue(uint32_t index, float value)
@@ -624,7 +629,10 @@ void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
     if (!slot)
         return;
 
-    slot->label->setText(text);
+    if (text && text[0] != '\0')
+        slot->label->setText(text);
+    else
+        slot->label->setText(getDefaultLabelText(index).c_str());
 }
 
 void SControlsPanel::recalculateSubViews()
