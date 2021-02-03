@@ -420,6 +420,18 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
             }
         }
     }
+    else if (!strcmp(path, "/cc/changed") && !strcmp(sig, "b")) {
+        const uint8_t* bitChunks = args[0].b->data;
+        uint32_t byteSize = args[0].b->size;
+        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
+            bool changed = bitChunks[cc / 8] & (1u << (cc % 8));
+            if (changed) {
+                char pathBuf[256];
+                sprintf(pathBuf, "/cc%u/value", cc);
+                sendQueuedOSC(pathBuf, "", nullptr);
+            }
+        }
+    }
     else if (matchMessage("/cc&/value", path, indices) && !strcmp(sig, "f")) {
         updateCCValue(indices[0], args[0].f);
     }

@@ -245,6 +245,8 @@ void Synth::Impl::clear()
     resources_.filePool.clear();
     resources_.filePool.setRamLoading(config::loadInRam);
     clearCCLabels();
+    currentUsedCCs_.clear();
+    changedCCsThisCycle_.clear();
     keyLabels_.clear();
     keyswitchLabels_.clear();
     globalOpcodes_.clear();
@@ -855,6 +857,12 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         buffer.fill(0.0f);
     }
 
+    const size_t numFrames = buffer.getNumFrames();
+    if (numFrames < 1) {
+        CHECKFALSE;
+        return;
+    }
+
     if (impl.resources_.synthConfig.freeWheeling)
         impl.resources_.filePool.waitForBackgroundLoading();
 
@@ -867,7 +875,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         impl.resources_.filePool.triggerGarbageCollection();
     }
 
-    size_t numFrames = buffer.getNumFrames();
     auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto rampSpan = impl.resources_.bufferPool.getBuffer(numFrames);
@@ -957,6 +964,15 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Advance the clock to the end of cycle
     bc.endCycle();
+
+    // Send the set of changed CCs
+    Client broadcaster = impl.getBroadcaster();
+    const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
+    if (broadcaster.canReceive()) {
+            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            broadcaster.receive<'b'>(numFrames - 1, "/cc/changed", &blob);
+    }
+    impl.changedCCsThisCycle_.clear();
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1136,6 +1152,8 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
 
     ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
     resources_.midiState.ccEvent(delay, ccNumber, normValue);
+
+    changedCCsThisCycle_.set(ccNumber);
 
     if (asMidi) {
         if (ccNumber == config::resetCC) {

@@ -67,6 +67,7 @@ public:
     static constexpr size_t byte_size() noexcept { return (N + 7) / 8; }
     BitSpan span() noexcept { return BitSpan(data_, N); };
     ConstBitSpan span() const noexcept { return ConstBitSpan(data_, N); };
+    void clear() { span().clear(); }
     bool test(size_t i) const noexcept { return span().test(i); }
     void set(size_t i) noexcept { span().set(i); }
     void set(size_t i, bool b) noexcept { span().set(i, b); }

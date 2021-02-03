@@ -285,10 +285,18 @@ struct Synth::Impl final: public Parser::Listener {
 
     std::array<float, config::numCCs> defaultCCValues_;
     BitArray<config::numCCs> currentUsedCCs_;
+    BitArray<config::numCCs> changedCCsThisCycle_;
 
     // Messaging
     sfizz_receive_t* broadcastReceiver = nullptr;
     void* broadcastData = nullptr;
+
+    Client getBroadcaster() const
+    {
+        Client client(broadcastData);
+        client.setReceiveCallback(broadcastReceiver);
+        return client;
+    }
 };
 
 } // namespace sfz
