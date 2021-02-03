@@ -48,6 +48,7 @@ public:
 private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
+    bool _isActive = false;
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
 
@@ -94,6 +95,7 @@ private:
 
     // worker
     void doBackgroundWork();
+    void startBackgroundWork();
     void stopBackgroundWork();
     // writer
     bool writeWorkerMessage(const char* type, const void* data, uintptr_t size);
