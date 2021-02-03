@@ -383,10 +383,10 @@ struct Region {
 
     // Performance parameters: amplifier
     float volume { Default::volume }; // volume
-    float amplitude { normalizePercents(Default::amplitude) }; // amplitude
-    float pan { normalizePercents(Default::pan) }; // pan
-    float width { normalizePercents(Default::width) }; // width
-    float position { normalizePercents(Default::position) }; // position
+    float amplitude { Default::amplitude }; // amplitude
+    float pan { Default::pan }; // pan
+    float width { Default::width }; // width
+    float position { Default::position }; // position
     uint8_t ampKeycenter { Default::key }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_veltrack

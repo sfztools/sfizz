@@ -360,7 +360,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             }
             break;
         case hash("label_cc&"):
-            if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
+            if (Default::ccNumber.bounds.containsWithEnd(member.parameters.back()))
                 setCCLabel(member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):

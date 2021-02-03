@@ -87,13 +87,13 @@ struct OpcodeSpec
         if (!(flags & needsOperation))
             return input;
         else if (flags & kNormalizePercent)
-            return normalizePercents(input);
+            return static_cast<U>(normalizePercents(input));
         else if (flags & kNormalizeMidi)
-            return normalize7Bits(input);
+            return static_cast<U>(normalize7Bits(input));
         else if (flags & kNormalizeBend)
-            return normalizeBend(input);
+            return static_cast<U>(normalizeBend(input));
         else if (flags & kDb2Mag)
-            return db2mag(input);
+            return static_cast<U>(db2mag(input));
         else // just in case
             return input;
     }
