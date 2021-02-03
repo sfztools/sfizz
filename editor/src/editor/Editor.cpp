@@ -232,6 +232,9 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             const std::string& value = v.to_string();
             currentSfzFile_ = value;
             updateSfzFileLabel(value);
+
+            // request the whole CC information
+            sendQueuedOSC("/cc/slots", "", nullptr);
         }
         break;
     case EditId::Volume:
