@@ -603,6 +603,18 @@ void SControlsPanel::setControlValue(uint32_t index, float value)
     slot->knob->setValue(value);
 }
 
+void SControlsPanel::setControlDefaultValue(uint32_t index, float value)
+{
+    if (index >= slots_.size())
+        return;
+
+    ControlSlot* slot = slots_[index].get();
+    if (!slot)
+        return;
+
+    slot->knob->setDefaultValue(value);
+}
+
 void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
 {
     if (index >= slots_.size())

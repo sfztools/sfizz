@@ -156,6 +156,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
+    void updateCCDefaultValue(unsigned cc, float value);
     void updateCCLabel(unsigned cc, const char* label);
 
     // edition of CC by UI
@@ -412,6 +413,8 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
                 char pathBuf[256];
                 sprintf(pathBuf, "/cc%u/value", cc);
                 sendQueuedOSC(pathBuf, "", nullptr);
+                sprintf(pathBuf, "/cc%u/default", cc);
+                sendQueuedOSC(pathBuf, "", nullptr);
                 sprintf(pathBuf, "/cc%u/label", cc);
                 sendQueuedOSC(pathBuf, "", nullptr);
             }
@@ -419,6 +422,9 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     }
     else if (matchMessage("/cc&/value", path, indices) && !strcmp(sig, "f")) {
         updateCCValue(indices[0], args[0].f);
+    }
+    else if (matchMessage("/cc&/default", path, indices) && !strcmp(sig, "f")) {
+        updateCCDefaultValue(indices[0], args[0].f);
     }
     else if (matchMessage("/cc&/label", path, indices) && !strcmp(sig, "s")) {
         updateCCLabel(indices[0], args[0].s);
@@ -1201,6 +1207,12 @@ void Editor::Impl::updateCCValue(unsigned cc, float value)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlValue(cc, value);
+}
+
+void Editor::Impl::updateCCDefaultValue(unsigned cc, float value)
+{
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlDefaultValue(cc, value);
 }
 
 void Editor::Impl::updateCCLabel(unsigned cc, const char* label)

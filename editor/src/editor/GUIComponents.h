@@ -223,6 +223,7 @@ public:
 
     void setControlUsed(uint32_t index, bool used);
     void setControlValue(uint32_t index, float value);
+    void setControlDefaultValue(uint32_t index, float value);
     void setControlLabelText(uint32_t index, UTF8StringPtr text);
 
     std::function<void(uint32_t, float)> ValueChangeFunction;
