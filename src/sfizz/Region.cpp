@@ -177,7 +177,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             ModKey::createNXYZ(ModId::OscillatorModDepth, id));
         break;
     case hash("oscillator_quality"):
-        oscillatorQuality = opcode.read(Default::oscillatorQuality);
+        oscillatorQuality = opcode.readOptional(Default::oscillatorQuality);
         break;
 
     // Instrument settings: voice lifecycle
@@ -334,7 +334,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         sustainCC = opcode.read(Default::sustainCC);
         break;
     case hash("sustain_lo"):
-        sustainThreshold = normalizeCC(opcode.read(Default::sustainThreshold));
+        sustainThreshold = opcode.read(Default::sustainThreshold);
         break;
     case hash("sustain_sw"):
         checkSustain = opcode.read(Default::checkSustain);
@@ -460,10 +460,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         crossfadeKeyInRange.setStart(opcode.read(Default::loKey));
         break;
     case hash("xfin_hikey"):
-        crossfadeKeyInRange.setEnd(opcode.read(Default::hiKey));
+        crossfadeKeyInRange.setEnd(opcode.read(Default::loKey)); // loKey for the proper default
         break;
     case hash("xfout_lokey"):
-        crossfadeKeyOutRange.setStart(opcode.read(Default::loKey));
+        crossfadeKeyOutRange.setStart(opcode.read(Default::hiKey)); // hiKey for the proper default
         break;
     case hash("xfout_hikey"):
         crossfadeKeyOutRange.setEnd(opcode.read(Default::hiKey));
@@ -472,10 +472,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         crossfadeVelInRange.setStart(opcode.read(Default::loVel));
         break;
     case hash("xfin_hivel"):
-        crossfadeVelInRange.setEnd(opcode.read(Default::hiVel));
+        crossfadeVelInRange.setEnd(opcode.read(Default::loVel)); // loVel for the proper default
         break;
     case hash("xfout_lovel"):
-        crossfadeVelOutRange.setStart(opcode.read(Default::loVel));
+        crossfadeVelOutRange.setStart(opcode.read(Default::hiVel)); // hiVel for the proper default
         break;
     case hash("xfout_hivel"):
         crossfadeVelOutRange.setEnd(opcode.read(Default::hiVel));
@@ -497,21 +497,21 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::loCC)
+            opcode.read(Default::loCC) // loCC for the proper default
         );
         break;
     case hash("xfout_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::loCC)
+            opcode.read(Default::hiCC) // hiCC for the proper default
         );
         break;
     case hash("xfout_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::loCC)
+            opcode.read(Default::hiCC)
         );
         break;
     case hash("xf_cccurve"):

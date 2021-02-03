@@ -142,12 +142,12 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
 
-        return {};
+        return absl::nullopt;
     } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
 
-        return {};
+        return absl::nullopt;
     }
 
     return returnedValue;
@@ -273,13 +273,19 @@ absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
     // Cakewalk-style booleans, case-insensitive
     if (absl::EqualsIgnoreCase(opcode.value, "off"))
         return false;
+
     if (absl::EqualsIgnoreCase(opcode.value, "on"))
         return true;
 
     // ARIA-style booleans? (seen in egN_dynamic=1 for example)
     // TODO check this
     const OpcodeSpec<int64_t> fullInt64 { 0, Range<int64_t>::wholeRange(), 0 };
-    return opcode.read(fullInt64);
+    const auto v = opcode.readOptional(fullInt64);
+
+    if (v)
+        return v != 0;
+
+    return absl::nullopt;
 }
 
 template <>

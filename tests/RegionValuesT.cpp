@@ -481,8 +481,7 @@ TEST_CASE("[Values] Key range")
     synth.dispatchMessage(client, 0, "/region4/key_range", "", nullptr);
     synth.dispatchMessage(client, 0, "/region0/pitch_keycenter", "", nullptr);
     synth.dispatchMessage(client, 0, "/region5/pitch_keycenter", "", nullptr);
-        // TODO: activate for the new region parser ; ignore the second value
-    // synth.dispatchMessage(client, 0, "/region6/pitch_keycenter", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region6/pitch_keycenter", "", nullptr);
     synth.dispatchMessage(client, 0, "/region7/key_range", "", nullptr);
     synth.dispatchMessage(client, 0, "/region7/pitch_keycenter", "", nullptr);
     std::vector<std::string> expected {
@@ -493,7 +492,7 @@ TEST_CASE("[Values] Key range")
         "/region4/key_range,ii : { 0, 127 }",
         "/region0/pitch_keycenter,i : { 60 }",
         "/region5/pitch_keycenter,i : { 32 }",
-        // "/region6/pitch_keycenter,i : { 60 }",
+        "/region6/pitch_keycenter,i : { 60 }",
         "/region7/key_range,ii : { 26, 26 }",
         "/region7/pitch_keycenter,i : { 26 }",
     };
@@ -1612,7 +1611,7 @@ TEST_CASE("[Values] Crossfade key range")
             "/region1/xfin_key_range,ii : { 10, 40 }",
             "/region2/xfin_key_range,ii : { 60, 83 }",
             "/region3/xfin_key_range,ii : { 0, 40 }",
-            "/region4/xfin_key_range,ii : { 10, 10 }",
+            "/region4/xfin_key_range,ii : { 0, 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1666,7 +1665,7 @@ TEST_CASE("[Values] Crossfade velocity range")
             "/region0/xfin_vel_range,ff : { 0, 0 }",
             "/region1/xfin_vel_range,ff : { 0.0787402, 0.314961 }",
             "/region2/xfin_vel_range,ff : { 0, 0.314961 }",
-            "/region3/xfin_vel_range,ff : { 0.0787402, 1 }",
+            "/region3/xfin_vel_range,ff : { 0, 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1686,7 +1685,7 @@ TEST_CASE("[Values] Crossfade velocity range")
         std::vector<std::string> expected {
             "/region0/xfout_vel_range,ff : { 1, 1 }",
             "/region1/xfout_vel_range,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfout_vel_range,ff : { 0, 0.314961 }",
+            "/region2/xfout_vel_range,ff : { 0.314961, 0.314961 }",
             "/region3/xfout_vel_range,ff : { 0.0787402, 1 }",
         };
         REQUIRE(messageList == expected);
@@ -1787,7 +1786,7 @@ TEST_CASE("[Values] Crossfade CC range")
             "/region0/xfin_cc_range4,N : {  }",
             "/region1/xfin_cc_range4,ff : { 0.0787402, 0.314961 }",
             "/region2/xfin_cc_range4,ff : { 0, 0.314961 }",
-            "/region3/xfin_cc_range4,ff : { 0.0787402, 1 }",
+            "/region3/xfin_cc_range4,ff : { 0, 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1807,7 +1806,7 @@ TEST_CASE("[Values] Crossfade CC range")
         std::vector<std::string> expected {
             "/region0/xfout_cc_range4,N : {  }",
             "/region1/xfout_cc_range4,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfout_cc_range4,ff : { 0, 0.314961 }",
+            "/region2/xfout_cc_range4,ff : { 0.314961, 0.314961 }",
             "/region3/xfout_cc_range4,ff : { 0.0787402, 1 }",
         };
         REQUIRE(messageList == expected);
@@ -1934,12 +1933,11 @@ TEST_CASE("[Values] Pitch Random")
     )");
     synth.dispatchMessage(client, 0, "/region0/pitch_random", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/pitch_random", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region2/pitch_random", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/pitch_random", "", nullptr);
     std::vector<std::string> expected {
         "/region0/pitch_random,f : { 0 }",
         "/region1/pitch_random,f : { 10 }",
-        // "/region2/pitch_random,f : { 0 }",
+        "/region2/pitch_random,f : { 0 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -1961,15 +1959,14 @@ TEST_CASE("[Values] Transpose")
     synth.dispatchMessage(client, 0, "/region0/transpose", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/transpose", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/transpose", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region3/transpose", "", nullptr);
-    // synth.dispatchMessage(client, 0, "/region4/transpose", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region3/transpose", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region4/transpose", "", nullptr);
     std::vector<std::string> expected {
         "/region0/transpose,i : { 0 }",
         "/region1/transpose,i : { 10 }",
         "/region2/transpose,i : { -4 }",
-        // "/region3/transpose,i : { 0 }",
-        // "/region4/transpose,i : { 0 }",
+        "/region3/transpose,i : { 0 }",
+        "/region4/transpose,i : { 0 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2320,7 +2317,7 @@ TEST_CASE("[Values] RT dead")
         "/region0/rt_dead,F : {  }",
         "/region1/rt_dead,T : {  }",
         "/region2/rt_dead,F : {  }",
-        "/region3/rt_dead,T : {  }",
+        "/region3/rt_dead,F : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2346,7 +2343,7 @@ TEST_CASE("[Values] Sustain switch")
         "/region0/sustain_sw,T : {  }",
         "/region1/sustain_sw,F : {  }",
         "/region2/sustain_sw,T : {  }",
-        "/region3/sustain_sw,F : {  }",
+        "/region3/sustain_sw,T : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2372,7 +2369,7 @@ TEST_CASE("[Values] Sostenuto switch")
         "/region0/sostenuto_sw,T : {  }",
         "/region1/sostenuto_sw,F : {  }",
         "/region2/sostenuto_sw,T : {  }",
-        "/region3/sostenuto_sw,F : {  }",
+        "/region3/sostenuto_sw,T : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2391,12 +2388,11 @@ TEST_CASE("[Values] Sustain CC")
     )");
     synth.dispatchMessage(client, 0, "/region0/sustain_cc", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/sustain_cc", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region2/sustain_cc", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/sustain_cc", "", nullptr);
     std::vector<std::string> expected {
         "/region0/sustain_cc,i : { 64 }",
         "/region1/sustain_cc,i : { 10 }",
-        // "/region2/sustain_cc,i : { 20 }",
+        "/region2/sustain_cc,i : { 64 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2415,12 +2411,11 @@ TEST_CASE("[Values] Sustain low")
     )");
     synth.dispatchMessage(client, 0, "/region0/sustain_lo", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/sustain_lo", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region2/sustain_lo", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/sustain_lo", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/sustain_lo,f : { 0.0039 }",
+        "/region0/sustain_lo,f : { 0.00787402 }",
         "/region1/sustain_lo,f : { 0.0787402 }",
-        // "/region2/sustain_lo,f : { 0.0787402 }",
+        "/region2/sustain_lo,f : { 0.00787402 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2469,7 +2464,7 @@ TEST_CASE("[Values] Oscillator quality")
     std::vector<std::string> expected {
         "/region0/oscillator_quality,N : {  }",
         "/region1/oscillator_quality,i : { 2 }",
-        "/region2/oscillator_quality,i : { 0 }",
+        "/region2/oscillator_quality,N : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2497,7 +2492,7 @@ TEST_CASE("[Values] Oscillator mode/multi")
     std::vector<std::string> expected {
         "/region0/oscillator_mode,i : { 0 }",
         "/region1/oscillator_mode,i : { 2 }",
-        "/region2/oscillator_mode,i : { 1 }",
+        "/region2/oscillator_mode,i : { 0 }",
         "/region0/oscillator_multi,i : { 1 }",
         "/region3/oscillator_multi,i : { 9 }",
         "/region4/oscillator_multi,i : { 1 }",
@@ -2553,14 +2548,13 @@ TEST_CASE("[Values] Effect sends")
     synth.dispatchMessage(client, 0, "/region1/effect1", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/effect1", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/effect2", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region4/effect1", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region4/effect1", "", nullptr);
     std::vector<std::string> expected {
         // No reply to the first question
         "/region1/effect1,f : { 10 }",
         "/region2/effect1,f : { 0 }",
         "/region2/effect2,f : { 50.4 }",
-        // "/region4/effect1,f : { 100 }",
+        // No reply to the last question
     };
     REQUIRE(messageList == expected);
 }
@@ -2578,8 +2572,6 @@ TEST_CASE("[Values] Support floating point for int values")
     )");
     synth.dispatchMessage(client, 0, "/region0/offset", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/pitch_keytrack", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region4/effect1", "", nullptr);
     std::vector<std::string> expected {
         "/region0/offset,h : { 1042 }",
         "/region1/pitch_keytrack,i : { -2 }",
@@ -2899,15 +2891,14 @@ TEST_CASE("[Values] Filter value bounds")
     SECTION("Cutoff")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav cutoff=20000000 // Bound this to 20k
+            <region> sample=kick.wav cutoff=20000000 // Ignore the value
             <region> sample=kick.wav cutoff=50 cutoff=-100
         )");
         synth.dispatchMessage(client, 0, "/region0/filter0/cutoff", "", nullptr);
-        // TODO: activate after new parser; ignore OOB
-        // synth.dispatchMessage(client, 0, "/region0/filter0/cutoff", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/filter0/cutoff", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/filter0/cutoff,f : { 20000 }",
-            // "/region0/filter0/cutoff,f : { 50 }",
+            "/region0/filter0/cutoff,f : { 0 }",
+            "/region1/filter0/cutoff,f : { 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -2917,10 +2908,9 @@ TEST_CASE("[Values] Filter value bounds")
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
             <region> sample=kick.wav resonance=5 resonance=-5
         )");
-        // TODO: activate after new parser; ignore OOB
-        // synth.dispatchMessage(client, 0, "/region0/filter0/resonance", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/filter0/resonance", "", nullptr);
         std::vector<std::string> expected {
-            // "/region0/filter0/resonance,f : { 5 }",
+            "/region0/filter0/resonance,f : { 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -2928,19 +2918,17 @@ TEST_CASE("[Values] Filter value bounds")
     SECTION("Keycenter")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav keycenter=40 keycenter=-5
-            <region> sample=kick.wav keycenter=40 keycenter=1000
-            <region> sample=kick.wav keycenter=c3
+            <region> sample=kick.wav fil_keycenter=40
+            <region> sample=kick.wav fil_keycenter=40 fil_keycenter=1000
+            <region> sample=kick.wav fil_keycenter=c3
         )");
-        // TODO: activate after new parser; ignore OOB
-        // synth.dispatchMessage(client, 0, "/region0/filter0/keycenter", "", nullptr);
-        // synth.dispatchMessage(client, 0, "/region1/filter0/keycenter", "", nullptr);
-        // TODO: activate after new parser; parse note
-        // synth.dispatchMessage(client, 0, "/region2/filter0/keycenter", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/filter0/keycenter", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/filter0/keycenter", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/filter0/keycenter", "", nullptr);
         std::vector<std::string> expected {
-            // "/region0/filter0/keycenter,i : { 40 }",
-            // "/region1/filter0/keycenter,i : { 40 }",
-            // "/region2/filter0/keycenter,i : { 48 }",
+            "/region0/filter0/keycenter,i : { 40 }",
+            "/region1/filter0/keycenter,i : { 60 }",
+            "/region2/filter0/keycenter,i : { 48 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3109,15 +3097,14 @@ TEST_CASE("[Values] EQ value bounds")
     SECTION("Frequency")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav eq1_freq=20000000 // Bound this to 30k
+            <region> sample=kick.wav eq1_freq=20000000 // Ignore
             <region> sample=kick.wav eq1_freq=50 eq1_freq=-100
         )");
         synth.dispatchMessage(client, 0, "/region0/eq0/frequency", "", nullptr);
-        // TODO: activate after new parser; ignore OOB
-        // synth.dispatchMessage(client, 0, "/region0/eq0/frequency", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/eq0/frequency", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/eq0/frequency,f : { 30000 }",
-            // "/region0/eq0/frequency,f : { 50 }",
+            "/region0/eq0/frequency,f : { 50 }",
+            "/region1/eq0/frequency,f : { 50 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3127,10 +3114,9 @@ TEST_CASE("[Values] EQ value bounds")
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
             <region> sample=kick.wav eq1_bw=5 eq1_bw=-5
         )");
-        // TODO: activate after new parser; ignore OOB
-        // synth.dispatchMessage(client, 0, "/region0/eq0/bandwidth", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/eq0/bandwidth", "", nullptr);
         std::vector<std::string> expected {
-            // "/region0/eq0/bandwidth,f : { 5 }",
+            "/region0/eq0/bandwidth,f : { 1 }",
         };
         REQUIRE(messageList == expected);
     }

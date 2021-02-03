@@ -21,8 +21,7 @@ Curve Curve::buildCurveFromHeader(
 {
     Curve curve;
     bool fillStatus[NumValues] = {};
-    const OpcodeSpec<float> fullRange {0.0f, Range<float>(-HUGE_VALF, +HUGE_VALF), 0 };
-
+    const OpcodeSpec<float> fullRange {0.0f, Range<float>{ -1e16, 1e16 }, 0 };
     auto setPoint = [&curve, &fillStatus](int i, float x) {
         curve._points[i] = x;
         fillStatus[i] = true;

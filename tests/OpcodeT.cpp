@@ -353,7 +353,8 @@ TEST_CASE("[Opcode] opcode read (uint8_t)")
     {
         Opcode opcode { "", "garbage10" };
         OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
-        REQUIRE( opcode.read(spec) == spec.defaultInputValue );
+        REQUIRE( !opcode.readOptional(spec) );
+        REQUIRE( opcode.read(spec) == 0 );
     }
 
     SECTION("Can be note")
@@ -411,15 +412,16 @@ TEST_CASE("[Opcode] opcode read (int)")
     SECTION("Text after")
     {
         Opcode opcode { "", "10garbage" };
-        OpcodeSpec<int> spec { 0, Range<int>(20, 100), 0 };
-        REQUIRE( opcode.read(spec) == 20 );
+        OpcodeSpec<int> spec { 0, Range<int>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 10 );
     }
 
     SECTION("Text before")
     {
         Opcode opcode { "", "garbage10" };
         OpcodeSpec<int> spec { 0, Range<int>(20, 100), 0 };
-        REQUIRE( !opcode.read(spec) );
+        REQUIRE( !opcode.readOptional(spec) );
+        REQUIRE( opcode.read(spec) == 0 );
     }
 
     SECTION("Can be note")
@@ -486,7 +488,8 @@ TEST_CASE("[Opcode] opcode read (float)")
     {
         Opcode opcode { "", "garbage10" };
         OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), 0 };
-        REQUIRE( !opcode.read(spec) );
+        REQUIRE( !opcode.readOptional(spec) );
+        REQUIRE( opcode.read(spec) == 0.0f );
     }
 }
 
