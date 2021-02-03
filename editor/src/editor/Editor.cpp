@@ -114,6 +114,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     // queued OSC API; sends OSC with intermediate delay between messages
     // to prevent message bursts overloading the buffer
     void sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args);
+    void clearQueuedOSC();
     void tickOSCQueue(CVSTGUITimer* timer);
     std::queue<std::string> oscSendQueue_;
     SharedPointer<CVSTGUITimer> oscSendQueueTimer_;
@@ -217,6 +218,8 @@ void Editor::open(CFrame& frame)
 void Editor::close()
 {
     Impl& impl = *impl_;
+
+    impl.clearQueuedOSC();
 
     if (impl.frame_) {
         impl.frame_->removeView(impl.mainView_.get(), false);
@@ -459,6 +462,12 @@ void Editor::Impl::sendQueuedOSC(const char* path, const char* sig, const sfizz_
     sfizz_prepare_message(&oscData[0], oscSize, path, sig, args);
     oscSendQueue_.push(std::move(oscData));
     oscSendQueueTimer_->start();
+}
+
+void Editor::Impl::clearQueuedOSC()
+{
+    while (!oscSendQueue_.empty())
+        oscSendQueue_.pop();
 }
 
 void Editor::Impl::tickOSCQueue(CVSTGUITimer* timer)
