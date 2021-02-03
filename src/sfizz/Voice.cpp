@@ -548,7 +548,7 @@ void Voice::setSampleRate(float sampleRate) noexcept
     impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, impl.sampleRate_);
 
     for (WavetableOscillator& osc : impl.waveOscillators_)
-        osc.init(sampleRate);
+        osc.init(impl.sampleRate_);
 
     for (auto& lfo : impl.lfos_)
         lfo->setSampleRate(impl.sampleRate_);
@@ -562,8 +562,8 @@ void Voice::setSampleRate(float sampleRate) noexcept
     impl.powerFollower_.setSampleRate(impl.sampleRate_);
     downsampleFilter.setType(FilterType::kFilterLpf6p);
     downsampleFilter.setChannels(2);
-    downsampleFilter.init(impl.sampleRate_);
-    downsampleFilter.prepare(0.47 * sampleRate, 0.0, 0.0);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48 * sampleRate / impl.resources_.synthConfig.OSFactor, 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -597,8 +597,18 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
             impl.fillWithData(delayed_buffer);
     }
 
+    if (impl.region_->isStereo()) {
+        impl.ampStageStereo(downsampled_buffer);
+        impl.panStageStereo(downsampled_buffer);
+        impl.filterStageStereo(downsampled_buffer);
+    } else {
+        impl.ampStageMono(downsampled_buffer);
+        impl.filterStageMono(downsampled_buffer);
+        impl.panStageMono(downsampled_buffer);
+    }
+
 	if (impl.resources_.synthConfig.OSFactor > 1)
-	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48 * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor, 0.0, 0.0, downsampled_buffer.getNumFrames());
+	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48 * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor / impl.resources_.synthConfig.OSFactor, 0.0, 0.0, downsampled_buffer.getNumFrames());
 
     for (size_t i = 0; i < buffer.getNumChannels(); ++i)
 {
@@ -611,16 +621,6 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     buffer[i][j] /= impl.resources_.synthConfig.OSFactor;
 }
 }
-
-    if (impl.region_->isStereo()) {
-        impl.ampStageStereo(buffer);
-        impl.panStageStereo(buffer);
-        impl.filterStageStereo(buffer);
-    } else {
-        impl.ampStageMono(buffer);
-        impl.filterStageMono(buffer);
-        impl.panStageMono(buffer);
-    }
 
     if (!impl.region_->flexAmpEG) {
         if (!impl.egAmplitude_.isSmoothing())
