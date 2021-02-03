@@ -97,7 +97,6 @@ SFIZZ_SOURCES = \
 	src/sfizz/Opcode.cpp \
 	src/sfizz/Oversampler.cpp \
 	src/sfizz/Panning.cpp \
-	src/sfizz/Parser.cpp \
 	src/sfizz/parser/Parser.cpp \
 	src/sfizz/parser/ParserPrivate.cpp \
 	src/sfizz/PolyphonyGroup.cpp \
@@ -109,7 +108,6 @@ SFIZZ_SOURCES = \
 	src/sfizz/sfizz.cpp \
 	src/sfizz/sfizz_wrapper.cpp \
 	src/sfizz/SfzFilter.cpp \
-	src/sfizz/SfzHelpers.cpp \
 	src/sfizz/SIMDHelpers.cpp \
 	src/sfizz/simd/HelpersSSE.cpp \
 	src/sfizz/simd/HelpersAVX.cpp \
