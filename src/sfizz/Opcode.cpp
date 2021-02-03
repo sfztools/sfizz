@@ -132,18 +132,27 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
     absl::string_view validFlatLetters = "degab";
 
     ///
-    char sharpOrFlatLetter = absl::ascii_tolower(value.empty() ? '\0' : value.front());
-    if (sharpOrFlatLetter == '#') {
-        if (validSharpLetters.find(noteLetter) == absl::string_view::npos)
-            return {};
-        ++noteNumber;
-        value.remove_prefix(1);
-    }
-    else if (sharpOrFlatLetter == 'b') {
-        if (validFlatLetters.find(noteLetter) == absl::string_view::npos)
-            return {};
-        --noteNumber;
-        value.remove_prefix(1);
+    std::pair<absl::string_view, int> flatSharpPrefixes[] = {
+        {   "#", +1 },
+        { u8"♯", +1 },
+        {   "b", -1 },
+        { u8"♭", -1 },
+    };
+
+    for (const auto& prefix : flatSharpPrefixes) {
+        if (absl::StartsWith(value, prefix.first)) {
+            if (prefix.second == +1) {
+                if (validSharpLetters.find(noteLetter) == absl::string_view::npos)
+                    return {};
+            }
+            else if (prefix.second == -1) {
+                if (validFlatLetters.find(noteLetter) == absl::string_view::npos)
+                    return {};
+            }
+            noteNumber += prefix.second;
+            value.remove_prefix(prefix.first.size());
+            break;
+        }
     }
 
     int octaveNumber;

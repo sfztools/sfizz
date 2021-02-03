@@ -972,9 +972,11 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     else {
         // cut short the voice at the instant of reaching end of sample
         const auto sampleEnd = min(
-            static_cast<int>(currentPromise_->information.end),
-            static_cast<int>(source.getNumFrames())
-        ) - 1;
+            int(region_->trueSampleEnd(resources_.filePool.getOversamplingFactor())),
+            int(currentPromise_->information.end),
+            int(source.getNumFrames()))
+            - 1;
+
         for (unsigned i = 0; i < numSamples; ++i) {
             if ((*indices)[i] >= sampleEnd) {
 #ifndef NDEBUG
@@ -1673,7 +1675,7 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
     if (!bends)
         return;
 
-    const auto events = resources_.midiState.getPitchEvents();
+    const EventVector& events = resources_.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
         return centsFactor(region_->getBendInCents(bend));
     };

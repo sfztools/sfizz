@@ -33,7 +33,7 @@
 #include "FileId.h"
 #include "FileMetadata.h"
 #include "SIMDHelpers.h"
-#include "utility/SpinMutex.h"
+#include <SpinMutex.h>
 #include "ghc/fs_std.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
@@ -43,7 +43,6 @@
 #include <chrono>
 #include <thread>
 #include <future>
-#include "utility/SpinMutex.h"
 class ThreadPool;
 
 namespace sfz {

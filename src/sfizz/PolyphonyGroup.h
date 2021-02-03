@@ -16,6 +16,8 @@ namespace sfz
 {
 class PolyphonyGroup {
 public:
+    PolyphonyGroup();
+
     /**
      * @brief Set the polyphony limit for this polyphony group.
      *
@@ -35,6 +37,10 @@ public:
      * @param voice
      */
     void removeVoice(const Voice* voice) noexcept;
+    /**
+     * @brief Remove all the voices from this polyphony group.
+     */
+    void removeAllVoices() noexcept;
     /**
      * @brief Get the polyphony limit for this group
      *

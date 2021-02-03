@@ -246,8 +246,6 @@ struct Synth::Impl final: public Parser::Listener {
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution_ { 0, 1 };
 
-    SpinMutex callbackGuard_;
-
     // Singletons passed as references to the voices
     Resources resources_;
 

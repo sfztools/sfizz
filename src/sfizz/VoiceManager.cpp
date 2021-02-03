@@ -13,17 +13,22 @@ namespace sfz {
 
 void VoiceManager::onVoiceStateChanging(NumericId<Voice> id, Voice::State state)
 {
-    (void)id;
     if (state == Voice::State::idle) {
-        auto voice = getVoiceById(id);
-        RegionSet::removeVoiceFromHierarchy(voice->getRegion(), voice);
+        Voice* voice = getVoiceById(id);
+        const Region* region = voice->getRegion();
+        const uint32_t group = region->group;
+        RegionSet::removeVoiceFromHierarchy(region, voice);
         swapAndPopFirst(activeVoices_, [voice](const Voice* v) { return v == voice; });
-        polyphonyGroups_[voice->getRegion()->group].removeVoice(voice);
+        ASSERT(group < polyphonyGroups_.size());
+        polyphonyGroups_[group].removeVoice(voice);
     } else if (state == Voice::State::playing) {
-        auto voice = getVoiceById(id);
+        Voice* voice = getVoiceById(id);
+        const Region* region = voice->getRegion();
+        const uint32_t group = region->group;
         activeVoices_.push_back(voice);
-        RegionSet::registerVoiceInHierarchy(voice->getRegion(), voice);
-        polyphonyGroups_[voice->getRegion()->group].registerVoice(voice);
+        RegionSet::registerVoiceInHierarchy(region, voice);
+        ASSERT(group < polyphonyGroups_.size());
+        polyphonyGroups_[group].registerVoice(voice);
     }
 }
 
@@ -81,8 +86,9 @@ bool VoiceManager::playingAttackVoice(const Region* releaseRegion) noexcept
 
 void VoiceManager::ensureNumPolyphonyGroups(unsigned groupIdx) noexcept
 {
-    while (polyphonyGroups_.size() <= groupIdx)
-        polyphonyGroups_.emplace_back();
+    size_t neededSize = static_cast<size_t>(groupIdx) + 1;
+    if (polyphonyGroups_.size() < neededSize)
+        polyphonyGroups_.resize(neededSize);
 }
 
 void VoiceManager::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
@@ -99,7 +105,8 @@ const PolyphonyGroup* VoiceManager::getPolyphonyGroupView(int idx) const noexcep
 
 void VoiceManager::clear()
 {
-    reset();
+    for (PolyphonyGroup& pg : polyphonyGroups_)
+        pg.removeAllVoices();
     list_.clear();
     activeVoices_.clear();
 }
@@ -152,15 +159,14 @@ Voice* VoiceManager::findFreeVoice() noexcept
 
 void VoiceManager::requireNumVoices(int numVoices, Resources& resources)
 {
-    numActualVoices_ =
-        static_cast<int>(config::overflowVoiceMultiplier * numVoices);
     numRequiredVoices_ = numVoices;
+    const int numEffectiveVoices = getNumEffectiveVoices();
 
     clear();
-    list_.reserve(numActualVoices_);
-    activeVoices_.reserve(numActualVoices_);
+    list_.reserve(numEffectiveVoices);
+    activeVoices_.reserve(numEffectiveVoices);
 
-    for (int i = 0; i < numActualVoices_; ++i) {
+    for (int i = 0; i < numEffectiveVoices; ++i) {
         list_.emplace_back(i, resources);
         Voice& lastVoice = list_.back();
         lastVoice.setStateListener(this);
