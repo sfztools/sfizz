@@ -800,11 +800,8 @@ int Synth::getNumActiveVoices() const noexcept
     int activeVoices = static_cast<int>(impl.voiceManager_.getNumActiveVoices());
 
     // do not count overflow voices which are over limit
-    int resultVoices = activeVoices;
-    if (config::overflowVoiceMultiplier > 1)
-        resultVoices = std::min(impl.numVoices_, activeVoices);
-
-    return resultVoices;
+    return (config::overflowVoiceMultiplier > 1) ?
+        std::min(impl.numVoices_, activeVoices) : activeVoices;
 }
 
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
