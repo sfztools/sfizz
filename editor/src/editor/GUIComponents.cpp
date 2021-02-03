@@ -606,6 +606,7 @@ void SControlsPanel::setControlValue(uint32_t index, float value)
         return;
 
     slot->knob->setValue(value);
+    slot->knob->invalid();
 }
 
 void SControlsPanel::setControlDefaultValue(uint32_t index, float value)
@@ -633,6 +634,7 @@ void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
         slot->label->setText(text);
     else
         slot->label->setText(getDefaultLabelText(index).c_str());
+    slot->label->invalid();
 }
 
 void SControlsPanel::recalculateSubViews()
