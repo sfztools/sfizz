@@ -451,6 +451,9 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
 
 void Editor::Impl::sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args)
 {
+    if (!frame_)
+        return;
+
     uint32_t oscSize = sfizz_prepare_message(nullptr, 0, path, sig, args);
     std::string oscData(oscSize, '\0');
     sfizz_prepare_message(&oscData[0], oscSize, path, sig, args);
