@@ -318,7 +318,7 @@ TEST_CASE("[Opcode] opcode read (uint8_t)")
     {
         Opcode opcode { "", "110" };
         OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
-        REQUIRE( opcode.read(spec) == spec.defaultValue );
+        REQUIRE( opcode.read(spec) == spec.defaultInputValue );
     }
 
     SECTION("Clamp upper")
@@ -353,7 +353,7 @@ TEST_CASE("[Opcode] opcode read (uint8_t)")
     {
         Opcode opcode { "", "garbage10" };
         OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
-        REQUIRE( opcode.read(spec) == spec.defaultValue );
+        REQUIRE( opcode.read(spec) == spec.defaultInputValue );
     }
 
     SECTION("Can be note")
@@ -458,7 +458,7 @@ TEST_CASE("[Opcode] opcode read (float)")
     {
         Opcode opcode { "", "110" };
         OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
-        REQUIRE( opcode.read(spec) == spec.defaultValue );
+        REQUIRE( opcode.read(spec) == spec.defaultInputValue );
     }
 
     SECTION("Clamp upper")

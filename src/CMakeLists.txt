@@ -137,7 +137,6 @@ set(SFIZZ_SOURCES
     sfizz/Wavetables.cpp
     sfizz/Tuning.cpp
     sfizz/RegionSet.cpp
-    sfizz/Defaults.cpp
     sfizz/PolyphonyGroup.cpp
     sfizz/VoiceManager.cpp
     sfizz/VoiceStealing.cpp
@@ -201,6 +200,7 @@ set(SFIZZ_PARSER_HEADERS
 
 set(SFIZZ_PARSER_SOURCES
     sfizz/Opcode.cpp
+    sfizz/Defaults.cpp
     sfizz/OpcodeCleanup.cpp
     sfizz/parser/Parser.cpp
     sfizz/parser/ParserPrivate.cpp)

@@ -16,7 +16,6 @@
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "absl/meta/type_traits.h"
-#include "Defaults.h"
 
 namespace sfz {
 
@@ -126,6 +125,12 @@ constexpr float normalize7Bits(T value)
     return static_cast<float>(min(max(value, T { 0 }), T { 127 })) / 127.0f;
 }
 
+template <>
+constexpr float normalize7Bits(bool value)
+{
+    return value ? 1.0f : 0.0f;
+}
+
 /**
  * @brief Normalize a CC value between 0.0 and 1.0
  *
@@ -188,11 +193,11 @@ inline CXX14_CONSTEXPR uint8_t offsetAndClampKey(uint8_t key, int offset)
 {
     const int offsetKey { key + offset };
     if (offsetKey > std::numeric_limits<uint8_t>::max())
-        return Default::key.bounds.getEnd();
+        return 127;
     if (offsetKey < std::numeric_limits<uint8_t>::min())
-        return Default::key.bounds.getStart();
+        return 0;
 
-    return Default::key.bounds.clamp(static_cast<uint8_t>(offsetKey));
+    return clamp<uint8_t>(static_cast<uint8_t>(offsetKey), 0, 127);
 }
 
 namespace literals {

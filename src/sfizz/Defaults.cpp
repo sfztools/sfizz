@@ -1,6 +1,4 @@
 #include "Defaults.h"
-#include "MathHelpers.h"
-#include "SfzHelpers.h"
 
 namespace sfz {
 
@@ -23,7 +21,7 @@ extern const OpcodeSpec<int> oscillatorMode { 0, Range<int>(0, 2), 0 };
 extern const OpcodeSpec<int> oscillatorMulti { 1, Range<int>(1, config::oscillatorsPerVoice), 0 };
 extern const OpcodeSpec<float> oscillatorDetune { 0.0f, Range<float>(-12000.0f, 12000.0f), 0 };
 extern const OpcodeSpec<float> oscillatorDetuneMod { 0.0f, Range<float>(-12000.0f, 12000.0f), 0 };
-extern const OpcodeSpec<float> oscillatorModDepth { 0.0f, Range<float>(0.0f, 10000.0f), kNormalizePercent };
+extern const OpcodeSpec<float> oscillatorModDepth { 0.0f, Range<float>(0.0f, 10000.0f), 0 };
 extern const OpcodeSpec<float> oscillatorModDepthMod { 0.0f, Range<float>(0.0f, 10000.0f), 0 };
 extern const OpcodeSpec<int> oscillatorQuality { 1, Range<int>(0, 3), 0 };
 extern const OpcodeSpec<uint32_t> group { 0, Range<uint32_t>(0, uint32_t_max), 0 };
@@ -33,14 +31,14 @@ extern const OpcodeSpec<uint32_t> notePolyphony { config::maxVoices, Range<uint3
 extern const OpcodeSpec<uint8_t> key { 60, Range<uint8_t>(0, 127), kCanBeNote };
 extern const OpcodeSpec<uint8_t> loKey { 0, Range<uint8_t>(0, 127), kCanBeNote };
 extern const OpcodeSpec<uint8_t> hiKey { 127, Range<uint8_t>(0, 127), kCanBeNote };
-extern const OpcodeSpec<float> loCC { 0.0f , Range<float>(0.0f, 127.0f), kNormalizeMidi };
-extern const OpcodeSpec<float> hiCC { 1.0f , Range<float>(0.0f, 127.0f), kNormalizeMidi };
-extern const OpcodeSpec<float> loVel { 0.0f , Range<float>(0.0f, 127.0f), kNormalizeMidi };
-extern const OpcodeSpec<float> hiVel { 1.0f , Range<float>(0.0f, 127.0f), kNormalizeMidi };
+extern const OpcodeSpec<float> loCC { 0, Range<float>(0.0f, 127.0f), kNormalizeMidi };
+extern const OpcodeSpec<float> hiCC { 127, Range<float>(0.0f, 127.0f), kNormalizeMidi };
+extern const OpcodeSpec<float> loVel { 0, Range<float>(0.0f, 127.0f), kNormalizeMidi };
+extern const OpcodeSpec<float> hiVel { 127, Range<float>(0.0f, 127.0f), kNormalizeMidi };
 extern const OpcodeSpec<uint8_t> loChannelAftertouch { 0, Range<uint8_t>(0, 127), 0 };
 extern const OpcodeSpec<uint8_t> hiChannelAftertouch { 127, Range<uint8_t>(0, 127), 0 };
-extern const OpcodeSpec<float> loBend { -1.0f, Range<float>(-8192.0f, 8192.0f), kNormalizeBend };
-extern const OpcodeSpec<float> hiBend { 1.0f, Range<float>(-8192.0f, 8192.0f), kNormalizeBend };
+extern const OpcodeSpec<float> loBend { -8192, Range<float>(-8192.0f, 8192.0f), kNormalizeBend };
+extern const OpcodeSpec<float> hiBend { 8192, Range<float>(-8192.0f, 8192.0f), kNormalizeBend };
 extern const OpcodeSpec<float> loNormalized { 0.0f, Range<float>(0.0f, 1.0f), 0 };
 extern const OpcodeSpec<float> hiNormalized { 1.0f, Range<float>(0.0f, 1.0f), 0 };
 extern const OpcodeSpec<float> loBipolar { -1.0f, Range<float>(-1.0f, 1.0f), 0 };
@@ -49,7 +47,7 @@ extern const OpcodeSpec<uint16_t> ccNumber { 0, Range<uint16_t>(0, config::numCC
 extern const OpcodeSpec<uint8_t> smoothCC { 0, Range<uint8_t>(0, 100), 0 };
 extern const OpcodeSpec<uint8_t> curveCC { 0, Range<uint8_t>(0, 255), 0 };
 extern const OpcodeSpec<uint8_t> sustainCC { 64, Range<uint8_t>(0, 127), 0 };
-extern const OpcodeSpec<float> sustainThreshold { 0.0039f, Range<float>(0.0f, 127.0f), kNormalizeMidi };
+extern const OpcodeSpec<float> sustainThreshold { 1, Range<float>(0.0f, 127.0f), kNormalizeMidi };
 extern const OpcodeSpec<bool> checkSustain { true, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<bool> checkSostenuto { true, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> loBPM { 0.0f, Range<float>(0.0f, 500.0f), 0 };
@@ -58,19 +56,19 @@ extern const OpcodeSpec<uint8_t> sequence { 1, Range<uint8_t>(1, 100), 0 };
 extern const OpcodeSpec<float> volume { 0.0f, Range<float>(-144.0f, 48.0f), 0 };
 extern const OpcodeSpec<float> volumeMod { 0.0f, Range<float>(-144.0f, 48.0f), 0 };
 extern const OpcodeSpec<float> amplitude { 100.0f, Range<float>(0.0f, 10000.0f), kNormalizePercent };
-extern const OpcodeSpec<float> amplitudeMod { 0.0f, Range<float>(0.0f, 10000.0f), kNormalizePercent };
+extern const OpcodeSpec<float> amplitudeMod { 0.0f, Range<float>(0.0f, 10000.0f), 0 };
 extern const OpcodeSpec<float> pan { 0.0f, Range<float>(-100.0f, 100.0f), kNormalizePercent };
-extern const OpcodeSpec<float> panMod { 0.0f, Range<float>(-200.0f, 200.0f), kNormalizePercent };
+extern const OpcodeSpec<float> panMod { 0.0f, Range<float>(-200.0f, 200.0f), 0 };
 extern const OpcodeSpec<float> position { 0.0f, Range<float>(-100.0f, 100.0f), kNormalizePercent };
-extern const OpcodeSpec<float> positionMod { 0.0f, Range<float>(-200.0f, 200.0f), kNormalizePercent };
+extern const OpcodeSpec<float> positionMod { 0.0f, Range<float>(-200.0f, 200.0f), 0 };
 extern const OpcodeSpec<float> width { 100.0f, Range<float>(-100.0f, 100.0f), kNormalizePercent };
-extern const OpcodeSpec<float> widthMod { 0.0f, Range<float>(-200.0f, 200.0f), kNormalizePercent };
+extern const OpcodeSpec<float> widthMod { 0.0f, Range<float>(-200.0f, 200.0f), 0 };
 extern const OpcodeSpec<float> crossfadeIn { 0.0f, Range<float>(0.0f, 127.0f), kNormalizeMidi };
 extern const OpcodeSpec<float> crossfadeInNorm { 0.0f, Range<float>(0.0f, 1.0f), 0 };
-extern const OpcodeSpec<float> crossfadeOut { 1.0f, Range<float>(0.0f, 127.0f), kNormalizeMidi };
+extern const OpcodeSpec<float> crossfadeOut { 127.0f, Range<float>(0.0f, 127.0f), kNormalizeMidi };
 extern const OpcodeSpec<float> crossfadeOutNorm { 1.0f, Range<float>(0.0f, 1.0f), 0 };
 extern const OpcodeSpec<float> ampKeytrack { 0.0f, Range<float>(-96.0f, 12.0f), 0 };
-extern const OpcodeSpec<float> ampVeltrack { 100.0f, Range<float>(-100.0f, 100.0f), 0 };
+extern const OpcodeSpec<float> ampVeltrack { 100.0f, Range<float>(-100.0f, 100.0f), kNormalizePercent };
 extern const OpcodeSpec<float> ampVelcurve { 0.0f, Range<float>(0.0f, 1.0f), 0 };
 extern const OpcodeSpec<float> ampRandom { 0.0f, Range<float>(0.0f, 24.0f), 0 };
 extern const OpcodeSpec<bool> rtDead { false, Range<bool>(0, 1), 0 };
@@ -144,7 +142,7 @@ extern const OpcodeSpec<float> compRelease { 0.05f, Range<float>(0.0f, 10.0f), 0
 extern const OpcodeSpec<bool> compSTLink { false, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> compThreshold { 0.0f, Range<float>(-100.0f, 0.0f), 0 };
 extern const OpcodeSpec<float> compRatio { 1.0f, Range<float>(1.0f, 50.0f), 0 };
-extern const OpcodeSpec<float> compGain { 1.0f, Range<float>(-100.0f, 100.0f), kDb2Mag };
+extern const OpcodeSpec<float> compGain { 0.0f, Range<float>(-100.0f, 100.0f), kDb2Mag };
 extern const OpcodeSpec<float> fverbSize { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<float> fverbPredelay { 0.0f, Range<float>(0.0f, 10.0f), 0 };
 extern const OpcodeSpec<float> fverbTone { 100.0f, Range<float>(0.0f, 100.0f), 0 };

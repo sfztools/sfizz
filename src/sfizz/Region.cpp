@@ -283,8 +283,8 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("sw_last"):
         if (!lastKeyswitchRange) {
-            lastKeyswitch = opcode.read(Default::key);
-            keySwitched = false;
+            lastKeyswitch = opcode.readOptional(Default::key);
+            keySwitched = !lastKeyswitch.has_value();
         }
         break;
     case hash("sw_lolast"):
@@ -315,15 +315,15 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         keyswitchLabel = opcode.value;
         break;
     case hash("sw_down"):
-        downKeyswitch = opcode.read(Default::key);
-        keySwitched = false;
+        downKeyswitch = opcode.readOptional(Default::key);
+        keySwitched = !downKeyswitch.has_value();
         break;
     case hash("sw_up"):
-        upKeyswitch = opcode.read(Default::key);
+        upKeyswitch = opcode.readOptional(Default::key);
         break;
     case hash("sw_previous"):
-        previousKeyswitch = opcode.read(Default::key);
-        previousKeySwitched = false;
+        previousKeyswitch = opcode.readOptional(Default::key);
+        previousKeySwitched = !previousKeyswitch.has_value();
         break;
     case hash("sw_vel"):
         velocityOverride =

@@ -389,7 +389,7 @@ struct Region {
     float position { normalizePercents(Default::position) }; // position
     uint8_t ampKeycenter { Default::key }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
-    float ampVeltrack { normalizePercents(Default::ampVeltrack) }; // amp_veltrack
+    float ampVeltrack { Default::ampVeltrack }; // amp_veltrack
     std::vector<std::pair<uint8_t, float>> velocityPoints; // amp_velcurve_N
     absl::optional<Curve> velCurve {};
     float ampRandom { Default::ampRandom }; // amp_random

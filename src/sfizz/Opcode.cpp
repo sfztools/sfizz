@@ -155,9 +155,9 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
 
 #define INSTANTIATE_FOR_INTEGRAL(T)                             \
     template <>                                                 \
-    T Opcode::read(OpcodeSpec<T> spec) const    \
+    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
     {                                                           \
-        return readInt_<T>(spec, value).value_or(spec.defaultValue);                               \
+        return readInt_<T>(spec, value);                               \
     }
 
 INSTANTIATE_FOR_INTEGRAL(uint8_t)
@@ -205,23 +205,14 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
         return {};
     }
 
-    if (spec.flags & kNormalizeMidi)
-        returnedValue = normalize7Bits(returnedValue);
-    else if (spec.flags & kNormalizePercent)
-        returnedValue = normalizePercents(returnedValue);
-    else if (spec.flags & kNormalizeBend)
-        returnedValue = normalizeBend(returnedValue);
-    else if (spec.flags & kDb2Mag)
-        returnedValue = db2mag(returnedValue);
-
-    return returnedValue;
+    return spec.normalizeInput(returnedValue);
 }
 
 #define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
     template <>                                                 \
-    T Opcode::read(OpcodeSpec<T> spec) const    \
+    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
     {                                                           \
-        return readFloat_<T>(spec, value).value_or(spec.defaultValue);                             \
+        return readFloat_<T>(spec, value);                             \
     }
 
 INSTANTIATE_FOR_FLOATING_POINT(float)
@@ -292,17 +283,17 @@ absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
 }
 
 template <>
-OscillatorEnabled Opcode::read(OpcodeSpec<OscillatorEnabled> spec) const
+absl::optional<OscillatorEnabled> Opcode::readOptional(OpcodeSpec<OscillatorEnabled>) const
 {
     auto v = readBooleanFromOpcode(*this);
     if (!v)
-        return spec.defaultValue;
+        return {};
 
     return *v ? OscillatorEnabled::On : OscillatorEnabled::Off;
 }
 
 template <>
-Trigger Opcode::read(OpcodeSpec<Trigger> spec) const
+absl::optional<Trigger> Opcode::readOptional(OpcodeSpec<Trigger>) const
 {
     switch (hash(value)) {
     case hash("attack"): return Trigger::attack;
@@ -313,11 +304,11 @@ Trigger Opcode::read(OpcodeSpec<Trigger> spec) const
     }
 
     DBG("Unknown trigger value: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-CrossfadeCurve Opcode::read(OpcodeSpec<CrossfadeCurve> spec) const
+absl::optional<CrossfadeCurve> Opcode::readOptional(OpcodeSpec<CrossfadeCurve>) const
 {
     switch (hash(value)) {
     case hash("power"): return CrossfadeCurve::power;
@@ -325,11 +316,11 @@ CrossfadeCurve Opcode::read(OpcodeSpec<CrossfadeCurve> spec) const
     }
 
     DBG("Unknown crossfade power curve: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-OffMode Opcode::read(OpcodeSpec<OffMode> spec) const
+absl::optional<OffMode> Opcode::readOptional(OpcodeSpec<OffMode>) const
 {
     switch (hash(value)) {
     case hash("fast"): return OffMode::fast;
@@ -338,11 +329,11 @@ OffMode Opcode::read(OpcodeSpec<OffMode> spec) const
     }
 
     DBG("Unknown off mode: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-FilterType Opcode::read(OpcodeSpec<FilterType> spec) const
+absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>) const
 {
     switch (hash(value)) {
     case hash("lpf_1p"): return kFilterLpf1p;
@@ -371,11 +362,11 @@ FilterType Opcode::read(OpcodeSpec<FilterType> spec) const
     }
 
     DBG("Unknown filter type: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-EqType Opcode::read(OpcodeSpec<EqType> spec) const
+absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>) const
 {
     switch (hash(value)) {
     case hash("peak"): return kEqPeak;
@@ -384,11 +375,11 @@ EqType Opcode::read(OpcodeSpec<EqType> spec) const
     }
 
     DBG("Unknown EQ type: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-VelocityOverride Opcode::read(OpcodeSpec<VelocityOverride> spec) const
+absl::optional<VelocityOverride> Opcode::readOptional(OpcodeSpec<VelocityOverride>) const
 {
     switch (hash(value)) {
     case hash("current"): return VelocityOverride::current;
@@ -396,11 +387,11 @@ VelocityOverride Opcode::read(OpcodeSpec<VelocityOverride> spec) const
     }
 
     DBG("Unknown velocity override: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-SelfMask Opcode::read(OpcodeSpec<SelfMask> spec) const
+absl::optional<SelfMask> Opcode::readOptional(OpcodeSpec<SelfMask>) const
 {
     switch (hash(value)) {
     case hash("on"):
@@ -409,25 +400,28 @@ SelfMask Opcode::read(OpcodeSpec<SelfMask> spec) const
     }
 
     DBG("Unknown velocity override: " << value);
-    return spec.defaultValue;
+    return absl::nullopt;
 }
 
 template <>
-bool Opcode::read(OpcodeSpec<bool> spec) const
+absl::optional<bool> Opcode::readOptional(OpcodeSpec<bool>) const
 {
-    return readBooleanFromOpcode(*this).value_or(spec.defaultValue);
+    return readBooleanFromOpcode(*this);
 }
 
 template <>
-LFOWave Opcode::read(OpcodeSpec<LFOWave> spec) const
+absl::optional<LFOWave> Opcode::readOptional(OpcodeSpec<LFOWave> spec) const
 {
     const OpcodeSpec<int> intSpec {
-        static_cast<int>(spec.defaultValue),
+        static_cast<int>(spec.defaultInputValue),
         Range<int>(static_cast<int>(spec.bounds.getStart()), static_cast<int>(spec.bounds.getEnd())),
         0
     };
-    int value = read(intSpec);
-    return static_cast<LFOWave>(value);
+
+    if (auto value = readOptional(intSpec))
+        return static_cast<LFOWave>(*value);
+
+    return absl::nullopt;
 }
 
 } // namespace sfz

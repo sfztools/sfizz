@@ -747,7 +747,7 @@ TEST_CASE("[Values] Upswitch")
         "/region2/sw_up,N : {  }",
         "/region3/sw_up,N : {  }",
         "/region4/sw_up,i : { 60 }",
-        "/region5/sw_up,i : { 60 }",
+        "/region5/sw_up,N : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -778,7 +778,7 @@ TEST_CASE("[Values] Downswitch")
         "/region2/sw_down,N : {  }",
         "/region3/sw_down,N : {  }",
         "/region4/sw_down,i : { 60 }",
-        "/region5/sw_down,i : { 60 }",
+        "/region5/sw_down,N : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -809,7 +809,7 @@ TEST_CASE("[Values] Previous keyswitch")
         "/region2/sw_previous,N : {  }",
         "/region3/sw_previous,N : {  }",
         "/region4/sw_previous,i : { 60 }",
-        "/region5/sw_previous,i : { 64 }",
+        "/region5/sw_previous,N : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -889,7 +889,7 @@ TEST_CASE("[Values] BPM range")
         "/region0/bpm_range,ff : { 0, 500 }",
         "/region1/bpm_range,ff : { 34.1, 60.2 }",
         "/region2/bpm_range,ff : { 0, 60 }",
-        "/region3/bpm_range,ff : { 0, 0 }",
+        "/region3/bpm_range,ff : { 20, 500 }",
         "/region4/bpm_range,ff : { 10, 10 }",
     };
     REQUIRE(messageList == expected);
@@ -1553,12 +1553,11 @@ TEST_CASE("[Values] Amp Veltrack")
     )");
     synth.dispatchMessage(client, 0, "/region0/amp_veltrack", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/amp_veltrack", "", nullptr);
-    // TODO: activate for the new region parser ; ignore oob
-    // synth.dispatchMessage(client, 0, "/region2/amp_veltrack", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/amp_veltrack", "", nullptr);
     std::vector<std::string> expected {
         "/region0/amp_veltrack,f : { 100 }",
         "/region1/amp_veltrack,f : { 10.1 }",
-        // "/region2/amp_veltrack,f : { 100 }",
+        "/region2/amp_veltrack,f : { 100 }",
     };
     REQUIRE(messageList == expected);
 }

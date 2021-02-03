@@ -24,11 +24,14 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include <limits>
+#include <cstdint>
+#include <type_traits>
 #include "Range.h"
 #include "Config.h"
 #include "SfzFilter.h"
-#include <limits>
-#include <cstdint>
+#include "SfzHelpers.h"
+#include "MathHelpers.h"
 
 
 namespace sfz
@@ -68,10 +71,40 @@ enum OpcodeFlags : int {
 template<class T>
 struct OpcodeSpec
 {
-    T defaultValue;
+    T defaultInputValue;
     Range<T> bounds;
     int flags;
-    operator T() const { return defaultValue; }
+    template<class U=T>
+    typename std::enable_if<std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    {
+        constexpr auto needsOperation {
+            kNormalizePercent |
+            kNormalizeMidi |
+            kNormalizeBend |
+            kDb2Mag
+        };
+
+        if (!(flags & needsOperation))
+            return input;
+        else if (flags & kNormalizePercent)
+            return normalizePercents(input);
+        else if (flags & kNormalizeMidi)
+            return normalize7Bits(input);
+        else if (flags & kNormalizeBend)
+            return normalizeBend(input);
+        else if (flags & kDb2Mag)
+            return db2mag(input);
+        else // just in case
+            return input;
+    }
+
+    template<class U=T>
+    typename std::enable_if<!std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    {
+        return input;
+    }
+
+    operator T() const { return normalizeInput(defaultInputValue); }
 };
 
 namespace Default
