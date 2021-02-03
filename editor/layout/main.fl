@@ -3,7 +3,7 @@ version 1.0305
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {576 416 800 475} type Double
+  xywh {571 362 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box {} {
@@ -197,23 +197,22 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelControls]} {
-    xywh {5 110 790 285} hide
+  Fl_Group {subPanels_[kPanelControls]} {open
+    xywh {5 110 790 285}
     class LogicalGroup
   } {
     Fl_Group {} {open
       xywh {5 110 790 285} box ROUNDED_BOX
       class RoundedGroup
     } {
-      Fl_Box {} {
-        label {Controls not available}
-        xywh {5 110 790 285} labelsize 40
-        class Label
-      }
+      Fl_Group controlsPanel_ {open selected
+        xywh {5 110 790 285} box THIN_DOWN_FRAME
+        class ControlsPanel
+      } {}
     }
   }
   Fl_Group {subPanels_[kPanelSettings]} {open
-    xywh {5 109 790 316}
+    xywh {5 109 790 316} hide
     class LogicalGroup
   } {
     Fl_Group {} {
@@ -305,7 +304,7 @@ widget_class mainView {open
       }
     }
     Fl_Group userFilesGroup_ {
-      label Files open selected
+      label Files open
       xywh {620 270 139 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {

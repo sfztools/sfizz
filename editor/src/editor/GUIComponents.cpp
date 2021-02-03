@@ -516,3 +516,233 @@ void SStyledKnob::draw(CDrawContext* dc)
         dc->drawLine(p1, p2);
     }
 }
+
+///
+SControlsPanel::SControlsPanel(const CRect& size)
+    : CScrollView(
+        size, CRect(),
+        CScrollView::kVerticalScrollbar|CScrollView::kDontDrawFrame|CScrollView::kAutoHideScrollbars),
+      listener_(new ControlSlotListener(this))
+{
+    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+
+    setScrollbarWidth(10.0);
+}
+
+void SControlsPanel::setControlUsed(uint32_t index, bool used)
+{
+    bool changed = false;
+
+    if (used) {
+        if (index + 1 > slots_.size())
+            slots_.resize(index + 1);
+        ControlSlot* slot = slots_[index].get();
+        changed = !slot;
+        if (changed) {
+            slot = new ControlSlot;
+            slots_[index].reset(slot);
+
+            // create controls etc...
+            CCoord knobWidth = 48.0;
+            CCoord knobHeight = knobWidth;
+            CCoord labelWidth = 96.0;
+            CCoord labelHeight = 24.0;
+            CCoord verticalPadding = 0.0;
+
+            CCoord totalWidth = std::max(knobWidth, labelWidth);
+            CCoord knobX = (totalWidth - knobWidth) / 2.0;
+            CCoord labelX = (totalWidth - labelWidth) / 2.0;
+
+            CRect knobBounds(knobX, 0.0, knobX + knobWidth, knobHeight);
+            CRect labelBounds(labelX, knobHeight + verticalPadding, labelX + labelWidth, knobHeight + verticalPadding + labelHeight);
+            CRect boxBounds = CRect(knobBounds).unite(labelBounds);
+
+            SharedPointer<SStyledKnob> knob = owned(new SStyledKnob(knobBounds, listener_.get(), index));
+            SharedPointer<CTextLabel> label = owned(new CTextLabel(labelBounds));
+            SharedPointer<CViewContainer> box = owned(new CViewContainer(boxBounds));
+
+            box->addView(knob);
+            knob->remember();
+            box->addView(label);
+            label->remember();
+
+            box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+            label->setStyle(CTextLabel::kRoundRectStyle);
+            label->setRoundRectRadius(5.0);
+            label->setBackColor(CColor(0x2e, 0x34, 0x36));
+            label->setText(getDefaultLabelText(index));
+            knob->setActiveTrackColor(CColor(0x00, 0xb6, 0x2a));
+            knob->setInactiveTrackColor(CColor(0x30, 0x30, 0x30));
+            knob->setLineIndicatorColor(CColor(0x00, 0x00, 0x00));
+
+            slot->knob = knob;
+            slot->label = label;
+            slot->box = box;
+        }
+    }
+    else {
+        if (index < slots_.size() && slots_[index]) {
+            changed = true;
+            slots_[index].reset();
+        }
+    }
+
+    if (changed)
+        updateLayout();
+}
+
+std::string SControlsPanel::getDefaultLabelText(uint32_t index)
+{
+    return "CC " + std::to_string(index);
+}
+
+void SControlsPanel::setControlValue(uint32_t index, float value)
+{
+    if (index >= slots_.size())
+        return;
+
+    ControlSlot* slot = slots_[index].get();
+    if (!slot)
+        return;
+
+    slot->knob->setValue(value);
+    slot->knob->invalid();
+}
+
+void SControlsPanel::setControlDefaultValue(uint32_t index, float value)
+{
+    if (index >= slots_.size())
+        return;
+
+    ControlSlot* slot = slots_[index].get();
+    if (!slot)
+        return;
+
+    slot->knob->setDefaultValue(value);
+}
+
+void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
+{
+    if (index >= slots_.size())
+        return;
+
+    ControlSlot* slot = slots_[index].get();
+    if (!slot)
+        return;
+
+    if (text && text[0] != '\0')
+        slot->label->setText(text);
+    else
+        slot->label->setText(getDefaultLabelText(index).c_str());
+    slot->label->invalid();
+}
+
+void SControlsPanel::recalculateSubViews()
+{
+    CScrollView::recalculateSubViews();
+
+    // maybe the operation just created the scroll bar
+    if (CScrollbar* vsb = getVerticalScrollbar()) {
+        // update scrollbar style
+        vsb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+        vsb->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+        vsb->setScrollerColor(CColor(0x00, 0x00, 0x00, 0x80));
+    }
+}
+
+void SControlsPanel::updateLayout()
+{
+    removeAll();
+
+    const CRect viewBounds = getViewSize();
+
+    bool isFirstSlot = true;
+    CCoord itemWidth {};
+    CCoord itemHeight {};
+    CCoord itemOffsetX {};
+
+    int numColumns {};
+    const CCoord horizontalPadding = 24.0;
+    const CCoord verticalPadding = 18.0;
+
+    int currentRow = 0;
+    int currentColumn = 0;
+    int containerBottom = 0;
+
+    uint32_t numSlots = static_cast<uint32_t>(slots_.size());
+    for (uint32_t i = 0; i < numSlots; ++i) {
+        ControlSlot* slot = slots_[i].get();
+        if (!slot)
+            continue;
+
+        CViewContainer* box = slot->box;
+
+        if (isFirstSlot) {
+            itemWidth = box->getWidth();
+            itemHeight = box->getHeight();
+            isFirstSlot = false;
+            numColumns = int((viewBounds.getWidth() - horizontalPadding) /
+                             (itemWidth + horizontalPadding));
+            numColumns = std::max(1, numColumns);
+            itemOffsetX = (viewBounds.getWidth() - horizontalPadding -
+                           numColumns * (itemWidth + horizontalPadding)) / 2.0;
+        }
+
+        CRect itemBounds = box->getViewSize();
+        itemBounds.moveTo(
+            itemOffsetX + horizontalPadding + currentColumn * (horizontalPadding + itemWidth),
+            verticalPadding + currentRow * (verticalPadding + itemHeight));
+
+        box->setViewSize(itemBounds);
+
+        containerBottom = itemBounds.bottom;
+
+        addView(box);
+        box->remember();
+
+        if (++currentColumn == numColumns) {
+            currentColumn = 0;
+            ++currentRow;
+        }
+    }
+
+    CRect containerSize = getContainerSize();
+    containerSize.bottom = containerBottom;
+    setContainerSize(CRect(0.0, 0.0, viewBounds.getWidth(), containerBottom + verticalPadding));
+
+    invalid();
+}
+
+void SControlsPanel::ControlSlotListener::valueChanged(CControl* pControl)
+{
+    if (panel_->ValueChangeFunction)
+        panel_->ValueChangeFunction(pControl->getTag(), pControl->getValue());
+}
+
+void SControlsPanel::ControlSlotListener::controlBeginEdit(CControl* pControl)
+{
+    if (panel_->BeginEditFunction)
+        panel_->BeginEditFunction(pControl->getTag());
+}
+
+void SControlsPanel::ControlSlotListener::controlEndEdit(CControl* pControl)
+{
+    if (panel_->EndEditFunction)
+        panel_->EndEditFunction(pControl->getTag());
+}
+
+///
+SPlaceHolder::SPlaceHolder(const CRect& size, const CColor& color)
+    : CView(size), color_(color)
+{
+}
+
+void SPlaceHolder::draw(CDrawContext* dc)
+{
+    const CRect bounds = getViewSize();
+    dc->setDrawMode(kAliasing);
+    dc->setFrameColor(color_);
+    dc->drawRect(bounds);
+    dc->drawLine(bounds.getTopLeft(), bounds.getBottomRight());
+    dc->drawLine(bounds.getTopRight(), bounds.getBottomLeft());
+}

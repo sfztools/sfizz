@@ -244,7 +244,9 @@ void Synth::Impl::clear()
     resources_.midiState.reset();
     resources_.filePool.clear();
     resources_.filePool.setRamLoading(config::loadInRam);
-    ccLabels_.clear();
+    clearCCLabels();
+    currentUsedCCs_.clear();
+    changedCCsThisCycle_.clear();
     keyLabels_.clear();
     keyswitchLabels_.clear();
     globalOpcodes_.clear();
@@ -261,9 +263,9 @@ void Synth::Impl::clear()
     setDefaultHdcc(11, 1.0f);
 
     // set default controller labels
-    insertPairUniquely(ccLabels_, 7, "Volume");
-    insertPairUniquely(ccLabels_, 10, "Pan");
-    insertPairUniquely(ccLabels_, 11, "Expression");
+    setCCLabel(7, "Volume");
+    setCCLabel(10, "Pan");
+    setCCLabel(11, "Expression");
 }
 
 void Synth::Impl::handleMasterOpcodes(const std::vector<Opcode>& members)
@@ -365,7 +367,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("label_cc&"):
             if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
-                insertPairUniquely(ccLabels_, member.parameters.back(), std::string(member.value));
+                setCCLabel(member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
             if (member.parameters.back() <= Default::keyRange.getEnd()) {
@@ -696,7 +698,7 @@ void Synth::Impl::finalizeSfzLoad()
     regions_.resize(currentRegionCount);
 
     // collect all CCs used in regions, with matrix not yet connected
-    std::bitset<config::numCCs> usedCCs;
+    BitArray<config::numCCs> usedCCs;
     for (const RegionPtr& regionPtr : regions_) {
         const Region& region = *regionPtr;
         collectUsedCCsFromRegion(usedCCs, region);
@@ -855,6 +857,12 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         buffer.fill(0.0f);
     }
 
+    const size_t numFrames = buffer.getNumFrames();
+    if (numFrames < 1) {
+        CHECKFALSE;
+        return;
+    }
+
     if (impl.resources_.synthConfig.freeWheeling)
         impl.resources_.filePool.waitForBackgroundLoading();
 
@@ -867,7 +875,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         impl.resources_.filePool.triggerGarbageCollection();
     }
 
-    size_t numFrames = buffer.getNumFrames();
     auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto rampSpan = impl.resources_.bufferPool.getBuffer(numFrames);
@@ -957,6 +964,15 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     // Advance the clock to the end of cycle
     bc.endCycle();
+
+    // Send the set of changed CCs
+    Client broadcaster = impl.getBroadcaster();
+    const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
+    if (broadcaster.canReceive()) {
+            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            broadcaster.receive<'b'>(numFrames - 1, "/cc/changed", &blob);
+    }
+    impl.changedCCsThisCycle_.clear();
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1136,6 +1152,8 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
 
     ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
     resources_.midiState.ccEvent(delay, ccNumber, normValue);
+
+    changedCCsThisCycle_.set(ccNumber);
 
     if (asMidi) {
         if (ccNumber == config::resetCC) {
@@ -1328,8 +1346,8 @@ std::string Synth::exportMidnam(absl::string_view model) const
             }
         }
 
-        for (unsigned i = 0, n = std::min<unsigned>(128, anonymousCCs.size()); i < n; ++i) {
-            if (anonymousCCs[i]) {
+        for (unsigned i = 0, n = std::min<unsigned>(128, anonymousCCs.bit_size()); i < n; ++i) {
+            if (anonymousCCs.test(i)) {
                 pugi::xml_node cn = cns.append_child("Control");
                 cn.append_attribute("Type").set_value("7bit");
                 cn.append_attribute("Number").set_value(std::to_string(i).c_str());
@@ -1716,7 +1734,7 @@ void Synth::allSoundOff() noexcept
         effectBus->clear();
 }
 
-const std::bitset<config::numCCs>& Synth::getUsedCCs() const noexcept
+const BitArray<config::numCCs>& Synth::getUsedCCs() const noexcept
 {
     Impl& impl = *impl_;
     return impl.currentUsedCCs_;
@@ -1729,7 +1747,7 @@ void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
     impl.broadcastData = data;
 }
 
-void Synth::Impl::collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs, const Region& region)
+void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, const Region& region)
 {
     collectUsedCCsFromCCMap(usedCCs, region.offsetCC);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
@@ -1763,11 +1781,11 @@ void Synth::Impl::collectUsedCCsFromRegion(std::bitset<config::numCCs>& usedCCs,
     collectUsedCCsFromCCMap(usedCCs, region.crossfadeCCOutRange);
 }
 
-void Synth::Impl::collectUsedCCsFromModulations(std::bitset<config::numCCs>& usedCCs, const ModMatrix& mm)
+void Synth::Impl::collectUsedCCsFromModulations(BitArray<config::numCCs>& usedCCs, const ModMatrix& mm)
 {
     class CCSourceCollector : public ModMatrix::KeyVisitor {
     public:
-        explicit CCSourceCollector(std::bitset<config::numCCs>& used)
+        explicit CCSourceCollector(BitArray<config::numCCs>& used)
             : used_(used)
         {
         }
@@ -1778,20 +1796,44 @@ void Synth::Impl::collectUsedCCsFromModulations(std::bitset<config::numCCs>& use
                 used_.set(key.parameters().cc);
             return true;
         }
-        std::bitset<config::numCCs>& used_;
+        BitArray<config::numCCs>& used_;
     };
 
     CCSourceCollector vtor(usedCCs);
     mm.visitSources(vtor);
 }
 
-std::bitset<config::numCCs> Synth::Impl::collectAllUsedCCs()
+BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
 {
-    std::bitset<config::numCCs> used;
+    BitArray<config::numCCs> used;
     for (const Impl::RegionPtr& region : regions_)
         collectUsedCCsFromRegion(used, *region);
     collectUsedCCsFromModulations(used, resources_.modMatrix);
     return used;
+}
+
+const std::string* Synth::Impl::getCCLabel(int ccNumber)
+{
+    auto it = ccLabelsMap_.find(ccNumber);
+    return (it == ccLabelsMap_.end()) ? nullptr : &ccLabels_[it->second].second;
+}
+
+void Synth::Impl::setCCLabel(int ccNumber, std::string name)
+{
+    auto it = ccLabelsMap_.find(ccNumber);
+    if (it != ccLabelsMap_.end())
+        ccLabels_[it->second].second = std::move(name);
+    else {
+        size_t index = ccLabels_.size();
+        ccLabels_.emplace_back(ccNumber, std::move(name));
+        ccLabelsMap_[ccNumber] = index;
+    }
+}
+
+void Synth::Impl::clearCCLabels()
+{
+    ccLabels_.clear();
+    ccLabelsMap_.clear();
 }
 
 Parser& Synth::getParser() noexcept

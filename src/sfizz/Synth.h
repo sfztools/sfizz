@@ -17,6 +17,7 @@
 #include <bitset>
 #include <string>
 #include <vector>
+template <size_t> class BitArray;
 
 namespace sfz {
 
@@ -599,7 +600,7 @@ public:
      *
      * @return const std::bitset<config::numCCs>&
      */
-    const std::bitset<config::numCCs>& getUsedCCs() const noexcept;
+    const BitArray<config::numCCs>& getUsedCCs() const noexcept;
 
     /**
      * @brief Dispatch the incoming message to the synth engine
