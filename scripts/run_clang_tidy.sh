@@ -12,11 +12,9 @@ clang-tidy \
   src/sfizz/MidiState.cpp \
   src/sfizz/Opcode.cpp \
   src/sfizz/Oversampler.cpp \
-  src/sfizz/Parser.cpp \
   src/sfizz/Panning.cpp \
   src/sfizz/sfizz.cpp \
   src/sfizz/Region.cpp \
-  src/sfizz/SfzHelpers.cpp \
   src/sfizz/SIMDHelpers.cpp \
   src/sfizz/simd/HelpersSSE.cpp \
   src/sfizz/simd/HelpersAVX.cpp \
@@ -30,9 +28,9 @@ clang-tidy \
   vst/SfizzVstProcessor.cpp \
   vst/SfizzVstEditor.cpp \
   vst/SfizzVstState.cpp \
-  -- -Iexternal/abseil-cpp -Iexternal/jsl/include -Iexternal/filesystem/include -Isrc/external/hiir -Isrc/external/pugixml/src \
+  -- -Iexternal/abseil-cpp -Iexternal/jsl/include -Iexternal/filesystem/include -Iexternal/atomic_queue/include -Iexternal/threadpool -Isrc/external/hiir -Isrc/external/pugixml/src \
      -Iexternal/st_audiofile/src -Iexternal/st_audiofile/thirdparty/dr_libs \
       -Isrc/sfizz -Isrc -Isrc/sfizz/utility/spin_mutex -Isrc/external/spline -Isrc/external/cpuid/src \
-      -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ivst/external/VST_SDK/VST3_SDK/vstgui4 -Ivst/external/ring_buffer \
+      -Ivst -Ivst/external/VST_SDK/VST3_SDK -Ieditor/external/vstgui4 -Ivst/external/ring_buffer \
       -Ieditor/src \
       -DNDEBUG -std=c++17

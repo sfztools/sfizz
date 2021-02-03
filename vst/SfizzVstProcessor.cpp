@@ -182,6 +182,9 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
 {
     sfz::Sfizz* synth = _synth.get();
 
+    if (bool(state) == _isActive)
+        return kResultTrue;
+
     if (!synth)
         return kResultFalse;
 
@@ -192,13 +195,13 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
         _fileChangePeriod = static_cast<uint32>(1.0 * processSetup.sampleRate);
         _playStateChangePeriod = static_cast<uint32>(50e-3 * processSetup.sampleRate);
 
-        _workRunning = true;
-        _worker = std::thread([this]() { doBackgroundWork(); });
+        startBackgroundWork();
     } else {
-        synth->allSoundOff();
         stopBackgroundWork();
+        synth->allSoundOff();
     }
 
+    _isActive = bool(state);
     return kResultTrue;
 }
 
@@ -640,6 +643,15 @@ void SfizzVstProcessor::doBackgroundWork()
             sendMessage(notification);
         }
     }
+}
+
+void SfizzVstProcessor::startBackgroundWork()
+{
+    if (_workRunning)
+        return;
+
+    _workRunning = true;
+    _worker = std::thread([this]() { doBackgroundWork(); });
 }
 
 void SfizzVstProcessor::stopBackgroundWork()

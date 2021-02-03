@@ -13,14 +13,17 @@
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
 #include <absl/strings/ascii.h>
+#include <absl/strings/numbers.h>
 #include <ghc/fs_std.hpp>
 #include <array>
+#include <queue>
 #include <algorithm>
 #include <functional>
 #include <type_traits>
 #include <system_error>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 
 #include "utility/vstgui_before.h"
 #include "vstgui/vstgui.h"
@@ -103,8 +106,18 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     SPiano* piano_ = nullptr;
 
+    SControlsPanel* controlsPanel_ = nullptr;
+
     void uiReceiveValue(EditId id, const EditValue& v) override;
     void uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
+
+    // queued OSC API; sends OSC with intermediate delay between messages
+    // to prevent message bursts overloading the buffer
+    void sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args);
+    void clearQueuedOSC();
+    void tickOSCQueue(CVSTGUITimer* timer);
+    std::queue<std::string> oscSendQueue_;
+    SharedPointer<CVSTGUITimer> oscSendQueueTimer_;
 
     void createFrameContents();
 
@@ -142,6 +155,16 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateTuningFrequencyLabel(float tuningFrequency);
     void updateStretchedTuningLabel(float stretchedTuning);
 
+    void updateCCUsed(unsigned cc, bool used);
+    void updateCCValue(unsigned cc, float value);
+    void updateCCDefaultValue(unsigned cc, float value);
+    void updateCCLabel(unsigned cc, const char* label);
+
+    // edition of CC by UI
+    void performCCValueChange(unsigned cc, float value);
+    void performCCBeginEdit(unsigned cc);
+    void performCCEndEdit(unsigned cc);
+
     void setActivePanel(unsigned panelId);
 
     static void formatLabel(CTextLabel* label, const char* fmt, ...);
@@ -164,6 +187,11 @@ Editor::Editor(EditorController& ctrl)
     ctrl.decorate(&impl);
 
     impl.createFrameContents();
+
+    uint32_t oscSendInterval = 1; // milliseconds
+    impl.oscSendQueueTimer_ = makeOwned<CVSTGUITimer>(
+        [this](CVSTGUITimer* timer) { impl_->tickOSCQueue(timer); },
+        oscSendInterval, false);
 }
 
 Editor::~Editor()
@@ -182,11 +210,16 @@ void Editor::open(CFrame& frame)
 
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
+
+    // request the whole CC information
+    impl.sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
 void Editor::close()
 {
     Impl& impl = *impl_;
+
+    impl.clearQueuedOSC();
 
     if (impl.frame_) {
         impl.frame_->removeView(impl.mainView_.get(), false);
@@ -202,6 +235,9 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             const std::string& value = v.to_string();
             currentSfzFile_ = value;
             updateSfzFileLabel(value);
+
+            // request the whole CC information
+            sendQueuedOSC("/cc/slots", "", nullptr);
         }
         break;
     case EditId::Volume:
@@ -336,9 +372,118 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     }
 }
 
+///
+static constexpr unsigned kMessageMaxIndices = 8;
+
+static bool matchMessage(const char* pattern, const char* path, unsigned* indices)
+{
+    unsigned nthIndex = 0;
+
+    while (const char *endp = strchr(pattern, '&')) {
+        if (nthIndex == kMessageMaxIndices)
+            return false;
+
+        size_t length = endp - pattern;
+        if (strncmp(pattern, path, length))
+            return false;
+        pattern += length;
+        path += length;
+
+        length = 0;
+        while (absl::ascii_isdigit(path[length]))
+            ++length;
+
+        if (!absl::SimpleAtoi(absl::string_view(path, length), &indices[nthIndex++]))
+            return false;
+
+        pattern += 1;
+        path += length;
+    }
+
+    return !strcmp(path, pattern);
+}
+
+///
 void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args)
 {
-    // TODO handle the message...
+    unsigned indices[kMessageMaxIndices];
+
+    if (!strcmp(path, "/cc/slots") && !strcmp(sig, "b")) {
+        const uint8_t* bitChunks = args[0].b->data;
+        uint32_t byteSize = args[0].b->size;
+
+        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
+            bool used = bitChunks[cc / 8] & (1u << (cc % 8));
+            updateCCUsed(cc, used);
+            if (used) {
+                char pathBuf[256];
+                sprintf(pathBuf, "/cc%u/value", cc);
+                sendQueuedOSC(pathBuf, "", nullptr);
+                sprintf(pathBuf, "/cc%u/default", cc);
+                sendQueuedOSC(pathBuf, "", nullptr);
+                sprintf(pathBuf, "/cc%u/label", cc);
+                sendQueuedOSC(pathBuf, "", nullptr);
+            }
+        }
+    }
+    else if (!strcmp(path, "/cc/changed") && !strcmp(sig, "b")) {
+        const uint8_t* bitChunks = args[0].b->data;
+        uint32_t byteSize = args[0].b->size;
+        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
+            bool changed = bitChunks[cc / 8] & (1u << (cc % 8));
+            if (changed) {
+                char pathBuf[256];
+                sprintf(pathBuf, "/cc%u/value", cc);
+                sendQueuedOSC(pathBuf, "", nullptr);
+            }
+        }
+    }
+    else if (matchMessage("/cc&/value", path, indices) && !strcmp(sig, "f")) {
+        updateCCValue(indices[0], args[0].f);
+    }
+    else if (matchMessage("/cc&/default", path, indices) && !strcmp(sig, "f")) {
+        updateCCDefaultValue(indices[0], args[0].f);
+    }
+    else if (matchMessage("/cc&/label", path, indices) && !strcmp(sig, "s")) {
+        updateCCLabel(indices[0], args[0].s);
+    }
+    else {
+        //fprintf(stderr, "Receive unhandled OSC: %s\n", path);
+    }
+}
+
+void Editor::Impl::sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    if (!frame_)
+        return;
+
+    uint32_t oscSize = sfizz_prepare_message(nullptr, 0, path, sig, args);
+    std::string oscData(oscSize, '\0');
+    sfizz_prepare_message(&oscData[0], oscSize, path, sig, args);
+    oscSendQueue_.push(std::move(oscData));
+    oscSendQueueTimer_->start();
+}
+
+void Editor::Impl::clearQueuedOSC()
+{
+    while (!oscSendQueue_.empty())
+        oscSendQueue_.pop();
+}
+
+void Editor::Impl::tickOSCQueue(CVSTGUITimer* timer)
+{
+    if (oscSendQueue_.empty()) {
+        timer->stop();
+        return;
+    }
+    const std::string& msg = oscSendQueue_.front();
+    const char* path;
+    const char* sig;
+    const sfizz_arg_t* args;
+    uint8_t buffer[1024];
+    if (sfizz_extract_message(msg.data(), msg.size(), buffer, sizeof(buffer), &path, &sig, &args) > 0)
+        ctrl_->uiSendMessage(path, sig, args);
+    oscSendQueue_.pop();
 }
 
 void Editor::Impl::createFrameContents()
@@ -428,6 +573,7 @@ void Editor::Impl::createFrameContents()
         typedef STextButton NextFileButton;
         typedef SPiano Piano;
         typedef SActionMenu ChevronDropDown;
+        typedef SControlsPanel ControlsPanel;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
@@ -601,6 +747,10 @@ void Editor::Impl::createFrameContents()
             container->setBackground(background);
             return container;
         };
+        auto createControlsPanel = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            auto* panel = new SControlsPanel(bounds);
+            return panel;
+        };
 
         #include "layout/main.hpp"
 
@@ -739,6 +889,18 @@ void Editor::Impl::createFrameContents()
         };
     }
 
+    if (SControlsPanel* panel = controlsPanel_) {
+        panel->ValueChangeFunction = [this](uint32_t cc, float value) {
+            performCCValueChange(cc, value);
+        };
+        panel->BeginEditFunction = [this](uint32_t cc) {
+            performCCBeginEdit(cc);
+        };
+        panel->EndEditFunction = [this](uint32_t cc) {
+            performCCEndEdit(cc);
+        };
+    }
+
     ///
     CViewContainer* panel;
     activePanel_ = 0;
@@ -777,6 +939,9 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     ctrl_->uiSendValue(EditId::SfzFile, filePath);
     currentSfzFile_ = filePath;
     updateSfzFileLabel(filePath);
+
+    // request the whole CC information
+    sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
 void Editor::Impl::changeToNextSfzFile(long offset)
@@ -1060,6 +1225,51 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     sprintf(text, "%.3f", stretchedTuning);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+}
+
+void Editor::Impl::updateCCUsed(unsigned cc, bool used)
+{
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlUsed(cc, used);
+}
+
+void Editor::Impl::updateCCValue(unsigned cc, float value)
+{
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlValue(cc, value);
+}
+
+void Editor::Impl::updateCCDefaultValue(unsigned cc, float value)
+{
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlDefaultValue(cc, value);
+}
+
+void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
+{
+    if (SControlsPanel* panel = controlsPanel_)
+        panel->setControlLabelText(cc, label);
+}
+
+void Editor::Impl::performCCValueChange(unsigned cc, float value)
+{
+    // TODO(jpc) CC as parameters and automation
+
+    char pathBuf[256];
+    sprintf(pathBuf, "/cc%u/value", cc);
+    sfizz_arg_t args[1];
+    args[0].f = value;
+    sendQueuedOSC(pathBuf, "f", args);
+}
+
+void Editor::Impl::performCCBeginEdit(unsigned cc)
+{
+    // TODO(jpc) CC as parameters and automation
+}
+
+void Editor::Impl::performCCEndEdit(unsigned cc)
+{
+    // TODO(jpc) CC as parameters and automation
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)

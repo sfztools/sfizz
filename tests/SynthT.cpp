@@ -8,6 +8,7 @@
 #include "sfizz/SisterVoiceRing.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/utility/NumericId.h"
+#include "sfizz/utility/BitArray.h"
 #include "TestHelpers.h"
 #include <algorithm>
 #include "catch2/catch.hpp"
@@ -1087,18 +1088,18 @@ TEST_CASE("[Synth] Used CCs")
         <region> start_locc44=200 hikey=-1 sample=*sine
     )");
     auto usedCCs = synth.getUsedCCs();
-    REQUIRE( usedCCs[1] );
-    REQUIRE( usedCCs[2] );
-    REQUIRE( !usedCCs[3] );
-    REQUIRE( usedCCs[4] );
-    REQUIRE( usedCCs[5] );
-    REQUIRE( !usedCCs[6] );
-    REQUIRE( usedCCs[42] );
-    REQUIRE( usedCCs[44] );
-    REQUIRE( usedCCs[56] );
-    REQUIRE( usedCCs[67] );
-    REQUIRE( usedCCs[98] );
-    REQUIRE( !usedCCs[127] );
+    REQUIRE( usedCCs.test(1) );
+    REQUIRE( usedCCs.test(2) );
+    REQUIRE( !usedCCs.test(3) );
+    REQUIRE( usedCCs.test(4) );
+    REQUIRE( usedCCs.test(5) );
+    REQUIRE( !usedCCs.test(6) );
+    REQUIRE( usedCCs.test(42) );
+    REQUIRE( usedCCs.test(44) );
+    REQUIRE( usedCCs.test(56) );
+    REQUIRE( usedCCs.test(67) );
+    REQUIRE( usedCCs.test(98) );
+    REQUIRE( !usedCCs.test(127) );
 }
 
 TEST_CASE("[Synth] Used CCs EGs")
@@ -1135,31 +1136,31 @@ TEST_CASE("[Synth] Used CCs EGs")
             sample=*sine
     )");
     auto usedCCs = synth.getUsedCCs();
-    REQUIRE( usedCCs[1] );
-    REQUIRE( usedCCs[2] );
-    REQUIRE( usedCCs[3] );
-    REQUIRE( usedCCs[4] );
-    REQUIRE( usedCCs[5] );
-    REQUIRE( usedCCs[6] );
-    REQUIRE( usedCCs[7] );
+    REQUIRE( usedCCs.test(1) );
+    REQUIRE( usedCCs.test(2) );
+    REQUIRE( usedCCs.test(3) );
+    REQUIRE( usedCCs.test(4) );
+    REQUIRE( usedCCs.test(5) );
+    REQUIRE( usedCCs.test(6) );
+    REQUIRE( usedCCs.test(7) );
     // FIXME: enable when supported
-    // REQUIRE( !usedCCs[8] );
-    // REQUIRE( usedCCs[11] );
-    // REQUIRE( usedCCs[12] );
-    // REQUIRE( usedCCs[13] );
-    // REQUIRE( usedCCs[14] );
-    // REQUIRE( usedCCs[15] );
-    // REQUIRE( usedCCs[16] );
-    // REQUIRE( usedCCs[17] );
-    // REQUIRE( !usedCCs[18] );
-    // REQUIRE( usedCCs[21] );
-    // REQUIRE( usedCCs[22] );
-    // REQUIRE( usedCCs[23] );
-    // REQUIRE( usedCCs[24] );
-    // REQUIRE( usedCCs[25] );
-    // REQUIRE( usedCCs[26] );
-    // REQUIRE( usedCCs[27] );
-    // REQUIRE( !usedCCs[28] );
+    // REQUIRE( !usedCCs.test(8) );
+    // REQUIRE( usedCCs.test(11) );
+    // REQUIRE( usedCCs.test(12) );
+    // REQUIRE( usedCCs.test(13) );
+    // REQUIRE( usedCCs.test(14) );
+    // REQUIRE( usedCCs.test(15) );
+    // REQUIRE( usedCCs.test(16) );
+    // REQUIRE( usedCCs.test(17) );
+    // REQUIRE( !usedCCs.test(18) );
+    // REQUIRE( usedCCs.test(21) );
+    // REQUIRE( usedCCs.test(22) );
+    // REQUIRE( usedCCs.test(23) );
+    // REQUIRE( usedCCs.test(24) );
+    // REQUIRE( usedCCs.test(25) );
+    // REQUIRE( usedCCs.test(26) );
+    // REQUIRE( usedCCs.test(27) );
+    // REQUIRE( !usedCCs.test(28) );
 }
 
 TEST_CASE("[Synth] Activate also on the sustain CC")
