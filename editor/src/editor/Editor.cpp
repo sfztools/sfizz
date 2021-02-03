@@ -924,6 +924,9 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     ctrl_->uiSendValue(EditId::SfzFile, filePath);
     currentSfzFile_ = filePath;
     updateSfzFileLabel(filePath);
+
+    // request the whole CC information
+    sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
 void Editor::Impl::changeToNextSfzFile(long offset)
