@@ -128,7 +128,6 @@ set(SFIZZ_SOURCES
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp
     sfizz/MidiState.cpp
-    sfizz/SfzHelpers.cpp
     sfizz/Oversampler.cpp
     sfizz/ADSREnvelope.cpp
     sfizz/Logger.cpp
@@ -193,7 +192,6 @@ set(SFIZZ_PARSER_HEADERS
     sfizz/Range.h
     sfizz/Opcode.h
     sfizz/Macros.h
-    sfizz/Parser.h
     sfizz/parser/Parser.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
@@ -201,10 +199,8 @@ set(SFIZZ_PARSER_HEADERS
     sfizz/StringViewHelpers.h)
 
 set(SFIZZ_PARSER_SOURCES
-    sfizz/Parser.cpp
     sfizz/Opcode.cpp
     sfizz/OpcodeCleanup.cpp
-    sfizz/SfzHelpers.cpp
     sfizz/parser/Parser.cpp
     sfizz/parser/ParserPrivate.cpp)
 

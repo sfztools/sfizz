@@ -12,11 +12,9 @@ clang-tidy \
   src/sfizz/MidiState.cpp \
   src/sfizz/Opcode.cpp \
   src/sfizz/Oversampler.cpp \
-  src/sfizz/Parser.cpp \
   src/sfizz/Panning.cpp \
   src/sfizz/sfizz.cpp \
   src/sfizz/Region.cpp \
-  src/sfizz/SfzHelpers.cpp \
   src/sfizz/SIMDHelpers.cpp \
   src/sfizz/simd/HelpersSSE.cpp \
   src/sfizz/simd/HelpersAVX.cpp \
