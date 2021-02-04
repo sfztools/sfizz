@@ -474,7 +474,7 @@ struct Region {
     bool bpmSwitched { true };
     bool aftertouchSwitched { true };
     std::bitset<config::numCCs> ccSwitched;
-    absl::string_view defaultPath { "" };
+    std::string defaultPath { "" };
 
     int sequenceCounter { 0 };
     LEAK_DETECTOR(Region);

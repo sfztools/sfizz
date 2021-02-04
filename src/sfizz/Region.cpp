@@ -170,10 +170,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         group = opcode.read(Default::group);
         break;
     case hash("off_by"): // also offby
-        if (opcode.value == "-1")
-            offBy.reset();
-        else
-            offBy = opcode.read(Default::group);
+        offBy = opcode.readOptional(Default::group);
         break;
     case hash("off_mode"): // also offmode
          offMode = opcode.read(Default::offMode);
@@ -189,16 +186,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         notePolyphony = opcode.read(Default::notePolyphony);
         break;
     case hash("note_selfmask"):
-        switch (hash(opcode.value)) {
-        case hash("on"):
-            selfMask = SelfMask::mask;
-            break;
-        case hash("off"):
-            selfMask = SelfMask::dontMask;
-            break;
-        default:
-            DBG("Unkown self mask value:" << opcode.value);
-        }
+        selfMask = opcode.read(Default::selfMask);
         break;
     case hash("rt_dead"):
         rtDead = opcode.read(Default::rtDead);

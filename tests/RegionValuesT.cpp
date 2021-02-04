@@ -2291,7 +2291,7 @@ TEST_CASE("[Values] Self-mask")
         "/region0/note_selfmask,T : {  }",
         "/region1/note_selfmask,F : {  }",
         "/region2/note_selfmask,T : {  }",
-        "/region3/note_selfmask,F : {  }",
+        "/region3/note_selfmask,T : {  }",
     };
     REQUIRE(messageList == expected);
 }
