@@ -89,12 +89,15 @@ Build processor:               ${SFIZZ_SYSTEM_PROCESSOR}
 Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
+Build render client:           ${SFIZZ_RENDER}
 Build LV2 plug-in:             ${SFIZZ_LV2}
 Build LV2 user interface:      ${SFIZZ_LV2_UI}
 Build VST plug-in:             ${SFIZZ_VST}
 Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
+Build demos:                   ${SFIZZ_DEMOS}
+Build devtools:                ${SFIZZ_DEVTOOLS}
 Use sndfile:                   ${SFIZZ_USE_SNDFILE}
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
