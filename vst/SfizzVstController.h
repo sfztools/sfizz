@@ -6,10 +6,10 @@
 
 #pragma once
 #include "SfizzVstState.h"
+#include "SfizzVstUpdates.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
-#include "WeakPtr.h"
 #include <sfizz_message.h>
 #include <mutex>
 class SfizzVstState;
@@ -31,6 +31,10 @@ public:
     tresult PLUGIN_API getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) override;
     tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized) override;
 
+    tresult setParam(Vst::ParamID tag, float value);
+    tresult PLUGIN_API setParamNormalized(Vst::ParamID tag, Vst::ParamValue value) override;
+    tresult PLUGIN_API setComponentState(IBStream* stream) override;
+    tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
     // interfaces
     OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditController)
@@ -38,34 +42,20 @@ public:
     DEF_INTERFACE(Vst::IMidiMapping)
     END_DEFINE_INTERFACES(Vst::EditController)
     REFCOUNT_METHODS(Vst::EditController)
+
+protected:
+    Steinberg::IPtr<OSCUpdate> oscUpdate_;
+    Steinberg::IPtr<FilePathUpdate> sfzPathUpdate_;
+    Steinberg::IPtr<FilePathUpdate> scalaPathUpdate_;
+    Steinberg::IPtr<ProcessorStateUpdate> processorStateUpdate_;
+    Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
 };
 
 class SfizzVstController : public SfizzVstControllerNoUi, public VSTGUI::VST3EditorDelegate {
 public:
     IPlugView* PLUGIN_API createView(FIDString name) override;
 
-    tresult PLUGIN_API setParamNormalized(Vst::ParamID tag, Vst::ParamValue value) override;
-    tresult PLUGIN_API setState(IBStream* stream) override;
-    tresult PLUGIN_API getState(IBStream* stream) override;
-    tresult PLUGIN_API setComponentState(IBStream* stream) override;
-    tresult PLUGIN_API notify(Vst::IMessage* message) override;
-
-    ///
     static FUnknown* createInstance(void*);
 
     static FUID cid;
-
-private:
-    template <class F> void withStateLock(F&& fn) const
-    {
-        std::lock_guard<std::mutex> lock(_stateMutex);
-        fn();
-    }
-
-private:
-    mutable std::mutex _stateMutex; // for R/W the state data
-    SfizzVstState _state {};
-    SfizzUiState _uiState {}; // updated on UI open/close/state-request
-    SfizzPlayState _playState {};
-    WeakPtr<SfizzVstEditor> _editor;
 };

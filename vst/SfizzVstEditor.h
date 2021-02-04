@@ -7,8 +7,8 @@
 #pragma once
 #include "SfizzVstController.h"
 #include "editor/EditorController.h"
-#include "WeakPtr.h"
 #include "public.sdk/source/vst/vstguieditor.h"
+#include <absl/types/span.h>
 #include <mutex>
 class Editor;
 #if !defined(__APPLE__) && !defined(_WIN32)
@@ -19,12 +19,14 @@ using namespace Steinberg;
 using namespace VSTGUI;
 
 class SfizzVstEditor : public Vst::VSTGUIEditor,
-                       public EditorController,
-                       public Weakable<SfizzVstEditor> {
+                       public EditorController {
 public:
     using Self = SfizzVstEditor;
 
-    explicit SfizzVstEditor(SfizzVstController* controller);
+    SfizzVstEditor(
+        SfizzVstController* controller,
+        absl::Span<FObject*> continuousUpdates,
+        absl::Span<FObject*> triggerUpdates);
     ~SfizzVstEditor();
 
     bool PLUGIN_API open(void* parent, const VSTGUI::PlatformType& platformType = VSTGUI::kDefaultNative) override;
@@ -37,26 +39,15 @@ public:
 
     // VSTGUIEditor
     CMessageResult notify(CBaseObject* sender, const char* message) override;
+    // FObject
+    void PLUGIN_API update(FUnknown* changedUnknown, int32 message) override;
 
     //
     void updateState(const SfizzVstState& state);
-    void updateUiState(const SfizzUiState& uiState);
     void updatePlayState(const SfizzPlayState& playState);
-    SfizzUiState getCurrentUiState() const;
-    void receiveMessage(const void* data, uint32_t size);
-
-    void remember() override { SfizzVstEditor::addRef(); }
-    void forget() override { SfizzVstEditor::release(); }
-    WEAKABLE_REFCOUNT_METHODS(SfizzVstEditor)
 
 private:
     void processOscQueue();
-
-    template <class F> void withStateLock(F&& fn) const
-    {
-        std::lock_guard<std::recursive_mutex> lock(stateMutex_);
-        fn();
-    }
 
 protected:
     // EditorController
@@ -69,8 +60,6 @@ protected:
 private:
     void loadSfzFile(const std::string& filePath);
     void loadScalaFile(const std::string& filePath);
-
-    void updateStateDisplay();
 
     Vst::ParamID parameterOfEditId(EditId id);
 
@@ -85,13 +74,11 @@ private:
 
     // editor state
     // note: might be updated from a non-UI thread
-    mutable std::recursive_mutex stateMutex_;  // for R/W the state data, and OSC queue
-    SfizzVstState state_ {};
-    SfizzUiState uiState_ {};
-    SfizzPlayState playState_ {};
-    volatile bool mustRedisplayState_ = false;
-    volatile bool mustRedisplayUiState_ = false;
-    volatile bool mustRedisplayPlayState_ = false;
     typedef std::vector<uint8_t> OscByteVec;
     std::unique_ptr<OscByteVec> oscQueue_;
+    std::mutex oscQueueMutex_;
+
+    // subscribed updates
+    std::vector<IPtr<FObject>> continuousUpdates_;
+    std::vector<IPtr<FObject>> triggerUpdates_;
 };
