@@ -74,6 +74,14 @@ struct OpcodeSpec
     T defaultInputValue;
     Range<T> bounds;
     int flags;
+
+    /**
+     * @brief Normalizes an input as needed for the spec
+     *
+     * @tparam U
+     * @param input
+     * @return U
+     */
     template<class U=T>
     typename std::enable_if<std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
     {
@@ -98,6 +106,13 @@ struct OpcodeSpec
             return input;
     }
 
+    /**
+     * @brief Normalizes an input as needed for the spec
+     *
+     * @tparam U
+     * @param input
+     * @return U
+     */
     template<class U=T>
     typename std::enable_if<!std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
     {
@@ -262,6 +277,7 @@ namespace Default
     extern const OpcodeSpec<unsigned> stringsNumber;
     extern const OpcodeSpec<Trigger> trigger;
     extern const OpcodeSpec<OffMode> offMode;
+    extern const OpcodeSpec<LoopMode> loopMode;
     extern const OpcodeSpec<CrossfadeCurve> crossfadeCurve;
     extern const OpcodeSpec<VelocityOverride> velocityOverride;
     extern const OpcodeSpec<SelfMask> selfMask;

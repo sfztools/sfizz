@@ -5,11 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "catch2/catch.hpp"
 #include "sfizz/Synth.h"
 #include "sfizz/Region.h"
 #include "sfizz/Voice.h"
 #include "sfizz/Range.h"
+#include "catch2/catch.hpp"
 #include "sfizz/modulations/ModKey.h"
 
 class RegionCCView {

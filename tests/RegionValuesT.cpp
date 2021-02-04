@@ -2891,13 +2891,13 @@ TEST_CASE("[Values] Filter value bounds")
     SECTION("Cutoff")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav cutoff=20000000 // Ignore the value
+            <region> sample=kick.wav cutoff=20000000 // Clamp the value
             <region> sample=kick.wav cutoff=50 cutoff=-100
         )");
         synth.dispatchMessage(client, 0, "/region0/filter0/cutoff", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/filter0/cutoff", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/filter0/cutoff,f : { 0 }",
+            "/region0/filter0/cutoff,f : { 20000 }",
             "/region1/filter0/cutoff,f : { 0 }",
         };
         REQUIRE(messageList == expected);
@@ -3097,13 +3097,13 @@ TEST_CASE("[Values] EQ value bounds")
     SECTION("Frequency")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav eq1_freq=20000000 // Ignore
+            <region> sample=kick.wav eq1_freq=20000000 // Clamp the value
             <region> sample=kick.wav eq1_freq=50 eq1_freq=-100
         )");
         synth.dispatchMessage(client, 0, "/region0/eq0/frequency", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/eq0/frequency", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/eq0/frequency,f : { 50 }",
+            "/region0/eq0/frequency,f : { 20000 }",
             "/region1/eq0/frequency,f : { 50 }",
         };
         REQUIRE(messageList == expected);

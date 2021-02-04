@@ -197,12 +197,12 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
 
-        return {};
+        return absl::nullopt;
     } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
 
-        return {};
+        return absl::nullopt;
     }
 
     return spec.normalizeInput(returnedValue);
@@ -223,7 +223,7 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
     char noteLetter = absl::ascii_tolower(value.empty() ? '\0' : value.front());
     value.remove_prefix(1);
     if (noteLetter < 'a' || noteLetter > 'g')
-        return {};
+        return absl::nullopt;
 
     constexpr int offsetsABCDEFG[] = { 9, 11, 0, 2, 4, 5, 7 };
     int noteNumber = offsetsABCDEFG[noteLetter - 'a'];
@@ -244,11 +244,11 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
         if (absl::StartsWith(value, prefix.first)) {
             if (prefix.second == +1) {
                 if (validSharpLetters.find(noteLetter) == absl::string_view::npos)
-                    return {};
+                    return absl::nullopt;
             }
             else if (prefix.second == -1) {
                 if (validFlatLetters.find(noteLetter) == absl::string_view::npos)
-                    return {};
+                    return absl::nullopt;
             }
             noteNumber += prefix.second;
             value.remove_prefix(prefix.first.size());
@@ -258,12 +258,12 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
 
     int octaveNumber;
     if (!absl::SimpleAtoi(value, &octaveNumber))
-        return {};
+        return absl::nullopt;
 
     noteNumber += (octaveNumber + 1) * 12;
 
     if (noteNumber < 0 || noteNumber >= 128)
-        return {};
+        return absl::nullopt;
 
     return static_cast<uint8_t>(noteNumber);
 }
@@ -293,7 +293,7 @@ absl::optional<OscillatorEnabled> Opcode::readOptional(OpcodeSpec<OscillatorEnab
 {
     auto v = readBooleanFromOpcode(*this);
     if (!v)
-        return {};
+        return absl::nullopt;
 
     return *v ? OscillatorEnabled::On : OscillatorEnabled::Off;
 }
@@ -406,6 +406,20 @@ absl::optional<SelfMask> Opcode::readOptional(OpcodeSpec<SelfMask>) const
     }
 
     DBG("Unknown velocity override: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<LoopMode> Opcode::readOptional(OpcodeSpec<LoopMode>) const
+{
+    switch (hash(value)) {
+    case hash("no_loop"): return LoopMode::no_loop;
+    case hash("one_shot"): return LoopMode::one_shot;
+    case hash("loop_continuous"): return LoopMode::loop_continuous;
+    case hash("loop_sustain"): return LoopMode::loop_sustain;
+    }
+
+    DBG("Unknown loop mode: " << value);
     return absl::nullopt;
 }
 

@@ -73,7 +73,7 @@ extern const OpcodeSpec<float> ampVelcurve { 0.0f, Range<float>(0.0f, 1.0f), 0 }
 extern const OpcodeSpec<float> ampRandom { 0.0f, Range<float>(0.0f, 24.0f), 0 };
 extern const OpcodeSpec<bool> rtDead { false, Range<bool>(0, 1), 0 };
 extern const OpcodeSpec<float> rtDecay { 0.0f, Range<float>(0.0f, 200.0f), 0 };
-extern const OpcodeSpec<float> filterCutoff { 0.0f, Range<float>(0.0f, 20000.0f), 0 };
+extern const OpcodeSpec<float> filterCutoff { 0.0f, Range<float>(0.0f, 20000.0f), kEnforceUpperBound };
 extern const OpcodeSpec<float> filterCutoffMod { 0.0f, Range<float>(-12000.0f, 12000.0f), 0 };
 extern const OpcodeSpec<float> filterResonance { 0.0f, Range<float>(0.0f, 96.0f), 0 };
 extern const OpcodeSpec<float> filterResonanceMod { 0.0f, Range<float>(0.0f, 96.0f), 0 };
@@ -84,8 +84,8 @@ extern const OpcodeSpec<int> filterKeytrack { 0, Range<int>(0, 1200), 0 };
 extern const OpcodeSpec<int> filterVeltrack { 0, Range<int>(-12000, 12000), 0 };
 extern const OpcodeSpec<float> eqBandwidth { 1.0f, Range<float>(0.001f, 4.0f), 0 };
 extern const OpcodeSpec<float> eqBandwidthMod { 0.0f, Range<float>(-4.0f, 4.0f), 0 };
-extern const OpcodeSpec<float> eqFrequency { 0.0f, Range<float>(0.0f, 30000.0f), 0 };
-extern const OpcodeSpec<float> eqFrequencyMod { 0.0f, Range<float>(-30000.0f, 30000.0f), 0 };
+extern const OpcodeSpec<float> eqFrequency { 0.0f, Range<float>(0.0f, 20000.0f), kEnforceUpperBound };
+extern const OpcodeSpec<float> eqFrequencyMod { 0.0f, Range<float>(-20000.0f, 20000.0f), 0 };
 extern const OpcodeSpec<float> eqGain { 0.0f, Range<float>(-96.0f, 96.0f), 0 };
 extern const OpcodeSpec<float> eqGainMod { 0.0f, Range<float>(-96.0f, 96.0f), 0 };
 extern const OpcodeSpec<float> eqVel2Frequency { 0.0f, Range<float>(-30000.0f, 30000.0f), 0 };
@@ -159,6 +159,7 @@ extern const OpcodeSpec<unsigned> stringsNumber { maxStrings, Range<unsigned>(0,
 extern const OpcodeSpec<Trigger> trigger { Trigger::attack, Range<Trigger>(Trigger::attack, Trigger::release_key), 0};
 extern const OpcodeSpec<CrossfadeCurve> crossfadeCurve { CrossfadeCurve::power, Range<CrossfadeCurve>(CrossfadeCurve::gain, CrossfadeCurve::power), 0};
 extern const OpcodeSpec<OffMode> offMode { OffMode::fast, Range<OffMode>(OffMode::fast, OffMode::time), 0};
+extern const OpcodeSpec<LoopMode> loopMode { LoopMode::no_loop, Range<LoopMode>(LoopMode::no_loop, LoopMode::loop_sustain), 0};
 extern const OpcodeSpec<VelocityOverride> velocityOverride { VelocityOverride::current, Range<VelocityOverride>(VelocityOverride::current, VelocityOverride::previous), 0};
 extern const OpcodeSpec<SelfMask> selfMask { SelfMask::mask, Range<SelfMask>(SelfMask::mask, SelfMask::dontMask), 0};
 extern const OpcodeSpec<FilterType> filter { FilterType::kFilterNone, Range<FilterType>(FilterType::kFilterNone, FilterType::kFilterPeq), 0};

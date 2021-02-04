@@ -119,22 +119,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         sampleCount = opcode.read(Default::sampleCount);
         break;
     case hash("loop_mode"): // also loopmode
-        switch (hash(opcode.value)) {
-        case hash("no_loop"):
-            loopMode = LoopMode::no_loop;
-            break;
-        case hash("one_shot"):
-            loopMode = LoopMode::one_shot;
-            break;
-        case hash("loop_continuous"):
-            loopMode = LoopMode::loop_continuous;
-            break;
-        case hash("loop_sustain"):
-            loopMode = LoopMode::loop_sustain;
-            break;
-        default:
-            DBG("Unkown loop mode:" << opcode.value);
-        }
+        loopMode = opcode.readOptional(Default::loopMode);
         break;
     case hash("loop_end"): // also loopend
         loopRange.setEnd(opcode.read(Default::loopEnd));
