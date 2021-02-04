@@ -21,7 +21,7 @@ void OSCUpdate::clear()
     allocated_ = false;
 }
 
-void OSCUpdate::setMessage(const void* data, Steinberg::uint32 size, bool copy)
+void OSCUpdate::setMessage(const void* data, uint32_t size, bool copy)
 {
     clear();
 
