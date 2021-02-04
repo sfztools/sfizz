@@ -339,3 +339,18 @@ TEST_CASE("[Modulations] Override the default pan controller")
         R"("Controller 7 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
     }));
 }
+
+TEST_CASE("[Modulations] Aftertouch connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine cutoff_chanaft=1000
+        <region> sample=*sine cutoff2_chanaft=1000
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("ChannelAftertouch" -> "FilterCutoff {0, N=1}")",
+        R"("ChannelAftertouch" -> "FilterCutoff {1, N=2}")",
+    }, 2));
+}

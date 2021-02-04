@@ -29,7 +29,7 @@ public:
         : id_(id), region_(region), params_(params), flags_(ModIds::flags(id_)) {}
 
     static ModKey createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float step);
-    static ModKey createNXYZ(ModId id, NumericId<Region> region, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
+    static ModKey createNXYZ(ModId id, NumericId<Region> region = {}, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
 
     explicit operator bool() const noexcept { return id_ != ModId(); }
 

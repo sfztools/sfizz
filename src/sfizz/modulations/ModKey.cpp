@@ -105,6 +105,8 @@ std::string ModKey::toString() const
         return absl::StrCat("PitchEG {", region_.number(), "}");
     case ModId::FilEG:
         return absl::StrCat("FilterEG {", region_.number(), "}");
+    case ModId::ChannelAftertouch:
+        return absl::StrCat("ChannelAftertouch");
 
     case ModId::MasterAmplitude:
         return absl::StrCat("MasterAmplitude {", region_.number(), "}");

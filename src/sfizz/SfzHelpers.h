@@ -54,6 +54,7 @@ struct MidiEvent {
     int delay;
     float value;
 };
+
 using EventVector = std::vector<MidiEvent>;
 
 struct MidiEventDelayComparator {

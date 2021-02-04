@@ -78,34 +78,30 @@ int process(jack_nframes_t numFrames, void* arg)
 
         switch (midi::status(event.buffer[0])) {
         case midi::noteOff: noteoff:
-            // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
             synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
             if (event.buffer[2] == 0)
                 goto noteoff;
-            // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
             synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
-            // DBG("[MIDI] Polyphonic pressure on at time " << event.time);
+            // Not implemented
             break;
         case midi::controlChange:
-            // DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
             synth->cc(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::programChange:
-            // DBG("[MIDI] Program change at time " << event.time);
+            // Not implemented
             break;
         case midi::channelPressure:
-            // DBG("[MIDI] Channel pressure at time " << event.time);
+            synth->aftertouch(event.time, event.buffer[1]);
             break;
         case midi::pitchBend:
             synth->pitchWheel(event.time, midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));
-            // DBG("[MIDI] Pitch bend at time " << event.time);
             break;
         case midi::systemMessage:
-            // DBG("[MIDI] System message at time " << event.time);
+            // Not implemented
             break;
         }
     }

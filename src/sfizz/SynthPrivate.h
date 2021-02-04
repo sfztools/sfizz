@@ -8,6 +8,7 @@
 #include "modulations/sources/ADSREnvelope.h"
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
+#include "modulations/sources/ChannelAftertouch.h"
 #include "modulations/sources/LFO.h"
 #include "utility/BitArray.h"
 
@@ -265,6 +266,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::unique_ptr<LFOSource> genLFO_;
     std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope_;
     std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
+    std::unique_ptr<ChannelAftertouchSource> genChannelAftertouch_;
 
     // Settings per voice
     struct {

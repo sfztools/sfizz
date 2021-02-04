@@ -36,6 +36,8 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice;
     case ModId::FilEG:
         return kModIsPerVoice;
+    case ModId::ChannelAftertouch:
+        return kModIsPerCycle;
 
         // targets
     case ModId::MasterAmplitude:
