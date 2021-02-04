@@ -1546,9 +1546,11 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
     return false;
 }
 
+    #include<iostream>
 bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
+
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else

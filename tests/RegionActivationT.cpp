@@ -56,8 +56,8 @@ TEST_CASE("Region activation", "Region tests")
         REQUIRE(!region.isSwitchedOn());
         region.registerCC(54, 19_norm);
         REQUIRE(region.isSwitchedOn());
-        region.registerCC(54, 18_norm);
-        REQUIRE(region.isSwitchedOn());
+        region.registerCC(54, 17_norm);
+        REQUIRE(!region.isSwitchedOn());
         region.registerCC(54, 27_norm);
         REQUIRE(region.isSwitchedOn());
         region.registerCC(4, 56_norm);
