@@ -151,35 +151,32 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setParamNormalized(Vst::ParamID tag, 
     if (r != kResultTrue)
         return r;
 
-    SfizzVstState state = processorStateUpdate_->getState();
-
-    const SfizzRange range = SfizzRange::getForParameter(tag);
-
-    switch (tag) {
-    case kPidVolume:
-        state.volume = range.denormalize(normValue);
-        break;
-    case kPidNumVoices:
-        state.numVoices = (int32)range.denormalize(normValue);
-        break;
-    case kPidOversampling:
-        state.oversamplingLog2 = (int32)range.denormalize(normValue);
-        break;
-    case kPidPreloadSize:
-        state.preloadSize = (int32)range.denormalize(normValue);
-        break;
-    case kPidScalaRootKey:
-        state.scalaRootKey = (int32)range.denormalize(normValue);
-        break;
-    case kPidTuningFrequency:
-        state.tuningFrequency = (float)range.denormalize(normValue);
-        break;
-    case kPidStretchedTuning:
-        state.stretchedTuning = range.denormalize(normValue);
-        break;
-    }
-
-    processorStateUpdate_->setState(state);
+    processorStateUpdate_->access([tag, normValue](SfizzVstState& state) {
+        const SfizzRange range = SfizzRange::getForParameter(tag);
+        switch (tag) {
+        case kPidVolume:
+            state.volume = range.denormalize(normValue);
+            break;
+        case kPidNumVoices:
+            state.numVoices = (int32)range.denormalize(normValue);
+            break;
+        case kPidOversampling:
+            state.oversamplingLog2 = (int32)range.denormalize(normValue);
+            break;
+        case kPidPreloadSize:
+            state.preloadSize = (int32)range.denormalize(normValue);
+            break;
+        case kPidScalaRootKey:
+            state.scalaRootKey = (int32)range.denormalize(normValue);
+            break;
+        case kPidTuningFrequency:
+            state.tuningFrequency = (float)range.denormalize(normValue);
+            break;
+        case kPidStretchedTuning:
+            state.stretchedTuning = range.denormalize(normValue);
+            break;
+        }
+    });
 
     return kResultTrue;
 }
@@ -229,11 +226,11 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        SfizzVstState state = processorStateUpdate_->getState();
-        state.sfzFile.assign(static_cast<const char *>(data), size);
-        processorStateUpdate_->setState(state);
-
-        sfzPathUpdate_->setPath(state.sfzFile);
+        std::string sfzFile(static_cast<const char *>(data), size);
+        processorStateUpdate_->access([&sfzFile](SfizzVstState& state) {
+            state.sfzFile = sfzFile;
+        });
+        sfzPathUpdate_->setPath(std::move(sfzFile));
         sfzPathUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "LoadedScala")) {
@@ -244,11 +241,11 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        SfizzVstState state = processorStateUpdate_->getState();
-        state.scalaFile.assign(static_cast<const char *>(data), size);
-        processorStateUpdate_->setState(state);
-
-        scalaPathUpdate_->setPath(state.scalaFile);
+        std::string scalaFile(static_cast<const char *>(data), size);
+        processorStateUpdate_->access([&scalaFile](SfizzVstState& state) {
+            state.scalaFile = scalaFile;
+        });
+        scalaPathUpdate_->setPath(std::move(scalaFile));
         scalaPathUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "NotifiedPlayState")) {

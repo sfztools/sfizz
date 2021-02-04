@@ -97,6 +97,13 @@ public:
         return state_;
     }
 
+    template <class F>
+    void access(F&& fn)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        fn(state_);
+    }
+
     OBJ_METHODS(ProcessorStateUpdate, FObject)
 
 private:
