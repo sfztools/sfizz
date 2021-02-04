@@ -147,11 +147,12 @@ TEST_CASE("[Files] Group from AVL")
         REQUIRE(synth.getRegionView(i)->volume == 6.0f);
         REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(36, 36));
     }
-    REQUIRE(synth.getRegionView(0)->velocityRange == Range<float>(1_norm, 26_norm));
-    REQUIRE(synth.getRegionView(1)->velocityRange == Range<float>(27_norm, 52_norm));
-    REQUIRE(synth.getRegionView(2)->velocityRange == Range<float>(53_norm, 77_norm));
-    REQUIRE(synth.getRegionView(3)->velocityRange == Range<float>(78_norm, 102_norm));
-    REQUIRE(synth.getRegionView(4)->velocityRange == Range<float>(103_norm, 127_norm));
+
+    almostEqualRanges(synth.getRegionView(0)->velocityRange, { 1_norm, 26_norm });
+    almostEqualRanges(synth.getRegionView(1)->velocityRange, { 27_norm, 52_norm });
+    almostEqualRanges(synth.getRegionView(2)->velocityRange, { 53_norm, 77_norm });
+    almostEqualRanges(synth.getRegionView(3)->velocityRange, { 78_norm, 102_norm });
+    almostEqualRanges(synth.getRegionView(4)->velocityRange, { 103_norm, 127_norm });
 }
 
 TEST_CASE("[Files] Full hierarchy")
@@ -242,14 +243,14 @@ TEST_CASE("[Files] Pizz basic")
     REQUIRE(synth.getNumRegions() == 4);
     for (int i = 0; i < synth.getNumRegions(); ++i) {
         REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(12, 22));
-        REQUIRE(synth.getRegionView(i)->velocityRange == Range<float>(97_norm, 127_norm));
+        almostEqualRanges(synth.getRegionView(i)->velocityRange, { 97_norm, 127_norm });
         REQUIRE(synth.getRegionView(i)->pitchKeycenter == 21);
-        REQUIRE(synth.getRegionView(i)->ccConditions.getWithDefault(107) == Range<float>(0_norm, 13_norm));
+        almostEqualRanges(synth.getRegionView(i)->ccConditions.getWithDefault(107), { 0_norm, 13_norm });
     }
-    REQUIRE(synth.getRegionView(0)->randRange == Range<float>(0, 0.25));
-    REQUIRE(synth.getRegionView(1)->randRange == Range<float>(0.25, 0.5));
-    REQUIRE(synth.getRegionView(2)->randRange == Range<float>(0.5, 0.75));
-    REQUIRE(synth.getRegionView(3)->randRange == Range<float>(0.75, 1.0));
+    almostEqualRanges(synth.getRegionView(0)->randRange, { 0, 0.25 });
+    almostEqualRanges(synth.getRegionView(1)->randRange, { 0.25, 0.5 });
+    almostEqualRanges(synth.getRegionView(2)->randRange, { 0.5, 0.75 });
+    almostEqualRanges(synth.getRegionView(3)->randRange, { 0.75, 1.0 });
     REQUIRE(synth.getRegionView(0)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr1.wav)");
     REQUIRE(synth.getRegionView(1)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr2.wav)");
     REQUIRE(synth.getRegionView(2)->sampleId->filename() == R"(../Samples/pizz/a0_vl4_rr3.wav)");
