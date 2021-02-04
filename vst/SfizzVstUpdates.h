@@ -19,7 +19,7 @@
  */
 class OSCUpdate : public Steinberg::FObject {
 public:
-    OSCUpdate() noexcept = default;
+    OSCUpdate() = default;
     ~OSCUpdate();
     void clear();
     void setMessage(const void* data, uint32_t size, bool copy);
