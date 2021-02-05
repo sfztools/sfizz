@@ -570,6 +570,8 @@ void SControlsPanel::setControlUsed(uint32_t index, bool used)
             label->setStyle(CTextLabel::kRoundRectStyle);
             label->setRoundRectRadius(5.0);
             label->setBackColor(CColor(0x2e, 0x34, 0x36));
+            label->setTextTruncateMode(CTextLabel::kTruncateTail);
+            label->setTextInset({4.0, 0.0});
             label->setText(getDefaultLabelText(index));
             knob->setActiveTrackColor(CColor(0x00, 0xb6, 0x2a));
             knob->setInactiveTrackColor(CColor(0x30, 0x30, 0x30));
@@ -630,11 +632,12 @@ void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
     if (!slot)
         return;
 
+    CTextLabel* label = slot->label;
     if (text && text[0] != '\0')
-        slot->label->setText(text);
+        label->setText(text);
     else
-        slot->label->setText(getDefaultLabelText(index).c_str());
-    slot->label->invalid();
+        label->setText(getDefaultLabelText(index).c_str());
+    label->invalid();
 }
 
 void SControlsPanel::recalculateSubViews()
