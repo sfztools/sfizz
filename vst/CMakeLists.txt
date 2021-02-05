@@ -19,6 +19,7 @@ set(VSTPLUGIN_SOURCES
     SfizzVstController.cpp
     SfizzVstEditor.cpp
     SfizzVstState.cpp
+    SfizzVstUpdates.cpp
     SfizzFileScan.cpp
     SfizzForeignPaths.cpp
     SfizzSettings.cpp
@@ -32,13 +33,15 @@ set(VSTPLUGIN_HEADERS
     SfizzVstController.h
     SfizzVstEditor.h
     SfizzVstState.h
+    SfizzVstParameters.h
+    SfizzVstUpdates.h
     SfizzFileScan.h
     SfizzForeignPaths.h
     SfizzSettings.h
     X11RunLoop.h
+    IdleUpdateHandler.h
     NativeHelpers.h
-    FileTrie.h
-    WeakPtr.h)
+    FileTrie.h)
 
 if(APPLE)
     set(VSTPLUGIN_MAC_SOURCES

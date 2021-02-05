@@ -102,35 +102,3 @@ tresult SfizzVstState::store(IBStream* state) const
 }
 
 constexpr uint64 SfizzVstState::currentStateVersion;
-
-tresult SfizzUiState::load(IBStream* state)
-{
-    IBStreamer s(state, kLittleEndian);
-
-    uint64 version = 0;
-    if (!s.readInt64u(version))
-        return kResultFalse;
-
-    if (!s.readInt32u(activePanel))
-        return kResultFalse;
-
-    if (version > 0)
-        return kResultFalse;
-
-    return kResultTrue;
-}
-
-tresult SfizzUiState::store(IBStream* state) const
-{
-    IBStreamer s(state, kLittleEndian);
-
-    if (!s.writeInt64u(currentStateVersion))
-        return kResultFalse;
-
-    if (!s.writeInt32u(activePanel))
-        return kResultFalse;
-
-    return kResultTrue;
-}
-
-constexpr uint64 SfizzUiState::currentStateVersion;

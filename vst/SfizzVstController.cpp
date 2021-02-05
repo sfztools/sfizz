@@ -6,7 +6,9 @@
 
 #include "SfizzVstController.h"
 #include "SfizzVstEditor.h"
+#include "SfizzVstParameters.h"
 #include "base/source/fstreamer.h"
+#include "base/source/updatehandler.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
@@ -15,35 +17,46 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     if (result != kResultTrue)
         return result;
 
+    // initialize the update handler
+    Steinberg::UpdateHandler::instance();
+
+    // create update objects
+    oscUpdate_ = Steinberg::owned(new OSCUpdate);
+    sfzPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateSfz));
+    scalaPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateScala));
+    processorStateUpdate_ = Steinberg::owned(new ProcessorStateUpdate);
+    playStateUpdate_ = Steinberg::owned(new PlayStateUpdate);
+
+    // Parameters
     Vst::ParamID pid = 0;
 
     // Ordinary parameters
     parameters.addParameter(
-        kParamVolumeRange.createParameter(
+        SfizzRange::getForParameter(kPidVolume).createParameter(
             Steinberg::String("Volume"), pid++, Steinberg::String("dB"),
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamNumVoicesRange.createParameter(
+        SfizzRange::getForParameter(kPidNumVoices).createParameter(
             Steinberg::String("Polyphony"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamOversamplingRange.createParameter(
+        SfizzRange::getForParameter(kPidOversampling).createParameter(
             Steinberg::String("Oversampling"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamPreloadSizeRange.createParameter(
+        SfizzRange::getForParameter(kPidPreloadSize).createParameter(
             Steinberg::String("Preload size"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamScalaRootKeyRange.createParameter(
+        SfizzRange::getForParameter(kPidScalaRootKey).createParameter(
             Steinberg::String("Scala root key"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamTuningFrequencyRange.createParameter(
+        SfizzRange::getForParameter(kPidTuningFrequency).createParameter(
             Steinberg::String("Tuning frequency"), pid++, Steinberg::String("Hz"),
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
     parameters.addParameter(
-        kParamStretchedTuningRange.createParameter(
+        SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
             Steinberg::String("Stretched tuning"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
 
@@ -96,7 +109,8 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID ta
     switch (tag) {
     case kPidOversampling:
         {
-            auto factorLog2 = static_cast<int>(kParamOversamplingRange.denormalize(valueNormalized));
+            const SfizzRange range = SfizzRange::getForParameter(tag);
+            const int factorLog2 = static_cast<int>(range.denormalize(valueNormalized));
             Steinberg::String buf;
             buf.printf("%dX", 1 << factorLog2);
             buf.copyTo(string);
@@ -113,14 +127,11 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID ta
     case kPidOversampling:
         {
             int32 factor;
-            if (!Steinberg::String::scanInt32(string, factor, false) || factor < 1)
+            if (!Steinberg::String::scanInt32(string, factor, false))
                 factor = 1;
 
-            int32 log2Factor = 0;
-            for (int32 f = factor; f > 1; f /= 2)
-                ++log2Factor;
-
-            valueNormalized = kParamOversamplingRange.normalize(log2Factor);
+            const SfizzRange range = SfizzRange::getForParameter(tag);
+            valueNormalized = range.normalize(integerLog2(factor));
             return kResultTrue;
         }
     }
@@ -128,133 +139,49 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID ta
     return EditController::getParamValueByString(tag, string, valueNormalized);
 }
 
-// --- Controller with UI --- //
-
-IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
+tresult SfizzVstControllerNoUi::setParam(Vst::ParamID tag, float value)
 {
-    ConstString name(_name);
-
-    fprintf(stderr, "[sfizz] about to create view: %s\n", _name);
-
-    if (name != Vst::ViewType::kEditor)
-        return nullptr;
-
-    if (IPtr<SfizzVstEditor> editor = _editor.lock()) {
-        withStateLock([this, editor]() {
-            _uiState = editor->getCurrentUiState();
-        });
-    }
-
-    IPtr<SfizzVstEditor> editor = Steinberg::owned(new SfizzVstEditor(this));
-    _editor = editor->getWeakPtr();
-
-    withStateLock([this, editor]() {
-        editor->updateState(_state);
-        editor->updateUiState(_uiState);
-        editor->updatePlayState(_playState);
-    });
-
-    editor->remember();
-    return editor;
+    const SfizzRange range = SfizzRange::getForParameter(tag);
+    return setParamNormalized(tag, range.normalize(value));
 }
 
-tresult PLUGIN_API SfizzVstController::setParamNormalized(Vst::ParamID tag, Vst::ParamValue normValue)
+tresult PLUGIN_API SfizzVstControllerNoUi::setParamNormalized(Vst::ParamID tag, Vst::ParamValue normValue)
 {
-    tresult r = SfizzVstControllerNoUi::setParamNormalized(tag, normValue);
+    tresult r = EditController::setParamNormalized(tag, normValue);
     if (r != kResultTrue)
         return r;
 
-    float *slotF32 = nullptr;
-    int32 *slotI32 = nullptr;
-    float value = 0;
-
-    switch (tag) {
-    case kPidVolume: {
-        slotF32 = &_state.volume;
-        value = kParamVolumeRange.denormalize(normValue);
-        break;
-    }
-    case kPidNumVoices: {
-        slotI32 = &_state.numVoices;
-        value = kParamNumVoicesRange.denormalize(normValue);
-        break;
-    }
-    case kPidOversampling: {
-        slotI32 = &_state.oversamplingLog2;
-        value = kParamOversamplingRange.denormalize(normValue);
-        break;
-    }
-    case kPidPreloadSize: {
-        slotI32 = &_state.preloadSize;
-        value = kParamPreloadSizeRange.denormalize(normValue);
-        break;
-    }
-    case kPidScalaRootKey: {
-        slotI32 = &_state.scalaRootKey;
-        value = kParamScalaRootKeyRange.denormalize(normValue);
-        break;
-    }
-    case kPidTuningFrequency: {
-        slotF32 = &_state.tuningFrequency;
-        value = kParamTuningFrequencyRange.denormalize(normValue);
-        break;
-    }
-    case kPidStretchedTuning: {
-        slotF32 = &_state.stretchedTuning;
-        value = kParamStretchedTuningRange.denormalize(normValue);
-        break;
-    }
-    }
-
-    if (slotF32 && *slotF32 != value) {
-        withStateLock([this, slotF32, value]() {
-            *slotF32 = value;
-            if (IPtr<SfizzVstEditor> editor = _editor.lock())
-                editor->updateState(_state);
-        });
-    }
-    else if (slotI32 && *slotI32 != (int32)value) {
-        withStateLock([this, slotI32, value]() {
-            *slotI32 = (int32)value;
-            if (IPtr<SfizzVstEditor> editor = _editor.lock())
-                editor->updateState(_state);
-        });
-    }
-
-    return kResultTrue;
-}
-
-tresult PLUGIN_API SfizzVstController::setState(IBStream* stream)
-{
-    SfizzUiState s;
-
-    tresult r = s.load(stream);
-    if (r != kResultTrue)
-        return r;
-
-    withStateLock([this, &s]() {
-        _uiState = s;
-        if (IPtr<SfizzVstEditor> editor = _editor.lock())
-            editor->updateUiState(_uiState);
+    processorStateUpdate_->access([tag, normValue](SfizzVstState& state) {
+        const SfizzRange range = SfizzRange::getForParameter(tag);
+        switch (tag) {
+        case kPidVolume:
+            state.volume = range.denormalize(normValue);
+            break;
+        case kPidNumVoices:
+            state.numVoices = (int32)range.denormalize(normValue);
+            break;
+        case kPidOversampling:
+            state.oversamplingLog2 = (int32)range.denormalize(normValue);
+            break;
+        case kPidPreloadSize:
+            state.preloadSize = (int32)range.denormalize(normValue);
+            break;
+        case kPidScalaRootKey:
+            state.scalaRootKey = (int32)range.denormalize(normValue);
+            break;
+        case kPidTuningFrequency:
+            state.tuningFrequency = (float)range.denormalize(normValue);
+            break;
+        case kPidStretchedTuning:
+            state.stretchedTuning = range.denormalize(normValue);
+            break;
+        }
     });
 
     return kResultTrue;
 }
 
-tresult PLUGIN_API SfizzVstController::getState(IBStream* stream)
-{
-    tresult result;
-
-    withStateLock([this, stream, &result]() {
-        if (IPtr<SfizzVstEditor> editor = _editor.lock())
-            _uiState = editor->getCurrentUiState();
-        result = _uiState.store(stream);
-    });
-
-    return result;
-}
-
-tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* stream)
+tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
 {
     SfizzVstState s;
 
@@ -262,28 +189,29 @@ tresult PLUGIN_API SfizzVstController::setComponentState(IBStream* stream)
     if (r != kResultTrue)
         return r;
 
-    setParamNormalized(kPidVolume, kParamVolumeRange.normalize(s.volume));
-    setParamNormalized(kPidNumVoices, kParamNumVoicesRange.normalize(s.numVoices));
-    setParamNormalized(kPidOversampling, kParamOversamplingRange.normalize(s.oversamplingLog2));
-    setParamNormalized(kPidPreloadSize, kParamPreloadSizeRange.normalize(s.preloadSize));
-    setParamNormalized(kPidScalaRootKey, kParamScalaRootKeyRange.normalize(s.scalaRootKey));
-    setParamNormalized(kPidTuningFrequency, kParamTuningFrequencyRange.normalize(s.tuningFrequency));
-    setParamNormalized(kPidStretchedTuning, kParamStretchedTuningRange.normalize(s.stretchedTuning));
+    processorStateUpdate_->setState(s);
 
-    withStateLock([this, &s]() {
-        _state = s;
-        if (IPtr<SfizzVstEditor> editor = _editor.lock())
-            editor->updateState(_state);
-    });
+    setParam(kPidVolume, s.volume);
+    setParam(kPidNumVoices, s.numVoices);
+    setParam(kPidOversampling, s.oversamplingLog2);
+    setParam(kPidPreloadSize, s.preloadSize);
+    setParam(kPidScalaRootKey, s.scalaRootKey);
+    setParam(kPidTuningFrequency, s.tuningFrequency);
+    setParam(kPidStretchedTuning, s.stretchedTuning);
+
+    sfzPathUpdate_->setPath(s.sfzFile);
+    sfzPathUpdate_->deferUpdate();
+    scalaPathUpdate_->setPath(s.scalaFile);
+    scalaPathUpdate_->deferUpdate();
 
     return kResultTrue;
 }
 
-tresult SfizzVstController::notify(Vst::IMessage* message)
+tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
 {
     // Note: may be called from any thread (Reaper)
 
-    tresult result = SfizzVstControllerNoUi::notify(message);
+    tresult result = EditController::notify(message);
     if (result != kResultFalse)
         return result;
 
@@ -298,11 +226,12 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        withStateLock([this, data, size]() {
-            _state.sfzFile.assign(static_cast<const char *>(data), size);
-            if (IPtr<SfizzVstEditor> editor = _editor.lock())
-                editor->updateState(_state);
+        std::string sfzFile(static_cast<const char *>(data), size);
+        processorStateUpdate_->access([&sfzFile](SfizzVstState& state) {
+            state.sfzFile = sfzFile;
         });
+        sfzPathUpdate_->setPath(std::move(sfzFile));
+        sfzPathUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "LoadedScala")) {
         const void* data = nullptr;
@@ -312,11 +241,12 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        withStateLock([this, data, size]() {
-            _state.scalaFile.assign(static_cast<const char *>(data), size);
-            if (IPtr<SfizzVstEditor> editor = _editor.lock())
-                editor->updateState(_state);
+        std::string scalaFile(static_cast<const char *>(data), size);
+        processorStateUpdate_->access([&scalaFile](SfizzVstState& state) {
+            state.scalaFile = scalaFile;
         });
+        scalaPathUpdate_->setPath(std::move(scalaFile));
+        scalaPathUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "NotifiedPlayState")) {
         const void* data = nullptr;
@@ -326,11 +256,8 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        withStateLock([this, data]() {
-            _playState = *static_cast<const SfizzPlayState*>(data);
-            if (IPtr<SfizzVstEditor> editor = _editor.lock())
-                editor->updatePlayState(_playState);
-        });
+        playStateUpdate_->setState(*static_cast<const SfizzPlayState*>(data));
+        playStateUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "ReceivedMessage")) {
         const void* data = nullptr;
@@ -340,11 +267,41 @@ tresult SfizzVstController::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        if (IPtr<SfizzVstEditor> editor = _editor.lock())
-            editor->receiveMessage(data, size);
+        // this is a synchronous send, because the update object gets reused
+        oscUpdate_->setMessage(data, size, false);
+        oscUpdate_->changed();
+        oscUpdate_->clear();
     }
 
     return result;
+}
+
+// --- Controller with UI --- //
+
+IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
+{
+    ConstString name(_name);
+
+    fprintf(stderr, "[sfizz] about to create view: %s\n", _name);
+
+    if (name != Vst::ViewType::kEditor)
+        return nullptr;
+
+    std::vector<FObject*> continuousUpdates;
+    continuousUpdates.push_back(sfzPathUpdate_);
+    continuousUpdates.push_back(scalaPathUpdate_);
+    continuousUpdates.push_back(playStateUpdate_);
+    for (uint32 i = 0, n = parameters.getParameterCount(); i < n; ++i)
+        continuousUpdates.push_back(parameters.getParameterByIndex(i));
+
+    std::vector<FObject*> triggerUpdates;
+    triggerUpdates.push_back(oscUpdate_);
+
+    IPtr<SfizzVstEditor> editor = Steinberg::owned(
+        new SfizzVstEditor(this, absl::MakeSpan(continuousUpdates), absl::MakeSpan(triggerUpdates)));
+
+    editor->remember();
+    return editor;
 }
 
 FUnknown* SfizzVstController::createInstance(void*)

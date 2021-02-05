@@ -146,10 +146,10 @@ endif
 # st_audiofile dependency
 
 SFIZZ_SOURCES += \
-	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile.c \
-	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile_common.c \
-	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile_libs.c \
-	$(SFIZZ_DIR)/external/st_audiofile/src/st_audiofile_sndfile.c
+	external/st_audiofile/src/st_audiofile.c \
+	external/st_audiofile/src/st_audiofile_common.c \
+	external/st_audiofile/src/st_audiofile_libs.c \
+	external/st_audiofile/src/st_audiofile_sndfile.c
 
 SFIZZ_C_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/src \
@@ -338,6 +338,12 @@ SFIZZ_SOURCES += \
 
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/jsl/include
+
+### cephes dependency
+
+SFIZZ_SOURCES += \
+	external/cephes/src/chbevl.c \
+	external/cephes/src/i0.c
 
 ### math dependency
 

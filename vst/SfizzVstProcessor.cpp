@@ -7,6 +7,7 @@
 #include "SfizzVstProcessor.h"
 #include "SfizzVstController.h"
 #include "SfizzVstState.h"
+#include "SfizzVstParameters.h"
 #include "SfizzFileScan.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstevents.h"
@@ -315,7 +316,9 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
         if (!vq)
             continue;
 
-        Vst::ParamID id = vq->getParameterId();
+        const Vst::ParamID id = vq->getParameterId();
+        const SfizzRange range = SfizzRange::getForParameter(id);
+
         uint32 pointCount = vq->getPointCount();
         int32 sampleOffset;
         Vst::ParamValue value;
@@ -323,11 +326,11 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
         switch (id) {
         case kPidVolume:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.volume = kParamVolumeRange.denormalize(value);
+                _state.volume = range.denormalize(value);
             break;
         case kPidNumVoices:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                int32 data = static_cast<int32>(kParamNumVoicesRange.denormalize(value));
+                int32 data = static_cast<int32>(range.denormalize(value));
                 _state.numVoices = data;
                 if (writeWorkerMessage("SetNumVoices", &data, sizeof(data)))
                     _semaToWorker.post();
@@ -335,7 +338,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             break;
         case kPidOversampling:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                int32 data = static_cast<int32>(kParamOversamplingRange.denormalize(value));
+                int32 data = static_cast<int32>(range.denormalize(value));
                 _state.oversamplingLog2 = data;
                 if (writeWorkerMessage("SetOversampling", &data, sizeof(data)))
                     _semaToWorker.post();
@@ -343,7 +346,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             break;
         case kPidPreloadSize:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                int32 data = static_cast<int32>(kParamPreloadSizeRange.denormalize(value));
+                int32 data = static_cast<int32>(range.denormalize(value));
                 _state.preloadSize = data;
                 if (writeWorkerMessage("SetPreloadSize", &data, sizeof(data)))
                     _semaToWorker.post();
@@ -351,15 +354,15 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             break;
         case kPidScalaRootKey:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.scalaRootKey = static_cast<int32>(kParamScalaRootKeyRange.denormalize(value));
+                _state.scalaRootKey = static_cast<int32>(range.denormalize(value));
             break;
         case kPidTuningFrequency:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.tuningFrequency = kParamTuningFrequencyRange.denormalize(value);
+                _state.tuningFrequency = range.denormalize(value);
             break;
         case kPidStretchedTuning:
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.stretchedTuning = kParamStretchedTuningRange.denormalize(value);
+                _state.stretchedTuning = range.denormalize(value);
             break;
         }
     }
