@@ -625,6 +625,11 @@ void SfizzVstProcessor::doBackgroundWork()
                 fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
                 std::lock_guard<SpinMutex> lock(_processMutex);
                 loadSfzFileOrDefault(*_synth, _state.sfzFile);
+
+                Steinberg::OPtr<Vst::IMessage> reply { allocateMessage() };
+                reply->setMessageID("LoadedSfz");
+                reply->getAttributes()->setBinary("File", _state.sfzFile.data(), _state.sfzFile.size());
+                sendMessage(reply);
             }
             else if (_synth->shouldReloadScala()) {
                 fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
