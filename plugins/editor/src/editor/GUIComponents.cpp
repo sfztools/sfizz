@@ -707,8 +707,6 @@ void SControlsPanel::updateLayout()
         }
     }
 
-    CRect containerSize = getContainerSize();
-    containerSize.bottom = containerBottom;
     setContainerSize(CRect(0.0, 0.0, viewBounds.getWidth(), containerBottom + verticalPadding));
 
     invalid();
