@@ -515,10 +515,10 @@ TEST_CASE("[Synth] veltrack")
     };
 
     const VeltrackData veltrackdata[] = {
-        { 25, veldata25 },
-        { 50, veldata50 },
-        { 75, veldata75 },
-        { 100, veldata100 },
+        { 25, absl::MakeConstSpan(veldata25) },
+        { 50, absl::MakeConstSpan(veldata50) },
+        { 75, absl::MakeConstSpan(veldata75) },
+        { 100, absl::MakeConstSpan(veldata100) },
     };
 
     for (const VeltrackData& vt : veltrackdata) {

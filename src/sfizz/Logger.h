@@ -52,6 +52,7 @@ struct FileTime
     Duration loadDuration { 0 };
     uint32_t fileSize { 0 };
     absl::string_view filename {};
+    LEAK_DETECTOR(FileTime);
 };
 
 struct CallbackBreakdown
@@ -63,6 +64,7 @@ struct CallbackBreakdown
     Duration filters { 0 };
     Duration panning { 0 };
     Duration effects { 0 };
+    LEAK_DETECTOR(CallbackBreakdown);
 };
 
 struct CallbackTime
@@ -70,6 +72,7 @@ struct CallbackTime
     CallbackBreakdown breakdown {};
     int numVoices { 0 };
     size_t numSamples { 0 };
+    LEAK_DETECTOR(CallbackTime);
 };
 
 class Logger
