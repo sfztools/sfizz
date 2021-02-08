@@ -313,14 +313,14 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
 void SfizzVstEditor::uiBeginSend(EditId id)
 {
     Vst::ParamID pid = parameterOfEditId(id);
-    if (pid != -1)
+    if (pid != Vst::kNoParamId)
         getController()->beginEdit(pid);
 }
 
 void SfizzVstEditor::uiEndSend(EditId id)
 {
     Vst::ParamID pid = parameterOfEditId(id);
-    if (pid != -1)
+    if (pid != Vst::kNoParamId)
         getController()->endEdit(pid);
 }
 
@@ -403,6 +403,6 @@ Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
     case EditId::ScalaRootKey: return kPidScalaRootKey;
     case EditId::TuningFrequency: return kPidTuningFrequency;
     case EditId::StretchTuning: return kPidStretchedTuning;
-    default: return -1;
+    default: return Vst::kNoParamId;
     }
 }

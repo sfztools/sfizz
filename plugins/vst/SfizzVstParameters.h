@@ -5,15 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "sfizz/Config.h"
 #include "public.sdk/source/vst/vstparameters.h"
 #include <stdexcept>
 
 using namespace Steinberg;
-
-// number of MIDI CC
-enum {
-    kNumControllerParams = 128,
-};
 
 // parameters
 enum {
@@ -24,10 +20,10 @@ enum {
     kPidScalaRootKey,
     kPidTuningFrequency,
     kPidStretchedTuning,
-    kPidMidiAftertouch,
-    kPidMidiPitchBend,
-    kPidMidiCC0,
-    kPidMidiCCLast = kPidMidiCC0 + kNumControllerParams - 1,
+    kPidAftertouch,
+    kPidPitchBend,
+    kPidCC0,
+    kPidCCLast = kPidCC0 + sfz::config::numCCs - 1,
     /* Reserved */
 };
 
@@ -71,12 +67,12 @@ struct SfizzRange {
             return {440.0, 300.0, 500.0};
         case kPidStretchedTuning:
             return {0.0, 0.0, 1.0};
-        case kPidMidiAftertouch:
+        case kPidAftertouch:
             return {0.0, 0.0, 1.0};
-        case kPidMidiPitchBend:
+        case kPidPitchBend:
             return {0.5, 0.0, 1.0};
         default:
-            if (id >= kPidMidiCC0 && id <= kPidMidiCCLast)
+            if (id >= kPidCC0 && id <= kPidCCLast)
                 return {0.0, 0.0, 1.0};
             throw std::runtime_error("Bad parameter ID");
         }

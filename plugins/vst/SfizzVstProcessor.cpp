@@ -385,23 +385,23 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
 
         switch (id) {
         default:
-            if (id >= kPidMidiCC0 && id <= kPidMidiCCLast) {
-                auto ccNumber = static_cast<int>(id - kPidMidiCC0);
+            if (id >= kPidCC0 && id <= kPidCCLast) {
+                auto ccNumber = static_cast<int>(id - kPidCC0);
                 for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                     if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                        synth.cc(sampleOffset, ccNumber, fastRound(value * 127.0));
+                        synth.hdcc(sampleOffset, ccNumber, value);
                 }
             }
             break;
 
-        case kPidMidiAftertouch:
+        case kPidAftertouch:
             for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                 if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
                     synth.aftertouch(sampleOffset, fastRound(value * 127.0));
             }
             break;
 
-        case kPidMidiPitchBend:
+        case kPidPitchBend:
             for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                 if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
                     synth.pitchWheel(sampleOffset, fastRound(value * 16383) - 8192);
