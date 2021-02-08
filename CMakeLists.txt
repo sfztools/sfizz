@@ -54,22 +54,7 @@ add_subdirectory (src)
 
 # Optional targets
 add_subdirectory (clients)
-
-if ((SFIZZ_LV2 AND SFIZZ_LV2_UI) OR SFIZZ_VST)
-    add_subdirectory (plugins/editor)
-endif()
-
-if (SFIZZ_LV2)
-    add_subdirectory (plugins/lv2)
-endif()
-
-if (SFIZZ_VST)
-    add_subdirectory (plugins/vst)
-else()
-    if (SFIZZ_AU)
-        message(WARNING "Audio Unit requires VST to be enabled")
-    endif()
-endif()
+add_subdirectory (plugins)
 
 if (SFIZZ_BENCHMARKS)
     add_subdirectory (benchmarks)

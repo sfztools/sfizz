@@ -10,6 +10,7 @@
 #include "GUIComponents.h"
 #include "GUIPiano.h"
 #include "NativeHelpers.h"
+#include "plugin/MessageUtils.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
 #include <absl/strings/ascii.h>
@@ -372,43 +373,11 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     }
 }
 
-///
-static constexpr unsigned kMessageMaxIndices = 8;
-
-static bool matchMessage(const char* pattern, const char* path, unsigned* indices)
-{
-    unsigned nthIndex = 0;
-
-    while (const char *endp = strchr(pattern, '&')) {
-        if (nthIndex == kMessageMaxIndices)
-            return false;
-
-        size_t length = endp - pattern;
-        if (strncmp(pattern, path, length))
-            return false;
-        pattern += length;
-        path += length;
-
-        length = 0;
-        while (absl::ascii_isdigit(path[length]))
-            ++length;
-
-        if (!absl::SimpleAtoi(absl::string_view(path, length), &indices[nthIndex++]))
-            return false;
-
-        pattern += 1;
-        path += length;
-    }
-
-    return !strcmp(path, pattern);
-}
-
-///
 void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args)
 {
-    unsigned indices[kMessageMaxIndices];
+    unsigned indices[8];
 
-    if (!strcmp(path, "/cc/slots") && !strcmp(sig, "b")) {
+    if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
         const uint8_t* bitChunks = args[0].b->data;
         uint32_t byteSize = args[0].b->size;
 
@@ -426,7 +395,7 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
             }
         }
     }
-    else if (!strcmp(path, "/cc/changed") && !strcmp(sig, "b")) {
+    else if (Messages::matchOSC("/cc/changed", path, indices) && !strcmp(sig, "b")) {
         const uint8_t* bitChunks = args[0].b->data;
         uint32_t byteSize = args[0].b->size;
         for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
@@ -438,13 +407,13 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
             }
         }
     }
-    else if (matchMessage("/cc&/value", path, indices) && !strcmp(sig, "f")) {
+    else if (Messages::matchOSC("/cc&/value", path, indices) && !strcmp(sig, "f")) {
         updateCCValue(indices[0], args[0].f);
     }
-    else if (matchMessage("/cc&/default", path, indices) && !strcmp(sig, "f")) {
+    else if (Messages::matchOSC("/cc&/default", path, indices) && !strcmp(sig, "f")) {
         updateCCDefaultValue(indices[0], args[0].f);
     }
-    else if (matchMessage("/cc&/label", path, indices) && !strcmp(sig, "s")) {
+    else if (Messages::matchOSC("/cc&/label", path, indices) && !strcmp(sig, "s")) {
         updateCCLabel(indices[0], args[0].s);
     }
     else {
