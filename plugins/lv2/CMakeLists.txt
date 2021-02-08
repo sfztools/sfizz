@@ -19,8 +19,7 @@ source_group("Turtle Files" FILES
     ${LV2PLUGIN_TTL_SRC_FILES}
 )
 add_library(${LV2PLUGIN_PRJ_NAME} MODULE
-    ${PROJECT_NAME}.c
-    atomic_compat.h
+    ${PROJECT_NAME}.cpp
     ${LV2PLUGIN_TTL_SRC_FILES})
 target_link_libraries(${LV2PLUGIN_PRJ_NAME} PRIVATE sfizz::sfizz sfizz::spin_mutex)
 

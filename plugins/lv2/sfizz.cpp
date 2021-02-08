@@ -61,7 +61,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "atomic_compat.h"
+#include <atomic>
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -86,110 +86,110 @@
 #define LV2_DEBUG(...)
 #endif
 
-typedef struct
+struct sfizz_plugin_t
 {
     // Features
-    LV2_URID_Map *map;
-    LV2_URID_Unmap *unmap;
-    LV2_Worker_Schedule *worker;
-    LV2_Log_Log *log;
-    LV2_Midnam *midnam;
+    LV2_URID_Map *map {};
+    LV2_URID_Unmap *unmap {};
+    LV2_Worker_Schedule *worker {};
+    LV2_Log_Log *log {};
+    LV2_Midnam *midnam {};
 
     // Ports
-    const LV2_Atom_Sequence *control_port;
-    LV2_Atom_Sequence *notify_port;
-    float *output_buffers[2];
-    const float *volume_port;
-    const float *polyphony_port;
-    const float *oversampling_port;
-    const float *preload_port;
-    const float *freewheel_port;
-    const float *scala_root_key_port;
-    const float *tuning_frequency_port;
-    const float *stretch_tuning_port;
-    float *active_voices_port;
-    float *num_curves_port;
-    float *num_masters_port;
-    float *num_groups_port;
-    float *num_regions_port;
-    float *num_samples_port;
+    const LV2_Atom_Sequence *control_port {};
+    LV2_Atom_Sequence *notify_port {};
+    float *output_buffers[2] {};
+    const float *volume_port {};
+    const float *polyphony_port {};
+    const float *oversampling_port {};
+    const float *preload_port {};
+    const float *freewheel_port {};
+    const float *scala_root_key_port {};
+    const float *tuning_frequency_port {};
+    const float *stretch_tuning_port {};
+    float *active_voices_port {};
+    float *num_curves_port {};
+    float *num_masters_port {};
+    float *num_groups_port {};
+    float *num_regions_port {};
+    float *num_samples_port {};
 
     // Atom forge
-    LV2_Atom_Forge forge;              ///< Forge for writing atoms in run thread
-    LV2_Atom_Forge forge_secondary;    ///< Forge for writing into other buffers
+    LV2_Atom_Forge forge {};              ///< Forge for writing atoms in run thread
+    LV2_Atom_Forge forge_secondary {};    ///< Forge for writing into other buffers
 
     // Logger
-    LV2_Log_Logger logger;
+    LV2_Log_Logger logger {};
 
     // URIs
-    LV2_URID midi_event_uri;
-    LV2_URID options_interface_uri;
-    LV2_URID max_block_length_uri;
-    LV2_URID nominal_block_length_uri;
-    LV2_URID sample_rate_uri;
-    LV2_URID atom_object_uri;
-    LV2_URID atom_blank_uri;
-    LV2_URID atom_float_uri;
-    LV2_URID atom_double_uri;
-    LV2_URID atom_int_uri;
-    LV2_URID atom_long_uri;
-    LV2_URID atom_urid_uri;
-    LV2_URID atom_path_uri;
-    LV2_URID patch_set_uri;
-    LV2_URID patch_get_uri;
-    LV2_URID patch_put_uri;
-    LV2_URID patch_property_uri;
-    LV2_URID patch_value_uri;
-    LV2_URID patch_body_uri;
-    LV2_URID state_changed_uri;
-    LV2_URID sfizz_sfz_file_uri;
-    LV2_URID sfizz_scala_file_uri;
-    LV2_URID sfizz_num_voices_uri;
-    LV2_URID sfizz_preload_size_uri;
-    LV2_URID sfizz_oversampling_uri;
-    LV2_URID sfizz_log_status_uri;
-    LV2_URID sfizz_check_modification_uri;
-    LV2_URID sfizz_active_voices_uri;
-    LV2_URID sfizz_osc_blob_uri;
-    LV2_URID time_position_uri;
-    LV2_URID time_bar_uri;
-    LV2_URID time_bar_beat_uri;
-    LV2_URID time_beat_unit_uri;
-    LV2_URID time_beats_per_bar_uri;
-    LV2_URID time_beats_per_minute_uri;
-    LV2_URID time_speed_uri;
+    LV2_URID midi_event_uri {};
+    LV2_URID options_interface_uri {};
+    LV2_URID max_block_length_uri {};
+    LV2_URID nominal_block_length_uri {};
+    LV2_URID sample_rate_uri {};
+    LV2_URID atom_object_uri {};
+    LV2_URID atom_blank_uri {};
+    LV2_URID atom_float_uri {};
+    LV2_URID atom_double_uri {};
+    LV2_URID atom_int_uri {};
+    LV2_URID atom_long_uri {};
+    LV2_URID atom_urid_uri {};
+    LV2_URID atom_path_uri {};
+    LV2_URID patch_set_uri {};
+    LV2_URID patch_get_uri {};
+    LV2_URID patch_put_uri {};
+    LV2_URID patch_property_uri {};
+    LV2_URID patch_value_uri {};
+    LV2_URID patch_body_uri {};
+    LV2_URID state_changed_uri {};
+    LV2_URID sfizz_sfz_file_uri {};
+    LV2_URID sfizz_scala_file_uri {};
+    LV2_URID sfizz_num_voices_uri {};
+    LV2_URID sfizz_preload_size_uri {};
+    LV2_URID sfizz_oversampling_uri {};
+    LV2_URID sfizz_log_status_uri {};
+    LV2_URID sfizz_check_modification_uri {};
+    LV2_URID sfizz_active_voices_uri {};
+    LV2_URID sfizz_osc_blob_uri {};
+    LV2_URID time_position_uri {};
+    LV2_URID time_bar_uri {};
+    LV2_URID time_bar_beat_uri {};
+    LV2_URID time_beat_unit_uri {};
+    LV2_URID time_beats_per_bar_uri {};
+    LV2_URID time_beats_per_minute_uri {};
+    LV2_URID time_speed_uri {};
 
     // Sfizz related data
-    sfizz_synth_t *synth;
-    sfizz_client_t *client;
-    spin_mutex_t *synth_mutex;
-    bool expect_nominal_block_length;
-    char sfz_file_path[MAX_PATH_SIZE];
-    char scala_file_path[MAX_PATH_SIZE];
-    int num_voices;
-    unsigned int preload_size;
-    sfizz_oversampling_factor_t oversampling;
-    float stretch_tuning;
-    volatile bool check_modification;
-    int max_block_size;
-    int sample_counter;
-    float sample_rate;
-    atomic_int must_update_midnam;
+    sfizz_synth_t *synth {};
+    sfizz_client_t *client {};
+    spin_mutex_t *synth_mutex {};
+    bool expect_nominal_block_length {};
+    char sfz_file_path[MAX_PATH_SIZE] {};
+    char scala_file_path[MAX_PATH_SIZE] {};
+    int num_voices {};
+    unsigned int preload_size {};
+    sfizz_oversampling_factor_t oversampling {};
+    float stretch_tuning {};
+    volatile bool check_modification {};
+    int max_block_size {};
+    int sample_counter {};
+    float sample_rate {};
+    std::atomic<int> must_update_midnam {};
 
     // Timing data
-    int bar;
-    double bar_beat;
-    int beats_per_bar;
-    int beat_unit;
-    double bpm_tempo;
-    double speed;
+    int bar {};
+    double bar_beat {};
+    int beats_per_bar {};
+    int beat_unit {};
+    double bpm_tempo {};
+    double speed {};
 
     // Paths
-    char bundle_path[MAX_BUNDLE_PATH_SIZE];
+    char bundle_path[MAX_BUNDLE_PATH_SIZE] {};
 
     // OSC
-    uint8_t osc_temp[OSC_TEMP_SIZE];
-} sfizz_plugin_t;
+    uint8_t osc_temp[OSC_TEMP_SIZE] {};
+};
 
 enum
 {
@@ -209,8 +209,8 @@ sfizz_lv2_state_free_path(LV2_State_Free_Path_Handle handle,
 
 static LV2_State_Free_Path sfizz_State_Free_Path =
 {
-    .handle = NULL,
-    .free_path = &sfizz_lv2_state_free_path,
+    NULL,
+    &sfizz_lv2_state_free_path,
 };
 
 static void
@@ -467,7 +467,7 @@ instantiate(const LV2_Descriptor *descriptor,
     bool supports_fixed_block_size = false;
 
     // Allocate and initialise instance structure.
-    sfizz_plugin_t *self = (sfizz_plugin_t *)calloc(1, sizeof(sfizz_plugin_t));
+    sfizz_plugin_t *self = new sfizz_plugin_t;
     if (!self)
         return NULL;
 
@@ -500,31 +500,34 @@ instantiate(const LV2_Descriptor *descriptor,
     // Get the features from the host and populate the structure
     for (const LV2_Feature *const *f = features; *f; f++)
     {
+        const char *uri = (**f).URI;
+        void *data = (**f).data;
+
         // lv2_log_note(&self->logger, "Feature URI: %s\n", (**f).URI);
 
-        if (!strcmp((**f).URI, LV2_URID__map))
-            self->map = (**f).data;
+        if (!strcmp(uri, LV2_URID__map))
+            self->map = (LV2_URID_Map *)data;
 
-        if (!strcmp((**f).URI, LV2_URID__unmap))
-            self->unmap = (**f).data;
+        if (!strcmp(uri, LV2_URID__unmap))
+            self->unmap = (LV2_URID_Unmap *)data;
 
-        if (!strcmp((**f).URI, LV2_BUF_SIZE__boundedBlockLength))
+        if (!strcmp(uri, LV2_BUF_SIZE__boundedBlockLength))
             supports_bounded_block_size = true;
 
-        if (!strcmp((**f).URI, LV2_BUF_SIZE__fixedBlockLength))
+        if (!strcmp(uri, LV2_BUF_SIZE__fixedBlockLength))
             supports_fixed_block_size = true;
 
-        if (!strcmp((**f).URI, LV2_OPTIONS__options))
-            options = (**f).data;
+        if (!strcmp(uri, LV2_OPTIONS__options))
+            options = (LV2_Options_Option *)data;
 
-        if (!strcmp((**f).URI, LV2_WORKER__schedule))
-            self->worker = (**f).data;
+        if (!strcmp(uri, LV2_WORKER__schedule))
+            self->worker = (LV2_Worker_Schedule *)data;
 
-        if (!strcmp((**f).URI, LV2_LOG__log))
-            self->log = (**f).data;
+        if (!strcmp(uri, LV2_LOG__log))
+            self->log = (LV2_Log_Log *)data;
 
-        if (!strcmp((**f).URI, LV2_MIDNAM__update))
-            self->midnam = (**f).data;
+        if (!strcmp(uri, LV2_MIDNAM__update))
+            self->midnam = (LV2_Midnam *)data;
     }
 
     // Setup the loggers
@@ -534,7 +537,7 @@ instantiate(const LV2_Descriptor *descriptor,
     if (!self->map)
     {
         lv2_log_error(&self->logger, "Map feature not found, aborting..\n");
-        free(self);
+        delete self;
         return NULL;
     }
 
@@ -542,7 +545,7 @@ instantiate(const LV2_Descriptor *descriptor,
     if (!self->worker)
     {
         lv2_log_error(&self->logger, "Worker feature not found, aborting..\n");
-        free(self);
+        delete self;
         return NULL;
     }
 
@@ -596,7 +599,7 @@ instantiate(const LV2_Descriptor *descriptor,
     {
         lv2_log_error(&self->logger,
                       "Bounded block size not supported and options gave no block size, aborting..\n");
-        free(self);
+        delete self;
         return NULL;
     }
 
@@ -624,7 +627,7 @@ cleanup(LV2_Handle instance)
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
-    free(self);
+    delete self;
 }
 
 static void
@@ -633,7 +636,7 @@ activate(LV2_Handle instance)
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     sfizz_set_samples_per_block(self->synth, self->max_block_size);
     sfizz_set_sample_rate(self->synth, self->sample_rate);
-    atomic_store(&self->must_update_midnam, 1);
+    self->must_update_midnam.store(1);
 }
 
 static void
@@ -703,7 +706,9 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         LV2_Atom_Forge *forge = &self->forge_secondary;
         sfizz_path_atom_buffer_t buffer;
         lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
-        if (lv2_atom_forge_typed_string(forge, self->sfizz_sfz_file_uri, LV2_ATOM_BODY_CONST(atom), strnlen(LV2_ATOM_BODY_CONST(atom), atom->size)))
+        const char *body = (const char *)LV2_ATOM_BODY_CONST(atom);
+        uint32_t size = (uint32_t)strnlen(body, atom->size);
+        if (lv2_atom_forge_typed_string(forge, self->sfizz_sfz_file_uri, body, size))
             self->worker->schedule_work(self->worker->handle, lv2_atom_total_size(&buffer.atom), &buffer.atom);
         self->check_modification = false;
     }
@@ -712,7 +717,9 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         LV2_Atom_Forge *forge = &self->forge_secondary;
         sfizz_path_atom_buffer_t buffer;
         lv2_atom_forge_set_buffer(forge, (uint8_t *)&buffer, sizeof(buffer));
-        if (lv2_atom_forge_typed_string(forge, self->sfizz_scala_file_uri, LV2_ATOM_BODY_CONST(atom), strnlen(LV2_ATOM_BODY_CONST(atom), atom->size)))
+        const char *body = (const char *)LV2_ATOM_BODY_CONST(atom);
+        uint32_t size = (uint32_t)strnlen(body, atom->size);
+        if (lv2_atom_forge_typed_string(forge, self->sfizz_scala_file_uri, body, size))
             self->worker->schedule_work(self->worker->handle, lv2_atom_total_size(&buffer.atom), &buffer.atom);
         self->check_modification = false;
     }
@@ -798,11 +805,10 @@ sfizz_lv2_check_oversampling(sfizz_plugin_t* self)
 
     self->oversampling = (sfizz_oversampling_factor_t)port_value;
 
-    LV2_Atom_Int atom = {
-        .atom.type = self->sfizz_oversampling_uri,
-        .atom.size = sizeof(int),
-        .body = self->oversampling
-    };
+    LV2_Atom_Int atom;
+    atom.atom.type = self->sfizz_oversampling_uri;
+    atom.atom.size = sizeof(int);
+    atom.body = self->oversampling;
     if (self->worker->schedule_work(self->worker->handle,
                                     lv2_atom_total_size((LV2_Atom *)&atom),
                                     &atom) != LV2_WORKER_SUCCESS)
@@ -817,11 +823,10 @@ sfizz_lv2_check_preload_size(sfizz_plugin_t* self)
     unsigned int preload_size = (int)*self->preload_port;
     if (preload_size != self->preload_size)
     {
-        LV2_Atom_Int atom = {
-            .atom.type = self->sfizz_preload_size_uri,
-            .atom.size = sizeof(int),
-            .body = preload_size
-        };
+        LV2_Atom_Int atom;
+        atom.atom.type = self->sfizz_preload_size_uri;
+        atom.atom.size = sizeof(int);
+        atom.body = preload_size;
         if (self->worker->schedule_work(self->worker->handle,
                                         lv2_atom_total_size((LV2_Atom *)&atom),
                                         &atom) != LV2_WORKER_SUCCESS)
@@ -838,11 +843,10 @@ sfizz_lv2_check_num_voices(sfizz_plugin_t* self)
     int num_voices = (int)*self->polyphony_port;
     if (num_voices != self->num_voices)
     {
-        LV2_Atom_Int atom = {
-            .atom.type = self->sfizz_num_voices_uri,
-            .atom.size = sizeof(int),
-            .body = num_voices
-        };
+        LV2_Atom_Int atom;
+        atom.atom.type = self->sfizz_num_voices_uri;
+        atom.atom.size = sizeof(int);
+        atom.body = num_voices;
         if (self->worker->schedule_work(self->worker->handle,
                                         lv2_atom_total_size((LV2_Atom *)&atom),
                                         &atom) != LV2_WORKER_SUCCESS)
@@ -1061,7 +1065,7 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     spin_mutex_unlock(self->synth_mutex);
 
-    if (self->midnam && atomic_exchange(&self->must_update_midnam, 0))
+    if (self->midnam && self->must_update_midnam.exchange(0))
     {
         self->midnam->update(self->midnam->handle);
     }
@@ -1162,7 +1166,7 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
     lv2_log_note(&self->logger, "[sfizz] Number of groups: %d\n", sfizz_get_num_groups(self->synth));
     lv2_log_note(&self->logger, "[sfizz] Number of regions: %d\n", sfizz_get_num_regions(self->synth));
 
-    atomic_store(&self->must_update_midnam, 1);
+    self->must_update_midnam.store(1);
 }
 
 static bool
@@ -1415,10 +1419,9 @@ sfizz_lv2_activate_file_checking(
     LV2_Worker_Respond_Function respond,
     LV2_Worker_Respond_Handle handle)
 {
-    LV2_Atom check_modification_atom = {
-        .size = 0,
-        .type = self->sfizz_check_modification_uri
-    };
+    LV2_Atom check_modification_atom;
+    check_modification_atom.size = 0;
+    check_modification_atom.type = self->sfizz_check_modification_uri;
     respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
 }
 
@@ -1440,7 +1443,7 @@ work(LV2_Handle instance,
     const LV2_Atom *atom = (const LV2_Atom *)data;
     if (atom->type == self->sfizz_sfz_file_uri)
     {
-        const char *sfz_file_path = LV2_ATOM_BODY_CONST(atom);
+        const char *sfz_file_path = (const char *)LV2_ATOM_BODY_CONST(atom);
 
         spin_mutex_lock(self->synth_mutex);
         bool success = sfizz_lv2_load_file(self, sfz_file_path);
@@ -1456,7 +1459,7 @@ work(LV2_Handle instance,
     }
     else if (atom->type == self->sfizz_scala_file_uri)
     {
-        const char *scala_file_path = LV2_ATOM_BODY_CONST(atom);
+        const char *scala_file_path = (const char *)LV2_ATOM_BODY_CONST(atom);
 
         spin_mutex_lock(self->synth_mutex);
         bool success = sfizz_lv2_load_scala_file(self, scala_file_path);
@@ -1600,7 +1603,7 @@ work_response(LV2_Handle instance,
 static char *
 midnam_model(LV2_Handle instance)
 {
-    char *model = malloc(64);
+    char *model = (char *)malloc(64);
     if (!model)
         return NULL;
 
