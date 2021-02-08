@@ -1424,3 +1424,18 @@ TEST_CASE("[Synth] Send CC vs. Automate CC")
         REQUIRE(synth.getNumActiveVoices() == 1);
    }
 }
+
+TEST_CASE("[Keyswitches] Trigger from aftertouch extended CC")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/aftertouch_trigger.sfz", R"(
+        <region> start_locc129=100 start_hicc129=127 sample=*saw
+    )");
+    REQUIRE(synth.getNumActiveVoices() == 0);
+    synth.aftertouch(0, 90);
+    REQUIRE(synth.getNumActiveVoices() == 0);
+    synth.aftertouch(0, 110);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    synth.aftertouch(0, 120);
+    REQUIRE(synth.getNumActiveVoices() == 2);
+}
