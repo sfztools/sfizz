@@ -237,8 +237,13 @@ private:
     void updateLayout();
     static std::string getDefaultLabelText(uint32_t index);
 
+    struct ControlSlot;
+    ControlSlot* getSlot(uint32_t index);
+    ControlSlot* getOrCreateSlot(uint32_t index);
+
 private:
     struct ControlSlot {
+        bool used = false;
         SharedPointer<CControl> knob;
         SharedPointer<CTextLabel> label;
         SharedPointer<CViewContainer> box;
@@ -257,6 +262,7 @@ private:
 
     std::vector<std::unique_ptr<ControlSlot>> slots_;
     std::unique_ptr<ControlSlotListener> listener_;
+    SharedPointer<CVSTGUITimer> relayoutTrigger_;
 };
 
 ///
