@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "sfizz/Config.h"
 #include <cassert>
 
 enum class EditId : int {
@@ -19,6 +20,10 @@ enum class EditId : int {
     StretchTuning,
     CanEditUserFilesDir,
     UserFilesDir,
+    //
+    Controller0,
+    ControllerLast = Controller0 + sfz::config::numCCs - 1,
+    //
     UINumCurves,
     UINumMasters,
     UINumGroups,
@@ -38,3 +43,17 @@ struct EditRange {
     float extent() const noexcept { return max - min; }
     static EditRange get(EditId id);
 };
+
+inline EditId editIdForCC(int cc)
+{
+    return EditId(int(EditId::Controller0) + cc);
+}
+inline int ccForEditId(EditId id)
+{
+    return int(id) - int(EditId::Controller0);
+}
+inline bool editIdIsCC(EditId id)
+{
+    return int(id) >= int(EditId::Controller0) &&
+        int(id) <= int(EditId::ControllerLast);
+}
