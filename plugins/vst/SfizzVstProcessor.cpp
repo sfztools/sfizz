@@ -389,7 +389,7 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
                 auto ccNumber = static_cast<int>(id - kPidCC0);
                 for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
                     if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                        synth.cc(sampleOffset, ccNumber, fastRound(value * 127.0));
+                        synth.hdcc(sampleOffset, ccNumber, value);
                 }
             }
             break;
