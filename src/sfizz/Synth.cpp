@@ -1223,8 +1223,6 @@ void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
 
     const auto normalizedAftertouch = normalize7Bits(aftertouch);
     impl.resources_.midiState.channelAftertouchEvent(delay, normalizedAftertouch);
-    impl.resources_.midiState.ccEvent(delay, ExtendedCCs::channelAftertouch, normalizedAftertouch);
-
 
     for (auto& region : impl.regions_) {
         region->registerAftertouch(aftertouch);
@@ -1233,6 +1231,8 @@ void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
     for (auto& voice : impl.voiceManager_) {
         voice.registerAftertouch(delay, aftertouch);
     }
+
+    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normalizedAftertouch, false);
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
