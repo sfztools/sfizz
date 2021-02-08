@@ -80,14 +80,14 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         Vst::ParamID id = Vst::kNoParamId;
         switch (i) {
         case Vst::kAfterTouch:
-            id = kPidMidiAftertouch;
+            id = kPidAftertouch;
             break;
         case Vst::kPitchBend:
-            id = kPidMidiPitchBend;
+            id = kPidPitchBend;
             break;
         default:
             if (i < 128)
-                id = kPidMidiCC0 + i;
+                id = kPidCC0 + i;
             break;
         }
         midiMapping_[i] = id;
