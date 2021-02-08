@@ -9,6 +9,7 @@
 #include "SfizzVstUpdates.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
+#include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include <sfizz_message.h>
 #include <mutex>
@@ -49,6 +50,7 @@ protected:
     Steinberg::IPtr<FilePathUpdate> scalaPathUpdate_;
     Steinberg::IPtr<ProcessorStateUpdate> processorStateUpdate_;
     Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
+    Vst::ParamID midiMapping_[Vst::kCountCtrlNumber] {};
 };
 
 class SfizzVstController : public SfizzVstControllerNoUi, public VSTGUI::VST3EditorDelegate {

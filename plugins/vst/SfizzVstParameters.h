@@ -5,15 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "sfizz/Config.h"
 #include "public.sdk/source/vst/vstparameters.h"
 #include <stdexcept>
 
 using namespace Steinberg;
-
-// number of MIDI CC
-enum {
-    kNumControllerParams = 128,
-};
 
 // parameters
 enum {
@@ -27,7 +23,7 @@ enum {
     kPidMidiAftertouch,
     kPidMidiPitchBend,
     kPidMidiCC0,
-    kPidMidiCCLast = kPidMidiCC0 + kNumControllerParams - 1,
+    kPidMidiCCLast = kPidMidiCC0 + sfz::config::numCCs - 1,
     /* Reserved */
 };
 
