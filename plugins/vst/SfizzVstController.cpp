@@ -9,7 +9,6 @@
 #include "SfizzVstParameters.h"
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
-#include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {
@@ -65,7 +64,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     parameters.addParameter(Steinberg::String("Pitch bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
 
     // MIDI controllers
-    for (unsigned i = 0; i < kNumControllerParams; ++i) {
+    for (unsigned i = 0; i < sfz::config::numCCs; ++i) {
         Steinberg::String title;
         Steinberg::String shortTitle;
         title.printf("Controller %u", i);
@@ -74,6 +73,24 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         parameters.addParameter(
             title, nullptr, 0, 0, Vst::ParameterInfo::kNoFlags,
             pid++, Vst::kRootUnitId, shortTitle);
+    }
+
+    // Initial MIDI mapping
+    for (int32 i = 0; i < Vst::kCountCtrlNumber; ++i) {
+        Vst::ParamID id = Vst::kNoParamId;
+        switch (i) {
+        case Vst::kAfterTouch:
+            id = kPidAftertouch;
+            break;
+        case Vst::kPitchBend:
+            id = kPidPitchBend;
+            break;
+        default:
+            if (i < 128)
+                id = kPidCC0 + i;
+            break;
+        }
+        midiMapping_[i] = id;
     }
 
     return kResultTrue;
@@ -86,22 +103,16 @@ tresult PLUGIN_API SfizzVstControllerNoUi::terminate()
 
 tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id)
 {
-    switch (midiControllerNumber) {
-    case Vst::kAfterTouch:
-        id = kPidMidiAftertouch;
-        return kResultTrue;
-
-    case Vst::kPitchBend:
-        id = kPidMidiPitchBend;
-        return kResultTrue;
-
-    default:
-        if (midiControllerNumber < 0 || midiControllerNumber >= kNumControllerParams)
-            return kResultFalse;
-
-        id = kPidMidiCC0 + midiControllerNumber;
-        return kResultTrue;
+    if (midiControllerNumber < 0 || midiControllerNumber >= Vst::kCountCtrlNumber) {
+        id = Vst::kNoParamId;
+        return kResultFalse;
     }
+
+    id = midiMapping_[midiControllerNumber];
+    if (id == Vst::kNoParamId)
+        return kResultFalse;
+
+    return kResultTrue;
 }
 
 tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string)

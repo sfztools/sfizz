@@ -11,6 +11,7 @@
 #include "utility/vstgui_before.h"
 #include "vstgui/lib/cdrawcontext.h"
 #include "vstgui/lib/cgraphicspath.h"
+#include "vstgui/lib/cvstguitimer.h"
 #include "vstgui/lib/cframe.h"
 #include "utility/vstgui_after.h"
 
@@ -527,68 +528,23 @@ SControlsPanel::SControlsPanel(const CRect& size)
     setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
 
     setScrollbarWidth(10.0);
+
+    relayoutTrigger_ = makeOwned<CVSTGUITimer>(
+        [this](CVSTGUITimer* timer) { timer->stop(); updateLayout(); },
+        1, false);
 }
 
 void SControlsPanel::setControlUsed(uint32_t index, bool used)
 {
-    bool changed = false;
-
-    if (used) {
-        if (index + 1 > slots_.size())
-            slots_.resize(index + 1);
-        ControlSlot* slot = slots_[index].get();
-        changed = !slot;
-        if (changed) {
-            slot = new ControlSlot;
-            slots_[index].reset(slot);
-
-            // create controls etc...
-            CCoord knobWidth = 48.0;
-            CCoord knobHeight = knobWidth;
-            CCoord labelWidth = 96.0;
-            CCoord labelHeight = 24.0;
-            CCoord verticalPadding = 0.0;
-
-            CCoord totalWidth = std::max(knobWidth, labelWidth);
-            CCoord knobX = (totalWidth - knobWidth) / 2.0;
-            CCoord labelX = (totalWidth - labelWidth) / 2.0;
-
-            CRect knobBounds(knobX, 0.0, knobX + knobWidth, knobHeight);
-            CRect labelBounds(labelX, knobHeight + verticalPadding, labelX + labelWidth, knobHeight + verticalPadding + labelHeight);
-            CRect boxBounds = CRect(knobBounds).unite(labelBounds);
-
-            SharedPointer<SStyledKnob> knob = owned(new SStyledKnob(knobBounds, listener_.get(), index));
-            SharedPointer<CTextLabel> label = owned(new CTextLabel(labelBounds));
-            SharedPointer<CViewContainer> box = owned(new CViewContainer(boxBounds));
-
-            box->addView(knob);
-            knob->remember();
-            box->addView(label);
-            label->remember();
-
-            box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
-            label->setStyle(CTextLabel::kRoundRectStyle);
-            label->setRoundRectRadius(5.0);
-            label->setBackColor(CColor(0x2e, 0x34, 0x36));
-            label->setText(getDefaultLabelText(index));
-            knob->setActiveTrackColor(CColor(0x00, 0xb6, 0x2a));
-            knob->setInactiveTrackColor(CColor(0x30, 0x30, 0x30));
-            knob->setLineIndicatorColor(CColor(0x00, 0x00, 0x00));
-
-            slot->knob = knob;
-            slot->label = label;
-            slot->box = box;
-        }
+    ControlSlot* slot = getSlot(index);
+    if (!slot && !used)
+        return;
+    if (!slot)
+        slot = getOrCreateSlot(index);
+    if (used != slot->used) {
+        slot->used = used;
+        relayoutTrigger_->start();
     }
-    else {
-        if (index < slots_.size() && slots_[index]) {
-            changed = true;
-            slots_[index].reset();
-        }
-    }
-
-    if (changed)
-        updateLayout();
 }
 
 std::string SControlsPanel::getDefaultLabelText(uint32_t index)
@@ -596,45 +552,90 @@ std::string SControlsPanel::getDefaultLabelText(uint32_t index)
     return "CC " + std::to_string(index);
 }
 
+SControlsPanel::ControlSlot* SControlsPanel::getSlot(uint32_t index)
+{
+    ControlSlot* slot = nullptr;
+    if (index < slots_.size())
+        slot = slots_[index].get();
+    return slot;
+}
+
+SControlsPanel::ControlSlot* SControlsPanel::getOrCreateSlot(uint32_t index)
+{
+    ControlSlot* slot = getSlot(index);
+    if (slot)
+        return slot;
+
+    if (index + 1 > slots_.size())
+        slots_.resize(index + 1);
+
+    slot = new ControlSlot;
+    slots_[index].reset(slot);
+
+    // create controls etc...
+    CCoord knobWidth = 48.0;
+    CCoord knobHeight = knobWidth;
+    CCoord labelWidth = 96.0;
+    CCoord labelHeight = 24.0;
+    CCoord verticalPadding = 0.0;
+
+    CCoord totalWidth = std::max(knobWidth, labelWidth);
+    CCoord knobX = (totalWidth - knobWidth) / 2.0;
+    CCoord labelX = (totalWidth - labelWidth) / 2.0;
+
+    CRect knobBounds(knobX, 0.0, knobX + knobWidth, knobHeight);
+    CRect labelBounds(labelX, knobHeight + verticalPadding, labelX + labelWidth, knobHeight + verticalPadding + labelHeight);
+    CRect boxBounds = CRect(knobBounds).unite(labelBounds);
+
+    SharedPointer<SStyledKnob> knob = owned(new SStyledKnob(knobBounds, listener_.get(), index));
+    SharedPointer<CTextLabel> label = owned(new CTextLabel(labelBounds));
+    SharedPointer<CViewContainer> box = owned(new CViewContainer(boxBounds));
+
+    box->addView(knob);
+    knob->remember();
+    box->addView(label);
+    label->remember();
+
+    box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+    label->setStyle(CTextLabel::kRoundRectStyle);
+    label->setRoundRectRadius(5.0);
+    label->setBackColor(CColor(0x2e, 0x34, 0x36));
+    label->setText(getDefaultLabelText(index));
+    knob->setActiveTrackColor(CColor(0x00, 0xb6, 0x2a));
+    knob->setInactiveTrackColor(CColor(0x30, 0x30, 0x30));
+    knob->setLineIndicatorColor(CColor(0x00, 0x00, 0x00));
+
+    slot->knob = knob;
+    slot->label = label;
+    slot->box = box;
+
+    return slot;
+}
+
 void SControlsPanel::setControlValue(uint32_t index, float value)
 {
-    if (index >= slots_.size())
-        return;
-
-    ControlSlot* slot = slots_[index].get();
-    if (!slot)
-        return;
-
-    slot->knob->setValue(value);
-    slot->knob->invalid();
+    ControlSlot* slot = getOrCreateSlot(index);
+    CControl* knob = slot->knob;
+    knob->setValue(value);
+    knob->invalid();
 }
 
 void SControlsPanel::setControlDefaultValue(uint32_t index, float value)
 {
-    if (index >= slots_.size())
-        return;
-
-    ControlSlot* slot = slots_[index].get();
-    if (!slot)
-        return;
-
-    slot->knob->setDefaultValue(value);
+    ControlSlot* slot = getOrCreateSlot(index);
+    CControl* knob = slot->knob;
+    knob->setDefaultValue(value);
 }
 
 void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
 {
-    if (index >= slots_.size())
-        return;
-
-    ControlSlot* slot = slots_[index].get();
-    if (!slot)
-        return;
-
+    ControlSlot* slot = getOrCreateSlot(index);
+    CTextLabel* label = slot->label;
     if (text && text[0] != '\0')
-        slot->label->setText(text);
+        label->setText(text);
     else
-        slot->label->setText(getDefaultLabelText(index).c_str());
-    slot->label->invalid();
+        label->setText(getDefaultLabelText(index).c_str());
+    label->invalid();
 }
 
 void SControlsPanel::recalculateSubViews()
@@ -672,7 +673,7 @@ void SControlsPanel::updateLayout()
     uint32_t numSlots = static_cast<uint32_t>(slots_.size());
     for (uint32_t i = 0; i < numSlots; ++i) {
         ControlSlot* slot = slots_[i].get();
-        if (!slot)
+        if (!slot || !slot->used)
             continue;
 
         CViewContainer* box = slot->box;
@@ -706,8 +707,6 @@ void SControlsPanel::updateLayout()
         }
     }
 
-    CRect containerSize = getContainerSize();
-    containerSize.bottom = containerBottom;
     setContainerSize(CRect(0.0, 0.0, viewBounds.getWidth(), containerBottom + verticalPadding));
 
     invalid();

@@ -19,9 +19,9 @@ compile_commands.json
 clients/sfizz_jack
 clients/sfzprint
 
-/vst/download/
+/plugins/vst/download/
 
-/editor/external/fluentui-system-icons/
+/plugins/editor/external/fluentui-system-icons/
 
 *.sublime-*
 *.code-*
