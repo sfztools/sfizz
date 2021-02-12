@@ -16,7 +16,7 @@ namespace sfz {
  * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
  */
 template <class T, class U>
-float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, CrossfadeCurve curve)
 {
     if (value < crossfadeRange.getStart())
         return 0.0f;
@@ -27,9 +27,9 @@ float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurv
 
     else if (value < crossfadeRange.getEnd()) {
         const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
+        if (curve == CrossfadeCurve::power)
             return sqrt(crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
+        if (curve == CrossfadeCurve::gain)
             return crossfadePosition;
     }
 
@@ -40,7 +40,7 @@ float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurv
  * @brief Compute a crossfade out value with respect to a crossfade range (note, velocity, cc, ...)
  */
 template <class T, class U>
-float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, CrossfadeCurve curve)
 {
     if (value > crossfadeRange.getEnd())
         return 0.0f;
@@ -51,9 +51,9 @@ float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCur
 
     else if (value > crossfadeRange.getStart()) {
         const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
+        if (curve == CrossfadeCurve::power)
             return std::sqrt(1 - crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
+        if (curve == CrossfadeCurve::gain)
             return 1 - crossfadePosition;
     }
 

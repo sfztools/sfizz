@@ -6,12 +6,7 @@
 
 #pragma once
 
-#include "Config.h"
-#include "Defaults.h"
-#include "MathHelpers.h"
-#include "SfzHelpers.h"
 #include "OnePoleFilter.h"
-#include "SIMDHelpers.h"
 #include <array>
 
 namespace sfz {

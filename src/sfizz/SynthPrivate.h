@@ -257,8 +257,8 @@ struct Synth::Impl final: public Parser::Listener {
 
     // Control opcodes
     std::string defaultPath_ { "" };
-    int noteOffset_ { 0 };
-    int octaveOffset_ { 0 };
+    int noteOffset_ { Default::noteOffset };
+    int octaveOffset_ { Default::octaveOffset };
 
     // Modulation source generators
     std::unique_ptr<ControllerSource> genController_;

@@ -276,11 +276,10 @@ void Synth::Impl::handleMasterOpcodes(const std::vector<Opcode>& members)
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
             ASSERT(currentSet_ != nullptr);
-            if (auto value = readOpcode(member.value, Default::polyphonyRange))
-                currentSet_->setPolyphonyLimit(*value);
+            currentSet_->setPolyphonyLimit(member.read(Default::polyphony));
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, currentSwitch_, Default::keyRange);
+            currentSwitch_ = member.read(Default::key);
             break;
         }
     }
@@ -294,15 +293,14 @@ void Synth::Impl::handleGlobalOpcodes(const std::vector<Opcode>& members)
         switch (member.lettersOnlyHash) {
         case hash("polyphony"):
             ASSERT(currentSet_ != nullptr);
-            if (auto value = readOpcode(member.value, Default::polyphonyRange))
-                currentSet_->setPolyphonyLimit(*value);
+            currentSet_->setPolyphonyLimit(member.read(Default::polyphony));
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, currentSwitch_, Default::keyRange);
+            currentSwitch_ = member.read(Default::key);
             break;
         case hash("volume"):
             // FIXME : Probably best not to mess with this and let the host control the volume
-            // setValueFromOpcode(member, volume, Default::volumeRange);
+            // setValueFromOpcode(member, volume, OldDefault::volumeRange);
             break;
         }
     }
@@ -318,13 +316,13 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
 
         switch (member.lettersOnlyHash) {
         case hash("group"):
-            setValueFromOpcode(member, groupIdx, Default::groupRange);
+            groupIdx = member.read(Default::group);
             break;
         case hash("polyphony"):
-            setValueFromOpcode(member, maxPolyphony, Default::polyphonyRange);
+            maxPolyphony = member.read(Default::polyphony);
             break;
         case hash("sw_default"):
-            setValueFromOpcode(member, currentSwitch_, Default::keyRange);
+            currentSwitch_ = member.read(Default::key);
             break;
         }
     };
@@ -352,25 +350,21 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 
         switch (member.lettersOnlyHash) {
         case hash("set_cc&"):
-            if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
-                const auto ccValue = readOpcode(member.value, Default::midi7Range);
-                if (ccValue)
-                    setDefaultHdcc(member.parameters.back(), normalizeCC(*ccValue));
+            if (Default::ccNumber.bounds.containsWithEnd(member.parameters.back())) {
+                setDefaultHdcc(member.parameters.back(), member.read(Default::loCC));
             }
             break;
         case hash("set_hdcc&"):
-            if (Default::ccNumberRange.containsWithEnd(member.parameters.back())) {
-                const auto ccValue = readOpcode(member.value, Default::normalizedRange);
-                if (ccValue)
-                    setDefaultHdcc(member.parameters.back(), *ccValue);
+            if (Default::ccNumber.bounds.containsWithEnd(member.parameters.back())) {
+                setDefaultHdcc(member.parameters.back(), member.read(Default::loNormalized));
             }
             break;
         case hash("label_cc&"):
-            if (Default::ccNumberRange.containsWithEnd(member.parameters.back()))
+            if (Default::ccNumber.bounds.containsWithEnd(member.parameters.back()))
                 setCCLabel(member.parameters.back(), std::string(member.value));
             break;
         case hash("label_key&"):
-            if (member.parameters.back() <= Default::keyRange.getEnd()) {
+            if (member.parameters.back() <= Default::key.bounds.getEnd()) {
                 const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
                 insertPairUniquely(keyLabels_, noteNumber, std::string(member.value));
             }
@@ -380,10 +374,10 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             DBG("Changing default sample path to " << defaultPath_);
             break;
         case hash("note_offset"):
-            setValueFromOpcode(member, noteOffset_, Default::noteOffsetRange);
+            noteOffset_ = member.read(Default::noteOffset);
             break;
         case hash("octave_offset"):
-            setValueFromOpcode(member, octaveOffset_, Default::octaveOffsetRange);
+            octaveOffset_ = member.read(Default::octaveOffset);
             break;
         case hash("hint_ram_based"):
             if (member.value == "1")
@@ -446,22 +440,19 @@ void Synth::Impl::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
             // note(jpc): gain opcodes are linear volumes in % units
 
         case hash("directtomain"):
-            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
-                getOrCreateBus(0).setGainToMain(*valueOpt / 100);
+            getOrCreateBus(0).setGainToMain(opcode.read(Default::effect));
             break;
 
         case hash("fx&tomain"): // fx&tomain
             if (opcode.parameters.front() < 1 || opcode.parameters.front() > config::maxEffectBuses)
                 break;
-            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
-                getOrCreateBus(opcode.parameters.front()).setGainToMain(*valueOpt / 100);
+            getOrCreateBus(opcode.parameters.front()).setGainToMain(opcode.read(Default::effect));
             break;
 
         case hash("fx&tomix"): // fx&tomix
             if (opcode.parameters.front() < 1 || opcode.parameters.front() > config::maxEffectBuses)
                 break;
-            if (auto valueOpt = readOpcode<float>(opcode.value, { 0, 100 }))
-                getOrCreateBus(opcode.parameters.front()).setGainToMix(*valueOpt / 100);
+            getOrCreateBus(opcode.parameters.front()).setGainToMix(opcode.read(Default::effect));
             break;
         }
     }
@@ -584,20 +575,20 @@ void Synth::Impl::finalizeSfzLoad()
             region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
 
             if (fileInformation->hasLoop) {
-                if (region->loopRange.getStart() == Default::loopRange.getStart())
-                    region->loopRange.setStart(fileInformation->loopBegin);
+                if (region->loopRange.getStart() == Default::loopStart)
+                    region->loopRange.setStart(fileInformation->loopStart);
 
-                if (region->loopRange.getEnd() == Default::loopRange.getEnd())
+                if (region->loopRange.getEnd() == Default::loopEnd)
                     region->loopRange.setEnd(fileInformation->loopEnd);
 
                 if (!region->loopMode)
-                    region->loopMode = SfzLoopMode::loop_continuous;
+                    region->loopMode = LoopMode::loop_continuous;
             }
 
             if (region->isRelease() && !region->loopMode)
-                region->loopMode = SfzLoopMode::one_shot;
+                region->loopMode = LoopMode::one_shot;
 
-            if (region->loopRange.getEnd() == Default::loopRange.getEnd())
+            if (region->loopRange.getEnd() == Default::loopEnd)
                 region->loopRange.setEnd(region->sampleEnd);
 
             if (fileInformation->numChannels == 2)
@@ -611,7 +602,7 @@ void Synth::Impl::finalizeSfzLoad()
                 uint64_t sumOffsetCC = region->offset + region->offsetRandom;
                 for (const auto& offsets : region->offsetCC)
                     sumOffsetCC += offsets.data;
-                return Default::offsetCCRange.clamp(sumOffsetCC);
+                return Default::offsetMod.bounds.clamp(sumOffsetCC);
             }();
 
             if (!resources_.filePool.preloadFile(*region->sampleId, maxOffset))
@@ -651,7 +642,7 @@ void Synth::Impl::finalizeSfzLoad()
         for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc)
                 || region->ccConditions.contains(cc)
-                || (cc == region->sustainCC && region->trigger == SfzTrigger::release))
+                || (cc == region->sustainCC && region->trigger == Trigger::release))
                 ccActivationLists_[cc].push_back(region);
         }
 
@@ -663,14 +654,14 @@ void Synth::Impl::finalizeSfzLoad()
 
         // Set the default frequencies on equalizers if needed
         if (region->equalizers.size() > 0
-            && region->equalizers[0].frequency == Default::eqFrequencyUnset) {
-            region->equalizers[0].frequency = Default::eqFrequency1;
+            && region->equalizers[0].frequency == Default::eqFrequency) {
+            region->equalizers[0].frequency = Default::defaultEQFreq[0];
             if (region->equalizers.size() > 1
-                && region->equalizers[1].frequency == Default::eqFrequencyUnset) {
-                region->equalizers[1].frequency = Default::eqFrequency2;
+                && region->equalizers[1].frequency == Default::eqFrequency) {
+                region->equalizers[1].frequency = Default::defaultEQFreq[1];
                 if (region->equalizers.size() > 2
-                    && region->equalizers[2].frequency == Default::eqFrequencyUnset) {
-                    region->equalizers[2].frequency = Default::eqFrequency3;
+                    && region->equalizers[2].frequency == Default::eqFrequency) {
+                    region->equalizers[2].frequency = Default::defaultEQFreq[2];
                 }
             }
         }
@@ -1047,7 +1038,7 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
 
     for (auto& region : noteActivationLists_[noteNumber]) {
         if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == SfzTrigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
+            if (region->trigger == Trigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
                 continue;
 
             startVoice(region, delay, triggerEvent, ring);
@@ -1479,7 +1470,7 @@ float Synth::getVolume() const noexcept
 void Synth::setVolume(float volume) noexcept
 {
     Impl& impl = *impl_;
-    impl.volume_ = Default::volumeRange.clamp(volume);
+    impl.volume_ = Default::volume.bounds.clamp(volume);
 }
 
 int Synth::getNumVoices() const noexcept

@@ -8,6 +8,8 @@
 #include "sfizz/Synth.h"
 #include "sfizz/Region.h"
 #include "sfizz/Voice.h"
+#include "sfizz/Range.h"
+#include "catch2/catch.hpp"
 #include "sfizz/modulations/ModKey.h"
 
 class RegionCCView {
@@ -29,6 +31,13 @@ private:
     const sfz::Region& region_;
     sfz::ModKey target_;
 };
+
+template<class T>
+void almostEqualRanges(const sfz::Range<T>& lhs, const sfz::Range<T>& rhs)
+{
+    REQUIRE(lhs.getStart() == Approx(rhs.getStart()));
+    REQUIRE(lhs.getEnd() == Approx(rhs.getEnd()));
+}
 
 template<class C>
 void sortAll(C& container)

@@ -72,25 +72,17 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("filter_cutoff"):
-                setValueFromOpcode(opc, desc.cutoff, Default::filterCutoffRange);
+                desc.cutoff = opc.read(Default::filterCutoff);
                 break;
             case hash("filter_resonance"):
-                setValueFromOpcode(opc, desc.resonance, Default::filterResonanceRange);
+                desc.resonance = opc.read(Default::filterResonance);
                 break;
             case hash("filter_type"):
-                {
-                    absl::optional<FilterType> ftype = sfz::Filter::typeFromName(opc.value);
-                    if (ftype)
-                        desc.type = *ftype;
-                    else {
-                        desc.type = FilterType::kFilterNone;
-                        DBG("Unknown filter type: " << std::string(opc.value));
-                    }
-                    break;
-                }
+                desc.type = opc.read(Default::filter);
+                break;
             // extension
             case hash("sfizz:filter_gain"):
-                setValueFromOpcode(opc, desc.gain, Default::filterGainRange);
+                desc.gain = opc.read(Default::filterGain);
                 break;
             }
         }

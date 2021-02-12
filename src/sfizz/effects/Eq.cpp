@@ -70,25 +70,17 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("eq_freq"):
-                setValueFromOpcode(opc, desc.frequency, Default::eqFrequencyRange);
+                desc.frequency = opc.read(Default::eqFrequency);
                 break;
             case hash("eq_bw"):
-                setValueFromOpcode(opc, desc.bandwidth, Default::eqBandwidthRange);
+                desc.bandwidth = opc.read(Default::eqBandwidth);
                 break;
             case hash("eq_gain"):
-                setValueFromOpcode(opc, desc.gain, Default::eqGainRange);
+                desc.gain = opc.read(Default::eqGain);
                 break;
             case hash("eq_type"):
-                {
-                    absl::optional<EqType> ftype = sfz::FilterEq::typeFromName(opc.value);
-                    if (ftype)
-                        desc.type = *ftype;
-                    else {
-                        desc.type = EqType::kEqNone;
-                        DBG("Unknown EQ type: " << std::string(opc.value));
-                    }
-                    break;
-                }
+                desc.type = opc.read(Default::eq);
+                break;
             }
         }
 

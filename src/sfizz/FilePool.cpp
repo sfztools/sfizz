@@ -255,7 +255,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     if (!fileId.isReverse()) {
         if (haveInstrumentInfo && instrumentInfo.loop_count > 0) {
             returnedValue.hasLoop = true;
-            returnedValue.loopBegin = instrumentInfo.loops[0].start;
+            returnedValue.loopStart = instrumentInfo.loops[0].start;
             returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
         }
     } else {
@@ -297,7 +297,7 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
         const auto factor = static_cast<double>(oversamplingFactor);
         fileInformation->sampleRate = factor * static_cast<double>(reader->sampleRate());
         fileInformation->end = static_cast<uint32_t>(factor * fileInformation->end);
-        fileInformation->loopBegin = static_cast<uint32_t>(factor * fileInformation->loopBegin);
+        fileInformation->loopStart = static_cast<uint32_t>(factor * fileInformation->loopStart);
         fileInformation->loopEnd = static_cast<uint32_t>(factor * fileInformation->loopEnd);
         auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
             readFromFile(*reader, framesToLoad, oversamplingFactor),
@@ -329,7 +329,7 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
         const auto factor = static_cast<double>(oversamplingFactor);
         fileInformation->sampleRate = factor * static_cast<double>(reader->sampleRate());
         fileInformation->end = static_cast<uint32_t>(factor * fileInformation->end);
-        fileInformation->loopBegin = static_cast<uint32_t>(factor * fileInformation->loopBegin);
+        fileInformation->loopStart = static_cast<uint32_t>(factor * fileInformation->loopStart);
         fileInformation->loopEnd = static_cast<uint32_t>(factor * fileInformation->loopEnd);
         auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
             readFromFile(*reader, frames, oversamplingFactor),
@@ -461,7 +461,7 @@ void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
         FileInformation& information = preloadedFile.second.information;
         information.sampleRate *= samplerateChange;
         information.end = static_cast<uint32_t>(samplerateChange * information.end);
-        information.loopBegin = static_cast<uint32_t>(samplerateChange * information.loopBegin);
+        information.loopStart = static_cast<uint32_t>(samplerateChange * information.loopStart);
         information.loopEnd = static_cast<uint32_t>(samplerateChange * information.loopEnd);
 
         if (preloadedFile.second.status == FileData::Status::Done) {

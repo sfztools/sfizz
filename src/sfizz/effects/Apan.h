@@ -47,20 +47,20 @@ namespace fx {
         template <int Wave> void computeLfos(float* left, float* right, unsigned nframes);
 
     private:
-        float _samplePeriod = 0.0;
+        float _samplePeriod { 0.0f };
         sfz::Buffer<float> _lfoOutLeft { config::defaultSamplesPerBlock };
         sfz::Buffer<float> _lfoOutRight { config::defaultSamplesPerBlock };
 
         // Controls
-        float _dry = 0.0;
-        float _wet = 0.0;
-        float _depth = 0.0;
-        int _lfoWave = 0;
-        float _lfoFrequency = 0.0;
-        float _lfoPhaseOffset = 0.5;
+        float _dry { Default::apanLevel };
+        float _wet { Default::apanLevel };
+        float _depth { Default::apanLevel };
+        int _lfoWave { Default::apanWaveform };
+        float _lfoFrequency { Default::apanFrequency };
+        float _lfoPhaseOffset { Default::apanPhase };
 
         // State
-        float _lfoPhase = 0.0;
+        float _lfoPhase { 0.0f };
     };
 
 } // namespace fx

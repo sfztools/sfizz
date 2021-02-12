@@ -50,6 +50,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/AudioReader.cpp \
 	src/sfizz/BeatClock.cpp \
 	src/sfizz/Curve.cpp \
+	src/sfizz/Defaults.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
 	src/sfizz/modulations/ModId.cpp \
