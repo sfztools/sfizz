@@ -553,11 +553,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            if (auto value = readOpcode(opcode.value, Default::filterCutoffModRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::ChannelAftertouch);
-                const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::ChannelAftertouch);
+            const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex);
+            getOrCreateConnection(source, target).sourceDepth = opcode.read(Default::filterCutoffMod);
         }
         break;
     case hash("fil&_keytrack"): // also fil_keytrack
@@ -1532,7 +1530,6 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
     return false;
 }
 
-    #include<iostream>
 bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
