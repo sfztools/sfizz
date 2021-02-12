@@ -547,6 +547,19 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             processGenericCc(opcode, Default::filterResonanceMod, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
         }
         break;
+    case hash("cutoff&_chanaft"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            if (auto value = readOpcode(opcode.value, Default::filterCutoffModRange)) {
+                const ModKey source = ModKey::createNXYZ(ModId::ChannelAftertouch);
+                const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex);
+                getOrCreateConnection(source, target).sourceDepth = *value;
+            }
+        }
+        break;
     case hash("fil&_keytrack"): // also fil_keytrack
         {
             const auto filterIndex = opcode.parameters.front() - 1;

@@ -99,6 +99,20 @@ public:
     float getPitchBend() const noexcept;
 
     /**
+     * @brief Register a channel aftertouch event
+     *
+     * @param aftertouch
+     */
+    void channelAftertouchEvent(int delay, float aftertouch) noexcept;
+
+    /**
+     * @brief Get the channel aftertouch status
+
+     * @return int
+     */
+    float getChannelAftertouch() const noexcept;
+
+    /**
      * @brief Register a CC event
      *
      * @param ccNumber
@@ -135,8 +149,19 @@ public:
 
     const EventVector& getCCEvents(int ccIdx) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
+    const EventVector& getChannelAftertouchEvents() const noexcept;
 
 private:
+
+    /**
+     * @brief Insert events in a sorted event vector.
+     *
+     * @param events
+     * @param delay
+     * @param value
+     */
+    void insertEventInVector(EventVector& events, int delay, float value);
+
     int activeNotes { 0 };
 
     /**
@@ -175,6 +200,12 @@ private:
      * @brief Pitch bend status
      */
     EventVector pitchEvents;
+
+    /**
+     * @brief Aftertouch status
+     */
+    EventVector channelAftertouchEvents;
+
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
     unsigned internalClock { 0 };

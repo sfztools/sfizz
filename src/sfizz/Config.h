@@ -24,6 +24,19 @@ enum class Oversampling: int {
     x8 = 8
 };
 
+enum ExtendedCCs {
+    pitchBend = 128,
+    channelAftertouch,
+    polyphonicAftertouch,
+    noteOnVelocity,
+    noteOffVelocity,
+    keyboardNoteNumber,
+    keyboardNoteGate,
+    unipolarRandom,
+    bipolarRandom,
+    alternate
+};
+
 namespace config {
     constexpr float defaultSampleRate { 48000 };
     constexpr float maxSampleRate { 192000 };

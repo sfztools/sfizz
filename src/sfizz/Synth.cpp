@@ -63,6 +63,7 @@ Synth::Impl::Impl()
     genLFO_.reset(new LFOSource(voiceManager_));
     genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
     genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
+    genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, resources_.midiState));
 }
 
 Synth::Impl::~Impl()
@@ -1205,11 +1206,26 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
         voice.registerPitchWheel(delay, normalizedPitch);
     }
 }
-void Synth::aftertouch(int /* delay */, uint8_t /* aftertouch */) noexcept
+
+void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+
+    const auto normalizedAftertouch = normalize7Bits(aftertouch);
+    impl.resources_.midiState.channelAftertouchEvent(delay, normalizedAftertouch);
+
+    for (auto& region : impl.regions_) {
+        region->registerAftertouch(aftertouch);
+    }
+
+    for (auto& voice : impl.voiceManager_) {
+        voice.registerAftertouch(delay, aftertouch);
+    }
+
+    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normalizedAftertouch, false);
 }
+
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
 {
     Impl& impl = *impl_;
@@ -1217,6 +1233,7 @@ void Synth::tempo(int delay, float secondsPerBeat) noexcept
 
     impl.resources_.beatClock.setTempo(delay, secondsPerBeat);
 }
+
 void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
 {
     Impl& impl = *impl_;
@@ -1224,6 +1241,7 @@ void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
 
     impl.resources_.beatClock.setTimeSignature(delay, TimeSignature(beatsPerBar, beatUnit));
 }
+
 void Synth::timePosition(int delay, int bar, double barBeat)
 {
     Impl& impl = *impl_;
@@ -1231,6 +1249,7 @@ void Synth::timePosition(int delay, int bar, double barBeat)
 
     impl.resources_.beatClock.setTimePosition(delay, BBT(bar, barBeat));
 }
+
 void Synth::playbackState(int delay, int playbackState)
 {
     Impl& impl = *impl_;
@@ -1244,16 +1263,19 @@ int Synth::getNumRegions() const noexcept
     Impl& impl = *impl_;
     return static_cast<int>(impl.regions_.size());
 }
+
 int Synth::getNumGroups() const noexcept
 {
     Impl& impl = *impl_;
     return impl.numGroups_;
 }
+
 int Synth::getNumMasters() const noexcept
 {
     Impl& impl = *impl_;
     return impl.numMasters_;
 }
+
 int Synth::getNumCurves() const noexcept
 {
     Impl& impl = *impl_;
@@ -1553,6 +1575,9 @@ void Synth::Impl::setupModMatrix()
             case ModId::PitchEG:
             case ModId::FilEG:
                 gen = genADSREnvelope_.get();
+                break;
+            case ModId::ChannelAftertouch:
+                gen = genChannelAftertouch_.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");
