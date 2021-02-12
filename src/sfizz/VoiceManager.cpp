@@ -189,13 +189,9 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
 
     for (Voice* voice : activeVoices_) {
         const TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        const bool skipVoice =
-            (triggerEvent.type == TriggerEventType::NoteOn && voice->releasedOrFree())
-            || voice->isFree();
-        if (!skipVoice
+        if (!voice->releasedOrFree()
             && voice->getRegion()->group == region->group
-            && voiceTriggerEvent.number == triggerEvent.number
-            && voiceTriggerEvent.type == triggerEvent.type) {
+            && voiceTriggerEvent.number == triggerEvent.number) {
             notePolyphonyCounter += 1;
             switch (region->selfMask) {
             case SelfMask::mask:
