@@ -105,6 +105,12 @@ add_library(sfizz_hiir INTERFACE)
 add_library(sfizz::hiir ALIAS sfizz_hiir)
 target_include_directories(sfizz_hiir INTERFACE "src/external/hiir")
 
+# The hiir filter designer
+add_library(sfizz_hiir_polyphase_iir2designer STATIC
+    "src/external/hiir/hiir/PolyphaseIir2Designer.cpp")
+add_library(sfizz::hiir_polyphase_iir2designer ALIAS sfizz_hiir_polyphase_iir2designer)
+target_link_libraries(sfizz_hiir_polyphase_iir2designer PUBLIC sfizz::hiir)
+
 # The kissfft library
 add_library(sfizz_kissfft STATIC
     "src/external/kiss_fft/kiss_fft.c"
