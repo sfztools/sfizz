@@ -39,3 +39,6 @@
 	path = external/filesystem
 	url = https://github.com/gulrak/filesystem.git
 	shallow = true
+[submodule "external/simde"]
+	path = external/simde
+	url = https://github.com/simd-everywhere/simde.git
