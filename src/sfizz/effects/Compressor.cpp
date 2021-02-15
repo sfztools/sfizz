@@ -31,8 +31,8 @@ namespace fx {
 
     struct Compressor::Impl {
         faustCompressor _compressor[2];
-        bool _stlink = false;
-        float _inputGain = 1.0;
+        bool _stlink { Default::compSTLink };
+        float _inputGain { Default::compGain };
         AudioBuffer<float, 2> _tempBuffer2x { 2, _oversampling * config::defaultSamplesPerBlock };
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
         hiir::Downsampler2xFpu<12> _downsampler2x[EffectChannels];
@@ -163,36 +163,38 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("comp_attack"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
+                {
+                    auto value = opc.read(Default::compAttack);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Attack(c, *value);
+                        impl.set_Attack(c, value);
                 }
                 break;
             case hash("comp_release"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
+                {
+                    auto value = opc.read(Default::compRelease);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Release(c, *value);
+                        impl.set_Release(c, value);
                 }
                 break;
             case hash("comp_threshold"):
-                if (auto value = readOpcode<float>(opc.value, {-100.0, 0.0})) {
+                {
+                    auto value = opc.read(Default::compThreshold);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Threshold(c, *value);
+                        impl.set_Threshold(c, value);
                 }
                 break;
             case hash("comp_ratio"):
-                if (auto value = readOpcode<float>(opc.value, {1.0, 50.0})) {
+                {
+                    auto value = opc.read(Default::compRatio);
                     for (size_t c = 0; c < 2; ++c)
-                        impl.set_Ratio(c, *value);
+                        impl.set_Ratio(c, value);
                 }
                 break;
             case hash("comp_gain"):
-                if (auto value = readOpcode<float>(opc.value, {-100.0, 100.0}))
-                    impl._inputGain = db2mag(*value);
+                impl._inputGain = opc.read(Default::compGain);
                 break;
             case hash("comp_stlink"):
-                if (auto value = readBooleanFromOpcode(opc))
-                    impl._stlink = *value;
+                impl._stlink = opc.read(Default::compSTLink);
                 break;
             }
         }

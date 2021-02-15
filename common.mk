@@ -50,6 +50,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/AudioReader.cpp \
 	src/sfizz/BeatClock.cpp \
 	src/sfizz/Curve.cpp \
+	src/sfizz/Defaults.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
 	src/sfizz/modulations/ModId.cpp \
@@ -57,6 +58,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModKeyHash.cpp \
 	src/sfizz/modulations/ModMatrix.cpp \
 	src/sfizz/modulations/sources/ADSREnvelope.cpp \
+	src/sfizz/modulations/sources/ChannelAftertouch.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
 	src/sfizz/modulations/sources/FlexEnvelope.cpp \
 	src/sfizz/modulations/sources/LFO.cpp \

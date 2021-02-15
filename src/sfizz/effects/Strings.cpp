@@ -132,10 +132,10 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("strings_number"):
-                setValueFromOpcode(opc, strings->_numStrings, {0, MaximumNumStrings});
+                strings->_numStrings = opc.read(Default::stringsNumber);
                 break;
             case hash("strings_wet"):
-                setValueFromOpcode(opc, strings->_wet, {0.0f, 100.0f});
+                strings->_wet = opc.read(Default::effect);
                 break;
             }
         }

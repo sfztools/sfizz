@@ -189,16 +189,12 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
 
     for (Voice* voice : activeVoices_) {
         const TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        const bool skipVoice =
-            (triggerEvent.type == TriggerEventType::NoteOn && voice->releasedOrFree())
-            || voice->isFree();
-        if (!skipVoice
+        if (!voice->releasedOrFree()
             && voice->getRegion()->group == region->group
-            && voiceTriggerEvent.number == triggerEvent.number
-            && voiceTriggerEvent.type == triggerEvent.type) {
+            && voiceTriggerEvent.number == triggerEvent.number) {
             notePolyphonyCounter += 1;
             switch (region->selfMask) {
-            case SfzSelfMask::mask:
+            case SelfMask::mask:
                 if (voiceTriggerEvent.value <= triggerEvent.value) {
                     if (!selfMaskCandidate
                         || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
@@ -206,7 +202,7 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
                     }
                 }
                 break;
-            case SfzSelfMask::dontMask:
+            case SelfMask::dontMask:
                 if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
                     selfMaskCandidate = voice;
                 break;

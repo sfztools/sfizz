@@ -44,7 +44,7 @@ private:
     const EQDescription* description;
     std::unique_ptr<FilterEq> eq;
     float baseBandwidth { Default::eqBandwidth };
-    float baseFrequency { Default::eqFrequency1 };
+    float baseFrequency { Default::eqFrequency };
     float baseGain { Default::eqGain };
     bool prepared { false };
     ModMatrix::TargetId gainTarget;

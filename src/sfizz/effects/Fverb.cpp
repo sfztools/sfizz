@@ -180,13 +180,13 @@ namespace fx {
         std::unique_ptr<Effect> fx { reverb };
 
         const Impl::Profile* profile = &Impl::largeHall;
-        float dry = 0;
-        float wet = 0;
-        float input = 0;
-        float size = 0;
-        float predelay = 0;
-        float tone = 100;
-        float damp = 0;
+        float dry { Default::effect };
+        float wet { Default::effect };
+        float input { Default::effect };
+        float size { Default::fverbSize };
+        float predelay { Default::fverbPredelay };
+        float tone { Default::fverbTone };
+        float damp { Default::fverbDamp };
 
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
@@ -211,25 +211,26 @@ namespace fx {
                 }
                 break;
             case hash("reverb_dry"):
-                setValueFromOpcode(opc, dry, {0.0f, 100.0f});
+
+                dry = opc.read(Default::effect);
                 break;
             case hash("reverb_wet"):
-                setValueFromOpcode(opc, wet, {0.0f, 100.0f});
+                wet = opc.read(Default::effect);
                 break;
             case hash("reverb_input"):
-                setValueFromOpcode(opc, input, {0.0f, 100.0f});
+                input = opc.read(Default::effect);
                 break;
             case hash("reverb_size"):
-                setValueFromOpcode(opc, size, {0.0f, 100.0f});
+                size = opc.read(Default::fverbSize);
                 break;
             case hash("reverb_predelay"):
-                setValueFromOpcode(opc, predelay, {0.0f, 10.0f});
+                predelay = opc.read(Default::fverbPredelay);
                 break;
             case hash("reverb_tone"):
-                setValueFromOpcode(opc, tone, {0.0f, 100.0f});
+                tone = opc.read(Default::fverbTone);
                 break;
             case hash("reverb_damp"):
-                setValueFromOpcode(opc, damp, {0.0f, 100.0f});
+                damp = opc.read(Default::fverbDamp);
                 break;
             }
         }

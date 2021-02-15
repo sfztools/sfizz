@@ -18,7 +18,7 @@ struct FilterDescription
     float resonance { Default::filterCutoff };
     float gain { Default::filterGain };
     int keytrack { Default::filterKeytrack };
-    uint8_t keycenter { Default::filterKeycenter };
+    uint8_t keycenter { Default::key };
     int veltrack { Default::filterVeltrack };
     float random { Default::filterRandom };
     FilterType type { FilterType::kFilterLpf2p };

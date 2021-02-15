@@ -26,6 +26,7 @@ enum class ModId : int {
     AmpEG,
     PitchEG,
     FilEG,
+    ChannelAftertouch,
 
     _SourcesEnd,
 

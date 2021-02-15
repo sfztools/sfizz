@@ -95,7 +95,7 @@ namespace fx {
                     rectify->_full = false;
                 break;
             case hash("rectify"):
-                setValueFromOpcode(opc, rectify->_amount, { 0.0, 100.0 });
+                rectify->_amount = opc.read(Default::rectify);
                 break;
             }
         }

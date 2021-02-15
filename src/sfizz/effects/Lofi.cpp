@@ -85,10 +85,10 @@ namespace fx {
         for (const Opcode& opcode : members) {
             switch (opcode.lettersOnlyHash) {
             case hash("bitred"):
-                setValueFromOpcode(opcode, lofi->_bitred_depth, { 0.0, 100.0 });
+                lofi->_bitred_depth = opcode.read(Default::lofiBitred);
                 break;
             case hash("decim"):
-                setValueFromOpcode(opcode, lofi->_decim_depth, { 0.0, 100.0 });
+                lofi->_decim_depth = opcode.read(Default::lofiDecim);
                 break;
             }
         }

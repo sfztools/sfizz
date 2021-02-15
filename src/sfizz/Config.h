@@ -24,6 +24,19 @@ enum class Oversampling: int {
     x8 = 8
 };
 
+enum ExtendedCCs {
+    pitchBend = 128,
+    channelAftertouch,
+    polyphonicAftertouch,
+    noteOnVelocity,
+    noteOffVelocity,
+    keyboardNoteNumber,
+    keyboardNoteGate,
+    unipolarRandom,
+    bipolarRandom,
+    alternate
+};
+
 namespace config {
     constexpr float defaultSampleRate { 48000 };
     constexpr float maxSampleRate { 192000 };
@@ -150,6 +163,10 @@ namespace config {
             (int(polyphony * config::overflowVoiceMultiplier) < int(config::maxVoices)) ?
             int(polyphony * config::overflowVoiceMultiplier) : int(config::maxVoices);
     }
+    /**
+     * @brief The smoothing time constant per "smooth" steps
+     */
+    constexpr float smoothTauPerStep { 3e-3 };
 } // namespace config
 
 } // namespace sfz

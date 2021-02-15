@@ -102,7 +102,11 @@ void sfz::Logger::logCallbackTime(const CallbackBreakdown& breakdown, int numVoi
     if (!loggingEnabled)
         return;
 
-    callbackTimeQueue.try_push<CallbackTime>({ breakdown, numVoices, numSamples });
+    CallbackTime callbackTime;
+    callbackTime.breakdown = breakdown;
+    callbackTime.numVoices = numVoices;
+    callbackTime.numSamples = numSamples;
+    callbackTimeQueue.try_push(callbackTime);
 }
 
 void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename)
@@ -110,7 +114,12 @@ void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::c
     if (!loggingEnabled)
         return;
 
-    fileTimeQueue.try_push<FileTime>({ waitDuration, loadDuration, fileSize, filename });
+    FileTime fileTime;
+    fileTime.waitDuration = waitDuration;
+    fileTime.loadDuration = loadDuration;
+    fileTime.fileSize = fileSize;
+    fileTime.filename = filename;
+    fileTimeQueue.try_push(fileTime);
 }
 
 void sfz::Logger::setPrefix(absl::string_view prefix)

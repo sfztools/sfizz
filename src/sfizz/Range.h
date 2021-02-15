@@ -19,7 +19,9 @@ namespace sfz
  */
 template <class Type>
 class Range {
-    static_assert(std::is_arithmetic<Type>::value, "The Type should be arithmetic");
+    // static_assert(std::is_arithmetic<Type>::value
+    //     || (std::is_enum<Type>::value && std::is_same<typename std::underlying_type<Type>::type, int>::value),
+    //     "The Type should be arithmetic");
 
 public:
     constexpr Range() = default;

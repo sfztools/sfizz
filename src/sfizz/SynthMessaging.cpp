@@ -124,13 +124,27 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
+        MATCH("/region&/trigger_on_note", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.triggerOnNote) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/trigger_on_cc", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.triggerOnCC) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
         MATCH("/region&/count", "") {
             GET_REGION_OR_BREAK(indices[0])
-            if (!region.sampleCount) {
-                client.receive<'N'>(delay, path, {});
-            } else {
-                client.receive<'h'>(delay, path, *region.sampleCount);
-            }
+            client.receive<'h'>(delay, path, region.sampleCount);
         } break;
 
         MATCH("/region&/loop_range", "") {
@@ -149,16 +163,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
 
             switch (*region.loopMode) {
-            case SfzLoopMode::no_loop:
+            case LoopMode::no_loop:
                 client.receive<'s'>(delay, path, "no_loop");
                 break;
-            case SfzLoopMode::loop_continuous:
+            case LoopMode::loop_continuous:
                 client.receive<'s'>(delay, path, "loop_continuous");
                 break;
-            case SfzLoopMode::loop_sustain:
+            case LoopMode::loop_sustain:
                 client.receive<'s'>(delay, path, "loop_sustain");
                 break;
-            case SfzLoopMode::one_shot:
+            case LoopMode::one_shot:
                 client.receive<'s'>(delay, path, "one_shot");
                 break;
             }
@@ -186,13 +200,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/off_mode", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.offMode) {
-            case SfzOffMode::time:
+            case OffMode::time:
                 client.receive<'s'>(delay, path, "time");
                 break;
-            case SfzOffMode::normal:
+            case OffMode::normal:
                 client.receive<'s'>(delay, path, "normal");
                 break;
-            case SfzOffMode::fast:
+            case OffMode::fast:
                 client.receive<'s'>(delay, path, "fast");
                 break;
             }
@@ -295,10 +309,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/sw_vel", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.velocityOverride) {
-            case SfzVelocityOverride::current:
+            case VelocityOverride::current:
                 client.receive<'s'>(delay, path, "current");
                 break;
-            case SfzVelocityOverride::previous:
+            case VelocityOverride::previous:
                 client.receive<'s'>(delay, path, "previous");
                 break;
             }
@@ -341,19 +355,19 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/trigger", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.trigger) {
-            case SfzTrigger::attack:
+            case Trigger::attack:
                 client.receive<'s'>(delay, path, "attack");
                 break;
-            case SfzTrigger::first:
+            case Trigger::first:
                 client.receive<'s'>(delay, path, "first");
                 break;
-            case SfzTrigger::release:
+            case Trigger::release:
                 client.receive<'s'>(delay, path, "release");
                 break;
-            case SfzTrigger::release_key:
+            case Trigger::release_key:
                 client.receive<'s'>(delay, path, "release_key");
                 break;
-            case SfzTrigger::legato:
+            case Trigger::legato:
                 client.receive<'s'>(delay, path, "legato");
                 break;
             }
@@ -678,10 +692,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/xf_keycurve", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.crossfadeKeyCurve) {
-            case SfzCrossfadeCurve::gain:
+            case CrossfadeCurve::gain:
                 client.receive<'s'>(delay, path, "gain");
                 break;
-            case SfzCrossfadeCurve::power:
+            case CrossfadeCurve::power:
                 client.receive<'s'>(delay, path, "power");
                 break;
             }
@@ -690,10 +704,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/xf_velcurve", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.crossfadeVelCurve) {
-            case SfzCrossfadeCurve::gain:
+            case CrossfadeCurve::gain:
                 client.receive<'s'>(delay, path, "gain");
                 break;
-            case SfzCrossfadeCurve::power:
+            case CrossfadeCurve::power:
                 client.receive<'s'>(delay, path, "power");
                 break;
             }
@@ -702,10 +716,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/xf_cccurve", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch (region.crossfadeCCCurve) {
-            case SfzCrossfadeCurve::gain:
+            case CrossfadeCurve::gain:
                 client.receive<'s'>(delay, path, "gain");
                 break;
-            case SfzCrossfadeCurve::power:
+            case CrossfadeCurve::power:
                 client.receive<'s'>(delay, path, "power");
                 break;
             }
@@ -761,12 +775,12 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, region.transpose);
         } break;
 
-        MATCH("/region&/tune", "") {
+        MATCH("/region&/pitch", "") {
             GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.tune);
+            client.receive<'f'>(delay, path, region.pitch);
         } break;
 
-        MATCH("/region&/tune_cc&", "") {
+        MATCH("/region&/pitch_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
             auto value = region.ccModDepth(indices[1], ModId::Pitch);
             if (value) {
@@ -776,7 +790,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
-        MATCH("/region&/tune_stepcc&", "") {
+        MATCH("/region&/pitch_stepcc&", "") {
             GET_REGION_OR_BREAK(indices[0])
             auto params = region.ccModParameters(indices[1], ModId::Pitch);
             if (params) {
@@ -786,7 +800,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
-        MATCH("/region&/tune_smoothcc&", "") {
+        MATCH("/region&/pitch_smoothcc&", "") {
             GET_REGION_OR_BREAK(indices[0])
             auto params = region.ccModParameters(indices[1], ModId::Pitch);
             if (params) {
@@ -796,7 +810,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
-        MATCH("/region&/tune_curvecc&", "") {
+        MATCH("/region&/pitch_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
             auto params = region.ccModParameters(indices[1], ModId::Pitch);
             if (params) {
@@ -808,17 +822,17 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/region&/bend_up", "") {
             GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.bendUp);
+            client.receive<'f'>(delay, path, region.bendUp);
         } break;
 
         MATCH("/region&/bend_down", "") {
             GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.bendDown);
+            client.receive<'f'>(delay, path, region.bendDown);
         } break;
 
         MATCH("/region&/bend_step", "") {
             GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.bendStep);
+            client.receive<'f'>(delay, path, region.bendStep);
         } break;
 
         MATCH("/region&/bend_smooth", "") {
@@ -863,7 +877,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/region&/ampeg_depth", "") {
             GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.amplitudeEG.depth);
+            client.receive<'f'>(delay, path, region.amplitudeEG.depth);
         } break;
 
         MATCH("/region&/ampeg_vel&attack", "") {
@@ -912,7 +926,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             GET_REGION_OR_BREAK(indices[0])
             if (indices[1] != 2)
                 break;
-            client.receive<'i'>(delay, path, region.amplitudeEG.vel2depth);
+            client.receive<'f'>(delay, path, region.amplitudeEG.vel2depth);
         } break;
 
         MATCH("/region&/note_polyphony", "") {
@@ -927,10 +941,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/note_selfmask", "") {
             GET_REGION_OR_BREAK(indices[0])
             switch(region.selfMask) {
-            case SfzSelfMask::mask:
+            case SelfMask::mask:
                 client.receive(delay, path, "T", nullptr);
                 break;
-            case SfzSelfMask::dontMask:
+            case SelfMask::dontMask:
                 client.receive(delay, path, "F", nullptr);
                 break;
             }
@@ -977,6 +991,37 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.oscillatorPhase);
         } break;
+
+        MATCH("/region&/oscillator_quality", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.oscillatorQuality) {
+                client.receive<'i'>(delay, path, *region.oscillatorQuality);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/oscillator_mode", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.oscillatorMode);
+        } break;
+
+        MATCH("/region&/oscillator_multi", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.oscillatorMulti);
+        } break;
+
+        MATCH("/region&/oscillator_detune", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, region.oscillatorDetune);
+        } break;
+
+        MATCH("/region&/oscillator_mod_depth", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, region.oscillatorModDepth * 100.0f);
+        } break;
+
+        // TODO: detune cc, mod depth cc
 
         MATCH("/region&/effect&", "") {
             GET_REGION_OR_BREAK(indices[0])

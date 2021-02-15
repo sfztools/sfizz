@@ -33,6 +33,18 @@ bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapac
     return true;
 }
 
+sfz::Region::Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath)
+: id{regionNumber}, midiState(midiState), defaultPath(defaultPath)
+{
+    ccSwitched.set();
+
+    gainToEffect.reserve(5); // sufficient room for main and fx1-4
+    gainToEffect.push_back(1.0); // contribute 100% into the main bus
+
+    // Default amplitude release
+    amplitudeEG.release = Default::egRelease;
+}
+
 bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
 {
     const Opcode opcode = rawOpcode.cleanUp(kOpcodeScopeRegion);
@@ -45,21 +57,19 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         case hash(x "_stepcc&"):   \
         case hash(x "_smoothcc&")
 
-    #define LFO_EG_filter_EQ_target(sourceKey, targetKey, range)                                        \
-        {                                                                                               \
-            const auto number = opcode.parameters.front();                                              \
-            if (number == 0)                                                                            \
-                return false;                                                                           \
-                                                                                                        \
-            const auto index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;        \
-            if (!extendIfNecessary(filters, index + 1, Default::numFilters))                            \
-                return false;                                                                           \
-                                                                                                        \
-            if (auto value = readOpcode(opcode.value, range)) {                                         \
-                const ModKey source = ModKey::createNXYZ(sourceKey, id, number - 1);                    \
-                const ModKey target = ModKey::createNXYZ(targetKey, id, index);                         \
-                getOrCreateConnection(source, target).sourceDepth = *value;                             \
-            }                                                                                           \
+    #define LFO_EG_filter_EQ_target(sourceKey, targetKey, spec)                                     \
+        {                                                                                           \
+            const auto number = opcode.parameters.front();                                          \
+            if (number == 0)                                                                        \
+                return false;                                                                       \
+                                                                                                    \
+            const auto index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;    \
+            if (!extendIfNecessary(filters, index + 1, Default::numFilters))                        \
+                return false;                                                                       \
+                                                                                                    \
+            const ModKey source = ModKey::createNXYZ(sourceKey, id, number - 1);                    \
+            const ModKey target = ModKey::createNXYZ(targetKey, id, index);                         \
+            getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);                  \
         }
 
     // Sound source: sample playback
@@ -79,245 +89,196 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         }
         break;
     case hash("sample_quality"):
-        {
-            if (opcode.value == "-1")
-                sampleQuality.reset();
-            else
-                setValueFromOpcode(opcode, sampleQuality, Default::sampleQualityRange);
-            break;
-        }
+        sampleQuality = opcode.read(Default::sampleQuality);
         break;
     case hash("direction"):
         *sampleId = sampleId->reversed(opcode.value == "reverse");
         break;
     case hash("delay"):
-        setValueFromOpcode(opcode, delay, Default::delayRange);
+        delay = opcode.read(Default::delay);
         break;
     case hash("delay_random"):
-        setValueFromOpcode(opcode, delayRandom, Default::delayRange);
+        delayRandom = opcode.read(Default::delayRandom);
         break;
     case hash("offset"):
-        setValueFromOpcode(opcode, offset, Default::offsetRange);
+        offset = opcode.read(Default::offset);
         break;
     case hash("offset_random"):
-        setValueFromOpcode(opcode, offsetRandom, Default::offsetRange);
+        offsetRandom = opcode.read(Default::offsetRandom);
         break;
     case hash("offset_oncc&"): // also offset_cc&
         if (opcode.parameters.back() > config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::offsetCCRange))
-            offsetCC[opcode.parameters.back()] = *value;
+
+        offsetCC[opcode.parameters.back()] = opcode.read(Default::offsetMod);
         break;
     case hash("end"):
-        setValueFromOpcode(opcode, sampleEnd, Default::sampleEndRange);
+        sampleEnd = opcode.read(Default::sampleEnd);
         break;
     case hash("count"):
-        setValueFromOpcode(opcode, sampleCount, Default::sampleCountRange);
+        sampleCount = opcode.read(Default::sampleCount);
         break;
     case hash("loop_mode"): // also loopmode
-        switch (hash(opcode.value)) {
-        case hash("no_loop"):
-            loopMode = SfzLoopMode::no_loop;
-            break;
-        case hash("one_shot"):
-            loopMode = SfzLoopMode::one_shot;
-            break;
-        case hash("loop_continuous"):
-            loopMode = SfzLoopMode::loop_continuous;
-            break;
-        case hash("loop_sustain"):
-            loopMode = SfzLoopMode::loop_sustain;
-            break;
-        default:
-            DBG("Unkown loop mode:" << opcode.value);
-        }
+        loopMode = opcode.readOptional(Default::loopMode);
         break;
     case hash("loop_end"): // also loopend
-        setRangeEndFromOpcode(opcode, loopRange, Default::loopRange);
+        loopRange.setEnd(opcode.read(Default::loopEnd));
         break;
     case hash("loop_start"): // also loopstart
-        setRangeStartFromOpcode(opcode, loopRange, Default::loopRange);
+        loopRange.setStart(opcode.read(Default::loopStart));
         break;
     case hash("loop_crossfade"):
-        setValueFromOpcode(opcode, loopCrossfade, Default::loopCrossfadeRange);
+        loopCrossfade = opcode.read(Default::loopCrossfade);
         break;
 
     // Wavetable oscillator
     case hash("oscillator_phase"):
-        if (auto value = readOpcode(opcode.value, Default::oscillatorPhaseRange))
-            oscillatorPhase = (*value >= 0) ? wrapPhase(*value) : -1.0f;
+        {
+            auto phase = opcode.read(Default::oscillatorPhase);
+            oscillatorPhase = (phase >= 0) ? wrapPhase(phase) : -1.0f;
+        }
         break;
     case hash("oscillator"):
-        if (auto value = readBooleanFromOpcode(opcode))
-            oscillatorEnabled = *value ? OscillatorEnabled::On : OscillatorEnabled::Off;
+        oscillatorEnabled = opcode.read(Default::oscillator);
         break;
     case hash("oscillator_mode"):
-        setValueFromOpcode(opcode, oscillatorMode, Default::oscillatorModeRange);
+        oscillatorMode = opcode.read(Default::oscillatorMode);
         break;
     case hash("oscillator_multi"):
-        setValueFromOpcode(opcode, oscillatorMulti, Default::oscillatorMultiRange);
+        oscillatorMulti = opcode.read(Default::oscillatorMulti);
         break;
     case hash("oscillator_detune"):
-        setValueFromOpcode(opcode, oscillatorDetune, Default::oscillatorDetuneRange);
+        oscillatorDetune = opcode.read(Default::oscillatorDetune);
         break;
     case_any_ccN("oscillator_detune"):
-        processGenericCc(opcode, Default::oscillatorDetuneCCRange, ModKey::createNXYZ(ModId::OscillatorDetune, id));
+        processGenericCc(opcode, Default::oscillatorDetuneMod,
+            ModKey::createNXYZ(ModId::OscillatorDetune, id));
         break;
     case hash("oscillator_mod_depth"):
-        if (auto value = readOpcode(opcode.value, Default::oscillatorModDepthRange))
-            oscillatorModDepth = normalizePercents(*value);
+        oscillatorModDepth = opcode.read(Default::oscillatorModDepth);
         break;
     case_any_ccN("oscillator_mod_depth"):
-        processGenericCc(opcode, Default::oscillatorModDepthCCRange, ModKey::createNXYZ(ModId::OscillatorModDepth, id));
+        processGenericCc(opcode, Default::oscillatorModDepthMod,
+            ModKey::createNXYZ(ModId::OscillatorModDepth, id));
         break;
     case hash("oscillator_quality"):
-        if (opcode.value == "-1")
-            oscillatorQuality.reset();
-        else
-            setValueFromOpcode(opcode, oscillatorQuality, Default::oscillatorQualityRange);
+        oscillatorQuality = opcode.readOptional(Default::oscillatorQuality);
         break;
 
     // Instrument settings: voice lifecycle
     case hash("group"): // also polyphony_group
-        setValueFromOpcode(opcode, group, Default::groupRange);
+        group = opcode.read(Default::group);
         break;
     case hash("off_by"): // also offby
-        if (opcode.value == "-1")
-            offBy.reset();
-        else
-            setValueFromOpcode(opcode, offBy, Default::groupRange);
+        offBy = opcode.readOptional(Default::group);
         break;
     case hash("off_mode"): // also offmode
-        switch (hash(opcode.value)) {
-        case hash("fast"):
-            offMode = SfzOffMode::fast;
-            break;
-        case hash("normal"):
-            offMode = SfzOffMode::normal;
-            break;
-        case hash("time"):
-            offMode = SfzOffMode::time;
-            break;
-        default:
-            DBG("Unkown off mode:" << opcode.value);
-        }
+         offMode = opcode.read(Default::offMode);
         break;
     case hash("off_time"):
-        offMode = SfzOffMode::time;
-        setValueFromOpcode(opcode, offTime, Default::egTimeRange);
+        offMode = OffMode::time;
+        offTime = opcode.read(Default::offTime);
         break;
     case hash("polyphony"):
-        if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
-            polyphony = *value;
+        polyphony = opcode.read(Default::polyphony);
         break;
     case hash("note_polyphony"):
-        if (auto value = readOpcode(opcode.value, Default::polyphonyRange))
-            notePolyphony = *value;
+        notePolyphony = opcode.read(Default::notePolyphony);
         break;
     case hash("note_selfmask"):
-        switch (hash(opcode.value)) {
-        case hash("on"):
-            selfMask = SfzSelfMask::mask;
-            break;
-        case hash("off"):
-            selfMask = SfzSelfMask::dontMask;
-            break;
-        default:
-            DBG("Unkown self mask value:" << opcode.value);
-        }
+        selfMask = opcode.read(Default::selfMask);
         break;
     case hash("rt_dead"):
-        if (opcode.value == "on") {
-            rtDead = true;
-        } else if (opcode.value == "off") {
-            rtDead = false;
-        } else {
-            DBG("Unkown rt_dead value:" << opcode.value);
-        }
+        rtDead = opcode.read(Default::rtDead);
         break;
     // Region logic: key mapping
     case hash("lokey"):
         triggerOnNote = true;
-        setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
+        keyRange.setStart(opcode.read(Default::loKey));
         break;
     case hash("hikey"):
         triggerOnNote = (opcode.value != "-1");
-        setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
+        keyRange.setEnd(opcode.read(Default::hiKey));
         break;
     case hash("key"):
         triggerOnNote = (opcode.value != "-1");
-        setRangeStartFromOpcode(opcode, keyRange, Default::keyRange);
-        setRangeEndFromOpcode(opcode, keyRange, Default::keyRange);
-        setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+        {
+            auto value = opcode.read(Default::key);
+            keyRange.setStart(value);
+            keyRange.setEnd(value);
+            pitchKeycenter = value;
+        }
         break;
     case hash("lovel"):
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            velocityRange.setStart(normalizeVelocity(*value));
+        velocityRange.setStart(opcode.read(Default::loVel));
         break;
     case hash("hivel"):
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            velocityRange.setEnd(normalizeVelocity(*value));
+        velocityRange.setEnd(opcode.read(Default::hiVel));
         break;
 
     // Region logic: MIDI conditions
     case hash("lobend"):
-        if (auto value = readOpcode(opcode.value, Default::bendRange))
-            bendRange.setStart(normalizeBend(*value));
+        bendRange.setStart(opcode.read(Default::loBend));
         break;
     case hash("hibend"):
-        if (auto value = readOpcode(opcode.value, Default::bendRange))
-            bendRange.setEnd(normalizeBend(*value));
+        bendRange.setEnd(opcode.read(Default::hiBend));
         break;
     case hash("locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            ccConditions[opcode.parameters.back()].setStart(normalizeCC(*value));
+        ccConditions[opcode.parameters.back()].setStart(
+            opcode.read(Default::loCC)
+        );
         break;
     case hash("hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            ccConditions[opcode.parameters.back()].setEnd(normalizeCC(*value));
+        ccConditions[opcode.parameters.back()].setEnd(
+            opcode.read(Default::hiCC)
+        );
         break;
     case hash("lohdcc&"): // also lorealcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
-            ccConditions[opcode.parameters.back()].setStart(*value);
+        ccConditions[opcode.parameters.back()].setStart(
+            opcode.read(Default::loNormalized)
+        );
         break;
     case hash("hihdcc&"): // also hirealcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange))
-            ccConditions[opcode.parameters.back()].setEnd(*value);
+        ccConditions[opcode.parameters.back()].setEnd(
+            opcode.read(Default::hiNormalized)
+        );
         break;
     case hash("sw_lokey"): // fallthrough
     case hash("sw_hikey"):
         break;
     case hash("sw_last"):
         if (!lastKeyswitchRange) {
-            setValueFromOpcode(opcode, lastKeyswitch, Default::keyRange);
-            keySwitched = false;
+            lastKeyswitch = opcode.readOptional(Default::key);
+            keySwitched = !lastKeyswitch.has_value();
         }
         break;
     case hash("sw_lolast"):
-        if (auto value = readOpcode(opcode.value, Default::keyRange)) {
+        {
+            auto value = opcode.read(Default::key);
             if (!lastKeyswitchRange)
-                lastKeyswitchRange.emplace(*value, *value);
+                lastKeyswitchRange.emplace(value, value);
             else
-                lastKeyswitchRange->setStart(*value);
+                lastKeyswitchRange->setStart(value);
 
             keySwitched = false;
             lastKeyswitch = absl::nullopt;
         }
         break;
     case hash("sw_hilast"):
-        if (auto value = readOpcode(opcode.value, Default::keyRange)) {
+        {
+            auto value = opcode.read(Default::key);
             if (!lastKeyswitchRange)
-                lastKeyswitchRange.emplace(*value, *value);
+                lastKeyswitchRange.emplace(value, value);
             else
-                lastKeyswitchRange->setEnd(*value);
+                lastKeyswitchRange->setEnd(value);
 
             keySwitched = false;
             lastKeyswitch = absl::nullopt;
@@ -327,294 +288,228 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         keyswitchLabel = opcode.value;
         break;
     case hash("sw_down"):
-        setValueFromOpcode(opcode, downKeyswitch, Default::keyRange);
-        keySwitched = false;
+        downKeyswitch = opcode.readOptional(Default::key);
+        keySwitched = !downKeyswitch.has_value();
         break;
     case hash("sw_up"):
-        setValueFromOpcode(opcode, upKeyswitch, Default::keyRange);
+        upKeyswitch = opcode.readOptional(Default::key);
         break;
     case hash("sw_previous"):
-        setValueFromOpcode(opcode, previousKeyswitch, Default::keyRange);
-        previousKeySwitched = false;
+        previousKeyswitch = opcode.readOptional(Default::key);
+        previousKeySwitched = !previousKeyswitch.has_value();
         break;
     case hash("sw_vel"):
-        switch (hash(opcode.value)) {
-        case hash("current"):
-            velocityOverride = SfzVelocityOverride::current;
-            break;
-        case hash("previous"):
-            velocityOverride = SfzVelocityOverride::previous;
-            break;
-        default:
-            DBG("Unknown velocity mode: " << opcode.value);
-        }
+        velocityOverride =
+            opcode.read(Default::velocityOverride);
         break;
 
     case hash("sustain_cc"):
-        setValueFromOpcode(opcode, sustainCC, Default::ccNumberRange);
+        sustainCC = opcode.read(Default::sustainCC);
         break;
     case hash("sustain_lo"):
-        if (auto value = readOpcode(opcode.value, Default::float7Range)) {
-            sustainThreshold = normalizeCC(*value);
-        }
+        sustainThreshold = opcode.read(Default::sustainThreshold);
         break;
     case hash("sustain_sw"):
-        checkSustain = readBooleanFromOpcode(opcode).value_or(Default::checkSustain);
+        checkSustain = opcode.read(Default::checkSustain);
         break;
     case hash("sostenuto_sw"):
-        checkSostenuto = readBooleanFromOpcode(opcode).value_or(Default::checkSostenuto);
+        checkSostenuto = opcode.read(Default::checkSostenuto);
         break;
     // Region logic: internal conditions
     case hash("lochanaft"):
-        setRangeStartFromOpcode(opcode, aftertouchRange, Default::aftertouchRange);
+        aftertouchRange.setStart(opcode.read(Default::loChannelAftertouch));
         break;
     case hash("hichanaft"):
-        setRangeEndFromOpcode(opcode, aftertouchRange, Default::aftertouchRange);
+        aftertouchRange.setEnd(opcode.read(Default::hiChannelAftertouch));
         break;
     case hash("lobpm"):
-        setRangeStartFromOpcode(opcode, bpmRange, Default::bpmRange);
+        bpmRange.setStart(opcode.read(Default::loBPM));
         break;
     case hash("hibpm"):
-        setRangeEndFromOpcode(opcode, bpmRange, Default::bpmRange);
+        bpmRange.setEnd(opcode.read(Default::hiBPM));
         break;
     case hash("lorand"):
-        setRangeStartFromOpcode(opcode, randRange, Default::randRange);
+        randRange.setStart(opcode.read(Default::loNormalized));
         break;
     case hash("hirand"):
-        setRangeEndFromOpcode(opcode, randRange, Default::randRange);
+        randRange.setEnd(opcode.read(Default::hiNormalized));
         break;
     case hash("seq_length"):
-        setValueFromOpcode(opcode, sequenceLength, Default::sequenceRange);
+        sequenceLength = opcode.read(Default::sequence);
         break;
     case hash("seq_position"):
-        setValueFromOpcode(opcode, sequencePosition, Default::sequenceRange);
+        sequencePosition = opcode.read(Default::sequence);
         sequenceSwitched = false;
         break;
     // Region logic: triggers
     case hash("trigger"):
-        switch (hash(opcode.value)) {
-        case hash("attack"):
-            trigger = SfzTrigger::attack;
-            break;
-        case hash("first"):
-            trigger = SfzTrigger::first;
-            break;
-        case hash("legato"):
-            trigger = SfzTrigger::legato;
-            break;
-        case hash("release"):
-            trigger = SfzTrigger::release;
-            break;
-        case hash("release_key"):
-            trigger = SfzTrigger::release_key;
-            break;
-        default:
-            DBG("Unknown trigger mode: " << opcode.value);
-        }
+        trigger = opcode.read(Default::trigger);
         break;
     case hash("start_locc&"): // also on_locc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range)) {
-            triggerOnCC = true;
-            ccTriggers[opcode.parameters.back()].setStart(normalizeCC(*value));
-        }
+        triggerOnCC = true;
+        ccTriggers[opcode.parameters.back()].setStart(
+            opcode.read(Default::loCC)
+        );
         break;
     case hash("start_hicc&"): // also on_hicc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range)) {
-            triggerOnCC = true;
-            ccTriggers[opcode.parameters.back()].setEnd(normalizeCC(*value));
-        }
+        triggerOnCC = true;
+        ccTriggers[opcode.parameters.back()].setEnd(
+            opcode.read(Default::hiCC)
+        );
         break;
     case hash("start_lohdcc&"): // also on_lohdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange)) {
-            triggerOnCC = true;
-            ccTriggers[opcode.parameters.back()].setStart(*value);
-        }
+        triggerOnCC = true;
+        ccTriggers[opcode.parameters.back()].setStart(
+            opcode.read(Default::loNormalized)
+        );
         break;
     case hash("start_hihdcc&"): // also on_hihdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::normalizedRange)) {
-            triggerOnCC = true;
-            ccTriggers[opcode.parameters.back()].setEnd(*value);
-        }
+        ccTriggers[opcode.parameters.back()].setEnd(
+            opcode.read(Default::hiNormalized)
+        );
         break;
 
     // Performance parameters: amplifier
     case hash("volume"): // also gain
-        setValueFromOpcode(opcode, volume, Default::volumeRange);
+        volume = opcode.read(Default::volume);
         break;
     case_any_ccN("volume"): // also gain
-        processGenericCc(opcode, Default::volumeCCRange, ModKey::createNXYZ(ModId::Volume, id));
+        processGenericCc(opcode, Default::volumeMod, ModKey::createNXYZ(ModId::Volume, id));
         break;
     case hash("amplitude"):
-        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            amplitude = normalizePercents(*value);
+        amplitude = opcode.read(Default::amplitude);
         break;
     case_any_ccN("amplitude"):
-        processGenericCc(opcode, Default::amplitudeRange, ModKey::createNXYZ(ModId::Amplitude, id));
+        processGenericCc(opcode, Default::amplitudeMod, ModKey::createNXYZ(ModId::Amplitude, id));
         break;
     case hash("pan"):
-        if (auto value = readOpcode(opcode.value, Default::panRange))
-            pan = normalizePercents(*value);
+        pan = opcode.read(Default::pan);
         break;
     case_any_ccN("pan"):
-        processGenericCc(opcode, Default::panCCRange, ModKey::createNXYZ(ModId::Pan, id));
+        processGenericCc(opcode, Default::panMod, ModKey::createNXYZ(ModId::Pan, id));
         break;
     case hash("position"):
-        if (auto value = readOpcode(opcode.value, Default::positionRange))
-            position = normalizePercents(*value);
+        position = opcode.read(Default::position);
         break;
     case_any_ccN("position"):
-        processGenericCc(opcode, Default::positionCCRange, ModKey::createNXYZ(ModId::Position, id));
+        processGenericCc(opcode, Default::positionMod, ModKey::createNXYZ(ModId::Position, id));
         break;
     case hash("width"):
-        if (auto value = readOpcode(opcode.value, Default::widthRange))
-            width = normalizePercents(*value);
+        width = opcode.read(Default::width);
         break;
     case_any_ccN("width"):
-        processGenericCc(opcode, Default::widthCCRange, ModKey::createNXYZ(ModId::Width, id));
+        processGenericCc(opcode, Default::widthMod, ModKey::createNXYZ(ModId::Width, id));
         break;
     case hash("amp_keycenter"):
-        setValueFromOpcode(opcode, ampKeycenter, Default::keyRange);
+        ampKeycenter = opcode.read(Default::key);
         break;
     case hash("amp_keytrack"):
-        setValueFromOpcode(opcode, ampKeytrack, Default::ampKeytrackRange);
+        ampKeytrack = opcode.read(Default::ampKeytrack);
         break;
     case hash("amp_veltrack"):
-        if (auto value = readOpcode(opcode.value, Default::ampVeltrackRange))
-            ampVeltrack = normalizePercents(*value);
+        ampVeltrack = opcode.read(Default::ampVeltrack);
         break;
     case hash("amp_random"):
-        setValueFromOpcode(opcode, ampRandom, Default::ampRandomRange);
+        ampRandom = opcode.read(Default::ampRandom);
         break;
     case hash("amp_velcurve_&"):
         {
-            auto value = readOpcode(opcode.value, Default::ampVelcurveRange);
             if (opcode.parameters.back() > 127)
                 return false;
 
             const auto inputVelocity = static_cast<uint8_t>(opcode.parameters.back());
-            if (value)
-                velocityPoints.emplace_back(inputVelocity, *value);
+            velocityPoints.emplace_back(inputVelocity, opcode.read(Default::ampVelcurve));
         }
         break;
     case hash("xfin_lokey"):
-        setRangeStartFromOpcode(opcode, crossfadeKeyInRange, Default::keyRange);
+        crossfadeKeyInRange.setStart(opcode.read(Default::loKey));
         break;
     case hash("xfin_hikey"):
-        setRangeEndFromOpcode(opcode, crossfadeKeyInRange, Default::keyRange);
+        crossfadeKeyInRange.setEnd(opcode.read(Default::loKey)); // loKey for the proper default
         break;
     case hash("xfout_lokey"):
-        setRangeStartFromOpcode(opcode, crossfadeKeyOutRange, Default::keyRange);
+        crossfadeKeyOutRange.setStart(opcode.read(Default::hiKey)); // hiKey for the proper default
         break;
     case hash("xfout_hikey"):
-        setRangeEndFromOpcode(opcode, crossfadeKeyOutRange, Default::keyRange);
+        crossfadeKeyOutRange.setEnd(opcode.read(Default::hiKey));
         break;
     case hash("xfin_lovel"):
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeVelInRange.setStart(normalizeVelocity(*value));
+        crossfadeVelInRange.setStart(opcode.read(Default::loVel));
         break;
     case hash("xfin_hivel"):
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeVelInRange.setEnd(normalizeVelocity(*value));
+        crossfadeVelInRange.setEnd(opcode.read(Default::loVel)); // loVel for the proper default
         break;
     case hash("xfout_lovel"):
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeVelOutRange.setStart(normalizeVelocity(*value));
+        crossfadeVelOutRange.setStart(opcode.read(Default::hiVel)); // hiVel for the proper default
         break;
     case hash("xfout_hivel"):
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeVelOutRange.setEnd(normalizeVelocity(*value));
+        crossfadeVelOutRange.setEnd(opcode.read(Default::hiVel));
         break;
     case hash("xf_keycurve"):
-        switch (hash(opcode.value)) {
-        case hash("power"):
-            crossfadeKeyCurve = SfzCrossfadeCurve::power;
-            break;
-        case hash("gain"):
-            crossfadeKeyCurve = SfzCrossfadeCurve::gain;
-            break;
-        default:
-            DBG("Unknown crossfade power curve: " << opcode.value);
-        }
+        crossfadeKeyCurve = opcode.read(Default::crossfadeCurve);
         break;
     case hash("xf_velcurve"):
-        switch (hash(opcode.value)) {
-        case hash("power"):
-            crossfadeVelCurve = SfzCrossfadeCurve::power;
-            break;
-        case hash("gain"):
-            crossfadeVelCurve = SfzCrossfadeCurve::gain;
-            break;
-        default:
-            DBG("Unknown crossfade power curve: " << opcode.value);
-        }
+        crossfadeVelCurve = opcode.read(Default::crossfadeCurve);
         break;
     case hash("xfin_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeCCInRange[opcode.parameters.back()].setStart(normalizeCC(*value));
+        crossfadeCCInRange[opcode.parameters.back()].setStart(
+            opcode.read(Default::loCC)
+        );
         break;
     case hash("xfin_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeCCInRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
+        crossfadeCCInRange[opcode.parameters.back()].setEnd(
+            opcode.read(Default::loCC) // loCC for the proper default
+        );
         break;
     case hash("xfout_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeCCOutRange[opcode.parameters.back()].setStart(normalizeCC(*value));
+        crossfadeCCOutRange[opcode.parameters.back()].setStart(
+            opcode.read(Default::hiCC) // hiCC for the proper default
+        );
         break;
     case hash("xfout_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
-        if (auto value = readOpcode(opcode.value, Default::midi7Range))
-            crossfadeCCOutRange[opcode.parameters.back()].setEnd(normalizeCC(*value));
+        crossfadeCCOutRange[opcode.parameters.back()].setEnd(
+            opcode.read(Default::hiCC)
+        );
         break;
     case hash("xf_cccurve"):
-        switch (hash(opcode.value)) {
-        case hash("power"):
-            crossfadeCCCurve = SfzCrossfadeCurve::power;
-            break;
-        case hash("gain"):
-            crossfadeCCCurve = SfzCrossfadeCurve::gain;
-            break;
-        default:
-            DBG("Unknown crossfade power curve: " << opcode.value);
-        }
+        crossfadeCCCurve = opcode.read(Default::crossfadeCurve);
         break;
     case hash("rt_decay"):
-        setValueFromOpcode(opcode, rtDecay, Default::rtDecayRange);
+        rtDecay = opcode.read(Default::rtDecay);
         break;
     case hash("global_amplitude"):
-        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            globalAmplitude = normalizePercents(*value);
+        globalAmplitude = opcode.read(Default::amplitude);
         break;
     case hash("master_amplitude"):
-        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            masterAmplitude = normalizePercents(*value);
+        masterAmplitude = opcode.read(Default::amplitude);
         break;
     case hash("group_amplitude"):
-        if (auto value = readOpcode(opcode.value, Default::amplitudeRange))
-            groupAmplitude = normalizePercents(*value);
+        groupAmplitude = opcode.read(Default::amplitude);
         break;
     case hash("global_volume"):
-        setValueFromOpcode(opcode, globalVolume, Default::volumeRange);
+        globalVolume = opcode.read(Default::volume);
         break;
     case hash("master_volume"):
-        setValueFromOpcode(opcode, masterVolume, Default::volumeRange);
+        masterVolume = opcode.read(Default::volume);
         break;
     case hash("group_volume"):
-        setValueFromOpcode(opcode, groupVolume, Default::volumeRange);
+        groupVolume = opcode.read(Default::volume);
         break;
 
     // Performance parameters: filters
@@ -623,7 +518,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.empty() ? 0 : (opcode.parameters.back() - 1);
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-            setValueFromOpcode(opcode, filters[filterIndex].cutoff, Default::filterCutoffRange);
+            filters[filterIndex].cutoff = opcode.read(Default::filterCutoff);
         }
         break;
     case hash("resonance&"): // also resonance
@@ -631,7 +526,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.empty() ? 0 : (opcode.parameters.back() - 1);
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-            setValueFromOpcode(opcode, filters[filterIndex].resonance, Default::filterResonanceRange);
+            filters[filterIndex].resonance = opcode.read(Default::filterResonance);
         }
         break;
     case_any_ccN("cutoff&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
@@ -640,7 +535,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            processGenericCc(opcode, Default::filterCutoffModRange, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
+            processGenericCc(opcode, Default::filterCutoffMod, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
         }
         break;
     case_any_ccN("resonance&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
@@ -649,7 +544,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            processGenericCc(opcode, Default::filterResonanceModRange, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
+            processGenericCc(opcode, Default::filterResonanceMod, ModKey::createNXYZ(ModId::FilResonance, id, filterIndex));
+        }
+        break;
+    case hash("cutoff&_chanaft"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const ModKey source = ModKey::createNXYZ(ModId::ChannelAftertouch);
+            const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex);
+            getOrCreateConnection(source, target).sourceDepth = opcode.read(Default::filterCutoffMod);
         }
         break;
     case hash("fil&_keytrack"): // also fil_keytrack
@@ -657,8 +563,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-
-            setValueFromOpcode(opcode, filters[filterIndex].keytrack, Default::filterKeytrackRange);
+            filters[filterIndex].keytrack = opcode.read(Default::filterKeytrack);
         }
         break;
     case hash("fil&_keycenter"): // also fil_keycenter
@@ -666,8 +571,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-
-            setValueFromOpcode(opcode, filters[filterIndex].keycenter, Default::keyRange);
+            filters[filterIndex].keycenter = opcode.read(Default::key);
         }
         break;
     case hash("fil&_veltrack"): // also fil_veltrack
@@ -675,8 +579,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-
-            setValueFromOpcode(opcode, filters[filterIndex].veltrack, Default::filterVeltrackRange);
+            filters[filterIndex].veltrack = opcode.read(Default::filterVeltrack);
         }
         break;
     case hash("fil&_random"): // also fil_random, cutoff_random, cutoff&_random
@@ -684,8 +587,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-
-            setValueFromOpcode(opcode, filters[filterIndex].random, Default::filterRandomRange);
+            filters[filterIndex].random = opcode.read(Default::filterRandom);
         }
         break;
     case hash("fil&_gain"): // also fil_gain
@@ -693,8 +595,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
-
-            setValueFromOpcode(opcode, filters[filterIndex].gain, Default::filterGainRange);
+            filters[filterIndex].gain = opcode.read(Default::filterGain);
         }
         break;
     case_any_ccN("fil&_gain"): // also fil_gain_oncc&
@@ -703,7 +604,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            processGenericCc(opcode, Default::filterGainModRange, ModKey::createNXYZ(ModId::FilGain, id, filterIndex));
+            processGenericCc(opcode, Default::filterGainMod, ModKey::createNXYZ(ModId::FilGain, id, filterIndex));
         }
         break;
     case hash("fil&_type"): // also fil_type, filtype
@@ -712,14 +613,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            absl::optional<FilterType> ftype = Filter::typeFromName(opcode.value);
-
-            if (ftype)
-                filters[filterIndex].type = *ftype;
-            else {
-                filters[filterIndex].type = FilterType::kFilterNone;
-                DBG("Unknown filter type: " << opcode.value);
-            }
+            filters[filterIndex].type = opcode.read(Default::filter);
         }
         break;
 
@@ -729,8 +623,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-
-            setValueFromOpcode(opcode, equalizers[eqIndex].bandwidth, Default::eqBandwidthRange);
+            equalizers[eqIndex].bandwidth = opcode.read(Default::eqBandwidth);
         }
         break;
     case_any_ccN("eq&_bw"): // also eq&_bwcc&
@@ -739,7 +632,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            processGenericCc(opcode, Default::eqBandwidthModRange, ModKey::createNXYZ(ModId::EqBandwidth, id, eqIndex));
+            processGenericCc(opcode, Default::eqBandwidthMod, ModKey::createNXYZ(ModId::EqBandwidth, id, eqIndex));
         }
         break;
     case hash("eq&_freq"):
@@ -747,7 +640,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            setValueFromOpcode(opcode, equalizers[eqIndex].frequency, Default::eqFrequencyRange);
+            equalizers[eqIndex].frequency = opcode.read(Default::eqFrequency);
         }
         break;
     case_any_ccN("eq&_freq"): // also eq&_freqcc&
@@ -756,7 +649,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            processGenericCc(opcode, Default::eqFrequencyModRange, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
+            processGenericCc(opcode, Default::eqFrequencyMod, ModKey::createNXYZ(ModId::EqFrequency, id, eqIndex));
         }
         break;
     case hash("eq&_veltofreq"): // also eq&_vel2freq
@@ -764,8 +657,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-
-            setValueFromOpcode(opcode, equalizers[eqIndex].vel2frequency, Default::eqFrequencyModRange);
+            equalizers[eqIndex].vel2frequency = opcode.read(Default::eqVel2Frequency);
         }
         break;
     case hash("eq&_gain"):
@@ -773,7 +665,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-            setValueFromOpcode(opcode, equalizers[eqIndex].gain, Default::eqGainRange);
+            equalizers[eqIndex].gain = opcode.read(Default::eqGain);
         }
         break;
     case_any_ccN("eq&_gain"): // also eq&_gaincc&
@@ -782,7 +674,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            processGenericCc(opcode, Default::eqGainModRange, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
+            processGenericCc(opcode, Default::eqGainMod, ModKey::createNXYZ(ModId::EqGain, id, eqIndex));
         }
         break;
     case hash("eq&_veltogain"): // also eq&_vel2gain
@@ -790,8 +682,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto eqIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
-
-            setValueFromOpcode(opcode, equalizers[eqIndex].vel2gain, Default::eqGainModRange);
+            equalizers[eqIndex].vel2gain = opcode.read(Default::eqVel2Gain);
         }
         break;
     case hash("eq&_type"):
@@ -800,15 +691,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(equalizers, eqIndex + 1, Default::numEQs))
                 return false;
 
-            absl::optional<EqType> ftype = FilterEq::typeFromName(opcode.value);
+            equalizers[eqIndex].type =
+                opcode.read(Default::eq);
 
-            if (ftype)
-                equalizers[eqIndex].type = *ftype;
-            else {
-                equalizers[eqIndex].type = EqType::kEqNone;
-                DBG("Unknown EQ type: " << opcode.value);
-            }
-        }
+       }
         break;
 
     // Performance parameters: pitch
@@ -817,38 +703,38 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             pitchKeycenterFromSample = true;
         else {
             pitchKeycenterFromSample = false;
-            setValueFromOpcode(opcode, pitchKeycenter, Default::keyRange);
+            pitchKeycenter = opcode.read(Default::key);
         }
         break;
     case hash("pitch_keytrack"):
-        setValueFromOpcode(opcode, pitchKeytrack, Default::pitchKeytrackRange);
+        pitchKeytrack = opcode.read(Default::pitchKeytrack);
         break;
     case hash("pitch_veltrack"):
-        setValueFromOpcode(opcode, pitchVeltrack, Default::pitchVeltrackRange);
+        pitchVeltrack = opcode.read(Default::pitchVeltrack);
         break;
     case hash("pitch_random"):
-        setValueFromOpcode(opcode, pitchRandom, Default::pitchRandomRange);
+        pitchRandom = opcode.read(Default::pitchRandom);
         break;
     case hash("transpose"):
-        setValueFromOpcode(opcode, transpose, Default::transposeRange);
+        transpose = opcode.read(Default::transpose);
         break;
     case hash("pitch"): // also tune
-        setValueFromOpcode(opcode, tune, Default::tuneRange);
+        pitch = opcode.read(Default::pitch);
         break;
     case_any_ccN("pitch"): // also tune
-        processGenericCc(opcode, Default::tuneCCRange, ModKey::createNXYZ(ModId::Pitch, id));
+        processGenericCc(opcode, Default::pitchMod, ModKey::createNXYZ(ModId::Pitch, id));
         break;
     case hash("bend_up"): // also bendup
-        setValueFromOpcode(opcode, bendUp, Default::bendBoundRange);
+        bendUp = opcode.read(Default::bendUp);
         break;
     case hash("bend_down"): // also benddown
-        setValueFromOpcode(opcode, bendDown, Default::bendBoundRange);
+        bendDown = opcode.read(Default::bendDown);
         break;
     case hash("bend_step"):
-        setValueFromOpcode(opcode, bendStep, Default::bendStepRange);
+        bendStep = opcode.read(Default::bendStep);
         break;
     case hash("bend_smooth"):
-        setValueFromOpcode(opcode, bendSmooth, Default::smoothCCRange);
+        bendSmooth = opcode.read(Default::smoothCC);
         break;
 
     // Modulation: LFO
@@ -859,7 +745,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            setValueFromOpcode(opcode, lfos[lfoNumber - 1].freq, Default::lfoFreqRange);
+            lfos[lfoNumber - 1].freq = opcode.read(Default::lfoFreq);
         }
         break;
     case_any_ccN("lfo&_freq"):
@@ -869,7 +755,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            processGenericCc(opcode, Default::lfoFreqModRange, ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber - 1));
+            processGenericCc(opcode, Default::lfoFreqMod, ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber - 1));
         }
         break;
     case hash("lfo&_beats"):
@@ -879,7 +765,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            setValueFromOpcode(opcode, lfos[lfoNumber - 1].beats, Default::lfoBeatsRange);
+            lfos[lfoNumber - 1].beats = opcode.read(Default::lfoBeats);
         }
         break;
     case_any_ccN("lfo&_beats"):
@@ -889,7 +775,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            processGenericCc(opcode, Default::lfoBeatsModRange, ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber - 1));
+            processGenericCc(opcode, Default::lfoBeatsMod, ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber - 1));
         }
         break;
     case hash("lfo&_phase"):
@@ -899,8 +785,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoPhaseRange))
-                lfos[lfoNumber - 1].phase0 = wrapPhase(*value);
+            lfos[lfoNumber - 1].phase0 = opcode.read(Default::lfoPhase);
         }
         break;
     case hash("lfo&_delay"):
@@ -910,7 +795,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            setValueFromOpcode(opcode, lfos[lfoNumber - 1].delay, Default::lfoDelayRange);
+            lfos[lfoNumber - 1].delay = opcode.read(Default::lfoDelay);
         }
         break;
     case hash("lfo&_fade"):
@@ -920,7 +805,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            setValueFromOpcode(opcode, lfos[lfoNumber - 1].fade, Default::lfoFadeRange);
+            lfos[lfoNumber - 1].fade = opcode.read(Default::lfoFade);
         }
         break;
     case hash("lfo&_count"):
@@ -930,7 +815,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            setValueFromOpcode(opcode, lfos[lfoNumber - 1].count, Default::lfoCountRange);
+            lfos[lfoNumber - 1].count = opcode.read(Default::lfoCount);
         }
         break;
     case hash("lfo&_steps"):
@@ -940,11 +825,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoStepsRange)) {
-                if (!lfos[lfoNumber - 1].seq)
-                    lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
-                lfos[lfoNumber - 1].seq->steps.resize(*value);
-            }
+            if (!lfos[lfoNumber - 1].seq)
+                lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
+            lfos[lfoNumber - 1].seq->steps.resize(opcode.read(Default::lfoSteps));
         }
         break;
     case hash("lfo&_step&"):
@@ -955,13 +838,11 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoStepXRange)) {
-                if (!lfos[lfoNumber - 1].seq)
-                    lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
-                if (!extendIfNecessary(lfos[lfoNumber - 1].seq->steps, stepNumber, Default::numLFOSteps))
-                    return false;
-                lfos[lfoNumber - 1].seq->steps[stepNumber - 1] = *value * 0.01f;
-            }
+            if (!lfos[lfoNumber - 1].seq)
+                lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
+            if (!extendIfNecessary(lfos[lfoNumber - 1].seq->steps, stepNumber, Default::numLFOSteps))
+                return false;
+            lfos[lfoNumber - 1].seq->steps[stepNumber - 1] = opcode.read(Default::lfoStepX);
         }
         break;
     case hash("lfo&_wave&"): // also lfo&_wave
@@ -972,11 +853,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoWaveRange)) {
-                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
                     return false;
-                lfos[lfoNumber - 1].sub[subNumber - 1].wave = static_cast<LFOWave>(*value);
-            }
+            lfos[lfoNumber - 1].sub[subNumber - 1].wave = opcode.read(Default::lfoWave);
         }
         break;
     case hash("lfo&_offset&"): // also lfo&_offset
@@ -987,11 +866,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoOffsetRange)) {
-                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                    return false;
-                lfos[lfoNumber - 1].sub[subNumber - 1].offset = *value;
-            }
+            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                return false;
+            lfos[lfoNumber - 1].sub[subNumber - 1].offset = opcode.read(Default::lfoOffset);
         }
         break;
     case hash("lfo&_ratio&"): // also lfo&_ratio
@@ -1002,11 +879,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoRatioRange)) {
-                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                    return false;
-                lfos[lfoNumber - 1].sub[subNumber - 1].ratio = *value;
-            }
+            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                return false;
+            lfos[lfoNumber - 1].sub[subNumber - 1].ratio = opcode.read(Default::lfoRatio);
         }
         break;
     case hash("lfo&_scale&"): // also lfo&_scale
@@ -1017,11 +892,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
                 return false;
             if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::lfoScaleRange)) {
-                if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                    return false;
-                lfos[lfoNumber - 1].sub[subNumber - 1].scale = *value;
-            }
+            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
+                return false;
+            lfos[lfoNumber - 1].sub[subNumber - 1].scale = opcode.read(Default::lfoScale);
         }
         break;
 
@@ -1031,11 +904,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto lfoNumber = opcode.parameters.front();
             if (lfoNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::amplitudeMod);
         }
         break;
     case hash("lfo&_pan"):
@@ -1043,11 +915,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto lfoNumber = opcode.parameters.front();
             if (lfoNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::panMod);
         }
         break;
     case hash("lfo&_width"):
@@ -1055,11 +926,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto lfoNumber = opcode.parameters.front();
             if (lfoNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::widthMod);
         }
         break;
     case hash("lfo&_position"): // sfizz extension
@@ -1067,11 +937,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto lfoNumber = opcode.parameters.front();
             if (lfoNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::positionMod);
         }
         break;
     case hash("lfo&_pitch"):
@@ -1079,11 +948,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto lfoNumber = opcode.parameters.front();
             if (lfoNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::pitchMod);
         }
         break;
     case hash("lfo&_volume"):
@@ -1091,30 +959,29 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto lfoNumber = opcode.parameters.front();
             if (lfoNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::volumeMod);
         }
         break;
     case hash("lfo&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffModRange);
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
         break;
     case hash("lfo&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceModRange);
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceMod);
         break;
     case hash("lfo&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainModRange);
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainMod);
         break;
     case hash("lfo&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainModRange);
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainMod);
         break;
     case hash("lfo&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyModRange);
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyMod);
         break;
     case hash("lfo&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthModRange);
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthMod);
         break;
 
     // Modulation: Flex EG (targets)
@@ -1123,11 +990,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto egNumber = opcode.parameters.front();
             if (egNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::amplitudeRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::amplitudeMod);
         }
         break;
     case hash("eg&_pan"):
@@ -1135,11 +1001,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto egNumber = opcode.parameters.front();
             if (egNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::panCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::panMod);
         }
         break;
     case hash("eg&_width"):
@@ -1147,11 +1012,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto egNumber = opcode.parameters.front();
             if (egNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::widthCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::widthMod);
         }
         break;
     case hash("eg&_position"): // sfizz extension
@@ -1159,11 +1023,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto egNumber = opcode.parameters.front();
             if (egNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::positionCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::positionMod);
         }
         break;
     case hash("eg&_pitch"):
@@ -1171,11 +1034,10 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto egNumber = opcode.parameters.front();
             if (egNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::tuneCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::pitchMod);
         }
         break;
     case hash("eg&_volume"):
@@ -1183,30 +1045,29 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto egNumber = opcode.parameters.front();
             if (egNumber == 0)
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::volumeCCRange)) {
-                const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-                const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-                getOrCreateConnection(source, target).sourceDepth = *value;
-            }
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
+            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::volumeMod);
         }
         break;
     case hash("eg&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffModRange);
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);
         break;
     case hash("eg&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceModRange);
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceMod);
         break;
     case hash("eg&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainModRange);
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainMod);
         break;
     case hash("eg&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainModRange);
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainMod);
         break;
     case hash("eg&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyModRange);
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyMod);
         break;
     case hash("eg&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthModRange);
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthMod);
         break;
 
     case hash("eg&_ampeg"):
@@ -1216,15 +1077,14 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             return false;
         if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
             return false;
-        if (auto ampeg = readBooleanFromOpcode(opcode)) {
-            FlexEGDescription& desc = flexEGs[egNumber - 1];
-            if (desc.ampeg != *ampeg) {
-                desc.ampeg = *ampeg;
-                flexAmpEG = absl::nullopt;
-                for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
-                    if (flexEGs[i].ampeg)
-                        flexAmpEG = static_cast<uint8_t>(i);
-                }
+        auto ampeg = opcode.read(Default::flexEGAmpeg);
+        FlexEGDescription& desc = flexEGs[egNumber - 1];
+        if (desc.ampeg != ampeg) {
+            desc.ampeg = ampeg;
+            flexAmpEG = absl::nullopt;
+            for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
+                if (flexEGs[i].ampeg)
+                    flexAmpEG = static_cast<uint8_t>(i);
             }
         }
         break;
@@ -1307,29 +1167,25 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
 
     case hash("pitcheg_depth"):
-        if (auto value = readOpcode(opcode.value, Default::pitchEgDepthRange))
-            getOrCreateConnection(
-                ModKey::createNXYZ(ModId::PitchEG, id),
-                ModKey::createNXYZ(ModId::Pitch, id)).sourceDepth = *value;
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::PitchEG, id),
+            ModKey::createNXYZ(ModId::Pitch, id)).sourceDepth = opcode.read(Default::egDepth);
         break;
     case hash("fileg_depth"):
-        if (auto value = readOpcode(opcode.value, Default::filterEgDepthRange))
-            getOrCreateConnection(
-                ModKey::createNXYZ(ModId::FilEG, id),
-                ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = *value;
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::FilEG, id),
+            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = opcode.read(Default::egDepth);
         break;
 
     case hash("pitcheg_veltodepth"): // also pitcheg_vel2depth
-        if (auto value = readOpcode(opcode.value, Default::pitchEgDepthRange))
-            getOrCreateConnection(
-                ModKey::createNXYZ(ModId::PitchEG, id),
-                ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = *value;
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::PitchEG, id),
+            ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = opcode.read(Default::egVel2Depth);
         break;
     case hash("fileg_veltodepth"): // also fileg_vel2depth
-        if (auto value = readOpcode(opcode.value, Default::filterEgDepthRange))
-            getOrCreateConnection(
-                ModKey::createNXYZ(ModId::FilEG, id),
-                ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = *value;
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::FilEG, id),
+            ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = opcode.read(Default::egVel2Depth);
         break;
 
     // Flex envelopes
@@ -1341,7 +1197,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
                 return false;
             auto& eg = flexEGs[egNumber - 1];
-            setValueFromOpcode(opcode, eg.dynamic, Default::flexEGDynamicRange);
+            eg.dynamic = opcode.read(Default::flexEGDynamic);
         }
         break;
     case hash("eg&_sustain"):
@@ -1352,7 +1208,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
                 return false;
             auto& eg = flexEGs[egNumber - 1];
-            setValueFromOpcode(opcode, eg.sustain, Default::flexEGSustainRange);
+            eg.sustain = opcode.read(Default::flexEGSustain);
         }
         break;
     case hash("eg&_time&"):
@@ -1366,7 +1222,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto pointNumber = opcode.parameters[1];
             if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
                 return false;
-            setValueFromOpcode(opcode, eg.points[pointNumber].time, Default::flexEGPointTimeRange);
+            eg.points[pointNumber].time = opcode.read(Default::flexEGPointTime);
         }
         break;
     case hash("eg&_level&"):
@@ -1380,7 +1236,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto pointNumber = opcode.parameters[1];
             if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
                 return false;
-            setValueFromOpcode(opcode, eg.points[pointNumber].level, Default::flexEGPointLevelRange);
+            eg.points[pointNumber].level = opcode.read(Default::flexEGPointLevel);
         }
         break;
     case hash("eg&_shape&"):
@@ -1394,8 +1250,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             const auto pointNumber = opcode.parameters[1];
             if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
                 return false;
-            if (auto value = readOpcode(opcode.value, Default::flexEGPointShapeRange))
-                eg.points[pointNumber].setShape(*value);
+            eg.points[pointNumber].setShape(opcode.read(Default::flexEGPointShape));
         }
         break;
 
@@ -1404,16 +1259,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         const auto effectNumber = opcode.parameters.back();
         if (!effectNumber || effectNumber < 1 || effectNumber > config::maxEffectBuses)
             break;
-        auto value = readOpcode<float>(opcode.value, { 0, 100 });
-        if (!value)
-            break;
         if (static_cast<size_t>(effectNumber + 1) > gainToEffect.size())
             gainToEffect.resize(effectNumber + 1);
-        gainToEffect[effectNumber] = *value / 100;
+        gainToEffect[effectNumber] = opcode.read(Default::effect);
         break;
     }
     case hash("sw_default"):
-        setValueFromOpcode(opcode, defaultSwitch, Default::keyRange);
+        defaultSwitch = opcode.read(Default::key);
         break;
 
     // Ignored opcodes
@@ -1441,98 +1293,91 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
 
     switch (opcode.lettersOnlyHash) {
     case_any_eg("attack"):
-        setValueFromOpcode(opcode, eg.attack, Default::egTimeRange);
+        eg.attack = opcode.read(Default::egTime);
         break;
     case_any_eg("decay"):
-        setValueFromOpcode(opcode, eg.decay, Default::egTimeRange);
+        eg.decay = opcode.read(Default::egTime);
         break;
     case_any_eg("delay"):
-        setValueFromOpcode(opcode, eg.delay, Default::egTimeRange);
+        eg.delay = opcode.read(Default::egTime);
         break;
     case_any_eg("hold"):
-        setValueFromOpcode(opcode, eg.hold, Default::egTimeRange);
+        eg.hold = opcode.read(Default::egTime);
         break;
     case_any_eg("release"):
-        setValueFromOpcode(opcode, eg.release, Default::egTimeRange);
+        eg.release = opcode.read(Default::egRelease);
         break;
     case_any_eg("start"):
-        setValueFromOpcode(opcode, eg.start, Default::egPercentRange);
+        eg.start = opcode.read(Default::egPercent);
         break;
     case_any_eg("sustain"):
-        setValueFromOpcode(opcode, eg.sustain, Default::egPercentRange);
+        eg.sustain = opcode.read(Default::egPercent);
         break;
     case_any_eg("veltoattack"): // also vel2attack
-        setValueFromOpcode(opcode, eg.vel2attack, Default::egOnCCTimeRange);
+        eg.vel2attack = opcode.read(Default::egTimeMod);
         break;
     case_any_eg("veltodecay"): // also vel2decay
-        setValueFromOpcode(opcode, eg.vel2decay, Default::egOnCCTimeRange);
+        eg.vel2decay = opcode.read(Default::egTimeMod);
         break;
     case_any_eg("veltodelay"): // also vel2delay
-        setValueFromOpcode(opcode, eg.vel2delay, Default::egOnCCTimeRange);
+        eg.vel2delay = opcode.read(Default::egTimeMod);
         break;
     case_any_eg("veltohold"): // also vel2hold
-        setValueFromOpcode(opcode, eg.vel2hold, Default::egOnCCTimeRange);
+        eg.vel2hold = opcode.read(Default::egTimeMod);
         break;
     case_any_eg("veltorelease"): // also vel2release
-        setValueFromOpcode(opcode, eg.vel2release, Default::egOnCCTimeRange);
+        eg.vel2release = opcode.read(Default::egTimeMod);
         break;
     case_any_eg("veltosustain"): // also vel2sustain
-        setValueFromOpcode(opcode, eg.vel2sustain, Default::egOnCCPercentRange);
+        eg.vel2sustain = opcode.read(Default::egPercentMod);
         break;
     case_any_eg("attack_oncc&"): // also attackcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            eg.ccAttack[opcode.parameters.back()] = *value;
+        eg.ccAttack[opcode.parameters.back()] = opcode.read(Default::egTimeMod);
 
         break;
     case_any_eg("decay_oncc&"): // also decaycc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            eg.ccDecay[opcode.parameters.back()] = *value;
+        eg.ccDecay[opcode.parameters.back()] = opcode.read(Default::egTimeMod);
 
         break;
     case_any_eg("delay_oncc&"): // also delaycc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            eg.ccDelay[opcode.parameters.back()] = *value;
+        eg.ccDelay[opcode.parameters.back()] = opcode.read(Default::egTimeMod);
 
         break;
     case_any_eg("hold_oncc&"): // also holdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            eg.ccHold[opcode.parameters.back()] = *value;
+        eg.ccHold[opcode.parameters.back()] = opcode.read(Default::egTimeMod);
 
         break;
     case_any_eg("release_oncc&"): // also releasecc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCTimeRange))
-            eg.ccRelease[opcode.parameters.back()] = *value;
+        eg.ccRelease[opcode.parameters.back()] = opcode.read(Default::egTimeMod);
 
         break;
     case_any_eg("start_oncc&"): // also startcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
-            eg.ccStart[opcode.parameters.back()] = *value;
+        eg.ccStart[opcode.parameters.back()] = opcode.read(Default::egPercentMod);
 
         break;
     case_any_eg("sustain_oncc&"): // also sustaincc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        if (auto value = readOpcode(opcode.value, Default::egOnCCPercentRange))
-            eg.ccSustain[opcode.parameters.back()] = *value;
+        eg.ccSustain[opcode.parameters.back()] = opcode.read(Default::egPercentMod);
 
         break;
     default:
@@ -1557,7 +1402,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, absl::optional<EGDescripti
     return parsed;
 }
 
-bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, const ModKey& target)
+bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec, const ModKey& target)
 {
     if (!opcode.isAnyCcN())
         return false;
@@ -1591,19 +1436,21 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, Range<float> range, con
         ModKey::Parameters p = conn->source.parameters();
         switch (opcode.category) {
         case kOpcodeOnCcN:
-            setValueFromOpcode(opcode, conn->sourceDepth, range);
+            conn->sourceDepth = opcode.read(spec);
             break;
         case kOpcodeCurveCcN:
-            setValueFromOpcode(opcode, p.curve, Default::curveCCRange);
+                p.curve = opcode.read(Default::curveCC);
             break;
         case kOpcodeStepCcN:
             {
-                const Range<float> stepCCRange { 0.0f, std::max(std::abs(range.getStart()), std::abs(range.getEnd())) };
-                setValueFromOpcode(opcode, p.step, stepCCRange);
+                const float maxStep =
+                    max(std::abs(spec.bounds.getStart()), std::abs(spec.bounds.getEnd()));
+                const OpcodeSpec<float> stepCC { 0.0f, Range<float>(0.0f, maxStep), 0 };
+                p.step = opcode.read(stepCC);
             }
             break;
         case kOpcodeSmoothCcN:
-            setValueFromOpcode(opcode, p.smooth, Default::smoothCCRange);
+            p.smooth = opcode.read(Default::smoothCC);
             break;
         default:
             assert(false);
@@ -1639,9 +1486,9 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
-    const bool firstLegatoNote = (trigger == SfzTrigger::first && midiState.getActiveNotes() == 1);
-    const bool attackTrigger = (trigger == SfzTrigger::attack);
-    const bool notFirstLegatoNote = (trigger == SfzTrigger::legato && midiState.getActiveNotes() > 1);
+    const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
+    const bool attackTrigger = (trigger == Trigger::attack);
+    const bool notFirstLegatoNote = (trigger == Trigger::legato && midiState.getActiveNotes() > 1);
 
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
@@ -1667,10 +1514,10 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
 
     // Release logic
 
-    if (trigger == SfzTrigger::release_key)
+    if (trigger == Trigger::release_key)
         return true;
 
-    if (trigger == SfzTrigger::release) {
+    if (trigger == Trigger::release) {
         if (midiState.getCCValue(sustainCC) < sustainThreshold)
             return true;
 
@@ -1686,6 +1533,7 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
 bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
+
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);
     else
@@ -1734,7 +1582,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
 
     fast_real_distribution<float> pitchDistribution { -pitchRandom, pitchRandom };
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
-    pitchVariationInCents += tune; // sample tuning
+    pitchVariationInCents += pitch; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
     pitchVariationInCents += velocity * pitchVeltrack; // track velocity
     pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
@@ -1748,7 +1596,7 @@ float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
     baseVolumedB += globalVolume;
     baseVolumedB += masterVolume;
     baseVolumedB += groupVolume;
-    if (trigger == SfzTrigger::release || trigger == SfzTrigger::release_key)
+    if (trigger == Trigger::release || trigger == Trigger::release_key)
         baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
     return baseVolumedB;
 }
@@ -1782,7 +1630,7 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
         finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
-    return Default::offsetRange.clamp(finalOffset) * static_cast<uint64_t>(factor);
+    return Default::offset.bounds.clamp(finalOffset) * static_cast<uint64_t>(factor);
 }
 
 float sfz::Region::getDelay() const noexcept
@@ -1871,37 +1719,37 @@ float sfz::Region::velocityCurve(float velocity) const noexcept
 void sfz::Region::offsetAllKeys(int offset) noexcept
 {
     // Offset key range
-    if (keyRange != Default::keyRange) {
+    if (keyRange != Default::key.bounds) {
         const auto start = keyRange.getStart();
         const auto end = keyRange.getEnd();
-        keyRange.setStart(offsetAndClampKey(start, offset, Default::keyRange));
-        keyRange.setEnd(offsetAndClampKey(end, offset, Default::keyRange));
+        keyRange.setStart(offsetAndClampKey(start, offset));
+        keyRange.setEnd(offsetAndClampKey(end, offset));
     }
-    pitchKeycenter = offsetAndClampKey(pitchKeycenter, offset, Default::keyRange);
+    pitchKeycenter = offsetAndClampKey(pitchKeycenter, offset);
 
     // Offset key switches
     if (upKeyswitch)
-        upKeyswitch = offsetAndClampKey(*upKeyswitch, offset, Default::keyRange);
+        upKeyswitch = offsetAndClampKey(*upKeyswitch, offset);
     if (lastKeyswitch)
-        lastKeyswitch = offsetAndClampKey(*lastKeyswitch, offset, Default::keyRange);
+        lastKeyswitch = offsetAndClampKey(*lastKeyswitch, offset);
     if (downKeyswitch)
-        downKeyswitch = offsetAndClampKey(*downKeyswitch, offset, Default::keyRange);
+        downKeyswitch = offsetAndClampKey(*downKeyswitch, offset);
     if (previousKeyswitch)
-        previousKeyswitch = offsetAndClampKey(*previousKeyswitch, offset, Default::keyRange);
+        previousKeyswitch = offsetAndClampKey(*previousKeyswitch, offset);
 
     // Offset crossfade ranges
     if (crossfadeKeyInRange != Default::crossfadeKeyInRange) {
         const auto start = crossfadeKeyInRange.getStart();
         const auto end = crossfadeKeyInRange.getEnd();
-        crossfadeKeyInRange.setStart(offsetAndClampKey(start, offset, Default::keyRange));
-        crossfadeKeyInRange.setEnd(offsetAndClampKey(end, offset, Default::keyRange));
+        crossfadeKeyInRange.setStart(offsetAndClampKey(start, offset));
+        crossfadeKeyInRange.setEnd(offsetAndClampKey(end, offset));
     }
 
     if (crossfadeKeyOutRange != Default::crossfadeKeyOutRange) {
         const auto start = crossfadeKeyOutRange.getStart();
         const auto end = crossfadeKeyOutRange.getEnd();
-        crossfadeKeyOutRange.setStart(offsetAndClampKey(start, offset, Default::keyRange));
-        crossfadeKeyOutRange.setEnd(offsetAndClampKey(end, offset, Default::keyRange));
+        crossfadeKeyOutRange.setStart(offsetAndClampKey(start, offset));
+        crossfadeKeyOutRange.setEnd(offsetAndClampKey(end, offset));
     }
 }
 

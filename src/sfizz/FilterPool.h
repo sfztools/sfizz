@@ -22,7 +22,7 @@ public:
      * @param noteNumber    the triggering note number
      * @param velocity      the triggering note velocity/value
      */
-    void setup(const Region& region, unsigned filterId, int noteNumber = static_cast<int>(Default::filterKeycenter), float velocity = 0);
+    void setup(const Region& region, unsigned filterId, int noteNumber = static_cast<int>(Default::key), float velocity = 0);
     /**
      * @brief Process a block of stereo inputs
      *

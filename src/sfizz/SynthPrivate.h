@@ -8,6 +8,7 @@
 #include "modulations/sources/ADSREnvelope.h"
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
+#include "modulations/sources/ChannelAftertouch.h"
 #include "modulations/sources/LFO.h"
 #include "utility/BitArray.h"
 
@@ -257,14 +258,15 @@ struct Synth::Impl final: public Parser::Listener {
 
     // Control opcodes
     std::string defaultPath_ { "" };
-    int noteOffset_ { 0 };
-    int octaveOffset_ { 0 };
+    int noteOffset_ { Default::noteOffset };
+    int octaveOffset_ { Default::octaveOffset };
 
     // Modulation source generators
     std::unique_ptr<ControllerSource> genController_;
     std::unique_ptr<LFOSource> genLFO_;
     std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope_;
     std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
+    std::unique_ptr<ChannelAftertouchSource> genChannelAftertouch_;
 
     // Settings per voice
     struct {

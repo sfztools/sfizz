@@ -48,13 +48,6 @@ struct ScopedTiming
 
 struct FileTime
 {
-    FileTime() = default;
-    FileTime(Duration waitDuration, Duration loadDuration, uint32_t fileSize, absl::string_view filename)
-    : waitDuration(waitDuration), loadDuration(loadDuration), fileSize(fileSize), filename(filename) { }
-    FileTime(const FileTime&) = default;
-    FileTime& operator=(const FileTime&) = default;
-    FileTime(FileTime&&) = default;
-    FileTime& operator=(FileTime&&) = default;
     Duration waitDuration { 0 };
     Duration loadDuration { 0 };
     uint32_t fileSize { 0 };
@@ -76,13 +69,6 @@ struct CallbackBreakdown
 
 struct CallbackTime
 {
-    CallbackTime() = default;
-    CallbackTime(const CallbackBreakdown& breakdown, int numVoices, size_t numSamples)
-    : breakdown(breakdown), numVoices(numVoices), numSamples(numSamples) { }
-    CallbackTime(const CallbackTime&) = default;
-    CallbackTime& operator=(const CallbackTime&) = default;
-    CallbackTime(CallbackTime&&) = default;
-    CallbackTime& operator=(CallbackTime&&) = default;
     CallbackBreakdown breakdown {};
     int numVoices { 0 };
     size_t numSamples { 0 };

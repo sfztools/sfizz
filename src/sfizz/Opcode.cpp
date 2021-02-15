@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Opcode.h"
+#include "LFODescription.h"
 #include "StringViewHelpers.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
@@ -117,12 +118,112 @@ OpcodeCategory Opcode::identifyCategory(absl::string_view name)
     return category;
 }
 
+template <typename T>
+absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
+{
+    size_t numberEnd = 0;
+
+    if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
+        ++numberEnd;
+
+    while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
+        ++numberEnd;
+
+    if (numberEnd == 0 && (spec.flags & kCanBeNote))
+        return readNoteValue(v);
+
+    v = v.substr(0, numberEnd);
+
+    int64_t returnedValue;
+    if (!absl::SimpleAtoi(v, &returnedValue))
+        return absl::nullopt;
+
+    if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
+        if (spec.flags & kEnforceUpperBound)
+            return spec.bounds.getEnd();
+
+        return absl::nullopt;
+    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
+        if (spec.flags & kEnforceLowerBound)
+            return spec.bounds.getStart();
+
+        return absl::nullopt;
+    }
+
+    return returnedValue;
+}
+
+#define INSTANTIATE_FOR_INTEGRAL(T)                             \
+    template <>                                                 \
+    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
+    {                                                           \
+        return readInt_<T>(spec, value);                               \
+    }
+
+INSTANTIATE_FOR_INTEGRAL(uint8_t)
+INSTANTIATE_FOR_INTEGRAL(uint16_t)
+INSTANTIATE_FOR_INTEGRAL(uint32_t)
+INSTANTIATE_FOR_INTEGRAL(int8_t)
+INSTANTIATE_FOR_INTEGRAL(int16_t)
+INSTANTIATE_FOR_INTEGRAL(int32_t)
+INSTANTIATE_FOR_INTEGRAL(int64_t)
+
+
+template <typename T>
+absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
+{
+    size_t numberEnd = 0;
+
+    if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
+        ++numberEnd;
+
+    if (numberEnd < v.size() && v[numberEnd] == '.') {
+        ++numberEnd;
+        while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
+            ++numberEnd;
+    }
+
+    v = v.substr(0, numberEnd);
+
+    float returnedValue;
+    if (!absl::SimpleAtof(v, &returnedValue))
+        return absl::nullopt;
+
+    if (spec.flags & kWrapPhase)
+        returnedValue = wrapPhase(returnedValue);
+    else if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
+        if (spec.flags & kEnforceUpperBound)
+            return spec.bounds.getEnd();
+
+        return absl::nullopt;
+    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
+        if (spec.flags & kEnforceLowerBound)
+            return spec.bounds.getStart();
+
+        return absl::nullopt;
+    }
+
+    return spec.normalizeInput(returnedValue);
+}
+
+#define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
+    template <>                                                 \
+    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
+    {                                                           \
+        return readFloat_<T>(spec, value);                             \
+    }
+
+INSTANTIATE_FOR_FLOATING_POINT(float)
+INSTANTIATE_FOR_FLOATING_POINT(double)
+
 absl::optional<uint8_t> readNoteValue(absl::string_view value)
 {
     char noteLetter = absl::ascii_tolower(value.empty() ? '\0' : value.front());
     value.remove_prefix(1);
     if (noteLetter < 'a' || noteLetter > 'g')
-        return {};
+        return absl::nullopt;
 
     constexpr int offsetsABCDEFG[] = { 9, 11, 0, 2, 4, 5, 7 };
     int noteNumber = offsetsABCDEFG[noteLetter - 'a'];
@@ -143,11 +244,11 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
         if (absl::StartsWith(value, prefix.first)) {
             if (prefix.second == +1) {
                 if (validSharpLetters.find(noteLetter) == absl::string_view::npos)
-                    return {};
+                    return absl::nullopt;
             }
             else if (prefix.second == -1) {
                 if (validFlatLetters.find(noteLetter) == absl::string_view::npos)
-                    return {};
+                    return absl::nullopt;
             }
             noteNumber += prefix.second;
             value.remove_prefix(prefix.first.size());
@@ -157,64 +258,14 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
 
     int octaveNumber;
     if (!absl::SimpleAtoi(value, &octaveNumber))
-        return {};
+        return absl::nullopt;
 
     noteNumber += (octaveNumber + 1) * 12;
 
     if (noteNumber < 0 || noteNumber >= 128)
-        return {};
-
-    return static_cast<uint8_t>(noteNumber);
-}
-
-///
-template <typename ValueType, absl::enable_if_t<std::is_integral<ValueType>::value, int>>
-absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
-{
-    size_t numberEnd = 0;
-
-    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
-        ++numberEnd;
-    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
-        ++numberEnd;
-
-    value = value.substr(0, numberEnd);
-
-    int64_t returnedValue;
-    if (!absl::SimpleAtoi(value, &returnedValue))
-            return absl::nullopt;
-
-    if (returnedValue > std::numeric_limits<ValueType>::max())
-        returnedValue = std::numeric_limits<ValueType>::max();
-    if (returnedValue < std::numeric_limits<ValueType>::min())
-        returnedValue = std::numeric_limits<ValueType>::min();
-
-    return validRange.clamp(static_cast<ValueType>(returnedValue));
-}
-
-template <typename ValueType, absl::enable_if_t<std::is_floating_point<ValueType>::value, int>>
-absl::optional<ValueType> readOpcode(absl::string_view value, const Range<ValueType>& validRange)
-{
-    size_t numberEnd = 0;
-
-    if (numberEnd < value.size() && (value[numberEnd] == '+' || value[numberEnd] == '-'))
-        ++numberEnd;
-    while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
-        ++numberEnd;
-
-    if (numberEnd < value.size() && value[numberEnd] == '.') {
-        ++numberEnd;
-        while (numberEnd < value.size() && absl::ascii_isdigit(value[numberEnd]))
-            ++numberEnd;
-    }
-
-    value = value.substr(0, numberEnd);
-
-    float returnedValue;
-    if (!absl::SimpleAtof(value, &returnedValue))
         return absl::nullopt;
 
-    return validRange.clamp(returnedValue);
+    return static_cast<uint8_t>(noteNumber);
 }
 
 absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
@@ -222,88 +273,176 @@ absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
     // Cakewalk-style booleans, case-insensitive
     if (absl::EqualsIgnoreCase(opcode.value, "off"))
         return false;
+
     if (absl::EqualsIgnoreCase(opcode.value, "on"))
         return true;
 
     // ARIA-style booleans? (seen in egN_dynamic=1 for example)
     // TODO check this
-    if (auto value = readOpcode(opcode.value, Range<int64_t>::wholeRange()))
-        return *value != 0;
+    const OpcodeSpec<int64_t> fullInt64 { 0, Range<int64_t>::wholeRange(), 0 };
+    const auto v = opcode.readOptional(fullInt64);
+
+    if (v)
+        return v != 0;
 
     return absl::nullopt;
 }
 
-template <class ValueType>
-void setValueFromOpcode(const Opcode& opcode, ValueType& target, const Range<ValueType>& validRange)
+template <>
+absl::optional<OscillatorEnabled> Opcode::readOptional(OpcodeSpec<OscillatorEnabled>) const
 {
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target = *value;
+    auto v = readBooleanFromOpcode(*this);
+    if (!v)
+        return absl::nullopt;
+
+    return *v ? OscillatorEnabled::On : OscillatorEnabled::Off;
 }
 
-template <class ValueType>
-inline void setValueFromOpcode(const Opcode& opcode, absl::optional<ValueType>& target, const Range<ValueType>& validRange)
+template <>
+absl::optional<Trigger> Opcode::readOptional(OpcodeSpec<Trigger>) const
 {
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target = *value;
+    switch (hash(value)) {
+    case hash("attack"): return Trigger::attack;
+    case hash("first"): return Trigger::first;
+    case hash("legato"): return Trigger::legato;
+    case hash("release"): return Trigger::release;
+    case hash("release_key"): return Trigger::release_key;
+    }
+
+    DBG("Unknown trigger value: " << value);
+    return absl::nullopt;
 }
 
-template <class ValueType>
-void setRangeEndFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange)
+template <>
+absl::optional<CrossfadeCurve> Opcode::readOptional(OpcodeSpec<CrossfadeCurve>) const
 {
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target.setEnd(*value);
+    switch (hash(value)) {
+    case hash("power"): return CrossfadeCurve::power;
+    case hash("gain"): return CrossfadeCurve::gain;
+    }
+
+    DBG("Unknown crossfade power curve: " << value);
+    return absl::nullopt;
 }
 
-template <class ValueType>
-void setRangeStartFromOpcode(const Opcode& opcode, Range<ValueType>& target, const Range<ValueType>& validRange)
+template <>
+absl::optional<OffMode> Opcode::readOptional(OpcodeSpec<OffMode>) const
 {
-    auto value = readOpcode(opcode.value, validRange);
-    if (!value) // Try and read a note rather than a number
-        value = readNoteValue(opcode.value);
-    if (value)
-        target.setStart(*value);
+    switch (hash(value)) {
+    case hash("fast"): return OffMode::fast;
+    case hash("normal"): return OffMode::normal;
+    case hash("time"): return OffMode::time;
+    }
+
+    DBG("Unknown off mode: " << value);
+    return absl::nullopt;
 }
 
-template <class ValueType>
-void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<ValueType>>& target, const Range<ValueType>& validRange)
+template <>
+absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>) const
 {
-    auto value = readOpcode(opcode.value, validRange);
-    if (value && Default::ccNumberRange.containsWithEnd(opcode.parameters.back()))
-        target = { opcode.parameters.back(), *value };
-    else
-        target = {};
+    switch (hash(value)) {
+    case hash("lpf_1p"): return kFilterLpf1p;
+    case hash("hpf_1p"): return kFilterHpf1p;
+    case hash("lpf_2p"): return kFilterLpf2p;
+    case hash("hpf_2p"): return kFilterHpf2p;
+    case hash("bpf_2p"): return kFilterBpf2p;
+    case hash("brf_2p"): return kFilterBrf2p;
+    case hash("bpf_1p"): return kFilterBpf1p;
+    case hash("brf_1p"): return kFilterBrf1p;
+    case hash("apf_1p"): return kFilterApf1p;
+    case hash("lpf_2p_sv"): return kFilterLpf2pSv;
+    case hash("hpf_2p_sv"): return kFilterHpf2pSv;
+    case hash("bpf_2p_sv"): return kFilterBpf2pSv;
+    case hash("brf_2p_sv"): return kFilterBrf2pSv;
+    case hash("lpf_4p"): return kFilterLpf4p;
+    case hash("hpf_4p"): return kFilterHpf4p;
+    case hash("lpf_6p"): return kFilterLpf6p;
+    case hash("hpf_6p"): return kFilterHpf6p;
+    case hash("pink"): return kFilterPink;
+    case hash("lsh"): return kFilterLsh;
+    case hash("hsh"): return kFilterHsh;
+    case hash("bpk_2p"): //fallthrough
+    case hash("pkf_2p"): //fallthrough
+    case hash("peq"): return kFilterPeq;
+    }
+
+    DBG("Unknown filter type: " << value);
+    return absl::nullopt;
 }
 
-///
-#define INSTANCIATE_FOR(T) \
-    template absl::optional<T> readOpcode<T>(absl::string_view value, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
-    template void setValueFromOpcode<T>(const Opcode& opcode, T& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
-    template void setValueFromOpcode<T>(const Opcode& opcode, absl::optional<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
-    template void setRangeEndFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
-    template void setRangeStartFromOpcode(const Opcode& opcode, Range<T>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/ \
-    template void setCCPairFromOpcode(const Opcode& opcode, absl::optional<CCData<T>>& target, const Range<T>& validRange); /*NOLINT(bugprone-macro-parentheses)*/
+template <>
+absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>) const
+{
+    switch (hash(value)) {
+    case hash("peak"): return kEqPeak;
+    case hash("lshelf"): return kEqLowShelf;
+    case hash("hshelf"): return kEqHighShelf;
+    }
 
-INSTANCIATE_FOR(float)
-INSTANCIATE_FOR(double)
-INSTANCIATE_FOR(int8_t)
-INSTANCIATE_FOR(int16_t)
-INSTANCIATE_FOR(int32_t)
-INSTANCIATE_FOR(int64_t)
-INSTANCIATE_FOR(uint8_t)
-INSTANCIATE_FOR(uint16_t)
-INSTANCIATE_FOR(uint32_t)
-//INSTANCIATE_FOR(uint64_t)
+    DBG("Unknown EQ type: " << value);
+    return absl::nullopt;
+}
 
-#undef INSTANCIATE_FOR
+template <>
+absl::optional<VelocityOverride> Opcode::readOptional(OpcodeSpec<VelocityOverride>) const
+{
+    switch (hash(value)) {
+    case hash("current"): return VelocityOverride::current;
+    case hash("previous"): return VelocityOverride::previous;
+    }
+
+    DBG("Unknown velocity override: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<SelfMask> Opcode::readOptional(OpcodeSpec<SelfMask>) const
+{
+    switch (hash(value)) {
+    case hash("on"):
+    case hash("mask"): return SelfMask::mask;
+    case hash("off"): return SelfMask::dontMask;
+    }
+
+    DBG("Unknown velocity override: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<LoopMode> Opcode::readOptional(OpcodeSpec<LoopMode>) const
+{
+    switch (hash(value)) {
+    case hash("no_loop"): return LoopMode::no_loop;
+    case hash("one_shot"): return LoopMode::one_shot;
+    case hash("loop_continuous"): return LoopMode::loop_continuous;
+    case hash("loop_sustain"): return LoopMode::loop_sustain;
+    }
+
+    DBG("Unknown loop mode: " << value);
+    return absl::nullopt;
+}
+
+template <>
+absl::optional<bool> Opcode::readOptional(OpcodeSpec<bool>) const
+{
+    return readBooleanFromOpcode(*this);
+}
+
+template <>
+absl::optional<LFOWave> Opcode::readOptional(OpcodeSpec<LFOWave> spec) const
+{
+    const OpcodeSpec<int> intSpec {
+        static_cast<int>(spec.defaultInputValue),
+        Range<int>(static_cast<int>(spec.bounds.getStart()), static_cast<int>(spec.bounds.getEnd())),
+        0
+    };
+
+    if (auto value = readOptional(intSpec))
+        return static_cast<LFOWave>(*value);
+
+    return absl::nullopt;
+}
 
 } // namespace sfz
 

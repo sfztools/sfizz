@@ -28,7 +28,7 @@ struct RiffChunkInfo {
 /**
    @brief Loop mode, like SF_LOOP_*
  */
-enum LoopMode {
+enum FileLoopMode {
     LoopNone,
     LoopForward,
     LoopBackward,
@@ -52,7 +52,7 @@ struct InstrumentInfo {
     } loops[16];
 };
 #else
-enum LoopMode {
+enum FileLoopMode {
     LoopNone = SF_LOOP_NONE,
     LoopForward = SF_LOOP_FORWARD,
     LoopBackward = SF_LOOP_BACKWARD,

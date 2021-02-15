@@ -515,10 +515,10 @@ TEST_CASE("[Synth] veltrack")
     };
 
     const VeltrackData veltrackdata[] = {
-        { 25, veldata25 },
-        { 50, veldata50 },
-        { 75, veldata75 },
-        { 100, veldata100 },
+        { 25, absl::MakeConstSpan(veldata25) },
+        { 50, absl::MakeConstSpan(veldata50) },
+        { 75, absl::MakeConstSpan(veldata75) },
+        { 100, absl::MakeConstSpan(veldata100) },
     };
 
     for (const VeltrackData& vt : veltrackdata) {
@@ -579,7 +579,7 @@ TEST_CASE("[Synth] sample quality")
     synth.enableFreeWheeling();
     synth.noteOn(0, 60, 100);
     REQUIRE(synth.getNumActiveVoices() == 1);
-    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::sampleQualityInFreewheelingMode);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::freewheelingQuality);
     synth.allSoundOff();
     synth.disableFreeWheeling();
 
@@ -1085,7 +1085,7 @@ TEST_CASE("[Synth] Used CCs")
         <region> locc4=64 hicc67=32 pan_cc5=200 sample=*sine
         <region> width_cc98=200 sample=*sine
         <region> position_cc42=200 pitch_oncc56=200 sample=*sine
-        <region> start_locc44=200 hikey=-1 sample=*sine
+        <region> start_locc44=120 hikey=-1 sample=*sine
     )");
     auto usedCCs = synth.getUsedCCs();
     REQUIRE( usedCCs.test(1) );
@@ -1423,4 +1423,19 @@ TEST_CASE("[Synth] Send CC vs. Automate CC")
 
         REQUIRE(synth.getNumActiveVoices() == 1);
    }
+}
+
+TEST_CASE("[Keyswitches] Trigger from aftertouch extended CC")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/aftertouch_trigger.sfz", R"(
+        <region> start_locc129=100 start_hicc129=127 sample=*saw
+    )");
+    REQUIRE(synth.getNumActiveVoices() == 0);
+    synth.aftertouch(0, 90);
+    REQUIRE(synth.getNumActiveVoices() == 0);
+    synth.aftertouch(0, 110);
+    REQUIRE(synth.getNumActiveVoices() == 1);
+    synth.aftertouch(0, 120);
+    REQUIRE(synth.getNumActiveVoices() == 2);
 }
