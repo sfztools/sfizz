@@ -8,8 +8,9 @@
 #include "SIMDConfig.h"
 #include <absl/types/span.h>
 #include <memory>
-#if SFIZZ_HAVE_SSE2
-#include <xmmintrin.h>
+#include <simde/simde-features.h>
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
+#include <simde/x86/sse.h>
 #endif
 
 namespace sfz {
@@ -30,9 +31,9 @@ public:
     // interpolate f(x), where x must be in domain [-Points/2:+Points/2]
     float getUnchecked(float x) const noexcept;
 
-#if SFIZZ_HAVE_SSE2
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
     // interpolate f(x), 4 values at once
-    __m128 getUncheckedX4(__m128 x) const noexcept;
+    simde__m128 getUncheckedX4(simde__m128 x) const noexcept;
 #endif
 
     // calculate exact f(x), where x must be in domain [-Points/2:+Points/2]

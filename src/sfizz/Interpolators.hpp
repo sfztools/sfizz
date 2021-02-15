@@ -8,6 +8,10 @@
 #include "WindowedSinc.h"
 #include "MathHelpers.h"
 #include "SIMDConfig.h"
+#include <simde/simde-features.h>
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
+#include <simde/x86/sse.h>
+#endif
 
 namespace sfz {
 
@@ -49,25 +53,25 @@ public:
 //------------------------------------------------------------------------------
 // Hermite 3rd order, SSE specialization
 
-#if SFIZZ_HAVE_SSE
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 template <>
 class Interpolator<kInterpolatorHermite3, float>
 {
 public:
     static inline float process(const float* values, float coeff)
     {
-        __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
-        __m128 h = hermite3x4(x);
-        __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values - 1));
+        simde__m128 x = simde_mm_sub_ps(simde_mm_setr_ps(-1, 0, 1, 2), simde_mm_set1_ps(coeff));
+        simde__m128 h = hermite3x4(x);
+        simde__m128 y = simde_mm_mul_ps(h, simde_mm_loadu_ps(values - 1));
         // sum 4 to 1
-        __m128 xmm0 = y;
-        __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
-        __m128 xmm2 = _mm_movehl_ps(xmm0, xmm0);
-        xmm1 = _mm_add_ss(xmm1, xmm0);
-        xmm0 = _mm_shuffle_ps(xmm0, xmm0, 0xe7);
-        xmm2 = _mm_add_ss(xmm2, xmm1);
-        xmm0 = _mm_add_ss(xmm0, xmm2);
-        return _mm_cvtss_f32(xmm0);
+        simde__m128 xmm0 = y;
+        simde__m128 xmm1 = simde_mm_shuffle_ps(xmm0, xmm0, 0xe5);
+        simde__m128 xmm2 = simde_mm_movehl_ps(xmm0, xmm0);
+        xmm1 = simde_mm_add_ss(xmm1, xmm0);
+        xmm0 = simde_mm_shuffle_ps(xmm0, xmm0, 0xe7);
+        xmm2 = simde_mm_add_ss(xmm2, xmm1);
+        xmm0 = simde_mm_add_ss(xmm0, xmm2);
+        return simde_mm_cvtss_f32(xmm0);
     }
 };
 #endif
@@ -93,25 +97,25 @@ public:
 //------------------------------------------------------------------------------
 // B-spline 3rd order, SSE specialization
 
-#if SFIZZ_HAVE_SSE
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 template <>
 class Interpolator<kInterpolatorBspline3, float>
 {
 public:
     static inline float process(const float* values, float coeff)
     {
-        __m128 x = _mm_sub_ps(_mm_setr_ps(-1, 0, 1, 2), _mm_set1_ps(coeff));
-        __m128 h = bspline3x4(x);
-        __m128 y = _mm_mul_ps(h, _mm_loadu_ps(values - 1));
+        simde__m128 x = simde_mm_sub_ps(simde_mm_setr_ps(-1, 0, 1, 2), simde_mm_set1_ps(coeff));
+        simde__m128 h = bspline3x4(x);
+        simde__m128 y = simde_mm_mul_ps(h, simde_mm_loadu_ps(values - 1));
         // sum 4 to 1
-        __m128 xmm0 = y;
-        __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
-        __m128 xmm2 = _mm_movehl_ps(xmm0, xmm0);
-        xmm1 = _mm_add_ss(xmm1, xmm0);
-        xmm0 = _mm_shuffle_ps(xmm0, xmm0, 0xe7);
-        xmm2 = _mm_add_ss(xmm2, xmm1);
-        xmm0 = _mm_add_ss(xmm0, xmm2);
-        return _mm_cvtss_f32(xmm0);
+        simde__m128 xmm0 = y;
+        simde__m128 xmm1 = simde_mm_shuffle_ps(xmm0, xmm0, 0xe5);
+        simde__m128 xmm2 = simde_mm_movehl_ps(xmm0, xmm0);
+        xmm1 = simde_mm_add_ss(xmm1, xmm0);
+        xmm0 = simde_mm_shuffle_ps(xmm0, xmm0, 0xe7);
+        xmm2 = simde_mm_add_ss(xmm2, xmm1);
+        xmm0 = simde_mm_add_ss(xmm0, xmm2);
+        return simde_mm_cvtss_f32(xmm0);
     }
 };
 #endif
@@ -190,7 +194,7 @@ class SincInterpolator;
 
 //------------------------------------------------------------------------------
 // Windowed sinc any order, SSE specialization
-#if SFIZZ_HAVE_SSE2
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 template <size_t Points>
 class SincInterpolator<float, Points>
 {
@@ -204,25 +208,25 @@ public:
         constexpr int j0 = 1 - int(Points) / 2;
         float x0 = j0 - coeff;
 
-        __m128 y = _mm_set1_ps(0.0f);
-        __m128 x = _mm_add_ps(_mm_set1_ps(x0), _mm_setr_ps(0, 1, 2, 3));
+        simde__m128 y = simde_mm_set1_ps(0.0f);
+        simde__m128 x = simde_mm_add_ps(simde_mm_set1_ps(x0), simde_mm_setr_ps(0, 1, 2, 3));
         size_t i = 0;
         do {
-            __m128 h = ws.getUncheckedX4(x);
-            y = _mm_add_ps(y, _mm_mul_ps(h, _mm_loadu_ps(&values[j0 + i])));
-            x = _mm_add_ps(x, _mm_set1_ps(4.0f));
+            simde__m128 h = ws.getUncheckedX4(x);
+            y = simde_mm_add_ps(y, simde_mm_mul_ps(h, simde_mm_loadu_ps(&values[j0 + i])));
+            x = simde_mm_add_ps(x, simde_mm_set1_ps(4.0f));
             i += 4;
         } while (i < Points);
 
         // sum 4 to 1
-        __m128 xmm0 = y;
-        __m128 xmm1 = _mm_shuffle_ps(xmm0, xmm0, 0xe5);
-        __m128 xmm2 = _mm_movehl_ps(xmm0, xmm0);
-        xmm1 = _mm_add_ss(xmm1, xmm0);
-        xmm0 = _mm_shuffle_ps(xmm0, xmm0, 0xe7);
-        xmm2 = _mm_add_ss(xmm2, xmm1);
-        xmm0 = _mm_add_ss(xmm0, xmm2);
-        return _mm_cvtss_f32(xmm0);
+        simde__m128 xmm0 = y;
+        simde__m128 xmm1 = simde_mm_shuffle_ps(xmm0, xmm0, 0xe5);
+        simde__m128 xmm2 = simde_mm_movehl_ps(xmm0, xmm0);
+        xmm1 = simde_mm_add_ss(xmm1, xmm0);
+        xmm0 = simde_mm_shuffle_ps(xmm0, xmm0, 0xe7);
+        xmm2 = simde_mm_add_ss(xmm2, xmm1);
+        xmm0 = simde_mm_add_ss(xmm0, xmm2);
+        return simde_mm_cvtss_f32(xmm0);
     }
 };
 #endif
