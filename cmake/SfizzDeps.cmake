@@ -67,6 +67,11 @@ else()
 endif()
 add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 
+# The simde library
+add_library(sfizz_simde INTERFACE)
+add_library(sfizz::simde ALIAS sfizz_simde)
+target_include_directories(sfizz_simde INTERFACE "external/simde")
+
 # The pugixml library
 add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
 add_library(sfizz::pugixml ALIAS sfizz_pugixml)
