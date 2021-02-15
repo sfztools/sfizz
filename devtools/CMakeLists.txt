@@ -10,3 +10,6 @@ endif()
 
 add_executable(sfizz_preprocessor Preprocessor.cpp)
 target_link_libraries(sfizz_preprocessor PRIVATE sfizz::parser sfizz::pugixml sfizz::cxxopts)
+
+add_executable(sfizz_hiir_designer HIIRDesigner.cpp)
+target_link_libraries(sfizz_hiir_designer PRIVATE sfizz::hiir_polyphase_iir2designer)
