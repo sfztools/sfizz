@@ -217,7 +217,7 @@ target_sources(sfizz_parser PRIVATE
     ${SFIZZ_PARSER_HEADERS} ${SFIZZ_PARSER_SOURCES} ${SFIZZ_PARSER_OTHER})
 target_include_directories(sfizz_parser PUBLIC sfizz)
 target_link_libraries(sfizz_parser
-    PUBLIC sfizz::filesystem absl::strings
+    PUBLIC sfizz::filesystem sfizz::simde absl::strings
     PRIVATE absl::flat_hash_map)
 
 # OSC messaging library
