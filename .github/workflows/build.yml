@@ -136,7 +136,7 @@ jobs:
   build_for_mingw32:
     runs-on: ubuntu-18.04
     container:
-      image: archlinux
+      image: ghcr.io/sfztools/archlinux
     steps:
     - name: Set install name
       run: |
@@ -200,7 +200,7 @@ jobs:
   build_for_mingw64:
     runs-on: ubuntu-18.04
     container:
-      image: archlinux
+      image: ghcr.io/sfztools/archlinux
     steps:
     - name: Set install name
       run: |
