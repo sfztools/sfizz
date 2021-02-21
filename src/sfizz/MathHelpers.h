@@ -205,9 +205,7 @@ R hermite3(R x)
  */
 inline simde__m128 hermite3x4(simde__m128 x)
 {
-    // Note(jpc) replace with `simde_x_mm_abs_ps` when fixed
-    //           https://github.com/simd-everywhere/simde/issues/704
-    x = simde_mm_andnot_ps(simde_mm_set1_ps(-0.0f), x);
+    x = simde_x_mm_abs_ps(x);
     simde__m128 x2 = simde_mm_mul_ps(x, x);
     simde__m128 x3 = simde_mm_mul_ps(x2, x);
     simde__m128 y = simde_mm_set1_ps(0.0f);
@@ -252,9 +250,7 @@ R bspline3(R x)
  */
 inline simde__m128 bspline3x4(simde__m128 x)
 {
-    // Note(jpc) replace with `simde_x_mm_abs_ps` when fixed
-    //           https://github.com/simd-everywhere/simde/issues/704
-    x = simde_mm_andnot_ps(simde_mm_set1_ps(-0.0f), x);
+    x = simde_x_mm_abs_ps(x);
     simde__m128 x2 = simde_mm_mul_ps(x, x);
     simde__m128 x3 = simde_mm_mul_ps(x2, x);
     simde__m128 y = simde_mm_set1_ps(0.0f);
