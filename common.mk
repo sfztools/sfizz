@@ -364,3 +364,9 @@ SFIZZ_C_FLAGS += -pthread
 SFIZZ_CXX_FLAGS += -pthread
 SFIZZ_LINK_FLAGS += -pthread
 endif
+
+### OpenMP dependency
+
+SFIZZ_C_FLAGS += -fopenmp
+SFIZZ_CXX_FLAGS += -fopenmp
+SFIZZ_LINK_FLAGS += -fopenmp
