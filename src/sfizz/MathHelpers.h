@@ -21,8 +21,9 @@
 #include <type_traits>
 #include <cmath>
 #include <cfenv>
-#if SFIZZ_HAVE_SSE
-#include <xmmintrin.h>
+#include <simde/simde-features.h>
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
+#include <simde/x86/sse.h>
 #endif
 
 #if __cplusplus >= 201703L
@@ -195,26 +196,26 @@ R hermite3(R x)
     return y;
 }
 
-#if SFIZZ_HAVE_SSE
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 /**
  * @brief Compute 4 parallel elements of the 3rd-order Hermite interpolation polynomial.
  *
  * @param x
- * @return __m128
+ * @return simde__m128
  */
-inline __m128 hermite3x4(__m128 x)
+inline simde__m128 hermite3x4(simde__m128 x)
 {
-    x = _mm_andnot_ps(_mm_set1_ps(-0.0f), x);
-    __m128 x2 = _mm_mul_ps(x, x);
-    __m128 x3 = _mm_mul_ps(x2, x);
-    __m128 y = _mm_set1_ps(0.0f);
-    __m128 q = _mm_mul_ps(_mm_set1_ps(5./2.), x2);
-    __m128 p1 = _mm_add_ps(_mm_sub_ps(_mm_set1_ps(1), q), _mm_mul_ps(_mm_set1_ps(3./2.), x3));
-    __m128 p2 = _mm_sub_ps(_mm_add_ps(_mm_sub_ps(_mm_set1_ps(2), _mm_mul_ps(_mm_set1_ps(4), x)), q), _mm_mul_ps(_mm_set1_ps(1./2.), x3));
-    __m128 m2 = _mm_cmple_ps(x, _mm_set1_ps(2));
-    y = _mm_or_ps(_mm_and_ps(m2, p2), _mm_andnot_ps(m2, y));
-    __m128 m1 = _mm_cmple_ps(x, _mm_set1_ps(1));
-    y = _mm_or_ps(_mm_and_ps(m1, p1), _mm_andnot_ps(m1, y));
+    x = simde_x_mm_abs_ps(x);
+    simde__m128 x2 = simde_mm_mul_ps(x, x);
+    simde__m128 x3 = simde_mm_mul_ps(x2, x);
+    simde__m128 y = simde_mm_set1_ps(0.0f);
+    simde__m128 q = simde_mm_mul_ps(simde_mm_set1_ps(5./2.), x2);
+    simde__m128 p1 = simde_mm_add_ps(simde_mm_sub_ps(simde_mm_set1_ps(1), q), simde_mm_mul_ps(simde_mm_set1_ps(3./2.), x3));
+    simde__m128 p2 = simde_mm_sub_ps(simde_mm_add_ps(simde_mm_sub_ps(simde_mm_set1_ps(2), simde_mm_mul_ps(simde_mm_set1_ps(4), x)), q), simde_mm_mul_ps(simde_mm_set1_ps(1./2.), x3));
+    simde__m128 m2 = simde_mm_cmple_ps(x, simde_mm_set1_ps(2));
+    y = simde_mm_or_ps(simde_mm_and_ps(m2, p2), simde_mm_andnot_ps(m2, y));
+    simde__m128 m1 = simde_mm_cmple_ps(x, simde_mm_set1_ps(1));
+    y = simde_mm_or_ps(simde_mm_and_ps(m1, p1), simde_mm_andnot_ps(m1, y));
     return y;
 }
 #endif
@@ -240,25 +241,25 @@ R bspline3(R x)
     return y;
 }
 
-#if SFIZZ_HAVE_SSE
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 /**
  * @brief Compute 4 parallel elements of the 3rd-order B-spline interpolation polynomial.
  *
  * @param x
- * @return __m128
+ * @return simde__m128
  */
-inline __m128 bspline3x4(__m128 x)
+inline simde__m128 bspline3x4(simde__m128 x)
 {
-    x = _mm_andnot_ps(_mm_set1_ps(-0.0f), x);
-    __m128 x2 = _mm_mul_ps(x, x);
-    __m128 x3 = _mm_mul_ps(x2, x);
-    __m128 y = _mm_set1_ps(0.0f);
-    __m128 p1 = _mm_add_ps(_mm_sub_ps(_mm_set1_ps(2./3.), x2), _mm_mul_ps(_mm_set1_ps(1./2.), x3));
-    __m128 p2 = _mm_sub_ps(_mm_add_ps(_mm_sub_ps(_mm_set1_ps(4./3.), _mm_mul_ps(_mm_set1_ps(2), x)), x2), _mm_mul_ps(_mm_set1_ps(1./6.), x3));
-    __m128 m2 = _mm_cmple_ps(x, _mm_set1_ps(2));
-    y = _mm_or_ps(_mm_and_ps(m2, p2), _mm_andnot_ps(m2, y));
-    __m128 m1 = _mm_cmple_ps(x, _mm_set1_ps(1));
-    y = _mm_or_ps(_mm_and_ps(m1, p1), _mm_andnot_ps(m1, y));
+    x = simde_x_mm_abs_ps(x);
+    simde__m128 x2 = simde_mm_mul_ps(x, x);
+    simde__m128 x3 = simde_mm_mul_ps(x2, x);
+    simde__m128 y = simde_mm_set1_ps(0.0f);
+    simde__m128 p1 = simde_mm_add_ps(simde_mm_sub_ps(simde_mm_set1_ps(2./3.), x2), simde_mm_mul_ps(simde_mm_set1_ps(1./2.), x3));
+    simde__m128 p2 = simde_mm_sub_ps(simde_mm_add_ps(simde_mm_sub_ps(simde_mm_set1_ps(4./3.), simde_mm_mul_ps(simde_mm_set1_ps(2), x)), x2), simde_mm_mul_ps(simde_mm_set1_ps(1./6.), x3));
+    simde__m128 m2 = simde_mm_cmple_ps(x, simde_mm_set1_ps(2));
+    y = simde_mm_or_ps(simde_mm_and_ps(m2, p2), simde_mm_andnot_ps(m2, y));
+    simde__m128 m1 = simde_mm_cmple_ps(x, simde_mm_set1_ps(1));
+    y = simde_mm_or_ps(simde_mm_and_ps(m1, p1), simde_mm_andnot_ps(m1, y));
     return y;
 }
 #endif

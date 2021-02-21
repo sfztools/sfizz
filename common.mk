@@ -315,6 +315,10 @@ SFIZZ_SOURCES += \
 	src/external/cpuid/src/cpuid/cpuinfo.cpp \
 	src/external/cpuid/src/cpuid/version.cpp
 
+### simde dependency
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/simde
+
 ### Pugixml dependency
 
 SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external/pugixml/src
@@ -360,3 +364,9 @@ SFIZZ_C_FLAGS += -pthread
 SFIZZ_CXX_FLAGS += -pthread
 SFIZZ_LINK_FLAGS += -pthread
 endif
+
+### OpenMP dependency
+
+SFIZZ_C_FLAGS += -fopenmp
+SFIZZ_CXX_FLAGS += -fopenmp
+SFIZZ_LINK_FLAGS += -fopenmp

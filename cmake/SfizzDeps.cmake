@@ -1,6 +1,16 @@
 # Find system threads
 find_package(Threads REQUIRED)
 
+# Find OpenMP
+find_package(OpenMP)
+if(OPENMP_FOUND)
+    add_library(sfizz_openmp INTERFACE)
+    add_library(sfizz::openmp ALIAS sfizz_openmp)
+    target_compile_options(sfizz_openmp INTERFACE
+        $<$<COMPILE_LANGUAGE:C>:${OpenMP_C_FLAGS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${OpenMP_CXX_FLAGS}>)
+endif()
+
 # Find macOS system libraries
 if(APPLE)
     find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
@@ -66,6 +76,14 @@ else()
     set(ST_AUDIO_FILE_EXTERNAL_SNDFILE "" CACHE STRING ""  FORCE)
 endif()
 add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
+
+# The simde library
+add_library(sfizz_simde INTERFACE)
+add_library(sfizz::simde ALIAS sfizz_simde)
+target_include_directories(sfizz_simde INTERFACE "external/simde")
+if(TARGET sfizz::openmp)
+    target_link_libraries(sfizz_simde INTERFACE sfizz::openmp)
+endif()
 
 # The pugixml library
 add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
