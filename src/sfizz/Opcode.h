@@ -66,7 +66,7 @@ enum OpcodeScope {
 struct Opcode {
     Opcode() = delete;
     Opcode(absl::string_view inputOpcode, absl::string_view inputValue);
-    std::string opcode {};
+    std::string name {};
     std::string value {};
     uint64_t lettersOnlyHash { Fnv1aBasis };
     // This is to handle the integer parameters of some opcodes
