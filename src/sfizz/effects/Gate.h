@@ -6,8 +6,6 @@
 
 #pragma once
 #include "Effects.h"
-#include "hiir/Downsampler2xFpu.h"
-#include "hiir/Upsampler2xFpu.h"
 #include <memory>
 
 namespace sfz {

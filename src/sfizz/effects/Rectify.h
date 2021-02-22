@@ -6,8 +6,7 @@
 
 #pragma once
 #include "Effects.h"
-#include "hiir/Downsampler2xFpu.h"
-#include "hiir/Upsampler2xFpu.h"
+#include "OversamplerHelpers.h"
 
 namespace sfz {
 namespace fx {
@@ -47,8 +46,8 @@ namespace fx {
 
     private:
         AudioBuffer<float, 1> _tempBuffer { 1, config::defaultSamplesPerBlock };
-        hiir::Downsampler2xFpu<12> _downsampler2x[2];
-        hiir::Upsampler2xFpu<12> _upsampler2x[2];
+        hiir::Downsampler2x<12> _downsampler2x[2];
+        hiir::Upsampler2x<12> _upsampler2x[2];
 
         float _amount = 0;
         bool _full = false;
