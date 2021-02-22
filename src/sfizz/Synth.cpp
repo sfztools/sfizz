@@ -249,6 +249,7 @@ void Synth::Impl::clear()
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
     keyLabels_.clear();
+    keySlots_.clear();
     keyswitchLabels_.clear();
     globalOpcodes_.clear();
     masterOpcodes_.clear();
@@ -735,6 +736,15 @@ void Synth::Impl::finalizeSfzLoad()
 
     // cache the set of used CCs for future access
     currentUsedCCs_ = collectAllUsedCCs();
+
+    // cache the set of keys assigned
+    for (const RegionPtr& regionPtr : regions_) {
+        Range<uint8_t> keyRange = regionPtr->keyRange;
+        unsigned loKey = keyRange.getStart();
+        unsigned hiKey = keyRange.getEnd();
+        for (unsigned key = loKey; key <= hiKey; ++key)
+            keySlots_.set(key);
+    }
 }
 
 bool Synth::loadScalaFile(const fs::path& path)

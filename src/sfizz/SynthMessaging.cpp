@@ -38,6 +38,14 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/key/slots", "") {
+            const BitArray<128>& keys = impl.keySlots_;
+            sfizz_blob_t blob { keys.data(), static_cast<uint32_t>(keys.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/cc/slots", "") {
             const BitArray<config::numCCs>& ccs = impl.currentUsedCCs_;
             sfizz_blob_t blob { ccs.data(), static_cast<uint32_t>(ccs.byte_size()) };
