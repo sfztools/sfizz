@@ -27,14 +27,29 @@ bool openFileInExternalEditor(const char *filename)
 
     return ShellExecuteExW(&info);
 }
+
+bool openDirectoryInExplorer(const char *filename)
+{
+    std::wstring path = fs::u8path(filename).wstring();
+
+    SHELLEXECUTEINFOW info;
+    memset(&info, 0, sizeof(info));
+
+    info.cbSize = sizeof(info);
+    info.lpVerb = L"explore";
+    info.lpFile = path.c_str();
+    info.nShow = SW_SHOW;
+
+    return ShellExecuteExW(&info);
+}
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
 #include <gio/gio.h>
 
-bool openFileInExternalEditor(const char *filename)
+static bool openFileByMimeType(const char *filename, const char *mimetype)
 {
-    GAppInfo* appinfo = g_app_info_get_default_for_type("text/plain", FALSE);
+    GAppInfo* appinfo = g_app_info_get_default_for_type(mimetype, FALSE);
     if (!appinfo)
         return 1;
 
@@ -46,5 +61,15 @@ bool openFileInExternalEditor(const char *filename)
     g_list_free(files);
     g_object_unref(appinfo);
     return success == TRUE;
+}
+
+bool openFileInExternalEditor(const char *filename)
+{
+    return openFileByMimeType(filename, "text/plain");
+}
+
+bool openDirectoryInExplorer(const char *filename)
+{
+    return openFileByMimeType(filename, "inode/directory");
 }
 #endif
