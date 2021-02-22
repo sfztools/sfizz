@@ -36,11 +36,9 @@ namespace fx {
         _limiter->classInit(sampleRate);
         _limiter->instanceConstants(sampleRate);
 
-        static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-
         for (unsigned c = 0; c < EffectChannels; ++c) {
-            _downsampler2x[c].set_coefs(coefs2x);
-            _upsampler2x[c].set_coefs(coefs2x);
+            _downsampler2x[c].set_coefs(OSCoeffs2x);
+            _upsampler2x[c].set_coefs(OSCoeffs2x);
         }
 
         clear();
