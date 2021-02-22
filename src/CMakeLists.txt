@@ -219,6 +219,9 @@ target_include_directories(sfizz_parser PUBLIC sfizz)
 target_link_libraries(sfizz_parser
     PUBLIC sfizz::filesystem sfizz::simde absl::strings
     PRIVATE absl::flat_hash_map)
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_parser PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
 
 # OSC messaging library
 set(SFIZZ_MESSAGING_HEADERS
@@ -235,6 +238,9 @@ target_sources(sfizz_messaging PRIVATE
     ${SFIZZ_MESSAGING_HEADERS} ${SFIZZ_MESSAGING_SOURCES})
 target_include_directories(sfizz_messaging PUBLIC ".")
 target_link_libraries(sfizz_messaging PUBLIC absl::strings)
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_messaging PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
 
 # Sfizz spinlock mutex
 add_library(sfizz_spin_mutex STATIC
