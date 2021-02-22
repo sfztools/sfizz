@@ -199,7 +199,14 @@ static void generate_cpp_upsampler(const Stage *stages, int num_stages)
 
     printf("\t" "static int recommendedBuffer(int factor, int spl)\n");
     printf("\t" "{\n");
-    printf("\t\t" "return factor * spl;\n");
+    printf("\t\t" "switch (factor) {\n");
+    printf("\t\t" "case 2:\n");
+    printf("\t\t\t" "return 0;\n");
+    printf("\t\t" "case 4:\n");
+    printf("\t\t\t" "return 2 * spl;\n");
+    printf("\t\t" "default:\n");
+    printf("\t\t\t" "return factor * spl;\n");
+    printf("\t\t" "}\n");
     printf("\t" "}\n");
 
     printf("\t" "static bool canProcess(int factor)\n");
@@ -235,14 +242,25 @@ static void generate_cpp_upsampler(const Stage *stages, int num_stages)
     printf("\t" "}\n");
 
     for (int n = 1; n <= num_stages; ++n) {
+        // special case factor=2, buffer not required
+        if (stages[n - 1].factor == 2) {
+            printf("\t" "void process2x(const float *in, float *out, int spl, float * = nullptr, int = 0)\n");
+            printf("\t" "{\n");
+            printf("\t\t" "up2_.process_block(out, in, spl);\n");
+            printf("\t" "}\n");
+            continue;
+        }
         printf("\t" "void process%dx(const float *in, float *out, int spl, float *temp, int ntemp)\n", stages[n - 1].factor);
         printf("\t" "{\n");
-        printf("\t\t" "int maxspl = ntemp / %d;\n", stages[n - 1].factor);
-        printf("\t\t" "ASSERT(maxspl >= 0);\n");
+        // special case factor=4, only 1 buffer required
+        if (stages[n - 1].factor > 4)
+            printf("\t\t" "int maxspl = ntemp / %d;\n", stages[n - 1].factor);
+        else
+            printf("\t\t" "int maxspl = ntemp / %d;\n", stages[n - 1].factor / 2);
+        printf("\t\t" "ASSERT(maxspl > 0);\n");
         printf("\t\t" "float *t1 = temp;\n");
-        printf("\t\t" "float *t2 = temp + %d * maxspl;\n", stages[n - 1].factor / 2);
-        printf("\t\t" "(void)t1;\n");
-        printf("\t\t" "(void)t2;\n");
+        if (stages[n - 1].factor > 4)
+            printf("\t\t" "float *t2 = temp + %d * maxspl;\n", stages[n - 1].factor / 2);
         printf("\t\t" "while (spl > 0) {\n");
         printf("\t\t\t" "int curspl = (spl < maxspl) ? spl : maxspl;\n");
         for (int i = 0; i < n; ++i) {
@@ -294,7 +312,14 @@ static void generate_cpp_downsampler(const Stage *stages, int num_stages)
 
     printf("\t" "static int recommendedBuffer(int factor, int spl)\n");
     printf("\t" "{\n");
-    printf("\t\t" "return factor * spl;\n");
+    printf("\t\t" "switch (factor) {\n");
+    printf("\t\t" "case 2:\n");
+    printf("\t\t\t" "return 0;\n");
+    printf("\t\t" "case 4:\n");
+    printf("\t\t\t" "return 2 * spl;\n");
+    printf("\t\t" "default:\n");
+    printf("\t\t\t" "return factor * spl;\n");
+    printf("\t\t" "}\n");
     printf("\t" "}\n");
 
     printf("\t" "static bool canProcess(int factor)\n");
@@ -330,14 +355,25 @@ static void generate_cpp_downsampler(const Stage *stages, int num_stages)
     printf("\t" "}\n");
 
     for (int n = 1; n <= num_stages; ++n) {
+        // special case factor=2, buffer not required
+        if (stages[n - 1].factor == 2) {
+            printf("\t" "void process2x(const float *in, float *out, int spl, float * = nullptr, int = 0)\n");
+            printf("\t" "{\n");
+            printf("\t\t" "down2_.process_block(out, in, spl);\n");
+            printf("\t" "}\n");
+            continue;
+        }
         printf("\t" "void process%dx(const float *in, float *out, int spl, float *temp, int ntemp)\n", stages[n - 1].factor);
         printf("\t" "{\n");
-        printf("\t\t" "int maxspl = ntemp / %d;\n", stages[n - 1].factor);
-        printf("\t\t" "ASSERT(maxspl >= 0);\n");
+        // special case factor=4, only 1 buffer required
+        if (stages[n - 1].factor > 4)
+            printf("\t\t" "int maxspl = ntemp / %d;\n", stages[n - 1].factor);
+        else
+            printf("\t\t" "int maxspl = ntemp / %d;\n", stages[n - 1].factor / 2);
+        printf("\t\t" "ASSERT(maxspl > 0);\n");
         printf("\t\t" "float *t1 = temp;\n");
-        printf("\t\t" "float *t2 = temp + %d * maxspl;\n", stages[n - 1].factor / 2);
-        printf("\t\t" "(void)t1;\n");
-        printf("\t\t" "(void)t2;\n");
+        if (stages[n - 1].factor > 4)
+            printf("\t\t" "float *t2 = temp + %d * maxspl;\n", stages[n - 1].factor / 2);
         printf("\t\t" "while (spl > 0) {\n");
         printf("\t\t\t" "int curspl = (spl < maxspl) ? spl : maxspl;\n");
         for (int i = 0; i < n; ++i) {
