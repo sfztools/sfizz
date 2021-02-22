@@ -91,6 +91,7 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     absl::optional<fs::path> userFilesDir = SfizzPaths::getSfzConfigDefaultPath();
     uiReceiveValue(EditId::CanEditUserFilesDir, 1);
     uiReceiveValue(EditId::UserFilesDir, userFilesDir.value_or(fs::path()).u8string());
+    uiReceiveValue(EditId::FallbackFilesDir, SfizzPaths::getSfzFallbackDefaultPath().u8string());
 
     return true;
 }

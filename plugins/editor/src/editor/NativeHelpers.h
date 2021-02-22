@@ -7,3 +7,5 @@
 #pragma once
 
 bool openFileInExternalEditor(const char *filename);
+bool openDirectoryInExplorer(const char *filename);
+bool askQuestion(const char *text);
