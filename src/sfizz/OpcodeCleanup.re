@@ -237,7 +237,7 @@ end_control:
 
 Opcode Opcode::cleanUp(OpcodeScope scope) const
 {
-    return Opcode(cleanUpOpcodeName(opcode, scope), value);
+    return Opcode(cleanUpOpcodeName(name, scope), value);
 }
 
 } // namespace sfz

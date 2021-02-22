@@ -142,13 +142,13 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
-            const auto unknown = absl::c_find_if(unknownOpcodes_, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
+            const auto unknown = absl::c_find_if(unknownOpcodes_, [&](absl::string_view sv) { return sv.compare(opcode.name) == 0; });
             if (unknown != unknownOpcodes_.end()) {
                 continue;
             }
 
             if (!lastRegion->parseOpcode(opcode))
-                unknownOpcodes_.emplace_back(opcode.opcode);
+                unknownOpcodes_.emplace_back(opcode.name);
         }
     };
 
@@ -405,7 +405,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         default:
             // Unsupported control opcode
-            DBG("Unsupported control opcode: " << member.opcode);
+            DBG("Unsupported control opcode: " << member.name);
         }
     }
 }
