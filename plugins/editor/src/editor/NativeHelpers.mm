@@ -31,4 +31,14 @@ bool openDirectoryInExplorer(const char *fileName)
 {
     return openFileWithApplication(fileName, @"Finder");
 }
+
+bool askQuestion(const char *text)
+{
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:[NSString stringWithUTF8String:text]];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSInteger button = [alert runModal];
+    return button == NSAlertFirstButtonReturn;
+}
 #endif
