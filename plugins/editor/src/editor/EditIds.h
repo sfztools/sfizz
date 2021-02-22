@@ -20,6 +20,7 @@ enum class EditId : int {
     StretchTuning,
     CanEditUserFilesDir,
     UserFilesDir,
+    FallbackFilesDir,
     //
     Controller0,
     ControllerLast = Controller0 + sfz::config::numCCs - 1,

@@ -42,6 +42,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     std::string currentSfzFile_;
     std::string currentScalaFile_;
+    std::string userFilesDir_;
+    std::string fallbackFilesDir_;
 
     enum {
         kPanelGeneral,
@@ -137,6 +139,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void chooseScalaFile();
     void changeScalaFile(const std::string& filePath);
     void chooseUserFilesDir();
+    std::string getFileChooserInitialDir(const std::string& previousFilePath) const;
 
     static bool scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames);
 
@@ -319,7 +322,13 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         }
     case EditId::UserFilesDir:
         {
-            updateUserFilesDirLabel(v.to_string());
+            userFilesDir_ = v.to_string();
+            updateUserFilesDirLabel(userFilesDir_);
+            break;
+        }
+    case EditId::FallbackFilesDir:
+        {
+            fallbackFilesDir_ = v.to_string();
             break;
         }
     case EditId::UINumCurves:
@@ -891,10 +900,10 @@ void Editor::Impl::chooseSfzFile()
 
     fs->setTitle("Load SFZ file");
     fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
-    if (!currentSfzFile_.empty()) {
-        std::string initialDir = fs::path(currentSfzFile_).parent_path().u8string() + '/';
+
+    std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
+    if (!initialDir.empty())
         fs->setInitialDirectory(initialDir.c_str());
-    }
 
     if (fs->runModal()) {
         UTF8StringPtr file = fs->getSelectedFile(0);
@@ -969,10 +978,10 @@ void Editor::Impl::chooseScalaFile()
 
     fs->setTitle("Load Scala file");
     fs->setDefaultExtension(CFileExtension("SCL", "scl"));
-    if (!currentScalaFile_.empty()) {
-        std::string initialDir = fs::path(currentScalaFile_).parent_path().u8string() + '/';
+
+    std::string initialDir = getFileChooserInitialDir(currentScalaFile_);
+    if (!initialDir.empty())
         fs->setInitialDirectory(initialDir.c_str());
-    }
 
     if (fs->runModal()) {
         UTF8StringPtr file = fs->getSelectedFile(0);
@@ -998,10 +1007,29 @@ void Editor::Impl::chooseUserFilesDir()
     if (fs->runModal()) {
         UTF8StringPtr dir = fs->getSelectedFile(0);
         if (dir) {
-            updateUserFilesDirLabel(dir);
-            ctrl_->uiSendValue(EditId::UserFilesDir, std::string(dir));
+            userFilesDir_ = std::string(dir);
+            updateUserFilesDirLabel(userFilesDir_);
+            ctrl_->uiSendValue(EditId::UserFilesDir, userFilesDir_);
         }
     }
+}
+
+std::string Editor::Impl::getFileChooserInitialDir(const std::string& previousFilePath) const
+{
+    fs::path initialPath;
+
+    if (!previousFilePath.empty())
+        initialPath = fs::u8path(previousFilePath).parent_path();
+    else if (!userFilesDir_.empty())
+        initialPath = fs::u8path(userFilesDir_);
+    else if (!fallbackFilesDir_.empty())
+        initialPath = fs::u8path(fallbackFilesDir_);
+
+    std::string initialDir = initialPath.u8string();
+    if (!initialDir.empty())
+        initialDir.push_back('/');
+
+    return initialDir;
 }
 
 bool Editor::Impl::scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames)
