@@ -219,7 +219,8 @@ void Editor::open(CFrame& frame)
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
 
-    // request the whole CC information
+    // request the whole Key and CC information
+    impl.sendQueuedOSC("/key/slots", "", nullptr);
     impl.sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
@@ -244,7 +245,8 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             currentSfzFile_ = value;
             updateSfzFileLabel(value);
 
-            // request the whole CC information
+            // request the whole Key and CC information
+            sendQueuedOSC("/key/slots", "", nullptr);
             sendQueuedOSC("/cc/slots", "", nullptr);
         }
         break;
@@ -390,7 +392,10 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
 {
     unsigned indices[8];
 
-    if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
+    if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b")) {
+        // TODO(jpc) key ranges
+    }
+    else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
         const uint8_t* bitChunks = args[0].b->data;
         uint32_t byteSize = args[0].b->size;
 
@@ -962,7 +967,8 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     currentSfzFile_ = filePath;
     updateSfzFileLabel(filePath);
 
-    // request the whole CC information
+    // request the whole Key and CC information
+    sendQueuedOSC("/key/slots", "", nullptr);
     sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
