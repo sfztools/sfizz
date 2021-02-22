@@ -58,6 +58,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     enum {
         kTagLoadSfzFile,
         kTagEditSfzFile,
+        kTagOpenSfzFolder,
         kTagPreviousSfzFile,
         kTagNextSfzFile,
         kTagFileOperations,
@@ -848,6 +849,7 @@ void Editor::Impl::createFrameContents()
     if (SActionMenu* menu = fileOperationsMenu_) {
         menu->addEntry("Load file", kTagLoadSfzFile);
         menu->addEntry("Edit file", kTagEditSfzFile);
+        menu->addEntry("Open SFZ folder", kTagOpenSfzFolder);
     }
 
     if (SPiano* piano = piano_) {
@@ -1318,6 +1320,16 @@ void Editor::Impl::valueChanged(CControl* ctl)
 
         if (!currentSfzFile_.empty())
             openFileInExternalEditor(currentSfzFile_.c_str());
+        break;
+
+    case kTagOpenSfzFolder:
+        if (value != 1)
+            break;
+
+        if (!userFilesDir_.empty())
+            openDirectoryInExplorer(userFilesDir_.c_str());
+        else if (!fallbackFilesDir_.empty())
+            openDirectoryInExplorer(fallbackFilesDir_.c_str());
         break;
 
     case kTagPreviousSfzFile:
