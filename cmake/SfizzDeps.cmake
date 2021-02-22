@@ -35,6 +35,13 @@ if(APPLE)
     list(APPEND CMAKE_PREFIX_PATH /usr/local)
 endif()
 
+# Add Abseil
+if(SFIZZ_USE_SYSTEM_ABSEIL)
+    find_package(absl REQUIRED)
+else()
+    add_subdirectory("external/abseil-cpp" EXCLUDE_FROM_ALL)
+endif()
+
 # The jsl utility library for C++
 add_library(sfizz_jsl INTERFACE)
 add_library(sfizz::jsl ALIAS sfizz_jsl)

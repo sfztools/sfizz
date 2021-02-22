@@ -34,6 +34,7 @@ option_ex (SFIZZ_DEVTOOLS          "Enable developer tools build" OFF)
 option_ex (SFIZZ_SHARED            "Enable shared library build" ON)
 option_ex (SFIZZ_USE_SNDFILE       "Enable use of the sndfile library" ON)
 option_ex (SFIZZ_USE_VCPKG         "Assume that sfizz is build using vcpkg" OFF)
+option_ex (SFIZZ_USE_SYSTEM_ABSEIL "Use Abseil libraries preinstalled on system" OFF)
 option_ex (SFIZZ_STATIC_DEPENDENCIES "Link dependencies statically" OFF)
 option_ex (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds" OFF)
 
@@ -45,9 +46,6 @@ include (CheckIPO)
 
 # Dylib bunder for macOS
 include (BundleDylibs)
-
-# Add Abseil
-add_subdirectory (external/abseil-cpp EXCLUDE_FROM_ALL)
 
 # Add the static library targets and sources
 add_subdirectory (src)
