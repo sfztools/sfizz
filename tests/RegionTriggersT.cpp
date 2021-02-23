@@ -4,16 +4,19 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "TestHelpers.h"
+#include "sfizz/Synth.h"
 #include "sfizz/Region.h"
 #include "sfizz/SfzHelpers.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 using namespace sfz::literals;
+using namespace sfz;
 
 TEST_CASE("Basic triggers", "Region triggers")
 {
-    sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+    MidiState midiState;
+    Region region { 0, midiState };
 
     region.parseOpcode({ "sample", "*sine" });
     SECTION("key")
@@ -163,8 +166,8 @@ TEST_CASE("Basic triggers", "Region triggers")
 
 TEST_CASE("Legato triggers", "Region triggers")
 {
-    sfz::MidiState midiState;
-    sfz::Region region { 0, midiState };
+    MidiState midiState;
+    Region region { 0, midiState };
     region.parseOpcode({ "sample", "*sine" });
     SECTION("First note playing")
     {
@@ -199,4 +202,102 @@ TEST_CASE("Legato triggers", "Region triggers")
         midiState.noteOnEvent(0, 42, 64_norm);
         REQUIRE(!region.registerNoteOn(42, 64_norm, 0.5f));
     }
+}
+
+TEST_CASE("[Triggers] sw_vel, basic")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> key=60 sample=kick.wav
+        <region> key=62 sw_previous=60 sw_vel=previous sample=snare.wav
+    )");
+    synth.noteOn(0, 60, 127);
+    synth.noteOn(10, 62, 10);
+    synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
+    std::vector<std::string> expected {
+        "/num_active_voices,i : { 2 }",
+        "/voice0/trigger_value,f : { 1 }",
+        "/voice1/trigger_value,f : { 1 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Triggers] sw_vel, without sw_previous")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> key=60 sample=kick.wav
+        <region> key=62 sw_vel=previous sample=snare.wav
+    )");
+    synth.noteOn(0, 60, 127);
+    synth.noteOn(10, 62, 10);
+    synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
+    std::vector<std::string> expected {
+        "/num_active_voices,i : { 2 }",
+        "/voice0/trigger_value,f : { 1 }",
+        "/voice1/trigger_value,f : { 1 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Triggers] sw_vel, with a note in between")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> key=60 sample=kick.wav
+        <region> key=62 sw_vel=previous sample=snare.wav
+        <region> key=64 sample=closedhat.wav
+    )");
+    synth.noteOn(0, 60, 127);
+    synth.noteOn(5, 64, 63);
+    synth.noteOn(10, 62, 10);
+    synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice2/trigger_value", "", nullptr);
+    std::vector<std::string> expected {
+        "/num_active_voices,i : { 3 }",
+        "/voice0/trigger_value,f : { 1 }",
+        "/voice1/trigger_value,f : { 0.496063 }",
+        "/voice2/trigger_value,f : { 0.496063 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Triggers] sw_vel, with a note in between and sw_previous")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> key=60 sample=kick.wav
+        <region> key=62 sw_previous=60 sw_vel=previous sample=snare.wav
+        <region> key=64 sample=closedhat.wav
+    )");
+    synth.noteOn(0, 60, 127);
+    synth.noteOn(5, 64, 63);
+    synth.noteOn(10, 62, 10);
+    synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
+    std::vector<std::string> expected {
+        "/num_active_voices,i : { 2 }",
+        "/voice0/trigger_value,f : { 1 }",
+        "/voice1/trigger_value,f : { 0.496063 }",
+    };
+    REQUIRE(messageList == expected);
 }

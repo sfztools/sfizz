@@ -85,6 +85,13 @@ public:
     float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
+     * @brief Get the velocity of the last note played
+     *
+     * @return float
+     */
+    float getLastVelocity() const noexcept;
+
+    /**
      * @brief Register a pitch bend event
      *
      * @param pitchBendValue
@@ -183,6 +190,11 @@ private:
      *
      */
     MidiNoteArray<float> lastNoteVelocities;
+
+    /**
+     * @brief Last note played
+     */
+    int lastNotePlayed { 0 };
 
     /**
      * @brief Current known values for the CCs.

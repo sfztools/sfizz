@@ -21,6 +21,7 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
     if (noteNumber >= 0 && noteNumber < 128) {
         lastNoteVelocities[noteNumber] = velocity;
         noteOnTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
+        lastNotePlayed = noteNumber;
         activeNotes++;
     }
 
@@ -105,6 +106,11 @@ float sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
     return lastNoteVelocities[noteNumber];
 }
 
+float sfz::MidiState::getLastVelocity() const noexcept
+{
+    return lastNoteVelocities[lastNotePlayed];
+}
+
 void sfz::MidiState::insertEventInVector(EventVector& events, int delay, float value)
 {
     const auto insertionPoint = absl::c_upper_bound(events, delay, MidiEventDelayComparator {});
@@ -168,6 +174,7 @@ void sfz::MidiState::reset() noexcept
 
     activeNotes = 0;
     internalClock = 0;
+    lastNotePlayed = 0;
     absl::c_fill(noteOnTimes, 0);
     absl::c_fill(noteOffTimes, 0);
 }
