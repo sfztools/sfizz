@@ -250,6 +250,7 @@ void Synth::Impl::clear()
     changedCCsThisCycle_.clear();
     keyLabels_.clear();
     keySlots_.clear();
+    swSlots_.clear();
     keyswitchLabels_.clear();
     globalOpcodes_.clear();
     masterOpcodes_.clear();
@@ -744,6 +745,18 @@ void Synth::Impl::finalizeSfzLoad()
         unsigned hiKey = keyRange.getEnd();
         for (unsigned key = loKey; key <= hiKey; ++key)
             keySlots_.set(key);
+    }
+    // cache the set of keyswitches assigned
+    for (const RegionPtr& regionPtr : regions_) {
+        if (absl::optional<uint8_t> sw = regionPtr->lastKeyswitch) {
+            swSlots_.set(*sw);
+        }
+        else if (absl::optional<Range<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
+            unsigned loKey = swRange->getStart();
+            unsigned hiKey = swRange->getEnd();
+            for (unsigned key = loKey; key <= hiKey; ++key)
+                swSlots_.set(key);
+        }
     }
 }
 

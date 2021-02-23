@@ -217,6 +217,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::map<int, size_t> ccLabelsMap_;
     std::vector<NoteNamePair> keyLabels_;
     BitArray<128> keySlots_;
+    BitArray<128> swSlots_;
     std::vector<NoteNamePair> keyswitchLabels_;
 
     // Set as sw_default if present in the file
