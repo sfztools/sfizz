@@ -55,6 +55,7 @@ void SPiano::draw(CDrawContext* dc)
     const Dimensions dim = getDimensions(false);
     const unsigned octs = octs_;
     const unsigned keyCount = octs * 12;
+    const bool allKeysUsed = keyUsed_.all();
 
     dc->setDrawMode(kAntiAliasing);
 
@@ -71,7 +72,7 @@ void SPiano::draw(CDrawContext* dc)
             CRect rect = keyRect(key);
 
             SColorHCY hcy(keyUsedHue_, 1.0, whiteKeyLuma_);
-            if (!keyUsed_[key]) {
+            if (!keyUsed_[key] || allKeysUsed) {
                 hcy.y = 1.0;
                 if (keyval_[key])
                     hcy.c = 0.0;
@@ -99,7 +100,7 @@ void SPiano::draw(CDrawContext* dc)
             CRect rect = keyRect(key);
 
             SColorHCY hcy(keyUsedHue_, 1.0, blackKeyLuma_);
-            if (!keyUsed_[key])
+            if (!keyUsed_[key] || allKeysUsed)
                 hcy.c = 0.0;
             if (keyval_[key])
                 hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
