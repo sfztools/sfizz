@@ -122,13 +122,17 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         sampleEnd = opcode.read(Default::sampleEnd);
         break;
     case hash("count"):
-        sampleCount = opcode.read(Default::sampleCount);
+        sampleCount = opcode.readOptional(Default::sampleCount);
+        loopMode = LoopMode::one_shot;
         break;
     case hash("loop_mode"): // also loopmode
         loopMode = opcode.readOptional(Default::loopMode);
         break;
     case hash("loop_end"): // also loopend
         loopRange.setEnd(opcode.read(Default::loopEnd));
+        break;
+    case hash("loop_count"):
+        loopCount = opcode.readOptional(Default::loopCount);
         break;
     case hash("loop_start"): // also loopstart
         loopRange.setStart(opcode.read(Default::loopStart));

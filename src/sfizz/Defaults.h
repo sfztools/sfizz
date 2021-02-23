@@ -134,6 +134,7 @@ namespace Default
     extern const OpcodeSpec<uint32_t> sampleCount;
     extern const OpcodeSpec<uint32_t> loopStart;
     extern const OpcodeSpec<uint32_t> loopEnd;
+    extern const OpcodeSpec<uint32_t> loopCount;
     extern const OpcodeSpec<float> loopCrossfade;
     extern const OpcodeSpec<float> oscillatorPhase;
     extern const OpcodeSpec<OscillatorEnabled> oscillator;

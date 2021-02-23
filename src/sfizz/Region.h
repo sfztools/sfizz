@@ -326,9 +326,10 @@ struct Region {
     int64_t offsetRandom { Default::offsetRandom }; // offset_random
     CCMap<int64_t> offsetCC { Default::offsetMod };
     uint32_t sampleEnd { Default::sampleEnd }; // end
-    uint32_t sampleCount { Default::sampleCount }; // count
+    absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<LoopMode> loopMode {}; // loopmode
     Range<uint32_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    absl::optional<uint32_t> loopCount {}; // count
     float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 
     // Wavetable oscillator

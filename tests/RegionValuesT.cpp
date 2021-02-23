@@ -237,9 +237,7 @@ TEST_CASE("[Values] Count")
     synth.dispatchMessage(client, 0, "/region1/count", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/count", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/count,h : { 1 }",
         "/region1/count,h : { 2 }",
-        "/region2/count,h : { 1 }",
     };
     REQUIRE(messageList == expected);
 }

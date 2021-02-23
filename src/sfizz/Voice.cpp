@@ -192,6 +192,9 @@ struct Voice::Impl
     int sourcePosition_ { 0 };
     int initialDelay_ { 0 };
     int age_ { 0 };
+    uint32_t count_ { 1 };
+    int sampleSize_ { 0 };
+
     struct {
         int start { 0 };
         int end { 0 };
@@ -199,6 +202,7 @@ struct Voice::Impl
         int xfSize { 0 };
         int xfOutStart { 0 };
         int xfInStart { 0 };
+        uint32_t restarts { 0 };
     } loop_;
 
     FileDataHolder currentPromise_;
@@ -416,6 +420,7 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region->getDelay() * impl.sampleRate_);
     impl.baseFrequency_ = impl.resources_.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
+    impl.sampleSize_ = region->trueSampleEnd(impl.resources_.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
     impl.bendStepFactor_ = centsFactor(region->bendStep);
     impl.bendSmoother_.setSmoothing(region->bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region->getBendInCents(impl.resources_.midiState.getPitchBend())));
@@ -924,12 +929,22 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     if (isLooping) {
         int oldIndex {};
         int oldPartitionType {};
+        int blockRestarts { 0 };
         for (unsigned i = 0; i < numSamples; ++i) {
-            int index = (*indices)[i];
-
-            // wrap indices post loop-entry around the loop segment
-            int wrappedIndex = (index <= loop.end) ? index :
-                (loop.start + (index - loop.start) % loop.size);
+            int index = (*indices)[i] - loop.size * blockRestarts;
+            int wrappedIndex = index;
+            // wrap indices post loop-entry around the loop segment and increment the counter if necessary
+            if (index > loop.end) {
+                if (region_->loopCount && loop_.restarts >= *region_->loopCount) {
+                    wrappedIndex = loop.end;
+                    egAmplitude_.setReleaseTime(0.0f);
+                    egAmplitude_.startRelease(i);
+                } else {
+                    wrappedIndex -= loop.size;
+                    blockRestarts += 1;
+                    loop_.restarts += 1;
+                }
+            }
             (*indices)[i] = wrappedIndex;
 
             // identify the partition this index is in
@@ -956,7 +971,12 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             int(source.getNumFrames()))
             - 1;
 
+        int blockRestarts { 0 };
+
         for (unsigned i = 0; i < numSamples; ++i) {
+            ASSERT((*indices)[i] - sampleSize_ * blockRestarts >= 0);
+            (*indices)[i] -= sampleSize_ * blockRestarts;
+
             if ((*indices)[i] >= sampleEnd) {
 #ifndef NDEBUG
                 // Check for underflow
@@ -967,6 +987,14 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                         << " for sample " << *region_->sampleId);
                 }
 #endif
+                if (region_->sampleCount && count_ < *region_->sampleCount) {
+                    (*indices)[i] -= sampleSize_;
+                    ASSERT((*indices)[i] >= 0);
+                    blockRestarts += 1;
+                    count_ += 1;
+                    continue;
+                }
+
                 if (!region_->flexAmpEG) {
                     egAmplitude_.setReleaseTime(0.0f);
                     egAmplitude_.startRelease(i);
@@ -975,6 +1003,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                     // TODO(jpc): Flex AmpEG
                     flexEGs_[*region_->flexAmpEG]->release(i);
                 }
+
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
                 break;
@@ -1416,6 +1445,7 @@ void Voice::reset() noexcept
     impl.currentPromise_.reset();
     impl.sourcePosition_ = 0;
     impl.age_ = 0;
+    impl.count_ = 1;
     impl.floatPositionOffset_ = 0.0f;
     impl.noteIsOff_ = false;
 
@@ -1440,6 +1470,7 @@ void Voice::Impl::resetLoopInformation() noexcept
     loop_.xfSize = 0;
     loop_.xfOutStart = 0;
     loop_.xfInStart = 0;
+    loop_.restarts = 0;
 }
 
 void Voice::Impl::updateLoopInformation() noexcept
