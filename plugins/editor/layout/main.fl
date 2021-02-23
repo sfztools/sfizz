@@ -197,22 +197,22 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelControls]} {open
-    xywh {5 110 790 285}
+  Fl_Group {subPanels_[kPanelControls]} {
+    xywh {5 110 790 285} hide
     class LogicalGroup
   } {
     Fl_Group {} {open
       xywh {5 110 790 285} box ROUNDED_BOX
       class RoundedGroup
     } {
-      Fl_Group controlsPanel_ {open selected
+      Fl_Group controlsPanel_ {open
         xywh {5 110 790 285} box THIN_DOWN_FRAME
         class ControlsPanel
       } {}
     }
   }
   Fl_Group {subPanels_[kPanelSettings]} {open
-    xywh {5 109 790 316} hide
+    xywh {5 109 790 316}
     class LogicalGroup
   } {
     Fl_Group {} {
@@ -253,7 +253,7 @@ widget_class mainView {open
     }
     Fl_Group {} {
       label Tuning open
-      xywh {205 270 390 100} box ROUNDED_BOX labelsize 12 align 17
+      xywh {175 270 415 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
       Fl_Box {} {
@@ -283,13 +283,13 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label {Scala file}
-        xywh {225 290 100 25} labelsize 12
+        xywh {195 290 100 25} labelsize 12
         class ValueLabel
       }
       Fl_Button scalaFileButton_ {
         label DefaultScale
         comment {tag=kTagLoadScalaFile}
-        xywh {225 330 100 25} labelsize 12
+        xywh {195 330 100 25} labelsize 12
         class ValueButton
       }
       Fl_Spinner scalaRootKeySlider_ {
@@ -301,6 +301,11 @@ widget_class mainView {open
         comment {tag=kTagSetScalaRootKey}
         xywh {375 330 30 25} labelsize 12 textsize 12
         class ValueMenu
+      }
+      Fl_Button scalaResetButton_ {
+        comment {tag=kTagResetScalaFile} selected
+        xywh {295 330 25 25} labelsize 12
+        class ResetSomethingButton
       }
     }
     Fl_Group userFilesGroup_ {

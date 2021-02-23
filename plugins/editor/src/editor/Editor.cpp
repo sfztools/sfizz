@@ -70,6 +70,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetOversampling,
         kTagSetPreloadSize,
         kTagLoadScalaFile,
+        kTagResetScalaFile,
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
@@ -81,6 +82,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     STextButton* sfzFileLabel_ = nullptr;
     CTextLabel* scalaFileLabel_ = nullptr;
     STextButton* scalaFileButton_ = nullptr;
+    STextButton* scalaResetButton_ = nullptr;
     CControl *volumeSlider_ = nullptr;
     CTextLabel* volumeLabel_ = nullptr;
     SValueMenu *numVoicesSlider_ = nullptr;
@@ -583,6 +585,7 @@ void Editor::Impl::createFrameContents()
         typedef STextButton EditFileButton;
         typedef STextButton PreviousFileButton;
         typedef STextButton NextFileButton;
+        typedef STextButton ResetSomethingButton;
         typedef SPiano Piano;
         typedef SActionMenu ChevronDropDown;
         typedef SControlsPanel ControlsPanel;
@@ -737,6 +740,11 @@ void Editor::Impl::createFrameContents()
         };
         auto createNextFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue0da", bounds, tag, fontsize);
+        };
+        auto createResetSomethingButton = [&createValueButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createValueButton(bounds, tag, u8"\ue13a", kCenterText, fontsize);
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            return btn;
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
@@ -1469,6 +1477,13 @@ void Editor::Impl::valueChanged(CControl* ctl)
             break;
 
         Call::later([this]() { chooseScalaFile(); });
+        break;
+
+    case kTagResetScalaFile:
+        if (value != 1)
+            break;
+
+        changeScalaFile(std::string());
         break;
 
     case kTagSetVolume:

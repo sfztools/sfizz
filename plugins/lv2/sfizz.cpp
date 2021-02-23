@@ -1178,6 +1178,14 @@ static bool
 sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+
+    char buf[MAX_PATH_SIZE];
+    if (file_path[0] == '\0')
+    {
+        sfizz_lv2_get_default_sfz_path(instance, buf, MAX_PATH_SIZE);
+        file_path = buf;
+    }
+
     bool status = sfizz_load_file(self->synth, file_path);
     sfizz_lv2_update_file_info(self, file_path);
     return status;
@@ -1187,6 +1195,14 @@ static bool
 sfizz_lv2_load_scala_file(LV2_Handle instance, const char *file_path)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+
+    char buf[MAX_PATH_SIZE];
+    if (file_path[0] == '\0')
+    {
+        sfizz_lv2_get_default_scala_path(instance, buf, MAX_PATH_SIZE);
+        file_path = buf;
+    }
+
     bool status = sfizz_load_scala_file(self->synth, file_path);
     if (file_path != self->scala_file_path)
         strcpy(self->scala_file_path, file_path);
@@ -1308,7 +1324,7 @@ restore(LV2_Handle instance,
             "[sfizz] Error while restoring the file %s\n", self->sfz_file_path);
     }
 
-    if (sfizz_load_scala_file(self->synth, self->scala_file_path))
+    if (sfizz_lv2_load_scala_file(self->synth, self->scala_file_path))
     {
         lv2_log_note(&self->logger,
             "[sfizz] Restoring the scale %s\n", self->scala_file_path);
