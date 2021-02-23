@@ -56,6 +56,7 @@ The sfizz library also uses in some subprojects:
 - [cxxopts] by Jarryd Beck, licensed under the MIT license
 - [fmidi] by Jean Pierre Cimalando, licensed under the Boost Software License 1.0
 - [libsamplerate], licensed under the BSD 2-Clause license
+- [GLSL-Color-Spaces] by tobspr, licensed under the MIT license
 
 [Abseil]:       https://abseil.io/
 [atomic_queue]: https://github.com/max0x7ba/atomic_queue
@@ -74,6 +75,7 @@ The sfizz library also uses in some subprojects:
 [libsamplerate]: http://www.mega-nerd.com/SRC/
 [libsndfile]:   http://www.mega-nerd.com/libsndfile/
 [LV2]:          https://lv2plug.in/
+[GLSL-Color-Spaces]: https://github.com/tobspr/GLSL-Color-Spaces
 [our website]:  https://sfz.tools/sfizz
 [releases]:     https://github.com/sfztools/sfizz/releases
 [Carla]:     https://kx.studio/Applications:Carla
