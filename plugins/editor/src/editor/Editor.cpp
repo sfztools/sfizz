@@ -768,6 +768,31 @@ void Editor::Impl::createFrameContents()
 
         mainView->setBackgroundColor(frameBackground);
 
+#if LINUX
+        if (!isZenityAvailable()) {
+            CRect bounds = mainView->getViewSize();
+
+            CViewContainer* box = new CViewContainer(bounds);
+            mainView->addView(box);
+            box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0xc0));
+
+            CRect textSize = CRect(0, 0, 400, 80).centerInside(bounds);
+            CMultiLineTextLabel* textLabel = new CMultiLineTextLabel(textSize);
+            box->addView(textLabel);
+            textLabel->setTextInset(CPoint(10.0, 10.0));
+            textLabel->setStyle(CParamDisplay::kRoundRectStyle);
+            textLabel->setRoundRectRadius(10.0);
+            textLabel->setFrameColor(CColor(0xb2, 0xb2, 0xb2));
+            textLabel->setBackColor(CColor(0x2e, 0x34, 0x36));
+            auto font = makeOwned<CFontDesc>("Roboto", 16.0);
+            textLabel->setFont(font);
+            textLabel->setLineLayout(CMultiLineTextLabel::LineLayout::wrap);
+            textLabel->setText(
+                "The required program \"zenity\" is missing.\n"
+                "Install this software package first, and restart sfizz.");
+        }
+#endif
+
         mainView_ = owned(mainView);
     }
 

@@ -112,10 +112,12 @@ static std::vector<char *> createForkEnviron()
     return newEnv;
 }
 
+static constexpr char zenityPath[] = "/usr/bin/zenity";
+
 bool askQuestion(const char *text)
 {
     char *argv[] = {
-        const_cast<char *>("/usr/bin/zenity"),
+        const_cast<char *>(zenityPath),
         const_cast<char *>("--question"),
         const_cast<char *>("--text"),
         const_cast<char *>(text),
@@ -144,5 +146,10 @@ bool askQuestion(const char *text)
         return false;
 
     return WEXITSTATUS(wstatus) == 0;
+}
+
+bool isZenityAvailable()
+{
+    return access(zenityPath, X_OK) == 0;
 }
 #endif
