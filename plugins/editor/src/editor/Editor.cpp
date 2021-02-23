@@ -1483,7 +1483,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
         if (value != 1)
             break;
 
-        // TODO(jpc) Reset Scala File
+        changeScalaFile(std::string());
         break;
 
     case kTagSetVolume:
