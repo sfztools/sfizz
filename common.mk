@@ -128,6 +128,7 @@ SFIZZ_SOURCES = \
 
 SFIZZ_C_FLAGS += \
     -I$(SFIZZ_DIR)/src/sfizz \
+    -I$(SFIZZ_DIR)/src/sfizz/utility/bit_array \
     -I$(SFIZZ_DIR)/src/sfizz/utility/spin_mutex
 
 # Pkg-config dependency
