@@ -151,7 +151,7 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
         return absl::nullopt;
     }
 
-    return returnedValue;
+    return static_cast<T>(returnedValue);
 }
 
 #define INSTANTIATE_FOR_INTEGRAL(T)                             \
