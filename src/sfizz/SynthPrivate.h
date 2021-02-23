@@ -5,12 +5,12 @@
 #include "SisterVoiceRing.h"
 #include "TriggerEvent.h"
 #include "VoiceManager.h"
+#include "BitArray.h"
 #include "modulations/sources/ADSREnvelope.h"
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
 #include "modulations/sources/ChannelAftertouch.h"
 #include "modulations/sources/LFO.h"
-#include "utility/BitArray.h"
 
 namespace sfz {
 
