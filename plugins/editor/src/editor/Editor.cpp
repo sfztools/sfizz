@@ -10,6 +10,7 @@
 #include "GUIComponents.h"
 #include "GUIPiano.h"
 #include "NativeHelpers.h"
+#include "BitArray.h"
 #include "plugin/MessageUtils.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
@@ -396,11 +397,10 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
         // TODO(jpc) key ranges
     }
     else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
-        const uint8_t* bitChunks = args[0].b->data;
-        uint32_t byteSize = args[0].b->size;
-
-        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
-            bool used = bitChunks[cc / 8] & (1u << (cc % 8));
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned cc = 0; cc < numBits; ++cc) {
+            bool used = bits.test(cc);
             updateCCUsed(cc, used);
             if (used) {
                 char pathBuf[256];
@@ -414,10 +414,10 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
         }
     }
     else if (Messages::matchOSC("/cc/changed", path, indices) && !strcmp(sig, "b")) {
-        const uint8_t* bitChunks = args[0].b->data;
-        uint32_t byteSize = args[0].b->size;
-        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
-            bool changed = bitChunks[cc / 8] & (1u << (cc % 8));
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned cc = 0; cc < numBits; ++cc) {
+            bool changed = bits.test(cc);
             if (changed) {
                 char pathBuf[256];
                 sprintf(pathBuf, "/cc%u/value", cc);
