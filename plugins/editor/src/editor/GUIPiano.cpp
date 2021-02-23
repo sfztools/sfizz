@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "GUIPiano.h"
+#include "ColorHelpers.h"
 #include "utility/vstgui_before.h"
 #include "vstgui/lib/cdrawcontext.h"
 #include "vstgui/lib/cgraphicspath.h"
@@ -37,6 +38,18 @@ void SPiano::setNumOctaves(unsigned octs)
     invalid();
 }
 
+void SPiano::setKeyUsed(unsigned key, bool used)
+{
+    if (key >= 128)
+        return;
+
+    if (keyUsed_.test(key) == used)
+        return;
+
+    keyUsed_.set(key, used);
+    invalid();
+}
+
 void SPiano::draw(CDrawContext* dc)
 {
     const Dimensions dim = getDimensions(false);
@@ -56,9 +69,17 @@ void SPiano::draw(CDrawContext* dc)
     for (unsigned key = 0; key < keyCount; ++key) {
         if (!black[key % 12]) {
             CRect rect = keyRect(key);
-            CColor keycolor = whiteFill_;
+
+            SColorHCY hcy(keyUsedHue_, 1.0, whiteKeyLuma_);
+            if (!keyUsed_[key]) {
+                hcy.y = 1.0;
+                if (keyval_[key])
+                    hcy.c = 0.0;
+            }
             if (keyval_[key])
-                keycolor = pressedFill_;
+                hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
+
+            CColor keycolor = hcy.toColor();
             dc->setFillColor(keycolor);
             dc->drawRect(rect, kDrawFilled);
         }
@@ -76,9 +97,14 @@ void SPiano::draw(CDrawContext* dc)
     for (unsigned key = 0; key < keyCount; ++key) {
         if (black[key % 12]) {
             CRect rect = keyRect(key);
-            CColor keycolor = blackFill_;
+
+            SColorHCY hcy(keyUsedHue_, 1.0, blackKeyLuma_);
+            if (!keyUsed_[key])
+                hcy.c = 0.0;
             if (keyval_[key])
-                keycolor = pressedFill_;
+                hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
+
+            CColor keycolor = hcy.toColor();
             dc->setFillColor(keycolor);
             dc->drawRect(rect, kDrawFilled);
             dc->setFrameColor(outline_);

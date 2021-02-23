@@ -164,6 +164,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateTuningFrequencyLabel(float tuningFrequency);
     void updateStretchedTuningLabel(float stretchedTuning);
 
+    void updateKeyUsed(unsigned key, bool used);
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
     void updateCCDefaultValue(unsigned cc, float value);
@@ -394,7 +395,12 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     unsigned indices[8];
 
     if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b")) {
-        // TODO(jpc) key ranges
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned key = 0; key < 128; ++key) {
+            bool used = key < numBits && bits.test(key);
+            updateKeyUsed(key, used);
+        }
     }
     else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
         size_t numBits = 8 * args[0].b->size;
@@ -1272,6 +1278,12 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     sprintf(text, "%.3f", stretchedTuning);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+}
+
+void Editor::Impl::updateKeyUsed(unsigned key, bool used)
+{
+    if (SPiano* piano = piano_)
+        piano->setKeyUsed(key, used);
 }
 
 void Editor::Impl::updateCCUsed(unsigned cc, bool used)
