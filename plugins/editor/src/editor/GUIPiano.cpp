@@ -50,6 +50,18 @@ void SPiano::setKeyUsed(unsigned key, bool used)
     invalid();
 }
 
+void SPiano::setKeyswitchUsed(unsigned key, bool used)
+{
+    if (key >= 128)
+        return;
+
+    if (keyswitchUsed_.test(key) == used)
+        return;
+
+    keyswitchUsed_.set(key, used);
+    invalid();
+}
+
 void SPiano::setKeyValue(unsigned key, float value)
 {
     if (key >= 128)
@@ -62,6 +74,19 @@ void SPiano::setKeyValue(unsigned key, float value)
 
     keyval_[key] = value;
     invalid();
+}
+
+SPiano::KeyRole SPiano::getKeyRole(unsigned key)
+{
+    if (key >= 128)
+        return KeyRole::Unused;
+
+    if (keyUsed_.test(key))
+        return KeyRole::Note;
+    if (keyswitchUsed_.test(key))
+        return KeyRole::Switch;
+
+    return KeyRole::Unused;
 }
 
 void SPiano::draw(CDrawContext* dc)
@@ -85,12 +110,24 @@ void SPiano::draw(CDrawContext* dc)
         if (!black[key % 12]) {
             CRect rect = keyRect(key);
 
-            SColorHCY hcy(keyUsedHue_, 1.0, whiteKeyLuma_);
-            if (!keyUsed_[key] || allKeysUsed) {
+            SColorHCY hcy(0.0, 1.0, whiteKeyLuma_);
+
+            switch (getKeyRole(key)) {
+            case KeyRole::Note:
+                if (allKeysUsed)
+                    goto whiteKeyDefault;
+                hcy.h = keyUsedHue_;
+                break;
+            case KeyRole::Switch:
+                hcy.h = keySwitchHue_;
+                break;
+            default: whiteKeyDefault:
                 hcy.y = 1.0;
                 if (keyval_[key])
                     hcy.c = 0.0;
+                break;
             }
+
             if (keyval_[key])
                 hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
 
@@ -113,9 +150,22 @@ void SPiano::draw(CDrawContext* dc)
         if (black[key % 12]) {
             CRect rect = keyRect(key);
 
-            SColorHCY hcy(keyUsedHue_, 1.0, blackKeyLuma_);
-            if (!keyUsed_[key] || allKeysUsed)
+            SColorHCY hcy(0.0, 1.0, blackKeyLuma_);
+
+            switch (getKeyRole(key)) {
+            case KeyRole::Note:
+                if (allKeysUsed)
+                    goto blackKeyDefault;
+                hcy.h = keyUsedHue_;
+                break;
+            case KeyRole::Switch:
+                hcy.h = keySwitchHue_;
+                break;
+            default: blackKeyDefault:
                 hcy.c = 0.0;
+                break;
+            }
+
             if (keyval_[key])
                 hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
 
