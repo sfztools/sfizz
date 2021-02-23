@@ -59,6 +59,10 @@ if(APPLE)
 endif()
 
 # dependencies
+add_library(sfizz_colorspaces INTERFACE)
+add_library(sfizz::colorspaces ALIAS sfizz_colorspaces)
+target_include_directories(sfizz_colorspaces INTERFACE "external/color-spaces")
+
 if(WIN32)
     #
 elseif(APPLE)
@@ -69,7 +73,7 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_link_libraries(sfizz_editor PRIVATE sfizz::bit_array sfizz::filesystem)
+target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::bit_array sfizz::filesystem)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)
