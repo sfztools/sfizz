@@ -420,7 +420,7 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
     impl.bendSmoother_.setSmoothing(region->bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region->getBendInCents(impl.resources_.midiState.getPitchBend())));
 
-    impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), delay);
+    impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
     impl.saveModulationTargets(region);
 }
 
