@@ -7,6 +7,7 @@ constexpr auto uint32_t_max = std::numeric_limits<uint32_t>::max();
 
 extern const OpcodeSpec<float> delay { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<float> delayRandom { 0.0f, Range<float>(0.0f, 100.0f), 0 };
+extern const OpcodeSpec<float> delayMod { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<int64_t> offset { 0, Range<int64_t>(0, uint32_t_max), 0 };
 extern const OpcodeSpec<int64_t> offsetMod { 0, Range<int64_t>(0, uint32_t_max), 0 };
 extern const OpcodeSpec<int64_t> offsetRandom { 0, Range<int64_t>(0, uint32_t_max), 0 };
