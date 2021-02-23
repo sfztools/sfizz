@@ -87,7 +87,19 @@ add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 # The simde library
 add_library(sfizz_simde INTERFACE)
 add_library(sfizz::simde ALIAS sfizz_simde)
-target_include_directories(sfizz_simde INTERFACE "external/simde")
+if(SFIZZ_USE_SYSTEM_SIMDE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SIMDE "simde" REQUIRED)
+    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIRS}")
+    if(NOT SIMDE_VERSION OR SIMDE_VERSION VERSION_LESS_EQUAL "0.7.2")
+        message(WARNING "The version of SIMDe on this system has known issues. \
+It is recommended to either update if a newer version is available, or use the \
+version bundled with this package. Refer to following issues: \
+simd-everywhere/simde#704, simd-everywhere/simde#706")
+    endif()
+else()
+    target_include_directories(sfizz_simde INTERFACE "external/simde")
+endif()
 if(TARGET sfizz::openmp)
     target_link_libraries(sfizz_simde INTERFACE sfizz::openmp)
 endif()
