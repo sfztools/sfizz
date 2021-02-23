@@ -66,9 +66,9 @@ private:
     float backgroundRadius_ = 5.0;
 
     float keyUsedHue_ = 0.55;
-    float whiteKeyLuma_ = 0.5;
-    float blackKeyLuma_ = 0.25;
-    float keyLumaPressDelta_ = 0.20;
+    float whiteKeyLuma_ = 0.9;
+    float blackKeyLuma_ = 0.5;
+    float keyLumaPressDelta_ = 0.2;
 
     CColor outline_ { 0x00, 0x00, 0x00, 0xff };
     CColor shadeOutline_ { 0x80, 0x80, 0x80, 0xff };
