@@ -63,6 +63,30 @@ TEST_CASE("[Values] Delay")
         };
         REQUIRE(messageList == expected);
     }
+
+    SECTION("CC")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav delay_cc12=1.5
+            <region> sample=kick.wav delay_cc12=-1.5
+            <region> sample=kick.wav delay_cc14=3 delay_cc12=2 delay_cc12=-12
+        )");
+        synth.dispatchMessage(client, 0, "/region0/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/delay_cc14", "", nullptr);
+        // TODO: activate for the new region parser ; ignore the second value
+        // synth.dispatchMessage(client, 0, "/region3/delay_cc12", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/delay_cc12,f : { 0 }",
+            "/region1/delay_cc12,f : { 1.5 }",
+            "/region2/delay_cc12,f : { 0 }",
+            "/region3/delay_cc14,f : { 3 }",
+            // "/region3/delay_cc12,f : { 2 }",
+        };
+        REQUIRE(messageList == expected);
+    }
 }
 
 TEST_CASE("[Values] Sample and direction")

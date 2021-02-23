@@ -103,6 +103,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, region.delayRandom);
         } break;
 
+        MATCH("/region&/delay_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, region.delayCC.getWithDefault(indices[1]));
+        } break;
+
         MATCH("/region&/offset", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'h'>(delay, path, region.offset);

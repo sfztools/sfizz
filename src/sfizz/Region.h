@@ -321,6 +321,7 @@ struct Region {
     absl::optional<int> sampleQuality {};
     float delay { Default::delay }; // delay
     float delayRandom { Default::delayRandom }; // delay_random
+    CCMap<float> delayCC { Default::delayMod };
     int64_t offset { Default::offset }; // offset
     int64_t offsetRandom { Default::offsetRandom }; // offset_random
     CCMap<int64_t> offsetCC { Default::offsetMod };
