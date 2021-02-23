@@ -26,7 +26,16 @@ public:
     void setNumOctaves(unsigned octs);
 
     void setKeyUsed(unsigned key, bool used);
+    void setKeyswitchUsed(unsigned key, bool used);
     void setKeyValue(unsigned key, float value);
+
+    enum class KeyRole {
+        Unused,
+        Note,
+        Switch,
+    };
+
+    KeyRole getKeyRole(unsigned key);
 
     std::function<void(unsigned, float)> onKeyPressed;
     std::function<void(unsigned, float)> onKeyReleased;
@@ -57,6 +66,7 @@ private:
     unsigned octs_ {};
     std::vector<float> keyval_;
     std::bitset<128> keyUsed_;
+    std::bitset<128> keyswitchUsed_;
     unsigned mousePressedKey_ = ~0u;
 
     CCoord innerPaddingX_ = 4.0;
@@ -67,6 +77,7 @@ private:
     float backgroundRadius_ = 5.0;
 
     float keyUsedHue_ = 0.55;
+    float keySwitchHue_ = 0.0;
     float whiteKeyLuma_ = 0.9;
     float blackKeyLuma_ = 0.5;
     float keyLumaPressDelta_ = 0.2;
