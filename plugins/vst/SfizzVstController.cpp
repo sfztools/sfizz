@@ -21,6 +21,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 
     // create update objects
     oscUpdate_ = Steinberg::owned(new OSCUpdate);
+    noteUpdate_ = Steinberg::owned(new NoteUpdate);
     sfzPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateSfz));
     scalaPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateScala));
     processorStateUpdate_ = Steinberg::owned(new ProcessorStateUpdate);
@@ -283,6 +284,20 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         oscUpdate_->changed();
         oscUpdate_->clear();
     }
+    else if (!strcmp(id, "NoteEvents")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("Events", data, size);
+
+        const auto* events = reinterpret_cast<
+            const std::pair<uint32_t, float>*>(data);
+        uint32 numEvents = size / sizeof(events[0]);
+
+        // this is a synchronous send, because the update object gets reused
+        noteUpdate_->setEvents(events, numEvents, false);
+        noteUpdate_->changed();
+        noteUpdate_->clear();
+    }
 
     return result;
 }
@@ -307,6 +322,7 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
 
     std::vector<FObject*> triggerUpdates;
     triggerUpdates.push_back(oscUpdate_);
+    triggerUpdates.push_back(noteUpdate_);
 
     IPtr<SfizzVstEditor> editor = Steinberg::owned(
         new SfizzVstEditor(this, absl::MakeSpan(continuousUpdates), absl::MakeSpan(triggerUpdates)));

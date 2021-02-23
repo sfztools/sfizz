@@ -50,6 +50,20 @@ void SPiano::setKeyUsed(unsigned key, bool used)
     invalid();
 }
 
+void SPiano::setKeyValue(unsigned key, float value)
+{
+    if (key >= 128)
+        return;
+
+    value = std::max(0.0f, std::min(1.0f, value));
+
+    if (keyval_[key] == value)
+        return;
+
+    keyval_[key] = value;
+    invalid();
+}
+
 void SPiano::draw(CDrawContext* dc)
 {
     const Dimensions dim = getDimensions(false);

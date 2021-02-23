@@ -387,6 +387,14 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             setActivePanel(value);
         }
         break;
+    default:
+        if (editIdIsKey(id)) {
+            const int key = keyForEditId(id);
+            const float value = v.to_float();
+            if (SPiano* piano = piano_)
+                piano->setKeyValue(key, value);
+        }
+        break;
     }
 }
 

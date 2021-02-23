@@ -22,6 +22,9 @@ enum class EditId : int {
     UserFilesDir,
     FallbackFilesDir,
     //
+    Key0,
+    KeyLast = Key0 + 128 - 1,
+    //
     Controller0,
     ControllerLast = Controller0 + sfz::config::numCCs - 1,
     //
@@ -57,4 +60,17 @@ inline bool editIdIsCC(EditId id)
 {
     return int(id) >= int(EditId::Controller0) &&
         int(id) <= int(EditId::ControllerLast);
+}
+
+inline EditId editIdForKey(int key)
+{
+    return EditId(int(EditId::Key0) + key);
+}
+inline int keyForEditId(EditId id)
+{
+    return int(id) - int(EditId::Key0);
+}
+inline bool editIdIsKey(EditId id)
+{
+    return int(id) >= int(EditId::Key0) && int(id) <= int(EditId::KeyLast);
 }

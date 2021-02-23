@@ -26,6 +26,7 @@ public:
     void setNumOctaves(unsigned octs);
 
     void setKeyUsed(unsigned key, bool used);
+    void setKeyValue(unsigned key, float value);
 
     std::function<void(unsigned, float)> onKeyPressed;
     std::function<void(unsigned, float)> onKeyReleased;
@@ -54,7 +55,7 @@ private:
 
 private:
     unsigned octs_ {};
-    std::vector<unsigned> keyval_;
+    std::vector<float> keyval_;
     std::bitset<128> keyUsed_;
     unsigned mousePressedKey_ = ~0u;
 
