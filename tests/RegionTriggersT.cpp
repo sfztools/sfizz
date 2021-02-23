@@ -301,3 +301,42 @@ TEST_CASE("[Triggers] sw_vel, with a note in between and sw_previous")
     };
     REQUIRE(messageList == expected);
 }
+
+TEST_CASE("[Triggers] sw_vel, consider the previous velocity for triggers")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> key=60 sample=kick.wav
+        <region> key=62 sw_previous=60 sw_vel=previous sample=snare.wav lovel=63
+    )");
+
+    SECTION("Should trigger") {
+        synth.noteOn(0, 60, 127);
+        synth.noteOn(10, 62, 10);
+        synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
+        synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
+        synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
+        std::vector<std::string> expected {
+            "/num_active_voices,i : { 2 }",
+            "/voice0/trigger_value,f : { 1 }",
+            "/voice1/trigger_value,f : { 1 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Should not trigger") {
+        synth.noteOn(0, 60, 10);
+        synth.noteOn(10, 62, 127);
+        synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
+        synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
+        synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
+        std::vector<std::string> expected {
+            "/num_active_voices,i : { 1 }",
+            "/voice0/trigger_value,f : { 0.0787402 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+}
