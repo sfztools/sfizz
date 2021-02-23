@@ -1210,6 +1210,45 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         #undef GET_EQ_OR_BREAK
 
         #undef GET_REGION_OR_BREAK
+
+        MATCH("/num_active_voices", "") {
+            client.receive<'i'>(delay, path, impl.voiceManager_.getNumActiveVoices());
+        } break;
+
+        #define GET_VOICE_OR_BREAK(idx)                     \
+            if (static_cast<int>(idx) >= impl.numVoices_)   \
+                break;                                      \
+            const auto& voice = impl.voiceManager_[idx];    \
+            if (voice.isFree())                             \
+                break;
+
+        MATCH("/voice&/trigger_value", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, voice.getTriggerEvent().value);
+        } break;
+
+        MATCH("/voice&/trigger_number", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getTriggerEvent().number);
+        } break;
+
+        MATCH("/voice&/trigger_type", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            const auto& event = voice.getTriggerEvent();
+            switch (event.type) {
+            case TriggerEventType::CC:
+                client.receive<'s'>(delay, path, "cc");
+                break;
+            case TriggerEventType::NoteOn:
+                client.receive<'s'>(delay, path, "note_on");
+                break;
+            case TriggerEventType::NoteOff:
+                client.receive<'s'>(delay, path, "note_on");
+                break;
+            }
+
+        } break;
+
         #undef MATCH
         // TODO...
     }

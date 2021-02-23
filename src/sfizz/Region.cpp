@@ -1484,6 +1484,9 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     if (!triggerOnNote)
         return false;
 
+    if (velocityOverride == VelocityOverride::previous)
+        velocity = midiState.getLastVelocity();
+
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
     const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);

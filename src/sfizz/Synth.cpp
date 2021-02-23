@@ -998,8 +998,8 @@ void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     Impl& impl = *impl_;
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
+    impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -1010,7 +1010,6 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     Impl& impl = *impl_;
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -1021,6 +1020,7 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
         voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
     impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
+    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
@@ -1061,7 +1061,6 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
-    const TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
 
     if (!lastKeyswitchLists_[noteNumber].empty()) {
         if (currentSwitch_ && *currentSwitch_ != noteNumber) {
@@ -1088,6 +1087,10 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
                     noteOffDispatch(delay, event.number, event.value);
                 }
             }
+
+            TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
+            if (region->velocityOverride == VelocityOverride::previous)
+                triggerEvent.value = resources_.midiState.getLastVelocity();
 
             startVoice(region, delay, triggerEvent, ring);
         }
@@ -1150,7 +1153,6 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
     ASSERT(ccNumber >= 0);
 
     ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    resources_.midiState.ccEvent(delay, ccNumber, normValue);
 
     changedCCsThisCycle_.set(ccNumber);
 
@@ -1172,6 +1174,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
         voice.registerCC(delay, ccNumber, normValue);
 
     ccDispatch(delay, ccNumber, normValue);
+    resources_.midiState.ccEvent(delay, ccNumber, normValue);
 }
 
 void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
