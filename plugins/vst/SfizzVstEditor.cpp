@@ -23,6 +23,7 @@ static ViewRect sfizzUiViewRect { 0, 0, Editor::viewWidth, Editor::viewHeight };
 enum {
     kOscTempSize = 8192,
     kOscQueueSize = 65536,
+    kNoteEventQueueSize = 8192,
 };
 
 SfizzVstEditor::SfizzVstEditor(
@@ -70,6 +71,12 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         oscQueue_.reset(queue);
         queue->reserve(kOscQueueSize);
     }
+    {
+        std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
+        NoteEventsVec* queue = new NoteEventsVec;
+        noteEventQueue_.reset(queue);
+        queue->reserve(kNoteEventQueueSize);
+    }
 
     if (!frame->open(parent, platformType, config)) {
         fprintf(stderr, "[sfizz] error opening frame\n");
@@ -116,8 +123,14 @@ void PLUGIN_API SfizzVstEditor::close()
         this->frame = nullptr;
     }
 
-    std::lock_guard<std::mutex> lock(oscQueueMutex_);
-    oscQueue_.reset();
+    {
+        std::lock_guard<std::mutex> lock(oscQueueMutex_);
+        oscQueue_.reset();
+    }
+    {
+        std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
+        noteEventQueue_.reset();
+    }
 }
 
 ///
@@ -144,6 +157,7 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
 
     if (message == CVSTGUITimer::kMsgTimer) {
         processOscQueue();
+        processNoteEventQueue();
     }
 
     return result;
@@ -161,6 +175,17 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
                 std::copy(bytes, bytes + size, std::back_inserter(*queue));
         }
         return;
+    }
+
+    if (NoteUpdate* update = FCast<NoteUpdate>(changedUnknown)) {
+        // this update is synchronous: may happen from non-UI thread
+        uint32 count = update->count();
+        if (count > 0) {
+            const auto* events = update->events();
+            std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
+            if (NoteEventsVec* queue = noteEventQueue_.get())
+                std::copy(events, events + count, std::back_inserter(*queue));
+        }
     }
 
     if (FilePathUpdate* update = FCast<FilePathUpdate>(changedUnknown)) {
@@ -255,6 +280,20 @@ void SfizzVstEditor::processOscQueue()
         oscData += msgSize;
         oscSize -= msgSize;
     }
+
+    queue->clear();
+}
+
+void SfizzVstEditor::processNoteEventQueue()
+{
+    std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
+
+    NoteEventsVec* queue = noteEventQueue_.get();
+    if (!queue)
+        return;
+
+    for (std::pair<uint32, float> event : *queue)
+        uiReceiveValue(editIdForKey(event.first), event.second);
 
     queue->clear();
 }

@@ -48,6 +48,7 @@ public:
 
 private:
     void processOscQueue();
+    void processNoteEventQueue();
 
 protected:
     // EditorController
@@ -77,6 +78,9 @@ private:
     typedef std::vector<uint8_t> OscByteVec;
     std::unique_ptr<OscByteVec> oscQueue_;
     std::mutex oscQueueMutex_;
+    typedef std::vector<std::pair<uint32, float>> NoteEventsVec;
+    std::unique_ptr<NoteEventsVec> noteEventQueue_;
+    std::mutex noteEventQueueMutex_;
 
     // subscribed updates
     std::vector<IPtr<FObject>> continuousUpdates_;
