@@ -88,6 +88,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/mem/buffers", "") {
+            uint64_t total = BufferCounter::counter().getTotalBytes();
+            client.receive<'h'>(delay, path, total);
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/region&/delay", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.delay);
