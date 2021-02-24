@@ -86,30 +86,30 @@ widget_class mainView {open
         class ChevronDropDown
       }
       Fl_Box infoVoicesLabel_ {
-        xywh {260 76 50 25} labelsize 12 align 16
+        xywh {260 76 40 25} labelsize 12 align 16
         class Label
       }
       Fl_Box {} {
         label {Max:}
-        xywh {315 76 60 25} labelsize 12 align 24
+        xywh {315 76 40 25} labelsize 12 align 24
         class Label
       }
       Fl_Box numVoicesLabel_ {
-        xywh {380 76 35 25} labelsize 12 align 16
+        xywh {360 76 35 25} labelsize 12 align 16
         class Label
       }
       Fl_Box {} {
         label {Memory:}
-        xywh {435 76 60 25} labelsize 12 align 24
+        xywh {425 76 60 25} labelsize 12 align 24
         class Label
       }
-      Fl_Box memoryLabel_ {
-        xywh {500 76 50 25} labelsize 12 align 16
+      Fl_Box memoryLabel_ {selected
+        xywh {490 76 60 25} labelsize 12 align 16
         class Label
       }
       Fl_Button numVoicesSlider_ {
         comment {tag=kTagSetNumVoices}
-        xywh {415 80 20 20} labelsize 16
+        xywh {395 80 20 20} labelsize 16
         class ChevronValueDropDown
       }
     }
@@ -216,7 +216,7 @@ widget_class mainView {open
       } {}
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {open selected
+  Fl_Group {subPanels_[kPanelSettings]} {open
     xywh {5 109 790 316}
     class LogicalGroup
   } {

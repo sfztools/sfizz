@@ -47,6 +47,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
 
+    SharedPointer<CVSTGUITimer> memQueryTimer_;
+
     enum {
         kPanelGeneral,
         kPanelControls,
@@ -172,6 +174,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateCCValue(unsigned cc, float value);
     void updateCCDefaultValue(unsigned cc, float value);
     void updateCCLabel(unsigned cc, const char* label);
+    void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
     void performCCValueChange(unsigned cc, float value);
@@ -224,6 +227,10 @@ void Editor::open(CFrame& frame)
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
 
+    impl.memQueryTimer_ = makeOwned<CVSTGUITimer>([this](CVSTGUITimer*) {
+        impl_->sendQueuedOSC("/mem/buffers", "", nullptr);
+    }, 1000, true);
+
     // request the whole Key and CC information
     impl.sendQueuedOSC("/key/slots", "", nullptr);
     impl.sendQueuedOSC("/sw/slots", "", nullptr);
@@ -235,6 +242,8 @@ void Editor::close()
     Impl& impl = *impl_;
 
     impl.clearQueuedOSC();
+
+    impl.memQueryTimer_ = nullptr;
 
     if (impl.frame_) {
         impl.frame_->removeView(impl.mainView_.get(), false);
@@ -460,6 +469,9 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     }
     else if (Messages::matchOSC("/cc&/label", path, indices) && !strcmp(sig, "s")) {
         updateCCLabel(indices[0], args[0].s);
+    }
+    else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
+        updateMemoryUsed(args[0].h);
     }
     else {
         //fprintf(stderr, "Receive unhandled OSC: %s\n", path);
@@ -1347,6 +1359,27 @@ void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlLabelText(cc, label);
+}
+
+void Editor::Impl::updateMemoryUsed(uint64_t mem)
+{
+    if (CTextLabel* label = memoryLabel_) {
+        double value = mem / 1e3;
+        const char* unit = "kB";
+        int precision = 0;
+        if (value >= 1e3) {
+            value /= 1e3;
+            unit = "MB";
+        }
+        if (value >= 1e3) {
+            value /= 1e3;
+            unit = "GB";
+            precision = 1;
+        }
+        char textbuf[128];
+        snprintf(textbuf, sizeof(textbuf), "%.*f %s", precision, value, unit);
+        label->setText(textbuf);
+    }
 }
 
 void Editor::Impl::performCCValueChange(unsigned cc, float value)

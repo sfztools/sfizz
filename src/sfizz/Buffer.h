@@ -65,44 +65,32 @@ protected:
     }
 
 public:
-    void newBuffer(int size) noexcept
+    template <class I>
+    void newBuffer(I size) noexcept
     {
-        numBuffers++;
-        bytes.fetch_add(size);
+        ++numBuffers;
+        bytes.fetch_add(static_cast<size_t>(size));
     }
 
-    void bufferResized(int oldSize, int newSize) noexcept
+    template <class I>
+    void bufferResized(I oldSize, I newSize) noexcept
     {
-        bytes.fetch_add(newSize);
-        bytes.fetch_sub(oldSize);
+        bytes.fetch_add(static_cast<size_t>(newSize));
+        bytes.fetch_sub(static_cast<size_t>(oldSize));
     }
 
-    void bufferDeleted(int size) noexcept
+    template <class I>
+    void bufferDeleted(I size) noexcept
     {
-        numBuffers--;
-        bytes.fetch_sub(size);
+        --numBuffers;
+        bytes.fetch_sub(static_cast<size_t>(size));
     }
 
-    void bufferDeleted(size_t size) noexcept
-    {
-        bufferDeleted(static_cast<int>(size));
-    }
-
-    void bufferResized(size_t oldSize, size_t newSize) noexcept
-    {
-        bufferResized(static_cast<int>(oldSize), static_cast<int>(newSize));
-    }
-
-    void newBuffer(size_t size) noexcept
-    {
-        newBuffer(static_cast<int>(size));
-    }
-
-    int getNumBuffers() const noexcept { return numBuffers; }
-    int getTotalBytes() const noexcept { return bytes; }
+    size_t getNumBuffers() const noexcept { return numBuffers; }
+    size_t getTotalBytes() const noexcept { return bytes; }
 private:
-    std::atomic<int> numBuffers { 0 };
-    std::atomic<int> bytes { 0 };
+    std::atomic<size_t> numBuffers { 0 };
+    std::atomic<size_t> bytes { 0 };
 };
 
 
