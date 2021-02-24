@@ -16,7 +16,7 @@ public:
 
     virtual void init(int) = 0;
     virtual void instanceClear() = 0;
-    virtual void compute(int, float **, float **) = 0;
+    virtual void compute(int, const float *const *, float *const *) = 0;
 
     virtual void configureStandard(float, float, float) {}
     virtual void configureEq(float, float, float) {}
@@ -105,8 +105,8 @@ protected:
 template <class F> struct sfzFilter : public F {
     void configureStandard(float cutoff, float q, float pksh) override
     {
-        F::fCutoff = cutoff;
-        F::fQ = q;
+        this->setCutoff(cutoff);
+        this->setResonance(q);
         (void)pksh;
     }
 };
@@ -118,7 +118,7 @@ template <class F> struct sfzFilter : public F {
 template <class F> struct sfzFilterNoQ : public F {
     void configureStandard(float cutoff, float q, float pksh) override
     {
-        F::fCutoff = cutoff;
+        this->setCutoff(cutoff);
         (void)q;
         (void)pksh;
     }
@@ -144,9 +144,9 @@ template <class F> struct sfzFilterNoCutoff : public F {
 template <class F> struct sfzFilterPkSh : public F {
     void configureStandard(float cutoff, float q, float pksh) override
     {
-        F::fCutoff = cutoff;
-        F::fQ = q;
-        F::fPkShGain = pksh;
+        this->setCutoff(cutoff);
+        this->setResonance(q);
+        this->setPeakShelfGain(pksh);
     }
 };
 
@@ -157,9 +157,9 @@ template <class F> struct sfzFilterPkSh : public F {
 template <class F> struct sfzFilterEq : public F {
     void configureEq(float cutoff, float bw, float pksh) override
     {
-        F::fCutoff = cutoff;
-        F::fBandwidth = bw;
-        F::fPkShGain = pksh;
+        this->setCutoff(cutoff);
+        this->setBandwidth(bw);
+        this->setPeakShelfGain(pksh);
     }
 };
 

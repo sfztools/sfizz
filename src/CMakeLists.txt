@@ -310,6 +310,36 @@ endif()
 # Generic library alias
 add_library(sfizz::sfizz ALIAS sfizz_static)
 
+# Preserve generated files (Faust)
+set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)
+
+# Faust filters
+foreach(filter_type
+        Lpf1p Lpf2p Lpf4p Lpf6p Hpf1p Hpf2p Hpf4p Hpf6p
+        Bpf1p Bpf2p Bpf4p Bpf6p Apf1p Brf1p Brf2p
+        Pink Lpf2pSv Hpf2pSv Bpf2pSv Brf2pSv
+        Lsh Hsh Peq EqPeak EqLshelf EqHshelf)
+    add_faust_command(
+        "sfizz/dsp/filters/sfz_filters.dsp"
+        "sfizz/gen/filters/sfz${filter_type}.hxx"
+        DOUBLE IN_PLACE
+        PROCESS_NAME "sfz${filter_type}"
+        CLASS_NAME "faust${filter_type}"
+        SUPERCLASS_NAME "sfzFilterDsp"
+        IMPORT_DIRS "sfizz/dsp")
+    add_faust_command(
+        "sfizz/dsp/filters/sfz_filters.dsp"
+        "sfizz/gen/filters/sfz2ch${filter_type}.hxx"
+        DOUBLE IN_PLACE
+        PROCESS_NAME "sfz2ch${filter_type}"
+        CLASS_NAME "faust2ch${filter_type}"
+        SUPERCLASS_NAME "sfzFilterDsp"
+        IMPORT_DIRS "sfizz/dsp")
+    target_sources(sfizz_internal PRIVATE
+        "sfizz/gen/filters/sfz${filter_type}.hxx"
+        "sfizz/gen/filters/sfz2ch${filter_type}.hxx")
+endforeach()
+
 # Windows installer
 if(WIN32)
     include(VSTConfig)
