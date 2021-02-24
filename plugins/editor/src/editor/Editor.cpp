@@ -1391,11 +1391,13 @@ void Editor::Impl::performCCValueChange(unsigned cc, float value)
 void Editor::Impl::performCCBeginEdit(unsigned cc)
 {
     // TODO(jpc) CC as parameters and automation
+    (void)cc;
 }
 
 void Editor::Impl::performCCEndEdit(unsigned cc)
 {
     // TODO(jpc) CC as parameters and automation
+    (void)cc;
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)
