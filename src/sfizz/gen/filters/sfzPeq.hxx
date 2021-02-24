@@ -1,9 +1,13 @@
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 /* ------------------------------------------------------------
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.20.2 (https://faust.grame.fr)
-Compilation options: -lang cpp -inpl -double -ftz 0
+Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 ------------------------------------------------------------ */
 
 #ifndef  __faustPeq_H__
@@ -11,33 +15,37 @@ Compilation options: -lang cpp -inpl -double -ftz 0
 
 #ifndef FAUSTFLOAT
 #define FAUSTFLOAT float
-#endif
+#endif 
 
 #include <algorithm>
 #include <cmath>
 #include <math.h>
 
 
-#ifndef FAUSTCLASS
+#ifndef FAUSTCLASS 
 #define FAUSTCLASS faustPeq
 #endif
 
-#ifdef __APPLE__
+#ifdef __APPLE__ 
 #define exp10f __exp10f
 #define exp10 __exp10
 #endif
 
+
+//[Before:class]
 class faustPeq : public sfzFilterDsp {
+	//[Begin:class]
 
- public:
-
+	
+ private:
+	
 	int fSampleRate;
 	double fConst0;
 	double fConst1;
 	double fConst2;
-	FAUSTFLOAT fCutoff;
-	FAUSTFLOAT fQ;
-	FAUSTFLOAT fPkShGain;
+	FAUSTFLOAT fHslider0;
+	FAUSTFLOAT fVslider0;
+	FAUSTFLOAT fVslider1;
 	double fRec2[2];
 	double fVec0[2];
 	double fRec3[2];
@@ -47,64 +55,41 @@ class faustPeq : public sfzFilterDsp {
 	double fVec2[2];
 	double fRec1[2];
 	double fRec0[2];
-
+	
  public:
+	
 
-	void metadata(Meta* m) {
-	}
-
-	virtual int getNumInputs() {
+	static constexpr int getNumInputs() {
 		return 1;
 	}
-	virtual int getNumOutputs() {
+	static constexpr int getNumOutputs() {
 		return 1;
 	}
-	virtual int getInputRate(int channel) {
-		int rate;
-		switch ((channel)) {
-			case 0: {
-				rate = 1;
-				break;
-			}
-			default: {
-				rate = -1;
-				break;
-			}
-		}
-		return rate;
-	}
-	virtual int getOutputRate(int channel) {
-		int rate;
-		switch ((channel)) {
-			case 0: {
-				rate = 1;
-				break;
-			}
-			default: {
-				rate = -1;
-				break;
-			}
-		}
-		return rate;
-	}
-
+	
 	static void classInit(int sample_rate) {
+		//[Begin:classInit]
+		//[End:classInit]
 	}
-
-	virtual void instanceConstants(int sample_rate) {
+	
+	void instanceConstants(int sample_rate) {
+		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
-		fConst0 = std::min<double>(192000.0, std::max<double>(1.0, double(fSampleRate)));
+		fConst0 = double(fSampleRate);
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
 		fConst2 = (6.2831853071795862 / fConst0);
+		//[End:instanceConstants]
 	}
-
-	virtual void instanceResetUserInterface() {
-		fCutoff = FAUSTFLOAT(440.0);
-		fQ = FAUSTFLOAT(0.0);
-		fPkShGain = FAUSTFLOAT(0.0);
+	
+	void instanceResetUserInterface() {
+		//[Begin:instanceResetUserInterface]
+		fHslider0 = FAUSTFLOAT(440.0);
+		fVslider0 = FAUSTFLOAT(0.0);
+		fVslider1 = FAUSTFLOAT(0.0);
+		//[End:instanceResetUserInterface]
 	}
-
-	virtual void instanceClear() {
+	
+	void instanceClear() {
+		//[Begin:instanceClear]
 		for (int l0 = 0; (l0 < 2); l0 = (l0 + 1)) {
 			fRec2[l0] = 0.0;
 		}
@@ -132,42 +117,43 @@ class faustPeq : public sfzFilterDsp {
 		for (int l8 = 0; (l8 < 2); l8 = (l8 + 1)) {
 			fRec0[l8] = 0.0;
 		}
+		//[End:instanceClear]
 	}
-
-	virtual void init(int sample_rate) {
+	
+	void init(int sample_rate) {
+		//[Begin:init]
 		classInit(sample_rate);
 		instanceInit(sample_rate);
+		//[End:init]
 	}
-	virtual void instanceInit(int sample_rate) {
+	void instanceInit(int sample_rate) {
+		//[Begin:instanceInit]
 		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
+		//[End:instanceInit]
 	}
-
-	virtual faustPeq* clone() {
-		return new faustPeq();
-	}
-
-	virtual int getSampleRate() {
+	
+	
+	int getSampleRate() {
 		return fSampleRate;
 	}
-
-	virtual void buildUserInterface(UI* ui_interface) {
-	}
-
-	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
-		FAUSTFLOAT* input0 = inputs[0];
+	
+	
+	void compute(int count, FAUSTFLOAT const* const* inputs, FAUSTFLOAT* const* outputs) {
+		//[Begin:compute]
+		FAUSTFLOAT const* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
-		double fSlow1 = (fConst2 * std::max<double>(0.0, double(fCutoff)));
+		double fSlow1 = (fConst2 * std::max<double>(0.0, double(fHslider0)));
 		double fSlow2 = std::sin(fSlow1);
-		double fSlow3 = std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fQ))));
-		double fSlow4 = std::pow(10.0, (0.025000000000000001 * double(fPkShGain)));
+		double fSlow3 = std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fVslider0))));
+		double fSlow4 = std::pow(10.0, (0.025000000000000001 * double(fVslider1)));
 		double fSlow5 = (0.5 * (fSlow2 / (fSlow3 * fSlow4)));
 		double fSlow6 = (fSlow5 + 1.0);
 		double fSlow7 = (1.0 - fSlow0);
 		double fSlow8 = (((0.0 - (2.0 * std::cos(fSlow1))) / fSlow6) * fSlow7);
-		double fSlow9 = (0.5 * ((fSlow2 * fSlow4) / fSlow3));
+		double fSlow9 = (0.5 * ((fSlow4 * fSlow2) / fSlow3));
 		double fSlow10 = (((fSlow9 + 1.0) / fSlow6) * fSlow7);
 		double fSlow11 = (((1.0 - fSlow9) / fSlow6) * fSlow7);
 		double fSlow12 = (((1.0 - fSlow5) / fSlow6) * fSlow7);
@@ -193,8 +179,27 @@ class faustPeq : public sfzFilterDsp {
 			fRec1[1] = fRec1[0];
 			fRec0[1] = fRec0[0];
 		}
+		//[End:compute]
 	}
 
+
+    FAUSTFLOAT getCutoff() const { return fHslider0; }
+    void setCutoff(FAUSTFLOAT value) { fHslider0 = value; }
+
+    FAUSTFLOAT getResonance() const { return fVslider0; }
+    void setResonance(FAUSTFLOAT value) { fVslider0 = value; }
+
+    FAUSTFLOAT getPeakShelfGain() const { return fVslider1; }
+    void setPeakShelfGain(FAUSTFLOAT value) { fVslider1 = value; }
+
+	//[End:class]
 };
+//[After:class]
+
 
 #endif
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+#undef FAUSTFLOAT
+#undef FAUSTCLASS

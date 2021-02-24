@@ -1,7 +1,11 @@
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 /* ------------------------------------------------------------
 name: "disto_stage"
-Code generated with Faust 2.27.2 (https://faust.grame.fr)
-Compilation options: -lang cpp -inpl -scal -ftz 0
+Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Compilation options: -lang cpp -inpl -es 1 -scal -ftz 0
 ------------------------------------------------------------ */
 
 #ifndef  __faustDisto_H__
@@ -9,20 +13,24 @@ Compilation options: -lang cpp -inpl -scal -ftz 0
 
 #ifndef FAUSTFLOAT
 #define FAUSTFLOAT float
-#endif
+#endif 
 
 #include <algorithm>
 #include <cmath>
 #include <math.h>
 
+
+//[Before:class]
 class faustDistoSIG0 {
+	//[Begin:class]
 
-  public:
-
+	
+  private:
+	
 	int iRec3[2];
-
+	
   public:
-
+	
 	int getNumInputsfaustDistoSIG0() {
 		return 0;
 	}
@@ -53,14 +61,13 @@ class faustDistoSIG0 {
 		}
 		return rate;
 	}
-
+	
 	void instanceInitfaustDistoSIG0(int sample_rate) {
-		(void)sample_rate;
 		for (int l3 = 0; (l3 < 2); l3 = (l3 + 1)) {
 			iRec3[l3] = 0;
 		}
 	}
-
+	
 	void fillfaustDistoSIG0(int count, float* table) {
 		for (int i = 0; (i < count); i = (i + 1)) {
 			iRec3[0] = (iRec3[1] + 1);
@@ -77,19 +84,19 @@ static void deletefaustDistoSIG0(faustDistoSIG0* dsp) { delete dsp; }
 
 static float ftbl0faustDistoSIG0[256];
 
-#ifndef FAUSTCLASS
+#ifndef FAUSTCLASS 
 #define FAUSTCLASS faustDisto
 #endif
 
-#ifdef __APPLE__
+#ifdef __APPLE__ 
 #define exp10f __exp10f
 #define exp10 __exp10
 #endif
 
 class faustDisto {
-
- public:
-
+	
+ private:
+	
 	float fVec0[2];
 	int fSampleRate;
 	float fConst0;
@@ -97,79 +104,52 @@ class faustDisto {
 	float fConst2;
 	float fConst3;
 	float fConst4;
-	int iConst5;
-	float fConst6;
+	float fConst5;
 	int iRec2[2];
-	float fConst7;
 	float fRec1[2];
 	FAUSTFLOAT fHslider0;
 	float fVec1[2];
 	float fRec0[2];
-
+	
  public:
+	
 
-	void metadata() {
-	}
-
-	int getNumInputs() {
+	static constexpr int getNumInputs() {
 		return 1;
 	}
-	int getNumOutputs() {
+	static constexpr int getNumOutputs() {
 		return 1;
 	}
-	int getInputRate(int channel) {
-		int rate;
-		switch ((channel)) {
-			case 0: {
-				rate = 1;
-				break;
-			}
-			default: {
-				rate = -1;
-				break;
-			}
-		}
-		return rate;
-	}
-	int getOutputRate(int channel) {
-		int rate;
-		switch ((channel)) {
-			case 0: {
-				rate = 1;
-				break;
-			}
-			default: {
-				rate = -1;
-				break;
-			}
-		}
-		return rate;
-	}
-
+	
 	static void classInit(int sample_rate) {
+		//[Begin:classInit]
 		faustDistoSIG0* sig0 = newfaustDistoSIG0();
 		sig0->instanceInitfaustDistoSIG0(sample_rate);
 		sig0->fillfaustDistoSIG0(256, ftbl0faustDistoSIG0);
 		deletefaustDistoSIG0(sig0);
+		//[End:classInit]
 	}
-
+	
 	void instanceConstants(int sample_rate) {
+		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
-		fConst0 = std::min<float>(192000.0f, std::max<float>(1.0f, float(fSampleRate)));
+		fConst0 = float(fSampleRate);
 		fConst1 = (15.707963f / fConst0);
 		fConst2 = (1.0f / (fConst1 + 1.0f));
 		fConst3 = (1.0f - fConst1);
-		fConst4 = (0.00999999978f * float(_oversampling));
-		iConst5 = (std::fabs(fConst4) < 1.1920929e-07f);
-		fConst6 = (iConst5 ? 0.0f : std::exp((0.0f - ((1.0f / fConst0) / (iConst5 ? 1.0f : fConst4)))));
-		fConst7 = (1.0f - fConst6);
+		fConst4 = std::exp((0.0f - (100.0f / fConst0)));
+		fConst5 = (1.0f - fConst4);
+		//[End:instanceConstants]
 	}
-
+	
 	void instanceResetUserInterface() {
+		//[Begin:instanceResetUserInterface]
 		fHslider0 = FAUSTFLOAT(100.0f);
+		//[End:instanceResetUserInterface]
 	}
-
+	
 	void instanceClear() {
+		//[Begin:instanceClear]
 		for (int l0 = 0; (l0 < 2); l0 = (l0 + 1)) {
 			fVec0[l0] = 0.0f;
 		}
@@ -185,38 +165,39 @@ class faustDisto {
 		for (int l5 = 0; (l5 < 2); l5 = (l5 + 1)) {
 			fRec0[l5] = 0.0f;
 		}
+		//[End:instanceClear]
 	}
-
+	
 	void init(int sample_rate) {
+		//[Begin:init]
 		classInit(sample_rate);
 		instanceInit(sample_rate);
+		//[End:init]
 	}
 	void instanceInit(int sample_rate) {
+		//[Begin:instanceInit]
 		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
+		//[End:instanceInit]
 	}
-
-	faustDisto* clone() {
-		return new faustDisto();
-	}
-
+	
+	
 	int getSampleRate() {
 		return fSampleRate;
 	}
-
-	void buildUserInterface() {
-	}
-
-	void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
-		FAUSTFLOAT* input0 = inputs[0];
+	
+	
+	void compute(int count, FAUSTFLOAT const* const* inputs, FAUSTFLOAT* const* outputs) {
+		//[Begin:compute]
+		FAUSTFLOAT const* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		float fSlow0 = ((0.200000003f * float(fHslider0)) + 2.0f);
 		for (int i = 0; (i < count); i = (i + 1)) {
 			float fTemp0 = float(input0[i]);
 			fVec0[0] = fTemp0;
 			iRec2[0] = (((fTemp0 < fVec0[1]) & (fTemp0 < -0.25f)) ? 1 : (((fTemp0 > fVec0[1]) & (fTemp0 > 0.25f)) ? 0 : iRec2[1]));
-			fRec1[0] = ((fRec1[1] * fConst6) + (float(iRec2[0]) * fConst7));
+			fRec1[0] = ((fConst4 * fRec1[1]) + (fConst5 * float(iRec2[0])));
 			float fTemp2 = std::max<float>(0.0f, (12.75f * ((fSlow0 * fTemp0) + 10.0f)));
 			int iTemp3 = int(fTemp2);
 			float fTemp4 = ftbl0faustDistoSIG0[std::min<int>(255, iTemp3)];
@@ -231,19 +212,21 @@ class faustDisto {
 			fVec1[1] = fVec1[0];
 			fRec0[1] = fRec0[0];
 		}
+		//[End:compute]
 	}
 
+
+    FAUSTFLOAT getDepth() const { return fHslider0; }
+    void setDepth(FAUSTFLOAT value) { fHslider0 = value; }
+
+	//[End:class]
 };
+//[After:class]
 
-#ifdef FAUST_UIMACROS
-
-
-
-	#define FAUST_LIST_ACTIVES(p) \
-		p(HORIZONTALSLIDER, Depth, "Depth", fHslider0, 100.0f, 0.0f, 100.0f, 0.01f) \
-
-	#define FAUST_LIST_PASSIVES(p) \
 
 #endif
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
+#undef FAUSTFLOAT
+#undef FAUSTCLASS

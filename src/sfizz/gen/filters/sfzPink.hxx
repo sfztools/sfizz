@@ -1,9 +1,13 @@
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 /* ------------------------------------------------------------
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.20.2 (https://faust.grame.fr)
-Compilation options: -lang cpp -inpl -double -ftz 0
+Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 ------------------------------------------------------------ */
 
 #ifndef  __faustPink_H__
@@ -11,107 +15,89 @@ Compilation options: -lang cpp -inpl -double -ftz 0
 
 #ifndef FAUSTFLOAT
 #define FAUSTFLOAT float
-#endif
+#endif 
 
 #include <algorithm>
 #include <cmath>
 
 
-#ifndef FAUSTCLASS
+#ifndef FAUSTCLASS 
 #define FAUSTCLASS faustPink
 #endif
 
-#ifdef __APPLE__
+#ifdef __APPLE__ 
 #define exp10f __exp10f
 #define exp10 __exp10
 #endif
 
+
+//[Before:class]
 class faustPink : public sfzFilterDsp {
+	//[Begin:class]
 
- public:
-
+	
+ private:
+	
 	double fRec0[4];
 	int fSampleRate;
-
+	
  public:
+	
 
-	void metadata(Meta* m) {
-	}
-
-	virtual int getNumInputs() {
+	static constexpr int getNumInputs() {
 		return 1;
 	}
-	virtual int getNumOutputs() {
+	static constexpr int getNumOutputs() {
 		return 1;
 	}
-	virtual int getInputRate(int channel) {
-		int rate;
-		switch ((channel)) {
-			case 0: {
-				rate = 1;
-				break;
-			}
-			default: {
-				rate = -1;
-				break;
-			}
-		}
-		return rate;
-	}
-	virtual int getOutputRate(int channel) {
-		int rate;
-		switch ((channel)) {
-			case 0: {
-				rate = 1;
-				break;
-			}
-			default: {
-				rate = -1;
-				break;
-			}
-		}
-		return rate;
-	}
-
+	
 	static void classInit(int sample_rate) {
+		//[Begin:classInit]
+		//[End:classInit]
 	}
-
-	virtual void instanceConstants(int sample_rate) {
+	
+	void instanceConstants(int sample_rate) {
+		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
+		//[End:instanceConstants]
 	}
-
-	virtual void instanceResetUserInterface() {
+	
+	void instanceResetUserInterface() {
+		//[Begin:instanceResetUserInterface]
+		//[End:instanceResetUserInterface]
 	}
-
-	virtual void instanceClear() {
+	
+	void instanceClear() {
+		//[Begin:instanceClear]
 		for (int l0 = 0; (l0 < 4); l0 = (l0 + 1)) {
 			fRec0[l0] = 0.0;
 		}
+		//[End:instanceClear]
 	}
-
-	virtual void init(int sample_rate) {
+	
+	void init(int sample_rate) {
+		//[Begin:init]
 		classInit(sample_rate);
 		instanceInit(sample_rate);
+		//[End:init]
 	}
-	virtual void instanceInit(int sample_rate) {
+	void instanceInit(int sample_rate) {
+		//[Begin:instanceInit]
 		instanceConstants(sample_rate);
 		instanceResetUserInterface();
 		instanceClear();
+		//[End:instanceInit]
 	}
-
-	virtual faustPink* clone() {
-		return new faustPink();
-	}
-
-	virtual int getSampleRate() {
+	
+	
+	int getSampleRate() {
 		return fSampleRate;
 	}
-
-	virtual void buildUserInterface(UI* ui_interface) {
-	}
-
-	virtual void compute(int count, FAUSTFLOAT** inputs, FAUSTFLOAT** outputs) {
-		FAUSTFLOAT* input0 = inputs[0];
+	
+	
+	void compute(int count, FAUSTFLOAT const* const* inputs, FAUSTFLOAT* const* outputs) {
+		//[Begin:compute]
+		FAUSTFLOAT const* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
@@ -121,8 +107,18 @@ class faustPink : public sfzFilterDsp {
 				fRec0[j0] = fRec0[(j0 - 1)];
 			}
 		}
+		//[End:compute]
 	}
 
+
+	//[End:class]
 };
+//[After:class]
+
 
 #endif
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+#undef FAUSTFLOAT
+#undef FAUSTCLASS
