@@ -41,6 +41,7 @@ option_ex (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds" OFF)
 
 include (SfizzConfig)
 include (SfizzDeps)
+include (SfizzFaust)
 
 # Don't use IPO in non Release builds
 include (CheckIPO)
