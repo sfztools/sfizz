@@ -95,7 +95,7 @@ static void codegen_item(int& idCounter, int parentId, int parentX, int parentY,
     else if (item.align & 8)
         align = "kRightText";
 
-    std::cout << item.classname << "* const view__" << id << " = create" << item.classname << "(CRect(" << relX << ", " << relY << ", " << (relX + item.w) << ", " << (relY + item.h) <<  "), " << tag << ", \"" << label << "\", " << align << ", " << item.labelsize << ");\n";
+    std::cout << "auto"/*item.classname*/ << "* const view__" << id << " = create" << item.classname << "(CRect(" << relX << ", " << relY << ", " << (relX + item.w) << ", " << (relY + item.h) <<  "), " << tag << ", \"" << label << "\", " << align << ", " << item.labelsize << ");\n";
 
     if (!item.id.empty())
         std::cout << item.id << " = view__" << id << ";\n";

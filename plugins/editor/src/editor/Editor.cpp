@@ -561,35 +561,6 @@ void Editor::Impl::createFrameContents()
         Theme* theme = &defaultTheme;
         auto enterTheme = [&theme](Theme& t) { theme = &t; };
 
-        typedef CViewContainer LogicalGroup;
-        typedef SBoxContainer RoundedGroup;
-        typedef STitleContainer TitleGroup;
-        typedef CKickButton SfizzMainButton;
-        typedef CTextLabel Label;
-        typedef CViewContainer HLine;
-        typedef CAnimKnob Knob48;
-        typedef SStyledKnob StyledKnob;
-        typedef CTextLabel ValueLabel;
-        typedef CViewContainer VMeter;
-        typedef SValueMenu ValueMenu;
-        typedef CViewContainer Background;
-#if 0
-        typedef CTextButton Button;
-#endif
-        typedef STextButton ClickableLabel;
-        typedef STextButton ValueButton;
-        typedef STextButton LoadFileButton;
-        typedef STextButton CCButton;
-        typedef STextButton HomeButton;
-        typedef STextButton SettingsButton;
-        typedef STextButton EditFileButton;
-        typedef STextButton PreviousFileButton;
-        typedef STextButton NextFileButton;
-        typedef STextButton ResetSomethingButton;
-        typedef SPiano Piano;
-        typedef SActionMenu ChevronDropDown;
-        typedef SControlsPanel ControlsPanel;
-
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -729,12 +700,14 @@ void Editor::Impl::createFrameContents()
         auto createSettingsButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
         };
+#if 0
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue148", bounds, tag, fontsize);
         };
         auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue1a3", bounds, tag, fontsize);
         };
+#endif
         auto createPreviousFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue0d9", bounds, tag, fontsize);
         };
@@ -755,6 +728,19 @@ void Editor::Impl::createFrameContents()
         auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFontColor(theme->icon);
+            menu->setHoverColor(theme->iconHighlight);
+            menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            return menu;
+        };
+        auto createChevronValueDropDown = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            SValueMenu* menu = new SValueMenu(bounds, this, tag);
+            menu->setValueToStringFunction2([](float, std::string& result, CParamDisplay*) -> bool {
+                result = u8"\ue0d7";
+                return true;
+            });
             menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
@@ -836,12 +822,6 @@ void Editor::Impl::createFrameContents()
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
-    numVoicesSlider_->setValueToStringFunction2(
-        [](float value, std::string& result, CParamDisplay*) -> bool
-        {
-            result = std::to_string(static_cast<int32_t>(value));
-            return true;
-        });
 
     for (int log2value = 0; log2value <= 3; ++log2value) {
         int value = 1 << log2value;
@@ -1383,11 +1363,13 @@ void Editor::Impl::performCCValueChange(unsigned cc, float value)
 void Editor::Impl::performCCBeginEdit(unsigned cc)
 {
     // TODO(jpc) CC as parameters and automation
+    (void)cc;
 }
 
 void Editor::Impl::performCCEndEdit(unsigned cc)
 {
     // TODO(jpc) CC as parameters and automation
+    (void)cc;
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)
