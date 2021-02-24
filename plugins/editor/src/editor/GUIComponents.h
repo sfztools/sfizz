@@ -92,16 +92,25 @@ private:
 class SValueMenu : public CParamDisplay {
 public:
     explicit SValueMenu(const CRect& bounds, IControlListener* listener, int32_t tag);
+    CColor getHoverColor() const { return hoverColor_; }
+    void setHoverColor(const CColor& color);
     CMenuItem* addEntry(CMenuItem* item, float value, int32_t index = -1);
     CMenuItem* addEntry(const UTF8String& title, float value, int32_t index = -1, int32_t itemFlags = CMenuItem::kNoFlags);
     CMenuItem* addSeparator(int32_t index = -1);
     int32_t getNbEntries() const;
 
 protected:
+    void draw(CDrawContext* dc) override;
+    CMouseEventResult onMouseEntered(CPoint& where, const CButtonState& buttons) override;
+    CMouseEventResult onMouseExited(CPoint& where, const CButtonState& buttons) override;
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
     bool onWheel(const CPoint& where, const CMouseWheelAxis& axis, const float& distance, const CButtonState& buttons) override;
 
 private:
+    CColor hoverColor_;
+    bool hovered_ = false;
+
+    //
     class MenuListener;
 
     //

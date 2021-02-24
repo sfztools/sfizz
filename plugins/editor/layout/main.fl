@@ -11,7 +11,7 @@ widget_class mainView {open
     class Background
   }
   Fl_Group {} {
-    comment {theme=darkTheme}
+    comment {theme=darkTheme} open
     xywh {0 0 800 110}
     class LogicalGroup
   } {
@@ -95,7 +95,7 @@ widget_class mainView {open
         class Label
       }
       Fl_Box numVoicesLabel_ {
-        xywh {380 76 50 25} labelsize 12 align 16
+        xywh {380 76 35 25} labelsize 12 align 16
         class Label
       }
       Fl_Box {} {
@@ -106,6 +106,11 @@ widget_class mainView {open
       Fl_Box memoryLabel_ {
         xywh {500 76 50 25} labelsize 12 align 16
         class Label
+      }
+      Fl_Button numVoicesSlider_ {
+        comment {tag=kTagSetNumVoices}
+        xywh {415 80 20 20} labelsize 16
+        class ChevronValueDropDown
       }
     }
     Fl_Group {} {open
@@ -211,43 +216,33 @@ widget_class mainView {open
       } {}
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {open
+  Fl_Group {subPanels_[kPanelSettings]} {open selected
     xywh {5 109 790 316}
     class LogicalGroup
   } {
     Fl_Group {} {
       label Engine open
-      xywh {260 135 280 100} box ROUNDED_BOX labelsize 12 align 17
+      xywh {295 135 205 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
-      Fl_Spinner numVoicesSlider_ {
-        comment {tag=kTagSetNumVoices}
-        xywh {285 195 60 25} labelsize 12 textsize 12
-        class ValueMenu
-      }
-      Fl_Box {} {
-        label Polyphony
-        xywh {275 155 80 25} labelsize 12
-        class ValueLabel
-      }
       Fl_Spinner oversamplingSlider_ {
         comment {tag=kTagSetOversampling}
-        xywh {370 195 60 25} labelsize 12 textsize 12
+        xywh {330 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Oversampling
-        xywh {360 155 80 25} labelsize 12
+        xywh {320 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Box {} {
         label {Preload size}
-        xywh {445 155 80 25} labelsize 12
+        xywh {405 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Spinner preloadSizeSlider_ {
         comment {tag=kTagSetPreloadSize}
-        xywh {455 195 60 25} labelsize 12 textsize 12
+        xywh {415 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
     }
@@ -303,7 +298,7 @@ widget_class mainView {open
         class ValueMenu
       }
       Fl_Button scalaResetButton_ {
-        comment {tag=kTagResetScalaFile} selected
+        comment {tag=kTagResetScalaFile}
         xywh {295 330 25 25} labelsize 12
         class ResetSomethingButton
       }

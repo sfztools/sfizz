@@ -588,6 +588,7 @@ void Editor::Impl::createFrameContents()
         typedef STextButton ResetSomethingButton;
         typedef SPiano Piano;
         typedef SActionMenu ChevronDropDown;
+        typedef SValueMenu ChevronValueDropDown;
         typedef SControlsPanel ControlsPanel;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
@@ -762,6 +763,19 @@ void Editor::Impl::createFrameContents()
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
         };
+        auto createChevronValueDropDown = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            SValueMenu* menu = new SValueMenu(bounds, this, tag);
+            menu->setValueToStringFunction2([](float, std::string& result, CParamDisplay*) -> bool {
+                result = u8"\ue0d7";
+                return true;
+            });
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFontColor(theme->icon);
+            menu->setHoverColor(theme->iconHighlight);
+            menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            return menu;
+        };
         auto createBackground = [&background](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackground(background);
@@ -836,12 +850,6 @@ void Editor::Impl::createFrameContents()
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
-    numVoicesSlider_->setValueToStringFunction2(
-        [](float value, std::string& result, CParamDisplay*) -> bool
-        {
-            result = std::to_string(static_cast<int32_t>(value));
-            return true;
-        });
 
     for (int log2value = 0; log2value <= 3; ++log2value) {
         int value = 1 << log2value;
