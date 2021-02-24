@@ -1,14 +1,12 @@
 import("stdfaust.lib");
 
 disto_stage(depth, x) = shs*hh(x)+(1.0-shs)*lh(x) : fi.dcblockerat(5.0) with {
-  over = fconstant(int _oversampling, <math.h>);
-
   // sigmoid parameters
   a = depth*0.2+2.0;
   b = 2.0;
 
   // smooth hysteresis transition
-  shs = hs : si.smooth(ba.tau2pole(10e-3*over));
+  shs = hs : si.smooth(ba.tau2pole(10e-3));
 
   // the low and high hysteresis
   lh(x) = sig(a*x)*b;

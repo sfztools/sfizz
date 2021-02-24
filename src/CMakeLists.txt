@@ -340,6 +340,44 @@ foreach(filter_type
         "sfizz/gen/filters/sfz2ch${filter_type}.hxx")
 endforeach()
 
+# Faust effects
+add_faust_command(
+    "sfizz/effects/dsp/compressor.dsp"
+    "sfizz/effects/gen/compressor.hxx"
+    IN_PLACE
+    CLASS_NAME "faustCompressor"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/disto_stage.dsp"
+    "sfizz/effects/gen/disto_stage.hxx"
+    IN_PLACE
+    CLASS_NAME "faustDisto"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/fverb.dsp"
+    "sfizz/effects/gen/fverb.hxx"
+    IN_PLACE
+    CLASS_NAME "faustFverb"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/gate.dsp"
+    "sfizz/effects/gen/gate.hxx"
+    IN_PLACE
+    CLASS_NAME "faustGate"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/limiter.dsp"
+    "sfizz/effects/gen/limiter.hxx"
+    IN_PLACE
+    CLASS_NAME "faustLimiter"
+    IMPORT_DIRS "sfizz/dsp")
+target_sources(sfizz_internal PRIVATE
+    "sfizz/effects/gen/compressor.hxx"
+    "sfizz/effects/gen/disto_stage.hxx"
+    "sfizz/effects/gen/fverb.hxx"
+    "sfizz/effects/gen/gate.hxx"
+    "sfizz/effects/gen/limiter.hxx")
+
 # Windows installer
 if(WIN32)
     include(VSTConfig)

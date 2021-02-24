@@ -11,12 +11,12 @@
 */
 
 #include "Limiter.h"
+#include "gen/limiter.hxx"
 #include "Opcode.h"
 #include "AudioSpan.h"
 #include "absl/memory/memory.h"
 
 static constexpr int _oversampling = 2;
-#include "gen/limiter.hxx"
 
 namespace sfz {
 namespace fx {
@@ -33,8 +33,8 @@ namespace fx {
 
     void Limiter::setSampleRate(double sampleRate)
     {
-        _limiter->classInit(sampleRate);
-        _limiter->instanceConstants(sampleRate);
+        _limiter->classInit(_oversampling * sampleRate);
+        _limiter->instanceConstants(_oversampling * sampleRate);
 
         for (unsigned c = 0; c < EffectChannels; ++c) {
             _downsampler2x[c].set_coefs(OSCoeffs2x);

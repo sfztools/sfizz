@@ -5,14 +5,13 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Fverb.h"
+#include "gen/fverb.hxx"
 #include "Opcode.h"
 #include "Config.h"
 #include "MathHelpers.h"
 #include <absl/memory/memory.h>
 #include <absl/strings/ascii.h>
 #include <cmath>
-#define FAUST_UIMACROS 1
-#include "gen/fverb.hxx"
 
 /**
    Note(jpc): implementation status
@@ -39,12 +38,6 @@ namespace fx {
 
     struct Fverb::Impl {
         faustFverb dsp;
-
-        #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
-            float get_##ident() const noexcept { return dsp.var; } \
-            void set_##ident(float value) noexcept { dsp.var = value; }
-        FAUST_LIST_ACTIVES(DEFINE_SET_GET);
-        #undef DEFINE_SET_GET
 
         struct Profile {
             float tailDensity; // %
@@ -240,17 +233,18 @@ namespace fx {
         const float decayMin = decayMax * 0.5f;
 
         Impl& impl = *reverb->impl_;
-        impl.set_Predelay(predelay * 1e3);
-        impl.set_Tail_density(profile->tailDensity);
-        impl.set_Decay(decayMax * size * 0.01f + decayMin * (1.0f - size * 0.01f));
-        impl.set_Modulator_frequency(profile->modulationFrequency);
-        impl.set_Modulator_depth(profile->modulationDepth);
-        impl.set_Dry(profile->dry * dry * 0.01f);
-        impl.set_Wet(profile->wet * wet * 0.01f);
-        impl.set_Input_amount(input);
-        impl.set_Input_low_pass_cutoff(Impl::lpfCutoff(tone));
+        faustFverb& dsp = impl.dsp;
+        dsp.setPredelay(predelay * 1e3);
+        dsp.setTailDensity(profile->tailDensity);
+        dsp.setDecay(decayMax * size * 0.01f + decayMin * (1.0f - size * 0.01f));
+        dsp.setModulatorFrequency(profile->modulationFrequency);
+        dsp.setModulatorDepth(profile->modulationDepth);
+        dsp.setDry(profile->dry * dry * 0.01f);
+        dsp.setWet(profile->wet * wet * 0.01f);
+        dsp.setInputAmount(input);
+        dsp.setInputLowPassCutoff(Impl::lpfCutoff(tone));
         // NOTE(jpc): damp formula not well calibrated, but sounds ok-ish
-        impl.set_Damping(Impl::lpfCutoff(100 - 0.5 * damp));
+        dsp.setDamping(Impl::lpfCutoff(100 - 0.5 * damp));
 
         return fx;
     }

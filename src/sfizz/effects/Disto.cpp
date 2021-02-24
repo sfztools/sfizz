@@ -19,6 +19,7 @@
 */
 
 #include "Disto.h"
+#include "gen/disto_stage.hxx"
 #include "Opcode.h"
 #include "Config.h"
 #include "MathHelpers.h"
@@ -27,8 +28,6 @@
 #include <cmath>
 
 static constexpr int _oversampling = 8;
-#define FAUST_UIMACROS 1
-#include "gen/disto_stage.hxx"
 
 namespace sfz {
 namespace fx {
@@ -56,12 +55,6 @@ struct Disto::Impl {
         float mk = 21.0f + _tone * 1.08f;
         return 440.0f * std::exp2((mk - 69.0f) * (1.0f / 12.0f));
     }
-
-    #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
-        float get_##ident(size_t c, size_t s) const noexcept { return _stages[c][s].var; } \
-        void set_##ident(size_t c, size_t s, float value) noexcept { _stages[c][s].var = value; }
-    FAUST_LIST_ACTIVES(DEFINE_SET_GET);
-    #undef DEFINE_SET_GET
 };
 
 Disto::Disto()
@@ -71,7 +64,7 @@ Disto::Disto()
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         for (faustDisto& stage : impl._stages[c])
-            stage.init(config::defaultSampleRate);
+            stage.init(_oversampling * config::defaultSampleRate);
     }
 }
 
@@ -86,8 +79,8 @@ void Disto::setSampleRate(double sampleRate)
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         for (faustDisto& stage : impl._stages[c]) {
-            stage.classInit(sampleRate);
-            stage.instanceConstants(sampleRate);
+            stage.classInit(_oversampling * sampleRate);
+            stage.instanceConstants(_oversampling * sampleRate);
         }
     }
 }
@@ -150,7 +143,7 @@ void Disto::process(const float* const inputs[], float* const outputs[], unsigne
         absl::Span<float> stageInOut = upsamplerOut;
         for (unsigned s = 0, numStages = impl._numStages; s < numStages; ++s) {
             // set depth parameter (TODO modulation)
-            impl.set_Depth(c, s, depth);
+            impl._stages[c][s].setDepth(depth);
             //
             float *faustIn[] = { stageInOut.data() };
             float *faustOut[] = { stageInOut.data() };
