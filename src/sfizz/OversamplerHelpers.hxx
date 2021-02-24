@@ -11,6 +11,7 @@
 
 #pragma once
 #include "OversamplerHelpers.h"
+#include "MathHelpers.h"
 
 namespace sfz {
 
@@ -93,6 +94,13 @@ public:
 		default:
 			return factor * spl;
 		}
+	}
+	static unsigned conversionFactor(double sourceRate, double targetRate)
+	{
+		int factor = static_cast<int>(std::ceil(targetRate / sourceRate));
+		factor = (factor > 1) ? factor : 1;
+		factor = (factor < 128) ? factor : 128;
+		return nextPow2(factor);
 	}
 	static bool canProcess(int factor)
 	{
@@ -292,6 +300,13 @@ public:
 		default:
 			return factor * spl;
 		}
+	}
+	static unsigned conversionFactor(double sourceRate, double targetRate)
+	{
+		int factor = static_cast<int>(std::ceil(targetRate / sourceRate));
+		factor = (factor > 1) ? factor : 1;
+		factor = (factor < 128) ? factor : 128;
+		return nextPow2(factor);
 	}
 	static bool canProcess(int factor)
 	{

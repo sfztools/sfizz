@@ -152,6 +152,7 @@ static void generate_cpp_prologue(int argc, char *argv[])
     printf(
         "#pragma once\n"
         "#include \"OversamplerHelpers.h\"\n"
+        "#include \"MathHelpers\"\n"
         "\n"
         "namespace sfz {\n"
         );
@@ -207,6 +208,14 @@ static void generate_cpp_upsampler(const Stage *stages, int num_stages)
     printf("\t\t" "default:\n");
     printf("\t\t\t" "return factor * spl;\n");
     printf("\t\t" "}\n");
+    printf("\t" "}\n");
+
+    printf("\t" "static unsigned conversionFactor(double sourceRate, double targetRate)\n");
+    printf("\t" "{\n");
+    printf("\t\t" "int factor = static_cast<int>(std::ceil(targetRate / sourceRate));\n");
+    printf("\t\t" "factor = (factor > 1) ? factor : 1;\n");
+    printf("\t\t" "factor = (factor < 128) ? factor : 128;\n");
+    printf("\t\t" "return nextPow2(factor);\n");
     printf("\t" "}\n");
 
     printf("\t" "static bool canProcess(int factor)\n");
@@ -320,6 +329,14 @@ static void generate_cpp_downsampler(const Stage *stages, int num_stages)
     printf("\t\t" "default:\n");
     printf("\t\t\t" "return factor * spl;\n");
     printf("\t\t" "}\n");
+    printf("\t" "}\n");
+
+    printf("\t" "static unsigned conversionFactor(double sourceRate, double targetRate)\n");
+    printf("\t" "{\n");
+    printf("\t\t" "int factor = static_cast<int>(std::ceil(targetRate / sourceRate));\n");
+    printf("\t\t" "factor = (factor > 1) ? factor : 1;\n");
+    printf("\t\t" "factor = (factor < 128) ? factor : 128;\n");
+    printf("\t\t" "return nextPow2(factor);\n");
     printf("\t" "}\n");
 
     printf("\t" "static bool canProcess(int factor)\n");

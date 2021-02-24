@@ -297,6 +297,25 @@ constexpr long int lroundPositive(T value)
 }
 
 /**
+ * @brief Compute the next power of 2
+ *
+ * @param v An integer
+ * @return The next power of 2, inclusive from @p v
+ */
+inline uint32_t nextPow2(uint32_t v)
+{
+    // Bit Twiddling Hacks
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
+
+/**
    @brief Wrap a normalized phase into the domain [0;1[
  */
 template <class T>
