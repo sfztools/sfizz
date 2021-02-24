@@ -103,7 +103,7 @@ widget_class mainView {open
         xywh {425 76 60 25} labelsize 12 align 24
         class Label
       }
-      Fl_Box memoryLabel_ {selected
+      Fl_Box memoryLabel_ {
         xywh {490 76 60 25} labelsize 12 align 16
         class Label
       }
@@ -221,8 +221,8 @@ widget_class mainView {open
     class LogicalGroup
   } {
     Fl_Group {} {
-      label Engine open
-      xywh {295 135 205 100} box ROUNDED_BOX labelsize 12 align 17
+      label Engine open selected
+      xywh {305 135 195 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
       Fl_Spinner oversamplingSlider_ {
