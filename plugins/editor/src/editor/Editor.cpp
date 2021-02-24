@@ -561,36 +561,6 @@ void Editor::Impl::createFrameContents()
         Theme* theme = &defaultTheme;
         auto enterTheme = [&theme](Theme& t) { theme = &t; };
 
-        typedef CViewContainer LogicalGroup;
-        typedef SBoxContainer RoundedGroup;
-        typedef STitleContainer TitleGroup;
-        typedef CKickButton SfizzMainButton;
-        typedef CTextLabel Label;
-        typedef CViewContainer HLine;
-        typedef CAnimKnob Knob48;
-        typedef SStyledKnob StyledKnob;
-        typedef CTextLabel ValueLabel;
-        typedef CViewContainer VMeter;
-        typedef SValueMenu ValueMenu;
-        typedef CViewContainer Background;
-#if 0
-        typedef CTextButton Button;
-#endif
-        typedef STextButton ClickableLabel;
-        typedef STextButton ValueButton;
-        typedef STextButton LoadFileButton;
-        typedef STextButton CCButton;
-        typedef STextButton HomeButton;
-        typedef STextButton SettingsButton;
-        typedef STextButton EditFileButton;
-        typedef STextButton PreviousFileButton;
-        typedef STextButton NextFileButton;
-        typedef STextButton ResetSomethingButton;
-        typedef SPiano Piano;
-        typedef SActionMenu ChevronDropDown;
-        typedef SValueMenu ChevronValueDropDown;
-        typedef SControlsPanel ControlsPanel;
-
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
