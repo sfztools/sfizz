@@ -12,7 +12,7 @@
 #include <absl/strings/ascii.h>
 #include <cmath>
 #define FAUST_UIMACROS 1
-#include "gen/fverb.cxx"
+#include "gen/fverb.hxx"
 
 /**
    Note(jpc): implementation status

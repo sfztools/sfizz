@@ -16,7 +16,7 @@
 #include "absl/memory/memory.h"
 
 static constexpr int _oversampling = 2;
-#include "gen/limiter.cpp"
+#include "gen/limiter.hxx"
 
 namespace sfz {
 namespace fx {

@@ -28,7 +28,7 @@
 
 static constexpr int _oversampling = 2;
 #define FAUST_UIMACROS 1
-#include "gen/gate.cxx"
+#include "gen/gate.hxx"
 
 namespace sfz {
 namespace fx {

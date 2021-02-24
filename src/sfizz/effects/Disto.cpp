@@ -28,7 +28,7 @@
 
 static constexpr int _oversampling = 8;
 #define FAUST_UIMACROS 1
-#include "gen/disto_stage.cxx"
+#include "gen/disto_stage.hxx"
 
 namespace sfz {
 namespace fx {

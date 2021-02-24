@@ -25,7 +25,7 @@
 
 static constexpr int _oversampling = 2;
 #define FAUST_UIMACROS 1
-#include "gen/compressor.cxx"
+#include "gen/compressor.hxx"
 
 namespace sfz {
 namespace fx {
