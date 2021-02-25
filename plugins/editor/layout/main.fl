@@ -60,9 +60,9 @@ widget_class mainView {open
         xywh {195 11 250 31} labelsize 20 align 20
         class ClickableLabel
       }
-      Fl_Box {} {
-        label {Key switch:}
-        xywh {195 44 250 30} labelsize 20 align 20
+      Fl_Box keyswitchLabel_ {
+        label {Key switch:} selected
+        xywh {195 44 360 30} labelsize 20 align 20
         class Label
       }
       Fl_Box {} {
@@ -221,7 +221,7 @@ widget_class mainView {open
     class LogicalGroup
   } {
     Fl_Group {} {
-      label Engine open selected
+      label Engine open
       xywh {305 135 195 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {

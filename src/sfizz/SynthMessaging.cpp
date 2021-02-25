@@ -46,10 +46,24 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
-        MATCH("/sw/slots", "") {
-            const BitArray<128>& switches = impl.swSlots_;
+        MATCH("/sw/last/slots", "") {
+            const BitArray<128>& switches = impl.swLastSlots_;
             sfizz_blob_t blob { switches.data(), static_cast<uint32_t>(switches.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/sw/last/current", "") {
+            int32_t value = -1;
+            if (impl.currentSwitch_)
+                value = *impl.currentSwitch_;
+            client.receive<'i'>(delay, path, value);
+        } break;
+
+        MATCH("/sw/last/&/label", "") {
+            if (indices[0] >= 128)
+                break;
+            const std::string* label = impl.getKeyswitchLabel(indices[0]);
+            client.receive<'s'>(delay, path, label ? label->c_str() : "");
         } break;
 
         //----------------------------------------------------------------------
