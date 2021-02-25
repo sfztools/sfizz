@@ -241,6 +241,7 @@ void Synth::Impl::clear()
     numGroups_ = 0;
     numMasters_ = 0;
     currentSwitch_ = absl::nullopt;
+    currentSwitchChanged_ = true;
     defaultPath_ = "";
     resources_.midiState.reset();
     resources_.filePool.clear();
@@ -251,7 +252,7 @@ void Synth::Impl::clear()
     keyLabels_.clear();
     keySlots_.clear();
     swLastSlots_.clear();
-    keyswitchLabels_.clear();
+    clearKeyswitchLabels();
     globalOpcodes_.clear();
     masterOpcodes_.clear();
     groupOpcodes_.clear();
@@ -623,7 +624,7 @@ void Synth::Impl::finalizeSfzLoad()
                 region->keySwitched = (*currentSwitch_ == *region->lastKeyswitch);
 
             if (region->keyswitchLabel)
-                insertPairUniquely(keyswitchLabels_, *region->lastKeyswitch, *region->keyswitchLabel);
+                setKeyswitchLabel(*region->lastKeyswitch, *region->keyswitchLabel);
         }
 
         if (region->lastKeyswitchRange) {
@@ -633,7 +634,7 @@ void Synth::Impl::finalizeSfzLoad()
 
             if (region->keyswitchLabel) {
                 for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
-                    insertPairUniquely(keyswitchLabels_, note, *region->keyswitchLabel);
+                    setKeyswitchLabel(note, *region->keyswitchLabel);
             }
         }
 
@@ -758,6 +759,8 @@ void Synth::Impl::finalizeSfzLoad()
                 swLastSlots_.set(key);
         }
     }
+    // resend current keyswitch
+    currentSwitchChanged_ = true;
 }
 
 bool Synth::loadScalaFile(const fs::path& path)
@@ -985,6 +988,16 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
             broadcaster.receive<'b'>(numFrames - 1, "/cc/changed", &blob);
     }
     impl.changedCCsThisCycle_.clear();
+    // Send the changed keyswitch
+    if (impl.currentSwitchChanged_) {
+        if (broadcaster.canReceive()) {
+            int32_t value = -1;
+            if (impl.currentSwitch_)
+                value = *impl.currentSwitch_;
+            broadcaster.receive<'i'>(numFrames - 1, "/sw/last/current", value);
+        }
+        impl.currentSwitchChanged_ = false;
+    }
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1081,6 +1094,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
                 region->keySwitched = false;
         }
         currentSwitch_ = noteNumber;
+        currentSwitchChanged_ = true;
     }
 
     for (auto& region : lastKeyswitchLists_[noteNumber])
@@ -1869,10 +1883,34 @@ void Synth::Impl::setCCLabel(int ccNumber, std::string name)
     }
 }
 
+const std::string* Synth::Impl::getKeyswitchLabel(int swNumber)
+{
+    auto it = keyswitchLabelsMap_.find(swNumber);
+    return (it == keyswitchLabelsMap_.end()) ? nullptr : &keyswitchLabels_[it->second].second;
+}
+
+void Synth::Impl::setKeyswitchLabel(int swNumber, std::string name)
+{
+    auto it = keyswitchLabelsMap_.find(swNumber);
+    if (it != keyswitchLabelsMap_.end())
+        keyswitchLabels_[it->second].second = std::move(name);
+    else {
+        size_t index = keyswitchLabels_.size();
+        keyswitchLabels_.emplace_back(swNumber, std::move(name));
+        keyswitchLabelsMap_[swNumber] = index;
+    }
+}
+
 void Synth::Impl::clearCCLabels()
 {
     ccLabels_.clear();
     ccLabelsMap_.clear();
+}
+
+void Synth::Impl::clearKeyswitchLabels()
+{
+    keyswitchLabels_.clear();
+    keyswitchLabelsMap_.clear();
 }
 
 Parser& Synth::getParser() noexcept
