@@ -134,7 +134,7 @@ class faustDisto {
 		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
 		fConst0 = float(fSampleRate);
-		fConst1 = (15.707963f / fConst0);
+		fConst1 = (125.663704f / fConst0);
 		fConst2 = (1.0f / (fConst1 + 1.0f));
 		fConst3 = (1.0f - fConst1);
 		fConst4 = std::exp((0.0f - (100.0f / fConst0)));

@@ -1,6 +1,6 @@
 import("stdfaust.lib");
 
-disto_stage(depth, x) = shs*hh(x)+(1.0-shs)*lh(x) : fi.dcblockerat(5.0) with {
+disto_stage(depth, x) = shs*hh(x)+(1.0-shs)*lh(x) : fi.dcblockerat(40.0) with {
   // sigmoid parameters
   a = depth*0.2+2.0;
   b = 2.0;
