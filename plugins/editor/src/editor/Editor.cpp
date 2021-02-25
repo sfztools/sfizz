@@ -237,7 +237,7 @@ void Editor::open(CFrame& frame)
 
     // request the whole Key and CC information
     impl.sendQueuedOSC("/key/slots", "", nullptr);
-    impl.sendQueuedOSC("/sw/slots", "", nullptr);
+    impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
     impl.sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
@@ -268,7 +268,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 
             // request the whole Key and CC information
             sendQueuedOSC("/key/slots", "", nullptr);
-            sendQueuedOSC("/sw/slots", "", nullptr);
+            sendQueuedOSC("/sw/last/slots", "", nullptr);
             sendQueuedOSC("/cc/slots", "", nullptr);
         }
         break;
@@ -430,7 +430,7 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
             updateKeyUsed(key, used);
         }
     }
-    else if (Messages::matchOSC("/sw/slots", path, indices) && !strcmp(sig, "b")) {
+    else if (Messages::matchOSC("/sw/last/slots", path, indices) && !strcmp(sig, "b")) {
         size_t numBits = 8 * args[0].b->size;
         ConstBitSpan bits { args[0].b->data, numBits };
         for (unsigned key = 0; key < 128; ++key) {
@@ -1033,7 +1033,7 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
 
     // request the whole Key and CC information
     sendQueuedOSC("/key/slots", "", nullptr);
-    sendQueuedOSC("/sw/slots", "", nullptr);
+    sendQueuedOSC("/sw/last/slots", "", nullptr);
     sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
