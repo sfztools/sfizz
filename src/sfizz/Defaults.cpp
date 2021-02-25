@@ -131,6 +131,7 @@ extern const OpcodeSpec<int> sampleQuality { 1, Range<int>(1, 10), 0 };
 extern const OpcodeSpec<int> octaveOffset { 0, Range<int>(-10, 10), 0 };
 extern const OpcodeSpec<int> noteOffset { 0, Range<int>(-127, 127), 0 };
 extern const OpcodeSpec<float> effect { 0.0f, Range<float>(0.0f, 100.0f), kNormalizePercent };
+extern const OpcodeSpec<float> effectPercent { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<int> apanWaveform { 0, Range<int>(0, std::numeric_limits<int>::max()), 0 };
 extern const OpcodeSpec<float> apanFrequency { 0.0f, Range<float>(0.0f, std::numeric_limits<float>::max()), 0 };
 extern const OpcodeSpec<float> apanPhase { 0.5f, Range<float>(0.0f, 1.0f), kWrapPhase };

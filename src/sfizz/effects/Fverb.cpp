@@ -173,9 +173,9 @@ namespace fx {
         std::unique_ptr<Effect> fx { reverb };
 
         const Impl::Profile* profile = &Impl::largeHall;
-        float dry { Default::effect };
-        float wet { Default::effect };
-        float input { Default::effect };
+        float dry { Default::effectPercent };
+        float wet { Default::effectPercent };
+        float input { Default::effectPercent };
         float size { Default::fverbSize };
         float predelay { Default::fverbPredelay };
         float tone { Default::fverbTone };
@@ -205,13 +205,13 @@ namespace fx {
                 break;
             case hash("reverb_dry"):
 
-                dry = opc.read(Default::effect);
+                dry = opc.read(Default::effectPercent);
                 break;
             case hash("reverb_wet"):
-                wet = opc.read(Default::effect);
+                wet = opc.read(Default::effectPercent);
                 break;
             case hash("reverb_input"):
-                input = opc.read(Default::effect);
+                input = opc.read(Default::effectPercent);
                 break;
             case hash("reverb_size"):
                 size = opc.read(Default::fverbSize);
