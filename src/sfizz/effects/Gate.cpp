@@ -20,6 +20,7 @@
 */
 
 #include "Gate.h"
+#include "gen/gate.hxx"
 #include "Opcode.h"
 #include "AudioSpan.h"
 #include "MathHelpers.h"
@@ -27,8 +28,6 @@
 #include "absl/memory/memory.h"
 
 static constexpr int _oversampling = 2;
-#define FAUST_UIMACROS 1
-#include "gen/gate.cxx"
 
 namespace sfz {
 namespace fx {
@@ -41,12 +40,6 @@ namespace fx {
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
         hiir::Downsampler2x<12> _downsampler2x[EffectChannels];
         hiir::Upsampler2x<12> _upsampler2x[EffectChannels];
-
-        #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
-            float get_##ident(size_t i) const noexcept { return _gate[i].var; } \
-            void set_##ident(size_t i, float value) noexcept { _gate[i].var = value; }
-        FAUST_LIST_ACTIVES(DEFINE_SET_GET);
-        #undef DEFINE_SET_GET
     };
 
     Gate::Gate()
@@ -65,8 +58,8 @@ namespace fx {
     {
         Impl& impl = *_impl;
         for (faustGate& gate : impl._gate) {
-            gate.classInit(sampleRate);
-            gate.instanceConstants(sampleRate);
+            gate.classInit(_oversampling * sampleRate);
+            gate.instanceConstants(_oversampling * sampleRate);
         }
 
         for (unsigned c = 0; c < EffectChannels; ++c) {
@@ -167,29 +160,29 @@ namespace fx {
             case hash("gate_attack"):
                 {
                     auto value = opc.read(Default::gateAttack);
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Attack(c, value);
+                    for (faustGate& gate : impl._gate)
+                        gate.setAttack(value);
                 }
                 break;
             case hash("gate_hold"):
                 {
                     auto value = opc.read(Default::gateHold);
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Hold(c, value);
+                    for (faustGate& gate : impl._gate)
+                        gate.setHold(value);
                 }
                 break;
             case hash("gate_release"):
                 {
                     auto value = opc.read(Default::gateRelease);
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Release(c, value);
+                    for (faustGate& gate : impl._gate)
+                        gate.setRelease(value);
                 }
                 break;
             case hash("gate_threshold"):
                 {
                     auto value = opc.read(Default::gateThreshold);
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Threshold(c, value);
+                    for (faustGate& gate : impl._gate)
+                        gate.setThreshold(value);
                 }
                 break;
             case hash("gate_stlink"):

@@ -116,7 +116,7 @@ namespace fx {
         auto outputR = absl::MakeSpan(outputs[1], nframes);
 
         absl::Span<float> wet = _tempBuffer.getSpan(2).first(nframes);
-        sfz::fill(wet, 0.01f *_wet); // TOD strings_wet_oncc modulation...
+        sfz::fill(wet, _wet); // TOD strings_wet_oncc modulation...
 
         sfz::copy(inputL, outputL);
         sfz::copy(inputR, outputR);
