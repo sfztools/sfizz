@@ -20,6 +20,7 @@
 #include <ghc/fs_std.hpp>
 #include <array>
 #include <queue>
+#include <unordered_map>
 #include <algorithm>
 #include <functional>
 #include <type_traits>
@@ -48,6 +49,10 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     std::string currentScalaFile_;
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
+
+    int currentKeyswitch_ = -1;
+    std::unordered_map<unsigned, std::string> keyswitchNames_;
+    std::string keyswitchLabelPrefix_;
 
     SharedPointer<CVSTGUITimer> memQueryTimer_;
 
@@ -102,6 +107,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
+    CTextLabel* keyswitchLabel_ = nullptr;
 
     STitleContainer* userFilesGroup_ = nullptr;
     STextButton* userFilesDirButton_ = nullptr;
@@ -170,12 +176,17 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateTuningFrequencyLabel(float tuningFrequency);
     void updateStretchedTuningLabel(float stretchedTuning);
 
+    absl::string_view getCurrentKeyswitchName() const;
+    void updateKeyswitchNameLabel();
+
     void updateKeyUsed(unsigned key, bool used);
     void updateKeyswitchUsed(unsigned key, bool used);
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
     void updateCCDefaultValue(unsigned cc, float value);
     void updateCCLabel(unsigned cc, const char* label);
+    void updateSWLastCurrent(int sw);
+    void updateSWLastLabel(unsigned sw, const char* label);
     void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
@@ -436,7 +447,13 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
         for (unsigned key = 0; key < 128; ++key) {
             bool used = key < numBits && bits.test(key);
             updateKeyswitchUsed(key, used);
+            if (used) {
+                char pathBuf[256];
+                sprintf(pathBuf, "/sw/last/%u/label", key);
+                sendQueuedOSC(pathBuf, "", nullptr);
+            }
         }
+        sendQueuedOSC("/sw/last/current", "", nullptr);
     }
     else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
         size_t numBits = 8 * args[0].b->size;
@@ -475,6 +492,12 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     }
     else if (Messages::matchOSC("/cc&/label", path, indices) && !strcmp(sig, "s")) {
         updateCCLabel(indices[0], args[0].s);
+    }
+    else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
+        updateSWLastCurrent(args[0].i);
+    }
+    else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
+        updateSWLastLabel(indices[0], args[0].s);
     }
     else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
         updateMemoryUsed(args[0].h);
@@ -807,6 +830,10 @@ void Editor::Impl::createFrameContents()
 
         mainView_ = owned(mainView);
     }
+
+    ///
+    if (keyswitchLabel_)
+        keyswitchLabelPrefix_ = std::string(keyswitchLabel_->getText()) + ' ';
 
     ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
@@ -1347,6 +1374,27 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     label->setText(text);
 }
 
+absl::string_view Editor::Impl::getCurrentKeyswitchName() const
+{
+    int sw = currentKeyswitch_;
+    if (sw == -1)
+        return {};
+
+    auto it = keyswitchNames_.find(static_cast<unsigned>(sw));
+    if (it == keyswitchNames_.end())
+        return {};
+
+    return it->second;
+}
+
+void Editor::Impl::updateKeyswitchNameLabel()
+{
+    if (CTextLabel* label = keyswitchLabel_) {
+        std::string name { getCurrentKeyswitchName() };
+        label->setText((keyswitchLabelPrefix_ + name).c_str());
+    }
+}
+
 void Editor::Impl::updateKeyUsed(unsigned key, bool used)
 {
     if (SPiano* piano = piano_)
@@ -1381,6 +1429,21 @@ void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlLabelText(cc, label);
+}
+
+void Editor::Impl::updateSWLastCurrent(int sw)
+{
+    if (currentKeyswitch_ == sw)
+        return;
+    currentKeyswitch_ = sw;
+    updateKeyswitchNameLabel();
+}
+
+void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
+{
+    keyswitchNames_[sw].assign(label);
+    if ((unsigned)currentKeyswitch_ == sw)
+        updateKeyswitchNameLabel();
 }
 
 void Editor::Impl::updateMemoryUsed(uint64_t mem)
