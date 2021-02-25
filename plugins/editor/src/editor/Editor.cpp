@@ -1460,7 +1460,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
         if (value != 1)
             break;
 
-        createNewSfzFile();
+        Call::later([this]() { createNewSfzFile(); });
         break;
 
     case kTagOpenSfzFolder:
