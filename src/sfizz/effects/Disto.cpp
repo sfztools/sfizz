@@ -83,6 +83,8 @@ void Disto::setSampleRate(double sampleRate)
             stage.instanceConstants(_oversampling * sampleRate);
         }
     }
+
+    clear();
 }
 
 void Disto::setSamplesPerBlock(int samplesPerBlock)
