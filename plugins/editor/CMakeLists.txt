@@ -34,6 +34,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/EditorController.h
     src/editor/GUIComponents.h
     src/editor/GUIComponents.cpp
+    src/editor/GUIHelpers.h
+    src/editor/GUIHelpers.cpp
     src/editor/GUIPiano.h
     src/editor/GUIPiano.cpp
     src/editor/ColorHelpers.h
