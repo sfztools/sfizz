@@ -8,6 +8,7 @@
 #include "EditorController.h"
 #include "EditIds.h"
 #include "GUIComponents.h"
+#include "GUIHelpers.h"
 #include "GUIPiano.h"
 #include "NativeHelpers.h"
 #include "BitArray.h"
@@ -40,6 +41,7 @@ const int Editor::viewHeight { 475 };
 struct Editor::Impl : EditorController::Receiver, IControlListener {
     EditorController* ctrl_ = nullptr;
     CFrame* frame_ = nullptr;
+    SharedPointer<SFrameDisabler> frameDisabler_;
     SharedPointer<CViewContainer> mainView_;
 
     std::string currentSfzFile_;
@@ -227,6 +229,8 @@ void Editor::open(CFrame& frame)
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
 
+    impl.frameDisabler_ = makeOwned<SFrameDisabler>(&frame);
+
     impl.memQueryTimer_ = makeOwned<CVSTGUITimer>([this](CVSTGUITimer*) {
         impl_->sendQueuedOSC("/mem/buffers", "", nullptr);
     }, 1000, true);
@@ -244,6 +248,8 @@ void Editor::close()
     impl.clearQueuedOSC();
 
     impl.memQueryTimer_ = nullptr;
+
+    impl.frameDisabler_ = nullptr;
 
     if (impl.frame_) {
         impl.frame_->removeView(impl.mainView_.get(), false);
@@ -966,7 +972,11 @@ void Editor::Impl::chooseSfzFile()
     if (!initialDir.empty())
         fs->setInitialDirectory(initialDir.c_str());
 
-    if (fs->runModal()) {
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr file = fs->getSelectedFile(0);
         if (file)
             changeSfzFile(file);
@@ -996,7 +1006,11 @@ void Editor::Impl::createNewSfzFile()
     if (!initialDir.empty())
         fs->setInitialDirectory(initialDir.c_str());
 
-    if (fs->runModal()) {
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr file = fs->getSelectedFile(0);
         std::string fileStr;
         if (file && !absl::EndsWithIgnoreCase(file, ".sfz")) {
@@ -1084,7 +1098,11 @@ void Editor::Impl::chooseScalaFile()
     if (!initialDir.empty())
         fs->setInitialDirectory(initialDir.c_str());
 
-    if (fs->runModal()) {
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr file = fs->getSelectedFile(0);
         if (file)
             changeScalaFile(file);
@@ -1105,7 +1123,11 @@ void Editor::Impl::chooseUserFilesDir()
 
     fs->setTitle("Set user files directory");
 
-    if (fs->runModal()) {
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr dir = fs->getSelectedFile(0);
         if (dir) {
             userFilesDir_ = std::string(dir);
