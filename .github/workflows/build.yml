@@ -47,6 +47,7 @@ jobs:
           libjack-jackd2-dev \
           libsndfile1-dev \
           libcairo2-dev \
+          libpango1.0-dev \
           libfontconfig1-dev \
           libx11-xcb-dev \
           libxcb-util-dev \
