@@ -406,16 +406,14 @@ sfizz_lv2_parse_sample_rate(sfizz_plugin_t* self, const LV2_Options_Option* opt)
 }
 
 static void
-sfizz_lv2_get_default_sfz_path(LV2_Handle instance, char *path, size_t size)
+sfizz_lv2_get_default_sfz_path(sfizz_plugin_t *self, char *path, size_t size)
 {
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     snprintf(path, size, "%s/%s", self->bundle_path, DEFAULT_SFZ_FILE);
 }
 
 static void
-sfizz_lv2_get_default_scala_path(LV2_Handle instance, char *path, size_t size)
+sfizz_lv2_get_default_scala_path(sfizz_plugin_t *self, char *path, size_t size)
 {
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     snprintf(path, size, "%s/%s", self->bundle_path, DEFAULT_SCALA_FILE);
 }
 
@@ -470,8 +468,6 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_plugin_t *self = new sfizz_plugin_t;
     if (!self)
         return NULL;
-
-    LV2_Handle instance = (LV2_Handle)self;
 
     strncpy(self->bundle_path, bundle_path, MAX_BUNDLE_PATH_SIZE);
     self->bundle_path[MAX_BUNDLE_PATH_SIZE - 1] = '\0';
@@ -609,8 +605,8 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_set_broadcast_callback(self->synth, &sfizz_lv2_receive_message, self);
     sfizz_set_receive_callback(self->client, &sfizz_lv2_receive_message);
 
-    sfizz_lv2_get_default_sfz_path(instance, self->sfz_file_path, MAX_PATH_SIZE);
-    sfizz_lv2_get_default_scala_path(instance, self->scala_file_path, MAX_PATH_SIZE);
+    sfizz_lv2_get_default_sfz_path(self, self->sfz_file_path, MAX_PATH_SIZE);
+    sfizz_lv2_get_default_scala_path(self, self->scala_file_path, MAX_PATH_SIZE);
 
     sfizz_load_file(self->synth, self->sfz_file_path);
     sfizz_load_scala_file(self->synth, self->scala_file_path);
@@ -1175,14 +1171,12 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
 }
 
 static bool
-sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
+sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
 {
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-
     char buf[MAX_PATH_SIZE];
     if (file_path[0] == '\0')
     {
-        sfizz_lv2_get_default_sfz_path(instance, buf, MAX_PATH_SIZE);
+        sfizz_lv2_get_default_sfz_path(self, buf, MAX_PATH_SIZE);
         file_path = buf;
     }
 
@@ -1192,14 +1186,12 @@ sfizz_lv2_load_file(LV2_Handle instance, const char *file_path)
 }
 
 static bool
-sfizz_lv2_load_scala_file(LV2_Handle instance, const char *file_path)
+sfizz_lv2_load_scala_file(sfizz_plugin_t *self, const char *file_path)
 {
-    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-
     char buf[MAX_PATH_SIZE];
     if (file_path[0] == '\0')
     {
-        sfizz_lv2_get_default_scala_path(instance, buf, MAX_PATH_SIZE);
+        sfizz_lv2_get_default_scala_path(self, buf, MAX_PATH_SIZE);
         file_path = buf;
     }
 
@@ -1231,8 +1223,8 @@ restore(LV2_Handle instance,
     }
 
     // Set default values
-    sfizz_lv2_get_default_sfz_path(instance, self->sfz_file_path, MAX_PATH_SIZE);
-    sfizz_lv2_get_default_scala_path(instance, self->scala_file_path, MAX_PATH_SIZE);
+    sfizz_lv2_get_default_sfz_path(self, self->sfz_file_path, MAX_PATH_SIZE);
+    sfizz_lv2_get_default_scala_path(self, self->scala_file_path, MAX_PATH_SIZE);
     self->num_voices = DEFAULT_VOICES;
     self->preload_size = DEFAULT_PRELOAD;
     self->oversampling = DEFAULT_OVERSAMPLING;
@@ -1312,7 +1304,7 @@ restore(LV2_Handle instance,
     // Load an empty file to remove the default sine, and then the new file.
     sfizz_load_string(self->synth, "empty.sfz", "");
     self->check_modification = false;
-    if (sfizz_lv2_load_file(instance, self->sfz_file_path))
+    if (sfizz_lv2_load_file(self, self->sfz_file_path))
     {
         lv2_log_note(&self->logger,
             "[sfizz] Restoring the file %s\n", self->sfz_file_path);
@@ -1324,7 +1316,7 @@ restore(LV2_Handle instance,
             "[sfizz] Error while restoring the file %s\n", self->sfz_file_path);
     }
 
-    if (sfizz_lv2_load_scala_file(self->synth, self->scala_file_path))
+    if (sfizz_lv2_load_scala_file(self, self->scala_file_path))
     {
         lv2_log_note(&self->logger,
             "[sfizz] Restoring the scale %s\n", self->scala_file_path);
