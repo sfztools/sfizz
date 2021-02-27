@@ -14,6 +14,7 @@ set(EDITOR_RESOURCES
     knob48.png
     knob48@2x.png
     Fonts/sfizz-fluentui-system-r20.ttf
+    Fonts/sfizz-fluentui-system-f20.ttf
     Fonts/Roboto-Regular.ttf
     PARENT_SCOPE)
 

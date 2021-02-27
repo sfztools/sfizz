@@ -26,17 +26,17 @@ widget_class mainView {open
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelGeneral} selected
-        xywh {49 77 25 25} labelsize 24
+        xywh {36 73 32 32} labelsize 30
         class HomeButton
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelControls} selected
-        xywh {81 77 25 25} labelsize 24
+        xywh {76 73 32 32} labelsize 30
         class CCButton
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelSettings} selected
-        xywh {112 77 25 25} labelsize 24
+        xywh {116 73 32 32} labelsize 30
         class SettingsButton
       }
     }
