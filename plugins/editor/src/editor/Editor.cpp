@@ -558,7 +558,7 @@ void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
 
-    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("logo_text_white.png"));
+    SharedPointer<CBitmap> iconShaded = owned(new CBitmap("logo_text_shaded.png"));
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
@@ -636,8 +636,8 @@ void Editor::Impl::createFrameContents()
             box->setTitleFont(font);
             return box;
         };
-        auto createSfizzMainButton = [this, &iconWhite](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CKickButton(bounds, this, tag, iconWhite);
+        auto createSfizzMainButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CKickButton(bounds, this, tag, iconShaded);
         };
         auto createLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);

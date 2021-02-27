@@ -20,22 +20,22 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        comment {tag=kTagFirstChangePanel+kPanelGeneral}
-        image {../resources/logo_text_white.png} xywh {35 9 120 60}
+        comment {tag=kTagFirstChangePanel+kPanelGeneral} selected
+        image {../resources/logo_text_shaded.png} xywh {35 9 120 60}
         class SfizzMainButton
       }
       Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelGeneral} selected
+        comment {tag=kTagFirstChangePanel+kPanelGeneral}
         xywh {36 73 32 32} labelsize 30
         class HomeButton
       }
       Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelControls} selected
+        comment {tag=kTagFirstChangePanel+kPanelControls}
         xywh {76 73 32 32} labelsize 30
         class CCButton
       }
       Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelSettings} selected
+        comment {tag=kTagFirstChangePanel+kPanelSettings}
         xywh {116 73 32 32} labelsize 30
         class SettingsButton
       }

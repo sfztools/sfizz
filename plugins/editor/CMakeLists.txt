@@ -5,8 +5,10 @@ set(EDITOR_RESOURCES
     logo.png
     logo_text.png
     logo_text_white.png
+    logo_text_shaded.png
     logo_text@2x.png
     logo_text_white@2x.png
+    logo_text_shaded@2x.png
     background.png
     background@2x.png
     icon_white.png
