@@ -558,7 +558,7 @@ void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
 
-    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("logo_text_white.png"));
+    SharedPointer<CBitmap> iconShaded = owned(new CBitmap("logo_text_shaded.png"));
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
@@ -603,7 +603,7 @@ void Editor::Impl::createFrameContents()
         darkTheme.highlightedText = { 0xfd, 0x98, 0x00 };
         darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
         darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
-        darkTheme.icon = darkTheme.text;
+        darkTheme.icon = { 0xb2, 0xb2, 0xb2 };
         darkTheme.iconHighlight = { 0xfd, 0x98, 0x00 };
         darkTheme.valueText = { 0x00, 0x00, 0x00 };
         darkTheme.valueBackground = { 0x9a, 0x9a, 0x9a };
@@ -636,8 +636,8 @@ void Editor::Impl::createFrameContents()
             box->setTitleFont(font);
             return box;
         };
-        auto createSfizzMainButton = [this, &iconWhite](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CKickButton(bounds, this, tag, iconWhite);
+        auto createSfizzMainButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CKickButton(bounds, this, tag, iconShaded);
         };
         auto createLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
@@ -757,7 +757,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
-            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             btn->setTextColor(theme->icon);
             btn->setHoverColor(theme->iconHighlight);
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -792,7 +792,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createResetSomethingButton = [&createValueButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createValueButton(bounds, tag, u8"\ue13a", kCenterText, fontsize);
-            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             return btn;
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
@@ -804,7 +804,7 @@ void Editor::Impl::createFrameContents()
         auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
-            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -817,7 +817,7 @@ void Editor::Impl::createFrameContents()
                 result = u8"\ue0d7";
                 return true;
             });
-            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));

@@ -63,6 +63,7 @@ Source: "sfizz.vst3\Plugin.ico"; Components: vst3; DestDir: "{commoncf}\VST3\sfi
 Source: "sfizz.vst3\gpl-3.0.txt"; Components: main; DestDir: "{app}"
 ; Note(sfizz): OS older than Windows 10 require UI fonts to be installed system-wide
 Source: "sfizz.vst3\Contents\Resources\Fonts\sfizz-fluentui-system-r20.ttf"; DestDir: "{fonts}"; FontInstall: "Sfizz Fluent System R20"; Flags: uninsneveruninstall; OnlyBelowVersion: 6.4
+Source: "sfizz.vst3\Contents\Resources\Fonts\sfizz-fluentui-system-f20.ttf"; DestDir: "{fonts}"; FontInstall: "Sfizz Fluent System F20"; Flags: uninsneveruninstall; OnlyBelowVersion: 6.4
 Source: "sfizz.vst3\Contents\Resources\Fonts\Roboto-Regular.ttf"; DestDir: "{fonts}"; FontInstall: "Roboto Regular"; Flags: uninsneveruninstall; OnlyBelowVersion: 6.4
 ;Source: "setup\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files

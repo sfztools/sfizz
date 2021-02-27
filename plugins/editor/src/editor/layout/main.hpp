@@ -10,11 +10,11 @@ auto* const view__3 = createRoundedGroup(CRect(5, 4, 180, 105), -1, "", kCenterT
 view__2->addView(view__3);
 auto* const view__4 = createSfizzMainButton(CRect(30, 5, 150, 65), kTagFirstChangePanel+kPanelGeneral, "", kCenterText, 14);
 view__3->addView(view__4);
-auto* const view__5 = createHomeButton(CRect(44, 73, 69, 98), kTagFirstChangePanel+kPanelGeneral, "", kCenterText, 24);
+auto* const view__5 = createHomeButton(CRect(31, 69, 63, 101), kTagFirstChangePanel+kPanelGeneral, "", kCenterText, 30);
 view__3->addView(view__5);
-auto* const view__6 = createCCButton(CRect(76, 73, 101, 98), kTagFirstChangePanel+kPanelControls, "", kCenterText, 24);
+auto* const view__6 = createCCButton(CRect(71, 69, 103, 101), kTagFirstChangePanel+kPanelControls, "", kCenterText, 30);
 view__3->addView(view__6);
-auto* const view__7 = createSettingsButton(CRect(107, 73, 132, 98), kTagFirstChangePanel+kPanelSettings, "", kCenterText, 24);
+auto* const view__7 = createSettingsButton(CRect(111, 69, 143, 101), kTagFirstChangePanel+kPanelSettings, "", kCenterText, 30);
 view__3->addView(view__7);
 auto* const view__8 = createRoundedGroup(CRect(185, 5, 565, 105), -1, "", kCenterText, 14);
 view__2->addView(view__8);
