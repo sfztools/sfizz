@@ -25,18 +25,18 @@ widget_class mainView {open
         class SfizzMainButton
       }
       Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelGeneral}
-        xywh {49 73 25 25} labelsize 24
+        comment {tag=kTagFirstChangePanel+kPanelGeneral} selected
+        xywh {49 77 25 25} labelsize 24
         class HomeButton
       }
       Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelControls}
-        xywh {81 73 25 25} labelsize 24
+        comment {tag=kTagFirstChangePanel+kPanelControls} selected
+        xywh {81 77 25 25} labelsize 24
         class CCButton
       }
       Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelSettings}
-        xywh {112 73 25 25} labelsize 24
+        comment {tag=kTagFirstChangePanel+kPanelSettings} selected
+        xywh {112 77 25 25} labelsize 24
         class SettingsButton
       }
     }
@@ -69,7 +69,7 @@ widget_class mainView {open
         class Badge
       }
       Fl_Box keyswitchInactiveLabel_ {
-        label {No key switch} selected
+        label {No key switch}
         xywh {195 45 360 30} labelsize 20 align 20 hide
         class InactiveLabel
       }
