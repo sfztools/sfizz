@@ -61,9 +61,17 @@ widget_class mainView {open
         class ClickableLabel
       }
       Fl_Box keyswitchLabel_ {
-        label {Key switch:}
-        xywh {195 45 360 30} labelsize 20 align 20
+        xywh {265 45 290 30} labelsize 20 align 20
         class Label
+      }
+      Fl_Box keyswitchBadge_ {
+        xywh {195 47 60 26} box THIN_UP_BOX labelsize 20
+        class Badge
+      }
+      Fl_Box keyswitchInactiveLabel_ {
+        label {No key switch} selected
+        xywh {195 45 360 30} labelsize 20 align 20 hide
+        class InactiveLabel
       }
       Fl_Box {} {
         label {Voices:}
@@ -71,7 +79,7 @@ widget_class mainView {open
         class Label
       }
       Fl_Button {} {
-        comment {tag=kTagPreviousSfzFile} selected
+        comment {tag=kTagPreviousSfzFile}
         xywh {480 18 25 25} labelsize 24
         class PreviousFileButton
       }
