@@ -97,6 +97,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("delay"):
         delay = opcode.read(Default::delay);
         break;
+    case hash("delay_oncc&"): // also delay_cc&
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        delayCC[opcode.parameters.back()] = opcode.read(Default::delayMod);
+        break;
     case hash("delay_random"):
         delayRandom = opcode.read(Default::delayRandom);
         break;
@@ -1484,6 +1490,9 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     if (!triggerOnNote)
         return false;
 
+    if (velocityOverride == VelocityOverride::previous)
+        velocity = midiState.getLastVelocity();
+
     const bool velOk = velocityRange.containsWithEnd(velocity);
     const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
     const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
@@ -1636,7 +1645,11 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
 float sfz::Region::getDelay() const noexcept
 {
     fast_real_distribution<float> delayDistribution { 0, delayRandom };
-    return delay + delayDistribution(Random::randomGenerator);
+    float finalDelay { delay };
+    finalDelay += delayDistribution(Random::randomGenerator);
+    for (const auto& mod: delayCC)
+        finalDelay += mod.data * midiState.getCCValue(mod.cc);
+    return Default::delay.bounds.clamp(finalDelay);
 }
 
 uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept

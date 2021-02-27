@@ -151,13 +151,13 @@ TEST_CASE("[Buffer] Buffer counter")
     sfz::BufferCounter& counter = sfz::Buffer<float>::counter();
 
     // handle the eventuality that the buffer counter does not start at zero
-    const int initialNumBuffers = counter.getNumBuffers();
-    const int initialTotalBytes = counter.getTotalBytes();
-    auto haveNumBuffers = [&](int n) -> bool {
+    const size_t initialNumBuffers = counter.getNumBuffers();
+    const size_t initialTotalBytes = counter.getTotalBytes();
+    auto haveNumBuffers = [&](size_t n) -> bool {
         return n == counter.getNumBuffers() - initialNumBuffers;
     };
-    auto haveTotalAllocation = [&](int n) -> bool {
-        return n * static_cast<int>(sizeof(float)) == counter.getTotalBytes() - initialTotalBytes;
+    auto haveTotalAllocation = [&](size_t n) -> bool {
+        return n * sizeof(float) == counter.getTotalBytes() - initialTotalBytes;
     };
 
     // create an empty buffer

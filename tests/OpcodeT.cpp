@@ -14,7 +14,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Normal construction")
     {
         Opcode opcode { "sample", "dummy" };
-        REQUIRE(opcode.opcode == "sample");
+        REQUIRE(opcode.name == "sample");
         REQUIRE(opcode.lettersOnlyHash == hash("sample"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -23,7 +23,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Normal construction with underscore")
     {
         Opcode opcode { "sample_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample_underscore");
+        REQUIRE(opcode.name == "sample_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -32,7 +32,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Normal construction with ampersand")
     {
         Opcode opcode { "sample&_ampersand", "dummy" };
-        REQUIRE(opcode.opcode == "sample&_ampersand");
+        REQUIRE(opcode.name == "sample&_ampersand");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -41,7 +41,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Normal construction with multiple ampersands")
     {
         Opcode opcode { "&sample&_ampersand&", "dummy" };
-        REQUIRE(opcode.opcode == "&sample&_ampersand&");
+        REQUIRE(opcode.name == "&sample&_ampersand&");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -50,7 +50,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode")
     {
         Opcode opcode { "sample123", "dummy" };
-        REQUIRE(opcode.opcode == "sample123");
+        REQUIRE(opcode.name == "sample123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
@@ -60,7 +60,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode with ampersand")
     {
         Opcode opcode { "sample&123", "dummy" };
-        REQUIRE(opcode.opcode == "sample&123");
+        REQUIRE(opcode.name == "sample&123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
@@ -70,7 +70,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode with underscore")
     {
         Opcode opcode { "sample_underscore123", "dummy" };
-        REQUIRE(opcode.opcode == "sample_underscore123");
+        REQUIRE(opcode.name == "sample_underscore123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
@@ -79,7 +79,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode within the opcode")
     {
         Opcode opcode { "sample1_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample1_underscore");
+        REQUIRE(opcode.name == "sample1_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters == std::vector<uint16_t>({ 1 }));
@@ -88,7 +88,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode within the opcode")
     {
         Opcode opcode { "sample123_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample123_underscore");
+        REQUIRE(opcode.name == "sample123_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
@@ -98,7 +98,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode within the opcode twice")
     {
         Opcode opcode { "sample123_double44_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample123_double44_underscore");
+        REQUIRE(opcode.name == "sample123_double44_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 2);
@@ -110,7 +110,7 @@ TEST_CASE("[Opcode] Construction")
     SECTION("Parameterized opcode within the opcode twice, with a back parameter")
     {
         Opcode opcode { "sample123_double44_underscore23", "dummy" };
-        REQUIRE(opcode.opcode == "sample123_double44_underscore23");
+        REQUIRE(opcode.name == "sample123_double44_underscore23");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 3);
@@ -198,8 +198,8 @@ TEST_CASE("[Opcode] Normalization")
 {
     // *_ccN
 
-    REQUIRE(Opcode("foo_cc7", "").cleanUp(kOpcodeScopeRegion).opcode == "foo_oncc7");
-    REQUIRE(Opcode("foo_cc7", "").cleanUp(kOpcodeScopeControl).opcode == "foo_cc7");
+    REQUIRE(Opcode("foo_cc7", "").cleanUp(kOpcodeScopeRegion).name == "foo_oncc7");
+    REQUIRE(Opcode("foo_cc7", "").cleanUp(kOpcodeScopeControl).name == "foo_cc7");
 
     // <region>
 
@@ -275,8 +275,8 @@ TEST_CASE("[Opcode] Normalization")
     for (auto pair : regionSpecific) {
         absl::string_view input = pair.first;
         absl::string_view expected = pair.second;
-        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeRegion).opcode == expected);
-        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeGeneric).opcode == input);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeRegion).name == expected);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeGeneric).name == input);
     }
 
     // <control>
@@ -289,13 +289,13 @@ TEST_CASE("[Opcode] Normalization")
     for (auto pair : controlSpecific) {
         absl::string_view input = pair.first;
         absl::string_view expected = pair.second;
-        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeControl).opcode == expected);
-        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeGeneric).opcode == input);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeControl).name == expected);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeGeneric).name == input);
     }
 
     // case
 
-    REQUIRE(Opcode("SaMpLe", "").cleanUp(kOpcodeScopeRegion).opcode == "sample");
+    REQUIRE(Opcode("SaMpLe", "").cleanUp(kOpcodeScopeRegion).name == "sample");
 }
 
 TEST_CASE("[Opcode] opcode read (uint8_t)")

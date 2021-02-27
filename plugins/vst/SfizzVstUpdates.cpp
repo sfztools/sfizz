@@ -35,3 +35,33 @@ void OSCUpdate::setMessage(const void* data, uint32_t size, bool copy)
     size_ = size;
     allocated_ = copy;
 }
+
+///
+NoteUpdate::~NoteUpdate()
+{
+    clear();
+}
+
+void NoteUpdate::clear()
+{
+    if (allocated_)
+        delete[] events_;
+    events_ = nullptr;
+    count_ = 0;
+    allocated_ = false;
+}
+
+void NoteUpdate::setEvents(const std::pair<uint32_t, float>* events, uint32_t count, bool copy)
+{
+    clear();
+
+    if (copy) {
+        auto *buffer = new std::pair<uint32_t, float>[count];
+        std::memcpy(buffer, events, count);
+        events = buffer;
+    }
+
+    events_ = events;
+    count_ = count;
+    allocated_ = copy;
+}

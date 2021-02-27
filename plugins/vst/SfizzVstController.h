@@ -46,6 +46,7 @@ public:
 
 protected:
     Steinberg::IPtr<OSCUpdate> oscUpdate_;
+    Steinberg::IPtr<NoteUpdate> noteUpdate_;
     Steinberg::IPtr<FilePathUpdate> sfzPathUpdate_;
     Steinberg::IPtr<FilePathUpdate> scalaPathUpdate_;
     Steinberg::IPtr<ProcessorStateUpdate> processorStateUpdate_;

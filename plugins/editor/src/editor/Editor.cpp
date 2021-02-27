@@ -8,8 +8,10 @@
 #include "EditorController.h"
 #include "EditIds.h"
 #include "GUIComponents.h"
+#include "GUIHelpers.h"
 #include "GUIPiano.h"
 #include "NativeHelpers.h"
+#include "BitArray.h"
 #include "plugin/MessageUtils.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
@@ -18,10 +20,12 @@
 #include <ghc/fs_std.hpp>
 #include <array>
 #include <queue>
+#include <unordered_map>
 #include <algorithm>
 #include <functional>
 #include <type_traits>
 #include <system_error>
+#include <fstream>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -38,10 +42,19 @@ const int Editor::viewHeight { 475 };
 struct Editor::Impl : EditorController::Receiver, IControlListener {
     EditorController* ctrl_ = nullptr;
     CFrame* frame_ = nullptr;
+    SharedPointer<SFrameDisabler> frameDisabler_;
     SharedPointer<CViewContainer> mainView_;
 
     std::string currentSfzFile_;
     std::string currentScalaFile_;
+    std::string userFilesDir_;
+    std::string fallbackFilesDir_;
+
+    int currentKeyswitch_ = -1;
+    std::unordered_map<unsigned, std::string> keyswitchNames_;
+    std::string keyswitchLabelPrefix_;
+
+    SharedPointer<CVSTGUITimer> memQueryTimer_;
 
     enum {
         kPanelGeneral,
@@ -56,6 +69,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     enum {
         kTagLoadSfzFile,
         kTagEditSfzFile,
+        kTagCreateNewSfzFile,
+        kTagOpenSfzFolder,
         kTagPreviousSfzFile,
         kTagNextSfzFile,
         kTagFileOperations,
@@ -64,6 +79,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetOversampling,
         kTagSetPreloadSize,
         kTagLoadScalaFile,
+        kTagResetScalaFile,
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
@@ -75,6 +91,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     STextButton* sfzFileLabel_ = nullptr;
     CTextLabel* scalaFileLabel_ = nullptr;
     STextButton* scalaFileButton_ = nullptr;
+    STextButton* scalaResetButton_ = nullptr;
     CControl *volumeSlider_ = nullptr;
     CTextLabel* volumeLabel_ = nullptr;
     SValueMenu *numVoicesSlider_ = nullptr;
@@ -90,6 +107,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
+    CTextLabel* keyswitchLabel_ = nullptr;
 
     STitleContainer* userFilesGroup_ = nullptr;
     STextButton* userFilesDirButton_ = nullptr;
@@ -132,11 +150,13 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     }
 
     void chooseSfzFile();
+    void createNewSfzFile();
     void changeSfzFile(const std::string& filePath);
     void changeToNextSfzFile(long offset);
     void chooseScalaFile();
     void changeScalaFile(const std::string& filePath);
     void chooseUserFilesDir();
+    std::string getFileChooserInitialDir(const std::string& previousFilePath) const;
 
     static bool scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames);
 
@@ -156,10 +176,18 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateTuningFrequencyLabel(float tuningFrequency);
     void updateStretchedTuningLabel(float stretchedTuning);
 
+    absl::string_view getCurrentKeyswitchName() const;
+    void updateKeyswitchNameLabel();
+
+    void updateKeyUsed(unsigned key, bool used);
+    void updateKeyswitchUsed(unsigned key, bool used);
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
     void updateCCDefaultValue(unsigned cc, float value);
     void updateCCLabel(unsigned cc, const char* label);
+    void updateSWLastCurrent(int sw);
+    void updateSWLastLabel(unsigned sw, const char* label);
+    void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
     void performCCValueChange(unsigned cc, float value);
@@ -212,7 +240,15 @@ void Editor::open(CFrame& frame)
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
 
-    // request the whole CC information
+    impl.frameDisabler_ = makeOwned<SFrameDisabler>(&frame);
+
+    impl.memQueryTimer_ = makeOwned<CVSTGUITimer>([this](CVSTGUITimer*) {
+        impl_->sendQueuedOSC("/mem/buffers", "", nullptr);
+    }, 1000, true);
+
+    // request the whole Key and CC information
+    impl.sendQueuedOSC("/key/slots", "", nullptr);
+    impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
     impl.sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
@@ -221,6 +257,10 @@ void Editor::close()
     Impl& impl = *impl_;
 
     impl.clearQueuedOSC();
+
+    impl.memQueryTimer_ = nullptr;
+
+    impl.frameDisabler_ = nullptr;
 
     if (impl.frame_) {
         impl.frame_->removeView(impl.mainView_.get(), false);
@@ -237,7 +277,9 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             currentSfzFile_ = value;
             updateSfzFileLabel(value);
 
-            // request the whole CC information
+            // request the whole Key and CC information
+            sendQueuedOSC("/key/slots", "", nullptr);
+            sendQueuedOSC("/sw/last/slots", "", nullptr);
             sendQueuedOSC("/cc/slots", "", nullptr);
         }
         break;
@@ -319,7 +361,13 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         }
     case EditId::UserFilesDir:
         {
-            updateUserFilesDirLabel(v.to_string());
+            userFilesDir_ = v.to_string();
+            updateUserFilesDirLabel(userFilesDir_);
+            break;
+        }
+    case EditId::FallbackFilesDir:
+        {
+            fallbackFilesDir_ = v.to_string();
             break;
         }
     case EditId::UINumCurves:
@@ -370,6 +418,14 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             setActivePanel(value);
         }
         break;
+    default:
+        if (editIdIsKey(id)) {
+            const int key = keyForEditId(id);
+            const float value = v.to_float();
+            if (SPiano* piano = piano_)
+                piano->setKeyValue(key, value);
+        }
+        break;
     }
 }
 
@@ -377,12 +433,33 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
 {
     unsigned indices[8];
 
-    if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
-        const uint8_t* bitChunks = args[0].b->data;
-        uint32_t byteSize = args[0].b->size;
-
-        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
-            bool used = bitChunks[cc / 8] & (1u << (cc % 8));
+    if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b")) {
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned key = 0; key < 128; ++key) {
+            bool used = key < numBits && bits.test(key);
+            updateKeyUsed(key, used);
+        }
+    }
+    else if (Messages::matchOSC("/sw/last/slots", path, indices) && !strcmp(sig, "b")) {
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned key = 0; key < 128; ++key) {
+            bool used = key < numBits && bits.test(key);
+            updateKeyswitchUsed(key, used);
+            if (used) {
+                char pathBuf[256];
+                sprintf(pathBuf, "/sw/last/%u/label", key);
+                sendQueuedOSC(pathBuf, "", nullptr);
+            }
+        }
+        sendQueuedOSC("/sw/last/current", "", nullptr);
+    }
+    else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned cc = 0; cc < numBits; ++cc) {
+            bool used = bits.test(cc);
             updateCCUsed(cc, used);
             if (used) {
                 char pathBuf[256];
@@ -396,10 +473,10 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
         }
     }
     else if (Messages::matchOSC("/cc/changed", path, indices) && !strcmp(sig, "b")) {
-        const uint8_t* bitChunks = args[0].b->data;
-        uint32_t byteSize = args[0].b->size;
-        for (unsigned cc = 0; cc < 8  * byteSize; ++cc) {
-            bool changed = bitChunks[cc / 8] & (1u << (cc % 8));
+        size_t numBits = 8 * args[0].b->size;
+        ConstBitSpan bits { args[0].b->data, numBits };
+        for (unsigned cc = 0; cc < numBits; ++cc) {
+            bool changed = bits.test(cc);
             if (changed) {
                 char pathBuf[256];
                 sprintf(pathBuf, "/cc%u/value", cc);
@@ -415,6 +492,15 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     }
     else if (Messages::matchOSC("/cc&/label", path, indices) && !strcmp(sig, "s")) {
         updateCCLabel(indices[0], args[0].s);
+    }
+    else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
+        updateSWLastCurrent(args[0].i);
+    }
+    else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
+        updateSWLastLabel(indices[0], args[0].s);
+    }
+    else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
+        updateMemoryUsed(args[0].h);
     }
     else {
         //fprintf(stderr, "Receive unhandled OSC: %s\n", path);
@@ -515,34 +601,6 @@ void Editor::Impl::createFrameContents()
 
         Theme* theme = &defaultTheme;
         auto enterTheme = [&theme](Theme& t) { theme = &t; };
-
-        typedef CViewContainer LogicalGroup;
-        typedef SBoxContainer RoundedGroup;
-        typedef STitleContainer TitleGroup;
-        typedef CKickButton SfizzMainButton;
-        typedef CTextLabel Label;
-        typedef CViewContainer HLine;
-        typedef CAnimKnob Knob48;
-        typedef SStyledKnob StyledKnob;
-        typedef CTextLabel ValueLabel;
-        typedef CViewContainer VMeter;
-        typedef SValueMenu ValueMenu;
-        typedef CViewContainer Background;
-#if 0
-        typedef CTextButton Button;
-#endif
-        typedef STextButton ClickableLabel;
-        typedef STextButton ValueButton;
-        typedef STextButton LoadFileButton;
-        typedef STextButton CCButton;
-        typedef STextButton HomeButton;
-        typedef STextButton SettingsButton;
-        typedef STextButton EditFileButton;
-        typedef STextButton PreviousFileButton;
-        typedef STextButton NextFileButton;
-        typedef SPiano Piano;
-        typedef SActionMenu ChevronDropDown;
-        typedef SControlsPanel ControlsPanel;
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
@@ -683,17 +741,24 @@ void Editor::Impl::createFrameContents()
         auto createSettingsButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
         };
+#if 0
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue148", bounds, tag, fontsize);
         };
         auto createLoadFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue1a3", bounds, tag, fontsize);
         };
+#endif
         auto createPreviousFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue0d9", bounds, tag, fontsize);
         };
         auto createNextFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue0da", bounds, tag, fontsize);
+        };
+        auto createResetSomethingButton = [&createValueButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createValueButton(bounds, tag, u8"\ue13a", kCenterText, fontsize);
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            return btn;
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
@@ -704,6 +769,19 @@ void Editor::Impl::createFrameContents()
         auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFontColor(theme->icon);
+            menu->setHoverColor(theme->iconHighlight);
+            menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            return menu;
+        };
+        auto createChevronValueDropDown = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            SValueMenu* menu = new SValueMenu(bounds, this, tag);
+            menu->setValueToStringFunction2([](float, std::string& result, CParamDisplay*) -> bool {
+                result = u8"\ue0d7";
+                return true;
+            });
             menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
@@ -725,8 +803,37 @@ void Editor::Impl::createFrameContents()
 
         mainView->setBackgroundColor(frameBackground);
 
+#if LINUX
+        if (!isZenityAvailable()) {
+            CRect bounds = mainView->getViewSize();
+
+            CViewContainer* box = new CViewContainer(bounds);
+            mainView->addView(box);
+            box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0xc0));
+
+            CRect textSize = CRect(0, 0, 400, 80).centerInside(bounds);
+            CMultiLineTextLabel* textLabel = new CMultiLineTextLabel(textSize);
+            box->addView(textLabel);
+            textLabel->setTextInset(CPoint(10.0, 10.0));
+            textLabel->setStyle(CParamDisplay::kRoundRectStyle);
+            textLabel->setRoundRectRadius(10.0);
+            textLabel->setFrameColor(CColor(0xb2, 0xb2, 0xb2));
+            textLabel->setBackColor(CColor(0x2e, 0x34, 0x36));
+            auto font = makeOwned<CFontDesc>("Roboto", 16.0);
+            textLabel->setFont(font);
+            textLabel->setLineLayout(CMultiLineTextLabel::LineLayout::wrap);
+            textLabel->setText(
+                "The required program \"zenity\" is missing.\n"
+                "Install this software package first, and restart sfizz.");
+        }
+#endif
+
         mainView_ = owned(mainView);
     }
+
+    ///
+    if (keyswitchLabel_)
+        keyswitchLabelPrefix_ = std::string(keyswitchLabel_->getText()) + ' ';
 
     ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
@@ -760,12 +867,6 @@ void Editor::Impl::createFrameContents()
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
-    numVoicesSlider_->setValueToStringFunction2(
-        [](float value, std::string& result, CParamDisplay*) -> bool
-        {
-            result = std::to_string(static_cast<int32_t>(value));
-            return true;
-        });
 
     for (int log2value = 0; log2value <= 3; ++log2value) {
         int value = 1 << log2value;
@@ -839,6 +940,8 @@ void Editor::Impl::createFrameContents()
     if (SActionMenu* menu = fileOperationsMenu_) {
         menu->addEntry("Load file", kTagLoadSfzFile);
         menu->addEntry("Edit file", kTagEditSfzFile);
+        menu->addEntry("Create new file", kTagCreateNewSfzFile);
+        menu->addEntry("Open SFZ folder", kTagOpenSfzFolder);
     }
 
     if (SPiano* piano = piano_) {
@@ -891,15 +994,61 @@ void Editor::Impl::chooseSfzFile()
 
     fs->setTitle("Load SFZ file");
     fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
-    if (!currentSfzFile_.empty()) {
-        std::string initialDir = fs::path(currentSfzFile_).parent_path().u8string() + '/';
-        fs->setInitialDirectory(initialDir.c_str());
-    }
 
-    if (fs->runModal()) {
+    std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
+    if (!initialDir.empty())
+        fs->setInitialDirectory(initialDir.c_str());
+
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr file = fs->getSelectedFile(0);
         if (file)
             changeSfzFile(file);
+    }
+}
+
+///
+static const char defaultSfzText[] =
+    "<region>sample=*sine" "\n"
+    "ampeg_attack=0.02 ampeg_release=0.1" "\n";
+
+static void createDefaultSfzFileIfNotExisting(const fs::path& path)
+{
+    if (!fs::exists(path))
+        fs::ofstream { path } << defaultSfzText;
+}
+
+///
+void Editor::Impl::createNewSfzFile()
+{
+    SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_, CNewFileSelector::kSelectSaveFile));
+
+    fs->setTitle("Create SFZ file");
+    fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+
+    std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
+    if (!initialDir.empty())
+        fs->setInitialDirectory(initialDir.c_str());
+
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
+        UTF8StringPtr file = fs->getSelectedFile(0);
+        std::string fileStr;
+        if (file && !absl::EndsWithIgnoreCase(file, ".sfz")) {
+            fileStr = std::string(file) + ".sfz";
+            file = fileStr.c_str();
+        }
+        if (file) {
+            createDefaultSfzFileIfNotExisting(fs::u8path(file));
+            changeSfzFile(file);
+            openFileInExternalEditor(file);
+        }
     }
 }
 
@@ -909,7 +1058,9 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     currentSfzFile_ = filePath;
     updateSfzFileLabel(filePath);
 
-    // request the whole CC information
+    // request the whole Key and CC information
+    sendQueuedOSC("/key/slots", "", nullptr);
+    sendQueuedOSC("/sw/last/slots", "", nullptr);
     sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
@@ -969,12 +1120,16 @@ void Editor::Impl::chooseScalaFile()
 
     fs->setTitle("Load Scala file");
     fs->setDefaultExtension(CFileExtension("SCL", "scl"));
-    if (!currentScalaFile_.empty()) {
-        std::string initialDir = fs::path(currentScalaFile_).parent_path().u8string() + '/';
-        fs->setInitialDirectory(initialDir.c_str());
-    }
 
-    if (fs->runModal()) {
+    std::string initialDir = getFileChooserInitialDir(currentScalaFile_);
+    if (!initialDir.empty())
+        fs->setInitialDirectory(initialDir.c_str());
+
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr file = fs->getSelectedFile(0);
         if (file)
             changeScalaFile(file);
@@ -995,13 +1150,36 @@ void Editor::Impl::chooseUserFilesDir()
 
     fs->setTitle("Set user files directory");
 
-    if (fs->runModal()) {
+    frameDisabler_->disable();
+    bool runOk = fs->runModal();
+    frameDisabler_->enable();
+
+    if (runOk) {
         UTF8StringPtr dir = fs->getSelectedFile(0);
         if (dir) {
-            updateUserFilesDirLabel(dir);
-            ctrl_->uiSendValue(EditId::UserFilesDir, std::string(dir));
+            userFilesDir_ = std::string(dir);
+            updateUserFilesDirLabel(userFilesDir_);
+            ctrl_->uiSendValue(EditId::UserFilesDir, userFilesDir_);
         }
     }
+}
+
+std::string Editor::Impl::getFileChooserInitialDir(const std::string& previousFilePath) const
+{
+    fs::path initialPath;
+
+    if (!previousFilePath.empty())
+        initialPath = fs::u8path(previousFilePath).parent_path();
+    else if (!userFilesDir_.empty())
+        initialPath = fs::u8path(userFilesDir_);
+    else if (!fallbackFilesDir_.empty())
+        initialPath = fs::u8path(fallbackFilesDir_);
+
+    std::string initialDir = initialPath.u8string();
+    if (!initialDir.empty())
+        initialDir.push_back('/');
+
+    return initialDir;
 }
 
 bool Editor::Impl::scanDirectoryFiles(const fs::path& dirPath, std::function<bool(const fs::path&)> filter, std::vector<fs::path>& fileNames)
@@ -1196,6 +1374,39 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     label->setText(text);
 }
 
+absl::string_view Editor::Impl::getCurrentKeyswitchName() const
+{
+    int sw = currentKeyswitch_;
+    if (sw == -1)
+        return {};
+
+    auto it = keyswitchNames_.find(static_cast<unsigned>(sw));
+    if (it == keyswitchNames_.end())
+        return {};
+
+    return it->second;
+}
+
+void Editor::Impl::updateKeyswitchNameLabel()
+{
+    if (CTextLabel* label = keyswitchLabel_) {
+        std::string name { getCurrentKeyswitchName() };
+        label->setText((keyswitchLabelPrefix_ + name).c_str());
+    }
+}
+
+void Editor::Impl::updateKeyUsed(unsigned key, bool used)
+{
+    if (SPiano* piano = piano_)
+        piano->setKeyUsed(key, used);
+}
+
+void Editor::Impl::updateKeyswitchUsed(unsigned key, bool used)
+{
+    if (SPiano* piano = piano_)
+        piano->setKeyswitchUsed(key, used);
+}
+
 void Editor::Impl::updateCCUsed(unsigned cc, bool used)
 {
     if (SControlsPanel* panel = controlsPanel_)
@@ -1220,6 +1431,42 @@ void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
         panel->setControlLabelText(cc, label);
 }
 
+void Editor::Impl::updateSWLastCurrent(int sw)
+{
+    if (currentKeyswitch_ == sw)
+        return;
+    currentKeyswitch_ = sw;
+    updateKeyswitchNameLabel();
+}
+
+void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
+{
+    keyswitchNames_[sw].assign(label);
+    if ((unsigned)currentKeyswitch_ == sw)
+        updateKeyswitchNameLabel();
+}
+
+void Editor::Impl::updateMemoryUsed(uint64_t mem)
+{
+    if (CTextLabel* label = memoryLabel_) {
+        double value = mem / 1e3;
+        const char* unit = "kB";
+        int precision = 0;
+        if (value >= 1e3) {
+            value /= 1e3;
+            unit = "MB";
+        }
+        if (value >= 1e3) {
+            value /= 1e3;
+            unit = "GB";
+            precision = 1;
+        }
+        char textbuf[128];
+        snprintf(textbuf, sizeof(textbuf), "%.*f %s", precision, value, unit);
+        label->setText(textbuf);
+    }
+}
+
 void Editor::Impl::performCCValueChange(unsigned cc, float value)
 {
     // TODO(jpc) CC as parameters and automation
@@ -1234,11 +1481,13 @@ void Editor::Impl::performCCValueChange(unsigned cc, float value)
 void Editor::Impl::performCCBeginEdit(unsigned cc)
 {
     // TODO(jpc) CC as parameters and automation
+    (void)cc;
 }
 
 void Editor::Impl::performCCEndEdit(unsigned cc)
 {
     // TODO(jpc) CC as parameters and automation
+    (void)cc;
 }
 
 void Editor::Impl::setActivePanel(unsigned panelId)
@@ -1292,6 +1541,23 @@ void Editor::Impl::valueChanged(CControl* ctl)
             openFileInExternalEditor(currentSfzFile_.c_str());
         break;
 
+    case kTagCreateNewSfzFile:
+        if (value != 1)
+            break;
+
+        Call::later([this]() { createNewSfzFile(); });
+        break;
+
+    case kTagOpenSfzFolder:
+        if (value != 1)
+            break;
+
+        if (!userFilesDir_.empty())
+            openDirectoryInExplorer(userFilesDir_.c_str());
+        else if (!fallbackFilesDir_.empty())
+            openDirectoryInExplorer(fallbackFilesDir_.c_str());
+        break;
+
     case kTagPreviousSfzFile:
         if (value != 1)
             break;
@@ -1311,6 +1577,13 @@ void Editor::Impl::valueChanged(CControl* ctl)
             break;
 
         Call::later([this]() { chooseScalaFile(); });
+        break;
+
+    case kTagResetScalaFile:
+        if (value != 1)
+            break;
+
+        changeScalaFile(std::string());
         break;
 
     case kTagSetVolume:

@@ -19,17 +19,15 @@
 */
 
 #include "Disto.h"
+#include "gen/disto_stage.hxx"
 #include "Opcode.h"
 #include "Config.h"
 #include "MathHelpers.h"
-#include <hiir/Upsampler2xFpu.h>
-#include <hiir/Downsampler2xFpu.h>
+#include "OversamplerHelpers.h"
 #include <absl/types/span.h>
 #include <cmath>
 
 static constexpr int _oversampling = 8;
-#define FAUST_UIMACROS 1
-#include "gen/disto_stage.cxx"
 
 namespace sfz {
 namespace fx {
@@ -47,15 +45,9 @@ struct Disto::Impl {
     float _toneLpfMem[EffectChannels] = {};
     faustDisto _stages[EffectChannels][Default::maxDistoStages];
 
-    hiir::Upsampler2xFpu<12> _up2x[EffectChannels];
-    hiir::Upsampler2xFpu<4> _up4x[EffectChannels];
-    hiir::Upsampler2xFpu<3> _up8x[EffectChannels];
-
-    hiir::Downsampler2xFpu<12> _down2x[EffectChannels];
-    hiir::Downsampler2xFpu<4> _down4x[EffectChannels];
-    hiir::Downsampler2xFpu<3> _down8x[EffectChannels];
-
-    std::unique_ptr<float[]> _temp8x[2];
+    sfz::Upsampler _upsampler[EffectChannels];
+    sfz::Downsampler _downsampler[EffectChannels];
+    std::unique_ptr<float[]> _temp[2];
 
     // use the same formula as reverb
     float toneCutoff() const noexcept
@@ -63,12 +55,6 @@ struct Disto::Impl {
         float mk = 21.0f + _tone * 1.08f;
         return 440.0f * std::exp2((mk - 69.0f) * (1.0f / 12.0f));
     }
-
-    #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
-        float get_##ident(size_t c, size_t s) const noexcept { return _stages[c][s].var; } \
-        void set_##ident(size_t c, size_t s, float value) noexcept { _stages[c][s].var = value; }
-    FAUST_LIST_ACTIVES(DEFINE_SET_GET);
-    #undef DEFINE_SET_GET
 };
 
 Disto::Disto()
@@ -78,7 +64,7 @@ Disto::Disto()
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         for (faustDisto& stage : impl._stages[c])
-            stage.init(config::defaultSampleRate);
+            stage.init(_oversampling * config::defaultSampleRate);
     }
 }
 
@@ -93,31 +79,20 @@ void Disto::setSampleRate(double sampleRate)
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         for (faustDisto& stage : impl._stages[c]) {
-            stage.classInit(sampleRate);
-            stage.instanceConstants(sampleRate);
+            stage.classInit(_oversampling * sampleRate);
+            stage.instanceConstants(_oversampling * sampleRate);
         }
     }
 
-    static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-    static constexpr double coefs4x[4] = { 0.042448989488488006, 0.17072114107630679, 0.39329183835224008, 0.74569514831986694 };
-    static constexpr double coefs8x[3] = { 0.055748680811302048, 0.24305119574153092, 0.6466991311926823 };
-
-    for (unsigned c = 0; c < EffectChannels; ++c) {
-        impl._down2x[c].set_coefs(coefs2x);
-        impl._down4x[c].set_coefs(coefs4x);
-        impl._down8x[c].set_coefs(coefs8x);
-        impl._up2x[c].set_coefs(coefs2x);
-        impl._up4x[c].set_coefs(coefs4x);
-        impl._up8x[c].set_coefs(coefs8x);
-    }
+    clear();
 }
 
 void Disto::setSamplesPerBlock(int samplesPerBlock)
 {
     Impl& impl = *_impl;
 
-    for (std::unique_ptr<float[]>& temp : impl._temp8x)
-        temp.reset(new float[8 * samplesPerBlock]);
+    for (std::unique_ptr<float[]>& temp : impl._temp)
+        temp.reset(new float[_oversampling * samplesPerBlock]);
 }
 
 void Disto::clear()
@@ -130,12 +105,8 @@ void Disto::clear()
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         impl._toneLpfMem[c] = 0.0f;
-        impl._up2x[c].clear_buffers();
-        impl._up4x[c].clear_buffers();
-        impl._up8x[c].clear_buffers();
-        impl._down2x[c].clear_buffers();
-        impl._down4x[c].clear_buffers();
-        impl._down8x[c].clear_buffers();
+        impl._downsampler[c].clear();
+        impl._upsampler[c].clear();
     }
 }
 
@@ -162,31 +133,27 @@ void Disto::process(const float* const inputs[], float* const outputs[], unsigne
         }
         impl._toneLpfMem[c] = lpfMem;
 
-        // upsample to 8x
+        // upsample
         absl::Span<float> temp[2] = {
-            absl::Span<float>(impl._temp8x[0].get(), 8 * nframes),
-            absl::Span<float>(impl._temp8x[1].get(), 8 * nframes),
+            absl::Span<float>(impl._temp[0].get(), _oversampling * nframes),
+            absl::Span<float>(impl._temp[1].get(), _oversampling * nframes),
         };
-        impl._up2x[c].process_block(temp[0].data(), lpfOut.data(), nframes);
-        impl._up4x[c].process_block(temp[1].data(), temp[0].data(), 2 * nframes);
-        impl._up8x[c].process_block(temp[0].data(), temp[1].data(), 4 * nframes);
+        impl._upsampler[c].process(_oversampling, lpfOut.data(), temp[0].data(), nframes, temp[1].data(), static_cast<int>(temp[1].size()));
         absl::Span<float> upsamplerOut = temp[0];
 
         // run disto stages
         absl::Span<float> stageInOut = upsamplerOut;
         for (unsigned s = 0, numStages = impl._numStages; s < numStages; ++s) {
             // set depth parameter (TODO modulation)
-            impl.set_Depth(c, s, depth);
+            impl._stages[c][s].setDepth(depth);
             //
             float *faustIn[] = { stageInOut.data() };
             float *faustOut[] = { stageInOut.data() };
-            impl._stages[c][s].compute(8 * nframes, faustIn, faustOut);
+            impl._stages[c][s].compute(_oversampling * nframes, faustIn, faustOut);
         }
 
-        // downsample to 1x
-        impl._down8x[c].process_block(temp[1].data(), stageInOut.data(), 4 * nframes);
-        impl._down4x[c].process_block(temp[0].data(), temp[1].data(), 2 * nframes);
-        impl._down2x[c].process_block(outputs[c], temp[0].data(), nframes);
+        // downsample
+        impl._downsampler[c].process(_oversampling, stageInOut.data(), outputs[c], nframes, temp[1].data(), static_cast<int>(temp[1].size()));
 
         // dry/wet mix
         absl::Span<float> mixOut(outputs[c], nframes);

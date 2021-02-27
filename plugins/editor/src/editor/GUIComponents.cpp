@@ -164,6 +164,12 @@ SValueMenu::SValueMenu(const CRect& bounds, IControlListener* listener, int32_t 
     setWheelInc(0.0f);
 }
 
+void SValueMenu::setHoverColor(const CColor& color)
+{
+    hoverColor_ = color;
+    invalid();
+}
+
 CMenuItem* SValueMenu::addEntry(CMenuItem* item, float value, int32_t index)
 {
     if (index < 0 || index > getNbEntries()) {
@@ -195,6 +201,30 @@ CMenuItem* SValueMenu::addSeparator(int32_t index)
 int32_t SValueMenu::getNbEntries() const
 {
     return static_cast<int32_t>(menuItems_.size());
+}
+
+void SValueMenu::draw(CDrawContext* dc)
+{
+    CColor backupColor = fontColor;
+    if (hovered_)
+        fontColor = hoverColor_;
+    CParamDisplay::draw(dc);
+    if (hovered_)
+        fontColor = backupColor;
+}
+
+CMouseEventResult SValueMenu::onMouseEntered(CPoint& where, const CButtonState& buttons)
+{
+    hovered_ = true;
+    invalid();
+    return CParamDisplay::onMouseEntered(where, buttons);
+}
+
+CMouseEventResult SValueMenu::onMouseExited(CPoint& where, const CButtonState& buttons)
+{
+    hovered_ = false;
+    invalid();
+    return CParamDisplay::onMouseExited(where, buttons);
 }
 
 CMouseEventResult SValueMenu::onMouseDown(CPoint& where, const CButtonState& buttons)

@@ -1,6 +1,16 @@
 # Find system threads
 find_package(Threads REQUIRED)
 
+# Find OpenMP
+find_package(OpenMP)
+if(OPENMP_FOUND)
+    add_library(sfizz_openmp INTERFACE)
+    add_library(sfizz::openmp ALIAS sfizz_openmp)
+    target_compile_options(sfizz_openmp INTERFACE
+        $<$<COMPILE_LANGUAGE:C>:${OpenMP_C_FLAGS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${OpenMP_CXX_FLAGS}>)
+endif()
+
 # Find macOS system libraries
 if(APPLE)
     find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
@@ -23,6 +33,13 @@ if(APPLE)
     # Apparently this is not needed in Travis CI using addons
     # but it is in Appveyor instead
     list(APPEND CMAKE_PREFIX_PATH /usr/local)
+endif()
+
+# Add Abseil
+if(SFIZZ_USE_SYSTEM_ABSEIL)
+    find_package(absl REQUIRED)
+else()
+    add_subdirectory("external/abseil-cpp" EXCLUDE_FROM_ALL)
 endif()
 
 # The jsl utility library for C++
@@ -67,6 +84,26 @@ else()
 endif()
 add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 
+# The simde library
+add_library(sfizz_simde INTERFACE)
+add_library(sfizz::simde ALIAS sfizz_simde)
+if(SFIZZ_USE_SYSTEM_SIMDE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SIMDE "simde" REQUIRED)
+    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIRS}")
+    if(NOT SIMDE_VERSION OR SIMDE_VERSION VERSION_LESS_EQUAL "0.7.2")
+        message(WARNING "The version of SIMDe on this system has known issues. \
+It is recommended to either update if a newer version is available, or use the \
+version bundled with this package. Refer to following issues: \
+simd-everywhere/simde#704, simd-everywhere/simde#706")
+    endif()
+else()
+    target_include_directories(sfizz_simde INTERFACE "external/simde")
+endif()
+if(TARGET sfizz::openmp)
+    target_link_libraries(sfizz_simde INTERFACE sfizz::openmp)
+endif()
+
 # The pugixml library
 add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
 add_library(sfizz::pugixml ALIAS sfizz_pugixml)
@@ -86,6 +123,12 @@ target_include_directories(sfizz_tunings PUBLIC "src/external/tunings/include")
 add_library(sfizz_hiir INTERFACE)
 add_library(sfizz::hiir ALIAS sfizz_hiir)
 target_include_directories(sfizz_hiir INTERFACE "src/external/hiir")
+
+# The hiir filter designer
+add_library(sfizz_hiir_polyphase_iir2designer STATIC
+    "src/external/hiir/hiir/PolyphaseIir2Designer.cpp")
+add_library(sfizz::hiir_polyphase_iir2designer ALIAS sfizz_hiir_polyphase_iir2designer)
+target_link_libraries(sfizz_hiir_polyphase_iir2designer PUBLIC sfizz::hiir)
 
 # The kissfft library
 add_library(sfizz_kissfft STATIC

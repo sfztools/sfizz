@@ -5,12 +5,12 @@
 #include "SisterVoiceRing.h"
 #include "TriggerEvent.h"
 #include "VoiceManager.h"
+#include "BitArray.h"
 #include "modulations/sources/ADSREnvelope.h"
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
 #include "modulations/sources/ChannelAftertouch.h"
 #include "modulations/sources/LFO.h"
-#include "utility/BitArray.h"
 
 namespace sfz {
 
@@ -184,6 +184,9 @@ struct Synth::Impl final: public Parser::Listener {
     const std::string* getCCLabel(int ccNumber);
     void setCCLabel(int ccNumber, std::string name);
     void clearCCLabels();
+    const std::string* getKeyswitchLabel(int swNumber);
+    void setKeyswitchLabel(int swNumber, std::string name);
+    void clearKeyswitchLabels();
 
     /**
      * @brief Perform a CC event
@@ -216,10 +219,14 @@ struct Synth::Impl final: public Parser::Listener {
     std::vector<CCNamePair> ccLabels_;
     std::map<int, size_t> ccLabelsMap_;
     std::vector<NoteNamePair> keyLabels_;
+    BitArray<128> keySlots_;
+    BitArray<128> swLastSlots_;
     std::vector<NoteNamePair> keyswitchLabels_;
+    std::map<int, size_t> keyswitchLabelsMap_;
 
     // Set as sw_default if present in the file
     absl::optional<uint8_t> currentSwitch_;
+    bool currentSwitchChanged_ = true;
     std::vector<std::string> unknownOpcodes_;
     using RegionViewVector = std::vector<Region*>;
     using VoiceViewVector = std::vector<Voice*>;

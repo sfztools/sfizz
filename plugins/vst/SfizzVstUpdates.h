@@ -40,6 +40,33 @@ private:
 };
 
 /**
+ * @brief Update which notifies one or more note on/off events
+ * Is is supposed to be used synchronously.
+ * (ie. FObject::changed or UpdateHandler::triggerUpdates)
+ */
+class NoteUpdate : public Steinberg::FObject {
+public:
+    NoteUpdate() = default;
+    ~NoteUpdate();
+    void clear();
+    void setEvents(const std::pair<uint32_t, float>* events, uint32_t count, bool copy);
+
+    const std::pair<uint32_t, float>* events() const noexcept { return events_; }
+    const uint32_t count() const noexcept { return count_; }
+
+    OBJ_METHODS(NoteUpdate, FObject)
+
+private:
+    const std::pair<uint32_t, float>* events_ = nullptr;
+    uint32_t count_ = 0;
+    bool allocated_ = false;
+
+private:
+    NoteUpdate(const NoteUpdate&) = delete;
+    NoteUpdate& operator=(const NoteUpdate&) = delete;
+};
+
+/**
  * @brief Update which notifies a change of file path pseudo-parameter
  * The message ID is used to indicate which path it is.
  */

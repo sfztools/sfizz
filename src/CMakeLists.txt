@@ -217,8 +217,11 @@ target_sources(sfizz_parser PRIVATE
     ${SFIZZ_PARSER_HEADERS} ${SFIZZ_PARSER_SOURCES} ${SFIZZ_PARSER_OTHER})
 target_include_directories(sfizz_parser PUBLIC sfizz)
 target_link_libraries(sfizz_parser
-    PUBLIC sfizz::filesystem absl::strings
+    PUBLIC sfizz::filesystem sfizz::simde absl::strings
     PRIVATE absl::flat_hash_map)
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_parser PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
 
 # OSC messaging library
 set(SFIZZ_MESSAGING_HEADERS
@@ -235,6 +238,9 @@ target_sources(sfizz_messaging PRIVATE
     ${SFIZZ_MESSAGING_HEADERS} ${SFIZZ_MESSAGING_SOURCES})
 target_include_directories(sfizz_messaging PUBLIC ".")
 target_link_libraries(sfizz_messaging PUBLIC absl::strings)
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_messaging PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
 
 # Sfizz spinlock mutex
 add_library(sfizz_spin_mutex STATIC
@@ -246,14 +252,19 @@ target_include_directories(sfizz_spin_mutex PUBLIC sfizz/utility/spin_mutex)
 target_link_libraries(sfizz_spin_mutex PRIVATE sfizz::atomic_queue)
 add_library(sfizz::spin_mutex ALIAS sfizz_spin_mutex)
 
+# Sfizz bit array
+add_library(sfizz_bit_array INTERFACE)
+target_include_directories(sfizz_bit_array INTERFACE sfizz/utility/bit_array)
+add_library(sfizz::bit_array ALIAS sfizz_bit_array)
+
 # Sfizz internals (use this for testing)
 add_library(sfizz_internal STATIC)
 add_library(sfizz::internal ALIAS sfizz_internal)
 target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES})
 target_include_directories(sfizz_internal PUBLIC "." "sfizz")
 target_link_libraries(sfizz_internal
-    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex
-    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::hiir sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::jsl sfizz::atomic)
+    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex sfizz::bit_array sfizz::simde sfizz::hiir
+    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::jsl sfizz::atomic)
 if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
     target_link_libraries(sfizz_internal PUBLIC st_audiofile)
@@ -298,6 +309,74 @@ endif()
 
 # Generic library alias
 add_library(sfizz::sfizz ALIAS sfizz_static)
+
+# Preserve generated files (Faust)
+set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)
+
+# Faust filters
+foreach(filter_type
+        Lpf1p Lpf2p Lpf4p Lpf6p Hpf1p Hpf2p Hpf4p Hpf6p
+        Bpf1p Bpf2p Bpf4p Bpf6p Apf1p Brf1p Brf2p
+        Pink Lpf2pSv Hpf2pSv Bpf2pSv Brf2pSv
+        Lsh Hsh Peq EqPeak EqLshelf EqHshelf)
+    add_faust_command(
+        "sfizz/dsp/filters/sfz_filters.dsp"
+        "sfizz/gen/filters/sfz${filter_type}.hxx"
+        DOUBLE IN_PLACE
+        PROCESS_NAME "sfz${filter_type}"
+        CLASS_NAME "faust${filter_type}"
+        SUPERCLASS_NAME "sfzFilterDsp"
+        IMPORT_DIRS "sfizz/dsp")
+    add_faust_command(
+        "sfizz/dsp/filters/sfz_filters.dsp"
+        "sfizz/gen/filters/sfz2ch${filter_type}.hxx"
+        DOUBLE IN_PLACE
+        PROCESS_NAME "sfz2ch${filter_type}"
+        CLASS_NAME "faust2ch${filter_type}"
+        SUPERCLASS_NAME "sfzFilterDsp"
+        IMPORT_DIRS "sfizz/dsp")
+    target_sources(sfizz_internal PRIVATE
+        "sfizz/gen/filters/sfz${filter_type}.hxx"
+        "sfizz/gen/filters/sfz2ch${filter_type}.hxx")
+endforeach()
+
+# Faust effects
+add_faust_command(
+    "sfizz/effects/dsp/compressor.dsp"
+    "sfizz/effects/gen/compressor.hxx"
+    IN_PLACE
+    CLASS_NAME "faustCompressor"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/disto_stage.dsp"
+    "sfizz/effects/gen/disto_stage.hxx"
+    IN_PLACE
+    CLASS_NAME "faustDisto"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/fverb.dsp"
+    "sfizz/effects/gen/fverb.hxx"
+    IN_PLACE
+    CLASS_NAME "faustFverb"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/gate.dsp"
+    "sfizz/effects/gen/gate.hxx"
+    IN_PLACE
+    CLASS_NAME "faustGate"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/limiter.dsp"
+    "sfizz/effects/gen/limiter.hxx"
+    IN_PLACE
+    CLASS_NAME "faustLimiter"
+    IMPORT_DIRS "sfizz/dsp")
+target_sources(sfizz_internal PRIVATE
+    "sfizz/effects/gen/compressor.hxx"
+    "sfizz/effects/gen/disto_stage.hxx"
+    "sfizz/effects/gen/fverb.hxx"
+    "sfizz/effects/gen/gate.hxx"
+    "sfizz/effects/gen/limiter.hxx")
 
 # Windows installer
 if(WIN32)

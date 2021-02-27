@@ -95,6 +95,8 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth->timePosition(0, 0, 0);
     _synth->playbackState(0, 0);
 
+    _noteEventsCurrentCycle.fill(-1.0f);
+
     return result;
 }
 
@@ -281,6 +283,21 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
             _semaToWorker.post();
     }
 
+    //
+    std::pair<uint32, float> noteEvents[128];
+    size_t numNoteEvents = 0;
+    for (uint32 key = 0; key < 128; ++key) {
+        float value = _noteEventsCurrentCycle[key];
+        if (value < 0.0f)
+            continue;
+        noteEvents[numNoteEvents++] = std::make_pair(key, value);
+        _noteEventsCurrentCycle[key] = -1.0f;
+    }
+    if (numNoteEvents > 0) {
+        if (writeWorkerMessage("NoteEvents", noteEvents, numNoteEvents * sizeof(noteEvents[0])))
+            _semaToWorker.post();
+    }
+
     return kResultTrue;
 }
 
@@ -422,15 +439,28 @@ void SfizzVstProcessor::processEvents(Vst::IEventList& events)
             continue;
 
         switch (e.type) {
-        case Vst::Event::kNoteOnEvent:
-            if (e.noteOn.velocity == 0.0f)
-                synth.noteOff(e.sampleOffset, e.noteOn.pitch, 0);
-            else
-                synth.noteOn(e.sampleOffset, e.noteOn.pitch, convertVelocityFromFloat(e.noteOn.velocity));
+        case Vst::Event::kNoteOnEvent: {
+            int pitch = e.noteOn.pitch;
+            if (pitch < 0 || pitch >= 128)
+                break;
+            if (e.noteOn.velocity <= 0.0f) {
+                synth.noteOff(e.sampleOffset, pitch, 0);
+                _noteEventsCurrentCycle[pitch] = 0.0f;
+            }
+            else {
+                synth.noteOn(e.sampleOffset, pitch, convertVelocityFromFloat(e.noteOn.velocity));
+                _noteEventsCurrentCycle[pitch] = e.noteOn.velocity;
+            }
             break;
-        case Vst::Event::kNoteOffEvent:
-            synth.noteOff(e.sampleOffset, e.noteOff.pitch, convertVelocityFromFloat(e.noteOff.velocity));
+        }
+        case Vst::Event::kNoteOffEvent: {
+            int pitch = e.noteOn.pitch;
+            if (pitch < 0 || pitch >= 128)
+                break;
+            synth.noteOff(e.sampleOffset, pitch, convertVelocityFromFloat(e.noteOff.velocity));
+            _noteEventsCurrentCycle[pitch] = 0.0f;
             break;
+        }
         // case Vst::Event::kPolyPressureEvent:
         //     synth.aftertouch(e.sampleOffset, convertVelocityFromFloat(e.polyPressure.pressure));
         //     break;
@@ -574,7 +604,7 @@ FUnknown* SfizzVstProcessor::createInstance(void*)
 void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
 {
     uint8_t* oscTemp = _oscTemp.get();
-    uint32_t oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
+    uint32 oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
     if (oscSize <= kOscTempSize) {
         if (writeWorkerMessage("ReceiveMessage", oscTemp, oscSize))
             _semaToWorker.post();
@@ -648,6 +678,12 @@ void SfizzVstProcessor::doBackgroundWork()
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("ReceivedMessage");
             notification->getAttributes()->setBinary("Message", msg->payload<uint8_t>(), msg->size);
+            sendMessage(notification);
+        }
+        else if (!std::strcmp(id, "NoteEvents")) {
+            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
+            notification->setMessageID("NoteEvents");
+            notification->getAttributes()->setBinary("Events", msg->payload<uint8_t>(), msg->size);
             sendMessage(notification);
         }
     }

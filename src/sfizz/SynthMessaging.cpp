@@ -38,6 +38,36 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/key/slots", "") {
+            const BitArray<128>& keys = impl.keySlots_;
+            sfizz_blob_t blob { keys.data(), static_cast<uint32_t>(keys.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        //----------------------------------------------------------------------
+
+        MATCH("/sw/last/slots", "") {
+            const BitArray<128>& switches = impl.swLastSlots_;
+            sfizz_blob_t blob { switches.data(), static_cast<uint32_t>(switches.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/sw/last/current", "") {
+            int32_t value = -1;
+            if (impl.currentSwitch_)
+                value = *impl.currentSwitch_;
+            client.receive<'i'>(delay, path, value);
+        } break;
+
+        MATCH("/sw/last/&/label", "") {
+            if (indices[0] >= 128)
+                break;
+            const std::string* label = impl.getKeyswitchLabel(indices[0]);
+            client.receive<'s'>(delay, path, label ? label->c_str() : "");
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/cc/slots", "") {
             const BitArray<config::numCCs>& ccs = impl.currentUsedCCs_;
             sfizz_blob_t blob { ccs.data(), static_cast<uint32_t>(ccs.byte_size()) };
@@ -72,6 +102,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/mem/buffers", "") {
+            uint64_t total = BufferCounter::counter().getTotalBytes();
+            client.receive<'h'>(delay, path, total);
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/region&/delay", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.delay);
@@ -93,6 +130,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/delay_random", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.delayRandom);
+        } break;
+
+        MATCH("/region&/delay_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, region.delayCC.getWithDefault(indices[1]));
         } break;
 
         MATCH("/region&/offset", "") {
@@ -1202,6 +1244,45 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         #undef GET_EQ_OR_BREAK
 
         #undef GET_REGION_OR_BREAK
+
+        MATCH("/num_active_voices", "") {
+            client.receive<'i'>(delay, path, impl.voiceManager_.getNumActiveVoices());
+        } break;
+
+        #define GET_VOICE_OR_BREAK(idx)                     \
+            if (static_cast<int>(idx) >= impl.numVoices_)   \
+                break;                                      \
+            const auto& voice = impl.voiceManager_[idx];    \
+            if (voice.isFree())                             \
+                break;
+
+        MATCH("/voice&/trigger_value", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, voice.getTriggerEvent().value);
+        } break;
+
+        MATCH("/voice&/trigger_number", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getTriggerEvent().number);
+        } break;
+
+        MATCH("/voice&/trigger_type", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            const auto& event = voice.getTriggerEvent();
+            switch (event.type) {
+            case TriggerEventType::CC:
+                client.receive<'s'>(delay, path, "cc");
+                break;
+            case TriggerEventType::NoteOn:
+                client.receive<'s'>(delay, path, "note_on");
+                break;
+            case TriggerEventType::NoteOff:
+                client.receive<'s'>(delay, path, "note_on");
+                break;
+            }
+
+        } break;
+
         #undef MATCH
         // TODO...
     }

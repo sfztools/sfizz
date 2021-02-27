@@ -7,6 +7,7 @@ constexpr auto uint32_t_max = std::numeric_limits<uint32_t>::max();
 
 extern const OpcodeSpec<float> delay { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<float> delayRandom { 0.0f, Range<float>(0.0f, 100.0f), 0 };
+extern const OpcodeSpec<float> delayMod { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<int64_t> offset { 0, Range<int64_t>(0, uint32_t_max), 0 };
 extern const OpcodeSpec<int64_t> offsetMod { 0, Range<int64_t>(0, uint32_t_max), 0 };
 extern const OpcodeSpec<int64_t> offsetRandom { 0, Range<int64_t>(0, uint32_t_max), 0 };
@@ -130,6 +131,7 @@ extern const OpcodeSpec<int> sampleQuality { 1, Range<int>(0, 10), 0 };
 extern const OpcodeSpec<int> octaveOffset { 0, Range<int>(-10, 10), 0 };
 extern const OpcodeSpec<int> noteOffset { 0, Range<int>(-127, 127), 0 };
 extern const OpcodeSpec<float> effect { 0.0f, Range<float>(0.0f, 100.0f), kNormalizePercent };
+extern const OpcodeSpec<float> effectPercent { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<int> apanWaveform { 0, Range<int>(0, std::numeric_limits<int>::max()), 0 };
 extern const OpcodeSpec<float> apanFrequency { 0.0f, Range<float>(0.0f, std::numeric_limits<float>::max()), 0 };
 extern const OpcodeSpec<float> apanPhase { 0.5f, Range<float>(0.0f, 1.0f), kWrapPhase };

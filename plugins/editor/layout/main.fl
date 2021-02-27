@@ -11,7 +11,7 @@ widget_class mainView {open
     class Background
   }
   Fl_Group {} {
-    comment {theme=darkTheme}
+    comment {theme=darkTheme} open
     xywh {0 0 800 110}
     class LogicalGroup
   } {
@@ -60,9 +60,9 @@ widget_class mainView {open
         xywh {195 11 250 31} labelsize 20 align 20
         class ClickableLabel
       }
-      Fl_Box {} {
-        label {Key switch:}
-        xywh {195 44 250 30} labelsize 20 align 20
+      Fl_Box keyswitchLabel_ {
+        label {Key switch:} selected
+        xywh {195 44 360 30} labelsize 20 align 20
         class Label
       }
       Fl_Box {} {
@@ -86,26 +86,31 @@ widget_class mainView {open
         class ChevronDropDown
       }
       Fl_Box infoVoicesLabel_ {
-        xywh {260 76 50 25} labelsize 12 align 16
+        xywh {260 76 40 25} labelsize 12 align 16
         class Label
       }
       Fl_Box {} {
         label {Max:}
-        xywh {315 76 60 25} labelsize 12 align 24
+        xywh {315 76 40 25} labelsize 12 align 24
         class Label
       }
       Fl_Box numVoicesLabel_ {
-        xywh {380 76 50 25} labelsize 12 align 16
+        xywh {360 76 35 25} labelsize 12 align 16
         class Label
       }
       Fl_Box {} {
         label {Memory:}
-        xywh {435 76 60 25} labelsize 12 align 24
+        xywh {425 76 60 25} labelsize 12 align 24
         class Label
       }
       Fl_Box memoryLabel_ {
-        xywh {500 76 50 25} labelsize 12 align 16
+        xywh {490 76 60 25} labelsize 12 align 16
         class Label
+      }
+      Fl_Button numVoicesSlider_ {
+        comment {tag=kTagSetNumVoices}
+        xywh {395 80 20 20} labelsize 16
+        class ChevronValueDropDown
       }
     }
     Fl_Group {} {open
@@ -197,63 +202,53 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelControls]} {open
-    xywh {5 110 790 285}
+  Fl_Group {subPanels_[kPanelControls]} {
+    xywh {5 110 790 285} hide
     class LogicalGroup
   } {
     Fl_Group {} {open
       xywh {5 110 790 285} box ROUNDED_BOX
       class RoundedGroup
     } {
-      Fl_Group controlsPanel_ {open selected
+      Fl_Group controlsPanel_ {open
         xywh {5 110 790 285} box THIN_DOWN_FRAME
         class ControlsPanel
       } {}
     }
   }
   Fl_Group {subPanels_[kPanelSettings]} {open
-    xywh {5 109 790 316} hide
+    xywh {5 109 790 316}
     class LogicalGroup
   } {
     Fl_Group {} {
       label Engine open
-      xywh {260 135 280 100} box ROUNDED_BOX labelsize 12 align 17
+      xywh {305 135 195 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
-      Fl_Spinner numVoicesSlider_ {
-        comment {tag=kTagSetNumVoices}
-        xywh {285 195 60 25} labelsize 12 textsize 12
-        class ValueMenu
-      }
-      Fl_Box {} {
-        label Polyphony
-        xywh {275 155 80 25} labelsize 12
-        class ValueLabel
-      }
       Fl_Spinner oversamplingSlider_ {
         comment {tag=kTagSetOversampling}
-        xywh {370 195 60 25} labelsize 12 textsize 12
+        xywh {330 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Oversampling
-        xywh {360 155 80 25} labelsize 12
+        xywh {320 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Box {} {
         label {Preload size}
-        xywh {445 155 80 25} labelsize 12
+        xywh {405 155 80 25} labelsize 12
         class ValueLabel
       }
       Fl_Spinner preloadSizeSlider_ {
         comment {tag=kTagSetPreloadSize}
-        xywh {455 195 60 25} labelsize 12 textsize 12
+        xywh {415 195 60 25} labelsize 12 textsize 12
         class ValueMenu
       }
     }
     Fl_Group {} {
       label Tuning open
-      xywh {205 270 390 100} box ROUNDED_BOX labelsize 12 align 17
+      xywh {175 270 415 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
       Fl_Box {} {
@@ -283,13 +278,13 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label {Scala file}
-        xywh {225 290 100 25} labelsize 12
+        xywh {195 290 100 25} labelsize 12
         class ValueLabel
       }
       Fl_Button scalaFileButton_ {
         label DefaultScale
         comment {tag=kTagLoadScalaFile}
-        xywh {225 330 100 25} labelsize 12
+        xywh {195 330 100 25} labelsize 12
         class ValueButton
       }
       Fl_Spinner scalaRootKeySlider_ {
@@ -301,6 +296,11 @@ widget_class mainView {open
         comment {tag=kTagSetScalaRootKey}
         xywh {375 330 30 25} labelsize 12 textsize 12
         class ValueMenu
+      }
+      Fl_Button scalaResetButton_ {
+        comment {tag=kTagResetScalaFile}
+        xywh {295 330 25 25} labelsize 12
+        class ResetSomethingButton
       }
     }
     Fl_Group userFilesGroup_ {

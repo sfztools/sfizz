@@ -11,6 +11,7 @@
 #include "utility/vstgui_after.h"
 #include <functional>
 #include <vector>
+#include <bitset>
 
 using namespace VSTGUI;
 
@@ -23,6 +24,18 @@ public:
 
     unsigned getNumOctaves() const { return octs_; }
     void setNumOctaves(unsigned octs);
+
+    void setKeyUsed(unsigned key, bool used);
+    void setKeyswitchUsed(unsigned key, bool used);
+    void setKeyValue(unsigned key, float value);
+
+    enum class KeyRole {
+        Unused,
+        Note,
+        Switch,
+    };
+
+    KeyRole getKeyRole(unsigned key);
 
     std::function<void(unsigned, float)> onKeyPressed;
     std::function<void(unsigned, float)> onKeyReleased;
@@ -51,7 +64,9 @@ private:
 
 private:
     unsigned octs_ {};
-    std::vector<unsigned> keyval_;
+    std::vector<float> keyval_;
+    std::bitset<128> keyUsed_;
+    std::bitset<128> keyswitchUsed_;
     unsigned mousePressedKey_ = ~0u;
 
     CCoord innerPaddingX_ = 4.0;
@@ -60,9 +75,13 @@ private:
 
     CColor backgroundFill_ { 0xca, 0xca, 0xca, 0xff };
     float backgroundRadius_ = 5.0;
-    CColor whiteFill_ { 0xee, 0xee, 0xec, 0xff };
-    CColor blackFill_ { 0x2e, 0x34, 0x36, 0xff };
-    CColor pressedFill_ { 0xa0, 0xa0, 0xa0, 0xff };
+
+    float keyUsedHue_ = 0.55;
+    float keySwitchHue_ = 0.0;
+    float whiteKeyLuma_ = 0.9;
+    float blackKeyLuma_ = 0.5;
+    float keyLumaPressDelta_ = 0.2;
+
     CColor outline_ { 0x00, 0x00, 0x00, 0xff };
     CColor shadeOutline_ { 0x80, 0x80, 0x80, 0xff };
     CColor labelStroke_ { 0x63, 0x63, 0x63, 0xff };

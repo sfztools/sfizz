@@ -9,6 +9,7 @@
 #include "sfizz/Region.h"
 #include "sfizz/Voice.h"
 #include "sfizz/Range.h"
+#include "sfizz/Messaging.h"
 #include "catch2/catch.hpp"
 #include "sfizz/modulations/ModKey.h"
 
@@ -104,3 +105,8 @@ inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, 
 
     return true;
 }
+
+/**
+ * @brief Simple helper function that feeds all received messages into a std::vector<std::string>* in data.
+ */
+void simpleMessageReceiver(void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args);

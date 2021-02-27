@@ -6,7 +6,7 @@
 
 #pragma once
 #include "Effects.h"
-#include "hiir/Downsampler2xFpu.h"
+#include "OversamplerHelpers.h"
 
 namespace sfz {
 namespace fx {
@@ -57,7 +57,7 @@ namespace fx {
         private:
             float fDepth = 0.0;
             float fLastValue = 0.0;
-            hiir::Downsampler2xFpu<12> fDownsampler2x;
+            hiir::Downsampler2x<12> fDownsampler2x;
         };
 
         ///
@@ -73,7 +73,7 @@ namespace fx {
             float fDepth = 0.0;
             float fPhase = 0.0;
             float fLastValue = 0.0;
-            hiir::Downsampler2xFpu<12> fDownsampler2x;
+            hiir::Downsampler2x<12> fDownsampler2x;
         };
 
         ///

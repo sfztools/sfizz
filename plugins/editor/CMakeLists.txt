@@ -34,8 +34,12 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/EditorController.h
     src/editor/GUIComponents.h
     src/editor/GUIComponents.cpp
+    src/editor/GUIHelpers.h
+    src/editor/GUIHelpers.cpp
     src/editor/GUIPiano.h
     src/editor/GUIPiano.cpp
+    src/editor/ColorHelpers.h
+    src/editor/ColorHelpers.cpp
     src/editor/NativeHelpers.h
     src/editor/NativeHelpers.cpp
     src/editor/layout/main.hpp
@@ -59,6 +63,10 @@ if(APPLE)
 endif()
 
 # dependencies
+add_library(sfizz_colorspaces INTERFACE)
+add_library(sfizz::colorspaces ALIAS sfizz_colorspaces)
+target_include_directories(sfizz_colorspaces INTERFACE "external/color-spaces")
+
 if(WIN32)
     #
 elseif(APPLE)
@@ -69,7 +77,7 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_link_libraries(sfizz_editor PRIVATE sfizz::filesystem)
+target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::bit_array sfizz::filesystem)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)

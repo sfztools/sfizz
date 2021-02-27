@@ -142,13 +142,13 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
         for (auto& opcode : opcodes) {
-            const auto unknown = absl::c_find_if(unknownOpcodes_, [&](absl::string_view sv) { return sv.compare(opcode.opcode) == 0; });
+            const auto unknown = absl::c_find_if(unknownOpcodes_, [&](absl::string_view sv) { return sv.compare(opcode.name) == 0; });
             if (unknown != unknownOpcodes_.end()) {
                 continue;
             }
 
             if (!lastRegion->parseOpcode(opcode))
-                unknownOpcodes_.emplace_back(opcode.opcode);
+                unknownOpcodes_.emplace_back(opcode.name);
         }
     };
 
@@ -241,6 +241,7 @@ void Synth::Impl::clear()
     numGroups_ = 0;
     numMasters_ = 0;
     currentSwitch_ = absl::nullopt;
+    currentSwitchChanged_ = true;
     defaultPath_ = "";
     resources_.midiState.reset();
     resources_.filePool.clear();
@@ -249,7 +250,9 @@ void Synth::Impl::clear()
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
     keyLabels_.clear();
-    keyswitchLabels_.clear();
+    keySlots_.clear();
+    swLastSlots_.clear();
+    clearKeyswitchLabels();
     globalOpcodes_.clear();
     masterOpcodes_.clear();
     groupOpcodes_.clear();
@@ -417,7 +420,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         default:
             // Unsupported control opcode
-            DBG("Unsupported control opcode: " << member.opcode);
+            DBG("Unsupported control opcode: " << member.name);
         }
     }
     if (overSampled == false)
@@ -641,7 +644,7 @@ void Synth::Impl::finalizeSfzLoad()
                 region->keySwitched = (*currentSwitch_ == *region->lastKeyswitch);
 
             if (region->keyswitchLabel)
-                insertPairUniquely(keyswitchLabels_, *region->lastKeyswitch, *region->keyswitchLabel);
+                setKeyswitchLabel(*region->lastKeyswitch, *region->keyswitchLabel);
         }
 
         if (region->lastKeyswitchRange) {
@@ -651,7 +654,7 @@ void Synth::Impl::finalizeSfzLoad()
 
             if (region->keyswitchLabel) {
                 for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
-                    insertPairUniquely(keyswitchLabels_, note, *region->keyswitchLabel);
+                    setKeyswitchLabel(note, *region->keyswitchLabel);
             }
         }
 
@@ -755,6 +758,29 @@ void Synth::Impl::finalizeSfzLoad()
 
     // cache the set of used CCs for future access
     currentUsedCCs_ = collectAllUsedCCs();
+
+    // cache the set of keys assigned
+    for (const RegionPtr& regionPtr : regions_) {
+        Range<uint8_t> keyRange = regionPtr->keyRange;
+        unsigned loKey = keyRange.getStart();
+        unsigned hiKey = keyRange.getEnd();
+        for (unsigned key = loKey; key <= hiKey; ++key)
+            keySlots_.set(key);
+    }
+    // cache the set of keyswitches assigned
+    for (const RegionPtr& regionPtr : regions_) {
+        if (absl::optional<uint8_t> sw = regionPtr->lastKeyswitch) {
+            swLastSlots_.set(*sw);
+        }
+        else if (absl::optional<Range<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
+            unsigned loKey = swRange->getStart();
+            unsigned hiKey = swRange->getEnd();
+            for (unsigned key = loKey; key <= hiKey; ++key)
+                swLastSlots_.set(key);
+        }
+    }
+    // resend current keyswitch
+    currentSwitchChanged_ = true;
 }
 
 bool Synth::loadScalaFile(const fs::path& path)
@@ -983,6 +1009,16 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
             broadcaster.receive<'b'>(numFrames - 1, "/cc/changed", &blob);
     }
     impl.changedCCsThisCycle_.clear();
+    // Send the changed keyswitch
+    if (impl.currentSwitchChanged_) {
+        if (broadcaster.canReceive()) {
+            int32_t value = -1;
+            if (impl.currentSwitch_)
+                value = *impl.currentSwitch_;
+            broadcaster.receive<'i'>(numFrames - 1, "/sw/last/current", value);
+        }
+        impl.currentSwitchChanged_ = false;
+    }
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1009,8 +1045,8 @@ void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
     Impl& impl = *impl_;
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
+    impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
@@ -1021,7 +1057,6 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     Impl& impl = *impl_;
     const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
@@ -1032,6 +1067,7 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
         voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
     impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
+    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
@@ -1072,7 +1108,6 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
-    const TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
 
     if (!lastKeyswitchLists_[noteNumber].empty()) {
         if (currentSwitch_ && *currentSwitch_ != noteNumber) {
@@ -1080,6 +1115,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
                 region->keySwitched = false;
         }
         currentSwitch_ = noteNumber;
+        currentSwitchChanged_ = true;
     }
 
     for (auto& region : lastKeyswitchLists_[noteNumber])
@@ -1099,6 +1135,10 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
                     noteOffDispatch(delay, event.number, event.value);
                 }
             }
+
+            TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
+            if (region->velocityOverride == VelocityOverride::previous)
+                triggerEvent.value = resources_.midiState.getLastVelocity();
 
             startVoice(region, delay, triggerEvent, ring);
         }
@@ -1161,7 +1201,6 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
     ASSERT(ccNumber >= 0);
 
     ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    resources_.midiState.ccEvent(delay, ccNumber, normValue);
 
     changedCCsThisCycle_.set(ccNumber);
 
@@ -1183,6 +1222,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
         voice.registerCC(delay, ccNumber, normValue);
 
     ccDispatch(delay, ccNumber, normValue);
+    resources_.midiState.ccEvent(delay, ccNumber, normValue);
 }
 
 void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
@@ -1864,10 +1904,34 @@ void Synth::Impl::setCCLabel(int ccNumber, std::string name)
     }
 }
 
+const std::string* Synth::Impl::getKeyswitchLabel(int swNumber)
+{
+    auto it = keyswitchLabelsMap_.find(swNumber);
+    return (it == keyswitchLabelsMap_.end()) ? nullptr : &keyswitchLabels_[it->second].second;
+}
+
+void Synth::Impl::setKeyswitchLabel(int swNumber, std::string name)
+{
+    auto it = keyswitchLabelsMap_.find(swNumber);
+    if (it != keyswitchLabelsMap_.end())
+        keyswitchLabels_[it->second].second = std::move(name);
+    else {
+        size_t index = keyswitchLabels_.size();
+        keyswitchLabels_.emplace_back(swNumber, std::move(name));
+        keyswitchLabelsMap_[swNumber] = index;
+    }
+}
+
 void Synth::Impl::clearCCLabels()
 {
     ccLabels_.clear();
     ccLabelsMap_.clear();
+}
+
+void Synth::Impl::clearKeyswitchLabels()
+{
+    keyswitchLabels_.clear();
+    keyswitchLabelsMap_.clear();
 }
 
 Parser& Synth::getParser() noexcept

@@ -39,13 +39,13 @@ protected:
             std::cout << '\n';
             std::cout << '<' << header << '>' << '\n';
             for (const sfz::Opcode& opc : opcodes)
-                std::cout << opc.opcode << '=' << opc.value << '\n';
+                std::cout << opc.name << '=' << opc.value << '\n';
         }
         else if (g_mode == OutputXML) {
             pugi::xml_node block_node = g_xml_doc.append_child(header.c_str());
             for (const sfz::Opcode& opc : opcodes) {
                 pugi::xml_node opcode_node = block_node.append_child("opcode");
-                opcode_node.append_attribute("name").set_value(opc.opcode.c_str());
+                opcode_node.append_attribute("name").set_value(opc.name.c_str());
                 opcode_node.append_attribute("value").set_value(opc.value.c_str());
             }
         }

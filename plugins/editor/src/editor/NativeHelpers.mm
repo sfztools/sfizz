@@ -11,20 +11,34 @@
 #import <CoreServices/CoreServices.h>
 #import <Foundation/Foundation.h>
 
-bool openFileInExternalEditor(const char *fileNameUTF8)
+static bool openFileWithApplication(const char *fileName, NSString *application)
 {
-    BOOL wasOpened = NO;
+    NSWorkspace* workspace = [NSWorkspace sharedWorkspace];
+    NSString* fileNameNs = [NSString stringWithUTF8String:fileName];
+    return [workspace openFile:fileNameNs withApplication:application] == YES;
+}
 
+bool openFileInExternalEditor(const char *fileName)
+{
     NSURL* applicationURL = (__bridge_transfer NSURL*)LSCopyDefaultApplicationURLForContentType(
         kUTTypePlainText, kLSRolesEditor, nil);
-    if (!applicationURL)
+    if (!applicationURL || ![applicationURL isFileURL])
         return false;
-    if ([applicationURL isFileURL]) {
-        NSWorkspace* workspace = [NSWorkspace sharedWorkspace];
-        NSString* fileName = [NSString stringWithUTF8String:fileNameUTF8];
-        wasOpened = [workspace openFile:fileName withApplication:[applicationURL path]];
-    }
+    return openFileWithApplication(fileName, [applicationURL path]);
+}
 
-    return wasOpened == YES;
+bool openDirectoryInExplorer(const char *fileName)
+{
+    return openFileWithApplication(fileName, @"Finder");
+}
+
+bool askQuestion(const char *text)
+{
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:[NSString stringWithUTF8String:text]];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSInteger button = [alert runModal];
+    return button == NSAlertFirstButtonReturn;
 }
 #endif

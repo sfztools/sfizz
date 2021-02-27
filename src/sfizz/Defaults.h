@@ -126,6 +126,7 @@ namespace Default
 {
     extern const OpcodeSpec<float> delay;
     extern const OpcodeSpec<float> delayRandom;
+    extern const OpcodeSpec<float> delayMod;
     extern const OpcodeSpec<int64_t> offset;
     extern const OpcodeSpec<int64_t> offsetMod;
     extern const OpcodeSpec<int64_t> offsetRandom;
@@ -249,6 +250,7 @@ namespace Default
     extern const OpcodeSpec<int> octaveOffset;
     extern const OpcodeSpec<int> noteOffset;
     extern const OpcodeSpec<float> effect;
+    extern const OpcodeSpec<float> effectPercent;
     extern const OpcodeSpec<int> apanWaveform;
     extern const OpcodeSpec<float> apanFrequency;
     extern const OpcodeSpec<float> apanPhase;

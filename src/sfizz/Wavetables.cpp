@@ -155,10 +155,10 @@ void WavetableOscillator::process(float frequency, float detuneRatio, float* out
         processSingle<kInterpolatorLinear>(frequency, detuneRatio, output, nframes);
         break;
     case 2:
-        processSingle<kInterpolatorBspline3>(frequency, detuneRatio, output, nframes);
+        processSingle<kInterpolatorHermite3>(frequency, detuneRatio, output, nframes);
         break;
     case 3:
-        processDual<kInterpolatorBspline3>(frequency, detuneRatio, output, nframes);
+        processDual<kInterpolatorHermite3>(frequency, detuneRatio, output, nframes);
         break;
     }
 }
@@ -175,10 +175,10 @@ void WavetableOscillator::processModulated(const float* frequencies, const float
         processModulatedSingle<kInterpolatorLinear>(frequencies, detuneRatios, output, nframes);
         break;
     case 2:
-        processModulatedSingle<kInterpolatorBspline3>(frequencies, detuneRatios, output, nframes);
+        processModulatedSingle<kInterpolatorHermite3>(frequencies, detuneRatios, output, nframes);
         break;
     case 3:
-        processModulatedDual<kInterpolatorBspline3>(frequencies, detuneRatios, output, nframes);
+        processModulatedDual<kInterpolatorHermite3>(frequencies, detuneRatios, output, nframes);
         break;
     }
 }

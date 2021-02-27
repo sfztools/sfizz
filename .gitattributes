@@ -29,3 +29,10 @@ appveyor.yml export-ignore
 /external/abseil-cpp/conanfile.py export-ignore
 /external/abseil-cpp/**/BUILD.bazel export-ignore
 /external/abseil-cpp/ci/** export-ignore
+
+/external/simde/docker/** export-ignore
+/external/simde/test/** export-ignore
+/external/simde/meson* export-ignore
+/external/simde/*.py export-ignore
+/external/simde/*.yml export-ignore
+/external/simde/*.toml export-ignore

@@ -95,7 +95,7 @@ TEST_CASE("[Parsing] Empty2")
 namespace sfz{
 bool operator==(const Opcode& lhs, const Opcode& rhs)
 {
-    return (lhs.opcode == rhs.opcode) && (lhs.value == rhs.value);
+    return (lhs.name == rhs.name) && (lhs.value == rhs.value);
 }
 }
 
@@ -142,10 +142,10 @@ void memberTestNew(absl::string_view member, absl::string_view opcode, absl::str
     REQUIRE(mock.fullBlockHeaders.size() == 1);
     REQUIRE(mock.fullBlockMembers.size() == 1);
     REQUIRE(mock.headers[0] == "region");
-    REQUIRE(mock.opcodes[0].opcode == opcode);
+    REQUIRE(mock.opcodes[0].name == opcode);
     REQUIRE(mock.opcodes[0].value == value);
     REQUIRE(mock.fullBlockHeaders[0] == "region");
-    REQUIRE(mock.fullBlockMembers[0][0].opcode == opcode);
+    REQUIRE(mock.fullBlockMembers[0][0].name == opcode);
     REQUIRE(mock.fullBlockMembers[0][0].value == value);
 }
 

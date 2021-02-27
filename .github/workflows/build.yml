@@ -47,6 +47,7 @@ jobs:
           libjack-jackd2-dev \
           libsndfile1-dev \
           libcairo2-dev \
+          libpango1.0-dev \
           libfontconfig1-dev \
           libx11-xcb-dev \
           libxcb-util-dev \
@@ -136,7 +137,7 @@ jobs:
   build_for_mingw32:
     runs-on: ubuntu-18.04
     container:
-      image: archlinux
+      image: ghcr.io/sfztools/archlinux
     steps:
     - name: Set install name
       run: |
@@ -164,7 +165,7 @@ jobs:
       shell: bash
       # need to convert some includes to lower case (as of VST 3.7.1)
       run: |
-        find "$GITHUB_WORKSPACE"/vst/external/VST_SDK -type d -name source -exec \
+        find "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK -type d -name source -exec \
             find {} -type f -name '*.[hc]' -o -name '*.[hc]pp' -print0 \; | \
           xargs -0 sed -i 's/<Windows.h>/<windows.h>/'
     - name: Create Build Environment
@@ -200,7 +201,7 @@ jobs:
   build_for_mingw64:
     runs-on: ubuntu-18.04
     container:
-      image: archlinux
+      image: ghcr.io/sfztools/archlinux
     steps:
     - name: Set install name
       run: |
@@ -228,7 +229,7 @@ jobs:
       shell: bash
       # need to convert some includes to lower case (as of VST 3.7.1)
       run: |
-        find "$GITHUB_WORKSPACE"/vst/external/VST_SDK -type d -name source -exec \
+        find "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK -type d -name source -exec \
             find {} -type f -name '*.[hc]' -o -name '*.[hc]pp' -print0 \; | \
           xargs -0 sed -i 's/<Windows.h>/<windows.h>/'
     - name: Create Build Environment

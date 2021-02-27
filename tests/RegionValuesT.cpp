@@ -6,47 +6,12 @@
 
 #include "TestHelpers.h"
 #include "sfizz/Synth.h"
-#include "sfizz/Messaging.h"
 #include "catch2/catch.hpp"
 #include <stdexcept>
 #include <absl/strings/str_cat.h>
 #include <absl/strings/str_format.h>
 using namespace Catch::literals;
 using namespace sfz;
-
-void simpleMessageReceiver(void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
-{
-    (void)delay;
-    auto& messageList = *reinterpret_cast<std::vector<std::string>*>(data);
-
-    std::string newMessage = absl::StrCat(path, ",", sig, " : { ");
-    for (unsigned i = 0, n = strlen(sig); i < n; ++i) {
-        switch(sig[i]){
-        case 'i':
-            absl::StrAppend(&newMessage, args[i].i);
-            break;
-        case 'f':
-            absl::StrAppend(&newMessage, args[i].f);
-            break;
-        case 'd':
-            absl::StrAppend(&newMessage, args[i].d);
-            break;
-        case 'h':
-            absl::StrAppend(&newMessage, args[i].h);
-            break;
-        case 's':
-            absl::StrAppend(&newMessage, args[i].s);
-            break;
-        }
-
-        if (i == (n - 1))
-            absl::StrAppend(&newMessage, " }");
-        else
-            absl::StrAppend(&newMessage, ", ");
-    }
-
-    messageList.push_back(std::move(newMessage));
-}
 
 TEST_CASE("[Values] Delay")
 {
@@ -95,6 +60,30 @@ TEST_CASE("[Values] Delay")
             "/region1/delay_random,f : { 1 }",
             "/region2/delay_random,f : { 0 }",
             // "/region3/delay_random,f : { 1 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("CC")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav delay_cc12=1.5
+            <region> sample=kick.wav delay_cc12=-1.5
+            <region> sample=kick.wav delay_cc14=3 delay_cc12=2 delay_cc12=-12
+        )");
+        synth.dispatchMessage(client, 0, "/region0/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/delay_cc14", "", nullptr);
+        // TODO: activate for the new region parser ; ignore the second value
+        // synth.dispatchMessage(client, 0, "/region3/delay_cc12", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/delay_cc12,f : { 0 }",
+            "/region1/delay_cc12,f : { 1.5 }",
+            "/region2/delay_cc12,f : { 0 }",
+            "/region3/delay_cc14,f : { 3 }",
+            // "/region3/delay_cc12,f : { 2 }",
         };
         REQUIRE(messageList == expected);
     }

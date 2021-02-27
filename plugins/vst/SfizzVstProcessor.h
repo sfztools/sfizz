@@ -11,6 +11,7 @@
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include <sfizz.hpp>
 #include <SpinMutex.h>
+#include <array>
 #include <thread>
 #include <memory>
 #include <cstdlib>
@@ -59,6 +60,9 @@ private:
 
     // misc
     static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);
+
+    // note event tracking
+    std::array<float, 128> _noteEventsCurrentCycle; // 0: off, >0: on, <0: no change
 
     // worker and thread sync
     std::thread _worker;

@@ -161,6 +161,7 @@ else()
     pkg_check_modules(LIBXKB_COMMON REQUIRED xkbcommon)
     pkg_check_modules(LIBXKB_COMMON_X11 REQUIRED xkbcommon-x11)
     pkg_check_modules(CAIRO REQUIRED cairo)
+    pkg_check_modules(PANGO REQUIRED pangocairo pangoft2)
     pkg_check_modules(FONTCONFIG REQUIRED fontconfig)
     pkg_check_modules(GLIB REQUIRED glib-2.0)
     target_include_directories(sfizz_vstgui PRIVATE
@@ -174,6 +175,7 @@ else()
         ${LIBXKB_COMMON_INCLUDE_DIRS}
         ${LIBXKB_COMMON_X11_INCLUDE_DIRS}
         ${CAIRO_INCLUDE_DIRS}
+        ${PANGO_INCLUDE_DIRS}
         ${FONTCONFIG_INCLUDE_DIRS}
         ${GLIB_INCLUDE_DIRS})
     target_link_libraries(sfizz_vstgui  PRIVATE
@@ -187,6 +189,7 @@ else()
         ${LIBXKB_COMMON_LIBRARIES}
         ${LIBXKB_COMMON_X11_LIBRARIES}
         ${CAIRO_LIBRARIES}
+        ${PANGO_LIBRARIES}
         ${FONTCONFIG_LIBRARIES}
         ${GLIB_LIBRARIES})
     find_library(DL_LIBRARY "dl")

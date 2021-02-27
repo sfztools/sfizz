@@ -7,6 +7,7 @@
 #include "Opcode.h"
 #include "LFODescription.h"
 #include "StringViewHelpers.h"
+#include "Debug.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -17,31 +18,31 @@
 namespace sfz {
 
 Opcode::Opcode(absl::string_view inputOpcode, absl::string_view inputValue)
-    : opcode(trim(inputOpcode))
+    : name(trim(inputOpcode))
     , value(trim(inputValue))
     , category(identifyCategory(inputOpcode))
 {
     size_t nextCharIndex { 0 };
     int parameterPosition { 0 };
-    auto nextNumIndex = opcode.find_first_of("1234567890");
-    while (nextNumIndex != opcode.npos) {
+    auto nextNumIndex = name.find_first_of("1234567890");
+    while (nextNumIndex != name.npos) {
         const auto numLetters = nextNumIndex - nextCharIndex;
         parameterPosition += numLetters;
-        lettersOnlyHash = hashNoAmpersand(opcode.substr(nextCharIndex, numLetters), lettersOnlyHash);
-        nextCharIndex = opcode.find_first_not_of("1234567890", nextNumIndex);
+        lettersOnlyHash = hashNoAmpersand(name.substr(nextCharIndex, numLetters), lettersOnlyHash);
+        nextCharIndex = name.find_first_not_of("1234567890", nextNumIndex);
 
         uint32_t returnedValue;
-        const auto numDigits = (nextCharIndex == opcode.npos) ? opcode.npos : nextCharIndex - nextNumIndex;
-        if (absl::SimpleAtoi(opcode.substr(nextNumIndex, numDigits), &returnedValue)) {
+        const auto numDigits = (nextCharIndex == name.npos) ? name.npos : nextCharIndex - nextNumIndex;
+        if (absl::SimpleAtoi(name.substr(nextNumIndex, numDigits), &returnedValue)) {
             lettersOnlyHash = hash("&", lettersOnlyHash);
             parameters.push_back(returnedValue);
         }
 
-        nextNumIndex = opcode.find_first_of("1234567890", nextCharIndex);
+        nextNumIndex = name.find_first_of("1234567890", nextCharIndex);
     }
 
-    if (nextCharIndex != opcode.npos)
-        lettersOnlyHash = hashNoAmpersand(opcode.substr(nextCharIndex), lettersOnlyHash);
+    if (nextCharIndex != name.npos)
+        lettersOnlyHash = hashNoAmpersand(name.substr(nextCharIndex), lettersOnlyHash);
 }
 
 static absl::string_view extractBackInteger(absl::string_view opcodeName)
@@ -54,7 +55,7 @@ static absl::string_view extractBackInteger(absl::string_view opcodeName)
 
 std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) const
 {
-    std::string derivedName(opcode);
+    std::string derivedName(name);
 
     switch (category) {
     case kOpcodeNormal:
@@ -65,8 +66,8 @@ std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) 
     case kOpcodeSmoothCcN:
         {
             // when the input is cc, first delete the suffix `_*cc`
-            size_t pos = opcode.rfind('_');
-            assert(pos != opcode.npos);
+            size_t pos = name.rfind('_');
+            ASSERT(pos != name.npos);
             derivedName.resize(pos);
         }
         break;
@@ -75,7 +76,7 @@ std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) 
     // helper to extract the cc number optionally if the next part needs it
     auto ccNumberSuffix = [this, number]() -> std::string {
         return (number != ~0u) ? std::to_string(number) :
-            std::string(extractBackInteger(opcode));
+            std::string(extractBackInteger(name));
     };
 
     switch (newCategory) {
@@ -150,7 +151,7 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
         return absl::nullopt;
     }
 
-    return returnedValue;
+    return static_cast<T>(returnedValue);
 }
 
 #define INSTANTIATE_FOR_INTEGRAL(T)                             \
@@ -448,5 +449,5 @@ absl::optional<LFOWave> Opcode::readOptional(OpcodeSpec<LFOWave> spec) const
 
 std::ostream &operator<<(std::ostream &os, const sfz::Opcode &opcode)
 {
-    return os << opcode.opcode << '=' << '"' << opcode.value << '"';
+    return os << opcode.name << '=' << '"' << opcode.value << '"';
 }
