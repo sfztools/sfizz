@@ -743,8 +743,11 @@ void SControlsPanel::setControlValue(uint32_t index, float value)
 {
     ControlSlot* slot = getOrCreateSlot(index);
     SKnobCCBox* box = slot->box;
-    box->getControl()->setValue(value);
-    box->invalid();
+    auto* control = box->getControl();
+    float oldValue = control->getValue();
+    control->setValue(value);
+    if (control->getValue() != oldValue)
+        box->invalid();
 }
 
 void SControlsPanel::setControlDefaultValue(uint32_t index, float value)

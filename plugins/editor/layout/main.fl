@@ -3,7 +3,7 @@ version 1.0305
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {571 362 800 475} type Double
+  xywh {659 319 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box {} {
@@ -121,7 +121,7 @@ widget_class mainView {open
         class ChevronValueDropDown
       }
     }
-    Fl_Group {} {open selected
+    Fl_Group {} {open
       xywh {570 5 225 100} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -134,19 +134,21 @@ widget_class mainView {open
         xywh {610 70 60 5} labelsize 12 hide
         class ValueLabel
       }
-      Fl_Dial volumeSlider_ {
-        comment {tag=kTagSetVolume}
-        xywh {680 20 48 48} value 0.5
-        class StyledKnob
-      }
-      Fl_Box volumeLabel_ {
-        label {0.0 dB}
-        xywh {675 70 60 22} labelsize 12
-        class ValueLabel
-      }
       Fl_Box {} {
         xywh {745 20 35 55} box BORDER_BOX
         class VMeter
+      }
+      Fl_Box volumeCCKnob_ {
+        label Volume
+        comment {tag=kTagSetCCVolume} selected
+        xywh {580 10 70 90} box BORDER_BOX labelsize 12 align 17
+        class KnobCCBox
+      }
+      Fl_Box panCCKnob_ {
+        label Pan
+        comment {tag=kTagSetCCPan}
+        xywh {655 10 70 90} box BORDER_BOX labelsize 12 align 17
+        class KnobCCBox
       }
     }
   }

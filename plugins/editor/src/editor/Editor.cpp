@@ -73,7 +73,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagPreviousSfzFile,
         kTagNextSfzFile,
         kTagFileOperations,
-        kTagSetVolume,
+        kTagSetMainVolume,
         kTagSetNumVoices,
         kTagSetOversampling,
         kTagSetPreloadSize,
@@ -82,6 +82,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
+        kTagSetCCVolume,
+        kTagSetCCPan,
         kTagChooseUserFilesDir,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
@@ -127,6 +129,18 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     SPiano* piano_ = nullptr;
 
     SControlsPanel* controlsPanel_ = nullptr;
+
+    SKnobCCBox* volumeCCKnob_ = nullptr;
+    SKnobCCBox* panCCKnob_ = nullptr;
+
+    CControl* getSecondaryCCControl(unsigned cc)
+    {
+        switch (cc) {
+        case 7: return volumeCCKnob_ ? volumeCCKnob_->getControl() : nullptr;
+        case 10: return panCCKnob_ ? panCCKnob_->getControl() : nullptr;
+        default: return nullptr;
+        }
+    }
 
     void uiReceiveValue(EditId id, const EditValue& v) override;
     void uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
@@ -826,12 +840,19 @@ void Editor::Impl::createFrameContents()
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
         };
-        auto createKnobCCBox = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int) {
+        auto createKnobCCBox = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int fontsize) {
             SKnobCCBox* box = new SKnobCCBox(bounds, this, tag);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             box->setNameLabelText(label);
+            box->setNameLabelFont(font);
             box->setNameLabelFontColor(theme->text);
+            box->setKnobFont(font);
             box->setKnobFontColor(theme->text);
             box->setKnobLineIndicatorColor(theme->knobLineIndicatorColor);
+            box->setValueToStringFunction([](float value, std::string& text) -> bool {
+                text = std::to_string(std::lround(value * 127));
+                return true;
+            });
             return box;
         };
         auto createBackground = [&background](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
@@ -1005,6 +1026,7 @@ void Editor::Impl::createFrameContents()
     if (SControlsPanel* panel = controlsPanel_) {
         panel->ValueChangeFunction = [this](uint32_t cc, float value) {
             performCCValueChange(cc, value);
+            updateCCValue(cc, value);
         };
         panel->BeginEditFunction = [this](uint32_t cc) {
             performCCBeginEdit(cc);
@@ -1012,6 +1034,15 @@ void Editor::Impl::createFrameContents()
         panel->EndEditFunction = [this](uint32_t cc) {
             performCCEndEdit(cc);
         };
+    }
+
+    if (SKnobCCBox* box = volumeCCKnob_) {
+        unsigned ccNumber = 7;
+        box->setCCLabelText(("CC " + std::to_string(ccNumber)).c_str());
+    }
+    if (SKnobCCBox* box = panCCKnob_) {
+        unsigned ccNumber = 10;
+        box->setCCLabelText(("CC " + std::to_string(ccNumber)).c_str());
     }
 
     updateKeyswitchNameLabel();
@@ -1483,12 +1514,18 @@ void Editor::Impl::updateCCValue(unsigned cc, float value)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlValue(cc, value);
+
+    if (CControl* other = getSecondaryCCControl(cc))
+        other->setValue(value);
 }
 
 void Editor::Impl::updateCCDefaultValue(unsigned cc, float value)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlDefaultValue(cc, value);
+
+    if (CControl* other = getSecondaryCCControl(cc))
+        other->setDefaultValue(value);
 }
 
 void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
@@ -1652,9 +1689,19 @@ void Editor::Impl::valueChanged(CControl* ctl)
         changeScalaFile(std::string());
         break;
 
-    case kTagSetVolume:
+    case kTagSetMainVolume:
         ctrl.uiSendValue(EditId::Volume, value);
         updateVolumeLabel(value);
+        break;
+
+    case kTagSetCCVolume:
+        performCCValueChange(7, value);
+        updateCCValue(7, value);
+        break;
+
+    case kTagSetCCPan:
+        performCCValueChange(10, value);
+        updateCCValue(10, value);
         break;
 
     case kTagSetNumVoices:
@@ -1717,13 +1764,15 @@ void Editor::Impl::enterOrLeaveEdit(CControl* ctl, bool enter)
     EditId id;
 
     switch (tag) {
-    case kTagSetVolume: id = EditId::Volume; break;
+    case kTagSetMainVolume: id = EditId::Volume; break;
     case kTagSetNumVoices: id = EditId::Polyphony; break;
     case kTagSetOversampling: id = EditId::Oversampling; break;
     case kTagSetPreloadSize: id = EditId::PreloadSize; break;
     case kTagSetScalaRootKey: id = EditId::ScalaRootKey; break;
     case kTagSetTuningFrequency: id = EditId::TuningFrequency; break;
     case kTagSetStretchedTuning: id = EditId::StretchTuning; break;
+    case kTagSetCCVolume: id = editIdForCC(7); break;
+    case kTagSetCCPan: id = editIdForCC(10); break;
     default: return;
     }
 
