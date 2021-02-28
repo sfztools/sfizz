@@ -824,6 +824,14 @@ void Editor::Impl::createFrameContents()
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
         };
+        auto createKnobCCBox = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int) {
+            SKnobCCBox* box = new SKnobCCBox(bounds, this, tag);
+            box->setNameLabelText(label);
+            box->setNameLabelFontColor(theme->text);
+            box->setKnobFontColor(theme->text);
+            box->setKnobLineIndicatorColor(theme->knobLineIndicatorColor);
+            return box;
+        };
         auto createBackground = [&background](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackground(background);

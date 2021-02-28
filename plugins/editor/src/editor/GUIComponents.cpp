@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "GUIComponents.h"
+#include "ColorHelpers.h"
 #include <complex>
 #include <cmath>
 
@@ -488,10 +489,32 @@ void SStyledKnob::setLineIndicatorColor(const CColor& color)
     invalid();
 }
 
+void SStyledKnob::setFont(CFontRef font)
+{
+    if (font_ == font)
+        return;
+    font_ = font;
+    invalid();
+}
+
+void SStyledKnob::setFontColor(CColor fontColor)
+{
+    if (fontColor_ == fontColor)
+        return;
+    fontColor_ = fontColor;
+    invalid();
+}
+
+void SStyledKnob::setValueToStringFunction(ValueToStringFunction func)
+{
+    valueToStringFunction_ = std::move(func);
+    invalid();
+}
+
 void SStyledKnob::draw(CDrawContext* dc)
 {
     const CCoord lineWidth = 4.0;
-    const CCoord indicatorLineLength = 10.0;
+    const CCoord indicatorLineLength = 8.0;
     const CCoord angleSpread = 250.0;
     const CCoord angle1 = 270.0 - 0.5 * angleSpread;
     const CCoord angle2 = 270.0 + 0.5 * angleSpread;
@@ -546,6 +569,106 @@ void SStyledKnob::draw(CDrawContext* dc)
         dc->setLineStyle(kLineSolid);
         dc->drawLine(p1, p2);
     }
+
+    if (valueToStringFunction_ && fontColor_.alpha > 0) {
+        std::string text;
+        if (valueToStringFunction_(getValue(), text)) {
+            dc->setFont(font_);
+            dc->setFontColor(fontColor_);
+            dc->drawString(text.c_str(), bounds);
+        }
+    }
+}
+
+///
+SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t tag)
+    : CViewContainer(size),
+      label_(makeOwned<CTextLabel>(CRect())),
+      knob_(makeOwned<SStyledKnob>(CRect(), listener, tag)),
+      ccLabel_(makeOwned<CTextLabel>(CRect()))
+{
+    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+
+    label_->setText("Parameter");
+    label_->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+    label_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+    label_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
+
+    knob_->setLineIndicatorColor(CColor(0x00, 0x00, 0x00, 0xff));
+
+    ccLabel_->setText("CC 1");
+    ccLabel_->setStyle(CParamDisplay::kRoundRectStyle);
+    ccLabel_->setRoundRectRadius(5.0);
+    ccLabel_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+    ccLabel_->setFontColor(CColor(0xff, 0xff, 0xff));
+
+    addView(label_);
+    label_->remember();
+    addView(knob_);
+    knob_->remember();
+    addView(ccLabel_);
+    ccLabel_->remember();
+
+    updateViewColors();
+    updateViewSizes();
+}
+
+void SKnobCCBox::setHue(float hue)
+{
+    hue_ = hue;
+    updateViewColors();
+}
+
+void SKnobCCBox::setNameLabelFont(CFontRef font)
+{
+    label_->setFont(font);
+    updateViewSizes();
+}
+
+void SKnobCCBox::setCCLabelFont(CFontRef font)
+{
+    ccLabel_->setFont(font);
+    updateViewSizes();
+}
+
+void SKnobCCBox::updateViewSizes()
+{
+    const CRect size = getViewSize();
+    const CCoord ypad = 4.0;
+
+    const CFontRef nameFont = ccLabel_->getFont();
+    const CFontRef ccFont = ccLabel_->getFont();
+
+    nameLabelSize_ = CRect(0.0, 0.0, size.getWidth(), nameFont->getSize() + 2 * ypad);
+    ccLabelSize_ = CRect(0.0, size.bottom - ccFont->getSize() - 2 * ypad, size.getWidth(), size.bottom);
+    knobSize_ = CRect(0.0, nameLabelSize_.bottom, size.getWidth(), ccLabelSize_.top);
+
+    // remove knob side areas
+    CCoord side = std::max(0.0, knobSize_.getWidth() - knobSize_.getHeight());
+    knobSize_.extend(-0.5 * side, 0.0);
+
+    //
+    label_->setViewSize(nameLabelSize_);
+    knob_->setViewSize(knobSize_);
+    ccLabel_->setViewSize(ccLabelSize_);
+
+    invalid();
+}
+
+void SKnobCCBox::updateViewColors()
+{
+    const float knobLuma = 0.4;
+    const float ccLuma = 0.25;
+
+    SColorHCY knobActiveTrackColor { hue_, 1.0, knobLuma };
+    SColorHCY knobInactiveTrackColor { 0.0, 0.0, knobLuma };
+    knob_->setActiveTrackColor(knobActiveTrackColor.toColor());
+    knob_->setInactiveTrackColor(knobInactiveTrackColor.toColor());
+
+    SColorHCY ccLabelColor { hue_, 1.0, ccLuma };
+    ccLabel_->setBackColor(ccLabelColor.toColor());
+
+    invalid();
 }
 
 ///
@@ -579,7 +702,8 @@ void SControlsPanel::setControlUsed(uint32_t index, bool used)
 
 std::string SControlsPanel::getDefaultLabelText(uint32_t index)
 {
-    return "CC " + std::to_string(index);
+    (void)index;
+    return {};
 }
 
 SControlsPanel::ControlSlot* SControlsPanel::getSlot(uint32_t index)
@@ -602,42 +726,15 @@ SControlsPanel::ControlSlot* SControlsPanel::getOrCreateSlot(uint32_t index)
     slot = new ControlSlot;
     slots_[index].reset(slot);
 
-    // create controls etc...
-    CCoord knobWidth = 48.0;
-    CCoord knobHeight = knobWidth;
-    CCoord labelWidth = 96.0;
-    CCoord labelHeight = 24.0;
-    CCoord verticalPadding = 0.0;
-
-    CCoord totalWidth = std::max(knobWidth, labelWidth);
-    CCoord knobX = (totalWidth - knobWidth) / 2.0;
-    CCoord labelX = (totalWidth - labelWidth) / 2.0;
-
-    CRect knobBounds(knobX, 0.0, knobX + knobWidth, knobHeight);
-    CRect labelBounds(labelX, knobHeight + verticalPadding, labelX + labelWidth, knobHeight + verticalPadding + labelHeight);
-    CRect boxBounds = CRect(knobBounds).unite(labelBounds);
-
-    SharedPointer<SStyledKnob> knob = owned(new SStyledKnob(knobBounds, listener_.get(), index));
-    SharedPointer<CTextLabel> label = owned(new CTextLabel(labelBounds));
-    SharedPointer<CViewContainer> box = owned(new CViewContainer(boxBounds));
-
-    box->addView(knob);
-    knob->remember();
-    box->addView(label);
-    label->remember();
-
-    box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
-    label->setStyle(CTextLabel::kRoundRectStyle);
-    label->setRoundRectRadius(5.0);
-    label->setBackColor(CColor(0x2e, 0x34, 0x36));
-    label->setText(getDefaultLabelText(index));
-    knob->setActiveTrackColor(CColor(0x00, 0xb6, 0x2a));
-    knob->setInactiveTrackColor(CColor(0x30, 0x30, 0x30));
-    knob->setLineIndicatorColor(CColor(0x00, 0x00, 0x00));
-
-    slot->knob = knob;
-    slot->label = label;
+    CRect boxSize { 0.0, 0.0, 120.0, 90.0 };
+    SharedPointer<SKnobCCBox> box = makeOwned<SKnobCCBox>(boxSize, listener_.get(), index);
     slot->box = box;
+    slot->box->setCCLabelText(("CC " + std::to_string(index)).c_str());
+
+    slot->box->setValueToStringFunction([](float value, std::string& text) -> bool {
+        text = std::to_string(std::lround(value * 127));
+        return true;
+    });
 
     return slot;
 }
@@ -645,27 +742,27 @@ SControlsPanel::ControlSlot* SControlsPanel::getOrCreateSlot(uint32_t index)
 void SControlsPanel::setControlValue(uint32_t index, float value)
 {
     ControlSlot* slot = getOrCreateSlot(index);
-    CControl* knob = slot->knob;
-    knob->setValue(value);
-    knob->invalid();
+    SKnobCCBox* box = slot->box;
+    box->getControl()->setValue(value);
+    box->invalid();
 }
 
 void SControlsPanel::setControlDefaultValue(uint32_t index, float value)
 {
     ControlSlot* slot = getOrCreateSlot(index);
-    CControl* knob = slot->knob;
-    knob->setDefaultValue(value);
+    SKnobCCBox* box = slot->box;
+    box->getControl()->setDefaultValue(value);
 }
 
 void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
 {
     ControlSlot* slot = getOrCreateSlot(index);
-    CTextLabel* label = slot->label;
+    SKnobCCBox* box = slot->box;
     if (text && text[0] != '\0')
-        label->setText(text);
+        box->setNameLabelText(text);
     else
-        label->setText(getDefaultLabelText(index).c_str());
-    label->invalid();
+        box->setNameLabelText(getDefaultLabelText(index).c_str());
+    box->invalid();
 }
 
 void SControlsPanel::recalculateSubViews()
@@ -693,8 +790,10 @@ void SControlsPanel::updateLayout()
     CCoord itemOffsetX {};
 
     int numColumns {};
-    const CCoord horizontalPadding = 24.0;
-    const CCoord verticalPadding = 18.0;
+    const CCoord horizontalPadding = 4.0;
+    CCoord verticalPadding = 4.0;
+    CCoord interRowPadding = {};
+    CCoord interColumnPadding = 8.0;
 
     int currentRow = 0;
     int currentColumn = 0;
@@ -713,16 +812,20 @@ void SControlsPanel::updateLayout()
             itemHeight = box->getHeight();
             isFirstSlot = false;
             numColumns = int((viewBounds.getWidth() - horizontalPadding) /
-                             (itemWidth + horizontalPadding));
+                             (itemWidth + interColumnPadding));
             numColumns = std::max(1, numColumns);
             itemOffsetX = (viewBounds.getWidth() - horizontalPadding -
-                           numColumns * (itemWidth + horizontalPadding)) / 2.0;
+                           numColumns * (itemWidth + interColumnPadding)) / 2.0;
+
+            int maxRowsShown = int((viewBounds.getHeight() - 2 * verticalPadding) / itemHeight);
+            if (maxRowsShown > 1)
+                interRowPadding = (viewBounds.getHeight() - 2 * verticalPadding - itemHeight * maxRowsShown) / (maxRowsShown - 1);
         }
 
         CRect itemBounds = box->getViewSize();
         itemBounds.moveTo(
-            itemOffsetX + horizontalPadding + currentColumn * (horizontalPadding + itemWidth),
-            verticalPadding + currentRow * (verticalPadding + itemHeight));
+            itemOffsetX + horizontalPadding + currentColumn * (interColumnPadding + itemWidth),
+            verticalPadding + currentRow * (interRowPadding + itemHeight));
 
         box->setViewSize(itemBounds);
 

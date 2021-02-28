@@ -215,6 +215,14 @@ public:
     const CColor& getLineIndicatorColor() const { return lineIndicatorColor_; }
     void setLineIndicatorColor(const CColor& color);
 
+    void setFont(CFontRef font);
+    CFontRef getFont() const { return font_; }
+    void setFontColor(CColor fontColor);
+    CColor getFontColor() const { return fontColor_; }
+
+    using ValueToStringFunction = std::function<bool(float value, std::string& result)>;
+    void setValueToStringFunction(ValueToStringFunction func);
+
     CLASS_METHODS(SStyledKnob, CKnobBase)
 protected:
     void draw(CDrawContext* dc) override;
@@ -223,6 +231,45 @@ private:
     CColor activeTrackColor_;
     CColor inactiveTrackColor_;
     CColor lineIndicatorColor_;
+
+    SharedPointer<CFontDesc> font_ = kNormalFont;
+    CColor fontColor_ { 0x00, 0x00, 0x00 };
+
+    ValueToStringFunction valueToStringFunction_;
+};
+
+///
+class SKnobCCBox : public CViewContainer {
+public:
+    SKnobCCBox(const CRect& size, IControlListener* listener, int32_t tag);
+    void setHue(float hue);
+    SStyledKnob* getControl() const { return knob_; }
+
+    void setNameLabelText(const UTF8String& name) { label_->setText(name); }
+    void setNameLabelFont(CFontRef font);
+    void setNameLabelFontColor(CColor color) { label_->setFontColor(color); }
+    void setCCLabelText(const UTF8String& name) { ccLabel_->setText(name); }
+    void setCCLabelFont(CFontRef font);
+    void setCCLabelFontColor(CColor color) { ccLabel_->setFontColor(color); }
+    void setKnobLineIndicatorColor(CColor color) { knob_->setLineIndicatorColor(color); }
+    void setKnobFont(CFontRef font) { knob_->setFont(font); }
+    void setKnobFontColor(CColor color) { knob_->setFontColor(color); }
+
+    using ValueToStringFunction = SStyledKnob::ValueToStringFunction;
+    void setValueToStringFunction(ValueToStringFunction f) { knob_->setValueToStringFunction(std::move(f)); }
+
+private:
+    void updateViewSizes();
+    void updateViewColors();
+
+private:
+    SharedPointer<CTextLabel> label_;
+    SharedPointer<SStyledKnob> knob_;
+    SharedPointer<CTextLabel> ccLabel_;
+    CRect nameLabelSize_;
+    CRect knobSize_;
+    CRect ccLabelSize_;
+    float hue_ = 0.35;
 };
 
 ///
@@ -253,9 +300,7 @@ private:
 private:
     struct ControlSlot {
         bool used = false;
-        SharedPointer<CControl> knob;
-        SharedPointer<CTextLabel> label;
-        SharedPointer<CViewContainer> box;
+        SharedPointer<SKnobCCBox> box;
     };
 
     class ControlSlotListener : public IControlListener {
