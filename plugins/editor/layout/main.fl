@@ -20,7 +20,7 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        comment {tag=kTagFirstChangePanel+kPanelGeneral} selected
+        comment {tag=kTagFirstChangePanel+kPanelGeneral}
         image {../resources/logo_text_shaded.png} xywh {35 9 120 60}
         class SfizzMainButton
       }
@@ -121,7 +121,7 @@ widget_class mainView {open
         class ChevronValueDropDown
       }
     }
-    Fl_Group {} {open
+    Fl_Group {} {open selected
       xywh {570 5 225 100} box ROUNDED_BOX
       class RoundedGroup
     } {
