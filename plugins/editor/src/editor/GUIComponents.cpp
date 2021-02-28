@@ -636,11 +636,11 @@ void SKnobCCBox::updateViewSizes()
     const CRect size = getViewSize();
     const CCoord ypad = 4.0;
 
-    const CFontRef nameFont = ccLabel_->getFont();
+    const CFontRef nameFont = label_->getFont();
     const CFontRef ccFont = ccLabel_->getFont();
 
     nameLabelSize_ = CRect(0.0, 0.0, size.getWidth(), nameFont->getSize() + 2 * ypad);
-    ccLabelSize_ = CRect(0.0, size.bottom - ccFont->getSize() - 2 * ypad, size.getWidth(), size.bottom);
+    ccLabelSize_ = CRect(0.0, size.getHeight() - ccFont->getSize() - 2 * ypad, size.getWidth(), size.getHeight());
     knobSize_ = CRect(0.0, nameLabelSize_.bottom, size.getWidth(), ccLabelSize_.top);
 
     // remove knob side areas
