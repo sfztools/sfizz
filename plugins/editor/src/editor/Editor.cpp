@@ -144,6 +144,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     template <class Control>
     void adjustMinMaxToEditRange(Control* c, EditId id)
     {
+        if (!c)
+            return;
         const EditRange er = EditRange::get(id);
         c->setMin(er.min);
         c->setMax(er.max);
