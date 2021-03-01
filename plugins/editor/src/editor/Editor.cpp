@@ -1515,8 +1515,10 @@ void Editor::Impl::updateCCValue(unsigned cc, float value)
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlValue(cc, value);
 
-    if (CControl* other = getSecondaryCCControl(cc))
+    if (CControl* other = getSecondaryCCControl(cc)) {
         other->setValue(value);
+        other->invalid();
+    }
 }
 
 void Editor::Impl::updateCCDefaultValue(unsigned cc, float value)
