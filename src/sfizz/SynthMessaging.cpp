@@ -188,6 +188,8 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             GET_REGION_OR_BREAK(indices[0])
             if (region.sampleCount)
                 client.receive<'h'>(delay, path, *region.sampleCount);
+            else
+                client.receive<'N'>(delay, path, {});
         } break;
 
         MATCH("/region&/loop_range", "") {
@@ -224,6 +226,14 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/loop_crossfade", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.loopCrossfade);
+        } break;
+
+        MATCH("/region&/loop_count", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.loopCount)
+                client.receive<'h'>(delay, path, *region.loopCount);
+            else
+                client.receive<'N'>(delay, path, {});
         } break;
 
         MATCH("/region&/group", "") {
