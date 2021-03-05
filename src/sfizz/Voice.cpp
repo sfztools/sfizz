@@ -987,7 +987,6 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     };
 
     if (loopContinuous) {
-
         for (unsigned i = 0; i < numSamples; ++i) {
             int wrappedIndex = (*indices)[i] - loop.size * blockRestarts;
             if (wrappedIndex > loop.end) {
@@ -1000,9 +999,8 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             addPartitionIfNecessary(i, wrappedIndex, wrapped);
 
             // Release if we reached the loop count
-            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount && !released()) {
+            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount && !released())
                 release(i);
-            }
         }
     } else if (loopSustain) {
         unsigned i = 0;
@@ -1037,19 +1035,21 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             }
             i++;
         }
-    } else { // One shots and loop_sustain that have ended
+    } else { // One shots and loop_sustain that have released or ended
         for (unsigned i = 0; i < numSamples; ++i) {
             (*indices)[i] -= sampleSize_ * blockRestarts;
 
             if ((*indices)[i] >= sampleEnd) {
-                if (region_->sampleCount && count_ < *region_->sampleCount) {
+                if (region_->sampleCount && count_ < *region_->sampleCount && !region_->shouldLoop()) {
                     (*indices)[i] -= sampleSize_;
                     blockRestarts += 1;
                     count_ += 1;
                     continue;
                 }
 
-                release(i);
+                if (!released())
+                    release(i);
+
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
                 break;

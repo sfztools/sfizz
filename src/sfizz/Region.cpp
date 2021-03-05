@@ -1661,7 +1661,7 @@ uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept
     if (sampleEnd <= 0)
         return 0;
 
-    return min(static_cast<uint32_t>(sampleEnd), loopRange.getEnd()) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(sampleEnd) * static_cast<uint32_t>(factor);
 }
 
 uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
