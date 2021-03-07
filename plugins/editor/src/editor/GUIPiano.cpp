@@ -17,73 +17,125 @@ static constexpr CCoord keyoffs[12] = {0,    0.6, 1,   1.8, 2,    3,
                                        3.55, 4,   4.7, 5,   5.85, 6};
 static constexpr bool black[12] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0};
 
+struct SPiano::Impl {
+    unsigned octs_ {};
+    std::vector<float> keyval_;
+    std::bitset<128> keyUsed_;
+    std::bitset<128> keyswitchUsed_;
+    unsigned mousePressedKey_ = ~0u;
+
+    CCoord innerPaddingX_ = 4.0;
+    CCoord innerPaddingY_ = 4.0;
+    CCoord spacingY_ = 4.0;
+
+    CColor backgroundFill_ { 0xca, 0xca, 0xca, 0xff };
+    float backgroundRadius_ = 5.0;
+
+    float keyUsedHue_ = 0.55;
+    float keySwitchHue_ = 0.0;
+    float whiteKeyChroma_ = 0.9;
+    float blackKeyChroma_ = 0.75;
+    float whiteKeyLuma_ = 0.9;
+    float blackKeyLuma_ = 0.35;
+    float keyLumaPressDelta_ = 0.2;
+
+    CColor outline_ { 0x00, 0x00, 0x00, 0xff };
+    CColor shadeOutline_ { 0x80, 0x80, 0x80, 0xff };
+    CColor labelStroke_ { 0x63, 0x63, 0x63, 0xff };
+
+    mutable Dimensions dim_;
+    SharedPointer<CFontDesc> font_;
+};
+
 SPiano::SPiano(CRect bounds)
-    : CView(bounds)
+    : CView(bounds), impl_(new Impl)
 {
     setNumOctaves(10);
 }
 
+CFontRef SPiano::getFont() const
+{
+    const Impl& impl = *impl_;
+    return impl.font_;
+}
+
 void SPiano::setFont(CFontRef font)
 {
-    font_ = font;
+    Impl& impl = *impl_;
+    impl.font_ = font;
     getDimensions(true);
     invalid();
 }
 
+unsigned SPiano::getNumOctaves() const
+{
+    const Impl& impl = *impl_;
+    return impl.octs_;
+}
+
 void SPiano::setNumOctaves(unsigned octs)
 {
-    keyval_.resize(octs * 12);
-    octs_ = std::max(1u, octs);
+    Impl& impl = *impl_;
+    impl.keyval_.resize(octs * 12);
+    impl.octs_ = std::max(1u, octs);
     getDimensions(true);
     invalid();
 }
 
 void SPiano::setKeyUsed(unsigned key, bool used)
 {
+    Impl& impl = *impl_;
+
     if (key >= 128)
         return;
 
-    if (keyUsed_.test(key) == used)
+    if (impl.keyUsed_.test(key) == used)
         return;
 
-    keyUsed_.set(key, used);
+    impl.keyUsed_.set(key, used);
     invalid();
 }
 
 void SPiano::setKeyswitchUsed(unsigned key, bool used)
 {
+    Impl& impl = *impl_;
+
     if (key >= 128)
         return;
 
-    if (keyswitchUsed_.test(key) == used)
+    if (impl.keyswitchUsed_.test(key) == used)
         return;
 
-    keyswitchUsed_.set(key, used);
+    impl.keyswitchUsed_.set(key, used);
     invalid();
 }
 
 void SPiano::setKeyValue(unsigned key, float value)
 {
+    Impl& impl = *impl_;
+
     if (key >= 128)
         return;
 
     value = std::max(0.0f, std::min(1.0f, value));
 
-    if (keyval_[key] == value)
+    if (impl.keyval_[key] == value)
         return;
 
-    keyval_[key] = value;
+    impl.keyval_[key] = value;
     invalid();
 }
 
 SPiano::KeyRole SPiano::getKeyRole(unsigned key)
 {
+    Impl& impl = *impl_;
+
     if (key >= 128)
         return KeyRole::Unused;
 
-    if (keyUsed_.test(key))
+    if (impl.keyUsed_.test(key))
         return KeyRole::Note;
-    if (keyswitchUsed_.test(key))
+    if (impl.keyswitchUsed_.test(key))
         return KeyRole::Switch;
 
     return KeyRole::Unused;
@@ -91,17 +143,18 @@ SPiano::KeyRole SPiano::getKeyRole(unsigned key)
 
 void SPiano::draw(CDrawContext* dc)
 {
+    Impl& impl = *impl_;
     const Dimensions dim = getDimensions(false);
-    const unsigned octs = octs_;
+    const unsigned octs = impl.octs_;
     const unsigned keyCount = octs * 12;
-    const bool allKeysUsed = keyUsed_.all();
+    const bool allKeysUsed = impl.keyUsed_.all();
 
     dc->setDrawMode(kAntiAliasing);
 
-    if (backgroundFill_.alpha > 0) {
+    if (impl.backgroundFill_.alpha > 0) {
         SharedPointer<CGraphicsPath> path;
         path = owned(dc->createGraphicsPath());
-        path->addRoundRect(dim.bounds, backgroundRadius_);
+        path->addRoundRect(dim.bounds, impl.backgroundRadius_);
         dc->setFillColor(CColor(0xca, 0xca, 0xca));
         dc->drawGraphicsPath(path, CDrawContext::kPathFilled);
     }
@@ -110,26 +163,26 @@ void SPiano::draw(CDrawContext* dc)
         if (!black[key % 12]) {
             CRect rect = keyRect(key);
 
-            SColorHCY hcy(0.0, 1.0, whiteKeyLuma_);
+            SColorHCY hcy(0.0, impl.whiteKeyChroma_, impl.whiteKeyLuma_);
 
             switch (getKeyRole(key)) {
             case KeyRole::Note:
                 if (allKeysUsed)
                     goto whiteKeyDefault;
-                hcy.h = keyUsedHue_;
+                hcy.h = impl.keyUsedHue_;
                 break;
             case KeyRole::Switch:
-                hcy.h = keySwitchHue_;
+                hcy.h = impl.keySwitchHue_;
                 break;
             default: whiteKeyDefault:
                 hcy.y = 1.0;
-                if (keyval_[key])
+                if (impl.keyval_[key])
                     hcy.c = 0.0;
                 break;
             }
 
-            if (keyval_[key])
-                hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
+            if (impl.keyval_[key])
+                hcy.y = std::max(0.0f, hcy.y - impl.keyLumaPressDelta_);
 
             CColor keycolor = hcy.toColor();
             dc->setFillColor(keycolor);
@@ -137,7 +190,7 @@ void SPiano::draw(CDrawContext* dc)
         }
     }
 
-    dc->setFrameColor(outline_);
+    dc->setFrameColor(impl.outline_);
     dc->drawLine(dim.keyBounds.getTopLeft(), dim.keyBounds.getBottomLeft());
     for (unsigned key = 0; key < keyCount; ++key) {
         if (!black[key % 12]) {
@@ -150,62 +203,63 @@ void SPiano::draw(CDrawContext* dc)
         if (black[key % 12]) {
             CRect rect = keyRect(key);
 
-            SColorHCY hcy(0.0, 1.0, blackKeyLuma_);
+            SColorHCY hcy(0.0, impl.blackKeyChroma_, impl.blackKeyLuma_);
 
             switch (getKeyRole(key)) {
             case KeyRole::Note:
                 if (allKeysUsed)
                     goto blackKeyDefault;
-                hcy.h = keyUsedHue_;
+                hcy.h = impl.keyUsedHue_;
                 break;
             case KeyRole::Switch:
-                hcy.h = keySwitchHue_;
+                hcy.h = impl.keySwitchHue_;
                 break;
             default: blackKeyDefault:
                 hcy.c = 0.0;
                 break;
             }
 
-            if (keyval_[key])
-                hcy.y = std::max(0.0f, hcy.y - keyLumaPressDelta_);
+            if (impl.keyval_[key])
+                hcy.y = std::min(1.0f, hcy.y + impl.keyLumaPressDelta_);
 
             CColor keycolor = hcy.toColor();
             dc->setFillColor(keycolor);
             dc->drawRect(rect, kDrawFilled);
-            dc->setFrameColor(outline_);
+            dc->setFrameColor(impl.outline_);
             dc->drawRect(rect);
         }
     }
 
-    if (const CFontRef& font = font_) {
+    if (const CFontRef& font = impl.font_) {
         for (unsigned o = 0; o < octs; ++o) {
             CRect rect = keyRect(o * 12);
             CRect textRect(
                 rect.left, dim.labelBounds.top,
                 rect.right, dim.labelBounds.bottom);
             dc->setFont(font);
-            dc->setFontColor(labelStroke_);
+            dc->setFontColor(impl.labelStroke_);
             std::string text = std::to_string(static_cast<int>(o) - 1);
             dc->drawString(text.c_str(), textRect, kCenterText);
         }
     }
 
     {
-        dc->setFrameColor(outline_);
+        dc->setFrameColor(impl.outline_);
         dc->drawLine(dim.keyBounds.getTopLeft(), dim.keyBounds.getTopRight());
-        dc->setFrameColor(shadeOutline_);
+        dc->setFrameColor(impl.shadeOutline_);
         dc->drawLine(dim.keyBounds.getBottomLeft(), dim.keyBounds.getBottomRight());
     }
 
-    dc->setFrameColor(outline_);
+    dc->setFrameColor(impl.outline_);
 }
 
 CMouseEventResult SPiano::onMouseDown(CPoint& where, const CButtonState& buttons)
 {
+    Impl& impl = *impl_;
     unsigned key = keyAtPos(where);
     if (key != ~0u) {
-        keyval_[key] = 1;
-        mousePressedKey_ = key;
+        impl.keyval_[key] = 1;
+        impl.mousePressedKey_ = key;
         if (onKeyPressed)
             onKeyPressed(key, mousePressVelocity(key, where.y));
         invalid();
@@ -216,12 +270,13 @@ CMouseEventResult SPiano::onMouseDown(CPoint& where, const CButtonState& buttons
 
 CMouseEventResult SPiano::onMouseUp(CPoint& where, const CButtonState& buttons)
 {
-    unsigned key = mousePressedKey_;
+    Impl& impl = *impl_;
+    unsigned key = impl.mousePressedKey_;
     if (key != ~0u) {
-        keyval_[key] = 0;
+        impl.keyval_[key] = 0;
         if (onKeyReleased)
             onKeyReleased(key, mousePressVelocity(key, where.y));
-        mousePressedKey_ = ~0u;
+        impl.mousePressedKey_ = ~0u;
         invalid();
         return kMouseEventHandled;
     }
@@ -230,16 +285,17 @@ CMouseEventResult SPiano::onMouseUp(CPoint& where, const CButtonState& buttons)
 
 CMouseEventResult SPiano::onMouseMoved(CPoint& where, const CButtonState& buttons)
 {
-    if (mousePressedKey_ != ~0u) {
+    Impl& impl = *impl_;
+    if (impl.mousePressedKey_ != ~0u) {
         unsigned key = keyAtPos(where);
-        if (mousePressedKey_ != key) {
-            keyval_[mousePressedKey_] = 0;
+        if (impl.mousePressedKey_ != key) {
+            impl.keyval_[impl.mousePressedKey_] = 0;
             if (onKeyReleased)
-                onKeyReleased(mousePressedKey_, mousePressVelocity(key, where.y));
+                onKeyReleased(impl.mousePressedKey_, mousePressVelocity(key, where.y));
             // mousePressedKey_ = ~0u;
             if (key != ~0u) {
-                keyval_[key] = 1;
-                mousePressedKey_ = key;
+                impl.keyval_[key] = 1;
+                impl.mousePressedKey_ = key;
                 if (onKeyPressed)
                     onKeyPressed(key, mousePressVelocity(key, where.y));
             }
@@ -252,33 +308,35 @@ CMouseEventResult SPiano::onMouseMoved(CPoint& where, const CButtonState& button
 
 const SPiano::Dimensions& SPiano::getDimensions(bool forceUpdate) const
 {
-    if (!forceUpdate && dim_.bounds == getViewSize())
-        return dim_;
+    const Impl& impl = *impl_;
+
+    if (!forceUpdate && impl.dim_.bounds == getViewSize())
+        return impl.dim_;
 
     Dimensions dim;
     dim.bounds = getViewSize();
     dim.paddedBounds = CRect(dim.bounds)
-        .extend(-2 * innerPaddingX_, -2 * innerPaddingY_);
+        .extend(-2 * impl.innerPaddingX_, -2 * impl.innerPaddingY_);
     CCoord keyHeight = std::floor(dim.paddedBounds.getHeight());
-    CCoord fontHeight = font_ ? font_->getSize() : 0.0;
-    keyHeight -= spacingY_ + fontHeight;
+    CCoord fontHeight = impl.font_ ? impl.font_->getSize() : 0.0;
+    keyHeight -= impl.spacingY_ + fontHeight;
     dim.keyBounds = CRect(dim.paddedBounds)
         .setHeight(keyHeight);
     dim.keyWidth = static_cast<unsigned>(
-        dim.paddedBounds.getWidth() / octs_ / 7.0);
-    dim.keyBounds.setWidth(dim.keyWidth * octs_ * 7.0);
+        dim.paddedBounds.getWidth() / impl.octs_ / 7.0);
+    dim.keyBounds.setWidth(dim.keyWidth * impl.octs_ * 7.0);
     dim.keyBounds.offset(
         std::floor(0.5 * (dim.paddedBounds.getWidth() - dim.keyBounds.getWidth())), 0.0);
 
-    if (!font_)
+    if (!impl.font_)
         dim.labelBounds = CRect();
     else
         dim.labelBounds = CRect(
-            dim.keyBounds.left, dim.keyBounds.bottom + spacingY_,
-            dim.keyBounds.right, dim.keyBounds.bottom + spacingY_ + fontHeight);
+            dim.keyBounds.left, dim.keyBounds.bottom + impl.spacingY_,
+            dim.keyBounds.right, dim.keyBounds.bottom + impl.spacingY_ + fontHeight);
 
-    dim_ = dim;
-    return dim_;
+    impl.dim_ = dim;
+    return impl.dim_;
 }
 
 CRect SPiano::keyRect(const Dimensions& dim, unsigned key)
@@ -302,7 +360,8 @@ CRect SPiano::keyRect(unsigned key) const
 
 unsigned SPiano::keyAtPos(CPoint pos) const
 {
-    const unsigned octs = octs_;
+    const Impl& impl = *impl_;
+    const unsigned octs = impl.octs_;
 
     for (unsigned key = 0; key < octs * 12; ++key) {
         if (black[key % 12]) {
