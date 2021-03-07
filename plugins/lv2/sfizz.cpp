@@ -34,6 +34,8 @@
 
 #include "sfizz_lv2.h"
 
+#include "plugin/ForeignInstrument.h"
+
 #include <lv2/atom/atom.h>
 #include <lv2/atom/forge.h>
 #include <lv2/atom/util.h>
@@ -1173,6 +1175,8 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
 static bool
 sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
 {
+    bool status;
+
     char buf[MAX_PATH_SIZE];
     if (file_path[0] == '\0')
     {
@@ -1180,7 +1184,22 @@ sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
         file_path = buf;
     }
 
-    bool status = sfizz_load_file(self->synth, file_path);
+    // bool status = sfizz_load_file(self->synth, file_path);
+
+    ///
+    const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
+    const sfz::InstrumentFormat* format = formatRegistry.getMatchingFormat(file_path);
+
+    if (!format)
+        status = sfizz_load_file(self->synth, file_path);
+    else {
+        auto importer = format->createImporter();
+        std::string virtual_path = std::string(file_path) + ".sfz";
+        std::string sfz_text = importer->convertToSfz(file_path);
+        status = sfizz_load_string(self->synth, virtual_path.c_str(), sfz_text.c_str());
+    }
+
+    ///
     sfizz_lv2_update_file_info(self, file_path);
     return status;
 }
