@@ -33,6 +33,8 @@ struct SPiano::Impl {
 
     float keyUsedHue_ = 0.55;
     float keySwitchHue_ = 0.0;
+    float whiteKeyChroma_ = 1.0;
+    float blackKeyChroma_ = 1.0;
     float whiteKeyLuma_ = 0.9;
     float blackKeyLuma_ = 0.5;
     float keyLumaPressDelta_ = 0.2;
@@ -161,7 +163,7 @@ void SPiano::draw(CDrawContext* dc)
         if (!black[key % 12]) {
             CRect rect = keyRect(key);
 
-            SColorHCY hcy(0.0, 1.0, impl.whiteKeyLuma_);
+            SColorHCY hcy(0.0, impl.whiteKeyChroma_, impl.whiteKeyLuma_);
 
             switch (getKeyRole(key)) {
             case KeyRole::Note:
@@ -201,7 +203,7 @@ void SPiano::draw(CDrawContext* dc)
         if (black[key % 12]) {
             CRect rect = keyRect(key);
 
-            SColorHCY hcy(0.0, 1.0, impl.blackKeyLuma_);
+            SColorHCY hcy(0.0, impl.blackKeyChroma_, impl.blackKeyLuma_);
 
             switch (getKeyRole(key)) {
             case KeyRole::Note:
