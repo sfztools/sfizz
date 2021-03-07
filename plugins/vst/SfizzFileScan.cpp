@@ -11,6 +11,9 @@
 #include <absl/strings/ascii.h>
 #include <absl/algorithm/container.h>
 #include <memory>
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 
 // wait at least this much before refreshing the file rescan
 // it permits to not repeat the operation many times if many searches are
