@@ -1184,8 +1184,6 @@ sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
         file_path = buf;
     }
 
-    // bool status = sfizz_load_file(self->synth, file_path);
-
     ///
     const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
     const sfz::InstrumentFormat* format = formatRegistry.getMatchingFormat(file_path);
