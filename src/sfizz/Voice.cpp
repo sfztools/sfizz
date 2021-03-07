@@ -918,9 +918,13 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
     // calculate loop characteristics
     const auto loop = this->loop_;
+
+    // Looping logic
     const bool hasLoopSamples = static_cast<size_t>(loop.end) < source.getNumFrames();
-    const bool loopContinuous = hasLoopSamples && (region_->loopMode == LoopMode::loop_continuous);
-    const bool loopSustain = hasLoopSamples && (region_->loopMode == LoopMode::loop_sustain) && !released();
+    const bool loopCountReached = region_->loopCount && loop_.restarts >= *region_->loopCount;
+    const bool loopContinuous = (region_->loopMode == LoopMode::loop_continuous);
+    const bool loopSustain = (region_->loopMode == LoopMode::loop_sustain) && !released();
+    const bool shouldLoop = hasLoopSamples && (loopSustain || loopContinuous) && !loopCountReached;
 
     /*
                loop start             loop end
@@ -942,7 +946,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     enum PartitionType { kPartitionNormal, kPartitionLoopXfade };
 
     SpanHolder<absl::Span<int>> partitionBuffers[2];
-    if (loopSustain || loopContinuous) {
+    if (shouldLoop) {
         for (auto& buf : partitionBuffers) {
             buf = resources_.bufferPool.getIndexBuffer(numSamples);
             if (!buf)
@@ -986,23 +990,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         oldPartitionType = partitionType;
     };
 
-    if (loopContinuous) {
-        for (unsigned i = 0; i < numSamples; ++i) {
-            int wrappedIndex = (*indices)[i] - loop.size * blockRestarts;
-            if (wrappedIndex > loop.end) {
-                wrappedIndex -= loop.size;
-                blockRestarts += 1;
-                loop_.restarts += 1;
-            }
-            (*indices)[i] = wrappedIndex;
-            const bool wrapped = wrappedIndex < oldIndex;
-            addPartitionIfNecessary(i, wrappedIndex, wrapped);
-
-            // Release if we reached the loop count
-            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount && !released())
-                release(i);
-        }
-    } else if (loopSustain) {
+    if (shouldLoop) {
         unsigned i = 0;
         while (i < numSamples) {
             int wrappedIndex = (*indices)[i] - loop.size * blockRestarts;
@@ -1016,14 +1004,11 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
             // identify the partition this index is in
             addPartitionIfNecessary(i, wrappedIndex, wrapped);
-
             i++;
 
-            // Release if we reached the loop count and break
-            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount) {
-                release(i - 1);
+            // Break if we reached the loop count
+            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount)
                 break;
-            }
         }
 
         while (i < numSamples) { // In case we released within the block, continue as if it were a one-shot
@@ -1035,7 +1020,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             }
             i++;
         }
-    } else { // One shots and loop_sustain that have released or ended
+    } else { // One shots and loops that have released (for loop sustain) or ended (with loop counts)
         for (unsigned i = 0; i < numSamples; ++i) {
             (*indices)[i] -= sampleSize_ * blockRestarts;
 
@@ -1048,7 +1033,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                 }
 
                 if (!released())
-                    release(i);
+                    off(i, true);
 
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
