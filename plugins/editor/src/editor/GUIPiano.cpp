@@ -220,7 +220,7 @@ void SPiano::draw(CDrawContext* dc)
             }
 
             if (impl.keyval_[key])
-                hcy.y = std::max(0.0f, hcy.y - impl.keyLumaPressDelta_);
+                hcy.y = std::min(1.0f, hcy.y + impl.keyLumaPressDelta_);
 
             CColor keycolor = hcy.toColor();
             dc->setFillColor(keycolor);
