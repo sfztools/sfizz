@@ -33,10 +33,10 @@ struct SPiano::Impl {
 
     float keyUsedHue_ = 0.55;
     float keySwitchHue_ = 0.0;
-    float whiteKeyChroma_ = 1.0;
-    float blackKeyChroma_ = 1.0;
+    float whiteKeyChroma_ = 0.9;
+    float blackKeyChroma_ = 0.75;
     float whiteKeyLuma_ = 0.9;
-    float blackKeyLuma_ = 0.5;
+    float blackKeyLuma_ = 0.35;
     float keyLumaPressDelta_ = 0.2;
 
     CColor outline_ { 0x00, 0x00, 0x00, 0xff };
