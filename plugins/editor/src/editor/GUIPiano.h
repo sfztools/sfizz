@@ -19,10 +19,10 @@ class SPiano : public CView {
 public:
     explicit SPiano(CRect bounds);
 
-    CFontRef getFont() const { return font_; }
+    CFontRef getFont() const;
     void setFont(CFontRef font);
 
-    unsigned getNumOctaves() const { return octs_; }
+    unsigned getNumOctaves() const;
     void setNumOctaves(unsigned octs);
 
     void setKeyUsed(unsigned key, bool used);
@@ -63,29 +63,6 @@ private:
     float mousePressVelocity(unsigned key, CCoord posY);
 
 private:
-    unsigned octs_ {};
-    std::vector<float> keyval_;
-    std::bitset<128> keyUsed_;
-    std::bitset<128> keyswitchUsed_;
-    unsigned mousePressedKey_ = ~0u;
-
-    CCoord innerPaddingX_ = 4.0;
-    CCoord innerPaddingY_ = 4.0;
-    CCoord spacingY_ = 4.0;
-
-    CColor backgroundFill_ { 0xca, 0xca, 0xca, 0xff };
-    float backgroundRadius_ = 5.0;
-
-    float keyUsedHue_ = 0.55;
-    float keySwitchHue_ = 0.0;
-    float whiteKeyLuma_ = 0.9;
-    float blackKeyLuma_ = 0.5;
-    float keyLumaPressDelta_ = 0.2;
-
-    CColor outline_ { 0x00, 0x00, 0x00, 0xff };
-    CColor shadeOutline_ { 0x80, 0x80, 0x80, 0xff };
-    CColor labelStroke_ { 0x63, 0x63, 0x63, 0xff };
-
-    mutable Dimensions dim_;
-    SharedPointer<CFontDesc> font_;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
