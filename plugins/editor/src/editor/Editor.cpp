@@ -1069,6 +1069,15 @@ void Editor::Impl::chooseSfzFile()
     fs->setTitle("Load SFZ file");
     fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
 
+    // also add extensions of importable files
+    fs->addFileExtension(CFileExtension("WAV", "wav"));
+    fs->addFileExtension(CFileExtension("FLAC", "flac"));
+    fs->addFileExtension(CFileExtension("OGG", "ogg"));
+    fs->addFileExtension(CFileExtension("MP3", "mp3"));
+    fs->addFileExtension(CFileExtension("AIF", "aif"));
+    fs->addFileExtension(CFileExtension("AIFF", "aiff"));
+    fs->addFileExtension(CFileExtension("AIFC", "aifc"));
+
     std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
     if (!initialDir.empty())
         fs->setInitialDirectory(initialDir.c_str());
