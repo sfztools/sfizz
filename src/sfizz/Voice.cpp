@@ -1015,7 +1015,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             (*indices)[i] -= loop.size * blockRestarts;
             if ((*indices)[i] >= sampleEnd) {
                 fill<int>(indices->subspan(i), sampleEnd);
-                fill<float>(coeffs->subspan(i), 1.0f);
+                fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
                 break;
             }
             i++;
