@@ -158,6 +158,6 @@ public:
     OBJ_METHODS(PlayStateUpdate, FObject)
 
 private:
-    SfizzPlayState state_;
+    SfizzPlayState state_ {};
     mutable std::mutex mutex_;
 };
