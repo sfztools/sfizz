@@ -551,6 +551,9 @@ void Voice::setSampleRate(float sampleRate) noexcept
     for (WavetableOscillator& osc : impl.waveOscillators_)
         osc.init(sampleRate);
 
+    for (auto& eg : impl.flexEGs_)
+        eg->setSampleRate(sampleRate);
+
     for (auto& lfo : impl.lfos_)
         lfo->setSampleRate(sampleRate);
 
