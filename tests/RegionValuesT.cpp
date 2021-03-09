@@ -237,9 +237,9 @@ TEST_CASE("[Values] Count")
     synth.dispatchMessage(client, 0, "/region1/count", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/count", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/count,h : { 1 }",
+        "/region0/count,N : {  }",
         "/region1/count,h : { 2 }",
-        "/region2/count,h : { 1 }",
+        "/region2/count,N : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -349,6 +349,29 @@ TEST_CASE("[Values] Loop crossfade")
     };
     REQUIRE(messageList == expected);
 }
+
+TEST_CASE("[Values] Loop count")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav loop_count=2
+        <region> sample=kick.wav loop_count=-1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/loop_count", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/loop_count", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/loop_count", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/loop_count,N : {  }",
+        "/region1/loop_count,h : { 2 }",
+        "/region2/loop_count,N : {  }",
+    };
+    REQUIRE(messageList == expected);
+}
+
 
 TEST_CASE("[Values] Group")
 {

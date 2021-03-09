@@ -7,24 +7,25 @@
 #pragma once
 
 namespace sfz {
-namespace fx {
-namespace lfo {
 
-enum Wave {
-    kTriangle,
-    kSine,
-    kPulse75,
-    kSquare,
-    kPulse25,
-    kPulse12_5,
-    kRamp,
-    kSaw,
+enum class LFOWave : int {
+    Triangle,
+    Sine,
+    Pulse75,
+    Square,
+    Pulse25,
+    Pulse12_5,
+    Ramp,
+    Saw,
+    // ARIA extra
+    RandomSH = 12,
 };
 
-template <int Wave> float evaluateAtPhase(float phase);
+namespace lfo {
+
+template <LFOWave Wave> float evaluateAtPhase(float phase);
 
 } // namespace lfo
-} // namespace fx
 } // namespace sfz
 
-#include "CommonLFO.hpp"
+#include "LFOCommon.hpp"

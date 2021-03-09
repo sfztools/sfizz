@@ -4,11 +4,10 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "CommonLFO.h"
+#include "LFOCommon.h"
 #include <cmath>
 
 namespace sfz {
-namespace fx {
 namespace lfo {
 
     // Pulse and Square levels
@@ -16,7 +15,7 @@ namespace lfo {
     static constexpr float hiPulse = 1.0f;
 
     template <>
-    inline float evaluateAtPhase<kTriangle>(float phase)
+    inline float evaluateAtPhase<LFOWave::Triangle>(float phase)
     {
         float y = -4 * phase + 2;
         y = (phase < 0.25f) ? (4 * phase) : y;
@@ -25,48 +24,47 @@ namespace lfo {
     }
 
     template <>
-    inline float evaluateAtPhase<kSine>(float phase)
+    inline float evaluateAtPhase<LFOWave::Sine>(float phase)
     {
         float x = phase + phase - 1;
         return -4 * x * (1 - std::fabs(x));
     }
 
     template <>
-    inline float evaluateAtPhase<kPulse75>(float phase)
+    inline float evaluateAtPhase<LFOWave::Pulse75>(float phase)
     {
         return (phase < 0.75f) ? hiPulse : loPulse;
     }
 
     template <>
-    inline float evaluateAtPhase<kSquare>(float phase)
+    inline float evaluateAtPhase<LFOWave::Square>(float phase)
     {
         return (phase < 0.5f) ? hiPulse : loPulse;
     }
 
     template <>
-    inline float evaluateAtPhase<kPulse25>(float phase)
+    inline float evaluateAtPhase<LFOWave::Pulse25>(float phase)
     {
         return (phase < 0.25f) ? hiPulse : loPulse;
     }
 
     template <>
-    inline float evaluateAtPhase<kPulse12_5>(float phase)
+    inline float evaluateAtPhase<LFOWave::Pulse12_5>(float phase)
     {
         return (phase < 0.125f) ? hiPulse : loPulse;
     }
 
     template <>
-    inline float evaluateAtPhase<kRamp>(float phase)
+    inline float evaluateAtPhase<LFOWave::Ramp>(float phase)
     {
         return 2 * phase - 1;
     }
 
     template <>
-    inline float evaluateAtPhase<kSaw>(float phase)
+    inline float evaluateAtPhase<LFOWave::Saw>(float phase)
     {
         return 1 - 2 * phase;
     }
 
 } // namespace lfo
-} // namespace fx
 } // namespace sfz

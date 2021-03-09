@@ -171,6 +171,30 @@ struct Voice::Impl
      */
     void updateLoopInformation() noexcept;
 
+    /**
+     * @brief Check whether the voice is released
+     *
+     * @return true
+     * @return false
+     */
+    bool released() const noexcept;
+
+    /**
+     * @brief Release the voice after a given delay
+     *
+     * @param delay
+     */
+    void release(int delay) noexcept;
+
+    /**
+     * @brief Off the voice (steal). This will respect the off mode of the region
+     *      and set the envelopes if necessary.
+     *
+     * @param delay
+     * @param fast whether to apply a fast release regardless of the off mode
+     */
+    void off(int delay, bool fast = false) noexcept;
+
     const NumericId<Voice> id_;
     StateListener* stateListener_ = nullptr;
 
@@ -192,6 +216,9 @@ struct Voice::Impl
     int sourcePosition_ { 0 };
     int initialDelay_ { 0 };
     int age_ { 0 };
+    uint32_t count_ { 1 };
+    int sampleSize_ { 0 };
+
     struct {
         int start { 0 };
         int end { 0 };
@@ -199,6 +226,7 @@ struct Voice::Impl
         int xfSize { 0 };
         int xfOutStart { 0 };
         int xfInStart { 0 };
+        uint32_t restarts { 0 };
     } loop_;
 
     FileDataHolder currentPromise_;
@@ -416,6 +444,7 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region->getDelay() * impl.sampleRate_);
     impl.baseFrequency_ = impl.resources_.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
+    impl.sampleSize_ = region->trueSampleEnd(impl.resources_.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
     impl.bendStepFactor_ = centsFactor(region->bendStep);
     impl.bendSmoother_.setSmoothing(region->bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region->getBendInCents(impl.resources_.midiState.getPitchBend())));
@@ -445,29 +474,39 @@ bool Voice::isFree() const noexcept
 void Voice::release(int delay) noexcept
 {
     Impl& impl = *impl_;
-    if (impl.state_ != State::playing)
+    impl.release(delay);
+}
+
+void Voice::Impl::release(int delay) noexcept
+{
+    if (state_ != State::playing)
         return;
 
-    if (!impl.region_->flexAmpEG) {
-        if (impl.egAmplitude_.getRemainingDelay() > delay)
-            impl.switchState(State::cleanMeUp);
+    if (!region_->flexAmpEG) {
+        if (egAmplitude_.getRemainingDelay() > delay)
+            switchState(State::cleanMeUp);
     }
     else {
-        if (impl.flexEGs_[*impl.region_->flexAmpEG]->getRemainingDelay() > static_cast<unsigned>(delay))
-            impl.switchState(State::cleanMeUp);
+        if (flexEGs_[*region_->flexAmpEG]->getRemainingDelay() > static_cast<unsigned>(delay))
+            switchState(State::cleanMeUp);
     }
 
-    impl.resources_.modMatrix.releaseVoice(impl.id_, impl.region_->getId(), delay);
+    resources_.modMatrix.releaseVoice(id_, region_->getId(), delay);
 }
 
 void Voice::off(int delay, bool fast) noexcept
 {
     Impl& impl = *impl_;
-    if (!impl.region_->flexAmpEG) {
-        if (impl.region_->offMode == OffMode::fast || fast) {
-            impl.egAmplitude_.setReleaseTime(Default::offTime);
-        } else if (impl.region_->offMode == OffMode::time) {
-            impl.egAmplitude_.setReleaseTime(impl.region_->offTime);
+    impl.off(delay, fast);
+}
+
+void Voice::Impl::off(int delay, bool fast) noexcept
+{
+    if (!region_->flexAmpEG) {
+        if (region_->offMode == OffMode::fast || fast) {
+            egAmplitude_.setReleaseTime(Default::offTime);
+        } else if (region_->offMode == OffMode::time) {
+            egAmplitude_.setReleaseTime(region_->offTime);
         }
     }
     else {
@@ -550,6 +589,9 @@ void Voice::setSampleRate(float sampleRate) noexcept
 
     for (WavetableOscillator& osc : impl.waveOscillators_)
         osc.init(sampleRate);
+
+    for (auto& eg : impl.flexEGs_)
+        eg->setSampleRate(sampleRate);
 
     for (auto& lfo : impl.lfos_)
         lfo->setSampleRate(sampleRate);
@@ -879,8 +921,13 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
     // calculate loop characteristics
     const auto loop = this->loop_;
-    const bool isLooping = region_->shouldLoop()
-        && (static_cast<size_t>(loop.end) < source.getNumFrames());
+
+    // Looping logic
+    const bool hasLoopSamples = static_cast<size_t>(loop.end) < source.getNumFrames();
+    const bool loopCountReached = region_->loopCount && loop_.restarts >= *region_->loopCount;
+    const bool loopContinuous = (region_->loopMode == LoopMode::loop_continuous);
+    const bool loopSustain = (region_->loopMode == LoopMode::loop_sustain) && !released();
+    const bool shouldLoop = hasLoopSamples && (loopSustain || loopContinuous) && !loopCountReached;
 
     /*
                loop start             loop end
@@ -902,13 +949,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     enum PartitionType { kPartitionNormal, kPartitionLoopXfade };
 
     SpanHolder<absl::Span<int>> partitionBuffers[2];
-    if (!isLooping) {
-        static const int starts[1] = { 0 };
-        static const int types[1] = { kPartitionNormal };
-        partitionStarts = absl::MakeSpan(const_cast<int*>(starts), 1);
-        partitionTypes = absl::MakeSpan(const_cast<int*>(types), 1);
-        numPartitions = 1;
-    } else {
+    if (shouldLoop) {
         for (auto& buf : partitionBuffers) {
             buf = resources_.bufferPool.getIndexBuffer(numSamples);
             if (!buf)
@@ -918,63 +959,85 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         partitionTypes = *partitionBuffers[1];
         // Note: partitions will be alternance of Normal/Xfade
         //       computed along with index processing below
+    } else {
+        static const int starts[1] = { 0 };
+        static const int types[1] = { kPartitionNormal };
+        partitionStarts = absl::MakeSpan(const_cast<int*>(starts), 1);
+        partitionTypes = absl::MakeSpan(const_cast<int*>(types), 1);
+        numPartitions = 1;
     }
 
-    // index preprocessing for loops
-    if (isLooping) {
-        int oldIndex {};
-        int oldPartitionType {};
-        for (unsigned i = 0; i < numSamples; ++i) {
-            int index = (*indices)[i];
-
-            // wrap indices post loop-entry around the loop segment
-            int wrappedIndex = (index <= loop.end) ? index :
-                (loop.start + (index - loop.start) % loop.size);
-            (*indices)[i] = wrappedIndex;
-
-            // identify the partition this index is in
-            bool xfading = wrappedIndex >= loop.start && wrappedIndex >= loop.xfOutStart;
-            int partitionType = xfading ? kPartitionLoopXfade : kPartitionNormal;
-            // if looping or entering a different type, start a new partition
-            bool start = i == 0 || wrappedIndex < oldIndex || partitionType != oldPartitionType;
-            if (start) {
-                partitionStarts[numPartitions] = i;
-                partitionTypes[numPartitions] = partitionType;
-                ++numPartitions;
-            }
-
-            oldIndex = wrappedIndex;
-            oldPartitionType = partitionType;
-        }
-    }
-    // index preprocessing for one-shots
-    else {
-        // cut short the voice at the instant of reaching end of sample
-        const auto sampleEnd = min(
+    const auto sampleEnd = min(
             int(region_->trueSampleEnd(resources_.filePool.getOversamplingFactor())),
             int(currentPromise_->information.end),
             int(source.getNumFrames()))
             - 1;
 
-        for (unsigned i = 0; i < numSamples; ++i) {
+    int blockRestarts { 0 };
+    int oldIndex {};
+    int oldPartitionType {};
+
+    const auto addPartitionIfNecessary = [&] (unsigned blockIndex, int wrappedIndex, bool wrapped) {
+        const bool xfading = wrappedIndex >= loop.start && wrappedIndex >= loop.xfOutStart;
+        const int partitionType = xfading ? kPartitionLoopXfade : kPartitionNormal;
+
+        // if looping or entering a different type, start a new partition
+        bool start = blockIndex == 0 || wrapped || partitionType != oldPartitionType;
+        if (start) {
+            partitionStarts[numPartitions] = blockIndex;
+            partitionTypes[numPartitions] = partitionType;
+            ++numPartitions;
+        }
+
+        oldIndex = wrappedIndex;
+        oldPartitionType = partitionType;
+    };
+
+    if (shouldLoop) {
+        unsigned i = 0;
+        while (i < numSamples) {
+            int wrappedIndex = (*indices)[i] - loop.size * blockRestarts;
+            if (wrappedIndex > loop.end) {
+                wrappedIndex -= loop.size;
+                blockRestarts += 1;
+                loop_.restarts += 1;
+            }
+            (*indices)[i] = wrappedIndex;
+            const bool wrapped = wrappedIndex < oldIndex;
+
+            // identify the partition this index is in
+            addPartitionIfNecessary(i, wrappedIndex, wrapped);
+            i++;
+
+            // Break if we reached the loop count
+            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount)
+                break;
+        }
+
+        while (i < numSamples) { // In case we released within the block, continue as if it were a one-shot
+            (*indices)[i] -= loop.size * blockRestarts;
             if ((*indices)[i] >= sampleEnd) {
-#ifndef NDEBUG
-                // Check for underflow
-                if (source.getNumFrames() - 1 < currentPromise_->information.end) {
-                    DBG("[sfizz] Underflow: source available samples "
-                        << source.getNumFrames() << "/"
-                        << currentPromise_->information.end
-                        << " for sample " << *region_->sampleId);
+                fill<int>(indices->subspan(i), sampleEnd);
+                fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
+                break;
+            }
+            i++;
+        }
+    } else { // One shots and loops that have released (for loop sustain) or ended (with loop counts)
+        for (unsigned i = 0; i < numSamples; ++i) {
+            (*indices)[i] -= sampleSize_ * blockRestarts;
+
+            if ((*indices)[i] >= sampleEnd) {
+                if (region_->sampleCount && count_ < *region_->sampleCount && !region_->shouldLoop()) {
+                    (*indices)[i] -= sampleSize_;
+                    blockRestarts += 1;
+                    count_ += 1;
+                    continue;
                 }
-#endif
-                if (!region_->flexAmpEG) {
-                    egAmplitude_.setReleaseTime(0.0f);
-                    egAmplitude_.startRelease(i);
-                }
-                else {
-                    // TODO(jpc): Flex AmpEG
-                    flexEGs_[*region_->flexAmpEG]->release(i);
-                }
+
+                if (!released())
+                    off(i, true);
+
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 1.0f);
                 break;
@@ -1392,6 +1455,14 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #endif
 }
 
+bool Voice::Impl::released() const noexcept
+{
+    if (!region_->flexAmpEG)
+        return egAmplitude_.isReleased();
+    else
+        return flexEGs_[*region_->flexAmpEG]->isReleased();
+}
+
 bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
 {
     Impl& impl = *impl_;
@@ -1416,6 +1487,7 @@ void Voice::reset() noexcept
     impl.currentPromise_.reset();
     impl.sourcePosition_ = 0;
     impl.age_ = 0;
+    impl.count_ = 1;
     impl.floatPositionOffset_ = 0.0f;
     impl.noteIsOff_ = false;
 
@@ -1440,6 +1512,7 @@ void Voice::Impl::resetLoopInformation() noexcept
     loop_.xfSize = 0;
     loop_.xfOutStart = 0;
     loop_.xfInStart = 0;
+    loop_.restarts = 0;
 }
 
 void Voice::Impl::updateLoopInformation() noexcept
@@ -1497,10 +1570,8 @@ bool Voice::releasedOrFree() const noexcept
     Impl& impl = *impl_;
     if (impl.state_ != State::playing)
         return true;
-    if (!impl.region_->flexAmpEG)
-        return impl.egAmplitude_.isReleased();
-    else
-        return impl.flexEGs_[*impl.region_->flexAmpEG]->isReleased();
+
+    return impl.released();
 }
 
 void Voice::setMaxFiltersPerVoice(size_t numFilters)

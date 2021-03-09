@@ -117,13 +117,28 @@ static constexpr char zenityPath[] = "/usr/bin/zenity";
 
 bool askQuestion(const char *text)
 {
-    char *argv[] = {
+    char* const kdialogArgs[] = {
+        const_cast<char *>(kdialogPath),
+        const_cast<char *>("--yesno"),
+        const_cast<char *>(text),
+        nullptr,
+    };
+
+    char* const zenityArgs[] = {
         const_cast<char *>(zenityPath),
         const_cast<char *>("--question"),
         const_cast<char *>("--text"),
         const_cast<char *>(text),
         nullptr,
     };
+
+    char *const *args;
+    if (isKdialogAvailable())
+        args = kdialogArgs;
+    else if (isZenityAvailable())
+        args = zenityArgs;
+    else
+        return false;
 
     std::vector<char *> newEnv = createForkEnviron();
     char **envp = newEnv.data();
@@ -133,7 +148,7 @@ bool askQuestion(const char *text)
         return false;
 
     if (forkPid == 0) {
-        execve(argv[0], argv, envp);
+        execve(args[0], args, envp);
         _exit(1);
     }
 
