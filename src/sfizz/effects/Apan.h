@@ -44,7 +44,7 @@ namespace fx {
 
     private:
         void computeLfos(float* left, float* right, unsigned nframes);
-        template <int Wave> void computeLfos(float* left, float* right, unsigned nframes);
+        template <LFOWave Wave> void computeLfos(float* left, float* right, unsigned nframes);
 
     private:
         float _samplePeriod { 0.0f };
@@ -55,7 +55,7 @@ namespace fx {
         float _dry { Default::apanLevel };
         float _wet { Default::apanLevel };
         float _depth { Default::apanLevel };
-        int _lfoWave { Default::apanWaveform };
+        LFOWave _lfoWave { Default::apanWaveform };
         float _lfoFrequency { Default::apanFrequency };
         float _lfoPhaseOffset { Default::apanPhase };
 
