@@ -112,6 +112,7 @@ static std::vector<char *> createForkEnviron()
     return newEnv;
 }
 
+static constexpr char kdialogPath[] = "/usr/bin/kdialog";
 static constexpr char zenityPath[] = "/usr/bin/zenity";
 
 bool askQuestion(const char *text)
@@ -146,6 +147,11 @@ bool askQuestion(const char *text)
         return false;
 
     return WEXITSTATUS(wstatus) == 0;
+}
+
+bool isKdialogAvailable()
+{
+    return access(kdialogPath, X_OK) == 0;
 }
 
 bool isZenityAvailable()

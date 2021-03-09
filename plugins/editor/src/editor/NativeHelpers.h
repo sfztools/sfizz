@@ -11,5 +11,6 @@ bool openDirectoryInExplorer(const char *filename);
 bool askQuestion(const char *text);
 
 #if !defined(_WIN32) && !defined(__APPLE__)
+bool isKdialogAvailable();
 bool isZenityAvailable();
 #endif

@@ -870,7 +870,7 @@ void Editor::Impl::createFrameContents()
         mainView->setBackgroundColor(frameBackground);
 
 #if LINUX
-        if (!isZenityAvailable()) {
+        if (!isZenityAvailable() && !isKdialogAvailable()) {
             CRect bounds = mainView->getViewSize();
 
             CViewContainer* box = new CViewContainer(bounds);
@@ -889,8 +889,8 @@ void Editor::Impl::createFrameContents()
             textLabel->setFont(font);
             textLabel->setLineLayout(CMultiLineTextLabel::LineLayout::wrap);
             textLabel->setText(
-                "The required program \"zenity\" is missing.\n"
-                "Install this software package first, and restart sfizz.");
+                "Neither program \"zenity\" or \"kdialog\" is present.\n"
+                "Install one of these software packages first, and restart sfizz.");
         }
 #endif
 
