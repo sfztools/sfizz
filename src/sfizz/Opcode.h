@@ -82,6 +82,12 @@ struct Opcode {
      */
     Opcode cleanUp(OpcodeScope scope) const;
 
+    /**
+     * @brief Calculate a letter-only name, replacing any digit sequence with
+     * in the opcode name with a single ampersand character.
+     */
+    std::string getLetterOnlyName() const;
+
     /*
      * @brief Get the derived opcode name to convert it to another category.
      *

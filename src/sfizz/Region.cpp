@@ -14,6 +14,7 @@
 #include "modulations/ModId.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/match.h"
 #include "absl/algorithm/container.h"
 #include <random>
 #include <cassert>
@@ -45,32 +46,18 @@ sfz::Region::Region(int regionNumber, const MidiState& midiState, absl::string_v
     amplitudeEG.release = Default::egRelease;
 }
 
+// Helper for ccN processing
+#define case_any_ccN(x)        \
+    case hash(x "_oncc&"):     \
+    case hash(x "_curvecc&"):  \
+    case hash(x "_stepcc&"):   \
+    case hash(x "_smoothcc&")
+
 bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
 {
     const Opcode opcode = rawOpcode.cleanUp(kOpcodeScopeRegion);
 
     switch (opcode.lettersOnlyHash) {
-    // Helper for ccN processing
-    #define case_any_ccN(x)        \
-        case hash(x "_oncc&"):     \
-        case hash(x "_curvecc&"):  \
-        case hash(x "_stepcc&"):   \
-        case hash(x "_smoothcc&")
-
-    #define LFO_EG_filter_EQ_target(sourceKey, targetKey, spec)                                     \
-        {                                                                                           \
-            const auto number = opcode.parameters.front();                                          \
-            if (number == 0)                                                                        \
-                return false;                                                                       \
-                                                                                                    \
-            const auto index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;    \
-            if (!extendIfNecessary(filters, index + 1, Default::numFilters))                        \
-                return false;                                                                       \
-                                                                                                    \
-            const ModKey source = ModKey::createNXYZ(sourceKey, id, number - 1);                    \
-            const ModKey target = ModKey::createNXYZ(targetKey, id, index);                         \
-            getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);                  \
-        }
 
     // Sound source: sample playback
     case hash("sample"):
@@ -747,523 +734,6 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         bendSmooth = opcode.read(Default::smoothCC);
         break;
 
-    // Modulation: LFO
-    case hash("lfo&_freq"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            lfos[lfoNumber - 1].freq = opcode.read(Default::lfoFreq);
-        }
-        break;
-    case_any_ccN("lfo&_freq"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            processGenericCc(opcode, Default::lfoFreqMod, ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber - 1));
-        }
-        break;
-    case hash("lfo&_beats"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            lfos[lfoNumber - 1].beats = opcode.read(Default::lfoBeats);
-        }
-        break;
-    case_any_ccN("lfo&_beats"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            processGenericCc(opcode, Default::lfoBeatsMod, ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber - 1));
-        }
-        break;
-    case hash("lfo&_phase"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            lfos[lfoNumber - 1].phase0 = opcode.read(Default::lfoPhase);
-        }
-        break;
-    case hash("lfo&_delay"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            lfos[lfoNumber - 1].delay = opcode.read(Default::lfoDelay);
-        }
-        break;
-    case hash("lfo&_fade"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            lfos[lfoNumber - 1].fade = opcode.read(Default::lfoFade);
-        }
-        break;
-    case hash("lfo&_count"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            lfos[lfoNumber - 1].count = opcode.read(Default::lfoCount);
-        }
-        break;
-    case hash("lfo&_steps"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            if (!lfos[lfoNumber - 1].seq)
-                lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
-            lfos[lfoNumber - 1].seq->steps.resize(opcode.read(Default::lfoSteps));
-        }
-        break;
-    case hash("lfo&_step&"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            const auto stepNumber = opcode.parameters[1];
-            if (lfoNumber == 0 || stepNumber == 0 || stepNumber > config::maxLFOSteps)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            if (!lfos[lfoNumber - 1].seq)
-                lfos[lfoNumber - 1].seq = LFODescription::StepSequence();
-            if (!extendIfNecessary(lfos[lfoNumber - 1].seq->steps, stepNumber, Default::numLFOSteps))
-                return false;
-            lfos[lfoNumber - 1].seq->steps[stepNumber - 1] = opcode.read(Default::lfoStepX);
-        }
-        break;
-    case hash("lfo&_wave&"): // also lfo&_wave
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            const auto subNumber = opcode.parameters[1];
-            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                    return false;
-            lfos[lfoNumber - 1].sub[subNumber - 1].wave = opcode.read(Default::lfoWave);
-        }
-        break;
-    case hash("lfo&_offset&"): // also lfo&_offset
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            const auto subNumber = opcode.parameters[1];
-            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                return false;
-            lfos[lfoNumber - 1].sub[subNumber - 1].offset = opcode.read(Default::lfoOffset);
-        }
-        break;
-    case hash("lfo&_ratio&"): // also lfo&_ratio
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            const auto subNumber = opcode.parameters[1];
-            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                return false;
-            lfos[lfoNumber - 1].sub[subNumber - 1].ratio = opcode.read(Default::lfoRatio);
-        }
-        break;
-    case hash("lfo&_scale&"): // also lfo&_scale
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            const auto subNumber = opcode.parameters[1];
-            if (lfoNumber == 0 || subNumber == 0 || subNumber > config::maxLFOSubs)
-                return false;
-            if (!extendIfNecessary(lfos, lfoNumber, Default::numLFOs))
-                return false;
-            if (!extendIfNecessary(lfos[lfoNumber - 1].sub, subNumber, Default::numLFOSubs))
-                return false;
-            lfos[lfoNumber - 1].sub[subNumber - 1].scale = opcode.read(Default::lfoScale);
-        }
-        break;
-
-    // Modulation: LFO (targets)
-    case hash("lfo&_amplitude"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::amplitudeMod);
-        }
-        break;
-    case hash("lfo&_pan"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::panMod);
-        }
-        break;
-    case hash("lfo&_width"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::widthMod);
-        }
-        break;
-    case hash("lfo&_position"): // sfizz extension
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::positionMod);
-        }
-        break;
-    case hash("lfo&_pitch"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::pitchMod);
-        }
-        break;
-    case hash("lfo&_volume"):
-        {
-            const auto lfoNumber = opcode.parameters.front();
-            if (lfoNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::volumeMod);
-        }
-        break;
-    case hash("lfo&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
-        break;
-    case hash("lfo&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceMod);
-        break;
-    case hash("lfo&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainMod);
-        break;
-    case hash("lfo&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainMod);
-        break;
-    case hash("lfo&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyMod);
-        break;
-    case hash("lfo&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthMod);
-        break;
-
-    // Modulation: Flex EG (targets)
-    case hash("eg&_amplitude"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::amplitudeMod);
-        }
-        break;
-    case hash("eg&_pan"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::panMod);
-        }
-        break;
-    case hash("eg&_width"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::widthMod);
-        }
-        break;
-    case hash("eg&_position"): // sfizz extension
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::positionMod);
-        }
-        break;
-    case hash("eg&_pitch"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::pitchMod);
-        }
-        break;
-    case hash("eg&_volume"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber - 1);
-            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::volumeMod);
-        }
-        break;
-    case hash("eg&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);
-        break;
-    case hash("eg&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceMod);
-        break;
-    case hash("eg&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainMod);
-        break;
-    case hash("eg&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainMod);
-        break;
-    case hash("eg&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyMod);
-        break;
-    case hash("eg&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthMod);
-        break;
-
-    case hash("eg&_ampeg"):
-    {
-        const auto egNumber = opcode.parameters.front();
-        if (egNumber == 0)
-            return false;
-        if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
-            return false;
-        auto ampeg = opcode.read(Default::flexEGAmpeg);
-        FlexEGDescription& desc = flexEGs[egNumber - 1];
-        if (desc.ampeg != ampeg) {
-            desc.ampeg = ampeg;
-            flexAmpEG = absl::nullopt;
-            for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
-                if (flexEGs[i].ampeg)
-                    flexAmpEG = static_cast<uint8_t>(i);
-            }
-        }
-        break;
-    }
-
-    // Amplitude Envelope
-    case hash("ampeg_attack"):
-    case hash("ampeg_decay"):
-    case hash("ampeg_delay"):
-    case hash("ampeg_hold"):
-    case hash("ampeg_release"):
-    case hash("ampeg_start"):
-    case hash("ampeg_sustain"):
-    case hash("ampeg_veltoattack"): // also ampeg_vel2attack
-    case hash("ampeg_veltodecay"): // also ampeg_vel2decay
-    case hash("ampeg_veltodelay"): // also ampeg_vel2delay
-    case hash("ampeg_veltohold"): // also ampeg_vel2hold
-    case hash("ampeg_veltorelease"): // also ampeg_vel2release
-    case hash("ampeg_veltosustain"): // also ampeg_vel2sustain
-    case hash("ampeg_attack_oncc&"): // also ampeg_attackcc&
-    case hash("ampeg_decay_oncc&"): // also ampeg_decaycc&
-    case hash("ampeg_delay_oncc&"): // also ampeg_delaycc&
-    case hash("ampeg_hold_oncc&"): // also ampeg_holdcc&
-    case hash("ampeg_release_oncc&"): // also ampeg_releasecc&
-    case hash("ampeg_start_oncc&"): // also ampeg_startcc&
-    case hash("ampeg_sustain_oncc&"): // also ampeg_sustaincc&
-        parseEGOpcode(opcode, amplitudeEG);
-        break;
-
-    case hash("pitcheg_attack"):
-    case hash("pitcheg_decay"):
-    case hash("pitcheg_delay"):
-    case hash("pitcheg_hold"):
-    case hash("pitcheg_release"):
-    case hash("pitcheg_start"):
-    case hash("pitcheg_sustain"):
-    case hash("pitcheg_veltoattack"): // also pitcheg_vel2attack
-    case hash("pitcheg_veltodecay"): // also pitcheg_vel2decay
-    case hash("pitcheg_veltodelay"): // also pitcheg_vel2delay
-    case hash("pitcheg_veltohold"): // also pitcheg_vel2hold
-    case hash("pitcheg_veltorelease"): // also pitcheg_vel2release
-    case hash("pitcheg_veltosustain"): // also pitcheg_vel2sustain
-    case hash("pitcheg_attack_oncc&"): // also pitcheg_attackcc&
-    case hash("pitcheg_decay_oncc&"): // also pitcheg_decaycc&
-    case hash("pitcheg_delay_oncc&"): // also pitcheg_delaycc&
-    case hash("pitcheg_hold_oncc&"): // also pitcheg_holdcc&
-    case hash("pitcheg_release_oncc&"): // also pitcheg_releasecc&
-    case hash("pitcheg_start_oncc&"): // also pitcheg_startcc&
-    case hash("pitcheg_sustain_oncc&"): // also pitcheg_sustaincc&
-        if (parseEGOpcode(opcode, pitchEG))
-            getOrCreateConnection(
-                ModKey::createNXYZ(ModId::PitchEG, id),
-                ModKey::createNXYZ(ModId::Pitch, id));
-        break;
-
-    case hash("fileg_attack"):
-    case hash("fileg_decay"):
-    case hash("fileg_delay"):
-    case hash("fileg_hold"):
-    case hash("fileg_release"):
-    case hash("fileg_start"):
-    case hash("fileg_sustain"):
-    case hash("fileg_veltoattack"): // also fileg_vel2attack
-    case hash("fileg_veltodecay"): // also fileg_vel2decay
-    case hash("fileg_veltodelay"): // also fileg_vel2delay
-    case hash("fileg_veltohold"): // also fileg_vel2hold
-    case hash("fileg_veltorelease"): // also fileg_vel2release
-    case hash("fileg_veltosustain"): // also fileg_vel2sustain
-    case hash("fileg_attack_oncc&"): // also fileg_attackcc&
-    case hash("fileg_decay_oncc&"): // also fileg_decaycc&
-    case hash("fileg_delay_oncc&"): // also fileg_delaycc&
-    case hash("fileg_hold_oncc&"): // also fileg_holdcc&
-    case hash("fileg_release_oncc&"): // also fileg_releasecc&
-    case hash("fileg_start_oncc&"): // also fileg_startcc&
-    case hash("fileg_sustain_oncc&"): // also fileg_sustaincc&
-        if (parseEGOpcode(opcode, filterEG))
-            getOrCreateConnection(
-                ModKey::createNXYZ(ModId::FilEG, id),
-                ModKey::createNXYZ(ModId::FilCutoff, id));
-        break;
-
-    case hash("pitcheg_depth"):
-        getOrCreateConnection(
-            ModKey::createNXYZ(ModId::PitchEG, id),
-            ModKey::createNXYZ(ModId::Pitch, id)).sourceDepth = opcode.read(Default::egDepth);
-        break;
-    case hash("fileg_depth"):
-        getOrCreateConnection(
-            ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = opcode.read(Default::egDepth);
-        break;
-
-    case hash("pitcheg_veltodepth"): // also pitcheg_vel2depth
-        getOrCreateConnection(
-            ModKey::createNXYZ(ModId::PitchEG, id),
-            ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = opcode.read(Default::egVel2Depth);
-        break;
-    case hash("fileg_veltodepth"): // also fileg_vel2depth
-        getOrCreateConnection(
-            ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = opcode.read(Default::egVel2Depth);
-        break;
-
-    // Flex envelopes
-    case hash("eg&_dynamic"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
-                return false;
-            auto& eg = flexEGs[egNumber - 1];
-            eg.dynamic = opcode.read(Default::flexEGDynamic);
-        }
-        break;
-    case hash("eg&_sustain"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
-                return false;
-            auto& eg = flexEGs[egNumber - 1];
-            eg.sustain = opcode.read(Default::flexEGSustain);
-        }
-        break;
-    case hash("eg&_time&"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
-                return false;
-            auto& eg = flexEGs[egNumber - 1];
-            const auto pointNumber = opcode.parameters[1];
-            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
-                return false;
-            eg.points[pointNumber].time = opcode.read(Default::flexEGPointTime);
-        }
-        break;
-    case hash("eg&_level&"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
-                return false;
-            auto& eg = flexEGs[egNumber - 1];
-            const auto pointNumber = opcode.parameters[1];
-            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
-                return false;
-            eg.points[pointNumber].level = opcode.read(Default::flexEGPointLevel);
-        }
-        break;
-    case hash("eg&_shape&"):
-        {
-            const auto egNumber = opcode.parameters.front();
-            if (egNumber == 0)
-                return false;
-            if (!extendIfNecessary(flexEGs, egNumber, Default::numFlexEGs))
-                return false;
-            auto& eg = flexEGs[egNumber - 1];
-            const auto pointNumber = opcode.parameters[1];
-            if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
-                return false;
-            eg.points[pointNumber].setShape(opcode.read(Default::flexEGPointShape));
-        }
-        break;
-
     case hash("effect&"):
     {
         const auto effectNumber = opcode.parameters.back();
@@ -1284,11 +754,49 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("ampeg_depth"):
     case hash("ampeg_veltodepth"): // also ampeg_vel2depth
         break;
-    default:
-        return false;
 
-    #undef case_any_ccN
-    #undef LFO_EG_filter_EQ_target
+    default: {
+        // Amplitude Envelope
+        if (absl::StartsWith(opcode.name, "ampeg_")) {
+            if (parseEGOpcode(opcode, amplitudeEG))
+                return true;
+        }
+        // Pitch Envelope
+        if (absl::StartsWith(opcode.name, "pitcheg_")) {
+            if (parseEGOpcode(opcode, pitchEG)) {
+                getOrCreateConnection(
+                    ModKey::createNXYZ(ModId::PitchEG, id),
+                    ModKey::createNXYZ(ModId::Pitch, id));
+                return true;
+            }
+        }
+        // Filter Envelope
+        if (absl::StartsWith(opcode.name, "fileg_")) {
+            if (parseEGOpcode(opcode, filterEG)) {
+                getOrCreateConnection(
+                    ModKey::createNXYZ(ModId::FilEG, id),
+                    ModKey::createNXYZ(ModId::FilCutoff, id));
+                return true;
+            }
+        }
+
+        //
+        const std::string letterOnlyName = opcode.getLetterOnlyName();
+
+        // Modulation: LFO
+        if (absl::StartsWith(letterOnlyName, "lfo&_")) {
+            if (parseLFOOpcodeV2(opcode))
+                return true;
+        }
+        // Modulation: Flex EG
+        if (absl::StartsWith(letterOnlyName, "eg&_")) {
+            if (parseEGOpcodeV2(opcode))
+                return true;
+        }
+
+        return false;
+    }
+
     }
 
     return true;
@@ -1390,6 +898,29 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.ccSustain[opcode.parameters.back()] = opcode.read(Default::egPercentMod);
 
         break;
+
+    case hash("pitcheg_depth"):
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::PitchEG, id),
+            ModKey::createNXYZ(ModId::Pitch, id)).sourceDepth = opcode.read(Default::egDepth);
+        break;
+    case hash("fileg_depth"):
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::FilEG, id),
+            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = opcode.read(Default::egDepth);
+        break;
+
+    case hash("pitcheg_veltodepth"): // also pitcheg_vel2depth
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::PitchEG, id),
+            ModKey::createNXYZ(ModId::Pitch, id)).velToDepth = opcode.read(Default::egVel2Depth);
+        break;
+    case hash("fileg_veltodepth"): // also fileg_vel2depth
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::FilEG, id),
+            ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = opcode.read(Default::egVel2Depth);
+        break;
+
     default:
         return false;
     }
@@ -1410,6 +941,333 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, absl::optional<EGDescripti
         eg = absl::nullopt;
 
     return parsed;
+}
+
+bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
+{
+    const unsigned lfoNumber1Based = opcode.parameters.front();
+
+    if (lfoNumber1Based <= 0)
+        return false;
+    if (!extendIfNecessary(lfos, lfoNumber1Based, Default::numLFOs))
+        return false;
+
+    const unsigned lfoNumber = lfoNumber1Based - 1;
+    LFODescription& lfo = lfos[lfoNumber];
+
+    //
+    auto getOrCreateLFOStep = [&opcode, &lfo]() -> float* {
+        const unsigned stepNumber1Based = opcode.parameters[1];
+        if (stepNumber1Based <= 0 || stepNumber1Based > config::maxLFOSteps)
+            return nullptr;
+        if (!lfo.seq)
+            lfo.seq = LFODescription::StepSequence();
+        if (!extendIfNecessary(lfo.seq->steps, stepNumber1Based, Default::numLFOSteps))
+            return nullptr;
+        return &lfo.seq->steps[stepNumber1Based - 1];
+    };
+    auto getOrCreateLFOSub = [&opcode, &lfo]() -> LFODescription::Sub* {
+        const unsigned subNumber1Based = opcode.parameters[1];
+        if (subNumber1Based <= 0 || subNumber1Based > config::maxLFOSubs)
+            return nullptr;
+        if (!extendIfNecessary(lfo.sub, subNumber1Based, Default::numLFOSubs))
+            return nullptr;
+        return &lfo.sub[subNumber1Based - 1];
+    };
+    auto LFO_EG_filter_EQ_target = [this, &opcode, lfoNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
+        const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
+        if (!extendIfNecessary(filters, index + 1, Default::numFilters))
+            return false;
+        const ModKey source = ModKey::createNXYZ(sourceId, id, lfoNumber);
+        const ModKey target = ModKey::createNXYZ(targetId, id, index);
+        getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
+        return true;
+    };
+
+    //
+    switch (opcode.lettersOnlyHash) {
+
+    // Modulation: LFO
+    case hash("lfo&_freq"):
+        lfo.freq = opcode.read(Default::lfoFreq);
+        break;
+    case_any_ccN("lfo&_freq"):
+        processGenericCc(opcode, Default::lfoFreqMod, ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber));
+        break;
+    case hash("lfo&_beats"):
+        lfo.beats = opcode.read(Default::lfoBeats);
+        break;
+    case_any_ccN("lfo&_beats"):
+        processGenericCc(opcode, Default::lfoBeatsMod, ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber));
+        break;
+    case hash("lfo&_phase"):
+        lfo.phase0 = opcode.read(Default::lfoPhase);
+        break;
+    case hash("lfo&_delay"):
+        lfo.delay = opcode.read(Default::lfoDelay);
+        break;
+    case hash("lfo&_fade"):
+        lfo.fade = opcode.read(Default::lfoFade);
+        break;
+    case hash("lfo&_count"):
+        lfo.count = opcode.read(Default::lfoCount);
+        break;
+    case hash("lfo&_steps"):
+        if (!lfo.seq)
+            lfo.seq = LFODescription::StepSequence();
+        lfo.seq->steps.resize(opcode.read(Default::lfoSteps));
+        break;
+    case hash("lfo&_step&"):
+        if (float* step = getOrCreateLFOStep())
+            *step = opcode.read(Default::lfoStepX);
+        else
+            return false;
+        break;
+    case hash("lfo&_wave&"): // also lfo&_wave
+        if (LFODescription::Sub* sub = getOrCreateLFOSub())
+            sub->wave = opcode.read(Default::lfoWave);
+        else
+            return false;
+        break;
+    case hash("lfo&_offset&"): // also lfo&_offset
+        if (LFODescription::Sub* sub = getOrCreateLFOSub())
+            sub->offset = opcode.read(Default::lfoOffset);
+        else
+            return false;
+        break;
+    case hash("lfo&_ratio&"): // also lfo&_ratio
+        if (LFODescription::Sub* sub = getOrCreateLFOSub())
+            sub->ratio = opcode.read(Default::lfoRatio);
+        else
+            return false;
+        break;
+    case hash("lfo&_scale&"): // also lfo&_scale
+        if (LFODescription::Sub* sub = getOrCreateLFOSub())
+            sub->scale = opcode.read(Default::lfoScale);
+        else
+            return false;
+        break;
+
+    // Modulation: LFO (targets)
+    case hash("lfo&_amplitude"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::amplitudeMod);
+        }
+        break;
+    case hash("lfo&_pan"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::panMod);
+        }
+        break;
+    case hash("lfo&_width"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::widthMod);
+        }
+        break;
+    case hash("lfo&_position"): // sfizz extension
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::positionMod);
+        }
+        break;
+    case hash("lfo&_pitch"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::pitchMod);
+        }
+        break;
+    case hash("lfo&_volume"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::volumeMod);
+        }
+        break;
+
+    case hash("lfo&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
+        break;
+    case hash("lfo&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceMod);
+        break;
+    case hash("lfo&_fil&gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainMod);
+        break;
+    case hash("lfo&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainMod);
+        break;
+    case hash("lfo&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyMod);
+        break;
+    case hash("lfo&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthMod);
+        break;
+
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
+{
+    const unsigned egNumber1Based = opcode.parameters.front();
+    if (egNumber1Based <= 0)
+        return false;
+    if (!extendIfNecessary(flexEGs, egNumber1Based, Default::numFlexEGs))
+        return false;
+
+    const unsigned egNumber = egNumber1Based - 1;
+    FlexEGDescription& eg = flexEGs[egNumber];
+
+    //
+    auto getOrCreateEGPoint = [&opcode, &eg]() -> FlexEGPoint* {
+        const auto pointNumber = opcode.parameters[1];
+        if (!extendIfNecessary(eg.points, pointNumber + 1, Default::numFlexEGPoints))
+            return nullptr;
+        return &eg.points[pointNumber];
+    };
+    auto LFO_EG_filter_EQ_target = [this, &opcode, egNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
+        const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
+        if (!extendIfNecessary(filters, index + 1, Default::numFilters))
+            return false;
+        const ModKey source = ModKey::createNXYZ(sourceId, id, egNumber);
+        const ModKey target = ModKey::createNXYZ(targetId, id, index);
+        getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
+        return true;
+    };
+
+    //
+    switch (opcode.lettersOnlyHash) {
+
+    // Flex envelopes
+    case hash("eg&_dynamic"):
+        eg.dynamic = opcode.read(Default::flexEGDynamic);
+        break;
+    case hash("eg&_sustain"):
+        eg.sustain = opcode.read(Default::flexEGSustain);
+        break;
+    case hash("eg&_time&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint())
+            point->time = opcode.read(Default::flexEGPointTime);
+        else
+            return false;
+        break;
+    case hash("eg&_level&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint())
+            point->level = opcode.read(Default::flexEGPointLevel);
+        else
+            return false;
+        break;
+    case hash("eg&_shape&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint())
+            point->setShape(opcode.read(Default::flexEGPointShape));
+        else
+            return false;
+        break;
+
+    // Modulation: Flex EG (targets)
+    case hash("eg&_amplitude"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::amplitudeMod);
+        }
+        break;
+    case hash("eg&_pan"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::panMod);
+        }
+        break;
+    case hash("eg&_width"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::widthMod);
+        }
+        break;
+    case hash("eg&_position"): // sfizz extension
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::positionMod);
+        }
+        break;
+    case hash("eg&_pitch"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::pitchMod);
+        }
+        break;
+    case hash("eg&_volume"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+            getOrCreateConnection(source, target).sourceDepth =
+                opcode.read(Default::volumeMod);
+        }
+        break;
+    case hash("eg&_cutoff&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);
+        break;
+    case hash("eg&_resonance&"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceMod);
+        break;
+    case hash("eg&_fil&gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainMod);
+        break;
+    case hash("eg&_eq&gain"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainMod);
+        break;
+    case hash("eg&_eq&freq"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyMod);
+        break;
+    case hash("eg&_eq&bw"):
+        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthMod);
+        break;
+
+    case hash("eg&_ampeg"):
+    {
+        auto ampeg = opcode.read(Default::flexEGAmpeg);
+        if (eg.ampeg != ampeg) {
+            eg.ampeg = ampeg;
+            flexAmpEG = absl::nullopt;
+            for (size_t i = 0, n = flexEGs.size(); i < n && !flexAmpEG; ++i) {
+                if (flexEGs[i].ampeg)
+                    flexAmpEG = static_cast<uint8_t>(i);
+            }
+        }
+        break;
+    }
+
+    default:
+        return false;
+    }
+
+    return true;
 }
 
 bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec, const ModKey& target)
