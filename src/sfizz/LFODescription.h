@@ -6,6 +6,7 @@
 
 #pragma once
 #include "Defaults.h"
+#include "modulations/ModKey.h"
 #include <absl/types/optional.h>
 #include <vector>
 
@@ -32,6 +33,10 @@ struct LFODescription {
     };
     absl::optional<StepSequence> seq;
     std::vector<Sub> sub;
+
+    // modulations
+    ModKey beatsKey;
+    ModKey freqKey;
 };
 
 } // namespace sfz

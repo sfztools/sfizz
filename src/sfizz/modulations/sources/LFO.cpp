@@ -59,7 +59,7 @@ void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl
     }
 
     LFO* lfo = voice->getLFO(lfoIndex);
-    lfo->process(buffer, region->getId());
+    lfo->process(buffer);
 }
 
 } // namespace sfz

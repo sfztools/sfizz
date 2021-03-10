@@ -956,6 +956,10 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
     LFODescription& lfo = lfos[lfoNumber];
 
     //
+    lfo.beatsKey = ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber);
+    lfo.freqKey = ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber);
+
+    //
     auto getOrCreateLFOStep = [&opcode, &lfo]() -> float* {
         const unsigned stepNumber1Based = opcode.parameters[1];
         if (stepNumber1Based <= 0 || stepNumber1Based > config::maxLFOSteps)
