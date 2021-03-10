@@ -1067,7 +1067,7 @@ void Editor::Impl::chooseSfzFile()
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
 
     fs->setTitle("Load SFZ file");
-    fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+    fs->addFileExtension(CFileExtension("SFZ", "sfz"));
 
     // also add extensions of importable files
     fs->addFileExtension(CFileExtension("WAV", "wav"));
@@ -1110,7 +1110,7 @@ void Editor::Impl::createNewSfzFile()
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_, CNewFileSelector::kSelectSaveFile));
 
     fs->setTitle("Create SFZ file");
-    fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+    fs->addFileExtension(CFileExtension("SFZ", "sfz"));
 
     std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
     if (!initialDir.empty())
@@ -1202,7 +1202,7 @@ void Editor::Impl::chooseScalaFile()
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
 
     fs->setTitle("Load Scala file");
-    fs->setDefaultExtension(CFileExtension("SCL", "scl"));
+    fs->addFileExtension(CFileExtension("SCL", "scl"));
 
     std::string initialDir = getFileChooserInitialDir(currentScalaFile_);
     if (!initialDir.empty())
