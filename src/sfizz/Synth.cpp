@@ -551,6 +551,9 @@ void Synth::Impl::finalizeSfzLoad()
     size_t maxFlexEGs { 0 };
     bool havePitchEG { false };
     bool haveFilterEG { false };
+    bool haveAmplitudeLFO { false };
+    bool havePitchLFO { false };
+    bool haveFilterLFO { false };
 
     FlexEGs::clearUnusedCurves();
 
@@ -683,6 +686,9 @@ void Synth::Impl::finalizeSfzLoad()
         maxFlexEGs = max(maxFlexEGs, region->flexEGs.size());
         havePitchEG = havePitchEG || region->pitchEG != absl::nullopt;
         haveFilterEG = haveFilterEG || region->filterEG != absl::nullopt;
+        haveAmplitudeLFO = haveAmplitudeLFO || region->amplitudeLFO != absl::nullopt;
+        havePitchLFO = havePitchLFO || region->pitchLFO != absl::nullopt;
+        haveFilterLFO = haveFilterLFO || region->filterLFO != absl::nullopt;
 
         ++currentRegionIndex;
     }
@@ -731,6 +737,9 @@ void Synth::Impl::finalizeSfzLoad()
     settingsPerVoice_.maxFlexEGs = maxFlexEGs;
     settingsPerVoice_.havePitchEG = havePitchEG;
     settingsPerVoice_.haveFilterEG = haveFilterEG;
+    settingsPerVoice_.haveAmplitudeLFO = haveAmplitudeLFO;
+    settingsPerVoice_.havePitchLFO = havePitchLFO;
+    settingsPerVoice_.haveFilterLFO = haveFilterLFO;
 
     applySettingsPerVoice();
 
@@ -1579,6 +1588,9 @@ void Synth::Impl::applySettingsPerVoice()
         voice.setMaxFlexEGsPerVoice(settingsPerVoice_.maxFlexEGs);
         voice.setPitchEGEnabledPerVoice(settingsPerVoice_.havePitchEG);
         voice.setFilterEGEnabledPerVoice(settingsPerVoice_.haveFilterEG);
+        voice.setAmplitudeLFOEnabledPerVoice(settingsPerVoice_.haveAmplitudeLFO);
+        voice.setPitchLFOEnabledPerVoice(settingsPerVoice_.havePitchLFO);
+        voice.setFilterLFOEnabledPerVoice(settingsPerVoice_.haveFilterLFO);
     }
 }
 
@@ -1605,6 +1617,9 @@ void Synth::Impl::setupModMatrix()
             case ModId::Controller:
                 gen = genController_.get();
                 break;
+            case ModId::AmpLFO:
+            case ModId::PitchLFO:
+            case ModId::FilLFO:
             case ModId::LFO:
                 gen = genLFO_.get();
                 break;

@@ -780,6 +780,34 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             }
         }
 
+        // Amplitude LFO
+        if (absl::StartsWith(opcode.name, "amplfo_")) {
+            if (parseLFOOpcode(opcode, amplitudeLFO)) {
+                getOrCreateConnection(
+                    ModKey::createNXYZ(ModId::AmpLFO, id),
+                    ModKey::createNXYZ(ModId::Volume, id));
+                return true;
+            }
+        }
+        // Pitch LFO
+        if (absl::StartsWith(opcode.name, "pitchlfo_")) {
+            if (parseLFOOpcode(opcode, pitchLFO)) {
+                getOrCreateConnection(
+                    ModKey::createNXYZ(ModId::PitchLFO, id),
+                    ModKey::createNXYZ(ModId::Pitch, id));
+                return true;
+            }
+        }
+        // Filter LFO
+        if (absl::StartsWith(opcode.name, "fillfo_")) {
+            if (parseLFOOpcode(opcode, filterLFO)) {
+                getOrCreateConnection(
+                    ModKey::createNXYZ(ModId::FilLFO, id),
+                    ModKey::createNXYZ(ModId::FilCutoff, id));
+                return true;
+            }
+        }
+
         //
         const std::string letterOnlyName = opcode.getLetterOnlyName();
 
@@ -800,6 +828,109 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     }
 
     return true;
+}
+
+bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
+{
+    #define case_any_lfo(param)                     \
+        case hash("amplfo_" param):                 \
+        case hash("pitchlfo_" param):               \
+        case hash("fillfo_" param)                  \
+
+    #define case_any_lfo_any_ccN(param)             \
+        case_any_ccN("amplfo_" param):              \
+        case_any_ccN("pitchlfo_" param):            \
+        case_any_ccN("fillfo_" param)               \
+
+    //
+    ModKey sourceKey;
+    ModKey targetKey;
+    OpcodeSpec<float> depthSpec;
+
+    if (absl::StartsWith(opcode.name, "amplfo_")) {
+        sourceKey = ModKey::createNXYZ(ModId::AmpLFO, id);
+        targetKey = ModKey::createNXYZ(ModId::Volume, id);
+        lfo.freqKey = ModKey::createNXYZ(ModId::AmpLFOFrequency, id);
+        depthSpec = Default::ampLFODepth;
+    }
+    else if (absl::StartsWith(opcode.name, "pitchlfo_")) {
+        sourceKey = ModKey::createNXYZ(ModId::PitchLFO, id);
+        targetKey = ModKey::createNXYZ(ModId::Pitch, id);
+        lfo.freqKey = ModKey::createNXYZ(ModId::PitchLFOFrequency, id);
+        depthSpec = Default::pitchLFODepth;
+    }
+    else if (absl::StartsWith(opcode.name, "fillfo_")) {
+        sourceKey = ModKey::createNXYZ(ModId::FilLFO, id);
+        targetKey = ModKey::createNXYZ(ModId::FilCutoff, id);
+        lfo.freqKey = ModKey::createNXYZ(ModId::FilLFOFrequency, id);
+        depthSpec = Default::filLFODepth;
+    }
+    else {
+        ASSERTFALSE;
+        return false;
+    }
+
+    //
+    switch (opcode.lettersOnlyHash) {
+
+    case_any_lfo("delay"):
+        lfo.delay = opcode.read(Default::lfoDelay);
+        break;
+    case_any_lfo("depth"):
+        getOrCreateConnection(sourceKey, targetKey).sourceDepth = opcode.read(depthSpec);
+        break;
+    case_any_lfo_any_ccN("depth"): // also depthcc&
+        // TODO(jpc) LFO v1
+        break;
+    case_any_lfo("depthchanaft"):
+        // TODO(jpc) LFO v1
+        break;
+    case_any_lfo("depthpolyaft"):
+        // TODO(jpc) LFO v1
+        break;
+    case_any_lfo("fade"):
+        lfo.fade = opcode.read(Default::lfoFade);
+        break;
+    case_any_lfo("freq"):
+        lfo.freq = opcode.read(Default::lfoFreq);
+        break;
+    case_any_lfo_any_ccN("freq"): // also freqcc&
+        processGenericCc(opcode, Default::lfoFreqMod, lfo.freqKey);
+        break;
+    case_any_lfo("freqchanaft"):
+        // TODO(jpc) LFO v1
+        break;
+    case_any_lfo("freqpolyaft"):
+        // TODO(jpc) LFO v1
+        break;
+
+    // sfizz extension
+    case_any_lfo("wave"):
+        lfo.sub[0].wave = opcode.read(Default::lfoWave);
+        break;
+
+    default:
+        return false;
+    }
+
+    #undef case_any_lfo
+
+    return true;
+}
+
+bool sfz::Region::parseLFOOpcode(const Opcode& opcode, absl::optional<LFODescription>& lfo)
+{
+    bool create = lfo == absl::nullopt;
+    if (create) {
+        lfo = LFODescription();
+        lfo->sub[0].wave = LFOWave::Sine; // the LFO v1 default
+    }
+
+    bool parsed = parseLFOOpcode(opcode, *lfo);
+    if (!parsed && create)
+        lfo = absl::nullopt;
+
+    return parsed;
 }
 
 bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)

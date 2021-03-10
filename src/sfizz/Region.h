@@ -247,6 +247,26 @@ struct Region {
      */
     bool parseOpcode(const Opcode& opcode);
     /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
+     * amplfo, pitchlfo, fillfo.
+     *
+     * @param opcode
+     * @param lfo
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcode(const Opcode& opcode, LFODescription& lfo);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
+     * amplfo, pitchlfo, fillfo.
+     *
+     * @param opcode
+     * @param lfo
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcode(const Opcode& opcode, absl::optional<LFODescription>& lfo);
+    /**
      * @brief Parse a opcode which is specific to a particular SFZv1 EG:
      * ampeg, pitcheg, fileg.
      *
@@ -457,6 +477,9 @@ struct Region {
 
     // LFOs
     std::vector<LFODescription> lfos;
+    absl::optional<LFODescription> amplitudeLFO;
+    absl::optional<LFODescription> pitchLFO;
+    absl::optional<LFODescription> filterLFO;
 
     bool hasStereoSample { false };
 

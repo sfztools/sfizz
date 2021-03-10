@@ -283,6 +283,9 @@ struct Synth::Impl final: public Parser::Listener {
         size_t maxFlexEGs { 0 };
         bool havePitchEG { false };
         bool haveFilterEG { false };
+        bool haveAmplitudeLFO { false };
+        bool havePitchLFO { false };
+        bool haveFilterLFO { false };
     } settingsPerVoice_;
 
     Duration dispatchDuration_ { 0 };

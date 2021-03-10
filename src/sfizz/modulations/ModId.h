@@ -53,6 +53,9 @@ enum class ModId : int {
     EqBandwidth,
     OscillatorDetune,
     OscillatorModDepth,
+    AmpLFOFrequency,
+    PitchLFOFrequency,
+    FilLFOFrequency,
     LFOFrequency,
     LFOBeats,
 
