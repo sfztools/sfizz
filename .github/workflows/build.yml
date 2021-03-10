@@ -161,6 +161,11 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+    - name: Fix MinGW headers
+      shell: bash
+      run: |
+        cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
+            /usr/i686-w64-mingw32/include/dwrite_3.h
     - name: Fix VST sources
       shell: bash
       # need to convert some includes to lower case (as of VST 3.7.1)
@@ -225,6 +230,11 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+    - name: Fix MinGW headers
+      shell: bash
+      run: |
+        cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
+            /usr/x86_64-w64-mingw32/include/dwrite_3.h
     - name: Fix VST sources
       shell: bash
       # need to convert some includes to lower case (as of VST 3.7.1)
