@@ -213,9 +213,23 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     endif()
     # Windows 10 RS2 DDI for custom fonts
     target_compile_definitions(sfizz_vstgui PRIVATE "NTDDI_VERSION=0x0A000003")
-    # disable custom fonts while dwrite3 API is unavailable in MinGW
+    # disable custom fonts if dwrite3 API is unavailable in MinGW
     if(MINGW)
-        target_compile_definitions(sfizz_vstgui PRIVATE "VSTGUI_WIN32_CUSTOMFONT_SUPPORT=0")
+        check_cxx_source_compiles("
+#include <windows.h>
+#include <dwrite_3.h>
+HRESULT FeatureCheck(IDWriteFontSet* self, const WCHAR* name, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style, IDWriteFontSet** fontset)
+{
+    return self->GetMatchingFonts(name, weight, stretch, style, fontset);
+}
+int main()
+{
+    return 0;
+}" SFIZZ_MINGW_SUPPORTS_DWRITE3)
+        if(NOT SFIZZ_MINGW_SUPPORTS_DWRITE3)
+            message(WARNING "This version of MinGW does not support DirectWrite 3. Custom font support is disabled.")
+            target_compile_definitions(sfizz_vstgui PRIVATE "VSTGUI_WIN32_CUSTOMFONT_SUPPORT=0")
+        endif()
     endif()
 endif()
 
