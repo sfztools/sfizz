@@ -30,6 +30,12 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice;
     case ModId::LFO:
         return kModIsPerVoice;
+    case ModId::AmpLFO:
+        return kModIsPerVoice;
+    case ModId::PitchLFO:
+        return kModIsPerVoice;
+    case ModId::FilLFO:
+        return kModIsPerVoice;
     case ModId::AmpEG:
         return kModIsPerVoice;
     case ModId::PitchEG:
