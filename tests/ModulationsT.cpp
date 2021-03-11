@@ -354,3 +354,20 @@ TEST_CASE("[Modulations] Aftertouch connections")
         R"("ChannelAftertouch" -> "FilterCutoff {1, N=2}")",
     }, 2));
 }
+
+TEST_CASE("[Modulations] LFO v1 connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_freq=1.0
+        <region> sample=*sine pitchlfo_freq=1.0
+        <region> sample=*sine fillfo_freq=1.0
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
