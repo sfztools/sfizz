@@ -11,6 +11,5 @@ cmake .. -G"Visual Studio 16 2019" -A"%RELEASE_ARCH%"^
  -DSFIZZ_LV2=ON^
  -DSFIZZ_VST=ON^
  -DCMAKE_BUILD_TYPE=Release^
- -DBUILD_SHARED_LIBS=OFF^
  -DVCPKG_TARGET_TRIPLET=%VCPKG_TRIPLET%^
  -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake
