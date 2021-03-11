@@ -72,8 +72,7 @@ jobs:
           -DSFIZZ_SHARED=OFF \
           -DSFIZZ_STATIC_DEPENDENCIES=OFF \
           -DSFIZZ_LV2=ON \
-          -DCMAKE_CXX_STANDARD=17 \
-          -DBUILD_SHARED_LIBS=OFF
+          -DCMAKE_CXX_STANDARD=17
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
@@ -119,8 +118,7 @@ jobs:
       run: |
         mod-plugin-builder /usr/local/bin/cmake "$GITHUB_WORKSPACE" \
          -DSFIZZ_SYSTEM_PROCESSOR=armv7-a \
-         -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_VST=OFF -DSFIZZ_LV2_UI=OFF \
-         -DBUILD_SHARED_LIBS=OFF
+         -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_VST=OFF -DSFIZZ_LV2_UI=OFF
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
@@ -189,8 +187,7 @@ jobs:
           -DSFIZZ_JACK=OFF \
           -DSFIZZ_VST=ON \
           -DSFIZZ_STATIC_DEPENDENCIES=ON \
-          -DCMAKE_CXX_STANDARD=17 \
-          -DBUILD_SHARED_LIBS=OFF
+          -DCMAKE_CXX_STANDARD=17
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
@@ -259,8 +256,7 @@ jobs:
           -DSFIZZ_JACK=OFF \
           -DSFIZZ_VST=ON \
           -DSFIZZ_STATIC_DEPENDENCIES=ON \
-          -DCMAKE_CXX_STANDARD=17 \
-          -DBUILD_SHARED_LIBS=OFF
+          -DCMAKE_CXX_STANDARD=17
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build

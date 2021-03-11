@@ -39,7 +39,11 @@ endif()
 if(SFIZZ_USE_SYSTEM_ABSEIL)
     find_package(absl REQUIRED)
 else()
-    add_subdirectory("external/abseil-cpp" EXCLUDE_FROM_ALL)
+    function(sfizz_add_vendor_abseil)
+        set(BUILD_SHARED_LIBS OFF) # only changed at local scope
+        add_subdirectory("external/abseil-cpp" EXCLUDE_FROM_ALL)
+    endfunction()
+    sfizz_add_vendor_abseil()
 endif()
 
 # The jsl utility library for C++
