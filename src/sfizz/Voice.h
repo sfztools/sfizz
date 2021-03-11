@@ -309,7 +309,6 @@ public:
      * @brief Release the voice after a given delay
      *
      * @param delay
-     * @param fastRelease whether to do a normal release or cut the voice abruptly
      */
     void release(int delay) noexcept;
 

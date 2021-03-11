@@ -52,7 +52,6 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     int currentKeyswitch_ = -1;
     std::unordered_map<unsigned, std::string> keyswitchNames_;
-    std::string keyswitchLabelPrefix_;
 
     SharedPointer<CVSTGUITimer> memQueryTimer_;
 
@@ -74,7 +73,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagPreviousSfzFile,
         kTagNextSfzFile,
         kTagFileOperations,
-        kTagSetVolume,
+        kTagSetMainVolume,
         kTagSetNumVoices,
         kTagSetOversampling,
         kTagSetPreloadSize,
@@ -83,6 +82,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
+        kTagSetCCVolume,
+        kTagSetCCPan,
         kTagChooseUserFilesDir,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
@@ -108,6 +109,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
     CTextLabel* keyswitchLabel_ = nullptr;
+    CTextLabel* keyswitchInactiveLabel_ = nullptr;
+    CTextLabel* keyswitchBadge_ = nullptr;
 
     STitleContainer* userFilesGroup_ = nullptr;
     STextButton* userFilesDirButton_ = nullptr;
@@ -127,6 +130,18 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     SControlsPanel* controlsPanel_ = nullptr;
 
+    SKnobCCBox* volumeCCKnob_ = nullptr;
+    SKnobCCBox* panCCKnob_ = nullptr;
+
+    CControl* getSecondaryCCControl(unsigned cc)
+    {
+        switch (cc) {
+        case 7: return volumeCCKnob_ ? volumeCCKnob_->getControl() : nullptr;
+        case 10: return panCCKnob_ ? panCCKnob_->getControl() : nullptr;
+        default: return nullptr;
+        }
+    }
+
     void uiReceiveValue(EditId id, const EditValue& v) override;
     void uiReceiveMessage(const char* path, const char* sig, const sfizz_arg_t* args) override;
 
@@ -143,6 +158,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     template <class Control>
     void adjustMinMaxToEditRange(Control* c, EditId id)
     {
+        if (!c)
+            return;
         const EditRange er = EditRange::get(id);
         c->setMin(er.min);
         c->setMax(er.max);
@@ -204,6 +221,18 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void enterOrLeaveEdit(CControl* ctl, bool enter);
     void controlBeginEdit(CControl* ctl) override;
     void controlEndEdit(CControl* ctl) override;
+
+    // Misc
+    static std::string getUnicodeNoteName(unsigned key)
+    {
+        const char* keyNames[12] = {
+            u8"C", u8"C♯", u8"D", u8"D♯", u8"E",
+            u8"F", u8"F♯", u8"G", u8"G♯", u8"A", u8"A♯", u8"B",
+        };
+        int octave = static_cast<int>(key / 12) - 1;
+        const char* keyName = keyNames[key % 12];
+        return std::string(keyName) + ' ' + std::to_string(octave);
+    }
 };
 
 Editor::Editor(EditorController& ctrl)
@@ -545,7 +574,7 @@ void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
 
-    SharedPointer<CBitmap> iconWhite = owned(new CBitmap("logo_text_white.png"));
+    SharedPointer<CBitmap> iconShaded = owned(new CBitmap("logo_text_shaded.png"));
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
@@ -590,10 +619,10 @@ void Editor::Impl::createFrameContents()
         darkTheme.highlightedText = { 0xfd, 0x98, 0x00 };
         darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
         darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
-        darkTheme.icon = darkTheme.text;
+        darkTheme.icon = { 0xb2, 0xb2, 0xb2 };
         darkTheme.iconHighlight = { 0xfd, 0x98, 0x00 };
-        darkTheme.valueText = { 0x2e, 0x34, 0x36 };
-        darkTheme.valueBackground = { 0xff, 0xff, 0xff };
+        darkTheme.valueText = { 0x00, 0x00, 0x00 };
+        darkTheme.valueBackground = { 0x9a, 0x9a, 0x9a };
         darkTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
         darkTheme.knobInactiveTrackColor = { 0x60, 0x60, 0x60 };
         darkTheme.knobLineIndicatorColor = { 0xff, 0xff, 0xff };
@@ -623,14 +652,24 @@ void Editor::Impl::createFrameContents()
             box->setTitleFont(font);
             return box;
         };
-        auto createSfizzMainButton = [this, &iconWhite](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CKickButton(bounds, this, tag, iconWhite);
+        auto createSfizzMainButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CKickButton(bounds, this, tag, iconShaded);
         };
         auto createLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
+            lbl->setHoriAlign(align);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            lbl->setFont(font);
+            return lbl;
+        };
+        auto createInactiveLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(theme->inactiveText);
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
@@ -659,6 +698,18 @@ void Editor::Impl::createFrameContents()
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setFontColor(theme->text);
             lbl->setHoriAlign(align);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            lbl->setFont(font);
+            return lbl;
+        };
+        auto createBadge = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setBackColor(theme->valueBackground);
+            lbl->setFontColor(theme->valueText);
+            lbl->setHoriAlign(align);
+            lbl->setStyle(CParamDisplay::kRoundRectStyle);
+            lbl->setRoundRectRadius(5.0);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
@@ -722,7 +773,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
-            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             btn->setTextColor(theme->icon);
             btn->setHoverColor(theme->iconHighlight);
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -757,7 +808,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createResetSomethingButton = [&createValueButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createValueButton(bounds, tag, u8"\ue13a", kCenterText, fontsize);
-            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             return btn;
         };
         auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
@@ -769,7 +820,7 @@ void Editor::Impl::createFrameContents()
         auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
-            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -782,12 +833,27 @@ void Editor::Impl::createFrameContents()
                 result = u8"\ue0d7";
                 return true;
             });
-            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System R20", fontsize));
+            menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             menu->setFontColor(theme->icon);
             menu->setHoverColor(theme->iconHighlight);
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
+        };
+        auto createKnobCCBox = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int fontsize) {
+            SKnobCCBox* box = new SKnobCCBox(bounds, this, tag);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            box->setNameLabelText(label);
+            box->setNameLabelFont(font);
+            box->setNameLabelFontColor(theme->text);
+            box->setKnobFont(font);
+            box->setKnobFontColor(theme->text);
+            box->setKnobLineIndicatorColor(theme->knobLineIndicatorColor);
+            box->setValueToStringFunction([](float value, std::string& text) -> bool {
+                text = std::to_string(std::lround(value * 127));
+                return true;
+            });
+            return box;
         };
         auto createBackground = [&background](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
@@ -830,10 +896,6 @@ void Editor::Impl::createFrameContents()
 
         mainView_ = owned(mainView);
     }
-
-    ///
-    if (keyswitchLabel_)
-        keyswitchLabelPrefix_ = std::string(keyswitchLabel_->getText()) + ' ';
 
     ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
@@ -964,6 +1026,7 @@ void Editor::Impl::createFrameContents()
     if (SControlsPanel* panel = controlsPanel_) {
         panel->ValueChangeFunction = [this](uint32_t cc, float value) {
             performCCValueChange(cc, value);
+            updateCCValue(cc, value);
         };
         panel->BeginEditFunction = [this](uint32_t cc) {
             performCCBeginEdit(cc);
@@ -972,6 +1035,17 @@ void Editor::Impl::createFrameContents()
             performCCEndEdit(cc);
         };
     }
+
+    if (SKnobCCBox* box = volumeCCKnob_) {
+        unsigned ccNumber = 7;
+        box->setCCLabelText(("CC " + std::to_string(ccNumber)).c_str());
+    }
+    if (SKnobCCBox* box = panCCKnob_) {
+        unsigned ccNumber = 10;
+        box->setCCLabelText(("CC " + std::to_string(ccNumber)).c_str());
+    }
+
+    updateKeyswitchNameLabel();
 
     ///
     CViewContainer* panel;
@@ -993,7 +1067,16 @@ void Editor::Impl::chooseSfzFile()
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
 
     fs->setTitle("Load SFZ file");
-    fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+    fs->addFileExtension(CFileExtension("SFZ", "sfz"));
+
+    // also add extensions of importable files
+    fs->addFileExtension(CFileExtension("WAV", "wav"));
+    fs->addFileExtension(CFileExtension("FLAC", "flac"));
+    fs->addFileExtension(CFileExtension("OGG", "ogg"));
+    fs->addFileExtension(CFileExtension("MP3", "mp3"));
+    fs->addFileExtension(CFileExtension("AIF", "aif"));
+    fs->addFileExtension(CFileExtension("AIFF", "aiff"));
+    fs->addFileExtension(CFileExtension("AIFC", "aifc"));
 
     std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
     if (!initialDir.empty())
@@ -1027,7 +1110,7 @@ void Editor::Impl::createNewSfzFile()
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_, CNewFileSelector::kSelectSaveFile));
 
     fs->setTitle("Create SFZ file");
-    fs->setDefaultExtension(CFileExtension("SFZ", "sfz"));
+    fs->addFileExtension(CFileExtension("SFZ", "sfz"));
 
     std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
     if (!initialDir.empty())
@@ -1119,7 +1202,7 @@ void Editor::Impl::chooseScalaFile()
     SharedPointer<CNewFileSelector> fs = owned(CNewFileSelector::create(frame_));
 
     fs->setTitle("Load Scala file");
-    fs->setDefaultExtension(CFileExtension("SCL", "scl"));
+    fs->addFileExtension(CFileExtension("SCL", "scl"));
 
     std::string initialDir = getFileChooserInitialDir(currentScalaFile_);
     if (!initialDir.empty())
@@ -1389,9 +1472,32 @@ absl::string_view Editor::Impl::getCurrentKeyswitchName() const
 
 void Editor::Impl::updateKeyswitchNameLabel()
 {
-    if (CTextLabel* label = keyswitchLabel_) {
-        std::string name { getCurrentKeyswitchName() };
-        label->setText((keyswitchLabelPrefix_ + name).c_str());
+    CTextLabel* label = keyswitchLabel_;
+    CTextLabel* badge = keyswitchBadge_;
+    CTextLabel* inactiveLabel = keyswitchInactiveLabel_;
+
+    int sw = currentKeyswitch_;
+    const std::string name { getCurrentKeyswitchName() };
+
+    if (sw == -1) {
+        if (badge)
+            badge->setVisible(false);
+        if (label)
+            label->setVisible(false);
+        if (inactiveLabel)
+            inactiveLabel->setVisible(true);
+    }
+    else {
+        if (badge) {
+            badge->setText(getUnicodeNoteName(sw));
+            badge->setVisible(true);
+        }
+        if (label) {
+            label->setText(name.c_str());
+            label->setVisible(true);
+        }
+        if (inactiveLabel)
+            inactiveLabel->setVisible(false);
     }
 }
 
@@ -1417,12 +1523,20 @@ void Editor::Impl::updateCCValue(unsigned cc, float value)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlValue(cc, value);
+
+    if (CControl* other = getSecondaryCCControl(cc)) {
+        other->setValue(value);
+        other->invalid();
+    }
 }
 
 void Editor::Impl::updateCCDefaultValue(unsigned cc, float value)
 {
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlDefaultValue(cc, value);
+
+    if (CControl* other = getSecondaryCCControl(cc))
+        other->setDefaultValue(value);
 }
 
 void Editor::Impl::updateCCLabel(unsigned cc, const char* label)
@@ -1586,9 +1700,19 @@ void Editor::Impl::valueChanged(CControl* ctl)
         changeScalaFile(std::string());
         break;
 
-    case kTagSetVolume:
+    case kTagSetMainVolume:
         ctrl.uiSendValue(EditId::Volume, value);
         updateVolumeLabel(value);
+        break;
+
+    case kTagSetCCVolume:
+        performCCValueChange(7, value);
+        updateCCValue(7, value);
+        break;
+
+    case kTagSetCCPan:
+        performCCValueChange(10, value);
+        updateCCValue(10, value);
         break;
 
     case kTagSetNumVoices:
@@ -1651,13 +1775,15 @@ void Editor::Impl::enterOrLeaveEdit(CControl* ctl, bool enter)
     EditId id;
 
     switch (tag) {
-    case kTagSetVolume: id = EditId::Volume; break;
+    case kTagSetMainVolume: id = EditId::Volume; break;
     case kTagSetNumVoices: id = EditId::Polyphony; break;
     case kTagSetOversampling: id = EditId::Oversampling; break;
     case kTagSetPreloadSize: id = EditId::PreloadSize; break;
     case kTagSetScalaRootKey: id = EditId::ScalaRootKey; break;
     case kTagSetTuningFrequency: id = EditId::TuningFrequency; break;
     case kTagSetStretchedTuning: id = EditId::StretchTuning; break;
+    case kTagSetCCVolume: id = editIdForCC(7); break;
+    case kTagSetCCPan: id = editIdForCC(10); break;
     default: return;
     }
 

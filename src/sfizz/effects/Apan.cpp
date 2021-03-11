@@ -22,7 +22,7 @@
 
 #include "Apan.h"
 #include "Macros.h"
-#include "CommonLFO.h"
+#include "LFOCommon.h"
 #include "Opcode.h"
 #include <limits>
 #include <cmath>
@@ -107,22 +107,22 @@ namespace fx {
     void Apan::computeLfos(float* left, float* right, unsigned nframes)
     {
         switch (_lfoWave) {
-        #define CASE(X) case lfo::X:                          \
-            computeLfos<lfo::X>(left, right, nframes); break;
+        #define CASE(X) case X:                          \
+            computeLfos<X>(left, right, nframes); break;
         default:
-        CASE(kTriangle)
-        CASE(kSine)
-        CASE(kPulse75)
-        CASE(kSquare)
-        CASE(kPulse25)
-        CASE(kPulse12_5)
-        CASE(kRamp)
-        CASE(kSaw)
+        CASE(LFOWave::Triangle)
+        CASE(LFOWave::Sine)
+        CASE(LFOWave::Pulse75)
+        CASE(LFOWave::Square)
+        CASE(LFOWave::Pulse25)
+        CASE(LFOWave::Pulse12_5)
+        CASE(LFOWave::Ramp)
+        CASE(LFOWave::Saw)
         #undef CASE
         }
     }
 
-    template <int Wave> void Apan::computeLfos(float* left, float* right, unsigned nframes)
+    template <LFOWave Wave> void Apan::computeLfos(float* left, float* right, unsigned nframes)
     {
         float samplePeriod = _samplePeriod;
         float frequency = _lfoFrequency;

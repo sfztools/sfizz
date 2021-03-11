@@ -5,8 +5,10 @@ set(EDITOR_RESOURCES
     logo.png
     logo_text.png
     logo_text_white.png
+    logo_text_shaded.png
     logo_text@2x.png
     logo_text_white@2x.png
+    logo_text_shaded@2x.png
     background.png
     background@2x.png
     icon_white.png
@@ -14,6 +16,7 @@ set(EDITOR_RESOURCES
     knob48.png
     knob48@2x.png
     Fonts/sfizz-fluentui-system-r20.ttf
+    Fonts/sfizz-fluentui-system-f20.ttf
     Fonts/Roboto-Regular.ttf
     PARENT_SCOPE)
 

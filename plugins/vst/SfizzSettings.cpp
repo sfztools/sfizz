@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SfizzSettings.h"
+#include <memory>
 #include <cstdlib>
 
 std::string SfizzSettings::load_or(const char* key, absl::string_view defaultValue)

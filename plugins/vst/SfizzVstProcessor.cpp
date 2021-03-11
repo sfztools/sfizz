@@ -9,6 +9,7 @@
 #include "SfizzVstState.h"
 #include "SfizzVstParameters.h"
 #include "SfizzFileScan.h"
+#include "plugin/ForeignInstrument.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -32,6 +33,14 @@ enum {
 
 static const char* kRingIdMidi = "Mid";
 static const char* kRingIdOsc = "Osc";
+
+static const char* kMsgIdSetNumVoices = "SetNumVoices";
+static const char* kMsgIdSetOversampling = "SetOversampling";
+static const char* kMsgIdSetPreloadSize = "SetPreloadSize";
+static const char* kMsgIdCheckShouldReload = "CheckShouldReload";
+static const char* kMsgIdNotifyPlayState = "NotifyPlayState";
+static const char* kMsgIdReceiveMessage = "ReceiveMessage";
+static const char* kMsgIdNoteEvents = "NoteEvents";
 
 SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(64 * 1024), _fifoMessageFromUi(64 * 1024),
@@ -265,21 +274,21 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     _fileChangeCounter += numFrames;
     if (_fileChangeCounter > _fileChangePeriod) {
         _fileChangeCounter %= _fileChangePeriod;
-        if (writeWorkerMessage("CheckShouldReload", nullptr, 0))
+        if (writeWorkerMessage(kMsgIdCheckShouldReload, nullptr, 0))
             _semaToWorker.post();
     }
 
     _playStateChangeCounter += numFrames;
     if (_playStateChangeCounter > _playStateChangePeriod) {
         _playStateChangeCounter %= _playStateChangePeriod;
-        SfizzPlayState playState;
+        SfizzPlayState playState {};
         playState.curves = synth.getNumCurves();
         playState.masters = synth.getNumMasters();
         playState.groups = synth.getNumGroups();
         playState.regions = synth.getNumRegions();
         playState.preloadedSamples = synth.getNumPreloadedSamples();
         playState.activeVoices = synth.getNumActiveVoices();
-        if (writeWorkerMessage("NotifyPlayState", &playState, sizeof(playState)))
+        if (writeWorkerMessage(kMsgIdNotifyPlayState, &playState, sizeof(playState)))
             _semaToWorker.post();
     }
 
@@ -294,7 +303,7 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         _noteEventsCurrentCycle[key] = -1.0f;
     }
     if (numNoteEvents > 0) {
-        if (writeWorkerMessage("NoteEvents", noteEvents, numNoteEvents * sizeof(noteEvents[0])))
+        if (writeWorkerMessage(kMsgIdNoteEvents, noteEvents, numNoteEvents * sizeof(noteEvents[0])))
             _semaToWorker.post();
     }
 
@@ -349,7 +358,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
                 int32 data = static_cast<int32>(range.denormalize(value));
                 _state.numVoices = data;
-                if (writeWorkerMessage("SetNumVoices", &data, sizeof(data)))
+                if (writeWorkerMessage(kMsgIdSetNumVoices, &data, sizeof(data)))
                     _semaToWorker.post();
             }
             break;
@@ -357,7 +366,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
                 int32 data = static_cast<int32>(range.denormalize(value));
                 _state.oversamplingLog2 = data;
-                if (writeWorkerMessage("SetOversampling", &data, sizeof(data)))
+                if (writeWorkerMessage(kMsgIdSetOversampling, &data, sizeof(data)))
                     _semaToWorker.post();
             }
             break;
@@ -365,7 +374,7 @@ void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
             if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
                 int32 data = static_cast<int32>(range.denormalize(value));
                 _state.preloadSize = data;
-                if (writeWorkerMessage("SetPreloadSize", &data, sizeof(data)))
+                if (writeWorkerMessage(kMsgIdSetPreloadSize, &data, sizeof(data)))
                     _semaToWorker.post();
             }
             break;
@@ -606,15 +615,25 @@ void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* 
     uint8_t* oscTemp = _oscTemp.get();
     uint32 oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
     if (oscSize <= kOscTempSize) {
-        if (writeWorkerMessage("ReceiveMessage", oscTemp, oscSize))
+        if (writeWorkerMessage(kMsgIdReceiveMessage, oscTemp, oscSize))
             _semaToWorker.post();
     }
 }
 
 void SfizzVstProcessor::loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath)
 {
-    if (!filePath.empty())
-        synth.loadSfzFile(filePath);
+    if (!filePath.empty()) {
+        const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
+        const sfz::InstrumentFormat* format = formatRegistry.getMatchingFormat(filePath);
+        if (!format)
+            synth.loadSfzFile(filePath);
+        else {
+            auto importer = format->createImporter();
+            std::string virtualPath = filePath + ".sfz";
+            std::string sfzText = importer->convertToSfz(filePath);
+            synth.loadSfzString(virtualPath, sfzText);
+        }
+    }
     else
         synth.loadSfzString("default.sfz", defaultSfzText);
 }
@@ -635,22 +654,22 @@ void SfizzVstProcessor::doBackgroundWork()
 
         const char* id = msg->type;
 
-        if (!std::strcmp(id, "SetNumVoices")) {
+        if (id == kMsgIdSetNumVoices) {
             int32 value = *msg->payload<int32>();
             std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setNumVoices(value);
         }
-        else if (!std::strcmp(id, "SetOversampling")) {
+        else if (id == kMsgIdSetOversampling) {
             int32 value = *msg->payload<int32>();
             std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setOversamplingFactor(1 << value);
         }
-        else if (!std::strcmp(id, "SetPreloadSize")) {
+        else if (id == kMsgIdSetPreloadSize) {
             int32 value = *msg->payload<int32>();
             std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setPreloadSize(value);
         }
-        else if (!std::strcmp(id, "CheckShouldReload")) {
+        else if (id == kMsgIdCheckShouldReload) {
             if (_synth->shouldReloadFile()) {
                 fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
                 std::lock_guard<SpinMutex> lock(_processMutex);
@@ -667,20 +686,20 @@ void SfizzVstProcessor::doBackgroundWork()
                 _synth->loadScalaFile(_state.scalaFile);
             }
         }
-        else if (!std::strcmp(id, "NotifyPlayState")) {
+        else if (id == kMsgIdNotifyPlayState) {
             SfizzPlayState playState = *msg->payload<SfizzPlayState>();
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("NotifiedPlayState");
             notification->getAttributes()->setBinary("PlayState", &playState, sizeof(playState));
             sendMessage(notification);
         }
-        else if (!std::strcmp(id, "ReceiveMessage")) {
+        else if (id == kMsgIdReceiveMessage) {
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("ReceivedMessage");
             notification->getAttributes()->setBinary("Message", msg->payload<uint8_t>(), msg->size);
             sendMessage(notification);
         }
-        else if (!std::strcmp(id, "NoteEvents")) {
+        else if (id == kMsgIdNoteEvents) {
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("NoteEvents");
             notification->getAttributes()->setBinary("Events", msg->payload<uint8_t>(), msg->size);

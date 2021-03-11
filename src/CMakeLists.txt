@@ -44,8 +44,6 @@ set(SFIZZ_HEADERS
     sfizz/effects/impl/ResonantStringAVX.h
     sfizz/effects/impl/ResonantStringSSE.h
     sfizz/effects/Apan.h
-    sfizz/effects/CommonLFO.h
-    sfizz/effects/CommonLFO.hpp
     sfizz/effects/Compressor.h
     sfizz/effects/Disto.h
     sfizz/effects/Eq.h
@@ -75,6 +73,8 @@ set(SFIZZ_HEADERS
     sfizz/Interpolators.hpp
     sfizz/Logger.h
     sfizz/LFO.h
+    sfizz/LFOCommon.h
+    sfizz/LFOCommon.hpp
     sfizz/LFODescription.h
     sfizz/MathHelpers.h
     sfizz/Metronome.h

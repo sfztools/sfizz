@@ -31,6 +31,7 @@
 #include "Config.h"
 #include "SfzFilter.h"
 #include "SfzHelpers.h"
+#include "LFOCommon.h"
 #include "MathHelpers.h"
 
 
@@ -44,18 +45,6 @@ enum class VelocityOverride { current = 0, previous };
 enum class CrossfadeCurve { gain = 0, power };
 enum class SelfMask { mask = 0, dontMask };
 enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
-enum class LFOWave : int {
-    Triangle,
-    Sine,
-    Pulse75,
-    Square,
-    Pulse25,
-    Pulse12_5,
-    Ramp,
-    Saw,
-    // ARIA extra
-    RandomSH = 12,
-};
 
 enum OpcodeFlags : int {
     kCanBeNote = 1,
@@ -134,6 +123,7 @@ namespace Default
     extern const OpcodeSpec<uint32_t> sampleCount;
     extern const OpcodeSpec<uint32_t> loopStart;
     extern const OpcodeSpec<uint32_t> loopEnd;
+    extern const OpcodeSpec<uint32_t> loopCount;
     extern const OpcodeSpec<float> loopCrossfade;
     extern const OpcodeSpec<float> oscillatorPhase;
     extern const OpcodeSpec<OscillatorEnabled> oscillator;
@@ -251,7 +241,7 @@ namespace Default
     extern const OpcodeSpec<int> noteOffset;
     extern const OpcodeSpec<float> effect;
     extern const OpcodeSpec<float> effectPercent;
-    extern const OpcodeSpec<int> apanWaveform;
+    extern const OpcodeSpec<LFOWave> apanWaveform;
     extern const OpcodeSpec<float> apanFrequency;
     extern const OpcodeSpec<float> apanPhase;
     extern const OpcodeSpec<float> apanLevel;

@@ -114,7 +114,7 @@ void VoiceManager::clear()
 void VoiceManager::setStealingAlgorithm(StealingAlgorithm algorithm)
 {
     switch(algorithm){
-    case StealingAlgorithm::First: // fallthrough
+    case StealingAlgorithm::First:
         for (auto& voice : list_)
             voice.disablePowerFollower();
 
