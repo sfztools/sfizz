@@ -209,6 +209,9 @@ namespace Default
     extern const OpcodeSpec<float> bendUp;
     extern const OpcodeSpec<float> bendDown;
     extern const OpcodeSpec<float> bendStep;
+    extern const OpcodeSpec<float> ampLFODepth;
+    extern const OpcodeSpec<float> pitchLFODepth;
+    extern const OpcodeSpec<float> filLFODepth;
     extern const OpcodeSpec<float> lfoFreq;
     extern const OpcodeSpec<float> lfoFreqMod;
     extern const OpcodeSpec<float> lfoBeats;

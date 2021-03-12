@@ -99,6 +99,12 @@ std::string ModKey::toString() const
         return absl::StrCat("EG ", 1 + params_.N, " {", region_.number(), "}");
     case ModId::LFO:
         return absl::StrCat("LFO ", 1 + params_.N, " {", region_.number(), "}");
+    case ModId::AmpLFO:
+        return absl::StrCat("AmplitudeLFO {", region_.number(), "}");
+    case ModId::PitchLFO:
+        return absl::StrCat("PitchLFO {", region_.number(), "}");
+    case ModId::FilLFO:
+        return absl::StrCat("FilterLFO {", region_.number(), "}");
     case ModId::AmpEG:
         return absl::StrCat("AmplitudeEG {", region_.number(), "}");
     case ModId::PitchEG:
@@ -138,6 +144,12 @@ std::string ModKey::toString() const
         return absl::StrCat("OscillatorDetune {", region_.number(), ", N=", 1 + params_.N, "}");
    case ModId::OscillatorModDepth:
         return absl::StrCat("OscillatorModDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::AmpLFOFrequency:
+        return absl::StrCat("AmplitudeLFOFrequency {", region_.number(), "}");
+    case ModId::PitchLFOFrequency:
+        return absl::StrCat("PitchLFOFrequency {", region_.number(), "}");
+    case ModId::FilLFOFrequency:
+        return absl::StrCat("FilterLFOFrequency {", region_.number(), "}");
     case ModId::LFOFrequency:
         return absl::StrCat("LFOFrequency {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::LFOBeats:

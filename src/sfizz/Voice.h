@@ -306,6 +306,24 @@ public:
      */
     void setFilterEGEnabledPerVoice(bool haveFilterEG);
     /**
+     * @brief Set whether SFZv1 amplitude LFO is enabled on this voice
+     *
+     * @param haveAmplitudeLFO
+     */
+    void setAmplitudeLFOEnabledPerVoice(bool haveAmplitudeLFO);
+    /**
+     * @brief Set whether SFZv1 pitch LFO is enabled on this voice
+     *
+     * @param havePitchLFO
+     */
+    void setPitchLFOEnabledPerVoice(bool havePitchLFO);
+    /**
+     * @brief Set whether SFZv1 filter LFO is enabled on this voice
+     *
+     * @param haveFilterLFO
+     */
+    void setFilterLFOEnabledPerVoice(bool haveFilterLFO);
+    /**
      * @brief Release the voice after a given delay
      *
      * @param delay
@@ -332,6 +350,19 @@ public:
     Duration getLastAmplitudeDuration() const noexcept;
     Duration getLastFilterDuration() const noexcept;
     Duration getLastPanningDuration() const noexcept;
+
+    /**
+     * @brief Get the SFZv1 amplitude LFO, if existing
+     */
+    LFO* getAmplitudeLFO();
+    /**
+     * @brief Get the SFZv1 pitch LFO, if existing
+     */
+    LFO* getPitchLFO();
+    /**
+     * @brief Get the SFZv1 filter LFO, if existing
+     */
+    LFO* getFilterLFO();
 
     /**
      * @brief Get the SFZv1 amplitude EG, if existing

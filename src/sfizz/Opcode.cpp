@@ -53,6 +53,28 @@ static absl::string_view extractBackInteger(absl::string_view opcodeName)
     return opcodeName.substr(i);
 }
 
+std::string Opcode::getLetterOnlyName() const
+{
+    absl::string_view name { this->name };
+
+    std::string letterOnlyName;
+    letterOnlyName.reserve(name.size());
+
+    bool charWasDigit = false;
+    for (unsigned char c : name) {
+        bool charIsDigit = absl::ascii_isdigit(c);
+
+        if (!charIsDigit)
+            letterOnlyName.push_back(c);
+        else if (!charWasDigit)
+            letterOnlyName.push_back('&');
+
+        charWasDigit = charIsDigit;
+    }
+
+    return letterOnlyName;
+}
+
 std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) const
 {
     std::string derivedName(name);

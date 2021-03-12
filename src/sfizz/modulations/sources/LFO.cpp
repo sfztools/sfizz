@@ -21,8 +21,6 @@ LFOSource::LFOSource(VoiceManager& manager)
 
 void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    unsigned lfoIndex = sourceKey.parameters().N;
-
     Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
@@ -30,13 +28,39 @@ void LFOSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned
     }
 
     const Region* region = voice->getRegion();
-    if (lfoIndex >= region->lfos.size()) {
+    LFO* lfo = nullptr;
+    const LFODescription* desc = nullptr;
+
+    switch (sourceKey.id()) {
+    case ModId::AmpLFO:
+        lfo = voice->getAmplitudeLFO();
+        desc = &*region->amplitudeLFO;
+        break;
+    case ModId::PitchLFO:
+        lfo = voice->getPitchLFO();
+        desc = &*region->pitchLFO;
+        break;
+    case ModId::FilLFO:
+        lfo = voice->getFilterLFO();
+        desc = &*region->filterLFO;
+        break;
+    case ModId::LFO:
+        {
+            unsigned lfoIndex = sourceKey.parameters().N;
+            if (lfoIndex >= region->lfos.size()) {
+                ASSERTFALSE;
+                return;
+            }
+            lfo = voice->getLFO(lfoIndex);
+            desc = &region->lfos[lfoIndex];
+        }
+        break;
+    default:
         ASSERTFALSE;
         return;
     }
 
-    LFO* lfo = voice->getLFO(lfoIndex);
-    lfo->configure(&region->lfos[lfoIndex]);
+    lfo->configure(desc);
     lfo->start(delay);
 }
 
@@ -52,14 +76,34 @@ void LFOSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl
     }
 
     const Region* region = voice->getRegion();
-    if (lfoIndex >= region->lfos.size()) {
+    LFO* lfo = nullptr;
+
+    switch (sourceKey.id()) {
+    case ModId::AmpLFO:
+        lfo = voice->getAmplitudeLFO();
+        break;
+    case ModId::PitchLFO:
+        lfo = voice->getPitchLFO();
+        break;
+    case ModId::FilLFO:
+        lfo = voice->getFilterLFO();
+        break;
+    case ModId::LFO:
+        {
+            if (lfoIndex >= region->lfos.size()) {
+                ASSERTFALSE;
+                fill(buffer, 0.0f);
+                return;
+            }
+            lfo = voice->getLFO(lfoIndex);
+        }
+        break;
+    default:
         ASSERTFALSE;
-        fill(buffer, 0.0f);
         return;
     }
 
-    LFO* lfo = voice->getLFO(lfoIndex);
-    lfo->process(buffer, region->getId());
+    lfo->process(buffer);
 }
 
 } // namespace sfz

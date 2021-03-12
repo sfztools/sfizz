@@ -116,8 +116,7 @@ int main(int argc, char* argv[])
     std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        const NumericId<sfz::LFO> id { static_cast<int>(l) };
-        sfz::LFO* lfo = new sfz::LFO(id, bufferPool);
+        sfz::LFO* lfo = new sfz::LFO(bufferPool);
         lfos[l].reset(lfo);
         lfo->setSampleRate(sampleRate);
         lfo->configure(&desc[l]);

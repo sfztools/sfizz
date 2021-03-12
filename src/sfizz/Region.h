@@ -247,6 +247,26 @@ struct Region {
      */
     bool parseOpcode(const Opcode& opcode);
     /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
+     * amplfo, pitchlfo, fillfo.
+     *
+     * @param opcode
+     * @param lfo
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcode(const Opcode& opcode, LFODescription& lfo);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
+     * amplfo, pitchlfo, fillfo.
+     *
+     * @param opcode
+     * @param lfo
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcode(const Opcode& opcode, absl::optional<LFODescription>& lfo);
+    /**
      * @brief Parse a opcode which is specific to a particular SFZv1 EG:
      * ampeg, pitcheg, fileg.
      *
@@ -266,6 +286,22 @@ struct Region {
      * @return false
      */
     bool parseEGOpcode(const Opcode& opcode, absl::optional<EGDescription>& eg);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv2 LFO: lfoN.
+     *
+     * @param opcode
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcodeV2(const Opcode& opcode);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv2 EG: egN.
+     *
+     * @param opcode
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseEGOpcodeV2(const Opcode& opcode);
     /**
      * @brief Process a generic CC opcode, and fill the modulation parameters.
      *
@@ -441,6 +477,9 @@ struct Region {
 
     // LFOs
     std::vector<LFODescription> lfos;
+    absl::optional<LFODescription> amplitudeLFO;
+    absl::optional<LFODescription> pitchLFO;
+    absl::optional<LFODescription> filterLFO;
 
     bool hasStereoSample { false };
 

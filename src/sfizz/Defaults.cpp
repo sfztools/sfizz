@@ -101,6 +101,9 @@ extern const OpcodeSpec<float> pitchMod { 0.0f, Range<float>(-2400.0f, 2400.0f),
 extern const OpcodeSpec<float> bendUp { 200.0f, Range<float>(-12000.0f, 12000.0f), 0 };
 extern const OpcodeSpec<float> bendDown { -200.0f, Range<float>(-12000.0f, 12000.0f), 0 };
 extern const OpcodeSpec<float> bendStep { 1.0f, Range<float>(1.0f, 1200.0f), 0 };
+extern const OpcodeSpec<float> ampLFODepth { 0.0f, Range<float>(-10.0f, 10.0f), 0 };
+extern const OpcodeSpec<float> pitchLFODepth { 0.0f, Range<float>(-1200.0f, 1200.0f), 0 };
+extern const OpcodeSpec<float> filLFODepth { 0.0f, Range<float>(-1200.0f, 1200.0f), 0 };
 extern const OpcodeSpec<float> lfoFreq { 0.0f, Range<float>(0.0f, 100.0f), 0 };
 extern const OpcodeSpec<float> lfoFreqMod { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
 extern const OpcodeSpec<float> lfoBeats { 0.0f, Range<float>(0.0f, 1000.0f), 0 };
