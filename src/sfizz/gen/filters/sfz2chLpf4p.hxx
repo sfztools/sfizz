@@ -204,9 +204,9 @@ class faust2chLpf4p : public sfzFilterDsp {
 		FAUSTFLOAT const* input1 = inputs[1];
 		FAUSTFLOAT* output0 = outputs[0];
 		FAUSTFLOAT* output1 = outputs[1];
-		double fSlow0 = (fConst1 * std::max<double>(0.0, double(fHslider0)));
+		double fSlow0 = (fConst1 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
 		double fSlow1 = std::cos(fSlow0);
-		double fSlow2 = (0.5 * (std::sin(fSlow0) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fVslider0))))));
+		double fSlow2 = (0.5 * (std::sin(fSlow0) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(0.0, double(fVslider0))))))));
 		double fSlow3 = (fSlow2 + 1.0);
 		double fSlow4 = ((1.0 - fSlow1) / fSlow3);
 		double fSlow5 = (fSmoothEnable ? fConst2 : 0.0);
