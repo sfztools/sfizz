@@ -24,6 +24,7 @@
 #include <absl/types/span.h>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #ifdef _WIN32
 #define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
