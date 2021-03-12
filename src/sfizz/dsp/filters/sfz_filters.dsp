@@ -94,7 +94,7 @@ sfzPeq = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q);
 
 // the SFZ equalizer band
 sfzEqPeak = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
-  Q = 1./(2.*ma.sinh(0.5*log(2)*bandwidth*w0/sin(w0)));
+  Q = 1./(2.*ma.sinh(0.5*log(2)*max(1e-3, bandwidth)*w0/sin(w0)));
   w0 = 2*ma.PI*max(0,cutoff)/ma.SR;
 };
 
