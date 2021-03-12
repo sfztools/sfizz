@@ -117,7 +117,7 @@ class faustBpf1p : public sfzFilterDsp {
 		FAUSTFLOAT const* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
-		double fSlow1 = (std::exp((fConst2 * (0.0 - (6.2831853071795862 * double(fHslider0))))) * (1.0 - fSlow0));
+		double fSlow1 = (std::exp((fConst2 * (0.0 - (6.2831853071795862 * std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0))))))) * (1.0 - fSlow0));
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			fRec2[0] = ((fSlow0 * fRec2[1]) + fSlow1);

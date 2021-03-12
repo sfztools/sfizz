@@ -152,8 +152,8 @@ class faustEqHshelf : public sfzFilterDsp {
 		FAUSTFLOAT const* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
-		double fSlow1 = std::pow(10.0, (0.025000000000000001 * double(fVslider0)));
-		double fSlow2 = (fConst2 * std::max<double>(0.0, double(fHslider0)));
+		double fSlow1 = std::pow(10.0, (0.025000000000000001 * std::min<double>(60.0, std::max<double>(-120.0, double(fVslider0)))));
+		double fSlow2 = (fConst2 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
 		double fSlow3 = std::cos(fSlow2);
 		double fSlow4 = ((fSlow1 + 1.0) * fSlow3);
 		double fSlow5 = (faustEqHshelf_faustpower2_f(fSlow1) + 1.0);

@@ -171,12 +171,12 @@ class faust2chLsh : public sfzFilterDsp {
 		FAUSTFLOAT* output0 = outputs[0];
 		FAUSTFLOAT* output1 = outputs[1];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
-		double fSlow1 = std::pow(10.0, (0.025000000000000001 * double(fVslider0)));
-		double fSlow2 = (fConst2 * std::max<double>(0.0, double(fHslider0)));
+		double fSlow1 = std::pow(10.0, (0.025000000000000001 * std::min<double>(60.0, std::max<double>(-120.0, double(fVslider0)))));
+		double fSlow2 = (fConst2 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
 		double fSlow3 = std::cos(fSlow2);
 		double fSlow4 = ((fSlow1 + 1.0) * fSlow3);
 		double fSlow5 = ((fSlow1 + -1.0) * fSlow3);
-		double fSlow6 = ((std::sqrt(fSlow1) * std::sin(fSlow2)) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fVslider1)))));
+		double fSlow6 = ((std::sqrt(fSlow1) * std::sin(fSlow2)) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(0.0, double(fVslider1)))))));
 		double fSlow7 = (fSlow5 + fSlow6);
 		double fSlow8 = ((fSlow1 + fSlow7) + 1.0);
 		double fSlow9 = (1.0 - fSlow0);
