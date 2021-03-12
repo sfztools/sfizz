@@ -152,7 +152,7 @@ class faustEqPeak : public sfzFilterDsp {
 		double fSlow2 = (fConst2 * fSlow1);
 		double fSlow3 = std::sin(fSlow2);
 		double fSlow4 = std::pow(10.0, (0.025000000000000001 * double(fVslider0)));
-		double fSlow5 = std::max<double>(0.001, (0.5 / double(sinh(double((fConst3 * ((fSlow1 * double(fVslider1)) / fSlow3)))))));
+		double fSlow5 = std::max<double>(0.001, (0.5 / double(sinh(double((fConst3 * ((fSlow1 * std::max<double>(0.001, double(fVslider1))) / fSlow3)))))));
 		double fSlow6 = (0.5 * (fSlow3 / (fSlow4 * fSlow5)));
 		double fSlow7 = (fSlow6 + 1.0);
 		double fSlow8 = (1.0 - fSlow0);
