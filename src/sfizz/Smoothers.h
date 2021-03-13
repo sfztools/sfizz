@@ -87,7 +87,7 @@ private:
     float current_ = 0.0;
     float target_ = 0.0;
     float step_ = 0.0;
-    int32_t framesToTarget_ = 0;
+    //int32_t framesToTarget_ = 0;
     int32_t smoothFrames_ = 0;
 };
 

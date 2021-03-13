@@ -70,7 +70,7 @@ void LinearSmoother::reset(float value)
     current_ = value;
     target_ = value;
     step_ = 0.0;
-    framesToTarget_ = 0;
+    //framesToTarget_ = 0;
 }
 
 void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut)
@@ -93,7 +93,7 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
     }
 
     float step = step_;
-    int32_t framesToTarget = framesToTarget_;
+    // int32_t framesToTarget = framesToTarget_;
     const int32_t smoothFrames = smoothFrames_;
 
     for (; i + 15 < count; i += 16) {
@@ -101,8 +101,8 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
         if (target != nextTarget) {
             target = nextTarget;
             //framesToTarget = (framesToTarget > 0) ? framesToTarget : smoothFrames;
-            framesToTarget = smoothFrames;
-            step = (target - current) / max(1, framesToTarget);
+            //step = (target - current) / max(1, framesToTarget);
+            step = (target - current) / max(1, smoothFrames);
         }
         const simde__m128 targetX4 = simde_mm_set1_ps(target);
         if (target > current) {
@@ -141,16 +141,16 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
             simde_mm_storeu_ps(&output[i + 8], targetX4);
             simde_mm_storeu_ps(&output[i + 12], targetX4);
         }
-        framesToTarget -= 16;
+        //framesToTarget -= 16;
     }
 
     if (i < count) {
         const float nextTarget = input[count - 1];
         if (target != nextTarget) {
             target = nextTarget;
-            //framesToTarget = (framesToTarget > 0) ? framesToTarget : smoothFrames;
-            framesToTarget = smoothFrames;
-            step = (target - current) / max(1, framesToTarget);
+            // framesToTarget = (framesToTarget > 0) ? framesToTarget : smoothFrames;
+            // step = (target - current) / max(1, framesToTarget);
+            step = (target - current) / max(1, smoothFrames);
         }
         if (target > current) {
             for (; i < count; ++i)
@@ -164,13 +164,13 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
             for (; i < count; ++i)
                 output[i] = target;
         }
-        framesToTarget -= count;
+        //framesToTarget -= count;
     }
 
     current_ = current;
     target_ = target;
     step_ = step;
-    framesToTarget_ = max(0, framesToTarget);
+    //framesToTarget_ = max(0, framesToTarget);
 }
 
 }
