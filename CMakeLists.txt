@@ -61,6 +61,7 @@ if (SFIZZ_BENCHMARKS)
 endif()
 
 if (SFIZZ_TESTS)
+    enable_testing ()
     add_subdirectory (tests)
 endif()
 
