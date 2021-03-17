@@ -130,11 +130,18 @@ public:
     /**
      * @brief Advances the internal clock of a given amount of samples.
      * You should call this at each callback. This will flush the events
-     * in the midistate memory.
+     * in the midistate memory by calling flushEvents().
      *
      * @param numSamples the number of samples of clock advance
      */
     void advanceTime(int numSamples) noexcept;
+
+    /**
+     * @brief Flush events in all states, keeping only the last one as the "base" state
+     *
+     */
+    void flushEvents() noexcept;
+
     /**
      * @brief Get the CC value for CC number
      *
