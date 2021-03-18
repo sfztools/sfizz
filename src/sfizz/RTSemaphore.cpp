@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <string>
 #include <cerrno>
+#include <ctime>
 
 RTSemaphore::RTSemaphore(unsigned value)
 {
@@ -57,6 +58,15 @@ bool RTSemaphore::try_wait()
     return b;
 }
 
+bool RTSemaphore::timed_wait(uint32_t milliseconds)
+{
+    std::error_code ec;
+    bool b = timed_wait(milliseconds, ec);
+    if (ec)
+        throw std::system_error(ec);
+    return b;
+}
+
 #if defined(__APPLE__)
 void RTSemaphore::init(std::error_code& ec, unsigned value)
 {
@@ -101,9 +111,16 @@ void RTSemaphore::wait(std::error_code& ec) noexcept
 
 bool RTSemaphore::try_wait(std::error_code& ec) noexcept
 {
+    return timed_wait(0, ec);
+}
+
+bool RTSemaphore::timed_wait(uint32_t milliseconds, std::error_code& ec) noexcept
+{
     ec.clear();
     do {
-        const mach_timespec_t timeout = { 0, 0 };
+        mach_timespec_t timeout;
+        timeout.tv_sec = milliseconds / 1000;
+        timeout.tv_nsec = (milliseconds % 1000) * (1000L * 1000L);
         kern_return_t ret = semaphore_timedwait(sem_, timeout);
         switch (ret) {
         case KERN_SUCCESS:
@@ -179,8 +196,13 @@ void RTSemaphore::wait(std::error_code& ec) noexcept
 
 bool RTSemaphore::try_wait(std::error_code& ec) noexcept
 {
+    return timed_wait(0, ec);
+}
+
+bool RTSemaphore::timed_wait(uint32_t milliseconds, std::error_code& ec) noexcept
+{
     ec.clear();
-    DWORD ret = WaitForSingleObject(sem_, 0);
+    DWORD ret = WaitForSingleObject(sem_, milliseconds);
     switch (ret) {
     case WAIT_OBJECT_0:
         return true;
@@ -244,6 +266,40 @@ bool RTSemaphore::try_wait(std::error_code& ec) noexcept
         case EINTR:
             break;
         case EAGAIN:
+            return false;
+        default:
+            ec = std::error_code(e, std::generic_category());
+            return false;
+        }
+    } while (1);
+}
+
+static bool absolute_timeout(uint32_t milliseconds, timespec &abs, std::error_code& ec)
+{
+    timespec now;
+    if (clock_gettime(CLOCK_REALTIME, &now) != 0) {
+        ec = std::error_code(errno, std::generic_category());
+        return false;
+    }
+    abs.tv_sec = now.tv_sec + milliseconds / 1000;
+    abs.tv_nsec = now.tv_nsec + (milliseconds % 1000) * (1000L * 1000L);
+    return true;
+}
+
+bool RTSemaphore::timed_wait(uint32_t milliseconds, std::error_code& ec) noexcept
+{
+    ec.clear();
+    timespec abs;
+    if (!absolute_timeout(milliseconds, abs, ec))
+        return false;
+    do {
+        if (sem_timedwait(&sem_, &abs) == 0)
+            return true;
+        int e = errno;
+        switch (e) {
+        case EINTR:
+            break;
+        case ETIMEDOUT:
             return false;
         default:
             ec = std::error_code(e, std::generic_category());
