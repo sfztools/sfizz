@@ -19,7 +19,7 @@ static constexpr bool black[12] = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0};
 
 struct SPiano::Impl {
     unsigned octs_ {};
-    std::vector<float> keyval_;
+    std::unique_ptr<float[]> keyval_ { new float[128]{} };
     std::bitset<128> keyUsed_;
     std::bitset<128> keyswitchUsed_;
     unsigned mousePressedKey_ = ~0u;
@@ -76,7 +76,6 @@ unsigned SPiano::getNumOctaves() const
 void SPiano::setNumOctaves(unsigned octs)
 {
     Impl& impl = *impl_;
-    impl.keyval_.resize(octs * 12);
     impl.octs_ = std::max(1u, octs);
     getDimensions(true);
     invalid();
