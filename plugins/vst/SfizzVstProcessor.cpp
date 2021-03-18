@@ -9,7 +9,7 @@
 #include "SfizzVstState.h"
 #include "SfizzVstParameters.h"
 #include "SfizzFileScan.h"
-#include "plugin/ForeignInstrument.h"
+#include "sfizz/import/ForeignInstrument.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"

@@ -242,6 +242,24 @@ if(SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions(sfizz_messaging PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
 
+# Import library
+set(SFIZZ_IMPORT_HEADERS
+    sfizz/import/ForeignInstrument.h
+    sfizz/import/foreign_instruments/AudioFile.h)
+
+set(SFIZZ_IMPORT_SOURCES
+    sfizz/import/ForeignInstrument.cpp
+    sfizz/import/foreign_instruments/AudioFile.cpp)
+
+add_library(sfizz_import STATIC)
+add_library(sfizz::import ALIAS sfizz_import)
+target_sources(sfizz_import PRIVATE
+    ${SFIZZ_IMPORT_HEADERS} ${SFIZZ_IMPORT_SOURCES})
+target_include_directories(sfizz_import PUBLIC ".")
+target_link_libraries(sfizz_import
+    PUBLIC absl::strings absl::memory sfizz::filesystem
+    PRIVATE sfizz::pugixml)
+
 # Sfizz spinlock mutex
 add_library(sfizz_spin_mutex STATIC
     sfizz/utility/spin_mutex/spin_mutex.h
