@@ -78,9 +78,8 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "$BUILD_TYPE" -j 2
     - name: Test
-      working-directory: ${{runner.workspace}}/build
       shell: bash
-      run: tests/sfizz_tests
+      run: ${{runner.workspace}}/build/tests/sfizz_tests
     - name: Install
       working-directory: ${{runner.workspace}}/build
       shell: bash
