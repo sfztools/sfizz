@@ -14,6 +14,7 @@
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <ghc/fs_std.hpp>
+#include <chrono>
 #include <cstring>
 
 template<class T>
@@ -40,6 +41,8 @@ static const char* kMsgIdSetPreloadSize = "SetPreloadSize";
 static const char* kMsgIdNotifyPlayState = "NotifyPlayState";
 static const char* kMsgIdReceiveMessage = "ReceiveMessage";
 static const char* kMsgIdNoteEvents = "NoteEvents";
+
+static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 500 };
 
 SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(64 * 1024), _fifoMessageFromUi(64 * 1024),
@@ -637,7 +640,7 @@ void SfizzVstProcessor::doBackgroundWork()
     Clock::time_point lastIdleWorkTime;
 
     for (;;) {
-        bool isNotified = _semaToWorker.timed_wait(1000);
+        bool isNotified = _semaToWorker.timed_wait(kBackgroundIdleInterval.count());
 
         if (!_workRunning)
             break;
@@ -690,7 +693,7 @@ void SfizzVstProcessor::doBackgroundWork()
         }
 
         Clock::time_point currentTime = Clock::now();
-        if (!haveDoneIdleWork || currentTime - lastIdleWorkTime > std::chrono::seconds(1)) {
+        if (!haveDoneIdleWork || currentTime - lastIdleWorkTime > kBackgroundIdleInterval) {
             doBackgroundIdle();
             haveDoneIdleWork = true;
             lastIdleWorkTime = currentTime;
