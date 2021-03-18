@@ -72,10 +72,6 @@ private:
     Ring_Buffer _fifoMessageFromUi;
     SpinMutex _processMutex;
 
-    // file modification periodic checker
-    uint32 _fileChangeCounter = 0;
-    uint32 _fileChangePeriod = 0;
-
     // state notification periodic timer
     uint32 _playStateChangeCounter = 0;
     uint32 _playStateChangePeriod = 0;
@@ -99,6 +95,7 @@ private:
 
     // worker
     void doBackgroundWork();
+    void doBackgroundIdle();
     void startBackgroundWork();
     void stopBackgroundWork();
     // writer
