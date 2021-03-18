@@ -382,6 +382,12 @@ public:
      */
     const TriggerEvent& getTriggerEvent();
 
+public:
+    /**
+     * @brief Check if the voice already belongs to a sister ring
+     */
+    bool isInSisterRing() const noexcept { return this != nextSisterVoice_; }
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
