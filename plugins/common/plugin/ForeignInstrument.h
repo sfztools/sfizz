@@ -69,6 +69,8 @@ public:
  */
 class InstrumentImporter {
 public:
+    virtual ~InstrumentImporter() {}
+
     /**
      * @brief Get the format that this importer converts from
      */
