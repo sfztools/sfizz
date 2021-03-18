@@ -274,15 +274,23 @@ bool RTSemaphore::try_wait(std::error_code& ec) noexcept
     } while (1);
 }
 
-static bool absolute_timeout(uint32_t milliseconds, timespec &abs, std::error_code& ec)
+static bool absolute_timeout(uint32_t milliseconds, timespec &result, std::error_code& ec)
 {
     timespec now;
     if (clock_gettime(CLOCK_REALTIME, &now) != 0) {
         ec = std::error_code(errno, std::generic_category());
         return false;
     }
+
+    timespec abs;
     abs.tv_sec = now.tv_sec + milliseconds / 1000;
     abs.tv_nsec = now.tv_nsec + (milliseconds % 1000) * (1000L * 1000L);
+
+    long abs_nsec_sec = abs.tv_nsec / (1000L * 1000L * 1000L);
+    abs.tv_sec += abs_nsec_sec;
+    abs.tv_nsec -= abs_nsec_sec * (1000L * 1000L * 1000L);
+
+    result = abs;
     return true;
 }
 
