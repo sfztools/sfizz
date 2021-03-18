@@ -9,7 +9,10 @@
 #include "MathHelpers.h"
 #include "SfzHelpers.h"
 #include "SIMDHelpers.h"
+#include <simde/simde-features.h>
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 #include <simde/x86/sse.h>
+#endif
 
 namespace sfz {
 
@@ -96,6 +99,7 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
     // int32_t framesToTarget = framesToTarget_;
     const int32_t smoothFrames = smoothFrames_;
 
+#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
     for (; i + 15 < count; i += 16) {
         const float nextTarget = input[i + 15];
         if (target != nextTarget) {
@@ -143,6 +147,32 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
         }
         //framesToTarget -= 16;
     }
+#else
+    for (; i + 15 < count; i += 16) {
+        const float nextTarget = input[i + 15];
+
+        if (target != nextTarget) {
+            target = nextTarget;
+            //framesToTarget = (framesToTarget > 0) ? framesToTarget : smoothFrames;
+            //step = (target - current) / (16 * max(1, framesToTarget));
+            step = (target - current) / (16 * max(1, smoothFrames));
+        }
+        if (target > current) {
+            for (size_t j = 0; j < 16; ++j)
+                output[i + j] = current = min(target, current + step);
+        }
+        else if (target < current) {
+            for (size_t j = 0; j < 16; ++j)
+                output[i + j] = current = max(target, current + step);
+        }
+        else {
+            for (size_t j = 0; j < 16; ++j)
+                output[i + j] = target;
+        }
+
+        //framesToTarget -= 16;
+    }
+#endif
 
     if (i < count) {
         const float nextTarget = input[count - 1];
