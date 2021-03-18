@@ -87,8 +87,9 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
 
     float current = current_;
     float target = target_;
+    const int32_t smoothFrames = smoothFrames_;
 
-    if (canShortcut && current == target && current == input.front()) {
+    if (smoothFrames < 2 || (canShortcut && current == target && current == input.front())) {
         if (input.data() != output.data())
             copy<float>(input, output);
         reset(input.back());
@@ -97,7 +98,6 @@ void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> ou
 
     float step = step_;
     // int32_t framesToTarget = framesToTarget_;
-    const int32_t smoothFrames = smoothFrames_;
 
 #if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
     for (; i + 15 < count; i += 16) {
