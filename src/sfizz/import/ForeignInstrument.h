@@ -34,6 +34,11 @@ public:
      */
     const InstrumentFormat* getMatchingFormat(const fs::path& path) const;
 
+    /**
+     * @brief Get the list of registered formats.
+     */
+    const std::vector<const InstrumentFormat*>& getAllFormats() const noexcept { return formats_; }
+
 private:
     std::vector<const InstrumentFormat*> formats_;
 };

@@ -3,14 +3,18 @@
 
 int main(int argc, char* argv[])
 {
+    const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
+
     if (argc != 2) {
         std::cerr << "Usage: sfizz_importer <foreign-instrument>\n";
+        std::cerr << "--\n" "Supported formats:\n";
+        for (const sfz::InstrumentFormat* format : formatRegistry.getAllFormats())
+            std::cerr << " * " << format->name() << '\n';
         return 1;
     }
 
     const fs::path foreignPath = fs::u8path(argv[1]);
 
-    const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
     const sfz::InstrumentFormat* format = formatRegistry.getMatchingFormat(foreignPath);
 
     if (!format) {
