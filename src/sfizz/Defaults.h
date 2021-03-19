@@ -50,6 +50,7 @@ enum OpcodeFlags : int {
     kCanBeNote = 1,
     kEnforceLowerBound = 1 << 1,
     kEnforceUpperBound = 1 << 2,
+    kEnforceBounds = kEnforceLowerBound|kEnforceUpperBound,
     kNormalizePercent = 1 << 3,
     kNormalizeMidi = 1 << 4,
     kNormalizeBend = 1 << 5,
