@@ -1066,8 +1066,8 @@ void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& trig
         return;
 
     ASSERT(selectedVoice->isFree());
-    selectedVoice->startVoice(region, delay, triggerEvent);
-    ring.addVoiceToRing(selectedVoice);
+    if (selectedVoice->startVoice(region, delay, triggerEvent))
+        ring.addVoiceToRing(selectedVoice);
 }
 
 void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept

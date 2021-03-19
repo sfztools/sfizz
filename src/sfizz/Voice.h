@@ -102,8 +102,9 @@ public:
      * @param region
      * @param delay
      * @param evebt
+     * @return bool
      */
-    void startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
+    bool startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
 
     /**
      * @brief Get the sample quality determined by the active region.
