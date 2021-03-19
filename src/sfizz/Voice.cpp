@@ -1540,6 +1540,8 @@ void Voice::Impl::updateLoopInformation() noexcept
     loop_.start = static_cast<int>(region_->loopStart(factor));
     loop_.size = loop_.end + 1 - loop_.start;
     loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
+    // Clamp the crossfade to the part available before the loop starts
+    loop_.xfSize = min(loop_.start, loop_.xfSize);
     loop_.xfOutStart = loop_.end + 1 - loop_.xfSize;
     loop_.xfInStart = loop_.start - loop_.xfSize;
 }
