@@ -16,8 +16,9 @@ namespace sfz
  * @brief This class holds a range with functions to clamp and test if a value is in the range
  *
  * @tparam Type
+ * @tparam Checked whether this range adapts itself to guarantee (start<=end)
  */
-template <class Type>
+template <class Type, bool Checked = true>
 class Range {
     // static_assert(std::is_arithmetic<Type>::value
     //     || (std::is_enum<Type>::value && std::is_same<typename std::underlying_type<Type>::type, int>::value),
@@ -27,7 +28,7 @@ public:
     constexpr Range() = default;
     constexpr Range(Type start, Type end) noexcept
         : _start(start)
-        , _end(max(start, end))
+        , _end(Checked ? max(start, end) : end)
     {
 
     }
@@ -43,16 +44,28 @@ public:
     void setStart(Type start) noexcept
     {
         _start = start;
-        if (start > _end)
+        if (Checked && start > _end)
             _end = start;
     }
 
     void setEnd(Type end) noexcept
     {
         _end = end;
-        if (end < _start)
+        if (Checked && end < _start)
             _start = end;
     }
+
+    /**
+     * @brief Check whether the range verifies (start<=end)
+     */
+    bool isValid() const noexcept
+    {
+        if (Checked)
+            return true; // always valid
+        else
+            return _start <= _end;
+    }
+
     /**
      * @brief Clamp a value within the range including the endpoints
      *
@@ -84,7 +97,7 @@ public:
      */
     void shrinkIfSmaller(Type start, Type end)
     {
-        if (start > end)
+        if (Checked && start > end)
             std::swap(start, end);
 
         if (start > _start)
@@ -96,12 +109,9 @@ public:
 
     void expandTo(Type value)
     {
-        if (containsWithEnd(value))
-            return;
-
         if (value > _end)
             _end = value;
-        else
+        else if (value < _start)
             _start = value;
     }
 
@@ -134,6 +144,9 @@ private:
     Type _start { static_cast<Type>(0.0) };
     Type _end { static_cast<Type>(0.0) };
 };
+
+template <class T> using UncheckedRange = Range<T, false>;
+
 }
 
 template <class Type>
