@@ -50,11 +50,15 @@ enum OpcodeFlags : int {
     kCanBeNote = 1,
     kEnforceLowerBound = 1 << 1,
     kEnforceUpperBound = 1 << 2,
-    kNormalizePercent = 1 << 3,
-    kNormalizeMidi = 1 << 4,
-    kNormalizeBend = 1 << 5,
-    kWrapPhase = 1 << 6,
-    kDb2Mag = 1 << 7,
+    kEnforceBounds = kEnforceLowerBound|kEnforceUpperBound,
+    kPermissiveLowerBound = 1 << 3,
+    kPermissiveUpperBound = 1 << 4,
+    kPermissiveBounds = kPermissiveLowerBound|kPermissiveUpperBound,
+    kNormalizePercent = 1 << 5,
+    kNormalizeMidi = 1 << 6,
+    kNormalizeBend = 1 << 7,
+    kWrapPhase = 1 << 8,
+    kDb2Mag = 1 << 9,
 };
 
 template<class T>
@@ -151,11 +155,11 @@ namespace Default
     extern const OpcodeSpec<float> hiNormalized;
     extern const OpcodeSpec<float> loBipolar;
     extern const OpcodeSpec<float> hiBipolar;
-    extern const OpcodeSpec<uint8_t> loChannelAftertouch;
-    extern const OpcodeSpec<uint8_t> hiChannelAftertouch;
+    extern const OpcodeSpec<float> loChannelAftertouch;
+    extern const OpcodeSpec<float> hiChannelAftertouch;
     extern const OpcodeSpec<uint16_t> ccNumber;
     extern const OpcodeSpec<uint8_t> curveCC;
-    extern const OpcodeSpec<uint8_t> smoothCC;
+    extern const OpcodeSpec<uint16_t> smoothCC;
     extern const OpcodeSpec<uint8_t> sustainCC;
     extern const OpcodeSpec<bool> checkSustain;
     extern const OpcodeSpec<bool> checkSostenuto;

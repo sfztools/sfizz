@@ -90,13 +90,13 @@ TEST_CASE("Region activation", "Region tests")
     {
         region.parseOpcode({ "lochanaft", "56" });
         region.parseOpcode({ "hichanaft", "68" });
-        region.registerAftertouch(0);
+        region.registerAftertouch(sfz::normalize7Bits(0));
         REQUIRE(!region.isSwitchedOn());
-        region.registerAftertouch(56);
+        region.registerAftertouch(sfz::normalize7Bits(56));
         REQUIRE(region.isSwitchedOn());
-        region.registerAftertouch(68);
+        region.registerAftertouch(sfz::normalize7Bits(68));
         REQUIRE(region.isSwitchedOn());
-        region.registerAftertouch(98);
+        region.registerAftertouch(sfz::normalize7Bits(98));
         REQUIRE(!region.isSwitchedOn());
     }
 

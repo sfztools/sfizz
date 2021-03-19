@@ -56,7 +56,7 @@ ModKey::Parameters& ModKey::Parameters::operator=(Parameters&& other) noexcept
     return *this;
 }
 
-ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float step)
+ModKey ModKey::createCC(uint16_t cc, uint8_t curve, uint16_t smooth, float step)
 {
     ModKey::Parameters p;
     p.cc = cc;

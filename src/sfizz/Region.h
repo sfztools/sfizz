@@ -150,7 +150,7 @@ struct Region {
      *
      * @param aftertouch
      */
-    void registerAftertouch(uint8_t aftertouch) noexcept;
+    void registerAftertouch(float aftertouch) noexcept;
     /**
      * @brief Register tempo
      *
@@ -409,7 +409,7 @@ struct Region {
     float sustainThreshold { Default::sustainThreshold }; // sustain_cc
 
     // Region logic: internal conditions
-    Range<uint8_t> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
+    Range<float> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
     Range<float> bpmRange { Default::loBPM, Default::hiBPM }; // hibpm and lobpm
     Range<float> randRange { Default::loNormalized, Default::hiNormalized }; // hirand and lorand
     uint8_t sequenceLength { Default::sequence }; // seq_length
@@ -464,7 +464,7 @@ struct Region {
     float bendUp { Default::bendUp };
     float bendDown { Default::bendDown };
     float bendStep { Default::bendStep };
-    uint8_t bendSmooth { Default::smoothCC };
+    uint16_t bendSmooth { Default::smoothCC };
 
     // Envelopes
     EGDescription amplitudeEG;

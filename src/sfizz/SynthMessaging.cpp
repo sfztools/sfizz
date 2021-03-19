@@ -374,9 +374,9 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/chanaft_range", "") {
             GET_REGION_OR_BREAK(indices[0])
             sfizz_arg_t args[2];
-            args[0].i = region.aftertouchRange.getStart();
-            args[1].i = region.aftertouchRange.getEnd();
-            client.receive(delay, path, "ii", args);
+            args[0].f = region.aftertouchRange.getStart();
+            args[1].f = region.aftertouchRange.getEnd();
+            client.receive(delay, path, "ff", args);
         } break;
 
         MATCH("/region&/bpm_range", "") {

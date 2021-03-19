@@ -20,7 +20,7 @@ OnePoleSmoother::OnePoleSmoother()
 {
 }
 
-void OnePoleSmoother::setSmoothing(uint8_t smoothValue, float sampleRate)
+void OnePoleSmoother::setSmoothing(unsigned smoothValue, float sampleRate)
 {
     smoothing = (smoothValue > 0);
     if (smoothing) {
@@ -62,7 +62,7 @@ LinearSmoother::LinearSmoother()
 {
 }
 
-void LinearSmoother::setSmoothing(uint8_t smoothValue, float sampleRate)
+void LinearSmoother::setSmoothing(unsigned smoothValue, float sampleRate)
 {
     const float smoothTime = 1e-3f * smoothValue;
     smoothFrames_ = static_cast<int32_t>(smoothTime * sampleRate);

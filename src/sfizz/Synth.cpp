@@ -1258,21 +1258,26 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
 
 void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
 {
+    const float normalizedAftertouch = normalize7Bits(aftertouch);
+    hdAftertouch(delay, normalizedAftertouch);
+}
+
+void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
+{
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    const auto normalizedAftertouch = normalize7Bits(aftertouch);
-    impl.resources_.midiState.channelAftertouchEvent(delay, normalizedAftertouch);
+    impl.resources_.midiState.channelAftertouchEvent(delay, normAftertouch);
 
     for (auto& region : impl.regions_) {
-        region->registerAftertouch(aftertouch);
+        region->registerAftertouch(normAftertouch);
     }
 
     for (auto& voice : impl.voiceManager_) {
-        voice.registerAftertouch(delay, aftertouch);
+        voice.registerAftertouch(delay, normAftertouch);
     }
 
-    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normalizedAftertouch, false);
+    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
