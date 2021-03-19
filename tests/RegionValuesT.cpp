@@ -869,11 +869,11 @@ TEST_CASE("[Values] Aftertouch range")
     synth.dispatchMessage(client, 0, "/region3/chanaft_range", "", nullptr);
     synth.dispatchMessage(client, 0, "/region4/chanaft_range", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/chanaft_range,ii : { 0, 127 }",
-        "/region1/chanaft_range,ii : { 34, 60 }",
-        "/region2/chanaft_range,ii : { 0, 60 }",
-        "/region3/chanaft_range,ii : { 20, 127 }",
-        "/region4/chanaft_range,ii : { 10, 10 }",
+        "/region0/chanaft_range,ff : { 0, 1 }",
+        "/region1/chanaft_range,ff : { 0.267717, 0.472441 }",
+        "/region2/chanaft_range,ff : { 0, 0.472441 }",
+        "/region3/chanaft_range,ff : { 0.15748, 1 }",
+        "/region4/chanaft_range,ff : { 0.0787402, 0.0787402 }",
     };
     REQUIRE(messageList == expected);
 }

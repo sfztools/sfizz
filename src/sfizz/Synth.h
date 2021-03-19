@@ -390,6 +390,14 @@ public:
      */
     void aftertouch(int delay, uint8_t aftertouch) noexcept;
     /**
+     * @brief Send a high precision aftertouch event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock().
+     * @param normAftertouch the normalized aftertouch value, in domain 0 to 1
+     */
+    void hdAftertouch(int delay, float normAftertouch) noexcept;
+    /**
      * @brief Send a tempo event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of

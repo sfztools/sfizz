@@ -1565,7 +1565,7 @@ void sfz::Region::registerPitchWheel(float pitch) noexcept
         pitchSwitched = false;
 }
 
-void sfz::Region::registerAftertouch(uint8_t aftertouch) noexcept
+void sfz::Region::registerAftertouch(float aftertouch) noexcept
 {
     if (aftertouchRange.containsWithEnd(aftertouch))
         aftertouchSwitched = true;
