@@ -1586,7 +1586,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    fast_real_distribution<float> pitchDistribution { -pitchRandom, pitchRandom };
+    fast_real_distribution<float> pitchDistribution { 0.0f, pitchRandom };
     auto pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += pitch; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
@@ -1597,7 +1597,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
 
 float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
 {
-    fast_real_distribution<float> volumeDistribution { -ampRandom, ampRandom };
+    fast_real_distribution<float> volumeDistribution { 0.0f, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
     baseVolumedB += globalVolume;
     baseVolumedB += masterVolume;
