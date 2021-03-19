@@ -167,6 +167,11 @@ namespace config {
      * @brief The smoothing time constant per "smooth" steps
      */
     constexpr float smoothTauPerStep { 3e-3 };
+    /**
+     * @brief If a value below this threshold is given to `ampeg_sustain`, the envelope will free-run
+     * and the voice will release itself at the end of the decay stage.
+     */
+    constexpr float sustainFreeRunningThreshold { 0.0032f };
 } // namespace config
 
 } // namespace sfz
