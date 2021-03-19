@@ -1949,7 +1949,7 @@ TEST_CASE("[Values] Pitch Random")
     std::vector<std::string> expected {
         "/region0/pitch_random,f : { 0 }",
         "/region1/pitch_random,f : { 10 }",
-        "/region2/pitch_random,f : { 0 }",
+        "/region2/pitch_random,f : { -4 }",
     };
     REQUIRE(messageList == expected);
 }
