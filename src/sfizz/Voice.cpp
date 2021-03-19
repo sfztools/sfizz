@@ -358,18 +358,21 @@ Voice::Impl::Impl(int voiceNumber, Resources& resources)
     getSCurve();
 }
 
-void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
+bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
     impl.region_ = region;
-    if (region->disabled())
-        return;
 
     impl.triggerEvent_ = event;
     if (impl.triggerEvent_.type == TriggerEventType::CC)
         impl.triggerEvent_.number = region->pitchKeycenter;
+
+    if (region->disabled()) {
+        impl.switchState(State::cleanMeUp);
+        return false;
+    }
 
     impl.switchState(State::playing);
 
@@ -414,7 +417,7 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
         impl.currentPromise_ = impl.resources_.filePool.getFilePromise(region->sampleId);
         if (!impl.currentPromise_) {
             impl.switchState(State::cleanMeUp);
-            return;
+            return false;
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
@@ -455,6 +458,8 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
 
     impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
     impl.saveModulationTargets(region);
+
+    return true;
 }
 
 int Voice::Impl::getCurrentSampleQuality() const noexcept
@@ -628,7 +633,8 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);
     buffer.fill(0.0f);
 
-    if (impl.region_ == nullptr)
+    const Region* region = impl.region_;
+    if (region == nullptr || region->disabled())
         return;
 
     const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
@@ -637,13 +643,13 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Fill buffer with raw data
         ScopedTiming logger { impl.dataDuration_ };
-        if (impl.region_->isOscillator())
+        if (region->isOscillator())
             impl.fillWithGenerator(delayed_buffer);
         else
             impl.fillWithData(delayed_buffer);
     }
 
-    if (impl.region_->isStereo()) {
+    if (region->isStereo()) {
         impl.ampStageStereo(buffer);
         impl.panStageStereo(buffer);
         impl.filterStageStereo(buffer);
@@ -653,12 +659,12 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
         impl.panStageMono(buffer);
     }
 
-    if (!impl.region_->flexAmpEG) {
+    if (!region->flexAmpEG) {
         if (!impl.egAmplitude_.isSmoothing())
             impl.switchState(State::cleanMeUp);
     }
     else {
-        if (impl.flexEGs_[*impl.region_->flexAmpEG]->isFinished())
+        if (impl.flexEGs_[*region->flexAmpEG]->isFinished())
             impl.switchState(State::cleanMeUp);
     }
 
@@ -1476,12 +1482,13 @@ bool Voice::Impl::released() const noexcept
 bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
 {
     Impl& impl = *impl_;
-    if (impl.region_ == nullptr || other == nullptr)
+    const Region* region = impl.region_;
+    if (region == nullptr || other == nullptr)
         return false;
 
     if (impl.triggerEvent_.type == TriggerEventType::NoteOn
-        && impl.region_->offBy == other->group
-        && (impl.region_->group != other->group || noteNumber != impl.triggerEvent_.number)) {
+        && region->offBy == other->group
+        && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
     }

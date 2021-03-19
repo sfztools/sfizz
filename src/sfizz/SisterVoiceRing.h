@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Voice.h"
+#include "Debug.h"
 #include "absl/meta/type_traits.h"
 
 namespace sfz
@@ -135,31 +136,20 @@ public:
      * @param voice
      */
     void addVoiceToRing(Voice* voice) noexcept {
-        if (firstStartedVoice == nullptr)
-            firstStartedVoice = voice;
+        ASSERT(!voice->isInSisterRing());
 
-        firstStartedVoice->setPreviousSisterVoice(voice);
-        voice->setNextSisterVoice(firstStartedVoice);
+        Voice* next = head_;
+        if (!next)
+            head_ = next = voice;
 
-        if (lastStartedVoice != nullptr) {
-            voice->setPreviousSisterVoice(lastStartedVoice);
-            lastStartedVoice->setNextSisterVoice(voice);
-        }
-
-        lastStartedVoice = voice;
+        Voice* previous = next->getPreviousSisterVoice();
+        voice->setNextSisterVoice(next);
+        voice->setPreviousSisterVoice(previous);
+        next->setPreviousSisterVoice(voice);
+        previous->setNextSisterVoice(voice);
     }
-    /**
-     * @brief Apply a function to the sister ring, including the current voice.
-     * This function should be safe enough to even reset the sister voices, but
-     * if you mutate the ring significantly you should probably roll your own
-     * iterator.
-     *
-     * @param lambda the function to apply.
-     * @param voice the starting voice
-     */
 private:
-    Voice* firstStartedVoice { nullptr };
-    Voice* lastStartedVoice { nullptr };
+    Voice* head_ { nullptr };
 };
 
 }

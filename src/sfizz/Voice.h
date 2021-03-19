@@ -102,8 +102,9 @@ public:
      * @param region
      * @param delay
      * @param evebt
+     * @return bool
      */
-    void startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
+    bool startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
 
     /**
      * @brief Get the sample quality determined by the active region.
@@ -381,6 +382,12 @@ public:
      * @brief Get the trigger event
      */
     const TriggerEvent& getTriggerEvent();
+
+public:
+    /**
+     * @brief Check if the voice already belongs to a sister ring
+     */
+    bool isInSisterRing() const noexcept { return this != nextSisterVoice_; }
 
 private:
     struct Impl;
