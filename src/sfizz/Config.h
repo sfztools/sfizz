@@ -56,8 +56,8 @@ namespace config {
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
     constexpr unsigned smoothingSteps { 512 };
-    constexpr uint8_t xfadeSmoothing { 5 };
-    constexpr uint8_t gainSmoothing { 0 };
+    constexpr uint16_t xfadeSmoothing { 5 };
+    constexpr uint16_t gainSmoothing { 0 };
     constexpr unsigned powerTableSizeExponent { 11 };
     constexpr int maxFilePromises { maxVoices };
     constexpr int allSoundOffCC { 120 };

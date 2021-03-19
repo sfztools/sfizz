@@ -28,7 +28,7 @@ public:
     explicit ModKey(ModId id, NumericId<Region> region = {}, Parameters params = {})
         : id_(id), region_(region), params_(params), flags_(ModIds::flags(id_)) {}
 
-    static ModKey createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float step);
+    static ModKey createCC(uint16_t cc, uint8_t curve, uint16_t smooth, float step);
     static ModKey createNXYZ(ModId id, NumericId<Region> region = {}, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
 
     explicit operator bool() const noexcept { return id_ != ModId(); }
@@ -45,7 +45,7 @@ public:
     struct RawParameters {
         union {
             //! Parameters if this key identifies a CC source
-            struct { uint16_t cc; uint8_t curve, smooth; float step; };
+            struct { uint16_t cc; uint8_t curve; uint16_t smooth; float step; };
             //! Parameters otherwise, based on the related opcode
             // eg. `N` in `lfoN`, `N, X` in `lfoN_eqX`
             struct { uint8_t N, X, Y, Z; };

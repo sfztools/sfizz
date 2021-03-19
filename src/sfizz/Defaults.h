@@ -159,7 +159,7 @@ namespace Default
     extern const OpcodeSpec<float> hiChannelAftertouch;
     extern const OpcodeSpec<uint16_t> ccNumber;
     extern const OpcodeSpec<uint8_t> curveCC;
-    extern const OpcodeSpec<uint8_t> smoothCC;
+    extern const OpcodeSpec<uint16_t> smoothCC;
     extern const OpcodeSpec<uint8_t> sustainCC;
     extern const OpcodeSpec<bool> checkSustain;
     extern const OpcodeSpec<bool> checkSostenuto;

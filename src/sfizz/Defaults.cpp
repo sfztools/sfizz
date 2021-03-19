@@ -58,7 +58,7 @@ FloatSpec hiNormalized { 1.0f, {0.0f, 1.0f}, 0 };
 FloatSpec loBipolar { -1.0f, {-1.0f, 1.0f}, 0 };
 FloatSpec hiBipolar { 1.0f, {-1.0f, 1.0f}, 0 };
 UInt16Spec ccNumber { 0, {0, config::numCCs}, 0 };
-UInt8Spec smoothCC { 0, {0, 100}, 0 };
+UInt16Spec smoothCC { 0, {0, 100}, kPermissiveUpperBound };
 UInt8Spec curveCC { 0, {0, 255}, 0 };
 UInt8Spec sustainCC { 64, {0, 127}, 0 };
 FloatSpec sustainThreshold { 1.0f, {0.0f, 127.0f}, kNormalizeMidi };

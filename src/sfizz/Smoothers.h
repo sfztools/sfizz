@@ -24,7 +24,7 @@ public:
      * @param smoothValue
      * @param sampleRate
      */
-    void setSmoothing(uint8_t smoothValue, float sampleRate);
+    void setSmoothing(unsigned smoothValue, float sampleRate);
     /**
      * @brief Reset the filter state to a given value
      *
@@ -63,7 +63,7 @@ public:
      * @param smoothValue
      * @param sampleRate
      */
-    void setSmoothing(uint8_t smoothValue, float sampleRate);
+    void setSmoothing(unsigned smoothValue, float sampleRate);
     /**
      * @brief Reset the filter state to a given value
      *

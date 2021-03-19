@@ -464,7 +464,7 @@ struct Region {
     float bendUp { Default::bendUp };
     float bendDown { Default::bendDown };
     float bendStep { Default::bendStep };
-    uint8_t bendSmooth { Default::smoothCC };
+    uint16_t bendSmooth { Default::smoothCC };
 
     // Envelopes
     EGDescription amplitudeEG;
