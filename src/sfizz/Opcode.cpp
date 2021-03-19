@@ -11,6 +11,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include <limits>
 #include <iostream>
 #include <cctype>
 #include <cassert>
@@ -144,6 +145,8 @@ OpcodeCategory Opcode::identifyCategory(absl::string_view name)
 template <typename T>
 absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
 {
+    using Limits = std::numeric_limits<T>;
+
     size_t numberEnd = 0;
 
     if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
@@ -164,14 +167,17 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
     if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveBounds))
+            return absl::nullopt;
     } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveBounds))
+            return absl::nullopt;
     }
+
+    returnedValue = std::max<int64_t>(returnedValue, Limits::min());
+    returnedValue = std::min<int64_t>(returnedValue, Limits::max());
 
     return static_cast<T>(returnedValue);
 }
@@ -219,16 +225,18 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
     else if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveBounds))
+            return absl::nullopt;
     } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveBounds))
+            return absl::nullopt;
     }
 
-    return spec.normalizeInput(returnedValue);
+    returnedValue = spec.normalizeInput(returnedValue);
+
+    return returnedValue;
 }
 
 #define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
