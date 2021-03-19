@@ -52,7 +52,7 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const 
     sustainThreshold = this->sustain + config::virtuallyZero;
     shouldRelease = false;
     freeRunning = (
-        (this->sustain == Float(0.0))
+        (this->sustain <= Float(config::sustainFreeRunningThreshold))
         || (region.loopMode == LoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
