@@ -51,12 +51,14 @@ enum OpcodeFlags : int {
     kEnforceLowerBound = 1 << 1,
     kEnforceUpperBound = 1 << 2,
     kEnforceBounds = kEnforceLowerBound|kEnforceUpperBound,
-    kPermissiveBounds = 1 << 3,
-    kNormalizePercent = 1 << 4,
-    kNormalizeMidi = 1 << 5,
-    kNormalizeBend = 1 << 6,
-    kWrapPhase = 1 << 7,
-    kDb2Mag = 1 << 8,
+    kPermissiveLowerBound = 1 << 3,
+    kPermissiveUpperBound = 1 << 4,
+    kPermissiveBounds = kPermissiveLowerBound|kPermissiveUpperBound,
+    kNormalizePercent = 1 << 5,
+    kNormalizeMidi = 1 << 6,
+    kNormalizeBend = 1 << 7,
+    kWrapPhase = 1 << 8,
+    kDb2Mag = 1 << 9,
 };
 
 template<class T>
