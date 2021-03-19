@@ -31,14 +31,12 @@ TEST_CASE("[Values] Delay")
         synth.dispatchMessage(client, 0, "/region0/delay", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/delay", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/delay", "", nullptr);
-        // TODO: activate for the new region parser ; ignore the second value
-        // synth.dispatchMessage(client, 0, "/region3/delay", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/delay", "", nullptr);
         std::vector<std::string> expected {
             "/region0/delay,f : { 0 }",
             "/region1/delay,f : { 1 }",
-            "/region2/delay,f : { 0 }",
-            // TODO: activate for the new region parser ; ignore the second value
-            // "/region3/delay,f : { 1 }",
+            "/region2/delay,f : { -1 }",
+            "/region3/delay,f : { -1 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -54,12 +52,12 @@ TEST_CASE("[Values] Delay")
         synth.dispatchMessage(client, 0, "/region0/delay_random", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/delay_random", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/delay_random", "", nullptr);
-        // synth.dispatchMessage(client, 0, "/region3/delay_random", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/delay_random", "", nullptr);
         std::vector<std::string> expected {
             "/region0/delay_random,f : { 0 }",
             "/region1/delay_random,f : { 1 }",
-            "/region2/delay_random,f : { 0 }",
-            // "/region3/delay_random,f : { 1 }",
+            "/region2/delay_random,f : { -1 }",
+            "/region3/delay_random,f : { -1 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -76,14 +74,13 @@ TEST_CASE("[Values] Delay")
         synth.dispatchMessage(client, 0, "/region1/delay_cc12", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/delay_cc12", "", nullptr);
         synth.dispatchMessage(client, 0, "/region3/delay_cc14", "", nullptr);
-        // TODO: activate for the new region parser ; ignore the second value
-        // synth.dispatchMessage(client, 0, "/region3/delay_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/delay_cc12", "", nullptr);
         std::vector<std::string> expected {
             "/region0/delay_cc12,f : { 0 }",
             "/region1/delay_cc12,f : { 1.5 }",
-            "/region2/delay_cc12,f : { 0 }",
+            "/region2/delay_cc12,f : { -1.5 }",
             "/region3/delay_cc14,f : { 3 }",
-            // "/region3/delay_cc12,f : { 2 }",
+            "/region3/delay_cc12,f : { -12 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -131,14 +128,12 @@ TEST_CASE("[Values] Offset")
         synth.dispatchMessage(client, 0, "/region0/offset", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/offset", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/offset", "", nullptr);
-        // TODO: activate for the new region parser ; ignore the second value
-        // synth.dispatchMessage(client, 0, "/region3/offset", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/offset", "", nullptr);
         std::vector<std::string> expected {
             "/region0/offset,h : { 0 }",
             "/region1/offset,h : { 12 }",
-            "/region2/offset,h : { 0 }",
-            // TODO: activate for the new region parser ; ignore the second value
-            // "/region3/offset,f : { 12 }",
+            "/region2/offset,h : { -1 }",
+            "/region3/offset,h : { -1 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -154,13 +149,12 @@ TEST_CASE("[Values] Offset")
         synth.dispatchMessage(client, 0, "/region0/offset_random", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/offset_random", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/offset_random", "", nullptr);
-        // TODO: activate for the new region parser ; ignore the second value
-        // synth.dispatchMessage(client, 0, "/region3/offset_random", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/offset_random", "", nullptr);
         std::vector<std::string> expected {
             "/region0/offset_random,h : { 0 }",
             "/region1/offset_random,h : { 1 }",
-            "/region2/offset_random,h : { 0 }",
-            // "/region3/offset_random,f : { 1 }",
+            "/region2/offset_random,h : { -1 }",
+            "/region3/offset_random,h : { -1 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -177,14 +171,13 @@ TEST_CASE("[Values] Offset")
         synth.dispatchMessage(client, 0, "/region1/offset_cc12", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/offset_cc12", "", nullptr);
         synth.dispatchMessage(client, 0, "/region3/offset_cc14", "", nullptr);
-        // TODO: activate for the new region parser ; ignore the second value
-        // synth.dispatchMessage(client, 0, "/region3/offset_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/offset_cc12", "", nullptr);
         std::vector<std::string> expected {
             "/region0/offset_cc12,h : { 0 }",
             "/region1/offset_cc12,h : { 12 }",
-            "/region2/offset_cc12,h : { 0 }",
+            "/region2/offset_cc12,h : { -12 }",
             "/region3/offset_cc14,h : { 14 }",
-            // "/region3/offset_cc12,h : { 12 }",
+            "/region3/offset_cc12,h : { -12 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -465,7 +458,7 @@ TEST_CASE("[Values] Off time")
     std::vector<std::string> expected {
         "/region0/off_time,f : { 0.006 }",
         "/region1/off_time,f : { 0.1 }",
-        "/region2/off_time,f : { 0.006 }",
+        "/region2/off_time,f : { -1 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -556,8 +549,8 @@ TEST_CASE("[Values] Velocity range")
     std::vector<std::string> expected {
         "/region0/vel_range,ff : { 0, 1 }",
         "/region1/vel_range,ff : { 0.267717, 0.472441 }",
-        "/region2/vel_range,ff : { 0, 0.472441 }",
-        "/region3/vel_range,ff : { 0, 1 }",
+        "/region2/vel_range,ff : { -0.023622, 0.472441 }",
+        "/region3/vel_range,ff : { 0, -0.00787402 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -582,7 +575,7 @@ TEST_CASE("[Values] Bend range")
         "/region0/bend_range,ff : { -1, 1 }",
         "/region1/bend_range,ff : { 0.108778, 0.24417 }",
         "/region2/bend_range,ff : { -0.108778, 0.108778 }",
-        "/region3/bend_range,ff : { -1, 1 }",
+        "/region3/bend_range,ff : { -1, -1.22085 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -612,7 +605,7 @@ TEST_CASE("[Values] CC condition range")
             "/region1/cc_range1,ff : { 0, 0.425197 }",
             "/region2/cc_range1,ff : { 0, 0.425197 }",
             "/region2/cc_range2,ff : { 0.015748, 0.0787402 }",
-            "/region3/cc_range1,ff : { 0.0787402, 1 }",
+            "/region3/cc_range1,ff : { 0.0787402, -0.00787402 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -635,7 +628,7 @@ TEST_CASE("[Values] CC condition range")
             "/region1/cc_range1,ff : { 0, 0.1 }",
             "/region2/cc_range1,ff : { 0, 0.1 }",
             "/region2/cc_range2,ff : { 0.1, 0.2 }",
-            "/region3/cc_range1,ff : { 0.1, 1 }",
+            "/region3/cc_range1,ff : { 0.1, -0.1 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -658,7 +651,7 @@ TEST_CASE("[Values] CC condition range")
             "/region1/cc_range1,ff : { 0, 0.1 }",
             "/region2/cc_range1,ff : { 0, 0.1 }",
             "/region2/cc_range2,ff : { 0.1, 0.2 }",
-            "/region3/cc_range1,ff : { 0.1, 1 }",
+            "/region3/cc_range1,ff : { 0.1, -0.1 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -871,9 +864,9 @@ TEST_CASE("[Values] Aftertouch range")
     std::vector<std::string> expected {
         "/region0/chanaft_range,ff : { 0, 1 }",
         "/region1/chanaft_range,ff : { 0.267717, 0.472441 }",
-        "/region2/chanaft_range,ff : { 0, 0.472441 }",
-        "/region3/chanaft_range,ff : { 0.15748, 1 }",
-        "/region4/chanaft_range,ff : { 0.0787402, 0.0787402 }",
+        "/region2/chanaft_range,ff : { -0.023622, 0.472441 }",
+        "/region3/chanaft_range,ff : { 0.15748, -0.00787402 }",
+        "/region4/chanaft_range,ff : { 0.15748, 0.0787402 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -899,9 +892,9 @@ TEST_CASE("[Values] BPM range")
     std::vector<std::string> expected {
         "/region0/bpm_range,ff : { 0, 500 }",
         "/region1/bpm_range,ff : { 34.1, 60.2 }",
-        "/region2/bpm_range,ff : { 0, 60 }",
-        "/region3/bpm_range,ff : { 20, 500 }",
-        "/region4/bpm_range,ff : { 10, 10 }",
+        "/region2/bpm_range,ff : { -3, 60 }",
+        "/region3/bpm_range,ff : { 20, -1 }",
+        "/region4/bpm_range,ff : { 20, 10 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -927,9 +920,9 @@ TEST_CASE("[Values] Rand range")
     std::vector<std::string> expected {
         "/region0/rand_range,ff : { 0, 1 }",
         "/region1/rand_range,ff : { 0.2, 0.4 }",
-        "/region2/rand_range,ff : { 0, 0.4 }",
-        "/region3/rand_range,ff : { 0.2, 1 }",
-        "/region4/rand_range,ff : { 0.1, 0.1 }",
+        "/region2/rand_range,ff : { -0.1, 0.4 }",
+        "/region3/rand_range,ff : { 0.2, -0.1 }",
+        "/region4/rand_range,ff : { 0.2, 0.1 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -1568,7 +1561,7 @@ TEST_CASE("[Values] Amp Veltrack")
     std::vector<std::string> expected {
         "/region0/amp_veltrack,f : { 100 }",
         "/region1/amp_veltrack,f : { 10.1 }",
-        "/region2/amp_veltrack,f : { 100 }",
+        "/region2/amp_veltrack,f : { -132 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -1623,7 +1616,7 @@ TEST_CASE("[Values] Crossfade key range")
             "/region1/xfin_key_range,ii : { 10, 40 }",
             "/region2/xfin_key_range,ii : { 60, 83 }",
             "/region3/xfin_key_range,ii : { 0, 40 }",
-            "/region4/xfin_key_range,ii : { 0, 0 }",
+            "/region4/xfin_key_range,ii : { 10, 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1646,7 +1639,7 @@ TEST_CASE("[Values] Crossfade key range")
             "/region0/xfout_key_range,ii : { 127, 127 }",
             "/region1/xfout_key_range,ii : { 10, 40 }",
             "/region2/xfout_key_range,ii : { 60, 83 }",
-            "/region3/xfout_key_range,ii : { 40, 40 }",
+            "/region3/xfout_key_range,ii : { 127, 40 }",
             "/region4/xfout_key_range,ii : { 10, 127 }",
         };
         REQUIRE(messageList == expected);
@@ -1676,8 +1669,8 @@ TEST_CASE("[Values] Crossfade velocity range")
         std::vector<std::string> expected {
             "/region0/xfin_vel_range,ff : { 0, 0 }",
             "/region1/xfin_vel_range,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfin_vel_range,ff : { 0, 0.314961 }",
-            "/region3/xfin_vel_range,ff : { 0, 0 }",
+            "/region2/xfin_vel_range,ff : { -0.0787402, 0.314961 }",
+            "/region3/xfin_vel_range,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1697,8 +1690,8 @@ TEST_CASE("[Values] Crossfade velocity range")
         std::vector<std::string> expected {
             "/region0/xfout_vel_range,ff : { 1, 1 }",
             "/region1/xfout_vel_range,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfout_vel_range,ff : { 0.314961, 0.314961 }",
-            "/region3/xfout_vel_range,ff : { 0.0787402, 1 }",
+            "/region2/xfout_vel_range,ff : { -0.0787402, 0.314961 }",
+            "/region3/xfout_vel_range,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1797,8 +1790,8 @@ TEST_CASE("[Values] Crossfade CC range")
         std::vector<std::string> expected {
             "/region0/xfin_cc_range4,N : {  }",
             "/region1/xfin_cc_range4,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfin_cc_range4,ff : { 0, 0.314961 }",
-            "/region3/xfin_cc_range4,ff : { 0, 0 }",
+            "/region2/xfin_cc_range4,ff : { -0.0787402, 0.314961 }",
+            "/region3/xfin_cc_range4,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1818,8 +1811,8 @@ TEST_CASE("[Values] Crossfade CC range")
         std::vector<std::string> expected {
             "/region0/xfout_cc_range4,N : {  }",
             "/region1/xfout_cc_range4,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfout_cc_range4,ff : { 0.314961, 0.314961 }",
-            "/region3/xfout_cc_range4,ff : { 0.0787402, 1 }",
+            "/region2/xfout_cc_range4,ff : { -0.0787402, 0.314961 }",
+            "/region3/xfout_cc_range4,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -1977,8 +1970,8 @@ TEST_CASE("[Values] Transpose")
         "/region0/transpose,i : { 0 }",
         "/region1/transpose,i : { 10 }",
         "/region2/transpose,i : { -4 }",
-        "/region3/transpose,i : { 0 }",
-        "/region4/transpose,i : { 0 }",
+        "/region3/transpose,i : { -400 }",
+        "/region4/transpose,i : { 400 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2427,7 +2420,7 @@ TEST_CASE("[Values] Sustain low")
     std::vector<std::string> expected {
         "/region0/sustain_lo,f : { 0.00787402 }",
         "/region1/sustain_lo,f : { 0.0787402 }",
-        "/region2/sustain_lo,f : { 0.00787402 }",
+        "/region2/sustain_lo,f : { -0.00787402 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2538,7 +2531,7 @@ TEST_CASE("[Values] Oscillator detune/mod depth")
         "/region2/oscillator_detune,f : { -1200.2 }",
         "/region0/oscillator_mod_depth,f : { 0 }",
         "/region3/oscillator_mod_depth,f : { 1564.75 }",
-        "/region4/oscillator_mod_depth,f : { 0 }",
+        "/region4/oscillator_mod_depth,f : { -2.2 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2903,14 +2896,14 @@ TEST_CASE("[Values] Filter value bounds")
     SECTION("Cutoff")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav cutoff=20000000 // Clamp the value
+            <region> sample=kick.wav cutoff=100000
             <region> sample=kick.wav cutoff=50 cutoff=-100
         )");
         synth.dispatchMessage(client, 0, "/region0/filter0/cutoff", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/filter0/cutoff", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/filter0/cutoff,f : { 20000 }",
-            "/region1/filter0/cutoff,f : { 0 }",
+            "/region0/filter0/cutoff,f : { 100000 }",
+            "/region1/filter0/cutoff,f : { -100 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -2922,7 +2915,7 @@ TEST_CASE("[Values] Filter value bounds")
         )");
         synth.dispatchMessage(client, 0, "/region0/filter0/resonance", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/filter0/resonance,f : { 0 }",
+            "/region0/filter0/resonance,f : { -5 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3109,14 +3102,14 @@ TEST_CASE("[Values] EQ value bounds")
     SECTION("Frequency")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-            <region> sample=kick.wav eq1_freq=20000000 // Clamp the value
+            <region> sample=kick.wav eq1_freq=100000
             <region> sample=kick.wav eq1_freq=50 eq1_freq=-100
         )");
         synth.dispatchMessage(client, 0, "/region0/eq0/frequency", "", nullptr);
         synth.dispatchMessage(client, 0, "/region1/eq0/frequency", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/eq0/frequency,f : { 20000 }",
-            "/region1/eq0/frequency,f : { 50 }",
+            "/region0/eq0/frequency,f : { 100000 }",
+            "/region1/eq0/frequency,f : { -100 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3128,7 +3121,7 @@ TEST_CASE("[Values] EQ value bounds")
         )");
         synth.dispatchMessage(client, 0, "/region0/eq0/bandwidth", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/eq0/bandwidth,f : { 1 }",
+            "/region0/eq0/bandwidth,f : { -5 }",
         };
         REQUIRE(messageList == expected);
     }

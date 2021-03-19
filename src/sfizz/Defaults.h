@@ -88,11 +88,11 @@ struct OpcodeSpec
         if (!(flags & needsOperation))
             return input;
         else if (flags & kNormalizePercent)
-            return static_cast<U>(normalizePercents(input));
+            return static_cast<U>(input / U(100));
         else if (flags & kNormalizeMidi)
-            return static_cast<U>(normalize7Bits(input));
+            return static_cast<U>(input / U(127));
         else if (flags & kNormalizeBend)
-            return static_cast<U>(normalizeBend(input));
+            return static_cast<U>(input / U(8191));
         else if (flags & kDb2Mag)
             return static_cast<U>(db2mag(input));
         else // just in case
@@ -177,10 +177,6 @@ namespace Default
     extern const OpcodeSpec<float> positionMod;
     extern const OpcodeSpec<float> width;
     extern const OpcodeSpec<float> widthMod;
-    extern const OpcodeSpec<float> crossfadeIn;
-    extern const OpcodeSpec<float> crossfadeInNorm;
-    extern const OpcodeSpec<float> crossfadeOut;
-    extern const OpcodeSpec<float> crossfadeOutNorm;
     extern const OpcodeSpec<float> ampKeytrack;
     extern const OpcodeSpec<float> ampVeltrack;
     extern const OpcodeSpec<float> ampVelcurve;
@@ -194,8 +190,8 @@ namespace Default
     extern const OpcodeSpec<float> filterGain;
     extern const OpcodeSpec<float> filterGainMod;
     extern const OpcodeSpec<float> filterRandom;
-    extern const OpcodeSpec<int32_t> filterKeytrack;
-    extern const OpcodeSpec<int32_t> filterVeltrack;
+    extern const OpcodeSpec<float> filterKeytrack;
+    extern const OpcodeSpec<float> filterVeltrack;
     extern const OpcodeSpec<float> eqBandwidth;
     extern const OpcodeSpec<float> eqBandwidthMod;
     extern const OpcodeSpec<float> eqFrequency;
@@ -204,10 +200,10 @@ namespace Default
     extern const OpcodeSpec<float> eqGainMod;
     extern const OpcodeSpec<float> eqVel2Frequency;
     extern const OpcodeSpec<float> eqVel2Gain;
-    extern const OpcodeSpec<int32_t> pitchKeytrack;
+    extern const OpcodeSpec<float> pitchKeytrack;
     extern const OpcodeSpec<float> pitchRandom;
-    extern const OpcodeSpec<int32_t> pitchVeltrack;
-    extern const OpcodeSpec<int32_t> transpose;
+    extern const OpcodeSpec<float> pitchVeltrack;
+    extern const OpcodeSpec<float> transpose;
     extern const OpcodeSpec<float> pitch;
     extern const OpcodeSpec<float> pitchMod;
     extern const OpcodeSpec<float> bendUp;
@@ -238,7 +234,7 @@ namespace Default
     extern const OpcodeSpec<float> egDepth;
     extern const OpcodeSpec<float> egVel2Depth;
     extern const OpcodeSpec<bool> flexEGAmpeg;
-    extern const OpcodeSpec<int32_t> flexEGDynamic;
+    extern const OpcodeSpec<bool> flexEGDynamic;
     extern const OpcodeSpec<int32_t> flexEGSustain;
     extern const OpcodeSpec<float> flexEGPointTime;
     extern const OpcodeSpec<float> flexEGPointLevel;

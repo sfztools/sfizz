@@ -362,18 +362,14 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
             for (size_t i = 0; i < numFrames; ++i) {
                 phases[i] = phase;
                 float incr = ratio * samplePeriod * baseFreq;
-                phase += incr;
-                int numWraps = (int)phase;
-                phase -= numWraps;
+                phase = wrapPhase(phase + incr);
             }
         }
         else {
             for (size_t i = 0; i < numFrames; ++i) {
                 phases[i] = phase;
                 float incr = ratio * samplePeriod * (baseFreq + freqMod[i]);
-                phase += incr;
-                int numWraps = (int)phase;
-                phase -= numWraps;
+                phase = wrapPhase(phase + incr);
             }
         }
     }

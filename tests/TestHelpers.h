@@ -33,8 +33,8 @@ private:
     sfz::ModKey target_;
 };
 
-template<class T>
-void almostEqualRanges(const sfz::Range<T>& lhs, const sfz::Range<T>& rhs)
+template<class Range>
+void almostEqualRanges(const Range& lhs, const Range& rhs)
 {
     REQUIRE(lhs.getStart() == Approx(rhs.getStart()));
     REQUIRE(lhs.getEnd() == Approx(rhs.getEnd()));

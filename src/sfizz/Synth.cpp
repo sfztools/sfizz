@@ -598,6 +598,10 @@ void Synth::Impl::finalizeSfzLoad()
             if (region->loopRange.getEnd() == Default::loopEnd)
                 region->loopRange.setEnd(region->sampleEnd);
 
+            // if range is invalid, disable the loop
+            if (!region->loopRange.isValid())
+                region->loopMode = absl::nullopt;
+
             if (fileInformation->numChannels == 2)
                 region->hasStereoSample = true;
 
@@ -750,7 +754,7 @@ void Synth::Impl::finalizeSfzLoad()
 
     // cache the set of keys assigned
     for (const RegionPtr& regionPtr : regions_) {
-        Range<uint8_t> keyRange = regionPtr->keyRange;
+        UncheckedRange<uint8_t> keyRange = regionPtr->keyRange;
         unsigned loKey = keyRange.getStart();
         unsigned hiKey = keyRange.getEnd();
         for (unsigned key = loKey; key <= hiKey; ++key)
@@ -761,7 +765,7 @@ void Synth::Impl::finalizeSfzLoad()
         if (absl::optional<uint8_t> sw = regionPtr->lastKeyswitch) {
             swLastSlots_.set(*sw);
         }
-        else if (absl::optional<Range<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
+        else if (absl::optional<UncheckedRange<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
             unsigned loKey = swRange->getStart();
             unsigned hiKey = swRange->getEnd();
             for (unsigned key = loKey; key <= hiKey; ++key)
