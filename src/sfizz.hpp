@@ -26,9 +26,10 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+struct sfizz_synth_t;
+
 namespace sfz
 {
-class Synth;
 class Client;
 /**
  * @brief Synthesizer for SFZ instruments
@@ -61,6 +62,22 @@ public:
      */
     Sfizz();
     ~Sfizz();
+
+    Sfizz(Sfizz&& other) noexcept;
+    Sfizz& operator=(Sfizz&& other) noexcept;
+
+    Sfizz(const Sfizz& other) = delete;
+    Sfizz& operator=(const Sfizz& other) = delete;
+
+    /**
+     * @brief Reference an existing synth handle.
+     */
+    explicit Sfizz(sfizz_synth_t* synth);
+
+    /**
+     * @brief Get the synth handle.
+     */
+    sfizz_synth_t* handle() const noexcept { return synth; }
 
     /**
      * @brief Processing mode.
@@ -809,7 +826,7 @@ public:
      */
 
 private:
-    std::unique_ptr<sfz::Synth> synth;
+    sfizz_synth_t* synth {};
 };
 
 using ClientPtr = Sfizz::ClientPtr;

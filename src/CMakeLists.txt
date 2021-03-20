@@ -296,7 +296,7 @@ endif()
 sfizz_enable_fast_math(sfizz_internal)
 
 # Sfizz static library
-add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sfizz_private.hpp)
 add_library(sfizz::static ALIAS sfizz_static)
 target_include_directories(sfizz_static PUBLIC .)
 target_link_libraries(sfizz_static PRIVATE sfizz::internal)

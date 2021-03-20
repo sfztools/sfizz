@@ -92,6 +92,14 @@ SFIZZ_EXPORTED_API sfizz_synth_t* sfizz_create_synth();
 SFIZZ_EXPORTED_API void sfizz_free(sfizz_synth_t* synth);
 
 /**
+ * @brief Adds a reference to an existing sfizz synth.
+ * @since 0.6.0
+ *
+ * @param synth  The synth to reference.
+ */
+SFIZZ_EXPORTED_API void sfizz_add_ref(sfizz_synth_t* synth);
+
+/**
  * @brief Loads an SFZ file.
  *
  * The file path can be absolute or relative. All file operations for this SFZ
