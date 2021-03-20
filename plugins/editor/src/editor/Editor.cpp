@@ -1078,6 +1078,8 @@ void Editor::Impl::chooseSfzFile()
     fs->addFileExtension(CFileExtension("AIF", "aif"));
     fs->addFileExtension(CFileExtension("AIFF", "aiff"));
     fs->addFileExtension(CFileExtension("AIFC", "aifc"));
+    // Decent samples
+    fs->addFileExtension(CFileExtension("DSPRESET", "dspreset"));
 
     std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
     if (!initialDir.empty())

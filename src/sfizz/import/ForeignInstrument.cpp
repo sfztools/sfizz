@@ -6,12 +6,14 @@
 
 #include "ForeignInstrument.h"
 #include "foreign_instruments/AudioFile.h"
+#include "foreign_instruments/DecentSampler.h"
 
 namespace sfz {
 
 InstrumentFormatRegistry::InstrumentFormatRegistry()
     : formats_ {
             &AudioFileInstrumentFormat::getInstance(),
+            &DecentSamplerInstrumentFormat::getInstance(),
       }
 {
 }
