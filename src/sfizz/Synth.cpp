@@ -1312,7 +1312,7 @@ void Synth::timePosition(int delay, int bar, double barBeat)
     const auto newBeatPosition = newPosition.toBeats(impl.resources_.beatClock.getTimeSignature());
     const auto currentBeatPosition = impl.resources_.beatClock.getLastBeatPosition();
     const auto positionDifference = std::abs(newBeatPosition - currentBeatPosition);
-    const auto threshold = 2 * static_cast<float>(impl.resources_.beatClock.getBeatsPerFrame());
+    const auto threshold = 2 * impl.resources_.beatClock.getBeatsPerFrame();
 
     if (positionDifference > threshold)
         impl.playheadMoved_ = true;

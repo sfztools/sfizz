@@ -145,7 +145,7 @@ public:
      *
      * @return float
      */
-    float getLastBeatPosition() const;
+    double getLastBeatPosition() const;
     /**
      * @brief Get the Beats Per Frame object
      *

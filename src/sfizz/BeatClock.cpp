@@ -157,10 +157,9 @@ absl::Span<const float> BeatClock::getRunningBeatPosition()
     return absl::MakeConstSpan(runningBeatPosition_.data(), currentCycleFrames_);
 }
 
-float BeatClock::getLastBeatPosition() const
+double BeatClock::getLastBeatPosition() const
 {
-    double beats = lastClientPos_.toBeats(timeSig_);
-    return static_cast<float>(beats);
+    return lastClientPos_.toBeats(timeSig_);
 }
 
 absl::Span<const int> BeatClock::getRunningBeatsPerBar()

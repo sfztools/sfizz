@@ -31,6 +31,12 @@ void OnePoleSmoother::setSmoothing(unsigned smoothValue, float sampleRate)
 void OnePoleSmoother::reset(float value)
 {
     filter.reset(value);
+    target_ = value;
+}
+
+void OnePoleSmoother::resetToTarget()
+{
+    reset(target_);
 }
 
 void OnePoleSmoother::process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut)
@@ -55,6 +61,8 @@ void OnePoleSmoother::process(absl::Span<const float> input, absl::Span<float> o
     } else if (input.data() != output.data()) {
         copy<float>(input, output);
     }
+
+    target_ = input.back();
 }
 
 ///
@@ -74,6 +82,11 @@ void LinearSmoother::reset(float value)
     target_ = value;
     step_ = 0.0;
     //framesToTarget_ = 0;
+}
+
+void LinearSmoother::resetToTarget()
+{
+    reset(target_);
 }
 
 void LinearSmoother::process(absl::Span<const float> input, absl::Span<float> output, bool canShortcut)
