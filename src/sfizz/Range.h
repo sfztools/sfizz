@@ -6,6 +6,7 @@
 
 #pragma once
 #include "MathHelpers.h"
+#include "Macros.h"
 #include <initializer_list>
 #include <type_traits>
 #include <limits>
@@ -30,7 +31,6 @@ public:
         : _start(start)
         , _end(Checked ? max(start, end) : end)
     {
-
     }
 
     constexpr Range(const Range<Type, !Checked>& other)
@@ -50,15 +50,19 @@ public:
     void setStart(Type start) noexcept
     {
         _start = start;
-        if (Checked && start > _end)
-            _end = start;
+        IF_CONSTEXPR (Checked) {
+            if (start > _end)
+                _end = start;
+        }
     }
 
     void setEnd(Type end) noexcept
     {
         _end = end;
-        if (Checked && end < _start)
-            _start = end;
+        IF_CONSTEXPR (Checked) {
+            if (end < _start)
+                _start = end;
+        }
     }
 
     /**
@@ -66,7 +70,7 @@ public:
      */
     bool isValid() const noexcept
     {
-        if (Checked)
+        IF_CONSTEXPR (Checked)
             return true; // always valid
         else
             return _start <= _end;
@@ -103,8 +107,10 @@ public:
      */
     void shrinkIfSmaller(Type start, Type end)
     {
-        if (Checked && start > end)
-            std::swap(start, end);
+        IF_CONSTEXPR (Checked) {
+            if (start > end)
+                std::swap(start, end);
+        }
 
         if (start > _start)
             _start = start;
