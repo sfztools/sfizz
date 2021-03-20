@@ -32,6 +32,10 @@ public:
      */
     void reset(float value = 0.0f);
     /**
+     * @brief Reset to the target value (the back of the last vector passed)
+     */
+    void resetToTarget();
+    /**
      * @brief Process a span of data. Input and output can refer to the same
      * memory.
      *
@@ -47,6 +51,7 @@ public:
 private:
     bool smoothing { false };
     OnePoleFilter<float> filter {};
+    float target_ { 0.0f };
 };
 
 /**
@@ -70,6 +75,10 @@ public:
      * @param value
      */
     void reset(float value = 0.0f);
+    /**
+     * @brief Reset to the target value (the back of the last vector passed)
+     */
+    void resetToTarget();
     /**
      * @brief Process a span of data. Input and output can refer to the same
      * memory.

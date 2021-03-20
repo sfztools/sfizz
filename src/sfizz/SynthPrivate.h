@@ -309,6 +309,8 @@ struct Synth::Impl final: public Parser::Listener {
         client.setReceiveCallback(broadcastReceiver);
         return client;
     }
+
+    bool playheadMoved_ { false };
 };
 
 } // namespace sfz

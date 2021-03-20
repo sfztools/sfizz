@@ -103,6 +103,11 @@ public:
      */
     void setTimeSignature(unsigned delay, TimeSignature newSig);
     /**
+     * @brief Get the time signature
+     *
+     */
+    TimeSignature getTimeSignature() const noexcept { return timeSig_; }
+    /**
      * @brief Set the time position.
      */
     void setTimePosition(unsigned delay, BBT newPos);
@@ -134,6 +139,19 @@ public:
      * @brief Get the time signature numerator for each frame of the current cycle.
      */
     absl::Span<const int> getRunningBeatsPerBar();
+
+    /**
+     * @brief Get the last BeatPosition
+     *
+     * @return float
+     */
+    double getLastBeatPosition() const;
+    /**
+     * @brief Get the Beats Per Frame object
+     *
+     * @return float
+     */
+    double getBeatsPerFrame() const { return beatsPerSecond_ * samplePeriod_; }
     /**
      * @brief Create a normalized phase signal for LFO which completes a
      *        period every N-th beat.

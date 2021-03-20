@@ -258,6 +258,7 @@ void Synth::Impl::clear()
     groupOpcodes_.clear();
     unknownOpcodes_.clear();
     modificationTime_ = absl::nullopt;
+    playheadMoved_ = false;
 
     // set default controllers
     // midistate is reset above
@@ -917,6 +918,12 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     BeatClock& bc = impl.resources_.beatClock;
     bc.beginCycle(numFrames);
 
+    if (impl.playheadMoved_ && impl.resources_.beatClock.isPlaying()) {
+        impl.resources_.midiState.flushEvents();
+        impl.genController_->resetSmoothers();
+        impl.playheadMoved_ = false;
+    }
+
     { // Clear effect busses
         ScopedTiming logger { callbackBreakdown.effects };
         for (auto& bus : impl.effectBuses_) {
@@ -1305,7 +1312,16 @@ void Synth::timePosition(int delay, int bar, double barBeat)
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.beatClock.setTimePosition(delay, BBT(bar, barBeat));
+    const auto newPosition = BBT(bar, barBeat);
+    const auto newBeatPosition = newPosition.toBeats(impl.resources_.beatClock.getTimeSignature());
+    const auto currentBeatPosition = impl.resources_.beatClock.getLastBeatPosition();
+    const auto positionDifference = std::abs(newBeatPosition - currentBeatPosition);
+    const auto threshold = 2 * impl.resources_.beatClock.getBeatsPerFrame();
+
+    if (positionDifference > threshold)
+        impl.playheadMoved_ = true;
+
+    impl.resources_.beatClock.setTimePosition(delay, newPosition);
 }
 
 void Synth::playbackState(int delay, int playbackState)

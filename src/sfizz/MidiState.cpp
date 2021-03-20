@@ -57,20 +57,26 @@ void sfz::MidiState::setSampleRate(float sampleRate) noexcept
 
 void sfz::MidiState::advanceTime(int numSamples) noexcept
 {
-    auto clearEvents = [] (EventVector& events) {
+    internalClock += numSamples;
+    flushEvents();
+}
+
+void sfz::MidiState::flushEvents() noexcept
+{
+    auto flushEventVector = [] (EventVector& events) {
         ASSERT(!events.empty()); // CC event vectors should never be empty
         events.front().value = events.back().value;
         events.front().delay = 0;
         events.resize(1);
     };
 
-    internalClock += numSamples;
     for (auto& ccEvents : cc)
-        clearEvents(ccEvents);
+        flushEventVector(ccEvents);
 
-    clearEvents(pitchEvents);
-    clearEvents(channelAftertouchEvents);
+    flushEventVector(pitchEvents);
+    flushEventVector(channelAftertouchEvents);
 }
+
 
 void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
@@ -113,7 +119,7 @@ float sfz::MidiState::getLastVelocity() const noexcept
 
 void sfz::MidiState::insertEventInVector(EventVector& events, int delay, float value)
 {
-    const auto insertionPoint = absl::c_upper_bound(events, delay, MidiEventDelayComparator {});
+    const auto insertionPoint = absl::c_lower_bound(events, delay, MidiEventDelayComparator {});
     if (insertionPoint == events.end() || insertionPoint->delay != delay)
         events.insert(insertionPoint, { delay, value });
     else
