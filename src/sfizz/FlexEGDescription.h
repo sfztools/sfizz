@@ -31,7 +31,7 @@ private:
 };
 
 struct FlexEGDescription {
-    int dynamic { Default::flexEGDynamic }; // whether parameters can be modulated while EG runs
+    bool dynamic { Default::flexEGDynamic }; // whether parameters can be modulated while EG runs
     int sustain { Default::flexEGSustain }; // index of the sustain point (default to 0 in ARIA)
     std::vector<FlexEGPoint> points;
     // ARIA

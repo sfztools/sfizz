@@ -23,7 +23,7 @@ TEST_CASE("[Direct Region Tests] amp_velcurve")
     region.parseOpcode({ "amp_velcurve_6", "0.4" });
     REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(6, 0.4f));
     region.parseOpcode({ "amp_velcurve_127", "-1.0" });
-    REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(127, 0.0f));
+    REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(127, -1.0f));
     region.parseOpcode({ "amp_velcurve_008", "0.3" });
     REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(8, 0.3f));
     region.parseOpcode({ "amp_velcurve_064", "0.9" });

@@ -194,13 +194,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         keyRange.setStart(opcode.read(Default::loKey));
         break;
     case hash("hikey"):
-        triggerOnNote = (opcode.value != "-1");
-        keyRange.setEnd(opcode.read(Default::hiKey));
+        {
+            absl::optional<uint8_t> optValue = opcode.readOptional(Default::hiKey);
+            triggerOnNote = optValue != absl::nullopt;
+            uint8_t value = optValue.value_or(Default::hiKey);
+            keyRange.setEnd(value);
+        }
         break;
     case hash("key"):
-        triggerOnNote = (opcode.value != "-1");
         {
-            auto value = opcode.read(Default::key);
+            absl::optional<uint8_t> optValue = opcode.readOptional(Default::key);
+            triggerOnNote = optValue != absl::nullopt;
+            uint8_t value = optValue.value_or(Default::key);
             keyRange.setStart(value);
             keyRange.setEnd(value);
             pitchKeycenter = value;
@@ -1491,7 +1496,7 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
         velocity = midiState.getLastVelocity();
 
     const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue) || (randValue == 1.0f && randRange.getEnd() == 1.0f);
+    const bool randOk = randRange.contains(randValue) || (randValue >= 1.0f && randRange.isValid() && randRange.getEnd() >= 1.0f);
     const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
     const bool attackTrigger = (trigger == Trigger::attack);
     const bool notFirstLegatoNote = (trigger == Trigger::legato && midiState.getActiveNotes() > 1);
@@ -1513,7 +1518,7 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
 
     const bool keyOk = keyRange.containsWithEnd(noteNumber);
     const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue);
+    const bool randOk = randRange.contains(randValue) || (randValue >= 1.0f && randRange.isValid() && randRange.getEnd() >= 1.0f);
 
     if (!(velOk && keyOk && randOk))
         return false;
@@ -1587,7 +1592,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     fast_real_distribution<float> pitchDistribution { 0.0f, pitchRandom };
-    auto pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
+    float pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
     pitchVariationInCents += pitch; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
     pitchVariationInCents += velocity * pitchVeltrack; // track velocity

@@ -6,6 +6,7 @@
 
 #pragma once
 #include "MathHelpers.h"
+#include "Macros.h"
 #include <initializer_list>
 #include <type_traits>
 #include <limits>
@@ -30,8 +31,13 @@ public:
         : _start(start)
         , _end(Checked ? max(start, end) : end)
     {
-
     }
+
+    constexpr Range(const Range<Type, !Checked>& other)
+        : Range(other.getStart(), other.getEnd())
+    {
+    }
+
     constexpr Type getStart() const noexcept { return _start; }
     constexpr Type getEnd() const noexcept { return _end; }
     /**
@@ -44,15 +50,19 @@ public:
     void setStart(Type start) noexcept
     {
         _start = start;
-        if (Checked && start > _end)
-            _end = start;
+        IF_CONSTEXPR (Checked) {
+            if (start > _end)
+                _end = start;
+        }
     }
 
     void setEnd(Type end) noexcept
     {
         _end = end;
-        if (Checked && end < _start)
-            _start = end;
+        IF_CONSTEXPR (Checked) {
+            if (end < _start)
+                _start = end;
+        }
     }
 
     /**
@@ -60,7 +70,7 @@ public:
      */
     bool isValid() const noexcept
     {
-        if (Checked)
+        IF_CONSTEXPR (Checked)
             return true; // always valid
         else
             return _start <= _end;
@@ -97,8 +107,10 @@ public:
      */
     void shrinkIfSmaller(Type start, Type end)
     {
-        if (Checked && start > end)
-            std::swap(start, end);
+        IF_CONSTEXPR (Checked) {
+            if (start > end)
+                std::swap(start, end);
+        }
 
         if (start > _start)
             _start = start;
@@ -149,27 +161,27 @@ template <class T> using UncheckedRange = Range<T, false>;
 
 }
 
-template <class Type>
-bool operator==(const sfz::Range<Type>& lhs, const sfz::Range<Type>& rhs)
+template <class Type, bool C1, bool C2>
+bool operator==(const sfz::Range<Type, C1>& lhs, const sfz::Range<Type, C2>& rhs)
 {
     return (lhs.getStart() == rhs.getStart()) && (lhs.getEnd() == rhs.getEnd());
 }
 
-template <class Type>
-bool operator!=(const sfz::Range<Type>& lhs, const sfz::Range<Type>& rhs)
+template <class Type, bool C1, bool C2>
+bool operator!=(const sfz::Range<Type, C1>& lhs, const sfz::Range<Type, C2>& rhs)
 {
     return (lhs.getStart() != rhs.getStart()) || (lhs.getEnd() != rhs.getEnd());
 }
 
 
-template <class Type>
-bool operator==(const sfz::Range<Type>& lhs, const std::pair<Type, Type>& rhs)
+template <class Type, bool C>
+bool operator==(const sfz::Range<Type, C>& lhs, const std::pair<Type, Type>& rhs)
 {
     return (lhs.getStart() == rhs.first) && (lhs.getEnd() == rhs.second);
 }
 
-template <class Type>
-bool operator==(const std::pair<Type, Type>& lhs, const sfz::Range<Type>& rhs)
+template <class Type, bool C>
+bool operator==(const std::pair<Type, Type>& lhs, const sfz::Range<Type, C>& rhs)
 {
     return rhs == lhs;
 }

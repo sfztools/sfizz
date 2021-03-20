@@ -168,7 +168,7 @@ constexpr float normalizeVelocity(T velocity)
 template <class T>
 constexpr float normalizePercents(T percentValue)
 {
-    return percentValue * 0.01f;
+    return percentValue / 100.0f;
 }
 
 /**
