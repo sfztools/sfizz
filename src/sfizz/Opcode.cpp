@@ -147,21 +147,20 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
 {
     using Limits = std::numeric_limits<T>;
 
-    size_t numberEnd = 0;
-
-    if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
-        ++numberEnd;
-
-    while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
-        ++numberEnd;
-
-    if (numberEnd == 0 && (spec.flags & kCanBeNote))
-        return readNoteValue(v);
-
-    v = v.substr(0, numberEnd);
-
     int64_t returnedValue;
-    if (!absl::SimpleAtoi(v, &returnedValue))
+    bool readValueSuccess = false;
+
+    if (readLeadingInt(v, &returnedValue))
+        readValueSuccess = true;
+
+    if (!readValueSuccess && (spec.flags & kCanBeNote)) {
+        if (absl::optional<uint8_t> noteValue = readNoteValue(v)) {
+            returnedValue = *noteValue;
+            readValueSuccess = true;
+        }
+    }
+
+    if (!readValueSuccess)
         return absl::nullopt;
 
     if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
@@ -201,23 +200,8 @@ INSTANTIATE_FOR_INTEGRAL(int64_t)
 template <typename T>
 absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
 {
-    size_t numberEnd = 0;
-
-    if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
-        ++numberEnd;
-    while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
-        ++numberEnd;
-
-    if (numberEnd < v.size() && v[numberEnd] == '.') {
-        ++numberEnd;
-        while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
-            ++numberEnd;
-    }
-
-    v = v.substr(0, numberEnd);
-
-    float returnedValue;
-    if (!absl::SimpleAtof(v, &returnedValue))
+    T returnedValue;
+    if (!readLeadingFloat(v, &returnedValue))
         return absl::nullopt;
 
     if (spec.flags & kWrapPhase)
