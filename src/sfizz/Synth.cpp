@@ -1683,7 +1683,7 @@ void Synth::Impl::setupModMatrix()
                 continue;
             }
 
-            if (!mm.connect(source, target, conn.sourceDepth, conn.velToDepth)) {
+            if (!mm.connect(source, target, conn.sourceDepth, conn.sourceDepthMod, conn.velToDepth)) {
                 DBG("[sfizz] Failed to connect modulation source and target");
                 ASSERTFALSE;
             }

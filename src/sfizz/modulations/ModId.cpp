@@ -76,9 +76,19 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::OscillatorModDepth:
         return kModIsPerVoice|kModIsPercentMultiplicative;
+    case ModId::PitchEGDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::FilEGDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::AmpLFODepth:
+        return kModIsPerVoice|kModIsAdditive;
     case ModId::AmpLFOFrequency:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::PitchLFODepth:
+        return kModIsPerVoice|kModIsAdditive;
     case ModId::PitchLFOFrequency:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::FilLFODepth:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::FilLFOFrequency:
         return kModIsPerVoice|kModIsAdditive;

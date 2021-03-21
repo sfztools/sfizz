@@ -494,6 +494,7 @@ struct Region {
         ModKey source;
         ModKey target;
         float sourceDepth = 0.0f;
+        ModKey sourceDepthMod;
         float velToDepth = 0.0f;
     };
     std::vector<Connection> connections;

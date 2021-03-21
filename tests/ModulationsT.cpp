@@ -371,3 +371,40 @@ TEST_CASE("[Modulations] LFO v1 connections")
         R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
     }, 3));
 }
+
+TEST_CASE("[Modulations] LFO v1 CC connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_depth_oncc1=10
+        <region> sample=*sine pitchlfo_depth_oncc2=1200
+        <region> sample=*sine fillfo_depth_oncc3=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("Controller 1 {curve=0, smooth=0, step=0}" -> "AmplitudeLFODepth {0}")",
+        R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchLFODepth {1}")",
+        R"("Controller 3 {curve=0, smooth=0, step=-0}" -> "FilterLFODepth {2}")",
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
+
+TEST_CASE("[Modulations] EG v1 CC connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine pitcheg_depth_oncc2=1200
+        <region> sample=*sine fileg_depth_oncc3=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchEGDepth {0}")",
+        R"("Controller 3 {curve=0, smooth=0, step=-0}" -> "FilterEGDepth {1}")",
+        R"("PitchEG {0}" -> "Pitch {0}")",
+        R"("FilterEG {1}" -> "FilterCutoff {1, N=1}")",
+    }, 2));
+}
