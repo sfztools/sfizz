@@ -927,6 +927,11 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             return;
 
         fill(*jumps, pitchRatio_ * speedRatio_);
+
+        // Take the first sample if the voice just started
+        if (age_ == 0)
+            jumps->front() = 0.0f;
+
         pitchEnvelope(*jumps);
 
         jumps->front() += floatPositionOffset_;
