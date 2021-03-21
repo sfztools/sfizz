@@ -223,12 +223,12 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
     if (spec.flags & kWrapPhase)
         returnedValue = wrapPhase(returnedValue);
 
-    if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
+    if (returnedValue > spec.bounds.getEnd()) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
         else if (!(spec.flags & kPermissiveUpperBound))
             return absl::nullopt;
-    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
+    } else if (returnedValue < spec.bounds.getStart()) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
         else if (!(spec.flags & kPermissiveLowerBound))
