@@ -172,6 +172,12 @@ namespace config {
      * and the voice will release itself at the end of the decay stage.
      */
     constexpr float sustainFreeRunningThreshold { 0.0032f };
+    /**
+     * @brief Number of frames offset between the end of a block and the beginning of the next
+     * detected as a shift in the playhead position
+     *
+     */
+    constexpr int playheadMovedFrames { 16 };
 } // namespace config
 
 } // namespace sfz
