@@ -144,10 +144,20 @@ std::string ModKey::toString() const
         return absl::StrCat("OscillatorDetune {", region_.number(), ", N=", 1 + params_.N, "}");
    case ModId::OscillatorModDepth:
         return absl::StrCat("OscillatorModDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::PitchEGDepth:
+        return absl::StrCat("PitchEGDepth {", region_.number(), "}");
+    case ModId::FilEGDepth:
+        return absl::StrCat("FilterEGDepth {", region_.number(), "}");
+    case ModId::AmpLFODepth:
+        return absl::StrCat("AmplitudeLFODepth {", region_.number(), "}");
     case ModId::AmpLFOFrequency:
         return absl::StrCat("AmplitudeLFOFrequency {", region_.number(), "}");
+    case ModId::PitchLFODepth:
+        return absl::StrCat("PitchLFODepth {", region_.number(), "}");
     case ModId::PitchLFOFrequency:
         return absl::StrCat("PitchLFOFrequency {", region_.number(), "}");
+    case ModId::FilLFODepth:
+        return absl::StrCat("FilterLFODepth {", region_.number(), "}");
     case ModId::FilLFOFrequency:
         return absl::StrCat("FilterLFOFrequency {", region_.number(), "}");
     case ModId::LFOFrequency:

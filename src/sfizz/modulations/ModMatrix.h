@@ -92,10 +92,11 @@ public:
      * @param sourceId source of the connection
      * @param targetId target of the connection
      * @param sourceDepth amount which multiplies the source output
+     * @param sourceDepthMod optional modulation which adds to the source depth
      * @param velToDepth amount which full velocity adds to the source depth
      * @return true if the connection was successfully made, otherwise false
      */
-    bool connect(SourceId sourceId, TargetId targetId, float sourceDepth, float velToDepth = 0.0f);
+    bool connect(SourceId sourceId, TargetId targetId, float sourceDepth, const ModKey& sourceDepthMod, float velToDepth);
 
     /**
      * @brief Reinitialize modulation sources overall.

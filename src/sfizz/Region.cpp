@@ -849,26 +849,34 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
 
     //
     ModKey sourceKey;
+    ModKey sourceDepthKey;
     ModKey targetKey;
     OpcodeSpec<float> depthSpec;
+    OpcodeSpec<float> depthModSpec;
 
     if (absl::StartsWith(opcode.name, "amplfo_")) {
         sourceKey = ModKey::createNXYZ(ModId::AmpLFO, id);
+        sourceDepthKey = ModKey::createNXYZ(ModId::AmpLFODepth, id);
         targetKey = ModKey::createNXYZ(ModId::Volume, id);
         lfo.freqKey = ModKey::createNXYZ(ModId::AmpLFOFrequency, id);
         depthSpec = Default::ampLFODepth;
+        depthModSpec = Default::volumeMod;
     }
     else if (absl::StartsWith(opcode.name, "pitchlfo_")) {
         sourceKey = ModKey::createNXYZ(ModId::PitchLFO, id);
+        sourceDepthKey = ModKey::createNXYZ(ModId::PitchLFODepth, id);
         targetKey = ModKey::createNXYZ(ModId::Pitch, id);
         lfo.freqKey = ModKey::createNXYZ(ModId::PitchLFOFrequency, id);
         depthSpec = Default::pitchLFODepth;
+        depthModSpec = Default::pitchMod;
     }
     else if (absl::StartsWith(opcode.name, "fillfo_")) {
         sourceKey = ModKey::createNXYZ(ModId::FilLFO, id);
+        sourceDepthKey = ModKey::createNXYZ(ModId::FilLFODepth, id);
         targetKey = ModKey::createNXYZ(ModId::FilCutoff, id);
         lfo.freqKey = ModKey::createNXYZ(ModId::FilLFOFrequency, id);
         depthSpec = Default::filLFODepth;
+        depthModSpec = Default::filterCutoffMod;
     }
     else {
         ASSERTFALSE;
@@ -885,7 +893,8 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         getOrCreateConnection(sourceKey, targetKey).sourceDepth = opcode.read(depthSpec);
         break;
     case_any_lfo_any_ccN("depth"): // also depthcc&
-        // TODO(jpc) LFO v1
+        getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
+        processGenericCc(opcode, depthModSpec, sourceDepthKey);
         break;
     case_any_lfo("depthchanaft"):
         // TODO(jpc) LFO v1
@@ -1055,6 +1064,19 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
             ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = opcode.read(Default::egVel2Depth);
+        break;
+
+    case_any_ccN("pitcheg_depth"):
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::PitchEG, id),
+            ModKey::createNXYZ(ModId::Pitch, id)).sourceDepthMod = ModKey::createNXYZ(ModId::PitchEGDepth, id);
+        processGenericCc(opcode, Default::pitchMod, ModKey::createNXYZ(ModId::PitchEGDepth, id));
+        break;
+    case_any_ccN("fileg_depth"):
+        getOrCreateConnection(
+            ModKey::createNXYZ(ModId::FilEG, id),
+            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepthMod = ModKey::createNXYZ(ModId::FilEGDepth, id);
+        processGenericCc(opcode, Default::filterCutoffMod, ModKey::createNXYZ(ModId::FilEGDepth, id));
         break;
 
     default:
