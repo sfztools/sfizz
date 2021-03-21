@@ -90,7 +90,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/cc&/value", "f") {
             if (indices[0] >= config::numCCs)
                 break;
-            impl.resources_.midiState.ccEvent(delay, indices[0], args[0].f);
+            impl.performHdcc(delay, indices[0], args[0].f, false);
         } break;
 
         MATCH("/cc&/label", "") {

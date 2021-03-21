@@ -281,6 +281,7 @@ public:
     void setControlValue(uint32_t index, float value);
     void setControlDefaultValue(uint32_t index, float value);
     void setControlLabelText(uint32_t index, UTF8StringPtr text);
+    bool isControlEditing(uint32_t index);
 
     std::function<void(uint32_t, float)> ValueChangeFunction;
     std::function<void(uint32_t)> BeginEditFunction;

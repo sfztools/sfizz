@@ -515,7 +515,8 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
         }
     }
     else if (Messages::matchOSC("/cc&/value", path, indices) && !strcmp(sig, "f")) {
-        updateCCValue(indices[0], args[0].f);
+        if (!controlsPanel_->isControlEditing(indices[0]))
+            updateCCValue(indices[0], args[0].f);
     }
     else if (Messages::matchOSC("/cc&/default", path, indices) && !strcmp(sig, "f")) {
         updateCCDefaultValue(indices[0], args[0].f);

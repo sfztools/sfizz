@@ -768,6 +768,18 @@ void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
     box->invalid();
 }
 
+bool SControlsPanel::isControlEditing(uint32_t index)
+{
+    ControlSlot* slot = getSlot(index);
+    if (!slot)
+        return false;
+
+    SKnobCCBox* box = slot->box;
+
+    return box->getControl()->isEditing();
+}
+
+
 void SControlsPanel::recalculateSubViews()
 {
     CScrollView::recalculateSubViews();
