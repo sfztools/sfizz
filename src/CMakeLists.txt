@@ -245,11 +245,13 @@ endif()
 # Import library
 set(SFIZZ_IMPORT_HEADERS
     sfizz/import/ForeignInstrument.h
-    sfizz/import/foreign_instruments/AudioFile.h)
+    sfizz/import/foreign_instruments/AudioFile.h
+    sfizz/import/foreign_instruments/DecentSampler.h)
 
 set(SFIZZ_IMPORT_SOURCES
     sfizz/import/ForeignInstrument.cpp
-    sfizz/import/foreign_instruments/AudioFile.cpp)
+    sfizz/import/foreign_instruments/AudioFile.cpp
+    sfizz/import/foreign_instruments/DecentSampler.cpp)
 
 add_library(sfizz_import STATIC)
 add_library(sfizz::import ALIAS sfizz_import)
@@ -258,7 +260,7 @@ target_sources(sfizz_import PRIVATE
 target_include_directories(sfizz_import PUBLIC ".")
 target_link_libraries(sfizz_import
     PUBLIC absl::strings absl::memory sfizz::filesystem
-    PRIVATE sfizz::pugixml)
+    PRIVATE sfizz::internal sfizz::pugixml)
 
 # Sfizz spinlock mutex
 add_library(sfizz_spin_mutex STATIC
