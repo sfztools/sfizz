@@ -31,12 +31,6 @@ public:
      */
     void reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
     /**
-     * @brief Get the next value for the envelope
-     *
-     * @return Float
-     */
-    Float getNextValue() noexcept;
-    /**
      * @brief Get a block of values for the envelope. This method tries hard to be efficient
      * and hopefully it is.
      *

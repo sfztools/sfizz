@@ -59,57 +59,6 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const 
     currentState = State::Delay;
 }
 
-Float ADSREnvelope::getNextValue() noexcept
-{
-    if (shouldRelease && releaseDelay-- == 0)
-        currentState = State::Release;
-
-    switch (currentState) {
-    case State::Delay:
-        if (delay-- > 0)
-            return start;
-
-        currentState = State::Attack;
-        // fallthrough
-    case State::Attack:
-        currentValue += peak * attackStep;
-        if (currentValue < peak)
-            return currentValue;
-
-        currentState = State::Hold;
-        currentValue = peak;
-        // fallthrough
-    case State::Hold:
-        if (hold-- > 0)
-            return currentValue;
-
-        currentState = State::Decay;
-        // fallthrough
-    case State::Decay:
-        currentValue *= decayRate;
-        if (currentValue > sustainThreshold )
-            return currentValue;
-
-        currentState = State::Sustain;
-        currentValue = sustain;
-        // fallthrough
-    case State::Sustain:
-        if (freeRunning)
-            shouldRelease = true;
-        return currentValue;
-    case State::Release:
-        currentValue *= releaseRate;
-        if (currentValue > config::egReleaseThreshold)
-            return currentValue;
-
-        currentState = State::Done;
-        currentValue = 0.0;
-        // fallthrough
-    default:
-        return 0.0;
-    }
-}
-
 void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
 {
     State currentState = this->currentState;
