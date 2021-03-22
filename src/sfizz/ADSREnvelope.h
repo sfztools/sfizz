@@ -94,7 +94,6 @@ private:
     Float releaseRate { 0 };
     int hold { 0 };
     Float start { 0 };
-    Float peak { 0 };
     Float sustain { 0 };
     Float sustainThreshold { config::virtuallyZero };
     int releaseDelay { 0 };

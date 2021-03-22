@@ -44,9 +44,8 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const 
     this->decayRate = secondsToExpRate(desc.getDecay(state, velocity));
     this->releaseRate = secondsToExpRate(desc.getRelease(state, velocity));
     this->hold = secondsToSamples(desc.getHold(state, velocity));
-    this->peak = 1.0;
     this->sustain = normalizePercents(desc.getSustain(state, velocity));
-    this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
+    this->start = normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
     sustainThreshold = this->sustain + config::virtuallyZero;
@@ -90,10 +89,10 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
                 currentState = State::Attack;
             break;
         case State::Attack:
-            while (count < size && (currentValue += peak * attackStep) < peak)
+            while (count < size && (currentValue += attackStep) < 1)
                 output[count++] = currentValue;
-            if (currentValue >= peak) {
-                currentValue = peak;
+            if (currentValue >= 1) {
+                currentValue = 1;
                 currentState = State::Hold;
             }
             break;
