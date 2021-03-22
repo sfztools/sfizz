@@ -31,7 +31,7 @@ TEST_CASE("[Synth] Play and check active voices")
     synth.noteOn(0, 36, 89);
     REQUIRE(synth.getNumActiveVoices() == 2);
     // Render for a while
-    for (int i = 0; i < 200; ++i)
+    for (int i = 0; i < 300; ++i)
         synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 0);
 }

@@ -517,7 +517,7 @@ TEST_CASE("[Files] Off modes")
     REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 1 );
     AudioBuffer<float> buffer { 2, 256 };
-    for (unsigned i = 0; i < 10; ++i) // Not enough for the "normal" voice to die
+    for (unsigned i = 0; i < 20; ++i) // Not enough for the "normal" voice to die
         synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( fastVoice->isFree() );

@@ -44,9 +44,8 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const 
     this->decayRate = secondsToExpRate(desc.getDecay(state, velocity));
     this->releaseRate = secondsToExpRate(desc.getRelease(state, velocity));
     this->hold = secondsToSamples(desc.getHold(state, velocity));
-    this->peak = 1.0;
     this->sustain = normalizePercents(desc.getSustain(state, velocity));
-    this->start = this->peak * normalizePercents(desc.getStart(state, velocity));
+    this->start = normalizePercents(desc.getStart(state, velocity));
 
     releaseDelay = 0;
     sustainThreshold = this->sustain + config::virtuallyZero;
@@ -59,63 +58,13 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const 
     currentState = State::Delay;
 }
 
-Float ADSREnvelope::getNextValue() noexcept
-{
-    if (shouldRelease && releaseDelay-- == 0)
-        currentState = State::Release;
-
-    switch (currentState) {
-    case State::Delay:
-        if (delay-- > 0)
-            return start;
-
-        currentState = State::Attack;
-        // fallthrough
-    case State::Attack:
-        currentValue += peak * attackStep;
-        if (currentValue < peak)
-            return currentValue;
-
-        currentState = State::Hold;
-        currentValue = peak;
-        // fallthrough
-    case State::Hold:
-        if (hold-- > 0)
-            return currentValue;
-
-        currentState = State::Decay;
-        // fallthrough
-    case State::Decay:
-        currentValue *= decayRate;
-        if (currentValue > sustainThreshold )
-            return currentValue;
-
-        currentState = State::Sustain;
-        currentValue = sustain;
-        // fallthrough
-    case State::Sustain:
-        if (freeRunning)
-            shouldRelease = true;
-        return currentValue;
-    case State::Release:
-        currentValue *= releaseRate;
-        if (currentValue > config::egReleaseThreshold)
-            return currentValue;
-
-        currentState = State::Done;
-        currentValue = 0.0;
-        // fallthrough
-    default:
-        return 0.0;
-    }
-}
-
 void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
 {
     State currentState = this->currentState;
     Float currentValue = this->currentValue;
     bool shouldRelease = this->shouldRelease;
     int releaseDelay = this->releaseDelay;
+    Float transitionDelta = this->transitionDelta;
 
     while (!output.empty()) {
         size_t count = 0;
@@ -130,6 +79,8 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
             size = std::min<size_t>(size, releaseDelay);
         }
 
+        Float previousValue;
+
         switch (currentState) {
         case State::Delay:
             while (count < size && delay-- > 0) {
@@ -140,10 +91,10 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
                 currentState = State::Attack;
             break;
         case State::Attack:
-            while (count < size && (currentValue += peak * attackStep) < peak)
+            while (count < size && (currentValue += attackStep) < 1)
                 output[count++] = currentValue;
-            if (currentValue >= peak) {
-                currentValue = peak;
+            if (currentValue >= 1) {
+                currentValue = 1;
                 currentState = State::Hold;
             }
             break;
@@ -157,8 +108,9 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
             while (count < size && (currentValue *= decayRate) > sustain)
                 output[count++] = currentValue;
             if (currentValue <= sustainThreshold) {
-                currentValue = sustain;
                 currentState = State::Sustain;
+                currentValue = std::max(sustain, currentValue);
+                transitionDelta = (sustain - currentValue) / (sampleRate * config::egTransitionTime);
             }
             break;
         case State::Sustain:
@@ -166,16 +118,27 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
                 shouldRelease = true;
                 break;
             }
-            count = size;
-            currentValue = sustain;
-            sfz::fill(output.first(count), currentValue);
+            while (count < size) {
+                currentValue = std::max(sustain, currentValue + transitionDelta);
+                output[count++] = currentValue;
+            }
             break;
         case State::Release:
+            previousValue = currentValue;
             while (count < size && (currentValue *= releaseRate) > config::egReleaseThreshold)
-                output[count++] = currentValue;
+                output[count++] = previousValue = currentValue;
             if (currentValue <= config::egReleaseThreshold) {
-                currentValue = 0;
+                currentState = State::Fadeout;
+                currentValue = previousValue;
+                transitionDelta = -currentValue / (sampleRate * config::egTransitionTime);
+            }
+            break;
+        case State::Fadeout:
+            while (count < size && (currentValue += transitionDelta) > 0)
+                output[count++] = currentValue;
+            if (currentValue <= 0) {
                 currentState = State::Done;
+                currentValue = 0;
             }
             break;
         default:
@@ -195,6 +158,7 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
     this->currentValue = currentValue;
     this->shouldRelease = shouldRelease;
     this->releaseDelay = releaseDelay;
+    this->transitionDelta = transitionDelta;
 
     ASSERT(!hasNanInf(output));
 }

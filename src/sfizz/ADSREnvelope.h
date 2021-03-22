@@ -31,12 +31,6 @@ public:
      */
     void reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
     /**
-     * @brief Get the next value for the envelope
-     *
-     * @return Float
-     */
-    Float getNextValue() noexcept;
-    /**
      * @brief Get a block of values for the envelope. This method tries hard to be efficient
      * and hopefully it is.
      *
@@ -68,7 +62,7 @@ public:
      * @return true
      * @return false
      */
-    bool isReleased() const noexcept { return currentState == State::Release || shouldRelease; }
+    bool isReleased() const noexcept { return currentState >= State::Release || shouldRelease; }
     /**
      * @brief Get the remaining delay samples
      *
@@ -89,6 +83,7 @@ private:
         Decay,
         Sustain,
         Release,
+        Fadeout,
         Done
     };
     State currentState { State::Done };
@@ -99,12 +94,12 @@ private:
     Float releaseRate { 0 };
     int hold { 0 };
     Float start { 0 };
-    Float peak { 0 };
     Float sustain { 0 };
     Float sustainThreshold { config::virtuallyZero };
     int releaseDelay { 0 };
     bool shouldRelease { false };
     bool freeRunning { false };
+    Float transitionDelta {};
     LEAK_DETECTOR(ADSREnvelope);
 };
 
