@@ -79,6 +79,8 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
             size = std::min<size_t>(size, releaseDelay);
         }
 
+        Float previousValue;
+
         switch (currentState) {
         case State::Delay:
             while (count < size && delay-- > 0) {
@@ -122,10 +124,12 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
             }
             break;
         case State::Release:
+            previousValue = currentValue;
             while (count < size && (currentValue *= releaseRate) > config::egReleaseThreshold)
-                output[count++] = currentValue;
+                output[count++] = previousValue = currentValue;
             if (currentValue <= config::egReleaseThreshold) {
                 currentState = State::Fadeout;
+                currentValue = previousValue;
                 transitionDelta = -currentValue / (sampleRate * config::egTransitionTime);
             }
             break;
