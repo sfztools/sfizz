@@ -109,6 +109,11 @@ namespace config {
      */
     constexpr float egReleaseThreshold = 1e-4;
     /**
+       Duration of a linear transition user to smooth cases of otherwise
+       immediate level transitions. (eg. decay->sustain or release->off)
+     */
+    constexpr float egTransitionTime = 50e-3;
+    /**
        Default metadata for MIDIName documents
      */
     const absl::string_view midnamManufacturer { "The Sfizz authors" };

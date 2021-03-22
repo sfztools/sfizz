@@ -62,7 +62,7 @@ public:
      * @return true
      * @return false
      */
-    bool isReleased() const noexcept { return currentState == State::Release || shouldRelease; }
+    bool isReleased() const noexcept { return currentState >= State::Release || shouldRelease; }
     /**
      * @brief Get the remaining delay samples
      *
@@ -83,6 +83,7 @@ private:
         Decay,
         Sustain,
         Release,
+        Fadeout,
         Done
     };
     State currentState { State::Done };
@@ -99,6 +100,7 @@ private:
     int releaseDelay { 0 };
     bool shouldRelease { false };
     bool freeRunning { false };
+    Float transitionDelta {};
     LEAK_DETECTOR(ADSREnvelope);
 };
 
