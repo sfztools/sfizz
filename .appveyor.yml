@@ -7,18 +7,6 @@ environment:
     appveyor_build_worker_image: macos
     INSTALL_DIR: sfizz-$(APPVEYOR_REPO_TAG_NAME)-macos
 
-  - job_name: Windows x86
-    appveyor_build_worker_image: Visual Studio 2019
-    platform: x86
-    VCPKG_TRIPLET: x86-windows-static
-    PATH: C:\Program Files (x86)\Inno Setup 6;%PATH%
-
-  - job_name: Windows x64
-    appveyor_build_worker_image: Visual Studio 2019
-    platform: x64
-    VCPKG_TRIPLET: x64-windows-static
-    PATH: C:\Program Files (x86)\Inno Setup 6;%PATH%
-
   # Made with https://github.com/sfztools/code-signing
   CODESIGN_IDENTITY: codesign.sfz.tools
   CODESIGN_P12:
@@ -54,35 +42,11 @@ for:
   - name: macOS DMG
     path: "sfizz-*.dmg"
 
-- matrix:
-    only:
-    - job_name: Windows x86
-  cache: c:\tools\vcpkg\installed\ -> appveyor.yml
-  install:      call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\install.cmd
-  before_build: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\before_build.cmd
-  build_script: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\build.cmd
-  after_build:  call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\after_build.cmd
-  artifacts:
-  - name: x86 Setup
-    path: "sfizz-*.exe"
-
-- matrix:
-    only:
-    - job_name: Windows x64
-  cache: c:\tools\vcpkg\installed\ -> appveyor.yml
-  install:      call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\install.cmd
-  before_build: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\before_build.cmd
-  build_script: call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\build.cmd
-  after_build:  call %APPVEYOR_BUILD_FOLDER%\scripts\appveyor\after_build.cmd
-  artifacts:
-  - name: x64 Setup
-    path: "sfizz-*.exe"
-
 deploy:
 - provider: GitHub
   auth_token:
     secure: xOugGAynvnZdc0DXaL3rlgMf4CICFLkdO8JxoRfLQMKJhkj/kZ4d8h7NCFneDzXG
-  artifact: macOS DMG,x86 Setup,x64 Setup
+  artifact: macOS DMG
   draft: false
   prerelease: false
   force_update: true
