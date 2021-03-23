@@ -7,7 +7,6 @@
 #pragma once
 #include "MathHelpers.h"
 #include "Macros.h"
-#include <initializer_list>
 #include <type_traits>
 #include <limits>
 
@@ -159,29 +158,16 @@ private:
 
 template <class T> using UncheckedRange = Range<T, false>;
 
+template <class Type, bool C1, bool C2>
+bool operator==(const Range<Type, C1>& lhs, const Range<Type, C2>& rhs) noexcept
+{
+    return lhs.getStart() == rhs.getStart() && lhs.getEnd() == rhs.getEnd();
 }
 
 template <class Type, bool C1, bool C2>
-bool operator==(const sfz::Range<Type, C1>& lhs, const sfz::Range<Type, C2>& rhs)
+bool operator!=(const Range<Type, C1>& lhs, const Range<Type, C2>& rhs) noexcept
 {
-    return (lhs.getStart() == rhs.getStart()) && (lhs.getEnd() == rhs.getEnd());
+    return !operator==(lhs, rhs);
 }
 
-template <class Type, bool C1, bool C2>
-bool operator!=(const sfz::Range<Type, C1>& lhs, const sfz::Range<Type, C2>& rhs)
-{
-    return (lhs.getStart() != rhs.getStart()) || (lhs.getEnd() != rhs.getEnd());
-}
-
-
-template <class Type, bool C>
-bool operator==(const sfz::Range<Type, C>& lhs, const std::pair<Type, Type>& rhs)
-{
-    return (lhs.getStart() == rhs.first) && (lhs.getEnd() == rhs.second);
-}
-
-template <class Type, bool C>
-bool operator==(const std::pair<Type, Type>& lhs, const sfz::Range<Type, C>& rhs)
-{
-    return rhs == lhs;
-}
+} // namespace sfz
