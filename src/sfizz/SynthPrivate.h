@@ -181,6 +181,9 @@ struct Synth::Impl final: public Parser::Listener {
 
     BitArray<config::numCCs> collectAllUsedCCs();
 
+    const std::string* getKeyLabel(int keyNumber);
+    void setKeyLabel(int keyNumber, std::string name);
+    void clearKeyLabels();
     const std::string* getCCLabel(int ccNumber);
     void setCCLabel(int ccNumber, std::string name);
     void clearCCLabels();
@@ -219,6 +222,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::vector<CCNamePair> ccLabels_;
     std::map<int, size_t> ccLabelsMap_;
     std::vector<NoteNamePair> keyLabels_;
+    std::map<int, size_t> keyLabelsMap_;
     BitArray<128> keySlots_;
     BitArray<128> swLastSlots_;
     std::vector<NoteNamePair> keyswitchLabels_;

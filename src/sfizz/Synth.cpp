@@ -249,7 +249,7 @@ void Synth::Impl::clear()
     clearCCLabels();
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
-    keyLabels_.clear();
+    clearKeyLabels();
     keySlots_.clear();
     swLastSlots_.clear();
     clearKeyswitchLabels();
@@ -371,7 +371,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("label_key&"):
             if (member.parameters.back() <= Default::key.bounds.getEnd()) {
                 const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
-                insertPairUniquely(keyLabels_, noteNumber, std::string(member.value));
+                setKeyLabel(noteNumber, member.value);
             }
             break;
         case hash("default_path"):
@@ -1905,6 +1905,24 @@ BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
     return used;
 }
 
+const std::string* Synth::Impl::getKeyLabel(int keyNumber)
+{
+    auto it = keyLabelsMap_.find(keyNumber);
+    return (it == keyLabelsMap_.end()) ? nullptr : &keyLabels_[it->second].second;
+}
+
+void Synth::Impl::setKeyLabel(int keyNumber, std::string name)
+{
+    auto it = keyLabelsMap_.find(keyNumber);
+    if (it != keyLabelsMap_.end())
+        keyLabels_[it->second].second = std::move(name);
+    else {
+        size_t index = keyLabels_.size();
+        keyLabels_.emplace_back(keyNumber, std::move(name));
+        keyLabelsMap_[keyNumber] = index;
+    }
+}
+
 const std::string* Synth::Impl::getCCLabel(int ccNumber)
 {
     auto it = ccLabelsMap_.find(ccNumber);
@@ -1939,6 +1957,12 @@ void Synth::Impl::setKeyswitchLabel(int swNumber, std::string name)
         keyswitchLabels_.emplace_back(swNumber, std::move(name));
         keyswitchLabelsMap_[swNumber] = index;
     }
+}
+
+void Synth::Impl::clearKeyLabels()
+{
+    keyLabels_.clear();
+    keyLabelsMap_.clear();
 }
 
 void Synth::Impl::clearCCLabels()
