@@ -154,6 +154,11 @@ SFIZZ_SOURCES += \
 	external/st_audiofile/src/st_audiofile_libs.c \
 	external/st_audiofile/src/st_audiofile_sndfile.c
 
+ifneq ($(SFIZZ_USE_SNDFILE),1)
+SFIZZ_SOURCES += \
+	external/st_audiofile/src/st_audiofile_libs.c
+endif
+
 SFIZZ_C_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/src \
 	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs
