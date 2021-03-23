@@ -1905,7 +1905,7 @@ BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
     return used;
 }
 
-const std::string* Synth::Impl::getKeyLabel(int keyNumber)
+const std::string* Synth::Impl::getKeyLabel(int keyNumber) const
 {
     auto it = keyLabelsMap_.find(keyNumber);
     return (it == keyLabelsMap_.end()) ? nullptr : &keyLabels_[it->second].second;
@@ -1923,7 +1923,7 @@ void Synth::Impl::setKeyLabel(int keyNumber, std::string name)
     }
 }
 
-const std::string* Synth::Impl::getCCLabel(int ccNumber)
+const std::string* Synth::Impl::getCCLabel(int ccNumber) const
 {
     auto it = ccLabelsMap_.find(ccNumber);
     return (it == ccLabelsMap_.end()) ? nullptr : &ccLabels_[it->second].second;
@@ -1941,7 +1941,7 @@ void Synth::Impl::setCCLabel(int ccNumber, std::string name)
     }
 }
 
-const std::string* Synth::Impl::getKeyswitchLabel(int swNumber)
+const std::string* Synth::Impl::getKeyswitchLabel(int swNumber) const
 {
     auto it = keyswitchLabelsMap_.find(swNumber);
     return (it == keyswitchLabelsMap_.end()) ? nullptr : &keyswitchLabels_[it->second].second;
