@@ -818,6 +818,35 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
     REQUIRE( synth.getNumActiveVoices() == 2 );
 }
 
+TEST_CASE("[Synth] Release key (Different sostenuto CC)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <global> sostenuto_cc=54
+        <region> key=62 sample=*sine trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+}
+
+TEST_CASE("[Synth] Release (Different sostenuto CC)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <global>sostenuto_cc=54
+        <region> key=62 sample=*silence
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+    synth.cc(0, 54, 0);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+}
+
 TEST_CASE("[Synth] Sustain threshold default")
 {
     sfz::Synth synth;
@@ -850,6 +879,55 @@ TEST_CASE("[Synth] Sustain threshold")
     synth.cc(0, 64, 64);
     synth.noteOff(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices() == 5 );
+}
+
+TEST_CASE("[Synth] Sostenuto")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sostenuto.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    SECTION("1 note")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 1);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(3, 66, 0);
+        REQUIRE( synth.getNumActiveVoices() == 0 );
+    }
+
+    SECTION("2 notes")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.noteOn(0, 64, 85);
+        synth.cc(1, 66, 1);
+        synth.noteOff(2, 62, 85);
+        synth.noteOff(2, 64, 85);
+        REQUIRE( synth.getNumActiveVoices() == 2 );
+        synth.cc(3, 66, 0);
+        REQUIRE( synth.getNumActiveVoices() == 0 );
+    }
+
+    SECTION("1 note but after the pedal is depressed")
+    {
+        synth.cc(0, 66, 1);
+        synth.noteOn(1, 62, 85);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 0 );
+    }
+
+    SECTION("2 notes, 1 after the pedal is depressed")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 1);
+        synth.noteOn(2, 64, 85);
+        synth.noteOff(3, 62, 85);
+        synth.noteOff(3, 64, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        REQUIRE( getActiveVoices(synth)[0]->getTriggerEvent().number == 62 );
+    }
 }
 
 TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")

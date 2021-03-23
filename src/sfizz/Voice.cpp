@@ -202,6 +202,8 @@ struct Voice::Impl
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
+    enum class SostenutoState { Up, Sustaining, PreviouslyDown };
+    SostenutoState sostenutoState_ { SostenutoState::Up };
 
     TriggerEvent triggerEvent_;
     absl::optional<int> triggerDelay_;
@@ -459,6 +461,13 @@ bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
     impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
     impl.saveModulationTargets(region);
 
+    if (region->checkSostenuto) {
+        const bool sostenutoPressed =
+            impl.resources_.midiState.getCCValue(region->sostenutoCC) >= region->sostenutoThreshold;
+        impl.sostenutoState_ =
+            sostenutoPressed ? Impl::SostenutoState::PreviouslyDown : Impl::SostenutoState::Up;
+    }
+
     return true;
 }
 
@@ -546,6 +555,10 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
         if (!impl.region_->checkSustain
             || impl.resources_.midiState.getCCValue(impl.region_->sustainCC) < impl.region_->sustainThreshold)
             release(delay);
+
+        if (!impl.region_->checkSostenuto
+            || impl.sostenutoState_ != Impl::SostenutoState::Sustaining)
+            release(delay);
     }
 }
 
@@ -564,6 +577,19 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
         && ccNumber == impl.region_->sustainCC
         && ccValue < impl.region_->sustainThreshold)
         release(delay);
+
+    if (impl.region_->checkSostenuto
+        && ccNumber == impl.region_->sostenutoCC) {
+        if (ccValue < impl.region_->sostenutoThreshold) {
+            impl.sostenutoState_ = Impl::SostenutoState::Up;
+        } else {
+            if (impl.sostenutoState_ == Impl::SostenutoState::Up)
+                impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
+        }
+
+        if (impl.sostenutoState_ != Impl::SostenutoState::Sustaining && impl.noteIsOff_)
+            release(delay);
+    }
 }
 
 void Voice::registerPitchWheel(int delay, float pitch) noexcept
@@ -1512,6 +1538,7 @@ void Voice::reset() noexcept
     impl.count_ = 1;
     impl.floatPositionOffset_ = 0.0f;
     impl.noteIsOff_ = false;
+    impl.sostenutoState_ = Impl::SostenutoState::Up;
 
     impl.resetLoopInformation();
 
