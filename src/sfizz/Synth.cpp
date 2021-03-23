@@ -1155,7 +1155,6 @@ void Synth::Impl::startDelayedReleaseVoices(Region* region, int delay, SisterVoi
     }
 
     for (auto& note: region->delayedReleases) {
-        // FIXME: we really need to have some form of common method to find and start voices...
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
         startVoice(region, delay, noteOffEvent, ring);
     }

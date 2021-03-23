@@ -202,6 +202,8 @@ struct Voice::Impl
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
+    enum class SustainState { Up, Sustaining };
+    SustainState sustainState_ { SustainState::Up };
     enum class SostenutoState { Up, Sustaining, PreviouslyDown };
     SostenutoState sostenutoState_ { SostenutoState::Up };
 
@@ -461,6 +463,13 @@ bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
     impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
     impl.saveModulationTargets(region);
 
+    if (region->checkSustain) {
+        const bool sustainPressed =
+            impl.resources_.midiState.getCCValue(region->sustainCC) >= region->sustainThreshold;
+        impl.sustainState_ =
+            sustainPressed ? Impl::SustainState::Sustaining : Impl::SustainState::Up;
+    }
+
     if (region->checkSostenuto) {
         const bool sostenutoPressed =
             impl.resources_.midiState.getCCValue(region->sostenutoCC) >= region->sostenutoThreshold;
@@ -552,12 +561,13 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
         if (impl.region_->loopMode == LoopMode::one_shot)
             return;
 
-        if (!impl.region_->checkSustain
-            || impl.resources_.midiState.getCCValue(impl.region_->sustainCC) < impl.region_->sustainThreshold)
-            release(delay);
+        const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+            || impl.sustainState_ != Impl::SustainState::Sustaining;
 
-        if (!impl.region_->checkSostenuto
-            || impl.sostenutoState_ != Impl::SostenutoState::Sustaining)
+        const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+            || impl.sostenutoState_ != Impl::SostenutoState::Sustaining;
+
+        if (sustainPedalReleaseCondition && sostenutoPedalReleaseCondition)
             release(delay);
     }
 }
@@ -572,24 +582,30 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (impl.state_ != State::playing)
         return;
 
-    if (impl.region_->checkSustain
-        && impl.noteIsOff_
-        && ccNumber == impl.region_->sustainCC
-        && ccValue < impl.region_->sustainThreshold)
-        release(delay);
-
-    if (impl.region_->checkSostenuto
-        && ccNumber == impl.region_->sostenutoCC) {
+    if (impl.region_->checkSustain && (ccNumber == impl.region_->sostenutoCC)) {
         if (ccValue < impl.region_->sostenutoThreshold) {
             impl.sostenutoState_ = Impl::SostenutoState::Up;
-        } else {
-            if (impl.sostenutoState_ == Impl::SostenutoState::Up)
-                impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
+        } else if (impl.sostenutoState_ == Impl::SostenutoState::Up) {
+            impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
         }
-
-        if (impl.sostenutoState_ != Impl::SostenutoState::Sustaining && impl.noteIsOff_)
-            release(delay);
     }
+
+    if (impl.region_->checkSostenuto && (ccNumber == impl.region_->sustainCC)) {
+        if (ccValue < impl.region_->sustainThreshold) {
+            impl.sustainState_ = Impl::SustainState::Up;
+        } else {
+            impl.sustainState_ = Impl::SustainState::Sustaining;
+        }
+    }
+
+    const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+        || (impl.noteIsOff_ && (impl.sustainState_ != Impl::SustainState::Sustaining));
+
+    const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+        || (impl.noteIsOff_ && (impl.sostenutoState_ != Impl::SostenutoState::Sustaining));
+
+    if (sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
+        release(delay);
 }
 
 void Voice::registerPitchWheel(int delay, float pitch) noexcept
