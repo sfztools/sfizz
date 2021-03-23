@@ -308,8 +308,14 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sustain_cc"):
         sustainCC = opcode.read(Default::sustainCC);
         break;
+    case hash("sostenuto_cc"):
+        sostenutoCC = opcode.read(Default::sostenutoCC);
+        break;
     case hash("sustain_lo"):
         sustainThreshold = opcode.read(Default::sustainThreshold);
+        break;
+    case hash("sostenuto_lo"):
+        sostenutoThreshold = opcode.read(Default::sostenutoThreshold);
         break;
     case hash("sustain_sw"):
         checkSustain = opcode.read(Default::checkSustain);

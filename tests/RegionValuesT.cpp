@@ -2425,6 +2425,52 @@ TEST_CASE("[Values] Sustain low")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Values] Sostenuto CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav sostenuto_cc=10
+        <region> sample=kick.wav sostenuto_cc=20 sostenuto_cc=-1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/sostenuto_cc", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/sostenuto_cc", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/sostenuto_cc", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/sostenuto_cc,i : { 66 }",
+        "/region1/sostenuto_cc,i : { 10 }",
+        "/region2/sostenuto_cc,i : { 66 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Values] Sostenuto low")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav sostenuto_lo=10
+        <region> sample=kick.wav sostenuto_lo=10 sostenuto_lo=-1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/sostenuto_lo", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/sostenuto_lo", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/sostenuto_lo", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/sostenuto_lo,f : { 0.00787402 }",
+        "/region1/sostenuto_lo,f : { 0.0787402 }",
+        "/region2/sostenuto_lo,f : { -0.00787402 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
 TEST_CASE("[Values] Oscillator phase")
 {
     Synth synth;

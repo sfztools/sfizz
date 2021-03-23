@@ -161,9 +161,11 @@ namespace Default
     extern const OpcodeSpec<uint8_t> curveCC;
     extern const OpcodeSpec<uint16_t> smoothCC;
     extern const OpcodeSpec<uint8_t> sustainCC;
+    extern const OpcodeSpec<uint8_t> sostenutoCC;
     extern const OpcodeSpec<bool> checkSustain;
     extern const OpcodeSpec<bool> checkSostenuto;
     extern const OpcodeSpec<float> sustainThreshold;
+    extern const OpcodeSpec<float> sostenutoThreshold;
     extern const OpcodeSpec<float> loBPM;
     extern const OpcodeSpec<float> hiBPM;
     extern const OpcodeSpec<uint8_t> sequence;
