@@ -133,6 +133,70 @@ jobs:
         name: MOD devices tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
+  build_for_win32:
+    runs-on: windows-2019
+    steps:
+    - name: Set install name
+      run: |
+        echo platform=x86 >> "${Env:GITHUB_ENV}"
+        echo release_arch=Win32 >> "${Env:GITHUB_ENV}"
+        echo "install_ref=$(${Env:GITHUB_REF}.split('/')[-1])" >> "${Env:GITHUB_ENV}"
+        echo "install_name=sfizz-$(${Env:GITHUB_REF}.split('/')[-1])-win32" >> "${Env:GITHUB_ENV}"
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Create Build Environment
+      working-directory: ${{runner.workspace}}
+      run: cmake -E make_directory build
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: |
+       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
+    - name: Test
+      run: ${{runner.workspace}}/build/tests/Release/sfizz_tests
+    - name: Create installer
+      working-directory: ${{runner.workspace}}/build
+      run: iscc /O"." /F"${Env:install_name}" /dARCH="${Env:platform}" innosetup.iss
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Win32 installer
+        path: ${{runner.workspace}}/build/${{env.install_name}}.exe
+
+  build_for_win64:
+    runs-on: windows-2019
+    steps:
+    - name: Set install name
+      run: |
+        echo platform=x64 >> "${Env:GITHUB_ENV}"
+        echo release_arch=x64 >> "${Env:GITHUB_ENV}"
+        echo "install_ref=$(${Env:GITHUB_REF}.split('/')[-1])" >> "${Env:GITHUB_ENV}"
+        echo "install_name=sfizz-$(${Env:GITHUB_REF}.split('/')[-1])-win64" >> "${Env:GITHUB_ENV}"
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Create Build Environment
+      working-directory: ${{runner.workspace}}
+      run: cmake -E make_directory build
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: |
+       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
+    - name: Test
+      run: ${{runner.workspace}}/build/tests/Release/sfizz_tests
+    - name: Create installer
+      working-directory: ${{runner.workspace}}/build
+      run: iscc /O"." /F"${Env:install_name}" /dARCH="${Env:platform}" innosetup.iss
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Win64 installer
+        path: ${{runner.workspace}}/build/${{env.install_name}}.exe
+
   build_for_mingw32:
     runs-on: ubuntu-18.04
     container:
