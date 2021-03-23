@@ -29,6 +29,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <chrono>
 
 #include "utility/vstgui_before.h"
 #include "vstgui/vstgui.h"
@@ -233,6 +234,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         const char* keyName = keyNames[key % 12];
         return std::string(keyName) + ' ' + std::to_string(octave);
     }
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastCCValueSent_;
 };
 
 Editor::Editor(EditorController& ctrl)
@@ -1027,13 +1030,26 @@ void Editor::Impl::createFrameContents()
 
     if (SControlsPanel* panel = controlsPanel_) {
         panel->ValueChangeFunction = [this](uint32_t cc, float value) {
-            performCCValueChange(cc, value);
+            // Space out the CC values to send
+            const auto now = std::chrono::high_resolution_clock::now();
+            const auto timeSinceLastCCSend =
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCCValueSent_);
+            const auto ccSentThreshold = std::chrono::milliseconds(30);
+
+            if (timeSinceLastCCSend > ccSentThreshold) {
+                lastCCValueSent_ = now;
+                performCCValueChange(cc, value);
+            }
+
             updateCCValue(cc, value);
         };
-        panel->BeginEditFunction = [this](uint32_t cc) {
+        panel->BeginEditFunction = [this](uint32_t cc, float value) {
+            (void)value;
             performCCBeginEdit(cc);
         };
-        panel->EndEditFunction = [this](uint32_t cc) {
+        panel->EndEditFunction = [this](uint32_t cc, float value) {
+            // Always send the last CC value of the edit
+            performCCValueChange(cc, value);
             performCCEndEdit(cc);
         };
     }

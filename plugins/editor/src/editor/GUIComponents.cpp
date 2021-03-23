@@ -869,13 +869,13 @@ void SControlsPanel::ControlSlotListener::valueChanged(CControl* pControl)
 void SControlsPanel::ControlSlotListener::controlBeginEdit(CControl* pControl)
 {
     if (panel_->BeginEditFunction)
-        panel_->BeginEditFunction(pControl->getTag());
+        panel_->BeginEditFunction(pControl->getTag(), pControl->getValue());
 }
 
 void SControlsPanel::ControlSlotListener::controlEndEdit(CControl* pControl)
 {
     if (panel_->EndEditFunction)
-        panel_->EndEditFunction(pControl->getTag());
+        panel_->EndEditFunction(pControl->getTag(), pControl->getValue());
 }
 
 ///

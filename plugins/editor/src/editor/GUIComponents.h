@@ -284,8 +284,8 @@ public:
     bool isControlEditing(uint32_t index);
 
     std::function<void(uint32_t, float)> ValueChangeFunction;
-    std::function<void(uint32_t)> BeginEditFunction;
-    std::function<void(uint32_t)> EndEditFunction;
+    std::function<void(uint32_t, float)> BeginEditFunction;
+    std::function<void(uint32_t, float)> EndEditFunction;
 
 protected:
     void recalculateSubViews() override;
