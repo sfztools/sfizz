@@ -6,7 +6,7 @@ endif
 
 ### Options
 
-SFIZZ_USE_SNDFILE ?= 1
+SFIZZ_USE_SNDFILE ?= 0
 
 ###
 
