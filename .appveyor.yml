@@ -3,8 +3,8 @@ configuration: Release
 
 environment:
   matrix:
-  - job_name: macOS Mojave
-    appveyor_build_worker_image: macos-mojave
+  - job_name: macOS
+    appveyor_build_worker_image: macos
     INSTALL_DIR: sfizz-$(APPVEYOR_REPO_TAG_NAME)-macos
 
   - job_name: Windows x86
@@ -31,11 +31,12 @@ environment:
 for:
 - matrix:
     only:
-    - job_name: macOS Mojave
+    - job_name: macOS
   init:
   - system_profiler SPSoftwareDataType
   - cmake --version
   - gcc -v
+  - xcodebuild -version
   install:
   - chmod +x ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/install.sh
   - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/install.sh
