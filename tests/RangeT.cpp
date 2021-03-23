@@ -12,13 +12,9 @@ TEST_CASE("[Range] Equality operators")
 {
     sfz::Range<int> intRange { 1, 1 };
     REQUIRE(intRange == sfz::Range<int>(1, 1));
-    REQUIRE(intRange == std::pair<int, int>(1, 1));
-    REQUIRE(std::pair<int, int>(1, 1) == intRange);
 
     sfz::Range<float> floatRange { 1.0f, 1.0f };
     REQUIRE(floatRange == sfz::Range<float>(1.0f, 1.0f));
-    REQUIRE(floatRange == std::pair<float, float>(1.0f, 1.0f));
-    REQUIRE(std::pair<float, float>(1.0f, 1.0f) == floatRange);
 }
 
 TEST_CASE("[Range] Default ranges for classical types")
