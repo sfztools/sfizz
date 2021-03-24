@@ -44,6 +44,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'b'>(delay, path, &blob);
         } break;
 
+        MATCH("/key%d/label", "") {
+            if (indices[0] >= 128)
+                break;
+            const std::string* label = impl.getKeyLabel(indices[0]);
+            client.receive<'s'>(delay, path, label ? label->c_str() : "");
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/sw/last/slots", "") {
