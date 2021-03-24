@@ -155,13 +155,22 @@ struct Synth::Impl final: public Parser::Listener {
     void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
-     * @brief Start all delayed release voices of the region if necessary
+     * @brief Start all delayed sustain release voices of the region if necessary
      *
      * @param region
      * @param delay
      * @param ring
      */
-    void startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    void startDelayedSustainReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+
+    /**
+     * @brief Start all delayed sostenuto release voices of the region if necessary
+     *
+     * @param region
+     * @param delay
+     * @param ring
+     */
+    void startDelayedSostenutoReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Finalize SFZ loading, following a successful execution of the

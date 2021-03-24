@@ -9,6 +9,7 @@
 #include "Macros.h"
 #include "Debug.h"
 #include "Opcode.h"
+#include "SwapAndPop.h"
 #include "StringViewHelpers.h"
 #include "ModifierHelpers.h"
 #include "modulations/ModId.h"
@@ -1503,6 +1504,29 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
+void sfz::Region::delaySustainRelease(int noteNumber, float velocity)
+{
+    if (delayedSustainReleases.size() == delayedSustainReleases.capacity())
+        return;
+
+    delayedSustainReleases.emplace_back(noteNumber, velocity);
+}
+
+void sfz::Region::delaySostenutoRelease(int noteNumber, float velocity)
+{
+    if (delayedSostenutoReleases.size() == delayedSostenutoReleases.capacity())
+        return;
+
+    delayedSostenutoReleases.emplace_back(noteNumber, velocity);
+}
+
+void sfz::Region::removeFromSostenutoReleases(int noteNumber)
+{
+    swapAndPopFirst(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
+        return p.first == noteNumber;
+    });
+}
+
 bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
@@ -1528,6 +1552,13 @@ bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue
     const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
     const bool attackTrigger = (trigger == Trigger::attack);
     const bool notFirstLegatoNote = (trigger == Trigger::legato && midiState.getActiveNotes() > 1);
+
+    if (trigger == Trigger::release &&
+        keyOk && velOk
+        && checkSostenuto && midiState.getCCValue(sostenutoCC) < sostenutoThreshold) {
+        // This note on will possibly be "sostenutoed"
+        delaySostenutoRelease(noteNumber, velocity);
+    }
 
     return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
 }
@@ -1557,13 +1588,22 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
         return true;
 
     if (trigger == Trigger::release) {
-        if (midiState.getCCValue(sustainCC) < sustainThreshold)
+        if (checkSostenuto && midiState.getCCValue(sostenutoCC) < sostenutoThreshold)
+            removeFromSostenutoReleases(noteNumber);
+
+        const bool shouldSustain = checkSustain && midiState.getCCValue(sustainCC) >= sustainThreshold;
+        const bool shouldSostenuto =
+            checkSostenuto && midiState.getCCValue(sostenutoCC) >= sostenutoThreshold
+            && absl::c_find_if(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
+                return p.first == noteNumber;
+            }) != delayedSostenutoReleases.end();
+
+        if (!shouldSustain && !shouldSostenuto)
             return true;
 
         // If we reach this part, we're storing the notes to delay their release on CC up
         // This is handled by the Synth object
-
-        delayedReleases.emplace_back(noteNumber, midiState.getNoteVelocity(noteNumber));
+        delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
     }
 
     return false;

@@ -37,6 +37,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     region.parseOpcode({ "lokey", "63" });
     region.parseOpcode({ "hikey", "65" });
     region.parseOpcode({ "sample", "*sine" });
+    region.delayedSustainReleases.reserve(config::delayedReleaseVoices);
     SECTION("Release key without sustain")
     {
         region.parseOpcode({ "trigger", "release_key" });
@@ -68,11 +69,11 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
-        REQUIRE( region.delayedReleases.size() == 1 );
+        REQUIRE( region.delayedSustainReleases.size() == 1 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f }
         };
-        REQUIRE( region.delayedReleases == expected );
+        REQUIRE( region.delayedSustainReleases == expected );
     }
 
     SECTION("Release with sustain and 2 notes")
@@ -85,12 +86,12 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         REQUIRE( !region.registerNoteOn(64, 0.6f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
         REQUIRE( !region.registerNoteOff(64, 0.2f, 0.0f) );
-        REQUIRE( region.delayedReleases.size() == 2 );
+        REQUIRE( region.delayedSustainReleases.size() == 2 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f },
             { 64, 0.6f }
         };
-        REQUIRE( region.delayedReleases == expected );
+        REQUIRE( region.delayedSustainReleases == expected );
     }
 
     SECTION("Release with sustain and 2 notes but 1 outside")
@@ -103,10 +104,10 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         REQUIRE( !region.registerNoteOn(66, 0.6f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
         REQUIRE( !region.registerNoteOff(66, 0.2f, 0.0f) );
-        REQUIRE( region.delayedReleases.size() == 1 );
+        REQUIRE( region.delayedSustainReleases.size() == 1 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f }
         };
-        REQUIRE( region.delayedReleases == expected );
+        REQUIRE( region.delayedSustainReleases == expected );
     }
 }

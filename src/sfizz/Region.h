@@ -508,7 +508,11 @@ struct Region {
     RegionSet* parent { nullptr };
 
     // Started notes
-    std::vector<std::pair<int, float>> delayedReleases;
+    std::vector<std::pair<int, float>> delayedSustainReleases;
+    std::vector<std::pair<int, float>> delayedSostenutoReleases;
+    void delaySustainRelease(int noteNumber, float velocity);
+    void delaySostenutoRelease(int noteNumber, float velocity);
+    void removeFromSostenutoReleases(int noteNumber);
 
     const MidiState& midiState;
     bool keySwitched { true };
