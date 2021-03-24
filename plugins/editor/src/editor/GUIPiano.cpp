@@ -33,6 +33,7 @@ struct SPiano::Impl {
 
     float keyUsedHue_ = 0.55;
     float keySwitchHue_ = 0.0;
+    float keyUsedAndSwitchHue_ = 0.85;
     float whiteKeyChroma_ = 0.9;
     float blackKeyChroma_ = 0.75;
     float whiteKeyLuma_ = 0.9;
@@ -125,19 +126,19 @@ void SPiano::setKeyValue(unsigned key, float value)
     invalid();
 }
 
-SPiano::KeyRole SPiano::getKeyRole(unsigned key)
+int SPiano::getKeyRole(unsigned key)
 {
     Impl& impl = *impl_;
+    int role = 0;
 
-    if (key >= 128)
-        return KeyRole::Unused;
+    if (key < 128) {
+        if (impl.keyUsed_.test(key))
+            role |= KeyRole::Note;
+        if (impl.keyswitchUsed_.test(key))
+            role |= KeyRole::Switch;
+    }
 
-    if (impl.keyUsed_.test(key))
-        return KeyRole::Note;
-    if (impl.keyswitchUsed_.test(key))
-        return KeyRole::Switch;
-
-    return KeyRole::Unused;
+    return role;
 }
 
 void SPiano::draw(CDrawContext* dc)
@@ -170,6 +171,12 @@ void SPiano::draw(CDrawContext* dc)
                     goto whiteKeyDefault;
                 hcy.h = impl.keyUsedHue_;
                 break;
+            case KeyRole::Note|KeyRole::Switch:
+                if (!allKeysUsed) {
+                    hcy.h = impl.keyUsedAndSwitchHue_;
+                    break;
+                }
+                // fall through
             case KeyRole::Switch:
                 hcy.h = impl.keySwitchHue_;
                 break;
@@ -210,6 +217,12 @@ void SPiano::draw(CDrawContext* dc)
                     goto blackKeyDefault;
                 hcy.h = impl.keyUsedHue_;
                 break;
+            case KeyRole::Note|KeyRole::Switch:
+                if (!allKeysUsed) {
+                    hcy.h = impl.keyUsedAndSwitchHue_;
+                    break;
+                }
+                // fall through
             case KeyRole::Switch:
                 hcy.h = impl.keySwitchHue_;
                 break;
