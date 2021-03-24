@@ -599,12 +599,12 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     }
 
     const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
-        || (impl.noteIsOff_ && (impl.sustainState_ != Impl::SustainState::Sustaining));
+        || (impl.sustainState_ != Impl::SustainState::Sustaining);
 
     const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
-        || (impl.noteIsOff_ && (impl.sostenutoState_ != Impl::SostenutoState::Sustaining));
+        || (impl.sostenutoState_ != Impl::SostenutoState::Sustaining);
 
-    if (sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
+    if (impl.noteIsOff_ && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
 }
 

@@ -6,6 +6,7 @@
 
 #pragma once
 #include <array>
+#include <bitset>
 #include "CCMap.h"
 #include "Range.h"
 
@@ -143,6 +144,15 @@ public:
     void flushEvents() noexcept;
 
     /**
+     * @brief Check if a note is currently depressed
+     *
+     * @param noteNumber
+     * @return true
+     * @return false
+     */
+    bool isNotePressed(int noteNumber) const noexcept { return noteStates[noteNumber]; }
+
+    /**
      * @brief Get the CC value for CC number
      *
      * @param ccNumber
@@ -190,6 +200,12 @@ private:
      */
 
     MidiNoteArray<unsigned> noteOffTimes { {} };
+
+    /**
+     * @brief Store the note states
+     *
+     */
+    std::bitset<128> noteStates;
 
     /**
      * @brief Stores the velocity of the note ons for currently

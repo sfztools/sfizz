@@ -42,6 +42,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release_key" });
         midiState.ccEvent(0, 64, 0.0f);
+        region.registerCC(64, 0.0f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -49,6 +50,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release_key" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         REQUIRE( !region.registerCC(64, 1.0f) );
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
@@ -58,6 +60,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 0.0f);
+        region.registerCC(64, 0.0f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -66,6 +69,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
@@ -80,6 +84,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 64, 0.6f);
@@ -98,6 +103,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 66, 0.6f);

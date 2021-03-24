@@ -659,7 +659,8 @@ void Synth::Impl::finalizeSfzLoad()
         for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc)
                 || region->ccConditions.contains(cc)
-                || (cc == region->sustainCC && region->trigger == Trigger::release))
+                || (cc == region->sustainCC && region->trigger == Trigger::release)
+                || (cc == region->sostenutoCC && region->trigger == Trigger::release))
                 ccActivationLists_[cc].push_back(region);
         }
 
@@ -1163,6 +1164,7 @@ void Synth::Impl::startDelayedSustainReleases(Region* region, int delay, SisterV
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
         startVoice(region, delay, noteOffEvent, ring);
     }
+
     region->delayedSustainReleases.clear();
 }
 
@@ -1191,11 +1193,19 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
     for (auto& region : ccActivationLists_[ccNumber]) {
-        if (ccNumber == region->sustainCC && value < region->sustainThreshold)
+        if (region->checkSustain && ccNumber == region->sustainCC && value < region->sustainThreshold)
             startDelayedSustainReleases(region, delay, ring);
 
-        if (ccNumber == region->sostenutoCC && value < region->sostenutoThreshold)
-            startDelayedSostenutoReleases(region, delay, ring);
+        if (region->checkSostenuto && ccNumber == region->sostenutoCC && value < region->sostenutoThreshold) {
+            if (region->sustainPressed) {
+                for (const auto& v: region->delayedSostenutoReleases)
+                    region->delaySustainRelease(v.first, v.second);
+
+                region->delayedSostenutoReleases.clear();
+            } else {
+                startDelayedSostenutoReleases(region, delay, ring);
+            }
+        }
 
         if (region->registerCC(ccNumber, value))
             startVoice(region, delay, triggerEvent, ring);

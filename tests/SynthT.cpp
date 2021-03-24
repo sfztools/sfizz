@@ -889,6 +889,41 @@ TEST_CASE("[Synth] Release (Different sostenuto CC)")
     }
 }
 
+TEST_CASE("[Synth] Release (sustain + sostenuto)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <region> key=62 sample=*silence
+        <region> key=62 sample=*sine trigger=release
+        <region> key=64 sample=*silence
+        <region> key=64 sample=*sine trigger=release
+    )");
+    SECTION("Sustain up first")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 127);
+        synth.cc(1, 64, 127);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(3, 64, 0);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(4, 66, 0);
+        REQUIRE( synth.getNumActiveVoices() == 2 );
+    }
+    SECTION("Sostenuto up first")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 127);
+        synth.cc(1, 64, 127);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(3, 66, 0);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(4, 64, 0);
+        REQUIRE( synth.getNumActiveVoices() == 2 );
+    }
+}
+
 TEST_CASE("[Synth] Sustain threshold default")
 {
     sfz::Synth synth;
