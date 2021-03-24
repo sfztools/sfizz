@@ -1613,11 +1613,10 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
                 delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
         }
 
-        if (sustainPressed) {
-            if (!sostenutoPressed || !sostenutoed)
+        if (!sostenutoPressed || !sostenutoed) {
+            if (sustainPressed)
                 delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
-        } else {
-            if (!sostenutoPressed || !sostenutoed)
+            else
                 return true;
         }
     }
