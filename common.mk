@@ -161,10 +161,12 @@ endif
 
 SFIZZ_C_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/src \
-	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/stb_vorbis
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/src \
-	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/stb_vorbis
 
 ifeq ($(SFIZZ_USE_SNDFILE),1)
 SFIZZ_C_FLAGS += $(SFIZZ_SNDFILE_C_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
@@ -176,7 +178,7 @@ endif
 
 ifneq ($(SFIZZ_USE_SNDFILE),1)
 SFIZZ_SOURCES += \
-	$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff/libaiff.all.c
+	external/st_audiofile/thirdparty/libaiff/libaiff.all.c
 SFIZZ_C_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
 SFIZZ_CXX_FLAGS += \
