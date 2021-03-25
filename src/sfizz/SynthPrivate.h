@@ -5,6 +5,7 @@
 #include "SisterVoiceRing.h"
 #include "TriggerEvent.h"
 #include "VoiceManager.h"
+#include "Layer.h"
 #include "BitArray.h"
 #include "modulations/sources/ADSREnvelope.h"
 #include "modulations/sources/Controller.h"
@@ -147,30 +148,30 @@ struct Synth::Impl final: public Parser::Listener {
      * @brief Start a voice for a specific region.
      * This will do the needed polyphony checks and voice stealing.
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param triggerEvent
      * @param ring
      */
-    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
+    void startVoice(Layer* layer, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Start all delayed sustain release voices of the region if necessary
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param ring
      */
-    void startDelayedSustainReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    void startDelayedSustainReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Start all delayed sostenuto release voices of the region if necessary
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param ring
      */
-    void startDelayedSostenutoReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    void startDelayedSostenutoReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Finalize SFZ loading, following a successful execution of the
@@ -242,22 +243,24 @@ struct Synth::Impl final: public Parser::Listener {
     bool currentSwitchChanged_ = true;
     std::vector<std::string> unknownOpcodes_;
     using RegionViewVector = std::vector<Region*>;
+    using LayerViewVector = std::vector<Layer*>;
     using VoiceViewVector = std::vector<Voice*>;
+    using LayerPtr = std::unique_ptr<Layer>;
     using RegionPtr = std::unique_ptr<Region>;
     using RegionSetPtr = std::unique_ptr<RegionSet>;
-    std::vector<RegionPtr> regions_;
+    std::vector<LayerPtr> layers_;
     VoiceManager voiceManager_;
 
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet_ { nullptr };
     std::vector<RegionSetPtr> sets_;
 
-    std::array<RegionViewVector, 128> lastKeyswitchLists_;
-    std::array<RegionViewVector, 128> downKeyswitchLists_;
-    std::array<RegionViewVector, 128> upKeyswitchLists_;
-    RegionViewVector previousKeyswitchLists_;
-    std::array<RegionViewVector, 128> noteActivationLists_;
-    std::array<RegionViewVector, config::numCCs> ccActivationLists_;
+    std::array<LayerViewVector, 128> lastKeyswitchLists_;
+    std::array<LayerViewVector, 128> downKeyswitchLists_;
+    std::array<LayerViewVector, 128> upKeyswitchLists_;
+    LayerViewVector previousKeyswitchLists_;
+    std::array<LayerViewVector, 128> noteActivationLists_;
+    std::array<LayerViewVector, config::numCCs> ccActivationLists_;
 
     // Effect factory and buses
     EffectFactory effectFactory_;

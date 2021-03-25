@@ -7,6 +7,7 @@
 #include "TestHelpers.h"
 #include "sfizz/MidiState.h"
 #include "sfizz/Region.h"
+#include "sfizz/Layer.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/modulations/ModId.h"
 #include "sfizz/modulations/ModKey.h"
@@ -18,8 +19,7 @@ using namespace sfz;
 
 TEST_CASE("[Direct Region Tests] amp_velcurve")
 {
-    MidiState midiState;
-    Region region { 0, midiState };
+    Region region { 0 };
     region.parseOpcode({ "amp_velcurve_6", "0.4" });
     REQUIRE(region.velocityPoints.back() == std::pair<uint8_t, float>(6, 0.4f));
     region.parseOpcode({ "amp_velcurve_127", "-1.0" });
@@ -33,87 +33,98 @@ TEST_CASE("[Direct Region Tests] amp_velcurve")
 TEST_CASE("[Direct Region Tests] Release and release key")
 {
     MidiState midiState;
-    Region region { 0, midiState };
+    Region region { 0 };
     region.parseOpcode({ "lokey", "63" });
     region.parseOpcode({ "hikey", "65" });
     region.parseOpcode({ "sample", "*sine" });
-    region.delayedSustainReleases.reserve(config::delayedReleaseVoices);
     SECTION("Release key without sustain")
     {
         region.parseOpcode({ "trigger", "release_key" });
+        Layer layer { &region, midiState };
+        layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 0.0f);
-        region.registerCC(64, 0.0f);
-        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
-        REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
+        layer.registerCC(64, 0.0f);
+        REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( layer.registerNoteOff(63, 0.5f, 0.0f) );
     }
     SECTION("Release key with sustain")
     {
         region.parseOpcode({ "trigger", "release_key" });
+        Layer layer { &region, midiState };
+        layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        region.registerCC(64, 1.0f);
-        REQUIRE( !region.registerCC(64, 1.0f) );
-        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
-        REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
+        layer.registerCC(64, 1.0f);
+        REQUIRE( !layer.registerCC(64, 1.0f) );
+        REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( layer.registerNoteOff(63, 0.5f, 0.0f) );
     }
 
     SECTION("Release without sustain")
     {
         region.parseOpcode({ "trigger", "release" });
+        Layer layer { &region, midiState };
+        layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 0.0f);
-        region.registerCC(64, 0.0f);
-        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
-        REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
+        layer.registerCC(64, 0.0f);
+        REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( layer.registerNoteOff(63, 0.5f, 0.0f) );
     }
 
     SECTION("Release with sustain")
     {
         region.parseOpcode({ "trigger", "release" });
+        Layer layer { &region, midiState };
+        layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        region.registerCC(64, 1.0f);
+        layer.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
-        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
-        REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
-        REQUIRE( region.delayedSustainReleases.size() == 1 );
+        REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( !layer.registerNoteOff(63, 0.5f, 0.0f) );
+        REQUIRE( layer.delayedSustainReleases_.size() == 1 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f }
         };
-        REQUIRE( region.delayedSustainReleases == expected );
+        REQUIRE( layer.delayedSustainReleases_ == expected );
     }
 
     SECTION("Release with sustain and 2 notes")
     {
         region.parseOpcode({ "trigger", "release" });
+        Layer layer { &region, midiState };
+        layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        region.registerCC(64, 1.0f);
+        layer.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
-        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 64, 0.6f);
-        REQUIRE( !region.registerNoteOn(64, 0.6f, 0.0f) );
-        REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
-        REQUIRE( !region.registerNoteOff(64, 0.2f, 0.0f) );
-        REQUIRE( region.delayedSustainReleases.size() == 2 );
+        REQUIRE( !layer.registerNoteOn(64, 0.6f, 0.0f) );
+        REQUIRE( !layer.registerNoteOff(63, 0.0f, 0.0f) );
+        REQUIRE( !layer.registerNoteOff(64, 0.2f, 0.0f) );
+        REQUIRE( layer.delayedSustainReleases_.size() == 2 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f },
             { 64, 0.6f }
         };
-        REQUIRE( region.delayedSustainReleases == expected );
+        REQUIRE( layer.delayedSustainReleases_ == expected );
     }
 
     SECTION("Release with sustain and 2 notes but 1 outside")
     {
         region.parseOpcode({ "trigger", "release" });
+        Layer layer { &region, midiState };
+        layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        region.registerCC(64, 1.0f);
+        layer.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
-        REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
+        REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 66, 0.6f);
-        REQUIRE( !region.registerNoteOn(66, 0.6f, 0.0f) );
-        REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
-        REQUIRE( !region.registerNoteOff(66, 0.2f, 0.0f) );
-        REQUIRE( region.delayedSustainReleases.size() == 1 );
+        REQUIRE( !layer.registerNoteOn(66, 0.6f, 0.0f) );
+        REQUIRE( !layer.registerNoteOff(63, 0.0f, 0.0f) );
+        REQUIRE( !layer.registerNoteOff(66, 0.2f, 0.0f) );
+        REQUIRE( layer.delayedSustainReleases_.size() == 1 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f }
         };
-        REQUIRE( region.delayedSustainReleases == expected );
+        REQUIRE( layer.delayedSustainReleases_ == expected );
     }
 }

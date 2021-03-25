@@ -28,9 +28,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             if (extractMessage(p, path, indices) && !strcmp(sig, s))
 
         #define GET_REGION_OR_BREAK(idx)            \
-            if (idx >= impl.regions_.size())        \
+            if (idx >= impl.layers_.size())         \
                 break;                              \
-            const auto& region = *impl.regions_[idx];
+            Layer& layer = *impl.layers_[idx];      \
+            const Region& region = layer.getRegion();
 
         MATCH("/hello", "") {
             client.receive(delay, "/hello", "", nullptr);

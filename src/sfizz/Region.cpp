@@ -6,6 +6,7 @@
 
 #include "Region.h"
 #include "Opcode.h"
+#include "MidiState.h"
 #include "MathHelpers.h"
 #include "utility/SwapAndPop.h"
 #include "utility/StringViewHelpers.h"
@@ -35,11 +36,9 @@ bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapac
     return true;
 }
 
-sfz::Region::Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath)
-: id{regionNumber}, midiState(midiState), defaultPath(defaultPath)
+sfz::Region::Region(int regionNumber, absl::string_view defaultPath)
+: id{regionNumber}, defaultPath(defaultPath)
 {
-    ccSwitched.set();
-
     gainToEffect.reserve(5); // sufficient room for main and fx1-4
     gainToEffect.push_back(1.0); // contribute 100% into the main bus
 
@@ -260,7 +259,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sw_last"):
         if (!lastKeyswitchRange) {
             lastKeyswitch = opcode.readOptional(Default::key);
-            keySwitched = !lastKeyswitch.has_value();
+            usesKeySwitches = lastKeyswitch.has_value();
         }
         break;
     case hash("sw_lolast"):
@@ -271,7 +270,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             else
                 lastKeyswitchRange->setStart(value);
 
-            keySwitched = false;
+            usesKeySwitches = true;
             lastKeyswitch = absl::nullopt;
         }
         break;
@@ -283,7 +282,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             else
                 lastKeyswitchRange->setEnd(value);
 
-            keySwitched = false;
+            usesKeySwitches = true;
             lastKeyswitch = absl::nullopt;
         }
         break;
@@ -292,14 +291,14 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("sw_down"):
         downKeyswitch = opcode.readOptional(Default::key);
-        keySwitched = !downKeyswitch.has_value();
+        usesKeySwitches = downKeyswitch.has_value();
         break;
     case hash("sw_up"):
         upKeyswitch = opcode.readOptional(Default::key);
         break;
     case hash("sw_previous"):
         previousKeyswitch = opcode.readOptional(Default::key);
-        previousKeySwitched = !previousKeyswitch.has_value();
+        usesPreviousKeySwitches = previousKeyswitch.has_value();
         break;
     case hash("sw_vel"):
         velocityOverride =
@@ -348,7 +347,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("seq_position"):
         sequencePosition = opcode.read(Default::sequence);
-        sequenceSwitched = false;
+        usesSequenceSwitches = true;
         break;
     // Region logic: triggers
     case hash("trigger"):
@@ -1499,191 +1498,6 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
     return true;
 }
 
-bool sfz::Region::isSwitchedOn() const noexcept
-{
-    return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
-}
-
-void sfz::Region::delaySustainRelease(int noteNumber, float velocity) noexcept
-{
-    if (delayedSustainReleases.size() == delayedSustainReleases.capacity())
-        return;
-
-    delayedSustainReleases.emplace_back(noteNumber, velocity);
-}
-
-void sfz::Region::delaySostenutoRelease(int noteNumber, float velocity) noexcept
-{
-    if (delayedSostenutoReleases.size() == delayedSostenutoReleases.capacity())
-        return;
-
-    delayedSostenutoReleases.emplace_back(noteNumber, velocity);
-}
-
-void sfz::Region::removeFromSostenutoReleases(int noteNumber) noexcept
-{
-    swapAndPopFirst(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
-        return p.first == noteNumber;
-    });
-}
-
-void sfz::Region::storeSostenutoNotes() noexcept
-{
-    ASSERT(delayedSostenutoReleases.empty());
-    for (int note = keyRange.getStart(); note <= keyRange.getEnd(); ++note) {
-        if (midiState.isNotePressed(note))
-            delaySostenutoRelease(note, midiState.getNoteVelocity(note));
-    }
-}
-
-
-bool sfz::Region::isNoteSustained(int noteNumber) const noexcept
-{
-    return absl::c_find_if(delayedSustainReleases, [=](const std::pair<int, float>& p) {
-        return p.first == noteNumber;
-    }) != delayedSustainReleases.end();
-}
-
-bool sfz::Region::isNoteSostenutoed(int noteNumber) const noexcept
-{
-    return absl::c_find_if(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
-        return p.first == noteNumber;
-    }) != delayedSostenutoReleases.end();
-}
-
-bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    const bool keyOk = keyRange.containsWithEnd(noteNumber);
-    if (keyOk) {
-        // Sequence activation
-        sequenceSwitched =
-            ((sequenceCounter++ % sequenceLength) == sequencePosition - 1);
-    }
-
-    if (!isSwitchedOn())
-        return false;
-
-    if (!triggerOnNote)
-        return false;
-
-    if (velocityOverride == VelocityOverride::previous)
-        velocity = midiState.getLastVelocity();
-
-    const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue) || (randValue >= 1.0f && randRange.isValid() && randRange.getEnd() >= 1.0f);
-    const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
-    const bool attackTrigger = (trigger == Trigger::attack);
-    const bool notFirstLegatoNote = (trigger == Trigger::legato && midiState.getActiveNotes() > 1);
-
-    return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
-}
-
-bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValue) noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    if (!isSwitchedOn())
-        return false;
-
-    if (!triggerOnNote)
-        return false;
-
-    // Prerequisites
-
-    const bool keyOk = keyRange.containsWithEnd(noteNumber);
-    const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue) || (randValue >= 1.0f && randRange.isValid() && randRange.getEnd() >= 1.0f);
-
-    if (!(velOk && keyOk && randOk))
-        return false;
-
-    // Release logic
-
-    if (trigger == Trigger::release_key)
-        return true;
-
-    if (trigger == Trigger::release) {
-        const bool sostenutoed = isNoteSostenutoed(noteNumber);
-
-        if (sostenutoed && !sostenutoPressed) {
-            removeFromSostenutoReleases(noteNumber);
-            if (sustainPressed)
-                delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
-        }
-
-        if (!sostenutoPressed || !sostenutoed) {
-            if (sustainPressed)
-                delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
-            else
-                return true;
-        }
-    }
-
-    return false;
-}
-
-bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
-{
-    ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
-
-    if (ccNumber == sustainCC)
-        sustainPressed = checkSustain && ccValue >= sustainThreshold;
-
-    if (ccNumber == sostenutoCC) {
-        const bool newState = checkSostenuto && ccValue >= sostenutoThreshold;
-        if (!sostenutoPressed && newState)
-            storeSostenutoNotes();
-
-        if (!newState && sostenutoPressed)
-            delayedSostenutoReleases.clear();
-
-        sostenutoPressed = newState;
-    }
-
-    if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
-        ccSwitched.set(ccNumber, true);
-    else
-        ccSwitched.set(ccNumber, false);
-
-    if (!isSwitchedOn())
-        return false;
-
-    if (!triggerOnCC)
-        return false;
-
-    if (ccTriggers.contains(ccNumber) && ccTriggers[ccNumber].containsWithEnd(ccValue))
-        return true;
-
-    return false;
-}
-
-void sfz::Region::registerPitchWheel(float pitch) noexcept
-{
-    if (bendRange.containsWithEnd(pitch))
-        pitchSwitched = true;
-    else
-        pitchSwitched = false;
-}
-
-void sfz::Region::registerAftertouch(float aftertouch) noexcept
-{
-    if (aftertouchRange.containsWithEnd(aftertouch))
-        aftertouchSwitched = true;
-    else
-        aftertouchSwitched = false;
-}
-
-void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
-{
-    const float bpm = 60.0f / secondsPerQuarter;
-    if (bpmRange.containsWithEnd(bpm))
-        bpmSwitched = true;
-    else
-        bpmSwitched = false;
-}
-
 float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
@@ -1697,7 +1511,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
+float sfz::Region::getBaseVolumedB(const MidiState& midiState, int noteNumber) const noexcept
 {
     fast_real_distribution<float> volumeDistribution { 0.0f, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
@@ -1732,7 +1546,7 @@ float sfz::Region::getPhase() const noexcept
     return phase;
 }
 
-uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
+uint64_t sfz::Region::getOffset(const MidiState& midiState, Oversampling factor) const noexcept
 {
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
@@ -1741,7 +1555,7 @@ uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
     return Default::offset.bounds.clamp(finalOffset) * static_cast<uint64_t>(factor);
 }
 
-float sfz::Region::getDelay() const noexcept
+float sfz::Region::getDelay(const MidiState& midiState) const noexcept
 {
     fast_real_distribution<float> delayDistribution { 0, delayRandom };
     float finalDelay { delay };
@@ -1792,7 +1606,7 @@ float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
     return baseGain;
 }
 
-float sfz::Region::getCrossfadeGain() const noexcept
+float sfz::Region::getCrossfadeGain(const MidiState& midiState) const noexcept
 {
     float gain { 1.0f };
 

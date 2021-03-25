@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Voice.h"
+#include "Layer.h"
 #include "AudioBuffer.h"
 #include "Config.h"
 #include "Defaults.h"
@@ -198,7 +199,7 @@ struct Voice::Impl
     const NumericId<Voice> id_;
     StateListener* stateListener_ = nullptr;
 
-    Region* region_ { nullptr };
+    const Region* region_ { nullptr };
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
@@ -362,18 +363,21 @@ Voice::Impl::Impl(int voiceNumber, Resources& resources)
     getSCurve();
 }
 
-bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
+bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
-    impl.region_ = region;
+    Resources& resources = impl.resources_;
+
+    const Region& region = layer->getRegion();
+    impl.region_ = &region;
 
     impl.triggerEvent_ = event;
     if (impl.triggerEvent_.type == TriggerEventType::CC)
-        impl.triggerEvent_.number = region->pitchKeycenter;
+        impl.triggerEvent_.number = region.pitchKeycenter;
 
-    if (region->disabled()) {
+    if (region.disabled()) {
         impl.switchState(State::cleanMeUp);
         return false;
     }
@@ -384,33 +388,33 @@ bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
     if (delay < 0)
         delay = 0;
 
-    if (region->isOscillator()) {
+    if (region.isOscillator()) {
         const WavetableMulti* wave = nullptr;
-        if (!region->isGenerator())
-            wave = impl.resources_.wavePool.getFileWave(region->sampleId->filename());
+        if (!region.isGenerator())
+            wave = resources.wavePool.getFileWave(region.sampleId->filename());
         else {
-            switch (hash(region->sampleId->filename())) {
+            switch (hash(region.sampleId->filename())) {
             default:
             case hash("*silence"):
                 break;
             case hash("*sine"):
-                wave = impl.resources_.wavePool.getWaveSin();
+                wave = resources.wavePool.getWaveSin();
                 break;
             case hash("*triangle"): // fallthrough
             case hash("*tri"):
-                wave = impl.resources_.wavePool.getWaveTriangle();
+                wave = resources.wavePool.getWaveTriangle();
                 break;
             case hash("*square"):
-                wave = impl.resources_.wavePool.getWaveSquare();
+                wave = resources.wavePool.getWaveSquare();
                 break;
             case hash("*saw"):
-                wave = impl.resources_.wavePool.getWaveSaw();
+                wave = resources.wavePool.getWaveSaw();
                 break;
             }
         }
-        const float phase = region->getPhase();
+        const float phase = region.getPhase();
         const int quality =
-            region->oscillatorQuality.value_or(Default::oscillatorQuality);
+            region.oscillatorQuality.value_or(Default::oscillatorQuality);
         for (WavetableOscillator& osc : impl.waveOscillators_) {
             osc.setWavetable(wave);
             osc.setPhase(phase);
@@ -418,61 +422,61 @@ bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
         }
         impl.setupOscillatorUnison();
     } else {
-        impl.currentPromise_ = impl.resources_.filePool.getFilePromise(region->sampleId);
+        impl.currentPromise_ = resources.filePool.getFilePromise(region.sampleId);
         if (!impl.currentPromise_) {
             impl.switchState(State::cleanMeUp);
             return false;
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
-        impl.sourcePosition_ = region->getOffset(impl.resources_.filePool.getOversamplingFactor());
+        impl.sourcePosition_ = region.getOffset(resources.midiState, resources.filePool.getOversamplingFactor());
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
-    const float numberRetuned = impl.resources_.tuning.getKeyFractional12TET(impl.triggerEvent_.number);
+    const float numberRetuned = resources.tuning.getKeyFractional12TET(impl.triggerEvent_.number);
 
-    impl.pitchRatio_ = region->getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
+    impl.pitchRatio_ = region.getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
 
     // apply stretch tuning if set
-    if (impl.resources_.stretch)
-        impl.pitchRatio_ *= impl.resources_.stretch->getRatioForFractionalKey(numberRetuned);
+    if (resources.stretch)
+        impl.pitchRatio_ *= resources.stretch->getRatioForFractionalKey(numberRetuned);
 
-    impl.baseVolumedB_ = region->getBaseVolumedB(impl.triggerEvent_.number);
-    impl.baseGain_ = region->getBaseGain();
+    impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
+    impl.baseGain_ = region.getBaseGain();
     if (impl.triggerEvent_.type != TriggerEventType::CC)
-        impl.baseGain_ *= region->getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
+        impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
     impl.gainSmoother_.reset();
     impl.resetCrossfades();
 
-    for (unsigned i = 0; i < region->filters.size(); ++i) {
-        impl.filters_[i].setup(*region, i, impl.triggerEvent_.number, impl.triggerEvent_.value);
+    for (unsigned i = 0; i < region.filters.size(); ++i) {
+        impl.filters_[i].setup(region, i, impl.triggerEvent_.number, impl.triggerEvent_.value);
     }
 
-    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
-        impl.equalizers_[i].setup(*region, i, impl.triggerEvent_.value);
+    for (unsigned i = 0; i < region.equalizers.size(); ++i) {
+        impl.equalizers_[i].setup(region, i, impl.triggerEvent_.value);
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(region->getDelay() * impl.sampleRate_);
-    impl.baseFrequency_ = impl.resources_.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleSize_ = region->trueSampleEnd(impl.resources_.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
-    impl.bendStepFactor_ = centsFactor(region->bendStep);
-    impl.bendSmoother_.setSmoothing(region->bendSmooth, impl.sampleRate_);
-    impl.bendSmoother_.reset(centsFactor(region->getBendInCents(impl.resources_.midiState.getPitchBend())));
+    impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
+    impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
+    impl.sampleSize_ = region.trueSampleEnd(resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
+    impl.bendStepFactor_ = centsFactor(region.bendStep);
+    impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
+    impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
 
-    impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
-    impl.saveModulationTargets(region);
+    resources.modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
+    impl.saveModulationTargets(&region);
 
-    if (region->checkSustain) {
+    if (region.checkSustain) {
         const bool sustainPressed =
-            impl.resources_.midiState.getCCValue(region->sustainCC) >= region->sustainThreshold;
+            resources.midiState.getCCValue(region.sustainCC) >= region.sustainThreshold;
         impl.sustainState_ =
             sustainPressed ? Impl::SustainState::Sustaining : Impl::SustainState::Up;
     }
 
-    if (region->checkSostenuto) {
+    if (region.checkSostenuto) {
         const bool sostenutoPressed =
-            impl.resources_.midiState.getCCValue(region->sostenutoCC) >= region->sostenutoThreshold;
+            resources.midiState.getCCValue(region.sostenutoCC) >= region.sostenutoThreshold;
         impl.sostenutoState_ =
             sostenutoPressed ? Impl::SostenutoState::PreviouslyDown : Impl::SostenutoState::Up;
     }

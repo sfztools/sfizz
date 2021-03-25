@@ -18,6 +18,7 @@ namespace sfz {
 enum InterpolatorModel : int;
 class LFO;
 class FlexEnvelope;
+struct Layer;
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -99,12 +100,12 @@ public:
     /**
      * @brief Start playing a region after a short delay for different triggers (note on, off, cc)
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param evebt
      * @return bool
      */
-    bool startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
+    bool startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept;
 
     /**
      * @brief Get the sample quality determined by the active region.
