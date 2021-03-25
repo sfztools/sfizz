@@ -310,9 +310,19 @@ void Parser::processOpcode()
             // if there aren't non-space characters following, do not extract
             if (i == valueSize)
                 stop = true;
-            // if a "<" or "#" character is next, a header or a directive follows
-            else if (valueRaw[i] == '<' || valueRaw[i] == '#')
+            // if a "<" character is next, a header follows
+            else if (valueRaw[i] == '<')
                 stop = true;
+            // if a "#" character is next, check if a directive follows
+            else if (valueRaw[i] == '#') {
+                size_t dirStart = i + 1;
+                size_t dirEnd = dirStart;
+                while (dirEnd < valueSize && isIdentifierChar(valueRaw[dirEnd]))
+                    ++dirEnd;
+                absl::string_view dir(&valueRaw[dirStart], dirEnd - dirStart);
+                if (dir == "define" || dir == "include")
+                    stop = true;
+            }
             // if sequence of identifier chars and then "=", an opcode follows
             else if (isIdentifierChar(valueRaw[i])) {
                 ++i;
