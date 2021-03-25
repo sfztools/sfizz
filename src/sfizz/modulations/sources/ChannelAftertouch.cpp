@@ -8,13 +8,12 @@
 #include "../../ModifierHelpers.h"
 #include "../../ADSREnvelope.h"
 
-// TODO(jpc): also matrix the ampeg
-
 namespace sfz {
 
 ChannelAftertouchSource::ChannelAftertouchSource(VoiceManager& manager, MidiState& state)
-    : voiceManager_(manager), midiState_(state)
+    : midiState_(state)
 {
+    (void)manager;
 }
 
 void ChannelAftertouchSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
