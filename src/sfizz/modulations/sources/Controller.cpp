@@ -19,13 +19,15 @@ struct ControllerSource::Impl {
     float getLastTransformedValue(uint16_t cc, uint8_t curve) const noexcept;
     double sampleRate_ = config::defaultSampleRate;
     Resources* res_ = nullptr;
+    VoiceManager* voiceManager_ = nullptr;
     absl::flat_hash_map<ModKey, Smoother> smoother_;
 };
 
-ControllerSource::ControllerSource(Resources& res)
+ControllerSource::ControllerSource(Resources& res, VoiceManager& manager)
     : impl_(new Impl)
 {
     impl_->res_ = &res;
+    impl_->voiceManager_ = &manager;
 }
 
 ControllerSource::~ControllerSource()
@@ -85,27 +87,97 @@ void ControllerSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, u
 
 void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
-    (void)voiceId;
-
     const ModKey::Parameters p = sourceKey.parameters();
     const Resources& res = *impl_->res_;
     const Curve& curve = res.curves.getCurve(p.curve);
     const MidiState& ms = res.midiState;
-    const EventVector& events = ms.getCCEvents(p.cc);
+    bool canShortcut = false;
 
     auto transformValue = [p, &curve](float x) {
         return curve.evalNormalized(x);
     };
 
-    if (p.step > 0.0f)
-        linearEnvelope(events, buffer, transformValue, p.step);
-    else
-        linearEnvelope(events, buffer, transformValue);
+    // Ignore the eventual curve for the extended CCs
+    auto quantize = [p](float x) {
+        if (p.step > 0.0f)
+            return std::trunc(x / p.step) * p.step;
+
+        return x;
+    };
+
+    switch(p.cc) {
+    case ExtendedCCs::noteOnVelocity: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue =
+                voice && voice->getTriggerEvent().type == TriggerEventType::NoteOn ?
+                voice->getTriggerEvent().value : 0.0f;
+
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::noteOffVelocity: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue =
+                voice && voice->getTriggerEvent().type == TriggerEventType::NoteOff ?
+                voice->getTriggerEvent().value : 0.0f;
+
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::keyboardNoteNumber: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue = voice ? normalize7Bits(voice->getTriggerEvent().number) : 0.0f;
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::keyboardNoteGate: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue = voice ? voice->getExtendedCCValues().noteGate : 0.0f;
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::unipolarRandom: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue = voice ? voice->getExtendedCCValues().unipolar : 0.0f;
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::bipolarRandom: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue = voice ? voice->getExtendedCCValues().bipolar : 0.0f;
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::alternate: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue = voice ? voice->getExtendedCCValues().alternate : 0.0f;
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
+    case ExtendedCCs::pitchBend: // fallthrough
+    case ExtendedCCs::channelAftertouch: {
+            const EventVector& events = ms.getCCEvents(p.cc);
+            linearEnvelope(events, buffer, [](float x) { return x; }, p.step);
+            canShortcut = events.size() == 1;
+            break;
+        }
+    default: {
+            const EventVector& events = ms.getCCEvents(p.cc);
+            linearEnvelope(events, buffer, transformValue, p.step);
+            canShortcut = events.size() == 1;
+        }
+    }
 
     auto it = impl_->smoother_.find(sourceKey);
     if (it != impl_->smoother_.end()) {
         Smoother& s = it->second;
-        bool canShortcut = events.size() == 1;
         s.process(buffer, buffer, canShortcut);
     }
 }

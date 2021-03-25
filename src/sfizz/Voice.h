@@ -19,6 +19,14 @@ enum InterpolatorModel : int;
 class LFO;
 class FlexEnvelope;
 struct Layer;
+
+struct ExtendedCCValues {
+    float unipolar {};
+    float bipolar {};
+    float noteGate {};
+    float alternate {};
+};
+
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -383,6 +391,13 @@ public:
      * @brief Get the trigger event
      */
     const TriggerEvent& getTriggerEvent();
+
+    /**
+     * @brief Get the extended CC values
+     *
+     * @return const ExtendedCCValues&
+     */
+    const ExtendedCCValues& getExtendedCCValues() const noexcept;
 
 public:
     /**

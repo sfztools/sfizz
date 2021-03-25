@@ -414,6 +414,36 @@ TEST_CASE("[Modulations] LFO CC connections")
     sfz::Synth synth;
     synth.loadSfzString("/modulation.sfz", R"(
         <region> sample=*sine
+            pitch_oncc128=1200
+            pitch_oncc129=1200
+            pitch_oncc131=1200
+            pitch_oncc132=1200
+            pitch_oncc133=1200
+            pitch_oncc134=1200
+            pitch_oncc135=1200
+            pitch_oncc136=1200
+            pitch_oncc137=1200
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("Controller 128 {curve=0, smooth=0, step=0}" -> "Pitch {0}")",
+        R"("Controller 129 {curve=0, smooth=0, step=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 131 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 132 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 133 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 134 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 135 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 136 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+        R"("PerVoiceController 137 {curve=0, smooth=0, step=0, region=0}" -> "Pitch {0}")",
+    }, 1));
+}
+
+TEST_CASE("[Modulations] Extended CCs connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
         lfo1_freq=2 lfo1_freq_cc1=0.1 lfo1_volume=0.5
         lfo2_freq=0.1 lfo2_freq_cc1=2 lfo2_freq_smoothcc1=10 lfo2_freq_stepcc1=0.2 lfo2_freq_curvecc1=1 lfo2_pitch=1200
         lfo3_freq=0.1 lfo3_phase_cc1=2 lfo3_phase_smoothcc1=10 lfo3_phase_stepcc1=0.2 lfo3_phase_curvecc1=1 lfo3_amplitude=50
