@@ -7,8 +7,8 @@
 #include "Curve.h"
 #include "Opcode.h"
 #include "SIMDHelpers.h"
-#include "Debug.h"
-#include "spline/spline.h"
+#include "utility/Debug.h"
+#include <spline/spline.h>
 #include <cmath>
 
 namespace sfz

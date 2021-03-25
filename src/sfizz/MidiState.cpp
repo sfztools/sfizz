@@ -5,8 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "MidiState.h"
-#include "Macros.h"
-#include "Debug.h"
+#include "utility/Macros.h"
+#include "utility/Debug.h"
 
 sfz::MidiState::MidiState()
 {

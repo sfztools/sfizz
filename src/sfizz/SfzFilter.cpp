@@ -7,10 +7,10 @@
 #include "Config.h"
 #include "SfzFilter.h"
 #include "SfzFilterImpls.hpp"
-#include "StringViewHelpers.h"
-#include <cstring>
 #include "SIMDHelpers.h"
-#include "Debug.h"
+#include "utility/StringViewHelpers.h"
+#include "utility/Debug.h"
+#include <cstring>
 
 namespace sfz {
 

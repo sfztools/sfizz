@@ -6,7 +6,7 @@
 
 #pragma once
 #include "MathHelpers.h"
-#include "Macros.h"
+#include "utility/Macros.h"
 #include <type_traits>
 #include <limits>
 

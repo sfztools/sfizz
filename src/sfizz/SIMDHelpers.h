@@ -25,9 +25,9 @@
  */
 #pragma once
 #include "Config.h"
-#include "Debug.h"
 #include "Range.h"
 #include "MathHelpers.h"
+#include "utility/Debug.h"
 #include "simd/HelpersScalar.h"
 #include <absl/types/span.h>
 #include <array>

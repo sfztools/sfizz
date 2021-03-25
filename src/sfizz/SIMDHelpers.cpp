@@ -6,7 +6,7 @@
 
 #include "SIMDHelpers.h"
 #include "SIMDConfig.h"
-#include "Debug.h"
+#include "utility/Debug.h"
 #include "simd/HelpersSSE.h"
 #include "simd/HelpersAVX.h"
 #include "cpuid/cpuinfo.hpp"

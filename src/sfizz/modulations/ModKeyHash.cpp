@@ -7,7 +7,7 @@
 #include "ModKeyHash.h"
 #include "ModKey.h"
 #include "ModId.h"
-#include "StringViewHelpers.h"
+#include "utility/StringViewHelpers.h"
 #include <cstdint>
 
 size_t std::hash<sfz::ModKey>::operator()(const sfz::ModKey &key) const

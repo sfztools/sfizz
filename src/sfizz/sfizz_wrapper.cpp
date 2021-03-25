@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Config.h"
-#include "Macros.h"
 #include "Synth.h"
 #include "Messaging.h"
+#include "utility/Macros.h"
 #include "sfizz.h"
 #include "sfizz_private.hpp"
 #include <limits>

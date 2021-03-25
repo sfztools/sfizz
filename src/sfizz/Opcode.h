@@ -6,10 +6,10 @@
 
 #pragma once
 #include "Defaults.h"
-#include "LeakDetector.h"
 #include "Range.h"
 #include "SfzHelpers.h"
-#include "StringViewHelpers.h"
+#include "utility/LeakDetector.h"
+#include "utility/StringViewHelpers.h"
 #include "absl/types/optional.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/ascii.h"

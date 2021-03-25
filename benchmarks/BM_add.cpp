@@ -5,13 +5,13 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SIMDHelpers.h"
-#include "Macros.h"
+#include "utility/Macros.h"
 #include <benchmark/benchmark.h>
 #include <random>
 #include <numeric>
 #include <vector>
-#include <cmath>
 #include <iostream>
+#include <cmath>
 
 class AddArray : public benchmark::Fixture {
 public:

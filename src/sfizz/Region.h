@@ -7,7 +7,6 @@
 #pragma once
 #include "CCMap.h"
 #include "Curve.h"
-#include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
 #include "FlexEGDescription.h"
@@ -19,6 +18,7 @@
 #include "MidiState.h"
 #include "FileId.h"
 #include "utility/NumericId.h"
+#include "utility/LeakDetector.h"
 #include "modulations/ModKey.h"
 #include "absl/types/optional.h"
 #include "absl/strings/string_view.h"
