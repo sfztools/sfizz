@@ -392,8 +392,8 @@ absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>) const
 {
     switch (hash(value)) {
     case hash("peak"): return kEqPeak;
-    case hash("lshelf"): return kEqLowShelf;
-    case hash("hshelf"): return kEqHighShelf;
+    case hash("lshelf"): return kEqLshelf;
+    case hash("hshelf"): return kEqHshelf;
     }
 
     DBG("Unknown EQ type: " << value);

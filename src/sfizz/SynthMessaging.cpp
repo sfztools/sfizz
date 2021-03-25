@@ -1254,8 +1254,8 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             switch (eq.type) {
             case EqType::kEqNone: client.receive<'s'>(delay, path, "none"); break;
             case EqType::kEqPeak: client.receive<'s'>(delay, path, "peak"); break;
-            case EqType::kEqLowShelf: client.receive<'s'>(delay, path, "lshelf"); break;
-            case EqType::kEqHighShelf: client.receive<'s'>(delay, path, "hshelf"); break;
+            case EqType::kEqLshelf: client.receive<'s'>(delay, path, "lshelf"); break;
+            case EqType::kEqHshelf: client.receive<'s'>(delay, path, "hshelf"); break;
             }
         } break;
 
