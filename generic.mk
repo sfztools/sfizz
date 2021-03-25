@@ -23,9 +23,13 @@ endif
 
 ###
 
+SFIZZ_TARGET := $(SFIZZ_BUILD_DIR)/libsfizz.a
+
+###
+
 all: lib
 
-lib: $(SFIZZ_BUILD_DIR)/libsfizz.a
+lib: $(SFIZZ_TARGET)
 
 clean:
 	rm -rf $(SFIZZ_BUILD_DIR)

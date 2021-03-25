@@ -335,6 +335,36 @@ jobs:
         name: Win64 MinGW tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
+  build_with_makefile:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Build with GNU make
+      shell: bash
+      run: make -C "$GITHUB_WORKSPACE" -f generic.mk -j2
+    - name: Compile a simple program
+      shell: bash
+      run: |
+        cat <<EOF > "$GITHUB_WORKSPACE"/simple.cpp
+        #include <sfizz.hpp>
+        int main() {
+            sfz::Sfizz synth;
+            synth.loadSfzString("", "");
+            return 0;
+        }
+        EOF
+        cat <<EOF > "$GITHUB_WORKSPACE"/simple.mk
+        all: simple
+        include generic.mk
+        simple.o: simple.cpp
+        	\$(CXX) \$(CXXFLAGS) \$(SFIZZ_CXX_FLAGS) -c -o \$@ \$<
+        simple: simple.o \$(SFIZZ_TARGET)
+        	\$(CXX) -o \$@ \$^ \$(SFIZZ_LINK_FLAGS) \$(LDFLAGS)
+        EOF
+        make -C "$GITHUB_WORKSPACE" -f simple.mk
+
   archive_source_code:
     runs-on: ubuntu-18.04
     if: startsWith(github.ref, 'refs/tags/')
