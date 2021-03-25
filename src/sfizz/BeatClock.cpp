@@ -7,7 +7,7 @@
 #include "BeatClock.h"
 #include "SIMDHelpers.h"
 #include "Config.h"
-#include "Debug.h"
+#include "utility/Debug.h"
 #include <iostream>
 #include <cmath>
 

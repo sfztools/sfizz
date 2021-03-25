@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "catch2/catch.hpp"
-#include "sfizz/SwapAndPop.h"
+#include "sfizz/utility/SwapAndPop.h"
 using namespace Catch::literals;
 
 TEST_CASE("[SwapAndPop] Popping one element")

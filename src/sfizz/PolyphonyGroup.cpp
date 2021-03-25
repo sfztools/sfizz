@@ -1,4 +1,5 @@
 #include "PolyphonyGroup.h"
+#include <absl/algorithm/container.h>
 
 sfz::PolyphonyGroup::PolyphonyGroup()
 {

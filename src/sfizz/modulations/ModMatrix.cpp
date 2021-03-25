@@ -11,7 +11,7 @@
 #include "Buffer.h"
 #include "Config.h"
 #include "SIMDHelpers.h"
-#include "Debug.h"
+#include "utility/Debug.h"
 #include <absl/container/flat_hash_map.h>
 #include <absl/strings/string_view.h>
 #include <vector>

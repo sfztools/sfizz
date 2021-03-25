@@ -4,7 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "sfizz/StringViewHelpers.h"
+#include "sfizz/utility/StringViewHelpers.h"
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"
 using namespace Catch::literals;

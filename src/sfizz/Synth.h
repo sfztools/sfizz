@@ -6,10 +6,10 @@
 
 #pragma once
 #include "AudioSpan.h"
-#include "LeakDetector.h"
 #include "Resources.h"
 #include "Messaging.h"
 #include "utility/NumericId.h"
+#include "utility/LeakDetector.h"
 #include "parser/Parser.h"
 #include <ghc/fs_std.hpp>
 #include <absl/strings/string_view.h>

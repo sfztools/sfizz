@@ -5,12 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Region.h"
-#include "MathHelpers.h"
-#include "Macros.h"
-#include "Debug.h"
 #include "Opcode.h"
-#include "SwapAndPop.h"
-#include "StringViewHelpers.h"
+#include "MathHelpers.h"
+#include "utility/SwapAndPop.h"
+#include "utility/StringViewHelpers.h"
+#include "utility/Macros.h"
+#include "utility/Debug.h"
 #include "ModifierHelpers.h"
 #include "modulations/ModId.h"
 #include "absl/strings/str_replace.h"

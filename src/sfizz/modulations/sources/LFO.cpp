@@ -10,7 +10,7 @@
 #include "../../Voice.h"
 #include "../../SIMDHelpers.h"
 #include "../../Config.h"
-#include "../../Debug.h"
+#include "../../utility/Debug.h"
 
 namespace sfz {
 

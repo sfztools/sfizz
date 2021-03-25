@@ -26,10 +26,10 @@
 #pragma once
 #include "Config.h"
 #include "Defaults.h"
-#include "Macros.h"
-#include "LeakDetector.h"
 #include "SfzHelpers.h"
 #include "MidiState.h"
+#include "utility/Macros.h"
+#include "utility/LeakDetector.h"
 #include <absl/types/optional.h>
 
 namespace sfz {

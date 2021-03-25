@@ -9,7 +9,7 @@
 #include "Region.h"
 #include "Voice.h"
 #include "Opcode.h"
-#include "SwapAndPop.h"
+#include "utility/SwapAndPop.h"
 #include <vector>
 
 namespace sfz

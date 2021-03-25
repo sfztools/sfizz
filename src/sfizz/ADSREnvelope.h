@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "LeakDetector.h"
 #include "Region.h"
 #include "MidiState.h"
+#include "utility/LeakDetector.h"
 #include <absl/types/span.h>
 namespace sfz {
 /**

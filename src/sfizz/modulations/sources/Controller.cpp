@@ -10,7 +10,7 @@
 #include "../../ModifierHelpers.h"
 #include "../../Resources.h"
 #include "../../Config.h"
-#include "../../Debug.h"
+#include "../../utility/Debug.h"
 #include <absl/container/flat_hash_map.h>
 
 namespace sfz {

@@ -21,9 +21,9 @@
 */
 
 #include "Apan.h"
-#include "Macros.h"
 #include "LFOCommon.h"
 #include "Opcode.h"
+#include "utility/Macros.h"
 #include <limits>
 #include <cmath>
 

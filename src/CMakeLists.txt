@@ -24,8 +24,12 @@ set(SFIZZ_HEADERS
     sfizz/CCMap.h
     sfizz/Config.h
     sfizz/Curve.h
-    sfizz/Debug.h
+    sfizz/utility/Debug.h
+    sfizz/utility/LeakDetector.h
+    sfizz/utility/Macros.h
     sfizz/utility/NumericId.h
+    sfizz/utility/StringViewHelpers.h
+    sfizz/utility/SwapAndPop.h
     sfizz/utility/XmlHelpers.h
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
@@ -103,7 +107,6 @@ set(SFIZZ_HEADERS
     sfizz/SIMDHelpers.h
     sfizz/SisterVoiceRing.h
     sfizz/Smoothers.h
-    sfizz/SwapAndPop.h
     sfizz/Synth.h
     sfizz/SynthConfig.h
     sfizz/SynthPrivate.h
@@ -190,15 +193,12 @@ sfizz_add_simd_sources(SFIZZ_SOURCES ".")
 # Parser core library
 set(SFIZZ_PARSER_HEADERS
     sfizz/Defaults.h
-    sfizz/LeakDetector.h
     sfizz/Range.h
     sfizz/Opcode.h
-    sfizz/Macros.h
     sfizz/parser/Parser.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
-    sfizz/SfzHelpers.h
-    sfizz/StringViewHelpers.h)
+    sfizz/SfzHelpers.h)
 
 set(SFIZZ_PARSER_SOURCES
     sfizz/Opcode.cpp

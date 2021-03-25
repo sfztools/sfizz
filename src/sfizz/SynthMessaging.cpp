@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SynthPrivate.h"
-#include "StringViewHelpers.h"
+#include "utility/StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
 

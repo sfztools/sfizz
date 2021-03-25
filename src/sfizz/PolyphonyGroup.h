@@ -9,8 +9,7 @@
 #include "Config.h"
 #include "Region.h"
 #include "Voice.h"
-#include "SwapAndPop.h"
-#include "absl/algorithm/container.h"
+#include "utility/SwapAndPop.h"
 
 namespace sfz
 {

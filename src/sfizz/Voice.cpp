@@ -13,7 +13,6 @@
 #include "FlexEnvelope.h"
 #include "Interpolators.h"
 #include "LFO.h"
-#include "Macros.h"
 #include "MathHelpers.h"
 #include "ModifierHelpers.h"
 #include "modulations/ModId.h"
@@ -25,6 +24,7 @@
 #include "SfzHelpers.h"
 #include "SIMDHelpers.h"
 #include "Smoothers.h"
+#include "utility/Macros.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <random>

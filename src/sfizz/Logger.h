@@ -6,14 +6,14 @@
 
 #pragma once
 #include "Config.h"
-#include "LeakDetector.h"
-#include "atomic_queue/atomic_queue.h"
+#include "utility/LeakDetector.h"
+#include <atomic_queue/atomic_queue.h>
+#include <absl/strings/string_view.h>
 #include <vector>
 #include <string>
 #include <chrono>
 #include <functional>
 #include <thread>
-#include "absl/strings/string_view.h"
 
 namespace sfz
 {

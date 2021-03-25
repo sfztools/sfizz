@@ -10,8 +10,8 @@
 #include "Region.h"
 #include "Resources.h"
 #include "AudioSpan.h"
-#include "LeakDetector.h"
 #include "utility/NumericId.h"
+#include "utility/LeakDetector.h"
 #include <memory>
 
 namespace sfz {

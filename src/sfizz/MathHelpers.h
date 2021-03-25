@@ -9,10 +9,10 @@
  * @brief Contains math helper functions and math constants
  */
 #pragma once
-#include "Debug.h"
 #include "Config.h"
-#include "Macros.h"
 #include "SIMDConfig.h"
+#include "utility/Debug.h"
+#include "utility/Macros.h"
 #include "absl/types/span.h"
 #include <algorithm>
 #include <array>

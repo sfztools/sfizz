@@ -6,7 +6,7 @@
 #pragma once
 
 #include "Voice.h"
-#include "Debug.h"
+#include "utility/Debug.h"
 #include "absl/meta/type_traits.h"
 
 namespace sfz

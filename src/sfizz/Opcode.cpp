@@ -6,11 +6,11 @@
 
 #include "Opcode.h"
 #include "LFODescription.h"
-#include "StringViewHelpers.h"
-#include "Debug.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "utility/StringViewHelpers.h"
+#include "utility/Debug.h"
+#include <absl/strings/ascii.h>
+#include <absl/strings/match.h>
+#include <absl/strings/str_cat.h>
 #include <limits>
 #include <iostream>
 #include <cctype>
