@@ -247,7 +247,7 @@ void DemoApp::initWindow()
     grpMode->setExclusive(true);
 
     connect(
-        grpMode, QOverload<int, bool>::of(&QButtonGroup::buttonToggled), this,
+        grpMode, &QButtonGroup::idToggled, this,
         [this](int id, bool toggled) {
             if (toggled)
                 valueChangedFilterMode(id);
