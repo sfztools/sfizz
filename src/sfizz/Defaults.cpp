@@ -180,7 +180,7 @@ ESpec<LoopMode> loopMode { LoopMode::no_loop, {LoopMode::no_loop, LoopMode::loop
 ESpec<VelocityOverride> velocityOverride { VelocityOverride::current, {VelocityOverride::current, VelocityOverride::previous}, 0};
 ESpec<SelfMask> selfMask { SelfMask::mask, {SelfMask::mask, SelfMask::dontMask}, 0};
 ESpec<FilterType> filter { FilterType::kFilterNone, {FilterType::kFilterNone, FilterType::kFilterPeq}, 0};
-ESpec<EqType> eq { EqType::kEqNone, {EqType::kEqNone, EqType::kEqHighShelf}, 0};
+ESpec<EqType> eq { EqType::kEqNone, {EqType::kEqNone, EqType::kEqHshelf}, 0};
 } // namespace Default
 
 } // namespace sfz

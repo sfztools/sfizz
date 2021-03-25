@@ -216,3 +216,33 @@ struct sfz2chPeq final : public sfzFilterPkSh<faust2chPeq> {};
 struct sfz2chEqPeak final : public sfzFilterEq<faust2chEqPeak> {};
 struct sfz2chEqLshelf final : public sfzFilterEq<faust2chEqLshelf> {};
 struct sfz2chEqHshelf final : public sfzFilterEq<faust2chEqHshelf> {};
+
+#define SFZ_EACH_FILTER(F) \
+    F(Apf1p) \
+    F(Bpf1p) \
+    F(Bpf2p) \
+    F(Bpf4p) \
+    F(Bpf6p) \
+    F(Brf1p) \
+    F(Brf2p) \
+    F(Hpf1p) \
+    F(Hpf2p) \
+    F(Hpf4p) \
+    F(Hpf6p) \
+    F(Lpf1p) \
+    F(Lpf2p) \
+    F(Lpf4p) \
+    F(Lpf6p) \
+    F(Pink) \
+    F(Lpf2pSv) \
+    F(Hpf2pSv) \
+    F(Bpf2pSv) \
+    F(Brf2pSv) \
+    F(Lsh) \
+    F(Hsh) \
+    F(Peq)
+
+#define SFZ_EACH_EQ(F) \
+    F(Peak) \
+    F(Lshelf) \
+    F(Hshelf)

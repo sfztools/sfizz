@@ -197,8 +197,8 @@ private:
 enum EqType : int {
     kEqNone,
     kEqPeak,
-    kEqLowShelf,
-    kEqHighShelf,
+    kEqLshelf,
+    kEqHshelf,
 };
 
 } // namespace sfz
