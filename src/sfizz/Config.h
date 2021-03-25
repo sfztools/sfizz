@@ -183,6 +183,11 @@ namespace config {
      *
      */
     constexpr int playheadMovedFrames { 16 };
+    /**
+     * @brief Max number of voices to start on release pedal up
+     *
+     */
+    constexpr unsigned delayedReleaseVoices { 16 };
 } // namespace config
 
 } // namespace sfz

@@ -9,6 +9,7 @@
 #include "Macros.h"
 #include "Debug.h"
 #include "Opcode.h"
+#include "SwapAndPop.h"
 #include "StringViewHelpers.h"
 #include "ModifierHelpers.h"
 #include "modulations/ModId.h"
@@ -308,8 +309,14 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sustain_cc"):
         sustainCC = opcode.read(Default::sustainCC);
         break;
+    case hash("sostenuto_cc"):
+        sostenutoCC = opcode.read(Default::sostenutoCC);
+        break;
     case hash("sustain_lo"):
         sustainThreshold = opcode.read(Default::sustainThreshold);
+        break;
+    case hash("sostenuto_lo"):
+        sostenutoThreshold = opcode.read(Default::sostenutoThreshold);
         break;
     case hash("sustain_sw"):
         checkSustain = opcode.read(Default::checkSustain);
@@ -1497,6 +1504,53 @@ bool sfz::Region::isSwitchedOn() const noexcept
     return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
 }
 
+void sfz::Region::delaySustainRelease(int noteNumber, float velocity) noexcept
+{
+    if (delayedSustainReleases.size() == delayedSustainReleases.capacity())
+        return;
+
+    delayedSustainReleases.emplace_back(noteNumber, velocity);
+}
+
+void sfz::Region::delaySostenutoRelease(int noteNumber, float velocity) noexcept
+{
+    if (delayedSostenutoReleases.size() == delayedSostenutoReleases.capacity())
+        return;
+
+    delayedSostenutoReleases.emplace_back(noteNumber, velocity);
+}
+
+void sfz::Region::removeFromSostenutoReleases(int noteNumber) noexcept
+{
+    swapAndPopFirst(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
+        return p.first == noteNumber;
+    });
+}
+
+void sfz::Region::storeSostenutoNotes() noexcept
+{
+    ASSERT(delayedSostenutoReleases.empty());
+    for (int note = keyRange.getStart(); note <= keyRange.getEnd(); ++note) {
+        if (midiState.isNotePressed(note))
+            delaySostenutoRelease(note, midiState.getNoteVelocity(note));
+    }
+}
+
+
+bool sfz::Region::isNoteSustained(int noteNumber) const noexcept
+{
+    return absl::c_find_if(delayedSustainReleases, [=](const std::pair<int, float>& p) {
+        return p.first == noteNumber;
+    }) != delayedSustainReleases.end();
+}
+
+bool sfz::Region::isNoteSostenutoed(int noteNumber) const noexcept
+{
+    return absl::c_find_if(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
+        return p.first == noteNumber;
+    }) != delayedSostenutoReleases.end();
+}
+
 bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
@@ -1551,13 +1605,20 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
         return true;
 
     if (trigger == Trigger::release) {
-        if (midiState.getCCValue(sustainCC) < sustainThreshold)
-            return true;
+        const bool sostenutoed = isNoteSostenutoed(noteNumber);
 
-        // If we reach this part, we're storing the notes to delay their release on CC up
-        // This is handled by the Synth object
+        if (sostenutoed && !sostenutoPressed) {
+            removeFromSostenutoReleases(noteNumber);
+            if (sustainPressed)
+                delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
+        }
 
-        delayedReleases.emplace_back(noteNumber, midiState.getNoteVelocity(noteNumber));
+        if (!sostenutoPressed || !sostenutoed) {
+            if (sustainPressed)
+                delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
+            else
+                return true;
+        }
     }
 
     return false;
@@ -1566,6 +1627,20 @@ bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValu
 bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
+
+    if (ccNumber == sustainCC)
+        sustainPressed = checkSustain && ccValue >= sustainThreshold;
+
+    if (ccNumber == sostenutoCC) {
+        const bool newState = checkSostenuto && ccValue >= sostenutoThreshold;
+        if (!sostenutoPressed && newState)
+            storeSostenutoNotes();
+
+        if (!newState && sostenutoPressed)
+            delayedSostenutoReleases.clear();
+
+        sostenutoPressed = newState;
+    }
 
     if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
         ccSwitched.set(ccNumber, true);

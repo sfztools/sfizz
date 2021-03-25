@@ -1042,9 +1042,19 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, region.sustainCC);
         } break;
 
+        MATCH("/region&/sostenuto_cc", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.sostenutoCC);
+        } break;
+
         MATCH("/region&/sustain_lo", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.sustainThreshold);
+        } break;
+
+        MATCH("/region&/sostenuto_lo", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, region.sostenutoThreshold);
         } break;
 
         MATCH("/region&/oscillator_phase", "") {

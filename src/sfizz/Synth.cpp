@@ -205,7 +205,12 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
     }
 
     // Adapt the size of the delayed releases to avoid allocating later on
-    lastRegion->delayedReleases.reserve(lastRegion->keyRange.length());
+    if (lastRegion->trigger == Trigger::release) {
+        const auto keyLength = static_cast<unsigned>(lastRegion->keyRange.length());
+        const auto size = max(config::delayedReleaseVoices, keyLength);
+        lastRegion->delayedSustainReleases.reserve(size);
+        lastRegion->delayedSostenutoReleases.reserve(size);
+    }
 
     regions_.push_back(std::move(lastRegion));
 }
@@ -654,7 +659,8 @@ void Synth::Impl::finalizeSfzLoad()
         for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc)
                 || region->ccConditions.contains(cc)
-                || (cc == region->sustainCC && region->trigger == Trigger::release))
+                || (cc == region->sustainCC && region->trigger == Trigger::release)
+                || (cc == region->sostenutoCC && region->trigger == Trigger::release))
                 ccActivationLists_[cc].push_back(region);
         }
 
@@ -1147,21 +1153,34 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
         region->previousKeySwitched = (*region->previousKeyswitch == noteNumber);
 }
 
-void Synth::Impl::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startDelayedSustainReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
     if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
-        region->delayedReleases.clear();
+        region->delayedSustainReleases.clear();
         return;
     }
 
-    for (auto& note: region->delayedReleases) {
-        // FIXME: we really need to have some form of common method to find and start voices...
+    for (auto& note: region->delayedSustainReleases) {
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
         startVoice(region, delay, noteOffEvent, ring);
     }
-    region->delayedReleases.clear();
+
+    region->delayedSustainReleases.clear();
 }
 
+void Synth::Impl::startDelayedSostenutoReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+{
+    if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
+        region->delayedSostenutoReleases.clear();
+        return;
+    }
+
+    for (auto& note: region->delayedSostenutoReleases) {
+        const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
+        startVoice(region, delay, noteOffEvent, ring);
+    }
+    region->delayedSostenutoReleases.clear();
+}
 
 void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
@@ -1174,8 +1193,19 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
     for (auto& region : ccActivationLists_[ccNumber]) {
-        if (ccNumber == region->sustainCC)
-            startDelayedReleaseVoices(region, delay, ring);
+        if (region->checkSustain && ccNumber == region->sustainCC && value < region->sustainThreshold)
+            startDelayedSustainReleases(region, delay, ring);
+
+        if (region->checkSostenuto && ccNumber == region->sostenutoCC && value < region->sostenutoThreshold) {
+            if (region->sustainPressed) {
+                for (const auto& v: region->delayedSostenutoReleases)
+                    region->delaySustainRelease(v.first, v.second);
+
+                region->delayedSostenutoReleases.clear();
+            } else {
+                startDelayedSostenutoReleases(region, delay, ring);
+            }
+        }
 
         if (region->registerCC(ccNumber, value))
             startVoice(region, delay, triggerEvent, ring);

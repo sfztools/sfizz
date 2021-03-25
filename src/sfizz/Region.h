@@ -406,7 +406,9 @@ struct Region {
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
     uint16_t sustainCC { Default::sustainCC }; // sustain_cc
+    uint16_t sostenutoCC { Default::sostenutoCC }; // sustain_cc
     float sustainThreshold { Default::sustainThreshold }; // sustain_cc
+    float sostenutoThreshold { Default::sostenutoThreshold }; // sustain_cc
 
     // Region logic: internal conditions
     UncheckedRange<float> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
@@ -506,7 +508,16 @@ struct Region {
     RegionSet* parent { nullptr };
 
     // Started notes
-    std::vector<std::pair<int, float>> delayedReleases;
+    bool sustainPressed { false };
+    bool sostenutoPressed { false };
+    std::vector<std::pair<int, float>> delayedSustainReleases;
+    std::vector<std::pair<int, float>> delayedSostenutoReleases;
+    void delaySustainRelease(int noteNumber, float velocity) noexcept;
+    void delaySostenutoRelease(int noteNumber, float velocity) noexcept;
+    void storeSostenutoNotes() noexcept;
+    void removeFromSostenutoReleases(int noteNumber) noexcept;
+    bool isNoteSustained(int noteNumber) const noexcept;
+    bool isNoteSostenutoed(int noteNumber) const noexcept;
 
     const MidiState& midiState;
     bool keySwitched { true };

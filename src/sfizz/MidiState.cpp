@@ -23,6 +23,7 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
         noteOnTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
         lastNotePlayed = noteNumber;
         activeNotes++;
+        noteStates[noteNumber] = true;
     }
 
 }
@@ -37,6 +38,7 @@ void sfz::MidiState::noteOffEvent(int delay, int noteNumber, float velocity) noe
         noteOffTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
         if (activeNotes > 0)
             activeNotes--;
+        noteStates[noteNumber] = false;
     }
 
 }
@@ -181,6 +183,7 @@ void sfz::MidiState::reset() noexcept
     activeNotes = 0;
     internalClock = 0;
     lastNotePlayed = 0;
+    noteStates.reset();
     absl::c_fill(noteOnTimes, 0);
     absl::c_fill(noteOffTimes, 0);
 }

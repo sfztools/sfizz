@@ -37,10 +37,12 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     region.parseOpcode({ "lokey", "63" });
     region.parseOpcode({ "hikey", "65" });
     region.parseOpcode({ "sample", "*sine" });
+    region.delayedSustainReleases.reserve(config::delayedReleaseVoices);
     SECTION("Release key without sustain")
     {
         region.parseOpcode({ "trigger", "release_key" });
         midiState.ccEvent(0, 64, 0.0f);
+        region.registerCC(64, 0.0f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -48,6 +50,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release_key" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         REQUIRE( !region.registerCC(64, 1.0f) );
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
@@ -57,6 +60,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 0.0f);
+        region.registerCC(64, 0.0f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( region.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -65,48 +69,51 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.5f, 0.0f) );
-        REQUIRE( region.delayedReleases.size() == 1 );
+        REQUIRE( region.delayedSustainReleases.size() == 1 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f }
         };
-        REQUIRE( region.delayedReleases == expected );
+        REQUIRE( region.delayedSustainReleases == expected );
     }
 
     SECTION("Release with sustain and 2 notes")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 64, 0.6f);
         REQUIRE( !region.registerNoteOn(64, 0.6f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
         REQUIRE( !region.registerNoteOff(64, 0.2f, 0.0f) );
-        REQUIRE( region.delayedReleases.size() == 2 );
+        REQUIRE( region.delayedSustainReleases.size() == 2 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f },
             { 64, 0.6f }
         };
-        REQUIRE( region.delayedReleases == expected );
+        REQUIRE( region.delayedSustainReleases == expected );
     }
 
     SECTION("Release with sustain and 2 notes but 1 outside")
     {
         region.parseOpcode({ "trigger", "release" });
         midiState.ccEvent(0, 64, 1.0f);
+        region.registerCC(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !region.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 66, 0.6f);
         REQUIRE( !region.registerNoteOn(66, 0.6f, 0.0f) );
         REQUIRE( !region.registerNoteOff(63, 0.0f, 0.0f) );
         REQUIRE( !region.registerNoteOff(66, 0.2f, 0.0f) );
-        REQUIRE( region.delayedReleases.size() == 1 );
+        REQUIRE( region.delayedSustainReleases.size() == 1 );
         std::vector<std::pair<int, float>> expected = {
             { 63, 0.5f }
         };
-        REQUIRE( region.delayedReleases == expected );
+        REQUIRE( region.delayedSustainReleases == expected );
     }
 }
