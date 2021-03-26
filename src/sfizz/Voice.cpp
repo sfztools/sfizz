@@ -1102,7 +1102,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                     off(i, true);
 
                 fill<int>(indices->subspan(i), sampleEnd);
-                fill<float>(coeffs->subspan(i), 1.0f);
+                fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
                 break;
             }
         }
