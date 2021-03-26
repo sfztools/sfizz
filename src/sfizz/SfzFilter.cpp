@@ -154,8 +154,15 @@ void Filter::setChannels(unsigned channels)
 {
     ASSERT(channels <= Impl::maxChannels);
     if (P->fChannels != channels) {
+        sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
+        if (dsp)
+            dsp->~sfzFilterDsp();
+
         P->fChannels = channels;
-        clear();
+
+        dsp = P->newDsp(channels, P->fType);
+        if (dsp)
+            dsp->init(P->fSampleRate);
     }
 }
 
@@ -346,8 +353,15 @@ void FilterEq::setChannels(unsigned channels)
 {
     ASSERT(channels <= Impl::maxChannels);
     if (P->fChannels != channels) {
+        sfzFilterDsp *dsp = P->getDsp(P->fChannels, P->fType);
+        if (dsp)
+            dsp->~sfzFilterDsp();
+
         P->fChannels = channels;
-        clear();
+
+        dsp = P->newDsp(channels, P->fType);
+        if (dsp)
+            dsp->init(P->fSampleRate);
     }
 }
 
