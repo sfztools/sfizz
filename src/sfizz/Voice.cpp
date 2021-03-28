@@ -459,7 +459,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
     impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleSize_ = region.trueSampleEnd(resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
+    impl.sampleSize_ = region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
     impl.bendStepFactor_ = centsFactor(region.bendStep);
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
@@ -578,7 +578,6 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
 
 void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 {
-    ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
     Impl& impl = *impl_;
     if (impl.region_ == nullptr)
         return;
@@ -986,7 +985,8 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         add1<int>(sourcePosition_, *indices);
     }
 
-    // calculate loop characteristics
+    // Update loop characteristics with the current CC state
+    updateLoopInformation();
     const auto loop = this->loop_;
 
     // Looping logic
@@ -1035,7 +1035,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     const auto sampleEnd = min(
-            int(region_->trueSampleEnd(resources_.filePool.getOversamplingFactor())),
+            int(sampleSize_),
             int(currentPromise_->information.end),
             int(source.getNumFrames()))
             - 1;
@@ -1591,12 +1591,14 @@ void Voice::Impl::updateLoopInformation() noexcept
 
     if (!region_->shouldLoop())
         return;
-    const auto& info = currentPromise_->information;
-    const auto factor = resources_.filePool.getOversamplingFactor();
-    const auto rate = info.sampleRate;
 
-    loop_.end = static_cast<int>(region_->loopEnd(factor));
-    loop_.start = static_cast<int>(region_->loopStart(factor));
+    Resources& resources = resources_;
+    const FileInformation& info = currentPromise_->information;
+    const Oversampling factor = resources_.filePool.getOversamplingFactor();
+    const double rate = info.sampleRate;
+
+    loop_.start = static_cast<int>(region_->loopStart(resources.midiState, factor));
+    loop_.end = max(static_cast<int>(region_->loopEnd(resources.midiState, factor)), loop_.start);
     loop_.size = loop_.end + 1 - loop_.start;
     loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
     // Clamp the crossfade to the part available before the loop starts

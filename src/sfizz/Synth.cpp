@@ -590,7 +590,7 @@ void Synth::Impl::finalizeSfzLoad()
         }
 
         if (!region.isOscillator()) {
-            region.sampleEnd = std::min(region.sampleEnd, fileInformation->end);
+            region.sampleEnd = min(region.sampleEnd, fileInformation->end);
 
             if (fileInformation->hasLoop) {
                 if (region.loopRange.getStart() == Default::loopStart)

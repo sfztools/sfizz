@@ -123,10 +123,12 @@ namespace Default
     extern const OpcodeSpec<int64_t> offset;
     extern const OpcodeSpec<int64_t> offsetMod;
     extern const OpcodeSpec<int64_t> offsetRandom;
-    extern const OpcodeSpec<uint32_t> sampleEnd;
+    extern const OpcodeSpec<int64_t> sampleEnd;
+    extern const OpcodeSpec<int64_t> sampleEndMod;
     extern const OpcodeSpec<uint32_t> sampleCount;
-    extern const OpcodeSpec<uint32_t> loopStart;
-    extern const OpcodeSpec<uint32_t> loopEnd;
+    extern const OpcodeSpec<int64_t> loopStart;
+    extern const OpcodeSpec<int64_t> loopEnd;
+    extern const OpcodeSpec<int64_t> loopMod;
     extern const OpcodeSpec<uint32_t> loopCount;
     extern const OpcodeSpec<float> loopCrossfade;
     extern const OpcodeSpec<float> oscillatorPhase;

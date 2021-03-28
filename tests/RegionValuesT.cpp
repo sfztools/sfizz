@@ -189,30 +189,55 @@ TEST_CASE("[Values] End")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-        <region> sample=kick.wav end=194
-        <region> sample=kick.wav end=-1
-        <region> sample=kick.wav end=0
-        <region> sample=kick.wav end=194 end=-1
-        <region> sample=kick.wav end=0 end=194
-    )");
-    synth.dispatchMessage(client, 0, "/region0/end", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region0/enabled", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region1/enabled", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region2/enabled", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region3/enabled", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region4/enabled", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region4/end", "", nullptr);
-    std::vector<std::string> expected {
-        "/region0/end,h : { 194 }",
-        "/region0/enabled,T : {  }",
-        "/region1/enabled,F : {  }",
-        "/region2/enabled,F : {  }",
-        "/region3/enabled,F : {  }",
-        "/region4/enabled,T : {  }",
-        "/region4/end,h : { 194 }",
-    };
-    REQUIRE(messageList == expected);
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav end=194
+            <region> sample=kick.wav end=-1
+            <region> sample=kick.wav end=0
+            <region> sample=kick.wav end=194 end=-1
+            <region> sample=kick.wav end=0 end=194
+        )");
+        synth.dispatchMessage(client, 0, "/region0/end", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/enabled", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/enabled", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/enabled", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/enabled", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region4/enabled", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region4/end", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/end,h : { 194 }",
+            "/region0/enabled,T : {  }",
+            "/region1/enabled,F : {  }",
+            "/region2/enabled,F : {  }",
+            "/region3/enabled,F : {  }",
+            "/region4/enabled,T : {  }",
+            "/region4/end,h : { 194 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+    SECTION("CC")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav end_cc12=12
+            <region> sample=kick.wav end_oncc12=-12
+            <region> sample=kick.wav end_cc14=14 end_cc12=12 end_oncc12=-12
+        )");
+        synth.dispatchMessage(client, 0, "/region0/end_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/end_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/end_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/end_cc14", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/end_cc12", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/end_cc12,h : { 0 }",
+            "/region1/end_cc12,h : { 12 }",
+            "/region2/end_cc12,h : { -12 }",
+            "/region3/end_cc14,h : { 14 }",
+            "/region3/end_cc12,h : { -12 }",
+        };
+        REQUIRE(messageList == expected);
+    }
 }
 
 TEST_CASE("[Values] Count")
@@ -305,23 +330,49 @@ TEST_CASE("[Values] Loop range")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-        <region> sample=kick.wav
-        <region> sample=kick.wav loop_start=10 loop_end=100
-        <region> sample=kick.wav loopstart=10 loopend=100
-        <region> sample=kick.wav loop_start=-1 loopend=-100
-    )");
-    synth.dispatchMessage(client, 0, "/region0/loop_range", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region1/loop_range", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region2/loop_range", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region3/loop_range", "", nullptr);
-    std::vector<std::string> expected {
-        "/region0/loop_range,hh : { 0, 44011 }", // Default loop points in the file
-        "/region1/loop_range,hh : { 10, 100 }",
-        "/region2/loop_range,hh : { 10, 100 }",
-        "/region3/loop_range,hh : { 0, 44011 }",
-    };
-    REQUIRE(messageList == expected);
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav loop_start=10 loop_end=100
+            <region> sample=kick.wav loopstart=10 loopend=100
+            <region> sample=kick.wav loop_start=-1 loopend=-100
+        )");
+        synth.dispatchMessage(client, 0, "/region0/loop_range", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/loop_range", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/loop_range", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/loop_range", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/loop_range,hh : { 0, 44011 }", // Default loop points in the file
+            "/region1/loop_range,hh : { 10, 100 }",
+            "/region2/loop_range,hh : { 10, 100 }",
+            "/region3/loop_range,hh : { 0, 44011 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+    SECTION("CC")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav loop_start_cc12=10 loop_end_cc14=-100
+            <region> sample=kick.wav loop_start_oncc12=-10 loop_end_oncc14=100
+        )");
+        synth.dispatchMessage(client, 0, "/region0/loop_start_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/loop_end_cc14", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/loop_start_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/loop_end_cc14", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/loop_start_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/loop_end_cc14", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/loop_start_cc12,h : { 0 }",
+            "/region0/loop_end_cc14,h : { 0 }",
+            "/region1/loop_start_cc12,h : { 10 }",
+            "/region1/loop_end_cc14,h : { -100 }",
+            "/region2/loop_start_cc12,h : { -10 }",
+            "/region2/loop_end_cc14,h : { 100 }",
+        };
+        REQUIRE(messageList == expected);
+    }
 }
 
 TEST_CASE("[Values] Loop crossfade")

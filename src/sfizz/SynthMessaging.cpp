@@ -165,6 +165,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'h'>(delay, path, region.sampleEnd);
         } break;
 
+        MATCH("/region&/end_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'h'>(delay, path, region.endCC.getWithDefault(indices[1]));
+        } break;
+
         MATCH("/region&/enabled", "") {
             GET_REGION_OR_BREAK(indices[0])
             if (region.disabled()) {
@@ -206,6 +211,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             args[0].h = region.loopRange.getStart();
             args[1].h = region.loopRange.getEnd();
             client.receive(delay, path, "hh", args);
+        } break;
+
+        MATCH("/region&/loop_start_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'h'>(delay, path, region.loopStartCC.getWithDefault(indices[1]));
+        } break;
+
+        MATCH("/region&/loop_end_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'h'>(delay, path, region.loopEndCC.getWithDefault(indices[1]));
         } break;
 
         MATCH("/region&/loop_mode", "") {
