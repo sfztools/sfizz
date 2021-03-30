@@ -13,8 +13,9 @@
 namespace sfz {
 
 Layer::Layer(int regionNumber, absl::string_view defaultPath, const MidiState& midiState)
-    : Layer(Region(regionNumber, defaultPath), midiState)
+    : midiState_(midiState), region_(regionNumber, defaultPath)
 {
+    initializeActivations();
 }
 
 Layer::Layer(const Region& region, const MidiState& midiState)
