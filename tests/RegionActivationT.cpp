@@ -20,7 +20,7 @@ TEST_CASE("Region activation", "Region tests")
     region.parseOpcode({ "sample", "*sine" });
     SECTION("Basic state")
     {
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         layer.registerCC(4, 0_norm);
         REQUIRE(layer.isSwitchedOn());
     }
@@ -29,7 +29,7 @@ TEST_CASE("Region activation", "Region tests")
     {
         region.parseOpcode({ "locc4", "56" });
         region.parseOpcode({ "hicc4", "59" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         layer.registerCC(4, 0_norm);
         REQUIRE(!layer.isSwitchedOn());
         layer.registerCC(4, 57_norm);
@@ -52,7 +52,7 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "hicc4", "59" });
         region.parseOpcode({ "locc54", "18" });
         region.parseOpcode({ "hicc54", "27" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         layer.registerCC(4, 0_norm);
         layer.registerCC(54, 0_norm);
         REQUIRE(!layer.isSwitchedOn());
@@ -80,7 +80,7 @@ TEST_CASE("Region activation", "Region tests")
     {
         region.parseOpcode({ "lobend", "56" });
         region.parseOpcode({ "hibend", "243" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         layer.registerPitchWheel(0);
         REQUIRE(!layer.isSwitchedOn());
         layer.registerPitchWheel(sfz::normalizeBend(56));
@@ -95,7 +95,7 @@ TEST_CASE("Region activation", "Region tests")
     {
         region.parseOpcode({ "lochanaft", "56" });
         region.parseOpcode({ "hichanaft", "68" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         layer.registerAftertouch(sfz::normalize7Bits(0));
         REQUIRE(!layer.isSwitchedOn());
         layer.registerAftertouch(sfz::normalize7Bits(56));
@@ -110,7 +110,7 @@ TEST_CASE("Region activation", "Region tests")
     {
         region.parseOpcode({ "lobpm", "56" });
         region.parseOpcode({ "hibpm", "68" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         layer.registerTempo(2.0f);
         REQUIRE(!layer.isSwitchedOn());
         layer.registerTempo(0.90f);
@@ -126,7 +126,7 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "seq_length", "2" });
         region.parseOpcode({ "seq_position", "1" });
         region.parseOpcode({ "key", "40" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         REQUIRE(!layer.isSwitchedOn());
         layer.registerNoteOn(40, 64_norm, 0.5f);
         REQUIRE(layer.isSwitchedOn());
@@ -146,7 +146,7 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "seq_length", "2" });
         region.parseOpcode({ "seq_position", "2" });
         region.parseOpcode({ "key", "40" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         REQUIRE(!layer.isSwitchedOn());
         layer.registerNoteOn(40, 64_norm, 0.5f);
         REQUIRE(!layer.isSwitchedOn());
@@ -166,7 +166,7 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "seq_length", "3" });
         region.parseOpcode({ "seq_position", "2" });
         region.parseOpcode({ "key", "40" });
-        sfz::Layer layer { &region, midiState };
+        sfz::Layer layer { region, midiState };
         REQUIRE(!layer.isSwitchedOn());
         layer.registerNoteOn(40, 64_norm, 0.5f);
         REQUIRE(!layer.isSwitchedOn());

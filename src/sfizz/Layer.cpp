@@ -12,28 +12,24 @@
 
 namespace sfz {
 
-Layer::Layer(std::unique_ptr<Region> region, const MidiState& midiState)
-    : Layer(region.get(), midiState)
+Layer::Layer(int regionNumber, absl::string_view defaultPath, const MidiState& midiState)
+    : Layer(Region(regionNumber, defaultPath), midiState)
 {
-    regionOwned_ = true;
-    region.release();
 }
 
-Layer::Layer(Region* region, const MidiState& midiState)
-    : region_(region), regionOwned_(false), midiState_(midiState)
+Layer::Layer(const Region& region, const MidiState& midiState)
+    : midiState_(midiState), region_(region)
 {
     initializeActivations();
 }
 
 Layer::~Layer()
 {
-    if (regionOwned_)
-        delete region_;
 }
 
 void Layer::initializeActivations()
 {
-    const Region& region = *region_;
+    const Region& region = region_;
 
     keySwitched_ = !region.usesKeySwitches;
     previousKeySwitched_ = !region.usesPreviousKeySwitches;
@@ -53,7 +49,7 @@ bool Layer::registerNoteOn(int noteNumber, float velocity, float randValue) noex
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    const Region& region = *region_;
+    const Region& region = region_;
 
     const bool keyOk = region.keyRange.containsWithEnd(noteNumber);
     if (keyOk) {
@@ -84,7 +80,7 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
-    const Region& region = *region_;
+    const Region& region = region_;
 
     if (!isSwitchedOn())
         return false;
@@ -130,7 +126,7 @@ bool Layer::registerCC(int ccNumber, float ccValue) noexcept
 {
     ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
 
-    const Region& region = *region_;
+    const Region& region = region_;
 
     if (ccNumber == region.sustainCC)
         sustainPressed_ = region.checkSustain && ccValue >= region.sustainThreshold;
@@ -167,7 +163,7 @@ bool Layer::registerCC(int ccNumber, float ccValue) noexcept
 
 void Layer::registerPitchWheel(float pitch) noexcept
 {
-    const Region& region = *region_;
+    const Region& region = region_;
     if (region.bendRange.containsWithEnd(pitch))
         pitchSwitched_ = true;
     else
@@ -176,7 +172,7 @@ void Layer::registerPitchWheel(float pitch) noexcept
 
 void Layer::registerAftertouch(float aftertouch) noexcept
 {
-    const Region& region = *region_;
+    const Region& region = region_;
     if (region.aftertouchRange.containsWithEnd(aftertouch))
         aftertouchSwitched_ = true;
     else
@@ -185,7 +181,7 @@ void Layer::registerAftertouch(float aftertouch) noexcept
 
 void Layer::registerTempo(float secondsPerQuarter) noexcept
 {
-    const Region& region = *region_;
+    const Region& region = region_;
     const float bpm = 60.0f / secondsPerQuarter;
     if (region.bpmRange.containsWithEnd(bpm))
         bpmSwitched_ = true;
@@ -219,7 +215,7 @@ void Layer::removeFromSostenutoReleases(int noteNumber) noexcept
 void Layer::storeSostenutoNotes() noexcept
 {
     ASSERT(delayedSostenutoReleases_.empty());
-    const Region& region = *region_;
+    const Region& region = region_;
     for (int note = region.keyRange.getStart(); note <= region.keyRange.getEnd(); ++note) {
         if (midiState_.isNotePressed(note))
             delaySostenutoRelease(note, midiState_.getNoteVelocity(note));

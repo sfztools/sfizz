@@ -5,9 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Region.h"
 #include "Config.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
+#include <absl/strings/string_view.h>
 #include <utility>
 #include <string>
 #include <vector>
@@ -20,23 +22,26 @@ class MidiState;
 
 struct Layer {
 public:
-    Layer(std::unique_ptr<Region> region, const MidiState& midiState);
-    Layer(Region* region, const MidiState& midiState);
+    /**
+     * @brief Initialize a layer based on a new default region.
+     */
+    Layer(int regionNumber, absl::string_view defaultPath, const MidiState& midiState);
+
+    /**
+     * @brief Initialize a layer based on a copy of the contents of a region.
+     */
+    Layer(const Region& region, const MidiState& midiState);
+
     ~Layer();
 
-    Layer(const Layer&) = delete;
-    Layer(Layer&&) = delete;
-    Layer& operator=(const Layer&) = delete;
-    Layer& operator=(Layer&&) = delete;
-
     /**
      * @brief Get the region that this layer operates on.
      */
-    const Region& getRegion() const noexcept { return *region_; }
+    const Region& getRegion() const noexcept { return region_; }
     /**
      * @brief Get the region that this layer operates on.
      */
-    Region& getRegion() noexcept { return *region_; }
+    Region& getRegion() noexcept { return region_; }
 
     /**
      * @brief Reset the activations to their initial states.
@@ -103,9 +108,6 @@ public:
      */
     void registerTempo(float secondsPerQuarter) noexcept;
 
-    Region* const region_ {};
-    bool regionOwned_ = false;
-
     // Started notes
     bool sustainPressed_ { false };
     bool sostenutoPressed_ { false };
@@ -128,6 +130,8 @@ public:
     std::bitset<config::numCCs> ccSwitched_;
 
     int sequenceCounter_ { 0 };
+
+    Region region_;
 
     LEAK_DETECTOR(Layer);
 };

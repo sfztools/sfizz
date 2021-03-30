@@ -40,7 +40,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     SECTION("Release key without sustain")
     {
         region.parseOpcode({ "trigger", "release_key" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 0.0f);
         layer.registerCC(64, 0.0f);
@@ -50,7 +50,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     SECTION("Release key with sustain")
     {
         region.parseOpcode({ "trigger", "release_key" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
         layer.registerCC(64, 1.0f);
@@ -62,7 +62,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     SECTION("Release without sustain")
     {
         region.parseOpcode({ "trigger", "release" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 0.0f);
         layer.registerCC(64, 0.0f);
@@ -73,7 +73,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     SECTION("Release with sustain")
     {
         region.parseOpcode({ "trigger", "release" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
         layer.registerCC(64, 1.0f);
@@ -90,7 +90,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     SECTION("Release with sustain and 2 notes")
     {
         region.parseOpcode({ "trigger", "release" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
         layer.registerCC(64, 1.0f);
@@ -111,7 +111,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
     SECTION("Release with sustain and 2 notes but 1 outside")
     {
         region.parseOpcode({ "trigger", "release" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
         layer.registerCC(64, 1.0f);

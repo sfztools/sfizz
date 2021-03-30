@@ -23,7 +23,7 @@ TEST_CASE("Basic triggers", "Region triggers")
     SECTION("key")
     {
         region.parseOpcode({ "key", "40" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.5f));
         REQUIRE(!layer.registerNoteOff(40, 64_norm, 0.5f));
         REQUIRE(!layer.registerNoteOn(41, 64_norm, 0.5f));
@@ -33,7 +33,7 @@ TEST_CASE("Basic triggers", "Region triggers")
     {
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "42" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerNoteOn(39, 64_norm, 0.5f));
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.5f));
         REQUIRE(!layer.registerNoteOff(40, 64_norm, 0.5f));
@@ -48,7 +48,7 @@ TEST_CASE("Basic triggers", "Region triggers")
     {
         region.parseOpcode({ "key", "40" });
         region.parseOpcode({ "trigger", "release" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerNoteOn(40, 64_norm, 0.5f));
         REQUIRE(layer.registerNoteOff(40, 64_norm, 0.5f));
         REQUIRE(!layer.registerNoteOn(41, 64_norm, 0.5f));
@@ -59,7 +59,7 @@ TEST_CASE("Basic triggers", "Region triggers")
     {
         region.parseOpcode({ "key", "40" });
         region.parseOpcode({ "trigger", "release_key" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerNoteOn(40, 64_norm, 0.5f));
         REQUIRE(layer.registerNoteOff(40, 64_norm, 0.5f));
         REQUIRE(!layer.registerNoteOn(41, 64_norm, 0.5f));
@@ -72,7 +72,7 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "key", "40" });
         region.parseOpcode({ "lovel", "60" });
         region.parseOpcode({ "hivel", "70" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.5f));
         REQUIRE(layer.registerNoteOn(40, 60_norm, 0.5f));
         REQUIRE(layer.registerNoteOn(40, 70_norm, 0.5f));
@@ -85,7 +85,7 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "key", "40" });
         region.parseOpcode({ "lorand", "0.35" });
         region.parseOpcode({ "hirand", "0.40" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerNoteOn(40, 64_norm, 0.34f));
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.35f));
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.36f));
@@ -100,7 +100,7 @@ TEST_CASE("Basic triggers", "Region triggers")
     {
         region.parseOpcode({ "key", "40" });
         region.parseOpcode({ "lorand", "0.35" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerNoteOn(40, 64_norm, 0.34f));
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.35f));
         REQUIRE(layer.registerNoteOn(40, 64_norm, 1.0f));
@@ -109,19 +109,19 @@ TEST_CASE("Basic triggers", "Region triggers")
     SECTION("Disable key trigger")
     {
         region.parseOpcode({ "key", "40" });
-        Layer layer1 { &region, midiState };
+        Layer layer1 { region, midiState };
         REQUIRE(layer1.registerNoteOn(40, 64_norm, 1.0f));
         region.parseOpcode({ "hikey", "-1" });
-        Layer layer2 { &region, midiState };
+        Layer layer2 { region, midiState };
         REQUIRE(!layer2.registerNoteOn(40, 64_norm, 1.0f));
         region.parseOpcode({ "hikey", "40" });
-        Layer layer3 { &region, midiState };
+        Layer layer3 { region, midiState };
         REQUIRE(layer3.registerNoteOn(40, 64_norm, 1.0f));
-        Layer layer4 { &region, midiState };
         region.parseOpcode({ "key", "-1" });
+        Layer layer4 { region, midiState };
         REQUIRE(!layer4.registerNoteOn(40, 64_norm, 1.0f));
-        Layer layer5 { &region, midiState };
         region.parseOpcode({ "key", "40" });
+        Layer layer5 { region, midiState };
         REQUIRE(layer5.registerNoteOn(40, 64_norm, 1.0f));
     }
 
@@ -129,12 +129,12 @@ TEST_CASE("Basic triggers", "Region triggers")
     {
         region.parseOpcode({ "on_locc47", "64" });
         region.parseOpcode({ "on_hicc47", "68" });
-        Layer layer1 { &region, midiState };
+        Layer layer1 { region, midiState };
         REQUIRE(!layer1.registerCC(47, 63_norm));
         REQUIRE(layer1.registerCC(47, 64_norm));
         REQUIRE(layer1.registerCC(47, 65_norm));
         region.parseOpcode({ "hikey", "-1" });
-        Layer layer2 { &region, midiState };
+        Layer layer2 { region, midiState };
         REQUIRE(layer2.registerCC(47, 64_norm));
         REQUIRE(layer2.registerCC(47, 65_norm));
         REQUIRE(layer2.registerCC(47, 66_norm));
@@ -149,7 +149,7 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "sample", "*sine" });
         region.parseOpcode({ "on_locc1", "127" });
         region.parseOpcode({ "on_hicc1", "127" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerCC(1, 126_norm));
         REQUIRE(!layer.registerCC(2, 127_norm));
         REQUIRE(layer.registerCC(1, 127_norm));
@@ -162,7 +162,7 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "on_locc1", "127" });
         region.parseOpcode({ "on_hicc1", "127" });
         region.parseOpcode({ "key", "-1" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerCC(1, 126_norm));
         REQUIRE(layer.registerCC(1, 127_norm));
         REQUIRE(!layer.registerNoteOn(64, 127_norm, 0.5f));
@@ -174,7 +174,7 @@ TEST_CASE("Basic triggers", "Region triggers")
         region.parseOpcode({ "on_locc1", "127" });
         region.parseOpcode({ "on_hicc1", "127" });
         region.parseOpcode({ "hikey", "-1" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         REQUIRE(!layer.registerCC(1, 126_norm));
         REQUIRE(!layer.registerCC(2, 127_norm));
         REQUIRE(layer.registerCC(1, 127_norm));
@@ -192,7 +192,7 @@ TEST_CASE("Legato triggers", "Region triggers")
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "50" });
         region.parseOpcode({ "trigger", "first" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         midiState.noteOnEvent(0, 40, 64_norm);
         REQUIRE(layer.registerNoteOn(40, 64_norm, 0.5f));
         midiState.noteOnEvent(0, 41, 64_norm);
@@ -210,7 +210,7 @@ TEST_CASE("Legato triggers", "Region triggers")
         region.parseOpcode({ "lokey", "40" });
         region.parseOpcode({ "hikey", "50" });
         region.parseOpcode({ "trigger", "legato" });
-        Layer layer { &region, midiState };
+        Layer layer { region, midiState };
         midiState.noteOnEvent(0, 40, 64_norm);
         REQUIRE(!layer.registerNoteOn(40, 64_norm, 0.5f));
         midiState.noteOnEvent(0, 41, 64_norm);

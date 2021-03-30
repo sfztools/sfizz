@@ -137,9 +137,9 @@ void Synth::Impl::onParseWarning(const SourceRange& range, const std::string& me
 void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
     int regionNumber = static_cast<int>(layers_.size());
-    Region* lastRegion = new Region(regionNumber, defaultPath_);
-    Layer* lastLayer = new Layer(std::unique_ptr<Region>(lastRegion), resources_.midiState);
+    Layer* lastLayer = new Layer(regionNumber, defaultPath_, resources_.midiState);
     layers_.emplace_back(lastLayer);
+    Region* lastRegion = &lastLayer->getRegion();
 
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
