@@ -1,14 +1,12 @@
 #include "sfizz/SfzFilter.h"
 #include "sfizz/Buffer.h"
 #include "sfizz/SIMDHelpers.h"
-#include "ghc/filesystem.hpp"
-#include "cxxopts.hpp"
-#include "sfizz/StringViewHelpers.h"
+#include "sfizz/utility/StringViewHelpers.h"
 #include <sndfile.hh>
+#include <cxxopts.hpp>
+#include <ghc/fs_std.hpp>
 #include <string>
 #include <iostream>
-
-namespace fs = ghc::filesystem;
 
 int main(int argc, char** argv)
 {

@@ -6,10 +6,10 @@
 
 #pragma once
 #include "Defaults.h"
-#include "LeakDetector.h"
 #include "Range.h"
 #include "SfzHelpers.h"
-#include "StringViewHelpers.h"
+#include "utility/LeakDetector.h"
+#include "utility/StringViewHelpers.h"
 #include "absl/types/optional.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/ascii.h"
@@ -81,6 +81,12 @@ struct Opcode {
      * @return normalized opcode
      */
     Opcode cleanUp(OpcodeScope scope) const;
+
+    /**
+     * @brief Calculate a letter-only name, replacing any digit sequence with
+     * in the opcode name with a single ampersand character.
+     */
+    std::string getLetterOnlyName() const;
 
     /*
      * @brief Get the derived opcode name to convert it to another category.

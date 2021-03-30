@@ -6,10 +6,10 @@
 
 #pragma once
 #include "Config.h"
-#include "Debug.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
+#include "utility/Debug.h"
 #include <array>
 #include <memory>
 #include <functional>

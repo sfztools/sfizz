@@ -20,7 +20,6 @@ public:
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
-    VoiceManager& voiceManager_;
     MidiState& midiState_;
 };
 

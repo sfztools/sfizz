@@ -21,7 +21,7 @@ source_group("Turtle Files" FILES
 add_library(${LV2PLUGIN_PRJ_NAME} MODULE
     ${PROJECT_NAME}.cpp
     ${LV2PLUGIN_TTL_SRC_FILES})
-target_link_libraries(${LV2PLUGIN_PRJ_NAME} PRIVATE sfizz::sfizz sfizz::plugins-common)
+target_link_libraries(${LV2PLUGIN_PRJ_NAME} PRIVATE sfizz::sfizz sfizz::import sfizz::plugins-common)
 
 if(SFIZZ_LV2_UI)
     add_library(${LV2PLUGIN_PRJ_NAME}_ui MODULE

@@ -8,10 +8,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Opcode.h"
-#include "Macros.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/ascii.h"
+#include "utility/Macros.h"
+#include <absl/strings/string_view.h>
+#include <absl/strings/str_cat.h>
+#include <absl/strings/ascii.h>
 #include <string>
 
 namespace sfz {

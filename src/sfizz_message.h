@@ -8,6 +8,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#if defined SFIZZ_EXPORT_SYMBOLS
+  #if defined _WIN32
+    #define SFIZZ_EXPORTED_API __declspec(dllexport)
+  #else
+    #define SFIZZ_EXPORTED_API __attribute__ ((visibility ("default")))
+  #endif
+#else
+  #define SFIZZ_EXPORTED_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,7 +68,7 @@ typedef void (sfizz_receive_t)(void* data, int delay, const char* path, const ch
  * @return              The size necessary to store the converted message in
  *                      entirety, <= capacity if the written message is valid.
  */
-uint32_t sfizz_prepare_message(
+SFIZZ_EXPORTED_API uint32_t sfizz_prepare_message(
     void* buffer, uint32_t capacity,
     const char* path, const char* sig, const sfizz_arg_t* args);
 
@@ -77,7 +87,7 @@ uint32_t sfizz_prepare_message(
  *                      On failure, it is 0 if the OSC message is invalid,
  *                      -1 if there was not enough buffer for the arguments.
  */
-int32_t sfizz_extract_message(
+SFIZZ_EXPORTED_API int32_t sfizz_extract_message(
     const void* srcBuffer, uint32_t srcCapacity,
     void* argsBuffer, uint32_t argsCapacity,
     const char** outPath, const char** outSig, const sfizz_arg_t** outArgs);

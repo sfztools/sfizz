@@ -245,11 +245,6 @@ Editor::Editor(EditorController& ctrl)
     ctrl.decorate(&impl);
 
     impl.createFrameContents();
-
-    uint32_t oscSendInterval = 1; // milliseconds
-    impl.oscSendQueueTimer_ = makeOwned<CVSTGUITimer>(
-        [this](CVSTGUITimer* timer) { impl_->tickOSCQueue(timer); },
-        oscSendInterval, false);
 }
 
 Editor::~Editor()
@@ -275,6 +270,11 @@ void Editor::open(CFrame& frame)
         impl_->sendQueuedOSC("/mem/buffers", "", nullptr);
     }, 1000, true);
 
+    uint32_t oscSendInterval = 1; // milliseconds
+    impl.oscSendQueueTimer_ = makeOwned<CVSTGUITimer>(
+        [this](CVSTGUITimer* timer) { impl_->tickOSCQueue(timer); },
+        oscSendInterval, false);
+
     // request the whole Key and CC information
     impl.sendQueuedOSC("/key/slots", "", nullptr);
     impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
@@ -286,6 +286,7 @@ void Editor::close()
     Impl& impl = *impl_;
 
     impl.clearQueuedOSC();
+    impl.oscSendQueueTimer_ = nullptr;
 
     impl.memQueryTimer_ = nullptr;
 
@@ -1077,6 +1078,8 @@ void Editor::Impl::chooseSfzFile()
     fs->addFileExtension(CFileExtension("AIF", "aif"));
     fs->addFileExtension(CFileExtension("AIFF", "aiff"));
     fs->addFileExtension(CFileExtension("AIFC", "aifc"));
+    // Decent samples
+    fs->addFileExtension(CFileExtension("DSPRESET", "dspreset"));
 
     std::string initialDir = getFileChooserInitialDir(currentSfzFile_);
     if (!initialDir.empty())

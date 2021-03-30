@@ -6,8 +6,8 @@
 
 #include "SynthPrivate.h"
 #include "Config.h"
-#include "Debug.h"
-#include "Macros.h"
+#include "utility/Debug.h"
+#include "utility/Macros.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -17,7 +17,7 @@
 #include "RegionSet.h"
 #include "Resources.h"
 #include "ScopedFTZ.h"
-#include "StringViewHelpers.h"
+#include "utility/StringViewHelpers.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
 #include "Interpolators.h"
@@ -205,7 +205,12 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
     }
 
     // Adapt the size of the delayed releases to avoid allocating later on
-    lastRegion->delayedReleases.reserve(lastRegion->keyRange.length());
+    if (lastRegion->trigger == Trigger::release) {
+        const auto keyLength = static_cast<unsigned>(lastRegion->keyRange.length());
+        const auto size = max(config::delayedReleaseVoices, keyLength);
+        lastRegion->delayedSustainReleases.reserve(size);
+        lastRegion->delayedSostenutoReleases.reserve(size);
+    }
 
     regions_.push_back(std::move(lastRegion));
 }
@@ -249,7 +254,7 @@ void Synth::Impl::clear()
     clearCCLabels();
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
-    keyLabels_.clear();
+    clearKeyLabels();
     keySlots_.clear();
     swLastSlots_.clear();
     clearKeyswitchLabels();
@@ -258,6 +263,7 @@ void Synth::Impl::clear()
     groupOpcodes_.clear();
     unknownOpcodes_.clear();
     modificationTime_ = absl::nullopt;
+    playheadMoved_ = false;
 
     // set default controllers
     // midistate is reset above
@@ -371,7 +377,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("label_key&"):
             if (member.parameters.back() <= Default::key.bounds.getEnd()) {
                 const auto noteNumber = static_cast<uint8_t>(member.parameters.back());
-                insertPairUniquely(keyLabels_, noteNumber, std::string(member.value));
+                setKeyLabel(noteNumber, member.value);
             }
             break;
         case hash("default_path"):
@@ -571,6 +577,9 @@ void Synth::Impl::finalizeSfzLoad()
     size_t maxFlexEGs { 0 };
     bool havePitchEG { false };
     bool haveFilterEG { false };
+    bool haveAmplitudeLFO { false };
+    bool havePitchLFO { false };
+    bool haveFilterLFO { false };
 
     FlexEGs::clearUnusedCurves();
 
@@ -614,6 +623,10 @@ void Synth::Impl::finalizeSfzLoad()
 
             if (region->loopRange.getEnd() == Default::loopEnd)
                 region->loopRange.setEnd(region->sampleEnd);
+
+            // if range is invalid, disable the loop
+            if (!region->loopRange.isValid())
+                region->loopMode = absl::nullopt;
 
             if (fileInformation->numChannels == 2)
                 region->hasStereoSample = true;
@@ -666,7 +679,8 @@ void Synth::Impl::finalizeSfzLoad()
         for (int cc = 0; cc < config::numCCs; cc++) {
             if (region->ccTriggers.contains(cc)
                 || region->ccConditions.contains(cc)
-                || (cc == region->sustainCC && region->trigger == Trigger::release))
+                || (cc == region->sustainCC && region->trigger == Trigger::release)
+                || (cc == region->sostenutoCC && region->trigger == Trigger::release))
                 ccActivationLists_[cc].push_back(region);
         }
 
@@ -703,6 +717,9 @@ void Synth::Impl::finalizeSfzLoad()
         maxFlexEGs = max(maxFlexEGs, region->flexEGs.size());
         havePitchEG = havePitchEG || region->pitchEG != absl::nullopt;
         haveFilterEG = haveFilterEG || region->filterEG != absl::nullopt;
+        haveAmplitudeLFO = haveAmplitudeLFO || region->amplitudeLFO != absl::nullopt;
+        havePitchLFO = havePitchLFO || region->pitchLFO != absl::nullopt;
+        haveFilterLFO = haveFilterLFO || region->filterLFO != absl::nullopt;
 
         ++currentRegionIndex;
     }
@@ -751,6 +768,9 @@ void Synth::Impl::finalizeSfzLoad()
     settingsPerVoice_.maxFlexEGs = maxFlexEGs;
     settingsPerVoice_.havePitchEG = havePitchEG;
     settingsPerVoice_.haveFilterEG = haveFilterEG;
+    settingsPerVoice_.haveAmplitudeLFO = haveAmplitudeLFO;
+    settingsPerVoice_.havePitchLFO = havePitchLFO;
+    settingsPerVoice_.haveFilterLFO = haveFilterLFO;
 
     applySettingsPerVoice();
 
@@ -761,7 +781,7 @@ void Synth::Impl::finalizeSfzLoad()
 
     // cache the set of keys assigned
     for (const RegionPtr& regionPtr : regions_) {
-        Range<uint8_t> keyRange = regionPtr->keyRange;
+        UncheckedRange<uint8_t> keyRange = regionPtr->keyRange;
         unsigned loKey = keyRange.getStart();
         unsigned hiKey = keyRange.getEnd();
         for (unsigned key = loKey; key <= hiKey; ++key)
@@ -772,7 +792,7 @@ void Synth::Impl::finalizeSfzLoad()
         if (absl::optional<uint8_t> sw = regionPtr->lastKeyswitch) {
             swLastSlots_.set(*sw);
         }
-        else if (absl::optional<Range<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
+        else if (absl::optional<UncheckedRange<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
             unsigned loKey = swRange->getStart();
             unsigned hiKey = swRange->getEnd();
             for (unsigned key = loKey; key <= hiKey; ++key)
@@ -924,6 +944,12 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     BeatClock& bc = impl.resources_.beatClock;
     bc.beginCycle(numFrames);
+
+    if (impl.playheadMoved_ && impl.resources_.beatClock.isPlaying()) {
+        impl.resources_.midiState.flushEvents();
+        impl.genController_->resetSmoothers();
+        impl.playheadMoved_ = false;
+    }
 
     { // Clear effect busses
         ScopedTiming logger { callbackBreakdown.effects };
@@ -1078,8 +1104,8 @@ void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& trig
         return;
 
     ASSERT(selectedVoice->isFree());
-    selectedVoice->startVoice(region, delay, triggerEvent);
-    ring.addVoiceToRing(selectedVoice);
+    if (selectedVoice->startVoice(region, delay, triggerEvent))
+        ring.addVoiceToRing(selectedVoice);
 }
 
 void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
@@ -1148,21 +1174,34 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
         region->previousKeySwitched = (*region->previousKeyswitch == noteNumber);
 }
 
-void Synth::Impl::startDelayedReleaseVoices(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startDelayedSustainReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
     if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
-        region->delayedReleases.clear();
+        region->delayedSustainReleases.clear();
         return;
     }
 
-    for (auto& note: region->delayedReleases) {
-        // FIXME: we really need to have some form of common method to find and start voices...
+    for (auto& note: region->delayedSustainReleases) {
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
         startVoice(region, delay, noteOffEvent, ring);
     }
-    region->delayedReleases.clear();
+
+    region->delayedSustainReleases.clear();
 }
 
+void Synth::Impl::startDelayedSostenutoReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+{
+    if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
+        region->delayedSostenutoReleases.clear();
+        return;
+    }
+
+    for (auto& note: region->delayedSostenutoReleases) {
+        const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
+        startVoice(region, delay, noteOffEvent, ring);
+    }
+    region->delayedSostenutoReleases.clear();
+}
 
 void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 {
@@ -1175,8 +1214,19 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
     for (auto& region : ccActivationLists_[ccNumber]) {
-        if (ccNumber == region->sustainCC)
-            startDelayedReleaseVoices(region, delay, ring);
+        if (region->checkSustain && ccNumber == region->sustainCC && value < region->sustainThreshold)
+            startDelayedSustainReleases(region, delay, ring);
+
+        if (region->checkSostenuto && ccNumber == region->sostenutoCC && value < region->sostenutoThreshold) {
+            if (region->sustainPressed) {
+                for (const auto& v: region->delayedSostenutoReleases)
+                    region->delaySustainRelease(v.first, v.second);
+
+                region->delayedSostenutoReleases.clear();
+            } else {
+                startDelayedSostenutoReleases(region, delay, ring);
+            }
+        }
 
         if (region->registerCC(ccNumber, value))
             startVoice(region, delay, triggerEvent, ring);
@@ -1270,21 +1320,26 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
 
 void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
 {
+    const float normalizedAftertouch = normalize7Bits(aftertouch);
+    hdAftertouch(delay, normalizedAftertouch);
+}
+
+void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
+{
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    const auto normalizedAftertouch = normalize7Bits(aftertouch);
-    impl.resources_.midiState.channelAftertouchEvent(delay, normalizedAftertouch);
+    impl.resources_.midiState.channelAftertouchEvent(delay, normAftertouch);
 
     for (auto& region : impl.regions_) {
-        region->registerAftertouch(aftertouch);
+        region->registerAftertouch(normAftertouch);
     }
 
     for (auto& voice : impl.voiceManager_) {
-        voice.registerAftertouch(delay, aftertouch);
+        voice.registerAftertouch(delay, normAftertouch);
     }
 
-    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normalizedAftertouch, false);
+    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
@@ -1308,7 +1363,16 @@ void Synth::timePosition(int delay, int bar, double barBeat)
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.beatClock.setTimePosition(delay, BBT(bar, barBeat));
+    const auto newPosition = BBT(bar, barBeat);
+    const auto newBeatPosition = newPosition.toBeats(impl.resources_.beatClock.getTimeSignature());
+    const auto currentBeatPosition = impl.resources_.beatClock.getLastBeatPosition();
+    const auto positionDifference = std::abs(newBeatPosition - currentBeatPosition);
+    const auto threshold = config::playheadMovedFrames * impl.resources_.beatClock.getBeatsPerFrame();
+
+    if (positionDifference > threshold)
+        impl.playheadMoved_ = true;
+
+    impl.resources_.beatClock.setTimePosition(delay, newPosition);
 }
 
 void Synth::playbackState(int delay, int playbackState)
@@ -1600,6 +1664,9 @@ void Synth::Impl::applySettingsPerVoice()
         voice.setMaxFlexEGsPerVoice(settingsPerVoice_.maxFlexEGs);
         voice.setPitchEGEnabledPerVoice(settingsPerVoice_.havePitchEG);
         voice.setFilterEGEnabledPerVoice(settingsPerVoice_.haveFilterEG);
+        voice.setAmplitudeLFOEnabledPerVoice(settingsPerVoice_.haveAmplitudeLFO);
+        voice.setPitchLFOEnabledPerVoice(settingsPerVoice_.havePitchLFO);
+        voice.setFilterLFOEnabledPerVoice(settingsPerVoice_.haveFilterLFO);
     }
 }
 
@@ -1626,6 +1693,9 @@ void Synth::Impl::setupModMatrix()
             case ModId::Controller:
                 gen = genController_.get();
                 break;
+            case ModId::AmpLFO:
+            case ModId::PitchLFO:
+            case ModId::FilLFO:
             case ModId::LFO:
                 gen = genLFO_.get();
                 break;
@@ -1664,7 +1734,7 @@ void Synth::Impl::setupModMatrix()
                 continue;
             }
 
-            if (!mm.connect(source, target, conn.sourceDepth, conn.velToDepth)) {
+            if (!mm.connect(source, target, conn.sourceDepth, conn.sourceDepthMod, conn.velToDepth)) {
                 DBG("[sfizz] Failed to connect modulation source and target");
                 ASSERTFALSE;
             }
@@ -1886,7 +1956,25 @@ BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
     return used;
 }
 
-const std::string* Synth::Impl::getCCLabel(int ccNumber)
+const std::string* Synth::Impl::getKeyLabel(int keyNumber) const
+{
+    auto it = keyLabelsMap_.find(keyNumber);
+    return (it == keyLabelsMap_.end()) ? nullptr : &keyLabels_[it->second].second;
+}
+
+void Synth::Impl::setKeyLabel(int keyNumber, std::string name)
+{
+    auto it = keyLabelsMap_.find(keyNumber);
+    if (it != keyLabelsMap_.end())
+        keyLabels_[it->second].second = std::move(name);
+    else {
+        size_t index = keyLabels_.size();
+        keyLabels_.emplace_back(keyNumber, std::move(name));
+        keyLabelsMap_[keyNumber] = index;
+    }
+}
+
+const std::string* Synth::Impl::getCCLabel(int ccNumber) const
 {
     auto it = ccLabelsMap_.find(ccNumber);
     return (it == ccLabelsMap_.end()) ? nullptr : &ccLabels_[it->second].second;
@@ -1904,7 +1992,7 @@ void Synth::Impl::setCCLabel(int ccNumber, std::string name)
     }
 }
 
-const std::string* Synth::Impl::getKeyswitchLabel(int swNumber)
+const std::string* Synth::Impl::getKeyswitchLabel(int swNumber) const
 {
     auto it = keyswitchLabelsMap_.find(swNumber);
     return (it == keyswitchLabelsMap_.end()) ? nullptr : &keyswitchLabels_[it->second].second;
@@ -1920,6 +2008,12 @@ void Synth::Impl::setKeyswitchLabel(int swNumber, std::string name)
         keyswitchLabels_.emplace_back(swNumber, std::move(name));
         keyswitchLabelsMap_[swNumber] = index;
     }
+}
+
+void Synth::Impl::clearKeyLabels()
+{
+    keyLabels_.clear();
+    keyLabelsMap_.clear();
 }
 
 void Synth::Impl::clearCCLabels()

@@ -34,7 +34,7 @@
 
 #include "sfizz_lv2.h"
 
-#include "plugin/ForeignInstrument.h"
+#include "sfizz/import/ForeignInstrument.h"
 
 #include <lv2/atom/atom.h>
 #include <lv2/atom/forge.h>

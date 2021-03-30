@@ -25,7 +25,7 @@
 
 #pragma once
 #include "Config.h"
-#include "LeakDetector.h"
+#include "utility/LeakDetector.h"
 #include <cstdlib>
 #include <cstring>
 #include <memory>
@@ -156,8 +156,12 @@ public:
             return true;
         }
 
-        auto tempSize = newSize + 2 * AlignmentMask; // To ensure that we have leeway at the beginning and at the end
-        auto* newData = std::realloc(paddedData.get(), tempSize * sizeof(value_type));
+        Type* oldData = paddedData.get();
+        Type* oldNormalData = normalData;
+        std::size_t oldSize = alignedSize;
+
+        std::size_t tempSize = newSize + 2 * AlignmentMask; // To ensure that we have leeway at the beginning and at the end
+        Type* newData = reinterpret_cast<Type*>(std::calloc(tempSize, sizeof(value_type)));
         if (newData == nullptr) {
             return false;
         }
@@ -173,11 +177,14 @@ public:
         paddedData.reset(static_cast<pointer>(newData));
         normalData = static_cast<pointer>(align(Alignment, alignedSize, newData, tempSize));
         normalEnd = normalData + alignedSize;
-        auto endMisalignment = (alignedSize & TypeAlignmentMask);
+        std::size_t endMisalignment = (alignedSize & TypeAlignmentMask);
         if (endMisalignment != 0)
             _alignedEnd = normalEnd + Alignment - endMisalignment;
         else
             _alignedEnd = normalEnd;
+
+        std::memcpy(normalData, oldNormalData, std::min(newSize, oldSize) * sizeof(Type));
+        std::free(oldData);
 
         return true;
     }
@@ -307,14 +314,14 @@ private:
     static_assert(Alignment == 0 || Alignment == 4 || Alignment == 8 || Alignment == 16 || Alignment == 32, "Bad alignment value");
     static_assert(TypeAlignment * sizeof(value_type) == Alignment || !std::is_arithmetic<value_type>::value,
                   "The alignment does not appear to be divided by the size of the arithmetic Type");
-    void* align(std::size_t alignment, std::size_t size, void *&ptr, std::size_t &space )
+    void* align(std::size_t alignment, std::size_t size, void *ptr, std::size_t &space)
     {
-        std::uintptr_t pn = reinterpret_cast< std::uintptr_t>( ptr );
-        std::uintptr_t aligned = ( pn + alignment - 1 ) & - alignment;
+        std::uintptr_t pn = reinterpret_cast<std::uintptr_t>(ptr);
+        std::uintptr_t aligned = (pn + alignment - 1) & - alignment;
         std::size_t padding = aligned - pn;
-        if ( space < size + padding ) return nullptr;
+        if (space < size + padding) return nullptr;
         space -= padding;
-        return ptr = reinterpret_cast< void * >( aligned );
+        return reinterpret_cast<void *>(aligned);
     }
 
     struct deleter {

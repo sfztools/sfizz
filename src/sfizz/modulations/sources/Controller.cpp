@@ -10,12 +10,13 @@
 #include "../../ModifierHelpers.h"
 #include "../../Resources.h"
 #include "../../Config.h"
-#include "../../Debug.h"
+#include "../../utility/Debug.h"
 #include <absl/container/flat_hash_map.h>
 
 namespace sfz {
 
 struct ControllerSource::Impl {
+    float getLastTransformedValue(uint16_t cc, uint8_t curve) const noexcept;
     double sampleRate_ = config::defaultSampleRate;
     Resources* res_ = nullptr;
     absl::flat_hash_map<ModKey, Smoother> smoother_;
@@ -29,6 +30,22 @@ ControllerSource::ControllerSource(Resources& res)
 
 ControllerSource::~ControllerSource()
 {
+}
+
+float ControllerSource::Impl::getLastTransformedValue(uint16_t cc, uint8_t curveIndex) const noexcept
+{
+    ASSERT(res_);
+    const Curve& curve = res_->curves.getCurve(curveIndex);
+    const auto lastCCValue = res_->midiState.getCCValue(cc);
+    return curve.evalNormalized(lastCCValue);
+}
+
+void ControllerSource::resetSmoothers()
+{
+    for (auto& item : impl_->smoother_) {
+        const ModKey::Parameters p = item.first.parameters();
+        item.second.reset(impl_->getLastTransformedValue(p.cc, p.curve));
+    }
 }
 
 void ControllerSource::setSampleRate(double sampleRate)
@@ -58,6 +75,7 @@ void ControllerSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, u
     if (p.smooth > 0) {
         Smoother s;
         s.setSmoothing(p.smooth, impl_->sampleRate_);
+        s.reset(impl_->getLastTransformedValue(p.cc, p.curve));
         impl_->smoother_[sourceKey] = s;
     }
     else {

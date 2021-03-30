@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Tuning.h"
-#include "Debug.h"
-#include "absl/types/optional.h"
 #include "Tunings.h" // Surge tuning library
+#include "utility/Debug.h"
+#include <absl/types/optional.h>
 #include <algorithm>
 #include <fstream>
 #include <sstream>

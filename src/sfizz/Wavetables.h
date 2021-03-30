@@ -6,9 +6,9 @@
 
 #pragma once
 #include "Config.h"
-#include "LeakDetector.h"
 #include "Buffer.h"
 #include "MathHelpers.h"
+#include "utility/LeakDetector.h"
 #include <absl/types/span.h>
 #include <absl/container/flat_hash_map.h>
 #include <array>

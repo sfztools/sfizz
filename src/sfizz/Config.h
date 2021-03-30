@@ -56,8 +56,8 @@ namespace config {
     constexpr int numVoices { 64 };
     constexpr unsigned maxVoices { 256 };
     constexpr unsigned smoothingSteps { 512 };
-    constexpr uint8_t xfadeSmoothing { 5 };
-    constexpr uint8_t gainSmoothing { 0 };
+    constexpr uint16_t xfadeSmoothing { 5 };
+    constexpr uint16_t gainSmoothing { 0 };
     constexpr unsigned powerTableSizeExponent { 11 };
     constexpr int maxFilePromises { maxVoices };
     constexpr int allSoundOffCC { 120 };
@@ -108,6 +108,11 @@ namespace config {
        finished.
      */
     constexpr float egReleaseThreshold = 1e-4;
+    /**
+       Duration of a linear transition user to smooth cases of otherwise
+       immediate level transitions. (eg. decay->sustain or release->off)
+     */
+    constexpr float egTransitionTime = 50e-3;
     /**
        Default metadata for MIDIName documents
      */
@@ -167,6 +172,22 @@ namespace config {
      * @brief The smoothing time constant per "smooth" steps
      */
     constexpr float smoothTauPerStep { 3e-3 };
+    /**
+     * @brief If a value below this threshold is given to `ampeg_sustain`, the envelope will free-run
+     * and the voice will release itself at the end of the decay stage.
+     */
+    constexpr float sustainFreeRunningThreshold { 0.0032f };
+    /**
+     * @brief Number of frames offset between the end of a block and the beginning of the next
+     * detected as a shift in the playhead position
+     *
+     */
+    constexpr int playheadMovedFrames { 16 };
+    /**
+     * @brief Max number of voices to start on release pedal up
+     *
+     */
+    constexpr unsigned delayedReleaseVoices { 16 };
 } // namespace config
 
 } // namespace sfz

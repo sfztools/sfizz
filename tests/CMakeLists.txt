@@ -1,6 +1,11 @@
 ###############################
 # Test application
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/catch2")
+
+include(CTest)
+include(Catch)
+
 set(SFIZZ_TEST_SOURCES
     DirectRegionT.cpp
     RegionValuesT.cpp
@@ -47,8 +52,7 @@ set(SFIZZ_TEST_SOURCES
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::spin_mutex sfizz::jsl)
+target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::spin_mutex sfizz::jsl sfizz::filesystem)
 sfizz_enable_lto_if_needed(sfizz_tests)
 sfizz_enable_fast_math(sfizz_tests)
-
-file(COPY "." DESTINATION ${CMAKE_BINARY_DIR}/tests)
+catch_discover_tests(sfizz_tests)

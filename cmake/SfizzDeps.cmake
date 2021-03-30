@@ -39,7 +39,11 @@ endif()
 if(SFIZZ_USE_SYSTEM_ABSEIL)
     find_package(absl REQUIRED)
 else()
-    add_subdirectory("external/abseil-cpp" EXCLUDE_FROM_ALL)
+    function(sfizz_add_vendor_abseil)
+        set(BUILD_SHARED_LIBS OFF) # only changed at local scope
+        add_subdirectory("external/abseil-cpp" EXCLUDE_FROM_ALL)
+    endfunction()
+    sfizz_add_vendor_abseil()
 endif()
 
 # The jsl utility library for C++
@@ -53,7 +57,7 @@ add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
 target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
 
 # The sndfile library
-if(SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_BENCHMARKS OR SFIZZ_RENDER)
+if(SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_DEVTOOLS OR SFIZZ_BENCHMARKS)
     add_library(sfizz_sndfile INTERFACE)
     add_library(sfizz::sndfile ALIAS sfizz_sndfile)
     if(SFIZZ_USE_VCPKG OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

@@ -5,8 +5,8 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "LeakDetector.h"
 #include "SfzHelpers.h"
+#include "utility/LeakDetector.h"
 #include <vector>
 #include <absl/algorithm/container.h>
 #include <absl/types/optional.h>

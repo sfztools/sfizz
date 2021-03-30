@@ -40,7 +40,7 @@ fi
 
 set -x
 
-brew install libsndfile dylibbundler
+brew install dylibbundler
 
 cd ~; npm install appdmg; cd -
 ~/node_modules/appdmg/bin/appdmg.js --version

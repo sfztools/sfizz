@@ -12,6 +12,7 @@
 #else
 #include <semaphore.h>
 #endif
+#include <cstdint>
 #include <system_error>
 
 class RTSemaphore {
@@ -28,10 +29,12 @@ public:
     void post();
     void wait();
     bool try_wait();
+    bool timed_wait(uint32_t milliseconds);
 
     void post(std::error_code& ec) noexcept;
     void wait(std::error_code& ec) noexcept;
     bool try_wait(std::error_code& ec) noexcept;
+    bool timed_wait(uint32_t milliseconds, std::error_code& ec) noexcept;
 
 private:
     void init(std::error_code& ec, unsigned value);

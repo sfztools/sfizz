@@ -46,10 +46,10 @@ class faust2chLpf6p : public sfzFilterDsp {
 	FAUSTFLOAT fVslider0;
 	double fConst2;
 	double fRec2[2];
-	double fRec7[2];
 	double fVec0[2];
-	double fRec8[2];
+	double fRec7[2];
 	double fVec1[2];
+	double fRec8[2];
 	double fVec2[2];
 	double fRec9[2];
 	double fRec6[2];
@@ -117,16 +117,16 @@ class faust2chLpf6p : public sfzFilterDsp {
 			fRec2[l0] = 0.0;
 		}
 		for (int l1 = 0; (l1 < 2); l1 = (l1 + 1)) {
-			fRec7[l1] = 0.0;
+			fVec0[l1] = 0.0;
 		}
 		for (int l2 = 0; (l2 < 2); l2 = (l2 + 1)) {
-			fVec0[l2] = 0.0;
+			fRec7[l2] = 0.0;
 		}
 		for (int l3 = 0; (l3 < 2); l3 = (l3 + 1)) {
-			fRec8[l3] = 0.0;
+			fVec1[l3] = 0.0;
 		}
 		for (int l4 = 0; (l4 < 2); l4 = (l4 + 1)) {
-			fVec1[l4] = 0.0;
+			fRec8[l4] = 0.0;
 		}
 		for (int l5 = 0; (l5 < 2); l5 = (l5 + 1)) {
 			fVec2[l5] = 0.0;
@@ -244,9 +244,9 @@ class faust2chLpf6p : public sfzFilterDsp {
 		FAUSTFLOAT const* input1 = inputs[1];
 		FAUSTFLOAT* output0 = outputs[0];
 		FAUSTFLOAT* output1 = outputs[1];
-		double fSlow0 = (fConst1 * std::max<double>(0.0, double(fHslider0)));
+		double fSlow0 = (fConst1 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
 		double fSlow1 = std::cos(fSlow0);
-		double fSlow2 = (0.5 * (std::sin(fSlow0) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fVslider0))))));
+		double fSlow2 = (0.5 * (std::sin(fSlow0) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(0.0, double(fVslider0))))))));
 		double fSlow3 = (fSlow2 + 1.0);
 		double fSlow4 = ((1.0 - fSlow1) / fSlow3);
 		double fSlow5 = (fSmoothEnable ? fConst2 : 0.0);
@@ -259,14 +259,14 @@ class faust2chLpf6p : public sfzFilterDsp {
 			double fTemp0 = double(input0[i]);
 			double fTemp1 = double(input1[i]);
 			fRec2[0] = (fSlow7 + (fSlow5 * fRec2[1]));
+			fVec0[0] = (fTemp0 * fRec2[0]);
 			fRec7[0] = ((fSlow5 * fRec7[1]) + fSlow8);
 			double fTemp2 = (fTemp0 * fRec7[0]);
-			fVec0[0] = fTemp2;
+			fVec1[0] = fTemp2;
 			fRec8[0] = ((fSlow5 * fRec8[1]) + fSlow9);
-			fVec1[0] = (fVec0[1] - (fRec8[0] * fRec5[1]));
-			fVec2[0] = (fTemp0 * fRec2[0]);
+			fVec2[0] = (fVec1[1] - (fRec8[0] * fRec5[1]));
 			fRec9[0] = ((fSlow5 * fRec9[1]) + fSlow10);
-			fRec6[0] = ((fVec1[1] + (fTemp2 + fVec2[1])) - (fRec9[0] * fRec6[1]));
+			fRec6[0] = ((fVec0[1] + (fTemp2 + fVec2[1])) - (fRec9[0] * fRec6[1]));
 			fRec5[0] = fRec6[0];
 			fVec3[0] = (fRec2[0] * fRec5[0]);
 			double fTemp3 = (fRec7[0] * fRec5[0]);
@@ -301,10 +301,10 @@ class faust2chLpf6p : public sfzFilterDsp {
 			fRec10[0] = fRec11[0];
 			output1[i] = FAUSTFLOAT(fRec10[0]);
 			fRec2[1] = fRec2[0];
-			fRec7[1] = fRec7[0];
 			fVec0[1] = fVec0[0];
-			fRec8[1] = fRec8[0];
+			fRec7[1] = fRec7[0];
 			fVec1[1] = fVec1[0];
+			fRec8[1] = fRec8[0];
 			fVec2[1] = fVec2[0];
 			fRec9[1] = fRec9[0];
 			fRec6[1] = fRec6[0];

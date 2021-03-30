@@ -11,7 +11,9 @@
  */
 
 #pragma once
-#include "absl/strings/string_view.h"
+#include <absl/strings/ascii.h>
+#include <absl/strings/numbers.h>
+#include <absl/strings/string_view.h>
 #include <cstdint>
 
 /**
@@ -100,4 +102,88 @@ uint64_t hashNumber(Int i, uint64_t h = Fnv1aBasis)
     static_assert(std::is_arithmetic<Int>::value,
                   "The hashed object must be of arithmetic type");
     return hash(absl::string_view(reinterpret_cast<const char*>(&i), sizeof(i)), h);
+}
+
+/**
+ * @brief Read a floating-point number from a string non-permissively
+ *
+ * @param[in]  input  a string to read from
+ * @param[out] result address of the value where the result is stored
+ * @return whether the conversion is successful
+ */
+template <class F>
+bool readFloat(absl::string_view input, F* result);
+
+template <>
+inline bool readFloat<float>(absl::string_view input, float* result)
+{
+    return absl::SimpleAtof(input, result);
+}
+
+template <>
+inline bool readFloat<double>(absl::string_view input, double* result)
+{
+    return absl::SimpleAtod(input, result);
+}
+
+/**
+ * @brief Read an integer from a string, permitting extra trailing characters.
+ *
+ * @param[in]  input  a string to read from
+ * @param[out] result address of the value where the result is stored
+ * @param[out] rest   optional address which receives the unprocessed tail of the input
+ * @return whether the conversion is successful
+ */
+template <class I>
+bool readLeadingInt(absl::string_view input, I* result, absl::string_view* rest = nullptr)
+{
+    size_t numberEnd = 0;
+
+    if (numberEnd < input.size() && (input[numberEnd] == '+' || input[numberEnd] == '-'))
+        ++numberEnd;
+
+    while (numberEnd < input.size() && absl::ascii_isdigit(input[numberEnd]))
+        ++numberEnd;
+
+    if (!absl::SimpleAtoi(input.substr(0, numberEnd), result))
+        return false;
+
+    if (rest)
+        *rest = input.substr(numberEnd);
+
+    return true;
+}
+
+/**
+ * @brief Read a floating-point number from a string, permitting extra
+ * trailing characters.
+ *
+ * @param[in]  input  a string to read from
+ * @param[out] result address of the value where the result is stored
+ * @param[out] rest   optional address which receives the unprocessed tail of the input
+ * @return whether the conversion is successful
+ */
+template <class F>
+bool readLeadingFloat(absl::string_view input, F* result, absl::string_view* rest = nullptr)
+{
+    size_t numberEnd = 0;
+
+    if (numberEnd < input.size() && (input[numberEnd] == '+' || input[numberEnd] == '-'))
+        ++numberEnd;
+    while (numberEnd < input.size() && absl::ascii_isdigit(input[numberEnd]))
+        ++numberEnd;
+
+    if (numberEnd < input.size() && input[numberEnd] == '.') {
+        ++numberEnd;
+        while (numberEnd < input.size() && absl::ascii_isdigit(input[numberEnd]))
+            ++numberEnd;
+    }
+
+    if (!readFloat(input.substr(0, numberEnd), result))
+        return false;
+
+    if (rest)
+        *rest = input.substr(numberEnd);
+
+    return true;
 }

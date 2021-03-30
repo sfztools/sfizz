@@ -335,6 +335,20 @@ TEST_CASE("[Opcode] opcode read (uint8_t)")
         REQUIRE( opcode.read(spec) == 20 );
     }
 
+    SECTION("Clamp upper (real)")
+    {
+        Opcode opcode { "", "101" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.5f), kEnforceUpperBound };
+        REQUIRE( opcode.read(spec) == 100.5f );
+    }
+
+    SECTION("Clamp lower (real)")
+    {
+        Opcode opcode { "", "19" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(19.5f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 19.5f );
+    }
+
     SECTION("Floating point")
     {
         Opcode opcode { "", "10.5" };

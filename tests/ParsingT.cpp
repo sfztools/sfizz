@@ -585,13 +585,17 @@ TEST_CASE("[Parsing] Opcode value with inline directives")
         ParsingMocker mock;
         parser.setListener(&mock);
         parser.parseString("/opcodeValueWithInlineDirective.sfz",
-R"(<region>#define $VEL v1 sample=$VEL.wav #define $FOO bar)");
+R"(
+<region>#define $VEL v1 sample=$VEL.wav #define $FOO bar
+<region>#define $VEL v2 sample=$VEL.wav #notAdirective 123
+)");
 
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
             {{"sample", "v1.wav"}},
+            {{"sample", "v2.wav #notAdirective 123"}},
         };
         std::vector<std::string> expectedHeaders = {
-            "region"
+            "region", "region"
         };
         std::vector<sfz::Opcode> expectedOpcodes;
 

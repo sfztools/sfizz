@@ -50,11 +50,15 @@ enum OpcodeFlags : int {
     kCanBeNote = 1,
     kEnforceLowerBound = 1 << 1,
     kEnforceUpperBound = 1 << 2,
-    kNormalizePercent = 1 << 3,
-    kNormalizeMidi = 1 << 4,
-    kNormalizeBend = 1 << 5,
-    kWrapPhase = 1 << 6,
-    kDb2Mag = 1 << 7,
+    kEnforceBounds = kEnforceLowerBound|kEnforceUpperBound,
+    kPermissiveLowerBound = 1 << 3,
+    kPermissiveUpperBound = 1 << 4,
+    kPermissiveBounds = kPermissiveLowerBound|kPermissiveUpperBound,
+    kNormalizePercent = 1 << 5,
+    kNormalizeMidi = 1 << 6,
+    kNormalizeBend = 1 << 7,
+    kWrapPhase = 1 << 8,
+    kDb2Mag = 1 << 9,
 };
 
 template<class T>
@@ -84,11 +88,11 @@ struct OpcodeSpec
         if (!(flags & needsOperation))
             return input;
         else if (flags & kNormalizePercent)
-            return static_cast<U>(normalizePercents(input));
+            return static_cast<U>(input / U(100));
         else if (flags & kNormalizeMidi)
-            return static_cast<U>(normalize7Bits(input));
+            return static_cast<U>(input / U(127));
         else if (flags & kNormalizeBend)
-            return static_cast<U>(normalizeBend(input));
+            return static_cast<U>(input / U(8191));
         else if (flags & kDb2Mag)
             return static_cast<U>(db2mag(input));
         else // just in case
@@ -127,13 +131,13 @@ namespace Default
     extern const OpcodeSpec<float> loopCrossfade;
     extern const OpcodeSpec<float> oscillatorPhase;
     extern const OpcodeSpec<OscillatorEnabled> oscillator;
-    extern const OpcodeSpec<int> oscillatorMode;
-    extern const OpcodeSpec<int> oscillatorMulti;
+    extern const OpcodeSpec<int32_t> oscillatorMode;
+    extern const OpcodeSpec<int32_t> oscillatorMulti;
     extern const OpcodeSpec<float> oscillatorDetune;
     extern const OpcodeSpec<float> oscillatorDetuneMod;
     extern const OpcodeSpec<float> oscillatorModDepth;
     extern const OpcodeSpec<float> oscillatorModDepthMod;
-    extern const OpcodeSpec<int> oscillatorQuality;
+    extern const OpcodeSpec<int32_t> oscillatorQuality;
     extern const OpcodeSpec<uint32_t> group;
     extern const OpcodeSpec<float> offTime;
     extern const OpcodeSpec<uint32_t> polyphony;
@@ -151,15 +155,17 @@ namespace Default
     extern const OpcodeSpec<float> hiNormalized;
     extern const OpcodeSpec<float> loBipolar;
     extern const OpcodeSpec<float> hiBipolar;
-    extern const OpcodeSpec<uint8_t> loChannelAftertouch;
-    extern const OpcodeSpec<uint8_t> hiChannelAftertouch;
+    extern const OpcodeSpec<float> loChannelAftertouch;
+    extern const OpcodeSpec<float> hiChannelAftertouch;
     extern const OpcodeSpec<uint16_t> ccNumber;
     extern const OpcodeSpec<uint8_t> curveCC;
-    extern const OpcodeSpec<uint8_t> smoothCC;
+    extern const OpcodeSpec<uint16_t> smoothCC;
     extern const OpcodeSpec<uint8_t> sustainCC;
+    extern const OpcodeSpec<uint8_t> sostenutoCC;
     extern const OpcodeSpec<bool> checkSustain;
     extern const OpcodeSpec<bool> checkSostenuto;
     extern const OpcodeSpec<float> sustainThreshold;
+    extern const OpcodeSpec<float> sostenutoThreshold;
     extern const OpcodeSpec<float> loBPM;
     extern const OpcodeSpec<float> hiBPM;
     extern const OpcodeSpec<uint8_t> sequence;
@@ -173,10 +179,6 @@ namespace Default
     extern const OpcodeSpec<float> positionMod;
     extern const OpcodeSpec<float> width;
     extern const OpcodeSpec<float> widthMod;
-    extern const OpcodeSpec<float> crossfadeIn;
-    extern const OpcodeSpec<float> crossfadeInNorm;
-    extern const OpcodeSpec<float> crossfadeOut;
-    extern const OpcodeSpec<float> crossfadeOutNorm;
     extern const OpcodeSpec<float> ampKeytrack;
     extern const OpcodeSpec<float> ampVeltrack;
     extern const OpcodeSpec<float> ampVelcurve;
@@ -190,8 +192,8 @@ namespace Default
     extern const OpcodeSpec<float> filterGain;
     extern const OpcodeSpec<float> filterGainMod;
     extern const OpcodeSpec<float> filterRandom;
-    extern const OpcodeSpec<int> filterKeytrack;
-    extern const OpcodeSpec<int> filterVeltrack;
+    extern const OpcodeSpec<float> filterKeytrack;
+    extern const OpcodeSpec<float> filterVeltrack;
     extern const OpcodeSpec<float> eqBandwidth;
     extern const OpcodeSpec<float> eqBandwidthMod;
     extern const OpcodeSpec<float> eqFrequency;
@@ -200,15 +202,18 @@ namespace Default
     extern const OpcodeSpec<float> eqGainMod;
     extern const OpcodeSpec<float> eqVel2Frequency;
     extern const OpcodeSpec<float> eqVel2Gain;
-    extern const OpcodeSpec<int> pitchKeytrack;
+    extern const OpcodeSpec<float> pitchKeytrack;
     extern const OpcodeSpec<float> pitchRandom;
-    extern const OpcodeSpec<int> pitchVeltrack;
-    extern const OpcodeSpec<int> transpose;
+    extern const OpcodeSpec<float> pitchVeltrack;
+    extern const OpcodeSpec<float> transpose;
     extern const OpcodeSpec<float> pitch;
     extern const OpcodeSpec<float> pitchMod;
     extern const OpcodeSpec<float> bendUp;
     extern const OpcodeSpec<float> bendDown;
     extern const OpcodeSpec<float> bendStep;
+    extern const OpcodeSpec<float> ampLFODepth;
+    extern const OpcodeSpec<float> pitchLFODepth;
+    extern const OpcodeSpec<float> filLFODepth;
     extern const OpcodeSpec<float> lfoFreq;
     extern const OpcodeSpec<float> lfoFreqMod;
     extern const OpcodeSpec<float> lfoBeats;
@@ -216,8 +221,8 @@ namespace Default
     extern const OpcodeSpec<float> lfoPhase;
     extern const OpcodeSpec<float> lfoDelay;
     extern const OpcodeSpec<float> lfoFade;
-    extern const OpcodeSpec<unsigned> lfoCount;
-    extern const OpcodeSpec<unsigned> lfoSteps;
+    extern const OpcodeSpec<uint32_t> lfoCount;
+    extern const OpcodeSpec<uint32_t> lfoSteps;
     extern const OpcodeSpec<float> lfoStepX;
     extern const OpcodeSpec<LFOWave> lfoWave;
     extern const OpcodeSpec<float> lfoOffset;
@@ -231,14 +236,14 @@ namespace Default
     extern const OpcodeSpec<float> egDepth;
     extern const OpcodeSpec<float> egVel2Depth;
     extern const OpcodeSpec<bool> flexEGAmpeg;
-    extern const OpcodeSpec<int> flexEGDynamic;
-    extern const OpcodeSpec<int> flexEGSustain;
+    extern const OpcodeSpec<bool> flexEGDynamic;
+    extern const OpcodeSpec<int32_t> flexEGSustain;
     extern const OpcodeSpec<float> flexEGPointTime;
     extern const OpcodeSpec<float> flexEGPointLevel;
     extern const OpcodeSpec<float> flexEGPointShape;
-    extern const OpcodeSpec<int> sampleQuality;
-    extern const OpcodeSpec<int> octaveOffset;
-    extern const OpcodeSpec<int> noteOffset;
+    extern const OpcodeSpec<int32_t> sampleQuality;
+    extern const OpcodeSpec<int32_t> octaveOffset;
+    extern const OpcodeSpec<int32_t> noteOffset;
     extern const OpcodeSpec<float> effect;
     extern const OpcodeSpec<float> effectPercent;
     extern const OpcodeSpec<LFOWave> apanWaveform;
@@ -247,7 +252,7 @@ namespace Default
     extern const OpcodeSpec<float> apanLevel;
     extern const OpcodeSpec<float> distoTone;
     extern const OpcodeSpec<float> distoDepth;
-    extern const OpcodeSpec<unsigned> distoStages;
+    extern const OpcodeSpec<uint32_t> distoStages;
     extern const OpcodeSpec<float> compAttack;
     extern const OpcodeSpec<float> compRelease;
     extern const OpcodeSpec<float> compThreshold;
@@ -266,7 +271,7 @@ namespace Default
     extern const OpcodeSpec<float> lofiBitred;
     extern const OpcodeSpec<float> lofiDecim;
     extern const OpcodeSpec<float> rectify;
-    extern const OpcodeSpec<unsigned> stringsNumber;
+    extern const OpcodeSpec<uint32_t> stringsNumber;
     extern const OpcodeSpec<Trigger> trigger;
     extern const OpcodeSpec<OffMode> offMode;
     extern const OpcodeSpec<LoopMode> loopMode;

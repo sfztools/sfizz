@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SynthPrivate.h"
-#include "StringViewHelpers.h"
+#include "utility/StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
 
@@ -42,6 +42,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             const BitArray<128>& keys = impl.keySlots_;
             sfizz_blob_t blob { keys.data(), static_cast<uint32_t>(keys.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/key%d/label", "") {
+            if (indices[0] >= 128)
+                break;
+            const std::string* label = impl.getKeyLabel(indices[0]);
+            client.receive<'s'>(delay, path, label ? label->c_str() : "");
         } break;
 
         //----------------------------------------------------------------------
@@ -374,9 +381,9 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/chanaft_range", "") {
             GET_REGION_OR_BREAK(indices[0])
             sfizz_arg_t args[2];
-            args[0].i = region.aftertouchRange.getStart();
-            args[1].i = region.aftertouchRange.getEnd();
-            client.receive(delay, path, "ii", args);
+            args[0].f = region.aftertouchRange.getStart();
+            args[1].f = region.aftertouchRange.getEnd();
+            client.receive(delay, path, "ff", args);
         } break;
 
         MATCH("/region&/bpm_range", "") {
@@ -1035,9 +1042,19 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, region.sustainCC);
         } break;
 
+        MATCH("/region&/sostenuto_cc", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.sostenutoCC);
+        } break;
+
         MATCH("/region&/sustain_lo", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.sustainThreshold);
+        } break;
+
+        MATCH("/region&/sostenuto_lo", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'f'>(delay, path, region.sostenutoThreshold);
         } break;
 
         MATCH("/region&/oscillator_phase", "") {
@@ -1247,8 +1264,8 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             switch (eq.type) {
             case EqType::kEqNone: client.receive<'s'>(delay, path, "none"); break;
             case EqType::kEqPeak: client.receive<'s'>(delay, path, "peak"); break;
-            case EqType::kEqLowShelf: client.receive<'s'>(delay, path, "lshelf"); break;
-            case EqType::kEqHighShelf: client.receive<'s'>(delay, path, "hshelf"); break;
+            case EqType::kEqLshelf: client.receive<'s'>(delay, path, "lshelf"); break;
+            case EqType::kEqHshelf: client.receive<'s'>(delay, path, "hshelf"); break;
             }
         } break;
 

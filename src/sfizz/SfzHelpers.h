@@ -5,17 +5,17 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include <absl/types/optional.h>
-#include <absl/strings/string_view.h>
-#include <absl/algorithm/container.h>
-//#include <string>
-#include <array>
-#include <cmath>
-#include "Macros.h"
 #include "Config.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
-#include "absl/meta/type_traits.h"
+#include "utility/Macros.h"
+//#include <string>
+#include <array>
+#include <cmath>
+#include <absl/types/optional.h>
+#include <absl/strings/string_view.h>
+#include <absl/algorithm/container.h>
+#include <absl/meta/type_traits.h>
 
 namespace sfz {
 
@@ -168,7 +168,7 @@ constexpr float normalizeVelocity(T velocity)
 template <class T>
 constexpr float normalizePercents(T percentValue)
 {
-    return percentValue * 0.01f;
+    return percentValue / 100.0f;
 }
 
 /**

@@ -9,9 +9,7 @@
 #include "../../Synth.h"
 #include "../../Voice.h"
 #include "../../Config.h"
-#include "../../Debug.h"
-
-// TODO(jpc): also matrix the ampeg
+#include "../../utility/Debug.h"
 
 namespace sfz {
 

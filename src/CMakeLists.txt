@@ -24,8 +24,12 @@ set(SFIZZ_HEADERS
     sfizz/CCMap.h
     sfizz/Config.h
     sfizz/Curve.h
-    sfizz/Debug.h
+    sfizz/utility/Debug.h
+    sfizz/utility/LeakDetector.h
+    sfizz/utility/Macros.h
     sfizz/utility/NumericId.h
+    sfizz/utility/StringViewHelpers.h
+    sfizz/utility/SwapAndPop.h
     sfizz/utility/XmlHelpers.h
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
@@ -103,7 +107,6 @@ set(SFIZZ_HEADERS
     sfizz/SIMDHelpers.h
     sfizz/SisterVoiceRing.h
     sfizz/Smoothers.h
-    sfizz/SwapAndPop.h
     sfizz/Synth.h
     sfizz/SynthConfig.h
     sfizz/SynthPrivate.h
@@ -190,15 +193,12 @@ sfizz_add_simd_sources(SFIZZ_SOURCES ".")
 # Parser core library
 set(SFIZZ_PARSER_HEADERS
     sfizz/Defaults.h
-    sfizz/LeakDetector.h
     sfizz/Range.h
     sfizz/Opcode.h
-    sfizz/Macros.h
     sfizz/parser/Parser.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
-    sfizz/SfzHelpers.h
-    sfizz/StringViewHelpers.h)
+    sfizz/SfzHelpers.h)
 
 set(SFIZZ_PARSER_SOURCES
     sfizz/Opcode.cpp
@@ -242,6 +242,26 @@ if(SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions(sfizz_messaging PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
 
+# Import library
+set(SFIZZ_IMPORT_HEADERS
+    sfizz/import/ForeignInstrument.h
+    sfizz/import/foreign_instruments/AudioFile.h
+    sfizz/import/foreign_instruments/DecentSampler.h)
+
+set(SFIZZ_IMPORT_SOURCES
+    sfizz/import/ForeignInstrument.cpp
+    sfizz/import/foreign_instruments/AudioFile.cpp
+    sfizz/import/foreign_instruments/DecentSampler.cpp)
+
+add_library(sfizz_import STATIC)
+add_library(sfizz::import ALIAS sfizz_import)
+target_sources(sfizz_import PRIVATE
+    ${SFIZZ_IMPORT_HEADERS} ${SFIZZ_IMPORT_SOURCES})
+target_include_directories(sfizz_import PUBLIC ".")
+target_link_libraries(sfizz_import
+    PUBLIC absl::strings absl::memory sfizz::filesystem
+    PRIVATE sfizz::internal sfizz::pugixml)
+
 # Sfizz spinlock mutex
 add_library(sfizz_spin_mutex STATIC
     sfizz/utility/spin_mutex/spin_mutex.h
@@ -278,7 +298,7 @@ endif()
 sfizz_enable_fast_math(sfizz_internal)
 
 # Sfizz static library
-add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sfizz_private.hpp)
 add_library(sfizz::static ALIAS sfizz_static)
 target_include_directories(sfizz_static PUBLIC .)
 target_link_libraries(sfizz_static PRIVATE sfizz::internal)

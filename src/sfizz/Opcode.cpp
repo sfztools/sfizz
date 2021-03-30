@@ -6,11 +6,12 @@
 
 #include "Opcode.h"
 #include "LFODescription.h"
-#include "StringViewHelpers.h"
-#include "Debug.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "utility/StringViewHelpers.h"
+#include "utility/Debug.h"
+#include <absl/strings/ascii.h>
+#include <absl/strings/match.h>
+#include <absl/strings/str_cat.h>
+#include <limits>
 #include <iostream>
 #include <cctype>
 #include <cassert>
@@ -51,6 +52,28 @@ static absl::string_view extractBackInteger(absl::string_view opcodeName)
     size_t i = n;
     while (i > 0 && absl::ascii_isdigit(opcodeName[i - 1])) --i;
     return opcodeName.substr(i);
+}
+
+std::string Opcode::getLetterOnlyName() const
+{
+    absl::string_view name { this->name };
+
+    std::string letterOnlyName;
+    letterOnlyName.reserve(name.size());
+
+    bool charWasDigit = false;
+    for (unsigned char c : name) {
+        bool charIsDigit = absl::ascii_isdigit(c);
+
+        if (!charIsDigit)
+            letterOnlyName.push_back(c);
+        else if (!charWasDigit)
+            letterOnlyName.push_back('&');
+
+        charWasDigit = charIsDigit;
+    }
+
+    return letterOnlyName;
 }
 
 std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) const
@@ -122,34 +145,38 @@ OpcodeCategory Opcode::identifyCategory(absl::string_view name)
 template <typename T>
 absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
 {
-    size_t numberEnd = 0;
-
-    if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
-        ++numberEnd;
-
-    while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
-        ++numberEnd;
-
-    if (numberEnd == 0 && (spec.flags & kCanBeNote))
-        return readNoteValue(v);
-
-    v = v.substr(0, numberEnd);
+    using Limits = std::numeric_limits<T>;
 
     int64_t returnedValue;
-    if (!absl::SimpleAtoi(v, &returnedValue))
+    bool readValueSuccess = false;
+
+    if (readLeadingInt(v, &returnedValue))
+        readValueSuccess = true;
+
+    if (!readValueSuccess && (spec.flags & kCanBeNote)) {
+        if (absl::optional<uint8_t> noteValue = readNoteValue(v)) {
+            returnedValue = *noteValue;
+            readValueSuccess = true;
+        }
+    }
+
+    if (!readValueSuccess)
         return absl::nullopt;
 
     if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveUpperBound))
+            return absl::nullopt;
     } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveLowerBound))
+            return absl::nullopt;
     }
+
+    returnedValue = std::max<int64_t>(returnedValue, Limits::min());
+    returnedValue = std::min<int64_t>(returnedValue, Limits::max());
 
     return static_cast<T>(returnedValue);
 }
@@ -173,40 +200,28 @@ INSTANTIATE_FOR_INTEGRAL(int64_t)
 template <typename T>
 absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
 {
-    size_t numberEnd = 0;
-
-    if (numberEnd < v.size() && (v[numberEnd] == '+' || v[numberEnd] == '-'))
-        ++numberEnd;
-    while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
-        ++numberEnd;
-
-    if (numberEnd < v.size() && v[numberEnd] == '.') {
-        ++numberEnd;
-        while (numberEnd < v.size() && absl::ascii_isdigit(v[numberEnd]))
-            ++numberEnd;
-    }
-
-    v = v.substr(0, numberEnd);
-
-    float returnedValue;
-    if (!absl::SimpleAtof(v, &returnedValue))
+    T returnedValue;
+    if (!readLeadingFloat(v, &returnedValue))
         return absl::nullopt;
 
     if (spec.flags & kWrapPhase)
         returnedValue = wrapPhase(returnedValue);
-    else if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
+
+    if (returnedValue > spec.bounds.getEnd()) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
-
-        return absl::nullopt;
-    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
+        else if (!(spec.flags & kPermissiveUpperBound))
+            return absl::nullopt;
+    } else if (returnedValue < spec.bounds.getStart()) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
-
-        return absl::nullopt;
+        else if (!(spec.flags & kPermissiveLowerBound))
+            return absl::nullopt;
     }
 
-    return spec.normalizeInput(returnedValue);
+    returnedValue = spec.normalizeInput(returnedValue);
+
+    return returnedValue;
 }
 
 #define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
@@ -377,8 +392,8 @@ absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>) const
 {
     switch (hash(value)) {
     case hash("peak"): return kEqPeak;
-    case hash("lshelf"): return kEqLowShelf;
-    case hash("hshelf"): return kEqHighShelf;
+    case hash("lshelf"): return kEqLshelf;
+    case hash("hshelf"): return kEqHshelf;
     }
 
     DBG("Unknown EQ type: " << value);

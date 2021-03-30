@@ -21,6 +21,10 @@ public:
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
+    /**
+     * @brief Reset the smoothers.
+     */
+    void resetSmoothers();
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

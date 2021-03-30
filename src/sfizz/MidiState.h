@@ -6,6 +6,7 @@
 
 #pragma once
 #include <array>
+#include <bitset>
 #include "CCMap.h"
 #include "Range.h"
 
@@ -130,11 +131,27 @@ public:
     /**
      * @brief Advances the internal clock of a given amount of samples.
      * You should call this at each callback. This will flush the events
-     * in the midistate memory.
+     * in the midistate memory by calling flushEvents().
      *
      * @param numSamples the number of samples of clock advance
      */
     void advanceTime(int numSamples) noexcept;
+
+    /**
+     * @brief Flush events in all states, keeping only the last one as the "base" state
+     *
+     */
+    void flushEvents() noexcept;
+
+    /**
+     * @brief Check if a note is currently depressed
+     *
+     * @param noteNumber
+     * @return true
+     * @return false
+     */
+    bool isNotePressed(int noteNumber) const noexcept { return noteStates[noteNumber]; }
+
     /**
      * @brief Get the CC value for CC number
      *
@@ -183,6 +200,12 @@ private:
      */
 
     MidiNoteArray<unsigned> noteOffTimes { {} };
+
+    /**
+     * @brief Store the note states
+     *
+     */
+    std::bitset<128> noteStates;
 
     /**
      * @brief Stores the velocity of the note ons for currently

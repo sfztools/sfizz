@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Logger.h"
-#include "Debug.h"
-#include "absl/algorithm/container.h"
-#include "ghc/fs_std.hpp"
+#include "utility/Debug.h"
+#include <ghc/fs_std.hpp>
+#include <absl/algorithm/container.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>

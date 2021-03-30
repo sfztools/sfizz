@@ -23,8 +23,8 @@ Potential extensions (like ARIA)
 #include "Filter.h"
 #include "Opcode.h"
 #include "SIMDHelpers.h"
-#include "Debug.h"
-#include "absl/memory/memory.h"
+#include "utility/Debug.h"
+#include <absl/memory/memory.h>
 
 namespace sfz {
 namespace fx {

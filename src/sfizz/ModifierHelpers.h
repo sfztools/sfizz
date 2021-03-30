@@ -15,14 +15,14 @@ namespace sfz {
 /**
  * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
  */
-template <class T, class U>
-float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, CrossfadeCurve curve)
+template <class T, bool C, class U>
+float crossfadeIn(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurve curve)
 {
     if (value < crossfadeRange.getStart())
         return 0.0f;
 
     const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
+    if (length <= 0.0f)
         return 1.0f;
 
     else if (value < crossfadeRange.getEnd()) {
@@ -39,14 +39,14 @@ float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, CrossfadeCurve c
 /**
  * @brief Compute a crossfade out value with respect to a crossfade range (note, velocity, cc, ...)
  */
-template <class T, class U>
-float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, CrossfadeCurve curve)
+template <class T, bool C, class U>
+float crossfadeOut(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurve curve)
 {
     if (value > crossfadeRange.getEnd())
         return 0.0f;
 
     const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
+    if (length <= 0.0f)
         return 1.0f;
 
     else if (value > crossfadeRange.getStart()) {

@@ -62,6 +62,7 @@ if(WIN32)
 endif()
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE sfizz::sfizz
+    PRIVATE sfizz::import
     PRIVATE sfizz::editor
     PRIVATE sfizz::plugins-common
     PRIVATE sfizz::pugixml sfizz::filesystem)
@@ -200,7 +201,8 @@ elseif(SFIZZ_AU)
         "${APPLE_COREMIDI_LIBRARY}")
 
     target_link_libraries(${AUPLUGIN_PRJ_NAME}
-        PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
+        PRIVATE sfizz::sfizz
+        PRIVATE sfizz::import
         PRIVATE sfizz::editor
         PRIVATE sfizz::plugins-common
         PRIVATE sfizz::pugixml sfizz::filesystem)

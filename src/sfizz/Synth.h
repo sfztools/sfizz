@@ -6,10 +6,10 @@
 
 #pragma once
 #include "AudioSpan.h"
-#include "LeakDetector.h"
 #include "Resources.h"
 #include "Messaging.h"
 #include "utility/NumericId.h"
+#include "utility/LeakDetector.h"
 #include "parser/Parser.h"
 #include <ghc/fs_std.hpp>
 #include <absl/strings/string_view.h>
@@ -389,6 +389,14 @@ public:
      * @param aftertouch the aftertouch value
      */
     void aftertouch(int delay, uint8_t aftertouch) noexcept;
+    /**
+     * @brief Send a high precision aftertouch event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock().
+     * @param normAftertouch the normalized aftertouch value, in domain 0 to 1
+     */
+    void hdAftertouch(int delay, float normAftertouch) noexcept;
     /**
      * @brief Send a tempo event to the synth
      *

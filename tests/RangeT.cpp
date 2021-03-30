@@ -12,13 +12,9 @@ TEST_CASE("[Range] Equality operators")
 {
     sfz::Range<int> intRange { 1, 1 };
     REQUIRE(intRange == sfz::Range<int>(1, 1));
-    REQUIRE(intRange == std::pair<int, int>(1, 1));
-    REQUIRE(std::pair<int, int>(1, 1) == intRange);
 
     sfz::Range<float> floatRange { 1.0f, 1.0f };
     REQUIRE(floatRange == sfz::Range<float>(1.0f, 1.0f));
-    REQUIRE(floatRange == std::pair<float, float>(1.0f, 1.0f));
-    REQUIRE(std::pair<float, float>(1.0f, 1.0f) == floatRange);
 }
 
 TEST_CASE("[Range] Default ranges for classical types")
@@ -60,6 +56,32 @@ TEST_CASE("[Range] Contains")
     REQUIRE(floatRange.containsWithEnd(1.0));
     REQUIRE(floatRange.containsWithEnd(5.0));
     REQUIRE(floatRange.containsWithEnd(10.0));
+}
+
+TEST_CASE("[Range] Unchecked ranges")
+{
+    sfz::UncheckedRange<int> intRange { 10, 1 };
+    REQUIRE(intRange.getStart() == 10);
+    REQUIRE(intRange.getEnd() == 1);
+    REQUIRE(!intRange.isValid());
+    for (int v : {0, 1, 5, 10}) {
+        REQUIRE(!intRange.contains(v));
+        REQUIRE(!intRange.containsWithEnd(v));
+    }
+
+    sfz::UncheckedRange<float> floatRange { 10.0, 1.0 };
+    REQUIRE(floatRange.getStart() == 10.0f);
+    REQUIRE(floatRange.getEnd() == 1.0f);
+    REQUIRE(!floatRange.isValid());
+    for (float v : {0.0f, 1.0f, 5.0f, 10.0f}) {
+        REQUIRE(!floatRange.contains(v));
+        REQUIRE(!floatRange.containsWithEnd(v));
+    }
+
+    REQUIRE(sfz::UncheckedRange<int> { 1, 10 }.isValid());
+    REQUIRE(sfz::UncheckedRange<int> { 1, 1 }.isValid());
+    REQUIRE(sfz::UncheckedRange<float> { 1.0, 10.0 }.isValid());
+    REQUIRE(sfz::UncheckedRange<float> { 10.0, 10.0 }.isValid());
 }
 
 TEST_CASE("[Range] Clamp")

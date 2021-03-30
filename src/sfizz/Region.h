@@ -7,7 +7,6 @@
 #pragma once
 #include "CCMap.h"
 #include "Curve.h"
-#include "LeakDetector.h"
 #include "Defaults.h"
 #include "EGDescription.h"
 #include "FlexEGDescription.h"
@@ -19,6 +18,7 @@
 #include "MidiState.h"
 #include "FileId.h"
 #include "utility/NumericId.h"
+#include "utility/LeakDetector.h"
 #include "modulations/ModKey.h"
 #include "absl/types/optional.h"
 #include "absl/strings/string_view.h"
@@ -150,7 +150,7 @@ struct Region {
      *
      * @param aftertouch
      */
-    void registerAftertouch(uint8_t aftertouch) noexcept;
+    void registerAftertouch(float aftertouch) noexcept;
     /**
      * @brief Register tempo
      *
@@ -247,6 +247,26 @@ struct Region {
      */
     bool parseOpcode(const Opcode& opcode);
     /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
+     * amplfo, pitchlfo, fillfo.
+     *
+     * @param opcode
+     * @param lfo
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcode(const Opcode& opcode, LFODescription& lfo);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
+     * amplfo, pitchlfo, fillfo.
+     *
+     * @param opcode
+     * @param lfo
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcode(const Opcode& opcode, absl::optional<LFODescription>& lfo);
+    /**
      * @brief Parse a opcode which is specific to a particular SFZv1 EG:
      * ampeg, pitcheg, fileg.
      *
@@ -266,6 +286,22 @@ struct Region {
      * @return false
      */
     bool parseEGOpcode(const Opcode& opcode, absl::optional<EGDescription>& eg);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv2 LFO: lfoN.
+     *
+     * @param opcode
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseLFOOpcodeV2(const Opcode& opcode);
+    /**
+     * @brief Parse a opcode which is specific to a particular SFZv2 EG: egN.
+     *
+     * @param opcode
+     * @return true if the opcode was properly read and stored.
+     * @return false
+     */
+    bool parseEGOpcodeV2(const Opcode& opcode);
     /**
      * @brief Process a generic CC opcode, and fill the modulation parameters.
      *
@@ -328,7 +364,7 @@ struct Region {
     uint32_t sampleEnd { Default::sampleEnd }; // end
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<LoopMode> loopMode {}; // loopmode
-    Range<uint32_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    UncheckedRange<uint32_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
     absl::optional<uint32_t> loopCount {}; // count
     float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 
@@ -353,14 +389,14 @@ struct Region {
     bool rtDead { Default::rtDead };
 
     // Region logic: key mapping
-    Range<uint8_t> keyRange { Default::loKey, Default::hiKey }; //lokey, hikey and key
-    Range<float> velocityRange { Default::loVel, Default::hiVel }; // hivel and lovel
+    UncheckedRange<uint8_t> keyRange { Default::loKey, Default::hiKey }; //lokey, hikey and key
+    UncheckedRange<float> velocityRange { Default::loVel, Default::hiVel }; // hivel and lovel
 
     // Region logic: MIDI conditions
-    Range<float> bendRange { Default::loBend, Default::hiBend }; // hibend and lobend
-    CCMap<Range<float>> ccConditions {{ Default::loCC, Default::hiCC }};
+    UncheckedRange<float> bendRange { Default::loBend, Default::hiBend }; // hibend and lobend
+    CCMap<UncheckedRange<float>> ccConditions {{ Default::loCC, Default::hiCC }};
     absl::optional<uint8_t> lastKeyswitch {}; // sw_last
-    absl::optional<Range<uint8_t>> lastKeyswitchRange {}; // sw_last
+    absl::optional<UncheckedRange<uint8_t>> lastKeyswitchRange {}; // sw_last
     absl::optional<std::string> keyswitchLabel {};
     absl::optional<uint8_t> upKeyswitch {}; // sw_up
     absl::optional<uint8_t> downKeyswitch {}; // sw_down
@@ -370,18 +406,20 @@ struct Region {
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
     uint16_t sustainCC { Default::sustainCC }; // sustain_cc
+    uint16_t sostenutoCC { Default::sostenutoCC }; // sustain_cc
     float sustainThreshold { Default::sustainThreshold }; // sustain_cc
+    float sostenutoThreshold { Default::sostenutoThreshold }; // sustain_cc
 
     // Region logic: internal conditions
-    Range<uint8_t> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
-    Range<float> bpmRange { Default::loBPM, Default::hiBPM }; // hibpm and lobpm
-    Range<float> randRange { Default::loNormalized, Default::hiNormalized }; // hirand and lorand
+    UncheckedRange<float> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
+    UncheckedRange<float> bpmRange { Default::loBPM, Default::hiBPM }; // hibpm and lobpm
+    UncheckedRange<float> randRange { Default::loNormalized, Default::hiNormalized }; // hirand and lorand
     uint8_t sequenceLength { Default::sequence }; // seq_length
     uint8_t sequencePosition { Default::sequence }; // seq_position
 
     // Region logic: triggers
     Trigger trigger { Default::trigger }; // trigger
-    CCMap<Range<float>> ccTriggers {{ Default::loCC, Default::hiCC }}; // on_loccN on_hiccN
+    CCMap<UncheckedRange<float>> ccTriggers {{ Default::loCC, Default::hiCC }}; // on_loccN on_hiccN
 
     // Performance parameters: amplifier
     float volume { Default::volume }; // volume
@@ -395,15 +433,15 @@ struct Region {
     std::vector<std::pair<uint8_t, float>> velocityPoints; // amp_velcurve_N
     absl::optional<Curve> velCurve {};
     float ampRandom { Default::ampRandom }; // amp_random
-    Range<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
-    Range<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
-    Range<float> crossfadeVelInRange { Default::crossfadeVelInRange };
-    Range<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
+    UncheckedRange<uint8_t> crossfadeKeyInRange { Default::crossfadeKeyInRange };
+    UncheckedRange<uint8_t> crossfadeKeyOutRange { Default::crossfadeKeyOutRange };
+    UncheckedRange<float> crossfadeVelInRange { Default::crossfadeVelInRange };
+    UncheckedRange<float> crossfadeVelOutRange { Default::crossfadeVelOutRange };
     CrossfadeCurve crossfadeKeyCurve { Default::crossfadeCurve };
     CrossfadeCurve crossfadeVelCurve { Default::crossfadeCurve };
     CrossfadeCurve crossfadeCCCurve { Default::crossfadeCurve };
-    CCMap<Range<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
-    CCMap<Range<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
+    CCMap<UncheckedRange<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
+    CCMap<UncheckedRange<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
 
     float globalAmplitude { 1.0 }; // global_amplitude
@@ -420,15 +458,15 @@ struct Region {
     // Performance parameters: pitch
     uint8_t pitchKeycenter { Default::key }; // pitch_keycenter
     bool pitchKeycenterFromSample { false };
-    int pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
+    float pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
     float pitchRandom { Default::pitchRandom }; // pitch_random
-    int pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
-    int transpose { Default::transpose }; // transpose
+    float pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
+    float transpose { Default::transpose }; // transpose
     float pitch { Default::pitch }; // tune
     float bendUp { Default::bendUp };
     float bendDown { Default::bendDown };
     float bendStep { Default::bendStep };
-    uint8_t bendSmooth { Default::smoothCC };
+    uint16_t bendSmooth { Default::smoothCC };
 
     // Envelopes
     EGDescription amplitudeEG;
@@ -441,6 +479,9 @@ struct Region {
 
     // LFOs
     std::vector<LFODescription> lfos;
+    absl::optional<LFODescription> amplitudeLFO;
+    absl::optional<LFODescription> pitchLFO;
+    absl::optional<LFODescription> filterLFO;
 
     bool hasStereoSample { false };
 
@@ -455,6 +496,7 @@ struct Region {
         ModKey source;
         ModKey target;
         float sourceDepth = 0.0f;
+        ModKey sourceDepthMod;
         float velToDepth = 0.0f;
     };
     std::vector<Connection> connections;
@@ -466,7 +508,16 @@ struct Region {
     RegionSet* parent { nullptr };
 
     // Started notes
-    std::vector<std::pair<int, float>> delayedReleases;
+    bool sustainPressed { false };
+    bool sostenutoPressed { false };
+    std::vector<std::pair<int, float>> delayedSustainReleases;
+    std::vector<std::pair<int, float>> delayedSostenutoReleases;
+    void delaySustainRelease(int noteNumber, float velocity) noexcept;
+    void delaySostenutoRelease(int noteNumber, float velocity) noexcept;
+    void storeSostenutoNotes() noexcept;
+    void removeFromSostenutoReleases(int noteNumber) noexcept;
+    bool isNoteSustained(int noteNumber) const noexcept;
+    bool isNoteSostenutoed(int noteNumber) const noexcept;
 
     const MidiState& midiState;
     bool keySwitched { true };

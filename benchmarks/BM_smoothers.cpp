@@ -34,24 +34,24 @@ public:
     std::vector<float> output;
 };
 
-BENCHMARK_DEFINE_F(SmootherFixture, Linear) (benchmark::State& state)
+BENCHMARK_DEFINE_F(SmootherFixture, OnePole) (benchmark::State& state)
 {
-    sfz::Smoother smoother;
+    sfz::OnePoleSmoother smoother;
     smoother.setSmoothing(10, sfz::config::defaultSampleRate);
     for (auto _ : state) {
         smoother.process(input, absl::MakeSpan(output));
     }
 }
 
-// BENCHMARK_DEFINE_F(SmootherFixture, Multiplicative)(benchmark::State& state) {
-//     sfz::MultiplicativeSmoother smoother;
-//     smoother.setSmoothing(10, sfz::config::defaultSampleRate);
-//     for (auto _ : state)
-//     {
-//         smoother.process(input, absl::MakeSpan(output));
-//     }
-// }
+BENCHMARK_DEFINE_F(SmootherFixture, Linear) (benchmark::State& state)
+{
+    sfz::LinearSmoother smoother;
+    smoother.setSmoothing(10, sfz::config::defaultSampleRate);
+    for (auto _ : state) {
+        smoother.process(input, absl::MakeSpan(output));
+    }
+}
 
+BENCHMARK_REGISTER_F(SmootherFixture, OnePole)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_REGISTER_F(SmootherFixture, Linear)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
-// BENCHMARK_REGISTER_F(SmootherFixture, Multiplicative)->RangeMultiplier(4)->Range(1 << 2, 1 << 12);
 BENCHMARK_MAIN();

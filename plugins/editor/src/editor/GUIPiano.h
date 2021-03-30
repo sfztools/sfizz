@@ -29,13 +29,13 @@ public:
     void setKeyswitchUsed(unsigned key, bool used);
     void setKeyValue(unsigned key, float value);
 
-    enum class KeyRole {
-        Unused,
-        Note,
-        Switch,
+    enum KeyRole : int {
+        Unused = 0,
+        Note   = 1 << 0,
+        Switch = 1 << 1,
     };
 
-    KeyRole getKeyRole(unsigned key);
+    int getKeyRole(unsigned key);
 
     std::function<void(unsigned, float)> onKeyPressed;
     std::function<void(unsigned, float)> onKeyReleased;

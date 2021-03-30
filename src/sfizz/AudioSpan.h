@@ -8,9 +8,9 @@
 #include "AudioBuffer.h"
 #include "Buffer.h"
 #include "Config.h"
-#include "Debug.h"
-#include "LeakDetector.h"
 #include "SIMDHelpers.h"
+#include "utility/Debug.h"
+#include "utility/LeakDetector.h"
 #include "absl/types/span.h"
 #include <array>
 #include <initializer_list>

@@ -21,9 +21,8 @@
 namespace sfz {
 
 struct LFO::Impl {
-    explicit Impl(NumericId<LFO> id, BufferPool& bufferPool, BeatClock* beatClock, ModMatrix* modMatrix)
-        : id_(id),
-          bufferPool_(bufferPool),
+    explicit Impl(BufferPool& bufferPool, BeatClock* beatClock, ModMatrix* modMatrix)
+        : bufferPool_(bufferPool),
           beatClock_(beatClock),
           modMatrix_(modMatrix),
           sampleRate_(config::defaultSampleRate),
@@ -31,7 +30,6 @@ struct LFO::Impl {
     {
     }
 
-    NumericId<LFO> id_;
     BufferPool& bufferPool_;
     BeatClock* beatClock_ = nullptr;
     ModMatrix* modMatrix_ = nullptr;
@@ -48,18 +46,13 @@ struct LFO::Impl {
     std::array<int, config::maxLFOSubs> sampleHoldState_ {{}};
 };
 
-LFO::LFO(NumericId<LFO> id, BufferPool& bufferPool, BeatClock* beatClock, ModMatrix* modMatrix)
-    : impl_(new Impl(id, bufferPool, beatClock, modMatrix))
+LFO::LFO(BufferPool& bufferPool, BeatClock* beatClock, ModMatrix* modMatrix)
+    : impl_(new Impl(bufferPool, beatClock, modMatrix))
 {
 }
 
 LFO::~LFO()
 {
-}
-
-NumericId<LFO> LFO::getId() const noexcept
-{
-    return impl_->id_;
 }
 
 void LFO::setSampleRate(double sampleRate)
@@ -221,7 +214,7 @@ void LFO::processSteps(absl::Span<float> out, const float* phaseIn)
     }
 }
 
-void LFO::process(absl::Span<float> out, NumericId<Region> regionId)
+void LFO::process(absl::Span<float> out)
 {
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
@@ -252,13 +245,13 @@ void LFO::process(absl::Span<float> out, NumericId<Region> regionId)
     absl::Span<float> phases = *phasesTemp;
 
     if (desc.seq) {
-        generatePhase(0, phases, regionId);
+        generatePhase(0, phases);
         processSteps(out, phases.data());
         ++subno;
     }
 
     for (; subno < countSubs; ++subno) {
-        generatePhase(subno, phases, regionId);
+        generatePhase(subno, phases);
         switch (desc.sub[subno].wave) {
         case LFOWave::Triangle:
             processWave<LFOWave::Triangle>(subno, out, phases.data());
@@ -315,13 +308,12 @@ void LFO::processFadeIn(absl::Span<float> out)
     impl.fadePosition_ = fadePosition;
 }
 
-void LFO::generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region> regionId)
+void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
 {
     Impl& impl = *impl_;
     BufferPool& bufferPool = impl.bufferPool_;
     BeatClock* beatClock = impl.beatClock_;
     ModMatrix* modMatrix = impl.modMatrix_;
-    const NumericId<LFO> id { impl.id_ };
     const LFODescription& desc = *impl.desc_;
     const LFODescription::Sub& sub = desc.sub[nth];
     const float samplePeriod = 1.0f / impl.sampleRate_;
@@ -337,13 +329,11 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region
     // modulations
     const float* beatsMod = nullptr;
     const float* freqMod = nullptr;
-    if (modMatrix && id && regionId) {
+    if (modMatrix) {
         // Note(jpc) we might switch between beats and frequency, if host
         //           switches play state on and off; continually generate both.
-        ModKey beatsKey = ModKey::createNXYZ(ModId::LFOBeats, regionId, id.number());
-        ModKey freqKey = ModKey::createNXYZ(ModId::LFOFrequency, regionId, id.number());
-        beatsMod = modMatrix->getModulationByKey(beatsKey);
-        freqMod = modMatrix->getModulationByKey(freqKey);
+        beatsMod = modMatrix->getModulationByKey(desc.beatsKey);
+        freqMod = modMatrix->getModulationByKey(desc.freqKey);
     }
 
     if (beatClock && beatClock->isPlaying() && beats > 0) {
@@ -372,18 +362,14 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region
             for (size_t i = 0; i < numFrames; ++i) {
                 phases[i] = phase;
                 float incr = ratio * samplePeriod * baseFreq;
-                phase += incr;
-                int numWraps = (int)phase;
-                phase -= numWraps;
+                phase = wrapPhase(phase + incr);
             }
         }
         else {
             for (size_t i = 0; i < numFrames; ++i) {
                 phases[i] = phase;
                 float incr = ratio * samplePeriod * (baseFreq + freqMod[i]);
-                phase += incr;
-                int numWraps = (int)phase;
-                phase -= numWraps;
+                phase = wrapPhase(phase + incr);
             }
         }
     }

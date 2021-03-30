@@ -55,13 +55,10 @@ struct LFODescription;
 class LFO {
 public:
     explicit LFO(
-        NumericId<LFO> id,
         BufferPool& bufferPool,
         BeatClock* beatClock = nullptr,
         ModMatrix* modMatrix = nullptr);
     ~LFO();
-
-    NumericId<LFO> getId() const noexcept;
 
     /**
        Sets the sample rate.
@@ -85,7 +82,7 @@ public:
 
        TODO(jpc) frequency modulations
      */
-    void process(absl::Span<float> out, NumericId<Region> regionId = {});
+    void process(absl::Span<float> out);
 
 private:
     /**
@@ -123,7 +120,7 @@ private:
     /**
        Generate the phase of the N-th generator
      */
-    void generatePhase(unsigned nth, absl::Span<float> phases, NumericId<Region> regionId);
+    void generatePhase(unsigned nth, absl::Span<float> phases);
 
 private:
     struct Impl;

@@ -31,7 +31,7 @@ TEST_CASE("[Synth] Play and check active voices")
     synth.noteOn(0, 36, 89);
     REQUIRE(synth.getNumActiveVoices() == 2);
     // Render for a while
-    for (int i = 0; i < 200; ++i)
+    for (int i = 0; i < 300; ++i)
         synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 0);
 }
@@ -771,8 +771,6 @@ TEST_CASE("[Synth] Release (pedal was already down)")
     REQUIRE( synth.getNumActiveVoices() == 2 );
 }
 
-
-
 TEST_CASE("[Synth] Release samples don't play unless there is another playing region that matches")
 {
     sfz::Synth synth;
@@ -793,7 +791,7 @@ TEST_CASE("[Synth] Release key (Different sustain CC)")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
-        <global>sustain_cc=54
+        <global> sustain_cc=54
         <region> key=62 sample=*sine trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
@@ -806,7 +804,7 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
 {
     sfz::Synth synth;
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
-        <global>sustain_cc=54
+        <global> sustain_cc=54
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
     )");
@@ -816,6 +814,114 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
     REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.cc(0, 54, 0);
     REQUIRE( synth.getNumActiveVoices() == 2 );
+}
+
+TEST_CASE("[Synth] Release (don't check sustain)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <global>sustain_cc=54 sustain_sw=off
+        <region> key=62 sample=*silence
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+}
+
+TEST_CASE("[Synth] Release key (Different sostenuto CC)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <global> sostenuto_cc=54
+        <region> key=62 sample=*sine trigger=release_key
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 1 );
+}
+
+TEST_CASE("[Synth] Release (don't check sostenuto)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <global> sostenuto_cc=54 sostenuto_sw=off
+        <region> key=62 sample=*silence
+        <region> key=62 sample=*sine trigger=release
+    )");
+    synth.noteOn(0, 62, 85);
+    synth.cc(0, 54, 127);
+    synth.noteOff(0, 62, 85);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
+}
+
+TEST_CASE("[Synth] Release (Different sostenuto CC)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <global> sostenuto_cc=54
+        <region> key=62 sample=*silence
+        <region> key=62 sample=*sine trigger=release
+        <region> key=64 sample=*silence
+        <region> key=64 sample=*sine trigger=release
+    )");
+    SECTION("One note with sostenuto")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 54, 127);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(3, 54, 0);
+        REQUIRE( synth.getNumActiveVoices() == 2 );
+    }
+    SECTION("Two notes, only one with sostenuto")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 54, 127);
+        synth.noteOn(2, 64, 85);
+        synth.noteOff(3, 62, 85);
+        synth.noteOff(3, 64, 85);
+        REQUIRE( synth.getNumActiveVoices() == 3 );
+        synth.cc(4, 54, 0);
+        REQUIRE( synth.getNumActiveVoices() == 4 );
+    }
+}
+
+TEST_CASE("[Synth] Release (sustain + sostenuto)")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+        <region> key=62 sample=*silence
+        <region> key=62 sample=*sine trigger=release
+        <region> key=64 sample=*silence
+        <region> key=64 sample=*sine trigger=release
+    )");
+    SECTION("Sustain up first")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 127);
+        synth.cc(1, 64, 127);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(3, 64, 0);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(4, 66, 0);
+        REQUIRE( synth.getNumActiveVoices() == 2 );
+    }
+    SECTION("Sostenuto up first")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 127);
+        synth.cc(1, 64, 127);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(3, 66, 0);
+        REQUIRE( synth.getNumActiveVoices() == 1 );
+        synth.cc(4, 64, 0);
+        REQUIRE( synth.getNumActiveVoices() == 2 );
+    }
 }
 
 TEST_CASE("[Synth] Sustain threshold default")
@@ -850,6 +956,108 @@ TEST_CASE("[Synth] Sustain threshold")
     synth.cc(0, 64, 64);
     synth.noteOff(0, 62, 85);
     REQUIRE( synth.getNumActiveVoices() == 5 );
+}
+
+TEST_CASE("[Synth] Sustain")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sostenuto.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    SECTION("1 note")
+    {
+        synth.noteOn(0, 62, 85);
+        REQUIRE( numPlayingVoices(synth) == 1 );
+        synth.cc(1, 64, 1);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( numPlayingVoices(synth) == 1 );
+        synth.cc(3, 64, 0);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+
+    SECTION("2 notes")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.noteOn(0, 64, 85);
+        synth.cc(1, 64, 1);
+        synth.noteOff(2, 62, 85);
+        synth.noteOff(2, 64, 85);
+        REQUIRE( numPlayingVoices(synth) == 2 );
+        synth.cc(3, 64, 0);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+
+    SECTION("1 note after the pedal is depressed")
+    {
+        synth.cc(0, 64, 1);
+        synth.noteOn(1, 62, 85);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( numPlayingVoices(synth) == 1 );
+        synth.cc(3, 64, 0);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+
+    SECTION("2 notes, 1 after the pedal is depressed")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 64, 1);
+        synth.noteOn(2, 64, 85);
+        synth.noteOff(3, 62, 85);
+        synth.noteOff(3, 64, 85);
+        REQUIRE( numPlayingVoices(synth) == 2 );
+        synth.cc(4, 64, 0);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+}
+
+TEST_CASE("[Synth] Sostenuto")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sostenuto.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    SECTION("1 note")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 1);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( numPlayingVoices(synth) == 1 );
+        synth.cc(3, 66, 0);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+
+    SECTION("2 notes")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.noteOn(0, 64, 85);
+        synth.cc(1, 66, 1);
+        synth.noteOff(2, 62, 85);
+        synth.noteOff(2, 64, 85);
+        REQUIRE( numPlayingVoices(synth) == 2 );
+        synth.cc(3, 66, 0);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+
+    SECTION("1 note but after the pedal is depressed")
+    {
+        synth.cc(0, 66, 1);
+        synth.noteOn(1, 62, 85);
+        synth.noteOff(2, 62, 85);
+        REQUIRE( numPlayingVoices(synth) == 0 );
+    }
+
+    SECTION("2 notes, 1 after the pedal is depressed")
+    {
+        synth.noteOn(0, 62, 85);
+        synth.cc(1, 66, 1);
+        synth.noteOn(2, 64, 85);
+        synth.noteOff(3, 62, 85);
+        synth.noteOff(3, 64, 85);
+        REQUIRE( numPlayingVoices(synth) == 1 );
+        REQUIRE( getActiveVoices(synth)[0]->getTriggerEvent().number == 62 );
+    }
 }
 
 TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
@@ -903,7 +1111,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
 
-    REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
+    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
 }
 
 TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared the delayed voices after)")
@@ -933,7 +1141,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
 
-    REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
+    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
 }
 
 TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
@@ -960,7 +1168,7 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
-    REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
+    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
 }
 
 TEST_CASE("[Synth] No release sample after the main sample stopped sounding by default")
@@ -995,7 +1203,7 @@ TEST_CASE("[Synth] No release sample after the main sample stopped sounding by d
     synth.cc(0, 64, 0);
     REQUIRE( synth.getNumActiveVoices() == 0 );
 
-    REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
+    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
 }
 
 TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the attack sample died")
@@ -1030,7 +1238,7 @@ TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the a
     synth.cc(0, 64, 0);
     REQUIRE( synth.getNumActiveVoices() == 0 );
 
-    REQUIRE( synth.getRegionView(1)->delayedReleases.empty() );
+    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
 }
 
 TEST_CASE("[Synth] sw_default works at a global level")

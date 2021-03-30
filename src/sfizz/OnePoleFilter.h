@@ -6,9 +6,9 @@
 
 #pragma once
 #include "Config.h"
-#include "Debug.h"
 #include "MathHelpers.h"
-#include "Macros.h"
+#include "utility/Debug.h"
+#include "utility/Macros.h"
 #include <absl/types/span.h>
 #include <cmath>
 

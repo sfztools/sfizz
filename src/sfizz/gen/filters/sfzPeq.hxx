@@ -145,10 +145,10 @@ class faustPeq : public sfzFilterDsp {
 		FAUSTFLOAT const* input0 = inputs[0];
 		FAUSTFLOAT* output0 = outputs[0];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
-		double fSlow1 = (fConst2 * std::max<double>(0.0, double(fHslider0)));
+		double fSlow1 = (fConst2 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
 		double fSlow2 = std::sin(fSlow1);
-		double fSlow3 = std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * double(fVslider0))));
-		double fSlow4 = std::pow(10.0, (0.025000000000000001 * double(fVslider1)));
+		double fSlow3 = std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(0.0, double(fVslider0))))));
+		double fSlow4 = std::pow(10.0, (0.025000000000000001 * std::min<double>(60.0, std::max<double>(-120.0, double(fVslider1)))));
 		double fSlow5 = (0.5 * (fSlow2 / (fSlow3 * fSlow4)));
 		double fSlow6 = (fSlow5 + 1.0);
 		double fSlow7 = (1.0 - fSlow0);
