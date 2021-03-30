@@ -1123,6 +1123,7 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
     //
     lfo.beatsKey = ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber);
     lfo.freqKey = ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber);
+    lfo.phaseKey = ModKey::createNXYZ(ModId::LFOPhase, id, lfoNumber);
 
     //
     auto getOrCreateLFOStep = [&opcode, &lfo]() -> float* {
@@ -1172,11 +1173,26 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
     case hash("lfo&_phase"):
         lfo.phase0 = opcode.read(Default::lfoPhase);
         break;
+    case_any_ccN("lfo&_phase"):
+        processGenericCc(opcode, Default::lfoPhaseMod, ModKey::createNXYZ(ModId::LFOPhase, id, lfoNumber));
+        break;
     case hash("lfo&_delay"):
         lfo.delay = opcode.read(Default::lfoDelay);
         break;
+    case hash("lfo&_delay_oncc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        lfo.delayCC[opcode.parameters.back()] = opcode.read(Default::lfoDelayMod);
+        break;
     case hash("lfo&_fade"):
         lfo.fade = opcode.read(Default::lfoFade);
+        break;
+    case hash("lfo&_fade_oncc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        lfo.fadeCC[opcode.parameters.back()] = opcode.read(Default::lfoFadeMod);
         break;
     case hash("lfo&_count"):
         lfo.count = opcode.read(Default::lfoCount);

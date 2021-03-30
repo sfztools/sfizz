@@ -112,6 +112,12 @@ struct OpcodeSpec
         return input;
     }
 
+    template<>
+    typename bool normalizeInput(bool input) const
+    {
+        return input;
+    }
+
     operator T() const { return normalizeInput(defaultInputValue); }
 };
 
@@ -219,8 +225,11 @@ namespace Default
     extern const OpcodeSpec<float> lfoBeats;
     extern const OpcodeSpec<float> lfoBeatsMod;
     extern const OpcodeSpec<float> lfoPhase;
+    extern const OpcodeSpec<float> lfoPhaseMod;
     extern const OpcodeSpec<float> lfoDelay;
+    extern const OpcodeSpec<float> lfoDelayMod;
     extern const OpcodeSpec<float> lfoFade;
+    extern const OpcodeSpec<float> lfoFadeMod;
     extern const OpcodeSpec<uint32_t> lfoCount;
     extern const OpcodeSpec<uint32_t> lfoSteps;
     extern const OpcodeSpec<float> lfoStepX;

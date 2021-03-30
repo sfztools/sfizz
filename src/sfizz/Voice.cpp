@@ -1671,7 +1671,7 @@ void Voice::setMaxLFOsPerVoice(size_t numLFOs)
     impl.lfos_.resize(numLFOs);
 
     for (size_t i = 0; i < numLFOs; ++i) {
-        auto lfo = absl::make_unique<LFO>(resources.bufferPool, &resources.beatClock, &resources.modMatrix);
+        auto lfo = absl::make_unique<LFO>(resources);
         lfo->setSampleRate(impl.sampleRate_);
         impl.lfos_[i] = std::move(lfo);
     }
@@ -1712,7 +1712,7 @@ void Voice::setAmplitudeLFOEnabledPerVoice(bool haveAmplitudeLFO)
     Impl& impl = *impl_;
     Resources& res = impl.resources_;
     if (haveAmplitudeLFO) {
-        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        LFO* lfo = new LFO(res);
         impl.lfoAmplitude_.reset(lfo);
         lfo->setSampleRate(impl.sampleRate_);
     }
@@ -1725,7 +1725,7 @@ void Voice::setPitchLFOEnabledPerVoice(bool havePitchLFO)
     Impl& impl = *impl_;
     Resources& res = impl.resources_;
     if (havePitchLFO) {
-        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        LFO* lfo = new LFO(res);
         impl.lfoPitch_.reset(lfo);
         lfo->setSampleRate(impl.sampleRate_);
     }
@@ -1738,7 +1738,7 @@ void Voice::setFilterLFOEnabledPerVoice(bool haveFilterLFO)
     Impl& impl = *impl_;
     Resources& res = impl.resources_;
     if (haveFilterLFO) {
-        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        LFO* lfo = new LFO(res);
         impl.lfoFilter_.reset(lfo);
         lfo->setSampleRate(impl.sampleRate_);
     }

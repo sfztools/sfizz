@@ -28,7 +28,7 @@ static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRat
     std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        sfz::LFO* lfo = new sfz::LFO(resources.bufferPool);
+        sfz::LFO* lfo = new sfz::LFO(resources);
         lfos[l].reset(lfo);
         lfo->setSampleRate(sampleRate);
         lfo->configure(&desc[l]);
