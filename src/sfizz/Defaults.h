@@ -68,6 +68,10 @@ struct OpcodeSpec
     Range<T> bounds;
     int flags;
 
+    template <class U>
+    using IsNormalizable = std::integral_constant<
+        bool, std::is_arithmetic<U>::value && !std::is_same<U, bool>::value>;
+
     /**
      * @brief Normalizes an input as needed for the spec
      *
@@ -76,7 +80,7 @@ struct OpcodeSpec
      * @return U
      */
     template<class U=T>
-    typename std::enable_if<std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    typename std::enable_if<IsNormalizable<U>::value, U>::type normalizeInput(U input) const
     {
         constexpr int needsOperation {
             kNormalizePercent |
@@ -107,13 +111,7 @@ struct OpcodeSpec
      * @return U
      */
     template<class U=T>
-    typename std::enable_if<!std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
-    {
-        return input;
-    }
-
-    template<>
-    typename bool normalizeInput(bool input) const
+    typename std::enable_if<!IsNormalizable<U>::value, U>::type normalizeInput(U input) const
     {
         return input;
     }
