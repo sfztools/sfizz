@@ -63,6 +63,9 @@ enum class ModId : int {
     FilLFOFrequency,
     LFOFrequency,
     LFOBeats,
+    LFOVolumeDepth,
+    LFOFilCutoffDepth,
+    LFOPitchDepth,
 
     _TargetsEnd,
     // [/targets] --------------------------------------------------------------

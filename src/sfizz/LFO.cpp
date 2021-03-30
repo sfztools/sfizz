@@ -37,6 +37,8 @@ struct LFO::Impl {
 
     // control
     const LFODescription* desc_ = nullptr;
+    ModMatrix::TargetId beatsModId_ {};
+    ModMatrix::TargetId freqModId_ {};
 
     // state
     size_t delayFramesLeft_ = 0;
@@ -68,8 +70,14 @@ void LFO::configure(const LFODescription* desc)
 void LFO::start(unsigned triggerDelay)
 {
     Impl& impl = *impl_;
+    ModMatrix* modMatrix = impl.modMatrix_;
     const LFODescription& desc = *impl.desc_;
     const float sampleRate = impl.sampleRate_;
+
+    if (modMatrix) {
+        impl.beatsModId_ = modMatrix->findTarget(desc.beatsKey);
+        impl.freqModId_ = modMatrix->findTarget(desc.freqKey);
+    }
 
     impl.subPhases_.fill(0.0f);
     impl.sampleHoldMem_.fill(0.0f);
@@ -332,8 +340,8 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
     if (modMatrix) {
         // Note(jpc) we might switch between beats and frequency, if host
         //           switches play state on and off; continually generate both.
-        beatsMod = modMatrix->getModulationByKey(desc.beatsKey);
-        freqMod = modMatrix->getModulationByKey(desc.freqKey);
+        beatsMod = modMatrix->getModulation(impl.beatsModId_);
+        freqMod = modMatrix->getModulation(impl.freqModId_);
     }
 
     if (beatClock && beatClock->isPlaying() && beats > 0) {

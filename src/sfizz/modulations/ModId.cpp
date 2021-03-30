@@ -96,6 +96,12 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::LFOBeats:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOVolumeDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOPitchDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOFilCutoffDepth:
+        return kModIsPerVoice|kModIsAdditive;
 
         // unknown
     default:

@@ -1266,6 +1266,33 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
                 opcode.read(Default::volumeMod);
         }
         break;
+    case_any_ccN("lfo&_volume"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
+            const ModKey depthModifier = ModKey::createNXYZ(ModId::LFOVolumeDepth, id);
+            getOrCreateConnection(source, target).sourceDepthMod = depthModifier;
+            processGenericCc(opcode, Default::volumeMod, depthModifier);
+        }
+        break;
+    case_any_ccN("lfo&_pitch"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
+            const ModKey depthModifier = ModKey::createNXYZ(ModId::LFOPitchDepth, id);
+            getOrCreateConnection(source, target).sourceDepthMod = depthModifier;
+            processGenericCc(opcode, Default::pitchMod, depthModifier);
+        }
+        break;
+    case_any_ccN("lfo&_cutoff"):
+        {
+            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+            const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id);
+            const ModKey depthModifier = ModKey::createNXYZ(ModId::LFOFilCutoffDepth, id);
+            getOrCreateConnection(source, target).sourceDepthMod = depthModifier;
+            processGenericCc(opcode, Default::filterCutoffMod, depthModifier);
+        }
+        break;
 
     case hash("lfo&_cutoff&"):
         LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
