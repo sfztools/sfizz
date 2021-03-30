@@ -5,13 +5,15 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/Synth.h"
+#include "sfizz/Region.h"
+#include "sfizz/Layer.h"
 #include "sfizz/SisterVoiceRing.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/utility/NumericId.h"
 #include "BitArray.h"
 #include "TestHelpers.h"
-#include <algorithm>
 #include "catch2/catch.hpp"
+#include <algorithm>
 using namespace Catch::literals;
 using namespace sfz::literals;
 
@@ -1111,7 +1113,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
 
-    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
+    REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
 TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared the delayed voices after)")
@@ -1141,7 +1143,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
 
-    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
+    REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
 TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
@@ -1168,7 +1170,7 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
     }
     sortAll(requiredVelocities, actualVelocities);
     REQUIRE( requiredVelocities == actualVelocities );
-    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
+    REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
 TEST_CASE("[Synth] No release sample after the main sample stopped sounding by default")
@@ -1203,7 +1205,7 @@ TEST_CASE("[Synth] No release sample after the main sample stopped sounding by d
     synth.cc(0, 64, 0);
     REQUIRE( synth.getNumActiveVoices() == 0 );
 
-    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
+    REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
 TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the attack sample died")
@@ -1238,7 +1240,7 @@ TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the a
     synth.cc(0, 64, 0);
     REQUIRE( synth.getNumActiveVoices() == 0 );
 
-    REQUIRE( synth.getRegionView(1)->delayedSustainReleases.empty() );
+    REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
 TEST_CASE("[Synth] sw_default works at a global level")

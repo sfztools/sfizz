@@ -89,6 +89,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/FlexEGDescription.cpp \
 	src/sfizz/FlexEnvelope.cpp \
 	src/sfizz/Interpolators.cpp \
+	src/sfizz/Layer.cpp \
 	src/sfizz/Logger.cpp \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \

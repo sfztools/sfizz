@@ -75,6 +75,7 @@ set(SFIZZ_HEADERS
     sfizz/HistoricalBuffer.h
     sfizz/Interpolators.h
     sfizz/Interpolators.hpp
+    sfizz/Layer.h
     sfizz/Logger.h
     sfizz/LFO.h
     sfizz/LFOCommon.h
@@ -157,6 +158,7 @@ set(SFIZZ_SOURCES
     sfizz/SynthMessaging.cpp
     sfizz/WindowedSinc.cpp
     sfizz/Interpolators.cpp
+    sfizz/Layer.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
