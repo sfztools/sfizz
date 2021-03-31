@@ -117,7 +117,9 @@ void streamFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampl
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
-    : logger(logger), threadPool(globalThreadPool())
+    : logger(logger),
+      filesToLoad(alignedNew<FileQueue>()),
+      threadPool(globalThreadPool())
 {
     loadingJobs.reserve(config::maxVoices);
     lastUsedFiles.reserve(config::maxVoices);
@@ -350,8 +352,8 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
         return {};
     }
     QueuedFileData queuedData { fileId, &preloaded->second, std::chrono::high_resolution_clock::now() };
-    if (!filesToLoad.try_push(queuedData)) {
-        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad.capacity() << ")");
+    if (!filesToLoad->try_push(queuedData)) {
+        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
         return {};
     }
 
@@ -498,7 +500,7 @@ void sfz::FilePool::dispatchingJob() noexcept
     while (dispatchBarrier.wait(), dispatchFlag) {
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
-        if (filesToLoad.try_pop(queuedData)) {
+        if (filesToLoad->try_pop(queuedData)) {
             if (queuedData.id.expired()) {
                 // file ID was nulled, it means the region was deleted, ignore
             }
