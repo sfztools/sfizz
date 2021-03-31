@@ -35,6 +35,7 @@
 #include "Logger.h"
 #include "SpinMutex.h"
 #include "utility/LeakDetector.h"
+#include "utility/MemoryHelpers.h"
 #include <ghc/fs_std.hpp>
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
@@ -43,6 +44,7 @@
 #include <chrono>
 #include <thread>
 #include <future>
+#include <memory>
 class ThreadPool;
 
 namespace sfz {
@@ -348,7 +350,10 @@ private:
         FileData* data { nullptr };
         TimePoint queuedTime {};
     };
-    atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices> filesToLoad;
+
+    using FileQueue = atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices>;
+    aligned_unique_ptr<FileQueue> filesToLoad;
+
     void dispatchingJob() noexcept;
     void garbageJob() noexcept;
     void loadingJob(QueuedFileData data) noexcept;
