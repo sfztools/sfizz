@@ -180,7 +180,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t trueSampleEnd(Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t getSampleEnd(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Parse a new opcode into the region to fill in the proper parameters.
      * This must be called multiple times for each opcode applying to this region.
@@ -259,8 +259,8 @@ struct Region {
 
     void offsetAllKeys(int offset) noexcept;
 
-    uint32_t loopStart(Oversampling factor = Oversampling::x1) const noexcept;
-    uint32_t loopEnd(Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t loopStart(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t loopEnd(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
 
     /**
      * @brief Get the gain this region contributes into the input of the Nth
@@ -305,10 +305,13 @@ struct Region {
     int64_t offset { Default::offset }; // offset
     int64_t offsetRandom { Default::offsetRandom }; // offset_random
     CCMap<int64_t> offsetCC { Default::offsetMod };
-    uint32_t sampleEnd { Default::sampleEnd }; // end
+    int64_t sampleEnd { Default::sampleEnd }; // end
+    CCMap<int64_t> endCC { Default::sampleEndMod };
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<LoopMode> loopMode {}; // loopmode
-    UncheckedRange<uint32_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    UncheckedRange<int64_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    CCMap<int64_t> loopStartCC { Default::sampleEndMod };
+    CCMap<int64_t> loopEndCC { Default::sampleEndMod };
     absl::optional<uint32_t> loopCount {}; // count
     float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 

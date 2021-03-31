@@ -535,9 +535,9 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
     REQUIRE( synth.getRegionView(1)->loopMode == LoopMode::no_loop );
     REQUIRE( synth.getRegionView(2)->loopMode == LoopMode::loop_continuous );
 
-    REQUIRE(synth.getRegionView(0)->loopRange == Range<uint32_t> { 77554, 186581 });
-    REQUIRE(synth.getRegionView(1)->loopRange == Range<uint32_t> { 77554, 186581 });
-    REQUIRE(synth.getRegionView(2)->loopRange == Range<uint32_t> { 4, 124 });
+    REQUIRE(synth.getRegionView(0)->loopRange == Range<int64_t> { 77554, 186581 });
+    REQUIRE(synth.getRegionView(1)->loopRange == Range<int64_t> { 77554, 186581 });
+    REQUIRE(synth.getRegionView(2)->loopRange == Range<int64_t> { 4, 124 });
 }
 
 TEST_CASE("[Files] Looped regions can start at 0")
@@ -548,7 +548,7 @@ TEST_CASE("[Files] Looped regions can start at 0")
     )");
     REQUIRE( synth.getNumRegions() == 1 );
     REQUIRE( synth.getRegionView(0)->loopMode == LoopMode::loop_continuous );
-    REQUIRE( synth.getRegionView(0)->loopRange == Range<uint32_t> { 0, synth.getRegionView(0)->sampleEnd } );
+    REQUIRE( synth.getRegionView(0)->loopRange == Range<int64_t> { 0, synth.getRegionView(0)->sampleEnd } );
 }
 
 TEST_CASE("[Synth] Release triggers automatically sets the loop mode")

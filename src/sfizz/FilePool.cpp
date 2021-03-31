@@ -256,7 +256,8 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
         if (haveInstrumentInfo && instrumentInfo.loop_count > 0) {
             returnedValue.hasLoop = true;
             returnedValue.loopStart = instrumentInfo.loops[0].start;
-            returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
+            returnedValue.loopEnd =
+                min(returnedValue.end, static_cast<int64_t>(instrumentInfo.loops[0].end - 1));
         }
     } else {
         // TODO loops ignored when reversed
