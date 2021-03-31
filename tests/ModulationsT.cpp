@@ -42,15 +42,13 @@ TEST_CASE("[Modulations] Flags")
     {
         checkBasicFlags(flags);
         REQUIRE((bool(flags & sfz::kModIsAdditive) +
-                 bool(flags & sfz::kModIsMultiplicative) +
-                 bool(flags & sfz::kModIsPercentMultiplicative)) == 0);
+                 bool(flags & sfz::kModIsMultiplicative)) == 0);
     };
     static auto* checkTargetFlags = +[](int flags)
     {
         checkBasicFlags(flags);
         REQUIRE((bool(flags & sfz::kModIsAdditive) +
-                 bool(flags & sfz::kModIsMultiplicative) +
-                 bool(flags & sfz::kModIsPercentMultiplicative)) == 1);
+                 bool(flags & sfz::kModIsMultiplicative)) == 1);
     };
 
     sfz::ModIds::forEachSourceId([](sfz::ModId id)
@@ -385,7 +383,7 @@ TEST_CASE("[Modulations] LFO v1 CC connections")
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 1 {curve=0, smooth=0, step=0}" -> "AmplitudeLFODepth {0}")",
         R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchLFODepth {1}")",
-        R"("Controller 3 {curve=0, smooth=0, step=-0}" -> "FilterLFODepth {2}")",
+        R"("Controller 3 {curve=0, smooth=0, step=0}" -> "FilterLFODepth {2}")",
         R"("AmplitudeLFO {0}" -> "Volume {0}")",
         R"("PitchLFO {1}" -> "Pitch {1}")",
         R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
@@ -403,7 +401,7 @@ TEST_CASE("[Modulations] EG v1 CC connections")
     const std::string graph = synth.getResources().modMatrix.toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchEGDepth {0}")",
-        R"("Controller 3 {curve=0, smooth=0, step=-0}" -> "FilterEGDepth {1}")",
+        R"("Controller 3 {curve=0, smooth=0, step=0}" -> "FilterEGDepth {1}")",
         R"("PitchEG {0}" -> "Pitch {0}")",
         R"("FilterEG {1}" -> "FilterCutoff {1, N=1}")",
     }, 2));
