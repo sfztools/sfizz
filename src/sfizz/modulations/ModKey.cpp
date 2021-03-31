@@ -164,6 +164,8 @@ std::string ModKey::toString() const
         return absl::StrCat("LFOFrequency {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::LFOBeats:
         return absl::StrCat("LFOBeats {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOPhase:
+        return absl::StrCat("LFOPhase {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};

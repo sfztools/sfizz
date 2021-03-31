@@ -110,14 +110,14 @@ int main(int argc, char* argv[])
     }
 
     constexpr size_t bufferSize = 1024;
-    sfz::BufferPool bufferPool;
-    bufferPool.setBufferSize(bufferSize);
+    sfz::Resources resources;
+    resources.setSamplesPerBlock(bufferSize);
 
     size_t numLfos = desc.size();
     std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        sfz::LFO* lfo = new sfz::LFO(bufferPool);
+        sfz::LFO* lfo = new sfz::LFO(resources);
         lfos[l].reset(lfo);
         lfo->setSampleRate(sampleRate);
         lfo->configure(&desc[l]);

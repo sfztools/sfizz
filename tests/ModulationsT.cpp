@@ -408,3 +408,24 @@ TEST_CASE("[Modulations] EG v1 CC connections")
         R"("FilterEG {1}" -> "FilterCutoff {1, N=1}")",
     }, 2));
 }
+
+TEST_CASE("[Modulations] LFO CC connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine
+        lfo1_freq=2 lfo1_freq_cc1=0.1 lfo1_volume=0.5
+        lfo2_freq=0.1 lfo2_freq_cc1=2 lfo2_freq_smoothcc1=10 lfo2_freq_stepcc1=0.2 lfo2_freq_curvecc1=1 lfo2_pitch=1200
+        lfo3_freq=0.1 lfo3_phase_cc1=2 lfo3_phase_smoothcc1=10 lfo3_phase_stepcc1=0.2 lfo3_phase_curvecc1=1 lfo3_amplitude=50
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("LFO 1 {0}" -> "Volume {0}")",
+        R"("LFO 2 {0}" -> "Pitch {0}")",
+        R"("LFO 3 {0}" -> "Amplitude {0}")",
+        R"("Controller 1 {curve=0, smooth=0, step=0}" -> "LFOFrequency {0, N=1}")",
+        R"("Controller 1 {curve=1, smooth=10, step=0.1}" -> "LFOFrequency {0, N=2}")",
+        R"("Controller 1 {curve=1, smooth=10, step=0.1}" -> "LFOPhase {0, N=3}")",
+    }, 1));
+}

@@ -10,9 +10,7 @@
 #include <memory>
 
 namespace sfz {
-class BufferPool;
-class BeatClock;
-class ModMatrix;
+struct Resources;
 struct Region;
 
 enum class LFOWave : int;
@@ -54,10 +52,7 @@ struct LFODescription;
 
 class LFO {
 public:
-    explicit LFO(
-        BufferPool& bufferPool,
-        BeatClock* beatClock = nullptr,
-        ModMatrix* modMatrix = nullptr);
+    explicit LFO(Resources& resources);
     ~LFO();
 
     /**

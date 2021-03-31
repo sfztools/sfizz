@@ -96,6 +96,8 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::LFOBeats:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOPhase:
+        return kModIsPerVoice|kModIsAdditive;
 
         // unknown
     default:

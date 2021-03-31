@@ -68,6 +68,10 @@ struct OpcodeSpec
     Range<T> bounds;
     int flags;
 
+    template <class U>
+    using IsNormalizable = std::integral_constant<
+        bool, std::is_arithmetic<U>::value && !std::is_same<U, bool>::value>;
+
     /**
      * @brief Normalizes an input as needed for the spec
      *
@@ -76,7 +80,7 @@ struct OpcodeSpec
      * @return U
      */
     template<class U=T>
-    typename std::enable_if<std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    typename std::enable_if<IsNormalizable<U>::value, U>::type normalizeInput(U input) const
     {
         constexpr int needsOperation {
             kNormalizePercent |
@@ -107,7 +111,7 @@ struct OpcodeSpec
      * @return U
      */
     template<class U=T>
-    typename std::enable_if<!std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    typename std::enable_if<!IsNormalizable<U>::value, U>::type normalizeInput(U input) const
     {
         return input;
     }
@@ -221,8 +225,11 @@ namespace Default
     extern const OpcodeSpec<float> lfoBeats;
     extern const OpcodeSpec<float> lfoBeatsMod;
     extern const OpcodeSpec<float> lfoPhase;
+    extern const OpcodeSpec<float> lfoPhaseMod;
     extern const OpcodeSpec<float> lfoDelay;
+    extern const OpcodeSpec<float> lfoDelayMod;
     extern const OpcodeSpec<float> lfoFade;
+    extern const OpcodeSpec<float> lfoFadeMod;
     extern const OpcodeSpec<uint32_t> lfoCount;
     extern const OpcodeSpec<uint32_t> lfoSteps;
     extern const OpcodeSpec<float> lfoStepX;
