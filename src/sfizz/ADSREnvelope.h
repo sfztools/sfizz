@@ -72,7 +72,7 @@ public:
 
 private:
     float sampleRate { config::defaultSampleRate };
-    Float secondsToSamples(Float timeInSeconds) const noexcept;
+    int secondsToSamples(Float timeInSeconds) const noexcept;
     Float secondsToLinRate(Float timeInSeconds) const noexcept;
     Float secondsToExpRate(Float timeInSeconds) const noexcept;
 
