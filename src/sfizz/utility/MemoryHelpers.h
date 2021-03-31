@@ -22,7 +22,7 @@ T* alignedNew(Args&& ...args)
     struct deleter {
         void operator()(T* x) const noexcept { allocator().deallocate(x, sizeof(T)); }
     };
-    std::unique_ptr<T, deleter> ptr { allocator().allocate(sizeof(T)) };
+    std::unique_ptr<T, deleter> ptr { allocator().allocate(1) };
     allocator().construct(ptr.get(), std::forward<Args>(args)...);
     return ptr.release();
 }
