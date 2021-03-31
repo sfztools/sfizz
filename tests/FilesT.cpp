@@ -378,7 +378,7 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
     const ModKey target = ModKey::createNXYZ(ModId::Amplitude, synth.getRegionView(2)->getId());
     const RegionCCView view(*synth.getRegionView(2), target);
     REQUIRE(!view.empty());
-    REQUIRE(view.valueAt(10) == 34.0f);
+    REQUIRE(view.valueAt(10) == Approx(0.34f).margin(1e-3));
 }
 
 TEST_CASE("[Files] Specific bug: relative path with backslashes")

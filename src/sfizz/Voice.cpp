@@ -826,7 +826,7 @@ void Voice::Impl::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     applyGain1<float>(baseGain_, modulationSpan);
     if (float* mod = mm.getModulation(amplitudeTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            modulationSpan[i] *= normalizePercents(mod[i]);
+            modulationSpan[i] *= mod[i];
     }
 
     // Volume envelope
@@ -891,7 +891,7 @@ void Voice::Impl::panStageMono(AudioSpan<float> buffer) noexcept
     fill(*modulationSpan, region_->pan);
     if (float* mod = mm.getModulation(panTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
@@ -913,7 +913,7 @@ void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
     fill(*modulationSpan, region_->pan);
     if (float* mod = mm.getModulation(panTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
@@ -921,14 +921,14 @@ void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
     fill(*modulationSpan, region_->width);
     if (float* mod = mm.getModulation(widthTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     width(*modulationSpan, leftBuffer, rightBuffer);
 
     fill(*modulationSpan, region_->position);
     if (float* mod = mm.getModulation(positionTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
@@ -1511,7 +1511,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
                 applyGain1(oscillatorModDepth, *modulatorSpan);
             const float* modDepthMod = resources_.modMatrix.getModulation(oscillatorModDepthTarget_);
             if (modDepthMod)
-                multiplyMul1(0.01f, absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
+                applyGain(absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
 
             // compute carrier×modulator
             switch (region_->oscillatorMode) {

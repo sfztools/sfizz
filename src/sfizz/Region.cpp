@@ -1513,10 +1513,8 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
             break;
         case kOpcodeStepCcN:
             {
-                const float maxStep =
-                    max(std::abs(spec.bounds.getStart()), std::abs(spec.bounds.getEnd()));
-                const OpcodeSpec<float> stepCC { 0.0f, Range<float>(0.0f, maxStep), 0 };
-                p.step = opcode.read(stepCC);
+                const OpcodeSpec<float> stepCC { 0.0f, {}, kPermissiveBounds };
+                p.step = spec.normalizeInput(opcode.read(stepCC));
             }
             break;
         case kOpcodeSmoothCcN:

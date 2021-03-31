@@ -49,9 +49,9 @@ int ModIds::flags(ModId id) noexcept
 
         // targets
     case ModId::MasterAmplitude:
-        return kModIsPerVoice|kModIsPercentMultiplicative;
+        return kModIsPerVoice|kModIsMultiplicative;
     case ModId::Amplitude:
-        return kModIsPerVoice|kModIsPercentMultiplicative;
+        return kModIsPerVoice|kModIsMultiplicative;
     case ModId::Pan:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::Width:
@@ -77,7 +77,7 @@ int ModIds::flags(ModId id) noexcept
     case ModId::OscillatorDetune:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::OscillatorModDepth:
-        return kModIsPerVoice|kModIsPercentMultiplicative;
+        return kModIsPerVoice|kModIsMultiplicative;
     case ModId::PitchEGDepth:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::FilEGDepth:

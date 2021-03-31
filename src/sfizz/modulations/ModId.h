@@ -85,8 +85,6 @@ enum ModFlags : int {
     kModIsAdditive = 1 << 3,
     //! This target is multiplicative (T)
     kModIsMultiplicative = 1 << 4,
-    //! This target is %-multiplicative (T)
-    kModIsPercentMultiplicative = 1 << 5,
 };
 
 namespace ModIds {

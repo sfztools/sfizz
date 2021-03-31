@@ -731,17 +731,17 @@ void Synth::Impl::finalizeSfzLoad()
         if (!usedCCs.test(7)) {
             region.getOrCreateConnection(
                 ModKey::createCC(7, 4, defaultSmoothness, 0),
-                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 100.0f;
+                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 1.0f;
         }
         if (!usedCCs.test(10)) {
             region.getOrCreateConnection(
                 ModKey::createCC(10, 1, defaultSmoothness, 0),
-                ModKey::createNXYZ(ModId::Pan, region.id)).sourceDepth = 100.0f;
+                ModKey::createNXYZ(ModId::Pan, region.id)).sourceDepth = 1.0f;
         }
         if (!usedCCs.test(11)) {
             region.getOrCreateConnection(
                 ModKey::createCC(11, 4, defaultSmoothness, 0),
-                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 100.0f;
+                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 1.0f;
         }
     }
 
@@ -1699,7 +1699,7 @@ void Synth::Impl::setupModMatrix()
             // normalize the stepcc to 0-1
             if (sourceKey.id() == ModId::Controller) {
                 ModKey::Parameters p = sourceKey.parameters();
-                p.step = (conn.sourceDepth == 0.0f) ? 0.0f :
+                p.step = (conn.sourceDepth <= 0.0f) ? 0.0f :
                     (p.step / conn.sourceDepth);
                 sourceKey = ModKey::createCC(p.cc, p.curve, p.smooth, p.step);
             }

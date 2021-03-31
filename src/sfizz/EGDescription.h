@@ -71,8 +71,8 @@ struct EGDescription {
     float delay { Default::egTime };
     float hold { Default::egTime };
     float release { Default::egTime };
-    float start { Default::egPercent.bounds.getStart() };
-    float sustain { Default::egPercent.bounds.getEnd() };
+    float start { Default::egPercent };
+    float sustain { Default::egSustain };
     float depth { Default::egDepth };
     float vel2attack { Default::egTimeMod };
     float vel2decay { Default::egTimeMod };

@@ -240,6 +240,7 @@ namespace Default
     extern const OpcodeSpec<float> egTime;
     extern const OpcodeSpec<float> egRelease;
     extern const OpcodeSpec<float> egTimeMod;
+    extern const OpcodeSpec<float> egSustain;
     extern const OpcodeSpec<float> egPercent;
     extern const OpcodeSpec<float> egPercentMod;
     extern const OpcodeSpec<float> egDepth;
