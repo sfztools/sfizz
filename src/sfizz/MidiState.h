@@ -175,6 +175,13 @@ public:
     const EventVector& getPitchEvents() const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
 
+    /**
+     * @brief Get the alternate state value, for extended CC 137
+     *
+     * @return float
+     */
+    float getAlternateState() const noexcept { return alternate; }
+
 private:
 
     /**
@@ -243,6 +250,7 @@ private:
 
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
+    float alternate { 0.0f };
     unsigned internalClock { 0 };
 };
 }

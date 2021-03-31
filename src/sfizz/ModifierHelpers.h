@@ -73,6 +73,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 {
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
+
     if (envelope.size() == 0)
         return;
 
@@ -103,7 +104,11 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 {
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
-    ASSERT(step != 0.0);
+
+    if (step == 0.0f) {
+        linearEnvelope(events, envelope, std::forward<F>(lambda));
+        return;
+    }
 
     if (envelope.size() == 0)
         return;
@@ -155,6 +160,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
 
     if (envelope.size() == 0)
         return;
+
     const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
     auto lastValue = lambda(events[0].value);

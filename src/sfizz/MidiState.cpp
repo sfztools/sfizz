@@ -24,6 +24,7 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
         lastNotePlayed = noteNumber;
         activeNotes++;
         noteStates[noteNumber] = true;
+        alternate = alternate == 0.0f ? 1.0f : 0.0f;
     }
 
 }
@@ -154,7 +155,6 @@ float sfz::MidiState::getChannelAftertouch() const noexcept
 
 void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
-    ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
     insertEventInVector(cc[ccNumber], delay, ccValue);
 }
 

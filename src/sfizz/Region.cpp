@@ -1526,7 +1526,21 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
             assert(false);
             break;
         }
-        conn->source = ModKey(ModId::Controller, {}, p);
+
+        switch (p.cc) {
+        case ExtendedCCs::noteOnVelocity: // fallthrough
+        case ExtendedCCs::noteOffVelocity: // fallthrough
+        case ExtendedCCs::keyboardNoteNumber: // fallthrough
+        case ExtendedCCs::keyboardNoteGate: // fallthrough
+        case ExtendedCCs::unipolarRandom: // fallthrough
+        case ExtendedCCs::bipolarRandom: // fallthrough
+        case ExtendedCCs::alternate:
+            conn->source = ModKey(ModId::PerVoiceController, id, p);
+            break;
+        default:
+            conn->source = ModKey(ModId::Controller, {}, p);
+            break;
+        }
     }
 
     return true;

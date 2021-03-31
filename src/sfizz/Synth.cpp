@@ -59,7 +59,7 @@ Synth::Impl::Impl()
     resetVoices(config::numVoices);
 
     // modulation sources
-    genController_.reset(new ControllerSource(resources_));
+    genController_.reset(new ControllerSource(resources_, voiceManager_));
     genLFO_.reset(new LFOSource(voiceManager_));
     genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
     genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
@@ -1314,6 +1314,8 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
     for (auto& voice : impl.voiceManager_) {
         voice.registerPitchWheel(delay, normalizedPitch);
     }
+
+    impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
 
 void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
@@ -1704,6 +1706,7 @@ void Synth::Impl::setupModMatrix()
 
             switch (sourceKey.id()) {
             case ModId::Controller:
+            case ModId::PerVoiceController:
                 gen = genController_.get();
                 break;
             case ModId::AmpLFO:
