@@ -36,7 +36,7 @@ void alignedDelete(T* ptr)
 {
     using allocator = jsl::aligned_allocator<T, A>;
     if (ptr) {
-        ptr->~T();
+        allocator().destroy(ptr);
         allocator().deallocate(ptr, sizeof(T));
     }
 }
