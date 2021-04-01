@@ -423,7 +423,12 @@ float* ModMatrix::getModulation(TargetId targetId)
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] = sourceDepth * sourceBuffer[i];
                 }
+                else if (targetFlags & kModIsMultiplicative) {
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] = (sourceDepth * sourceDepthMod[i]) * sourceBuffer[i];
+                }
                 else {
+                    ASSERT(targetFlags & kModIsAdditive);
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] = (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
                 }
@@ -435,7 +440,7 @@ float* ModMatrix::getModulation(TargetId targetId)
                         multiplyMul1<float>(sourceDepth, sourceBuffer, buffer);
                     else {
                         for (uint32_t i = 0; i < numFrames; ++i)
-                            buffer[i] *= (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
+                            buffer[i] *= (sourceDepth * sourceDepthMod[i]) * sourceBuffer[i];
                     }
                 }
                 else {

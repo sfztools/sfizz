@@ -42,6 +42,12 @@ public:
     bool isTarget() const noexcept;
     std::string toString() const;
 
+    /**
+     * @brief Obtain the modulation key of the source depth, in the connection
+     * between source and target, if such a key exists.
+     */
+    static ModKey getSourceDepthKey(ModKey source, ModKey target);
+
     struct RawParameters {
         union {
             //! Parameters if this key identifies a CC source
