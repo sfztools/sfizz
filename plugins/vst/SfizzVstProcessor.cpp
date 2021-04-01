@@ -309,7 +309,7 @@ void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
     sfz::Sfizz& synth = *_synth;
 
     if (context.state & context.kTempoValid)
-        synth.tempo(0, 60.0f / context.tempo);
+        synth.tempo(0, float(60.0 / context.tempo));
 
     if (context.state & context.kTimeSigValid) {
         _timeSigNumerator = context.timeSigNumerator;

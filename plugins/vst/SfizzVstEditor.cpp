@@ -206,7 +206,7 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
         uiReceiveValue(EditId::SfzFile, state.sfzFile);
         uiReceiveValue(EditId::Volume, state.volume);
         uiReceiveValue(EditId::Polyphony, state.numVoices);
-        uiReceiveValue(EditId::Oversampling, 1u << state.oversamplingLog2);
+        uiReceiveValue(EditId::Oversampling, float(1u << state.oversamplingLog2));
         uiReceiveValue(EditId::PreloadSize, state.preloadSize);
         uiReceiveValue(EditId::ScalaFile, state.scalaFile);
         uiReceiveValue(EditId::ScalaRootKey, state.scalaRootKey);
@@ -237,7 +237,7 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
             uiReceiveValue(EditId::Polyphony, range.denormalize(value));
             break;
         case kPidOversampling:
-            uiReceiveValue(EditId::Oversampling, 1u << (int32)range.denormalize(value));
+            uiReceiveValue(EditId::Oversampling, float(1u << (int32)range.denormalize(value)));
             break;
         case kPidPreloadSize:
             uiReceiveValue(EditId::PreloadSize, range.denormalize(value));

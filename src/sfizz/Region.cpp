@@ -920,10 +920,10 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
         processGenericCc(opcode, depthModSpec, sourceDepthKey);
         break;
-    case_any_lfo("depthchanaft"):
+    case_any_lfo("depthchanaft"): // NOLINT bugprone-branch-clone
         // TODO(jpc) LFO v1
         break;
-    case_any_lfo("depthpolyaft"):
+    case_any_lfo("depthpolyaft"): // NOLINT bugprone-branch-clone
         // TODO(jpc) LFO v1
         break;
     case_any_lfo("fade"):
@@ -935,10 +935,10 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
     case_any_lfo_any_ccN("freq"): // also freqcc&
         processGenericCc(opcode, Default::lfoFreqMod, lfo.freqKey);
         break;
-    case_any_lfo("freqchanaft"):
+    case_any_lfo("freqchanaft"): // NOLINT bugprone-branch-clone
         // TODO(jpc) LFO v1
         break;
-    case_any_lfo("freqpolyaft"):
+    case_any_lfo("freqpolyaft"): // NOLINT bugprone-branch-clone
         // TODO(jpc) LFO v1
         break;
 
@@ -1638,7 +1638,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     fast_real_distribution<float> pitchDistribution { 0.0f, pitchRandom };
-    float pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
+    float pitchVariationInCents = pitchKeytrack * (noteNumber - float(pitchKeycenter)); // note difference with pitch center
     pitchVariationInCents += pitch; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
     pitchVariationInCents += velocity * pitchVeltrack; // track velocity
