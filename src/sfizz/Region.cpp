@@ -1345,6 +1345,19 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
             return nullptr;
         return &eg.points[pointNumber];
     };
+    auto EG_target = [this, &opcode, egNumber](ModId targetId, ModId depthId, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+        const ModKey target = ModKey::createNXYZ(targetId, id);
+        Connection& conn = getOrCreateConnection(source, target);
+        if (depthId == ModId::Undefined)
+            conn.sourceDepth = opcode.read(spec);
+        else {
+            const ModKey depth = ModKey::createNXYZ(depthId, id, egNumber);
+            conn.sourceDepthMod = depth;
+            processGenericCc(opcode, spec, depth);
+        }
+        return true;
+    };
     auto LFO_EG_filter_EQ_target = [this, &opcode, egNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
         const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
         if (!extendIfNecessary(filters, index + 1, Default::numFilters))
@@ -1386,52 +1399,40 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
 
     // Modulation: Flex EG (targets)
     case hash("eg&_amplitude"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::amplitudeMod);
-        }
+        EG_target(ModId::Amplitude, {}, Default::amplitudeMod);
+        break;
+    case_any_ccN("eg&_amplitude"):
+        EG_target(ModId::Amplitude, ModId::EGAmplitudeDepth, Default::amplitudeMod);
         break;
     case hash("eg&_pan"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::panMod);
-        }
+        EG_target(ModId::Pan, {}, Default::panMod);
+        break;
+    case_any_ccN("eg&_pan"):
+        EG_target(ModId::Pan, ModId::EGPanDepth, Default::panMod);
         break;
     case hash("eg&_width"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::widthMod);
-        }
+        EG_target(ModId::Width, {}, Default::widthMod);
+        break;
+    case_any_ccN("eg&_width"):
+        EG_target(ModId::Width, ModId::EGWidthDepth, Default::widthMod);
         break;
     case hash("eg&_position"): // sfizz extension
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::positionMod);
-        }
+        EG_target(ModId::Position, {}, Default::positionMod);
+        break;
+    case_any_ccN("eg&_position"): // sfizz extension
+        EG_target(ModId::Position, ModId::EGPositionDepth, Default::positionMod);
         break;
     case hash("eg&_pitch"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::pitchMod);
-        }
+        EG_target(ModId::Pitch, {}, Default::pitchMod);
+        break;
+    case_any_ccN("eg&_pitch"):
+        EG_target(ModId::Pitch, ModId::EGPitchDepth, Default::pitchMod);
         break;
     case hash("eg&_volume"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::volumeMod);
-        }
+        EG_target(ModId::Volume, {}, Default::volumeMod);
+        break;
+    case_any_ccN("eg&_volume"):
+        EG_target(ModId::Volume, ModId::EGVolumeDepth, Default::volumeMod);
         break;
     case hash("eg&_cutoff&"):
         LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);

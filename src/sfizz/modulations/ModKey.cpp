@@ -182,6 +182,18 @@ std::string ModKey::toString() const
         return absl::StrCat("LFOPitchDepth {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::LFOVolumeDepth:
         return absl::StrCat("LFOVolumeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGAmplitudeDepth:
+        return absl::StrCat("EGAmplitudeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGPanDepth:
+        return absl::StrCat("EGPanDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGWidthDepth:
+        return absl::StrCat("EGWidthDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGPositionDepth:
+        return absl::StrCat("EGPositionDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGPitchDepth:
+        return absl::StrCat("EGPitchDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGVolumeDepth:
+        return absl::StrCat("EGVolumeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};

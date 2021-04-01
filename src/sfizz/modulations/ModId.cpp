@@ -112,6 +112,18 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::LFOVolumeDepth:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGAmplitudeDepth:
+        return kModIsPerVoice|kModIsMultiplicative;
+    case ModId::EGPanDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGWidthDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGPositionDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGPitchDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGVolumeDepth:
+        return kModIsPerVoice|kModIsAdditive;
 
         // unknown
     default:

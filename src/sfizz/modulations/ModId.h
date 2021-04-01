@@ -70,6 +70,12 @@ enum class ModId : int {
     LFOPositionDepth,
     LFOPitchDepth,
     LFOVolumeDepth,
+    EGAmplitudeDepth,
+    EGPanDepth,
+    EGWidthDepth,
+    EGPositionDepth,
+    EGPitchDepth,
+    EGVolumeDepth,
 
     _TargetsEnd,
     // [/targets] --------------------------------------------------------------
