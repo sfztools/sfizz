@@ -902,7 +902,7 @@ void Synth::Impl::updateRegions() noexcept
         if (!update.region)
             continue;
 
-        update.region->parseOpcode(update.opcode, true);
+        update.region->parseOpcode(update.opcode, false);
     }
 
     regionUpdates_.clear();

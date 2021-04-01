@@ -186,11 +186,11 @@ struct Region {
      * This must be called multiple times for each opcode applying to this region.
      *
      * @param opcode
-     * @param rtSafe whether the processing has to be real-time safe
+     * @param cleanOpcode whether the opcode should be canonicalized
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool parseOpcode(const Opcode& opcode, bool rtSafe = false);
+    bool parseOpcode(const Opcode& opcode, bool cleanOpcode = true);
     /**
      * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
      * amplfo, pitchlfo, fillfo.

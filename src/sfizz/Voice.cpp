@@ -222,6 +222,7 @@ struct Voice::Impl
     float baseVolumedB_ { 0.0 };
     float baseGain_ { 1.0 };
     float baseFrequency_ { 440.0 };
+    uint8_t pitchKeycenter_ { Default::key };
 
     float floatPositionOffset_ { 0.0f };
     int sourcePosition_ { 0 };
@@ -467,6 +468,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     if (resources.stretch)
         impl.pitchRatio_ *= resources.stretch->getRatioForFractionalKey(numberRetuned);
 
+    impl.pitchKeycenter_ = region.pitchKeycenter;
     impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
     impl.baseGain_ = region.getBaseGain();
     if (impl.triggerEvent_.type != TriggerEventType::CC)
@@ -1425,7 +1427,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         if (!frequencies)
             return;
 
-        float keycenterFrequency = midiNoteFrequency(region_->pitchKeycenter);
+        float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
         fill(*frequencies, pitchRatio_ * keycenterFrequency);
         pitchEnvelope(*frequencies);
 
