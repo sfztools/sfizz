@@ -804,7 +804,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (parseEGOpcode(opcode, filterEG)) {
                 getOrCreateConnection(
                     ModKey::createNXYZ(ModId::FilEG, id),
-                    ModKey::createNXYZ(ModId::FilCutoff, id));
+                    ModKey::createNXYZ(ModId::FilCutoff, id, 0));
                 return true;
             }
         }
@@ -832,7 +832,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (parseLFOOpcode(opcode, filterLFO)) {
                 getOrCreateConnection(
                     ModKey::createNXYZ(ModId::FilLFO, id),
-                    ModKey::createNXYZ(ModId::FilCutoff, id));
+                    ModKey::createNXYZ(ModId::FilCutoff, id, 0));
                 return true;
             }
         }
@@ -897,7 +897,7 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
     else if (absl::StartsWith(opcode.name, "fillfo_")) {
         sourceKey = ModKey::createNXYZ(ModId::FilLFO, id);
         sourceDepthKey = ModKey::createNXYZ(ModId::FilLFODepth, id);
-        targetKey = ModKey::createNXYZ(ModId::FilCutoff, id);
+        targetKey = ModKey::createNXYZ(ModId::FilCutoff, id, 0);
         lfo.freqKey = ModKey::createNXYZ(ModId::FilLFOFrequency, id);
         depthSpec = Default::filLFODepth;
         depthModSpec = Default::filterCutoffMod;
@@ -1076,7 +1076,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case hash("fileg_depth"):
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = opcode.read(Default::egDepth);
+            ModKey::createNXYZ(ModId::FilCutoff, id, 0)).sourceDepth = opcode.read(Default::egDepth);
         break;
 
     case hash("pitcheg_veltodepth"): // also pitcheg_vel2depth
@@ -1087,7 +1087,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case hash("fileg_veltodepth"): // also fileg_vel2depth
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = opcode.read(Default::egVel2Depth);
+            ModKey::createNXYZ(ModId::FilCutoff, id, 0)).velToDepth = opcode.read(Default::egVel2Depth);
         break;
 
     case_any_ccN("pitcheg_depth"):
@@ -1099,7 +1099,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case_any_ccN("fileg_depth"):
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepthMod = ModKey::createNXYZ(ModId::FilEGDepth, id);
+            ModKey::createNXYZ(ModId::FilCutoff, id, 0)).sourceDepthMod = ModKey::createNXYZ(ModId::FilEGDepth, id);
         processGenericCc(opcode, Default::filterCutoffMod, ModKey::createNXYZ(ModId::FilEGDepth, id));
         break;
 
