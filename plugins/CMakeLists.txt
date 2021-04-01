@@ -1,10 +1,13 @@
 add_library(plugins-common STATIC EXCLUDE_FROM_ALL
     "common/plugin/MessageUtils.h"
-    "common/plugin/MessageUtils.cpp")
+    "common/plugin/MessageUtils.cpp"
+    "common/plugin/InstrumentDescription.h"
+    "common/plugin/InstrumentDescription.cpp")
 target_include_directories(plugins-common PUBLIC "common")
 target_link_libraries(plugins-common
     PUBLIC sfizz::spin_mutex
-    PUBLIC sfizz::filesystem absl::strings)
+    PUBLIC sfizz::filesystem absl::strings
+    PRIVATE sfizz::internal)
 add_library(sfizz::plugins-common ALIAS plugins-common)
 
 if((SFIZZ_LV2 AND SFIZZ_LV2_UI) OR SFIZZ_VST)
