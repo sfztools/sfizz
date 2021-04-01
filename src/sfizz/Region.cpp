@@ -1161,17 +1161,18 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
             return nullptr;
         return &lfo.sub[subNumber1Based - 1];
     };
-    auto LFO_target = [this, &opcode, lfoNumber](ModId targetId, ModId depthId, const OpcodeSpec<float>& spec) -> bool {
+    auto LFO_target = [this, &opcode, lfoNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
         const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-        const ModKey target = ModKey::createNXYZ(targetId, id);
+        getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
+        return true;
+    };
+    auto LFO_target_cc = [this, &opcode, lfoNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+        const ModKey depth = ModKey::getSourceDepthKey(source, target);
+        ASSERT(depth);
         Connection& conn = getOrCreateConnection(source, target);
-        if (depthId == ModId::Undefined)
-            conn.sourceDepth = opcode.read(spec);
-        else {
-            const ModKey depth = ModKey::createNXYZ(depthId, id, lfoNumber);
-            conn.sourceDepthMod = depth;
-            processGenericCc(opcode, spec, depth);
-        }
+        conn.sourceDepthMod = depth;
+        processGenericCc(opcode, spec, depth);
         return true;
     };
     auto LFO_EG_filter_EQ_target = [this, &opcode, lfoNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
@@ -1265,42 +1266,41 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
 
     // Modulation: LFO (targets)
     case hash("lfo&_amplitude"):
-        LFO_target(ModId::Amplitude, {}, Default::amplitudeMod);
+        LFO_target(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
         break;
     case_any_ccN("lfo&_amplitude"):
-        LFO_target(ModId::Amplitude, ModId::LFOAmplitudeDepth, Default::amplitudeMod);
+        LFO_target_cc(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
         break;
     case hash("lfo&_pan"):
-        LFO_target(ModId::Pan, {}, Default::panMod);
+        LFO_target(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
         break;
     case_any_ccN("lfo&_pan"):
-        LFO_target(ModId::Pan, ModId::LFOPanDepth, Default::panMod);
+        LFO_target_cc(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
         break;
     case hash("lfo&_width"):
-        LFO_target(ModId::Width, {}, Default::widthMod);
+        LFO_target(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
         break;
     case_any_ccN("lfo&_width"):
-        LFO_target(ModId::Width, ModId::LFOWidthDepth, Default::widthMod);
+        LFO_target_cc(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
         break;
     case hash("lfo&_position"): // sfizz extension
-        LFO_target(ModId::Position, {}, Default::positionMod);
+        LFO_target(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
         break;
     case_any_ccN("lfo&_position"): // sfizz extension
-        LFO_target(ModId::Position, ModId::LFOPositionDepth, Default::positionMod);
+        LFO_target_cc(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
         break;
     case hash("lfo&_pitch"):
-        LFO_target(ModId::Pitch, {}, Default::pitchMod);
+        LFO_target(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
         break;
     case_any_ccN("lfo&_pitch"):
-        LFO_target(ModId::Pitch, ModId::LFOPitchDepth, Default::pitchMod);
+        LFO_target_cc(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
         break;
     case hash("lfo&_volume"):
-        LFO_target(ModId::Volume, {}, Default::volumeMod);
+        LFO_target(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
     case_any_ccN("lfo&_volume"):
-        LFO_target(ModId::Volume, ModId::LFOVolumeDepth, Default::volumeMod);
+        LFO_target_cc(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
-
     case hash("lfo&_cutoff&"):
         LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
         break;
@@ -1345,17 +1345,18 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
             return nullptr;
         return &eg.points[pointNumber];
     };
-    auto EG_target = [this, &opcode, egNumber](ModId targetId, ModId depthId, const OpcodeSpec<float>& spec) -> bool {
+    auto EG_target = [this, &opcode, egNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
         const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-        const ModKey target = ModKey::createNXYZ(targetId, id);
+        getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
+        return true;
+    };
+    auto EG_target_cc = [this, &opcode, egNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+        const ModKey depth = ModKey::getSourceDepthKey(source, target);
+        ASSERT(depth);
         Connection& conn = getOrCreateConnection(source, target);
-        if (depthId == ModId::Undefined)
-            conn.sourceDepth = opcode.read(spec);
-        else {
-            const ModKey depth = ModKey::createNXYZ(depthId, id, egNumber);
-            conn.sourceDepthMod = depth;
-            processGenericCc(opcode, spec, depth);
-        }
+        conn.sourceDepthMod = depth;
+        processGenericCc(opcode, spec, depth);
         return true;
     };
     auto LFO_EG_filter_EQ_target = [this, &opcode, egNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
@@ -1399,40 +1400,40 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
 
     // Modulation: Flex EG (targets)
     case hash("eg&_amplitude"):
-        EG_target(ModId::Amplitude, {}, Default::amplitudeMod);
+        EG_target(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
         break;
     case_any_ccN("eg&_amplitude"):
-        EG_target(ModId::Amplitude, ModId::EGAmplitudeDepth, Default::amplitudeMod);
+        EG_target_cc(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
         break;
     case hash("eg&_pan"):
-        EG_target(ModId::Pan, {}, Default::panMod);
+        EG_target(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
         break;
     case_any_ccN("eg&_pan"):
-        EG_target(ModId::Pan, ModId::EGPanDepth, Default::panMod);
+        EG_target_cc(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
         break;
     case hash("eg&_width"):
-        EG_target(ModId::Width, {}, Default::widthMod);
+        EG_target(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
         break;
     case_any_ccN("eg&_width"):
-        EG_target(ModId::Width, ModId::EGWidthDepth, Default::widthMod);
+        EG_target_cc(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
         break;
     case hash("eg&_position"): // sfizz extension
-        EG_target(ModId::Position, {}, Default::positionMod);
+        EG_target(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
         break;
     case_any_ccN("eg&_position"): // sfizz extension
-        EG_target(ModId::Position, ModId::EGPositionDepth, Default::positionMod);
+        EG_target_cc(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
         break;
     case hash("eg&_pitch"):
-        EG_target(ModId::Pitch, {}, Default::pitchMod);
+        EG_target(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
         break;
     case_any_ccN("eg&_pitch"):
-        EG_target(ModId::Pitch, ModId::EGPitchDepth, Default::pitchMod);
+        EG_target_cc(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
         break;
     case hash("eg&_volume"):
-        EG_target(ModId::Volume, {}, Default::volumeMod);
+        EG_target(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
     case_any_ccN("eg&_volume"):
-        EG_target(ModId::Volume, ModId::EGVolumeDepth, Default::volumeMod);
+        EG_target_cc(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
     case hash("eg&_cutoff&"):
         LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);
