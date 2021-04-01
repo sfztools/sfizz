@@ -13,14 +13,17 @@ namespace sfz {
 
 using Float = ADSREnvelope::Float;
 
-Float ADSREnvelope::secondsToSamples(Float timeInSeconds) const noexcept
+int ADSREnvelope::secondsToSamples(Float timeInSeconds) const noexcept
 {
+    if (timeInSeconds <= 0)
+        return Float(0);
+
     return static_cast<int>(timeInSeconds * sampleRate);
 };
 
 Float ADSREnvelope::secondsToLinRate(Float timeInSeconds) const noexcept
 {
-    if (timeInSeconds == 0)
+    if (timeInSeconds <= 0)
         return Float(1);
 
     return 1 / (sampleRate * timeInSeconds);
@@ -28,7 +31,7 @@ Float ADSREnvelope::secondsToLinRate(Float timeInSeconds) const noexcept
 
 Float ADSREnvelope::secondsToExpRate(Float timeInSeconds) const noexcept
 {
-    if (timeInSeconds == 0)
+    if (timeInSeconds <= 0)
         return Float(0.0);
 
     timeInSeconds = std::max(Float(25e-3), timeInSeconds);
@@ -44,8 +47,8 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const 
     this->decayRate = secondsToExpRate(desc.getDecay(state, velocity));
     this->releaseRate = secondsToExpRate(desc.getRelease(state, velocity));
     this->hold = secondsToSamples(desc.getHold(state, velocity));
-    this->sustain = desc.getSustain(state, velocity);
-    this->start = desc.getStart(state, velocity);
+    this->sustain = clamp(desc.getSustain(state, velocity), 0.0f, 1.0f);
+    this->start = clamp(desc.getStart(state, velocity), 0.0f, 1.0f);
 
     releaseDelay = 0;
     sustainThreshold = this->sustain + config::virtuallyZero;
