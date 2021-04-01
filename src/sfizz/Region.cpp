@@ -1175,14 +1175,15 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
         processGenericCc(opcode, spec, depth);
         return true;
     };
-    auto LFO_EG_filter_EQ_target = [this, &opcode, lfoNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
-        const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
-        if (!extendIfNecessary(filters, index + 1, Default::numFilters))
-            return false;
-        const ModKey source = ModKey::createNXYZ(sourceId, id, lfoNumber);
-        const ModKey target = ModKey::createNXYZ(targetId, id, index);
-        getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
-        return true;
+    auto ensureFilter = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(filters, index + 1, Default::numFilters);
+    };
+    auto ensureEQ = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(equalizers, index + 1, Default::numEQs);
     };
 
     //
@@ -1302,22 +1303,64 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
         LFO_target_cc(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
     case hash("lfo&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
+        if (!ensureFilter())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
+        break;
+    case_any_ccN("lfo&_cutoff&"):
+        if (!ensureFilter())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
         break;
     case hash("lfo&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceMod);
+        if (!ensureFilter())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
+        break;
+    case_any_ccN("lfo&_resonance&"):
+        if (!ensureFilter())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
         break;
     case hash("lfo&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainMod);
+        if (!ensureFilter())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
+        break;
+    case_any_ccN("lfo&_fil&gain"):
+        if (!ensureFilter())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
         break;
     case hash("lfo&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainMod);
+        if (!ensureEQ())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
+        break;
+    case_any_ccN("lfo&_eq&gain"):
+        if (!ensureEQ())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
         break;
     case hash("lfo&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyMod);
+        if (!ensureEQ())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
+        break;
+    case_any_ccN("lfo&_eq&freq"):
+        if (!ensureEQ())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
         break;
     case hash("lfo&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthMod);
+        if (!ensureEQ())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
+        break;
+    case_any_ccN("lfo&_eq&bw"):
+        if (!ensureEQ())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
         break;
 
     default:
@@ -1359,14 +1402,15 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
         processGenericCc(opcode, spec, depth);
         return true;
     };
-    auto LFO_EG_filter_EQ_target = [this, &opcode, egNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
-        const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
-        if (!extendIfNecessary(filters, index + 1, Default::numFilters))
-            return false;
-        const ModKey source = ModKey::createNXYZ(sourceId, id, egNumber);
-        const ModKey target = ModKey::createNXYZ(targetId, id, index);
-        getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
-        return true;
+    auto ensureFilter = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(filters, index + 1, Default::numFilters);
+    };
+    auto ensureEQ = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(equalizers, index + 1, Default::numEQs);
     };
 
     //
@@ -1436,22 +1480,64 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
         EG_target_cc(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
     case hash("eg&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);
+        if (!ensureFilter())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
+        break;
+    case_any_ccN("eg&_cutoff&"):
+        if (!ensureFilter())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
         break;
     case hash("eg&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceMod);
+        if (!ensureFilter())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
+        break;
+    case_any_ccN("eg&_resonance&"):
+        if (!ensureFilter())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
         break;
     case hash("eg&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainMod);
+        if (!ensureFilter())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
+        break;
+    case_any_ccN("eg&_fil&gain"):
+        if (!ensureFilter())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
         break;
     case hash("eg&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainMod);
+        if (!ensureEQ())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
+        break;
+    case_any_ccN("eg&_eq&gain"):
+        if (!ensureEQ())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
         break;
     case hash("eg&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyMod);
+        if (!ensureEQ())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
+        break;
+    case_any_ccN("eg&_eq&freq"):
+        if (!ensureEQ())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
         break;
     case hash("eg&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthMod);
+        if (!ensureEQ())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
+        break;
+    case_any_ccN("eg&_eq&bw"):
+        if (!ensureEQ())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
         break;
 
     case hash("eg&_ampeg"):
