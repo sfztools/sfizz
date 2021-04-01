@@ -1161,6 +1161,19 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
             return nullptr;
         return &lfo.sub[subNumber1Based - 1];
     };
+    auto LFO_target = [this, &opcode, lfoNumber](ModId targetId, ModId depthId, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+        const ModKey target = ModKey::createNXYZ(targetId, id);
+        Connection& conn = getOrCreateConnection(source, target);
+        if (depthId == ModId::Undefined)
+            conn.sourceDepth = opcode.read(spec);
+        else {
+            const ModKey depth = ModKey::createNXYZ(depthId, id, lfoNumber);
+            conn.sourceDepthMod = depth;
+            processGenericCc(opcode, spec, depth);
+        }
+        return true;
+    };
     auto LFO_EG_filter_EQ_target = [this, &opcode, lfoNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
         const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
         if (!extendIfNecessary(filters, index + 1, Default::numFilters))
@@ -1252,52 +1265,40 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
 
     // Modulation: LFO (targets)
     case hash("lfo&_amplitude"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::amplitudeMod);
-        }
+        LFO_target(ModId::Amplitude, {}, Default::amplitudeMod);
+        break;
+    case_any_ccN("lfo&_amplitude"):
+        LFO_target(ModId::Amplitude, ModId::LFOAmplitudeDepth, Default::amplitudeMod);
         break;
     case hash("lfo&_pan"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::panMod);
-        }
+        LFO_target(ModId::Pan, {}, Default::panMod);
+        break;
+    case_any_ccN("lfo&_pan"):
+        LFO_target(ModId::Pan, ModId::LFOPanDepth, Default::panMod);
         break;
     case hash("lfo&_width"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::widthMod);
-        }
+        LFO_target(ModId::Width, {}, Default::widthMod);
+        break;
+    case_any_ccN("lfo&_width"):
+        LFO_target(ModId::Width, ModId::LFOWidthDepth, Default::widthMod);
         break;
     case hash("lfo&_position"): // sfizz extension
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::positionMod);
-        }
+        LFO_target(ModId::Position, {}, Default::positionMod);
+        break;
+    case_any_ccN("lfo&_position"): // sfizz extension
+        LFO_target(ModId::Position, ModId::LFOPositionDepth, Default::positionMod);
         break;
     case hash("lfo&_pitch"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::pitchMod);
-        }
+        LFO_target(ModId::Pitch, {}, Default::pitchMod);
+        break;
+    case_any_ccN("lfo&_pitch"):
+        LFO_target(ModId::Pitch, ModId::LFOPitchDepth, Default::pitchMod);
         break;
     case hash("lfo&_volume"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::volumeMod);
-        }
+        LFO_target(ModId::Volume, {}, Default::volumeMod);
+        break;
+    case_any_ccN("lfo&_volume"):
+        LFO_target(ModId::Volume, ModId::LFOVolumeDepth, Default::volumeMod);
         break;
 
     case hash("lfo&_cutoff&"):

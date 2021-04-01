@@ -170,6 +170,18 @@ std::string ModKey::toString() const
         return absl::StrCat("LFOBeats {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::LFOPhase:
         return absl::StrCat("LFOPhase {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOAmplitudeDepth:
+        return absl::StrCat("LFOAmplitudeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOPanDepth:
+        return absl::StrCat("LFOPanDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOWidthDepth:
+        return absl::StrCat("LFOWidthDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOPositionDepth:
+        return absl::StrCat("LFOPositionDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOPitchDepth:
+        return absl::StrCat("LFOPitchDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOVolumeDepth:
+        return absl::StrCat("LFOVolumeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
 
     default:
         return {};
