@@ -35,7 +35,7 @@ static const auto panData = []()
 float panLookup(float pan)
 {
     // reduce range, round to nearest
-    const int index = lroundPositive(pan * (panSize - 1));
+    const long index = lroundPositive(pan * (panSize - 1));
     return panData[index];
 }
 

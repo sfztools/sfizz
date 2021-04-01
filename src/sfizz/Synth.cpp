@@ -1016,9 +1016,10 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // Send the set of changed CCs
     Client broadcaster = impl.getBroadcaster();
     const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
+    const int finalFrameNumber = int(numFrames - 1);
     if (broadcaster.canReceive()) {
             sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
-            broadcaster.receive<'b'>(numFrames - 1, "/cc/changed", &blob);
+            broadcaster.receive<'b'>(finalFrameNumber, "/cc/changed", &blob);
     }
     impl.changedCCsThisCycle_.clear();
     // Send the changed keyswitch
@@ -1027,7 +1028,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
             int32_t value = -1;
             if (impl.currentSwitch_)
                 value = *impl.currentSwitch_;
-            broadcaster.receive<'i'>(numFrames - 1, "/sw/last/current", value);
+            broadcaster.receive<'i'>(finalFrameNumber, "/sw/last/current", value);
         }
         impl.currentSwitchChanged_ = false;
     }

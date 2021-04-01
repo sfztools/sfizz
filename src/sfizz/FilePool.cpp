@@ -234,7 +234,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     FileInformation returnedValue;
     returnedValue.end = static_cast<uint32_t>(reader->frames()) - 1;
     returnedValue.sampleRate = static_cast<double>(reader->sampleRate());
-    returnedValue.numChannels = reader->channels();
+    returnedValue.numChannels = static_cast<int>(reader->channels());
 
     InstrumentInfo instrumentInfo {};
     bool haveInstrumentInfo = reader->getInstrument(&instrumentInfo);
@@ -267,7 +267,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     }
 
     if (haveInstrumentInfo)
-        returnedValue.rootKey = clamp<int8_t>(instrumentInfo.basenote, 0, 127);
+        returnedValue.rootKey = clamp<uint8_t>(instrumentInfo.basenote, 0, 127);
 
     return returnedValue;
 }
@@ -379,7 +379,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     }
 }
 
-void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
+void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
 {
     raiseCurrentThreadPriority();
 
@@ -496,17 +496,17 @@ bool is_ready(std::future<R> const& f)
 
 void sfz::FilePool::dispatchingJob() noexcept
 {
-    QueuedFileData queuedData;
     while (dispatchBarrier.wait(), dispatchFlag) {
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
+        QueuedFileData queuedData;
         if (filesToLoad->try_pop(queuedData)) {
             if (queuedData.id.expired()) {
                 // file ID was nulled, it means the region was deleted, ignore
             }
             else
                 loadingJobs.push_back(
-                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, std::move(queuedData)));
         }
 
         // Clear finished jobs

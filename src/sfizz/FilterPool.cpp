@@ -33,7 +33,7 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
         fast_real_distribution<float> dist { 0.0f, description->random };
         baseCutoff *= centsFactor(dist(Random::randomGenerator));
     }
-    const auto keytrack = description->keytrack * (noteNumber - description->keycenter);
+    const auto keytrack = description->keytrack * float(noteNumber - description->keycenter);
     baseCutoff *= centsFactor(keytrack);
     const auto veltrack = description->veltrack * velocity;
     baseCutoff *= centsFactor(veltrack);

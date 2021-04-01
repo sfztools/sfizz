@@ -485,7 +485,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
     impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleSize_ = region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
+    impl.sampleSize_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1);
     impl.bendStepFactor_ = centsFactor(region.bendStep);
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
@@ -1129,7 +1129,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                 }
 
                 if (!released())
-                    off(i, true);
+                    off(int(i), true);
 
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
@@ -1167,8 +1167,8 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
             // compute crossfade positions
             for (unsigned i = 0; i < ptSize; ++i) {
-                float pos = ptIndices[i] + ptCoeffs[i];
-                xfCurvePos[i] = (pos - loop.xfOutStart) / loop.xfSize;
+                float pos = float(ptIndices[i]) + ptCoeffs[i];
+                xfCurvePos[i] = (pos - float(loop.xfOutStart)) / float(loop.xfSize);
             }
 
             //----------------------------------------------------------------//
@@ -1390,8 +1390,8 @@ const Curve& Voice::Impl::getSCurve()
         constexpr unsigned N = Curve::NumValues;
         float values[N];
         for (unsigned i = 0; i < N; ++i) {
-            double x = i / static_cast<double>(N - 1);
-            values[i] = (1.0 - std::cos(M_PI * x)) * 0.5;
+            double x = i / double(N - 1);
+            values[i] = float((1.0 - std::cos(M_PI * x)) * 0.5);
         }
         return Curve::buildFromPoints(values);
     }();
