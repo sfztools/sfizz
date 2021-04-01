@@ -182,6 +182,18 @@ std::string ModKey::toString() const
         return absl::StrCat("LFOPitchDepth {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::LFOVolumeDepth:
         return absl::StrCat("LFOVolumeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::LFOFilCutoffDepth:
+        return absl::StrCat("LFOFilCutoffDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::LFOFilResonanceDepth:
+        return absl::StrCat("LFOFilResonanceDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::LFOFilGainDepth:
+        return absl::StrCat("LFOFilGainDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::LFOEqGainDepth:
+        return absl::StrCat("LFOEqGainDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::LFOEqFrequencyDepth:
+        return absl::StrCat("LFOEqFrequencyDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::LFOEqBandwidthDepth:
+        return absl::StrCat("LFOEqBandwidthDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
     case ModId::EGAmplitudeDepth:
         return absl::StrCat("EGAmplitudeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::EGPanDepth:
@@ -194,10 +206,142 @@ std::string ModKey::toString() const
         return absl::StrCat("EGPitchDepth {", region_.number(), ", N=", 1 + params_.N, "}");
     case ModId::EGVolumeDepth:
         return absl::StrCat("EGVolumeDepth {", region_.number(), ", N=", 1 + params_.N, "}");
+    case ModId::EGFilCutoffDepth:
+        return absl::StrCat("EGFilCutoffDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::EGFilResonanceDepth:
+        return absl::StrCat("EGFilResonanceDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::EGFilGainDepth:
+        return absl::StrCat("EGFilGainDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::EGEqGainDepth:
+        return absl::StrCat("EGEqGainDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::EGEqFrequencyDepth:
+        return absl::StrCat("EGEqFrequencyDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::EGEqBandwidthDepth:
+        return absl::StrCat("EGEqBandwidthDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
 
     default:
         return {};
     }
+}
+
+ModKey ModKey::getSourceDepthKey(ModKey source, ModKey target)
+{
+    const NumericId<Region> region = source.region();
+    const ModKey::Parameters& tp = target.parameters();
+
+    switch (source.id()) {
+    case ModId::AmpLFO:
+        switch (target.id()) {
+        case ModId::Volume:
+            return ModKey::createNXYZ(ModId::AmpLFODepth, region);
+        default:
+            break;
+        }
+        break;
+
+    case ModId::PitchLFO:
+        switch (target.id()) {
+        case ModId::Pitch:
+            return ModKey::createNXYZ(ModId::PitchLFODepth, region);
+        default:
+            break;
+        }
+        break;
+
+    case ModId::FilLFO:
+        switch (target.id()) {
+        case ModId::FilCutoff:
+            return ModKey::createNXYZ(ModId::FilLFODepth, region);
+        default:
+            break;
+        }
+        break;
+
+    case ModId::PitchEG:
+        switch (target.id()) {
+        case ModId::Pitch:
+            return ModKey::createNXYZ(ModId::PitchEGDepth, region);
+        default:
+            break;
+        }
+        break;
+
+    case ModId::FilEG:
+        switch (target.id()) {
+        case ModId::FilCutoff:
+            return ModKey::createNXYZ(ModId::FilEGDepth, region);
+        default:
+            break;
+        }
+        break;
+
+    case ModId::LFO:
+        switch (target.id()) {
+        case ModId::Amplitude:
+            return ModKey::createNXYZ(ModId::LFOAmplitudeDepth, region, tp.N);
+        case ModId::Pan:
+            return ModKey::createNXYZ(ModId::LFOPanDepth, region, tp.N);
+        case ModId::Width:
+            return ModKey::createNXYZ(ModId::LFOWidthDepth, region, tp.N);
+        case ModId::Position:
+            return ModKey::createNXYZ(ModId::LFOPositionDepth, region, tp.N);
+        case ModId::Pitch:
+            return ModKey::createNXYZ(ModId::LFOPitchDepth, region, tp.N);
+        case ModId::Volume:
+            return ModKey::createNXYZ(ModId::LFOVolumeDepth, region, tp.N);
+        case ModId::FilCutoff:
+            return ModKey::createNXYZ(ModId::LFOFilCutoffDepth, region, tp.N, tp.X);
+        case ModId::FilResonance:
+            return ModKey::createNXYZ(ModId::LFOFilResonanceDepth, region, tp.N, tp.X);
+        case ModId::FilGain:
+            return ModKey::createNXYZ(ModId::LFOFilGainDepth, region, tp.N, tp.X);
+        case ModId::EqGain:
+            return ModKey::createNXYZ(ModId::LFOEqGainDepth, region, tp.N, tp.X);
+        case ModId::EqFrequency:
+            return ModKey::createNXYZ(ModId::LFOEqFrequencyDepth, region, tp.N, tp.X);
+        case ModId::EqBandwidth:
+            return ModKey::createNXYZ(ModId::LFOEqBandwidthDepth, region, tp.N, tp.X);
+        default:
+            break;
+        }
+        break;
+
+    case ModId::Envelope:
+        switch (target.id()) {
+        case ModId::Amplitude:
+            return ModKey::createNXYZ(ModId::EGAmplitudeDepth, region, tp.N);
+        case ModId::Pan:
+            return ModKey::createNXYZ(ModId::EGPanDepth, region, tp.N);
+        case ModId::Width:
+            return ModKey::createNXYZ(ModId::EGWidthDepth, region, tp.N);
+        case ModId::Position:
+            return ModKey::createNXYZ(ModId::EGPositionDepth, region, tp.N);
+        case ModId::Pitch:
+            return ModKey::createNXYZ(ModId::EGPitchDepth, region, tp.N);
+        case ModId::Volume:
+            return ModKey::createNXYZ(ModId::EGVolumeDepth, region, tp.N);
+        case ModId::FilCutoff:
+            return ModKey::createNXYZ(ModId::EGFilCutoffDepth, region, tp.N, tp.X);
+        case ModId::FilResonance:
+            return ModKey::createNXYZ(ModId::EGFilResonanceDepth, region, tp.N, tp.X);
+        case ModId::FilGain:
+            return ModKey::createNXYZ(ModId::EGFilGainDepth, region, tp.N, tp.X);
+        case ModId::EqGain:
+            return ModKey::createNXYZ(ModId::EGEqGainDepth, region, tp.N, tp.X);
+        case ModId::EqFrequency:
+            return ModKey::createNXYZ(ModId::EGEqFrequencyDepth, region, tp.N, tp.X);
+        case ModId::EqBandwidth:
+            return ModKey::createNXYZ(ModId::EGEqBandwidthDepth, region, tp.N, tp.X);
+        default:
+            break;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return {};
 }
 
 } // namespace sfz
