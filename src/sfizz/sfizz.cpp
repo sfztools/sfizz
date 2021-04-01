@@ -185,6 +185,11 @@ void sfz::Sfizz::aftertouch(int delay, uint8_t aftertouch) noexcept
     synth->synth.aftertouch(delay, aftertouch);
 }
 
+void sfz::Sfizz::polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept
+{
+    synth->synth.polyAftertouch(delay, noteNumber, aftertouch);
+}
+
 void sfz::Sfizz::tempo(int delay, float secondsPerBeat) noexcept
 {
     synth->synth.tempo(delay, secondsPerBeat);

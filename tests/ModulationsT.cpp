@@ -430,7 +430,6 @@ TEST_CASE("[Modulations] LFO v1 aftertouch connections")
     }, 3));
 }
 
-
 TEST_CASE("[Modulations] LFO v1 aftertouch frequency connections")
 {
     sfz::Synth synth;
@@ -445,6 +444,46 @@ TEST_CASE("[Modulations] LFO v1 aftertouch frequency connections")
         R"("ChannelAftertouch" -> "AmplitudeLFOFrequency {0}")",
         R"("ChannelAftertouch" -> "PitchLFOFrequency {1}")",
         R"("ChannelAftertouch" -> "FilterLFOFrequency {2}")",
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
+
+TEST_CASE("[Modulations] LFO v1 poly aftertouch connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_depthpolyaft=10
+        <region> sample=*sine pitchlfo_depthpolyaft=1200
+        <region> sample=*sine fillfo_depthpolyaft=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("PolyAftertouch" -> "AmplitudeLFODepth {0}")",
+        R"("PolyAftertouch" -> "PitchLFODepth {1}")",
+        R"("PolyAftertouch" -> "FilterLFODepth {2}")",
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
+
+TEST_CASE("[Modulations] LFO v1 poly aftertouch frequency connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_freqpolyaft=10
+        <region> sample=*sine pitchlfo_freqpolyaft=1200
+        <region> sample=*sine fillfo_freqpolyaft=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("PolyAftertouch" -> "AmplitudeLFOFrequency {0}")",
+        R"("PolyAftertouch" -> "PitchLFOFrequency {1}")",
+        R"("PolyAftertouch" -> "FilterLFOFrequency {2}")",
         R"("AmplitudeLFO {0}" -> "Volume {0}")",
         R"("PitchLFO {1}" -> "Pitch {1}")",
         R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",

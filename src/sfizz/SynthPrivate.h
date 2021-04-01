@@ -11,6 +11,7 @@
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
 #include "modulations/sources/ChannelAftertouch.h"
+#include "modulations/sources/PolyAftertouch.h"
 #include "modulations/sources/LFO.h"
 
 namespace sfz {
@@ -303,6 +304,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope_;
     std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
     std::unique_ptr<ChannelAftertouchSource> genChannelAftertouch_;
+    std::unique_ptr<PolyAftertouchSource> genPolyAftertouch_;
 
     // Settings per voice
     struct {

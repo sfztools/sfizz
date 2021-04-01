@@ -73,8 +73,11 @@ void sfz::MidiState::flushEvents() noexcept
         events.resize(1);
     };
 
-    for (auto& ccEvents : cc)
-        flushEventVector(ccEvents);
+    for (auto& events : ccEvents)
+        flushEventVector(events);
+
+    for (auto& events: polyAftertouchEvents)
+        flushEventVector(events);
 
     flushEventVector(pitchEvents);
     flushEventVector(channelAftertouchEvents);
@@ -88,8 +91,11 @@ void sfz::MidiState::setSamplesPerBlock(int samplesPerBlock) noexcept
         events.reserve(samplesPerBlock);
     };
     this->samplesPerBlock = samplesPerBlock;
-    for (auto& ccEvents : cc)
-        updateEventBufferSize(ccEvents);
+    for (auto& events: ccEvents)
+        updateEventBufferSize(events);
+
+    for (auto& events: polyAftertouchEvents)
+        updateEventBufferSize(events);
 
     updateEventBufferSize(pitchEvents);
     updateEventBufferSize(channelAftertouchEvents);
@@ -147,21 +153,39 @@ void sfz::MidiState::channelAftertouchEvent(int delay, float aftertouch) noexcep
     insertEventInVector(channelAftertouchEvents, delay, aftertouch);
 }
 
+void sfz::MidiState::polyAftertouchEvent(int delay, int noteNumber, float aftertouch) noexcept
+{
+    ASSERT(aftertouch >= 0.0f && aftertouch <= 1.0f);
+    if (noteNumber < 0 || noteNumber >= static_cast<int>(polyAftertouchEvents.size()))
+        return;
+
+    insertEventInVector(polyAftertouchEvents[noteNumber], delay, aftertouch);
+}
+
 float sfz::MidiState::getChannelAftertouch() const noexcept
 {
     ASSERT(channelAftertouchEvents.size() > 0);
     return channelAftertouchEvents.back().value;
 }
 
+float sfz::MidiState::getPolyAftertouch(int noteNumber) const noexcept
+{
+    if (noteNumber < 0 || noteNumber > 127)
+        return 0.0f;
+    
+    ASSERT(polyAftertouchEvents[noteNumber].size() > 0);
+    return polyAftertouchEvents[noteNumber].back().value;
+}
+
 void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
-    insertEventInVector(cc[ccNumber], delay, ccValue);
+    insertEventInVector(ccEvents[ccNumber], delay, ccValue);
 }
 
 float sfz::MidiState::getCCValue(int ccNumber) const noexcept
 {
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
-    return cc[ccNumber].back().value;
+    return ccEvents[ccNumber].back().value;
 }
 
 void sfz::MidiState::reset() noexcept
@@ -174,8 +198,11 @@ void sfz::MidiState::reset() noexcept
         events.push_back({ 0, 0.0f });
     };
 
-    for (auto& ccEvents : cc)
-        clearEvents(ccEvents);
+    for (auto& events : ccEvents)
+        clearEvents(events);
+
+   for (auto& events : polyAftertouchEvents)
+        clearEvents(events);
 
     clearEvents(pitchEvents);
     clearEvents(channelAftertouchEvents);
@@ -201,7 +228,7 @@ const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept
     if (ccIdx < 0 || ccIdx >= config::numCCs)
         return nullEvent;
 
-    return cc[ccIdx];
+    return ccEvents[ccIdx];
 }
 
 const sfz::EventVector& sfz::MidiState::getPitchEvents() const noexcept
@@ -212,4 +239,12 @@ const sfz::EventVector& sfz::MidiState::getPitchEvents() const noexcept
 const sfz::EventVector& sfz::MidiState::getChannelAftertouchEvents() const noexcept
 {
     return channelAftertouchEvents;
+}
+
+const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int noteNumber) const noexcept
+{
+    if (noteNumber < 0 || noteNumber > 127)
+        return nullEvent;
+
+    return polyAftertouchEvents[noteNumber];
 }

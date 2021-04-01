@@ -30,6 +30,7 @@ enum class ModId : int {
     PitchEG,
     FilEG,
     ChannelAftertouch,
+    PolyAftertouch,
     PerVoiceController,
     _SourcesEnd,
 

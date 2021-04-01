@@ -153,7 +153,17 @@ public:
      * @param delay
      * @param aftertouch
      */
-    void registerAftertouch(int delay, uint8_t aftertouch) noexcept;
+    void registerAftertouch(int delay, float aftertouch) noexcept;
+
+    /**
+     * @brief Register a polyphonic aftertouch event; for now this does nothing
+     *
+     * @param delay
+     * @param noteNumber
+     * @param aftertouch
+     */
+    void registerPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept;
+
     /**
      * @brief Register a tempo event; for now this does nothing
      *

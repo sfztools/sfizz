@@ -163,6 +163,8 @@ namespace Default
     extern const OpcodeSpec<float> hiBipolar;
     extern const OpcodeSpec<float> loChannelAftertouch;
     extern const OpcodeSpec<float> hiChannelAftertouch;
+    extern const OpcodeSpec<float> loPolyAftertouch;
+    extern const OpcodeSpec<float> hiPolyAftertouch;
     extern const OpcodeSpec<uint16_t> ccNumber;
     extern const OpcodeSpec<uint8_t> curveCC;
     extern const OpcodeSpec<uint16_t> smoothCC;

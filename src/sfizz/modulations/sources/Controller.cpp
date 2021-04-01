@@ -106,6 +106,16 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
     };
 
     switch(p.cc) {
+    case ExtendedCCs::polyphonicAftertouch: {
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const float fillValue =
+                voice && voice->getTriggerEvent().type == TriggerEventType::NoteOn ?
+                impl_->res_->midiState.getPolyAftertouch(voice->getTriggerEvent().number) : 0.0f;
+
+            sfz::fill(buffer, quantize(fillValue));
+            canShortcut = true;
+            break;
+        }
     case ExtendedCCs::noteOnVelocity: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue =

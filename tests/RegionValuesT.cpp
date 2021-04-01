@@ -922,6 +922,34 @@ TEST_CASE("[Values] Aftertouch range")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Values] Polyaftertouch range")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav lopolyaft=34 hipolyaft=60
+        <region> sample=kick.wav lopolyaft=-3 hipolyaft=60
+        <region> sample=kick.wav lopolyaft=20 hipolyaft=-1
+        <region> sample=kick.wav lopolyaft=20 hipolyaft=10
+    )");
+    synth.dispatchMessage(client, 0, "/region0/polyaft_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/polyaft_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/polyaft_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region3/polyaft_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region4/polyaft_range", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/polyaft_range,ff : { 0, 1 }",
+        "/region1/polyaft_range,ff : { 0.267717, 0.472441 }",
+        "/region2/polyaft_range,ff : { -0.023622, 0.472441 }",
+        "/region3/polyaft_range,ff : { 0.15748, -0.00787402 }",
+        "/region4/polyaft_range,ff : { 0.15748, 0.0787402 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
 TEST_CASE("[Values] BPM range")
 {
     Synth synth;

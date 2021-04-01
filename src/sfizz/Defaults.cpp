@@ -53,6 +53,8 @@ FloatSpec loVel { 0, {0.0f, 127.0f}, kNormalizeMidi|kPermissiveBounds };
 FloatSpec hiVel { 127, {0.0f, 127.0f}, kNormalizeMidi|kPermissiveBounds };
 FloatSpec loChannelAftertouch { 0, {0, 127}, kNormalizeMidi|kPermissiveBounds };
 FloatSpec hiChannelAftertouch { 127, {0, 127}, kNormalizeMidi|kPermissiveBounds };
+FloatSpec loPolyAftertouch { 0, {0, 127}, kNormalizeMidi|kPermissiveBounds };
+FloatSpec hiPolyAftertouch { 127, {0, 127}, kNormalizeMidi|kPermissiveBounds };
 FloatSpec loBend { -8191, {-8192.0f, 8191.0f}, kNormalizeBend|kPermissiveBounds };
 FloatSpec hiBend { 8191, {-8192.0f, 8191.0f}, kNormalizeBend|kPermissiveBounds };
 FloatSpec loNormalized { 0.0f, {0.0f, 1.0f}, kPermissiveBounds };
