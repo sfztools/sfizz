@@ -39,6 +39,7 @@ struct ModMatrix::Impl {
     struct ConnectionData {
         float sourceDepth_ {};
         ModKey sourceDepthMod_ {};
+        TargetId sourceDepthModId_ {};
         float velToDepth_ {};
     };
 
@@ -207,6 +208,10 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth,
     Impl::ConnectionData& conn = target.connectedSources[sourceIndex];
     conn.sourceDepth_ = sourceDepth;
     conn.sourceDepthMod_ = sourceDepthMod;
+
+    if (sourceDepthMod)
+        conn.sourceDepthModId_ = registerTarget(sourceDepthMod);
+
     conn.velToDepth_ = velToDepth;
 
     return true;
@@ -414,7 +419,7 @@ float* ModMatrix::getModulation(TargetId targetId)
                 sourceDepth += triggerValue * velToDepth;
             }
 
-            const float* sourceDepthMod = getModulationByKey(sourcesPos->second.sourceDepthMod_);
+            const float* sourceDepthMod = getModulation(sourcesPos->second.sourceDepthModId_);
 
             if (isFirstSource) {
                 if (sourceDepth == 1 && !sourceDepthMod)
