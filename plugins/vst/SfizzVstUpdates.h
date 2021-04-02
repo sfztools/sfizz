@@ -71,11 +71,10 @@ private:
  */
 class SfzUpdate : public Steinberg::FObject {
 public:
-    void setPath(std::string newPath, std::string newDescription)
+    void setPath(std::string newPath)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         path_ = std::move(newPath);
-        description_ = std::move(newDescription);
     }
 
     std::string getPath() const
@@ -84,16 +83,33 @@ public:
         return path_;
     }
 
+    OBJ_METHODS(SfzUpdate, FObject)
+
+private:
+    std::string path_;
+    mutable std::mutex mutex_;
+};
+
+/**
+ * @brief Update which notifies a change of SFZ description.
+ */
+class SfzDescriptionUpdate : public Steinberg::FObject {
+public:
+    void setDescription(std::string newDescription)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        description_ = std::move(newDescription);
+    }
+
     std::string getDescription() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
         return description_;
     }
 
-    OBJ_METHODS(SfzUpdate, FObject)
+    OBJ_METHODS(SfzDescriptionUpdate, FObject)
 
 private:
-    std::string path_;
     std::string description_;
     mutable std::mutex mutex_;
 };

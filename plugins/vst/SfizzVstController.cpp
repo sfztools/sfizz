@@ -23,6 +23,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     oscUpdate_ = Steinberg::owned(new OSCUpdate);
     noteUpdate_ = Steinberg::owned(new NoteUpdate);
     sfzUpdate_ = Steinberg::owned(new SfzUpdate);
+    sfzDescriptionUpdate_ = Steinberg::owned(new SfzDescriptionUpdate);
     scalaUpdate_ = Steinberg::owned(new ScalaUpdate);
     processorStateUpdate_ = Steinberg::owned(new ProcessorStateUpdate);
     playStateUpdate_ = Steinberg::owned(new PlayStateUpdate);
@@ -211,6 +212,8 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     setParam(kPidTuningFrequency, s.tuningFrequency);
     setParam(kPidStretchedTuning, s.stretchedTuning);
 
+    sfzUpdate_->setPath(s.sfzFile);
+    sfzUpdate_->deferUpdate();
     scalaUpdate_->setPath(s.scalaFile);
     scalaUpdate_->deferUpdate();
 
@@ -254,8 +257,10 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         processorStateUpdate_->access([sfzFile](SfizzVstState& state) {
             state.sfzFile = std::string(sfzFile);
         });
-        sfzUpdate_->setPath(std::string(sfzFile), std::string(sfzDescriptionBlob));
+        sfzUpdate_->setPath(std::string(sfzFile));
         sfzUpdate_->deferUpdate();
+        sfzDescriptionUpdate_->setDescription(std::string(sfzDescriptionBlob));
+        sfzDescriptionUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "LoadedScala")) {
         absl::string_view scalaFile;
@@ -325,6 +330,7 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
 
     std::vector<FObject*> continuousUpdates;
     continuousUpdates.push_back(sfzUpdate_);
+    continuousUpdates.push_back(sfzDescriptionUpdate_);
     continuousUpdates.push_back(scalaUpdate_);
     continuousUpdates.push_back(playStateUpdate_);
     for (uint32 i = 0, n = parameters.getParameterCount(); i < n; ++i)

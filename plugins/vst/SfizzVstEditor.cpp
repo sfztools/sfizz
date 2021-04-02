@@ -11,6 +11,7 @@
 #include "SfizzFileScan.h"
 #include "editor/Editor.h"
 #include "editor/EditIds.h"
+#include "plugin/InstrumentDescription.h"
 #include "IdleUpdateHandler.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "X11RunLoop.h"
@@ -191,6 +192,11 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
     if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
         uiReceiveValue(EditId::SfzFile, path);
+    }
+
+    if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
+        const InstrumentDescription desc = parseDescriptionBlob(update->getDescription());
+        // TODO(jpc) instrument description
     }
 
     if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {

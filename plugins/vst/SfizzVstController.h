@@ -48,6 +48,7 @@ protected:
     Steinberg::IPtr<OSCUpdate> oscUpdate_;
     Steinberg::IPtr<NoteUpdate> noteUpdate_;
     Steinberg::IPtr<SfzUpdate> sfzUpdate_;
+    Steinberg::IPtr<SfzDescriptionUpdate> sfzDescriptionUpdate_;
     Steinberg::IPtr<ScalaUpdate> scalaUpdate_;
     Steinberg::IPtr<ProcessorStateUpdate> processorStateUpdate_;
     Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
