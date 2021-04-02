@@ -26,6 +26,8 @@ public:
     tresult PLUGIN_API initialize(FUnknown* context) override;
     tresult PLUGIN_API setBusArrangements(Vst::SpeakerArrangement* inputs, int32 numIns, Vst::SpeakerArrangement* outputs, int32 numOuts) override;
 
+    tresult PLUGIN_API connect(IConnectionPoint* other) override;
+
     tresult PLUGIN_API setState(IBStream* stream) override;
     tresult PLUGIN_API getState(IBStream* stream) override;
     void syncStateToSynth();
@@ -49,6 +51,7 @@ public:
 private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
+    Steinberg::IPtr<Vst::IMessage> _loadedSfzMessage;
     bool _isActive = false;
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
@@ -59,7 +62,7 @@ private:
     void receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     // misc
-    static void loadSfzFileOrDefault(sfz::Sfizz& synth, const std::string& filePath);
+    void loadSfzFileOrDefault(const std::string& filePath);
 
     // note event tracking
     std::array<float, 128> _noteEventsCurrentCycle; // 0: off, >0: on, <0: no change

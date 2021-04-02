@@ -39,6 +39,28 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/num_regions", "") {
+            client.receive<'i'>(delay, path, int(impl.layers_.size()));
+        } break;
+
+        MATCH("/num_groups", "") {
+            client.receive<'i'>(delay, path, impl.numGroups_);
+        } break;
+
+        MATCH("/num_masters", "") {
+            client.receive<'i'>(delay, path, impl.numMasters_);
+        } break;
+
+        MATCH("/num_curves", "") {
+            client.receive<'i'>(delay, path, int(impl.resources_.curves.getNumCurves()));
+        } break;
+
+        MATCH("/num_samples", "") {
+            client.receive<'i'>(delay, path, int(impl.resources_.filePool.getNumPreloadedSamples()));
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/key/slots", "") {
             const BitArray<128>& keys = impl.keySlots_;
             sfizz_blob_t blob { keys.data(), static_cast<uint32_t>(keys.byte_size()) };

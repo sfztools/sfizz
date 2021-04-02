@@ -47,8 +47,8 @@ public:
 protected:
     Steinberg::IPtr<OSCUpdate> oscUpdate_;
     Steinberg::IPtr<NoteUpdate> noteUpdate_;
-    Steinberg::IPtr<FilePathUpdate> sfzPathUpdate_;
-    Steinberg::IPtr<FilePathUpdate> scalaPathUpdate_;
+    Steinberg::IPtr<SfzUpdate> sfzUpdate_;
+    Steinberg::IPtr<ScalaUpdate> scalaUpdate_;
     Steinberg::IPtr<ProcessorStateUpdate> processorStateUpdate_;
     Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
     Vst::ParamID midiMapping_[Vst::kCountCtrlNumber] {};

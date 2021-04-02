@@ -37,6 +37,7 @@
 #include "editor/Editor.h"
 #include "editor/EditorController.h"
 #include "editor/EditIds.h"
+#include "plugin/InstrumentDescription.h"
 #include <lv2/ui/ui.h>
 #include <lv2/atom/atom.h>
 #include <lv2/atom/forge.h>
@@ -44,6 +45,7 @@
 #include <lv2/midi/midi.h>
 #include <lv2/patch/patch.h>
 #include <lv2/urid/urid.h>
+#include <lv2/instance-access/instance-access.h>
 #include <string>
 #include <memory>
 #include <cstring>
@@ -86,6 +88,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID_Unmap *unmap = nullptr;
     LV2UI_Resize *resize = nullptr;
     LV2UI_Touch *touch = nullptr;
+    sfizz_plugin_t *plugin = nullptr;
     FrameHolder uiFrame;
     std::unique_ptr<Editor> editor;
 #if LINUX
@@ -111,6 +114,9 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
 
     uint8_t osc_temp[OSC_TEMP_SIZE];
     alignas(LV2_Atom) uint8_t atom_temp[ATOM_TEMP_SIZE];
+
+    int sfz_serial = 0;
+    bool valid_sfz_serial = false;
 
 protected:
     void uiSendValue(EditId id, const EditValue& v) override;
@@ -178,10 +184,16 @@ instantiate(const LV2UI_Descriptor *descriptor,
             self->touch = (LV2UI_Touch*)(**f).data;
         else if (!strcmp((**f).URI, LV2_UI__parent))
             parentWindowId = (**f).data;
+        else if (!strcmp((**f).URI, LV2_INSTANCE_ACCESS_URI))
+            self->plugin = (sfizz_plugin_t *)(**f).data;
     }
 
     // The map feature is required
     if (!map || !unmap)
+        return nullptr;
+
+    // The instance-access feature is required
+    if (!self->plugin)
         return nullptr;
 
     LV2_Atom_Forge *forge = &self->atom_forge;
@@ -358,10 +370,43 @@ port_event(LV2UI_Handle ui,
     (void)buffer_size;
 }
 
+static void
+sfizz_ui_update_description(const InstrumentDescription& desc)
+{
+    // TODO(jpc) perform editor updates here
+
+    //std::cerr << desc << std::endl;
+}
+
+static void
+sfizz_ui_check_sfz_update(sfizz_ui_t *self)
+{
+    uint8_t *data = nullptr;
+    uint32_t size = 0;
+    int new_serial = 0;
+    const int *serial = self->valid_sfz_serial ? &self->sfz_serial : nullptr;
+
+    bool update = sfizz_lv2_fetch_description(
+        self->plugin, serial, &data, &size, &new_serial);
+
+    if (update) {
+        std::unique_ptr<uint8_t[]> cleanup(data);
+        self->sfz_serial = new_serial;
+        self->valid_sfz_serial = true;
+
+        const InstrumentDescription desc = parseDescriptionBlob(
+            absl::string_view(reinterpret_cast<char*>(data), size));
+        sfizz_ui_update_description(desc);
+    }
+}
+
 static int
 idle(LV2UI_Handle ui)
 {
     sfizz_ui_t *self = (sfizz_ui_t *)ui;
+
+    // check if there are news regarding the current SFZ
+    sfizz_ui_check_sfz_update(self);
 
 #if LINUX
    self->runLoop->execIdle();

@@ -93,6 +93,11 @@ std::string getDescriptionBlob(sfizz_synth_t* handle)
         }
     });
 
+    synth.sendMessage(*client, 0, "/num_regions", "", nullptr);
+    synth.sendMessage(*client, 0, "/num_groups", "", nullptr);
+    synth.sendMessage(*client, 0, "/num_masters", "", nullptr);
+    synth.sendMessage(*client, 0, "/num_curves", "", nullptr);
+    synth.sendMessage(*client, 0, "/num_samples", "", nullptr);
     synth.sendMessage(*client, 0, "/key/slots", "", nullptr);
     synth.sendMessage(*client, 0, "/sw/last/slots", "", nullptr);
     synth.sendMessage(*client, 0, "/cc/slots", "", nullptr);
@@ -125,7 +130,17 @@ InstrumentDescription parseDescriptionBlob(absl::string_view blob)
         };
 
         //
-        if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b"))
+        if (Messages::matchOSC("/num_regions", path, indices) && !strcmp(sig, "i"))
+            desc.numRegions = uint32_t(args[0].i);
+        else if (Messages::matchOSC("/num_groups", path, indices) && !strcmp(sig, "i"))
+            desc.numGroups = uint32_t(args[0].i);
+        else if (Messages::matchOSC("/num_masters", path, indices) && !strcmp(sig, "i"))
+            desc.numMasters = uint32_t(args[0].i);
+        else if (Messages::matchOSC("/num_curves", path, indices) && !strcmp(sig, "i"))
+            desc.numCurves = uint32_t(args[0].i);
+        else if (Messages::matchOSC("/num_samples", path, indices) && !strcmp(sig, "i"))
+            desc.numSamples = uint32_t(args[0].i);
+        else if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b"))
             copyArgToBitSpan(args[0], desc.keyUsed.span());
         else if (Messages::matchOSC("/sw/last/slots", path, indices) && !strcmp(sig, "b"))
             copyArgToBitSpan(args[0], desc.keyswitchUsed.span());
@@ -150,6 +165,12 @@ InstrumentDescription parseDescriptionBlob(absl::string_view blob)
 std::ostream& operator<<(std::ostream& os, const InstrumentDescription& desc)
 {
     os << "instrument:\n";
+
+    os << "  regions: " << desc.numRegions << "\n";
+    os << "  groups: " << desc.numGroups << "\n";
+    os << "  masters: " << desc.numMasters << "\n";
+    os << "  curves: " << desc.numCurves << "\n";
+    os << "  samples: " << desc.numSamples << "\n";
 
     os << "  keys:\n";
     for (unsigned i = 0; i < 128; ++i) {

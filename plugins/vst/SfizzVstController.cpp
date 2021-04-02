@@ -22,8 +22,8 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     // create update objects
     oscUpdate_ = Steinberg::owned(new OSCUpdate);
     noteUpdate_ = Steinberg::owned(new NoteUpdate);
-    sfzPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateSfz));
-    scalaPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateScala));
+    sfzUpdate_ = Steinberg::owned(new SfzUpdate);
+    scalaUpdate_ = Steinberg::owned(new ScalaUpdate);
     processorStateUpdate_ = Steinberg::owned(new ProcessorStateUpdate);
     playStateUpdate_ = Steinberg::owned(new PlayStateUpdate);
 
@@ -211,10 +211,8 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     setParam(kPidTuningFrequency, s.tuningFrequency);
     setParam(kPidStretchedTuning, s.stretchedTuning);
 
-    sfzPathUpdate_->setPath(s.sfzFile);
-    sfzPathUpdate_->deferUpdate();
-    scalaPathUpdate_->setPath(s.scalaFile);
-    scalaPathUpdate_->deferUpdate();
+    scalaUpdate_->setPath(s.scalaFile);
+    scalaUpdate_->deferUpdate();
 
     return kResultTrue;
 }
@@ -230,35 +228,47 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
     const char* id = message->getMessageID();
     Vst::IAttributeList* attr = message->getAttributes();
 
-    if (!strcmp(id, "LoadedSfz")) {
+    ///
+    auto stringFromBinaryAttribute = [attr](const char* id, absl::string_view& string) -> tresult {
         const void* data = nullptr;
         uint32 size = 0;
-        result = attr->getBinary("File", data, size);
+        tresult result = attr->getBinary(id, data, size);
+        if (result == kResultTrue)
+            string = absl::string_view(reinterpret_cast<const char*>(data), size);
+        return result;
+    };
 
+    ///
+    if (!strcmp(id, "LoadedSfz")) {
+        absl::string_view sfzFile;
+        absl::string_view sfzDescriptionBlob;
+
+        result = stringFromBinaryAttribute("File", sfzFile);
         if (result != kResultTrue)
             return result;
 
-        std::string sfzFile(static_cast<const char *>(data), size);
-        processorStateUpdate_->access([&sfzFile](SfizzVstState& state) {
-            state.sfzFile = sfzFile;
+        result = stringFromBinaryAttribute("Description", sfzDescriptionBlob);
+        if (result != kResultTrue)
+            return result;
+
+        processorStateUpdate_->access([sfzFile](SfizzVstState& state) {
+            state.sfzFile = std::string(sfzFile);
         });
-        sfzPathUpdate_->setPath(std::move(sfzFile));
-        sfzPathUpdate_->deferUpdate();
+        sfzUpdate_->setPath(std::string(sfzFile), std::string(sfzDescriptionBlob));
+        sfzUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "LoadedScala")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("File", data, size);
+        absl::string_view scalaFile;
 
+        result = stringFromBinaryAttribute("File", scalaFile);
         if (result != kResultTrue)
             return result;
 
-        std::string scalaFile(static_cast<const char *>(data), size);
-        processorStateUpdate_->access([&scalaFile](SfizzVstState& state) {
-            state.scalaFile = scalaFile;
+        processorStateUpdate_->access([scalaFile](SfizzVstState& state) {
+            state.scalaFile = std::string(scalaFile);
         });
-        scalaPathUpdate_->setPath(std::move(scalaFile));
-        scalaPathUpdate_->deferUpdate();
+        scalaUpdate_->setPath(std::string(scalaFile));
+        scalaUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "NotifiedPlayState")) {
         const void* data = nullptr;
@@ -314,8 +324,8 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
         return nullptr;
 
     std::vector<FObject*> continuousUpdates;
-    continuousUpdates.push_back(sfzPathUpdate_);
-    continuousUpdates.push_back(scalaPathUpdate_);
+    continuousUpdates.push_back(sfzUpdate_);
+    continuousUpdates.push_back(scalaUpdate_);
     continuousUpdates.push_back(playStateUpdate_);
     for (uint32 i = 0, n = parameters.getParameterCount(); i < n; ++i)
         continuousUpdates.push_back(parameters.getParameterByIndex(i));

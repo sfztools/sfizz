@@ -33,37 +33,14 @@
 */
 
 #include "sfizz_lv2.h"
+#include "sfizz_lv2_plugin.h"
 
 #include "sfizz/import/ForeignInstrument.h"
-
-#include <lv2/atom/atom.h>
-#include <lv2/atom/forge.h>
-#include <lv2/atom/util.h>
-#include <lv2/buf-size/buf-size.h>
-#include <lv2/core/lv2.h>
-#include <lv2/core/lv2_util.h>
-#include <lv2/midi/midi.h>
-#include <lv2/options/options.h>
-#include <lv2/parameters/parameters.h>
-#include <lv2/patch/patch.h>
-#include <lv2/state/state.h>
-#include <lv2/urid/urid.h>
-#include <lv2/worker/worker.h>
-#include <lv2/log/logger.h>
-#include <lv2/log/log.h>
-#include <lv2/time/time.h>
-
-#include <ardour/lv2_extensions.h>
-
-#include <spin_mutex.h>
+#include "plugin/InstrumentDescription.h"
 
 #include <math.h>
-#include <sfizz.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <atomic>
 
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
@@ -77,121 +54,11 @@
 #define LOG_SAMPLE_COUNT 48000
 #define UNUSED(x) (void)(x)
 
-#define DEFAULT_SCALA_FILE  "Contents/Resources/DefaultScale.scl"
-#define DEFAULT_SFZ_FILE    "Contents/Resources/DefaultInstrument.sfz"
-// This assumes that the longest path is the default sfz file; if not, change it
-#define MAX_BUNDLE_PATH_SIZE (MAX_PATH_SIZE - sizeof(DEFAULT_SFZ_FILE))
-
 #ifndef NDEBUG
 #define LV2_DEBUG(...) lv2_log_note(&self->logger, "[DEBUG] " __VA_ARGS__)
 #else
 #define LV2_DEBUG(...)
 #endif
-
-struct sfizz_plugin_t
-{
-    // Features
-    LV2_URID_Map *map {};
-    LV2_URID_Unmap *unmap {};
-    LV2_Worker_Schedule *worker {};
-    LV2_Log_Log *log {};
-    LV2_Midnam *midnam {};
-
-    // Ports
-    const LV2_Atom_Sequence *control_port {};
-    LV2_Atom_Sequence *notify_port {};
-    float *output_buffers[2] {};
-    const float *volume_port {};
-    const float *polyphony_port {};
-    const float *oversampling_port {};
-    const float *preload_port {};
-    const float *freewheel_port {};
-    const float *scala_root_key_port {};
-    const float *tuning_frequency_port {};
-    const float *stretch_tuning_port {};
-    float *active_voices_port {};
-    float *num_curves_port {};
-    float *num_masters_port {};
-    float *num_groups_port {};
-    float *num_regions_port {};
-    float *num_samples_port {};
-
-    // Atom forge
-    LV2_Atom_Forge forge {};              ///< Forge for writing atoms in run thread
-    LV2_Atom_Forge forge_secondary {};    ///< Forge for writing into other buffers
-
-    // Logger
-    LV2_Log_Logger logger {};
-
-    // URIs
-    LV2_URID midi_event_uri {};
-    LV2_URID options_interface_uri {};
-    LV2_URID max_block_length_uri {};
-    LV2_URID nominal_block_length_uri {};
-    LV2_URID sample_rate_uri {};
-    LV2_URID atom_object_uri {};
-    LV2_URID atom_blank_uri {};
-    LV2_URID atom_float_uri {};
-    LV2_URID atom_double_uri {};
-    LV2_URID atom_int_uri {};
-    LV2_URID atom_long_uri {};
-    LV2_URID atom_urid_uri {};
-    LV2_URID atom_path_uri {};
-    LV2_URID patch_set_uri {};
-    LV2_URID patch_get_uri {};
-    LV2_URID patch_put_uri {};
-    LV2_URID patch_property_uri {};
-    LV2_URID patch_value_uri {};
-    LV2_URID patch_body_uri {};
-    LV2_URID state_changed_uri {};
-    LV2_URID sfizz_sfz_file_uri {};
-    LV2_URID sfizz_scala_file_uri {};
-    LV2_URID sfizz_num_voices_uri {};
-    LV2_URID sfizz_preload_size_uri {};
-    LV2_URID sfizz_oversampling_uri {};
-    LV2_URID sfizz_log_status_uri {};
-    LV2_URID sfizz_check_modification_uri {};
-    LV2_URID sfizz_active_voices_uri {};
-    LV2_URID sfizz_osc_blob_uri {};
-    LV2_URID time_position_uri {};
-    LV2_URID time_bar_uri {};
-    LV2_URID time_bar_beat_uri {};
-    LV2_URID time_beat_unit_uri {};
-    LV2_URID time_beats_per_bar_uri {};
-    LV2_URID time_beats_per_minute_uri {};
-    LV2_URID time_speed_uri {};
-
-    // Sfizz related data
-    sfizz_synth_t *synth {};
-    sfizz_client_t *client {};
-    spin_mutex_t *synth_mutex {};
-    bool expect_nominal_block_length {};
-    char sfz_file_path[MAX_PATH_SIZE] {};
-    char scala_file_path[MAX_PATH_SIZE] {};
-    int num_voices {};
-    unsigned int preload_size {};
-    sfizz_oversampling_factor_t oversampling {};
-    float stretch_tuning {};
-    volatile bool check_modification {};
-    int max_block_size {};
-    int sample_counter {};
-    float sample_rate {};
-    std::atomic<int> must_update_midnam {};
-
-    // Timing data
-    int bar {};
-    double bar_beat {};
-    int beats_per_bar {};
-    int beat_unit {};
-    double bpm_tempo {};
-    double speed {};
-
-    // Paths
-    char bundle_path[MAX_BUNDLE_PATH_SIZE] {};
-
-    // OSC
-    uint8_t osc_temp[OSC_TEMP_SIZE] {};
-};
 
 enum
 {
@@ -201,6 +68,14 @@ enum
     SFIZZ_TIMEINFO_SPEED = 1 << 3,
 };
 
+///
+static bool
+sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path);
+
+static bool
+sfizz_lv2_load_scala_file(sfizz_plugin_t *self, const char *file_path);
+
+///
 static void
 sfizz_lv2_state_free_path(LV2_State_Free_Path_Handle handle,
                           char *path)
@@ -607,11 +482,10 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_set_broadcast_callback(self->synth, &sfizz_lv2_receive_message, self);
     sfizz_set_receive_callback(self->client, &sfizz_lv2_receive_message);
 
-    sfizz_lv2_get_default_sfz_path(self, self->sfz_file_path, MAX_PATH_SIZE);
-    sfizz_lv2_get_default_scala_path(self, self->scala_file_path, MAX_PATH_SIZE);
+    self->sfz_blob_mutex = new std::mutex;
 
-    sfizz_load_file(self->synth, self->sfz_file_path);
-    sfizz_load_scala_file(self->synth, self->scala_file_path);
+    sfizz_lv2_load_file(self, self->sfz_file_path);
+    sfizz_lv2_load_scala_file(self, self->scala_file_path);
 
     sfizz_lv2_update_timeinfo(self, 0, ~0);
 
@@ -622,6 +496,8 @@ static void
 cleanup(LV2_Handle instance)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    delete[] self->sfz_blob_data;
+    delete self->sfz_blob_mutex;
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
@@ -1172,6 +1048,25 @@ sfizz_lv2_update_file_info(sfizz_plugin_t* self, const char *file_path)
     self->must_update_midnam.store(1);
 }
 
+static void
+sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
+{
+    const std::string blob = getDescriptionBlob(self->synth);
+
+    uint32_t size = uint32_t(blob.size());
+    uint8_t *data = new uint8_t[size];
+    memcpy(data, blob.data(), size);
+
+    self->sfz_blob_mutex->lock();
+    self->sfz_blob_serial += 1;
+    const uint8_t *old_data = self->sfz_blob_data;
+    self->sfz_blob_data = data;
+    self->sfz_blob_size = size;
+    self->sfz_blob_mutex->unlock();
+
+    delete[] old_data;
+}
+
 static bool
 sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
 {
@@ -1197,7 +1092,7 @@ sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
         status = sfizz_load_string(self->synth, virtual_path.c_str(), sfz_text.c_str());
     }
 
-    ///
+    sfizz_lv2_update_sfz_info(self);
     sfizz_lv2_update_file_info(self, file_path);
     return status;
 }

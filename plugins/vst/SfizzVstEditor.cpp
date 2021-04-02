@@ -188,17 +188,14 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
         }
     }
 
-    if (FilePathUpdate* update = FCast<FilePathUpdate>(changedUnknown)) {
+    if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
-        switch (update->getType()) {
-        case kFilePathUpdateSfz:
-            uiReceiveValue(EditId::SfzFile, path);
-            break;
-        case kFilePathUpdateScala:
-            uiReceiveValue(EditId::ScalaFile, path);
-            break;
-        }
-        return;
+        uiReceiveValue(EditId::SfzFile, path);
+    }
+
+    if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
+        const std::string path = update->getPath();
+        uiReceiveValue(EditId::ScalaFile, path);
     }
 
     if (ProcessorStateUpdate* update = FCast<ProcessorStateUpdate>(changedUnknown)) {

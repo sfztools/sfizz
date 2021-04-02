@@ -13,7 +13,15 @@
 #include <iosfwd>
 struct sfizz_synth_t;
 
+/**
+ * @brief Description of user-interactible elements of the SFZ instrument
+ */
 struct InstrumentDescription {
+    uint32_t numRegions {};
+    uint32_t numGroups {};
+    uint32_t numMasters {};
+    uint32_t numCurves {};
+    uint32_t numSamples {};
     BitArray<128> keyUsed {};
     BitArray<128> keyswitchUsed {};
     BitArray<sfz::config::numCCs> ccUsed {};
@@ -23,7 +31,21 @@ struct InstrumentDescription {
     std::array<float, sfz::config::numCCs> ccDefault {};
 };
 
+/**
+ * @brief Produce a description of the currently loaded instrument in the synth,
+ *        in the form of a concatenation of OSC messages.
+ *
+ * This form is a message transmissible over binary channels.
+ */
 std::string getDescriptionBlob(sfizz_synth_t* handle);
+
+/**
+ * @brief Extract the information from the OSC blob and rearrange it in a
+ *        structured form.
+ */
 InstrumentDescription parseDescriptionBlob(absl::string_view blob);
 
+/**
+ * @brief Display the description in human-readable format.
+ */
 std::ostream& operator<<(std::ostream& os, const InstrumentDescription& desc);
