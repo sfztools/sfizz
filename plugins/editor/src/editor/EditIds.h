@@ -48,29 +48,23 @@ struct EditRange {
     static EditRange get(EditId id);
 };
 
-inline EditId editIdForCC(int cc)
-{
-    return EditId(int(EditId::Controller0) + cc);
-}
-inline int ccForEditId(EditId id)
-{
-    return int(id) - int(EditId::Controller0);
-}
-inline bool editIdIsCC(EditId id)
-{
-    return int(id) >= int(EditId::Controller0) &&
-        int(id) <= int(EditId::ControllerLast);
-}
+#define DEFINE_EDIT_ID_RANGE_HELPERS(type, Type, IdPrefix)          \
+    inline EditId editIdFor##Type(int value)                        \
+    {                                                               \
+        return EditId(int(EditId::IdPrefix##0) + value);            \
+    }                                                               \
+    inline int type##ForEditId(EditId id)                           \
+    {                                                               \
+        return int(id) - int(EditId::IdPrefix##0);                  \
+    }                                                               \
+    inline bool editIdIs##Type(EditId id)                           \
+    {                                                               \
+        return int(id) >= int(EditId::IdPrefix##0) &&               \
+            int(id) <= int(EditId::IdPrefix##Last);                 \
+    }
 
-inline EditId editIdForKey(int key)
-{
-    return EditId(int(EditId::Key0) + key);
-}
-inline int keyForEditId(EditId id)
-{
-    return int(id) - int(EditId::Key0);
-}
-inline bool editIdIsKey(EditId id)
-{
-    return int(id) >= int(EditId::Key0) && int(id) <= int(EditId::KeyLast);
-}
+// defines editIdForCC, ccForEditId, editIdIsCC, etc..
+DEFINE_EDIT_ID_RANGE_HELPERS(cc, CC, Controller)
+DEFINE_EDIT_ID_RANGE_HELPERS(key, Key, Key)
+
+#undef DEFINE_EDIT_ID_RANGE_HELPERS
