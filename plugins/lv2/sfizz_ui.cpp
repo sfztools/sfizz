@@ -371,11 +371,33 @@ port_event(LV2UI_Handle ui,
 }
 
 static void
-sfizz_ui_update_description(const InstrumentDescription& desc)
+sfizz_ui_update_description(sfizz_ui_t *self, const InstrumentDescription& desc)
 {
-    // TODO(jpc) perform editor updates here
+    self->uiReceiveValue(EditId::UINumCurves, desc.numCurves);
+    self->uiReceiveValue(EditId::UINumMasters, desc.numMasters);
+    self->uiReceiveValue(EditId::UINumGroups, desc.numGroups);
+    self->uiReceiveValue(EditId::UINumRegions, desc.numRegions);
+    self->uiReceiveValue(EditId::UINumPreloadedSamples, desc.numSamples);
 
-    //std::cerr << desc << std::endl;
+    for (unsigned key = 0; key < 128; ++key) {
+        bool keyUsed = desc.keyUsed.test(key);
+        bool keyswitchUsed = desc.keyswitchUsed.test(key);
+        self->uiReceiveValue(editIdForKeyUsed(key), float(keyUsed));
+        self->uiReceiveValue(editIdForKeyswitchUsed(key), float(keyswitchUsed));
+        if (keyUsed)
+            self->uiReceiveValue(editIdForKeyLabel(key), desc.keyLabel[key]);
+        if (keyswitchUsed)
+            self->uiReceiveValue(editIdForKeyswitchLabel(key), desc.keyswitchLabel[key]);
+    }
+
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        bool ccUsed = desc.ccUsed.test(cc);
+        self->uiReceiveValue(editIdForCCUsed(cc), float(ccUsed));
+        if (ccUsed) {
+            self->uiReceiveValue(editIdForCCDefault(cc), desc.ccDefault[cc]);
+            self->uiReceiveValue(editIdForCCLabel(cc), desc.ccLabel[cc]);
+        }
+    }
 }
 
 static void
@@ -396,7 +418,7 @@ sfizz_ui_check_sfz_update(sfizz_ui_t *self)
 
         const InstrumentDescription desc = parseDescriptionBlob(
             absl::string_view(reinterpret_cast<char*>(data), size));
-        sfizz_ui_update_description(desc);
+        sfizz_ui_update_description(self, desc);
     }
 }
 

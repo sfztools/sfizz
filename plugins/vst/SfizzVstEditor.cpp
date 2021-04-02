@@ -196,7 +196,32 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
 
     if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
         const InstrumentDescription desc = parseDescriptionBlob(update->getDescription());
-        // TODO(jpc) instrument description
+
+        uiReceiveValue(EditId::UINumCurves, desc.numCurves);
+        uiReceiveValue(EditId::UINumMasters, desc.numMasters);
+        uiReceiveValue(EditId::UINumGroups, desc.numGroups);
+        uiReceiveValue(EditId::UINumRegions, desc.numRegions);
+        uiReceiveValue(EditId::UINumPreloadedSamples, desc.numSamples);
+
+        for (unsigned key = 0; key < 128; ++key) {
+            bool keyUsed = desc.keyUsed.test(key);
+            bool keyswitchUsed = desc.keyswitchUsed.test(key);
+            uiReceiveValue(editIdForKeyUsed(key), float(keyUsed));
+            uiReceiveValue(editIdForKeyswitchUsed(key), float(keyswitchUsed));
+            if (keyUsed)
+                uiReceiveValue(editIdForKeyLabel(key), desc.keyLabel[key]);
+            if (keyswitchUsed)
+                uiReceiveValue(editIdForKeyswitchLabel(key), desc.keyswitchLabel[key]);
+        }
+
+        for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+            bool ccUsed = desc.ccUsed.test(cc);
+            uiReceiveValue(editIdForCCUsed(cc), float(ccUsed));
+            if (ccUsed) {
+                uiReceiveValue(editIdForCCDefault(cc), desc.ccDefault[cc]);
+                uiReceiveValue(editIdForCCLabel(cc), desc.ccLabel[cc]);
+            }
+        }
     }
 
     if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
