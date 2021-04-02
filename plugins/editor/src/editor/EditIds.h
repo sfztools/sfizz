@@ -60,18 +60,21 @@ struct EditRange {
 };
 
 #define DEFINE_EDIT_ID_RANGE_HELPERS(type, Type, IdPrefix)          \
-    inline EditId editIdFor##Type(int value)                        \
-    {                                                               \
-        return EditId(int(EditId::IdPrefix##0) + value);            \
-    }                                                               \
-    inline int type##ForEditId(EditId id)                           \
-    {                                                               \
-        return int(id) - int(EditId::IdPrefix##0);                  \
-    }                                                               \
     inline bool editIdIs##Type(EditId id)                           \
     {                                                               \
         return int(id) >= int(EditId::IdPrefix##0) &&               \
             int(id) <= int(EditId::IdPrefix##Last);                 \
+    }                                                               \
+    inline EditId editIdFor##Type(int value)                        \
+    {                                                               \
+        EditId id = EditId(int(EditId::IdPrefix##0) + value);       \
+        assert(editIdIs##Type(id));                                 \
+        return id;                                                  \
+    }                                                               \
+    inline int type##ForEditId(EditId id)                           \
+    {                                                               \
+        assert(editIdIs##Type(id));                                 \
+        return int(id) - int(EditId::IdPrefix##0);                  \
     }
 
 // defines editIdForCC, ccForEditId, editIdIsCC, etc..
