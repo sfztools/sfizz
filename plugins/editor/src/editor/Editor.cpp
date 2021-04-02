@@ -200,6 +200,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateKeyswitchNameLabel();
 
     void updateKeyUsed(unsigned key, bool used);
+    void updateKeyLabel(unsigned key, const char* label);
     void updateKeyswitchUsed(unsigned key, bool used);
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
@@ -460,6 +461,27 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             const float value = v.to_float();
             if (SPiano* piano = piano_)
                 piano->setKeyValue(key, value);
+        }
+        else if (editIdIsKeyUsed(id)) {
+            updateKeyUsed(keyUsedForEditId(id), v.to_float() != 0);
+        }
+        else if (editIdIsKeyLabel(id)) {
+            updateKeyLabel(keyLabelForEditId(id), v.to_string().c_str());
+        }
+        else if (editIdIsKeyswitchUsed(id)) {
+            updateKeyswitchUsed(keyswitchUsedForEditId(id), v.to_float() != 0);
+        }
+        else if (editIdIsKeyswitchLabel(id)) {
+            updateSWLastLabel(keyswitchLabelForEditId(id), v.to_string().c_str());
+        }
+        else if (editIdIsCCUsed(id)) {
+            updateCCUsed(ccUsedForEditId(id), v.to_float() != 0);
+        }
+        else if (editIdIsCCDefault(id)) {
+            updateCCDefaultValue(ccDefaultForEditId(id), v.to_float());
+        }
+        else if (editIdIsCCLabel(id)) {
+            updateCCLabel(ccLabelForEditId(id), v.to_string().c_str());
         }
         break;
     }
@@ -1517,6 +1539,13 @@ void Editor::Impl::updateKeyUsed(unsigned key, bool used)
 {
     if (SPiano* piano = piano_)
         piano->setKeyUsed(key, used);
+}
+
+void Editor::Impl::updateKeyLabel(unsigned key, const char* label)
+{
+    // TODO nothing done with this info currently
+    (void)key;
+    (void)label;
 }
 
 void Editor::Impl::updateKeyswitchUsed(unsigned key, bool used)
