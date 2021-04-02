@@ -390,6 +390,67 @@ TEST_CASE("[Modulations] LFO v1 CC connections")
     }, 3));
 }
 
+TEST_CASE("[Modulations] LFO v1 CC frequency connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_freq_oncc1=10
+        <region> sample=*sine pitchlfo_freq_cc2=1200
+        <region> sample=*sine fillfo_freqcc3=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("Controller 1 {curve=0, smooth=0, step=0}" -> "AmplitudeLFOFrequency {0}")",
+        R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchLFOFrequency {1}")",
+        R"("Controller 3 {curve=0, smooth=0, step=0}" -> "FilterLFOFrequency {2}")",
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
+
+TEST_CASE("[Modulations] LFO v1 aftertouch connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_depthchanaft=10
+        <region> sample=*sine pitchlfo_depthchanaft=1200
+        <region> sample=*sine fillfo_depthchanaft=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("ChannelAftertouch" -> "AmplitudeLFODepth {0}")",
+        R"("ChannelAftertouch" -> "PitchLFODepth {1}")",
+        R"("ChannelAftertouch" -> "FilterLFODepth {2}")",
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
+
+
+TEST_CASE("[Modulations] LFO v1 aftertouch frequency connections")
+{
+    sfz::Synth synth;
+    synth.loadSfzString("/modulation.sfz", R"(
+        <region> sample=*sine amplfo_freqchanaft=10
+        <region> sample=*sine pitchlfo_freqchanaft=1200
+        <region> sample=*sine fillfo_freqchanaft=-3600
+    )");
+
+    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    REQUIRE(graph == createDefaultGraph({
+        R"("ChannelAftertouch" -> "AmplitudeLFOFrequency {0}")",
+        R"("ChannelAftertouch" -> "PitchLFOFrequency {1}")",
+        R"("ChannelAftertouch" -> "FilterLFOFrequency {2}")",
+        R"("AmplitudeLFO {0}" -> "Volume {0}")",
+        R"("PitchLFO {1}" -> "Pitch {1}")",
+        R"("FilterLFO {2}" -> "FilterCutoff {2, N=1}")",
+    }, 3));
+}
+
 TEST_CASE("[Modulations] EG v1 CC connections")
 {
     sfz::Synth synth;

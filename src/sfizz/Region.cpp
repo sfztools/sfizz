@@ -920,8 +920,10 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
         processGenericCc(opcode, depthModSpec, sourceDepthKey);
         break;
-    case_any_lfo("depthchanaft"): // NOLINT bugprone-branch-clone
-        // TODO(jpc) LFO v1
+    case_any_lfo("depthchanaft"):
+        getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
+        getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), sourceDepthKey).sourceDepth
+            = opcode.read(depthModSpec);
         break;
     case_any_lfo("depthpolyaft"): // NOLINT bugprone-branch-clone
         // TODO(jpc) LFO v1
@@ -936,7 +938,8 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         processGenericCc(opcode, Default::lfoFreqMod, lfo.freqKey);
         break;
     case_any_lfo("freqchanaft"): // NOLINT bugprone-branch-clone
-        // TODO(jpc) LFO v1
+        getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), lfo.freqKey).sourceDepth
+            = opcode.read(Default::lfoFreqMod);
         break;
     case_any_lfo("freqpolyaft"): // NOLINT bugprone-branch-clone
         // TODO(jpc) LFO v1
