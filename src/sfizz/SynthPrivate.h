@@ -240,7 +240,6 @@ struct Synth::Impl final: public Parser::Listener {
 
     // Set as sw_default if present in the file
     absl::optional<uint8_t> currentSwitch_;
-    bool currentSwitchChanged_ = true;
     std::vector<std::string> unknownOpcodes_;
     using RegionViewVector = std::vector<Region*>;
     using LayerViewVector = std::vector<Layer*>;

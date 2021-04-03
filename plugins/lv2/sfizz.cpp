@@ -942,6 +942,10 @@ run(LV2_Handle instance, uint32_t sample_count)
     // Render the block
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
 
+    // Request OSC updates
+    sfizz_send_message(self->synth, self->client, 0, "/cc/changed~", "", nullptr);
+    sfizz_send_message(self->synth, self->client, 0, "/sw/last/current", "", nullptr);
+
     spin_mutex_unlock(self->synth_mutex);
 
     if (self->midnam && self->must_update_midnam.exchange(0))

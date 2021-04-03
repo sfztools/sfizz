@@ -279,12 +279,6 @@ void Editor::open(CFrame& frame)
     impl.oscSendQueueTimer_ = makeOwned<CVSTGUITimer>(
         [this](CVSTGUITimer* timer) { impl_->tickOSCQueue(timer); },
         oscSendInterval, false);
-
-    // request the whole Key and CC information
-    impl.sendQueuedOSC("/key/slots", "", nullptr);
-    impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
-    impl.sendQueuedOSC("/cc/slots", "", nullptr);
-    impl.sendQueuedOSC("/image", "", nullptr);
 }
 
 void Editor::close()
@@ -312,12 +306,6 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             const std::string& value = v.to_string();
             currentSfzFile_ = value;
             updateSfzFileLabel(value);
-
-            // request the whole Key and CC information
-            sendQueuedOSC("/key/slots", "", nullptr);
-            sendQueuedOSC("/sw/last/slots", "", nullptr);
-            sendQueuedOSC("/cc/slots", "", nullptr);
-            sendQueuedOSC("/image", "", nullptr);
         }
         break;
     case EditId::Volume:
@@ -476,6 +464,10 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         }
         else if (editIdIsCCUsed(id)) {
             updateCCUsed(ccUsedForEditId(id), v.to_float() != 0);
+            // TODO(jpc) remove value requests, when implementing CC automation
+            char pathBuf[256];
+            sprintf(pathBuf, "/cc%u/value", ccUsedForEditId(id));
+            sendQueuedOSC(pathBuf, "", nullptr);
         }
         else if (editIdIsCCDefault(id)) {
             updateCCDefaultValue(ccDefaultForEditId(id), v.to_float());
@@ -491,46 +483,7 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
 {
     unsigned indices[8];
 
-    if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned key = 0; key < 128; ++key) {
-            bool used = key < numBits && bits.test(key);
-            updateKeyUsed(key, used);
-        }
-    }
-    else if (Messages::matchOSC("/sw/last/slots", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned key = 0; key < 128; ++key) {
-            bool used = key < numBits && bits.test(key);
-            updateKeyswitchUsed(key, used);
-            if (used) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/sw/last/%u/label", key);
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
-        }
-        sendQueuedOSC("/sw/last/current", "", nullptr);
-    }
-    else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned cc = 0; cc < numBits; ++cc) {
-            bool used = bits.test(cc);
-            updateCCUsed(cc, used);
-            if (used) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/cc%u/value", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-                sprintf(pathBuf, "/cc%u/default", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-                sprintf(pathBuf, "/cc%u/label", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
-        }
-    }
-    else if (Messages::matchOSC("/cc/changed", path, indices) && !strcmp(sig, "b")) {
+    if (Messages::matchOSC("/cc/changed~", path, indices) && !strcmp(sig, "b")) {
         size_t numBits = 8 * args[0].b->size;
         ConstBitSpan bits { args[0].b->data, numBits };
         for (unsigned cc = 0; cc < numBits; ++cc) {
@@ -545,23 +498,11 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     else if (Messages::matchOSC("/cc&/value", path, indices) && !strcmp(sig, "f")) {
         updateCCValue(indices[0], args[0].f);
     }
-    else if (Messages::matchOSC("/cc&/default", path, indices) && !strcmp(sig, "f")) {
-        updateCCDefaultValue(indices[0], args[0].f);
-    }
-    else if (Messages::matchOSC("/cc&/label", path, indices) && !strcmp(sig, "s")) {
-        updateCCLabel(indices[0], args[0].s);
-    }
     else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
         updateSWLastCurrent(args[0].i);
     }
     else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "N")) {
         updateSWLastCurrent(-1);
-    }
-    else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
-        updateSWLastLabel(indices[0], args[0].s);
-    }
-    else if (Messages::matchOSC("/image", path, indices) && !strcmp(sig, "s")) {
-        updateBackgroundImage(args[0].s);
     }
     else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
         updateMemoryUsed(args[0].h);
@@ -1176,12 +1117,6 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     ctrl_->uiSendValue(EditId::SfzFile, filePath);
     currentSfzFile_ = filePath;
     updateSfzFileLabel(filePath);
-
-    // request the whole Key and CC information
-    sendQueuedOSC("/key/slots", "", nullptr);
-    sendQueuedOSC("/sw/last/slots", "", nullptr);
-    sendQueuedOSC("/cc/slots", "", nullptr);
-    sendQueuedOSC("/image", "", nullptr);
 }
 
 void Editor::Impl::changeToNextSfzFile(long offset)

@@ -286,6 +286,11 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 
     synth.renderBlock(outputs, numFrames, numChannels);
 
+    // Request OSC updates
+    sfz::Client& client = *_client;
+    synth.sendMessage(client, 0, "/cc/changed~", "", nullptr);
+    synth.sendMessage(client, 0, "/sw/last/current", "", nullptr);
+
     _playStateChangeCounter += numFrames;
     if (_playStateChangeCounter > _playStateChangePeriod) {
         _playStateChangeCounter %= _playStateChangePeriod;

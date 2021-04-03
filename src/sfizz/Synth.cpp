@@ -249,7 +249,6 @@ void Synth::Impl::clear()
     numGroups_ = 0;
     numMasters_ = 0;
     currentSwitch_ = absl::nullopt;
-    currentSwitchChanged_ = true;
     defaultPath_ = "";
     image_ = "";
     resources_.midiState.reset();
@@ -791,8 +790,6 @@ void Synth::Impl::finalizeSfzLoad()
                 swLastSlots_.set(key);
         }
     }
-    // resend current keyswitch
-    currentSwitchChanged_ = true;
 }
 
 bool Synth::loadScalaFile(const fs::path& path)
@@ -1018,26 +1015,9 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // Advance the clock to the end of cycle
     bc.endCycle();
 
-    // Send the set of changed CCs
-    Client broadcaster = impl.getBroadcaster();
-    const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
-    const int finalFrameNumber = int(numFrames - 1);
-    if (broadcaster.canReceive()) {
-            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
-            broadcaster.receive<'b'>(finalFrameNumber, "/cc/changed", &blob);
-    }
+    // Update sets of changed CCs
     impl.changedCCsLastCycle_ = impl.changedCCsThisCycle_;
     impl.changedCCsThisCycle_.clear();
-    // Send the changed keyswitch
-    if (impl.currentSwitchChanged_) {
-        if (broadcaster.canReceive()) {
-            int32_t value = -1;
-            if (impl.currentSwitch_)
-                value = *impl.currentSwitch_;
-            broadcaster.receive<'i'>(finalFrameNumber, "/sw/last/current", value);
-        }
-        impl.currentSwitchChanged_ = false;
-    }
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1137,7 +1117,6 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
                 layer->keySwitched_ = false;
         }
         currentSwitch_ = noteNumber;
-        currentSwitchChanged_ = true;
     }
 
     for (Layer* layer : lastKeyswitchLists_[noteNumber])
