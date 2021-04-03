@@ -18,6 +18,9 @@
 #include <absl/strings/ascii.h>
 #include <absl/strings/numbers.h>
 #include <ghc/fs_std.hpp>
+
+#include <stb_image/stb_image.h>
+
 #include <array>
 #include <queue>
 #include <unordered_map>
@@ -38,6 +41,11 @@ using namespace VSTGUI;
 
 const int Editor::viewWidth { 800 };
 const int Editor::viewHeight { 475 };
+
+struct image_deleter {
+    void operator()(unsigned char* x) const noexcept { stbi_image_free(x); }
+};
+typedef std::unique_ptr<unsigned char[], image_deleter> image_u;
 
 struct Editor::Impl : EditorController::Receiver, IControlListener {
     EditorController* ctrl_ = nullptr;
@@ -122,6 +130,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* infoSamplesLabel_ = nullptr;
     CTextLabel* infoVoicesLabel_ = nullptr;
 
+    SharedPointer<CViewContainer> imageContainer_;
+
     CTextLabel* memoryLabel_ = nullptr;
 
     SActionMenu* fileOperationsMenu_ = nullptr;
@@ -204,6 +214,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateCCLabel(unsigned cc, const char* label);
     void updateSWLastCurrent(int sw);
     void updateSWLastLabel(unsigned sw, const char* label);
+    void updateBackgroundImage(const char* filepath);
     void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
@@ -233,6 +244,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         const char* keyName = keyNames[key % 12];
         return std::string(keyName) + ' ' + std::to_string(octave);
     }
+
+    static SharedPointer<CBitmap> loadAnyFormatImage(const fs::path& filePath);
 };
 
 Editor::Editor(EditorController& ctrl)
@@ -279,6 +292,7 @@ void Editor::open(CFrame& frame)
     impl.sendQueuedOSC("/key/slots", "", nullptr);
     impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
     impl.sendQueuedOSC("/cc/slots", "", nullptr);
+    impl.sendQueuedOSC("/image", "", nullptr);
 }
 
 void Editor::close()
@@ -311,6 +325,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             sendQueuedOSC("/key/slots", "", nullptr);
             sendQueuedOSC("/sw/last/slots", "", nullptr);
             sendQueuedOSC("/cc/slots", "", nullptr);
+            sendQueuedOSC("/image", "", nullptr);
         }
         break;
     case EditId::Volume:
@@ -529,6 +544,9 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
         updateSWLastLabel(indices[0], args[0].s);
     }
+    else if (Messages::matchOSC("/image", path, indices) && !strcmp(sig, "s")) {
+        updateBackgroundImage(args[0].s);
+    }
     else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
         updateMemoryUsed(args[0].h);
     }
@@ -579,7 +597,6 @@ void Editor::Impl::createFrameContents()
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
-
     {
         const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
 
@@ -1148,6 +1165,7 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     sendQueuedOSC("/key/slots", "", nullptr);
     sendQueuedOSC("/sw/last/slots", "", nullptr);
     sendQueuedOSC("/cc/slots", "", nullptr);
+    sendQueuedOSC("/image", "", nullptr);
 }
 
 void Editor::Impl::changeToNextSfzFile(long offset)
@@ -1561,6 +1579,75 @@ void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
     keyswitchNames_[sw].assign(label);
     if ((unsigned)currentKeyswitch_ == sw)
         updateKeyswitchNameLabel();
+}
+
+SharedPointer<CBitmap> Editor::Impl::loadAnyFormatImage(const fs::path& filePath)
+{
+#if defined(_WIN32)
+    FILE* file { _wfopen(filePath.wstring().c_str(), L"rb") };
+#else
+    FILE* file { fopen(filePath.c_str(), "rb") };
+#endif
+    SharedPointer<CBitmap> bitmap;
+
+    if (!file)
+        return bitmap;
+
+    int width, height, channels;
+    image_u image {
+        stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha)
+    };
+    fclose(file);
+    auto imageData = image.get();
+
+    if (imageData) {
+        bitmap = makeOwned<CBitmap>(width, height);
+        SharedPointer<CBitmapPixelAccess> accessor =
+            owned(CBitmapPixelAccess::create(bitmap.get()));
+
+        if (accessor) {
+            do {
+                CColor c(
+                    imageData[0],
+                    imageData[1],
+                    imageData[2],
+                    imageData[3]
+                );
+                accessor->setColor(c);
+                imageData += 4;
+            }
+            while (++*accessor);
+            accessor = nullptr;
+        }
+    }
+    return bitmap;
+}
+
+void Editor::Impl::updateBackgroundImage(const char* filepath)
+{
+    const fs::path sfzFilePath = fs::u8path(currentSfzFile_);
+    const fs::path sfzDirPath = sfzFilePath.parent_path();
+    const fs::path imagePath = sfzDirPath / fs::u8path(filepath);
+    SharedPointer<CBitmap> bitmap = loadAnyFormatImage(imagePath);
+
+    if (bitmap) {
+        CCoord containerW = imageContainer_->getWidth();
+        CCoord containerH = imageContainer_->getHeight();
+        CCoord bitmapW = bitmap->getWidth();
+        CCoord bitmapH = bitmap->getHeight();
+
+        if (bitmapW > containerW || bitmapH > containerH) {
+            CCoord xScale = bitmapW / containerW;
+            CCoord yScale = bitmapH / containerH;
+            CCoord scale = (xScale > yScale) ? xScale : yScale;
+
+            PlatformBitmapPtr ptr = bitmap->getPlatformBitmap();
+            ptr->setScaleFactor(scale);
+        }
+    } else {
+        bitmap = owned(new CBitmap("background.png"));
+    }
+    imageContainer_->setBackground(bitmap);
 }
 
 void Editor::Impl::updateMemoryUsed(uint64_t mem)

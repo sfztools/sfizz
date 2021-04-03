@@ -34,6 +34,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/EditIds.cpp
     src/editor/Editor.h
     src/editor/Editor.cpp
+    src/editor/EditorLibs.cpp
     src/editor/EditorController.h
     src/editor/GUIComponents.h
     src/editor/GUIComponents.cpp
@@ -49,7 +50,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h)
 add_library(sfizz::editor ALIAS sfizz_editor)
-target_include_directories(sfizz_editor PUBLIC "src")
+target_include_directories(sfizz_editor PUBLIC "src" "external")
 target_link_libraries(sfizz_editor PUBLIC sfizz::messaging sfizz::plugins-common)
 target_link_libraries(sfizz_editor PRIVATE sfizz::vstgui)
 if(APPLE)

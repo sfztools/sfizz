@@ -54,6 +54,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/image", "") {
+            client.receive<'s'>(delay, path, impl.image_.c_str());
+        } break;
+
         MATCH("/sw/last/slots", "") {
             const BitArray<128>& switches = impl.swLastSlots_;
             sfizz_blob_t blob { switches.data(), static_cast<uint32_t>(switches.byte_size()) };
