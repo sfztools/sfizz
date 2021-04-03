@@ -34,6 +34,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/EditIds.cpp
     src/editor/Editor.h
     src/editor/Editor.cpp
+    src/editor/EditorLibs.h
     src/editor/EditorLibs.cpp
     src/editor/EditorController.h
     src/editor/GUIComponents.h
@@ -50,7 +51,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h)
 add_library(sfizz::editor ALIAS sfizz_editor)
-target_include_directories(sfizz_editor PUBLIC "src" "external")
+target_include_directories(sfizz_editor PUBLIC "src")
 target_link_libraries(sfizz_editor PUBLIC sfizz::messaging sfizz::plugins-common)
 target_link_libraries(sfizz_editor PRIVATE sfizz::vstgui)
 if(APPLE)
@@ -71,6 +72,10 @@ add_library(sfizz_colorspaces INTERFACE)
 add_library(sfizz::colorspaces ALIAS sfizz_colorspaces)
 target_include_directories(sfizz_colorspaces INTERFACE "external/color-spaces")
 
+add_library(sfizz_stb_image INTERFACE)
+add_library(sfizz::stb_image ALIAS sfizz_stb_image)
+target_include_directories(sfizz_stb_image INTERFACE "external/stb_image")
+
 if(WIN32)
     #
 elseif(APPLE)
@@ -81,7 +86,7 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::bit_array sfizz::filesystem)
+target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::stb_image sfizz::bit_array sfizz::filesystem)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)

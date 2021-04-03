@@ -6,6 +6,7 @@
 
 #include "Editor.h"
 #include "EditorController.h"
+#include "EditorLibs.h"
 #include "EditIds.h"
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
@@ -18,9 +19,6 @@
 #include <absl/strings/ascii.h>
 #include <absl/strings/numbers.h>
 #include <ghc/fs_std.hpp>
-
-#include <stb_image/stb_image.h>
-
 #include <array>
 #include <queue>
 #include <unordered_map>
