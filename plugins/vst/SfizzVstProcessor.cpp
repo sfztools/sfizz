@@ -39,11 +39,10 @@ static const char* kRingIdOsc = "Osc";
 static const char* kMsgIdSetNumVoices = "SetNumVoices";
 static const char* kMsgIdSetOversampling = "SetOversampling";
 static const char* kMsgIdSetPreloadSize = "SetPreloadSize";
-static const char* kMsgIdNotifyPlayState = "NotifyPlayState";
 static const char* kMsgIdReceiveMessage = "ReceiveMessage";
 static const char* kMsgIdNoteEvents = "NoteEvents";
 
-static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 500 };
+static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 50 };
 
 SfizzVstProcessor::SfizzVstProcessor()
     : _fifoToWorker(64 * 1024), _fifoMessageFromUi(64 * 1024),
@@ -219,9 +218,6 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
     if (state) {
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
-
-        _playStateChangePeriod = static_cast<uint32>(50e-3 * processSetup.sampleRate);
-
         startBackgroundWork();
     } else {
         stopBackgroundWork();
@@ -290,15 +286,6 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     sfz::Client& client = *_client;
     synth.sendMessage(client, 0, "/cc/changed~", "", nullptr);
     synth.sendMessage(client, 0, "/sw/last/current", "", nullptr);
-
-    _playStateChangeCounter += numFrames;
-    if (_playStateChangeCounter > _playStateChangePeriod) {
-        _playStateChangeCounter %= _playStateChangePeriod;
-        SfizzPlayState playState {};
-        playState.activeVoices = synth.getNumActiveVoices();
-        if (writeWorkerMessage(kMsgIdNotifyPlayState, &playState, sizeof(playState)))
-            _semaToWorker.post();
-    }
 
     //
     std::pair<uint32, float> noteEvents[128];
@@ -663,6 +650,7 @@ void SfizzVstProcessor::doBackgroundWork()
 
     bool haveDoneIdleWork = false;
     Clock::time_point lastIdleWorkTime;
+    size_t idleCounter = 0;
 
     for (;;) {
         bool isNotified = _semaToWorker.timed_wait(kBackgroundIdleInterval.count());
@@ -697,13 +685,6 @@ void SfizzVstProcessor::doBackgroundWork()
             std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setPreloadSize(value);
         }
-        else if (id == kMsgIdNotifyPlayState) {
-            SfizzPlayState playState = *msg->payload<SfizzPlayState>();
-            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
-            notification->setMessageID("NotifiedPlayState");
-            notification->getAttributes()->setBinary("PlayState", &playState, sizeof(playState));
-            sendMessage(notification);
-        }
         else if (id == kMsgIdReceiveMessage) {
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("ReceivedMessage");
@@ -719,24 +700,35 @@ void SfizzVstProcessor::doBackgroundWork()
 
         Clock::time_point currentTime = Clock::now();
         if (!haveDoneIdleWork || currentTime - lastIdleWorkTime > kBackgroundIdleInterval) {
-            doBackgroundIdle();
+            doBackgroundIdle(idleCounter++);
             haveDoneIdleWork = true;
             lastIdleWorkTime = currentTime;
         }
     }
 }
 
-void SfizzVstProcessor::doBackgroundIdle()
+void SfizzVstProcessor::doBackgroundIdle(size_t idleCounter)
 {
-    if (_synth->shouldReloadFile()) {
-        fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
-        std::lock_guard<SpinMutex> lock(_processMutex);
-        loadSfzFileOrDefault(_state.sfzFile);
+    {
+        SfizzPlayState ps;
+        ps.activeVoices = _synth->getNumActiveVoices();
+        Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
+        notification->setMessageID("NotifiedPlayState");
+        notification->getAttributes()->setBinary("PlayState", &ps, sizeof(ps));
+        sendMessage(notification);
     }
-    if (_synth->shouldReloadScala()) {
-        fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
-        std::lock_guard<SpinMutex> lock(_processMutex);
-        _synth->loadScalaFile(_state.scalaFile);
+
+    if (idleCounter % 10 == 0) {
+        if (_synth->shouldReloadFile()) {
+            fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
+            std::lock_guard<SpinMutex> lock(_processMutex);
+            loadSfzFileOrDefault(_state.sfzFile);
+        }
+        if (_synth->shouldReloadScala()) {
+            fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
+            std::lock_guard<SpinMutex> lock(_processMutex);
+            _synth->loadScalaFile(_state.scalaFile);
+        }
     }
 }
 

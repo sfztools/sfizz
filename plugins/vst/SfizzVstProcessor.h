@@ -75,10 +75,6 @@ private:
     Ring_Buffer _fifoMessageFromUi;
     SpinMutex _processMutex;
 
-    // state notification periodic timer
-    uint32 _playStateChangeCounter = 0;
-    uint32 _playStateChangePeriod = 0;
-
     // time info
     int _timeSigNumerator = 0;
     int _timeSigDenominator = 0;
@@ -98,7 +94,7 @@ private:
 
     // worker
     void doBackgroundWork();
-    void doBackgroundIdle();
+    void doBackgroundIdle(size_t idleCounter);
     void startBackgroundWork();
     void stopBackgroundWork();
     // writer
