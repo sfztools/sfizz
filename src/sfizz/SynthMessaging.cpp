@@ -87,10 +87,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         } break;
 
         MATCH("/sw/last/current", "") {
-            int32_t value = -1;
             if (impl.currentSwitch_)
-                value = *impl.currentSwitch_;
-            client.receive<'i'>(delay, path, value);
+                client.receive<'i'>(delay, path, *impl.currentSwitch_);
+            else
+                client.receive<'N'>(delay, path, {});
         } break;
 
         MATCH("/sw/last/&/label", "") {

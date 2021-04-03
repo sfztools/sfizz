@@ -554,6 +554,9 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
         updateSWLastCurrent(args[0].i);
     }
+    else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "N")) {
+        updateSWLastCurrent(-1);
+    }
     else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
         updateSWLastLabel(indices[0], args[0].s);
     }
