@@ -251,6 +251,7 @@ void Synth::Impl::clear()
     currentSwitch_ = absl::nullopt;
     currentSwitchChanged_ = true;
     defaultPath_ = "";
+    image_ = "";
     resources_.midiState.reset();
     resources_.filePool.clear();
     resources_.filePool.setRamLoading(config::loadInRam);
@@ -385,6 +386,9 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("default_path"):
             defaultPath_ = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             DBG("Changing default sample path to " << defaultPath_);
+            break;
+        case hash("image"):
+            image_ = absl::StrCat(defaultPath_, absl::StrReplaceAll(trim(member.value), { { "\\", "/" } }));
             break;
         case hash("note_offset"):
             noteOffset_ = member.read(Default::noteOffset);

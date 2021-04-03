@@ -10,6 +10,7 @@
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
+#include "ImageHelpers.h"
 #include "NativeHelpers.h"
 #include "BitArray.h"
 #include "plugin/MessageUtils.h"
@@ -122,6 +123,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* infoSamplesLabel_ = nullptr;
     CTextLabel* infoVoicesLabel_ = nullptr;
 
+    SharedPointer<CViewContainer> imageContainer_;
+
     CTextLabel* memoryLabel_ = nullptr;
 
     SActionMenu* fileOperationsMenu_ = nullptr;
@@ -204,6 +207,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateCCLabel(unsigned cc, const char* label);
     void updateSWLastCurrent(int sw);
     void updateSWLastLabel(unsigned sw, const char* label);
+    void updateBackgroundImage(const char* filepath);
     void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
@@ -279,6 +283,7 @@ void Editor::open(CFrame& frame)
     impl.sendQueuedOSC("/key/slots", "", nullptr);
     impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
     impl.sendQueuedOSC("/cc/slots", "", nullptr);
+    impl.sendQueuedOSC("/image", "", nullptr);
 }
 
 void Editor::close()
@@ -311,6 +316,7 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             sendQueuedOSC("/key/slots", "", nullptr);
             sendQueuedOSC("/sw/last/slots", "", nullptr);
             sendQueuedOSC("/cc/slots", "", nullptr);
+            sendQueuedOSC("/image", "", nullptr);
         }
         break;
     case EditId::Volume:
@@ -529,6 +535,9 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
     else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
         updateSWLastLabel(indices[0], args[0].s);
     }
+    else if (Messages::matchOSC("/image", path, indices) && !strcmp(sig, "s")) {
+        updateBackgroundImage(args[0].s);
+    }
     else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
         updateMemoryUsed(args[0].h);
     }
@@ -579,7 +588,6 @@ void Editor::Impl::createFrameContents()
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
-
     {
         const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
 
@@ -1148,6 +1156,7 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     sendQueuedOSC("/key/slots", "", nullptr);
     sendQueuedOSC("/sw/last/slots", "", nullptr);
     sendQueuedOSC("/cc/slots", "", nullptr);
+    sendQueuedOSC("/image", "", nullptr);
 }
 
 void Editor::Impl::changeToNextSfzFile(long offset)
@@ -1561,6 +1570,20 @@ void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
     keyswitchNames_[sw].assign(label);
     if ((unsigned)currentKeyswitch_ == sw)
         updateKeyswitchNameLabel();
+}
+
+void Editor::Impl::updateBackgroundImage(const char* filepath)
+{
+    const fs::path sfzFilePath = fs::u8path(currentSfzFile_);
+    const fs::path sfzDirPath = sfzFilePath.parent_path();
+    const fs::path imagePath = sfzDirPath / fs::u8path(filepath);
+    SharedPointer<CBitmap> bitmap = loadAnyFormatImage(imagePath);
+
+    if (!bitmap)
+        bitmap = owned(new CBitmap("background.png"));
+
+    downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
+    imageContainer_->setBackground(bitmap);
 }
 
 void Editor::Impl::updateMemoryUsed(uint64_t mem)

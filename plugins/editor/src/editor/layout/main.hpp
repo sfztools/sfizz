@@ -2,6 +2,7 @@
 auto* const view__0 = createLogicalGroup(CRect(0, 0, 800, 475), -1, "", kCenterText, 14);
 mainView = view__0;
 auto* const view__1 = createBackground(CRect(190, 110, 790, 390), -1, "", kCenterText, 14);
+imageContainer_ = view__1;
 view__0->addView(view__1);
 enterTheme(darkTheme);
 auto* const view__2 = createLogicalGroup(CRect(0, 0, 800, 110), -1, "", kCenterText, 14);

@@ -6,7 +6,7 @@ widget_class mainView {open
   xywh {659 319 800 475} type Double
   class LogicalGroup visible
 } {
-  Fl_Box {} {
+  Fl_Box imageContainer_ {
     image {../resources/background.png} xywh {190 110 600 280}
     class Background
   }
