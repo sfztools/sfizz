@@ -295,11 +295,6 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     if (_playStateChangeCounter > _playStateChangePeriod) {
         _playStateChangeCounter %= _playStateChangePeriod;
         SfizzPlayState playState {};
-        playState.curves = synth.getNumCurves();
-        playState.masters = synth.getNumMasters();
-        playState.groups = synth.getNumGroups();
-        playState.regions = synth.getNumRegions();
-        playState.preloadedSamples = synth.getNumPreloadedSamples();
         playState.activeVoices = synth.getNumActiveVoices();
         if (writeWorkerMessage(kMsgIdNotifyPlayState, &playState, sizeof(playState)))
             _semaToWorker.post();

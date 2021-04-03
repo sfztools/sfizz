@@ -31,10 +31,5 @@ public:
 };
 
 struct SfizzPlayState {
-    uint32 curves;
-    uint32 masters;
-    uint32 groups;
-    uint32 regions;
-    uint32 preloadedSamples;
     uint32 activeVoices;
 };

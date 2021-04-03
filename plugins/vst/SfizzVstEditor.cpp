@@ -244,11 +244,6 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
 
     if (PlayStateUpdate* update = FCast<PlayStateUpdate>(changedUnknown)) {
         const SfizzPlayState playState = update->getState();
-        uiReceiveValue(EditId::UINumCurves, playState.curves);
-        uiReceiveValue(EditId::UINumMasters, playState.masters);
-        uiReceiveValue(EditId::UINumGroups, playState.groups);
-        uiReceiveValue(EditId::UINumRegions, playState.regions);
-        uiReceiveValue(EditId::UINumPreloadedSamples, playState.preloadedSamples);
         uiReceiveValue(EditId::UINumActiveVoices, playState.activeVoices);
         return;
     }
