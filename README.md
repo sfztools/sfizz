@@ -79,7 +79,7 @@ The sfizz library also uses in some subprojects:
 [libsndfile]:   http://www.mega-nerd.com/libsndfile/
 [LV2]:          https://lv2plug.in/
 [GLSL-Color-Spaces]: https://github.com/tobspr/GLSL-Color-Spaces
-[stb_image]:    https://github.com/nothings/stb#stb
+[stb_image]:    https://github.com/nothings/stb
 [our website]:  https://sfz.tools/sfizz
 [releases]:     https://github.com/sfztools/sfizz/releases
 [Carla]:     https://kx.studio/Applications:Carla
