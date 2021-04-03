@@ -51,7 +51,9 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/NativeHelpers.cpp
     src/editor/layout/main.hpp
     src/editor/utility/vstgui_after.h
-    src/editor/utility/vstgui_before.h)
+    src/editor/utility/vstgui_before.h
+    src/editor/GitBuildId.h
+    "${CMAKE_CURRENT_BINARY_DIR}/git-build-id/GitBuildId.c")
 add_library(sfizz::editor ALIAS sfizz_editor)
 target_include_directories(sfizz_editor PUBLIC "src")
 target_link_libraries(sfizz_editor PUBLIC sfizz::messaging sfizz::plugins-common)
@@ -106,3 +108,12 @@ if(NOT CMAKE_CROSSCOMPILING)
         > "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
         DEPENDS layout-maker "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl")
 endif()
+
+# git build identifier
+add_custom_target(sfizz_editor_git_build_id
+    COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+            "-DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/git-build-id/GitBuildId.c"
+            "-P" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/GitBuildID.cmake"
+    BYPRODUCTS "git-build-id/GitBuildId.c")
+add_dependencies(sfizz_editor sfizz_editor_git_build_id)
