@@ -6,11 +6,11 @@
 
 #include "Editor.h"
 #include "EditorController.h"
-#include "EditorLibs.h"
 #include "EditIds.h"
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
+#include "ImageHelpers.h"
 #include "NativeHelpers.h"
 #include "BitArray.h"
 #include "plugin/MessageUtils.h"
@@ -39,11 +39,6 @@ using namespace VSTGUI;
 
 const int Editor::viewWidth { 800 };
 const int Editor::viewHeight { 475 };
-
-struct image_deleter {
-    void operator()(unsigned char* x) const noexcept { stbi_image_free(x); }
-};
-typedef std::unique_ptr<unsigned char[], image_deleter> image_u;
 
 struct Editor::Impl : EditorController::Receiver, IControlListener {
     EditorController* ctrl_ = nullptr;
@@ -242,8 +237,6 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         const char* keyName = keyNames[key % 12];
         return std::string(keyName) + ' ' + std::to_string(octave);
     }
-
-    static SharedPointer<CBitmap> loadAnyFormatImage(const fs::path& filePath);
 };
 
 Editor::Editor(EditorController& ctrl)
@@ -1579,48 +1572,6 @@ void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
         updateKeyswitchNameLabel();
 }
 
-SharedPointer<CBitmap> Editor::Impl::loadAnyFormatImage(const fs::path& filePath)
-{
-#if defined(_WIN32)
-    FILE* file { _wfopen(filePath.wstring().c_str(), L"rb") };
-#else
-    FILE* file { fopen(filePath.c_str(), "rb") };
-#endif
-    SharedPointer<CBitmap> bitmap;
-
-    if (!file)
-        return bitmap;
-
-    int width, height, channels;
-    image_u image {
-        stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha)
-    };
-    fclose(file);
-    auto imageData = image.get();
-
-    if (imageData) {
-        bitmap = makeOwned<CBitmap>(width, height);
-        SharedPointer<CBitmapPixelAccess> accessor =
-            owned(CBitmapPixelAccess::create(bitmap.get()));
-
-        if (accessor) {
-            do {
-                CColor c(
-                    imageData[0],
-                    imageData[1],
-                    imageData[2],
-                    imageData[3]
-                );
-                accessor->setColor(c);
-                imageData += 4;
-            }
-            while (++*accessor);
-            accessor = nullptr;
-        }
-    }
-    return bitmap;
-}
-
 void Editor::Impl::updateBackgroundImage(const char* filepath)
 {
     const fs::path sfzFilePath = fs::u8path(currentSfzFile_);
@@ -1628,23 +1579,10 @@ void Editor::Impl::updateBackgroundImage(const char* filepath)
     const fs::path imagePath = sfzDirPath / fs::u8path(filepath);
     SharedPointer<CBitmap> bitmap = loadAnyFormatImage(imagePath);
 
-    if (bitmap) {
-        CCoord containerW = imageContainer_->getWidth();
-        CCoord containerH = imageContainer_->getHeight();
-        CCoord bitmapW = bitmap->getWidth();
-        CCoord bitmapH = bitmap->getHeight();
-
-        if (bitmapW > containerW || bitmapH > containerH) {
-            CCoord xScale = bitmapW / containerW;
-            CCoord yScale = bitmapH / containerH;
-            CCoord scale = (xScale > yScale) ? xScale : yScale;
-
-            PlatformBitmapPtr ptr = bitmap->getPlatformBitmap();
-            ptr->setScaleFactor(scale);
-        }
-    } else {
+    if (!bitmap)
         bitmap = owned(new CBitmap("background.png"));
-    }
+
+    downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
     imageContainer_->setBackground(bitmap);
 }
 

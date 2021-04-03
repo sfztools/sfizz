@@ -45,6 +45,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/GUIPiano.cpp
     src/editor/ColorHelpers.h
     src/editor/ColorHelpers.cpp
+    src/editor/ImageHelpers.h
+    src/editor/ImageHelpers.cpp
     src/editor/NativeHelpers.h
     src/editor/NativeHelpers.cpp
     src/editor/layout/main.hpp
