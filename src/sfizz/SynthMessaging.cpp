@@ -76,9 +76,15 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/root_path", "") {
+            client.receive<'s'>(delay, path, impl.rootPath_.c_str());
+        } break;
+
         MATCH("/image", "") {
             client.receive<'s'>(delay, path, impl.image_.c_str());
         } break;
+
+        //----------------------------------------------------------------------
 
         MATCH("/sw/last/slots", "") {
             const BitArray<128>& switches = impl.swLastSlots_;

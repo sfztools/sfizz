@@ -22,6 +22,8 @@ struct InstrumentDescription {
     uint32_t numMasters {};
     uint32_t numCurves {};
     uint32_t numSamples {};
+    std::string rootPath;
+    std::string image;
     BitArray<128> keyUsed {};
     BitArray<128> keyswitchUsed {};
     BitArray<sfz::config::numCCs> ccUsed {};

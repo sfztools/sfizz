@@ -278,6 +278,9 @@ struct Synth::Impl final: public Parser::Listener {
     // Singletons passed as references to the voices
     Resources resources_;
 
+    // Root path
+    std::string rootPath_;
+
     // Control opcodes
     std::string defaultPath_ { "" };
     std::string image_ { "" };

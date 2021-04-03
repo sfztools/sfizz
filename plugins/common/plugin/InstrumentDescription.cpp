@@ -98,6 +98,8 @@ std::string getDescriptionBlob(sfizz_synth_t* handle)
     synth.sendMessage(*client, 0, "/num_masters", "", nullptr);
     synth.sendMessage(*client, 0, "/num_curves", "", nullptr);
     synth.sendMessage(*client, 0, "/num_samples", "", nullptr);
+    synth.sendMessage(*client, 0, "/root_path", "", nullptr);
+    synth.sendMessage(*client, 0, "/image", "", nullptr);
     synth.sendMessage(*client, 0, "/key/slots", "", nullptr);
     synth.sendMessage(*client, 0, "/sw/last/slots", "", nullptr);
     synth.sendMessage(*client, 0, "/cc/slots", "", nullptr);
@@ -140,6 +142,10 @@ InstrumentDescription parseDescriptionBlob(absl::string_view blob)
             desc.numCurves = uint32_t(args[0].i);
         else if (Messages::matchOSC("/num_samples", path, indices) && !strcmp(sig, "i"))
             desc.numSamples = uint32_t(args[0].i);
+        else if (Messages::matchOSC("/root_path", path, indices) && !strcmp(sig, "s"))
+            desc.rootPath = args[0].s;
+        else if (Messages::matchOSC("/image", path, indices) && !strcmp(sig, "s"))
+            desc.image = args[0].s;
         else if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b"))
             copyArgToBitSpan(args[0], desc.keyUsed.span());
         else if (Messages::matchOSC("/sw/last/slots", path, indices) && !strcmp(sig, "b"))
@@ -171,6 +177,9 @@ std::ostream& operator<<(std::ostream& os, const InstrumentDescription& desc)
     os << "  masters: " << desc.numMasters << "\n";
     os << "  curves: " << desc.numCurves << "\n";
     os << "  samples: " << desc.numSamples << "\n";
+
+    os << "  root_path: " << desc.rootPath << "\n";
+    os << "  image: " << desc.image << "\n";
 
     os << "  keys:\n";
     for (unsigned i = 0; i < 128; ++i) {
