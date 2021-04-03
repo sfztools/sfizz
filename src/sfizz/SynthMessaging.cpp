@@ -134,6 +134,18 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'s'>(delay, path, label ? label->c_str() : "");
         } break;
 
+        MATCH("/cc/changed", "") {
+            const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
+            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/cc/changed~", "") {
+            const BitArray<config::numCCs>& changedCCs = impl.changedCCsLastCycle_;
+            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/mem/buffers", "") {

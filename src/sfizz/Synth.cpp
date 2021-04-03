@@ -258,6 +258,7 @@ void Synth::Impl::clear()
     clearCCLabels();
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
+    changedCCsLastCycle_.clear();
     clearKeyLabels();
     keySlots_.clear();
     swLastSlots_.clear();
@@ -1025,6 +1026,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
             sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
             broadcaster.receive<'b'>(finalFrameNumber, "/cc/changed", &blob);
     }
+    impl.changedCCsLastCycle_ = impl.changedCCsThisCycle_;
     impl.changedCCsThisCycle_.clear();
     // Send the changed keyswitch
     if (impl.currentSwitchChanged_) {

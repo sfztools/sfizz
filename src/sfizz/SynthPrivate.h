@@ -315,6 +315,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::array<float, config::numCCs> defaultCCValues_;
     BitArray<config::numCCs> currentUsedCCs_;
     BitArray<config::numCCs> changedCCsThisCycle_;
+    BitArray<config::numCCs> changedCCsLastCycle_;
 
     // Messaging
     sfizz_receive_t* broadcastReceiver = nullptr;
