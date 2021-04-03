@@ -60,23 +60,28 @@ SharedPointer<CBitmap> loadAnyFormatImage(const fs::path& filePath)
     return bitmap;
 }
 
-void downscaleToWidthAndHeight(VSTGUI::CBitmap* bitmap, VSTGUI::CPoint frameSize)
+void downscaleToWidthAndHeight(CBitmap* bitmap, CPoint frameSize)
 {
     if (!bitmap)
         return;
 
+    PlatformBitmapPtr platformBitmap = bitmap->getPlatformBitmap();
+    if (!platformBitmap)
+        return;
+
+    CPoint bitmapSize = platformBitmap->getSize();
+
     CCoord frameW = frameSize.x;
     CCoord frameH = frameSize.y;
-    CCoord bitmapW = bitmap->getWidth();
-    CCoord bitmapH = bitmap->getHeight();
+    CCoord bitmapW = bitmapSize.x;
+    CCoord bitmapH = bitmapSize.y;
 
-    CCoord scale =  1.0;
+    CCoord scale = 1.0;
     if (bitmapW > frameW || bitmapH > frameH) {
         CCoord xScale = bitmapW / frameW;
         CCoord yScale = bitmapH / frameH;
         scale = (xScale > yScale) ? xScale : yScale;
     }
 
-    if (PlatformBitmapPtr platformBitmap = bitmap->getPlatformBitmap())
-        platformBitmap->setScaleFactor(scale);
+    platformBitmap->setScaleFactor(scale);
 }

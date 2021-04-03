@@ -136,6 +136,9 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
 
+    SharedPointer<CBitmap> backgroundBitmap_;
+    SharedPointer<CBitmap> defaultBackgroundBitmap_;
+
     CControl* getSecondaryCCControl(unsigned cc)
     {
         switch (cc) {
@@ -217,6 +220,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void performCCEndEdit(unsigned cc);
 
     void setActivePanel(unsigned panelId);
+    void applyBackgroundForCurrentPanel();
 
     static void formatLabel(CTextLabel* label, const char* fmt, ...);
     static void vformatLabel(CTextLabel* label, const char* fmt, va_list ap);
@@ -560,6 +564,10 @@ void Editor::Impl::createFrameContents()
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
+
+    defaultBackgroundBitmap_ = background;
+    backgroundBitmap_ = background;
+
     {
         const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
 
@@ -1041,6 +1049,8 @@ void Editor::Impl::createFrameContents()
 
         panel->setVisible(currentPanel == activePanel_);
     }
+
+    applyBackgroundForCurrentPanel();
 }
 
 void Editor::Impl::chooseSfzFile()
@@ -1547,10 +1557,21 @@ void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
 
 void Editor::Impl::updateBackgroundImage(const char* filepath)
 {
-    SharedPointer<CBitmap> bitmap = loadAnyFormatImage(filepath);
+    backgroundBitmap_ = loadAnyFormatImage(filepath);
 
-    if (!bitmap)
-        bitmap = owned(new CBitmap("background.png"));
+    if (!backgroundBitmap_)
+        backgroundBitmap_ = defaultBackgroundBitmap_;
+
+    applyBackgroundForCurrentPanel();
+}
+
+void Editor::Impl::applyBackgroundForCurrentPanel()
+{
+    CBitmap* bitmap;
+    if (activePanel_ == kPanelGeneral)
+        bitmap = backgroundBitmap_;
+    else
+        bitmap = defaultBackgroundBitmap_;
 
     downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
     imageContainer_->setBackground(bitmap);
@@ -1610,6 +1631,7 @@ void Editor::Impl::setActivePanel(unsigned panelId)
         if (subPanels_[panelId])
             subPanels_[panelId]->setVisible(true);
         activePanel_ = panelId;
+        applyBackgroundForCurrentPanel();
     }
 }
 
