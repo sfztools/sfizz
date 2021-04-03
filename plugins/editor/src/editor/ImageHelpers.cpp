@@ -42,8 +42,17 @@ SharedPointer<CBitmap> loadAnyFormatImage(const fs::path& filePath)
 
     const unsigned char* pixel = image.get();
     do {
-        CColor c(pixel[0], pixel[1], pixel[2], pixel[3]);
-        accessor->setColor(c);
+        uint8_t r = pixel[0];
+        uint8_t g = pixel[1];
+        uint8_t b = pixel[2];
+        uint8_t a = pixel[3];
+
+        // premultiply alpha
+        r = uint8_t((r * a) / 255);
+        g = uint8_t((g * a) / 255);
+        b = uint8_t((b * a) / 255);
+
+        accessor->setColor(CColor(r, g, b, a));
         pixel += 4;
     } while (++*accessor);
     accessor = nullptr;
