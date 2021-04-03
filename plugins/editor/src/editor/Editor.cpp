@@ -123,7 +123,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* infoSamplesLabel_ = nullptr;
     CTextLabel* infoVoicesLabel_ = nullptr;
 
-    SharedPointer<CViewContainer> imageContainer_;
+    CViewContainer* imageContainer_ = nullptr;
 
     CTextLabel* memoryLabel_ = nullptr;
 
