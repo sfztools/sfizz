@@ -6,6 +6,27 @@
 
 #pragma once
 
+#include <lv2/atom/atom.h>
+#include <lv2/atom/forge.h>
+#include <lv2/atom/util.h>
+#include <lv2/buf-size/buf-size.h>
+#include <lv2/core/lv2.h>
+#include <lv2/core/lv2_util.h>
+#include <lv2/midi/midi.h>
+#include <lv2/options/options.h>
+#include <lv2/parameters/parameters.h>
+#include <lv2/patch/patch.h>
+#include <lv2/state/state.h>
+#include <lv2/urid/urid.h>
+#include <lv2/worker/worker.h>
+#include <lv2/log/logger.h>
+#include <lv2/log/log.h>
+#include <lv2/time/time.h>
+
+#include <ardour/lv2_extensions.h>
+
+#include <stdint.h>
+
 #define MAX_PATH_SIZE 1024
 #define ATOM_TEMP_SIZE 8192
 #define OSC_TEMP_SIZE 8192
@@ -45,3 +66,22 @@ enum
     SFIZZ_NUM_REGIONS = 16,
     SFIZZ_NUM_SAMPLES = 17,
 };
+
+// For use with instance-access
+struct sfizz_plugin_t;
+
+/**
+ * @brief Fetch a copy of the current description, if more recent than what the
+ *        version we already have.
+ *
+ * @param self     The LV2 plugin
+ * @param serial   The optional serial number to compare against
+ * @param desc     The memory zone which receives the copy
+ * @param sizep    The memory zone which receives the size
+ * @param serialp  The memory zone which receives the new serial
+ * @return if serial is not null and its value isn't older, false
+ *         otherwise, true, and the pointer returned in descp must be freed with delete[] after use
+ */
+bool sfizz_lv2_fetch_description(
+    sfizz_plugin_t *self, const int *serial,
+    uint8_t **descp, uint32_t *sizep, int *serialp);

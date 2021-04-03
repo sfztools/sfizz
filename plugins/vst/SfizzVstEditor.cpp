@@ -11,10 +11,12 @@
 #include "SfizzFileScan.h"
 #include "editor/Editor.h"
 #include "editor/EditIds.h"
+#include "plugin/InstrumentDescription.h"
 #include "IdleUpdateHandler.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "X11RunLoop.h"
 #endif
+#include <ghc/fs_std.hpp>
 
 using namespace VSTGUI;
 
@@ -188,17 +190,48 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
         }
     }
 
-    if (FilePathUpdate* update = FCast<FilePathUpdate>(changedUnknown)) {
+    if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
-        switch (update->getType()) {
-        case kFilePathUpdateSfz:
-            uiReceiveValue(EditId::SfzFile, path);
-            break;
-        case kFilePathUpdateScala:
-            uiReceiveValue(EditId::ScalaFile, path);
-            break;
+        uiReceiveValue(EditId::SfzFile, path);
+    }
+
+    if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
+        const InstrumentDescription desc = parseDescriptionBlob(update->getDescription());
+
+        uiReceiveValue(EditId::UINumCurves, desc.numCurves);
+        uiReceiveValue(EditId::UINumMasters, desc.numMasters);
+        uiReceiveValue(EditId::UINumGroups, desc.numGroups);
+        uiReceiveValue(EditId::UINumRegions, desc.numRegions);
+        uiReceiveValue(EditId::UINumPreloadedSamples, desc.numSamples);
+
+        const fs::path rootPath = fs::u8path(desc.rootPath);
+        const fs::path imagePath = rootPath / fs::u8path(desc.image);
+        uiReceiveValue(EditId::BackgroundImage, imagePath.u8string());
+
+        for (unsigned key = 0; key < 128; ++key) {
+            bool keyUsed = desc.keyUsed.test(key);
+            bool keyswitchUsed = desc.keyswitchUsed.test(key);
+            uiReceiveValue(editIdForKeyUsed(int(key)), float(keyUsed));
+            uiReceiveValue(editIdForKeyswitchUsed(int(key)), float(keyswitchUsed));
+            if (keyUsed)
+                uiReceiveValue(editIdForKeyLabel(int(key)), desc.keyLabel[key]);
+            if (keyswitchUsed)
+                uiReceiveValue(editIdForKeyswitchLabel(int(key)), desc.keyswitchLabel[key]);
         }
-        return;
+
+        for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+            bool ccUsed = desc.ccUsed.test(cc);
+            uiReceiveValue(editIdForCCUsed(int(cc)), float(ccUsed));
+            if (ccUsed) {
+                uiReceiveValue(editIdForCCDefault(int(cc)), desc.ccDefault[cc]);
+                uiReceiveValue(editIdForCCLabel(int(cc)), desc.ccLabel[cc]);
+            }
+        }
+    }
+
+    if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
+        const std::string path = update->getPath();
+        uiReceiveValue(EditId::ScalaFile, path);
     }
 
     if (ProcessorStateUpdate* update = FCast<ProcessorStateUpdate>(changedUnknown)) {
@@ -216,11 +249,6 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
 
     if (PlayStateUpdate* update = FCast<PlayStateUpdate>(changedUnknown)) {
         const SfizzPlayState playState = update->getState();
-        uiReceiveValue(EditId::UINumCurves, playState.curves);
-        uiReceiveValue(EditId::UINumMasters, playState.masters);
-        uiReceiveValue(EditId::UINumGroups, playState.groups);
-        uiReceiveValue(EditId::UINumRegions, playState.regions);
-        uiReceiveValue(EditId::UINumPreloadedSamples, playState.preloadedSamples);
         uiReceiveValue(EditId::UINumActiveVoices, playState.activeVoices);
         return;
     }

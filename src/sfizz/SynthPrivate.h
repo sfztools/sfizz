@@ -240,7 +240,6 @@ struct Synth::Impl final: public Parser::Listener {
 
     // Set as sw_default if present in the file
     absl::optional<uint8_t> currentSwitch_;
-    bool currentSwitchChanged_ = true;
     std::vector<std::string> unknownOpcodes_;
     using RegionViewVector = std::vector<Region*>;
     using LayerViewVector = std::vector<Layer*>;
@@ -279,6 +278,9 @@ struct Synth::Impl final: public Parser::Listener {
     // Singletons passed as references to the voices
     Resources resources_;
 
+    // Root path
+    std::string rootPath_;
+
     // Control opcodes
     std::string defaultPath_ { "" };
     std::string image_ { "" };
@@ -315,6 +317,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::array<float, config::numCCs> defaultCCValues_;
     BitArray<config::numCCs> currentUsedCCs_;
     BitArray<config::numCCs> changedCCsThisCycle_;
+    BitArray<config::numCCs> changedCCsLastCycle_;
 
     // Messaging
     sfizz_receive_t* broadcastReceiver = nullptr;

@@ -39,13 +39,35 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/num_regions", "") {
+            client.receive<'i'>(delay, path, int(impl.layers_.size()));
+        } break;
+
+        MATCH("/num_groups", "") {
+            client.receive<'i'>(delay, path, impl.numGroups_);
+        } break;
+
+        MATCH("/num_masters", "") {
+            client.receive<'i'>(delay, path, impl.numMasters_);
+        } break;
+
+        MATCH("/num_curves", "") {
+            client.receive<'i'>(delay, path, int(impl.resources_.curves.getNumCurves()));
+        } break;
+
+        MATCH("/num_samples", "") {
+            client.receive<'i'>(delay, path, int(impl.resources_.filePool.getNumPreloadedSamples()));
+        } break;
+
+        //----------------------------------------------------------------------
+
         MATCH("/key/slots", "") {
             const BitArray<128>& keys = impl.keySlots_;
             sfizz_blob_t blob { keys.data(), static_cast<uint32_t>(keys.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
         } break;
 
-        MATCH("/key%d/label", "") {
+        MATCH("/key&/label", "") {
             if (indices[0] >= 128)
                 break;
             const std::string* label = impl.getKeyLabel(indices[0]);
@@ -54,9 +76,15 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         //----------------------------------------------------------------------
 
+        MATCH("/root_path", "") {
+            client.receive<'s'>(delay, path, impl.rootPath_.c_str());
+        } break;
+
         MATCH("/image", "") {
             client.receive<'s'>(delay, path, impl.image_.c_str());
         } break;
+
+        //----------------------------------------------------------------------
 
         MATCH("/sw/last/slots", "") {
             const BitArray<128>& switches = impl.swLastSlots_;
@@ -65,10 +93,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         } break;
 
         MATCH("/sw/last/current", "") {
-            int32_t value = -1;
             if (impl.currentSwitch_)
-                value = *impl.currentSwitch_;
-            client.receive<'i'>(delay, path, value);
+                client.receive<'i'>(delay, path, *impl.currentSwitch_);
+            else
+                client.receive<'N'>(delay, path, {});
         } break;
 
         MATCH("/sw/last/&/label", "") {
@@ -110,6 +138,18 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 break;
             const std::string* label = impl.getCCLabel(indices[0]);
             client.receive<'s'>(delay, path, label ? label->c_str() : "");
+        } break;
+
+        MATCH("/cc/changed", "") {
+            const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
+            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/cc/changed~", "") {
+            const BitArray<config::numCCs>& changedCCs = impl.changedCCsLastCycle_;
+            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
         } break;
 
         //----------------------------------------------------------------------
