@@ -46,6 +46,7 @@
 #include <lv2/patch/patch.h>
 #include <lv2/urid/urid.h>
 #include <lv2/instance-access/instance-access.h>
+#include <ghc/fs_std.hpp>
 #include <string>
 #include <memory>
 #include <cstring>
@@ -378,6 +379,10 @@ sfizz_ui_update_description(sfizz_ui_t *self, const InstrumentDescription& desc)
     self->uiReceiveValue(EditId::UINumGroups, desc.numGroups);
     self->uiReceiveValue(EditId::UINumRegions, desc.numRegions);
     self->uiReceiveValue(EditId::UINumPreloadedSamples, desc.numSamples);
+
+    const fs::path rootPath = fs::u8path(desc.rootPath);
+    const fs::path imagePath = rootPath / fs::u8path(desc.image);
+    self->uiReceiveValue(EditId::BackgroundImage, imagePath.u8string());
 
     for (unsigned key = 0; key < 128; ++key) {
         bool keyUsed = desc.keyUsed.test(key);

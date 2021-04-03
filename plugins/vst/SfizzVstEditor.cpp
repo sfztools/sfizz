@@ -16,6 +16,7 @@
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "X11RunLoop.h"
 #endif
+#include <ghc/fs_std.hpp>
 
 using namespace VSTGUI;
 
@@ -202,6 +203,10 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
         uiReceiveValue(EditId::UINumGroups, desc.numGroups);
         uiReceiveValue(EditId::UINumRegions, desc.numRegions);
         uiReceiveValue(EditId::UINumPreloadedSamples, desc.numSamples);
+
+        const fs::path rootPath = fs::u8path(desc.rootPath);
+        const fs::path imagePath = rootPath / fs::u8path(desc.image);
+        uiReceiveValue(EditId::BackgroundImage, imagePath.u8string());
 
         for (unsigned key = 0; key < 128; ++key) {
             bool keyUsed = desc.keyUsed.test(key);

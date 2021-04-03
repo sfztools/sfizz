@@ -44,6 +44,8 @@ enum class EditId : int {
     UINumActiveVoices,
     UIActivePanel,
     //
+    BackgroundImage,
+    //
     #undef KEY_RANGE
     #undef CC_RANGE
 };

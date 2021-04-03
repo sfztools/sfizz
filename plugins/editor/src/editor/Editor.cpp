@@ -443,6 +443,12 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             setActivePanel(value);
         }
         break;
+    case EditId::BackgroundImage:
+        {
+            const std::string& value = v.to_string();
+            updateBackgroundImage(value.c_str());
+        }
+        break;
     default:
         if (editIdIsKey(id)) {
             const int key = keyForEditId(id);
@@ -1541,10 +1547,7 @@ void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
 
 void Editor::Impl::updateBackgroundImage(const char* filepath)
 {
-    const fs::path sfzFilePath = fs::u8path(currentSfzFile_);
-    const fs::path sfzDirPath = sfzFilePath.parent_path();
-    const fs::path imagePath = sfzDirPath / fs::u8path(filepath);
-    SharedPointer<CBitmap> bitmap = loadAnyFormatImage(imagePath);
+    SharedPointer<CBitmap> bitmap = loadAnyFormatImage(filepath);
 
     if (!bitmap)
         bitmap = owned(new CBitmap("background.png"));
