@@ -1,0 +1,24 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0305
+header_name {.h}
+code_name {.cxx}
+widget_class aboutView {open
+  xywh {616 129 600 300} type Double
+  class LogicalGroup visible
+} {
+  Fl_Group {} {open selected
+    xywh {0 0 600 300}
+    class AboutFrame
+  } {
+    Fl_Box {} {
+      label {About sfizz}
+      xywh {180 85 245 45} labelsize 30
+      class Label
+    }
+    Fl_Box {} {
+      label {Redtide will implement this dialog}
+      xywh {65 155 475 45} labelsize 24
+      class Label
+    }
+  }
+}

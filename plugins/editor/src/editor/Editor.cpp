@@ -10,6 +10,7 @@
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
+#include "DlgAbout.h"
 #include "ImageHelpers.h"
 #include "NativeHelpers.h"
 #include "BitArray.h"
@@ -86,6 +87,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
+        kTagAbout,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -135,6 +137,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
+
+    SAboutDialog* aboutDialog_ = nullptr;
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
@@ -885,6 +889,12 @@ void Editor::Impl::createFrameContents()
 
         mainView_ = owned(mainView);
     }
+
+    ///
+    SAboutDialog* aboutDialog = new SAboutDialog(mainView->getViewSize());
+    mainView->addView(aboutDialog);
+    aboutDialog_ = aboutDialog;
+    aboutDialog->setVisible(false);
 
     ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
@@ -1775,6 +1785,13 @@ void Editor::Impl::valueChanged(CControl* ctl)
             break;
 
         Call::later([this]() { chooseUserFilesDir(); });
+        break;
+
+    case kTagAbout:
+        if (value != 1)
+            break;
+
+        Call::later([this]() { aboutDialog_->setVisible(true); });
         break;
 
     default:

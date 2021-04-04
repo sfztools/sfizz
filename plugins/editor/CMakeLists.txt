@@ -43,6 +43,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/GUIHelpers.cpp
     src/editor/GUIPiano.h
     src/editor/GUIPiano.cpp
+    src/editor/DlgAbout.h
+    src/editor/DlgAbout.cpp
     src/editor/ColorHelpers.h
     src/editor/ColorHelpers.cpp
     src/editor/ImageHelpers.h
@@ -50,6 +52,7 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/NativeHelpers.h
     src/editor/NativeHelpers.cpp
     src/editor/layout/main.hpp
+    src/editor/layout/about.hpp
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h
     src/editor/GitBuildId.h
@@ -101,12 +104,14 @@ if(NOT CMAKE_CROSSCOMPILING)
         "tools/layout-maker/sources/main.cpp")
     target_link_libraries(layout-maker PRIVATE absl::strings)
 
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
-        COMMAND "$<TARGET_FILE:layout-maker>"
-        "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl"
-        > "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
-        DEPENDS layout-maker "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl")
+    foreach(_layout main about)
+        add_custom_command(
+            OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/${_layout}.hpp"
+            COMMAND "$<TARGET_FILE:layout-maker>"
+            "${CMAKE_CURRENT_SOURCE_DIR}/layout/${_layout}.fl"
+            > "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/${_layout}.hpp"
+            DEPENDS layout-maker "${CMAKE_CURRENT_SOURCE_DIR}/layout/${_layout}.fl")
+    endforeach()
 endif()
 
 # git build identifier
