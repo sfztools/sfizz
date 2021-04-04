@@ -1088,6 +1088,16 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
         ring.addVoiceToRing(selectedVoice);
 }
 
+void Synth::Impl::checkOffGroups(const Region* region, int delay, int number)
+{
+    for (auto& voice : voiceManager_) {
+        if (voice.checkOffGroup(region, delay, number)) {
+            const TriggerEvent& event = voice.getTriggerEvent();
+            noteOffDispatch(delay, event.number, event.value);
+        }
+    }
+}
+
 void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
@@ -1106,6 +1116,7 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
             if (region.trigger == Trigger::release && !region.rtDead && !voiceManager_.playingAttackVoice(&region))
                 continue;
 
+            checkOffGroups(&region, delay, noteNumber);
             startVoice(layer, delay, triggerEvent, ring);
         }
     }
@@ -1136,13 +1147,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
     for (Layer* layer : noteActivationLists_[noteNumber]) {
         if (layer->registerNoteOn(noteNumber, velocity, randValue)) {
             const Region& region = layer->getRegion();
-            for (auto& voice : voiceManager_) {
-                if (voice.checkOffGroup(&region, delay, noteNumber)) {
-                    const TriggerEvent& event = voice.getTriggerEvent();
-                    noteOffDispatch(delay, event.number, event.value);
-                }
-            }
-
+            checkOffGroups(&region, delay, noteNumber);
             TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
             startVoice(layer, delay, triggerEvent, ring);
         }
@@ -1215,12 +1220,7 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
         }
 
         if (layer->registerCC(ccNumber, value)) {
-            for (auto& voice : voiceManager_) {
-                if (voice.checkOffGroup(&region, delay, ccNumber)) {
-                    const TriggerEvent& event = voice.getTriggerEvent();
-                    noteOffDispatch(delay, event.number, event.value);
-                }
-            }
+            checkOffGroups(&region, delay, ccNumber);
             startVoice(layer, delay, triggerEvent, ring);
         }
     }

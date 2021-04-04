@@ -1626,6 +1626,28 @@ TEST_CASE("[Synth] Off by a CC event")
     REQUIRE( numPlayingVoices(synth) == 1 );
 }
 
+TEST_CASE("[Synth] Off by a note-off event")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> key=60 group=1 off_by=2 sample=*saw
+        <region> key=62 sample=*silence
+        <region> key=62 trigger=release group=2 sample=*silence
+    )");
+    synth.noteOn(0, 60, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(0, 62, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 2 );
+    synth.noteOff(10, 62, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    // TODO: check the samples; the last one should be *silence
+}
+
 TEST_CASE("[Synth] Initial values of CC")
 {
     sfz::Synth synth;
