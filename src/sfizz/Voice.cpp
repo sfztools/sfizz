@@ -228,6 +228,7 @@ struct Voice::Impl
     int initialDelay_ { 0 };
     int age_ { 0 };
     uint32_t count_ { 1 };
+    int sampleEnd_ { 0 };
     int sampleSize_ { 0 };
 
     struct {
@@ -489,7 +490,8 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
     impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleSize_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1);
+    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()));
+    impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendStepFactor_ = centsFactor(region.bendStep);
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
@@ -1064,11 +1066,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         numPartitions = 1;
     }
 
-    const auto sampleEnd = min(
-            int(sampleSize_),
-            int(currentPromise_->information.end),
-            int(source.getNumFrames()))
-            - 1;
+    const auto sampleEnd = min( int(sampleEnd_), int(currentPromise_->information.end), int(source.getNumFrames())) - 1;
 
     int blockRestarts { 0 };
     int oldIndex {};
