@@ -101,7 +101,7 @@ float sfz::MidiState::getNoteDuration(int noteNumber, int delay) const
     if (noteNumber < 0 || noteNumber >= 128)
         return 0.0f;
 
-    if (noteOnTimes[noteNumber] != 0 && noteOffTimes[noteNumber] != 0 && noteOnTimes[noteNumber] > noteOffTimes[noteNumber])
+    if (!noteStates[noteNumber])
         return 0.0f;
 
     const unsigned timeInSamples = internalClock + static_cast<unsigned>(delay) - noteOnTimes[noteNumber];
