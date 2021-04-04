@@ -472,8 +472,9 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
 
     impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
     impl.baseGain_ = region.getBaseGain();
-    if (impl.triggerEvent_.type != TriggerEventType::CC)
+    if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
         impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
+
     impl.gainSmoother_.reset();
     impl.resetCrossfades();
 
