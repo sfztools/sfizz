@@ -401,6 +401,9 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     if (impl.triggerEvent_.type == TriggerEventType::CC)
         impl.triggerEvent_.number = region.pitchKeycenter;
 
+    if (region.velocityOverride == VelocityOverride::previous)
+        impl.triggerEvent_.value = resources.midiState.getLastVelocity();
+
     if (region.disabled()) {
         impl.switchState(State::cleanMeUp);
         return false;

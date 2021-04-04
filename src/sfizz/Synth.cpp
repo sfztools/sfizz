@@ -1144,9 +1144,6 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
             }
 
             TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
-            if (region.velocityOverride == VelocityOverride::previous)
-                triggerEvent.value = resources_.midiState.getLastVelocity();
-
             startVoice(layer, delay, triggerEvent, ring);
         }
     }
@@ -1199,7 +1196,7 @@ void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
 {
     SisterVoiceRingBuilder ring;
-    const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
+    TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
     for (Layer* layer : ccActivationLists_[ccNumber]) {
         const Region& region = layer->getRegion();
 
@@ -1217,8 +1214,9 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
             }
         }
 
-        if (layer->registerCC(ccNumber, value))
+        if (layer->registerCC(ccNumber, value)) {
             startVoice(layer, delay, triggerEvent, ring);
+        }
     }
 }
 
