@@ -1215,6 +1215,12 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
         }
 
         if (layer->registerCC(ccNumber, value)) {
+            for (auto& voice : voiceManager_) {
+                if (voice.checkOffGroup(&region, delay, ccNumber)) {
+                    const TriggerEvent& event = voice.getTriggerEvent();
+                    noteOffDispatch(delay, event.number, event.value);
+                }
+            }
             startVoice(layer, delay, triggerEvent, ring);
         }
     }

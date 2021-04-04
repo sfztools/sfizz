@@ -1572,7 +1572,7 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
         return false;
 
     if (impl.triggerEvent_.type == TriggerEventType::NoteOn
-        && region->offBy == other->group
+        && region->offBy && *region->offBy == other->group
         && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
